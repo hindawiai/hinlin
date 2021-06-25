@@ -1,39 +1,38 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright 2020 Jonathan Neuschथअfer
+ * Copyright 2020 Jonathan Neuschäfer
  *
- * Register access and version inक्रमmation क्रम the Netronix embedded
+ * Register access and version information for the Netronix embedded
  * controller.
  */
 
-#अगर_अघोषित NTXEC_H
-#घोषणा NTXEC_H
+#ifndef NTXEC_H
+#define NTXEC_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा device;
-काष्ठा regmap;
+struct device;
+struct regmap;
 
-काष्ठा ntxec अणु
-	काष्ठा device *dev;
-	काष्ठा regmap *regmap;
-पूर्ण;
+struct ntxec {
+	struct device *dev;
+	struct regmap *regmap;
+};
 
 /*
- * Some रेजिस्टरs, such as the battery status रेजिस्टर (0x41), are in
- * big-endian, but others only have eight signअगरicant bits, which are in the
+ * Some registers, such as the battery status register (0x41), are in
+ * big-endian, but others only have eight significant bits, which are in the
  * first byte transmitted over I2C (the MSB of the big-endian value).
- * This convenience function converts an 8-bit value to 16-bit क्रम use in the
- * second kind of रेजिस्टर.
+ * This convenience function converts an 8-bit value to 16-bit for use in the
+ * second kind of register.
  */
-अटल अंतरभूत __be16 ntxec_reg8(u8 value)
-अणु
-	वापस value << 8;
-पूर्ण
+static inline __be16 ntxec_reg8(u8 value)
+{
+	return value << 8;
+}
 
 /* Known firmware versions */
-#घोषणा NTXEC_VERSION_KOBO_AURA	0xd726	/* found in Kobo Aura */
-#घोषणा NTXEC_VERSION_TOLINO_SHINE2 0xf110 /* found in Tolino Shine 2 HD */
+#define NTXEC_VERSION_KOBO_AURA	0xd726	/* found in Kobo Aura */
+#define NTXEC_VERSION_TOLINO_SHINE2 0xf110 /* found in Tolino Shine 2 HD */
 
-#पूर्ण_अगर
+#endif

@@ -1,17 +1,16 @@
-<शैली गुरु>
 /*
- * SPDX-License-Identअगरier: MIT
+ * SPDX-License-Identifier: MIT
  *
- * Copyright तऊ 2017 Intel Corporation
+ * Copyright © 2017 Intel Corporation
  */
 
-#अगर_अघोषित __I915_GEMFS_H__
-#घोषणा __I915_GEMFS_H__
+#ifndef __I915_GEMFS_H__
+#define __I915_GEMFS_H__
 
-काष्ठा drm_i915_निजी;
+struct drm_i915_private;
 
-पूर्णांक i915_gemfs_init(काष्ठा drm_i915_निजी *i915);
+int i915_gemfs_init(struct drm_i915_private *i915);
 
-व्योम i915_gemfs_fini(काष्ठा drm_i915_निजी *i915);
+void i915_gemfs_fini(struct drm_i915_private *i915);
 
-#पूर्ण_अगर
+#endif

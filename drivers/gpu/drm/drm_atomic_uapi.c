@@ -1,15 +1,14 @@
-<शैली गुरु>
 /*
  * Copyright (C) 2014 Red Hat
  * Copyright (C) 2014 Intel Corp.
  * Copyright (C) 2018 Intel Corp.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -27,127 +26,127 @@
  * Daniel Vetter <daniel.vetter@ffwll.ch>
  */
 
-#समावेश <drm/drm_atomic_uapi.h>
-#समावेश <drm/drm_atomic.h>
-#समावेश <drm/drm_prपूर्णांक.h>
-#समावेश <drm/drm_drv.h>
-#समावेश <drm/drm_ग_लिखोback.h>
-#समावेश <drm/drm_vblank.h>
+#include <drm/drm_atomic_uapi.h>
+#include <drm/drm_atomic.h>
+#include <drm/drm_print.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_writeback.h>
+#include <drm/drm_vblank.h>
 
-#समावेश <linux/dma-fence.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/sync_file.h>
-#समावेश <linux/file.h>
+#include <linux/dma-fence.h>
+#include <linux/uaccess.h>
+#include <linux/sync_file.h>
+#include <linux/file.h>
 
-#समावेश "drm_crtc_internal.h"
+#include "drm_crtc_internal.h"
 
 /**
  * DOC: overview
  *
- * This file contains the marshalling and demarshalling glue क्रम the atomic UAPI
- * in all its क्रमms: The monster ATOMIC IOCTL itself, code क्रम GET_PROPERTY and
- * SET_PROPERTY IOCTLs. Plus पूर्णांकerface functions क्रम compatibility helpers and
- * drivers which have special needs to स्थिरruct their own atomic updates, e.g.
- * क्रम load detect or similiar.
+ * This file contains the marshalling and demarshalling glue for the atomic UAPI
+ * in all its forms: The monster ATOMIC IOCTL itself, code for GET_PROPERTY and
+ * SET_PROPERTY IOCTLs. Plus interface functions for compatibility helpers and
+ * drivers which have special needs to construct their own atomic updates, e.g.
+ * for load detect or similiar.
  */
 
 /**
- * drm_atomic_set_mode_क्रम_crtc - set mode क्रम CRTC
+ * drm_atomic_set_mode_for_crtc - set mode for CRTC
  * @state: the CRTC whose incoming state to update
- * @mode: kernel-पूर्णांकernal mode to use क्रम the CRTC, or शून्य to disable
+ * @mode: kernel-internal mode to use for the CRTC, or NULL to disable
  *
  * Set a mode (originating from the kernel) on the desired CRTC state and update
  * the enable property.
  *
  * RETURNS:
- * Zero on success, error code on failure. Cannot वापस -EDEADLK.
+ * Zero on success, error code on failure. Cannot return -EDEADLK.
  */
-पूर्णांक drm_atomic_set_mode_क्रम_crtc(काष्ठा drm_crtc_state *state,
-				 स्थिर काष्ठा drm_display_mode *mode)
-अणु
-	काष्ठा drm_crtc *crtc = state->crtc;
-	काष्ठा drm_mode_modeinfo umode;
+int drm_atomic_set_mode_for_crtc(struct drm_crtc_state *state,
+				 const struct drm_display_mode *mode)
+{
+	struct drm_crtc *crtc = state->crtc;
+	struct drm_mode_modeinfo umode;
 
-	/* Early वापस क्रम no change. */
-	अगर (mode && स_भेद(&state->mode, mode, माप(*mode)) == 0)
-		वापस 0;
+	/* Early return for no change. */
+	if (mode && memcmp(&state->mode, mode, sizeof(*mode)) == 0)
+		return 0;
 
 	drm_property_blob_put(state->mode_blob);
-	state->mode_blob = शून्य;
+	state->mode_blob = NULL;
 
-	अगर (mode) अणु
+	if (mode) {
 		drm_mode_convert_to_umode(&umode, mode);
 		state->mode_blob =
 			drm_property_create_blob(state->crtc->dev,
-		                                 माप(umode),
+		                                 sizeof(umode),
 		                                 &umode);
-		अगर (IS_ERR(state->mode_blob))
-			वापस PTR_ERR(state->mode_blob);
+		if (IS_ERR(state->mode_blob))
+			return PTR_ERR(state->mode_blob);
 
 		drm_mode_copy(&state->mode, mode);
 		state->enable = true;
 		drm_dbg_atomic(crtc->dev,
 			       "Set [MODE:%s] for [CRTC:%d:%s] state %p\n",
 			       mode->name, crtc->base.id, crtc->name, state);
-	पूर्ण अन्यथा अणु
-		स_रखो(&state->mode, 0, माप(state->mode));
+	} else {
+		memset(&state->mode, 0, sizeof(state->mode));
 		state->enable = false;
 		drm_dbg_atomic(crtc->dev,
 			       "Set [NOMODE] for [CRTC:%d:%s] state %p\n",
 			       crtc->base.id, crtc->name, state);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(drm_atomic_set_mode_क्रम_crtc);
+	return 0;
+}
+EXPORT_SYMBOL(drm_atomic_set_mode_for_crtc);
 
 /**
- * drm_atomic_set_mode_prop_क्रम_crtc - set mode क्रम CRTC
+ * drm_atomic_set_mode_prop_for_crtc - set mode for CRTC
  * @state: the CRTC whose incoming state to update
- * @blob: poपूर्णांकer to blob property to use क्रम mode
+ * @blob: pointer to blob property to use for mode
  *
  * Set a mode (originating from a blob property) on the desired CRTC state.
- * This function will take a reference on the blob property क्रम the CRTC state,
- * and release the reference held on the state's existing mode property, अगर any
+ * This function will take a reference on the blob property for the CRTC state,
+ * and release the reference held on the state's existing mode property, if any
  * was set.
  *
  * RETURNS:
- * Zero on success, error code on failure. Cannot वापस -EDEADLK.
+ * Zero on success, error code on failure. Cannot return -EDEADLK.
  */
-पूर्णांक drm_atomic_set_mode_prop_क्रम_crtc(काष्ठा drm_crtc_state *state,
-                                      काष्ठा drm_property_blob *blob)
-अणु
-	काष्ठा drm_crtc *crtc = state->crtc;
+int drm_atomic_set_mode_prop_for_crtc(struct drm_crtc_state *state,
+                                      struct drm_property_blob *blob)
+{
+	struct drm_crtc *crtc = state->crtc;
 
-	अगर (blob == state->mode_blob)
-		वापस 0;
+	if (blob == state->mode_blob)
+		return 0;
 
 	drm_property_blob_put(state->mode_blob);
-	state->mode_blob = शून्य;
+	state->mode_blob = NULL;
 
-	स_रखो(&state->mode, 0, माप(state->mode));
+	memset(&state->mode, 0, sizeof(state->mode));
 
-	अगर (blob) अणु
-		पूर्णांक ret;
+	if (blob) {
+		int ret;
 
-		अगर (blob->length != माप(काष्ठा drm_mode_modeinfo)) अणु
+		if (blob->length != sizeof(struct drm_mode_modeinfo)) {
 			drm_dbg_atomic(crtc->dev,
 				       "[CRTC:%d:%s] bad mode blob length: %zu\n",
 				       crtc->base.id, crtc->name,
 				       blob->length);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		ret = drm_mode_convert_umode(crtc->dev,
 					     &state->mode, blob->data);
-		अगर (ret) अणु
+		if (ret) {
 			drm_dbg_atomic(crtc->dev,
 				       "[CRTC:%d:%s] invalid mode (ret=%d, status=%s):\n",
 				       crtc->base.id, crtc->name,
 				       ret, drm_get_mode_status_name(state->mode.status));
-			drm_mode_debug_prपूर्णांकmodeline(&state->mode);
-			वापस -EINVAL;
-		पूर्ण
+			drm_mode_debug_printmodeline(&state->mode);
+			return -EINVAL;
+		}
 
 		state->mode_blob = drm_property_blob_get(blob);
 		state->enable = true;
@@ -155,165 +154,165 @@ EXPORT_SYMBOL(drm_atomic_set_mode_क्रम_crtc);
 			       "Set [MODE:%s] for [CRTC:%d:%s] state %p\n",
 			       state->mode.name, crtc->base.id, crtc->name,
 			       state);
-	पूर्ण अन्यथा अणु
+	} else {
 		state->enable = false;
 		drm_dbg_atomic(crtc->dev,
 			       "Set [NOMODE] for [CRTC:%d:%s] state %p\n",
 			       crtc->base.id, crtc->name, state);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(drm_atomic_set_mode_prop_क्रम_crtc);
+	return 0;
+}
+EXPORT_SYMBOL(drm_atomic_set_mode_prop_for_crtc);
 
 /**
- * drm_atomic_set_crtc_क्रम_plane - set CRTC क्रम plane
+ * drm_atomic_set_crtc_for_plane - set CRTC for plane
  * @plane_state: the plane whose incoming state to update
- * @crtc: CRTC to use क्रम the plane
+ * @crtc: CRTC to use for the plane
  *
- * Changing the asचिन्हित CRTC क्रम a plane requires us to grab the lock and state
- * क्रम the new CRTC, as needed. This function takes care of all these details
- * besides updating the poपूर्णांकer in the state object itself.
+ * Changing the assigned CRTC for a plane requires us to grab the lock and state
+ * for the new CRTC, as needed. This function takes care of all these details
+ * besides updating the pointer in the state object itself.
  *
  * Returns:
  * 0 on success or can fail with -EDEADLK or -ENOMEM. When the error is EDEADLK
  * then the w/w mutex code has detected a deadlock and the entire atomic
  * sequence must be restarted. All other errors are fatal.
  */
-पूर्णांक
-drm_atomic_set_crtc_क्रम_plane(काष्ठा drm_plane_state *plane_state,
-			      काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा drm_plane *plane = plane_state->plane;
-	काष्ठा drm_crtc_state *crtc_state;
-	/* Nothing to करो क्रम same crtc*/
-	अगर (plane_state->crtc == crtc)
-		वापस 0;
-	अगर (plane_state->crtc) अणु
+int
+drm_atomic_set_crtc_for_plane(struct drm_plane_state *plane_state,
+			      struct drm_crtc *crtc)
+{
+	struct drm_plane *plane = plane_state->plane;
+	struct drm_crtc_state *crtc_state;
+	/* Nothing to do for same crtc*/
+	if (plane_state->crtc == crtc)
+		return 0;
+	if (plane_state->crtc) {
 		crtc_state = drm_atomic_get_crtc_state(plane_state->state,
 						       plane_state->crtc);
-		अगर (WARN_ON(IS_ERR(crtc_state)))
-			वापस PTR_ERR(crtc_state);
+		if (WARN_ON(IS_ERR(crtc_state)))
+			return PTR_ERR(crtc_state);
 
 		crtc_state->plane_mask &= ~drm_plane_mask(plane);
-	पूर्ण
+	}
 
 	plane_state->crtc = crtc;
 
-	अगर (crtc) अणु
+	if (crtc) {
 		crtc_state = drm_atomic_get_crtc_state(plane_state->state,
 						       crtc);
-		अगर (IS_ERR(crtc_state))
-			वापस PTR_ERR(crtc_state);
+		if (IS_ERR(crtc_state))
+			return PTR_ERR(crtc_state);
 		crtc_state->plane_mask |= drm_plane_mask(plane);
-	पूर्ण
+	}
 
-	अगर (crtc)
+	if (crtc)
 		drm_dbg_atomic(plane->dev,
 			       "Link [PLANE:%d:%s] state %p to [CRTC:%d:%s]\n",
 			       plane->base.id, plane->name, plane_state,
 			       crtc->base.id, crtc->name);
-	अन्यथा
+	else
 		drm_dbg_atomic(plane->dev,
 			       "Link [PLANE:%d:%s] state %p to [NOCRTC]\n",
 			       plane->base.id, plane->name, plane_state);
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(drm_atomic_set_crtc_क्रम_plane);
+	return 0;
+}
+EXPORT_SYMBOL(drm_atomic_set_crtc_for_plane);
 
 /**
- * drm_atomic_set_fb_क्रम_plane - set framebuffer क्रम plane
- * @plane_state: atomic state object क्रम the plane
- * @fb: fb to use क्रम the plane
+ * drm_atomic_set_fb_for_plane - set framebuffer for plane
+ * @plane_state: atomic state object for the plane
+ * @fb: fb to use for the plane
  *
- * Changing the asचिन्हित framebuffer क्रम a plane requires us to grab a reference
- * to the new fb and drop the reference to the old fb, अगर there is one. This
- * function takes care of all these details besides updating the poपूर्णांकer in the
+ * Changing the assigned framebuffer for a plane requires us to grab a reference
+ * to the new fb and drop the reference to the old fb, if there is one. This
+ * function takes care of all these details besides updating the pointer in the
  * state object itself.
  */
-व्योम
-drm_atomic_set_fb_क्रम_plane(काष्ठा drm_plane_state *plane_state,
-			    काष्ठा drm_framebuffer *fb)
-अणु
-	काष्ठा drm_plane *plane = plane_state->plane;
+void
+drm_atomic_set_fb_for_plane(struct drm_plane_state *plane_state,
+			    struct drm_framebuffer *fb)
+{
+	struct drm_plane *plane = plane_state->plane;
 
-	अगर (fb)
+	if (fb)
 		drm_dbg_atomic(plane->dev,
 			       "Set [FB:%d] for [PLANE:%d:%s] state %p\n",
 			       fb->base.id, plane->base.id, plane->name,
 			       plane_state);
-	अन्यथा
+	else
 		drm_dbg_atomic(plane->dev,
 			       "Set [NOFB] for [PLANE:%d:%s] state %p\n",
 			       plane->base.id, plane->name, plane_state);
 
 	drm_framebuffer_assign(&plane_state->fb, fb);
-पूर्ण
-EXPORT_SYMBOL(drm_atomic_set_fb_क्रम_plane);
+}
+EXPORT_SYMBOL(drm_atomic_set_fb_for_plane);
 
 /**
- * drm_atomic_set_fence_क्रम_plane - set fence क्रम plane
- * @plane_state: atomic state object क्रम the plane
- * @fence: dma_fence to use क्रम the plane
+ * drm_atomic_set_fence_for_plane - set fence for plane
+ * @plane_state: atomic state object for the plane
+ * @fence: dma_fence to use for the plane
  *
- * Helper to setup the plane_state fence in हाल it is not set yet.
- * By using this drivers करोesn't need to worry अगर the user choose
+ * Helper to setup the plane_state fence in case it is not set yet.
+ * By using this drivers doesn't need to worry if the user choose
  * implicit or explicit fencing.
  *
- * This function will not set the fence to the state अगर it was set
- * via explicit fencing पूर्णांकerfaces on the atomic ioctl. In that हाल it will
+ * This function will not set the fence to the state if it was set
+ * via explicit fencing interfaces on the atomic ioctl. In that case it will
  * drop the reference to the fence as we are not storing it anywhere.
- * Otherwise, अगर &drm_plane_state.fence is not set this function we just set it
- * with the received implicit fence. In both हालs this function consumes a
- * reference क्रम @fence.
+ * Otherwise, if &drm_plane_state.fence is not set this function we just set it
+ * with the received implicit fence. In both cases this function consumes a
+ * reference for @fence.
  *
  * This way explicit fencing can be used to overrule implicit fencing, which is
- * important to make explicit fencing use-हालs work: One example is using one
- * buffer क्रम 2 screens with dअगरferent refresh rates. Implicit fencing will
+ * important to make explicit fencing use-cases work: One example is using one
+ * buffer for 2 screens with different refresh rates. Implicit fencing will
  * clamp rendering to the refresh rate of the slower screen, whereas explicit
  * fence allows 2 independent render and display loops on a single buffer. If a
- * driver allows obeys both implicit and explicit fences क्रम plane updates, then
- * it will अवरोध all the benefits of explicit fencing.
+ * driver allows obeys both implicit and explicit fences for plane updates, then
+ * it will break all the benefits of explicit fencing.
  */
-व्योम
-drm_atomic_set_fence_क्रम_plane(काष्ठा drm_plane_state *plane_state,
-			       काष्ठा dma_fence *fence)
-अणु
-	अगर (plane_state->fence) अणु
+void
+drm_atomic_set_fence_for_plane(struct drm_plane_state *plane_state,
+			       struct dma_fence *fence)
+{
+	if (plane_state->fence) {
 		dma_fence_put(fence);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	plane_state->fence = fence;
-पूर्ण
-EXPORT_SYMBOL(drm_atomic_set_fence_क्रम_plane);
+}
+EXPORT_SYMBOL(drm_atomic_set_fence_for_plane);
 
 /**
- * drm_atomic_set_crtc_क्रम_connector - set CRTC क्रम connector
- * @conn_state: atomic state object क्रम the connector
- * @crtc: CRTC to use क्रम the connector
+ * drm_atomic_set_crtc_for_connector - set CRTC for connector
+ * @conn_state: atomic state object for the connector
+ * @crtc: CRTC to use for the connector
  *
- * Changing the asचिन्हित CRTC क्रम a connector requires us to grab the lock and
- * state क्रम the new CRTC, as needed. This function takes care of all these
- * details besides updating the poपूर्णांकer in the state object itself.
+ * Changing the assigned CRTC for a connector requires us to grab the lock and
+ * state for the new CRTC, as needed. This function takes care of all these
+ * details besides updating the pointer in the state object itself.
  *
  * Returns:
  * 0 on success or can fail with -EDEADLK or -ENOMEM. When the error is EDEADLK
  * then the w/w mutex code has detected a deadlock and the entire atomic
  * sequence must be restarted. All other errors are fatal.
  */
-पूर्णांक
-drm_atomic_set_crtc_क्रम_connector(काष्ठा drm_connector_state *conn_state,
-				  काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा drm_connector *connector = conn_state->connector;
-	काष्ठा drm_crtc_state *crtc_state;
+int
+drm_atomic_set_crtc_for_connector(struct drm_connector_state *conn_state,
+				  struct drm_crtc *crtc)
+{
+	struct drm_connector *connector = conn_state->connector;
+	struct drm_crtc_state *crtc_state;
 
-	अगर (conn_state->crtc == crtc)
-		वापस 0;
+	if (conn_state->crtc == crtc)
+		return 0;
 
-	अगर (conn_state->crtc) अणु
+	if (conn_state->crtc) {
 		crtc_state = drm_atomic_get_new_crtc_state(conn_state->state,
 							   conn_state->crtc);
 
@@ -321,13 +320,13 @@ drm_atomic_set_crtc_क्रम_connector(काष्ठा drm_connector_stat
 			~drm_connector_mask(conn_state->connector);
 
 		drm_connector_put(conn_state->connector);
-		conn_state->crtc = शून्य;
-	पूर्ण
+		conn_state->crtc = NULL;
+	}
 
-	अगर (crtc) अणु
+	if (crtc) {
 		crtc_state = drm_atomic_get_crtc_state(conn_state->state, crtc);
-		अगर (IS_ERR(crtc_state))
-			वापस PTR_ERR(crtc_state);
+		if (IS_ERR(crtc_state))
+			return PTR_ERR(crtc_state);
 
 		crtc_state->connector_mask |=
 			drm_connector_mask(conn_state->connector);
@@ -339,1031 +338,1031 @@ drm_atomic_set_crtc_क्रम_connector(काष्ठा drm_connector_stat
 			       "Link [CONNECTOR:%d:%s] state %p to [CRTC:%d:%s]\n",
 			       connector->base.id, connector->name,
 			       conn_state, crtc->base.id, crtc->name);
-	पूर्ण अन्यथा अणु
+	} else {
 		drm_dbg_atomic(connector->dev,
 			       "Link [CONNECTOR:%d:%s] state %p to [NOCRTC]\n",
 			       connector->base.id, connector->name,
 			       conn_state);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(drm_atomic_set_crtc_क्रम_connector);
+	return 0;
+}
+EXPORT_SYMBOL(drm_atomic_set_crtc_for_connector);
 
-अटल व्योम set_out_fence_क्रम_crtc(काष्ठा drm_atomic_state *state,
-				   काष्ठा drm_crtc *crtc, s32 __user *fence_ptr)
-अणु
+static void set_out_fence_for_crtc(struct drm_atomic_state *state,
+				   struct drm_crtc *crtc, s32 __user *fence_ptr)
+{
 	state->crtcs[drm_crtc_index(crtc)].out_fence_ptr = fence_ptr;
-पूर्ण
+}
 
-अटल s32 __user *get_out_fence_क्रम_crtc(काष्ठा drm_atomic_state *state,
-					  काष्ठा drm_crtc *crtc)
-अणु
+static s32 __user *get_out_fence_for_crtc(struct drm_atomic_state *state,
+					  struct drm_crtc *crtc)
+{
 	s32 __user *fence_ptr;
 
 	fence_ptr = state->crtcs[drm_crtc_index(crtc)].out_fence_ptr;
-	state->crtcs[drm_crtc_index(crtc)].out_fence_ptr = शून्य;
+	state->crtcs[drm_crtc_index(crtc)].out_fence_ptr = NULL;
 
-	वापस fence_ptr;
-पूर्ण
+	return fence_ptr;
+}
 
-अटल पूर्णांक set_out_fence_क्रम_connector(काष्ठा drm_atomic_state *state,
-					काष्ठा drm_connector *connector,
+static int set_out_fence_for_connector(struct drm_atomic_state *state,
+					struct drm_connector *connector,
 					s32 __user *fence_ptr)
-अणु
-	अचिन्हित पूर्णांक index = drm_connector_index(connector);
+{
+	unsigned int index = drm_connector_index(connector);
 
-	अगर (!fence_ptr)
-		वापस 0;
+	if (!fence_ptr)
+		return 0;
 
-	अगर (put_user(-1, fence_ptr))
-		वापस -EFAULT;
+	if (put_user(-1, fence_ptr))
+		return -EFAULT;
 
 	state->connectors[index].out_fence_ptr = fence_ptr;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल s32 __user *get_out_fence_क्रम_connector(काष्ठा drm_atomic_state *state,
-					       काष्ठा drm_connector *connector)
-अणु
-	अचिन्हित पूर्णांक index = drm_connector_index(connector);
+static s32 __user *get_out_fence_for_connector(struct drm_atomic_state *state,
+					       struct drm_connector *connector)
+{
+	unsigned int index = drm_connector_index(connector);
 	s32 __user *fence_ptr;
 
 	fence_ptr = state->connectors[index].out_fence_ptr;
-	state->connectors[index].out_fence_ptr = शून्य;
+	state->connectors[index].out_fence_ptr = NULL;
 
-	वापस fence_ptr;
-पूर्ण
+	return fence_ptr;
+}
 
-अटल पूर्णांक
-drm_atomic_replace_property_blob_from_id(काष्ठा drm_device *dev,
-					 काष्ठा drm_property_blob **blob,
-					 uपूर्णांक64_t blob_id,
-					 sमाप_प्रकार expected_size,
-					 sमाप_प्रकार expected_elem_size,
+static int
+drm_atomic_replace_property_blob_from_id(struct drm_device *dev,
+					 struct drm_property_blob **blob,
+					 uint64_t blob_id,
+					 ssize_t expected_size,
+					 ssize_t expected_elem_size,
 					 bool *replaced)
-अणु
-	काष्ठा drm_property_blob *new_blob = शून्य;
+{
+	struct drm_property_blob *new_blob = NULL;
 
-	अगर (blob_id != 0) अणु
+	if (blob_id != 0) {
 		new_blob = drm_property_lookup_blob(dev, blob_id);
-		अगर (new_blob == शून्य)
-			वापस -EINVAL;
+		if (new_blob == NULL)
+			return -EINVAL;
 
-		अगर (expected_size > 0 &&
-		    new_blob->length != expected_size) अणु
+		if (expected_size > 0 &&
+		    new_blob->length != expected_size) {
 			drm_property_blob_put(new_blob);
-			वापस -EINVAL;
-		पूर्ण
-		अगर (expected_elem_size > 0 &&
-		    new_blob->length % expected_elem_size != 0) अणु
+			return -EINVAL;
+		}
+		if (expected_elem_size > 0 &&
+		    new_blob->length % expected_elem_size != 0) {
 			drm_property_blob_put(new_blob);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
 	*replaced |= drm_property_replace_blob(blob, new_blob);
 	drm_property_blob_put(new_blob);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक drm_atomic_crtc_set_property(काष्ठा drm_crtc *crtc,
-		काष्ठा drm_crtc_state *state, काष्ठा drm_property *property,
-		uपूर्णांक64_t val)
-अणु
-	काष्ठा drm_device *dev = crtc->dev;
-	काष्ठा drm_mode_config *config = &dev->mode_config;
+static int drm_atomic_crtc_set_property(struct drm_crtc *crtc,
+		struct drm_crtc_state *state, struct drm_property *property,
+		uint64_t val)
+{
+	struct drm_device *dev = crtc->dev;
+	struct drm_mode_config *config = &dev->mode_config;
 	bool replaced = false;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (property == config->prop_active)
+	if (property == config->prop_active)
 		state->active = val;
-	अन्यथा अगर (property == config->prop_mode_id) अणु
-		काष्ठा drm_property_blob *mode =
+	else if (property == config->prop_mode_id) {
+		struct drm_property_blob *mode =
 			drm_property_lookup_blob(dev, val);
-		ret = drm_atomic_set_mode_prop_क्रम_crtc(state, mode);
+		ret = drm_atomic_set_mode_prop_for_crtc(state, mode);
 		drm_property_blob_put(mode);
-		वापस ret;
-	पूर्ण अन्यथा अगर (property == config->prop_vrr_enabled) अणु
+		return ret;
+	} else if (property == config->prop_vrr_enabled) {
 		state->vrr_enabled = val;
-	पूर्ण अन्यथा अगर (property == config->degamma_lut_property) अणु
+	} else if (property == config->degamma_lut_property) {
 		ret = drm_atomic_replace_property_blob_from_id(dev,
 					&state->degamma_lut,
 					val,
-					-1, माप(काष्ठा drm_color_lut),
+					-1, sizeof(struct drm_color_lut),
 					&replaced);
 		state->color_mgmt_changed |= replaced;
-		वापस ret;
-	पूर्ण अन्यथा अगर (property == config->cपंचांग_property) अणु
+		return ret;
+	} else if (property == config->ctm_property) {
 		ret = drm_atomic_replace_property_blob_from_id(dev,
-					&state->cपंचांग,
+					&state->ctm,
 					val,
-					माप(काष्ठा drm_color_cपंचांग), -1,
+					sizeof(struct drm_color_ctm), -1,
 					&replaced);
 		state->color_mgmt_changed |= replaced;
-		वापस ret;
-	पूर्ण अन्यथा अगर (property == config->gamma_lut_property) अणु
+		return ret;
+	} else if (property == config->gamma_lut_property) {
 		ret = drm_atomic_replace_property_blob_from_id(dev,
 					&state->gamma_lut,
 					val,
-					-1, माप(काष्ठा drm_color_lut),
+					-1, sizeof(struct drm_color_lut),
 					&replaced);
 		state->color_mgmt_changed |= replaced;
-		वापस ret;
-	पूर्ण अन्यथा अगर (property == config->prop_out_fence_ptr) अणु
+		return ret;
+	} else if (property == config->prop_out_fence_ptr) {
 		s32 __user *fence_ptr = u64_to_user_ptr(val);
 
-		अगर (!fence_ptr)
-			वापस 0;
+		if (!fence_ptr)
+			return 0;
 
-		अगर (put_user(-1, fence_ptr))
-			वापस -EFAULT;
+		if (put_user(-1, fence_ptr))
+			return -EFAULT;
 
-		set_out_fence_क्रम_crtc(state->state, crtc, fence_ptr);
-	पूर्ण अन्यथा अगर (property == crtc->scaling_filter_property) अणु
+		set_out_fence_for_crtc(state->state, crtc, fence_ptr);
+	} else if (property == crtc->scaling_filter_property) {
 		state->scaling_filter = val;
-	पूर्ण अन्यथा अगर (crtc->funcs->atomic_set_property) अणु
-		वापस crtc->funcs->atomic_set_property(crtc, state, property, val);
-	पूर्ण अन्यथा अणु
+	} else if (crtc->funcs->atomic_set_property) {
+		return crtc->funcs->atomic_set_property(crtc, state, property, val);
+	} else {
 		drm_dbg_atomic(crtc->dev,
 			       "[CRTC:%d:%s] unknown property [PROP:%d:%s]]\n",
 			       crtc->base.id, crtc->name,
 			       property->base.id, property->name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-drm_atomic_crtc_get_property(काष्ठा drm_crtc *crtc,
-		स्थिर काष्ठा drm_crtc_state *state,
-		काष्ठा drm_property *property, uपूर्णांक64_t *val)
-अणु
-	काष्ठा drm_device *dev = crtc->dev;
-	काष्ठा drm_mode_config *config = &dev->mode_config;
+static int
+drm_atomic_crtc_get_property(struct drm_crtc *crtc,
+		const struct drm_crtc_state *state,
+		struct drm_property *property, uint64_t *val)
+{
+	struct drm_device *dev = crtc->dev;
+	struct drm_mode_config *config = &dev->mode_config;
 
-	अगर (property == config->prop_active)
+	if (property == config->prop_active)
 		*val = drm_atomic_crtc_effectively_active(state);
-	अन्यथा अगर (property == config->prop_mode_id)
+	else if (property == config->prop_mode_id)
 		*val = (state->mode_blob) ? state->mode_blob->base.id : 0;
-	अन्यथा अगर (property == config->prop_vrr_enabled)
+	else if (property == config->prop_vrr_enabled)
 		*val = state->vrr_enabled;
-	अन्यथा अगर (property == config->degamma_lut_property)
+	else if (property == config->degamma_lut_property)
 		*val = (state->degamma_lut) ? state->degamma_lut->base.id : 0;
-	अन्यथा अगर (property == config->cपंचांग_property)
-		*val = (state->cपंचांग) ? state->cपंचांग->base.id : 0;
-	अन्यथा अगर (property == config->gamma_lut_property)
+	else if (property == config->ctm_property)
+		*val = (state->ctm) ? state->ctm->base.id : 0;
+	else if (property == config->gamma_lut_property)
 		*val = (state->gamma_lut) ? state->gamma_lut->base.id : 0;
-	अन्यथा अगर (property == config->prop_out_fence_ptr)
+	else if (property == config->prop_out_fence_ptr)
 		*val = 0;
-	अन्यथा अगर (property == crtc->scaling_filter_property)
+	else if (property == crtc->scaling_filter_property)
 		*val = state->scaling_filter;
-	अन्यथा अगर (crtc->funcs->atomic_get_property)
-		वापस crtc->funcs->atomic_get_property(crtc, state, property, val);
-	अन्यथा
-		वापस -EINVAL;
+	else if (crtc->funcs->atomic_get_property)
+		return crtc->funcs->atomic_get_property(crtc, state, property, val);
+	else
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक drm_atomic_plane_set_property(काष्ठा drm_plane *plane,
-		काष्ठा drm_plane_state *state, काष्ठा drm_file *file_priv,
-		काष्ठा drm_property *property, uपूर्णांक64_t val)
-अणु
-	काष्ठा drm_device *dev = plane->dev;
-	काष्ठा drm_mode_config *config = &dev->mode_config;
+static int drm_atomic_plane_set_property(struct drm_plane *plane,
+		struct drm_plane_state *state, struct drm_file *file_priv,
+		struct drm_property *property, uint64_t val)
+{
+	struct drm_device *dev = plane->dev;
+	struct drm_mode_config *config = &dev->mode_config;
 	bool replaced = false;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (property == config->prop_fb_id) अणु
-		काष्ठा drm_framebuffer *fb;
+	if (property == config->prop_fb_id) {
+		struct drm_framebuffer *fb;
 
 		fb = drm_framebuffer_lookup(dev, file_priv, val);
-		drm_atomic_set_fb_क्रम_plane(state, fb);
-		अगर (fb)
+		drm_atomic_set_fb_for_plane(state, fb);
+		if (fb)
 			drm_framebuffer_put(fb);
-	पूर्ण अन्यथा अगर (property == config->prop_in_fence_fd) अणु
-		अगर (state->fence)
-			वापस -EINVAL;
+	} else if (property == config->prop_in_fence_fd) {
+		if (state->fence)
+			return -EINVAL;
 
-		अगर (U642I64(val) == -1)
-			वापस 0;
+		if (U642I64(val) == -1)
+			return 0;
 
 		state->fence = sync_file_get_fence(val);
-		अगर (!state->fence)
-			वापस -EINVAL;
+		if (!state->fence)
+			return -EINVAL;
 
-	पूर्ण अन्यथा अगर (property == config->prop_crtc_id) अणु
-		काष्ठा drm_crtc *crtc = drm_crtc_find(dev, file_priv, val);
+	} else if (property == config->prop_crtc_id) {
+		struct drm_crtc *crtc = drm_crtc_find(dev, file_priv, val);
 
-		अगर (val && !crtc)
-			वापस -EACCES;
-		वापस drm_atomic_set_crtc_क्रम_plane(state, crtc);
-	पूर्ण अन्यथा अगर (property == config->prop_crtc_x) अणु
+		if (val && !crtc)
+			return -EACCES;
+		return drm_atomic_set_crtc_for_plane(state, crtc);
+	} else if (property == config->prop_crtc_x) {
 		state->crtc_x = U642I64(val);
-	पूर्ण अन्यथा अगर (property == config->prop_crtc_y) अणु
+	} else if (property == config->prop_crtc_y) {
 		state->crtc_y = U642I64(val);
-	पूर्ण अन्यथा अगर (property == config->prop_crtc_w) अणु
+	} else if (property == config->prop_crtc_w) {
 		state->crtc_w = val;
-	पूर्ण अन्यथा अगर (property == config->prop_crtc_h) अणु
+	} else if (property == config->prop_crtc_h) {
 		state->crtc_h = val;
-	पूर्ण अन्यथा अगर (property == config->prop_src_x) अणु
+	} else if (property == config->prop_src_x) {
 		state->src_x = val;
-	पूर्ण अन्यथा अगर (property == config->prop_src_y) अणु
+	} else if (property == config->prop_src_y) {
 		state->src_y = val;
-	पूर्ण अन्यथा अगर (property == config->prop_src_w) अणु
+	} else if (property == config->prop_src_w) {
 		state->src_w = val;
-	पूर्ण अन्यथा अगर (property == config->prop_src_h) अणु
+	} else if (property == config->prop_src_h) {
 		state->src_h = val;
-	पूर्ण अन्यथा अगर (property == plane->alpha_property) अणु
+	} else if (property == plane->alpha_property) {
 		state->alpha = val;
-	पूर्ण अन्यथा अगर (property == plane->blend_mode_property) अणु
+	} else if (property == plane->blend_mode_property) {
 		state->pixel_blend_mode = val;
-	पूर्ण अन्यथा अगर (property == plane->rotation_property) अणु
-		अगर (!is_घातer_of_2(val & DRM_MODE_ROTATE_MASK)) अणु
+	} else if (property == plane->rotation_property) {
+		if (!is_power_of_2(val & DRM_MODE_ROTATE_MASK)) {
 			drm_dbg_atomic(plane->dev,
 				       "[PLANE:%d:%s] bad rotation bitmask: 0x%llx\n",
 				       plane->base.id, plane->name, val);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		state->rotation = val;
-	पूर्ण अन्यथा अगर (property == plane->zpos_property) अणु
+	} else if (property == plane->zpos_property) {
 		state->zpos = val;
-	पूर्ण अन्यथा अगर (property == plane->color_encoding_property) अणु
+	} else if (property == plane->color_encoding_property) {
 		state->color_encoding = val;
-	पूर्ण अन्यथा अगर (property == plane->color_range_property) अणु
+	} else if (property == plane->color_range_property) {
 		state->color_range = val;
-	पूर्ण अन्यथा अगर (property == config->prop_fb_damage_clips) अणु
+	} else if (property == config->prop_fb_damage_clips) {
 		ret = drm_atomic_replace_property_blob_from_id(dev,
 					&state->fb_damage_clips,
 					val,
 					-1,
-					माप(काष्ठा drm_rect),
+					sizeof(struct drm_rect),
 					&replaced);
-		वापस ret;
-	पूर्ण अन्यथा अगर (property == plane->scaling_filter_property) अणु
+		return ret;
+	} else if (property == plane->scaling_filter_property) {
 		state->scaling_filter = val;
-	पूर्ण अन्यथा अगर (plane->funcs->atomic_set_property) अणु
-		वापस plane->funcs->atomic_set_property(plane, state,
+	} else if (plane->funcs->atomic_set_property) {
+		return plane->funcs->atomic_set_property(plane, state,
 				property, val);
-	पूर्ण अन्यथा अणु
+	} else {
 		drm_dbg_atomic(plane->dev,
 			       "[PLANE:%d:%s] unknown property [PROP:%d:%s]]\n",
 			       plane->base.id, plane->name,
 			       property->base.id, property->name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-drm_atomic_plane_get_property(काष्ठा drm_plane *plane,
-		स्थिर काष्ठा drm_plane_state *state,
-		काष्ठा drm_property *property, uपूर्णांक64_t *val)
-अणु
-	काष्ठा drm_device *dev = plane->dev;
-	काष्ठा drm_mode_config *config = &dev->mode_config;
+static int
+drm_atomic_plane_get_property(struct drm_plane *plane,
+		const struct drm_plane_state *state,
+		struct drm_property *property, uint64_t *val)
+{
+	struct drm_device *dev = plane->dev;
+	struct drm_mode_config *config = &dev->mode_config;
 
-	अगर (property == config->prop_fb_id) अणु
+	if (property == config->prop_fb_id) {
 		*val = (state->fb) ? state->fb->base.id : 0;
-	पूर्ण अन्यथा अगर (property == config->prop_in_fence_fd) अणु
+	} else if (property == config->prop_in_fence_fd) {
 		*val = -1;
-	पूर्ण अन्यथा अगर (property == config->prop_crtc_id) अणु
+	} else if (property == config->prop_crtc_id) {
 		*val = (state->crtc) ? state->crtc->base.id : 0;
-	पूर्ण अन्यथा अगर (property == config->prop_crtc_x) अणु
+	} else if (property == config->prop_crtc_x) {
 		*val = I642U64(state->crtc_x);
-	पूर्ण अन्यथा अगर (property == config->prop_crtc_y) अणु
+	} else if (property == config->prop_crtc_y) {
 		*val = I642U64(state->crtc_y);
-	पूर्ण अन्यथा अगर (property == config->prop_crtc_w) अणु
+	} else if (property == config->prop_crtc_w) {
 		*val = state->crtc_w;
-	पूर्ण अन्यथा अगर (property == config->prop_crtc_h) अणु
+	} else if (property == config->prop_crtc_h) {
 		*val = state->crtc_h;
-	पूर्ण अन्यथा अगर (property == config->prop_src_x) अणु
+	} else if (property == config->prop_src_x) {
 		*val = state->src_x;
-	पूर्ण अन्यथा अगर (property == config->prop_src_y) अणु
+	} else if (property == config->prop_src_y) {
 		*val = state->src_y;
-	पूर्ण अन्यथा अगर (property == config->prop_src_w) अणु
+	} else if (property == config->prop_src_w) {
 		*val = state->src_w;
-	पूर्ण अन्यथा अगर (property == config->prop_src_h) अणु
+	} else if (property == config->prop_src_h) {
 		*val = state->src_h;
-	पूर्ण अन्यथा अगर (property == plane->alpha_property) अणु
+	} else if (property == plane->alpha_property) {
 		*val = state->alpha;
-	पूर्ण अन्यथा अगर (property == plane->blend_mode_property) अणु
+	} else if (property == plane->blend_mode_property) {
 		*val = state->pixel_blend_mode;
-	पूर्ण अन्यथा अगर (property == plane->rotation_property) अणु
+	} else if (property == plane->rotation_property) {
 		*val = state->rotation;
-	पूर्ण अन्यथा अगर (property == plane->zpos_property) अणु
+	} else if (property == plane->zpos_property) {
 		*val = state->zpos;
-	पूर्ण अन्यथा अगर (property == plane->color_encoding_property) अणु
+	} else if (property == plane->color_encoding_property) {
 		*val = state->color_encoding;
-	पूर्ण अन्यथा अगर (property == plane->color_range_property) अणु
+	} else if (property == plane->color_range_property) {
 		*val = state->color_range;
-	पूर्ण अन्यथा अगर (property == config->prop_fb_damage_clips) अणु
+	} else if (property == config->prop_fb_damage_clips) {
 		*val = (state->fb_damage_clips) ?
 			state->fb_damage_clips->base.id : 0;
-	पूर्ण अन्यथा अगर (property == plane->scaling_filter_property) अणु
+	} else if (property == plane->scaling_filter_property) {
 		*val = state->scaling_filter;
-	पूर्ण अन्यथा अगर (plane->funcs->atomic_get_property) अणु
-		वापस plane->funcs->atomic_get_property(plane, state, property, val);
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+	} else if (plane->funcs->atomic_get_property) {
+		return plane->funcs->atomic_get_property(plane, state, property, val);
+	} else {
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक drm_atomic_set_ग_लिखोback_fb_क्रम_connector(
-		काष्ठा drm_connector_state *conn_state,
-		काष्ठा drm_framebuffer *fb)
-अणु
-	पूर्णांक ret;
-	काष्ठा drm_connector *conn = conn_state->connector;
+static int drm_atomic_set_writeback_fb_for_connector(
+		struct drm_connector_state *conn_state,
+		struct drm_framebuffer *fb)
+{
+	int ret;
+	struct drm_connector *conn = conn_state->connector;
 
-	ret = drm_ग_लिखोback_set_fb(conn_state, fb);
-	अगर (ret < 0)
-		वापस ret;
+	ret = drm_writeback_set_fb(conn_state, fb);
+	if (ret < 0)
+		return ret;
 
-	अगर (fb)
+	if (fb)
 		drm_dbg_atomic(conn->dev,
 			       "Set [FB:%d] for connector state %p\n",
 			       fb->base.id, conn_state);
-	अन्यथा
+	else
 		drm_dbg_atomic(conn->dev,
 			       "Set [NOFB] for connector state %p\n",
 			       conn_state);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक drm_atomic_connector_set_property(काष्ठा drm_connector *connector,
-		काष्ठा drm_connector_state *state, काष्ठा drm_file *file_priv,
-		काष्ठा drm_property *property, uपूर्णांक64_t val)
-अणु
-	काष्ठा drm_device *dev = connector->dev;
-	काष्ठा drm_mode_config *config = &dev->mode_config;
+static int drm_atomic_connector_set_property(struct drm_connector *connector,
+		struct drm_connector_state *state, struct drm_file *file_priv,
+		struct drm_property *property, uint64_t val)
+{
+	struct drm_device *dev = connector->dev;
+	struct drm_mode_config *config = &dev->mode_config;
 	bool replaced = false;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (property == config->prop_crtc_id) अणु
-		काष्ठा drm_crtc *crtc = drm_crtc_find(dev, file_priv, val);
+	if (property == config->prop_crtc_id) {
+		struct drm_crtc *crtc = drm_crtc_find(dev, file_priv, val);
 
-		अगर (val && !crtc)
-			वापस -EACCES;
-		वापस drm_atomic_set_crtc_क्रम_connector(state, crtc);
-	पूर्ण अन्यथा अगर (property == config->dpms_property) अणु
+		if (val && !crtc)
+			return -EACCES;
+		return drm_atomic_set_crtc_for_connector(state, crtc);
+	} else if (property == config->dpms_property) {
 		/* setting DPMS property requires special handling, which
-		 * is करोne in legacy setprop path क्रम us.  Disallow (क्रम
-		 * now?) atomic ग_लिखोs to DPMS property:
+		 * is done in legacy setprop path for us.  Disallow (for
+		 * now?) atomic writes to DPMS property:
 		 */
-		वापस -EINVAL;
-	पूर्ण अन्यथा अगर (property == config->tv_select_subconnector_property) अणु
+		return -EINVAL;
+	} else if (property == config->tv_select_subconnector_property) {
 		state->tv.subconnector = val;
-	पूर्ण अन्यथा अगर (property == config->tv_left_margin_property) अणु
+	} else if (property == config->tv_left_margin_property) {
 		state->tv.margins.left = val;
-	पूर्ण अन्यथा अगर (property == config->tv_right_margin_property) अणु
+	} else if (property == config->tv_right_margin_property) {
 		state->tv.margins.right = val;
-	पूर्ण अन्यथा अगर (property == config->tv_top_margin_property) अणु
+	} else if (property == config->tv_top_margin_property) {
 		state->tv.margins.top = val;
-	पूर्ण अन्यथा अगर (property == config->tv_bottom_margin_property) अणु
+	} else if (property == config->tv_bottom_margin_property) {
 		state->tv.margins.bottom = val;
-	पूर्ण अन्यथा अगर (property == config->tv_mode_property) अणु
+	} else if (property == config->tv_mode_property) {
 		state->tv.mode = val;
-	पूर्ण अन्यथा अगर (property == config->tv_brightness_property) अणु
+	} else if (property == config->tv_brightness_property) {
 		state->tv.brightness = val;
-	पूर्ण अन्यथा अगर (property == config->tv_contrast_property) अणु
+	} else if (property == config->tv_contrast_property) {
 		state->tv.contrast = val;
-	पूर्ण अन्यथा अगर (property == config->tv_flicker_reduction_property) अणु
+	} else if (property == config->tv_flicker_reduction_property) {
 		state->tv.flicker_reduction = val;
-	पूर्ण अन्यथा अगर (property == config->tv_overscan_property) अणु
+	} else if (property == config->tv_overscan_property) {
 		state->tv.overscan = val;
-	पूर्ण अन्यथा अगर (property == config->tv_saturation_property) अणु
+	} else if (property == config->tv_saturation_property) {
 		state->tv.saturation = val;
-	पूर्ण अन्यथा अगर (property == config->tv_hue_property) अणु
+	} else if (property == config->tv_hue_property) {
 		state->tv.hue = val;
-	पूर्ण अन्यथा अगर (property == config->link_status_property) अणु
-		/* Never करोwngrade from GOOD to BAD on userspace's request here,
-		 * only hw issues can करो that.
+	} else if (property == config->link_status_property) {
+		/* Never downgrade from GOOD to BAD on userspace's request here,
+		 * only hw issues can do that.
 		 *
-		 * For an atomic property the userspace करोesn't need to be able
+		 * For an atomic property the userspace doesn't need to be able
 		 * to understand all the properties, but needs to be able to
-		 * restore the state it wants on VT चयन. So अगर the userspace
+		 * restore the state it wants on VT switch. So if the userspace
 		 * tries to change the link_status from GOOD to BAD, driver
-		 * silently rejects it and वापसs a 0. This prevents userspace
-		 * from accidently अवरोधing  the display when it restores the
+		 * silently rejects it and returns a 0. This prevents userspace
+		 * from accidently breaking  the display when it restores the
 		 * state.
 		 */
-		अगर (state->link_status != DRM_LINK_STATUS_GOOD)
+		if (state->link_status != DRM_LINK_STATUS_GOOD)
 			state->link_status = val;
-	पूर्ण अन्यथा अगर (property == config->hdr_output_metadata_property) अणु
+	} else if (property == config->hdr_output_metadata_property) {
 		ret = drm_atomic_replace_property_blob_from_id(dev,
 				&state->hdr_output_metadata,
 				val,
-				माप(काष्ठा hdr_output_metadata), -1,
+				sizeof(struct hdr_output_metadata), -1,
 				&replaced);
-		वापस ret;
-	पूर्ण अन्यथा अगर (property == config->aspect_ratio_property) अणु
+		return ret;
+	} else if (property == config->aspect_ratio_property) {
 		state->picture_aspect_ratio = val;
-	पूर्ण अन्यथा अगर (property == config->content_type_property) अणु
+	} else if (property == config->content_type_property) {
 		state->content_type = val;
-	पूर्ण अन्यथा अगर (property == connector->scaling_mode_property) अणु
+	} else if (property == connector->scaling_mode_property) {
 		state->scaling_mode = val;
-	पूर्ण अन्यथा अगर (property == config->content_protection_property) अणु
-		अगर (val == DRM_MODE_CONTENT_PROTECTION_ENABLED) अणु
+	} else if (property == config->content_protection_property) {
+		if (val == DRM_MODE_CONTENT_PROTECTION_ENABLED) {
 			DRM_DEBUG_KMS("only drivers can set CP Enabled\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		state->content_protection = val;
-	पूर्ण अन्यथा अगर (property == config->hdcp_content_type_property) अणु
+	} else if (property == config->hdcp_content_type_property) {
 		state->hdcp_content_type = val;
-	पूर्ण अन्यथा अगर (property == connector->colorspace_property) अणु
+	} else if (property == connector->colorspace_property) {
 		state->colorspace = val;
-	पूर्ण अन्यथा अगर (property == config->ग_लिखोback_fb_id_property) अणु
-		काष्ठा drm_framebuffer *fb;
-		पूर्णांक ret;
+	} else if (property == config->writeback_fb_id_property) {
+		struct drm_framebuffer *fb;
+		int ret;
 
 		fb = drm_framebuffer_lookup(dev, file_priv, val);
-		ret = drm_atomic_set_ग_लिखोback_fb_क्रम_connector(state, fb);
-		अगर (fb)
+		ret = drm_atomic_set_writeback_fb_for_connector(state, fb);
+		if (fb)
 			drm_framebuffer_put(fb);
-		वापस ret;
-	पूर्ण अन्यथा अगर (property == config->ग_लिखोback_out_fence_ptr_property) अणु
+		return ret;
+	} else if (property == config->writeback_out_fence_ptr_property) {
 		s32 __user *fence_ptr = u64_to_user_ptr(val);
 
-		वापस set_out_fence_क्रम_connector(state->state, connector,
+		return set_out_fence_for_connector(state->state, connector,
 						   fence_ptr);
-	पूर्ण अन्यथा अगर (property == connector->max_bpc_property) अणु
+	} else if (property == connector->max_bpc_property) {
 		state->max_requested_bpc = val;
-	पूर्ण अन्यथा अगर (connector->funcs->atomic_set_property) अणु
-		वापस connector->funcs->atomic_set_property(connector,
+	} else if (connector->funcs->atomic_set_property) {
+		return connector->funcs->atomic_set_property(connector,
 				state, property, val);
-	पूर्ण अन्यथा अणु
+	} else {
 		drm_dbg_atomic(connector->dev,
 			       "[CONNECTOR:%d:%s] unknown property [PROP:%d:%s]]\n",
 			       connector->base.id, connector->name,
 			       property->base.id, property->name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-drm_atomic_connector_get_property(काष्ठा drm_connector *connector,
-		स्थिर काष्ठा drm_connector_state *state,
-		काष्ठा drm_property *property, uपूर्णांक64_t *val)
-अणु
-	काष्ठा drm_device *dev = connector->dev;
-	काष्ठा drm_mode_config *config = &dev->mode_config;
+static int
+drm_atomic_connector_get_property(struct drm_connector *connector,
+		const struct drm_connector_state *state,
+		struct drm_property *property, uint64_t *val)
+{
+	struct drm_device *dev = connector->dev;
+	struct drm_mode_config *config = &dev->mode_config;
 
-	अगर (property == config->prop_crtc_id) अणु
+	if (property == config->prop_crtc_id) {
 		*val = (state->crtc) ? state->crtc->base.id : 0;
-	पूर्ण अन्यथा अगर (property == config->dpms_property) अणु
-		अगर (state->crtc && state->crtc->state->self_refresh_active)
+	} else if (property == config->dpms_property) {
+		if (state->crtc && state->crtc->state->self_refresh_active)
 			*val = DRM_MODE_DPMS_ON;
-		अन्यथा
+		else
 			*val = connector->dpms;
-	पूर्ण अन्यथा अगर (property == config->tv_select_subconnector_property) अणु
+	} else if (property == config->tv_select_subconnector_property) {
 		*val = state->tv.subconnector;
-	पूर्ण अन्यथा अगर (property == config->tv_left_margin_property) अणु
+	} else if (property == config->tv_left_margin_property) {
 		*val = state->tv.margins.left;
-	पूर्ण अन्यथा अगर (property == config->tv_right_margin_property) अणु
+	} else if (property == config->tv_right_margin_property) {
 		*val = state->tv.margins.right;
-	पूर्ण अन्यथा अगर (property == config->tv_top_margin_property) अणु
+	} else if (property == config->tv_top_margin_property) {
 		*val = state->tv.margins.top;
-	पूर्ण अन्यथा अगर (property == config->tv_bottom_margin_property) अणु
+	} else if (property == config->tv_bottom_margin_property) {
 		*val = state->tv.margins.bottom;
-	पूर्ण अन्यथा अगर (property == config->tv_mode_property) अणु
+	} else if (property == config->tv_mode_property) {
 		*val = state->tv.mode;
-	पूर्ण अन्यथा अगर (property == config->tv_brightness_property) अणु
+	} else if (property == config->tv_brightness_property) {
 		*val = state->tv.brightness;
-	पूर्ण अन्यथा अगर (property == config->tv_contrast_property) अणु
+	} else if (property == config->tv_contrast_property) {
 		*val = state->tv.contrast;
-	पूर्ण अन्यथा अगर (property == config->tv_flicker_reduction_property) अणु
+	} else if (property == config->tv_flicker_reduction_property) {
 		*val = state->tv.flicker_reduction;
-	पूर्ण अन्यथा अगर (property == config->tv_overscan_property) अणु
+	} else if (property == config->tv_overscan_property) {
 		*val = state->tv.overscan;
-	पूर्ण अन्यथा अगर (property == config->tv_saturation_property) अणु
+	} else if (property == config->tv_saturation_property) {
 		*val = state->tv.saturation;
-	पूर्ण अन्यथा अगर (property == config->tv_hue_property) अणु
+	} else if (property == config->tv_hue_property) {
 		*val = state->tv.hue;
-	पूर्ण अन्यथा अगर (property == config->link_status_property) अणु
+	} else if (property == config->link_status_property) {
 		*val = state->link_status;
-	पूर्ण अन्यथा अगर (property == config->aspect_ratio_property) अणु
+	} else if (property == config->aspect_ratio_property) {
 		*val = state->picture_aspect_ratio;
-	पूर्ण अन्यथा अगर (property == config->content_type_property) अणु
+	} else if (property == config->content_type_property) {
 		*val = state->content_type;
-	पूर्ण अन्यथा अगर (property == connector->colorspace_property) अणु
+	} else if (property == connector->colorspace_property) {
 		*val = state->colorspace;
-	पूर्ण अन्यथा अगर (property == connector->scaling_mode_property) अणु
+	} else if (property == connector->scaling_mode_property) {
 		*val = state->scaling_mode;
-	पूर्ण अन्यथा अगर (property == config->hdr_output_metadata_property) अणु
+	} else if (property == config->hdr_output_metadata_property) {
 		*val = state->hdr_output_metadata ?
 			state->hdr_output_metadata->base.id : 0;
-	पूर्ण अन्यथा अगर (property == config->content_protection_property) अणु
+	} else if (property == config->content_protection_property) {
 		*val = state->content_protection;
-	पूर्ण अन्यथा अगर (property == config->hdcp_content_type_property) अणु
+	} else if (property == config->hdcp_content_type_property) {
 		*val = state->hdcp_content_type;
-	पूर्ण अन्यथा अगर (property == config->ग_लिखोback_fb_id_property) अणु
-		/* Writeback framebuffer is one-shot, ग_लिखो and क्रमget */
+	} else if (property == config->writeback_fb_id_property) {
+		/* Writeback framebuffer is one-shot, write and forget */
 		*val = 0;
-	पूर्ण अन्यथा अगर (property == config->ग_लिखोback_out_fence_ptr_property) अणु
+	} else if (property == config->writeback_out_fence_ptr_property) {
 		*val = 0;
-	पूर्ण अन्यथा अगर (property == connector->max_bpc_property) अणु
+	} else if (property == connector->max_bpc_property) {
 		*val = state->max_requested_bpc;
-	पूर्ण अन्यथा अगर (connector->funcs->atomic_get_property) अणु
-		वापस connector->funcs->atomic_get_property(connector,
+	} else if (connector->funcs->atomic_get_property) {
+		return connector->funcs->atomic_get_property(connector,
 				state, property, val);
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+	} else {
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक drm_atomic_get_property(काष्ठा drm_mode_object *obj,
-		काष्ठा drm_property *property, uपूर्णांक64_t *val)
-अणु
-	काष्ठा drm_device *dev = property->dev;
-	पूर्णांक ret;
+int drm_atomic_get_property(struct drm_mode_object *obj,
+		struct drm_property *property, uint64_t *val)
+{
+	struct drm_device *dev = property->dev;
+	int ret;
 
-	चयन (obj->type) अणु
-	हाल DRM_MODE_OBJECT_CONNECTOR: अणु
-		काष्ठा drm_connector *connector = obj_to_connector(obj);
+	switch (obj->type) {
+	case DRM_MODE_OBJECT_CONNECTOR: {
+		struct drm_connector *connector = obj_to_connector(obj);
 
 		WARN_ON(!drm_modeset_is_locked(&dev->mode_config.connection_mutex));
 		ret = drm_atomic_connector_get_property(connector,
 				connector->state, property, val);
-		अवरोध;
-	पूर्ण
-	हाल DRM_MODE_OBJECT_CRTC: अणु
-		काष्ठा drm_crtc *crtc = obj_to_crtc(obj);
+		break;
+	}
+	case DRM_MODE_OBJECT_CRTC: {
+		struct drm_crtc *crtc = obj_to_crtc(obj);
 
 		WARN_ON(!drm_modeset_is_locked(&crtc->mutex));
 		ret = drm_atomic_crtc_get_property(crtc,
 				crtc->state, property, val);
-		अवरोध;
-	पूर्ण
-	हाल DRM_MODE_OBJECT_PLANE: अणु
-		काष्ठा drm_plane *plane = obj_to_plane(obj);
+		break;
+	}
+	case DRM_MODE_OBJECT_PLANE: {
+		struct drm_plane *plane = obj_to_plane(obj);
 
 		WARN_ON(!drm_modeset_is_locked(&plane->mutex));
 		ret = drm_atomic_plane_get_property(plane,
 				plane->state, property, val);
-		अवरोध;
-	पूर्ण
-	शेष:
+		break;
+	}
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * The big monster ioctl
  */
 
-अटल काष्ठा drm_pending_vblank_event *create_vblank_event(
-		काष्ठा drm_crtc *crtc, uपूर्णांक64_t user_data)
-अणु
-	काष्ठा drm_pending_vblank_event *e = शून्य;
+static struct drm_pending_vblank_event *create_vblank_event(
+		struct drm_crtc *crtc, uint64_t user_data)
+{
+	struct drm_pending_vblank_event *e = NULL;
 
-	e = kzalloc(माप *e, GFP_KERNEL);
-	अगर (!e)
-		वापस शून्य;
+	e = kzalloc(sizeof *e, GFP_KERNEL);
+	if (!e)
+		return NULL;
 
 	e->event.base.type = DRM_EVENT_FLIP_COMPLETE;
-	e->event.base.length = माप(e->event);
+	e->event.base.length = sizeof(e->event);
 	e->event.vbl.crtc_id = crtc->base.id;
 	e->event.vbl.user_data = user_data;
 
-	वापस e;
-पूर्ण
+	return e;
+}
 
-पूर्णांक drm_atomic_connector_commit_dpms(काष्ठा drm_atomic_state *state,
-				     काष्ठा drm_connector *connector,
-				     पूर्णांक mode)
-अणु
-	काष्ठा drm_connector *पंचांगp_connector;
-	काष्ठा drm_connector_state *new_conn_state;
-	काष्ठा drm_crtc *crtc;
-	काष्ठा drm_crtc_state *crtc_state;
-	पूर्णांक i, ret, old_mode = connector->dpms;
+int drm_atomic_connector_commit_dpms(struct drm_atomic_state *state,
+				     struct drm_connector *connector,
+				     int mode)
+{
+	struct drm_connector *tmp_connector;
+	struct drm_connector_state *new_conn_state;
+	struct drm_crtc *crtc;
+	struct drm_crtc_state *crtc_state;
+	int i, ret, old_mode = connector->dpms;
 	bool active = false;
 
 	ret = drm_modeset_lock(&state->dev->mode_config.connection_mutex,
 			       state->acquire_ctx);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (mode != DRM_MODE_DPMS_ON)
+	if (mode != DRM_MODE_DPMS_ON)
 		mode = DRM_MODE_DPMS_OFF;
 	connector->dpms = mode;
 
 	crtc = connector->state->crtc;
-	अगर (!crtc)
-		जाओ out;
+	if (!crtc)
+		goto out;
 	ret = drm_atomic_add_affected_connectors(state, crtc);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	crtc_state = drm_atomic_get_crtc_state(state, crtc);
-	अगर (IS_ERR(crtc_state)) अणु
+	if (IS_ERR(crtc_state)) {
 		ret = PTR_ERR(crtc_state);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम_each_new_connector_in_state(state, पंचांगp_connector, new_conn_state, i) अणु
-		अगर (new_conn_state->crtc != crtc)
-			जारी;
-		अगर (पंचांगp_connector->dpms == DRM_MODE_DPMS_ON) अणु
+	for_each_new_connector_in_state(state, tmp_connector, new_conn_state, i) {
+		if (new_conn_state->crtc != crtc)
+			continue;
+		if (tmp_connector->dpms == DRM_MODE_DPMS_ON) {
 			active = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	crtc_state->active = active;
 	ret = drm_atomic_commit(state);
 out:
-	अगर (ret != 0)
+	if (ret != 0)
 		connector->dpms = old_mode;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक drm_atomic_set_property(काष्ठा drm_atomic_state *state,
-			    काष्ठा drm_file *file_priv,
-			    काष्ठा drm_mode_object *obj,
-			    काष्ठा drm_property *prop,
-			    uपूर्णांक64_t prop_value)
-अणु
-	काष्ठा drm_mode_object *ref;
-	पूर्णांक ret;
+int drm_atomic_set_property(struct drm_atomic_state *state,
+			    struct drm_file *file_priv,
+			    struct drm_mode_object *obj,
+			    struct drm_property *prop,
+			    uint64_t prop_value)
+{
+	struct drm_mode_object *ref;
+	int ret;
 
-	अगर (!drm_property_change_valid_get(prop, prop_value, &ref))
-		वापस -EINVAL;
+	if (!drm_property_change_valid_get(prop, prop_value, &ref))
+		return -EINVAL;
 
-	चयन (obj->type) अणु
-	हाल DRM_MODE_OBJECT_CONNECTOR: अणु
-		काष्ठा drm_connector *connector = obj_to_connector(obj);
-		काष्ठा drm_connector_state *connector_state;
+	switch (obj->type) {
+	case DRM_MODE_OBJECT_CONNECTOR: {
+		struct drm_connector *connector = obj_to_connector(obj);
+		struct drm_connector_state *connector_state;
 
 		connector_state = drm_atomic_get_connector_state(state, connector);
-		अगर (IS_ERR(connector_state)) अणु
+		if (IS_ERR(connector_state)) {
 			ret = PTR_ERR(connector_state);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		ret = drm_atomic_connector_set_property(connector,
 				connector_state, file_priv,
 				prop, prop_value);
-		अवरोध;
-	पूर्ण
-	हाल DRM_MODE_OBJECT_CRTC: अणु
-		काष्ठा drm_crtc *crtc = obj_to_crtc(obj);
-		काष्ठा drm_crtc_state *crtc_state;
+		break;
+	}
+	case DRM_MODE_OBJECT_CRTC: {
+		struct drm_crtc *crtc = obj_to_crtc(obj);
+		struct drm_crtc_state *crtc_state;
 
 		crtc_state = drm_atomic_get_crtc_state(state, crtc);
-		अगर (IS_ERR(crtc_state)) अणु
+		if (IS_ERR(crtc_state)) {
 			ret = PTR_ERR(crtc_state);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		ret = drm_atomic_crtc_set_property(crtc,
 				crtc_state, prop, prop_value);
-		अवरोध;
-	पूर्ण
-	हाल DRM_MODE_OBJECT_PLANE: अणु
-		काष्ठा drm_plane *plane = obj_to_plane(obj);
-		काष्ठा drm_plane_state *plane_state;
+		break;
+	}
+	case DRM_MODE_OBJECT_PLANE: {
+		struct drm_plane *plane = obj_to_plane(obj);
+		struct drm_plane_state *plane_state;
 
 		plane_state = drm_atomic_get_plane_state(state, plane);
-		अगर (IS_ERR(plane_state)) अणु
+		if (IS_ERR(plane_state)) {
 			ret = PTR_ERR(plane_state);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		ret = drm_atomic_plane_set_property(plane,
 				plane_state, file_priv,
 				prop, prop_value);
-		अवरोध;
-	पूर्ण
-	शेष:
+		break;
+	}
+	default:
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	drm_property_change_valid_put(prop, ref);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * DOC: explicit fencing properties
  *
  * Explicit fencing allows userspace to control the buffer synchronization
  * between devices. A Fence or a group of fences are transfered to/from
- * userspace using Sync File fds and there are two DRM properties क्रम that.
+ * userspace using Sync File fds and there are two DRM properties for that.
  * IN_FENCE_FD on each DRM Plane to send fences to the kernel and
  * OUT_FENCE_PTR on each DRM CRTC to receive fences from the kernel.
  *
  * As a contrast, with implicit fencing the kernel keeps track of any
- * ongoing rendering, and स्वतःmatically ensures that the atomic update रुकोs
- * क्रम any pending rendering to complete. For shared buffers represented with
- * a &काष्ठा dma_buf this is tracked in &काष्ठा dma_resv.
+ * ongoing rendering, and automatically ensures that the atomic update waits
+ * for any pending rendering to complete. For shared buffers represented with
+ * a &struct dma_buf this is tracked in &struct dma_resv.
  * Implicit syncing is how Linux traditionally worked (e.g. DRI2/3 on X.org),
  * whereas explicit fencing is what Android wants.
  *
- * "IN_FENCE_FDै :
- *	Use this property to pass a fence that DRM should रुको on beक्रमe
- *	proceeding with the Atomic Commit request and show the framebuffer क्रम
+ * "IN_FENCE_FD”:
+ *	Use this property to pass a fence that DRM should wait on before
+ *	proceeding with the Atomic Commit request and show the framebuffer for
  *	the plane on the screen. The fence can be either a normal fence or a
- *	merged one, the sync_file framework will handle both हालs and use a
- *	fence_array अगर a merged fence is received. Passing -1 here means no
- *	fences to रुको on.
+ *	merged one, the sync_file framework will handle both cases and use a
+ *	fence_array if a merged fence is received. Passing -1 here means no
+ *	fences to wait on.
  *
  *	If the Atomic Commit request has the DRM_MODE_ATOMIC_TEST_ONLY flag
- *	it will only check अगर the Sync File is a valid one.
+ *	it will only check if the Sync File is a valid one.
  *
  *	On the driver side the fence is stored on the @fence parameter of
- *	&काष्ठा drm_plane_state. Drivers which also support implicit fencing
- *	should set the implicit fence using drm_atomic_set_fence_क्रम_plane(),
+ *	&struct drm_plane_state. Drivers which also support implicit fencing
+ *	should set the implicit fence using drm_atomic_set_fence_for_plane(),
  *	to make sure there's consistent behaviour between drivers in precedence
  *	of implicit vs. explicit fencing.
  *
- * "OUT_FENCE_PTRै :
- *	Use this property to pass a file descriptor poपूर्णांकer to DRM. Once the
- *	Atomic Commit request call वापसs OUT_FENCE_PTR will be filled with
+ * "OUT_FENCE_PTR”:
+ *	Use this property to pass a file descriptor pointer to DRM. Once the
+ *	Atomic Commit request call returns OUT_FENCE_PTR will be filled with
  *	the file descriptor number of a Sync File. This Sync File contains the
- *	CRTC fence that will be संकेतed when all framebuffers present on the
- *	Atomic Commit * request क्रम that given CRTC are scanned out on the
+ *	CRTC fence that will be signaled when all framebuffers present on the
+ *	Atomic Commit * request for that given CRTC are scanned out on the
  *	screen.
  *
- *	The Atomic Commit request fails अगर a invalid poपूर्णांकer is passed. If the
- *	Atomic Commit request fails क्रम any other reason the out fence fd
- *	वापसed will be -1. On a Atomic Commit with the
+ *	The Atomic Commit request fails if a invalid pointer is passed. If the
+ *	Atomic Commit request fails for any other reason the out fence fd
+ *	returned will be -1. On a Atomic Commit with the
  *	DRM_MODE_ATOMIC_TEST_ONLY flag the out fence will also be set to -1.
  *
- *	Note that out-fences करोn't have a special पूर्णांकerface to drivers and are
- *	पूर्णांकernally represented by a &काष्ठा drm_pending_vblank_event in काष्ठा
+ *	Note that out-fences don't have a special interface to drivers and are
+ *	internally represented by a &struct drm_pending_vblank_event in struct
  *	&drm_crtc_state, which is also used by the nonblocking atomic commit
- *	helpers and क्रम the DRM event handling क्रम existing userspace.
+ *	helpers and for the DRM event handling for existing userspace.
  */
 
-काष्ठा drm_out_fence_state अणु
+struct drm_out_fence_state {
 	s32 __user *out_fence_ptr;
-	काष्ठा sync_file *sync_file;
-	पूर्णांक fd;
-पूर्ण;
+	struct sync_file *sync_file;
+	int fd;
+};
 
-अटल पूर्णांक setup_out_fence(काष्ठा drm_out_fence_state *fence_state,
-			   काष्ठा dma_fence *fence)
-अणु
+static int setup_out_fence(struct drm_out_fence_state *fence_state,
+			   struct dma_fence *fence)
+{
 	fence_state->fd = get_unused_fd_flags(O_CLOEXEC);
-	अगर (fence_state->fd < 0)
-		वापस fence_state->fd;
+	if (fence_state->fd < 0)
+		return fence_state->fd;
 
-	अगर (put_user(fence_state->fd, fence_state->out_fence_ptr))
-		वापस -EFAULT;
+	if (put_user(fence_state->fd, fence_state->out_fence_ptr))
+		return -EFAULT;
 
 	fence_state->sync_file = sync_file_create(fence);
-	अगर (!fence_state->sync_file)
-		वापस -ENOMEM;
+	if (!fence_state->sync_file)
+		return -ENOMEM;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक prepare_संकेतing(काष्ठा drm_device *dev,
-				  काष्ठा drm_atomic_state *state,
-				  काष्ठा drm_mode_atomic *arg,
-				  काष्ठा drm_file *file_priv,
-				  काष्ठा drm_out_fence_state **fence_state,
-				  अचिन्हित पूर्णांक *num_fences)
-अणु
-	काष्ठा drm_crtc *crtc;
-	काष्ठा drm_crtc_state *crtc_state;
-	काष्ठा drm_connector *conn;
-	काष्ठा drm_connector_state *conn_state;
-	पूर्णांक i, c = 0, ret;
+static int prepare_signaling(struct drm_device *dev,
+				  struct drm_atomic_state *state,
+				  struct drm_mode_atomic *arg,
+				  struct drm_file *file_priv,
+				  struct drm_out_fence_state **fence_state,
+				  unsigned int *num_fences)
+{
+	struct drm_crtc *crtc;
+	struct drm_crtc_state *crtc_state;
+	struct drm_connector *conn;
+	struct drm_connector_state *conn_state;
+	int i, c = 0, ret;
 
-	अगर (arg->flags & DRM_MODE_ATOMIC_TEST_ONLY)
-		वापस 0;
+	if (arg->flags & DRM_MODE_ATOMIC_TEST_ONLY)
+		return 0;
 
-	क्रम_each_new_crtc_in_state(state, crtc, crtc_state, i) अणु
+	for_each_new_crtc_in_state(state, crtc, crtc_state, i) {
 		s32 __user *fence_ptr;
 
-		fence_ptr = get_out_fence_क्रम_crtc(crtc_state->state, crtc);
+		fence_ptr = get_out_fence_for_crtc(crtc_state->state, crtc);
 
-		अगर (arg->flags & DRM_MODE_PAGE_FLIP_EVENT || fence_ptr) अणु
-			काष्ठा drm_pending_vblank_event *e;
+		if (arg->flags & DRM_MODE_PAGE_FLIP_EVENT || fence_ptr) {
+			struct drm_pending_vblank_event *e;
 
 			e = create_vblank_event(crtc, arg->user_data);
-			अगर (!e)
-				वापस -ENOMEM;
+			if (!e)
+				return -ENOMEM;
 
 			crtc_state->event = e;
-		पूर्ण
+		}
 
-		अगर (arg->flags & DRM_MODE_PAGE_FLIP_EVENT) अणु
-			काष्ठा drm_pending_vblank_event *e = crtc_state->event;
+		if (arg->flags & DRM_MODE_PAGE_FLIP_EVENT) {
+			struct drm_pending_vblank_event *e = crtc_state->event;
 
-			अगर (!file_priv)
-				जारी;
+			if (!file_priv)
+				continue;
 
 			ret = drm_event_reserve_init(dev, file_priv, &e->base,
 						     &e->event.base);
-			अगर (ret) अणु
-				kमुक्त(e);
-				crtc_state->event = शून्य;
-				वापस ret;
-			पूर्ण
-		पूर्ण
+			if (ret) {
+				kfree(e);
+				crtc_state->event = NULL;
+				return ret;
+			}
+		}
 
-		अगर (fence_ptr) अणु
-			काष्ठा dma_fence *fence;
-			काष्ठा drm_out_fence_state *f;
+		if (fence_ptr) {
+			struct dma_fence *fence;
+			struct drm_out_fence_state *f;
 
-			f = kपुनः_स्मृति(*fence_state, माप(**fence_state) *
+			f = krealloc(*fence_state, sizeof(**fence_state) *
 				     (*num_fences + 1), GFP_KERNEL);
-			अगर (!f)
-				वापस -ENOMEM;
+			if (!f)
+				return -ENOMEM;
 
-			स_रखो(&f[*num_fences], 0, माप(*f));
+			memset(&f[*num_fences], 0, sizeof(*f));
 
 			f[*num_fences].out_fence_ptr = fence_ptr;
 			*fence_state = f;
 
 			fence = drm_crtc_create_fence(crtc);
-			अगर (!fence)
-				वापस -ENOMEM;
+			if (!fence)
+				return -ENOMEM;
 
 			ret = setup_out_fence(&f[(*num_fences)++], fence);
-			अगर (ret) अणु
+			if (ret) {
 				dma_fence_put(fence);
-				वापस ret;
-			पूर्ण
+				return ret;
+			}
 
 			crtc_state->event->base.fence = fence;
-		पूर्ण
+		}
 
 		c++;
-	पूर्ण
+	}
 
-	क्रम_each_new_connector_in_state(state, conn, conn_state, i) अणु
-		काष्ठा drm_ग_लिखोback_connector *wb_conn;
-		काष्ठा drm_out_fence_state *f;
-		काष्ठा dma_fence *fence;
+	for_each_new_connector_in_state(state, conn, conn_state, i) {
+		struct drm_writeback_connector *wb_conn;
+		struct drm_out_fence_state *f;
+		struct dma_fence *fence;
 		s32 __user *fence_ptr;
 
-		अगर (!conn_state->ग_लिखोback_job)
-			जारी;
+		if (!conn_state->writeback_job)
+			continue;
 
-		fence_ptr = get_out_fence_क्रम_connector(state, conn);
-		अगर (!fence_ptr)
-			जारी;
+		fence_ptr = get_out_fence_for_connector(state, conn);
+		if (!fence_ptr)
+			continue;
 
-		f = kपुनः_स्मृति(*fence_state, माप(**fence_state) *
+		f = krealloc(*fence_state, sizeof(**fence_state) *
 			     (*num_fences + 1), GFP_KERNEL);
-		अगर (!f)
-			वापस -ENOMEM;
+		if (!f)
+			return -ENOMEM;
 
-		स_रखो(&f[*num_fences], 0, माप(*f));
+		memset(&f[*num_fences], 0, sizeof(*f));
 
 		f[*num_fences].out_fence_ptr = fence_ptr;
 		*fence_state = f;
 
-		wb_conn = drm_connector_to_ग_लिखोback(conn);
-		fence = drm_ग_लिखोback_get_out_fence(wb_conn);
-		अगर (!fence)
-			वापस -ENOMEM;
+		wb_conn = drm_connector_to_writeback(conn);
+		fence = drm_writeback_get_out_fence(wb_conn);
+		if (!fence)
+			return -ENOMEM;
 
 		ret = setup_out_fence(&f[(*num_fences)++], fence);
-		अगर (ret) अणु
+		if (ret) {
 			dma_fence_put(fence);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		conn_state->ग_लिखोback_job->out_fence = fence;
-	पूर्ण
+		conn_state->writeback_job->out_fence = fence;
+	}
 
 	/*
 	 * Having this flag means user mode pends on event which will never
-	 * reach due to lack of at least one CRTC क्रम संकेतing
+	 * reach due to lack of at least one CRTC for signaling
 	 */
-	अगर (c == 0 && (arg->flags & DRM_MODE_PAGE_FLIP_EVENT))
-		वापस -EINVAL;
+	if (c == 0 && (arg->flags & DRM_MODE_PAGE_FLIP_EVENT))
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम complete_संकेतing(काष्ठा drm_device *dev,
-			       काष्ठा drm_atomic_state *state,
-			       काष्ठा drm_out_fence_state *fence_state,
-			       अचिन्हित पूर्णांक num_fences,
+static void complete_signaling(struct drm_device *dev,
+			       struct drm_atomic_state *state,
+			       struct drm_out_fence_state *fence_state,
+			       unsigned int num_fences,
 			       bool install_fds)
-अणु
-	काष्ठा drm_crtc *crtc;
-	काष्ठा drm_crtc_state *crtc_state;
-	पूर्णांक i;
+{
+	struct drm_crtc *crtc;
+	struct drm_crtc_state *crtc_state;
+	int i;
 
-	अगर (install_fds) अणु
-		क्रम (i = 0; i < num_fences; i++)
+	if (install_fds) {
+		for (i = 0; i < num_fences; i++)
 			fd_install(fence_state[i].fd,
 				   fence_state[i].sync_file->file);
 
-		kमुक्त(fence_state);
-		वापस;
-	पूर्ण
+		kfree(fence_state);
+		return;
+	}
 
-	क्रम_each_new_crtc_in_state(state, crtc, crtc_state, i) अणु
-		काष्ठा drm_pending_vblank_event *event = crtc_state->event;
+	for_each_new_crtc_in_state(state, crtc, crtc_state, i) {
+		struct drm_pending_vblank_event *event = crtc_state->event;
 		/*
 		 * Free the allocated event. drm_atomic_helper_setup_commit
-		 * can allocate an event too, so only मुक्त it अगर it's ours
-		 * to prevent a द्विगुन मुक्त in drm_atomic_state_clear.
+		 * can allocate an event too, so only free it if it's ours
+		 * to prevent a double free in drm_atomic_state_clear.
 		 */
-		अगर (event && (event->base.fence || event->base.file_priv)) अणु
-			drm_event_cancel_मुक्त(dev, &event->base);
-			crtc_state->event = शून्य;
-		पूर्ण
-	पूर्ण
+		if (event && (event->base.fence || event->base.file_priv)) {
+			drm_event_cancel_free(dev, &event->base);
+			crtc_state->event = NULL;
+		}
+	}
 
-	अगर (!fence_state)
-		वापस;
+	if (!fence_state)
+		return;
 
-	क्रम (i = 0; i < num_fences; i++) अणु
-		अगर (fence_state[i].sync_file)
+	for (i = 0; i < num_fences; i++) {
+		if (fence_state[i].sync_file)
 			fput(fence_state[i].sync_file->file);
-		अगर (fence_state[i].fd >= 0)
+		if (fence_state[i].fd >= 0)
 			put_unused_fd(fence_state[i].fd);
 
 		/* If this fails log error to the user */
-		अगर (fence_state[i].out_fence_ptr &&
+		if (fence_state[i].out_fence_ptr &&
 		    put_user(-1, fence_state[i].out_fence_ptr))
 			drm_dbg_atomic(dev, "Couldn't clear out_fence_ptr\n");
-	पूर्ण
+	}
 
-	kमुक्त(fence_state);
-पूर्ण
+	kfree(fence_state);
+}
 
-पूर्णांक drm_mode_atomic_ioctl(काष्ठा drm_device *dev,
-			  व्योम *data, काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_mode_atomic *arg = data;
-	uपूर्णांक32_t __user *objs_ptr = (uपूर्णांक32_t __user *)(अचिन्हित दीर्घ)(arg->objs_ptr);
-	uपूर्णांक32_t __user *count_props_ptr = (uपूर्णांक32_t __user *)(अचिन्हित दीर्घ)(arg->count_props_ptr);
-	uपूर्णांक32_t __user *props_ptr = (uपूर्णांक32_t __user *)(अचिन्हित दीर्घ)(arg->props_ptr);
-	uपूर्णांक64_t __user *prop_values_ptr = (uपूर्णांक64_t __user *)(अचिन्हित दीर्घ)(arg->prop_values_ptr);
-	अचिन्हित पूर्णांक copied_objs, copied_props;
-	काष्ठा drm_atomic_state *state;
-	काष्ठा drm_modeset_acquire_ctx ctx;
-	काष्ठा drm_out_fence_state *fence_state;
-	पूर्णांक ret = 0;
-	अचिन्हित पूर्णांक i, j, num_fences;
+int drm_mode_atomic_ioctl(struct drm_device *dev,
+			  void *data, struct drm_file *file_priv)
+{
+	struct drm_mode_atomic *arg = data;
+	uint32_t __user *objs_ptr = (uint32_t __user *)(unsigned long)(arg->objs_ptr);
+	uint32_t __user *count_props_ptr = (uint32_t __user *)(unsigned long)(arg->count_props_ptr);
+	uint32_t __user *props_ptr = (uint32_t __user *)(unsigned long)(arg->props_ptr);
+	uint64_t __user *prop_values_ptr = (uint64_t __user *)(unsigned long)(arg->prop_values_ptr);
+	unsigned int copied_objs, copied_props;
+	struct drm_atomic_state *state;
+	struct drm_modeset_acquire_ctx ctx;
+	struct drm_out_fence_state *fence_state;
+	int ret = 0;
+	unsigned int i, j, num_fences;
 
-	/* disallow क्रम drivers not supporting atomic: */
-	अगर (!drm_core_check_feature(dev, DRIVER_ATOMIC))
-		वापस -EOPNOTSUPP;
+	/* disallow for drivers not supporting atomic: */
+	if (!drm_core_check_feature(dev, DRIVER_ATOMIC))
+		return -EOPNOTSUPP;
 
-	/* disallow क्रम userspace that has not enabled atomic cap (even
-	 * though this may be a bit overसमाप्त, since legacy userspace
+	/* disallow for userspace that has not enabled atomic cap (even
+	 * though this may be a bit overkill, since legacy userspace
 	 * wouldn't know how to call this ioctl)
 	 */
-	अगर (!file_priv->atomic) अणु
+	if (!file_priv->atomic) {
 		drm_dbg_atomic(dev,
 			       "commit failed: atomic cap not enabled\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (arg->flags & ~DRM_MODE_ATOMIC_FLAGS) अणु
+	if (arg->flags & ~DRM_MODE_ATOMIC_FLAGS) {
 		drm_dbg_atomic(dev, "commit failed: invalid flag\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (arg->reserved) अणु
+	if (arg->reserved) {
 		drm_dbg_atomic(dev, "commit failed: reserved field set\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (arg->flags & DRM_MODE_PAGE_FLIP_ASYNC) अणु
+	if (arg->flags & DRM_MODE_PAGE_FLIP_ASYNC) {
 		drm_dbg_atomic(dev,
 			       "commit failed: invalid flag DRM_MODE_PAGE_FLIP_ASYNC\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* can't test and expect an event at the same समय. */
-	अगर ((arg->flags & DRM_MODE_ATOMIC_TEST_ONLY) &&
-			(arg->flags & DRM_MODE_PAGE_FLIP_EVENT)) अणु
+	/* can't test and expect an event at the same time. */
+	if ((arg->flags & DRM_MODE_ATOMIC_TEST_ONLY) &&
+			(arg->flags & DRM_MODE_PAGE_FLIP_EVENT)) {
 		drm_dbg_atomic(dev,
 			       "commit failed: page-flip event requested with test-only commit\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	state = drm_atomic_state_alloc(dev);
-	अगर (!state)
-		वापस -ENOMEM;
+	if (!state)
+		return -ENOMEM;
 
 	drm_modeset_acquire_init(&ctx, DRM_MODESET_ACQUIRE_INTERRUPTIBLE);
 	state->acquire_ctx = &ctx;
@@ -1372,107 +1371,107 @@ out:
 retry:
 	copied_objs = 0;
 	copied_props = 0;
-	fence_state = शून्य;
+	fence_state = NULL;
 	num_fences = 0;
 
-	क्रम (i = 0; i < arg->count_objs; i++) अणु
-		uपूर्णांक32_t obj_id, count_props;
-		काष्ठा drm_mode_object *obj;
+	for (i = 0; i < arg->count_objs; i++) {
+		uint32_t obj_id, count_props;
+		struct drm_mode_object *obj;
 
-		अगर (get_user(obj_id, objs_ptr + copied_objs)) अणु
+		if (get_user(obj_id, objs_ptr + copied_objs)) {
 			ret = -EFAULT;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		obj = drm_mode_object_find(dev, file_priv, obj_id, DRM_MODE_OBJECT_ANY);
-		अगर (!obj) अणु
+		if (!obj) {
 			ret = -ENOENT;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (!obj->properties) अणु
+		if (!obj->properties) {
 			drm_mode_object_put(obj);
 			ret = -ENOENT;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (get_user(count_props, count_props_ptr + copied_objs)) अणु
+		if (get_user(count_props, count_props_ptr + copied_objs)) {
 			drm_mode_object_put(obj);
 			ret = -EFAULT;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		copied_objs++;
 
-		क्रम (j = 0; j < count_props; j++) अणु
-			uपूर्णांक32_t prop_id;
-			uपूर्णांक64_t prop_value;
-			काष्ठा drm_property *prop;
+		for (j = 0; j < count_props; j++) {
+			uint32_t prop_id;
+			uint64_t prop_value;
+			struct drm_property *prop;
 
-			अगर (get_user(prop_id, props_ptr + copied_props)) अणु
+			if (get_user(prop_id, props_ptr + copied_props)) {
 				drm_mode_object_put(obj);
 				ret = -EFAULT;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			prop = drm_mode_obj_find_prop_id(obj, prop_id);
-			अगर (!prop) अणु
+			if (!prop) {
 				drm_mode_object_put(obj);
 				ret = -ENOENT;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
-			अगर (copy_from_user(&prop_value,
+			if (copy_from_user(&prop_value,
 					   prop_values_ptr + copied_props,
-					   माप(prop_value))) अणु
+					   sizeof(prop_value))) {
 				drm_mode_object_put(obj);
 				ret = -EFAULT;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			ret = drm_atomic_set_property(state, file_priv,
 						      obj, prop, prop_value);
-			अगर (ret) अणु
+			if (ret) {
 				drm_mode_object_put(obj);
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			copied_props++;
-		पूर्ण
+		}
 
 		drm_mode_object_put(obj);
-	पूर्ण
+	}
 
-	ret = prepare_संकेतing(dev, state, arg, file_priv, &fence_state,
+	ret = prepare_signaling(dev, state, arg, file_priv, &fence_state,
 				&num_fences);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	अगर (arg->flags & DRM_MODE_ATOMIC_TEST_ONLY) अणु
+	if (arg->flags & DRM_MODE_ATOMIC_TEST_ONLY) {
 		ret = drm_atomic_check_only(state);
-	पूर्ण अन्यथा अगर (arg->flags & DRM_MODE_ATOMIC_NONBLOCK) अणु
+	} else if (arg->flags & DRM_MODE_ATOMIC_NONBLOCK) {
 		ret = drm_atomic_nonblocking_commit(state);
-	पूर्ण अन्यथा अणु
-		अगर (drm_debug_enabled(DRM_UT_STATE))
-			drm_atomic_prपूर्णांक_state(state);
+	} else {
+		if (drm_debug_enabled(DRM_UT_STATE))
+			drm_atomic_print_state(state);
 
 		ret = drm_atomic_commit(state);
-	पूर्ण
+	}
 
 out:
-	complete_संकेतing(dev, state, fence_state, num_fences, !ret);
+	complete_signaling(dev, state, fence_state, num_fences, !ret);
 
-	अगर (ret == -EDEADLK) अणु
+	if (ret == -EDEADLK) {
 		drm_atomic_state_clear(state);
 		ret = drm_modeset_backoff(&ctx);
-		अगर (!ret)
-			जाओ retry;
-	पूर्ण
+		if (!ret)
+			goto retry;
+	}
 
 	drm_atomic_state_put(state);
 
 	drm_modeset_drop_locks(&ctx);
 	drm_modeset_acquire_fini(&ctx);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

@@ -1,472 +1,471 @@
-<शैली गुरु>
 /*
- * SPDX-License-Identअगरier: MIT
+ * SPDX-License-Identifier: MIT
  *
- * Copyright तऊ 2014-2016 Intel Corporation
+ * Copyright © 2014-2016 Intel Corporation
  */
 
-#समावेश "display/intel_frontbuffer.h"
-#समावेश "gt/intel_gt.h"
+#include "display/intel_frontbuffer.h"
+#include "gt/intel_gt.h"
 
-#समावेश "i915_drv.h"
-#समावेश "i915_gem_clflush.h"
-#समावेश "i915_gem_gtt.h"
-#समावेश "i915_gem_ioctls.h"
-#समावेश "i915_gem_object.h"
-#समावेश "i915_vma.h"
-#समावेश "i915_gem_lmem.h"
-#समावेश "i915_gem_mman.h"
+#include "i915_drv.h"
+#include "i915_gem_clflush.h"
+#include "i915_gem_gtt.h"
+#include "i915_gem_ioctls.h"
+#include "i915_gem_object.h"
+#include "i915_vma.h"
+#include "i915_gem_lmem.h"
+#include "i915_gem_mman.h"
 
-अटल bool gpu_ग_लिखो_needs_clflush(काष्ठा drm_i915_gem_object *obj)
-अणु
-	वापस !(obj->cache_level == I915_CACHE_NONE ||
+static bool gpu_write_needs_clflush(struct drm_i915_gem_object *obj)
+{
+	return !(obj->cache_level == I915_CACHE_NONE ||
 		 obj->cache_level == I915_CACHE_WT);
-पूर्ण
+}
 
-अटल व्योम
-flush_ग_लिखो_करोमुख्य(काष्ठा drm_i915_gem_object *obj, अचिन्हित पूर्णांक flush_करोमुख्यs)
-अणु
-	काष्ठा i915_vma *vma;
+static void
+flush_write_domain(struct drm_i915_gem_object *obj, unsigned int flush_domains)
+{
+	struct i915_vma *vma;
 
-	निश्चित_object_held(obj);
+	assert_object_held(obj);
 
-	अगर (!(obj->ग_लिखो_करोमुख्य & flush_करोमुख्यs))
-		वापस;
+	if (!(obj->write_domain & flush_domains))
+		return;
 
-	चयन (obj->ग_लिखो_करोमुख्य) अणु
-	हाल I915_GEM_DOMAIN_GTT:
+	switch (obj->write_domain) {
+	case I915_GEM_DOMAIN_GTT:
 		spin_lock(&obj->vma.lock);
-		क्रम_each_ggtt_vma(vma, obj) अणु
-			अगर (i915_vma_unset_ggtt_ग_लिखो(vma))
-				पूर्णांकel_gt_flush_ggtt_ग_लिखोs(vma->vm->gt);
-		पूर्ण
+		for_each_ggtt_vma(vma, obj) {
+			if (i915_vma_unset_ggtt_write(vma))
+				intel_gt_flush_ggtt_writes(vma->vm->gt);
+		}
 		spin_unlock(&obj->vma.lock);
 
 		i915_gem_object_flush_frontbuffer(obj, ORIGIN_CPU);
-		अवरोध;
+		break;
 
-	हाल I915_GEM_DOMAIN_WC:
+	case I915_GEM_DOMAIN_WC:
 		wmb();
-		अवरोध;
+		break;
 
-	हाल I915_GEM_DOMAIN_CPU:
+	case I915_GEM_DOMAIN_CPU:
 		i915_gem_clflush_object(obj, I915_CLFLUSH_SYNC);
-		अवरोध;
+		break;
 
-	हाल I915_GEM_DOMAIN_RENDER:
-		अगर (gpu_ग_लिखो_needs_clflush(obj))
+	case I915_GEM_DOMAIN_RENDER:
+		if (gpu_write_needs_clflush(obj))
 			obj->cache_dirty = true;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	obj->ग_लिखो_करोमुख्य = 0;
-पूर्ण
+	obj->write_domain = 0;
+}
 
-अटल व्योम __i915_gem_object_flush_क्रम_display(काष्ठा drm_i915_gem_object *obj)
-अणु
+static void __i915_gem_object_flush_for_display(struct drm_i915_gem_object *obj)
+{
 	/*
-	 * We manually flush the CPU करोमुख्य so that we can override and
-	 * क्रमce the flush क्रम the display, and perक्रमm it asyncrhonously.
+	 * We manually flush the CPU domain so that we can override and
+	 * force the flush for the display, and perform it asyncrhonously.
 	 */
-	flush_ग_लिखो_करोमुख्य(obj, ~I915_GEM_DOMAIN_CPU);
-	अगर (obj->cache_dirty)
+	flush_write_domain(obj, ~I915_GEM_DOMAIN_CPU);
+	if (obj->cache_dirty)
 		i915_gem_clflush_object(obj, I915_CLFLUSH_FORCE);
-	obj->ग_लिखो_करोमुख्य = 0;
-पूर्ण
+	obj->write_domain = 0;
+}
 
-व्योम i915_gem_object_flush_अगर_display(काष्ठा drm_i915_gem_object *obj)
-अणु
-	अगर (!i915_gem_object_is_framebuffer(obj))
-		वापस;
+void i915_gem_object_flush_if_display(struct drm_i915_gem_object *obj)
+{
+	if (!i915_gem_object_is_framebuffer(obj))
+		return;
 
-	i915_gem_object_lock(obj, शून्य);
-	__i915_gem_object_flush_क्रम_display(obj);
+	i915_gem_object_lock(obj, NULL);
+	__i915_gem_object_flush_for_display(obj);
 	i915_gem_object_unlock(obj);
-पूर्ण
+}
 
-व्योम i915_gem_object_flush_अगर_display_locked(काष्ठा drm_i915_gem_object *obj)
-अणु
-	अगर (i915_gem_object_is_framebuffer(obj))
-		__i915_gem_object_flush_क्रम_display(obj);
-पूर्ण
+void i915_gem_object_flush_if_display_locked(struct drm_i915_gem_object *obj)
+{
+	if (i915_gem_object_is_framebuffer(obj))
+		__i915_gem_object_flush_for_display(obj);
+}
 
 /**
- * Moves a single object to the WC पढ़ो, and possibly ग_लिखो करोमुख्य.
+ * Moves a single object to the WC read, and possibly write domain.
  * @obj: object to act on
- * @ग_लिखो: ask क्रम ग_लिखो access or पढ़ो only
+ * @write: ask for write access or read only
  *
- * This function वापसs when the move is complete, including रुकोing on
+ * This function returns when the move is complete, including waiting on
  * flushes to occur.
  */
-पूर्णांक
-i915_gem_object_set_to_wc_करोमुख्य(काष्ठा drm_i915_gem_object *obj, bool ग_लिखो)
-अणु
-	पूर्णांक ret;
+int
+i915_gem_object_set_to_wc_domain(struct drm_i915_gem_object *obj, bool write)
+{
+	int ret;
 
-	निश्चित_object_held(obj);
+	assert_object_held(obj);
 
-	ret = i915_gem_object_रुको(obj,
+	ret = i915_gem_object_wait(obj,
 				   I915_WAIT_INTERRUPTIBLE |
-				   (ग_लिखो ? I915_WAIT_ALL : 0),
+				   (write ? I915_WAIT_ALL : 0),
 				   MAX_SCHEDULE_TIMEOUT);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (obj->ग_लिखो_करोमुख्य == I915_GEM_DOMAIN_WC)
-		वापस 0;
+	if (obj->write_domain == I915_GEM_DOMAIN_WC)
+		return 0;
 
 	/* Flush and acquire obj->pages so that we are coherent through
-	 * direct access in memory with previous cached ग_लिखोs through
-	 * shmemfs and that our cache करोमुख्य tracking reमुख्यs valid.
-	 * For example, अगर the obj->filp was moved to swap without us
-	 * being notअगरied and releasing the pages, we would mistakenly
-	 * जारी to assume that the obj reमुख्यed out of the CPU cached
-	 * करोमुख्य.
+	 * direct access in memory with previous cached writes through
+	 * shmemfs and that our cache domain tracking remains valid.
+	 * For example, if the obj->filp was moved to swap without us
+	 * being notified and releasing the pages, we would mistakenly
+	 * continue to assume that the obj remained out of the CPU cached
+	 * domain.
 	 */
 	ret = i915_gem_object_pin_pages(obj);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	flush_ग_लिखो_करोमुख्य(obj, ~I915_GEM_DOMAIN_WC);
+	flush_write_domain(obj, ~I915_GEM_DOMAIN_WC);
 
-	/* Serialise direct access to this object with the barriers क्रम
-	 * coherent ग_लिखोs from the GPU, by effectively invalidating the
-	 * WC करोमुख्य upon first access.
+	/* Serialise direct access to this object with the barriers for
+	 * coherent writes from the GPU, by effectively invalidating the
+	 * WC domain upon first access.
 	 */
-	अगर ((obj->पढ़ो_करोमुख्यs & I915_GEM_DOMAIN_WC) == 0)
+	if ((obj->read_domains & I915_GEM_DOMAIN_WC) == 0)
 		mb();
 
-	/* It should now be out of any other ग_लिखो करोमुख्यs, and we can update
-	 * the करोमुख्य values क्रम our changes.
+	/* It should now be out of any other write domains, and we can update
+	 * the domain values for our changes.
 	 */
-	GEM_BUG_ON((obj->ग_लिखो_करोमुख्य & ~I915_GEM_DOMAIN_WC) != 0);
-	obj->पढ़ो_करोमुख्यs |= I915_GEM_DOMAIN_WC;
-	अगर (ग_लिखो) अणु
-		obj->पढ़ो_करोमुख्यs = I915_GEM_DOMAIN_WC;
-		obj->ग_लिखो_करोमुख्य = I915_GEM_DOMAIN_WC;
+	GEM_BUG_ON((obj->write_domain & ~I915_GEM_DOMAIN_WC) != 0);
+	obj->read_domains |= I915_GEM_DOMAIN_WC;
+	if (write) {
+		obj->read_domains = I915_GEM_DOMAIN_WC;
+		obj->write_domain = I915_GEM_DOMAIN_WC;
 		obj->mm.dirty = true;
-	पूर्ण
+	}
 
 	i915_gem_object_unpin_pages(obj);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * Moves a single object to the GTT पढ़ो, and possibly ग_लिखो करोमुख्य.
+ * Moves a single object to the GTT read, and possibly write domain.
  * @obj: object to act on
- * @ग_लिखो: ask क्रम ग_लिखो access or पढ़ो only
+ * @write: ask for write access or read only
  *
- * This function वापसs when the move is complete, including रुकोing on
+ * This function returns when the move is complete, including waiting on
  * flushes to occur.
  */
-पूर्णांक
-i915_gem_object_set_to_gtt_करोमुख्य(काष्ठा drm_i915_gem_object *obj, bool ग_लिखो)
-अणु
-	पूर्णांक ret;
+int
+i915_gem_object_set_to_gtt_domain(struct drm_i915_gem_object *obj, bool write)
+{
+	int ret;
 
-	निश्चित_object_held(obj);
+	assert_object_held(obj);
 
-	ret = i915_gem_object_रुको(obj,
+	ret = i915_gem_object_wait(obj,
 				   I915_WAIT_INTERRUPTIBLE |
-				   (ग_लिखो ? I915_WAIT_ALL : 0),
+				   (write ? I915_WAIT_ALL : 0),
 				   MAX_SCHEDULE_TIMEOUT);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (obj->ग_लिखो_करोमुख्य == I915_GEM_DOMAIN_GTT)
-		वापस 0;
+	if (obj->write_domain == I915_GEM_DOMAIN_GTT)
+		return 0;
 
 	/* Flush and acquire obj->pages so that we are coherent through
-	 * direct access in memory with previous cached ग_लिखोs through
-	 * shmemfs and that our cache करोमुख्य tracking reमुख्यs valid.
-	 * For example, अगर the obj->filp was moved to swap without us
-	 * being notअगरied and releasing the pages, we would mistakenly
-	 * जारी to assume that the obj reमुख्यed out of the CPU cached
-	 * करोमुख्य.
+	 * direct access in memory with previous cached writes through
+	 * shmemfs and that our cache domain tracking remains valid.
+	 * For example, if the obj->filp was moved to swap without us
+	 * being notified and releasing the pages, we would mistakenly
+	 * continue to assume that the obj remained out of the CPU cached
+	 * domain.
 	 */
 	ret = i915_gem_object_pin_pages(obj);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	flush_ग_लिखो_करोमुख्य(obj, ~I915_GEM_DOMAIN_GTT);
+	flush_write_domain(obj, ~I915_GEM_DOMAIN_GTT);
 
-	/* Serialise direct access to this object with the barriers क्रम
-	 * coherent ग_लिखोs from the GPU, by effectively invalidating the
-	 * GTT करोमुख्य upon first access.
+	/* Serialise direct access to this object with the barriers for
+	 * coherent writes from the GPU, by effectively invalidating the
+	 * GTT domain upon first access.
 	 */
-	अगर ((obj->पढ़ो_करोमुख्यs & I915_GEM_DOMAIN_GTT) == 0)
+	if ((obj->read_domains & I915_GEM_DOMAIN_GTT) == 0)
 		mb();
 
-	/* It should now be out of any other ग_लिखो करोमुख्यs, and we can update
-	 * the करोमुख्य values क्रम our changes.
+	/* It should now be out of any other write domains, and we can update
+	 * the domain values for our changes.
 	 */
-	GEM_BUG_ON((obj->ग_लिखो_करोमुख्य & ~I915_GEM_DOMAIN_GTT) != 0);
-	obj->पढ़ो_करोमुख्यs |= I915_GEM_DOMAIN_GTT;
-	अगर (ग_लिखो) अणु
-		काष्ठा i915_vma *vma;
+	GEM_BUG_ON((obj->write_domain & ~I915_GEM_DOMAIN_GTT) != 0);
+	obj->read_domains |= I915_GEM_DOMAIN_GTT;
+	if (write) {
+		struct i915_vma *vma;
 
-		obj->पढ़ो_करोमुख्यs = I915_GEM_DOMAIN_GTT;
-		obj->ग_लिखो_करोमुख्य = I915_GEM_DOMAIN_GTT;
+		obj->read_domains = I915_GEM_DOMAIN_GTT;
+		obj->write_domain = I915_GEM_DOMAIN_GTT;
 		obj->mm.dirty = true;
 
 		spin_lock(&obj->vma.lock);
-		क्रम_each_ggtt_vma(vma, obj)
-			अगर (i915_vma_is_bound(vma, I915_VMA_GLOBAL_BIND))
-				i915_vma_set_ggtt_ग_लिखो(vma);
+		for_each_ggtt_vma(vma, obj)
+			if (i915_vma_is_bound(vma, I915_VMA_GLOBAL_BIND))
+				i915_vma_set_ggtt_write(vma);
 		spin_unlock(&obj->vma.lock);
-	पूर्ण
+	}
 
 	i915_gem_object_unpin_pages(obj);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * Changes the cache-level of an object across all VMA.
  * @obj: object to act on
- * @cache_level: new cache level to set क्रम the object
+ * @cache_level: new cache level to set for the object
  *
- * After this function वापसs, the object will be in the new cache-level
+ * After this function returns, the object will be in the new cache-level
  * across all GTT and the contents of the backing storage will be coherent,
  * with respect to the new cache-level. In order to keep the backing storage
- * coherent क्रम all users, we only allow a single cache level to be set
+ * coherent for all users, we only allow a single cache level to be set
  * globally on the object and prevent it from being changed whilst the
- * hardware is पढ़ोing from the object. That is अगर the object is currently
+ * hardware is reading from the object. That is if the object is currently
  * on the scanout it will be set to uncached (or equivalent display
  * cache coherency) and all non-MOCS GPU access will also be uncached so
- * that all direct access to the scanout reमुख्यs coherent.
+ * that all direct access to the scanout remains coherent.
  */
-पूर्णांक i915_gem_object_set_cache_level(काष्ठा drm_i915_gem_object *obj,
-				    क्रमागत i915_cache_level cache_level)
-अणु
-	पूर्णांक ret;
+int i915_gem_object_set_cache_level(struct drm_i915_gem_object *obj,
+				    enum i915_cache_level cache_level)
+{
+	int ret;
 
-	अगर (obj->cache_level == cache_level)
-		वापस 0;
+	if (obj->cache_level == cache_level)
+		return 0;
 
-	ret = i915_gem_object_रुको(obj,
+	ret = i915_gem_object_wait(obj,
 				   I915_WAIT_INTERRUPTIBLE |
 				   I915_WAIT_ALL,
 				   MAX_SCHEDULE_TIMEOUT);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* Always invalidate stale cachelines */
-	अगर (obj->cache_level != cache_level) अणु
+	if (obj->cache_level != cache_level) {
 		i915_gem_object_set_cache_coherency(obj, cache_level);
 		obj->cache_dirty = true;
-	पूर्ण
+	}
 
 	/* The cache-level will be applied when each vma is rebound. */
-	वापस i915_gem_object_unbind(obj,
+	return i915_gem_object_unbind(obj,
 				      I915_GEM_OBJECT_UNBIND_ACTIVE |
 				      I915_GEM_OBJECT_UNBIND_BARRIER);
-पूर्ण
+}
 
-पूर्णांक i915_gem_get_caching_ioctl(काष्ठा drm_device *dev, व्योम *data,
-			       काष्ठा drm_file *file)
-अणु
-	काष्ठा drm_i915_gem_caching *args = data;
-	काष्ठा drm_i915_gem_object *obj;
-	पूर्णांक err = 0;
+int i915_gem_get_caching_ioctl(struct drm_device *dev, void *data,
+			       struct drm_file *file)
+{
+	struct drm_i915_gem_caching *args = data;
+	struct drm_i915_gem_object *obj;
+	int err = 0;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	obj = i915_gem_object_lookup_rcu(file, args->handle);
-	अगर (!obj) अणु
+	if (!obj) {
 		err = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	चयन (obj->cache_level) अणु
-	हाल I915_CACHE_LLC:
-	हाल I915_CACHE_L3_LLC:
+	switch (obj->cache_level) {
+	case I915_CACHE_LLC:
+	case I915_CACHE_L3_LLC:
 		args->caching = I915_CACHING_CACHED;
-		अवरोध;
+		break;
 
-	हाल I915_CACHE_WT:
+	case I915_CACHE_WT:
 		args->caching = I915_CACHING_DISPLAY;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		args->caching = I915_CACHING_NONE;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 out:
-	rcu_पढ़ो_unlock();
-	वापस err;
-पूर्ण
+	rcu_read_unlock();
+	return err;
+}
 
-पूर्णांक i915_gem_set_caching_ioctl(काष्ठा drm_device *dev, व्योम *data,
-			       काष्ठा drm_file *file)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(dev);
-	काष्ठा drm_i915_gem_caching *args = data;
-	काष्ठा drm_i915_gem_object *obj;
-	क्रमागत i915_cache_level level;
-	पूर्णांक ret = 0;
+int i915_gem_set_caching_ioctl(struct drm_device *dev, void *data,
+			       struct drm_file *file)
+{
+	struct drm_i915_private *i915 = to_i915(dev);
+	struct drm_i915_gem_caching *args = data;
+	struct drm_i915_gem_object *obj;
+	enum i915_cache_level level;
+	int ret = 0;
 
-	चयन (args->caching) अणु
-	हाल I915_CACHING_NONE:
+	switch (args->caching) {
+	case I915_CACHING_NONE:
 		level = I915_CACHE_NONE;
-		अवरोध;
-	हाल I915_CACHING_CACHED:
+		break;
+	case I915_CACHING_CACHED:
 		/*
 		 * Due to a HW issue on BXT A stepping, GPU stores via a
 		 * snooped mapping may leave stale data in a corresponding CPU
 		 * cacheline, whereas normally such cachelines would get
 		 * invalidated.
 		 */
-		अगर (!HAS_LLC(i915) && !HAS_SNOOP(i915))
-			वापस -ENODEV;
+		if (!HAS_LLC(i915) && !HAS_SNOOP(i915))
+			return -ENODEV;
 
 		level = I915_CACHE_LLC;
-		अवरोध;
-	हाल I915_CACHING_DISPLAY:
+		break;
+	case I915_CACHING_DISPLAY:
 		level = HAS_WT(i915) ? I915_CACHE_WT : I915_CACHE_NONE;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	obj = i915_gem_object_lookup(file, args->handle);
-	अगर (!obj)
-		वापस -ENOENT;
+	if (!obj)
+		return -ENOENT;
 
 	/*
 	 * The caching mode of proxy object is handled by its generator, and
 	 * not allowed to be changed by userspace.
 	 */
-	अगर (i915_gem_object_is_proxy(obj)) अणु
+	if (i915_gem_object_is_proxy(obj)) {
 		/*
-		 * Silently allow cached क्रम userptr; the vulkan driver
+		 * Silently allow cached for userptr; the vulkan driver
 		 * sets all objects to cached
 		 */
-		अगर (!i915_gem_object_is_userptr(obj) ||
+		if (!i915_gem_object_is_userptr(obj) ||
 		    args->caching != I915_CACHING_CACHED)
 			ret = -ENXIO;
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	ret = i915_gem_object_lock_पूर्णांकerruptible(obj, शून्य);
-	अगर (ret)
-		जाओ out;
+	ret = i915_gem_object_lock_interruptible(obj, NULL);
+	if (ret)
+		goto out;
 
 	ret = i915_gem_object_set_cache_level(obj, level);
 	i915_gem_object_unlock(obj);
 
 out:
 	i915_gem_object_put(obj);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Prepare buffer क्रम display plane (scanout, cursors, etc). Can be called from
- * an unपूर्णांकerruptible phase (modesetting) and allows any flushes to be pipelined
- * (क्रम pageflips). We only flush the caches जबतक preparing the buffer क्रम
- * display, the callers are responsible क्रम frontbuffer flush.
+ * Prepare buffer for display plane (scanout, cursors, etc). Can be called from
+ * an uninterruptible phase (modesetting) and allows any flushes to be pipelined
+ * (for pageflips). We only flush the caches while preparing the buffer for
+ * display, the callers are responsible for frontbuffer flush.
  */
-काष्ठा i915_vma *
-i915_gem_object_pin_to_display_plane(काष्ठा drm_i915_gem_object *obj,
-				     काष्ठा i915_gem_ww_ctx *ww,
+struct i915_vma *
+i915_gem_object_pin_to_display_plane(struct drm_i915_gem_object *obj,
+				     struct i915_gem_ww_ctx *ww,
 				     u32 alignment,
-				     स्थिर काष्ठा i915_ggtt_view *view,
-				     अचिन्हित पूर्णांक flags)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(obj->base.dev);
-	काष्ठा i915_vma *vma;
-	पूर्णांक ret;
+				     const struct i915_ggtt_view *view,
+				     unsigned int flags)
+{
+	struct drm_i915_private *i915 = to_i915(obj->base.dev);
+	struct i915_vma *vma;
+	int ret;
 
 	/* Frame buffer must be in LMEM (no migration yet) */
-	अगर (HAS_LMEM(i915) && !i915_gem_object_is_lmem(obj))
-		वापस ERR_PTR(-EINVAL);
+	if (HAS_LMEM(i915) && !i915_gem_object_is_lmem(obj))
+		return ERR_PTR(-EINVAL);
 
 	/*
 	 * The display engine is not coherent with the LLC cache on gen6.  As
 	 * a result, we make sure that the pinning that is about to occur is
-	 * करोne with uncached PTEs. This is lowest common denominator क्रम all
+	 * done with uncached PTEs. This is lowest common denominator for all
 	 * chipsets.
 	 *
-	 * However क्रम gen6+, we could करो better by using the GFDT bit instead
+	 * However for gen6+, we could do better by using the GFDT bit instead
 	 * of uncaching, which would allow us to flush all the LLC-cached data
-	 * with that bit in the PTE to मुख्य memory with just one PIPE_CONTROL.
+	 * with that bit in the PTE to main memory with just one PIPE_CONTROL.
 	 */
 	ret = i915_gem_object_set_cache_level(obj,
 					      HAS_WT(i915) ?
 					      I915_CACHE_WT : I915_CACHE_NONE);
-	अगर (ret)
-		वापस ERR_PTR(ret);
+	if (ret)
+		return ERR_PTR(ret);
 
 	/*
 	 * As the user may map the buffer once pinned in the display plane
-	 * (e.g. libkms क्रम the bootup splash), we have to ensure that we
-	 * always use map_and_fenceable क्रम all scanout buffers. However,
-	 * it may simply be too big to fit पूर्णांकo mappable, in which हाल
+	 * (e.g. libkms for the bootup splash), we have to ensure that we
+	 * always use map_and_fenceable for all scanout buffers. However,
+	 * it may simply be too big to fit into mappable, in which case
 	 * put it anyway and hope that userspace can cope (but always first
 	 * try to preserve the existing ABI).
 	 */
 	vma = ERR_PTR(-ENOSPC);
-	अगर ((flags & PIN_MAPPABLE) == 0 &&
+	if ((flags & PIN_MAPPABLE) == 0 &&
 	    (!view || view->type == I915_GGTT_VIEW_NORMAL))
 		vma = i915_gem_object_ggtt_pin_ww(obj, ww, view, 0, alignment,
 						  flags | PIN_MAPPABLE |
 						  PIN_NONBLOCK);
-	अगर (IS_ERR(vma) && vma != ERR_PTR(-EDEADLK))
+	if (IS_ERR(vma) && vma != ERR_PTR(-EDEADLK))
 		vma = i915_gem_object_ggtt_pin_ww(obj, ww, view, 0,
 						  alignment, flags);
-	अगर (IS_ERR(vma))
-		वापस vma;
+	if (IS_ERR(vma))
+		return vma;
 
 	vma->display_alignment = max_t(u64, vma->display_alignment, alignment);
 	i915_vma_mark_scanout(vma);
 
-	i915_gem_object_flush_अगर_display_locked(obj);
+	i915_gem_object_flush_if_display_locked(obj);
 
-	वापस vma;
-पूर्ण
+	return vma;
+}
 
 /**
- * Moves a single object to the CPU पढ़ो, and possibly ग_लिखो करोमुख्य.
+ * Moves a single object to the CPU read, and possibly write domain.
  * @obj: object to act on
- * @ग_लिखो: requesting ग_लिखो or पढ़ो-only access
+ * @write: requesting write or read-only access
  *
- * This function वापसs when the move is complete, including रुकोing on
+ * This function returns when the move is complete, including waiting on
  * flushes to occur.
  */
-पूर्णांक
-i915_gem_object_set_to_cpu_करोमुख्य(काष्ठा drm_i915_gem_object *obj, bool ग_लिखो)
-अणु
-	पूर्णांक ret;
+int
+i915_gem_object_set_to_cpu_domain(struct drm_i915_gem_object *obj, bool write)
+{
+	int ret;
 
-	निश्चित_object_held(obj);
+	assert_object_held(obj);
 
-	ret = i915_gem_object_रुको(obj,
+	ret = i915_gem_object_wait(obj,
 				   I915_WAIT_INTERRUPTIBLE |
-				   (ग_लिखो ? I915_WAIT_ALL : 0),
+				   (write ? I915_WAIT_ALL : 0),
 				   MAX_SCHEDULE_TIMEOUT);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	flush_ग_लिखो_करोमुख्य(obj, ~I915_GEM_DOMAIN_CPU);
+	flush_write_domain(obj, ~I915_GEM_DOMAIN_CPU);
 
-	/* Flush the CPU cache अगर it's still invalid. */
-	अगर ((obj->पढ़ो_करोमुख्यs & I915_GEM_DOMAIN_CPU) == 0) अणु
+	/* Flush the CPU cache if it's still invalid. */
+	if ((obj->read_domains & I915_GEM_DOMAIN_CPU) == 0) {
 		i915_gem_clflush_object(obj, I915_CLFLUSH_SYNC);
-		obj->पढ़ो_करोमुख्यs |= I915_GEM_DOMAIN_CPU;
-	पूर्ण
+		obj->read_domains |= I915_GEM_DOMAIN_CPU;
+	}
 
-	/* It should now be out of any other ग_लिखो करोमुख्यs, and we can update
-	 * the करोमुख्य values क्रम our changes.
+	/* It should now be out of any other write domains, and we can update
+	 * the domain values for our changes.
 	 */
-	GEM_BUG_ON(obj->ग_लिखो_करोमुख्य & ~I915_GEM_DOMAIN_CPU);
+	GEM_BUG_ON(obj->write_domain & ~I915_GEM_DOMAIN_CPU);
 
-	/* If we're writing through the CPU, then the GPU पढ़ो करोमुख्यs will
+	/* If we're writing through the CPU, then the GPU read domains will
 	 * need to be invalidated at next use.
 	 */
-	अगर (ग_लिखो)
-		__start_cpu_ग_लिखो(obj);
+	if (write)
+		__start_cpu_write(obj);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * Called when user space prepares to use an object with the CPU, either
@@ -475,109 +474,109 @@ i915_gem_object_set_to_cpu_करोमुख्य(काष्ठा drm_i915_
  * @data: ioctl data blob
  * @file: drm file
  */
-पूर्णांक
-i915_gem_set_करोमुख्य_ioctl(काष्ठा drm_device *dev, व्योम *data,
-			  काष्ठा drm_file *file)
-अणु
-	काष्ठा drm_i915_gem_set_करोमुख्य *args = data;
-	काष्ठा drm_i915_gem_object *obj;
-	u32 पढ़ो_करोमुख्यs = args->पढ़ो_करोमुख्यs;
-	u32 ग_लिखो_करोमुख्य = args->ग_लिखो_करोमुख्य;
-	पूर्णांक err;
+int
+i915_gem_set_domain_ioctl(struct drm_device *dev, void *data,
+			  struct drm_file *file)
+{
+	struct drm_i915_gem_set_domain *args = data;
+	struct drm_i915_gem_object *obj;
+	u32 read_domains = args->read_domains;
+	u32 write_domain = args->write_domain;
+	int err;
 
-	/* Only handle setting करोमुख्यs to types used by the CPU. */
-	अगर ((ग_लिखो_करोमुख्य | पढ़ो_करोमुख्यs) & I915_GEM_GPU_DOMAINS)
-		वापस -EINVAL;
+	/* Only handle setting domains to types used by the CPU. */
+	if ((write_domain | read_domains) & I915_GEM_GPU_DOMAINS)
+		return -EINVAL;
 
 	/*
-	 * Having something in the ग_लिखो करोमुख्य implies it's in the पढ़ो
-	 * करोमुख्य, and only that पढ़ो करोमुख्य.  Enक्रमce that in the request.
+	 * Having something in the write domain implies it's in the read
+	 * domain, and only that read domain.  Enforce that in the request.
 	 */
-	अगर (ग_लिखो_करोमुख्य && पढ़ो_करोमुख्यs != ग_लिखो_करोमुख्य)
-		वापस -EINVAL;
+	if (write_domain && read_domains != write_domain)
+		return -EINVAL;
 
-	अगर (!पढ़ो_करोमुख्यs)
-		वापस 0;
+	if (!read_domains)
+		return 0;
 
 	obj = i915_gem_object_lookup(file, args->handle);
-	अगर (!obj)
-		वापस -ENOENT;
+	if (!obj)
+		return -ENOENT;
 
 	/*
 	 * Try to flush the object off the GPU without holding the lock.
 	 * We will repeat the flush holding the lock in the normal manner
-	 * to catch हालs where we are gazumped.
+	 * to catch cases where we are gazumped.
 	 */
-	err = i915_gem_object_रुको(obj,
+	err = i915_gem_object_wait(obj,
 				   I915_WAIT_INTERRUPTIBLE |
 				   I915_WAIT_PRIORITY |
-				   (ग_लिखो_करोमुख्य ? I915_WAIT_ALL : 0),
+				   (write_domain ? I915_WAIT_ALL : 0),
 				   MAX_SCHEDULE_TIMEOUT);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	अगर (i915_gem_object_is_userptr(obj)) अणु
+	if (i915_gem_object_is_userptr(obj)) {
 		/*
-		 * Try to grab userptr pages, iris uses set_करोमुख्य to check
+		 * Try to grab userptr pages, iris uses set_domain to check
 		 * userptr validity
 		 */
 		err = i915_gem_object_userptr_validate(obj);
-		अगर (!err)
-			err = i915_gem_object_रुको(obj,
+		if (!err)
+			err = i915_gem_object_wait(obj,
 						   I915_WAIT_INTERRUPTIBLE |
 						   I915_WAIT_PRIORITY |
-						   (ग_लिखो_करोमुख्य ? I915_WAIT_ALL : 0),
+						   (write_domain ? I915_WAIT_ALL : 0),
 						   MAX_SCHEDULE_TIMEOUT);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
-	 * Proxy objects करो not control access to the backing storage, ergo
-	 * they cannot be used as a means to manipulate the cache करोमुख्य
-	 * tracking क्रम that backing storage. The proxy object is always
-	 * considered to be outside of any cache करोमुख्य.
+	 * Proxy objects do not control access to the backing storage, ergo
+	 * they cannot be used as a means to manipulate the cache domain
+	 * tracking for that backing storage. The proxy object is always
+	 * considered to be outside of any cache domain.
 	 */
-	अगर (i915_gem_object_is_proxy(obj)) अणु
+	if (i915_gem_object_is_proxy(obj)) {
 		err = -ENXIO;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	err = i915_gem_object_lock_पूर्णांकerruptible(obj, शून्य);
-	अगर (err)
-		जाओ out;
+	err = i915_gem_object_lock_interruptible(obj, NULL);
+	if (err)
+		goto out;
 
 	/*
 	 * Flush and acquire obj->pages so that we are coherent through
-	 * direct access in memory with previous cached ग_लिखोs through
-	 * shmemfs and that our cache करोमुख्य tracking reमुख्यs valid.
-	 * For example, अगर the obj->filp was moved to swap without us
-	 * being notअगरied and releasing the pages, we would mistakenly
-	 * जारी to assume that the obj reमुख्यed out of the CPU cached
-	 * करोमुख्य.
+	 * direct access in memory with previous cached writes through
+	 * shmemfs and that our cache domain tracking remains valid.
+	 * For example, if the obj->filp was moved to swap without us
+	 * being notified and releasing the pages, we would mistakenly
+	 * continue to assume that the obj remained out of the CPU cached
+	 * domain.
 	 */
 	err = i915_gem_object_pin_pages(obj);
-	अगर (err)
-		जाओ out_unlock;
+	if (err)
+		goto out_unlock;
 
 	/*
-	 * Alपढ़ोy in the desired ग_लिखो करोमुख्य? Nothing क्रम us to करो!
+	 * Already in the desired write domain? Nothing for us to do!
 	 *
 	 * We apply a little bit of cunning here to catch a broader set of
-	 * no-ops. If obj->ग_लिखो_करोमुख्य is set, we must be in the same
-	 * obj->पढ़ो_करोमुख्यs, and only that करोमुख्य. Thereक्रमe, अगर that
-	 * obj->ग_लिखो_करोमुख्य matches the request पढ़ो_करोमुख्यs, we are
-	 * alपढ़ोy in the same पढ़ो/ग_लिखो करोमुख्य and can skip the operation,
-	 * without having to further check the requested ग_लिखो_करोमुख्य.
+	 * no-ops. If obj->write_domain is set, we must be in the same
+	 * obj->read_domains, and only that domain. Therefore, if that
+	 * obj->write_domain matches the request read_domains, we are
+	 * already in the same read/write domain and can skip the operation,
+	 * without having to further check the requested write_domain.
 	 */
-	अगर (READ_ONCE(obj->ग_लिखो_करोमुख्य) == पढ़ो_करोमुख्यs)
-		जाओ out_unpin;
+	if (READ_ONCE(obj->write_domain) == read_domains)
+		goto out_unpin;
 
-	अगर (पढ़ो_करोमुख्यs & I915_GEM_DOMAIN_WC)
-		err = i915_gem_object_set_to_wc_करोमुख्य(obj, ग_लिखो_करोमुख्य);
-	अन्यथा अगर (पढ़ो_करोमुख्यs & I915_GEM_DOMAIN_GTT)
-		err = i915_gem_object_set_to_gtt_करोमुख्य(obj, ग_लिखो_करोमुख्य);
-	अन्यथा
-		err = i915_gem_object_set_to_cpu_करोमुख्य(obj, ग_लिखो_करोमुख्य);
+	if (read_domains & I915_GEM_DOMAIN_WC)
+		err = i915_gem_object_set_to_wc_domain(obj, write_domain);
+	else if (read_domains & I915_GEM_DOMAIN_GTT)
+		err = i915_gem_object_set_to_gtt_domain(obj, write_domain);
+	else
+		err = i915_gem_object_set_to_cpu_domain(obj, write_domain);
 
 out_unpin:
 	i915_gem_object_unpin_pages(obj);
@@ -585,125 +584,125 @@ out_unpin:
 out_unlock:
 	i915_gem_object_unlock(obj);
 
-	अगर (!err && ग_लिखो_करोमुख्य)
+	if (!err && write_domain)
 		i915_gem_object_invalidate_frontbuffer(obj, ORIGIN_CPU);
 
 out:
 	i915_gem_object_put(obj);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * Pins the specअगरied object's pages and synchronizes the object with
- * GPU accesses. Sets needs_clflush to non-zero अगर the caller should
+ * Pins the specified object's pages and synchronizes the object with
+ * GPU accesses. Sets needs_clflush to non-zero if the caller should
  * flush the object from the CPU cache.
  */
-पूर्णांक i915_gem_object_prepare_पढ़ो(काष्ठा drm_i915_gem_object *obj,
-				 अचिन्हित पूर्णांक *needs_clflush)
-अणु
-	पूर्णांक ret;
+int i915_gem_object_prepare_read(struct drm_i915_gem_object *obj,
+				 unsigned int *needs_clflush)
+{
+	int ret;
 
 	*needs_clflush = 0;
-	अगर (!i915_gem_object_has_काष्ठा_page(obj))
-		वापस -ENODEV;
+	if (!i915_gem_object_has_struct_page(obj))
+		return -ENODEV;
 
-	निश्चित_object_held(obj);
+	assert_object_held(obj);
 
-	ret = i915_gem_object_रुको(obj,
+	ret = i915_gem_object_wait(obj,
 				   I915_WAIT_INTERRUPTIBLE,
 				   MAX_SCHEDULE_TIMEOUT);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = i915_gem_object_pin_pages(obj);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (obj->cache_coherent & I915_BO_CACHE_COHERENT_FOR_READ ||
-	    !अटल_cpu_has(X86_FEATURE_CLFLUSH)) अणु
-		ret = i915_gem_object_set_to_cpu_करोमुख्य(obj, false);
-		अगर (ret)
-			जाओ err_unpin;
-		अन्यथा
-			जाओ out;
-	पूर्ण
+	if (obj->cache_coherent & I915_BO_CACHE_COHERENT_FOR_READ ||
+	    !static_cpu_has(X86_FEATURE_CLFLUSH)) {
+		ret = i915_gem_object_set_to_cpu_domain(obj, false);
+		if (ret)
+			goto err_unpin;
+		else
+			goto out;
+	}
 
-	flush_ग_लिखो_करोमुख्य(obj, ~I915_GEM_DOMAIN_CPU);
+	flush_write_domain(obj, ~I915_GEM_DOMAIN_CPU);
 
-	/* If we're not in the cpu पढ़ो करोमुख्य, set ourself पूर्णांकo the gtt
-	 * पढ़ो करोमुख्य and manually flush cachelines (अगर required). This
-	 * optimizes क्रम the हाल when the gpu will dirty the data
-	 * anyway again beक्रमe the next pपढ़ो happens.
+	/* If we're not in the cpu read domain, set ourself into the gtt
+	 * read domain and manually flush cachelines (if required). This
+	 * optimizes for the case when the gpu will dirty the data
+	 * anyway again before the next pread happens.
 	 */
-	अगर (!obj->cache_dirty &&
-	    !(obj->पढ़ो_करोमुख्यs & I915_GEM_DOMAIN_CPU))
+	if (!obj->cache_dirty &&
+	    !(obj->read_domains & I915_GEM_DOMAIN_CPU))
 		*needs_clflush = CLFLUSH_BEFORE;
 
 out:
-	/* वापस with the pages pinned */
-	वापस 0;
+	/* return with the pages pinned */
+	return 0;
 
 err_unpin:
 	i915_gem_object_unpin_pages(obj);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक i915_gem_object_prepare_ग_लिखो(काष्ठा drm_i915_gem_object *obj,
-				  अचिन्हित पूर्णांक *needs_clflush)
-अणु
-	पूर्णांक ret;
+int i915_gem_object_prepare_write(struct drm_i915_gem_object *obj,
+				  unsigned int *needs_clflush)
+{
+	int ret;
 
 	*needs_clflush = 0;
-	अगर (!i915_gem_object_has_काष्ठा_page(obj))
-		वापस -ENODEV;
+	if (!i915_gem_object_has_struct_page(obj))
+		return -ENODEV;
 
-	निश्चित_object_held(obj);
+	assert_object_held(obj);
 
-	ret = i915_gem_object_रुको(obj,
+	ret = i915_gem_object_wait(obj,
 				   I915_WAIT_INTERRUPTIBLE |
 				   I915_WAIT_ALL,
 				   MAX_SCHEDULE_TIMEOUT);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = i915_gem_object_pin_pages(obj);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (obj->cache_coherent & I915_BO_CACHE_COHERENT_FOR_WRITE ||
-	    !अटल_cpu_has(X86_FEATURE_CLFLUSH)) अणु
-		ret = i915_gem_object_set_to_cpu_करोमुख्य(obj, true);
-		अगर (ret)
-			जाओ err_unpin;
-		अन्यथा
-			जाओ out;
-	पूर्ण
+	if (obj->cache_coherent & I915_BO_CACHE_COHERENT_FOR_WRITE ||
+	    !static_cpu_has(X86_FEATURE_CLFLUSH)) {
+		ret = i915_gem_object_set_to_cpu_domain(obj, true);
+		if (ret)
+			goto err_unpin;
+		else
+			goto out;
+	}
 
-	flush_ग_लिखो_करोमुख्य(obj, ~I915_GEM_DOMAIN_CPU);
+	flush_write_domain(obj, ~I915_GEM_DOMAIN_CPU);
 
-	/* If we're not in the cpu ग_लिखो करोमुख्य, set ourself पूर्णांकo the
-	 * gtt ग_लिखो करोमुख्य and manually flush cachelines (as required).
-	 * This optimizes क्रम the हाल when the gpu will use the data
-	 * right away and we thereक्रमe have to clflush anyway.
+	/* If we're not in the cpu write domain, set ourself into the
+	 * gtt write domain and manually flush cachelines (as required).
+	 * This optimizes for the case when the gpu will use the data
+	 * right away and we therefore have to clflush anyway.
 	 */
-	अगर (!obj->cache_dirty) अणु
+	if (!obj->cache_dirty) {
 		*needs_clflush |= CLFLUSH_AFTER;
 
 		/*
 		 * Same trick applies to invalidate partially written
-		 * cachelines पढ़ो beक्रमe writing.
+		 * cachelines read before writing.
 		 */
-		अगर (!(obj->पढ़ो_करोमुख्यs & I915_GEM_DOMAIN_CPU))
+		if (!(obj->read_domains & I915_GEM_DOMAIN_CPU))
 			*needs_clflush |= CLFLUSH_BEFORE;
-	पूर्ण
+	}
 
 out:
 	i915_gem_object_invalidate_frontbuffer(obj, ORIGIN_CPU);
 	obj->mm.dirty = true;
-	/* वापस with the pages pinned */
-	वापस 0;
+	/* return with the pages pinned */
+	return 0;
 
 err_unpin:
 	i915_gem_object_unpin_pages(obj);
-	वापस ret;
-पूर्ण
+	return ret;
+}

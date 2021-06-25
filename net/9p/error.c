@@ -1,233 +1,232 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * linux/fs/9p/error.c
  *
  * Error string handling
  *
  * Plan 9 uses error strings, Unix uses error numbers.  These functions
- * try to help manage that and provide क्रम dynamically adding error
+ * try to help manage that and provide for dynamically adding error
  * mappings.
  *
  *  Copyright (C) 2004 by Eric Van Hensbergen <ericvh@gmail.com>
  *  Copyright (C) 2002 by Ron Minnich <rminnich@lanl.gov>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/list.h>
-#समावेश <linux/jhash.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <net/9p/9p.h>
+#include <linux/module.h>
+#include <linux/list.h>
+#include <linux/jhash.h>
+#include <linux/errno.h>
+#include <net/9p/9p.h>
 
 /**
- * काष्ठा errormap - map string errors from Plan 9 to Linux numeric ids
+ * struct errormap - map string errors from Plan 9 to Linux numeric ids
  * @name: string sent over 9P
- * @val: numeric id most बंदly representing @name
+ * @val: numeric id most closely representing @name
  * @namelen: length of string
- * @list: hash-table list क्रम string lookup
+ * @list: hash-table list for string lookup
  */
-काष्ठा errormap अणु
-	अक्षर *name;
-	पूर्णांक val;
+struct errormap {
+	char *name;
+	int val;
 
-	पूर्णांक namelen;
-	काष्ठा hlist_node list;
-पूर्ण;
+	int namelen;
+	struct hlist_node list;
+};
 
-#घोषणा ERRHASHSZ		32
-अटल काष्ठा hlist_head hash_errmap[ERRHASHSZ];
+#define ERRHASHSZ		32
+static struct hlist_head hash_errmap[ERRHASHSZ];
 
 /* FixMe - reduce to a reasonable size */
-अटल काष्ठा errormap errmap[] = अणु
-	अणु"Operation not permitted", EPERMपूर्ण,
-	अणु"wstat prohibited", EPERMपूर्ण,
-	अणु"No such file or directory", ENOENTपूर्ण,
-	अणु"directory entry not found", ENOENTपूर्ण,
-	अणु"file not found", ENOENTपूर्ण,
-	अणु"Interrupted system call", EINTRपूर्ण,
-	अणु"Input/output error", EIOपूर्ण,
-	अणु"No such device or address", ENXIOपूर्ण,
-	अणु"Argument list too long", E2BIGपूर्ण,
-	अणु"Bad file descriptor", EBADFपूर्ण,
-	अणु"Resource temporarily unavailable", EAGAINपूर्ण,
-	अणु"Cannot allocate memory", ENOMEMपूर्ण,
-	अणु"Permission denied", EACCESपूर्ण,
-	अणु"Bad address", EFAULTपूर्ण,
-	अणु"Block device required", ENOTBLKपूर्ण,
-	अणु"Device or resource busy", EBUSYपूर्ण,
-	अणु"File exists", EEXISTपूर्ण,
-	अणु"Invalid cross-device link", EXDEVपूर्ण,
-	अणु"No such device", ENODEVपूर्ण,
-	अणु"Not a directory", ENOTसूचीपूर्ण,
-	अणु"Is a directory", EISसूचीपूर्ण,
-	अणु"Invalid argument", EINVALपूर्ण,
-	अणु"Too many open files in system", ENखातापूर्ण,
-	अणु"Too many open files", EMखातापूर्ण,
-	अणु"Text file busy", ETXTBSYपूर्ण,
-	अणु"File too large", EFBIGपूर्ण,
-	अणु"No space left on device", ENOSPCपूर्ण,
-	अणु"Illegal seek", ESPIPEपूर्ण,
-	अणु"Read-only file system", EROFSपूर्ण,
-	अणु"Too many links", EMLINKपूर्ण,
-	अणु"Broken pipe", EPIPEपूर्ण,
-	अणु"Numerical argument out of domain", गलत_तर्कपूर्ण,
-	अणु"Numerical result out of range", दुस्फलपूर्ण,
-	अणु"Resource deadlock avoided", EDEADLKपूर्ण,
-	अणु"File name too long", ENAMETOOLONGपूर्ण,
-	अणु"No locks available", ENOLCKपूर्ण,
-	अणु"Function not implemented", ENOSYSपूर्ण,
-	अणु"Directory not empty", ENOTEMPTYपूर्ण,
-	अणु"Too many levels of symbolic links", ELOOPपूर्ण,
-	अणु"No message of desired type", ENOMSGपूर्ण,
-	अणु"Identifier removed", EIDRMपूर्ण,
-	अणु"No data available", ENODATAपूर्ण,
-	अणु"Machine is not on the network", ENONETपूर्ण,
-	अणु"Package not installed", ENOPKGपूर्ण,
-	अणु"Object is remote", EREMOTEपूर्ण,
-	अणु"Link has been severed", ENOLINKपूर्ण,
-	अणु"Communication error on send", ECOMMपूर्ण,
-	अणु"Protocol error", EPROTOपूर्ण,
-	अणु"Bad message", EBADMSGपूर्ण,
-	अणु"File descriptor in bad state", EBADFDपूर्ण,
-	अणु"Streams pipe error", ESTRPIPEपूर्ण,
-	अणु"Too many users", EUSERSपूर्ण,
-	अणु"Socket operation on non-socket", ENOTSOCKपूर्ण,
-	अणु"Message too long", EMSGSIZEपूर्ण,
-	अणु"Protocol not available", ENOPROTOOPTपूर्ण,
-	अणु"Protocol not supported", EPROTONOSUPPORTपूर्ण,
-	अणु"Socket type not supported", ESOCKTNOSUPPORTपूर्ण,
-	अणु"Operation not supported", EOPNOTSUPPपूर्ण,
-	अणु"Protocol family not supported", EPFNOSUPPORTपूर्ण,
-	अणु"Network is down", ENETDOWNपूर्ण,
-	अणु"Network is unreachable", ENETUNREACHपूर्ण,
-	अणु"Network dropped connection on reset", ENETRESETपूर्ण,
-	अणु"Software caused connection abort", ECONNABORTEDपूर्ण,
-	अणु"Connection reset by peer", ECONNRESETपूर्ण,
-	अणु"No buffer space available", ENOBUFSपूर्ण,
-	अणु"Transport endpoint is already connected", EISCONNपूर्ण,
-	अणु"Transport endpoint is not connected", ENOTCONNपूर्ण,
-	अणु"Cannot send after transport endpoint shutdown", ESHUTDOWNपूर्ण,
-	अणु"Connection timed out", ETIMEDOUTपूर्ण,
-	अणु"Connection refused", ECONNREFUSEDपूर्ण,
-	अणु"Host is down", EHOSTDOWNपूर्ण,
-	अणु"No route to host", EHOSTUNREACHपूर्ण,
-	अणु"Operation already in progress", EALREADYपूर्ण,
-	अणु"Operation now in progress", EINPROGRESSपूर्ण,
-	अणु"Is a named type file", EISNAMपूर्ण,
-	अणु"Remote I/O error", EREMOTEIOपूर्ण,
-	अणु"Disk quota exceeded", EDQUOTपूर्ण,
+static struct errormap errmap[] = {
+	{"Operation not permitted", EPERM},
+	{"wstat prohibited", EPERM},
+	{"No such file or directory", ENOENT},
+	{"directory entry not found", ENOENT},
+	{"file not found", ENOENT},
+	{"Interrupted system call", EINTR},
+	{"Input/output error", EIO},
+	{"No such device or address", ENXIO},
+	{"Argument list too long", E2BIG},
+	{"Bad file descriptor", EBADF},
+	{"Resource temporarily unavailable", EAGAIN},
+	{"Cannot allocate memory", ENOMEM},
+	{"Permission denied", EACCES},
+	{"Bad address", EFAULT},
+	{"Block device required", ENOTBLK},
+	{"Device or resource busy", EBUSY},
+	{"File exists", EEXIST},
+	{"Invalid cross-device link", EXDEV},
+	{"No such device", ENODEV},
+	{"Not a directory", ENOTDIR},
+	{"Is a directory", EISDIR},
+	{"Invalid argument", EINVAL},
+	{"Too many open files in system", ENFILE},
+	{"Too many open files", EMFILE},
+	{"Text file busy", ETXTBSY},
+	{"File too large", EFBIG},
+	{"No space left on device", ENOSPC},
+	{"Illegal seek", ESPIPE},
+	{"Read-only file system", EROFS},
+	{"Too many links", EMLINK},
+	{"Broken pipe", EPIPE},
+	{"Numerical argument out of domain", EDOM},
+	{"Numerical result out of range", ERANGE},
+	{"Resource deadlock avoided", EDEADLK},
+	{"File name too long", ENAMETOOLONG},
+	{"No locks available", ENOLCK},
+	{"Function not implemented", ENOSYS},
+	{"Directory not empty", ENOTEMPTY},
+	{"Too many levels of symbolic links", ELOOP},
+	{"No message of desired type", ENOMSG},
+	{"Identifier removed", EIDRM},
+	{"No data available", ENODATA},
+	{"Machine is not on the network", ENONET},
+	{"Package not installed", ENOPKG},
+	{"Object is remote", EREMOTE},
+	{"Link has been severed", ENOLINK},
+	{"Communication error on send", ECOMM},
+	{"Protocol error", EPROTO},
+	{"Bad message", EBADMSG},
+	{"File descriptor in bad state", EBADFD},
+	{"Streams pipe error", ESTRPIPE},
+	{"Too many users", EUSERS},
+	{"Socket operation on non-socket", ENOTSOCK},
+	{"Message too long", EMSGSIZE},
+	{"Protocol not available", ENOPROTOOPT},
+	{"Protocol not supported", EPROTONOSUPPORT},
+	{"Socket type not supported", ESOCKTNOSUPPORT},
+	{"Operation not supported", EOPNOTSUPP},
+	{"Protocol family not supported", EPFNOSUPPORT},
+	{"Network is down", ENETDOWN},
+	{"Network is unreachable", ENETUNREACH},
+	{"Network dropped connection on reset", ENETRESET},
+	{"Software caused connection abort", ECONNABORTED},
+	{"Connection reset by peer", ECONNRESET},
+	{"No buffer space available", ENOBUFS},
+	{"Transport endpoint is already connected", EISCONN},
+	{"Transport endpoint is not connected", ENOTCONN},
+	{"Cannot send after transport endpoint shutdown", ESHUTDOWN},
+	{"Connection timed out", ETIMEDOUT},
+	{"Connection refused", ECONNREFUSED},
+	{"Host is down", EHOSTDOWN},
+	{"No route to host", EHOSTUNREACH},
+	{"Operation already in progress", EALREADY},
+	{"Operation now in progress", EINPROGRESS},
+	{"Is a named type file", EISNAM},
+	{"Remote I/O error", EREMOTEIO},
+	{"Disk quota exceeded", EDQUOT},
 /* errors from fossil, vacfs, and u9fs */
-	अणु"fid unknown or out of range", EBADFपूर्ण,
-	अणु"permission denied", EACCESपूर्ण,
-	अणु"file does not exist", ENOENTपूर्ण,
-	अणु"authentication failed", ECONNREFUSEDपूर्ण,
-	अणु"bad offset in directory read", ESPIPEपूर्ण,
-	अणु"bad use of fid", EBADFपूर्ण,
-	अणु"wstat can't convert between files and directories", EPERMपूर्ण,
-	अणु"directory is not empty", ENOTEMPTYपूर्ण,
-	अणु"file exists", EEXISTपूर्ण,
-	अणु"file already exists", EEXISTपूर्ण,
-	अणु"file or directory already exists", EEXISTपूर्ण,
-	अणु"fid already in use", EBADFपूर्ण,
-	अणु"file in use", ETXTBSYपूर्ण,
-	अणु"i/o error", EIOपूर्ण,
-	अणु"file already open for I/O", ETXTBSYपूर्ण,
-	अणु"illegal mode", EINVALपूर्ण,
-	अणु"illegal name", ENAMETOOLONGपूर्ण,
-	अणु"not a directory", ENOTसूचीपूर्ण,
-	अणु"not a member of proposed group", EPERMपूर्ण,
-	अणु"not owner", EACCESपूर्ण,
-	अणु"only owner can change group in wstat", EACCESपूर्ण,
-	अणु"read only file system", EROFSपूर्ण,
-	अणु"no access to special file", EPERMपूर्ण,
-	अणु"i/o count too large", EIOपूर्ण,
-	अणु"unknown group", EINVALपूर्ण,
-	अणु"unknown user", EINVALपूर्ण,
-	अणु"bogus wstat buffer", EPROTOपूर्ण,
-	अणु"exclusive use file already open", EAGAINपूर्ण,
-	अणु"corrupted directory entry", EIOपूर्ण,
-	अणु"corrupted file entry", EIOपूर्ण,
-	अणु"corrupted block label", EIOपूर्ण,
-	अणु"corrupted meta data", EIOपूर्ण,
-	अणु"illegal offset", EINVALपूर्ण,
-	अणु"illegal path element", ENOENTपूर्ण,
-	अणु"root of file system is corrupted", EIOपूर्ण,
-	अणु"corrupted super block", EIOपूर्ण,
-	अणु"protocol botch", EPROTOपूर्ण,
-	अणु"file system is full", ENOSPCपूर्ण,
-	अणु"file is in use", EAGAINपूर्ण,
-	अणु"directory entry is not allocated", ENOENTपूर्ण,
-	अणु"file is read only", EROFSपूर्ण,
-	अणु"file has been removed", EIDRMपूर्ण,
-	अणु"only support truncation to zero length", EPERMपूर्ण,
-	अणु"cannot remove root", EPERMपूर्ण,
-	अणु"file too big", EFBIGपूर्ण,
-	अणु"venti i/o error", EIOपूर्ण,
+	{"fid unknown or out of range", EBADF},
+	{"permission denied", EACCES},
+	{"file does not exist", ENOENT},
+	{"authentication failed", ECONNREFUSED},
+	{"bad offset in directory read", ESPIPE},
+	{"bad use of fid", EBADF},
+	{"wstat can't convert between files and directories", EPERM},
+	{"directory is not empty", ENOTEMPTY},
+	{"file exists", EEXIST},
+	{"file already exists", EEXIST},
+	{"file or directory already exists", EEXIST},
+	{"fid already in use", EBADF},
+	{"file in use", ETXTBSY},
+	{"i/o error", EIO},
+	{"file already open for I/O", ETXTBSY},
+	{"illegal mode", EINVAL},
+	{"illegal name", ENAMETOOLONG},
+	{"not a directory", ENOTDIR},
+	{"not a member of proposed group", EPERM},
+	{"not owner", EACCES},
+	{"only owner can change group in wstat", EACCES},
+	{"read only file system", EROFS},
+	{"no access to special file", EPERM},
+	{"i/o count too large", EIO},
+	{"unknown group", EINVAL},
+	{"unknown user", EINVAL},
+	{"bogus wstat buffer", EPROTO},
+	{"exclusive use file already open", EAGAIN},
+	{"corrupted directory entry", EIO},
+	{"corrupted file entry", EIO},
+	{"corrupted block label", EIO},
+	{"corrupted meta data", EIO},
+	{"illegal offset", EINVAL},
+	{"illegal path element", ENOENT},
+	{"root of file system is corrupted", EIO},
+	{"corrupted super block", EIO},
+	{"protocol botch", EPROTO},
+	{"file system is full", ENOSPC},
+	{"file is in use", EAGAIN},
+	{"directory entry is not allocated", ENOENT},
+	{"file is read only", EROFS},
+	{"file has been removed", EIDRM},
+	{"only support truncation to zero length", EPERM},
+	{"cannot remove root", EPERM},
+	{"file too big", EFBIG},
+	{"venti i/o error", EIO},
 	/* these are not errors */
-	अणु"u9fs rhostsauth: no authentication required", 0पूर्ण,
-	अणु"u9fs authnone: no authentication required", 0पूर्ण,
-	अणुशून्य, -1पूर्ण
-पूर्ण;
+	{"u9fs rhostsauth: no authentication required", 0},
+	{"u9fs authnone: no authentication required", 0},
+	{NULL, -1}
+};
 
 /**
- * p9_error_init - preload mappings पूर्णांकo hash list
+ * p9_error_init - preload mappings into hash list
  *
  */
 
-पूर्णांक p9_error_init(व्योम)
-अणु
-	काष्ठा errormap *c;
-	पूर्णांक bucket;
+int p9_error_init(void)
+{
+	struct errormap *c;
+	int bucket;
 
 	/* initialize hash table */
-	क्रम (bucket = 0; bucket < ERRHASHSZ; bucket++)
+	for (bucket = 0; bucket < ERRHASHSZ; bucket++)
 		INIT_HLIST_HEAD(&hash_errmap[bucket]);
 
-	/* load initial error map पूर्णांकo hash table */
-	क्रम (c = errmap; c->name != शून्य; c++) अणु
-		c->namelen = म_माप(c->name);
+	/* load initial error map into hash table */
+	for (c = errmap; c->name != NULL; c++) {
+		c->namelen = strlen(c->name);
 		bucket = jhash(c->name, c->namelen, 0) % ERRHASHSZ;
 		INIT_HLIST_NODE(&c->list);
 		hlist_add_head(&c->list, &hash_errmap[bucket]);
-	पूर्ण
+	}
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 EXPORT_SYMBOL(p9_error_init);
 
 /**
- * p9_errstr2त्रुटि_सं - convert error string to error number
+ * p9_errstr2errno - convert error string to error number
  * @errstr: error string
  * @len: length of error string
  *
  */
 
-पूर्णांक p9_errstr2त्रुटि_सं(अक्षर *errstr, पूर्णांक len)
-अणु
-	पूर्णांक त्रुटि_सं;
-	काष्ठा errormap *c;
-	पूर्णांक bucket;
+int p9_errstr2errno(char *errstr, int len)
+{
+	int errno;
+	struct errormap *c;
+	int bucket;
 
-	त्रुटि_सं = 0;
-	c = शून्य;
+	errno = 0;
+	c = NULL;
 	bucket = jhash(errstr, len, 0) % ERRHASHSZ;
-	hlist_क्रम_each_entry(c, &hash_errmap[bucket], list) अणु
-		अगर (c->namelen == len && !स_भेद(c->name, errstr, len)) अणु
-			त्रुटि_सं = c->val;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+	hlist_for_each_entry(c, &hash_errmap[bucket], list) {
+		if (c->namelen == len && !memcmp(c->name, errstr, len)) {
+			errno = c->val;
+			break;
+		}
+	}
 
-	अगर (त्रुटि_सं == 0) अणु
-		/* TODO: अगर error isn't found, add it dynamically */
+	if (errno == 0) {
+		/* TODO: if error isn't found, add it dynamically */
 		errstr[len] = 0;
 		pr_err("%s: server reported unknown error %s\n",
 		       __func__, errstr);
-		त्रुटि_सं = ESERVERFAULT;
-	पूर्ण
+		errno = ESERVERFAULT;
+	}
 
-	वापस -त्रुटि_सं;
-पूर्ण
-EXPORT_SYMBOL(p9_errstr2त्रुटि_सं);
+	return -errno;
+}
+EXPORT_SYMBOL(p9_errstr2errno);

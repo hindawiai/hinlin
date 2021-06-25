@@ -1,102 +1,101 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Frame Interval Monitor.
  *
  * Copyright (c) 2016 Mentor Graphics Inc.
  */
-#समावेश <linux/delay.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-subdev.h>
-#समावेश <media/imx.h>
-#समावेश "imx-media.h"
+#include <linux/delay.h>
+#include <linux/irq.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-subdev.h>
+#include <media/imx.h>
+#include "imx-media.h"
 
-क्रमागत अणु
+enum {
 	FIM_CL_ENABLE = 0,
 	FIM_CL_NUM,
 	FIM_CL_TOLERANCE_MIN,
 	FIM_CL_TOLERANCE_MAX,
 	FIM_CL_NUM_SKIP,
 	FIM_NUM_CONTROLS,
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	FIM_CL_ICAP_EDGE = 0,
 	FIM_CL_ICAP_CHANNEL,
 	FIM_NUM_ICAP_CONTROLS,
-पूर्ण;
+};
 
-#घोषणा FIM_CL_ENABLE_DEF          0 /* FIM disabled by शेष */
-#घोषणा FIM_CL_NUM_DEF             8 /* average 8 frames */
-#घोषणा FIM_CL_NUM_SKIP_DEF        2 /* skip 2 frames after restart */
-#घोषणा FIM_CL_TOLERANCE_MIN_DEF  50 /* usec */
-#घोषणा FIM_CL_TOLERANCE_MAX_DEF   0 /* no max tolerance (unbounded) */
+#define FIM_CL_ENABLE_DEF          0 /* FIM disabled by default */
+#define FIM_CL_NUM_DEF             8 /* average 8 frames */
+#define FIM_CL_NUM_SKIP_DEF        2 /* skip 2 frames after restart */
+#define FIM_CL_TOLERANCE_MIN_DEF  50 /* usec */
+#define FIM_CL_TOLERANCE_MAX_DEF   0 /* no max tolerance (unbounded) */
 
-काष्ठा imx_media_fim अणु
+struct imx_media_fim {
 	/* the owning subdev of this fim instance */
-	काष्ठा v4l2_subdev *sd;
+	struct v4l2_subdev *sd;
 
 	/* FIM's control handler */
-	काष्ठा v4l2_ctrl_handler ctrl_handler;
+	struct v4l2_ctrl_handler ctrl_handler;
 
 	/* control clusters */
-	काष्ठा v4l2_ctrl  *ctrl[FIM_NUM_CONTROLS];
-	काष्ठा v4l2_ctrl  *icap_ctrl[FIM_NUM_ICAP_CONTROLS];
+	struct v4l2_ctrl  *ctrl[FIM_NUM_CONTROLS];
+	struct v4l2_ctrl  *icap_ctrl[FIM_NUM_ICAP_CONTROLS];
 
 	spinlock_t        lock; /* protect control values */
 
 	/* current control values */
 	bool              enabled;
-	पूर्णांक               num_avg;
-	पूर्णांक               num_skip;
-	अचिन्हित दीर्घ     tolerance_min; /* usec */
-	अचिन्हित दीर्घ     tolerance_max; /* usec */
+	int               num_avg;
+	int               num_skip;
+	unsigned long     tolerance_min; /* usec */
+	unsigned long     tolerance_max; /* usec */
 	/* input capture method of measuring FI */
-	पूर्णांक               icap_channel;
-	पूर्णांक               icap_flags;
+	int               icap_channel;
+	int               icap_flags;
 
-	पूर्णांक               counter;
-	kसमय_प्रकार		  last_ts;
-	अचिन्हित दीर्घ     sum;       /* usec */
-	अचिन्हित दीर्घ     nominal;   /* usec */
+	int               counter;
+	ktime_t		  last_ts;
+	unsigned long     sum;       /* usec */
+	unsigned long     nominal;   /* usec */
 
-	काष्ठा completion icap_first_event;
+	struct completion icap_first_event;
 	bool              stream_on;
-पूर्ण;
+};
 
-#घोषणा icap_enabled(fim) ((fim)->icap_flags != IRQ_TYPE_NONE)
+#define icap_enabled(fim) ((fim)->icap_flags != IRQ_TYPE_NONE)
 
-अटल व्योम update_fim_nominal(काष्ठा imx_media_fim *fim,
-			       स्थिर काष्ठा v4l2_fract *fi)
-अणु
-	अगर (fi->denominator == 0) अणु
+static void update_fim_nominal(struct imx_media_fim *fim,
+			       const struct v4l2_fract *fi)
+{
+	if (fi->denominator == 0) {
 		dev_dbg(fim->sd->dev, "no frame interval, FIM disabled\n");
 		fim->enabled = false;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	fim->nominal = DIV_ROUND_CLOSEST_ULL(1000000ULL * (u64)fi->numerator,
 					     fi->denominator);
 
 	dev_dbg(fim->sd->dev, "FI=%lu usec\n", fim->nominal);
-पूर्ण
+}
 
-अटल व्योम reset_fim(काष्ठा imx_media_fim *fim, bool curval)
-अणु
-	काष्ठा v4l2_ctrl *icap_chan = fim->icap_ctrl[FIM_CL_ICAP_CHANNEL];
-	काष्ठा v4l2_ctrl *icap_edge = fim->icap_ctrl[FIM_CL_ICAP_EDGE];
-	काष्ठा v4l2_ctrl *en = fim->ctrl[FIM_CL_ENABLE];
-	काष्ठा v4l2_ctrl *num = fim->ctrl[FIM_CL_NUM];
-	काष्ठा v4l2_ctrl *skip = fim->ctrl[FIM_CL_NUM_SKIP];
-	काष्ठा v4l2_ctrl *tol_min = fim->ctrl[FIM_CL_TOLERANCE_MIN];
-	काष्ठा v4l2_ctrl *tol_max = fim->ctrl[FIM_CL_TOLERANCE_MAX];
+static void reset_fim(struct imx_media_fim *fim, bool curval)
+{
+	struct v4l2_ctrl *icap_chan = fim->icap_ctrl[FIM_CL_ICAP_CHANNEL];
+	struct v4l2_ctrl *icap_edge = fim->icap_ctrl[FIM_CL_ICAP_EDGE];
+	struct v4l2_ctrl *en = fim->ctrl[FIM_CL_ENABLE];
+	struct v4l2_ctrl *num = fim->ctrl[FIM_CL_NUM];
+	struct v4l2_ctrl *skip = fim->ctrl[FIM_CL_NUM_SKIP];
+	struct v4l2_ctrl *tol_min = fim->ctrl[FIM_CL_TOLERANCE_MIN];
+	struct v4l2_ctrl *tol_max = fim->ctrl[FIM_CL_TOLERANCE_MAX];
 
-	अगर (curval) अणु
+	if (curval) {
 		fim->enabled = en->cur.val;
 		fim->icap_flags = icap_edge->cur.val;
 		fim->icap_channel = icap_chan->cur.val;
@@ -104,7 +103,7 @@
 		fim->num_skip = skip->cur.val;
 		fim->tolerance_min = tol_min->cur.val;
 		fim->tolerance_max = tol_max->cur.val;
-	पूर्ण अन्यथा अणु
+	} else {
 		fim->enabled = en->val;
 		fim->icap_flags = icap_edge->val;
 		fim->icap_channel = icap_chan->val;
@@ -112,67 +111,67 @@
 		fim->num_skip = skip->val;
 		fim->tolerance_min = tol_min->val;
 		fim->tolerance_max = tol_max->val;
-	पूर्ण
+	}
 
-	/* disable tolerance range अगर max <= min */
-	अगर (fim->tolerance_max <= fim->tolerance_min)
+	/* disable tolerance range if max <= min */
+	if (fim->tolerance_max <= fim->tolerance_min)
 		fim->tolerance_max = 0;
 
-	/* num_skip must be >= 1 अगर input capture not used */
-	अगर (!icap_enabled(fim))
-		fim->num_skip = max_t(पूर्णांक, fim->num_skip, 1);
+	/* num_skip must be >= 1 if input capture not used */
+	if (!icap_enabled(fim))
+		fim->num_skip = max_t(int, fim->num_skip, 1);
 
 	fim->counter = -fim->num_skip;
 	fim->sum = 0;
-पूर्ण
+}
 
-अटल व्योम send_fim_event(काष्ठा imx_media_fim *fim, अचिन्हित दीर्घ error)
-अणु
-	अटल स्थिर काष्ठा v4l2_event ev = अणु
+static void send_fim_event(struct imx_media_fim *fim, unsigned long error)
+{
+	static const struct v4l2_event ev = {
 		.type = V4L2_EVENT_IMX_FRAME_INTERVAL_ERROR,
-	पूर्ण;
+	};
 
-	v4l2_subdev_notअगरy_event(fim->sd, &ev);
-पूर्ण
+	v4l2_subdev_notify_event(fim->sd, &ev);
+}
 
 /*
- * Monitor an averaged frame पूर्णांकerval. If the average deviates too much
- * from the nominal frame rate, send the frame पूर्णांकerval error event. The
- * frame पूर्णांकervals are averaged in order to quiet noise from
- * (presumably अक्रमom) पूर्णांकerrupt latency.
+ * Monitor an averaged frame interval. If the average deviates too much
+ * from the nominal frame rate, send the frame interval error event. The
+ * frame intervals are averaged in order to quiet noise from
+ * (presumably random) interrupt latency.
  */
-अटल व्योम frame_पूर्णांकerval_monitor(काष्ठा imx_media_fim *fim,
-				   kसमय_प्रकार बारtamp)
-अणु
-	दीर्घ दीर्घ पूर्णांकerval, error;
-	अचिन्हित दीर्घ error_avg;
+static void frame_interval_monitor(struct imx_media_fim *fim,
+				   ktime_t timestamp)
+{
+	long long interval, error;
+	unsigned long error_avg;
 	bool send_event = false;
 
-	अगर (!fim->enabled || ++fim->counter <= 0)
-		जाओ out_update_ts;
+	if (!fim->enabled || ++fim->counter <= 0)
+		goto out_update_ts;
 
-	/* max error is less than l00तगs, so use 32-bit भागision or fail */
-	पूर्णांकerval = kसमय_प्रकारo_ns(kसमय_sub(बारtamp, fim->last_ts));
-	error = असल(पूर्णांकerval - NSEC_PER_USEC * (u64)fim->nominal);
-	अगर (error > U32_MAX)
+	/* max error is less than l00µs, so use 32-bit division or fail */
+	interval = ktime_to_ns(ktime_sub(timestamp, fim->last_ts));
+	error = abs(interval - NSEC_PER_USEC * (u64)fim->nominal);
+	if (error > U32_MAX)
 		error = U32_MAX;
-	अन्यथा
-		error = असल((u32)error / NSEC_PER_USEC);
+	else
+		error = abs((u32)error / NSEC_PER_USEC);
 
-	अगर (fim->tolerance_max && error >= fim->tolerance_max) अणु
+	if (fim->tolerance_max && error >= fim->tolerance_max) {
 		dev_dbg(fim->sd->dev,
 			"FIM: %llu ignored, out of tolerance bounds\n",
 			error);
 		fim->counter--;
-		जाओ out_update_ts;
-	पूर्ण
+		goto out_update_ts;
+	}
 
 	fim->sum += error;
 
-	अगर (fim->counter == fim->num_avg) अणु
+	if (fim->counter == fim->num_avg) {
 		error_avg = DIV_ROUND_CLOSEST(fim->sum, fim->num_avg);
 
-		अगर (error_avg > fim->tolerance_min)
+		if (error_avg > fim->tolerance_min)
 			send_event = true;
 
 		dev_dbg(fim->sd->dev, "FIM: error: %lu usec%s\n",
@@ -180,119 +179,119 @@
 
 		fim->counter = 0;
 		fim->sum = 0;
-	पूर्ण
+	}
 
 out_update_ts:
-	fim->last_ts = बारtamp;
-	अगर (send_event)
+	fim->last_ts = timestamp;
+	if (send_event)
 		send_fim_event(fim, error_avg);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_IMX_GPT_ICAP
+#ifdef CONFIG_IMX_GPT_ICAP
 /*
- * Input Capture method of measuring frame पूर्णांकervals. Not subject
- * to पूर्णांकerrupt latency.
+ * Input Capture method of measuring frame intervals. Not subject
+ * to interrupt latency.
  */
-अटल व्योम fim_input_capture_handler(पूर्णांक channel, व्योम *dev_id,
-				      kसमय_प्रकार बारtamp)
-अणु
-	काष्ठा imx_media_fim *fim = dev_id;
-	अचिन्हित दीर्घ flags;
+static void fim_input_capture_handler(int channel, void *dev_id,
+				      ktime_t timestamp)
+{
+	struct imx_media_fim *fim = dev_id;
+	unsigned long flags;
 
 	spin_lock_irqsave(&fim->lock, flags);
 
-	frame_पूर्णांकerval_monitor(fim, बारtamp);
+	frame_interval_monitor(fim, timestamp);
 
-	अगर (!completion_करोne(&fim->icap_first_event))
+	if (!completion_done(&fim->icap_first_event))
 		complete(&fim->icap_first_event);
 
 	spin_unlock_irqrestore(&fim->lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक fim_request_input_capture(काष्ठा imx_media_fim *fim)
-अणु
+static int fim_request_input_capture(struct imx_media_fim *fim)
+{
 	init_completion(&fim->icap_first_event);
 
-	वापस mxc_request_input_capture(fim->icap_channel,
+	return mxc_request_input_capture(fim->icap_channel,
 					 fim_input_capture_handler,
 					 fim->icap_flags, fim);
-पूर्ण
+}
 
-अटल व्योम fim_मुक्त_input_capture(काष्ठा imx_media_fim *fim)
-अणु
-	mxc_मुक्त_input_capture(fim->icap_channel, fim);
-पूर्ण
+static void fim_free_input_capture(struct imx_media_fim *fim)
+{
+	mxc_free_input_capture(fim->icap_channel, fim);
+}
 
-#अन्यथा /* CONFIG_IMX_GPT_ICAP */
+#else /* CONFIG_IMX_GPT_ICAP */
 
-अटल पूर्णांक fim_request_input_capture(काष्ठा imx_media_fim *fim)
-अणु
-	वापस 0;
-पूर्ण
+static int fim_request_input_capture(struct imx_media_fim *fim)
+{
+	return 0;
+}
 
-अटल व्योम fim_मुक्त_input_capture(काष्ठा imx_media_fim *fim)
-अणु
-पूर्ण
+static void fim_free_input_capture(struct imx_media_fim *fim)
+{
+}
 
-#पूर्ण_अगर /* CONFIG_IMX_GPT_ICAP */
+#endif /* CONFIG_IMX_GPT_ICAP */
 
 /*
- * In हाल we are monitoring the first frame पूर्णांकerval after streamon
- * (when fim->num_skip = 0), we need a valid fim->last_ts beक्रमe we
+ * In case we are monitoring the first frame interval after streamon
+ * (when fim->num_skip = 0), we need a valid fim->last_ts before we
  * can begin. This only applies to the input capture method. It is not
  * possible to accurately measure the first FI after streamon using the
- * खातापूर्ण method, so fim->num_skip minimum is set to 1 in that हाल, so this
- * function is a noop when the खातापूर्ण method is used.
+ * EOF method, so fim->num_skip minimum is set to 1 in that case, so this
+ * function is a noop when the EOF method is used.
  */
-अटल व्योम fim_acquire_first_ts(काष्ठा imx_media_fim *fim)
-अणु
-	अचिन्हित दीर्घ ret;
+static void fim_acquire_first_ts(struct imx_media_fim *fim)
+{
+	unsigned long ret;
 
-	अगर (!fim->enabled || fim->num_skip > 0)
-		वापस;
+	if (!fim->enabled || fim->num_skip > 0)
+		return;
 
-	ret = रुको_क्रम_completion_समयout(
+	ret = wait_for_completion_timeout(
 		&fim->icap_first_event,
-		msecs_to_jअगरfies(IMX_MEDIA_खातापूर्ण_TIMEOUT));
-	अगर (ret == 0)
+		msecs_to_jiffies(IMX_MEDIA_EOF_TIMEOUT));
+	if (ret == 0)
 		v4l2_warn(fim->sd, "wait first icap event timeout\n");
-पूर्ण
+}
 
 /* FIM Controls */
-अटल पूर्णांक fim_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा imx_media_fim *fim = container_of(ctrl->handler,
-						 काष्ठा imx_media_fim,
+static int fim_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct imx_media_fim *fim = container_of(ctrl->handler,
+						 struct imx_media_fim,
 						 ctrl_handler);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+	unsigned long flags;
+	int ret = 0;
 
 	spin_lock_irqsave(&fim->lock, flags);
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_IMX_FIM_ENABLE:
-		अवरोध;
-	हाल V4L2_CID_IMX_FIM_ICAP_EDGE:
-		अगर (fim->stream_on)
+	switch (ctrl->id) {
+	case V4L2_CID_IMX_FIM_ENABLE:
+		break;
+	case V4L2_CID_IMX_FIM_ICAP_EDGE:
+		if (fim->stream_on)
 			ret = -EBUSY;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	अगर (!ret)
+	if (!ret)
 		reset_fim(fim, false);
 
 	spin_unlock_irqrestore(&fim->lock, flags);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops fim_ctrl_ops = अणु
+static const struct v4l2_ctrl_ops fim_ctrl_ops = {
 	.s_ctrl = fim_s_ctrl,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_ctrl_config fim_ctrl[] = अणु
-	[FIM_CL_ENABLE] = अणु
+static const struct v4l2_ctrl_config fim_ctrl[] = {
+	[FIM_CL_ENABLE] = {
 		.ops = &fim_ctrl_ops,
 		.id = V4L2_CID_IMX_FIM_ENABLE,
 		.name = "FIM Enable",
@@ -301,8 +300,8 @@ out_update_ts:
 		.min = 0,
 		.max = 1,
 		.step = 1,
-	पूर्ण,
-	[FIM_CL_NUM] = अणु
+	},
+	[FIM_CL_NUM] = {
 		.ops = &fim_ctrl_ops,
 		.id = V4L2_CID_IMX_FIM_NUM,
 		.name = "FIM Num Average",
@@ -311,8 +310,8 @@ out_update_ts:
 		.min =  1, /* no averaging */
 		.max = 64, /* average 64 frames */
 		.step = 1,
-	पूर्ण,
-	[FIM_CL_TOLERANCE_MIN] = अणु
+	},
+	[FIM_CL_TOLERANCE_MIN] = {
 		.ops = &fim_ctrl_ops,
 		.id = V4L2_CID_IMX_FIM_TOLERANCE_MIN,
 		.name = "FIM Tolerance Min",
@@ -321,8 +320,8 @@ out_update_ts:
 		.min =    2,
 		.max =  200,
 		.step =   1,
-	पूर्ण,
-	[FIM_CL_TOLERANCE_MAX] = अणु
+	},
+	[FIM_CL_TOLERANCE_MAX] = {
 		.ops = &fim_ctrl_ops,
 		.id = V4L2_CID_IMX_FIM_TOLERANCE_MAX,
 		.name = "FIM Tolerance Max",
@@ -331,8 +330,8 @@ out_update_ts:
 		.min =    0,
 		.max =  500,
 		.step =   1,
-	पूर्ण,
-	[FIM_CL_NUM_SKIP] = अणु
+	},
+	[FIM_CL_NUM_SKIP] = {
 		.ops = &fim_ctrl_ops,
 		.id = V4L2_CID_IMX_FIM_NUM_SKIP,
 		.name = "FIM Num Skip",
@@ -341,21 +340,21 @@ out_update_ts:
 		.min =   0, /* skip no frames */
 		.max = 256, /* skip 256 frames */
 		.step =  1,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा v4l2_ctrl_config fim_icap_ctrl[] = अणु
-	[FIM_CL_ICAP_EDGE] = अणु
+static const struct v4l2_ctrl_config fim_icap_ctrl[] = {
+	[FIM_CL_ICAP_EDGE] = {
 		.ops = &fim_ctrl_ops,
 		.id = V4L2_CID_IMX_FIM_ICAP_EDGE,
 		.name = "FIM Input Capture Edge",
 		.type = V4L2_CTRL_TYPE_INTEGER,
-		.def =  IRQ_TYPE_NONE, /* input capture disabled by शेष */
+		.def =  IRQ_TYPE_NONE, /* input capture disabled by default */
 		.min =  IRQ_TYPE_NONE,
 		.max =  IRQ_TYPE_EDGE_BOTH,
 		.step = 1,
-	पूर्ण,
-	[FIM_CL_ICAP_CHANNEL] = अणु
+	},
+	[FIM_CL_ICAP_CHANNEL] = {
 		.ops = &fim_ctrl_ops,
 		.id = V4L2_CID_IMX_FIM_ICAP_CHANNEL,
 		.name = "FIM Input Capture Channel",
@@ -364,123 +363,123 @@ out_update_ts:
 		.min =  0,
 		.max =  1,
 		.step = 1,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल पूर्णांक init_fim_controls(काष्ठा imx_media_fim *fim)
-अणु
-	काष्ठा v4l2_ctrl_handler *hdlr = &fim->ctrl_handler;
-	पूर्णांक i, ret;
+static int init_fim_controls(struct imx_media_fim *fim)
+{
+	struct v4l2_ctrl_handler *hdlr = &fim->ctrl_handler;
+	int i, ret;
 
 	v4l2_ctrl_handler_init(hdlr, FIM_NUM_CONTROLS + FIM_NUM_ICAP_CONTROLS);
 
-	क्रम (i = 0; i < FIM_NUM_CONTROLS; i++)
+	for (i = 0; i < FIM_NUM_CONTROLS; i++)
 		fim->ctrl[i] = v4l2_ctrl_new_custom(hdlr,
 						    &fim_ctrl[i],
-						    शून्य);
-	क्रम (i = 0; i < FIM_NUM_ICAP_CONTROLS; i++)
+						    NULL);
+	for (i = 0; i < FIM_NUM_ICAP_CONTROLS; i++)
 		fim->icap_ctrl[i] = v4l2_ctrl_new_custom(hdlr,
 							 &fim_icap_ctrl[i],
-							 शून्य);
-	अगर (hdlr->error) अणु
+							 NULL);
+	if (hdlr->error) {
 		ret = hdlr->error;
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	v4l2_ctrl_cluster(FIM_NUM_CONTROLS, fim->ctrl);
 	v4l2_ctrl_cluster(FIM_NUM_ICAP_CONTROLS, fim->icap_ctrl);
 
-	वापस 0;
-err_मुक्त:
-	v4l2_ctrl_handler_मुक्त(hdlr);
-	वापस ret;
-पूर्ण
+	return 0;
+err_free:
+	v4l2_ctrl_handler_free(hdlr);
+	return ret;
+}
 
 /*
- * Monitor frame पूर्णांकervals via खातापूर्ण पूर्णांकerrupt. This method is
- * subject to uncertaपूर्णांकy errors पूर्णांकroduced by पूर्णांकerrupt latency.
+ * Monitor frame intervals via EOF interrupt. This method is
+ * subject to uncertainty errors introduced by interrupt latency.
  *
- * This is a noop अगर the Input Capture method is being used, since
- * the frame_पूर्णांकerval_monitor() is called by the input capture event
- * callback handler in that हाल.
+ * This is a noop if the Input Capture method is being used, since
+ * the frame_interval_monitor() is called by the input capture event
+ * callback handler in that case.
  */
-व्योम imx_media_fim_eof_monitor(काष्ठा imx_media_fim *fim, kसमय_प्रकार बारtamp)
-अणु
-	अचिन्हित दीर्घ flags;
+void imx_media_fim_eof_monitor(struct imx_media_fim *fim, ktime_t timestamp)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&fim->lock, flags);
 
-	अगर (!icap_enabled(fim))
-		frame_पूर्णांकerval_monitor(fim, बारtamp);
+	if (!icap_enabled(fim))
+		frame_interval_monitor(fim, timestamp);
 
 	spin_unlock_irqrestore(&fim->lock, flags);
-पूर्ण
+}
 
 /* Called by the subdev in its s_stream callback */
-पूर्णांक imx_media_fim_set_stream(काष्ठा imx_media_fim *fim,
-			     स्थिर काष्ठा v4l2_fract *fi,
+int imx_media_fim_set_stream(struct imx_media_fim *fim,
+			     const struct v4l2_fract *fi,
 			     bool on)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret = 0;
+{
+	unsigned long flags;
+	int ret = 0;
 
 	v4l2_ctrl_lock(fim->ctrl[FIM_CL_ENABLE]);
 
-	अगर (fim->stream_on == on)
-		जाओ out;
+	if (fim->stream_on == on)
+		goto out;
 
-	अगर (on) अणु
+	if (on) {
 		spin_lock_irqsave(&fim->lock, flags);
 		reset_fim(fim, true);
 		update_fim_nominal(fim, fi);
 		spin_unlock_irqrestore(&fim->lock, flags);
 
-		अगर (icap_enabled(fim)) अणु
+		if (icap_enabled(fim)) {
 			ret = fim_request_input_capture(fim);
-			अगर (ret)
-				जाओ out;
+			if (ret)
+				goto out;
 			fim_acquire_first_ts(fim);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (icap_enabled(fim))
-			fim_मुक्त_input_capture(fim);
-	पूर्ण
+		}
+	} else {
+		if (icap_enabled(fim))
+			fim_free_input_capture(fim);
+	}
 
 	fim->stream_on = on;
 out:
 	v4l2_ctrl_unlock(fim->ctrl[FIM_CL_ENABLE]);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक imx_media_fim_add_controls(काष्ठा imx_media_fim *fim)
-अणु
+int imx_media_fim_add_controls(struct imx_media_fim *fim)
+{
 	/* add the FIM controls to the calling subdev ctrl handler */
-	वापस v4l2_ctrl_add_handler(fim->sd->ctrl_handler,
-				     &fim->ctrl_handler, शून्य, false);
-पूर्ण
+	return v4l2_ctrl_add_handler(fim->sd->ctrl_handler,
+				     &fim->ctrl_handler, NULL, false);
+}
 
-/* Called by the subdev in its subdev रेजिस्टरed callback */
-काष्ठा imx_media_fim *imx_media_fim_init(काष्ठा v4l2_subdev *sd)
-अणु
-	काष्ठा imx_media_fim *fim;
-	पूर्णांक ret;
+/* Called by the subdev in its subdev registered callback */
+struct imx_media_fim *imx_media_fim_init(struct v4l2_subdev *sd)
+{
+	struct imx_media_fim *fim;
+	int ret;
 
-	fim = devm_kzalloc(sd->dev, माप(*fim), GFP_KERNEL);
-	अगर (!fim)
-		वापस ERR_PTR(-ENOMEM);
+	fim = devm_kzalloc(sd->dev, sizeof(*fim), GFP_KERNEL);
+	if (!fim)
+		return ERR_PTR(-ENOMEM);
 
 	fim->sd = sd;
 
 	spin_lock_init(&fim->lock);
 
 	ret = init_fim_controls(fim);
-	अगर (ret)
-		वापस ERR_PTR(ret);
+	if (ret)
+		return ERR_PTR(ret);
 
-	वापस fim;
-पूर्ण
+	return fim;
+}
 
-व्योम imx_media_fim_मुक्त(काष्ठा imx_media_fim *fim)
-अणु
-	v4l2_ctrl_handler_मुक्त(&fim->ctrl_handler);
-पूर्ण
+void imx_media_fim_free(struct imx_media_fim *fim)
+{
+	v4l2_ctrl_handler_free(&fim->ctrl_handler);
+}

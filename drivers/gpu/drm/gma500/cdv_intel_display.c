@@ -1,141 +1,140 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright तऊ 2006-2011 Intel Corporation
+ * Copyright © 2006-2011 Intel Corporation
  *
  * Authors:
  *	Eric Anholt <eric@anholt.net>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/i2c.h>
+#include <linux/delay.h>
+#include <linux/i2c.h>
 
-#समावेश <drm/drm_crtc.h>
+#include <drm/drm_crtc.h>
 
-#समावेश "cdv_device.h"
-#समावेश "framebuffer.h"
-#समावेश "gma_display.h"
-#समावेश "power.h"
-#समावेश "psb_drv.h"
-#समावेश "psb_intel_drv.h"
-#समावेश "psb_intel_reg.h"
+#include "cdv_device.h"
+#include "framebuffer.h"
+#include "gma_display.h"
+#include "power.h"
+#include "psb_drv.h"
+#include "psb_intel_drv.h"
+#include "psb_intel_reg.h"
 
-अटल bool cdv_पूर्णांकel_find_dp_pll(स्थिर काष्ठा gma_limit_t *limit,
-				  काष्ठा drm_crtc *crtc, पूर्णांक target,
-				  पूर्णांक refclk, काष्ठा gma_घड़ी_प्रकार *best_घड़ी);
+static bool cdv_intel_find_dp_pll(const struct gma_limit_t *limit,
+				  struct drm_crtc *crtc, int target,
+				  int refclk, struct gma_clock_t *best_clock);
 
 
-#घोषणा CDV_LIMIT_SINGLE_LVDS_96	0
-#घोषणा CDV_LIMIT_SINGLE_LVDS_100	1
-#घोषणा CDV_LIMIT_DAC_HDMI_27		2
-#घोषणा CDV_LIMIT_DAC_HDMI_96		3
-#घोषणा CDV_LIMIT_DP_27			4
-#घोषणा CDV_LIMIT_DP_100		5
+#define CDV_LIMIT_SINGLE_LVDS_96	0
+#define CDV_LIMIT_SINGLE_LVDS_100	1
+#define CDV_LIMIT_DAC_HDMI_27		2
+#define CDV_LIMIT_DAC_HDMI_96		3
+#define CDV_LIMIT_DP_27			4
+#define CDV_LIMIT_DP_100		5
 
-अटल स्थिर काष्ठा gma_limit_t cdv_पूर्णांकel_limits[] = अणु
-	अणु			/* CDV_SINGLE_LVDS_96MHz */
-	 .करोt = अणु.min = 20000, .max = 115500पूर्ण,
-	 .vco = अणु.min = 1800000, .max = 3600000पूर्ण,
-	 .n = अणु.min = 2, .max = 6पूर्ण,
-	 .m = अणु.min = 60, .max = 160पूर्ण,
-	 .m1 = अणु.min = 0, .max = 0पूर्ण,
-	 .m2 = अणु.min = 58, .max = 158पूर्ण,
-	 .p = अणु.min = 28, .max = 140पूर्ण,
-	 .p1 = अणु.min = 2, .max = 10पूर्ण,
-	 .p2 = अणु.करोt_limit = 200000, .p2_slow = 14, .p2_fast = 14पूर्ण,
+static const struct gma_limit_t cdv_intel_limits[] = {
+	{			/* CDV_SINGLE_LVDS_96MHz */
+	 .dot = {.min = 20000, .max = 115500},
+	 .vco = {.min = 1800000, .max = 3600000},
+	 .n = {.min = 2, .max = 6},
+	 .m = {.min = 60, .max = 160},
+	 .m1 = {.min = 0, .max = 0},
+	 .m2 = {.min = 58, .max = 158},
+	 .p = {.min = 28, .max = 140},
+	 .p1 = {.min = 2, .max = 10},
+	 .p2 = {.dot_limit = 200000, .p2_slow = 14, .p2_fast = 14},
 	 .find_pll = gma_find_best_pll,
-	 पूर्ण,
-	अणु			/* CDV_SINGLE_LVDS_100MHz */
-	 .करोt = अणु.min = 20000, .max = 115500पूर्ण,
-	 .vco = अणु.min = 1800000, .max = 3600000पूर्ण,
-	 .n = अणु.min = 2, .max = 6पूर्ण,
-	 .m = अणु.min = 60, .max = 160पूर्ण,
-	 .m1 = अणु.min = 0, .max = 0पूर्ण,
-	 .m2 = अणु.min = 58, .max = 158पूर्ण,
-	 .p = अणु.min = 28, .max = 140पूर्ण,
-	 .p1 = अणु.min = 2, .max = 10पूर्ण,
+	 },
+	{			/* CDV_SINGLE_LVDS_100MHz */
+	 .dot = {.min = 20000, .max = 115500},
+	 .vco = {.min = 1800000, .max = 3600000},
+	 .n = {.min = 2, .max = 6},
+	 .m = {.min = 60, .max = 160},
+	 .m1 = {.min = 0, .max = 0},
+	 .m2 = {.min = 58, .max = 158},
+	 .p = {.min = 28, .max = 140},
+	 .p1 = {.min = 2, .max = 10},
 	 /* The single-channel range is 25-112Mhz, and dual-channel
 	  * is 80-224Mhz.  Prefer single channel as much as possible.
 	  */
-	 .p2 = अणु.करोt_limit = 200000, .p2_slow = 14, .p2_fast = 14पूर्ण,
+	 .p2 = {.dot_limit = 200000, .p2_slow = 14, .p2_fast = 14},
 	 .find_pll = gma_find_best_pll,
-	 पूर्ण,
-	अणु			/* CDV_DAC_HDMI_27MHz */
-	 .करोt = अणु.min = 20000, .max = 400000पूर्ण,
-	 .vco = अणु.min = 1809000, .max = 3564000पूर्ण,
-	 .n = अणु.min = 1, .max = 1पूर्ण,
-	 .m = अणु.min = 67, .max = 132पूर्ण,
-	 .m1 = अणु.min = 0, .max = 0पूर्ण,
-	 .m2 = अणु.min = 65, .max = 130पूर्ण,
-	 .p = अणु.min = 5, .max = 90पूर्ण,
-	 .p1 = अणु.min = 1, .max = 9पूर्ण,
-	 .p2 = अणु.करोt_limit = 225000, .p2_slow = 10, .p2_fast = 5पूर्ण,
+	 },
+	{			/* CDV_DAC_HDMI_27MHz */
+	 .dot = {.min = 20000, .max = 400000},
+	 .vco = {.min = 1809000, .max = 3564000},
+	 .n = {.min = 1, .max = 1},
+	 .m = {.min = 67, .max = 132},
+	 .m1 = {.min = 0, .max = 0},
+	 .m2 = {.min = 65, .max = 130},
+	 .p = {.min = 5, .max = 90},
+	 .p1 = {.min = 1, .max = 9},
+	 .p2 = {.dot_limit = 225000, .p2_slow = 10, .p2_fast = 5},
 	 .find_pll = gma_find_best_pll,
-	 पूर्ण,
-	अणु			/* CDV_DAC_HDMI_96MHz */
-	 .करोt = अणु.min = 20000, .max = 400000पूर्ण,
-	 .vco = अणु.min = 1800000, .max = 3600000पूर्ण,
-	 .n = अणु.min = 2, .max = 6पूर्ण,
-	 .m = अणु.min = 60, .max = 160पूर्ण,
-	 .m1 = अणु.min = 0, .max = 0पूर्ण,
-	 .m2 = अणु.min = 58, .max = 158पूर्ण,
-	 .p = अणु.min = 5, .max = 100पूर्ण,
-	 .p1 = अणु.min = 1, .max = 10पूर्ण,
-	 .p2 = अणु.करोt_limit = 225000, .p2_slow = 10, .p2_fast = 5पूर्ण,
+	 },
+	{			/* CDV_DAC_HDMI_96MHz */
+	 .dot = {.min = 20000, .max = 400000},
+	 .vco = {.min = 1800000, .max = 3600000},
+	 .n = {.min = 2, .max = 6},
+	 .m = {.min = 60, .max = 160},
+	 .m1 = {.min = 0, .max = 0},
+	 .m2 = {.min = 58, .max = 158},
+	 .p = {.min = 5, .max = 100},
+	 .p1 = {.min = 1, .max = 10},
+	 .p2 = {.dot_limit = 225000, .p2_slow = 10, .p2_fast = 5},
 	 .find_pll = gma_find_best_pll,
-	 पूर्ण,
-	अणु			/* CDV_DP_27MHz */
-	 .करोt = अणु.min = 160000, .max = 272000पूर्ण,
-	 .vco = अणु.min = 1809000, .max = 3564000पूर्ण,
-	 .n = अणु.min = 1, .max = 1पूर्ण,
-	 .m = अणु.min = 67, .max = 132पूर्ण,
-	 .m1 = अणु.min = 0, .max = 0पूर्ण,
-	 .m2 = अणु.min = 65, .max = 130पूर्ण,
-	 .p = अणु.min = 5, .max = 90पूर्ण,
-	 .p1 = अणु.min = 1, .max = 9पूर्ण,
-	 .p2 = अणु.करोt_limit = 225000, .p2_slow = 10, .p2_fast = 10पूर्ण,
-	 .find_pll = cdv_पूर्णांकel_find_dp_pll,
-	 पूर्ण,
-	अणु			/* CDV_DP_100MHz */
-	 .करोt = अणु.min = 160000, .max = 272000पूर्ण,
-	 .vco = अणु.min = 1800000, .max = 3600000पूर्ण,
-	 .n = अणु.min = 2, .max = 6पूर्ण,
-	 .m = अणु.min = 60, .max = 164पूर्ण,
-	 .m1 = अणु.min = 0, .max = 0पूर्ण,
-	 .m2 = अणु.min = 58, .max = 162पूर्ण,
-	 .p = अणु.min = 5, .max = 100पूर्ण,
-	 .p1 = अणु.min = 1, .max = 10पूर्ण,
-	 .p2 = अणु.करोt_limit = 225000, .p2_slow = 10, .p2_fast = 10पूर्ण,
-	 .find_pll = cdv_पूर्णांकel_find_dp_pll,
-	पूर्ण
-पूर्ण;
+	 },
+	{			/* CDV_DP_27MHz */
+	 .dot = {.min = 160000, .max = 272000},
+	 .vco = {.min = 1809000, .max = 3564000},
+	 .n = {.min = 1, .max = 1},
+	 .m = {.min = 67, .max = 132},
+	 .m1 = {.min = 0, .max = 0},
+	 .m2 = {.min = 65, .max = 130},
+	 .p = {.min = 5, .max = 90},
+	 .p1 = {.min = 1, .max = 9},
+	 .p2 = {.dot_limit = 225000, .p2_slow = 10, .p2_fast = 10},
+	 .find_pll = cdv_intel_find_dp_pll,
+	 },
+	{			/* CDV_DP_100MHz */
+	 .dot = {.min = 160000, .max = 272000},
+	 .vco = {.min = 1800000, .max = 3600000},
+	 .n = {.min = 2, .max = 6},
+	 .m = {.min = 60, .max = 164},
+	 .m1 = {.min = 0, .max = 0},
+	 .m2 = {.min = 58, .max = 162},
+	 .p = {.min = 5, .max = 100},
+	 .p1 = {.min = 1, .max = 10},
+	 .p2 = {.dot_limit = 225000, .p2_slow = 10, .p2_fast = 10},
+	 .find_pll = cdv_intel_find_dp_pll,
+	}
+};
 
-#घोषणा _रुको_क्रम(COND, MS, W) (अणु \
-	अचिन्हित दीर्घ समयout__ = jअगरfies + msecs_to_jअगरfies(MS);	\
-	पूर्णांक ret__ = 0;							\
-	जबतक (!(COND)) अणु						\
-		अगर (समय_after(jअगरfies, समयout__)) अणु			\
+#define _wait_for(COND, MS, W) ({ \
+	unsigned long timeout__ = jiffies + msecs_to_jiffies(MS);	\
+	int ret__ = 0;							\
+	while (!(COND)) {						\
+		if (time_after(jiffies, timeout__)) {			\
 			ret__ = -ETIMEDOUT;				\
-			अवरोध;						\
-		पूर्ण							\
-		अगर (W && !in_dbg_master())				\
+			break;						\
+		}							\
+		if (W && !in_dbg_master())				\
 			msleep(W);					\
-	पूर्ण								\
+	}								\
 	ret__;								\
-पूर्ण)
+})
 
-#घोषणा रुको_क्रम(COND, MS) _रुको_क्रम(COND, MS, 1)
+#define wait_for(COND, MS) _wait_for(COND, MS, 1)
 
 
-पूर्णांक cdv_sb_पढ़ो(काष्ठा drm_device *dev, u32 reg, u32 *val)
-अणु
-	पूर्णांक ret;
+int cdv_sb_read(struct drm_device *dev, u32 reg, u32 *val)
+{
+	int ret;
 
-	ret = रुको_क्रम((REG_READ(SB_PCKT) & SB_BUSY) == 0, 1000);
-	अगर (ret) अणु
+	ret = wait_for((REG_READ(SB_PCKT) & SB_BUSY) == 0, 1000);
+	if (ret) {
 		DRM_ERROR("timeout waiting for SB to idle before read\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	REG_WRITE(SB_ADDR, reg);
 	REG_WRITE(SB_PCKT,
@@ -143,34 +142,34 @@
 		   SET_FIELD(SB_DEST_DPLL, SB_DEST) |
 		   SET_FIELD(0xf, SB_BYTE_ENABLE));
 
-	ret = रुको_क्रम((REG_READ(SB_PCKT) & SB_BUSY) == 0, 1000);
-	अगर (ret) अणु
+	ret = wait_for((REG_READ(SB_PCKT) & SB_BUSY) == 0, 1000);
+	if (ret) {
 		DRM_ERROR("timeout waiting for SB to idle after read\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	*val = REG_READ(SB_DATA);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक cdv_sb_ग_लिखो(काष्ठा drm_device *dev, u32 reg, u32 val)
-अणु
-	पूर्णांक ret;
-	अटल bool dpio_debug = true;
+int cdv_sb_write(struct drm_device *dev, u32 reg, u32 val)
+{
+	int ret;
+	static bool dpio_debug = true;
 	u32 temp;
 
-	अगर (dpio_debug) अणु
-		अगर (cdv_sb_पढ़ो(dev, reg, &temp) == 0)
+	if (dpio_debug) {
+		if (cdv_sb_read(dev, reg, &temp) == 0)
 			DRM_DEBUG_KMS("0x%08x: 0x%08x (before)\n", reg, temp);
 		DRM_DEBUG_KMS("0x%08x: 0x%08x\n", reg, val);
-	पूर्ण
+	}
 
-	ret = रुको_क्रम((REG_READ(SB_PCKT) & SB_BUSY) == 0, 1000);
-	अगर (ret) अणु
+	ret = wait_for((REG_READ(SB_PCKT) & SB_BUSY) == 0, 1000);
+	if (ret) {
 		DRM_ERROR("timeout waiting for SB to idle before write\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	REG_WRITE(SB_ADDR, reg);
 	REG_WRITE(SB_DATA, val);
@@ -179,46 +178,46 @@
 		   SET_FIELD(SB_DEST_DPLL, SB_DEST) |
 		   SET_FIELD(0xf, SB_BYTE_ENABLE));
 
-	ret = रुको_क्रम((REG_READ(SB_PCKT) & SB_BUSY) == 0, 1000);
-	अगर (ret) अणु
+	ret = wait_for((REG_READ(SB_PCKT) & SB_BUSY) == 0, 1000);
+	if (ret) {
 		DRM_ERROR("timeout waiting for SB to idle after write\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (dpio_debug) अणु
-		अगर (cdv_sb_पढ़ो(dev, reg, &temp) == 0)
+	if (dpio_debug) {
+		if (cdv_sb_read(dev, reg, &temp) == 0)
 			DRM_DEBUG_KMS("0x%08x: 0x%08x (after)\n", reg, temp);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Reset the DPIO configuration रेजिस्टर.  The BIOS करोes this at every
+/* Reset the DPIO configuration register.  The BIOS does this at every
  * mode set.
  */
-व्योम cdv_sb_reset(काष्ठा drm_device *dev)
-अणु
+void cdv_sb_reset(struct drm_device *dev)
+{
 
 	REG_WRITE(DPIO_CFG, 0);
 	REG_READ(DPIO_CFG);
 	REG_WRITE(DPIO_CFG, DPIO_MODE_SELECT_0 | DPIO_CMN_RESET_N);
-पूर्ण
+}
 
-/* Unlike most Intel display engines, on Cedarview the DPLL रेजिस्टरs
- * are behind this sideband bus.  They must be programmed जबतक the
- * DPLL reference घड़ी is on in the DPLL control रेजिस्टर, but beक्रमe
- * the DPLL is enabled in the DPLL control रेजिस्टर.
+/* Unlike most Intel display engines, on Cedarview the DPLL registers
+ * are behind this sideband bus.  They must be programmed while the
+ * DPLL reference clock is on in the DPLL control register, but before
+ * the DPLL is enabled in the DPLL control register.
  */
-अटल पूर्णांक
-cdv_dpll_set_घड़ी_cdv(काष्ठा drm_device *dev, काष्ठा drm_crtc *crtc,
-		       काष्ठा gma_घड़ी_प्रकार *घड़ी, bool is_lvds, u32 ddi_select)
-अणु
-	काष्ठा gma_crtc *gma_crtc = to_gma_crtc(crtc);
-	पूर्णांक pipe = gma_crtc->pipe;
+static int
+cdv_dpll_set_clock_cdv(struct drm_device *dev, struct drm_crtc *crtc,
+		       struct gma_clock_t *clock, bool is_lvds, u32 ddi_select)
+{
+	struct gma_crtc *gma_crtc = to_gma_crtc(crtc);
+	int pipe = gma_crtc->pipe;
 	u32 m, n_vco, p;
-	पूर्णांक ret = 0;
-	पूर्णांक dpll_reg = (pipe == 0) ? DPLL_A : DPLL_B;
-	पूर्णांक ref_sfr = (pipe == 0) ? SB_REF_DPLLA : SB_REF_DPLLB;
+	int ret = 0;
+	int dpll_reg = (pipe == 0) ? DPLL_A : DPLL_B;
+	int ref_sfr = (pipe == 0) ? SB_REF_DPLLA : SB_REF_DPLLB;
 	u32 ref_value;
 	u32 lane_reg, lane_value;
 
@@ -228,55 +227,55 @@ cdv_dpll_set_घड़ी_cdv(काष्ठा drm_device *dev, काष्�
 
 	udelay(100);
 
-	/* Follow the BIOS and ग_लिखो the REF/SFR Register. Hardcoded value */
+	/* Follow the BIOS and write the REF/SFR Register. Hardcoded value */
 	ref_value = 0x68A701;
 
-	cdv_sb_ग_लिखो(dev, SB_REF_SFR(pipe), ref_value);
+	cdv_sb_write(dev, SB_REF_SFR(pipe), ref_value);
 
-	/* We करोn't know what the other fields of these regs are, so
+	/* We don't know what the other fields of these regs are, so
 	 * leave them in place.
 	 */
 	/*
 	 * The BIT 14:13 of 0x8010/0x8030 is used to select the ref clk
-	 * क्रम the pipe A/B. Display spec 1.06 has wrong definition.
+	 * for the pipe A/B. Display spec 1.06 has wrong definition.
 	 * Correct definition is like below:
 	 *
-	 * refclka mean use घड़ी from same PLL
+	 * refclka mean use clock from same PLL
 	 *
-	 * अगर DPLLA sets 01 and DPLLB sets 01, they use घड़ी from their pll
+	 * if DPLLA sets 01 and DPLLB sets 01, they use clock from their pll
 	 *
-	 * अगर DPLLA sets 01 and DPLLB sets 02, both use clk from DPLLA
+	 * if DPLLA sets 01 and DPLLB sets 02, both use clk from DPLLA
 	 *
 	 */
-	ret = cdv_sb_पढ़ो(dev, ref_sfr, &ref_value);
-	अगर (ret)
-		वापस ret;
+	ret = cdv_sb_read(dev, ref_sfr, &ref_value);
+	if (ret)
+		return ret;
 	ref_value &= ~(REF_CLK_MASK);
 
-	/* use DPLL_A क्रम pipeB on CRT/HDMI */
-	अगर (pipe == 1 && !is_lvds && !(ddi_select & DP_MASK)) अणु
+	/* use DPLL_A for pipeB on CRT/HDMI */
+	if (pipe == 1 && !is_lvds && !(ddi_select & DP_MASK)) {
 		DRM_DEBUG_KMS("use DPLLA for pipe B\n");
 		ref_value |= REF_CLK_DPLLA;
-	पूर्ण अन्यथा अणु
+	} else {
 		DRM_DEBUG_KMS("use their DPLL for pipe A/B\n");
 		ref_value |= REF_CLK_DPLL;
-	पूर्ण
-	ret = cdv_sb_ग_लिखो(dev, ref_sfr, ref_value);
-	अगर (ret)
-		वापस ret;
+	}
+	ret = cdv_sb_write(dev, ref_sfr, ref_value);
+	if (ret)
+		return ret;
 
-	ret = cdv_sb_पढ़ो(dev, SB_M(pipe), &m);
-	अगर (ret)
-		वापस ret;
+	ret = cdv_sb_read(dev, SB_M(pipe), &m);
+	if (ret)
+		return ret;
 	m &= ~SB_M_DIVIDER_MASK;
-	m |= ((घड़ी->m2) << SB_M_DIVIDER_SHIFT);
-	ret = cdv_sb_ग_लिखो(dev, SB_M(pipe), m);
-	अगर (ret)
-		वापस ret;
+	m |= ((clock->m2) << SB_M_DIVIDER_SHIFT);
+	ret = cdv_sb_write(dev, SB_M(pipe), m);
+	if (ret)
+		return ret;
 
-	ret = cdv_sb_पढ़ो(dev, SB_N_VCO(pipe), &n_vco);
-	अगर (ret)
-		वापस ret;
+	ret = cdv_sb_read(dev, SB_N_VCO(pipe), &n_vco);
+	if (ret)
+		return ret;
 
 	/* Follow the BIOS to program the N_DIVIDER REG */
 	n_vco &= 0xFFFF;
@@ -285,216 +284,216 @@ cdv_dpll_set_घड़ी_cdv(काष्ठा drm_device *dev, काष्�
 		   SB_N_DIVIDER_MASK |
 		   SB_N_CB_TUNE_MASK);
 
-	n_vco |= ((घड़ी->n) << SB_N_DIVIDER_SHIFT);
+	n_vco |= ((clock->n) << SB_N_DIVIDER_SHIFT);
 
-	अगर (घड़ी->vco < 2250000) अणु
+	if (clock->vco < 2250000) {
 		n_vco |= (2 << SB_N_CB_TUNE_SHIFT);
 		n_vco |= (0 << SB_N_VCO_SEL_SHIFT);
-	पूर्ण अन्यथा अगर (घड़ी->vco < 2750000) अणु
+	} else if (clock->vco < 2750000) {
 		n_vco |= (1 << SB_N_CB_TUNE_SHIFT);
 		n_vco |= (1 << SB_N_VCO_SEL_SHIFT);
-	पूर्ण अन्यथा अगर (घड़ी->vco < 3300000) अणु
+	} else if (clock->vco < 3300000) {
 		n_vco |= (0 << SB_N_CB_TUNE_SHIFT);
 		n_vco |= (2 << SB_N_VCO_SEL_SHIFT);
-	पूर्ण अन्यथा अणु
+	} else {
 		n_vco |= (0 << SB_N_CB_TUNE_SHIFT);
 		n_vco |= (3 << SB_N_VCO_SEL_SHIFT);
-	पूर्ण
+	}
 
-	ret = cdv_sb_ग_लिखो(dev, SB_N_VCO(pipe), n_vco);
-	अगर (ret)
-		वापस ret;
+	ret = cdv_sb_write(dev, SB_N_VCO(pipe), n_vco);
+	if (ret)
+		return ret;
 
-	ret = cdv_sb_पढ़ो(dev, SB_P(pipe), &p);
-	अगर (ret)
-		वापस ret;
+	ret = cdv_sb_read(dev, SB_P(pipe), &p);
+	if (ret)
+		return ret;
 	p &= ~(SB_P2_DIVIDER_MASK | SB_P1_DIVIDER_MASK);
-	p |= SET_FIELD(घड़ी->p1, SB_P1_DIVIDER);
-	चयन (घड़ी->p2) अणु
-	हाल 5:
+	p |= SET_FIELD(clock->p1, SB_P1_DIVIDER);
+	switch (clock->p2) {
+	case 5:
 		p |= SET_FIELD(SB_P2_5, SB_P2_DIVIDER);
-		अवरोध;
-	हाल 10:
+		break;
+	case 10:
 		p |= SET_FIELD(SB_P2_10, SB_P2_DIVIDER);
-		अवरोध;
-	हाल 14:
+		break;
+	case 14:
 		p |= SET_FIELD(SB_P2_14, SB_P2_DIVIDER);
-		अवरोध;
-	हाल 7:
+		break;
+	case 7:
 		p |= SET_FIELD(SB_P2_7, SB_P2_DIVIDER);
-		अवरोध;
-	शेष:
-		DRM_ERROR("Bad P2 clock: %d\n", घड़ी->p2);
-		वापस -EINVAL;
-	पूर्ण
-	ret = cdv_sb_ग_लिखो(dev, SB_P(pipe), p);
-	अगर (ret)
-		वापस ret;
+		break;
+	default:
+		DRM_ERROR("Bad P2 clock: %d\n", clock->p2);
+		return -EINVAL;
+	}
+	ret = cdv_sb_write(dev, SB_P(pipe), p);
+	if (ret)
+		return ret;
 
-	अगर (ddi_select) अणु
-		अगर ((ddi_select & DDI_MASK) == DDI0_SELECT) अणु
+	if (ddi_select) {
+		if ((ddi_select & DDI_MASK) == DDI0_SELECT) {
 			lane_reg = PSB_LANE0;
-			cdv_sb_पढ़ो(dev, lane_reg, &lane_value);
+			cdv_sb_read(dev, lane_reg, &lane_value);
 			lane_value &= ~(LANE_PLL_MASK);
 			lane_value |= LANE_PLL_ENABLE | LANE_PLL_PIPE(pipe);
-			cdv_sb_ग_लिखो(dev, lane_reg, lane_value);
+			cdv_sb_write(dev, lane_reg, lane_value);
 
 			lane_reg = PSB_LANE1;
-			cdv_sb_पढ़ो(dev, lane_reg, &lane_value);
+			cdv_sb_read(dev, lane_reg, &lane_value);
 			lane_value &= ~(LANE_PLL_MASK);
 			lane_value |= LANE_PLL_ENABLE | LANE_PLL_PIPE(pipe);
-			cdv_sb_ग_लिखो(dev, lane_reg, lane_value);
-		पूर्ण अन्यथा अणु
+			cdv_sb_write(dev, lane_reg, lane_value);
+		} else {
 			lane_reg = PSB_LANE2;
-			cdv_sb_पढ़ो(dev, lane_reg, &lane_value);
+			cdv_sb_read(dev, lane_reg, &lane_value);
 			lane_value &= ~(LANE_PLL_MASK);
 			lane_value |= LANE_PLL_ENABLE | LANE_PLL_PIPE(pipe);
-			cdv_sb_ग_लिखो(dev, lane_reg, lane_value);
+			cdv_sb_write(dev, lane_reg, lane_value);
 
 			lane_reg = PSB_LANE3;
-			cdv_sb_पढ़ो(dev, lane_reg, &lane_value);
+			cdv_sb_read(dev, lane_reg, &lane_value);
 			lane_value &= ~(LANE_PLL_MASK);
 			lane_value |= LANE_PLL_ENABLE | LANE_PLL_PIPE(pipe);
-			cdv_sb_ग_लिखो(dev, lane_reg, lane_value);
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			cdv_sb_write(dev, lane_reg, lane_value);
+		}
+	}
+	return 0;
+}
 
-अटल स्थिर काष्ठा gma_limit_t *cdv_पूर्णांकel_limit(काष्ठा drm_crtc *crtc,
-						 पूर्णांक refclk)
-अणु
-	स्थिर काष्ठा gma_limit_t *limit;
-	अगर (gma_pipe_has_type(crtc, INTEL_OUTPUT_LVDS)) अणु
+static const struct gma_limit_t *cdv_intel_limit(struct drm_crtc *crtc,
+						 int refclk)
+{
+	const struct gma_limit_t *limit;
+	if (gma_pipe_has_type(crtc, INTEL_OUTPUT_LVDS)) {
 		/*
 		 * Now only single-channel LVDS is supported on CDV. If it is
 		 * incorrect, please add the dual-channel LVDS.
 		 */
-		अगर (refclk == 96000)
-			limit = &cdv_पूर्णांकel_limits[CDV_LIMIT_SINGLE_LVDS_96];
-		अन्यथा
-			limit = &cdv_पूर्णांकel_limits[CDV_LIMIT_SINGLE_LVDS_100];
-	पूर्ण अन्यथा अगर (gma_pipe_has_type(crtc, INTEL_OUTPUT_DISPLAYPORT) ||
-			gma_pipe_has_type(crtc, INTEL_OUTPUT_EDP)) अणु
-		अगर (refclk == 27000)
-			limit = &cdv_पूर्णांकel_limits[CDV_LIMIT_DP_27];
-		अन्यथा
-			limit = &cdv_पूर्णांकel_limits[CDV_LIMIT_DP_100];
-	पूर्ण अन्यथा अणु
-		अगर (refclk == 27000)
-			limit = &cdv_पूर्णांकel_limits[CDV_LIMIT_DAC_HDMI_27];
-		अन्यथा
-			limit = &cdv_पूर्णांकel_limits[CDV_LIMIT_DAC_HDMI_96];
-	पूर्ण
-	वापस limit;
-पूर्ण
+		if (refclk == 96000)
+			limit = &cdv_intel_limits[CDV_LIMIT_SINGLE_LVDS_96];
+		else
+			limit = &cdv_intel_limits[CDV_LIMIT_SINGLE_LVDS_100];
+	} else if (gma_pipe_has_type(crtc, INTEL_OUTPUT_DISPLAYPORT) ||
+			gma_pipe_has_type(crtc, INTEL_OUTPUT_EDP)) {
+		if (refclk == 27000)
+			limit = &cdv_intel_limits[CDV_LIMIT_DP_27];
+		else
+			limit = &cdv_intel_limits[CDV_LIMIT_DP_100];
+	} else {
+		if (refclk == 27000)
+			limit = &cdv_intel_limits[CDV_LIMIT_DAC_HDMI_27];
+		else
+			limit = &cdv_intel_limits[CDV_LIMIT_DAC_HDMI_96];
+	}
+	return limit;
+}
 
 /* m1 is reserved as 0 in CDV, n is a ring counter */
-अटल व्योम cdv_पूर्णांकel_घड़ी(पूर्णांक refclk, काष्ठा gma_घड़ी_प्रकार *घड़ी)
-अणु
-	घड़ी->m = घड़ी->m2 + 2;
-	घड़ी->p = घड़ी->p1 * घड़ी->p2;
-	घड़ी->vco = (refclk * घड़ी->m) / घड़ी->n;
-	घड़ी->करोt = घड़ी->vco / घड़ी->p;
-पूर्ण
+static void cdv_intel_clock(int refclk, struct gma_clock_t *clock)
+{
+	clock->m = clock->m2 + 2;
+	clock->p = clock->p1 * clock->p2;
+	clock->vco = (refclk * clock->m) / clock->n;
+	clock->dot = clock->vco / clock->p;
+}
 
-अटल bool cdv_पूर्णांकel_find_dp_pll(स्थिर काष्ठा gma_limit_t *limit,
-				  काष्ठा drm_crtc *crtc, पूर्णांक target,
-				  पूर्णांक refclk,
-				  काष्ठा gma_घड़ी_प्रकार *best_घड़ी)
-अणु
-	काष्ठा gma_crtc *gma_crtc = to_gma_crtc(crtc);
-	काष्ठा gma_घड़ी_प्रकार घड़ी;
+static bool cdv_intel_find_dp_pll(const struct gma_limit_t *limit,
+				  struct drm_crtc *crtc, int target,
+				  int refclk,
+				  struct gma_clock_t *best_clock)
+{
+	struct gma_crtc *gma_crtc = to_gma_crtc(crtc);
+	struct gma_clock_t clock;
 
-	स_रखो(&घड़ी, 0, माप(घड़ी));
+	memset(&clock, 0, sizeof(clock));
 
-	चयन (refclk) अणु
-	हाल 27000:
-		अगर (target < 200000) अणु
-			घड़ी.p1 = 2;
-			घड़ी.p2 = 10;
-			घड़ी.n = 1;
-			घड़ी.m1 = 0;
-			घड़ी.m2 = 118;
-		पूर्ण अन्यथा अणु
-			घड़ी.p1 = 1;
-			घड़ी.p2 = 10;
-			घड़ी.n = 1;
-			घड़ी.m1 = 0;
-			घड़ी.m2 = 98;
-		पूर्ण
-		अवरोध;
+	switch (refclk) {
+	case 27000:
+		if (target < 200000) {
+			clock.p1 = 2;
+			clock.p2 = 10;
+			clock.n = 1;
+			clock.m1 = 0;
+			clock.m2 = 118;
+		} else {
+			clock.p1 = 1;
+			clock.p2 = 10;
+			clock.n = 1;
+			clock.m1 = 0;
+			clock.m2 = 98;
+		}
+		break;
 
-	हाल 100000:
-		अगर (target < 200000) अणु
-			घड़ी.p1 = 2;
-			घड़ी.p2 = 10;
-			घड़ी.n = 5;
-			घड़ी.m1 = 0;
-			घड़ी.m2 = 160;
-		पूर्ण अन्यथा अणु
-			घड़ी.p1 = 1;
-			घड़ी.p2 = 10;
-			घड़ी.n = 5;
-			घड़ी.m1 = 0;
-			घड़ी.m2 = 133;
-		पूर्ण
-		अवरोध;
+	case 100000:
+		if (target < 200000) {
+			clock.p1 = 2;
+			clock.p2 = 10;
+			clock.n = 5;
+			clock.m1 = 0;
+			clock.m2 = 160;
+		} else {
+			clock.p1 = 1;
+			clock.p2 = 10;
+			clock.n = 5;
+			clock.m1 = 0;
+			clock.m2 = 133;
+		}
+		break;
 
-	शेष:
-		वापस false;
-	पूर्ण
+	default:
+		return false;
+	}
 
-	gma_crtc->घड़ी_funcs->घड़ी(refclk, &घड़ी);
-	स_नकल(best_घड़ी, &घड़ी, माप(काष्ठा gma_घड़ी_प्रकार));
-	वापस true;
-पूर्ण
+	gma_crtc->clock_funcs->clock(refclk, &clock);
+	memcpy(best_clock, &clock, sizeof(struct gma_clock_t));
+	return true;
+}
 
-#घोषणा		FIFO_PIPEA		(1 << 0)
-#घोषणा		FIFO_PIPEB		(1 << 1)
+#define		FIFO_PIPEA		(1 << 0)
+#define		FIFO_PIPEB		(1 << 1)
 
-अटल bool cdv_पूर्णांकel_pipe_enabled(काष्ठा drm_device *dev, पूर्णांक pipe)
-अणु
-	काष्ठा drm_crtc *crtc;
-	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
-	काष्ठा gma_crtc *gma_crtc = शून्य;
+static bool cdv_intel_pipe_enabled(struct drm_device *dev, int pipe)
+{
+	struct drm_crtc *crtc;
+	struct drm_psb_private *dev_priv = dev->dev_private;
+	struct gma_crtc *gma_crtc = NULL;
 
 	crtc = dev_priv->pipe_to_crtc_mapping[pipe];
 	gma_crtc = to_gma_crtc(crtc);
 
-	अगर (crtc->primary->fb == शून्य || !gma_crtc->active)
-		वापस false;
-	वापस true;
-पूर्ण
+	if (crtc->primary->fb == NULL || !gma_crtc->active)
+		return false;
+	return true;
+}
 
-व्योम cdv_disable_sr(काष्ठा drm_device *dev)
-अणु
-	अगर (REG_READ(FW_BLC_SELF) & FW_BLC_SELF_EN) अणु
+void cdv_disable_sr(struct drm_device *dev)
+{
+	if (REG_READ(FW_BLC_SELF) & FW_BLC_SELF_EN) {
 
-		/* Disable self-refresh beक्रमe adjust WM */
+		/* Disable self-refresh before adjust WM */
 		REG_WRITE(FW_BLC_SELF, (REG_READ(FW_BLC_SELF) & ~FW_BLC_SELF_EN));
 		REG_READ(FW_BLC_SELF);
 
-		gma_रुको_क्रम_vblank(dev);
+		gma_wait_for_vblank(dev);
 
-		/* Cedarview workaround to ग_लिखो ovelay plane, which क्रमce to leave
+		/* Cedarview workaround to write ovelay plane, which force to leave
 		 * MAX_FIFO state.
 		 */
 		REG_WRITE(OV_OVADD, 0/*dev_priv->ovl_offset*/);
 		REG_READ(OV_OVADD);
 
-		gma_रुको_क्रम_vblank(dev);
-	पूर्ण
+		gma_wait_for_vblank(dev);
+	}
 
-पूर्ण
+}
 
-व्योम cdv_update_wm(काष्ठा drm_device *dev, काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
-	काष्ठा gma_crtc *gma_crtc = to_gma_crtc(crtc);
+void cdv_update_wm(struct drm_device *dev, struct drm_crtc *crtc)
+{
+	struct drm_psb_private *dev_priv = dev->dev_private;
+	struct gma_crtc *gma_crtc = to_gma_crtc(crtc);
 
 	/* Is only one pipe enabled? */
-	अगर (cdv_पूर्णांकel_pipe_enabled(dev, 0) ^ cdv_पूर्णांकel_pipe_enabled(dev, 1)) अणु
+	if (cdv_intel_pipe_enabled(dev, 0) ^ cdv_intel_pipe_enabled(dev, 1)) {
 		u32 fw;
 
 		fw = REG_READ(DSPFW1);
@@ -516,27 +515,27 @@ cdv_dpll_set_घड़ी_cdv(काष्ठा drm_device *dev, काष्�
 		/* ignore FW4 */
 
 		/* Is pipe b lvds ? */
-		अगर (gma_crtc->pipe == 1 &&
-		    gma_pipe_has_type(crtc, INTEL_OUTPUT_LVDS)) अणु
+		if (gma_crtc->pipe == 1 &&
+		    gma_pipe_has_type(crtc, INTEL_OUTPUT_LVDS)) {
 			REG_WRITE(DSPFW5, 0x00040330);
-		पूर्ण अन्यथा अणु
+		} else {
 			fw = (3 << DSP_PLANE_B_FIFO_WM1_SHIFT) |
 			     (4 << DSP_PLANE_A_FIFO_WM1_SHIFT) |
 			     (3 << CURSOR_B_FIFO_WM1_SHIFT) |
 			     (4 << CURSOR_FIFO_SR_WM1_SHIFT);
 			REG_WRITE(DSPFW5, fw);
-		पूर्ण
+		}
 
 		REG_WRITE(DSPFW6, 0x10);
 
-		gma_रुको_क्रम_vblank(dev);
+		gma_wait_for_vblank(dev);
 
-		/* enable self-refresh क्रम single pipe active */
+		/* enable self-refresh for single pipe active */
 		REG_WRITE(FW_BLC_SELF, FW_BLC_SELF_EN);
 		REG_READ(FW_BLC_SELF);
-		gma_रुको_क्रम_vblank(dev);
+		gma_wait_for_vblank(dev);
 
-	पूर्ण अन्यथा अणु
+	} else {
 
 		/* HW team suggested values... */
 		REG_WRITE(DSPFW1, 0x3f880808);
@@ -546,132 +545,132 @@ cdv_dpll_set_घड़ी_cdv(काष्ठा drm_device *dev, काष्�
 		REG_WRITE(DSPFW5, 0x01010101);
 		REG_WRITE(DSPFW6, 0x1d0);
 
-		gma_रुको_क्रम_vblank(dev);
+		gma_wait_for_vblank(dev);
 
 		dev_priv->ops->disable_sr(dev);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Return the pipe currently connected to the panel fitter,
- * or -1 अगर the panel fitter is not present or not in use
+ * or -1 if the panel fitter is not present or not in use
  */
-अटल पूर्णांक cdv_पूर्णांकel_panel_fitter_pipe(काष्ठा drm_device *dev)
-अणु
+static int cdv_intel_panel_fitter_pipe(struct drm_device *dev)
+{
 	u32 pfit_control;
 
 	pfit_control = REG_READ(PFIT_CONTROL);
 
-	/* See अगर the panel fitter is in use */
-	अगर ((pfit_control & PFIT_ENABLE) == 0)
-		वापस -1;
-	वापस (pfit_control >> 29) & 0x3;
-पूर्ण
+	/* See if the panel fitter is in use */
+	if ((pfit_control & PFIT_ENABLE) == 0)
+		return -1;
+	return (pfit_control >> 29) & 0x3;
+}
 
-अटल पूर्णांक cdv_पूर्णांकel_crtc_mode_set(काष्ठा drm_crtc *crtc,
-			       काष्ठा drm_display_mode *mode,
-			       काष्ठा drm_display_mode *adjusted_mode,
-			       पूर्णांक x, पूर्णांक y,
-			       काष्ठा drm_framebuffer *old_fb)
-अणु
-	काष्ठा drm_device *dev = crtc->dev;
-	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
-	काष्ठा gma_crtc *gma_crtc = to_gma_crtc(crtc);
-	पूर्णांक pipe = gma_crtc->pipe;
-	स्थिर काष्ठा psb_offset *map = &dev_priv->regmap[pipe];
-	पूर्णांक refclk;
-	काष्ठा gma_घड़ी_प्रकार घड़ी;
+static int cdv_intel_crtc_mode_set(struct drm_crtc *crtc,
+			       struct drm_display_mode *mode,
+			       struct drm_display_mode *adjusted_mode,
+			       int x, int y,
+			       struct drm_framebuffer *old_fb)
+{
+	struct drm_device *dev = crtc->dev;
+	struct drm_psb_private *dev_priv = dev->dev_private;
+	struct gma_crtc *gma_crtc = to_gma_crtc(crtc);
+	int pipe = gma_crtc->pipe;
+	const struct psb_offset *map = &dev_priv->regmap[pipe];
+	int refclk;
+	struct gma_clock_t clock;
 	u32 dpll = 0, dspcntr, pipeconf;
 	bool ok;
 	bool is_lvds = false;
 	bool is_dp = false;
-	काष्ठा drm_mode_config *mode_config = &dev->mode_config;
-	काष्ठा drm_connector *connector;
-	स्थिर काष्ठा gma_limit_t *limit;
+	struct drm_mode_config *mode_config = &dev->mode_config;
+	struct drm_connector *connector;
+	const struct gma_limit_t *limit;
 	u32 ddi_select = 0;
 	bool is_edp = false;
 
-	list_क्रम_each_entry(connector, &mode_config->connector_list, head) अणु
-		काष्ठा gma_encoder *gma_encoder =
+	list_for_each_entry(connector, &mode_config->connector_list, head) {
+		struct gma_encoder *gma_encoder =
 					gma_attached_encoder(connector);
 
-		अगर (!connector->encoder
+		if (!connector->encoder
 		    || connector->encoder->crtc != crtc)
-			जारी;
+			continue;
 
 		ddi_select = gma_encoder->ddi_select;
-		चयन (gma_encoder->type) अणु
-		हाल INTEL_OUTPUT_LVDS:
+		switch (gma_encoder->type) {
+		case INTEL_OUTPUT_LVDS:
 			is_lvds = true;
-			अवरोध;
-		हाल INTEL_OUTPUT_ANALOG:
-		हाल INTEL_OUTPUT_HDMI:
-			अवरोध;
-		हाल INTEL_OUTPUT_DISPLAYPORT:
+			break;
+		case INTEL_OUTPUT_ANALOG:
+		case INTEL_OUTPUT_HDMI:
+			break;
+		case INTEL_OUTPUT_DISPLAYPORT:
 			is_dp = true;
-			अवरोध;
-		हाल INTEL_OUTPUT_EDP:
+			break;
+		case INTEL_OUTPUT_EDP:
 			is_edp = true;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			DRM_ERROR("invalid output type.\n");
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	अगर (dev_priv->dplla_96mhz)
+	if (dev_priv->dplla_96mhz)
 		/* low-end sku, 96/100 mhz */
 		refclk = 96000;
-	अन्यथा
+	else
 		/* high-end sku, 27/100 mhz */
 		refclk = 27000;
-	अगर (is_dp || is_edp) अणु
+	if (is_dp || is_edp) {
 		/*
 		 * Based on the spec the low-end SKU has only CRT/LVDS. So it is
-		 * unnecessary to consider it क्रम DP/eDP.
+		 * unnecessary to consider it for DP/eDP.
 		 * On the high-end SKU, it will use the 27/100M reference clk
-		 * क्रम DP/eDP. When using SSC घड़ी, the ref clk is 100MHz.Otherwise
+		 * for DP/eDP. When using SSC clock, the ref clk is 100MHz.Otherwise
 		 * it will be 27MHz. From the VBIOS code it seems that the pipe A choose
-		 * 27MHz क्रम DP/eDP जबतक the Pipe B chooses the 100MHz.
+		 * 27MHz for DP/eDP while the Pipe B chooses the 100MHz.
 		 */
-		अगर (pipe == 0)
+		if (pipe == 0)
 			refclk = 27000;
-		अन्यथा
+		else
 			refclk = 100000;
-	पूर्ण
+	}
 
-	अगर (is_lvds && dev_priv->lvds_use_ssc) अणु
+	if (is_lvds && dev_priv->lvds_use_ssc) {
 		refclk = dev_priv->lvds_ssc_freq * 1000;
 		DRM_DEBUG_KMS("Use SSC reference clock %d Mhz\n", dev_priv->lvds_ssc_freq);
-	पूर्ण
+	}
 
-	drm_mode_debug_prपूर्णांकmodeline(adjusted_mode);
+	drm_mode_debug_printmodeline(adjusted_mode);
 
-	limit = gma_crtc->घड़ी_funcs->limit(crtc, refclk);
+	limit = gma_crtc->clock_funcs->limit(crtc, refclk);
 
-	ok = limit->find_pll(limit, crtc, adjusted_mode->घड़ी, refclk,
-				 &घड़ी);
-	अगर (!ok) अणु
+	ok = limit->find_pll(limit, crtc, adjusted_mode->clock, refclk,
+				 &clock);
+	if (!ok) {
 		DRM_ERROR("Couldn't find PLL settings for mode! target: %d, actual: %d",
-			  adjusted_mode->घड़ी, घड़ी.करोt);
-		वापस 0;
-	पूर्ण
+			  adjusted_mode->clock, clock.dot);
+		return 0;
+	}
 
 	dpll = DPLL_VGA_MODE_DIS;
 
-	अगर (is_dp || is_edp) अणु
-		cdv_पूर्णांकel_dp_set_m_n(crtc, mode, adjusted_mode);
-	पूर्ण अन्यथा अणु
+	if (is_dp || is_edp) {
+		cdv_intel_dp_set_m_n(crtc, mode, adjusted_mode);
+	} else {
 		REG_WRITE(PIPE_GMCH_DATA_M(pipe), 0);
 		REG_WRITE(PIPE_GMCH_DATA_N(pipe), 0);
 		REG_WRITE(PIPE_DP_LINK_M(pipe), 0);
 		REG_WRITE(PIPE_DP_LINK_N(pipe), 0);
-	पूर्ण
+	}
 
 	dpll |= DPLL_SYNCLOCK_ENABLE;
-/*	अगर (is_lvds)
+/*	if (is_lvds)
 		dpll |= DPLLB_MODE_LVDS;
-	अन्यथा
+	else
 		dpll |= DPLLB_MODE_DAC_SERIAL; */
 	/* dpll |= (2 << 11); */
 
@@ -679,36 +678,36 @@ cdv_dpll_set_घड़ी_cdv(काष्ठा drm_device *dev, काष्�
 	pipeconf = REG_READ(map->conf);
 
 	pipeconf &= ~(PIPE_BPC_MASK);
-	अगर (is_edp) अणु
-		चयन (dev_priv->edp.bpp) अणु
-		हाल 24:
+	if (is_edp) {
+		switch (dev_priv->edp.bpp) {
+		case 24:
 			pipeconf |= PIPE_8BPC;
-			अवरोध;
-		हाल 18:
+			break;
+		case 18:
 			pipeconf |= PIPE_6BPC;
-			अवरोध;
-		हाल 30:
+			break;
+		case 30:
 			pipeconf |= PIPE_10BPC;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			pipeconf |= PIPE_8BPC;
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अगर (is_lvds) अणु
-		/* the BPC will be 6 अगर it is 18-bit LVDS panel */
-		अगर ((REG_READ(LVDS) & LVDS_A3_POWER_MASK) == LVDS_A3_POWER_UP)
+			break;
+		}
+	} else if (is_lvds) {
+		/* the BPC will be 6 if it is 18-bit LVDS panel */
+		if ((REG_READ(LVDS) & LVDS_A3_POWER_MASK) == LVDS_A3_POWER_UP)
 			pipeconf |= PIPE_8BPC;
-		अन्यथा
+		else
 			pipeconf |= PIPE_6BPC;
-	पूर्ण अन्यथा
+	} else
 		pipeconf |= PIPE_8BPC;
 
-	/* Set up the display plane रेजिस्टर */
+	/* Set up the display plane register */
 	dspcntr = DISPPLANE_GAMMA_ENABLE;
 
-	अगर (pipe == 0)
+	if (pipe == 0)
 		dspcntr |= DISPPLANE_SEL_PIPE_A;
-	अन्यथा
+	else
 		dspcntr |= DISPPLANE_SEL_PIPE_B;
 
 	dspcntr |= DISPLAY_PLANE_ENABLE;
@@ -717,16 +716,16 @@ cdv_dpll_set_घड़ी_cdv(काष्ठा drm_device *dev, काष्�
 	REG_WRITE(map->dpll, dpll | DPLL_VGA_MODE_DIS | DPLL_SYNCLOCK_ENABLE);
 	REG_READ(map->dpll);
 
-	cdv_dpll_set_घड़ी_cdv(dev, crtc, &घड़ी, is_lvds, ddi_select);
+	cdv_dpll_set_clock_cdv(dev, crtc, &clock, is_lvds, ddi_select);
 
 	udelay(150);
 
 
-	/* The LVDS pin pair needs to be on beक्रमe the DPLLs are enabled.
-	 * This is an exception to the general rule that mode_set करोesn't turn
+	/* The LVDS pin pair needs to be on before the DPLLs are enabled.
+	 * This is an exception to the general rule that mode_set doesn't turn
 	 * things on.
 	 */
-	अगर (is_lvds) अणु
+	if (is_lvds) {
 		u32 lvds = REG_READ(LVDS);
 
 		lvds |=
@@ -734,46 +733,46 @@ cdv_dpll_set_घड़ी_cdv(काष्ठा drm_device *dev, काष्�
 		    LVDS_PIPEB_SELECT;
 		/* Set the B0-B3 data pairs corresponding to
 		 * whether we're going to
-		 * set the DPLLs क्रम dual-channel mode or not.
+		 * set the DPLLs for dual-channel mode or not.
 		 */
-		अगर (घड़ी.p2 == 7)
+		if (clock.p2 == 7)
 			lvds |= LVDS_B0B3_POWER_UP | LVDS_CLKB_POWER_UP;
-		अन्यथा
+		else
 			lvds &= ~(LVDS_B0B3_POWER_UP | LVDS_CLKB_POWER_UP);
 
 		/* It would be nice to set 24 vs 18-bit mode (LVDS_A3_POWER_UP)
 		 * appropriately here, but we need to look more
-		 * thoroughly पूर्णांकo how panels behave in the two modes.
+		 * thoroughly into how panels behave in the two modes.
 		 */
 
 		REG_WRITE(LVDS, lvds);
 		REG_READ(LVDS);
-	पूर्ण
+	}
 
 	dpll |= DPLL_VCO_ENABLE;
 
-	/* Disable the panel fitter अगर it was on our pipe */
-	अगर (cdv_पूर्णांकel_panel_fitter_pipe(dev) == pipe)
+	/* Disable the panel fitter if it was on our pipe */
+	if (cdv_intel_panel_fitter_pipe(dev) == pipe)
 		REG_WRITE(PFIT_CONTROL, 0);
 
 	DRM_DEBUG_KMS("Mode for pipe %c:\n", pipe == 0 ? 'A' : 'B');
-	drm_mode_debug_prपूर्णांकmodeline(mode);
+	drm_mode_debug_printmodeline(mode);
 
 	REG_WRITE(map->dpll,
 		(REG_READ(map->dpll) & ~DPLL_LOCK) | DPLL_VCO_ENABLE);
 	REG_READ(map->dpll);
-	/* Wait क्रम the घड़ीs to stabilize. */
+	/* Wait for the clocks to stabilize. */
 	udelay(150); /* 42 usec w/o calibration, 110 with.  rounded up. */
 
-	अगर (!(REG_READ(map->dpll) & DPLL_LOCK)) अणु
+	if (!(REG_READ(map->dpll) & DPLL_LOCK)) {
 		dev_err(dev->dev, "Failed to get DPLL lock\n");
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 
-	अणु
-		पूर्णांक sdvo_pixel_multiply = adjusted_mode->घड़ी / mode->घड़ी;
+	{
+		int sdvo_pixel_multiply = adjusted_mode->clock / mode->clock;
 		REG_WRITE(map->dpll_md, (0 << DPLL_MD_UDI_DIVIDER_SHIFT) | ((sdvo_pixel_multiply - 1) << DPLL_MD_UDI_MULTIPLIER_SHIFT));
-	पूर्ण
+	}
 
 	REG_WRITE(map->htotal, (adjusted_mode->crtc_hdisplay - 1) |
 		  ((adjusted_mode->crtc_htotal - 1) << 16));
@@ -798,146 +797,146 @@ cdv_dpll_set_घड़ी_cdv(काष्ठा drm_device *dev, काष्�
 	REG_WRITE(map->conf, pipeconf);
 	REG_READ(map->conf);
 
-	gma_रुको_क्रम_vblank(dev);
+	gma_wait_for_vblank(dev);
 
 	REG_WRITE(map->cntr, dspcntr);
 
 	/* Flush the plane changes */
-	अणु
-		स्थिर काष्ठा drm_crtc_helper_funcs *crtc_funcs =
-		    crtc->helper_निजी;
+	{
+		const struct drm_crtc_helper_funcs *crtc_funcs =
+		    crtc->helper_private;
 		crtc_funcs->mode_set_base(crtc, x, y, old_fb);
-	पूर्ण
+	}
 
-	gma_रुको_क्रम_vblank(dev);
+	gma_wait_for_vblank(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/** Derive the pixel घड़ी क्रम the given refclk and भागisors क्रम 8xx chips. */
+/** Derive the pixel clock for the given refclk and divisors for 8xx chips. */
 
 /* FIXME: why are we using this, should it be cdv_ in this tree ? */
 
-अटल व्योम i8xx_घड़ी(पूर्णांक refclk, काष्ठा gma_घड़ी_प्रकार *घड़ी)
-अणु
-	घड़ी->m = 5 * (घड़ी->m1 + 2) + (घड़ी->m2 + 2);
-	घड़ी->p = घड़ी->p1 * घड़ी->p2;
-	घड़ी->vco = refclk * घड़ी->m / (घड़ी->n + 2);
-	घड़ी->करोt = घड़ी->vco / घड़ी->p;
-पूर्ण
+static void i8xx_clock(int refclk, struct gma_clock_t *clock)
+{
+	clock->m = 5 * (clock->m1 + 2) + (clock->m2 + 2);
+	clock->p = clock->p1 * clock->p2;
+	clock->vco = refclk * clock->m / (clock->n + 2);
+	clock->dot = clock->vco / clock->p;
+}
 
-/* Returns the घड़ी of the currently programmed mode of the given pipe. */
-अटल पूर्णांक cdv_पूर्णांकel_crtc_घड़ी_get(काष्ठा drm_device *dev,
-				काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
-	काष्ठा gma_crtc *gma_crtc = to_gma_crtc(crtc);
-	पूर्णांक pipe = gma_crtc->pipe;
-	स्थिर काष्ठा psb_offset *map = &dev_priv->regmap[pipe];
+/* Returns the clock of the currently programmed mode of the given pipe. */
+static int cdv_intel_crtc_clock_get(struct drm_device *dev,
+				struct drm_crtc *crtc)
+{
+	struct drm_psb_private *dev_priv = dev->dev_private;
+	struct gma_crtc *gma_crtc = to_gma_crtc(crtc);
+	int pipe = gma_crtc->pipe;
+	const struct psb_offset *map = &dev_priv->regmap[pipe];
 	u32 dpll;
 	u32 fp;
-	काष्ठा gma_घड़ी_प्रकार घड़ी;
+	struct gma_clock_t clock;
 	bool is_lvds;
-	काष्ठा psb_pipe *p = &dev_priv->regs.pipe[pipe];
+	struct psb_pipe *p = &dev_priv->regs.pipe[pipe];
 
-	अगर (gma_घातer_begin(dev, false)) अणु
+	if (gma_power_begin(dev, false)) {
 		dpll = REG_READ(map->dpll);
-		अगर ((dpll & DISPLAY_RATE_SELECT_FPA1) == 0)
+		if ((dpll & DISPLAY_RATE_SELECT_FPA1) == 0)
 			fp = REG_READ(map->fp0);
-		अन्यथा
+		else
 			fp = REG_READ(map->fp1);
 		is_lvds = (pipe == 1) && (REG_READ(LVDS) & LVDS_PORT_EN);
-		gma_घातer_end(dev);
-	पूर्ण अन्यथा अणु
+		gma_power_end(dev);
+	} else {
 		dpll = p->dpll;
-		अगर ((dpll & DISPLAY_RATE_SELECT_FPA1) == 0)
+		if ((dpll & DISPLAY_RATE_SELECT_FPA1) == 0)
 			fp = p->fp0;
-		अन्यथा
+		else
 			fp = p->fp1;
 
 		is_lvds = (pipe == 1) &&
 				(dev_priv->regs.psb.saveLVDS & LVDS_PORT_EN);
-	पूर्ण
+	}
 
-	घड़ी.m1 = (fp & FP_M1_DIV_MASK) >> FP_M1_DIV_SHIFT;
-	घड़ी.m2 = (fp & FP_M2_DIV_MASK) >> FP_M2_DIV_SHIFT;
-	घड़ी.n = (fp & FP_N_DIV_MASK) >> FP_N_DIV_SHIFT;
+	clock.m1 = (fp & FP_M1_DIV_MASK) >> FP_M1_DIV_SHIFT;
+	clock.m2 = (fp & FP_M2_DIV_MASK) >> FP_M2_DIV_SHIFT;
+	clock.n = (fp & FP_N_DIV_MASK) >> FP_N_DIV_SHIFT;
 
-	अगर (is_lvds) अणु
-		घड़ी.p1 =
+	if (is_lvds) {
+		clock.p1 =
 		    ffs((dpll &
 			 DPLL_FPA01_P1_POST_DIV_MASK_I830_LVDS) >>
 			DPLL_FPA01_P1_POST_DIV_SHIFT);
-		अगर (घड़ी.p1 == 0) अणु
-			घड़ी.p1 = 4;
+		if (clock.p1 == 0) {
+			clock.p1 = 4;
 			dev_err(dev->dev, "PLL %d\n", dpll);
-		पूर्ण
-		घड़ी.p2 = 14;
+		}
+		clock.p2 = 14;
 
-		अगर ((dpll & PLL_REF_INPUT_MASK) ==
-		    PLLB_REF_INPUT_SPREADSPECTRUMIN) अणु
+		if ((dpll & PLL_REF_INPUT_MASK) ==
+		    PLLB_REF_INPUT_SPREADSPECTRUMIN) {
 			/* XXX: might not be 66MHz */
-			i8xx_घड़ी(66000, &घड़ी);
-		पूर्ण अन्यथा
-			i8xx_घड़ी(48000, &घड़ी);
-	पूर्ण अन्यथा अणु
-		अगर (dpll & PLL_P1_DIVIDE_BY_TWO)
-			घड़ी.p1 = 2;
-		अन्यथा अणु
-			घड़ी.p1 =
+			i8xx_clock(66000, &clock);
+		} else
+			i8xx_clock(48000, &clock);
+	} else {
+		if (dpll & PLL_P1_DIVIDE_BY_TWO)
+			clock.p1 = 2;
+		else {
+			clock.p1 =
 			    ((dpll &
 			      DPLL_FPA01_P1_POST_DIV_MASK_I830) >>
 			     DPLL_FPA01_P1_POST_DIV_SHIFT) + 2;
-		पूर्ण
-		अगर (dpll & PLL_P2_DIVIDE_BY_4)
-			घड़ी.p2 = 4;
-		अन्यथा
-			घड़ी.p2 = 2;
+		}
+		if (dpll & PLL_P2_DIVIDE_BY_4)
+			clock.p2 = 4;
+		else
+			clock.p2 = 2;
 
-		i8xx_घड़ी(48000, &घड़ी);
-	पूर्ण
+		i8xx_clock(48000, &clock);
+	}
 
-	/* XXX: It would be nice to validate the घड़ीs, but we can't reuse
+	/* XXX: It would be nice to validate the clocks, but we can't reuse
 	 * i830PllIsValid() because it relies on the xf86_config connector
 	 * configuration being accurate, which it isn't necessarily.
 	 */
 
-	वापस घड़ी.करोt;
-पूर्ण
+	return clock.dot;
+}
 
 /** Returns the currently programmed mode of the given pipe. */
-काष्ठा drm_display_mode *cdv_पूर्णांकel_crtc_mode_get(काष्ठा drm_device *dev,
-					     काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा gma_crtc *gma_crtc = to_gma_crtc(crtc);
-	पूर्णांक pipe = gma_crtc->pipe;
-	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
-	काष्ठा psb_pipe *p = &dev_priv->regs.pipe[pipe];
-	स्थिर काष्ठा psb_offset *map = &dev_priv->regmap[pipe];
-	काष्ठा drm_display_mode *mode;
-	पूर्णांक htot;
-	पूर्णांक hsync;
-	पूर्णांक vtot;
-	पूर्णांक vsync;
+struct drm_display_mode *cdv_intel_crtc_mode_get(struct drm_device *dev,
+					     struct drm_crtc *crtc)
+{
+	struct gma_crtc *gma_crtc = to_gma_crtc(crtc);
+	int pipe = gma_crtc->pipe;
+	struct drm_psb_private *dev_priv = dev->dev_private;
+	struct psb_pipe *p = &dev_priv->regs.pipe[pipe];
+	const struct psb_offset *map = &dev_priv->regmap[pipe];
+	struct drm_display_mode *mode;
+	int htot;
+	int hsync;
+	int vtot;
+	int vsync;
 
-	अगर (gma_घातer_begin(dev, false)) अणु
+	if (gma_power_begin(dev, false)) {
 		htot = REG_READ(map->htotal);
 		hsync = REG_READ(map->hsync);
 		vtot = REG_READ(map->vtotal);
 		vsync = REG_READ(map->vsync);
-		gma_घातer_end(dev);
-	पूर्ण अन्यथा अणु
+		gma_power_end(dev);
+	} else {
 		htot = p->htotal;
 		hsync = p->hsync;
 		vtot = p->vtotal;
 		vsync = p->vsync;
-	पूर्ण
+	}
 
-	mode = kzalloc(माप(*mode), GFP_KERNEL);
-	अगर (!mode)
-		वापस शून्य;
+	mode = kzalloc(sizeof(*mode), GFP_KERNEL);
+	if (!mode)
+		return NULL;
 
-	mode->घड़ी = cdv_पूर्णांकel_crtc_घड़ी_get(dev, crtc);
+	mode->clock = cdv_intel_crtc_clock_get(dev, crtc);
 	mode->hdisplay = (htot & 0xffff) + 1;
 	mode->htotal = ((htot & 0xffff0000) >> 16) + 1;
 	mode->hsync_start = (hsync & 0xffff) + 1;
@@ -950,20 +949,20 @@ cdv_dpll_set_घड़ी_cdv(काष्ठा drm_device *dev, काष्�
 	drm_mode_set_name(mode);
 	drm_mode_set_crtcinfo(mode, 0);
 
-	वापस mode;
-पूर्ण
+	return mode;
+}
 
-स्थिर काष्ठा drm_crtc_helper_funcs cdv_पूर्णांकel_helper_funcs = अणु
+const struct drm_crtc_helper_funcs cdv_intel_helper_funcs = {
 	.dpms = gma_crtc_dpms,
-	.mode_set = cdv_पूर्णांकel_crtc_mode_set,
+	.mode_set = cdv_intel_crtc_mode_set,
 	.mode_set_base = gma_pipe_set_base,
 	.prepare = gma_crtc_prepare,
 	.commit = gma_crtc_commit,
 	.disable = gma_crtc_disable,
-पूर्ण;
+};
 
-स्थिर काष्ठा gma_घड़ी_funcs cdv_घड़ी_funcs = अणु
-	.घड़ी = cdv_पूर्णांकel_घड़ी,
-	.limit = cdv_पूर्णांकel_limit,
+const struct gma_clock_funcs cdv_clock_funcs = {
+	.clock = cdv_intel_clock,
+	.limit = cdv_intel_limit,
 	.pll_is_valid = gma_pll_is_valid,
-पूर्ण;
+};

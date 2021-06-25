@@ -1,14 +1,13 @@
-<शैली गुरु>
 /*
-   BNEP implementation क्रम Linux Bluetooth stack (BlueZ).
+   BNEP implementation for Linux Bluetooth stack (BlueZ).
    Copyright (C) 2001-2002 Inventel Systemes
    Written 2001-2002 by
-	Clथऊment Moreau <clement.moreau@inventel.fr>
+	Clément Moreau <clement.moreau@inventel.fr>
 	David Libault  <david.libault@inventel.fr>
 
    Copyright (C) 2002 Maxim Krasnyansky <maxk@qualcomm.com>
 
-   This program is मुक्त software; you can redistribute it and/or modअगरy
+   This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License version 2 as
    published by the Free Software Foundation;
 
@@ -16,7 +15,7 @@
    OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT OF THIRD PARTY RIGHTS.
    IN NO EVENT SHALL THE COPYRIGHT HOLDER(S) AND AUTHOR(S) BE LIABLE FOR ANY
-   CLAIM, OR ANY SPECIAL INसूचीECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
+   CLAIM, OR ANY SPECIAL INDIRECT OR CONSEQUENTIAL DAMAGES, OR ANY DAMAGES
    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
@@ -26,197 +25,197 @@
    SOFTWARE IS DISCLAIMED.
 */
 
-#समावेश <linux/etherdevice.h>
+#include <linux/etherdevice.h>
 
-#समावेश <net/bluetooth/bluetooth.h>
-#समावेश <net/bluetooth/hci_core.h>
-#समावेश <net/bluetooth/l2cap.h>
+#include <net/bluetooth/bluetooth.h>
+#include <net/bluetooth/hci_core.h>
+#include <net/bluetooth/l2cap.h>
 
-#समावेश "bnep.h"
+#include "bnep.h"
 
-#घोषणा BNEP_TX_QUEUE_LEN 20
+#define BNEP_TX_QUEUE_LEN 20
 
-अटल पूर्णांक bnep_net_खोलो(काष्ठा net_device *dev)
-अणु
-	netअगर_start_queue(dev);
-	वापस 0;
-पूर्ण
+static int bnep_net_open(struct net_device *dev)
+{
+	netif_start_queue(dev);
+	return 0;
+}
 
-अटल पूर्णांक bnep_net_बंद(काष्ठा net_device *dev)
-अणु
-	netअगर_stop_queue(dev);
-	वापस 0;
-पूर्ण
+static int bnep_net_close(struct net_device *dev)
+{
+	netif_stop_queue(dev);
+	return 0;
+}
 
-अटल व्योम bnep_net_set_mc_list(काष्ठा net_device *dev)
-अणु
-#अगर_घोषित CONFIG_BT_BNEP_MC_FILTER
-	काष्ठा bnep_session *s = netdev_priv(dev);
-	काष्ठा sock *sk = s->sock->sk;
-	काष्ठा bnep_set_filter_req *r;
-	काष्ठा sk_buff *skb;
-	पूर्णांक size;
+static void bnep_net_set_mc_list(struct net_device *dev)
+{
+#ifdef CONFIG_BT_BNEP_MC_FILTER
+	struct bnep_session *s = netdev_priv(dev);
+	struct sock *sk = s->sock->sk;
+	struct bnep_set_filter_req *r;
+	struct sk_buff *skb;
+	int size;
 
 	BT_DBG("%s mc_count %d", dev->name, netdev_mc_count(dev));
 
-	size = माप(*r) + (BNEP_MAX_MULTICAST_FILTERS + 1) * ETH_ALEN * 2;
+	size = sizeof(*r) + (BNEP_MAX_MULTICAST_FILTERS + 1) * ETH_ALEN * 2;
 	skb  = alloc_skb(size, GFP_ATOMIC);
-	अगर (!skb) अणु
+	if (!skb) {
 		BT_ERR("%s Multicast list allocation failed", dev->name);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	r = (व्योम *) skb->data;
-	__skb_put(skb, माप(*r));
+	r = (void *) skb->data;
+	__skb_put(skb, sizeof(*r));
 
 	r->type = BNEP_CONTROL;
 	r->ctrl = BNEP_FILTER_MULTI_ADDR_SET;
 
-	अगर (dev->flags & (IFF_PROMISC | IFF_ALLMULTI)) अणु
-		u8 start[ETH_ALEN] = अणु 0x01 पूर्ण;
+	if (dev->flags & (IFF_PROMISC | IFF_ALLMULTI)) {
+		u8 start[ETH_ALEN] = { 0x01 };
 
 		/* Request all addresses */
 		__skb_put_data(skb, start, ETH_ALEN);
 		__skb_put_data(skb, dev->broadcast, ETH_ALEN);
 		r->len = htons(ETH_ALEN * 2);
-	पूर्ण अन्यथा अणु
-		काष्ठा netdev_hw_addr *ha;
-		पूर्णांक i, len = skb->len;
+	} else {
+		struct netdev_hw_addr *ha;
+		int i, len = skb->len;
 
-		अगर (dev->flags & IFF_BROADCAST) अणु
+		if (dev->flags & IFF_BROADCAST) {
 			__skb_put_data(skb, dev->broadcast, ETH_ALEN);
 			__skb_put_data(skb, dev->broadcast, ETH_ALEN);
-		पूर्ण
+		}
 
 		/* FIXME: We should group addresses here. */
 
 		i = 0;
-		netdev_क्रम_each_mc_addr(ha, dev) अणु
-			अगर (i == BNEP_MAX_MULTICAST_FILTERS)
-				अवरोध;
+		netdev_for_each_mc_addr(ha, dev) {
+			if (i == BNEP_MAX_MULTICAST_FILTERS)
+				break;
 			__skb_put_data(skb, ha->addr, ETH_ALEN);
 			__skb_put_data(skb, ha->addr, ETH_ALEN);
 
 			i++;
-		पूर्ण
+		}
 		r->len = htons(skb->len - len);
-	पूर्ण
+	}
 
-	skb_queue_tail(&sk->sk_ग_लिखो_queue, skb);
-	wake_up_पूर्णांकerruptible(sk_sleep(sk));
-#पूर्ण_अगर
-पूर्ण
+	skb_queue_tail(&sk->sk_write_queue, skb);
+	wake_up_interruptible(sk_sleep(sk));
+#endif
+}
 
-अटल पूर्णांक bnep_net_set_mac_addr(काष्ठा net_device *dev, व्योम *arg)
-अणु
+static int bnep_net_set_mac_addr(struct net_device *dev, void *arg)
+{
 	BT_DBG("%s", dev->name);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम bnep_net_समयout(काष्ठा net_device *dev, अचिन्हित पूर्णांक txqueue)
-अणु
+static void bnep_net_timeout(struct net_device *dev, unsigned int txqueue)
+{
 	BT_DBG("net_timeout");
-	netअगर_wake_queue(dev);
-पूर्ण
+	netif_wake_queue(dev);
+}
 
-#अगर_घोषित CONFIG_BT_BNEP_MC_FILTER
-अटल पूर्णांक bnep_net_mc_filter(काष्ठा sk_buff *skb, काष्ठा bnep_session *s)
-अणु
-	काष्ठा ethhdr *eh = (व्योम *) skb->data;
+#ifdef CONFIG_BT_BNEP_MC_FILTER
+static int bnep_net_mc_filter(struct sk_buff *skb, struct bnep_session *s)
+{
+	struct ethhdr *eh = (void *) skb->data;
 
-	अगर ((eh->h_dest[0] & 1) && !test_bit(bnep_mc_hash(eh->h_dest), (uदीर्घ *) &s->mc_filter))
-		वापस 1;
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	if ((eh->h_dest[0] & 1) && !test_bit(bnep_mc_hash(eh->h_dest), (ulong *) &s->mc_filter))
+		return 1;
+	return 0;
+}
+#endif
 
-#अगर_घोषित CONFIG_BT_BNEP_PROTO_FILTER
+#ifdef CONFIG_BT_BNEP_PROTO_FILTER
 /* Determine ether protocol. Based on eth_type_trans. */
-अटल u16 bnep_net_eth_proto(काष्ठा sk_buff *skb)
-अणु
-	काष्ठा ethhdr *eh = (व्योम *) skb->data;
+static u16 bnep_net_eth_proto(struct sk_buff *skb)
+{
+	struct ethhdr *eh = (void *) skb->data;
 	u16 proto = ntohs(eh->h_proto);
 
-	अगर (proto >= ETH_P_802_3_MIN)
-		वापस proto;
+	if (proto >= ETH_P_802_3_MIN)
+		return proto;
 
-	अगर (get_unaligned((__be16 *) skb->data) == htons(0xFFFF))
-		वापस ETH_P_802_3;
+	if (get_unaligned((__be16 *) skb->data) == htons(0xFFFF))
+		return ETH_P_802_3;
 
-	वापस ETH_P_802_2;
-पूर्ण
+	return ETH_P_802_2;
+}
 
-अटल पूर्णांक bnep_net_proto_filter(काष्ठा sk_buff *skb, काष्ठा bnep_session *s)
-अणु
+static int bnep_net_proto_filter(struct sk_buff *skb, struct bnep_session *s)
+{
 	u16 proto = bnep_net_eth_proto(skb);
-	काष्ठा bnep_proto_filter *f = s->proto_filter;
-	पूर्णांक i;
+	struct bnep_proto_filter *f = s->proto_filter;
+	int i;
 
-	क्रम (i = 0; i < BNEP_MAX_PROTO_FILTERS && f[i].end; i++) अणु
-		अगर (proto >= f[i].start && proto <= f[i].end)
-			वापस 0;
-	पूर्ण
+	for (i = 0; i < BNEP_MAX_PROTO_FILTERS && f[i].end; i++) {
+		if (proto >= f[i].start && proto <= f[i].end)
+			return 0;
+	}
 
 	BT_DBG("BNEP: filtered skb %p, proto 0x%.4x", skb, proto);
-	वापस 1;
-पूर्ण
-#पूर्ण_अगर
+	return 1;
+}
+#endif
 
-अटल netdev_tx_t bnep_net_xmit(काष्ठा sk_buff *skb,
-				 काष्ठा net_device *dev)
-अणु
-	काष्ठा bnep_session *s = netdev_priv(dev);
-	काष्ठा sock *sk = s->sock->sk;
+static netdev_tx_t bnep_net_xmit(struct sk_buff *skb,
+				 struct net_device *dev)
+{
+	struct bnep_session *s = netdev_priv(dev);
+	struct sock *sk = s->sock->sk;
 
 	BT_DBG("skb %p, dev %p", skb, dev);
 
-#अगर_घोषित CONFIG_BT_BNEP_MC_FILTER
-	अगर (bnep_net_mc_filter(skb, s)) अणु
-		kमुक्त_skb(skb);
-		वापस NETDEV_TX_OK;
-	पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_BT_BNEP_MC_FILTER
+	if (bnep_net_mc_filter(skb, s)) {
+		kfree_skb(skb);
+		return NETDEV_TX_OK;
+	}
+#endif
 
-#अगर_घोषित CONFIG_BT_BNEP_PROTO_FILTER
-	अगर (bnep_net_proto_filter(skb, s)) अणु
-		kमुक्त_skb(skb);
-		वापस NETDEV_TX_OK;
-	पूर्ण
-#पूर्ण_अगर
+#ifdef CONFIG_BT_BNEP_PROTO_FILTER
+	if (bnep_net_proto_filter(skb, s)) {
+		kfree_skb(skb);
+		return NETDEV_TX_OK;
+	}
+#endif
 
 	/*
 	 * We cannot send L2CAP packets from here as we are potentially in a bh.
-	 * So we have to queue them and wake up session thपढ़ो which is sleeping
+	 * So we have to queue them and wake up session thread which is sleeping
 	 * on the sk_sleep(sk).
 	 */
-	netअगर_trans_update(dev);
-	skb_queue_tail(&sk->sk_ग_लिखो_queue, skb);
-	wake_up_पूर्णांकerruptible(sk_sleep(sk));
+	netif_trans_update(dev);
+	skb_queue_tail(&sk->sk_write_queue, skb);
+	wake_up_interruptible(sk_sleep(sk));
 
-	अगर (skb_queue_len(&sk->sk_ग_लिखो_queue) >= BNEP_TX_QUEUE_LEN) अणु
+	if (skb_queue_len(&sk->sk_write_queue) >= BNEP_TX_QUEUE_LEN) {
 		BT_DBG("tx queue is full");
 
 		/* Stop queuing.
-		 * Session thपढ़ो will करो netअगर_wake_queue() */
-		netअगर_stop_queue(dev);
-	पूर्ण
+		 * Session thread will do netif_wake_queue() */
+		netif_stop_queue(dev);
+	}
 
-	वापस NETDEV_TX_OK;
-पूर्ण
+	return NETDEV_TX_OK;
+}
 
-अटल स्थिर काष्ठा net_device_ops bnep_netdev_ops = अणु
-	.nकरो_खोलो            = bnep_net_खोलो,
-	.nकरो_stop            = bnep_net_बंद,
-	.nकरो_start_xmit	     = bnep_net_xmit,
-	.nकरो_validate_addr   = eth_validate_addr,
-	.nकरो_set_rx_mode     = bnep_net_set_mc_list,
-	.nकरो_set_mac_address = bnep_net_set_mac_addr,
-	.nकरो_tx_समयout      = bnep_net_समयout,
+static const struct net_device_ops bnep_netdev_ops = {
+	.ndo_open            = bnep_net_open,
+	.ndo_stop            = bnep_net_close,
+	.ndo_start_xmit	     = bnep_net_xmit,
+	.ndo_validate_addr   = eth_validate_addr,
+	.ndo_set_rx_mode     = bnep_net_set_mc_list,
+	.ndo_set_mac_address = bnep_net_set_mac_addr,
+	.ndo_tx_timeout      = bnep_net_timeout,
 
-पूर्ण;
+};
 
-व्योम bnep_net_setup(काष्ठा net_device *dev)
-अणु
+void bnep_net_setup(struct net_device *dev)
+{
 
 	eth_broadcast_addr(dev->broadcast);
 	dev->addr_len = ETH_ALEN;
@@ -227,5 +226,5 @@
 	dev->priv_flags &= ~IFF_TX_SKB_SHARING;
 	dev->netdev_ops = &bnep_netdev_ops;
 
-	dev->watchकरोg_समयo  = HZ * 2;
-पूर्ण
+	dev->watchdog_timeo  = HZ * 2;
+}

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,144 +19,144 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  *
- * Authors: Christian Kथघnig
+ * Authors: Christian König
  */
 
-#अगर_अघोषित _TTM_RESOURCE_H_
-#घोषणा _TTM_RESOURCE_H_
+#ifndef _TTM_RESOURCE_H_
+#define _TTM_RESOURCE_H_
 
-#समावेश <linux/types.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/dma-fence.h>
-#समावेश <drm/drm_prपूर्णांक.h>
-#समावेश <drm/tपंचांग/tपंचांग_caching.h>
+#include <linux/types.h>
+#include <linux/mutex.h>
+#include <linux/dma-fence.h>
+#include <drm/drm_print.h>
+#include <drm/ttm/ttm_caching.h>
 
-#घोषणा TTM_MAX_BO_PRIORITY	4U
+#define TTM_MAX_BO_PRIORITY	4U
 
-काष्ठा tपंचांग_device;
-काष्ठा tपंचांग_resource_manager;
-काष्ठा tपंचांग_resource;
-काष्ठा tपंचांग_place;
-काष्ठा tपंचांग_buffer_object;
+struct ttm_device;
+struct ttm_resource_manager;
+struct ttm_resource;
+struct ttm_place;
+struct ttm_buffer_object;
 
-काष्ठा tपंचांग_resource_manager_func अणु
+struct ttm_resource_manager_func {
 	/**
-	 * काष्ठा tपंचांग_resource_manager_func member alloc
+	 * struct ttm_resource_manager_func member alloc
 	 *
-	 * @man: Poपूर्णांकer to a memory type manager.
-	 * @bo: Poपूर्णांकer to the buffer object we're allocating space क्रम.
+	 * @man: Pointer to a memory type manager.
+	 * @bo: Pointer to the buffer object we're allocating space for.
 	 * @placement: Placement details.
 	 * @flags: Additional placement flags.
-	 * @mem: Poपूर्णांकer to a काष्ठा tपंचांग_resource to be filled in.
+	 * @mem: Pointer to a struct ttm_resource to be filled in.
 	 *
 	 * This function should allocate space in the memory type managed
-	 * by @man. Placement details अगर
+	 * by @man. Placement details if
 	 * applicable are given by @placement. If successful,
 	 * @mem::mm_node should be set to a non-null value, and
-	 * @mem::start should be set to a value identअगरying the beginning
-	 * of the range allocated, and the function should वापस zero.
+	 * @mem::start should be set to a value identifying the beginning
+	 * of the range allocated, and the function should return zero.
 	 * If the memory region accommodate the buffer object, @mem::mm_node
-	 * should be set to शून्य, and the function should वापस 0.
-	 * If a प्रणाली error occurred, preventing the request to be fulfilled,
-	 * the function should वापस a negative error code.
+	 * should be set to NULL, and the function should return 0.
+	 * If a system error occurred, preventing the request to be fulfilled,
+	 * the function should return a negative error code.
 	 *
 	 * Note that @mem::mm_node will only be dereferenced by
-	 * काष्ठा tपंचांग_resource_manager functions and optionally by the driver,
+	 * struct ttm_resource_manager functions and optionally by the driver,
 	 * which has knowledge of the underlying type.
 	 *
 	 * This function may not be called from within atomic context, so
 	 * an implementation can and must use either a mutex or a spinlock to
-	 * protect any data काष्ठाures managing the space.
+	 * protect any data structures managing the space.
 	 */
-	पूर्णांक  (*alloc)(काष्ठा tपंचांग_resource_manager *man,
-		      काष्ठा tपंचांग_buffer_object *bo,
-		      स्थिर काष्ठा tपंचांग_place *place,
-		      काष्ठा tपंचांग_resource *mem);
+	int  (*alloc)(struct ttm_resource_manager *man,
+		      struct ttm_buffer_object *bo,
+		      const struct ttm_place *place,
+		      struct ttm_resource *mem);
 
 	/**
-	 * काष्ठा tपंचांग_resource_manager_func member मुक्त
+	 * struct ttm_resource_manager_func member free
 	 *
-	 * @man: Poपूर्णांकer to a memory type manager.
-	 * @mem: Poपूर्णांकer to a काष्ठा tपंचांग_resource to be filled in.
+	 * @man: Pointer to a memory type manager.
+	 * @mem: Pointer to a struct ttm_resource to be filled in.
 	 *
-	 * This function मुक्तs memory type resources previously allocated
-	 * and that are identअगरied by @mem::mm_node and @mem::start. May not
+	 * This function frees memory type resources previously allocated
+	 * and that are identified by @mem::mm_node and @mem::start. May not
 	 * be called from within atomic context.
 	 */
-	व्योम (*मुक्त)(काष्ठा tपंचांग_resource_manager *man,
-		     काष्ठा tपंचांग_resource *mem);
+	void (*free)(struct ttm_resource_manager *man,
+		     struct ttm_resource *mem);
 
 	/**
-	 * काष्ठा tपंचांग_resource_manager_func member debug
+	 * struct ttm_resource_manager_func member debug
 	 *
-	 * @man: Poपूर्णांकer to a memory type manager.
-	 * @prपूर्णांकer: Prefix to be used in prपूर्णांकout to identअगरy the caller.
+	 * @man: Pointer to a memory type manager.
+	 * @printer: Prefix to be used in printout to identify the caller.
 	 *
-	 * This function is called to prपूर्णांक out the state of the memory
+	 * This function is called to print out the state of the memory
 	 * type manager to aid debugging of out-of-memory conditions.
 	 * It may not be called from within atomic context.
 	 */
-	व्योम (*debug)(काष्ठा tपंचांग_resource_manager *man,
-		      काष्ठा drm_prपूर्णांकer *prपूर्णांकer);
-पूर्ण;
+	void (*debug)(struct ttm_resource_manager *man,
+		      struct drm_printer *printer);
+};
 
 /**
- * काष्ठा tपंचांग_resource_manager
+ * struct ttm_resource_manager
  *
  * @use_type: The memory type is enabled.
- * @flags: TTM_MEMTYPE_XX flags identअगरying the traits of the memory
+ * @flags: TTM_MEMTYPE_XX flags identifying the traits of the memory
  * managed by this memory type.
  * @gpu_offset: If used, the GPU offset of the first managed page of
  * fixed memory or the first managed location in an aperture.
  * @size: Size of the managed region.
- * @func: काष्ठाure poपूर्णांकer implementing the range manager. See above
- * @move_lock: lock क्रम move fence
- * अटल inक्रमmation. bdev::driver::io_mem_मुक्त is never used.
- * @lru: The lru list क्रम this memory type.
+ * @func: structure pointer implementing the range manager. See above
+ * @move_lock: lock for move fence
+ * static information. bdev::driver::io_mem_free is never used.
+ * @lru: The lru list for this memory type.
  * @move: The fence of the last pipelined move operation.
  *
- * This काष्ठाure is used to identअगरy and manage memory types क्रम a device.
+ * This structure is used to identify and manage memory types for a device.
  */
-काष्ठा tपंचांग_resource_manager अणु
+struct ttm_resource_manager {
 	/*
 	 * No protection. Constant from start.
 	 */
 	bool use_type;
 	bool use_tt;
-	uपूर्णांक64_t size;
-	स्थिर काष्ठा tपंचांग_resource_manager_func *func;
+	uint64_t size;
+	const struct ttm_resource_manager_func *func;
 	spinlock_t move_lock;
 
 	/*
 	 * Protected by the global->lru_lock.
 	 */
 
-	काष्ठा list_head lru[TTM_MAX_BO_PRIORITY];
+	struct list_head lru[TTM_MAX_BO_PRIORITY];
 
 	/*
 	 * Protected by @move_lock.
 	 */
-	काष्ठा dma_fence *move;
-पूर्ण;
+	struct dma_fence *move;
+};
 
 /**
- * काष्ठा tपंचांग_bus_placement
+ * struct ttm_bus_placement
  *
- * @addr:		mapped भव address
+ * @addr:		mapped virtual address
  * @offset:		physical addr
  * @is_iomem:		is this io memory ?
  *
  * Structure indicating the bus placement of an object.
  */
-काष्ठा tपंचांग_bus_placement अणु
-	व्योम			*addr;
+struct ttm_bus_placement {
+	void			*addr;
 	phys_addr_t		offset;
 	bool			is_iomem;
-	क्रमागत tपंचांग_caching	caching;
-पूर्ण;
+	enum ttm_caching	caching;
+};
 
 /**
- * काष्ठा tपंचांग_resource
+ * struct ttm_resource
  *
  * @mm_node: Memory manager node.
  * @size: Requested size of memory region.
@@ -169,75 +168,75 @@
  * Structure indicating the placement and space resources used by a
  * buffer object.
  */
-काष्ठा tपंचांग_resource अणु
-	व्योम *mm_node;
-	अचिन्हित दीर्घ start;
-	अचिन्हित दीर्घ num_pages;
-	uपूर्णांक32_t page_alignment;
-	uपूर्णांक32_t mem_type;
-	uपूर्णांक32_t placement;
-	काष्ठा tपंचांग_bus_placement bus;
-पूर्ण;
+struct ttm_resource {
+	void *mm_node;
+	unsigned long start;
+	unsigned long num_pages;
+	uint32_t page_alignment;
+	uint32_t mem_type;
+	uint32_t placement;
+	struct ttm_bus_placement bus;
+};
 
 /**
- * tपंचांग_resource_manager_set_used
+ * ttm_resource_manager_set_used
  *
  * @man: A memory manager object.
  * @used: usage state to set.
  *
- * Set the manager in use flag. If disabled the manager is no दीर्घer
- * used क्रम object placement.
+ * Set the manager in use flag. If disabled the manager is no longer
+ * used for object placement.
  */
-अटल अंतरभूत व्योम
-tपंचांग_resource_manager_set_used(काष्ठा tपंचांग_resource_manager *man, bool used)
-अणु
-	पूर्णांक i;
+static inline void
+ttm_resource_manager_set_used(struct ttm_resource_manager *man, bool used)
+{
+	int i;
 
-	क्रम (i = 0; i < TTM_MAX_BO_PRIORITY; i++)
+	for (i = 0; i < TTM_MAX_BO_PRIORITY; i++)
 		WARN_ON(!list_empty(&man->lru[i]));
 	man->use_type = used;
-पूर्ण
+}
 
 /**
- * tपंचांग_resource_manager_used
+ * ttm_resource_manager_used
  *
- * @man: Manager to get used state क्रम
+ * @man: Manager to get used state for
  *
- * Get the in use flag क्रम a manager.
+ * Get the in use flag for a manager.
  * Returns:
- * true is used, false अगर not.
+ * true is used, false if not.
  */
-अटल अंतरभूत bool tपंचांग_resource_manager_used(काष्ठा tपंचांग_resource_manager *man)
-अणु
-	वापस man->use_type;
-पूर्ण
+static inline bool ttm_resource_manager_used(struct ttm_resource_manager *man)
+{
+	return man->use_type;
+}
 
 /**
- * tपंचांग_resource_manager_cleanup
+ * ttm_resource_manager_cleanup
  *
  * @man: A memory manager object.
  *
  * Cleanup the move fences from the memory manager object.
  */
-अटल अंतरभूत व्योम
-tपंचांग_resource_manager_cleanup(काष्ठा tपंचांग_resource_manager *man)
-अणु
+static inline void
+ttm_resource_manager_cleanup(struct ttm_resource_manager *man)
+{
 	dma_fence_put(man->move);
-	man->move = शून्य;
-पूर्ण
+	man->move = NULL;
+}
 
-पूर्णांक tपंचांग_resource_alloc(काष्ठा tपंचांग_buffer_object *bo,
-		       स्थिर काष्ठा tपंचांग_place *place,
-		       काष्ठा tपंचांग_resource *res);
-व्योम tपंचांग_resource_मुक्त(काष्ठा tपंचांग_buffer_object *bo, काष्ठा tपंचांग_resource *res);
+int ttm_resource_alloc(struct ttm_buffer_object *bo,
+		       const struct ttm_place *place,
+		       struct ttm_resource *res);
+void ttm_resource_free(struct ttm_buffer_object *bo, struct ttm_resource *res);
 
-व्योम tपंचांग_resource_manager_init(काष्ठा tपंचांग_resource_manager *man,
-			       अचिन्हित दीर्घ p_size);
+void ttm_resource_manager_init(struct ttm_resource_manager *man,
+			       unsigned long p_size);
 
-पूर्णांक tपंचांग_resource_manager_evict_all(काष्ठा tपंचांग_device *bdev,
-				   काष्ठा tपंचांग_resource_manager *man);
+int ttm_resource_manager_evict_all(struct ttm_device *bdev,
+				   struct ttm_resource_manager *man);
 
-व्योम tपंचांग_resource_manager_debug(काष्ठा tपंचांग_resource_manager *man,
-				काष्ठा drm_prपूर्णांकer *p);
+void ttm_resource_manager_debug(struct ttm_resource_manager *man,
+				struct drm_printer *p);
 
-#पूर्ण_अगर
+#endif

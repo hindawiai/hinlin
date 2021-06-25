@@ -1,144 +1,143 @@
-<शैली गुरु>
 /*
  * JFFS2 -- Journalling Flash File System, Version 2.
  *
- * Copyright तऊ 2004  Ferenc Havasi <havasi@inf.u-szeged.hu>,
+ * Copyright © 2004  Ferenc Havasi <havasi@inf.u-szeged.hu>,
  *		     Zoltan Sogor <weth@inf.u-szeged.hu>,
  *		     Patrik Kluba <pajko@halom.u-szeged.hu>,
  *		     University of Szeged, Hungary
  *	       2006  KaiGai Kohei <kaigai@ak.jp.nec.com>
  *
- * For licensing inक्रमmation, see the file 'LICENCE' in this directory.
+ * For licensing information, see the file 'LICENCE' in this directory.
  *
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/crc32.h>
-#समावेश <linux/compiler.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश "nodelist.h"
-#समावेश "debug.h"
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/mtd/mtd.h>
+#include <linux/pagemap.h>
+#include <linux/crc32.h>
+#include <linux/compiler.h>
+#include <linux/vmalloc.h>
+#include "nodelist.h"
+#include "debug.h"
 
-पूर्णांक jffs2_sum_init(काष्ठा jffs2_sb_info *c)
-अणु
-	uपूर्णांक32_t sum_size = min_t(uपूर्णांक32_t, c->sector_size, MAX_SUMMARY_SIZE);
+int jffs2_sum_init(struct jffs2_sb_info *c)
+{
+	uint32_t sum_size = min_t(uint32_t, c->sector_size, MAX_SUMMARY_SIZE);
 
-	c->summary = kzalloc(माप(काष्ठा jffs2_summary), GFP_KERNEL);
+	c->summary = kzalloc(sizeof(struct jffs2_summary), GFP_KERNEL);
 
-	अगर (!c->summary) अणु
+	if (!c->summary) {
 		JFFS2_WARNING("Can't allocate memory for summary information!\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	c->summary->sum_buf = kदो_स्मृति(sum_size, GFP_KERNEL);
+	c->summary->sum_buf = kmalloc(sum_size, GFP_KERNEL);
 
-	अगर (!c->summary->sum_buf) अणु
+	if (!c->summary->sum_buf) {
 		JFFS2_WARNING("Can't allocate buffer for writing out summary information!\n");
-		kमुक्त(c->summary);
-		वापस -ENOMEM;
-	पूर्ण
+		kfree(c->summary);
+		return -ENOMEM;
+	}
 
 	dbg_summary("returned successfully\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम jffs2_sum_निकास(काष्ठा jffs2_sb_info *c)
-अणु
+void jffs2_sum_exit(struct jffs2_sb_info *c)
+{
 	dbg_summary("called\n");
 
 	jffs2_sum_disable_collecting(c->summary);
 
-	kमुक्त(c->summary->sum_buf);
-	c->summary->sum_buf = शून्य;
+	kfree(c->summary->sum_buf);
+	c->summary->sum_buf = NULL;
 
-	kमुक्त(c->summary);
-	c->summary = शून्य;
-पूर्ण
+	kfree(c->summary);
+	c->summary = NULL;
+}
 
-अटल पूर्णांक jffs2_sum_add_mem(काष्ठा jffs2_summary *s, जोड़ jffs2_sum_mem *item)
-अणु
-	अगर (!s->sum_list_head)
-		s->sum_list_head = (जोड़ jffs2_sum_mem *) item;
-	अगर (s->sum_list_tail)
-		s->sum_list_tail->u.next = (जोड़ jffs2_sum_mem *) item;
-	s->sum_list_tail = (जोड़ jffs2_sum_mem *) item;
+static int jffs2_sum_add_mem(struct jffs2_summary *s, union jffs2_sum_mem *item)
+{
+	if (!s->sum_list_head)
+		s->sum_list_head = (union jffs2_sum_mem *) item;
+	if (s->sum_list_tail)
+		s->sum_list_tail->u.next = (union jffs2_sum_mem *) item;
+	s->sum_list_tail = (union jffs2_sum_mem *) item;
 
-	चयन (je16_to_cpu(item->u.nodetype)) अणु
-		हाल JFFS2_NODETYPE_INODE:
+	switch (je16_to_cpu(item->u.nodetype)) {
+		case JFFS2_NODETYPE_INODE:
 			s->sum_size += JFFS2_SUMMARY_INODE_SIZE;
 			s->sum_num++;
 			dbg_summary("inode (%u) added to summary\n",
 						je32_to_cpu(item->i.inode));
-			अवरोध;
-		हाल JFFS2_NODETYPE_सूचीENT:
-			s->sum_size += JFFS2_SUMMARY_सूचीENT_SIZE(item->d.nsize);
+			break;
+		case JFFS2_NODETYPE_DIRENT:
+			s->sum_size += JFFS2_SUMMARY_DIRENT_SIZE(item->d.nsize);
 			s->sum_num++;
 			dbg_summary("dirent (%u) added to summary\n",
 						je32_to_cpu(item->d.ino));
-			अवरोध;
-#अगर_घोषित CONFIG_JFFS2_FS_XATTR
-		हाल JFFS2_NODETYPE_XATTR:
+			break;
+#ifdef CONFIG_JFFS2_FS_XATTR
+		case JFFS2_NODETYPE_XATTR:
 			s->sum_size += JFFS2_SUMMARY_XATTR_SIZE;
 			s->sum_num++;
 			dbg_summary("xattr (xid=%u, version=%u) added to summary\n",
 				    je32_to_cpu(item->x.xid), je32_to_cpu(item->x.version));
-			अवरोध;
-		हाल JFFS2_NODETYPE_XREF:
+			break;
+		case JFFS2_NODETYPE_XREF:
 			s->sum_size += JFFS2_SUMMARY_XREF_SIZE;
 			s->sum_num++;
 			dbg_summary("xref added to summary\n");
-			अवरोध;
-#पूर्ण_अगर
-		शेष:
+			break;
+#endif
+		default:
 			JFFS2_WARNING("UNKNOWN node type %u\n",
 					    je16_to_cpu(item->u.nodetype));
-			वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return 1;
+	}
+	return 0;
+}
 
 
-/* The following 3 functions are called from scan.c to collect summary info क्रम not बंदd jeb */
+/* The following 3 functions are called from scan.c to collect summary info for not closed jeb */
 
-पूर्णांक jffs2_sum_add_padding_mem(काष्ठा jffs2_summary *s, uपूर्णांक32_t size)
-अणु
+int jffs2_sum_add_padding_mem(struct jffs2_summary *s, uint32_t size)
+{
 	dbg_summary("called with %u\n", size);
 	s->sum_padded += size;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक jffs2_sum_add_inode_mem(काष्ठा jffs2_summary *s, काष्ठा jffs2_raw_inode *ri,
-				uपूर्णांक32_t ofs)
-अणु
-	काष्ठा jffs2_sum_inode_mem *temp = kदो_स्मृति(माप(काष्ठा jffs2_sum_inode_mem), GFP_KERNEL);
+int jffs2_sum_add_inode_mem(struct jffs2_summary *s, struct jffs2_raw_inode *ri,
+				uint32_t ofs)
+{
+	struct jffs2_sum_inode_mem *temp = kmalloc(sizeof(struct jffs2_sum_inode_mem), GFP_KERNEL);
 
-	अगर (!temp)
-		वापस -ENOMEM;
+	if (!temp)
+		return -ENOMEM;
 
 	temp->nodetype = ri->nodetype;
 	temp->inode = ri->ino;
 	temp->version = ri->version;
 	temp->offset = cpu_to_je32(ofs); /* relative offset from the beginning of the jeb */
 	temp->totlen = ri->totlen;
-	temp->next = शून्य;
+	temp->next = NULL;
 
-	वापस jffs2_sum_add_mem(s, (जोड़ jffs2_sum_mem *)temp);
-पूर्ण
+	return jffs2_sum_add_mem(s, (union jffs2_sum_mem *)temp);
+}
 
-पूर्णांक jffs2_sum_add_dirent_mem(काष्ठा jffs2_summary *s, काष्ठा jffs2_raw_dirent *rd,
-				uपूर्णांक32_t ofs)
-अणु
-	काष्ठा jffs2_sum_dirent_mem *temp =
-		kदो_स्मृति(माप(काष्ठा jffs2_sum_dirent_mem) + rd->nsize, GFP_KERNEL);
+int jffs2_sum_add_dirent_mem(struct jffs2_summary *s, struct jffs2_raw_dirent *rd,
+				uint32_t ofs)
+{
+	struct jffs2_sum_dirent_mem *temp =
+		kmalloc(sizeof(struct jffs2_sum_dirent_mem) + rd->nsize, GFP_KERNEL);
 
-	अगर (!temp)
-		वापस -ENOMEM;
+	if (!temp)
+		return -ENOMEM;
 
 	temp->nodetype = rd->nodetype;
 	temp->totlen = rd->totlen;
@@ -148,89 +147,89 @@
 	temp->ino = rd->ino;
 	temp->nsize = rd->nsize;
 	temp->type = rd->type;
-	temp->next = शून्य;
+	temp->next = NULL;
 
-	स_नकल(temp->name, rd->name, rd->nsize);
+	memcpy(temp->name, rd->name, rd->nsize);
 
-	वापस jffs2_sum_add_mem(s, (जोड़ jffs2_sum_mem *)temp);
-पूर्ण
+	return jffs2_sum_add_mem(s, (union jffs2_sum_mem *)temp);
+}
 
-#अगर_घोषित CONFIG_JFFS2_FS_XATTR
-पूर्णांक jffs2_sum_add_xattr_mem(काष्ठा jffs2_summary *s, काष्ठा jffs2_raw_xattr *rx, uपूर्णांक32_t ofs)
-अणु
-	काष्ठा jffs2_sum_xattr_mem *temp;
+#ifdef CONFIG_JFFS2_FS_XATTR
+int jffs2_sum_add_xattr_mem(struct jffs2_summary *s, struct jffs2_raw_xattr *rx, uint32_t ofs)
+{
+	struct jffs2_sum_xattr_mem *temp;
 
-	temp = kदो_स्मृति(माप(काष्ठा jffs2_sum_xattr_mem), GFP_KERNEL);
-	अगर (!temp)
-		वापस -ENOMEM;
+	temp = kmalloc(sizeof(struct jffs2_sum_xattr_mem), GFP_KERNEL);
+	if (!temp)
+		return -ENOMEM;
 
 	temp->nodetype = rx->nodetype;
 	temp->xid = rx->xid;
 	temp->version = rx->version;
 	temp->offset = cpu_to_je32(ofs);
 	temp->totlen = rx->totlen;
-	temp->next = शून्य;
+	temp->next = NULL;
 
-	वापस jffs2_sum_add_mem(s, (जोड़ jffs2_sum_mem *)temp);
-पूर्ण
+	return jffs2_sum_add_mem(s, (union jffs2_sum_mem *)temp);
+}
 
-पूर्णांक jffs2_sum_add_xref_mem(काष्ठा jffs2_summary *s, काष्ठा jffs2_raw_xref *rr, uपूर्णांक32_t ofs)
-अणु
-	काष्ठा jffs2_sum_xref_mem *temp;
+int jffs2_sum_add_xref_mem(struct jffs2_summary *s, struct jffs2_raw_xref *rr, uint32_t ofs)
+{
+	struct jffs2_sum_xref_mem *temp;
 
-	temp = kदो_स्मृति(माप(काष्ठा jffs2_sum_xref_mem), GFP_KERNEL);
-	अगर (!temp)
-		वापस -ENOMEM;
+	temp = kmalloc(sizeof(struct jffs2_sum_xref_mem), GFP_KERNEL);
+	if (!temp)
+		return -ENOMEM;
 
 	temp->nodetype = rr->nodetype;
 	temp->offset = cpu_to_je32(ofs);
-	temp->next = शून्य;
+	temp->next = NULL;
 
-	वापस jffs2_sum_add_mem(s, (जोड़ jffs2_sum_mem *)temp);
-पूर्ण
-#पूर्ण_अगर
-/* Cleanup every collected summary inक्रमmation */
+	return jffs2_sum_add_mem(s, (union jffs2_sum_mem *)temp);
+}
+#endif
+/* Cleanup every collected summary information */
 
-अटल व्योम jffs2_sum_clean_collected(काष्ठा jffs2_summary *s)
-अणु
-	जोड़ jffs2_sum_mem *temp;
+static void jffs2_sum_clean_collected(struct jffs2_summary *s)
+{
+	union jffs2_sum_mem *temp;
 
-	अगर (!s->sum_list_head) अणु
+	if (!s->sum_list_head) {
 		dbg_summary("already empty\n");
-	पूर्ण
-	जबतक (s->sum_list_head) अणु
+	}
+	while (s->sum_list_head) {
 		temp = s->sum_list_head;
 		s->sum_list_head = s->sum_list_head->u.next;
-		kमुक्त(temp);
-	पूर्ण
-	s->sum_list_tail = शून्य;
+		kfree(temp);
+	}
+	s->sum_list_tail = NULL;
 	s->sum_padded = 0;
 	s->sum_num = 0;
-पूर्ण
+}
 
-व्योम jffs2_sum_reset_collected(काष्ठा jffs2_summary *s)
-अणु
+void jffs2_sum_reset_collected(struct jffs2_summary *s)
+{
 	dbg_summary("called\n");
 	jffs2_sum_clean_collected(s);
 	s->sum_size = 0;
-पूर्ण
+}
 
-व्योम jffs2_sum_disable_collecting(काष्ठा jffs2_summary *s)
-अणु
+void jffs2_sum_disable_collecting(struct jffs2_summary *s)
+{
 	dbg_summary("called\n");
 	jffs2_sum_clean_collected(s);
 	s->sum_size = JFFS2_SUMMARY_NOSUM_SIZE;
-पूर्ण
+}
 
-पूर्णांक jffs2_sum_is_disabled(काष्ठा jffs2_summary *s)
-अणु
-	वापस (s->sum_size == JFFS2_SUMMARY_NOSUM_SIZE);
-पूर्ण
+int jffs2_sum_is_disabled(struct jffs2_summary *s)
+{
+	return (s->sum_size == JFFS2_SUMMARY_NOSUM_SIZE);
+}
 
-/* Move the collected summary inक्रमmation पूर्णांकo sb (called from scan.c) */
+/* Move the collected summary information into sb (called from scan.c) */
 
-व्योम jffs2_sum_move_collected(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_summary *s)
-अणु
+void jffs2_sum_move_collected(struct jffs2_sb_info *c, struct jffs2_summary *s)
+{
 	dbg_summary("oldsize=0x%x oldnum=%u => newsize=0x%x newnum=%u\n",
 				c->summary->sum_size, c->summary->sum_num,
 				s->sum_size, s->sum_num);
@@ -241,50 +240,50 @@
 	c->summary->sum_list_head = s->sum_list_head;
 	c->summary->sum_list_tail = s->sum_list_tail;
 
-	s->sum_list_head = s->sum_list_tail = शून्य;
-पूर्ण
+	s->sum_list_head = s->sum_list_tail = NULL;
+}
 
-/* Called from wbuf.c to collect ग_लिखोd node info */
+/* Called from wbuf.c to collect writed node info */
 
-पूर्णांक jffs2_sum_add_kvec(काष्ठा jffs2_sb_info *c, स्थिर काष्ठा kvec *invecs,
-				अचिन्हित दीर्घ count, uपूर्णांक32_t ofs)
-अणु
-	जोड़ jffs2_node_जोड़ *node;
-	काष्ठा jffs2_eraseblock *jeb;
+int jffs2_sum_add_kvec(struct jffs2_sb_info *c, const struct kvec *invecs,
+				unsigned long count, uint32_t ofs)
+{
+	union jffs2_node_union *node;
+	struct jffs2_eraseblock *jeb;
 
-	अगर (c->summary->sum_size == JFFS2_SUMMARY_NOSUM_SIZE) अणु
+	if (c->summary->sum_size == JFFS2_SUMMARY_NOSUM_SIZE) {
 		dbg_summary("Summary is disabled for this jeb! Skipping summary info!\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	node = invecs[0].iov_base;
 	jeb = &c->blocks[ofs / c->sector_size];
 	ofs -= jeb->offset;
 
-	चयन (je16_to_cpu(node->u.nodetype)) अणु
-		हाल JFFS2_NODETYPE_INODE: अणु
-			काष्ठा jffs2_sum_inode_mem *temp =
-				kदो_स्मृति(माप(काष्ठा jffs2_sum_inode_mem), GFP_KERNEL);
+	switch (je16_to_cpu(node->u.nodetype)) {
+		case JFFS2_NODETYPE_INODE: {
+			struct jffs2_sum_inode_mem *temp =
+				kmalloc(sizeof(struct jffs2_sum_inode_mem), GFP_KERNEL);
 
-			अगर (!temp)
-				जाओ no_mem;
+			if (!temp)
+				goto no_mem;
 
 			temp->nodetype = node->i.nodetype;
 			temp->inode = node->i.ino;
 			temp->version = node->i.version;
 			temp->offset = cpu_to_je32(ofs);
 			temp->totlen = node->i.totlen;
-			temp->next = शून्य;
+			temp->next = NULL;
 
-			वापस jffs2_sum_add_mem(c->summary, (जोड़ jffs2_sum_mem *)temp);
-		पूर्ण
+			return jffs2_sum_add_mem(c->summary, (union jffs2_sum_mem *)temp);
+		}
 
-		हाल JFFS2_NODETYPE_सूचीENT: अणु
-			काष्ठा jffs2_sum_dirent_mem *temp =
-				kदो_स्मृति(माप(काष्ठा jffs2_sum_dirent_mem) + node->d.nsize, GFP_KERNEL);
+		case JFFS2_NODETYPE_DIRENT: {
+			struct jffs2_sum_dirent_mem *temp =
+				kmalloc(sizeof(struct jffs2_sum_dirent_mem) + node->d.nsize, GFP_KERNEL);
 
-			अगर (!temp)
-				जाओ no_mem;
+			if (!temp)
+				goto no_mem;
 
 			temp->nodetype = node->d.nodetype;
 			temp->totlen = node->d.totlen;
@@ -294,120 +293,120 @@
 			temp->ino = node->d.ino;
 			temp->nsize = node->d.nsize;
 			temp->type = node->d.type;
-			temp->next = शून्य;
+			temp->next = NULL;
 
-			चयन (count) अणु
-				हाल 1:
-					स_नकल(temp->name,node->d.name,node->d.nsize);
-					अवरोध;
+			switch (count) {
+				case 1:
+					memcpy(temp->name,node->d.name,node->d.nsize);
+					break;
 
-				हाल 2:
-					स_नकल(temp->name,invecs[1].iov_base,node->d.nsize);
-					अवरोध;
+				case 2:
+					memcpy(temp->name,invecs[1].iov_base,node->d.nsize);
+					break;
 
-				शेष:
+				default:
 					BUG();	/* impossible count value */
-					अवरोध;
-			पूर्ण
+					break;
+			}
 
-			वापस jffs2_sum_add_mem(c->summary, (जोड़ jffs2_sum_mem *)temp);
-		पूर्ण
-#अगर_घोषित CONFIG_JFFS2_FS_XATTR
-		हाल JFFS2_NODETYPE_XATTR: अणु
-			काष्ठा jffs2_sum_xattr_mem *temp;
-			temp = kदो_स्मृति(माप(काष्ठा jffs2_sum_xattr_mem), GFP_KERNEL);
-			अगर (!temp)
-				जाओ no_mem;
+			return jffs2_sum_add_mem(c->summary, (union jffs2_sum_mem *)temp);
+		}
+#ifdef CONFIG_JFFS2_FS_XATTR
+		case JFFS2_NODETYPE_XATTR: {
+			struct jffs2_sum_xattr_mem *temp;
+			temp = kmalloc(sizeof(struct jffs2_sum_xattr_mem), GFP_KERNEL);
+			if (!temp)
+				goto no_mem;
 
 			temp->nodetype = node->x.nodetype;
 			temp->xid = node->x.xid;
 			temp->version = node->x.version;
 			temp->totlen = node->x.totlen;
 			temp->offset = cpu_to_je32(ofs);
-			temp->next = शून्य;
+			temp->next = NULL;
 
-			वापस jffs2_sum_add_mem(c->summary, (जोड़ jffs2_sum_mem *)temp);
-		पूर्ण
-		हाल JFFS2_NODETYPE_XREF: अणु
-			काष्ठा jffs2_sum_xref_mem *temp;
-			temp = kदो_स्मृति(माप(काष्ठा jffs2_sum_xref_mem), GFP_KERNEL);
-			अगर (!temp)
-				जाओ no_mem;
+			return jffs2_sum_add_mem(c->summary, (union jffs2_sum_mem *)temp);
+		}
+		case JFFS2_NODETYPE_XREF: {
+			struct jffs2_sum_xref_mem *temp;
+			temp = kmalloc(sizeof(struct jffs2_sum_xref_mem), GFP_KERNEL);
+			if (!temp)
+				goto no_mem;
 			temp->nodetype = node->r.nodetype;
 			temp->offset = cpu_to_je32(ofs);
-			temp->next = शून्य;
+			temp->next = NULL;
 
-			वापस jffs2_sum_add_mem(c->summary, (जोड़ jffs2_sum_mem *)temp);
-		पूर्ण
-#पूर्ण_अगर
-		हाल JFFS2_NODETYPE_PADDING:
+			return jffs2_sum_add_mem(c->summary, (union jffs2_sum_mem *)temp);
+		}
+#endif
+		case JFFS2_NODETYPE_PADDING:
 			dbg_summary("node PADDING\n");
 			c->summary->sum_padded += je32_to_cpu(node->u.totlen);
-			अवरोध;
+			break;
 
-		हाल JFFS2_NODETYPE_CLEANMARKER:
+		case JFFS2_NODETYPE_CLEANMARKER:
 			dbg_summary("node CLEANMARKER\n");
-			अवरोध;
+			break;
 
-		हाल JFFS2_NODETYPE_SUMMARY:
+		case JFFS2_NODETYPE_SUMMARY:
 			dbg_summary("node SUMMARY\n");
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			/* If you implement a new node type you should also implement
-			   summary support क्रम it or disable summary.
+			   summary support for it or disable summary.
 			*/
 			BUG();
-			अवरोध;
-	पूर्ण
+			break;
+	}
 
-	वापस 0;
+	return 0;
 
 no_mem:
 	JFFS2_WARNING("MEMORY ALLOCATION ERROR!");
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल काष्ठा jffs2_raw_node_ref *sum_link_node_ref(काष्ठा jffs2_sb_info *c,
-						    काष्ठा jffs2_eraseblock *jeb,
-						    uपूर्णांक32_t ofs, uपूर्णांक32_t len,
-						    काष्ठा jffs2_inode_cache *ic)
-अणु
+static struct jffs2_raw_node_ref *sum_link_node_ref(struct jffs2_sb_info *c,
+						    struct jffs2_eraseblock *jeb,
+						    uint32_t ofs, uint32_t len,
+						    struct jffs2_inode_cache *ic)
+{
 	/* If there was a gap, mark it dirty */
-	अगर ((ofs & ~3) > c->sector_size - jeb->मुक्त_size) अणु
-		/* Ew. Summary करोesn't actually tell us explicitly about dirty space */
-		jffs2_scan_dirty_space(c, jeb, (ofs & ~3) - (c->sector_size - jeb->मुक्त_size));
-	पूर्ण
+	if ((ofs & ~3) > c->sector_size - jeb->free_size) {
+		/* Ew. Summary doesn't actually tell us explicitly about dirty space */
+		jffs2_scan_dirty_space(c, jeb, (ofs & ~3) - (c->sector_size - jeb->free_size));
+	}
 
-	वापस jffs2_link_node_ref(c, jeb, jeb->offset + ofs, len, ic);
-पूर्ण
+	return jffs2_link_node_ref(c, jeb, jeb->offset + ofs, len, ic);
+}
 
-/* Process the stored summary inक्रमmation - helper function क्रम jffs2_sum_scan_sumnode() */
+/* Process the stored summary information - helper function for jffs2_sum_scan_sumnode() */
 
-अटल पूर्णांक jffs2_sum_process_sum_data(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_eraseblock *jeb,
-				काष्ठा jffs2_raw_summary *summary, uपूर्णांक32_t *pseuकरो_अक्रमom)
-अणु
-	काष्ठा jffs2_inode_cache *ic;
-	काष्ठा jffs2_full_dirent *fd;
-	व्योम *sp;
-	पूर्णांक i, ino;
-	पूर्णांक err;
+static int jffs2_sum_process_sum_data(struct jffs2_sb_info *c, struct jffs2_eraseblock *jeb,
+				struct jffs2_raw_summary *summary, uint32_t *pseudo_random)
+{
+	struct jffs2_inode_cache *ic;
+	struct jffs2_full_dirent *fd;
+	void *sp;
+	int i, ino;
+	int err;
 
 	sp = summary->sum;
 
-	क्रम (i=0; i<je32_to_cpu(summary->sum_num); i++) अणु
+	for (i=0; i<je32_to_cpu(summary->sum_num); i++) {
 		dbg_summary("processing summary index %d\n", i);
 
 		cond_resched();
 
-		/* Make sure there's a spare ref क्रम dirty space */
-		err = jffs2_pपुनः_स्मृति_raw_node_refs(c, jeb, 2);
-		अगर (err)
-			वापस err;
+		/* Make sure there's a spare ref for dirty space */
+		err = jffs2_prealloc_raw_node_refs(c, jeb, 2);
+		if (err)
+			return err;
 
-		चयन (je16_to_cpu(((काष्ठा jffs2_sum_unknown_flash *)sp)->nodetype)) अणु
-			हाल JFFS2_NODETYPE_INODE: अणु
-				काष्ठा jffs2_sum_inode_flash *spi;
+		switch (je16_to_cpu(((struct jffs2_sum_unknown_flash *)sp)->nodetype)) {
+			case JFFS2_NODETYPE_INODE: {
+				struct jffs2_sum_inode_flash *spi;
 				spi = sp;
 
 				ino = je32_to_cpu(spi->inode);
@@ -417,24 +416,24 @@ no_mem:
 					    jeb->offset + je32_to_cpu(spi->offset) + je32_to_cpu(spi->totlen));
 
 				ic = jffs2_scan_make_ino_cache(c, ino);
-				अगर (!ic) अणु
+				if (!ic) {
 					JFFS2_NOTICE("scan_make_ino_cache failed\n");
-					वापस -ENOMEM;
-				पूर्ण
+					return -ENOMEM;
+				}
 
 				sum_link_node_ref(c, jeb, je32_to_cpu(spi->offset) | REF_UNCHECKED,
 						  PAD(je32_to_cpu(spi->totlen)), ic);
 
-				*pseuकरो_अक्रमom += je32_to_cpu(spi->version);
+				*pseudo_random += je32_to_cpu(spi->version);
 
 				sp += JFFS2_SUMMARY_INODE_SIZE;
 
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			हाल JFFS2_NODETYPE_सूचीENT: अणु
-				काष्ठा jffs2_sum_dirent_flash *spd;
-				पूर्णांक checkedlen;
+			case JFFS2_NODETYPE_DIRENT: {
+				struct jffs2_sum_dirent_flash *spd;
+				int checkedlen;
 				spd = sp;
 
 				dbg_summary("Dirent at 0x%08x-0x%08x\n",
@@ -444,56 +443,56 @@ no_mem:
 
 				/* This should never happen, but https://dev.laptop.org/ticket/4184 */
 				checkedlen = strnlen(spd->name, spd->nsize);
-				अगर (!checkedlen) अणु
+				if (!checkedlen) {
 					pr_err("Dirent at %08x has zero at start of name. Aborting mount.\n",
 					       jeb->offset +
 					       je32_to_cpu(spd->offset));
-					वापस -EIO;
-				पूर्ण
-				अगर (checkedlen < spd->nsize) अणु
+					return -EIO;
+				}
+				if (checkedlen < spd->nsize) {
 					pr_err("Dirent at %08x has zeroes in name. Truncating to %d chars\n",
 					       jeb->offset +
 					       je32_to_cpu(spd->offset),
 					       checkedlen);
-				पूर्ण
+				}
 
 
 				fd = jffs2_alloc_full_dirent(checkedlen+1);
-				अगर (!fd)
-					वापस -ENOMEM;
+				if (!fd)
+					return -ENOMEM;
 
-				स_नकल(&fd->name, spd->name, checkedlen);
+				memcpy(&fd->name, spd->name, checkedlen);
 				fd->name[checkedlen] = 0;
 
 				ic = jffs2_scan_make_ino_cache(c, je32_to_cpu(spd->pino));
-				अगर (!ic) अणु
-					jffs2_मुक्त_full_dirent(fd);
-					वापस -ENOMEM;
-				पूर्ण
+				if (!ic) {
+					jffs2_free_full_dirent(fd);
+					return -ENOMEM;
+				}
 
 				fd->raw = sum_link_node_ref(c, jeb,  je32_to_cpu(spd->offset) | REF_UNCHECKED,
 							    PAD(je32_to_cpu(spd->totlen)), ic);
 
-				fd->next = शून्य;
+				fd->next = NULL;
 				fd->version = je32_to_cpu(spd->version);
 				fd->ino = je32_to_cpu(spd->ino);
-				fd->nhash = full_name_hash(शून्य, fd->name, checkedlen);
+				fd->nhash = full_name_hash(NULL, fd->name, checkedlen);
 				fd->type = spd->type;
 
 				jffs2_add_fd_to_list(c, fd, &ic->scan_dents);
 
-				*pseuकरो_अक्रमom += je32_to_cpu(spd->version);
+				*pseudo_random += je32_to_cpu(spd->version);
 
-				sp += JFFS2_SUMMARY_सूचीENT_SIZE(spd->nsize);
+				sp += JFFS2_SUMMARY_DIRENT_SIZE(spd->nsize);
 
-				अवरोध;
-			पूर्ण
-#अगर_घोषित CONFIG_JFFS2_FS_XATTR
-			हाल JFFS2_NODETYPE_XATTR: अणु
-				काष्ठा jffs2_xattr_datum *xd;
-				काष्ठा jffs2_sum_xattr_flash *spx;
+				break;
+			}
+#ifdef CONFIG_JFFS2_FS_XATTR
+			case JFFS2_NODETYPE_XATTR: {
+				struct jffs2_xattr_datum *xd;
+				struct jffs2_sum_xattr_flash *spx;
 
-				spx = (काष्ठा jffs2_sum_xattr_flash *)sp;
+				spx = (struct jffs2_sum_xattr_flash *)sp;
 				dbg_summary("xattr at %#08x-%#08x (xid=%u, version=%u)\n", 
 					    jeb->offset + je32_to_cpu(spx->offset),
 					    jeb->offset + je32_to_cpu(spx->offset) + je32_to_cpu(spx->totlen),
@@ -501,227 +500,227 @@ no_mem:
 
 				xd = jffs2_setup_xattr_datum(c, je32_to_cpu(spx->xid),
 								je32_to_cpu(spx->version));
-				अगर (IS_ERR(xd))
-					वापस PTR_ERR(xd);
-				अगर (xd->version > je32_to_cpu(spx->version)) अणु
+				if (IS_ERR(xd))
+					return PTR_ERR(xd);
+				if (xd->version > je32_to_cpu(spx->version)) {
 					/* node is not the newest one */
-					काष्ठा jffs2_raw_node_ref *raw
+					struct jffs2_raw_node_ref *raw
 						= sum_link_node_ref(c, jeb, je32_to_cpu(spx->offset) | REF_UNCHECKED,
-								    PAD(je32_to_cpu(spx->totlen)), शून्य);
+								    PAD(je32_to_cpu(spx->totlen)), NULL);
 					raw->next_in_ino = xd->node->next_in_ino;
 					xd->node->next_in_ino = raw;
-				पूर्ण अन्यथा अणु
+				} else {
 					xd->version = je32_to_cpu(spx->version);
 					sum_link_node_ref(c, jeb, je32_to_cpu(spx->offset) | REF_UNCHECKED,
-							  PAD(je32_to_cpu(spx->totlen)), (व्योम *)xd);
-				पूर्ण
-				*pseuकरो_अक्रमom += je32_to_cpu(spx->xid);
+							  PAD(je32_to_cpu(spx->totlen)), (void *)xd);
+				}
+				*pseudo_random += je32_to_cpu(spx->xid);
 				sp += JFFS2_SUMMARY_XATTR_SIZE;
 
-				अवरोध;
-			पूर्ण
-			हाल JFFS2_NODETYPE_XREF: अणु
-				काष्ठा jffs2_xattr_ref *ref;
-				काष्ठा jffs2_sum_xref_flash *spr;
+				break;
+			}
+			case JFFS2_NODETYPE_XREF: {
+				struct jffs2_xattr_ref *ref;
+				struct jffs2_sum_xref_flash *spr;
 
-				spr = (काष्ठा jffs2_sum_xref_flash *)sp;
+				spr = (struct jffs2_sum_xref_flash *)sp;
 				dbg_summary("xref at %#08x-%#08x\n",
 					    jeb->offset + je32_to_cpu(spr->offset),
 					    jeb->offset + je32_to_cpu(spr->offset) + 
-					    (uपूर्णांक32_t)PAD(माप(काष्ठा jffs2_raw_xref)));
+					    (uint32_t)PAD(sizeof(struct jffs2_raw_xref)));
 
 				ref = jffs2_alloc_xattr_ref();
-				अगर (!ref) अणु
+				if (!ref) {
 					JFFS2_NOTICE("allocation of xattr_datum failed\n");
-					वापस -ENOMEM;
-				पूर्ण
+					return -ENOMEM;
+				}
 				ref->next = c->xref_temp;
 				c->xref_temp = ref;
 
 				sum_link_node_ref(c, jeb, je32_to_cpu(spr->offset) | REF_UNCHECKED,
-						  PAD(माप(काष्ठा jffs2_raw_xref)), (व्योम *)ref);
+						  PAD(sizeof(struct jffs2_raw_xref)), (void *)ref);
 
-				*pseuकरो_अक्रमom += ref->node->flash_offset;
+				*pseudo_random += ref->node->flash_offset;
 				sp += JFFS2_SUMMARY_XREF_SIZE;
 
-				अवरोध;
-			पूर्ण
-#पूर्ण_अगर
-			शेष : अणु
-				uपूर्णांक16_t nodetype = je16_to_cpu(((काष्ठा jffs2_sum_unknown_flash *)sp)->nodetype);
+				break;
+			}
+#endif
+			default : {
+				uint16_t nodetype = je16_to_cpu(((struct jffs2_sum_unknown_flash *)sp)->nodetype);
 				JFFS2_WARNING("Unsupported node type %x found in summary! Exiting...\n", nodetype);
-				अगर ((nodetype & JFFS2_COMPAT_MASK) == JFFS2_FEATURE_INCOMPAT)
-					वापस -EIO;
+				if ((nodetype & JFFS2_COMPAT_MASK) == JFFS2_FEATURE_INCOMPAT)
+					return -EIO;
 
 				/* For compatible node types, just fall back to the full scan */
 				c->wasted_size -= jeb->wasted_size;
-				c->मुक्त_size += c->sector_size - jeb->मुक्त_size;
+				c->free_size += c->sector_size - jeb->free_size;
 				c->used_size -= jeb->used_size;
 				c->dirty_size -= jeb->dirty_size;
 				jeb->wasted_size = jeb->used_size = jeb->dirty_size = 0;
-				jeb->मुक्त_size = c->sector_size;
+				jeb->free_size = c->sector_size;
 
-				jffs2_मुक्त_jeb_node_refs(c, jeb);
-				वापस -ENOTRECOVERABLE;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+				jffs2_free_jeb_node_refs(c, jeb);
+				return -ENOTRECOVERABLE;
+			}
+		}
+	}
+	return 0;
+}
 
 /* Process the summary node - called from jffs2_scan_eraseblock() */
-पूर्णांक jffs2_sum_scan_sumnode(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_eraseblock *jeb,
-			   काष्ठा jffs2_raw_summary *summary, uपूर्णांक32_t sumsize,
-			   uपूर्णांक32_t *pseuकरो_अक्रमom)
-अणु
-	काष्ठा jffs2_unknown_node crcnode;
-	पूर्णांक ret, ofs;
-	uपूर्णांक32_t crc;
+int jffs2_sum_scan_sumnode(struct jffs2_sb_info *c, struct jffs2_eraseblock *jeb,
+			   struct jffs2_raw_summary *summary, uint32_t sumsize,
+			   uint32_t *pseudo_random)
+{
+	struct jffs2_unknown_node crcnode;
+	int ret, ofs;
+	uint32_t crc;
 
 	ofs = c->sector_size - sumsize;
 
 	dbg_summary("summary found for 0x%08x at 0x%08x (0x%x bytes)\n",
 		    jeb->offset, jeb->offset + ofs, sumsize);
 
-	/* OK, now check क्रम node validity and CRC */
+	/* OK, now check for node validity and CRC */
 	crcnode.magic = cpu_to_je16(JFFS2_MAGIC_BITMASK);
 	crcnode.nodetype = cpu_to_je16(JFFS2_NODETYPE_SUMMARY);
 	crcnode.totlen = summary->totlen;
-	crc = crc32(0, &crcnode, माप(crcnode)-4);
+	crc = crc32(0, &crcnode, sizeof(crcnode)-4);
 
-	अगर (je32_to_cpu(summary->hdr_crc) != crc) अणु
+	if (je32_to_cpu(summary->hdr_crc) != crc) {
 		dbg_summary("Summary node header is corrupt (bad CRC or "
 				"no summary at all)\n");
-		जाओ crc_err;
-	पूर्ण
+		goto crc_err;
+	}
 
-	अगर (je32_to_cpu(summary->totlen) != sumsize) अणु
+	if (je32_to_cpu(summary->totlen) != sumsize) {
 		dbg_summary("Summary node is corrupt (wrong erasesize?)\n");
-		जाओ crc_err;
-	पूर्ण
+		goto crc_err;
+	}
 
-	crc = crc32(0, summary, माप(काष्ठा jffs2_raw_summary)-8);
+	crc = crc32(0, summary, sizeof(struct jffs2_raw_summary)-8);
 
-	अगर (je32_to_cpu(summary->node_crc) != crc) अणु
+	if (je32_to_cpu(summary->node_crc) != crc) {
 		dbg_summary("Summary node is corrupt (bad CRC)\n");
-		जाओ crc_err;
-	पूर्ण
+		goto crc_err;
+	}
 
-	crc = crc32(0, summary->sum, sumsize - माप(काष्ठा jffs2_raw_summary));
+	crc = crc32(0, summary->sum, sumsize - sizeof(struct jffs2_raw_summary));
 
-	अगर (je32_to_cpu(summary->sum_crc) != crc) अणु
+	if (je32_to_cpu(summary->sum_crc) != crc) {
 		dbg_summary("Summary node data is corrupt (bad CRC)\n");
-		जाओ crc_err;
-	पूर्ण
+		goto crc_err;
+	}
 
-	अगर ( je32_to_cpu(summary->cln_mkr) ) अणु
+	if ( je32_to_cpu(summary->cln_mkr) ) {
 
 		dbg_summary("Summary : CLEANMARKER node \n");
 
-		ret = jffs2_pपुनः_स्मृति_raw_node_refs(c, jeb, 1);
-		अगर (ret)
-			वापस ret;
+		ret = jffs2_prealloc_raw_node_refs(c, jeb, 1);
+		if (ret)
+			return ret;
 
-		अगर (je32_to_cpu(summary->cln_mkr) != c->cleanmarker_size) अणु
+		if (je32_to_cpu(summary->cln_mkr) != c->cleanmarker_size) {
 			dbg_summary("CLEANMARKER node has totlen 0x%x != normal 0x%x\n",
 				je32_to_cpu(summary->cln_mkr), c->cleanmarker_size);
-			अगर ((ret = jffs2_scan_dirty_space(c, jeb, PAD(je32_to_cpu(summary->cln_mkr)))))
-				वापस ret;
-		पूर्ण अन्यथा अगर (jeb->first_node) अणु
+			if ((ret = jffs2_scan_dirty_space(c, jeb, PAD(je32_to_cpu(summary->cln_mkr)))))
+				return ret;
+		} else if (jeb->first_node) {
 			dbg_summary("CLEANMARKER node not first node in block "
 					"(0x%08x)\n", jeb->offset);
-			अगर ((ret = jffs2_scan_dirty_space(c, jeb, PAD(je32_to_cpu(summary->cln_mkr)))))
-				वापस ret;
-		पूर्ण अन्यथा अणु
+			if ((ret = jffs2_scan_dirty_space(c, jeb, PAD(je32_to_cpu(summary->cln_mkr)))))
+				return ret;
+		} else {
 			jffs2_link_node_ref(c, jeb, jeb->offset | REF_NORMAL,
-					    je32_to_cpu(summary->cln_mkr), शून्य);
-		पूर्ण
-	पूर्ण
+					    je32_to_cpu(summary->cln_mkr), NULL);
+		}
+	}
 
-	ret = jffs2_sum_process_sum_data(c, jeb, summary, pseuकरो_अक्रमom);
-	/* -ENOTRECOVERABLE isn't a fatal error -- it means we should करो a full
-	   scan of this eraseblock. So वापस zero */
-	अगर (ret == -ENOTRECOVERABLE)
-		वापस 0;
-	अगर (ret)
-		वापस ret;		/* real error */
+	ret = jffs2_sum_process_sum_data(c, jeb, summary, pseudo_random);
+	/* -ENOTRECOVERABLE isn't a fatal error -- it means we should do a full
+	   scan of this eraseblock. So return zero */
+	if (ret == -ENOTRECOVERABLE)
+		return 0;
+	if (ret)
+		return ret;		/* real error */
 
-	/* क्रम PARANOIA_CHECK */
-	ret = jffs2_pपुनः_स्मृति_raw_node_refs(c, jeb, 2);
-	अगर (ret)
-		वापस ret;
+	/* for PARANOIA_CHECK */
+	ret = jffs2_prealloc_raw_node_refs(c, jeb, 2);
+	if (ret)
+		return ret;
 
-	sum_link_node_ref(c, jeb, ofs | REF_NORMAL, sumsize, शून्य);
+	sum_link_node_ref(c, jeb, ofs | REF_NORMAL, sumsize, NULL);
 
-	अगर (unlikely(jeb->मुक्त_size)) अणु
+	if (unlikely(jeb->free_size)) {
 		JFFS2_WARNING("Free size 0x%x bytes in eraseblock @0x%08x with summary?\n",
-			      jeb->मुक्त_size, jeb->offset);
-		jeb->wasted_size += jeb->मुक्त_size;
-		c->wasted_size += jeb->मुक्त_size;
-		c->मुक्त_size -= jeb->मुक्त_size;
-		jeb->मुक्त_size = 0;
-	पूर्ण
+			      jeb->free_size, jeb->offset);
+		jeb->wasted_size += jeb->free_size;
+		c->wasted_size += jeb->free_size;
+		c->free_size -= jeb->free_size;
+		jeb->free_size = 0;
+	}
 
-	वापस jffs2_scan_classअगरy_jeb(c, jeb);
+	return jffs2_scan_classify_jeb(c, jeb);
 
 crc_err:
 	JFFS2_WARNING("Summary node crc error, skipping summary information.\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Write summary data to flash - helper function क्रम jffs2_sum_ग_लिखो_sumnode() */
+/* Write summary data to flash - helper function for jffs2_sum_write_sumnode() */
 
-अटल पूर्णांक jffs2_sum_ग_लिखो_data(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_eraseblock *jeb,
-				uपूर्णांक32_t infosize, uपूर्णांक32_t datasize, पूर्णांक padsize)
-अणु
-	काष्ठा jffs2_raw_summary isum;
-	जोड़ jffs2_sum_mem *temp;
-	काष्ठा jffs2_sum_marker *sm;
-	काष्ठा kvec vecs[2];
-	uपूर्णांक32_t sum_ofs;
-	व्योम *wpage;
-	पूर्णांक ret;
-	माप_प्रकार retlen;
+static int jffs2_sum_write_data(struct jffs2_sb_info *c, struct jffs2_eraseblock *jeb,
+				uint32_t infosize, uint32_t datasize, int padsize)
+{
+	struct jffs2_raw_summary isum;
+	union jffs2_sum_mem *temp;
+	struct jffs2_sum_marker *sm;
+	struct kvec vecs[2];
+	uint32_t sum_ofs;
+	void *wpage;
+	int ret;
+	size_t retlen;
 
-	अगर (padsize + datasize > MAX_SUMMARY_SIZE) अणु
-		/* It won't fit in the buffer. Abort summary क्रम this jeb */
+	if (padsize + datasize > MAX_SUMMARY_SIZE) {
+		/* It won't fit in the buffer. Abort summary for this jeb */
 		jffs2_sum_disable_collecting(c->summary);
 
 		JFFS2_WARNING("Summary too big (%d data, %d pad) in eraseblock at %08x\n",
 			      datasize, padsize, jeb->offset);
 		/* Non-fatal */
-		वापस 0;
-	पूर्ण
-	/* Is there enough space क्रम summary? */
-	अगर (padsize < 0) अणु
-		/* करोn't try to ग_लिखो out summary क्रम this jeb */
+		return 0;
+	}
+	/* Is there enough space for summary? */
+	if (padsize < 0) {
+		/* don't try to write out summary for this jeb */
 		jffs2_sum_disable_collecting(c->summary);
 
 		JFFS2_WARNING("Not enough space for summary, padsize = %d\n",
 			      padsize);
 		/* Non-fatal */
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	स_रखो(c->summary->sum_buf, 0xff, datasize);
-	स_रखो(&isum, 0, माप(isum));
+	memset(c->summary->sum_buf, 0xff, datasize);
+	memset(&isum, 0, sizeof(isum));
 
 	isum.magic = cpu_to_je16(JFFS2_MAGIC_BITMASK);
 	isum.nodetype = cpu_to_je16(JFFS2_NODETYPE_SUMMARY);
 	isum.totlen = cpu_to_je32(infosize);
-	isum.hdr_crc = cpu_to_je32(crc32(0, &isum, माप(काष्ठा jffs2_unknown_node) - 4));
+	isum.hdr_crc = cpu_to_je32(crc32(0, &isum, sizeof(struct jffs2_unknown_node) - 4));
 	isum.padded = cpu_to_je32(c->summary->sum_padded);
 	isum.cln_mkr = cpu_to_je32(c->cleanmarker_size);
 	isum.sum_num = cpu_to_je32(c->summary->sum_num);
 	wpage = c->summary->sum_buf;
 
-	जबतक (c->summary->sum_num) अणु
+	while (c->summary->sum_num) {
 		temp = c->summary->sum_list_head;
 
-		चयन (je16_to_cpu(temp->u.nodetype)) अणु
-			हाल JFFS2_NODETYPE_INODE: अणु
-				काष्ठा jffs2_sum_inode_flash *sino_ptr = wpage;
+		switch (je16_to_cpu(temp->u.nodetype)) {
+			case JFFS2_NODETYPE_INODE: {
+				struct jffs2_sum_inode_flash *sino_ptr = wpage;
 
 				sino_ptr->nodetype = temp->i.nodetype;
 				sino_ptr->inode = temp->i.inode;
@@ -731,11 +730,11 @@ crc_err:
 
 				wpage += JFFS2_SUMMARY_INODE_SIZE;
 
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			हाल JFFS2_NODETYPE_सूचीENT: अणु
-				काष्ठा jffs2_sum_dirent_flash *sdrnt_ptr = wpage;
+			case JFFS2_NODETYPE_DIRENT: {
+				struct jffs2_sum_dirent_flash *sdrnt_ptr = wpage;
 
 				sdrnt_ptr->nodetype = temp->d.nodetype;
 				sdrnt_ptr->totlen = temp->d.totlen;
@@ -746,16 +745,16 @@ crc_err:
 				sdrnt_ptr->nsize = temp->d.nsize;
 				sdrnt_ptr->type = temp->d.type;
 
-				स_नकल(sdrnt_ptr->name, temp->d.name,
+				memcpy(sdrnt_ptr->name, temp->d.name,
 							temp->d.nsize);
 
-				wpage += JFFS2_SUMMARY_सूचीENT_SIZE(temp->d.nsize);
+				wpage += JFFS2_SUMMARY_DIRENT_SIZE(temp->d.nsize);
 
-				अवरोध;
-			पूर्ण
-#अगर_घोषित CONFIG_JFFS2_FS_XATTR
-			हाल JFFS2_NODETYPE_XATTR: अणु
-				काष्ठा jffs2_sum_xattr_flash *sxattr_ptr = wpage;
+				break;
+			}
+#ifdef CONFIG_JFFS2_FS_XATTR
+			case JFFS2_NODETYPE_XATTR: {
+				struct jffs2_sum_xattr_flash *sxattr_ptr = wpage;
 
 				temp = c->summary->sum_list_head;
 				sxattr_ptr->nodetype = temp->x.nodetype;
@@ -765,38 +764,38 @@ crc_err:
 				sxattr_ptr->totlen = temp->x.totlen;
 
 				wpage += JFFS2_SUMMARY_XATTR_SIZE;
-				अवरोध;
-			पूर्ण
-			हाल JFFS2_NODETYPE_XREF: अणु
-				काष्ठा jffs2_sum_xref_flash *sxref_ptr = wpage;
+				break;
+			}
+			case JFFS2_NODETYPE_XREF: {
+				struct jffs2_sum_xref_flash *sxref_ptr = wpage;
 
 				temp = c->summary->sum_list_head;
 				sxref_ptr->nodetype = temp->r.nodetype;
 				sxref_ptr->offset = temp->r.offset;
 
 				wpage += JFFS2_SUMMARY_XREF_SIZE;
-				अवरोध;
-			पूर्ण
-#पूर्ण_अगर
-			शेष : अणु
-				अगर ((je16_to_cpu(temp->u.nodetype) & JFFS2_COMPAT_MASK)
-				    == JFFS2_FEATURE_RWCOMPAT_COPY) अणु
+				break;
+			}
+#endif
+			default : {
+				if ((je16_to_cpu(temp->u.nodetype) & JFFS2_COMPAT_MASK)
+				    == JFFS2_FEATURE_RWCOMPAT_COPY) {
 					dbg_summary("Writing unknown RWCOMPAT_COPY node type %x\n",
 						    je16_to_cpu(temp->u.nodetype));
 					jffs2_sum_disable_collecting(c->summary);
-					/* The above call हटाओs the list, nothing more to करो */
-					जाओ bail_rwcompat;
-				पूर्ण अन्यथा अणु
-					BUG();	/* unknown node in summary inक्रमmation */
-				पूर्ण
-			पूर्ण
-		पूर्ण
+					/* The above call removes the list, nothing more to do */
+					goto bail_rwcompat;
+				} else {
+					BUG();	/* unknown node in summary information */
+				}
+			}
+		}
 
 		c->summary->sum_list_head = temp->u.next;
-		kमुक्त(temp);
+		kfree(temp);
 
 		c->summary->sum_num--;
-	पूर्ण
+	}
  bail_rwcompat:
 
 	jffs2_sum_reset_collected(c->summary);
@@ -804,75 +803,75 @@ crc_err:
 	wpage += padsize;
 
 	sm = wpage;
-	sm->offset = cpu_to_je32(c->sector_size - jeb->मुक्त_size);
+	sm->offset = cpu_to_je32(c->sector_size - jeb->free_size);
 	sm->magic = cpu_to_je32(JFFS2_SUM_MAGIC);
 
 	isum.sum_crc = cpu_to_je32(crc32(0, c->summary->sum_buf, datasize));
-	isum.node_crc = cpu_to_je32(crc32(0, &isum, माप(isum) - 8));
+	isum.node_crc = cpu_to_je32(crc32(0, &isum, sizeof(isum) - 8));
 
 	vecs[0].iov_base = &isum;
-	vecs[0].iov_len = माप(isum);
+	vecs[0].iov_len = sizeof(isum);
 	vecs[1].iov_base = c->summary->sum_buf;
 	vecs[1].iov_len = datasize;
 
-	sum_ofs = jeb->offset + c->sector_size - jeb->मुक्त_size;
+	sum_ofs = jeb->offset + c->sector_size - jeb->free_size;
 
 	dbg_summary("writing out data to flash to pos : 0x%08x\n", sum_ofs);
 
-	ret = jffs2_flash_ग_लिखोv(c, vecs, 2, sum_ofs, &retlen, 0);
+	ret = jffs2_flash_writev(c, vecs, 2, sum_ofs, &retlen, 0);
 
-	अगर (ret || (retlen != infosize)) अणु
+	if (ret || (retlen != infosize)) {
 
 		JFFS2_WARNING("Write of %u bytes at 0x%08x failed. returned %d, retlen %zd\n",
 			      infosize, sum_ofs, ret, retlen);
 
-		अगर (retlen) अणु
-			/* Waste reमुख्यing space */
+		if (retlen) {
+			/* Waste remaining space */
 			spin_lock(&c->erase_completion_lock);
-			jffs2_link_node_ref(c, jeb, sum_ofs | REF_OBSOLETE, infosize, शून्य);
+			jffs2_link_node_ref(c, jeb, sum_ofs | REF_OBSOLETE, infosize, NULL);
 			spin_unlock(&c->erase_completion_lock);
-		पूर्ण
+		}
 
 		c->summary->sum_size = JFFS2_SUMMARY_NOSUM_SIZE;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	spin_lock(&c->erase_completion_lock);
-	jffs2_link_node_ref(c, jeb, sum_ofs | REF_NORMAL, infosize, शून्य);
+	jffs2_link_node_ref(c, jeb, sum_ofs | REF_NORMAL, infosize, NULL);
 	spin_unlock(&c->erase_completion_lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* Write out summary inक्रमmation - called from jffs2_करो_reserve_space */
+/* Write out summary information - called from jffs2_do_reserve_space */
 
-पूर्णांक jffs2_sum_ग_लिखो_sumnode(काष्ठा jffs2_sb_info *c)
+int jffs2_sum_write_sumnode(struct jffs2_sb_info *c)
 	__must_hold(&c->erase_completion_block)
-अणु
-	पूर्णांक datasize, infosize, padsize;
-	काष्ठा jffs2_eraseblock *jeb;
-	पूर्णांक ret = 0;
+{
+	int datasize, infosize, padsize;
+	struct jffs2_eraseblock *jeb;
+	int ret = 0;
 
 	dbg_summary("called\n");
 
 	spin_unlock(&c->erase_completion_lock);
 
 	jeb = c->nextblock;
-	jffs2_pपुनः_स्मृति_raw_node_refs(c, jeb, 1);
+	jffs2_prealloc_raw_node_refs(c, jeb, 1);
 
-	अगर (!c->summary->sum_num || !c->summary->sum_list_head) अणु
+	if (!c->summary->sum_num || !c->summary->sum_list_head) {
 		JFFS2_WARNING("Empty summary info!!!\n");
 		BUG();
-	पूर्ण
+	}
 
-	datasize = c->summary->sum_size + माप(काष्ठा jffs2_sum_marker);
-	infosize = माप(काष्ठा jffs2_raw_summary) + datasize;
-	padsize = jeb->मुक्त_size - infosize;
+	datasize = c->summary->sum_size + sizeof(struct jffs2_sum_marker);
+	infosize = sizeof(struct jffs2_raw_summary) + datasize;
+	padsize = jeb->free_size - infosize;
 	infosize += padsize;
 	datasize += padsize;
 
-	ret = jffs2_sum_ग_लिखो_data(c, jeb, infosize, datasize, padsize);
+	ret = jffs2_sum_write_data(c, jeb, infosize, datasize, padsize);
 	spin_lock(&c->erase_completion_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}

@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#अगर_अघोषित __INTEL_DVO_H__
-#घोषणा __INTEL_DVO_H__
+#ifndef __INTEL_DVO_H__
+#define __INTEL_DVO_H__
 
-काष्ठा drm_i915_निजी;
+struct drm_i915_private;
 
-व्योम पूर्णांकel_dvo_init(काष्ठा drm_i915_निजी *dev_priv);
+void intel_dvo_init(struct drm_i915_private *dev_priv);
 
-#पूर्ण_अगर /* __INTEL_DVO_H__ */
+#endif /* __INTEL_DVO_H__ */

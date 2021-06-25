@@ -1,19 +1,18 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (c) 2015, 2018, The Linux Foundation. All rights reserved.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/export.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/delay.h>
+#include <linux/kernel.h>
+#include <linux/export.h>
+#include <linux/clk-provider.h>
+#include <linux/regmap.h>
+#include <linux/delay.h>
 
-#समावेश "clk-alpha-pll.h"
-#समावेश "common.h"
+#include "clk-alpha-pll.h"
+#include "common.h"
 
-#घोषणा PLL_MODE(p)		((p)->offset + 0x0)
+#define PLL_MODE(p)		((p)->offset + 0x0)
 # define PLL_OUTCTRL		BIT(0)
 # define PLL_BYPASSNL		BIT(1)
 # define PLL_RESET_N		BIT(2)
@@ -32,12 +31,12 @@
 # define PLL_ACTIVE_FLAG	BIT(30)
 # define PLL_LOCK_DET		BIT(31)
 
-#घोषणा PLL_L_VAL(p)		((p)->offset + (p)->regs[PLL_OFF_L_VAL])
-#घोषणा PLL_CAL_L_VAL(p)	((p)->offset + (p)->regs[PLL_OFF_CAL_L_VAL])
-#घोषणा PLL_ALPHA_VAL(p)	((p)->offset + (p)->regs[PLL_OFF_ALPHA_VAL])
-#घोषणा PLL_ALPHA_VAL_U(p)	((p)->offset + (p)->regs[PLL_OFF_ALPHA_VAL_U])
+#define PLL_L_VAL(p)		((p)->offset + (p)->regs[PLL_OFF_L_VAL])
+#define PLL_CAL_L_VAL(p)	((p)->offset + (p)->regs[PLL_OFF_CAL_L_VAL])
+#define PLL_ALPHA_VAL(p)	((p)->offset + (p)->regs[PLL_OFF_ALPHA_VAL])
+#define PLL_ALPHA_VAL_U(p)	((p)->offset + (p)->regs[PLL_OFF_ALPHA_VAL_U])
 
-#घोषणा PLL_USER_CTL(p)		((p)->offset + (p)->regs[PLL_OFF_USER_CTL])
+#define PLL_USER_CTL(p)		((p)->offset + (p)->regs[PLL_OFF_USER_CTL])
 # define PLL_POST_DIV_SHIFT	8
 # define PLL_POST_DIV_MASK(p)	GENMASK((p)->width, 0)
 # define PLL_ALPHA_EN		BIT(24)
@@ -45,21 +44,21 @@
 # define PLL_VCO_SHIFT		20
 # define PLL_VCO_MASK		0x3
 
-#घोषणा PLL_USER_CTL_U(p)	((p)->offset + (p)->regs[PLL_OFF_USER_CTL_U])
-#घोषणा PLL_USER_CTL_U1(p)	((p)->offset + (p)->regs[PLL_OFF_USER_CTL_U1])
+#define PLL_USER_CTL_U(p)	((p)->offset + (p)->regs[PLL_OFF_USER_CTL_U])
+#define PLL_USER_CTL_U1(p)	((p)->offset + (p)->regs[PLL_OFF_USER_CTL_U1])
 
-#घोषणा PLL_CONFIG_CTL(p)	((p)->offset + (p)->regs[PLL_OFF_CONFIG_CTL])
-#घोषणा PLL_CONFIG_CTL_U(p)	((p)->offset + (p)->regs[PLL_OFF_CONFIG_CTL_U])
-#घोषणा PLL_CONFIG_CTL_U1(p)	((p)->offset + (p)->regs[PLL_OFF_CONFIG_CTL_U1])
-#घोषणा PLL_TEST_CTL(p)		((p)->offset + (p)->regs[PLL_OFF_TEST_CTL])
-#घोषणा PLL_TEST_CTL_U(p)	((p)->offset + (p)->regs[PLL_OFF_TEST_CTL_U])
-#घोषणा PLL_TEST_CTL_U1(p)     ((p)->offset + (p)->regs[PLL_OFF_TEST_CTL_U1])
-#घोषणा PLL_STATUS(p)		((p)->offset + (p)->regs[PLL_OFF_STATUS])
-#घोषणा PLL_OPMODE(p)		((p)->offset + (p)->regs[PLL_OFF_OPMODE])
-#घोषणा PLL_FRAC(p)		((p)->offset + (p)->regs[PLL_OFF_FRAC])
+#define PLL_CONFIG_CTL(p)	((p)->offset + (p)->regs[PLL_OFF_CONFIG_CTL])
+#define PLL_CONFIG_CTL_U(p)	((p)->offset + (p)->regs[PLL_OFF_CONFIG_CTL_U])
+#define PLL_CONFIG_CTL_U1(p)	((p)->offset + (p)->regs[PLL_OFF_CONFIG_CTL_U1])
+#define PLL_TEST_CTL(p)		((p)->offset + (p)->regs[PLL_OFF_TEST_CTL])
+#define PLL_TEST_CTL_U(p)	((p)->offset + (p)->regs[PLL_OFF_TEST_CTL_U])
+#define PLL_TEST_CTL_U1(p)     ((p)->offset + (p)->regs[PLL_OFF_TEST_CTL_U1])
+#define PLL_STATUS(p)		((p)->offset + (p)->regs[PLL_OFF_STATUS])
+#define PLL_OPMODE(p)		((p)->offset + (p)->regs[PLL_OFF_OPMODE])
+#define PLL_FRAC(p)		((p)->offset + (p)->regs[PLL_OFF_FRAC])
 
-स्थिर u8 clk_alpha_pll_regs[][PLL_OFF_MAX_REGS] = अणु
-	[CLK_ALPHA_PLL_TYPE_DEFAULT] =  अणु
+const u8 clk_alpha_pll_regs[][PLL_OFF_MAX_REGS] = {
+	[CLK_ALPHA_PLL_TYPE_DEFAULT] =  {
 		[PLL_OFF_L_VAL] = 0x04,
 		[PLL_OFF_ALPHA_VAL] = 0x08,
 		[PLL_OFF_ALPHA_VAL_U] = 0x0c,
@@ -69,8 +68,8 @@
 		[PLL_OFF_TEST_CTL] = 0x1c,
 		[PLL_OFF_TEST_CTL_U] = 0x20,
 		[PLL_OFF_STATUS] = 0x24,
-	पूर्ण,
-	[CLK_ALPHA_PLL_TYPE_HUAYRA] =  अणु
+	},
+	[CLK_ALPHA_PLL_TYPE_HUAYRA] =  {
 		[PLL_OFF_L_VAL] = 0x04,
 		[PLL_OFF_ALPHA_VAL] = 0x08,
 		[PLL_OFF_USER_CTL] = 0x10,
@@ -79,8 +78,8 @@
 		[PLL_OFF_TEST_CTL] = 0x1c,
 		[PLL_OFF_TEST_CTL_U] = 0x20,
 		[PLL_OFF_STATUS] = 0x24,
-	पूर्ण,
-	[CLK_ALPHA_PLL_TYPE_BRAMMO] =  अणु
+	},
+	[CLK_ALPHA_PLL_TYPE_BRAMMO] =  {
 		[PLL_OFF_L_VAL] = 0x04,
 		[PLL_OFF_ALPHA_VAL] = 0x08,
 		[PLL_OFF_ALPHA_VAL_U] = 0x0c,
@@ -88,8 +87,8 @@
 		[PLL_OFF_CONFIG_CTL] = 0x18,
 		[PLL_OFF_TEST_CTL] = 0x1c,
 		[PLL_OFF_STATUS] = 0x24,
-	पूर्ण,
-	[CLK_ALPHA_PLL_TYPE_FABIA] =  अणु
+	},
+	[CLK_ALPHA_PLL_TYPE_FABIA] =  {
 		[PLL_OFF_L_VAL] = 0x04,
 		[PLL_OFF_USER_CTL] = 0x0c,
 		[PLL_OFF_USER_CTL_U] = 0x10,
@@ -100,8 +99,8 @@
 		[PLL_OFF_STATUS] = 0x24,
 		[PLL_OFF_OPMODE] = 0x2c,
 		[PLL_OFF_FRAC] = 0x38,
-	पूर्ण,
-	[CLK_ALPHA_PLL_TYPE_TRION] = अणु
+	},
+	[CLK_ALPHA_PLL_TYPE_TRION] = {
 		[PLL_OFF_L_VAL] = 0x04,
 		[PLL_OFF_CAL_L_VAL] = 0x08,
 		[PLL_OFF_USER_CTL] = 0x0c,
@@ -116,8 +115,8 @@
 		[PLL_OFF_STATUS] = 0x30,
 		[PLL_OFF_OPMODE] = 0x38,
 		[PLL_OFF_ALPHA_VAL] = 0x40,
-	पूर्ण,
-	[CLK_ALPHA_PLL_TYPE_AGERA] =  अणु
+	},
+	[CLK_ALPHA_PLL_TYPE_AGERA] =  {
 		[PLL_OFF_L_VAL] = 0x04,
 		[PLL_OFF_ALPHA_VAL] = 0x08,
 		[PLL_OFF_USER_CTL] = 0x0c,
@@ -126,397 +125,397 @@
 		[PLL_OFF_TEST_CTL] = 0x18,
 		[PLL_OFF_TEST_CTL_U] = 0x1c,
 		[PLL_OFF_STATUS] = 0x2c,
-	पूर्ण,
-पूर्ण;
+	},
+};
 EXPORT_SYMBOL_GPL(clk_alpha_pll_regs);
 
 /*
- * Even though 40 bits are present, use only 32 क्रम ease of calculation.
+ * Even though 40 bits are present, use only 32 for ease of calculation.
  */
-#घोषणा ALPHA_REG_BITWIDTH	40
-#घोषणा ALPHA_REG_16BIT_WIDTH	16
-#घोषणा ALPHA_BITWIDTH		32U
-#घोषणा ALPHA_SHIFT(w)		min(w, ALPHA_BITWIDTH)
+#define ALPHA_REG_BITWIDTH	40
+#define ALPHA_REG_16BIT_WIDTH	16
+#define ALPHA_BITWIDTH		32U
+#define ALPHA_SHIFT(w)		min(w, ALPHA_BITWIDTH)
 
-#घोषणा PLL_HUAYRA_M_WIDTH		8
-#घोषणा PLL_HUAYRA_M_SHIFT		8
-#घोषणा PLL_HUAYRA_M_MASK		0xff
-#घोषणा PLL_HUAYRA_N_SHIFT		0
-#घोषणा PLL_HUAYRA_N_MASK		0xff
-#घोषणा PLL_HUAYRA_ALPHA_WIDTH		16
+#define PLL_HUAYRA_M_WIDTH		8
+#define PLL_HUAYRA_M_SHIFT		8
+#define PLL_HUAYRA_M_MASK		0xff
+#define PLL_HUAYRA_N_SHIFT		0
+#define PLL_HUAYRA_N_MASK		0xff
+#define PLL_HUAYRA_ALPHA_WIDTH		16
 
-#घोषणा PLL_STANDBY		0x0
-#घोषणा PLL_RUN			0x1
-#घोषणा PLL_OUT_MASK		0x7
-#घोषणा PLL_RATE_MARGIN		500
+#define PLL_STANDBY		0x0
+#define PLL_RUN			0x1
+#define PLL_OUT_MASK		0x7
+#define PLL_RATE_MARGIN		500
 
-/* TRION PLL specअगरic settings and offsets */
-#घोषणा TRION_PLL_CAL_VAL	0x44
-#घोषणा TRION_PCAL_DONE		BIT(26)
+/* TRION PLL specific settings and offsets */
+#define TRION_PLL_CAL_VAL	0x44
+#define TRION_PCAL_DONE		BIT(26)
 
-/* LUCID PLL specअगरic settings and offsets */
-#घोषणा LUCID_PCAL_DONE		BIT(27)
+/* LUCID PLL specific settings and offsets */
+#define LUCID_PCAL_DONE		BIT(27)
 
-/* LUCID 5LPE PLL specअगरic settings and offsets */
-#घोषणा LUCID_5LPE_PCAL_DONE		BIT(11)
-#घोषणा LUCID_5LPE_ALPHA_PLL_ACK_LATCH	BIT(13)
-#घोषणा LUCID_5LPE_PLL_LATCH_INPUT	BIT(14)
-#घोषणा LUCID_5LPE_ENABLE_VOTE_RUN	BIT(21)
+/* LUCID 5LPE PLL specific settings and offsets */
+#define LUCID_5LPE_PCAL_DONE		BIT(11)
+#define LUCID_5LPE_ALPHA_PLL_ACK_LATCH	BIT(13)
+#define LUCID_5LPE_PLL_LATCH_INPUT	BIT(14)
+#define LUCID_5LPE_ENABLE_VOTE_RUN	BIT(21)
 
-#घोषणा pll_alpha_width(p)					\
+#define pll_alpha_width(p)					\
 		((PLL_ALPHA_VAL_U(p) - PLL_ALPHA_VAL(p) == 4) ?	\
 				 ALPHA_REG_BITWIDTH : ALPHA_REG_16BIT_WIDTH)
 
-#घोषणा pll_has_64bit_config(p)	((PLL_CONFIG_CTL_U(p) - PLL_CONFIG_CTL(p)) == 4)
+#define pll_has_64bit_config(p)	((PLL_CONFIG_CTL_U(p) - PLL_CONFIG_CTL(p)) == 4)
 
-#घोषणा to_clk_alpha_pll(_hw) container_of(to_clk_regmap(_hw), \
-					   काष्ठा clk_alpha_pll, clkr)
+#define to_clk_alpha_pll(_hw) container_of(to_clk_regmap(_hw), \
+					   struct clk_alpha_pll, clkr)
 
-#घोषणा to_clk_alpha_pll_postभाग(_hw) container_of(to_clk_regmap(_hw), \
-					   काष्ठा clk_alpha_pll_postभाग, clkr)
+#define to_clk_alpha_pll_postdiv(_hw) container_of(to_clk_regmap(_hw), \
+					   struct clk_alpha_pll_postdiv, clkr)
 
-अटल पूर्णांक रुको_क्रम_pll(काष्ठा clk_alpha_pll *pll, u32 mask, bool inverse,
-			स्थिर अक्षर *action)
-अणु
+static int wait_for_pll(struct clk_alpha_pll *pll, u32 mask, bool inverse,
+			const char *action)
+{
 	u32 val;
-	पूर्णांक count;
-	पूर्णांक ret;
-	स्थिर अक्षर *name = clk_hw_get_name(&pll->clkr.hw);
+	int count;
+	int ret;
+	const char *name = clk_hw_get_name(&pll->clkr.hw);
 
-	ret = regmap_पढ़ो(pll->clkr.regmap, PLL_MODE(pll), &val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(pll->clkr.regmap, PLL_MODE(pll), &val);
+	if (ret)
+		return ret;
 
-	क्रम (count = 100; count > 0; count--) अणु
-		ret = regmap_पढ़ो(pll->clkr.regmap, PLL_MODE(pll), &val);
-		अगर (ret)
-			वापस ret;
-		अगर (inverse && !(val & mask))
-			वापस 0;
-		अन्यथा अगर ((val & mask) == mask)
-			वापस 0;
+	for (count = 100; count > 0; count--) {
+		ret = regmap_read(pll->clkr.regmap, PLL_MODE(pll), &val);
+		if (ret)
+			return ret;
+		if (inverse && !(val & mask))
+			return 0;
+		else if ((val & mask) == mask)
+			return 0;
 
 		udelay(1);
-	पूर्ण
+	}
 
 	WARN(1, "%s failed to %s!\n", name, action);
-	वापस -ETIMEDOUT;
-पूर्ण
+	return -ETIMEDOUT;
+}
 
-#घोषणा रुको_क्रम_pll_enable_active(pll) \
-	रुको_क्रम_pll(pll, PLL_ACTIVE_FLAG, 0, "enable")
+#define wait_for_pll_enable_active(pll) \
+	wait_for_pll(pll, PLL_ACTIVE_FLAG, 0, "enable")
 
-#घोषणा रुको_क्रम_pll_enable_lock(pll) \
-	रुको_क्रम_pll(pll, PLL_LOCK_DET, 0, "enable")
+#define wait_for_pll_enable_lock(pll) \
+	wait_for_pll(pll, PLL_LOCK_DET, 0, "enable")
 
-#घोषणा रुको_क्रम_pll_disable(pll) \
-	रुको_क्रम_pll(pll, PLL_ACTIVE_FLAG, 1, "disable")
+#define wait_for_pll_disable(pll) \
+	wait_for_pll(pll, PLL_ACTIVE_FLAG, 1, "disable")
 
-#घोषणा रुको_क्रम_pll_offline(pll) \
-	रुको_क्रम_pll(pll, PLL_OFFLINE_ACK, 0, "offline")
+#define wait_for_pll_offline(pll) \
+	wait_for_pll(pll, PLL_OFFLINE_ACK, 0, "offline")
 
-#घोषणा रुको_क्रम_pll_update(pll) \
-	रुको_क्रम_pll(pll, PLL_UPDATE, 1, "update")
+#define wait_for_pll_update(pll) \
+	wait_for_pll(pll, PLL_UPDATE, 1, "update")
 
-#घोषणा रुको_क्रम_pll_update_ack_set(pll) \
-	रुको_क्रम_pll(pll, ALPHA_PLL_ACK_LATCH, 0, "update_ack_set")
+#define wait_for_pll_update_ack_set(pll) \
+	wait_for_pll(pll, ALPHA_PLL_ACK_LATCH, 0, "update_ack_set")
 
-#घोषणा रुको_क्रम_pll_update_ack_clear(pll) \
-	रुको_क्रम_pll(pll, ALPHA_PLL_ACK_LATCH, 1, "update_ack_clear")
+#define wait_for_pll_update_ack_clear(pll) \
+	wait_for_pll(pll, ALPHA_PLL_ACK_LATCH, 1, "update_ack_clear")
 
-अटल व्योम clk_alpha_pll_ग_लिखो_config(काष्ठा regmap *regmap, अचिन्हित पूर्णांक reg,
-					अचिन्हित पूर्णांक val)
-अणु
-	अगर (val)
-		regmap_ग_लिखो(regmap, reg, val);
-पूर्ण
+static void clk_alpha_pll_write_config(struct regmap *regmap, unsigned int reg,
+					unsigned int val)
+{
+	if (val)
+		regmap_write(regmap, reg, val);
+}
 
-व्योम clk_alpha_pll_configure(काष्ठा clk_alpha_pll *pll, काष्ठा regmap *regmap,
-			     स्थिर काष्ठा alpha_pll_config *config)
-अणु
+void clk_alpha_pll_configure(struct clk_alpha_pll *pll, struct regmap *regmap,
+			     const struct alpha_pll_config *config)
+{
 	u32 val, mask;
 
-	regmap_ग_लिखो(regmap, PLL_L_VAL(pll), config->l);
-	regmap_ग_लिखो(regmap, PLL_ALPHA_VAL(pll), config->alpha);
-	regmap_ग_लिखो(regmap, PLL_CONFIG_CTL(pll), config->config_ctl_val);
+	regmap_write(regmap, PLL_L_VAL(pll), config->l);
+	regmap_write(regmap, PLL_ALPHA_VAL(pll), config->alpha);
+	regmap_write(regmap, PLL_CONFIG_CTL(pll), config->config_ctl_val);
 
-	अगर (pll_has_64bit_config(pll))
-		regmap_ग_लिखो(regmap, PLL_CONFIG_CTL_U(pll),
+	if (pll_has_64bit_config(pll))
+		regmap_write(regmap, PLL_CONFIG_CTL_U(pll),
 			     config->config_ctl_hi_val);
 
-	अगर (pll_alpha_width(pll) > 32)
-		regmap_ग_लिखो(regmap, PLL_ALPHA_VAL_U(pll), config->alpha_hi);
+	if (pll_alpha_width(pll) > 32)
+		regmap_write(regmap, PLL_ALPHA_VAL_U(pll), config->alpha_hi);
 
-	val = config->मुख्य_output_mask;
+	val = config->main_output_mask;
 	val |= config->aux_output_mask;
 	val |= config->aux2_output_mask;
 	val |= config->early_output_mask;
-	val |= config->pre_भाग_val;
-	val |= config->post_भाग_val;
+	val |= config->pre_div_val;
+	val |= config->post_div_val;
 	val |= config->vco_val;
 	val |= config->alpha_en_mask;
 	val |= config->alpha_mode_mask;
 
-	mask = config->मुख्य_output_mask;
+	mask = config->main_output_mask;
 	mask |= config->aux_output_mask;
 	mask |= config->aux2_output_mask;
 	mask |= config->early_output_mask;
-	mask |= config->pre_भाग_mask;
-	mask |= config->post_भाग_mask;
+	mask |= config->pre_div_mask;
+	mask |= config->post_div_mask;
 	mask |= config->vco_mask;
 
 	regmap_update_bits(regmap, PLL_USER_CTL(pll), mask, val);
 
-	अगर (pll->flags & SUPPORTS_FSM_MODE)
+	if (pll->flags & SUPPORTS_FSM_MODE)
 		qcom_pll_set_fsm_mode(regmap, PLL_MODE(pll), 6, 0);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(clk_alpha_pll_configure);
 
-अटल पूर्णांक clk_alpha_pll_hwfsm_enable(काष्ठा clk_hw *hw)
-अणु
-	पूर्णांक ret;
-	काष्ठा clk_alpha_pll *pll = to_clk_alpha_pll(hw);
+static int clk_alpha_pll_hwfsm_enable(struct clk_hw *hw)
+{
+	int ret;
+	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
 	u32 val;
 
-	ret = regmap_पढ़ो(pll->clkr.regmap, PLL_MODE(pll), &val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(pll->clkr.regmap, PLL_MODE(pll), &val);
+	if (ret)
+		return ret;
 
 	val |= PLL_FSM_ENA;
 
-	अगर (pll->flags & SUPPORTS_OFFLINE_REQ)
+	if (pll->flags & SUPPORTS_OFFLINE_REQ)
 		val &= ~PLL_OFFLINE_REQ;
 
-	ret = regmap_ग_लिखो(pll->clkr.regmap, PLL_MODE(pll), val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_write(pll->clkr.regmap, PLL_MODE(pll), val);
+	if (ret)
+		return ret;
 
-	/* Make sure enable request goes through beक्रमe रुकोing क्रम update */
+	/* Make sure enable request goes through before waiting for update */
 	mb();
 
-	वापस रुको_क्रम_pll_enable_active(pll);
-पूर्ण
+	return wait_for_pll_enable_active(pll);
+}
 
-अटल व्योम clk_alpha_pll_hwfsm_disable(काष्ठा clk_hw *hw)
-अणु
-	पूर्णांक ret;
-	काष्ठा clk_alpha_pll *pll = to_clk_alpha_pll(hw);
+static void clk_alpha_pll_hwfsm_disable(struct clk_hw *hw)
+{
+	int ret;
+	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
 	u32 val;
 
-	ret = regmap_पढ़ो(pll->clkr.regmap, PLL_MODE(pll), &val);
-	अगर (ret)
-		वापस;
+	ret = regmap_read(pll->clkr.regmap, PLL_MODE(pll), &val);
+	if (ret)
+		return;
 
-	अगर (pll->flags & SUPPORTS_OFFLINE_REQ) अणु
+	if (pll->flags & SUPPORTS_OFFLINE_REQ) {
 		ret = regmap_update_bits(pll->clkr.regmap, PLL_MODE(pll),
 					 PLL_OFFLINE_REQ, PLL_OFFLINE_REQ);
-		अगर (ret)
-			वापस;
+		if (ret)
+			return;
 
-		ret = रुको_क्रम_pll_offline(pll);
-		अगर (ret)
-			वापस;
-	पूर्ण
+		ret = wait_for_pll_offline(pll);
+		if (ret)
+			return;
+	}
 
 	/* Disable hwfsm */
 	ret = regmap_update_bits(pll->clkr.regmap, PLL_MODE(pll),
 				 PLL_FSM_ENA, 0);
-	अगर (ret)
-		वापस;
+	if (ret)
+		return;
 
-	रुको_क्रम_pll_disable(pll);
-पूर्ण
+	wait_for_pll_disable(pll);
+}
 
-अटल पूर्णांक pll_is_enabled(काष्ठा clk_hw *hw, u32 mask)
-अणु
-	पूर्णांक ret;
-	काष्ठा clk_alpha_pll *pll = to_clk_alpha_pll(hw);
+static int pll_is_enabled(struct clk_hw *hw, u32 mask)
+{
+	int ret;
+	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
 	u32 val;
 
-	ret = regmap_पढ़ो(pll->clkr.regmap, PLL_MODE(pll), &val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(pll->clkr.regmap, PLL_MODE(pll), &val);
+	if (ret)
+		return ret;
 
-	वापस !!(val & mask);
-पूर्ण
+	return !!(val & mask);
+}
 
-अटल पूर्णांक clk_alpha_pll_hwfsm_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	वापस pll_is_enabled(hw, PLL_ACTIVE_FLAG);
-पूर्ण
+static int clk_alpha_pll_hwfsm_is_enabled(struct clk_hw *hw)
+{
+	return pll_is_enabled(hw, PLL_ACTIVE_FLAG);
+}
 
-अटल पूर्णांक clk_alpha_pll_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	वापस pll_is_enabled(hw, PLL_LOCK_DET);
-पूर्ण
+static int clk_alpha_pll_is_enabled(struct clk_hw *hw)
+{
+	return pll_is_enabled(hw, PLL_LOCK_DET);
+}
 
-अटल पूर्णांक clk_alpha_pll_enable(काष्ठा clk_hw *hw)
-अणु
-	पूर्णांक ret;
-	काष्ठा clk_alpha_pll *pll = to_clk_alpha_pll(hw);
+static int clk_alpha_pll_enable(struct clk_hw *hw)
+{
+	int ret;
+	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
 	u32 val, mask;
 
 	mask = PLL_OUTCTRL | PLL_RESET_N | PLL_BYPASSNL;
-	ret = regmap_पढ़ो(pll->clkr.regmap, PLL_MODE(pll), &val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(pll->clkr.regmap, PLL_MODE(pll), &val);
+	if (ret)
+		return ret;
 
-	/* If in FSM mode, just vote क्रम it */
-	अगर (val & PLL_VOTE_FSM_ENA) अणु
+	/* If in FSM mode, just vote for it */
+	if (val & PLL_VOTE_FSM_ENA) {
 		ret = clk_enable_regmap(hw);
-		अगर (ret)
-			वापस ret;
-		वापस रुको_क्रम_pll_enable_active(pll);
-	पूर्ण
+		if (ret)
+			return ret;
+		return wait_for_pll_enable_active(pll);
+	}
 
-	/* Skip अगर alपढ़ोy enabled */
-	अगर ((val & mask) == mask)
-		वापस 0;
+	/* Skip if already enabled */
+	if ((val & mask) == mask)
+		return 0;
 
 	ret = regmap_update_bits(pll->clkr.regmap, PLL_MODE(pll),
 				 PLL_BYPASSNL, PLL_BYPASSNL);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/*
 	 * H/W requires a 5us delay between disabling the bypass and
-	 * de-निश्चितing the reset.
+	 * de-asserting the reset.
 	 */
 	mb();
 	udelay(5);
 
 	ret = regmap_update_bits(pll->clkr.regmap, PLL_MODE(pll),
 				 PLL_RESET_N, PLL_RESET_N);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = रुको_क्रम_pll_enable_lock(pll);
-	अगर (ret)
-		वापस ret;
+	ret = wait_for_pll_enable_lock(pll);
+	if (ret)
+		return ret;
 
 	ret = regmap_update_bits(pll->clkr.regmap, PLL_MODE(pll),
 				 PLL_OUTCTRL, PLL_OUTCTRL);
 
-	/* Ensure that the ग_लिखो above goes through beक्रमe वापसing. */
+	/* Ensure that the write above goes through before returning. */
 	mb();
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम clk_alpha_pll_disable(काष्ठा clk_hw *hw)
-अणु
-	पूर्णांक ret;
-	काष्ठा clk_alpha_pll *pll = to_clk_alpha_pll(hw);
+static void clk_alpha_pll_disable(struct clk_hw *hw)
+{
+	int ret;
+	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
 	u32 val, mask;
 
-	ret = regmap_पढ़ो(pll->clkr.regmap, PLL_MODE(pll), &val);
-	अगर (ret)
-		वापस;
+	ret = regmap_read(pll->clkr.regmap, PLL_MODE(pll), &val);
+	if (ret)
+		return;
 
 	/* If in FSM mode, just unvote it */
-	अगर (val & PLL_VOTE_FSM_ENA) अणु
+	if (val & PLL_VOTE_FSM_ENA) {
 		clk_disable_regmap(hw);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	mask = PLL_OUTCTRL;
 	regmap_update_bits(pll->clkr.regmap, PLL_MODE(pll), mask, 0);
 
-	/* Delay of 2 output घड़ी ticks required until output is disabled */
+	/* Delay of 2 output clock ticks required until output is disabled */
 	mb();
 	udelay(1);
 
 	mask = PLL_RESET_N | PLL_BYPASSNL;
 	regmap_update_bits(pll->clkr.regmap, PLL_MODE(pll), mask, 0);
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ
+static unsigned long
 alpha_pll_calc_rate(u64 prate, u32 l, u32 a, u32 alpha_width)
-अणु
-	वापस (prate * l) + ((prate * a) >> ALPHA_SHIFT(alpha_width));
-पूर्ण
+{
+	return (prate * l) + ((prate * a) >> ALPHA_SHIFT(alpha_width));
+}
 
-अटल अचिन्हित दीर्घ
-alpha_pll_round_rate(अचिन्हित दीर्घ rate, अचिन्हित दीर्घ prate, u32 *l, u64 *a,
+static unsigned long
+alpha_pll_round_rate(unsigned long rate, unsigned long prate, u32 *l, u64 *a,
 		     u32 alpha_width)
-अणु
-	u64 reमुख्यder;
+{
+	u64 remainder;
 	u64 quotient;
 
 	quotient = rate;
-	reमुख्यder = करो_भाग(quotient, prate);
+	remainder = do_div(quotient, prate);
 	*l = quotient;
 
-	अगर (!reमुख्यder) अणु
+	if (!remainder) {
 		*a = 0;
-		वापस rate;
-	पूर्ण
+		return rate;
+	}
 
 	/* Upper ALPHA_BITWIDTH bits of Alpha */
-	quotient = reमुख्यder << ALPHA_SHIFT(alpha_width);
+	quotient = remainder << ALPHA_SHIFT(alpha_width);
 
-	reमुख्यder = करो_भाग(quotient, prate);
+	remainder = do_div(quotient, prate);
 
-	अगर (reमुख्यder)
+	if (remainder)
 		quotient++;
 
 	*a = quotient;
-	वापस alpha_pll_calc_rate(prate, *l, *a, alpha_width);
-पूर्ण
+	return alpha_pll_calc_rate(prate, *l, *a, alpha_width);
+}
 
-अटल स्थिर काष्ठा pll_vco *
-alpha_pll_find_vco(स्थिर काष्ठा clk_alpha_pll *pll, अचिन्हित दीर्घ rate)
-अणु
-	स्थिर काष्ठा pll_vco *v = pll->vco_table;
-	स्थिर काष्ठा pll_vco *end = v + pll->num_vco;
+static const struct pll_vco *
+alpha_pll_find_vco(const struct clk_alpha_pll *pll, unsigned long rate)
+{
+	const struct pll_vco *v = pll->vco_table;
+	const struct pll_vco *end = v + pll->num_vco;
 
-	क्रम (; v < end; v++)
-		अगर (rate >= v->min_freq && rate <= v->max_freq)
-			वापस v;
+	for (; v < end; v++)
+		if (rate >= v->min_freq && rate <= v->max_freq)
+			return v;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल अचिन्हित दीर्घ
-clk_alpha_pll_recalc_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ parent_rate)
-अणु
+static unsigned long
+clk_alpha_pll_recalc_rate(struct clk_hw *hw, unsigned long parent_rate)
+{
 	u32 l, low, high, ctl;
 	u64 a = 0, prate = parent_rate;
-	काष्ठा clk_alpha_pll *pll = to_clk_alpha_pll(hw);
+	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
 	u32 alpha_width = pll_alpha_width(pll);
 
-	regmap_पढ़ो(pll->clkr.regmap, PLL_L_VAL(pll), &l);
+	regmap_read(pll->clkr.regmap, PLL_L_VAL(pll), &l);
 
-	regmap_पढ़ो(pll->clkr.regmap, PLL_USER_CTL(pll), &ctl);
-	अगर (ctl & PLL_ALPHA_EN) अणु
-		regmap_पढ़ो(pll->clkr.regmap, PLL_ALPHA_VAL(pll), &low);
-		अगर (alpha_width > 32) अणु
-			regmap_पढ़ो(pll->clkr.regmap, PLL_ALPHA_VAL_U(pll),
+	regmap_read(pll->clkr.regmap, PLL_USER_CTL(pll), &ctl);
+	if (ctl & PLL_ALPHA_EN) {
+		regmap_read(pll->clkr.regmap, PLL_ALPHA_VAL(pll), &low);
+		if (alpha_width > 32) {
+			regmap_read(pll->clkr.regmap, PLL_ALPHA_VAL_U(pll),
 				    &high);
 			a = (u64)high << 32 | low;
-		पूर्ण अन्यथा अणु
+		} else {
 			a = low & GENMASK(alpha_width - 1, 0);
-		पूर्ण
+		}
 
-		अगर (alpha_width > ALPHA_BITWIDTH)
+		if (alpha_width > ALPHA_BITWIDTH)
 			a >>= alpha_width - ALPHA_BITWIDTH;
-	पूर्ण
+	}
 
-	वापस alpha_pll_calc_rate(prate, l, a, alpha_width);
-पूर्ण
+	return alpha_pll_calc_rate(prate, l, a, alpha_width);
+}
 
 
-अटल पूर्णांक __clk_alpha_pll_update_latch(काष्ठा clk_alpha_pll *pll)
-अणु
-	पूर्णांक ret;
+static int __clk_alpha_pll_update_latch(struct clk_alpha_pll *pll)
+{
+	int ret;
 	u32 mode;
 
-	regmap_पढ़ो(pll->clkr.regmap, PLL_MODE(pll), &mode);
+	regmap_read(pll->clkr.regmap, PLL_MODE(pll), &mode);
 
 	/* Latch the input to the PLL */
 	regmap_update_bits(pll->clkr.regmap, PLL_MODE(pll), PLL_UPDATE,
 			   PLL_UPDATE);
 
-	/* Wait क्रम 2 reference cycle beक्रमe checking ACK bit */
+	/* Wait for 2 reference cycle before checking ACK bit */
 	udelay(1);
 
 	/*
@@ -524,732 +523,732 @@ clk_alpha_pll_recalc_rate(काष्ठा clk_hw *hw, अचिन्हि�
 	 * PLL will respond by raising PLL_ACK_LATCH output when new programming
 	 * has been latched in and PLL is being updated. When
 	 * UPDATE_LOGIC_BYPASS bit is not set, PLL_UPDATE will be cleared
-	 * स्वतःmatically by hardware when PLL_ACK_LATCH is निश्चितed by PLL.
+	 * automatically by hardware when PLL_ACK_LATCH is asserted by PLL.
 	 */
-	अगर (mode & PLL_UPDATE_BYPASS) अणु
-		ret = रुको_क्रम_pll_update_ack_set(pll);
-		अगर (ret)
-			वापस ret;
+	if (mode & PLL_UPDATE_BYPASS) {
+		ret = wait_for_pll_update_ack_set(pll);
+		if (ret)
+			return ret;
 
 		regmap_update_bits(pll->clkr.regmap, PLL_MODE(pll), PLL_UPDATE, 0);
-	पूर्ण अन्यथा अणु
-		ret = रुको_क्रम_pll_update(pll);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	} else {
+		ret = wait_for_pll_update(pll);
+		if (ret)
+			return ret;
+	}
 
-	ret = रुको_क्रम_pll_update_ack_clear(pll);
-	अगर (ret)
-		वापस ret;
+	ret = wait_for_pll_update_ack_clear(pll);
+	if (ret)
+		return ret;
 
-	/* Wait क्रम PLL output to stabilize */
+	/* Wait for PLL output to stabilize */
 	udelay(10);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक clk_alpha_pll_update_latch(काष्ठा clk_alpha_pll *pll,
-				      पूर्णांक (*is_enabled)(काष्ठा clk_hw *))
-अणु
-	अगर (!is_enabled(&pll->clkr.hw) ||
+static int clk_alpha_pll_update_latch(struct clk_alpha_pll *pll,
+				      int (*is_enabled)(struct clk_hw *))
+{
+	if (!is_enabled(&pll->clkr.hw) ||
 	    !(pll->flags & SUPPORTS_DYNAMIC_UPDATE))
-		वापस 0;
+		return 0;
 
-	वापस __clk_alpha_pll_update_latch(pll);
-पूर्ण
+	return __clk_alpha_pll_update_latch(pll);
+}
 
-अटल पूर्णांक __clk_alpha_pll_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				    अचिन्हित दीर्घ prate,
-				    पूर्णांक (*is_enabled)(काष्ठा clk_hw *))
-अणु
-	काष्ठा clk_alpha_pll *pll = to_clk_alpha_pll(hw);
-	स्थिर काष्ठा pll_vco *vco;
+static int __clk_alpha_pll_set_rate(struct clk_hw *hw, unsigned long rate,
+				    unsigned long prate,
+				    int (*is_enabled)(struct clk_hw *))
+{
+	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
+	const struct pll_vco *vco;
 	u32 l, alpha_width = pll_alpha_width(pll);
 	u64 a;
 
 	rate = alpha_pll_round_rate(rate, prate, &l, &a, alpha_width);
 	vco = alpha_pll_find_vco(pll, rate);
-	अगर (pll->vco_table && !vco) अणु
+	if (pll->vco_table && !vco) {
 		pr_err("%s: alpha pll not in a valid vco range\n",
 		       clk_hw_get_name(hw));
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	regmap_ग_लिखो(pll->clkr.regmap, PLL_L_VAL(pll), l);
+	regmap_write(pll->clkr.regmap, PLL_L_VAL(pll), l);
 
-	अगर (alpha_width > ALPHA_BITWIDTH)
+	if (alpha_width > ALPHA_BITWIDTH)
 		a <<= alpha_width - ALPHA_BITWIDTH;
 
-	अगर (alpha_width > 32)
-		regmap_ग_लिखो(pll->clkr.regmap, PLL_ALPHA_VAL_U(pll), a >> 32);
+	if (alpha_width > 32)
+		regmap_write(pll->clkr.regmap, PLL_ALPHA_VAL_U(pll), a >> 32);
 
-	regmap_ग_लिखो(pll->clkr.regmap, PLL_ALPHA_VAL(pll), a);
+	regmap_write(pll->clkr.regmap, PLL_ALPHA_VAL(pll), a);
 
-	अगर (vco) अणु
+	if (vco) {
 		regmap_update_bits(pll->clkr.regmap, PLL_USER_CTL(pll),
 				   PLL_VCO_MASK << PLL_VCO_SHIFT,
 				   vco->val << PLL_VCO_SHIFT);
-	पूर्ण
+	}
 
 	regmap_update_bits(pll->clkr.regmap, PLL_USER_CTL(pll),
 			   PLL_ALPHA_EN, PLL_ALPHA_EN);
 
-	वापस clk_alpha_pll_update_latch(pll, is_enabled);
-पूर्ण
+	return clk_alpha_pll_update_latch(pll, is_enabled);
+}
 
-अटल पूर्णांक clk_alpha_pll_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				  अचिन्हित दीर्घ prate)
-अणु
-	वापस __clk_alpha_pll_set_rate(hw, rate, prate,
+static int clk_alpha_pll_set_rate(struct clk_hw *hw, unsigned long rate,
+				  unsigned long prate)
+{
+	return __clk_alpha_pll_set_rate(hw, rate, prate,
 					clk_alpha_pll_is_enabled);
-पूर्ण
+}
 
-अटल पूर्णांक clk_alpha_pll_hwfsm_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-					अचिन्हित दीर्घ prate)
-अणु
-	वापस __clk_alpha_pll_set_rate(hw, rate, prate,
+static int clk_alpha_pll_hwfsm_set_rate(struct clk_hw *hw, unsigned long rate,
+					unsigned long prate)
+{
+	return __clk_alpha_pll_set_rate(hw, rate, prate,
 					clk_alpha_pll_hwfsm_is_enabled);
-पूर्ण
+}
 
-अटल दीर्घ clk_alpha_pll_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				     अचिन्हित दीर्घ *prate)
-अणु
-	काष्ठा clk_alpha_pll *pll = to_clk_alpha_pll(hw);
+static long clk_alpha_pll_round_rate(struct clk_hw *hw, unsigned long rate,
+				     unsigned long *prate)
+{
+	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
 	u32 l, alpha_width = pll_alpha_width(pll);
 	u64 a;
-	अचिन्हित दीर्घ min_freq, max_freq;
+	unsigned long min_freq, max_freq;
 
 	rate = alpha_pll_round_rate(rate, *prate, &l, &a, alpha_width);
-	अगर (!pll->vco_table || alpha_pll_find_vco(pll, rate))
-		वापस rate;
+	if (!pll->vco_table || alpha_pll_find_vco(pll, rate))
+		return rate;
 
 	min_freq = pll->vco_table[0].min_freq;
 	max_freq = pll->vco_table[pll->num_vco - 1].max_freq;
 
-	वापस clamp(rate, min_freq, max_freq);
-पूर्ण
+	return clamp(rate, min_freq, max_freq);
+}
 
-अटल अचिन्हित दीर्घ
+static unsigned long
 alpha_huayra_pll_calc_rate(u64 prate, u32 l, u32 a)
-अणु
+{
 	/*
-	 * a contains 16 bit alpha_val in twoै s complement number in the range
+	 * a contains 16 bit alpha_val in two’s complement number in the range
 	 * of [-0.5, 0.5).
 	 */
-	अगर (a >= BIT(PLL_HUAYRA_ALPHA_WIDTH - 1))
+	if (a >= BIT(PLL_HUAYRA_ALPHA_WIDTH - 1))
 		l -= 1;
 
-	वापस (prate * l) + (prate * a >> PLL_HUAYRA_ALPHA_WIDTH);
-पूर्ण
+	return (prate * l) + (prate * a >> PLL_HUAYRA_ALPHA_WIDTH);
+}
 
-अटल अचिन्हित दीर्घ
-alpha_huayra_pll_round_rate(अचिन्हित दीर्घ rate, अचिन्हित दीर्घ prate,
+static unsigned long
+alpha_huayra_pll_round_rate(unsigned long rate, unsigned long prate,
 			    u32 *l, u32 *a)
-अणु
-	u64 reमुख्यder;
+{
+	u64 remainder;
 	u64 quotient;
 
 	quotient = rate;
-	reमुख्यder = करो_भाग(quotient, prate);
+	remainder = do_div(quotient, prate);
 	*l = quotient;
 
-	अगर (!reमुख्यder) अणु
+	if (!remainder) {
 		*a = 0;
-		वापस rate;
-	पूर्ण
+		return rate;
+	}
 
-	quotient = reमुख्यder << PLL_HUAYRA_ALPHA_WIDTH;
-	reमुख्यder = करो_भाग(quotient, prate);
+	quotient = remainder << PLL_HUAYRA_ALPHA_WIDTH;
+	remainder = do_div(quotient, prate);
 
-	अगर (reमुख्यder)
+	if (remainder)
 		quotient++;
 
 	/*
-	 * alpha_val should be in twoै s complement number in the range
-	 * of [-0.5, 0.5) so अगर quotient >= 0.5 then increment the l value
-	 * since alpha value will be subtracted in this हाल.
+	 * alpha_val should be in two’s complement number in the range
+	 * of [-0.5, 0.5) so if quotient >= 0.5 then increment the l value
+	 * since alpha value will be subtracted in this case.
 	 */
-	अगर (quotient >= BIT(PLL_HUAYRA_ALPHA_WIDTH - 1))
+	if (quotient >= BIT(PLL_HUAYRA_ALPHA_WIDTH - 1))
 		*l += 1;
 
 	*a = quotient;
-	वापस alpha_huayra_pll_calc_rate(prate, *l, *a);
-पूर्ण
+	return alpha_huayra_pll_calc_rate(prate, *l, *a);
+}
 
-अटल अचिन्हित दीर्घ
-alpha_pll_huayra_recalc_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ parent_rate)
-अणु
-	u64 rate = parent_rate, पंचांगp;
-	काष्ठा clk_alpha_pll *pll = to_clk_alpha_pll(hw);
+static unsigned long
+alpha_pll_huayra_recalc_rate(struct clk_hw *hw, unsigned long parent_rate)
+{
+	u64 rate = parent_rate, tmp;
+	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
 	u32 l, alpha = 0, ctl, alpha_m, alpha_n;
 
-	regmap_पढ़ो(pll->clkr.regmap, PLL_L_VAL(pll), &l);
-	regmap_पढ़ो(pll->clkr.regmap, PLL_USER_CTL(pll), &ctl);
+	regmap_read(pll->clkr.regmap, PLL_L_VAL(pll), &l);
+	regmap_read(pll->clkr.regmap, PLL_USER_CTL(pll), &ctl);
 
-	अगर (ctl & PLL_ALPHA_EN) अणु
-		regmap_पढ़ो(pll->clkr.regmap, PLL_ALPHA_VAL(pll), &alpha);
+	if (ctl & PLL_ALPHA_EN) {
+		regmap_read(pll->clkr.regmap, PLL_ALPHA_VAL(pll), &alpha);
 		/*
 		 * Depending upon alpha_mode, it can be treated as M/N value or
-		 * as a twoै s complement number. When alpha_mode=1,
+		 * as a two’s complement number. When alpha_mode=1,
 		 * pll_alpha_val<15:8>=M and pll_apla_val<7:0>=N
 		 *
 		 *		Fout=FIN*(L+(M/N))
 		 *
-		 * M is a चिन्हित number (-128 to 127) and N is अचिन्हित
+		 * M is a signed number (-128 to 127) and N is unsigned
 		 * (0 to 255). M/N has to be within +/-0.5.
 		 *
-		 * When alpha_mode=0, it is a twoै s complement number in the
+		 * When alpha_mode=0, it is a two’s complement number in the
 		 * range [-0.5, 0.5).
 		 *
 		 *		Fout=FIN*(L+(alpha_val)/2^16)
 		 *
-		 * where alpha_val is twoै s complement number.
+		 * where alpha_val is two’s complement number.
 		 */
-		अगर (!(ctl & PLL_ALPHA_MODE))
-			वापस alpha_huayra_pll_calc_rate(rate, l, alpha);
+		if (!(ctl & PLL_ALPHA_MODE))
+			return alpha_huayra_pll_calc_rate(rate, l, alpha);
 
 		alpha_m = alpha >> PLL_HUAYRA_M_SHIFT & PLL_HUAYRA_M_MASK;
 		alpha_n = alpha >> PLL_HUAYRA_N_SHIFT & PLL_HUAYRA_N_MASK;
 
 		rate *= l;
-		पंचांगp = parent_rate;
-		अगर (alpha_m >= BIT(PLL_HUAYRA_M_WIDTH - 1)) अणु
+		tmp = parent_rate;
+		if (alpha_m >= BIT(PLL_HUAYRA_M_WIDTH - 1)) {
 			alpha_m = BIT(PLL_HUAYRA_M_WIDTH) - alpha_m;
-			पंचांगp *= alpha_m;
-			करो_भाग(पंचांगp, alpha_n);
-			rate -= पंचांगp;
-		पूर्ण अन्यथा अणु
-			पंचांगp *= alpha_m;
-			करो_भाग(पंचांगp, alpha_n);
-			rate += पंचांगp;
-		पूर्ण
+			tmp *= alpha_m;
+			do_div(tmp, alpha_n);
+			rate -= tmp;
+		} else {
+			tmp *= alpha_m;
+			do_div(tmp, alpha_n);
+			rate += tmp;
+		}
 
-		वापस rate;
-	पूर्ण
+		return rate;
+	}
 
-	वापस alpha_huayra_pll_calc_rate(rate, l, alpha);
-पूर्ण
+	return alpha_huayra_pll_calc_rate(rate, l, alpha);
+}
 
-अटल पूर्णांक alpha_pll_huayra_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				     अचिन्हित दीर्घ prate)
-अणु
-	काष्ठा clk_alpha_pll *pll = to_clk_alpha_pll(hw);
+static int alpha_pll_huayra_set_rate(struct clk_hw *hw, unsigned long rate,
+				     unsigned long prate)
+{
+	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
 	u32 l, a, ctl, cur_alpha = 0;
 
 	rate = alpha_huayra_pll_round_rate(rate, prate, &l, &a);
 
-	regmap_पढ़ो(pll->clkr.regmap, PLL_USER_CTL(pll), &ctl);
+	regmap_read(pll->clkr.regmap, PLL_USER_CTL(pll), &ctl);
 
-	अगर (ctl & PLL_ALPHA_EN)
-		regmap_पढ़ो(pll->clkr.regmap, PLL_ALPHA_VAL(pll), &cur_alpha);
+	if (ctl & PLL_ALPHA_EN)
+		regmap_read(pll->clkr.regmap, PLL_ALPHA_VAL(pll), &cur_alpha);
 
 	/*
 	 * Huayra PLL supports PLL dynamic programming. User can change L_VAL,
-	 * without having to go through the घातer on sequence.
+	 * without having to go through the power on sequence.
 	 */
-	अगर (clk_alpha_pll_is_enabled(hw)) अणु
-		अगर (cur_alpha != a) अणु
+	if (clk_alpha_pll_is_enabled(hw)) {
+		if (cur_alpha != a) {
 			pr_err("%s: clock needs to be gated\n",
 			       clk_hw_get_name(hw));
-			वापस -EBUSY;
-		पूर्ण
+			return -EBUSY;
+		}
 
-		regmap_ग_लिखो(pll->clkr.regmap, PLL_L_VAL(pll), l);
-		/* Ensure that the ग_लिखो above goes to detect L val change. */
+		regmap_write(pll->clkr.regmap, PLL_L_VAL(pll), l);
+		/* Ensure that the write above goes to detect L val change. */
 		mb();
-		वापस रुको_क्रम_pll_enable_lock(pll);
-	पूर्ण
+		return wait_for_pll_enable_lock(pll);
+	}
 
-	regmap_ग_लिखो(pll->clkr.regmap, PLL_L_VAL(pll), l);
-	regmap_ग_लिखो(pll->clkr.regmap, PLL_ALPHA_VAL(pll), a);
+	regmap_write(pll->clkr.regmap, PLL_L_VAL(pll), l);
+	regmap_write(pll->clkr.regmap, PLL_ALPHA_VAL(pll), a);
 
-	अगर (a == 0)
+	if (a == 0)
 		regmap_update_bits(pll->clkr.regmap, PLL_USER_CTL(pll),
 				   PLL_ALPHA_EN, 0x0);
-	अन्यथा
+	else
 		regmap_update_bits(pll->clkr.regmap, PLL_USER_CTL(pll),
 				   PLL_ALPHA_EN | PLL_ALPHA_MODE, PLL_ALPHA_EN);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल दीर्घ alpha_pll_huayra_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-					अचिन्हित दीर्घ *prate)
-अणु
+static long alpha_pll_huayra_round_rate(struct clk_hw *hw, unsigned long rate,
+					unsigned long *prate)
+{
 	u32 l, a;
 
-	वापस alpha_huayra_pll_round_rate(rate, *prate, &l, &a);
-पूर्ण
+	return alpha_huayra_pll_round_rate(rate, *prate, &l, &a);
+}
 
-अटल पूर्णांक trion_pll_is_enabled(काष्ठा clk_alpha_pll *pll,
-				काष्ठा regmap *regmap)
-अणु
+static int trion_pll_is_enabled(struct clk_alpha_pll *pll,
+				struct regmap *regmap)
+{
 	u32 mode_val, opmode_val;
-	पूर्णांक ret;
+	int ret;
 
-	ret = regmap_पढ़ो(regmap, PLL_MODE(pll), &mode_val);
-	ret |= regmap_पढ़ो(regmap, PLL_OPMODE(pll), &opmode_val);
-	अगर (ret)
-		वापस 0;
+	ret = regmap_read(regmap, PLL_MODE(pll), &mode_val);
+	ret |= regmap_read(regmap, PLL_OPMODE(pll), &opmode_val);
+	if (ret)
+		return 0;
 
-	वापस ((opmode_val & PLL_RUN) && (mode_val & PLL_OUTCTRL));
-पूर्ण
+	return ((opmode_val & PLL_RUN) && (mode_val & PLL_OUTCTRL));
+}
 
-अटल पूर्णांक clk_trion_pll_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_alpha_pll *pll = to_clk_alpha_pll(hw);
+static int clk_trion_pll_is_enabled(struct clk_hw *hw)
+{
+	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
 
-	वापस trion_pll_is_enabled(pll, pll->clkr.regmap);
-पूर्ण
+	return trion_pll_is_enabled(pll, pll->clkr.regmap);
+}
 
-अटल पूर्णांक clk_trion_pll_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_alpha_pll *pll = to_clk_alpha_pll(hw);
-	काष्ठा regmap *regmap = pll->clkr.regmap;
+static int clk_trion_pll_enable(struct clk_hw *hw)
+{
+	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
+	struct regmap *regmap = pll->clkr.regmap;
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
-	ret = regmap_पढ़ो(regmap, PLL_MODE(pll), &val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(regmap, PLL_MODE(pll), &val);
+	if (ret)
+		return ret;
 
-	/* If in FSM mode, just vote क्रम it */
-	अगर (val & PLL_VOTE_FSM_ENA) अणु
+	/* If in FSM mode, just vote for it */
+	if (val & PLL_VOTE_FSM_ENA) {
 		ret = clk_enable_regmap(hw);
-		अगर (ret)
-			वापस ret;
-		वापस रुको_क्रम_pll_enable_active(pll);
-	पूर्ण
+		if (ret)
+			return ret;
+		return wait_for_pll_enable_active(pll);
+	}
 
 	/* Set operation mode to RUN */
-	regmap_ग_लिखो(regmap, PLL_OPMODE(pll), PLL_RUN);
+	regmap_write(regmap, PLL_OPMODE(pll), PLL_RUN);
 
-	ret = रुको_क्रम_pll_enable_lock(pll);
-	अगर (ret)
-		वापस ret;
+	ret = wait_for_pll_enable_lock(pll);
+	if (ret)
+		return ret;
 
-	/* Enable the PLL outमाला_दो */
+	/* Enable the PLL outputs */
 	ret = regmap_update_bits(regmap, PLL_USER_CTL(pll),
 				 PLL_OUT_MASK, PLL_OUT_MASK);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Enable the global PLL outमाला_दो */
-	वापस regmap_update_bits(regmap, PLL_MODE(pll),
+	/* Enable the global PLL outputs */
+	return regmap_update_bits(regmap, PLL_MODE(pll),
 				 PLL_OUTCTRL, PLL_OUTCTRL);
-पूर्ण
+}
 
-अटल व्योम clk_trion_pll_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_alpha_pll *pll = to_clk_alpha_pll(hw);
-	काष्ठा regmap *regmap = pll->clkr.regmap;
+static void clk_trion_pll_disable(struct clk_hw *hw)
+{
+	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
+	struct regmap *regmap = pll->clkr.regmap;
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
-	ret = regmap_पढ़ो(regmap, PLL_MODE(pll), &val);
-	अगर (ret)
-		वापस;
+	ret = regmap_read(regmap, PLL_MODE(pll), &val);
+	if (ret)
+		return;
 
 	/* If in FSM mode, just unvote it */
-	अगर (val & PLL_VOTE_FSM_ENA) अणु
+	if (val & PLL_VOTE_FSM_ENA) {
 		clk_disable_regmap(hw);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Disable the global PLL output */
 	ret = regmap_update_bits(regmap, PLL_MODE(pll), PLL_OUTCTRL, 0);
-	अगर (ret)
-		वापस;
+	if (ret)
+		return;
 
-	/* Disable the PLL outमाला_दो */
+	/* Disable the PLL outputs */
 	ret = regmap_update_bits(regmap, PLL_USER_CTL(pll),
 				 PLL_OUT_MASK, 0);
-	अगर (ret)
-		वापस;
+	if (ret)
+		return;
 
 	/* Place the PLL mode in STANDBY */
-	regmap_ग_लिखो(regmap, PLL_OPMODE(pll), PLL_STANDBY);
+	regmap_write(regmap, PLL_OPMODE(pll), PLL_STANDBY);
 	regmap_update_bits(regmap, PLL_MODE(pll), PLL_RESET_N, PLL_RESET_N);
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ
-clk_trion_pll_recalc_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_alpha_pll *pll = to_clk_alpha_pll(hw);
+static unsigned long
+clk_trion_pll_recalc_rate(struct clk_hw *hw, unsigned long parent_rate)
+{
+	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
 	u32 l, frac, alpha_width = pll_alpha_width(pll);
 
-	regmap_पढ़ो(pll->clkr.regmap, PLL_L_VAL(pll), &l);
-	regmap_पढ़ो(pll->clkr.regmap, PLL_ALPHA_VAL(pll), &frac);
+	regmap_read(pll->clkr.regmap, PLL_L_VAL(pll), &l);
+	regmap_read(pll->clkr.regmap, PLL_ALPHA_VAL(pll), &frac);
 
-	वापस alpha_pll_calc_rate(parent_rate, l, frac, alpha_width);
-पूर्ण
+	return alpha_pll_calc_rate(parent_rate, l, frac, alpha_width);
+}
 
-स्थिर काष्ठा clk_ops clk_alpha_pll_fixed_ops = अणु
+const struct clk_ops clk_alpha_pll_fixed_ops = {
 	.enable = clk_alpha_pll_enable,
 	.disable = clk_alpha_pll_disable,
 	.is_enabled = clk_alpha_pll_is_enabled,
 	.recalc_rate = clk_alpha_pll_recalc_rate,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(clk_alpha_pll_fixed_ops);
 
-स्थिर काष्ठा clk_ops clk_alpha_pll_ops = अणु
+const struct clk_ops clk_alpha_pll_ops = {
 	.enable = clk_alpha_pll_enable,
 	.disable = clk_alpha_pll_disable,
 	.is_enabled = clk_alpha_pll_is_enabled,
 	.recalc_rate = clk_alpha_pll_recalc_rate,
 	.round_rate = clk_alpha_pll_round_rate,
 	.set_rate = clk_alpha_pll_set_rate,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(clk_alpha_pll_ops);
 
-स्थिर काष्ठा clk_ops clk_alpha_pll_huayra_ops = अणु
+const struct clk_ops clk_alpha_pll_huayra_ops = {
 	.enable = clk_alpha_pll_enable,
 	.disable = clk_alpha_pll_disable,
 	.is_enabled = clk_alpha_pll_is_enabled,
 	.recalc_rate = alpha_pll_huayra_recalc_rate,
 	.round_rate = alpha_pll_huayra_round_rate,
 	.set_rate = alpha_pll_huayra_set_rate,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(clk_alpha_pll_huayra_ops);
 
-स्थिर काष्ठा clk_ops clk_alpha_pll_hwfsm_ops = अणु
+const struct clk_ops clk_alpha_pll_hwfsm_ops = {
 	.enable = clk_alpha_pll_hwfsm_enable,
 	.disable = clk_alpha_pll_hwfsm_disable,
 	.is_enabled = clk_alpha_pll_hwfsm_is_enabled,
 	.recalc_rate = clk_alpha_pll_recalc_rate,
 	.round_rate = clk_alpha_pll_round_rate,
 	.set_rate = clk_alpha_pll_hwfsm_set_rate,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(clk_alpha_pll_hwfsm_ops);
 
-स्थिर काष्ठा clk_ops clk_alpha_pll_fixed_trion_ops = अणु
+const struct clk_ops clk_alpha_pll_fixed_trion_ops = {
 	.enable = clk_trion_pll_enable,
 	.disable = clk_trion_pll_disable,
 	.is_enabled = clk_trion_pll_is_enabled,
 	.recalc_rate = clk_trion_pll_recalc_rate,
 	.round_rate = clk_alpha_pll_round_rate,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(clk_alpha_pll_fixed_trion_ops);
 
-अटल अचिन्हित दीर्घ
-clk_alpha_pll_postभाग_recalc_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_alpha_pll_postभाग *pll = to_clk_alpha_pll_postभाग(hw);
+static unsigned long
+clk_alpha_pll_postdiv_recalc_rate(struct clk_hw *hw, unsigned long parent_rate)
+{
+	struct clk_alpha_pll_postdiv *pll = to_clk_alpha_pll_postdiv(hw);
 	u32 ctl;
 
-	regmap_पढ़ो(pll->clkr.regmap, PLL_USER_CTL(pll), &ctl);
+	regmap_read(pll->clkr.regmap, PLL_USER_CTL(pll), &ctl);
 
 	ctl >>= PLL_POST_DIV_SHIFT;
 	ctl &= PLL_POST_DIV_MASK(pll);
 
-	वापस parent_rate >> fls(ctl);
-पूर्ण
+	return parent_rate >> fls(ctl);
+}
 
-अटल स्थिर काष्ठा clk_भाग_प्रकारable clk_alpha_भाग_प्रकारable[] = अणु
-	अणु 0x0, 1 पूर्ण,
-	अणु 0x1, 2 पूर्ण,
-	अणु 0x3, 4 पूर्ण,
-	अणु 0x7, 8 पूर्ण,
-	अणु 0xf, 16 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct clk_div_table clk_alpha_div_table[] = {
+	{ 0x0, 1 },
+	{ 0x1, 2 },
+	{ 0x3, 4 },
+	{ 0x7, 8 },
+	{ 0xf, 16 },
+	{ }
+};
 
-अटल स्थिर काष्ठा clk_भाग_प्रकारable clk_alpha_2bit_भाग_प्रकारable[] = अणु
-	अणु 0x0, 1 पूर्ण,
-	अणु 0x1, 2 पूर्ण,
-	अणु 0x3, 4 पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct clk_div_table clk_alpha_2bit_div_table[] = {
+	{ 0x0, 1 },
+	{ 0x1, 2 },
+	{ 0x3, 4 },
+	{ }
+};
 
-अटल दीर्घ
-clk_alpha_pll_postभाग_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				 अचिन्हित दीर्घ *prate)
-अणु
-	काष्ठा clk_alpha_pll_postभाग *pll = to_clk_alpha_pll_postभाग(hw);
-	स्थिर काष्ठा clk_भाग_प्रकारable *table;
+static long
+clk_alpha_pll_postdiv_round_rate(struct clk_hw *hw, unsigned long rate,
+				 unsigned long *prate)
+{
+	struct clk_alpha_pll_postdiv *pll = to_clk_alpha_pll_postdiv(hw);
+	const struct clk_div_table *table;
 
-	अगर (pll->width == 2)
-		table = clk_alpha_2bit_भाग_प्रकारable;
-	अन्यथा
-		table = clk_alpha_भाग_प्रकारable;
+	if (pll->width == 2)
+		table = clk_alpha_2bit_div_table;
+	else
+		table = clk_alpha_div_table;
 
-	वापस भागider_round_rate(hw, rate, prate, table,
+	return divider_round_rate(hw, rate, prate, table,
 				  pll->width, CLK_DIVIDER_POWER_OF_TWO);
-पूर्ण
+}
 
-अटल दीर्घ
-clk_alpha_pll_postभाग_round_ro_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				    अचिन्हित दीर्घ *prate)
-अणु
-	काष्ठा clk_alpha_pll_postभाग *pll = to_clk_alpha_pll_postभाग(hw);
-	u32 ctl, भाग;
+static long
+clk_alpha_pll_postdiv_round_ro_rate(struct clk_hw *hw, unsigned long rate,
+				    unsigned long *prate)
+{
+	struct clk_alpha_pll_postdiv *pll = to_clk_alpha_pll_postdiv(hw);
+	u32 ctl, div;
 
-	regmap_पढ़ो(pll->clkr.regmap, PLL_USER_CTL(pll), &ctl);
+	regmap_read(pll->clkr.regmap, PLL_USER_CTL(pll), &ctl);
 
 	ctl >>= PLL_POST_DIV_SHIFT;
 	ctl &= BIT(pll->width) - 1;
-	भाग = 1 << fls(ctl);
+	div = 1 << fls(ctl);
 
-	अगर (clk_hw_get_flags(hw) & CLK_SET_RATE_PARENT)
-		*prate = clk_hw_round_rate(clk_hw_get_parent(hw), भाग * rate);
+	if (clk_hw_get_flags(hw) & CLK_SET_RATE_PARENT)
+		*prate = clk_hw_round_rate(clk_hw_get_parent(hw), div * rate);
 
-	वापस DIV_ROUND_UP_ULL((u64)*prate, भाग);
-पूर्ण
+	return DIV_ROUND_UP_ULL((u64)*prate, div);
+}
 
-अटल पूर्णांक clk_alpha_pll_postभाग_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-					  अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_alpha_pll_postभाग *pll = to_clk_alpha_pll_postभाग(hw);
-	पूर्णांक भाग;
+static int clk_alpha_pll_postdiv_set_rate(struct clk_hw *hw, unsigned long rate,
+					  unsigned long parent_rate)
+{
+	struct clk_alpha_pll_postdiv *pll = to_clk_alpha_pll_postdiv(hw);
+	int div;
 
 	/* 16 -> 0xf, 8 -> 0x7, 4 -> 0x3, 2 -> 0x1, 1 -> 0x0 */
-	भाग = DIV_ROUND_UP_ULL(parent_rate, rate) - 1;
+	div = DIV_ROUND_UP_ULL(parent_rate, rate) - 1;
 
-	वापस regmap_update_bits(pll->clkr.regmap, PLL_USER_CTL(pll),
+	return regmap_update_bits(pll->clkr.regmap, PLL_USER_CTL(pll),
 				  PLL_POST_DIV_MASK(pll) << PLL_POST_DIV_SHIFT,
-				  भाग << PLL_POST_DIV_SHIFT);
-पूर्ण
+				  div << PLL_POST_DIV_SHIFT);
+}
 
-स्थिर काष्ठा clk_ops clk_alpha_pll_postभाग_ops = अणु
-	.recalc_rate = clk_alpha_pll_postभाग_recalc_rate,
-	.round_rate = clk_alpha_pll_postभाग_round_rate,
-	.set_rate = clk_alpha_pll_postभाग_set_rate,
-पूर्ण;
-EXPORT_SYMBOL_GPL(clk_alpha_pll_postभाग_ops);
+const struct clk_ops clk_alpha_pll_postdiv_ops = {
+	.recalc_rate = clk_alpha_pll_postdiv_recalc_rate,
+	.round_rate = clk_alpha_pll_postdiv_round_rate,
+	.set_rate = clk_alpha_pll_postdiv_set_rate,
+};
+EXPORT_SYMBOL_GPL(clk_alpha_pll_postdiv_ops);
 
-स्थिर काष्ठा clk_ops clk_alpha_pll_postभाग_ro_ops = अणु
-	.round_rate = clk_alpha_pll_postभाग_round_ro_rate,
-	.recalc_rate = clk_alpha_pll_postभाग_recalc_rate,
-पूर्ण;
-EXPORT_SYMBOL_GPL(clk_alpha_pll_postभाग_ro_ops);
+const struct clk_ops clk_alpha_pll_postdiv_ro_ops = {
+	.round_rate = clk_alpha_pll_postdiv_round_ro_rate,
+	.recalc_rate = clk_alpha_pll_postdiv_recalc_rate,
+};
+EXPORT_SYMBOL_GPL(clk_alpha_pll_postdiv_ro_ops);
 
-व्योम clk_fabia_pll_configure(काष्ठा clk_alpha_pll *pll, काष्ठा regmap *regmap,
-			     स्थिर काष्ठा alpha_pll_config *config)
-अणु
+void clk_fabia_pll_configure(struct clk_alpha_pll *pll, struct regmap *regmap,
+			     const struct alpha_pll_config *config)
+{
 	u32 val, mask;
 
-	clk_alpha_pll_ग_लिखो_config(regmap, PLL_L_VAL(pll), config->l);
-	clk_alpha_pll_ग_लिखो_config(regmap, PLL_FRAC(pll), config->alpha);
-	clk_alpha_pll_ग_लिखो_config(regmap, PLL_CONFIG_CTL(pll),
+	clk_alpha_pll_write_config(regmap, PLL_L_VAL(pll), config->l);
+	clk_alpha_pll_write_config(regmap, PLL_FRAC(pll), config->alpha);
+	clk_alpha_pll_write_config(regmap, PLL_CONFIG_CTL(pll),
 						config->config_ctl_val);
-	clk_alpha_pll_ग_लिखो_config(regmap, PLL_CONFIG_CTL_U(pll),
+	clk_alpha_pll_write_config(regmap, PLL_CONFIG_CTL_U(pll),
 						config->config_ctl_hi_val);
-	clk_alpha_pll_ग_लिखो_config(regmap, PLL_USER_CTL(pll),
+	clk_alpha_pll_write_config(regmap, PLL_USER_CTL(pll),
 						config->user_ctl_val);
-	clk_alpha_pll_ग_लिखो_config(regmap, PLL_USER_CTL_U(pll),
+	clk_alpha_pll_write_config(regmap, PLL_USER_CTL_U(pll),
 						config->user_ctl_hi_val);
-	clk_alpha_pll_ग_लिखो_config(regmap, PLL_TEST_CTL(pll),
+	clk_alpha_pll_write_config(regmap, PLL_TEST_CTL(pll),
 						config->test_ctl_val);
-	clk_alpha_pll_ग_लिखो_config(regmap, PLL_TEST_CTL_U(pll),
+	clk_alpha_pll_write_config(regmap, PLL_TEST_CTL_U(pll),
 						config->test_ctl_hi_val);
 
-	अगर (config->post_भाग_mask) अणु
-		mask = config->post_भाग_mask;
-		val = config->post_भाग_val;
+	if (config->post_div_mask) {
+		mask = config->post_div_mask;
+		val = config->post_div_val;
 		regmap_update_bits(regmap, PLL_USER_CTL(pll), mask, val);
-	पूर्ण
+	}
 
 	regmap_update_bits(regmap, PLL_MODE(pll), PLL_UPDATE_BYPASS,
 							PLL_UPDATE_BYPASS);
 
 	regmap_update_bits(regmap, PLL_MODE(pll), PLL_RESET_N, PLL_RESET_N);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(clk_fabia_pll_configure);
 
-अटल पूर्णांक alpha_pll_fabia_enable(काष्ठा clk_hw *hw)
-अणु
-	पूर्णांक ret;
-	काष्ठा clk_alpha_pll *pll = to_clk_alpha_pll(hw);
+static int alpha_pll_fabia_enable(struct clk_hw *hw)
+{
+	int ret;
+	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
 	u32 val, opmode_val;
-	काष्ठा regmap *regmap = pll->clkr.regmap;
+	struct regmap *regmap = pll->clkr.regmap;
 
-	ret = regmap_पढ़ो(regmap, PLL_MODE(pll), &val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(regmap, PLL_MODE(pll), &val);
+	if (ret)
+		return ret;
 
-	/* If in FSM mode, just vote क्रम it */
-	अगर (val & PLL_VOTE_FSM_ENA) अणु
+	/* If in FSM mode, just vote for it */
+	if (val & PLL_VOTE_FSM_ENA) {
 		ret = clk_enable_regmap(hw);
-		अगर (ret)
-			वापस ret;
-		वापस रुको_क्रम_pll_enable_active(pll);
-	पूर्ण
+		if (ret)
+			return ret;
+		return wait_for_pll_enable_active(pll);
+	}
 
-	ret = regmap_पढ़ो(regmap, PLL_OPMODE(pll), &opmode_val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(regmap, PLL_OPMODE(pll), &opmode_val);
+	if (ret)
+		return ret;
 
-	/* Skip If PLL is alपढ़ोy running */
-	अगर ((opmode_val & PLL_RUN) && (val & PLL_OUTCTRL))
-		वापस 0;
+	/* Skip If PLL is already running */
+	if ((opmode_val & PLL_RUN) && (val & PLL_OUTCTRL))
+		return 0;
 
 	ret = regmap_update_bits(regmap, PLL_MODE(pll), PLL_OUTCTRL, 0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = regmap_ग_लिखो(regmap, PLL_OPMODE(pll), PLL_STANDBY);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_write(regmap, PLL_OPMODE(pll), PLL_STANDBY);
+	if (ret)
+		return ret;
 
 	ret = regmap_update_bits(regmap, PLL_MODE(pll), PLL_RESET_N,
 				 PLL_RESET_N);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = regmap_ग_लिखो(regmap, PLL_OPMODE(pll), PLL_RUN);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_write(regmap, PLL_OPMODE(pll), PLL_RUN);
+	if (ret)
+		return ret;
 
-	ret = रुको_क्रम_pll_enable_lock(pll);
-	अगर (ret)
-		वापस ret;
+	ret = wait_for_pll_enable_lock(pll);
+	if (ret)
+		return ret;
 
 	ret = regmap_update_bits(regmap, PLL_USER_CTL(pll),
 				 PLL_OUT_MASK, PLL_OUT_MASK);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस regmap_update_bits(regmap, PLL_MODE(pll), PLL_OUTCTRL,
+	return regmap_update_bits(regmap, PLL_MODE(pll), PLL_OUTCTRL,
 				 PLL_OUTCTRL);
-पूर्ण
+}
 
-अटल व्योम alpha_pll_fabia_disable(काष्ठा clk_hw *hw)
-अणु
-	पूर्णांक ret;
-	काष्ठा clk_alpha_pll *pll = to_clk_alpha_pll(hw);
+static void alpha_pll_fabia_disable(struct clk_hw *hw)
+{
+	int ret;
+	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
 	u32 val;
-	काष्ठा regmap *regmap = pll->clkr.regmap;
+	struct regmap *regmap = pll->clkr.regmap;
 
-	ret = regmap_पढ़ो(regmap, PLL_MODE(pll), &val);
-	अगर (ret)
-		वापस;
+	ret = regmap_read(regmap, PLL_MODE(pll), &val);
+	if (ret)
+		return;
 
 	/* If in FSM mode, just unvote it */
-	अगर (val & PLL_FSM_ENA) अणु
+	if (val & PLL_FSM_ENA) {
 		clk_disable_regmap(hw);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ret = regmap_update_bits(regmap, PLL_MODE(pll), PLL_OUTCTRL, 0);
-	अगर (ret)
-		वापस;
+	if (ret)
+		return;
 
-	/* Disable मुख्य outमाला_दो */
+	/* Disable main outputs */
 	ret = regmap_update_bits(regmap, PLL_USER_CTL(pll), PLL_OUT_MASK, 0);
-	अगर (ret)
-		वापस;
+	if (ret)
+		return;
 
 	/* Place the PLL in STANDBY */
-	regmap_ग_लिखो(regmap, PLL_OPMODE(pll), PLL_STANDBY);
-पूर्ण
+	regmap_write(regmap, PLL_OPMODE(pll), PLL_STANDBY);
+}
 
-अटल अचिन्हित दीर्घ alpha_pll_fabia_recalc_rate(काष्ठा clk_hw *hw,
-						अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_alpha_pll *pll = to_clk_alpha_pll(hw);
+static unsigned long alpha_pll_fabia_recalc_rate(struct clk_hw *hw,
+						unsigned long parent_rate)
+{
+	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
 	u32 l, frac, alpha_width = pll_alpha_width(pll);
 
-	regmap_पढ़ो(pll->clkr.regmap, PLL_L_VAL(pll), &l);
-	regmap_पढ़ो(pll->clkr.regmap, PLL_FRAC(pll), &frac);
+	regmap_read(pll->clkr.regmap, PLL_L_VAL(pll), &l);
+	regmap_read(pll->clkr.regmap, PLL_FRAC(pll), &frac);
 
-	वापस alpha_pll_calc_rate(parent_rate, l, frac, alpha_width);
-पूर्ण
+	return alpha_pll_calc_rate(parent_rate, l, frac, alpha_width);
+}
 
 /*
- * Due to limited number of bits क्रम fractional rate programming, the
+ * Due to limited number of bits for fractional rate programming, the
  * rounded up rate could be marginally higher than the requested rate.
  */
-अटल पूर्णांक alpha_pll_check_rate_margin(काष्ठा clk_hw *hw,
-			अचिन्हित दीर्घ rrate, अचिन्हित दीर्घ rate)
-अणु
-	अचिन्हित दीर्घ rate_margin = rate + PLL_RATE_MARGIN;
+static int alpha_pll_check_rate_margin(struct clk_hw *hw,
+			unsigned long rrate, unsigned long rate)
+{
+	unsigned long rate_margin = rate + PLL_RATE_MARGIN;
 
-	अगर (rrate > rate_margin || rrate < rate) अणु
+	if (rrate > rate_margin || rrate < rate) {
 		pr_err("%s: Rounded rate %lu not within range [%lu, %lu)\n",
 		       clk_hw_get_name(hw), rrate, rate, rate_margin);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक alpha_pll_fabia_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-						अचिन्हित दीर्घ prate)
-अणु
-	काष्ठा clk_alpha_pll *pll = to_clk_alpha_pll(hw);
+static int alpha_pll_fabia_set_rate(struct clk_hw *hw, unsigned long rate,
+						unsigned long prate)
+{
+	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
 	u32 l, alpha_width = pll_alpha_width(pll);
-	अचिन्हित दीर्घ rrate;
-	पूर्णांक ret;
+	unsigned long rrate;
+	int ret;
 	u64 a;
 
 	rrate = alpha_pll_round_rate(rate, prate, &l, &a, alpha_width);
 
 	ret = alpha_pll_check_rate_margin(hw, rrate, rate);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	regmap_ग_लिखो(pll->clkr.regmap, PLL_L_VAL(pll), l);
-	regmap_ग_लिखो(pll->clkr.regmap, PLL_FRAC(pll), a);
+	regmap_write(pll->clkr.regmap, PLL_L_VAL(pll), l);
+	regmap_write(pll->clkr.regmap, PLL_FRAC(pll), a);
 
-	वापस __clk_alpha_pll_update_latch(pll);
-पूर्ण
+	return __clk_alpha_pll_update_latch(pll);
+}
 
-अटल पूर्णांक alpha_pll_fabia_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_alpha_pll *pll = to_clk_alpha_pll(hw);
-	स्थिर काष्ठा pll_vco *vco;
-	काष्ठा clk_hw *parent_hw;
-	अचिन्हित दीर्घ cal_freq, rrate;
+static int alpha_pll_fabia_prepare(struct clk_hw *hw)
+{
+	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
+	const struct pll_vco *vco;
+	struct clk_hw *parent_hw;
+	unsigned long cal_freq, rrate;
 	u32 cal_l, val, alpha_width = pll_alpha_width(pll);
-	स्थिर अक्षर *name = clk_hw_get_name(hw);
+	const char *name = clk_hw_get_name(hw);
 	u64 a;
-	पूर्णांक ret;
+	int ret;
 
-	/* Check अगर calibration needs to be करोne i.e. PLL is in reset */
-	ret = regmap_पढ़ो(pll->clkr.regmap, PLL_MODE(pll), &val);
-	अगर (ret)
-		वापस ret;
+	/* Check if calibration needs to be done i.e. PLL is in reset */
+	ret = regmap_read(pll->clkr.regmap, PLL_MODE(pll), &val);
+	if (ret)
+		return ret;
 
-	/* Return early अगर calibration is not needed. */
-	अगर (val & PLL_RESET_N)
-		वापस 0;
+	/* Return early if calibration is not needed. */
+	if (val & PLL_RESET_N)
+		return 0;
 
 	vco = alpha_pll_find_vco(pll, clk_hw_get_rate(hw));
-	अगर (!vco) अणु
+	if (!vco) {
 		pr_err("%s: alpha pll not in a valid vco range\n", name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	cal_freq = DIV_ROUND_CLOSEST((pll->vco_table[0].min_freq +
 				pll->vco_table[0].max_freq) * 54, 100);
 
 	parent_hw = clk_hw_get_parent(hw);
-	अगर (!parent_hw)
-		वापस -EINVAL;
+	if (!parent_hw)
+		return -EINVAL;
 
 	rrate = alpha_pll_round_rate(cal_freq, clk_hw_get_rate(parent_hw),
 					&cal_l, &a, alpha_width);
 
 	ret = alpha_pll_check_rate_margin(hw, rrate, cal_freq);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	/* Setup PLL क्रम calibration frequency */
-	regmap_ग_लिखो(pll->clkr.regmap, PLL_ALPHA_VAL(pll), cal_l);
+	/* Setup PLL for calibration frequency */
+	regmap_write(pll->clkr.regmap, PLL_ALPHA_VAL(pll), cal_l);
 
 	/* Bringup the PLL at calibration frequency */
 	ret = clk_alpha_pll_enable(hw);
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("%s: alpha pll calibration failed\n", name);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	clk_alpha_pll_disable(hw);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा clk_ops clk_alpha_pll_fabia_ops = अणु
+const struct clk_ops clk_alpha_pll_fabia_ops = {
 	.prepare = alpha_pll_fabia_prepare,
 	.enable = alpha_pll_fabia_enable,
 	.disable = alpha_pll_fabia_disable,
@@ -1257,178 +1256,178 @@ EXPORT_SYMBOL_GPL(clk_fabia_pll_configure);
 	.set_rate = alpha_pll_fabia_set_rate,
 	.recalc_rate = alpha_pll_fabia_recalc_rate,
 	.round_rate = clk_alpha_pll_round_rate,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(clk_alpha_pll_fabia_ops);
 
-स्थिर काष्ठा clk_ops clk_alpha_pll_fixed_fabia_ops = अणु
+const struct clk_ops clk_alpha_pll_fixed_fabia_ops = {
 	.enable = alpha_pll_fabia_enable,
 	.disable = alpha_pll_fabia_disable,
 	.is_enabled = clk_alpha_pll_is_enabled,
 	.recalc_rate = alpha_pll_fabia_recalc_rate,
 	.round_rate = clk_alpha_pll_round_rate,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(clk_alpha_pll_fixed_fabia_ops);
 
-अटल अचिन्हित दीर्घ clk_alpha_pll_postभाग_fabia_recalc_rate(काष्ठा clk_hw *hw,
-					अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_alpha_pll_postभाग *pll = to_clk_alpha_pll_postभाग(hw);
-	u32 i, भाग = 1, val;
-	पूर्णांक ret;
+static unsigned long clk_alpha_pll_postdiv_fabia_recalc_rate(struct clk_hw *hw,
+					unsigned long parent_rate)
+{
+	struct clk_alpha_pll_postdiv *pll = to_clk_alpha_pll_postdiv(hw);
+	u32 i, div = 1, val;
+	int ret;
 
-	ret = regmap_पढ़ो(pll->clkr.regmap, PLL_USER_CTL(pll), &val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(pll->clkr.regmap, PLL_USER_CTL(pll), &val);
+	if (ret)
+		return ret;
 
-	val >>= pll->post_भाग_shअगरt;
+	val >>= pll->post_div_shift;
 	val &= BIT(pll->width) - 1;
 
-	क्रम (i = 0; i < pll->num_post_भाग; i++) अणु
-		अगर (pll->post_भाग_प्रकारable[i].val == val) अणु
-			भाग = pll->post_भाग_प्रकारable[i].भाग;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < pll->num_post_div; i++) {
+		if (pll->post_div_table[i].val == val) {
+			div = pll->post_div_table[i].div;
+			break;
+		}
+	}
 
-	वापस (parent_rate / भाग);
-पूर्ण
+	return (parent_rate / div);
+}
 
-अटल अचिन्हित दीर्घ
-clk_trion_pll_postभाग_recalc_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_alpha_pll_postभाग *pll = to_clk_alpha_pll_postभाग(hw);
-	काष्ठा regmap *regmap = pll->clkr.regmap;
-	u32 i, भाग = 1, val;
+static unsigned long
+clk_trion_pll_postdiv_recalc_rate(struct clk_hw *hw, unsigned long parent_rate)
+{
+	struct clk_alpha_pll_postdiv *pll = to_clk_alpha_pll_postdiv(hw);
+	struct regmap *regmap = pll->clkr.regmap;
+	u32 i, div = 1, val;
 
-	regmap_पढ़ो(regmap, PLL_USER_CTL(pll), &val);
+	regmap_read(regmap, PLL_USER_CTL(pll), &val);
 
-	val >>= pll->post_भाग_shअगरt;
+	val >>= pll->post_div_shift;
 	val &= PLL_POST_DIV_MASK(pll);
 
-	क्रम (i = 0; i < pll->num_post_भाग; i++) अणु
-		अगर (pll->post_भाग_प्रकारable[i].val == val) अणु
-			भाग = pll->post_भाग_प्रकारable[i].भाग;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+	for (i = 0; i < pll->num_post_div; i++) {
+		if (pll->post_div_table[i].val == val) {
+			div = pll->post_div_table[i].div;
+			break;
+		}
+	}
 
-	वापस (parent_rate / भाग);
-पूर्ण
+	return (parent_rate / div);
+}
 
-अटल दीर्घ
-clk_trion_pll_postभाग_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				 अचिन्हित दीर्घ *prate)
-अणु
-	काष्ठा clk_alpha_pll_postभाग *pll = to_clk_alpha_pll_postभाग(hw);
+static long
+clk_trion_pll_postdiv_round_rate(struct clk_hw *hw, unsigned long rate,
+				 unsigned long *prate)
+{
+	struct clk_alpha_pll_postdiv *pll = to_clk_alpha_pll_postdiv(hw);
 
-	वापस भागider_round_rate(hw, rate, prate, pll->post_भाग_प्रकारable,
+	return divider_round_rate(hw, rate, prate, pll->post_div_table,
 				  pll->width, CLK_DIVIDER_ROUND_CLOSEST);
-पूर्ण;
+};
 
-अटल पूर्णांक
-clk_trion_pll_postभाग_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-			       अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_alpha_pll_postभाग *pll = to_clk_alpha_pll_postभाग(hw);
-	काष्ठा regmap *regmap = pll->clkr.regmap;
-	पूर्णांक i, val = 0, भाग;
+static int
+clk_trion_pll_postdiv_set_rate(struct clk_hw *hw, unsigned long rate,
+			       unsigned long parent_rate)
+{
+	struct clk_alpha_pll_postdiv *pll = to_clk_alpha_pll_postdiv(hw);
+	struct regmap *regmap = pll->clkr.regmap;
+	int i, val = 0, div;
 
-	भाग = DIV_ROUND_UP_ULL(parent_rate, rate);
-	क्रम (i = 0; i < pll->num_post_भाग; i++) अणु
-		अगर (pll->post_भाग_प्रकारable[i].भाग == भाग) अणु
-			val = pll->post_भाग_प्रकारable[i].val;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+	div = DIV_ROUND_UP_ULL(parent_rate, rate);
+	for (i = 0; i < pll->num_post_div; i++) {
+		if (pll->post_div_table[i].div == div) {
+			val = pll->post_div_table[i].val;
+			break;
+		}
+	}
 
-	वापस regmap_update_bits(regmap, PLL_USER_CTL(pll),
+	return regmap_update_bits(regmap, PLL_USER_CTL(pll),
 				  PLL_POST_DIV_MASK(pll) << PLL_POST_DIV_SHIFT,
 				  val << PLL_POST_DIV_SHIFT);
-पूर्ण
+}
 
-स्थिर काष्ठा clk_ops clk_alpha_pll_postभाग_प्रकारrion_ops = अणु
-	.recalc_rate = clk_trion_pll_postभाग_recalc_rate,
-	.round_rate = clk_trion_pll_postभाग_round_rate,
-	.set_rate = clk_trion_pll_postभाग_set_rate,
-पूर्ण;
-EXPORT_SYMBOL_GPL(clk_alpha_pll_postभाग_प्रकारrion_ops);
+const struct clk_ops clk_alpha_pll_postdiv_trion_ops = {
+	.recalc_rate = clk_trion_pll_postdiv_recalc_rate,
+	.round_rate = clk_trion_pll_postdiv_round_rate,
+	.set_rate = clk_trion_pll_postdiv_set_rate,
+};
+EXPORT_SYMBOL_GPL(clk_alpha_pll_postdiv_trion_ops);
 
-अटल दीर्घ clk_alpha_pll_postभाग_fabia_round_rate(काष्ठा clk_hw *hw,
-				अचिन्हित दीर्घ rate, अचिन्हित दीर्घ *prate)
-अणु
-	काष्ठा clk_alpha_pll_postभाग *pll = to_clk_alpha_pll_postभाग(hw);
+static long clk_alpha_pll_postdiv_fabia_round_rate(struct clk_hw *hw,
+				unsigned long rate, unsigned long *prate)
+{
+	struct clk_alpha_pll_postdiv *pll = to_clk_alpha_pll_postdiv(hw);
 
-	वापस भागider_round_rate(hw, rate, prate, pll->post_भाग_प्रकारable,
+	return divider_round_rate(hw, rate, prate, pll->post_div_table,
 				pll->width, CLK_DIVIDER_ROUND_CLOSEST);
-पूर्ण
+}
 
-अटल पूर्णांक clk_alpha_pll_postभाग_fabia_set_rate(काष्ठा clk_hw *hw,
-				अचिन्हित दीर्घ rate, अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_alpha_pll_postभाग *pll = to_clk_alpha_pll_postभाग(hw);
-	पूर्णांक i, val = 0, भाग, ret;
+static int clk_alpha_pll_postdiv_fabia_set_rate(struct clk_hw *hw,
+				unsigned long rate, unsigned long parent_rate)
+{
+	struct clk_alpha_pll_postdiv *pll = to_clk_alpha_pll_postdiv(hw);
+	int i, val = 0, div, ret;
 
 	/*
 	 * If the PLL is in FSM mode, then treat set_rate callback as a
 	 * no-operation.
 	 */
-	ret = regmap_पढ़ो(pll->clkr.regmap, PLL_MODE(pll), &val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(pll->clkr.regmap, PLL_MODE(pll), &val);
+	if (ret)
+		return ret;
 
-	अगर (val & PLL_VOTE_FSM_ENA)
-		वापस 0;
+	if (val & PLL_VOTE_FSM_ENA)
+		return 0;
 
-	भाग = DIV_ROUND_UP_ULL(parent_rate, rate);
-	क्रम (i = 0; i < pll->num_post_भाग; i++) अणु
-		अगर (pll->post_भाग_प्रकारable[i].भाग == भाग) अणु
-			val = pll->post_भाग_प्रकारable[i].val;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+	div = DIV_ROUND_UP_ULL(parent_rate, rate);
+	for (i = 0; i < pll->num_post_div; i++) {
+		if (pll->post_div_table[i].div == div) {
+			val = pll->post_div_table[i].val;
+			break;
+		}
+	}
 
-	वापस regmap_update_bits(pll->clkr.regmap, PLL_USER_CTL(pll),
-				(BIT(pll->width) - 1) << pll->post_भाग_shअगरt,
-				val << pll->post_भाग_shअगरt);
-पूर्ण
+	return regmap_update_bits(pll->clkr.regmap, PLL_USER_CTL(pll),
+				(BIT(pll->width) - 1) << pll->post_div_shift,
+				val << pll->post_div_shift);
+}
 
-स्थिर काष्ठा clk_ops clk_alpha_pll_postभाग_fabia_ops = अणु
-	.recalc_rate = clk_alpha_pll_postभाग_fabia_recalc_rate,
-	.round_rate = clk_alpha_pll_postभाग_fabia_round_rate,
-	.set_rate = clk_alpha_pll_postभाग_fabia_set_rate,
-पूर्ण;
-EXPORT_SYMBOL_GPL(clk_alpha_pll_postभाग_fabia_ops);
+const struct clk_ops clk_alpha_pll_postdiv_fabia_ops = {
+	.recalc_rate = clk_alpha_pll_postdiv_fabia_recalc_rate,
+	.round_rate = clk_alpha_pll_postdiv_fabia_round_rate,
+	.set_rate = clk_alpha_pll_postdiv_fabia_set_rate,
+};
+EXPORT_SYMBOL_GPL(clk_alpha_pll_postdiv_fabia_ops);
 
 /**
  * clk_lucid_pll_configure - configure the lucid pll
  *
  * @pll: clk alpha pll
- * @regmap: रेजिस्टर map
- * @config: configuration to apply क्रम pll
+ * @regmap: register map
+ * @config: configuration to apply for pll
  */
-व्योम clk_trion_pll_configure(काष्ठा clk_alpha_pll *pll, काष्ठा regmap *regmap,
-			     स्थिर काष्ठा alpha_pll_config *config)
-अणु
-	clk_alpha_pll_ग_लिखो_config(regmap, PLL_L_VAL(pll), config->l);
-	regmap_ग_लिखो(regmap, PLL_CAL_L_VAL(pll), TRION_PLL_CAL_VAL);
-	clk_alpha_pll_ग_लिखो_config(regmap, PLL_ALPHA_VAL(pll), config->alpha);
-	clk_alpha_pll_ग_लिखो_config(regmap, PLL_CONFIG_CTL(pll),
+void clk_trion_pll_configure(struct clk_alpha_pll *pll, struct regmap *regmap,
+			     const struct alpha_pll_config *config)
+{
+	clk_alpha_pll_write_config(regmap, PLL_L_VAL(pll), config->l);
+	regmap_write(regmap, PLL_CAL_L_VAL(pll), TRION_PLL_CAL_VAL);
+	clk_alpha_pll_write_config(regmap, PLL_ALPHA_VAL(pll), config->alpha);
+	clk_alpha_pll_write_config(regmap, PLL_CONFIG_CTL(pll),
 				     config->config_ctl_val);
-	clk_alpha_pll_ग_लिखो_config(regmap, PLL_CONFIG_CTL_U(pll),
+	clk_alpha_pll_write_config(regmap, PLL_CONFIG_CTL_U(pll),
 				     config->config_ctl_hi_val);
-	clk_alpha_pll_ग_लिखो_config(regmap, PLL_CONFIG_CTL_U1(pll),
+	clk_alpha_pll_write_config(regmap, PLL_CONFIG_CTL_U1(pll),
 				     config->config_ctl_hi1_val);
-	clk_alpha_pll_ग_लिखो_config(regmap, PLL_USER_CTL(pll),
+	clk_alpha_pll_write_config(regmap, PLL_USER_CTL(pll),
 					config->user_ctl_val);
-	clk_alpha_pll_ग_लिखो_config(regmap, PLL_USER_CTL_U(pll),
+	clk_alpha_pll_write_config(regmap, PLL_USER_CTL_U(pll),
 					config->user_ctl_hi_val);
-	clk_alpha_pll_ग_लिखो_config(regmap, PLL_USER_CTL_U1(pll),
+	clk_alpha_pll_write_config(regmap, PLL_USER_CTL_U1(pll),
 					config->user_ctl_hi1_val);
-	clk_alpha_pll_ग_लिखो_config(regmap, PLL_TEST_CTL(pll),
+	clk_alpha_pll_write_config(regmap, PLL_TEST_CTL(pll),
 					config->test_ctl_val);
-	clk_alpha_pll_ग_लिखो_config(regmap, PLL_TEST_CTL_U(pll),
+	clk_alpha_pll_write_config(regmap, PLL_TEST_CTL_U(pll),
 					config->test_ctl_hi_val);
-	clk_alpha_pll_ग_लिखो_config(regmap, PLL_TEST_CTL_U1(pll),
+	clk_alpha_pll_write_config(regmap, PLL_TEST_CTL_U1(pll),
 					config->test_ctl_hi1_val);
 
 	regmap_update_bits(regmap, PLL_MODE(pll), PLL_UPDATE_BYPASS,
@@ -1438,100 +1437,100 @@ EXPORT_SYMBOL_GPL(clk_alpha_pll_postभाग_fabia_ops);
 	regmap_update_bits(regmap, PLL_MODE(pll),  PLL_OUTCTRL, 0);
 
 	/* Set operation mode to OFF */
-	regmap_ग_लिखो(regmap, PLL_OPMODE(pll), PLL_STANDBY);
+	regmap_write(regmap, PLL_OPMODE(pll), PLL_STANDBY);
 
 	/* Place the PLL in STANDBY mode */
 	regmap_update_bits(regmap, PLL_MODE(pll), PLL_RESET_N, PLL_RESET_N);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(clk_trion_pll_configure);
 
 /*
- * The TRION PLL requires a घातer-on self-calibration which happens when the
- * PLL comes out of reset. Calibrate in हाल it is not completed.
+ * The TRION PLL requires a power-on self-calibration which happens when the
+ * PLL comes out of reset. Calibrate in case it is not completed.
  */
-अटल पूर्णांक __alpha_pll_trion_prepare(काष्ठा clk_hw *hw, u32 pcal_करोne)
-अणु
-	काष्ठा clk_alpha_pll *pll = to_clk_alpha_pll(hw);
+static int __alpha_pll_trion_prepare(struct clk_hw *hw, u32 pcal_done)
+{
+	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
-	/* Return early अगर calibration is not needed. */
-	regmap_पढ़ो(pll->clkr.regmap, PLL_STATUS(pll), &val);
-	अगर (val & pcal_करोne)
-		वापस 0;
+	/* Return early if calibration is not needed. */
+	regmap_read(pll->clkr.regmap, PLL_STATUS(pll), &val);
+	if (val & pcal_done)
+		return 0;
 
 	/* On/off to calibrate */
 	ret = clk_trion_pll_enable(hw);
-	अगर (!ret)
+	if (!ret)
 		clk_trion_pll_disable(hw);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक alpha_pll_trion_prepare(काष्ठा clk_hw *hw)
-अणु
-	वापस __alpha_pll_trion_prepare(hw, TRION_PCAL_DONE);
-पूर्ण
+static int alpha_pll_trion_prepare(struct clk_hw *hw)
+{
+	return __alpha_pll_trion_prepare(hw, TRION_PCAL_DONE);
+}
 
-अटल पूर्णांक alpha_pll_lucid_prepare(काष्ठा clk_hw *hw)
-अणु
-	वापस __alpha_pll_trion_prepare(hw, LUCID_PCAL_DONE);
-पूर्ण
+static int alpha_pll_lucid_prepare(struct clk_hw *hw)
+{
+	return __alpha_pll_trion_prepare(hw, LUCID_PCAL_DONE);
+}
 
-अटल पूर्णांक __alpha_pll_trion_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				      अचिन्हित दीर्घ prate, u32 latch_bit, u32 latch_ack)
-अणु
-	काष्ठा clk_alpha_pll *pll = to_clk_alpha_pll(hw);
-	अचिन्हित दीर्घ rrate;
+static int __alpha_pll_trion_set_rate(struct clk_hw *hw, unsigned long rate,
+				      unsigned long prate, u32 latch_bit, u32 latch_ack)
+{
+	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
+	unsigned long rrate;
 	u32 val, l, alpha_width = pll_alpha_width(pll);
 	u64 a;
-	पूर्णांक ret;
+	int ret;
 
 	rrate = alpha_pll_round_rate(rate, prate, &l, &a, alpha_width);
 
 	ret = alpha_pll_check_rate_margin(hw, rrate, rate);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	regmap_ग_लिखो(pll->clkr.regmap, PLL_L_VAL(pll), l);
-	regmap_ग_लिखो(pll->clkr.regmap, PLL_ALPHA_VAL(pll), a);
+	regmap_write(pll->clkr.regmap, PLL_L_VAL(pll), l);
+	regmap_write(pll->clkr.regmap, PLL_ALPHA_VAL(pll), a);
 
 	/* Latch the PLL input */
 	ret = regmap_update_bits(pll->clkr.regmap, PLL_MODE(pll), latch_bit, latch_bit);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Wait क्रम 2 reference cycles beक्रमe checking the ACK bit. */
+	/* Wait for 2 reference cycles before checking the ACK bit. */
 	udelay(1);
-	regmap_पढ़ो(pll->clkr.regmap, PLL_MODE(pll), &val);
-	अगर (!(val & latch_ack)) अणु
+	regmap_read(pll->clkr.regmap, PLL_MODE(pll), &val);
+	if (!(val & latch_ack)) {
 		pr_err("Lucid PLL latch failed. Output may be unstable!\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Return the latch input to 0 */
 	ret = regmap_update_bits(pll->clkr.regmap, PLL_MODE(pll), latch_bit, 0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (clk_hw_is_enabled(hw)) अणु
-		ret = रुको_क्रम_pll_enable_lock(pll);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (clk_hw_is_enabled(hw)) {
+		ret = wait_for_pll_enable_lock(pll);
+		if (ret)
+			return ret;
+	}
 
-	/* Wait क्रम PLL output to stabilize */
+	/* Wait for PLL output to stabilize */
 	udelay(100);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक alpha_pll_trion_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-				    अचिन्हित दीर्घ prate)
-अणु
-	वापस __alpha_pll_trion_set_rate(hw, rate, prate, PLL_UPDATE, ALPHA_PLL_ACK_LATCH);
-पूर्ण
+static int alpha_pll_trion_set_rate(struct clk_hw *hw, unsigned long rate,
+				    unsigned long prate)
+{
+	return __alpha_pll_trion_set_rate(hw, rate, prate, PLL_UPDATE, ALPHA_PLL_ACK_LATCH);
+}
 
-स्थिर काष्ठा clk_ops clk_alpha_pll_trion_ops = अणु
+const struct clk_ops clk_alpha_pll_trion_ops = {
 	.prepare = alpha_pll_trion_prepare,
 	.enable = clk_trion_pll_enable,
 	.disable = clk_trion_pll_disable,
@@ -1539,10 +1538,10 @@ EXPORT_SYMBOL_GPL(clk_trion_pll_configure);
 	.recalc_rate = clk_trion_pll_recalc_rate,
 	.round_rate = clk_alpha_pll_round_rate,
 	.set_rate = alpha_pll_trion_set_rate,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(clk_alpha_pll_trion_ops);
 
-स्थिर काष्ठा clk_ops clk_alpha_pll_lucid_ops = अणु
+const struct clk_ops clk_alpha_pll_lucid_ops = {
 	.prepare = alpha_pll_lucid_prepare,
 	.enable = clk_trion_pll_enable,
 	.disable = clk_trion_pll_disable,
@@ -1550,209 +1549,209 @@ EXPORT_SYMBOL_GPL(clk_alpha_pll_trion_ops);
 	.recalc_rate = clk_trion_pll_recalc_rate,
 	.round_rate = clk_alpha_pll_round_rate,
 	.set_rate = alpha_pll_trion_set_rate,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(clk_alpha_pll_lucid_ops);
 
-स्थिर काष्ठा clk_ops clk_alpha_pll_postभाग_lucid_ops = अणु
-	.recalc_rate = clk_alpha_pll_postभाग_fabia_recalc_rate,
-	.round_rate = clk_alpha_pll_postभाग_fabia_round_rate,
-	.set_rate = clk_alpha_pll_postभाग_fabia_set_rate,
-पूर्ण;
-EXPORT_SYMBOL_GPL(clk_alpha_pll_postभाग_lucid_ops);
+const struct clk_ops clk_alpha_pll_postdiv_lucid_ops = {
+	.recalc_rate = clk_alpha_pll_postdiv_fabia_recalc_rate,
+	.round_rate = clk_alpha_pll_postdiv_fabia_round_rate,
+	.set_rate = clk_alpha_pll_postdiv_fabia_set_rate,
+};
+EXPORT_SYMBOL_GPL(clk_alpha_pll_postdiv_lucid_ops);
 
-व्योम clk_agera_pll_configure(काष्ठा clk_alpha_pll *pll, काष्ठा regmap *regmap,
-			स्थिर काष्ठा alpha_pll_config *config)
-अणु
-	clk_alpha_pll_ग_लिखो_config(regmap, PLL_L_VAL(pll), config->l);
-	clk_alpha_pll_ग_लिखो_config(regmap, PLL_ALPHA_VAL(pll), config->alpha);
-	clk_alpha_pll_ग_लिखो_config(regmap, PLL_USER_CTL(pll),
+void clk_agera_pll_configure(struct clk_alpha_pll *pll, struct regmap *regmap,
+			const struct alpha_pll_config *config)
+{
+	clk_alpha_pll_write_config(regmap, PLL_L_VAL(pll), config->l);
+	clk_alpha_pll_write_config(regmap, PLL_ALPHA_VAL(pll), config->alpha);
+	clk_alpha_pll_write_config(regmap, PLL_USER_CTL(pll),
 							config->user_ctl_val);
-	clk_alpha_pll_ग_लिखो_config(regmap, PLL_CONFIG_CTL(pll),
+	clk_alpha_pll_write_config(regmap, PLL_CONFIG_CTL(pll),
 						config->config_ctl_val);
-	clk_alpha_pll_ग_लिखो_config(regmap, PLL_CONFIG_CTL_U(pll),
+	clk_alpha_pll_write_config(regmap, PLL_CONFIG_CTL_U(pll),
 						config->config_ctl_hi_val);
-	clk_alpha_pll_ग_लिखो_config(regmap, PLL_TEST_CTL(pll),
+	clk_alpha_pll_write_config(regmap, PLL_TEST_CTL(pll),
 						config->test_ctl_val);
-	clk_alpha_pll_ग_लिखो_config(regmap,  PLL_TEST_CTL_U(pll),
+	clk_alpha_pll_write_config(regmap,  PLL_TEST_CTL_U(pll),
 						config->test_ctl_hi_val);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(clk_agera_pll_configure);
 
-अटल पूर्णांक clk_alpha_pll_agera_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-							अचिन्हित दीर्घ prate)
-अणु
-	काष्ठा clk_alpha_pll *pll = to_clk_alpha_pll(hw);
+static int clk_alpha_pll_agera_set_rate(struct clk_hw *hw, unsigned long rate,
+							unsigned long prate)
+{
+	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
 	u32 l, alpha_width = pll_alpha_width(pll);
-	पूर्णांक ret;
-	अचिन्हित दीर्घ rrate;
+	int ret;
+	unsigned long rrate;
 	u64 a;
 
 	rrate = alpha_pll_round_rate(rate, prate, &l, &a, alpha_width);
 	ret = alpha_pll_check_rate_margin(hw, rrate, rate);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	/* change L_VAL without having to go through the घातer on sequence */
-	regmap_ग_लिखो(pll->clkr.regmap, PLL_L_VAL(pll), l);
-	regmap_ग_लिखो(pll->clkr.regmap, PLL_ALPHA_VAL(pll), a);
+	/* change L_VAL without having to go through the power on sequence */
+	regmap_write(pll->clkr.regmap, PLL_L_VAL(pll), l);
+	regmap_write(pll->clkr.regmap, PLL_ALPHA_VAL(pll), a);
 
-	अगर (clk_hw_is_enabled(hw))
-		वापस रुको_क्रम_pll_enable_lock(pll);
+	if (clk_hw_is_enabled(hw))
+		return wait_for_pll_enable_lock(pll);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-स्थिर काष्ठा clk_ops clk_alpha_pll_agera_ops = अणु
+const struct clk_ops clk_alpha_pll_agera_ops = {
 	.enable = clk_alpha_pll_enable,
 	.disable = clk_alpha_pll_disable,
 	.is_enabled = clk_alpha_pll_is_enabled,
 	.recalc_rate = alpha_pll_fabia_recalc_rate,
 	.round_rate = clk_alpha_pll_round_rate,
 	.set_rate = clk_alpha_pll_agera_set_rate,
-पूर्ण;
+};
 EXPORT_SYMBOL_GPL(clk_alpha_pll_agera_ops);
 
-अटल पूर्णांक alpha_pll_lucid_5lpe_enable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_alpha_pll *pll = to_clk_alpha_pll(hw);
+static int alpha_pll_lucid_5lpe_enable(struct clk_hw *hw)
+{
+	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
-	ret = regmap_पढ़ो(pll->clkr.regmap, PLL_USER_CTL(pll), &val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(pll->clkr.regmap, PLL_USER_CTL(pll), &val);
+	if (ret)
+		return ret;
 
-	/* If in FSM mode, just vote क्रम it */
-	अगर (val & LUCID_5LPE_ENABLE_VOTE_RUN) अणु
+	/* If in FSM mode, just vote for it */
+	if (val & LUCID_5LPE_ENABLE_VOTE_RUN) {
 		ret = clk_enable_regmap(hw);
-		अगर (ret)
-			वापस ret;
-		वापस रुको_क्रम_pll_enable_lock(pll);
-	पूर्ण
+		if (ret)
+			return ret;
+		return wait_for_pll_enable_lock(pll);
+	}
 
-	/* Check अगर PLL is alपढ़ोy enabled, वापस अगर enabled */
+	/* Check if PLL is already enabled, return if enabled */
 	ret = trion_pll_is_enabled(pll, pll->clkr.regmap);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	ret = regmap_update_bits(pll->clkr.regmap, PLL_MODE(pll), PLL_RESET_N, PLL_RESET_N);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	regmap_ग_लिखो(pll->clkr.regmap, PLL_OPMODE(pll), PLL_RUN);
+	regmap_write(pll->clkr.regmap, PLL_OPMODE(pll), PLL_RUN);
 
-	ret = रुको_क्रम_pll_enable_lock(pll);
-	अगर (ret)
-		वापस ret;
+	ret = wait_for_pll_enable_lock(pll);
+	if (ret)
+		return ret;
 
-	/* Enable the PLL outमाला_दो */
+	/* Enable the PLL outputs */
 	ret = regmap_update_bits(pll->clkr.regmap, PLL_USER_CTL(pll), PLL_OUT_MASK, PLL_OUT_MASK);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Enable the global PLL outमाला_दो */
-	वापस regmap_update_bits(pll->clkr.regmap, PLL_MODE(pll), PLL_OUTCTRL, PLL_OUTCTRL);
-पूर्ण
+	/* Enable the global PLL outputs */
+	return regmap_update_bits(pll->clkr.regmap, PLL_MODE(pll), PLL_OUTCTRL, PLL_OUTCTRL);
+}
 
-अटल व्योम alpha_pll_lucid_5lpe_disable(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_alpha_pll *pll = to_clk_alpha_pll(hw);
+static void alpha_pll_lucid_5lpe_disable(struct clk_hw *hw)
+{
+	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
 	u32 val;
-	पूर्णांक ret;
+	int ret;
 
-	ret = regmap_पढ़ो(pll->clkr.regmap, PLL_USER_CTL(pll), &val);
-	अगर (ret)
-		वापस;
+	ret = regmap_read(pll->clkr.regmap, PLL_USER_CTL(pll), &val);
+	if (ret)
+		return;
 
 	/* If in FSM mode, just unvote it */
-	अगर (val & LUCID_5LPE_ENABLE_VOTE_RUN) अणु
+	if (val & LUCID_5LPE_ENABLE_VOTE_RUN) {
 		clk_disable_regmap(hw);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Disable the global PLL output */
 	ret = regmap_update_bits(pll->clkr.regmap, PLL_MODE(pll), PLL_OUTCTRL, 0);
-	अगर (ret)
-		वापस;
+	if (ret)
+		return;
 
-	/* Disable the PLL outमाला_दो */
+	/* Disable the PLL outputs */
 	ret = regmap_update_bits(pll->clkr.regmap, PLL_USER_CTL(pll), PLL_OUT_MASK, 0);
-	अगर (ret)
-		वापस;
+	if (ret)
+		return;
 
 	/* Place the PLL mode in STANDBY */
-	regmap_ग_लिखो(pll->clkr.regmap, PLL_OPMODE(pll), PLL_STANDBY);
-पूर्ण
+	regmap_write(pll->clkr.regmap, PLL_OPMODE(pll), PLL_STANDBY);
+}
 
 /*
- * The Lucid 5LPE PLL requires a घातer-on self-calibration which happens
- * when the PLL comes out of reset. Calibrate in हाल it is not completed.
+ * The Lucid 5LPE PLL requires a power-on self-calibration which happens
+ * when the PLL comes out of reset. Calibrate in case it is not completed.
  */
-अटल पूर्णांक alpha_pll_lucid_5lpe_prepare(काष्ठा clk_hw *hw)
-अणु
-	काष्ठा clk_alpha_pll *pll = to_clk_alpha_pll(hw);
-	काष्ठा clk_hw *p;
+static int alpha_pll_lucid_5lpe_prepare(struct clk_hw *hw)
+{
+	struct clk_alpha_pll *pll = to_clk_alpha_pll(hw);
+	struct clk_hw *p;
 	u32 val = 0;
-	पूर्णांक ret;
+	int ret;
 
-	/* Return early अगर calibration is not needed. */
-	regmap_पढ़ो(pll->clkr.regmap, PLL_MODE(pll), &val);
-	अगर (val & LUCID_5LPE_PCAL_DONE)
-		वापस 0;
+	/* Return early if calibration is not needed. */
+	regmap_read(pll->clkr.regmap, PLL_MODE(pll), &val);
+	if (val & LUCID_5LPE_PCAL_DONE)
+		return 0;
 
 	p = clk_hw_get_parent(hw);
-	अगर (!p)
-		वापस -EINVAL;
+	if (!p)
+		return -EINVAL;
 
 	ret = alpha_pll_lucid_5lpe_enable(hw);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	alpha_pll_lucid_5lpe_disable(hw);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक alpha_pll_lucid_5lpe_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-					 अचिन्हित दीर्घ prate)
-अणु
-	वापस __alpha_pll_trion_set_rate(hw, rate, prate,
+static int alpha_pll_lucid_5lpe_set_rate(struct clk_hw *hw, unsigned long rate,
+					 unsigned long prate)
+{
+	return __alpha_pll_trion_set_rate(hw, rate, prate,
 					  LUCID_5LPE_PLL_LATCH_INPUT,
 					  LUCID_5LPE_ALPHA_PLL_ACK_LATCH);
-पूर्ण
+}
 
-अटल पूर्णांक clk_lucid_5lpe_pll_postभाग_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-					       अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_alpha_pll_postभाग *pll = to_clk_alpha_pll_postभाग(hw);
-	पूर्णांक i, val = 0, भाग, ret;
+static int clk_lucid_5lpe_pll_postdiv_set_rate(struct clk_hw *hw, unsigned long rate,
+					       unsigned long parent_rate)
+{
+	struct clk_alpha_pll_postdiv *pll = to_clk_alpha_pll_postdiv(hw);
+	int i, val = 0, div, ret;
 	u32 mask;
 
 	/*
 	 * If the PLL is in FSM mode, then treat set_rate callback as a
 	 * no-operation.
 	 */
-	ret = regmap_पढ़ो(pll->clkr.regmap, PLL_USER_CTL(pll), &val);
-	अगर (ret)
-		वापस ret;
+	ret = regmap_read(pll->clkr.regmap, PLL_USER_CTL(pll), &val);
+	if (ret)
+		return ret;
 
-	अगर (val & LUCID_5LPE_ENABLE_VOTE_RUN)
-		वापस 0;
+	if (val & LUCID_5LPE_ENABLE_VOTE_RUN)
+		return 0;
 
-	भाग = DIV_ROUND_UP_ULL((u64)parent_rate, rate);
-	क्रम (i = 0; i < pll->num_post_भाग; i++) अणु
-		अगर (pll->post_भाग_प्रकारable[i].भाग == भाग) अणु
-			val = pll->post_भाग_प्रकारable[i].val;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+	div = DIV_ROUND_UP_ULL((u64)parent_rate, rate);
+	for (i = 0; i < pll->num_post_div; i++) {
+		if (pll->post_div_table[i].div == div) {
+			val = pll->post_div_table[i].val;
+			break;
+		}
+	}
 
-	mask = GENMASK(pll->width + pll->post_भाग_shअगरt - 1, pll->post_भाग_shअगरt);
-	वापस regmap_update_bits(pll->clkr.regmap, PLL_USER_CTL(pll),
-				  mask, val << pll->post_भाग_shअगरt);
-पूर्ण
+	mask = GENMASK(pll->width + pll->post_div_shift - 1, pll->post_div_shift);
+	return regmap_update_bits(pll->clkr.regmap, PLL_USER_CTL(pll),
+				  mask, val << pll->post_div_shift);
+}
 
-स्थिर काष्ठा clk_ops clk_alpha_pll_lucid_5lpe_ops = अणु
+const struct clk_ops clk_alpha_pll_lucid_5lpe_ops = {
 	.prepare = alpha_pll_lucid_5lpe_prepare,
 	.enable = alpha_pll_lucid_5lpe_enable,
 	.disable = alpha_pll_lucid_5lpe_disable,
@@ -1760,21 +1759,21 @@ EXPORT_SYMBOL_GPL(clk_alpha_pll_agera_ops);
 	.recalc_rate = clk_trion_pll_recalc_rate,
 	.round_rate = clk_alpha_pll_round_rate,
 	.set_rate = alpha_pll_lucid_5lpe_set_rate,
-पूर्ण;
+};
 EXPORT_SYMBOL(clk_alpha_pll_lucid_5lpe_ops);
 
-स्थिर काष्ठा clk_ops clk_alpha_pll_fixed_lucid_5lpe_ops = अणु
+const struct clk_ops clk_alpha_pll_fixed_lucid_5lpe_ops = {
 	.enable = alpha_pll_lucid_5lpe_enable,
 	.disable = alpha_pll_lucid_5lpe_disable,
 	.is_enabled = clk_trion_pll_is_enabled,
 	.recalc_rate = clk_trion_pll_recalc_rate,
 	.round_rate = clk_alpha_pll_round_rate,
-पूर्ण;
+};
 EXPORT_SYMBOL(clk_alpha_pll_fixed_lucid_5lpe_ops);
 
-स्थिर काष्ठा clk_ops clk_alpha_pll_postभाग_lucid_5lpe_ops = अणु
-	.recalc_rate = clk_alpha_pll_postभाग_fabia_recalc_rate,
-	.round_rate = clk_alpha_pll_postभाग_fabia_round_rate,
-	.set_rate = clk_lucid_5lpe_pll_postभाग_set_rate,
-पूर्ण;
-EXPORT_SYMBOL(clk_alpha_pll_postभाग_lucid_5lpe_ops);
+const struct clk_ops clk_alpha_pll_postdiv_lucid_5lpe_ops = {
+	.recalc_rate = clk_alpha_pll_postdiv_fabia_recalc_rate,
+	.round_rate = clk_alpha_pll_postdiv_fabia_round_rate,
+	.set_rate = clk_lucid_5lpe_pll_postdiv_set_rate,
+};
+EXPORT_SYMBOL(clk_alpha_pll_postdiv_lucid_5lpe_ops);

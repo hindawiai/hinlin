@@ -1,18 +1,17 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 1997-2003 by The XFree86 Project, Inc.
- * Copyright तऊ 2007 Dave Airlie
- * Copyright तऊ 2007-2008 Intel Corporation
- *   Jesse Barnes <jesse.barnes@पूर्णांकel.com>
+ * Copyright © 1997-2003 by The XFree86 Project, Inc.
+ * Copyright © 2007 Dave Airlie
+ * Copyright © 2007-2008 Intel Corporation
+ *   Jesse Barnes <jesse.barnes@intel.com>
  * Copyright 2005-2006 Luc Verhaegen
  * Copyright (c) 2001, Andy Ritger  aritger@nvidia.com
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -31,69 +30,69 @@
  * authorization from the copyright holder(s) and author(s).
  */
 
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/list.h>
-#समावेश <linux/list_sort.h>
-#समावेश <linux/export.h>
+#include <linux/ctype.h>
+#include <linux/list.h>
+#include <linux/list_sort.h>
+#include <linux/export.h>
 
-#समावेश <video/of_videomode.h>
-#समावेश <video/videomode.h>
+#include <video/of_videomode.h>
+#include <video/videomode.h>
 
-#समावेश <drm/drm_crtc.h>
-#समावेश <drm/drm_device.h>
-#समावेश <drm/drm_modes.h>
-#समावेश <drm/drm_prपूर्णांक.h>
+#include <drm/drm_crtc.h>
+#include <drm/drm_device.h>
+#include <drm/drm_modes.h>
+#include <drm/drm_print.h>
 
-#समावेश "drm_crtc_internal.h"
+#include "drm_crtc_internal.h"
 
 /**
- * drm_mode_debug_prपूर्णांकmodeline - prपूर्णांक a mode to dmesg
- * @mode: mode to prपूर्णांक
+ * drm_mode_debug_printmodeline - print a mode to dmesg
+ * @mode: mode to print
  *
  * Describe @mode using DRM_DEBUG.
  */
-व्योम drm_mode_debug_prपूर्णांकmodeline(स्थिर काष्ठा drm_display_mode *mode)
-अणु
+void drm_mode_debug_printmodeline(const struct drm_display_mode *mode)
+{
 	DRM_DEBUG_KMS("Modeline " DRM_MODE_FMT "\n", DRM_MODE_ARG(mode));
-पूर्ण
-EXPORT_SYMBOL(drm_mode_debug_prपूर्णांकmodeline);
+}
+EXPORT_SYMBOL(drm_mode_debug_printmodeline);
 
 /**
  * drm_mode_create - create a new display mode
  * @dev: DRM device
  *
- * Create a new, cleared drm_display_mode with kzalloc, allocate an ID क्रम it
- * and वापस it.
+ * Create a new, cleared drm_display_mode with kzalloc, allocate an ID for it
+ * and return it.
  *
  * Returns:
- * Poपूर्णांकer to new mode on success, शून्य on error.
+ * Pointer to new mode on success, NULL on error.
  */
-काष्ठा drm_display_mode *drm_mode_create(काष्ठा drm_device *dev)
-अणु
-	काष्ठा drm_display_mode *nmode;
+struct drm_display_mode *drm_mode_create(struct drm_device *dev)
+{
+	struct drm_display_mode *nmode;
 
-	nmode = kzalloc(माप(काष्ठा drm_display_mode), GFP_KERNEL);
-	अगर (!nmode)
-		वापस शून्य;
+	nmode = kzalloc(sizeof(struct drm_display_mode), GFP_KERNEL);
+	if (!nmode)
+		return NULL;
 
-	वापस nmode;
-पूर्ण
+	return nmode;
+}
 EXPORT_SYMBOL(drm_mode_create);
 
 /**
- * drm_mode_destroy - हटाओ a mode
+ * drm_mode_destroy - remove a mode
  * @dev: DRM device
- * @mode: mode to हटाओ
+ * @mode: mode to remove
  *
- * Release @mode's unique ID, then मुक्त it @mode काष्ठाure itself using kमुक्त.
+ * Release @mode's unique ID, then free it @mode structure itself using kfree.
  */
-व्योम drm_mode_destroy(काष्ठा drm_device *dev, काष्ठा drm_display_mode *mode)
-अणु
-	अगर (!mode)
-		वापस;
+void drm_mode_destroy(struct drm_device *dev, struct drm_display_mode *mode)
+{
+	if (!mode)
+		return;
 
-	kमुक्त(mode);
-पूर्ण
+	kfree(mode);
+}
 EXPORT_SYMBOL(drm_mode_destroy);
 
 /**
@@ -101,17 +100,17 @@ EXPORT_SYMBOL(drm_mode_destroy);
  * @connector: connector the new mode
  * @mode: mode data
  *
- * Add @mode to @connector's probed_mode list क्रम later use. This list should
+ * Add @mode to @connector's probed_mode list for later use. This list should
  * then in a second step get filtered and all the modes actually supported by
  * the hardware moved to the @connector's modes list.
  */
-व्योम drm_mode_probed_add(काष्ठा drm_connector *connector,
-			 काष्ठा drm_display_mode *mode)
-अणु
+void drm_mode_probed_add(struct drm_connector *connector,
+			 struct drm_display_mode *mode)
+{
 	WARN_ON(!mutex_is_locked(&connector->dev->mode_config.mutex));
 
 	list_add_tail(&mode->head, &connector->probed_modes);
-पूर्ण
+}
 EXPORT_SYMBOL(drm_mode_probed_add);
 
 /**
@@ -121,62 +120,62 @@ EXPORT_SYMBOL(drm_mode_probed_add);
  * @vdisplay: vdisplay size
  * @vrefresh: vrefresh rate
  * @reduced: whether to use reduced blanking
- * @पूर्णांकerlaced: whether to compute an पूर्णांकerlaced mode
+ * @interlaced: whether to compute an interlaced mode
  * @margins: whether to add margins (borders)
  *
  * This function is called to generate the modeline based on CVT algorithm
  * according to the hdisplay, vdisplay, vrefresh.
  * It is based from the VESA(TM) Coordinated Video Timing Generator by
  * Graham Loveridge April 9, 2003 available at
- * http://www.elo.utfsm.cl/~elo212/करोcs/CVTd6r1.xls 
+ * http://www.elo.utfsm.cl/~elo212/docs/CVTd6r1.xls 
  *
- * And it is copied from xf86CVTmode in xserver/hw/xमुक्त86/modes/xf86cvt.c.
- * What I have करोne is to translate it by using पूर्णांकeger calculation.
+ * And it is copied from xf86CVTmode in xserver/hw/xfree86/modes/xf86cvt.c.
+ * What I have done is to translate it by using integer calculation.
  *
  * Returns:
  * The modeline based on the CVT algorithm stored in a drm_display_mode object.
- * The display mode object is allocated with drm_mode_create(). Returns शून्य
+ * The display mode object is allocated with drm_mode_create(). Returns NULL
  * when no mode could be allocated.
  */
-काष्ठा drm_display_mode *drm_cvt_mode(काष्ठा drm_device *dev, पूर्णांक hdisplay,
-				      पूर्णांक vdisplay, पूर्णांक vrefresh,
-				      bool reduced, bool पूर्णांकerlaced, bool margins)
-अणु
-#घोषणा HV_FACTOR			1000
-	/* 1) top/bottom margin size (% of height) - शेष: 1.8, */
-#घोषणा	CVT_MARGIN_PERCENTAGE		18
-	/* 2) अक्षरacter cell horizontal granularity (pixels) - शेष 8 */
-#घोषणा	CVT_H_GRANULARITY		8
-	/* 3) Minimum vertical porch (lines) - शेष 3 */
-#घोषणा	CVT_MIN_V_PORCH			3
-	/* 4) Minimum number of vertical back porch lines - शेष 6 */
-#घोषणा	CVT_MIN_V_BPORCH		6
+struct drm_display_mode *drm_cvt_mode(struct drm_device *dev, int hdisplay,
+				      int vdisplay, int vrefresh,
+				      bool reduced, bool interlaced, bool margins)
+{
+#define HV_FACTOR			1000
+	/* 1) top/bottom margin size (% of height) - default: 1.8, */
+#define	CVT_MARGIN_PERCENTAGE		18
+	/* 2) character cell horizontal granularity (pixels) - default 8 */
+#define	CVT_H_GRANULARITY		8
+	/* 3) Minimum vertical porch (lines) - default 3 */
+#define	CVT_MIN_V_PORCH			3
+	/* 4) Minimum number of vertical back porch lines - default 6 */
+#define	CVT_MIN_V_BPORCH		6
 	/* Pixel Clock step (kHz) */
-#घोषणा CVT_CLOCK_STEP			250
-	काष्ठा drm_display_mode *drm_mode;
-	अचिन्हित पूर्णांक vfieldrate, hperiod;
-	पूर्णांक hdisplay_rnd, hmargin, vdisplay_rnd, vmargin, vsync;
-	पूर्णांक पूर्णांकerlace;
-	u64 पंचांगp;
+#define CVT_CLOCK_STEP			250
+	struct drm_display_mode *drm_mode;
+	unsigned int vfieldrate, hperiod;
+	int hdisplay_rnd, hmargin, vdisplay_rnd, vmargin, vsync;
+	int interlace;
+	u64 tmp;
 
-	अगर (!hdisplay || !vdisplay)
-		वापस शून्य;
+	if (!hdisplay || !vdisplay)
+		return NULL;
 
-	/* allocate the drm_display_mode काष्ठाure. If failure, we will
-	 * वापस directly
+	/* allocate the drm_display_mode structure. If failure, we will
+	 * return directly
 	 */
 	drm_mode = drm_mode_create(dev);
-	अगर (!drm_mode)
-		वापस शून्य;
+	if (!drm_mode)
+		return NULL;
 
-	/* the CVT शेष refresh rate is 60Hz */
-	अगर (!vrefresh)
+	/* the CVT default refresh rate is 60Hz */
+	if (!vrefresh)
 		vrefresh = 60;
 
 	/* the required field fresh rate */
-	अगर (पूर्णांकerlaced)
+	if (interlaced)
 		vfieldrate = vrefresh * 2;
-	अन्यथा
+	else
 		vfieldrate = vrefresh;
 
 	/* horizontal pixels */
@@ -184,92 +183,92 @@ EXPORT_SYMBOL(drm_mode_probed_add);
 
 	/* determine the left&right borders */
 	hmargin = 0;
-	अगर (margins) अणु
+	if (margins) {
 		hmargin = hdisplay_rnd * CVT_MARGIN_PERCENTAGE / 1000;
 		hmargin -= hmargin % CVT_H_GRANULARITY;
-	पूर्ण
+	}
 	/* find the total active pixels */
 	drm_mode->hdisplay = hdisplay_rnd + 2 * hmargin;
 
 	/* find the number of lines per field */
-	अगर (पूर्णांकerlaced)
+	if (interlaced)
 		vdisplay_rnd = vdisplay / 2;
-	अन्यथा
+	else
 		vdisplay_rnd = vdisplay;
 
 	/* find the top & bottom borders */
 	vmargin = 0;
-	अगर (margins)
+	if (margins)
 		vmargin = vdisplay_rnd * CVT_MARGIN_PERCENTAGE / 1000;
 
 	drm_mode->vdisplay = vdisplay + 2 * vmargin;
 
 	/* Interlaced */
-	अगर (पूर्णांकerlaced)
-		पूर्णांकerlace = 1;
-	अन्यथा
-		पूर्णांकerlace = 0;
+	if (interlaced)
+		interlace = 1;
+	else
+		interlace = 0;
 
 	/* Determine VSync Width from aspect ratio */
-	अगर (!(vdisplay % 3) && ((vdisplay * 4 / 3) == hdisplay))
+	if (!(vdisplay % 3) && ((vdisplay * 4 / 3) == hdisplay))
 		vsync = 4;
-	अन्यथा अगर (!(vdisplay % 9) && ((vdisplay * 16 / 9) == hdisplay))
+	else if (!(vdisplay % 9) && ((vdisplay * 16 / 9) == hdisplay))
 		vsync = 5;
-	अन्यथा अगर (!(vdisplay % 10) && ((vdisplay * 16 / 10) == hdisplay))
+	else if (!(vdisplay % 10) && ((vdisplay * 16 / 10) == hdisplay))
 		vsync = 6;
-	अन्यथा अगर (!(vdisplay % 4) && ((vdisplay * 5 / 4) == hdisplay))
+	else if (!(vdisplay % 4) && ((vdisplay * 5 / 4) == hdisplay))
 		vsync = 7;
-	अन्यथा अगर (!(vdisplay % 9) && ((vdisplay * 15 / 9) == hdisplay))
+	else if (!(vdisplay % 9) && ((vdisplay * 15 / 9) == hdisplay))
 		vsync = 7;
-	अन्यथा /* custom */
+	else /* custom */
 		vsync = 10;
 
-	अगर (!reduced) अणु
-		/* simplअगरy the GTF calculation */
-		/* 4) Minimum समय of vertical sync + back porch पूर्णांकerval (तगs)
-		 * शेष 550.0
+	if (!reduced) {
+		/* simplify the GTF calculation */
+		/* 4) Minimum time of vertical sync + back porch interval (µs)
+		 * default 550.0
 		 */
-		पूर्णांक पंचांगp1, पंचांगp2;
-#घोषणा CVT_MIN_VSYNC_BP	550
-		/* 3) Nominal HSync width (% of line period) - शेष 8 */
-#घोषणा CVT_HSYNC_PERCENTAGE	8
-		अचिन्हित पूर्णांक hblank_percentage;
-		पूर्णांक vsyncandback_porch, __maybe_unused vback_porch, hblank;
+		int tmp1, tmp2;
+#define CVT_MIN_VSYNC_BP	550
+		/* 3) Nominal HSync width (% of line period) - default 8 */
+#define CVT_HSYNC_PERCENTAGE	8
+		unsigned int hblank_percentage;
+		int vsyncandback_porch, __maybe_unused vback_porch, hblank;
 
 		/* estimated the horizontal period */
-		पंचांगp1 = HV_FACTOR * 1000000  -
+		tmp1 = HV_FACTOR * 1000000  -
 				CVT_MIN_VSYNC_BP * HV_FACTOR * vfieldrate;
-		पंचांगp2 = (vdisplay_rnd + 2 * vmargin + CVT_MIN_V_PORCH) * 2 +
-				पूर्णांकerlace;
-		hperiod = पंचांगp1 * 2 / (पंचांगp2 * vfieldrate);
+		tmp2 = (vdisplay_rnd + 2 * vmargin + CVT_MIN_V_PORCH) * 2 +
+				interlace;
+		hperiod = tmp1 * 2 / (tmp2 * vfieldrate);
 
-		पंचांगp1 = CVT_MIN_VSYNC_BP * HV_FACTOR / hperiod + 1;
+		tmp1 = CVT_MIN_VSYNC_BP * HV_FACTOR / hperiod + 1;
 		/* 9. Find number of lines in sync + backporch */
-		अगर (पंचांगp1 < (vsync + CVT_MIN_V_PORCH))
+		if (tmp1 < (vsync + CVT_MIN_V_PORCH))
 			vsyncandback_porch = vsync + CVT_MIN_V_PORCH;
-		अन्यथा
-			vsyncandback_porch = पंचांगp1;
+		else
+			vsyncandback_porch = tmp1;
 		/* 10. Find number of lines in back porch */
 		vback_porch = vsyncandback_porch - vsync;
 		drm_mode->vtotal = vdisplay_rnd + 2 * vmargin +
 				vsyncandback_porch + CVT_MIN_V_PORCH;
-		/* 5) Definition of Horizontal blanking समय limitation */
-		/* Gradient (%/kHz) - शेष 600 */
-#घोषणा CVT_M_FACTOR	600
-		/* Offset (%) - शेष 40 */
-#घोषणा CVT_C_FACTOR	40
-		/* Blanking समय scaling factor - शेष 128 */
-#घोषणा CVT_K_FACTOR	128
-		/* Scaling factor weighting - शेष 20 */
-#घोषणा CVT_J_FACTOR	20
-#घोषणा CVT_M_PRIME	(CVT_M_FACTOR * CVT_K_FACTOR / 256)
-#घोषणा CVT_C_PRIME	((CVT_C_FACTOR - CVT_J_FACTOR) * CVT_K_FACTOR / 256 + \
+		/* 5) Definition of Horizontal blanking time limitation */
+		/* Gradient (%/kHz) - default 600 */
+#define CVT_M_FACTOR	600
+		/* Offset (%) - default 40 */
+#define CVT_C_FACTOR	40
+		/* Blanking time scaling factor - default 128 */
+#define CVT_K_FACTOR	128
+		/* Scaling factor weighting - default 20 */
+#define CVT_J_FACTOR	20
+#define CVT_M_PRIME	(CVT_M_FACTOR * CVT_K_FACTOR / 256)
+#define CVT_C_PRIME	((CVT_C_FACTOR - CVT_J_FACTOR) * CVT_K_FACTOR / 256 + \
 			 CVT_J_FACTOR)
-		/* 12. Find ideal blanking duty cycle from क्रमmula */
+		/* 12. Find ideal blanking duty cycle from formula */
 		hblank_percentage = CVT_C_PRIME * HV_FACTOR - CVT_M_PRIME *
 					hperiod / 1000;
-		/* 13. Blanking समय */
-		अगर (hblank_percentage < 20 * HV_FACTOR)
+		/* 13. Blanking time */
+		if (hblank_percentage < 20 * HV_FACTOR)
 			hblank_percentage = 20 * HV_FACTOR;
 		hblank = drm_mode->hdisplay * hblank_percentage /
 			 (100 * HV_FACTOR - hblank_percentage);
@@ -284,27 +283,27 @@ EXPORT_SYMBOL(drm_mode_probed_add);
 		/* fill the Vsync values */
 		drm_mode->vsync_start = drm_mode->vdisplay + CVT_MIN_V_PORCH;
 		drm_mode->vsync_end = drm_mode->vsync_start + vsync;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Reduced blanking */
-		/* Minimum vertical blanking पूर्णांकerval समय (तगs)- शेष 460 */
-#घोषणा CVT_RB_MIN_VBLANK	460
-		/* Fixed number of घड़ीs क्रम horizontal sync */
-#घोषणा CVT_RB_H_SYNC		32
-		/* Fixed number of घड़ीs क्रम horizontal blanking */
-#घोषणा CVT_RB_H_BLANK		160
-		/* Fixed number of lines क्रम vertical front porch - शेष 3*/
-#घोषणा CVT_RB_VFPORCH		3
-		पूर्णांक vbilines;
-		पूर्णांक पंचांगp1, पंचांगp2;
+		/* Minimum vertical blanking interval time (µs)- default 460 */
+#define CVT_RB_MIN_VBLANK	460
+		/* Fixed number of clocks for horizontal sync */
+#define CVT_RB_H_SYNC		32
+		/* Fixed number of clocks for horizontal blanking */
+#define CVT_RB_H_BLANK		160
+		/* Fixed number of lines for vertical front porch - default 3*/
+#define CVT_RB_VFPORCH		3
+		int vbilines;
+		int tmp1, tmp2;
 		/* 8. Estimate Horizontal period. */
-		पंचांगp1 = HV_FACTOR * 1000000 -
+		tmp1 = HV_FACTOR * 1000000 -
 			CVT_RB_MIN_VBLANK * HV_FACTOR * vfieldrate;
-		पंचांगp2 = vdisplay_rnd + 2 * vmargin;
-		hperiod = पंचांगp1 / (पंचांगp2 * vfieldrate);
+		tmp2 = vdisplay_rnd + 2 * vmargin;
+		hperiod = tmp1 / (tmp2 * vfieldrate);
 		/* 9. Find number of lines in vertical blanking */
 		vbilines = CVT_RB_MIN_VBLANK * HV_FACTOR / hperiod + 1;
-		/* 10. Check अगर vertical blanking is sufficient */
-		अगर (vbilines < (CVT_RB_VFPORCH + vsync + CVT_MIN_V_BPORCH))
+		/* 10. Check if vertical blanking is sufficient */
+		if (vbilines < (CVT_RB_VFPORCH + vsync + CVT_MIN_V_BPORCH))
 			vbilines = CVT_RB_VFPORCH + vsync + CVT_MIN_V_BPORCH;
 		/* 11. Find total number of lines in vertical field */
 		drm_mode->vtotal = vdisplay_rnd + 2 * vmargin + vbilines;
@@ -316,30 +315,30 @@ EXPORT_SYMBOL(drm_mode_probed_add);
 		/* Fill in VSync values */
 		drm_mode->vsync_start = drm_mode->vdisplay + CVT_RB_VFPORCH;
 		drm_mode->vsync_end = drm_mode->vsync_start + vsync;
-	पूर्ण
-	/* 15/13. Find pixel घड़ी frequency (kHz क्रम xf86) */
-	पंचांगp = drm_mode->htotal; /* perक्रमm पूर्णांकermediate calcs in u64 */
-	पंचांगp *= HV_FACTOR * 1000;
-	करो_भाग(पंचांगp, hperiod);
-	पंचांगp -= drm_mode->घड़ी % CVT_CLOCK_STEP;
-	drm_mode->घड़ी = पंचांगp;
+	}
+	/* 15/13. Find pixel clock frequency (kHz for xf86) */
+	tmp = drm_mode->htotal; /* perform intermediate calcs in u64 */
+	tmp *= HV_FACTOR * 1000;
+	do_div(tmp, hperiod);
+	tmp -= drm_mode->clock % CVT_CLOCK_STEP;
+	drm_mode->clock = tmp;
 	/* 18/16. Find actual vertical frame frequency */
-	/* ignore - just set the mode flag क्रम पूर्णांकerlaced */
-	अगर (पूर्णांकerlaced) अणु
+	/* ignore - just set the mode flag for interlaced */
+	if (interlaced) {
 		drm_mode->vtotal *= 2;
 		drm_mode->flags |= DRM_MODE_FLAG_INTERLACE;
-	पूर्ण
+	}
 	/* Fill the mode line name */
 	drm_mode_set_name(drm_mode);
-	अगर (reduced)
+	if (reduced)
 		drm_mode->flags |= (DRM_MODE_FLAG_PHSYNC |
 					DRM_MODE_FLAG_NVSYNC);
-	अन्यथा
+	else
 		drm_mode->flags |= (DRM_MODE_FLAG_PVSYNC |
 					DRM_MODE_FLAG_NHSYNC);
 
-	वापस drm_mode;
-पूर्ण
+	return drm_mode;
+}
 EXPORT_SYMBOL(drm_cvt_mode);
 
 /**
@@ -348,106 +347,106 @@ EXPORT_SYMBOL(drm_cvt_mode);
  * @hdisplay: hdisplay size
  * @vdisplay: vdisplay size
  * @vrefresh: vrefresh rate.
- * @पूर्णांकerlaced: whether to compute an पूर्णांकerlaced mode
+ * @interlaced: whether to compute an interlaced mode
  * @margins: desired margin (borders) size
- * @GTF_M: extended GTF क्रमmula parameters
- * @GTF_2C: extended GTF क्रमmula parameters
- * @GTF_K: extended GTF क्रमmula parameters
- * @GTF_2J: extended GTF क्रमmula parameters
+ * @GTF_M: extended GTF formula parameters
+ * @GTF_2C: extended GTF formula parameters
+ * @GTF_K: extended GTF formula parameters
+ * @GTF_2J: extended GTF formula parameters
  *
- * GTF feature blocks specअगरy C and J in multiples of 0.5, so we pass them
+ * GTF feature blocks specify C and J in multiples of 0.5, so we pass them
  * in here multiplied by two.  For a C of 40, pass in 80.
  *
  * Returns:
  * The modeline based on the full GTF algorithm stored in a drm_display_mode object.
- * The display mode object is allocated with drm_mode_create(). Returns शून्य
+ * The display mode object is allocated with drm_mode_create(). Returns NULL
  * when no mode could be allocated.
  */
-काष्ठा drm_display_mode *
-drm_gtf_mode_complex(काष्ठा drm_device *dev, पूर्णांक hdisplay, पूर्णांक vdisplay,
-		     पूर्णांक vrefresh, bool पूर्णांकerlaced, पूर्णांक margins,
-		     पूर्णांक GTF_M, पूर्णांक GTF_2C, पूर्णांक GTF_K, पूर्णांक GTF_2J)
-अणु	/* 1) top/bottom margin size (% of height) - शेष: 1.8, */
-#घोषणा	GTF_MARGIN_PERCENTAGE		18
-	/* 2) अक्षरacter cell horizontal granularity (pixels) - शेष 8 */
-#घोषणा	GTF_CELL_GRAN			8
-	/* 3) Minimum vertical porch (lines) - शेष 3 */
-#घोषणा	GTF_MIN_V_PORCH			1
+struct drm_display_mode *
+drm_gtf_mode_complex(struct drm_device *dev, int hdisplay, int vdisplay,
+		     int vrefresh, bool interlaced, int margins,
+		     int GTF_M, int GTF_2C, int GTF_K, int GTF_2J)
+{	/* 1) top/bottom margin size (% of height) - default: 1.8, */
+#define	GTF_MARGIN_PERCENTAGE		18
+	/* 2) character cell horizontal granularity (pixels) - default 8 */
+#define	GTF_CELL_GRAN			8
+	/* 3) Minimum vertical porch (lines) - default 3 */
+#define	GTF_MIN_V_PORCH			1
 	/* width of vsync in lines */
-#घोषणा V_SYNC_RQD			3
+#define V_SYNC_RQD			3
 	/* width of hsync as % of total line */
-#घोषणा H_SYNC_PERCENT			8
-	/* min समय of vsync + back porch (microsec) */
-#घोषणा MIN_VSYNC_PLUS_BP		550
+#define H_SYNC_PERCENT			8
+	/* min time of vsync + back porch (microsec) */
+#define MIN_VSYNC_PLUS_BP		550
 	/* C' and M' are part of the Blanking Duty Cycle computation */
-#घोषणा GTF_C_PRIME	((((GTF_2C - GTF_2J) * GTF_K / 256) + GTF_2J) / 2)
-#घोषणा GTF_M_PRIME	(GTF_K * GTF_M / 256)
-	काष्ठा drm_display_mode *drm_mode;
-	अचिन्हित पूर्णांक hdisplay_rnd, vdisplay_rnd, vfieldrate_rqd;
-	पूर्णांक top_margin, bottom_margin;
-	पूर्णांक पूर्णांकerlace;
-	अचिन्हित पूर्णांक hfreq_est;
-	पूर्णांक vsync_plus_bp, __maybe_unused vback_porch;
-	अचिन्हित पूर्णांक vtotal_lines, __maybe_unused vfieldrate_est;
-	अचिन्हित पूर्णांक __maybe_unused hperiod;
-	अचिन्हित पूर्णांक vfield_rate, __maybe_unused vframe_rate;
-	पूर्णांक left_margin, right_margin;
-	अचिन्हित पूर्णांक total_active_pixels, ideal_duty_cycle;
-	अचिन्हित पूर्णांक hblank, total_pixels, pixel_freq;
-	पूर्णांक hsync, hfront_porch, vodd_front_porch_lines;
-	अचिन्हित पूर्णांक पंचांगp1, पंचांगp2;
+#define GTF_C_PRIME	((((GTF_2C - GTF_2J) * GTF_K / 256) + GTF_2J) / 2)
+#define GTF_M_PRIME	(GTF_K * GTF_M / 256)
+	struct drm_display_mode *drm_mode;
+	unsigned int hdisplay_rnd, vdisplay_rnd, vfieldrate_rqd;
+	int top_margin, bottom_margin;
+	int interlace;
+	unsigned int hfreq_est;
+	int vsync_plus_bp, __maybe_unused vback_porch;
+	unsigned int vtotal_lines, __maybe_unused vfieldrate_est;
+	unsigned int __maybe_unused hperiod;
+	unsigned int vfield_rate, __maybe_unused vframe_rate;
+	int left_margin, right_margin;
+	unsigned int total_active_pixels, ideal_duty_cycle;
+	unsigned int hblank, total_pixels, pixel_freq;
+	int hsync, hfront_porch, vodd_front_porch_lines;
+	unsigned int tmp1, tmp2;
 
-	अगर (!hdisplay || !vdisplay)
-		वापस शून्य;
+	if (!hdisplay || !vdisplay)
+		return NULL;
 
 	drm_mode = drm_mode_create(dev);
-	अगर (!drm_mode)
-		वापस शून्य;
+	if (!drm_mode)
+		return NULL;
 
 	/* 1. In order to give correct results, the number of horizontal
-	 * pixels requested is first processed to ensure that it is भागisible
-	 * by the अक्षरacter size, by rounding it to the nearest अक्षरacter
+	 * pixels requested is first processed to ensure that it is divisible
+	 * by the character size, by rounding it to the nearest character
 	 * cell boundary:
 	 */
 	hdisplay_rnd = (hdisplay + GTF_CELL_GRAN / 2) / GTF_CELL_GRAN;
 	hdisplay_rnd = hdisplay_rnd * GTF_CELL_GRAN;
 
-	/* 2. If पूर्णांकerlace is requested, the number of vertical lines assumed
+	/* 2. If interlace is requested, the number of vertical lines assumed
 	 * by the calculation must be halved, as the computation calculates
 	 * the number of vertical lines per field.
 	 */
-	अगर (पूर्णांकerlaced)
+	if (interlaced)
 		vdisplay_rnd = vdisplay / 2;
-	अन्यथा
+	else
 		vdisplay_rnd = vdisplay;
 
 	/* 3. Find the frame rate required: */
-	अगर (पूर्णांकerlaced)
+	if (interlaced)
 		vfieldrate_rqd = vrefresh * 2;
-	अन्यथा
+	else
 		vfieldrate_rqd = vrefresh;
 
 	/* 4. Find number of lines in Top margin: */
 	top_margin = 0;
-	अगर (margins)
+	if (margins)
 		top_margin = (vdisplay_rnd * GTF_MARGIN_PERCENTAGE + 500) /
 				1000;
 	/* 5. Find number of lines in bottom margin: */
 	bottom_margin = top_margin;
 
-	/* 6. If पूर्णांकerlace is required, then set variable पूर्णांकerlace: */
-	अगर (पूर्णांकerlaced)
-		पूर्णांकerlace = 1;
-	अन्यथा
-		पूर्णांकerlace = 0;
+	/* 6. If interlace is required, then set variable interlace: */
+	if (interlaced)
+		interlace = 1;
+	else
+		interlace = 0;
 
 	/* 7. Estimate the Horizontal frequency */
-	अणु
-		पंचांगp1 = (1000000  - MIN_VSYNC_PLUS_BP * vfieldrate_rqd) / 500;
-		पंचांगp2 = (vdisplay_rnd + 2 * top_margin + GTF_MIN_V_PORCH) *
-				2 + पूर्णांकerlace;
-		hfreq_est = (पंचांगp2 * 1000 * vfieldrate_rqd) / पंचांगp1;
-	पूर्ण
+	{
+		tmp1 = (1000000  - MIN_VSYNC_PLUS_BP * vfieldrate_rqd) / 500;
+		tmp2 = (vdisplay_rnd + 2 * top_margin + GTF_MIN_V_PORCH) *
+				2 + interlace;
+		hfreq_est = (tmp2 * 1000 * vfieldrate_rqd) / tmp1;
+	}
 
 	/* 8. Find the number of lines in V sync + back porch */
 	/* [V SYNC+BP] = RINT(([MIN VSYNC+BP] * hfreq_est / 1000000)) */
@@ -466,15 +465,15 @@ drm_gtf_mode_complex(काष्ठा drm_device *dev, पूर्णां�
 	/*  13. Find the actual Vertical field frequency: */
 	vfield_rate = hfreq_est / vtotal_lines;
 	/*  14. Find the Vertical frame frequency: */
-	अगर (पूर्णांकerlaced)
+	if (interlaced)
 		vframe_rate = vfield_rate / 2;
-	अन्यथा
+	else
 		vframe_rate = vfield_rate;
 	/*  15. Find number of pixels in left margin: */
-	अगर (margins)
+	if (margins)
 		left_margin = (hdisplay_rnd * GTF_MARGIN_PERCENTAGE + 500) /
 				1000;
-	अन्यथा
+	else
 		left_margin = 0;
 
 	/* 16.Find number of pixels in right margin: */
@@ -484,20 +483,20 @@ drm_gtf_mode_complex(काष्ठा drm_device *dev, पूर्णां�
 	/* 18.Find the ideal blanking duty cycle from blanking duty cycle */
 	ideal_duty_cycle = GTF_C_PRIME * 1000 -
 				(GTF_M_PRIME * 1000000 / hfreq_est);
-	/* 19.Find the number of pixels in the blanking समय to the nearest
-	 * द्विगुन अक्षरacter cell: */
+	/* 19.Find the number of pixels in the blanking time to the nearest
+	 * double character cell: */
 	hblank = total_active_pixels * ideal_duty_cycle /
 			(100000 - ideal_duty_cycle);
 	hblank = (hblank + GTF_CELL_GRAN) / (2 * GTF_CELL_GRAN);
 	hblank = hblank * 2 * GTF_CELL_GRAN;
 	/* 20.Find total number of pixels: */
 	total_pixels = total_active_pixels + hblank;
-	/* 21.Find pixel घड़ी frequency: */
+	/* 21.Find pixel clock frequency: */
 	pixel_freq = total_pixels * hfreq_est / 1000;
 	/* Stage 1 computations are now complete; I should really pass
-	 * the results to another function and करो the Stage 2 computations,
+	 * the results to another function and do the Stage 2 computations,
 	 * but I only need a few more values so I'll just append the
-	 * computations here क्रम now */
+	 * computations here for now */
 	/* 17. Find the number of pixels in the horizontal sync period: */
 	hsync = H_SYNC_PERCENT * total_pixels / 100;
 	hsync = (hsync + GTF_CELL_GRAN / 2) / GTF_CELL_GRAN;
@@ -507,7 +506,7 @@ drm_gtf_mode_complex(काष्ठा drm_device *dev, पूर्णां�
 	/*  36. Find the number of lines in the odd front porch period: */
 	vodd_front_porch_lines = GTF_MIN_V_PORCH ;
 
-	/* finally, pack the results in the mode काष्ठा */
+	/* finally, pack the results in the mode struct */
 	drm_mode->hdisplay = hdisplay_rnd;
 	drm_mode->hsync_start = hdisplay_rnd + hfront_porch;
 	drm_mode->hsync_end = drm_mode->hsync_start + hsync;
@@ -517,21 +516,21 @@ drm_gtf_mode_complex(काष्ठा drm_device *dev, पूर्णां�
 	drm_mode->vsync_end = drm_mode->vsync_start + V_SYNC_RQD;
 	drm_mode->vtotal = vtotal_lines;
 
-	drm_mode->घड़ी = pixel_freq;
+	drm_mode->clock = pixel_freq;
 
-	अगर (पूर्णांकerlaced) अणु
+	if (interlaced) {
 		drm_mode->vtotal *= 2;
 		drm_mode->flags |= DRM_MODE_FLAG_INTERLACE;
-	पूर्ण
+	}
 
 	drm_mode_set_name(drm_mode);
-	अगर (GTF_M == 600 && GTF_2C == 80 && GTF_K == 128 && GTF_2J == 40)
+	if (GTF_M == 600 && GTF_2C == 80 && GTF_K == 128 && GTF_2J == 40)
 		drm_mode->flags = DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_PVSYNC;
-	अन्यथा
+	else
 		drm_mode->flags = DRM_MODE_FLAG_PHSYNC | DRM_MODE_FLAG_NVSYNC;
 
-	वापस drm_mode;
-पूर्ण
+	return drm_mode;
+}
 EXPORT_SYMBOL(drm_gtf_mode_complex);
 
 /**
@@ -540,19 +539,19 @@ EXPORT_SYMBOL(drm_gtf_mode_complex);
  * @hdisplay: hdisplay size
  * @vdisplay: vdisplay size
  * @vrefresh: vrefresh rate.
- * @पूर्णांकerlaced: whether to compute an पूर्णांकerlaced mode
+ * @interlaced: whether to compute an interlaced mode
  * @margins: desired margin (borders) size
  *
- * वापस the modeline based on GTF algorithm
+ * return the modeline based on GTF algorithm
  *
  * This function is to create the modeline based on the GTF algorithm.
  * Generalized Timing Formula is derived from:
  *
- *	GTF Spपढ़ोsheet by Andy Morrish (1/5/97)
+ *	GTF Spreadsheet by Andy Morrish (1/5/97)
  *	available at https://www.vesa.org
  *
- * And it is copied from the file of xserver/hw/xमुक्त86/modes/xf86gtf.c.
- * What I have करोne is to translate it by using पूर्णांकeger calculation.
+ * And it is copied from the file of xserver/hw/xfree86/modes/xf86gtf.c.
+ * What I have done is to translate it by using integer calculation.
  * I also refer to the function of fb_get_mode in the file of
  * drivers/video/fbmon.c
  *
@@ -565,30 +564,30 @@ EXPORT_SYMBOL(drm_gtf_mode_complex);
  *
  * Returns:
  * The modeline based on the GTF algorithm stored in a drm_display_mode object.
- * The display mode object is allocated with drm_mode_create(). Returns शून्य
+ * The display mode object is allocated with drm_mode_create(). Returns NULL
  * when no mode could be allocated.
  */
-काष्ठा drm_display_mode *
-drm_gtf_mode(काष्ठा drm_device *dev, पूर्णांक hdisplay, पूर्णांक vdisplay, पूर्णांक vrefresh,
-	     bool पूर्णांकerlaced, पूर्णांक margins)
-अणु
-	वापस drm_gtf_mode_complex(dev, hdisplay, vdisplay, vrefresh,
-				    पूर्णांकerlaced, margins,
+struct drm_display_mode *
+drm_gtf_mode(struct drm_device *dev, int hdisplay, int vdisplay, int vrefresh,
+	     bool interlaced, int margins)
+{
+	return drm_gtf_mode_complex(dev, hdisplay, vdisplay, vrefresh,
+				    interlaced, margins,
 				    600, 40 * 2, 128, 20 * 2);
-पूर्ण
+}
 EXPORT_SYMBOL(drm_gtf_mode);
 
-#अगर_घोषित CONFIG_VIDEOMODE_HELPERS
+#ifdef CONFIG_VIDEOMODE_HELPERS
 /**
  * drm_display_mode_from_videomode - fill in @dmode using @vm,
- * @vm: videomode काष्ठाure to use as source
- * @dmode: drm_display_mode काष्ठाure to use as destination
+ * @vm: videomode structure to use as source
+ * @dmode: drm_display_mode structure to use as destination
  *
- * Fills out @dmode using the display mode specअगरied in @vm.
+ * Fills out @dmode using the display mode specified in @vm.
  */
-व्योम drm_display_mode_from_videomode(स्थिर काष्ठा videomode *vm,
-				     काष्ठा drm_display_mode *dmode)
-अणु
+void drm_display_mode_from_videomode(const struct videomode *vm,
+				     struct drm_display_mode *dmode)
+{
 	dmode->hdisplay = vm->hactive;
 	dmode->hsync_start = dmode->hdisplay + vm->hfront_porch;
 	dmode->hsync_end = dmode->hsync_start + vm->hsync_len;
@@ -599,37 +598,37 @@ EXPORT_SYMBOL(drm_gtf_mode);
 	dmode->vsync_end = dmode->vsync_start + vm->vsync_len;
 	dmode->vtotal = dmode->vsync_end + vm->vback_porch;
 
-	dmode->घड़ी = vm->pixelघड़ी / 1000;
+	dmode->clock = vm->pixelclock / 1000;
 
 	dmode->flags = 0;
-	अगर (vm->flags & DISPLAY_FLAGS_HSYNC_HIGH)
+	if (vm->flags & DISPLAY_FLAGS_HSYNC_HIGH)
 		dmode->flags |= DRM_MODE_FLAG_PHSYNC;
-	अन्यथा अगर (vm->flags & DISPLAY_FLAGS_HSYNC_LOW)
+	else if (vm->flags & DISPLAY_FLAGS_HSYNC_LOW)
 		dmode->flags |= DRM_MODE_FLAG_NHSYNC;
-	अगर (vm->flags & DISPLAY_FLAGS_VSYNC_HIGH)
+	if (vm->flags & DISPLAY_FLAGS_VSYNC_HIGH)
 		dmode->flags |= DRM_MODE_FLAG_PVSYNC;
-	अन्यथा अगर (vm->flags & DISPLAY_FLAGS_VSYNC_LOW)
+	else if (vm->flags & DISPLAY_FLAGS_VSYNC_LOW)
 		dmode->flags |= DRM_MODE_FLAG_NVSYNC;
-	अगर (vm->flags & DISPLAY_FLAGS_INTERLACED)
+	if (vm->flags & DISPLAY_FLAGS_INTERLACED)
 		dmode->flags |= DRM_MODE_FLAG_INTERLACE;
-	अगर (vm->flags & DISPLAY_FLAGS_DOUBLESCAN)
+	if (vm->flags & DISPLAY_FLAGS_DOUBLESCAN)
 		dmode->flags |= DRM_MODE_FLAG_DBLSCAN;
-	अगर (vm->flags & DISPLAY_FLAGS_DOUBLECLK)
+	if (vm->flags & DISPLAY_FLAGS_DOUBLECLK)
 		dmode->flags |= DRM_MODE_FLAG_DBLCLK;
 	drm_mode_set_name(dmode);
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(drm_display_mode_from_videomode);
 
 /**
  * drm_display_mode_to_videomode - fill in @vm using @dmode,
- * @dmode: drm_display_mode काष्ठाure to use as source
- * @vm: videomode काष्ठाure to use as destination
+ * @dmode: drm_display_mode structure to use as source
+ * @vm: videomode structure to use as destination
  *
- * Fills out @vm using the display mode specअगरied in @dmode.
+ * Fills out @vm using the display mode specified in @dmode.
  */
-व्योम drm_display_mode_to_videomode(स्थिर काष्ठा drm_display_mode *dmode,
-				   काष्ठा videomode *vm)
-अणु
+void drm_display_mode_to_videomode(const struct drm_display_mode *dmode,
+				   struct videomode *vm)
+{
 	vm->hactive = dmode->hdisplay;
 	vm->hfront_porch = dmode->hsync_start - dmode->hdisplay;
 	vm->hsync_len = dmode->hsync_end - dmode->hsync_start;
@@ -640,112 +639,112 @@ EXPORT_SYMBOL_GPL(drm_display_mode_from_videomode);
 	vm->vsync_len = dmode->vsync_end - dmode->vsync_start;
 	vm->vback_porch = dmode->vtotal - dmode->vsync_end;
 
-	vm->pixelघड़ी = dmode->घड़ी * 1000;
+	vm->pixelclock = dmode->clock * 1000;
 
 	vm->flags = 0;
-	अगर (dmode->flags & DRM_MODE_FLAG_PHSYNC)
+	if (dmode->flags & DRM_MODE_FLAG_PHSYNC)
 		vm->flags |= DISPLAY_FLAGS_HSYNC_HIGH;
-	अन्यथा अगर (dmode->flags & DRM_MODE_FLAG_NHSYNC)
+	else if (dmode->flags & DRM_MODE_FLAG_NHSYNC)
 		vm->flags |= DISPLAY_FLAGS_HSYNC_LOW;
-	अगर (dmode->flags & DRM_MODE_FLAG_PVSYNC)
+	if (dmode->flags & DRM_MODE_FLAG_PVSYNC)
 		vm->flags |= DISPLAY_FLAGS_VSYNC_HIGH;
-	अन्यथा अगर (dmode->flags & DRM_MODE_FLAG_NVSYNC)
+	else if (dmode->flags & DRM_MODE_FLAG_NVSYNC)
 		vm->flags |= DISPLAY_FLAGS_VSYNC_LOW;
-	अगर (dmode->flags & DRM_MODE_FLAG_INTERLACE)
+	if (dmode->flags & DRM_MODE_FLAG_INTERLACE)
 		vm->flags |= DISPLAY_FLAGS_INTERLACED;
-	अगर (dmode->flags & DRM_MODE_FLAG_DBLSCAN)
+	if (dmode->flags & DRM_MODE_FLAG_DBLSCAN)
 		vm->flags |= DISPLAY_FLAGS_DOUBLESCAN;
-	अगर (dmode->flags & DRM_MODE_FLAG_DBLCLK)
+	if (dmode->flags & DRM_MODE_FLAG_DBLCLK)
 		vm->flags |= DISPLAY_FLAGS_DOUBLECLK;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(drm_display_mode_to_videomode);
 
 /**
- * drm_bus_flags_from_videomode - extract inक्रमmation about pixelclk and
+ * drm_bus_flags_from_videomode - extract information about pixelclk and
  * DE polarity from videomode and store it in a separate variable
- * @vm: videomode काष्ठाure to use
- * @bus_flags: inक्रमmation about pixelclk, sync and DE polarity will be stored
+ * @vm: videomode structure to use
+ * @bus_flags: information about pixelclk, sync and DE polarity will be stored
  * here
  *
  * Sets DRM_BUS_FLAG_DE_(LOW|HIGH),  DRM_BUS_FLAG_PIXDATA_DRIVE_(POS|NEG)EDGE
  * and DISPLAY_FLAGS_SYNC_(POS|NEG)EDGE in @bus_flags according to DISPLAY_FLAGS
  * found in @vm
  */
-व्योम drm_bus_flags_from_videomode(स्थिर काष्ठा videomode *vm, u32 *bus_flags)
-अणु
+void drm_bus_flags_from_videomode(const struct videomode *vm, u32 *bus_flags)
+{
 	*bus_flags = 0;
-	अगर (vm->flags & DISPLAY_FLAGS_PIXDATA_POSEDGE)
+	if (vm->flags & DISPLAY_FLAGS_PIXDATA_POSEDGE)
 		*bus_flags |= DRM_BUS_FLAG_PIXDATA_DRIVE_POSEDGE;
-	अगर (vm->flags & DISPLAY_FLAGS_PIXDATA_NEGEDGE)
+	if (vm->flags & DISPLAY_FLAGS_PIXDATA_NEGEDGE)
 		*bus_flags |= DRM_BUS_FLAG_PIXDATA_DRIVE_NEGEDGE;
 
-	अगर (vm->flags & DISPLAY_FLAGS_SYNC_POSEDGE)
+	if (vm->flags & DISPLAY_FLAGS_SYNC_POSEDGE)
 		*bus_flags |= DRM_BUS_FLAG_SYNC_DRIVE_POSEDGE;
-	अगर (vm->flags & DISPLAY_FLAGS_SYNC_NEGEDGE)
+	if (vm->flags & DISPLAY_FLAGS_SYNC_NEGEDGE)
 		*bus_flags |= DRM_BUS_FLAG_SYNC_DRIVE_NEGEDGE;
 
-	अगर (vm->flags & DISPLAY_FLAGS_DE_LOW)
+	if (vm->flags & DISPLAY_FLAGS_DE_LOW)
 		*bus_flags |= DRM_BUS_FLAG_DE_LOW;
-	अगर (vm->flags & DISPLAY_FLAGS_DE_HIGH)
+	if (vm->flags & DISPLAY_FLAGS_DE_HIGH)
 		*bus_flags |= DRM_BUS_FLAG_DE_HIGH;
-पूर्ण
+}
 EXPORT_SYMBOL_GPL(drm_bus_flags_from_videomode);
 
-#अगर_घोषित CONFIG_OF
+#ifdef CONFIG_OF
 /**
  * of_get_drm_display_mode - get a drm_display_mode from devicetree
- * @np: device_node with the timing specअगरication
- * @dmode: will be set to the वापस value
- * @bus_flags: inक्रमmation about pixelclk, sync and DE polarity
- * @index: index पूर्णांकo the list of display timings in devicetree
+ * @np: device_node with the timing specification
+ * @dmode: will be set to the return value
+ * @bus_flags: information about pixelclk, sync and DE polarity
+ * @index: index into the list of display timings in devicetree
  *
- * This function is expensive and should only be used, अगर only one mode is to be
- * पढ़ो from DT. To get multiple modes start with of_get_display_timings and
+ * This function is expensive and should only be used, if only one mode is to be
+ * read from DT. To get multiple modes start with of_get_display_timings and
  * work with that instead.
  *
  * Returns:
- * 0 on success, a negative त्रुटि_सं code when no of videomode node was found.
+ * 0 on success, a negative errno code when no of videomode node was found.
  */
-पूर्णांक of_get_drm_display_mode(काष्ठा device_node *np,
-			    काष्ठा drm_display_mode *dmode, u32 *bus_flags,
-			    पूर्णांक index)
-अणु
-	काष्ठा videomode vm;
-	पूर्णांक ret;
+int of_get_drm_display_mode(struct device_node *np,
+			    struct drm_display_mode *dmode, u32 *bus_flags,
+			    int index)
+{
+	struct videomode vm;
+	int ret;
 
 	ret = of_get_videomode(np, &vm, index);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	drm_display_mode_from_videomode(&vm, dmode);
-	अगर (bus_flags)
+	if (bus_flags)
 		drm_bus_flags_from_videomode(&vm, bus_flags);
 
 	pr_debug("%pOF: got %dx%d display mode\n",
 		np, vm.hactive, vm.vactive);
-	drm_mode_debug_prपूर्णांकmodeline(dmode);
+	drm_mode_debug_printmodeline(dmode);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(of_get_drm_display_mode);
-#पूर्ण_अगर /* CONFIG_OF */
-#पूर्ण_अगर /* CONFIG_VIDEOMODE_HELPERS */
+#endif /* CONFIG_OF */
+#endif /* CONFIG_VIDEOMODE_HELPERS */
 
 /**
  * drm_mode_set_name - set the name on a mode
  * @mode: name will be set in this mode
  *
- * Set the name of @mode to a standard क्रमmat which is <hdisplay>x<vdisplay>
- * with an optional 'i' suffix क्रम पूर्णांकerlaced modes.
+ * Set the name of @mode to a standard format which is <hdisplay>x<vdisplay>
+ * with an optional 'i' suffix for interlaced modes.
  */
-व्योम drm_mode_set_name(काष्ठा drm_display_mode *mode)
-अणु
-	bool पूर्णांकerlaced = !!(mode->flags & DRM_MODE_FLAG_INTERLACE);
+void drm_mode_set_name(struct drm_display_mode *mode)
+{
+	bool interlaced = !!(mode->flags & DRM_MODE_FLAG_INTERLACE);
 
-	snम_लिखो(mode->name, DRM_DISPLAY_MODE_LEN, "%dx%d%s",
+	snprintf(mode->name, DRM_DISPLAY_MODE_LEN, "%dx%d%s",
 		 mode->hdisplay, mode->vdisplay,
-		 पूर्णांकerlaced ? "i" : "");
-पूर्ण
+		 interlaced ? "i" : "");
+}
 EXPORT_SYMBOL(drm_mode_set_name);
 
 /**
@@ -753,71 +752,71 @@ EXPORT_SYMBOL(drm_mode_set_name);
  * @mode: mode
  *
  * Returns:
- * @modes's vrefresh rate in Hz, rounded to the nearest पूर्णांकeger. Calculates the
- * value first अगर it is not yet set.
+ * @modes's vrefresh rate in Hz, rounded to the nearest integer. Calculates the
+ * value first if it is not yet set.
  */
-पूर्णांक drm_mode_vrefresh(स्थिर काष्ठा drm_display_mode *mode)
-अणु
-	अचिन्हित पूर्णांक num, den;
+int drm_mode_vrefresh(const struct drm_display_mode *mode)
+{
+	unsigned int num, den;
 
-	अगर (mode->htotal == 0 || mode->vtotal == 0)
-		वापस 0;
+	if (mode->htotal == 0 || mode->vtotal == 0)
+		return 0;
 
-	num = mode->घड़ी;
+	num = mode->clock;
 	den = mode->htotal * mode->vtotal;
 
-	अगर (mode->flags & DRM_MODE_FLAG_INTERLACE)
+	if (mode->flags & DRM_MODE_FLAG_INTERLACE)
 		num *= 2;
-	अगर (mode->flags & DRM_MODE_FLAG_DBLSCAN)
+	if (mode->flags & DRM_MODE_FLAG_DBLSCAN)
 		den *= 2;
-	अगर (mode->vscan > 1)
+	if (mode->vscan > 1)
 		den *= mode->vscan;
 
-	वापस DIV_ROUND_CLOSEST_ULL(mul_u32_u32(num, 1000), den);
-पूर्ण
+	return DIV_ROUND_CLOSEST_ULL(mul_u32_u32(num, 1000), den);
+}
 EXPORT_SYMBOL(drm_mode_vrefresh);
 
 /**
- * drm_mode_get_hv_timing - Fetches hdisplay/vdisplay क्रम given mode
+ * drm_mode_get_hv_timing - Fetches hdisplay/vdisplay for given mode
  * @mode: mode to query
  * @hdisplay: hdisplay value to fill in
  * @vdisplay: vdisplay value to fill in
  *
- * The vdisplay value will be द्विगुनd अगर the specअगरied mode is a stereo mode of
+ * The vdisplay value will be doubled if the specified mode is a stereo mode of
  * the appropriate layout.
  */
-व्योम drm_mode_get_hv_timing(स्थिर काष्ठा drm_display_mode *mode,
-			    पूर्णांक *hdisplay, पूर्णांक *vdisplay)
-अणु
-	काष्ठा drm_display_mode adjusted = *mode;
+void drm_mode_get_hv_timing(const struct drm_display_mode *mode,
+			    int *hdisplay, int *vdisplay)
+{
+	struct drm_display_mode adjusted = *mode;
 
 	drm_mode_set_crtcinfo(&adjusted, CRTC_STEREO_DOUBLE_ONLY);
 	*hdisplay = adjusted.crtc_hdisplay;
 	*vdisplay = adjusted.crtc_vdisplay;
-पूर्ण
+}
 EXPORT_SYMBOL(drm_mode_get_hv_timing);
 
 /**
  * drm_mode_set_crtcinfo - set CRTC modesetting timing parameters
  * @p: mode
- * @adjust_flags: a combination of adjusपंचांगent flags
+ * @adjust_flags: a combination of adjustment flags
  *
- * Setup the CRTC modesetting timing parameters क्रम @p, adjusting अगर necessary.
+ * Setup the CRTC modesetting timing parameters for @p, adjusting if necessary.
  *
  * - The CRTC_INTERLACE_HALVE_V flag can be used to halve vertical timings of
- *   पूर्णांकerlaced modes.
- * - The CRTC_STEREO_DOUBLE flag can be used to compute the timings क्रम
- *   buffers containing two eyes (only adjust the timings when needed, eg. क्रम
+ *   interlaced modes.
+ * - The CRTC_STEREO_DOUBLE flag can be used to compute the timings for
+ *   buffers containing two eyes (only adjust the timings when needed, eg. for
  *   "frame packing" or "side by side full").
- * - The CRTC_NO_DBLSCAN and CRTC_NO_VSCAN flags request that adjusपंचांगent *not*
- *   be perक्रमmed क्रम द्विगुनscan and vscan > 1 modes respectively.
+ * - The CRTC_NO_DBLSCAN and CRTC_NO_VSCAN flags request that adjustment *not*
+ *   be performed for doublescan and vscan > 1 modes respectively.
  */
-व्योम drm_mode_set_crtcinfo(काष्ठा drm_display_mode *p, पूर्णांक adjust_flags)
-अणु
-	अगर (!p)
-		वापस;
+void drm_mode_set_crtcinfo(struct drm_display_mode *p, int adjust_flags)
+{
+	if (!p)
+		return;
 
-	p->crtc_घड़ी = p->घड़ी;
+	p->crtc_clock = p->clock;
 	p->crtc_hdisplay = p->hdisplay;
 	p->crtc_hsync_start = p->hsync_start;
 	p->crtc_hsync_end = p->hsync_end;
@@ -828,101 +827,101 @@ EXPORT_SYMBOL(drm_mode_get_hv_timing);
 	p->crtc_vsync_end = p->vsync_end;
 	p->crtc_vtotal = p->vtotal;
 
-	अगर (p->flags & DRM_MODE_FLAG_INTERLACE) अणु
-		अगर (adjust_flags & CRTC_INTERLACE_HALVE_V) अणु
+	if (p->flags & DRM_MODE_FLAG_INTERLACE) {
+		if (adjust_flags & CRTC_INTERLACE_HALVE_V) {
 			p->crtc_vdisplay /= 2;
 			p->crtc_vsync_start /= 2;
 			p->crtc_vsync_end /= 2;
 			p->crtc_vtotal /= 2;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!(adjust_flags & CRTC_NO_DBLSCAN)) अणु
-		अगर (p->flags & DRM_MODE_FLAG_DBLSCAN) अणु
+	if (!(adjust_flags & CRTC_NO_DBLSCAN)) {
+		if (p->flags & DRM_MODE_FLAG_DBLSCAN) {
 			p->crtc_vdisplay *= 2;
 			p->crtc_vsync_start *= 2;
 			p->crtc_vsync_end *= 2;
 			p->crtc_vtotal *= 2;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!(adjust_flags & CRTC_NO_VSCAN)) अणु
-		अगर (p->vscan > 1) अणु
+	if (!(adjust_flags & CRTC_NO_VSCAN)) {
+		if (p->vscan > 1) {
 			p->crtc_vdisplay *= p->vscan;
 			p->crtc_vsync_start *= p->vscan;
 			p->crtc_vsync_end *= p->vscan;
 			p->crtc_vtotal *= p->vscan;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (adjust_flags & CRTC_STEREO_DOUBLE) अणु
-		अचिन्हित पूर्णांक layout = p->flags & DRM_MODE_FLAG_3D_MASK;
+	if (adjust_flags & CRTC_STEREO_DOUBLE) {
+		unsigned int layout = p->flags & DRM_MODE_FLAG_3D_MASK;
 
-		चयन (layout) अणु
-		हाल DRM_MODE_FLAG_3D_FRAME_PACKING:
-			p->crtc_घड़ी *= 2;
+		switch (layout) {
+		case DRM_MODE_FLAG_3D_FRAME_PACKING:
+			p->crtc_clock *= 2;
 			p->crtc_vdisplay += p->crtc_vtotal;
 			p->crtc_vsync_start += p->crtc_vtotal;
 			p->crtc_vsync_end += p->crtc_vtotal;
 			p->crtc_vtotal += p->crtc_vtotal;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	p->crtc_vblank_start = min(p->crtc_vsync_start, p->crtc_vdisplay);
 	p->crtc_vblank_end = max(p->crtc_vsync_end, p->crtc_vtotal);
 	p->crtc_hblank_start = min(p->crtc_hsync_start, p->crtc_hdisplay);
 	p->crtc_hblank_end = max(p->crtc_hsync_end, p->crtc_htotal);
-पूर्ण
+}
 EXPORT_SYMBOL(drm_mode_set_crtcinfo);
 
 /**
  * drm_mode_copy - copy the mode
- * @dst: mode to overग_लिखो
+ * @dst: mode to overwrite
  * @src: mode to copy
  *
- * Copy an existing mode पूर्णांकo another mode, preserving the object id and
+ * Copy an existing mode into another mode, preserving the object id and
  * list head of the destination mode.
  */
-व्योम drm_mode_copy(काष्ठा drm_display_mode *dst, स्थिर काष्ठा drm_display_mode *src)
-अणु
-	काष्ठा list_head head = dst->head;
+void drm_mode_copy(struct drm_display_mode *dst, const struct drm_display_mode *src)
+{
+	struct list_head head = dst->head;
 
 	*dst = *src;
 	dst->head = head;
-पूर्ण
+}
 EXPORT_SYMBOL(drm_mode_copy);
 
 /**
  * drm_mode_duplicate - allocate and duplicate an existing mode
- * @dev: drm_device to allocate the duplicated mode क्रम
+ * @dev: drm_device to allocate the duplicated mode for
  * @mode: mode to duplicate
  *
- * Just allocate a new mode, copy the existing mode पूर्णांकo it, and वापस
- * a poपूर्णांकer to it.  Used to create new instances of established modes.
+ * Just allocate a new mode, copy the existing mode into it, and return
+ * a pointer to it.  Used to create new instances of established modes.
  *
  * Returns:
- * Poपूर्णांकer to duplicated mode on success, शून्य on error.
+ * Pointer to duplicated mode on success, NULL on error.
  */
-काष्ठा drm_display_mode *drm_mode_duplicate(काष्ठा drm_device *dev,
-					    स्थिर काष्ठा drm_display_mode *mode)
-अणु
-	काष्ठा drm_display_mode *nmode;
+struct drm_display_mode *drm_mode_duplicate(struct drm_device *dev,
+					    const struct drm_display_mode *mode)
+{
+	struct drm_display_mode *nmode;
 
 	nmode = drm_mode_create(dev);
-	अगर (!nmode)
-		वापस शून्य;
+	if (!nmode)
+		return NULL;
 
 	drm_mode_copy(nmode, mode);
 
-	वापस nmode;
-पूर्ण
+	return nmode;
+}
 EXPORT_SYMBOL(drm_mode_duplicate);
 
-अटल bool drm_mode_match_timings(स्थिर काष्ठा drm_display_mode *mode1,
-				   स्थिर काष्ठा drm_display_mode *mode2)
-अणु
-	वापस mode1->hdisplay == mode2->hdisplay &&
+static bool drm_mode_match_timings(const struct drm_display_mode *mode1,
+				   const struct drm_display_mode *mode2)
+{
+	return mode1->hdisplay == mode2->hdisplay &&
 		mode1->hsync_start == mode2->hsync_start &&
 		mode1->hsync_end == mode2->hsync_end &&
 		mode1->htotal == mode2->htotal &&
@@ -932,210 +931,210 @@ EXPORT_SYMBOL(drm_mode_duplicate);
 		mode1->vsync_end == mode2->vsync_end &&
 		mode1->vtotal == mode2->vtotal &&
 		mode1->vscan == mode2->vscan;
-पूर्ण
+}
 
-अटल bool drm_mode_match_घड़ी(स्थिर काष्ठा drm_display_mode *mode1,
-				  स्थिर काष्ठा drm_display_mode *mode2)
-अणु
+static bool drm_mode_match_clock(const struct drm_display_mode *mode1,
+				  const struct drm_display_mode *mode2)
+{
 	/*
-	 * करो घड़ी check convert to PICOS
+	 * do clock check convert to PICOS
 	 * so fb modes get matched the same
 	 */
-	अगर (mode1->घड़ी && mode2->घड़ी)
-		वापस KHZ2PICOS(mode1->घड़ी) == KHZ2PICOS(mode2->घड़ी);
-	अन्यथा
-		वापस mode1->घड़ी == mode2->घड़ी;
-पूर्ण
+	if (mode1->clock && mode2->clock)
+		return KHZ2PICOS(mode1->clock) == KHZ2PICOS(mode2->clock);
+	else
+		return mode1->clock == mode2->clock;
+}
 
-अटल bool drm_mode_match_flags(स्थिर काष्ठा drm_display_mode *mode1,
-				 स्थिर काष्ठा drm_display_mode *mode2)
-अणु
-	वापस (mode1->flags & ~DRM_MODE_FLAG_3D_MASK) ==
+static bool drm_mode_match_flags(const struct drm_display_mode *mode1,
+				 const struct drm_display_mode *mode2)
+{
+	return (mode1->flags & ~DRM_MODE_FLAG_3D_MASK) ==
 		(mode2->flags & ~DRM_MODE_FLAG_3D_MASK);
-पूर्ण
+}
 
-अटल bool drm_mode_match_3d_flags(स्थिर काष्ठा drm_display_mode *mode1,
-				    स्थिर काष्ठा drm_display_mode *mode2)
-अणु
-	वापस (mode1->flags & DRM_MODE_FLAG_3D_MASK) ==
+static bool drm_mode_match_3d_flags(const struct drm_display_mode *mode1,
+				    const struct drm_display_mode *mode2)
+{
+	return (mode1->flags & DRM_MODE_FLAG_3D_MASK) ==
 		(mode2->flags & DRM_MODE_FLAG_3D_MASK);
-पूर्ण
+}
 
-अटल bool drm_mode_match_aspect_ratio(स्थिर काष्ठा drm_display_mode *mode1,
-					स्थिर काष्ठा drm_display_mode *mode2)
-अणु
-	वापस mode1->picture_aspect_ratio == mode2->picture_aspect_ratio;
-पूर्ण
+static bool drm_mode_match_aspect_ratio(const struct drm_display_mode *mode1,
+					const struct drm_display_mode *mode2)
+{
+	return mode1->picture_aspect_ratio == mode2->picture_aspect_ratio;
+}
 
 /**
- * drm_mode_match - test modes क्रम (partial) equality
+ * drm_mode_match - test modes for (partial) equality
  * @mode1: first mode
  * @mode2: second mode
  * @match_flags: which parts need to match (DRM_MODE_MATCH_*)
  *
- * Check to see अगर @mode1 and @mode2 are equivalent.
+ * Check to see if @mode1 and @mode2 are equivalent.
  *
  * Returns:
- * True अगर the modes are (partially) equal, false otherwise.
+ * True if the modes are (partially) equal, false otherwise.
  */
-bool drm_mode_match(स्थिर काष्ठा drm_display_mode *mode1,
-		    स्थिर काष्ठा drm_display_mode *mode2,
-		    अचिन्हित पूर्णांक match_flags)
-अणु
-	अगर (!mode1 && !mode2)
-		वापस true;
+bool drm_mode_match(const struct drm_display_mode *mode1,
+		    const struct drm_display_mode *mode2,
+		    unsigned int match_flags)
+{
+	if (!mode1 && !mode2)
+		return true;
 
-	अगर (!mode1 || !mode2)
-		वापस false;
+	if (!mode1 || !mode2)
+		return false;
 
-	अगर (match_flags & DRM_MODE_MATCH_TIMINGS &&
+	if (match_flags & DRM_MODE_MATCH_TIMINGS &&
 	    !drm_mode_match_timings(mode1, mode2))
-		वापस false;
+		return false;
 
-	अगर (match_flags & DRM_MODE_MATCH_CLOCK &&
-	    !drm_mode_match_घड़ी(mode1, mode2))
-		वापस false;
+	if (match_flags & DRM_MODE_MATCH_CLOCK &&
+	    !drm_mode_match_clock(mode1, mode2))
+		return false;
 
-	अगर (match_flags & DRM_MODE_MATCH_FLAGS &&
+	if (match_flags & DRM_MODE_MATCH_FLAGS &&
 	    !drm_mode_match_flags(mode1, mode2))
-		वापस false;
+		return false;
 
-	अगर (match_flags & DRM_MODE_MATCH_3D_FLAGS &&
+	if (match_flags & DRM_MODE_MATCH_3D_FLAGS &&
 	    !drm_mode_match_3d_flags(mode1, mode2))
-		वापस false;
+		return false;
 
-	अगर (match_flags & DRM_MODE_MATCH_ASPECT_RATIO &&
+	if (match_flags & DRM_MODE_MATCH_ASPECT_RATIO &&
 	    !drm_mode_match_aspect_ratio(mode1, mode2))
-		वापस false;
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 EXPORT_SYMBOL(drm_mode_match);
 
 /**
- * drm_mode_equal - test modes क्रम equality
+ * drm_mode_equal - test modes for equality
  * @mode1: first mode
  * @mode2: second mode
  *
- * Check to see अगर @mode1 and @mode2 are equivalent.
+ * Check to see if @mode1 and @mode2 are equivalent.
  *
  * Returns:
- * True अगर the modes are equal, false otherwise.
+ * True if the modes are equal, false otherwise.
  */
-bool drm_mode_equal(स्थिर काष्ठा drm_display_mode *mode1,
-		    स्थिर काष्ठा drm_display_mode *mode2)
-अणु
-	वापस drm_mode_match(mode1, mode2,
+bool drm_mode_equal(const struct drm_display_mode *mode1,
+		    const struct drm_display_mode *mode2)
+{
+	return drm_mode_match(mode1, mode2,
 			      DRM_MODE_MATCH_TIMINGS |
 			      DRM_MODE_MATCH_CLOCK |
 			      DRM_MODE_MATCH_FLAGS |
 			      DRM_MODE_MATCH_3D_FLAGS|
 			      DRM_MODE_MATCH_ASPECT_RATIO);
-पूर्ण
+}
 EXPORT_SYMBOL(drm_mode_equal);
 
 /**
- * drm_mode_equal_no_घड़ीs - test modes क्रम equality
+ * drm_mode_equal_no_clocks - test modes for equality
  * @mode1: first mode
  * @mode2: second mode
  *
- * Check to see अगर @mode1 and @mode2 are equivalent, but
- * करोn't check the pixel घड़ीs.
+ * Check to see if @mode1 and @mode2 are equivalent, but
+ * don't check the pixel clocks.
  *
  * Returns:
- * True अगर the modes are equal, false otherwise.
+ * True if the modes are equal, false otherwise.
  */
-bool drm_mode_equal_no_घड़ीs(स्थिर काष्ठा drm_display_mode *mode1,
-			      स्थिर काष्ठा drm_display_mode *mode2)
-अणु
-	वापस drm_mode_match(mode1, mode2,
+bool drm_mode_equal_no_clocks(const struct drm_display_mode *mode1,
+			      const struct drm_display_mode *mode2)
+{
+	return drm_mode_match(mode1, mode2,
 			      DRM_MODE_MATCH_TIMINGS |
 			      DRM_MODE_MATCH_FLAGS |
 			      DRM_MODE_MATCH_3D_FLAGS);
-पूर्ण
-EXPORT_SYMBOL(drm_mode_equal_no_घड़ीs);
+}
+EXPORT_SYMBOL(drm_mode_equal_no_clocks);
 
 /**
- * drm_mode_equal_no_घड़ीs_no_stereo - test modes क्रम equality
+ * drm_mode_equal_no_clocks_no_stereo - test modes for equality
  * @mode1: first mode
  * @mode2: second mode
  *
- * Check to see अगर @mode1 and @mode2 are equivalent, but
- * करोn't check the pixel घड़ीs nor the stereo layout.
+ * Check to see if @mode1 and @mode2 are equivalent, but
+ * don't check the pixel clocks nor the stereo layout.
  *
  * Returns:
- * True अगर the modes are equal, false otherwise.
+ * True if the modes are equal, false otherwise.
  */
-bool drm_mode_equal_no_घड़ीs_no_stereo(स्थिर काष्ठा drm_display_mode *mode1,
-					स्थिर काष्ठा drm_display_mode *mode2)
-अणु
-	वापस drm_mode_match(mode1, mode2,
+bool drm_mode_equal_no_clocks_no_stereo(const struct drm_display_mode *mode1,
+					const struct drm_display_mode *mode2)
+{
+	return drm_mode_match(mode1, mode2,
 			      DRM_MODE_MATCH_TIMINGS |
 			      DRM_MODE_MATCH_FLAGS);
-पूर्ण
-EXPORT_SYMBOL(drm_mode_equal_no_घड़ीs_no_stereo);
+}
+EXPORT_SYMBOL(drm_mode_equal_no_clocks_no_stereo);
 
-अटल क्रमागत drm_mode_status
-drm_mode_validate_basic(स्थिर काष्ठा drm_display_mode *mode)
-अणु
-	अगर (mode->type & ~DRM_MODE_TYPE_ALL)
-		वापस MODE_BAD;
+static enum drm_mode_status
+drm_mode_validate_basic(const struct drm_display_mode *mode)
+{
+	if (mode->type & ~DRM_MODE_TYPE_ALL)
+		return MODE_BAD;
 
-	अगर (mode->flags & ~DRM_MODE_FLAG_ALL)
-		वापस MODE_BAD;
+	if (mode->flags & ~DRM_MODE_FLAG_ALL)
+		return MODE_BAD;
 
-	अगर ((mode->flags & DRM_MODE_FLAG_3D_MASK) > DRM_MODE_FLAG_3D_MAX)
-		वापस MODE_BAD;
+	if ((mode->flags & DRM_MODE_FLAG_3D_MASK) > DRM_MODE_FLAG_3D_MAX)
+		return MODE_BAD;
 
-	अगर (mode->घड़ी == 0)
-		वापस MODE_CLOCK_LOW;
+	if (mode->clock == 0)
+		return MODE_CLOCK_LOW;
 
-	अगर (mode->hdisplay == 0 ||
+	if (mode->hdisplay == 0 ||
 	    mode->hsync_start < mode->hdisplay ||
 	    mode->hsync_end < mode->hsync_start ||
 	    mode->htotal < mode->hsync_end)
-		वापस MODE_H_ILLEGAL;
+		return MODE_H_ILLEGAL;
 
-	अगर (mode->vdisplay == 0 ||
+	if (mode->vdisplay == 0 ||
 	    mode->vsync_start < mode->vdisplay ||
 	    mode->vsync_end < mode->vsync_start ||
 	    mode->vtotal < mode->vsync_end)
-		वापस MODE_V_ILLEGAL;
+		return MODE_V_ILLEGAL;
 
-	वापस MODE_OK;
-पूर्ण
+	return MODE_OK;
+}
 
 /**
  * drm_mode_validate_driver - make sure the mode is somewhat sane
  * @dev: drm device
  * @mode: mode to check
  *
- * First करो basic validation on the mode, and then allow the driver
- * to check क्रम device/driver specअगरic limitations via the optional
+ * First do basic validation on the mode, and then allow the driver
+ * to check for device/driver specific limitations via the optional
  * &drm_mode_config_helper_funcs.mode_valid hook.
  *
  * Returns:
  * The mode status
  */
-क्रमागत drm_mode_status
-drm_mode_validate_driver(काष्ठा drm_device *dev,
-			स्थिर काष्ठा drm_display_mode *mode)
-अणु
-	क्रमागत drm_mode_status status;
+enum drm_mode_status
+drm_mode_validate_driver(struct drm_device *dev,
+			const struct drm_display_mode *mode)
+{
+	enum drm_mode_status status;
 
 	status = drm_mode_validate_basic(mode);
-	अगर (status != MODE_OK)
-		वापस status;
+	if (status != MODE_OK)
+		return status;
 
-	अगर (dev->mode_config.funcs->mode_valid)
-		वापस dev->mode_config.funcs->mode_valid(dev, mode);
-	अन्यथा
-		वापस MODE_OK;
-पूर्ण
+	if (dev->mode_config.funcs->mode_valid)
+		return dev->mode_config.funcs->mode_valid(dev, mode);
+	else
+		return MODE_OK;
+}
 EXPORT_SYMBOL(drm_mode_validate_driver);
 
 /**
- * drm_mode_validate_size - make sure modes adhere to size स्थिरraपूर्णांकs
+ * drm_mode_validate_size - make sure modes adhere to size constraints
  * @mode: mode to check
  * @maxX: maximum width
  * @maxY: maximum height
@@ -1148,18 +1147,18 @@ EXPORT_SYMBOL(drm_mode_validate_driver);
  * Returns:
  * The mode status
  */
-क्रमागत drm_mode_status
-drm_mode_validate_size(स्थिर काष्ठा drm_display_mode *mode,
-		       पूर्णांक maxX, पूर्णांक maxY)
-अणु
-	अगर (maxX > 0 && mode->hdisplay > maxX)
-		वापस MODE_VIRTUAL_X;
+enum drm_mode_status
+drm_mode_validate_size(const struct drm_display_mode *mode,
+		       int maxX, int maxY)
+{
+	if (maxX > 0 && mode->hdisplay > maxX)
+		return MODE_VIRTUAL_X;
 
-	अगर (maxY > 0 && mode->vdisplay > maxY)
-		वापस MODE_VIRTUAL_Y;
+	if (maxY > 0 && mode->vdisplay > maxY)
+		return MODE_VIRTUAL_Y;
 
-	वापस MODE_OK;
-पूर्ण
+	return MODE_OK;
+}
 EXPORT_SYMBOL(drm_mode_validate_size);
 
 /**
@@ -1168,31 +1167,31 @@ EXPORT_SYMBOL(drm_mode_validate_size);
  * @connector: drm connector under action
  *
  * This function is a helper which can be used to filter out any YCBCR420
- * only mode, when the source करोesn't support it.
+ * only mode, when the source doesn't support it.
  *
  * Returns:
  * The mode status
  */
-क्रमागत drm_mode_status
-drm_mode_validate_ycbcr420(स्थिर काष्ठा drm_display_mode *mode,
-			   काष्ठा drm_connector *connector)
-अणु
+enum drm_mode_status
+drm_mode_validate_ycbcr420(const struct drm_display_mode *mode,
+			   struct drm_connector *connector)
+{
 	u8 vic = drm_match_cea_mode(mode);
-	क्रमागत drm_mode_status status = MODE_OK;
-	काष्ठा drm_hdmi_info *hdmi = &connector->display_info.hdmi;
+	enum drm_mode_status status = MODE_OK;
+	struct drm_hdmi_info *hdmi = &connector->display_info.hdmi;
 
-	अगर (test_bit(vic, hdmi->y420_vdb_modes)) अणु
-		अगर (!connector->ycbcr_420_allowed)
+	if (test_bit(vic, hdmi->y420_vdb_modes)) {
+		if (!connector->ycbcr_420_allowed)
 			status = MODE_NO_420;
-	पूर्ण
+	}
 
-	वापस status;
-पूर्ण
+	return status;
+}
 EXPORT_SYMBOL(drm_mode_validate_ycbcr420);
 
-#घोषणा MODE_STATUS(status) [MODE_ ## status + 3] = #status
+#define MODE_STATUS(status) [MODE_ ## status + 3] = #status
 
-अटल स्थिर अक्षर * स्थिर drm_mode_status_names[] = अणु
+static const char * const drm_mode_status_names[] = {
 	MODE_STATUS(OK),
 	MODE_STATUS(HSYNC),
 	MODE_STATUS(VSYNC),
@@ -1233,124 +1232,124 @@ EXPORT_SYMBOL(drm_mode_validate_ycbcr420);
 	MODE_STATUS(STALE),
 	MODE_STATUS(BAD),
 	MODE_STATUS(ERROR),
-पूर्ण;
+};
 
-#अघोषित MODE_STATUS
+#undef MODE_STATUS
 
-स्थिर अक्षर *drm_get_mode_status_name(क्रमागत drm_mode_status status)
-अणु
-	पूर्णांक index = status + 3;
+const char *drm_get_mode_status_name(enum drm_mode_status status)
+{
+	int index = status + 3;
 
-	अगर (WARN_ON(index < 0 || index >= ARRAY_SIZE(drm_mode_status_names)))
-		वापस "";
+	if (WARN_ON(index < 0 || index >= ARRAY_SIZE(drm_mode_status_names)))
+		return "";
 
-	वापस drm_mode_status_names[index];
-पूर्ण
+	return drm_mode_status_names[index];
+}
 
 /**
- * drm_mode_prune_invalid - हटाओ invalid modes from mode list
+ * drm_mode_prune_invalid - remove invalid modes from mode list
  * @dev: DRM device
  * @mode_list: list of modes to check
  * @verbose: be verbose about it
  *
  * This helper function can be used to prune a display mode list after
  * validation has been completed. All modes whose status is not MODE_OK will be
- * हटाओd from the list, and अगर @verbose the status code and mode name is also
- * prपूर्णांकed to dmesg.
+ * removed from the list, and if @verbose the status code and mode name is also
+ * printed to dmesg.
  */
-व्योम drm_mode_prune_invalid(काष्ठा drm_device *dev,
-			    काष्ठा list_head *mode_list, bool verbose)
-अणु
-	काष्ठा drm_display_mode *mode, *t;
+void drm_mode_prune_invalid(struct drm_device *dev,
+			    struct list_head *mode_list, bool verbose)
+{
+	struct drm_display_mode *mode, *t;
 
-	list_क्रम_each_entry_safe(mode, t, mode_list, head) अणु
-		अगर (mode->status != MODE_OK) अणु
+	list_for_each_entry_safe(mode, t, mode_list, head) {
+		if (mode->status != MODE_OK) {
 			list_del(&mode->head);
-			अगर (verbose) अणु
-				drm_mode_debug_prपूर्णांकmodeline(mode);
+			if (verbose) {
+				drm_mode_debug_printmodeline(mode);
 				DRM_DEBUG_KMS("Not using %s mode: %s\n",
 					      mode->name,
 					      drm_get_mode_status_name(mode->status));
-			पूर्ण
+			}
 			drm_mode_destroy(dev, mode);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 EXPORT_SYMBOL(drm_mode_prune_invalid);
 
 /**
- * drm_mode_compare - compare modes क्रम favorability
+ * drm_mode_compare - compare modes for favorability
  * @priv: unused
- * @lh_a: list_head क्रम first mode
- * @lh_b: list_head क्रम second mode
+ * @lh_a: list_head for first mode
+ * @lh_b: list_head for second mode
  *
- * Compare two modes, given by @lh_a and @lh_b, वापसing a value indicating
+ * Compare two modes, given by @lh_a and @lh_b, returning a value indicating
  * which is better.
  *
  * Returns:
- * Negative अगर @lh_a is better than @lh_b, zero अगर they're equivalent, or
- * positive अगर @lh_b is better than @lh_a.
+ * Negative if @lh_a is better than @lh_b, zero if they're equivalent, or
+ * positive if @lh_b is better than @lh_a.
  */
-अटल पूर्णांक drm_mode_compare(व्योम *priv, स्थिर काष्ठा list_head *lh_a,
-			    स्थिर काष्ठा list_head *lh_b)
-अणु
-	काष्ठा drm_display_mode *a = list_entry(lh_a, काष्ठा drm_display_mode, head);
-	काष्ठा drm_display_mode *b = list_entry(lh_b, काष्ठा drm_display_mode, head);
-	पूर्णांक dअगरf;
+static int drm_mode_compare(void *priv, const struct list_head *lh_a,
+			    const struct list_head *lh_b)
+{
+	struct drm_display_mode *a = list_entry(lh_a, struct drm_display_mode, head);
+	struct drm_display_mode *b = list_entry(lh_b, struct drm_display_mode, head);
+	int diff;
 
-	dअगरf = ((b->type & DRM_MODE_TYPE_PREFERRED) != 0) -
+	diff = ((b->type & DRM_MODE_TYPE_PREFERRED) != 0) -
 		((a->type & DRM_MODE_TYPE_PREFERRED) != 0);
-	अगर (dअगरf)
-		वापस dअगरf;
-	dअगरf = b->hdisplay * b->vdisplay - a->hdisplay * a->vdisplay;
-	अगर (dअगरf)
-		वापस dअगरf;
+	if (diff)
+		return diff;
+	diff = b->hdisplay * b->vdisplay - a->hdisplay * a->vdisplay;
+	if (diff)
+		return diff;
 
-	dअगरf = drm_mode_vrefresh(b) - drm_mode_vrefresh(a);
-	अगर (dअगरf)
-		वापस dअगरf;
+	diff = drm_mode_vrefresh(b) - drm_mode_vrefresh(a);
+	if (diff)
+		return diff;
 
-	dअगरf = b->घड़ी - a->घड़ी;
-	वापस dअगरf;
-पूर्ण
+	diff = b->clock - a->clock;
+	return diff;
+}
 
 /**
  * drm_mode_sort - sort mode list
- * @mode_list: list of drm_display_mode काष्ठाures to sort
+ * @mode_list: list of drm_display_mode structures to sort
  *
  * Sort @mode_list by favorability, moving good modes to the head of the list.
  */
-व्योम drm_mode_sort(काष्ठा list_head *mode_list)
-अणु
-	list_sort(शून्य, mode_list, drm_mode_compare);
-पूर्ण
+void drm_mode_sort(struct list_head *mode_list)
+{
+	list_sort(NULL, mode_list, drm_mode_compare);
+}
 EXPORT_SYMBOL(drm_mode_sort);
 
 /**
- * drm_connector_list_update - update the mode list क्रम the connector
+ * drm_connector_list_update - update the mode list for the connector
  * @connector: the connector to update
  *
  * This moves the modes from the @connector probed_modes list
  * to the actual mode list. It compares the probed mode against the current
- * list and only adds dअगरferent/new modes.
+ * list and only adds different/new modes.
  *
- * This is just a helper functions करोesn't validate any modes itself and also
- * करोesn't prune any invalid modes. Callers need to करो that themselves.
+ * This is just a helper functions doesn't validate any modes itself and also
+ * doesn't prune any invalid modes. Callers need to do that themselves.
  */
-व्योम drm_connector_list_update(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा drm_display_mode *pmode, *pt;
+void drm_connector_list_update(struct drm_connector *connector)
+{
+	struct drm_display_mode *pmode, *pt;
 
 	WARN_ON(!mutex_is_locked(&connector->dev->mode_config.mutex));
 
-	list_क्रम_each_entry_safe(pmode, pt, &connector->probed_modes, head) अणु
-		काष्ठा drm_display_mode *mode;
+	list_for_each_entry_safe(pmode, pt, &connector->probed_modes, head) {
+		struct drm_display_mode *mode;
 		bool found_it = false;
 
-		/* go through current modes checking क्रम the new probed mode */
-		list_क्रम_each_entry(mode, &connector->modes, head) अणु
-			अगर (!drm_mode_equal(pmode, mode))
-				जारी;
+		/* go through current modes checking for the new probed mode */
+		list_for_each_entry(mode, &connector->modes, head) {
+			if (!drm_mode_equal(pmode, mode))
+				continue;
 
 			found_it = true;
 
@@ -1362,343 +1361,343 @@ EXPORT_SYMBOL(drm_mode_sort);
 			 *
 			 * If two probed modes are considered equal, pick the
 			 * actual timings from the one that's marked as
-			 * preferred (in हाल the match isn't 100%). If
+			 * preferred (in case the match isn't 100%). If
 			 * multiple or zero preferred modes are present, favor
 			 * the mode added to the probed_modes list first.
 			 */
-			अगर (mode->status == MODE_STALE) अणु
+			if (mode->status == MODE_STALE) {
 				drm_mode_copy(mode, pmode);
-			पूर्ण अन्यथा अगर ((mode->type & DRM_MODE_TYPE_PREFERRED) == 0 &&
-				   (pmode->type & DRM_MODE_TYPE_PREFERRED) != 0) अणु
+			} else if ((mode->type & DRM_MODE_TYPE_PREFERRED) == 0 &&
+				   (pmode->type & DRM_MODE_TYPE_PREFERRED) != 0) {
 				pmode->type |= mode->type;
 				drm_mode_copy(mode, pmode);
-			पूर्ण अन्यथा अणु
+			} else {
 				mode->type |= pmode->type;
-			पूर्ण
+			}
 
 			list_del(&pmode->head);
 			drm_mode_destroy(connector->dev, pmode);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (!found_it) अणु
+		if (!found_it) {
 			list_move_tail(&pmode->head, &connector->modes);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 EXPORT_SYMBOL(drm_connector_list_update);
 
-अटल पूर्णांक drm_mode_parse_cmdline_bpp(स्थिर अक्षर *str, अक्षर **end_ptr,
-				      काष्ठा drm_cmdline_mode *mode)
-अणु
-	अचिन्हित पूर्णांक bpp;
+static int drm_mode_parse_cmdline_bpp(const char *str, char **end_ptr,
+				      struct drm_cmdline_mode *mode)
+{
+	unsigned int bpp;
 
-	अगर (str[0] != '-')
-		वापस -EINVAL;
+	if (str[0] != '-')
+		return -EINVAL;
 
 	str++;
-	bpp = simple_म_से_दीर्घ(str, end_ptr, 10);
-	अगर (*end_ptr == str)
-		वापस -EINVAL;
+	bpp = simple_strtol(str, end_ptr, 10);
+	if (*end_ptr == str)
+		return -EINVAL;
 
 	mode->bpp = bpp;
-	mode->bpp_specअगरied = true;
+	mode->bpp_specified = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक drm_mode_parse_cmdline_refresh(स्थिर अक्षर *str, अक्षर **end_ptr,
-					  काष्ठा drm_cmdline_mode *mode)
-अणु
-	अचिन्हित पूर्णांक refresh;
+static int drm_mode_parse_cmdline_refresh(const char *str, char **end_ptr,
+					  struct drm_cmdline_mode *mode)
+{
+	unsigned int refresh;
 
-	अगर (str[0] != '@')
-		वापस -EINVAL;
+	if (str[0] != '@')
+		return -EINVAL;
 
 	str++;
-	refresh = simple_म_से_दीर्घ(str, end_ptr, 10);
-	अगर (*end_ptr == str)
-		वापस -EINVAL;
+	refresh = simple_strtol(str, end_ptr, 10);
+	if (*end_ptr == str)
+		return -EINVAL;
 
 	mode->refresh = refresh;
-	mode->refresh_specअगरied = true;
+	mode->refresh_specified = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक drm_mode_parse_cmdline_extra(स्थिर अक्षर *str, पूर्णांक length,
-					bool मुक्तstanding,
-					स्थिर काष्ठा drm_connector *connector,
-					काष्ठा drm_cmdline_mode *mode)
-अणु
-	पूर्णांक i;
+static int drm_mode_parse_cmdline_extra(const char *str, int length,
+					bool freestanding,
+					const struct drm_connector *connector,
+					struct drm_cmdline_mode *mode)
+{
+	int i;
 
-	क्रम (i = 0; i < length; i++) अणु
-		चयन (str[i]) अणु
-		हाल 'i':
-			अगर (मुक्तstanding)
-				वापस -EINVAL;
+	for (i = 0; i < length; i++) {
+		switch (str[i]) {
+		case 'i':
+			if (freestanding)
+				return -EINVAL;
 
-			mode->पूर्णांकerlace = true;
-			अवरोध;
-		हाल 'm':
-			अगर (मुक्तstanding)
-				वापस -EINVAL;
+			mode->interlace = true;
+			break;
+		case 'm':
+			if (freestanding)
+				return -EINVAL;
 
 			mode->margins = true;
-			अवरोध;
-		हाल 'D':
-			अगर (mode->क्रमce != DRM_FORCE_UNSPECIFIED)
-				वापस -EINVAL;
+			break;
+		case 'D':
+			if (mode->force != DRM_FORCE_UNSPECIFIED)
+				return -EINVAL;
 
-			अगर ((connector->connector_type != DRM_MODE_CONNECTOR_DVII) &&
+			if ((connector->connector_type != DRM_MODE_CONNECTOR_DVII) &&
 			    (connector->connector_type != DRM_MODE_CONNECTOR_HDMIB))
-				mode->क्रमce = DRM_FORCE_ON;
-			अन्यथा
-				mode->क्रमce = DRM_FORCE_ON_DIGITAL;
-			अवरोध;
-		हाल 'd':
-			अगर (mode->क्रमce != DRM_FORCE_UNSPECIFIED)
-				वापस -EINVAL;
+				mode->force = DRM_FORCE_ON;
+			else
+				mode->force = DRM_FORCE_ON_DIGITAL;
+			break;
+		case 'd':
+			if (mode->force != DRM_FORCE_UNSPECIFIED)
+				return -EINVAL;
 
-			mode->क्रमce = DRM_FORCE_OFF;
-			अवरोध;
-		हाल 'e':
-			अगर (mode->क्रमce != DRM_FORCE_UNSPECIFIED)
-				वापस -EINVAL;
+			mode->force = DRM_FORCE_OFF;
+			break;
+		case 'e':
+			if (mode->force != DRM_FORCE_UNSPECIFIED)
+				return -EINVAL;
 
-			mode->क्रमce = DRM_FORCE_ON;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			mode->force = DRM_FORCE_ON;
+			break;
+		default:
+			return -EINVAL;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक drm_mode_parse_cmdline_res_mode(स्थिर अक्षर *str, अचिन्हित पूर्णांक length,
+static int drm_mode_parse_cmdline_res_mode(const char *str, unsigned int length,
 					   bool extras,
-					   स्थिर काष्ठा drm_connector *connector,
-					   काष्ठा drm_cmdline_mode *mode)
-अणु
-	स्थिर अक्षर *str_start = str;
+					   const struct drm_connector *connector,
+					   struct drm_cmdline_mode *mode)
+{
+	const char *str_start = str;
 	bool rb = false, cvt = false;
-	पूर्णांक xres = 0, yres = 0;
-	पूर्णांक reमुख्यing, i;
-	अक्षर *end_ptr;
+	int xres = 0, yres = 0;
+	int remaining, i;
+	char *end_ptr;
 
-	xres = simple_म_से_दीर्घ(str, &end_ptr, 10);
-	अगर (end_ptr == str)
-		वापस -EINVAL;
+	xres = simple_strtol(str, &end_ptr, 10);
+	if (end_ptr == str)
+		return -EINVAL;
 
-	अगर (end_ptr[0] != 'x')
-		वापस -EINVAL;
+	if (end_ptr[0] != 'x')
+		return -EINVAL;
 	end_ptr++;
 
 	str = end_ptr;
-	yres = simple_म_से_दीर्घ(str, &end_ptr, 10);
-	अगर (end_ptr == str)
-		वापस -EINVAL;
+	yres = simple_strtol(str, &end_ptr, 10);
+	if (end_ptr == str)
+		return -EINVAL;
 
-	reमुख्यing = length - (end_ptr - str_start);
-	अगर (reमुख्यing < 0)
-		वापस -EINVAL;
+	remaining = length - (end_ptr - str_start);
+	if (remaining < 0)
+		return -EINVAL;
 
-	क्रम (i = 0; i < reमुख्यing; i++) अणु
-		चयन (end_ptr[i]) अणु
-		हाल 'M':
+	for (i = 0; i < remaining; i++) {
+		switch (end_ptr[i]) {
+		case 'M':
 			cvt = true;
-			अवरोध;
-		हाल 'R':
+			break;
+		case 'R':
 			rb = true;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			/*
 			 * Try to pass that to our extras parsing
-			 * function to handle the हाल where the
+			 * function to handle the case where the
 			 * extras are directly after the resolution
 			 */
-			अगर (extras) अणु
-				पूर्णांक ret = drm_mode_parse_cmdline_extra(end_ptr + i,
+			if (extras) {
+				int ret = drm_mode_parse_cmdline_extra(end_ptr + i,
 								       1,
 								       false,
 								       connector,
 								       mode);
-				अगर (ret)
-					वापस ret;
-			पूर्ण अन्यथा अणु
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				if (ret)
+					return ret;
+			} else {
+				return -EINVAL;
+			}
+		}
+	}
 
 	mode->xres = xres;
 	mode->yres = yres;
 	mode->cvt = cvt;
 	mode->rb = rb;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक drm_mode_parse_cmdline_पूर्णांक(स्थिर अक्षर *delim, अचिन्हित पूर्णांक *पूर्णांक_ret)
-अणु
-	स्थिर अक्षर *value;
-	अक्षर *endp;
+static int drm_mode_parse_cmdline_int(const char *delim, unsigned int *int_ret)
+{
+	const char *value;
+	char *endp;
 
 	/*
-	 * delim must poपूर्णांक to the '=', otherwise it is a syntax error and
-	 * अगर delim poपूर्णांकs to the terminating zero, then delim + 1 wil poपूर्णांक
+	 * delim must point to the '=', otherwise it is a syntax error and
+	 * if delim points to the terminating zero, then delim + 1 wil point
 	 * past the end of the string.
 	 */
-	अगर (*delim != '=')
-		वापस -EINVAL;
+	if (*delim != '=')
+		return -EINVAL;
 
 	value = delim + 1;
-	*पूर्णांक_ret = simple_म_से_दीर्घ(value, &endp, 10);
+	*int_ret = simple_strtol(value, &endp, 10);
 
 	/* Make sure we have parsed something */
-	अगर (endp == value)
-		वापस -EINVAL;
+	if (endp == value)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक drm_mode_parse_panel_orientation(स्थिर अक्षर *delim,
-					    काष्ठा drm_cmdline_mode *mode)
-अणु
-	स्थिर अक्षर *value;
+static int drm_mode_parse_panel_orientation(const char *delim,
+					    struct drm_cmdline_mode *mode)
+{
+	const char *value;
 
-	अगर (*delim != '=')
-		वापस -EINVAL;
+	if (*delim != '=')
+		return -EINVAL;
 
 	value = delim + 1;
-	delim = म_अक्षर(value, ',');
-	अगर (!delim)
-		delim = value + म_माप(value);
+	delim = strchr(value, ',');
+	if (!delim)
+		delim = value + strlen(value);
 
-	अगर (!म_भेदन(value, "normal", delim - value))
+	if (!strncmp(value, "normal", delim - value))
 		mode->panel_orientation = DRM_MODE_PANEL_ORIENTATION_NORMAL;
-	अन्यथा अगर (!म_भेदन(value, "upside_down", delim - value))
+	else if (!strncmp(value, "upside_down", delim - value))
 		mode->panel_orientation = DRM_MODE_PANEL_ORIENTATION_BOTTOM_UP;
-	अन्यथा अगर (!म_भेदन(value, "left_side_up", delim - value))
+	else if (!strncmp(value, "left_side_up", delim - value))
 		mode->panel_orientation = DRM_MODE_PANEL_ORIENTATION_LEFT_UP;
-	अन्यथा अगर (!म_भेदन(value, "right_side_up", delim - value))
+	else if (!strncmp(value, "right_side_up", delim - value))
 		mode->panel_orientation = DRM_MODE_PANEL_ORIENTATION_RIGHT_UP;
-	अन्यथा
-		वापस -EINVAL;
+	else
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक drm_mode_parse_cmdline_options(स्थिर अक्षर *str,
-					  bool मुक्तstanding,
-					  स्थिर काष्ठा drm_connector *connector,
-					  काष्ठा drm_cmdline_mode *mode)
-अणु
-	अचिन्हित पूर्णांक deg, margin, rotation = 0;
-	स्थिर अक्षर *delim, *option, *sep;
+static int drm_mode_parse_cmdline_options(const char *str,
+					  bool freestanding,
+					  const struct drm_connector *connector,
+					  struct drm_cmdline_mode *mode)
+{
+	unsigned int deg, margin, rotation = 0;
+	const char *delim, *option, *sep;
 
 	option = str;
-	करो अणु
-		delim = म_अक्षर(option, '=');
-		अगर (!delim) अणु
-			delim = म_अक्षर(option, ',');
+	do {
+		delim = strchr(option, '=');
+		if (!delim) {
+			delim = strchr(option, ',');
 
-			अगर (!delim)
-				delim = option + म_माप(option);
-		पूर्ण
+			if (!delim)
+				delim = option + strlen(option);
+		}
 
-		अगर (!म_भेदन(option, "rotate", delim - option)) अणु
-			अगर (drm_mode_parse_cmdline_पूर्णांक(delim, &deg))
-				वापस -EINVAL;
+		if (!strncmp(option, "rotate", delim - option)) {
+			if (drm_mode_parse_cmdline_int(delim, &deg))
+				return -EINVAL;
 
-			चयन (deg) अणु
-			हाल 0:
+			switch (deg) {
+			case 0:
 				rotation |= DRM_MODE_ROTATE_0;
-				अवरोध;
+				break;
 
-			हाल 90:
+			case 90:
 				rotation |= DRM_MODE_ROTATE_90;
-				अवरोध;
+				break;
 
-			हाल 180:
+			case 180:
 				rotation |= DRM_MODE_ROTATE_180;
-				अवरोध;
+				break;
 
-			हाल 270:
+			case 270:
 				rotation |= DRM_MODE_ROTATE_270;
-				अवरोध;
+				break;
 
-			शेष:
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण अन्यथा अगर (!म_भेदन(option, "reflect_x", delim - option)) अणु
+			default:
+				return -EINVAL;
+			}
+		} else if (!strncmp(option, "reflect_x", delim - option)) {
 			rotation |= DRM_MODE_REFLECT_X;
-		पूर्ण अन्यथा अगर (!म_भेदन(option, "reflect_y", delim - option)) अणु
+		} else if (!strncmp(option, "reflect_y", delim - option)) {
 			rotation |= DRM_MODE_REFLECT_Y;
-		पूर्ण अन्यथा अगर (!म_भेदन(option, "margin_right", delim - option)) अणु
-			अगर (drm_mode_parse_cmdline_पूर्णांक(delim, &margin))
-				वापस -EINVAL;
+		} else if (!strncmp(option, "margin_right", delim - option)) {
+			if (drm_mode_parse_cmdline_int(delim, &margin))
+				return -EINVAL;
 
 			mode->tv_margins.right = margin;
-		पूर्ण अन्यथा अगर (!म_भेदन(option, "margin_left", delim - option)) अणु
-			अगर (drm_mode_parse_cmdline_पूर्णांक(delim, &margin))
-				वापस -EINVAL;
+		} else if (!strncmp(option, "margin_left", delim - option)) {
+			if (drm_mode_parse_cmdline_int(delim, &margin))
+				return -EINVAL;
 
 			mode->tv_margins.left = margin;
-		पूर्ण अन्यथा अगर (!म_भेदन(option, "margin_top", delim - option)) अणु
-			अगर (drm_mode_parse_cmdline_पूर्णांक(delim, &margin))
-				वापस -EINVAL;
+		} else if (!strncmp(option, "margin_top", delim - option)) {
+			if (drm_mode_parse_cmdline_int(delim, &margin))
+				return -EINVAL;
 
 			mode->tv_margins.top = margin;
-		पूर्ण अन्यथा अगर (!म_भेदन(option, "margin_bottom", delim - option)) अणु
-			अगर (drm_mode_parse_cmdline_पूर्णांक(delim, &margin))
-				वापस -EINVAL;
+		} else if (!strncmp(option, "margin_bottom", delim - option)) {
+			if (drm_mode_parse_cmdline_int(delim, &margin))
+				return -EINVAL;
 
 			mode->tv_margins.bottom = margin;
-		पूर्ण अन्यथा अगर (!म_भेदन(option, "panel_orientation", delim - option)) अणु
-			अगर (drm_mode_parse_panel_orientation(delim, mode))
-				वापस -EINVAL;
-		पूर्ण अन्यथा अणु
-			वापस -EINVAL;
-		पूर्ण
-		sep = म_अक्षर(delim, ',');
+		} else if (!strncmp(option, "panel_orientation", delim - option)) {
+			if (drm_mode_parse_panel_orientation(delim, mode))
+				return -EINVAL;
+		} else {
+			return -EINVAL;
+		}
+		sep = strchr(delim, ',');
 		option = sep + 1;
-	पूर्ण जबतक (sep);
+	} while (sep);
 
-	अगर (rotation && मुक्तstanding)
-		वापस -EINVAL;
+	if (rotation && freestanding)
+		return -EINVAL;
 
-	अगर (!(rotation & DRM_MODE_ROTATE_MASK))
+	if (!(rotation & DRM_MODE_ROTATE_MASK))
 		rotation |= DRM_MODE_ROTATE_0;
 
 	/* Make sure there is exactly one rotation defined */
-	अगर (!is_घातer_of_2(rotation & DRM_MODE_ROTATE_MASK))
-		वापस -EINVAL;
+	if (!is_power_of_2(rotation & DRM_MODE_ROTATE_MASK))
+		return -EINVAL;
 
 	mode->rotation_reflection = rotation;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर अक्षर * स्थिर drm_named_modes_whitelist[] = अणु
+static const char * const drm_named_modes_whitelist[] = {
 	"NTSC",
 	"PAL",
-पूर्ण;
+};
 
 /**
- * drm_mode_parse_command_line_क्रम_connector - parse command line modeline क्रम connector
+ * drm_mode_parse_command_line_for_connector - parse command line modeline for connector
  * @mode_option: optional per connector mode option
- * @connector: connector to parse modeline क्रम
- * @mode: pपुनः_स्मृतिated drm_cmdline_mode काष्ठाure to fill out
+ * @connector: connector to parse modeline for
+ * @mode: preallocated drm_cmdline_mode structure to fill out
  *
- * This parses @mode_option command line modeline क्रम modes and options to
- * configure the connector. If @mode_option is शून्य the शेष command line
+ * This parses @mode_option command line modeline for modes and options to
+ * configure the connector. If @mode_option is NULL the default command line
  * modeline in fb_mode_option will be parsed instead.
  *
- * This uses the same parameters as the fb modedb.c, except क्रम an extra
- * क्रमce-enable, क्रमce-enable-digital and क्रमce-disable bit at the end::
+ * This uses the same parameters as the fb modedb.c, except for an extra
+ * force-enable, force-enable-digital and force-disable bit at the end::
  *
  *	<xres>x<yres>[M][R][-<bpp>][@<refresh>][i][m][eDd]
  *
@@ -1706,205 +1705,205 @@ EXPORT_SYMBOL(drm_connector_list_update);
  * separate each option. Valid options can be found in
  * Documentation/fb/modedb.rst.
  *
- * The पूर्णांकermediate drm_cmdline_mode काष्ठाure is required to store additional
- * options from the command line modline like the क्रमce-enable/disable flag.
+ * The intermediate drm_cmdline_mode structure is required to store additional
+ * options from the command line modline like the force-enable/disable flag.
  *
  * Returns:
- * True अगर a valid modeline has been parsed, false otherwise.
+ * True if a valid modeline has been parsed, false otherwise.
  */
-bool drm_mode_parse_command_line_क्रम_connector(स्थिर अक्षर *mode_option,
-					       स्थिर काष्ठा drm_connector *connector,
-					       काष्ठा drm_cmdline_mode *mode)
-अणु
-	स्थिर अक्षर *name;
-	bool मुक्तstanding = false, parse_extras = false;
-	अचिन्हित पूर्णांक bpp_off = 0, refresh_off = 0, options_off = 0;
-	अचिन्हित पूर्णांक mode_end = 0;
-	स्थिर अक्षर *bpp_ptr = शून्य, *refresh_ptr = शून्य, *extra_ptr = शून्य;
-	स्थिर अक्षर *options_ptr = शून्य;
-	अक्षर *bpp_end_ptr = शून्य, *refresh_end_ptr = शून्य;
-	पूर्णांक i, len, ret;
+bool drm_mode_parse_command_line_for_connector(const char *mode_option,
+					       const struct drm_connector *connector,
+					       struct drm_cmdline_mode *mode)
+{
+	const char *name;
+	bool freestanding = false, parse_extras = false;
+	unsigned int bpp_off = 0, refresh_off = 0, options_off = 0;
+	unsigned int mode_end = 0;
+	const char *bpp_ptr = NULL, *refresh_ptr = NULL, *extra_ptr = NULL;
+	const char *options_ptr = NULL;
+	char *bpp_end_ptr = NULL, *refresh_end_ptr = NULL;
+	int i, len, ret;
 
-	स_रखो(mode, 0, माप(*mode));
+	memset(mode, 0, sizeof(*mode));
 	mode->panel_orientation = DRM_MODE_PANEL_ORIENTATION_UNKNOWN;
 
-	अगर (!mode_option)
-		वापस false;
+	if (!mode_option)
+		return false;
 
 	name = mode_option;
 
-	/* Try to locate the bpp and refresh specअगरiers, अगर any */
-	bpp_ptr = म_अक्षर(name, '-');
-	अगर (bpp_ptr)
+	/* Try to locate the bpp and refresh specifiers, if any */
+	bpp_ptr = strchr(name, '-');
+	if (bpp_ptr)
 		bpp_off = bpp_ptr - name;
 
-	refresh_ptr = म_अक्षर(name, '@');
-	अगर (refresh_ptr)
+	refresh_ptr = strchr(name, '@');
+	if (refresh_ptr)
 		refresh_off = refresh_ptr - name;
 
 	/* Locate the start of named options */
-	options_ptr = म_अक्षर(name, ',');
-	अगर (options_ptr)
+	options_ptr = strchr(name, ',');
+	if (options_ptr)
 		options_off = options_ptr - name;
 
 	/* Locate the end of the name / resolution, and parse it */
-	अगर (bpp_ptr) अणु
+	if (bpp_ptr) {
 		mode_end = bpp_off;
-	पूर्ण अन्यथा अगर (refresh_ptr) अणु
+	} else if (refresh_ptr) {
 		mode_end = refresh_off;
-	पूर्ण अन्यथा अगर (options_ptr) अणु
+	} else if (options_ptr) {
 		mode_end = options_off;
 		parse_extras = true;
-	पूर्ण अन्यथा अणु
-		mode_end = म_माप(name);
+	} else {
+		mode_end = strlen(name);
 		parse_extras = true;
-	पूर्ण
+	}
 
-	/* First check क्रम a named mode */
-	क्रम (i = 0; i < ARRAY_SIZE(drm_named_modes_whitelist); i++) अणु
+	/* First check for a named mode */
+	for (i = 0; i < ARRAY_SIZE(drm_named_modes_whitelist); i++) {
 		ret = str_has_prefix(name, drm_named_modes_whitelist[i]);
-		अगर (ret == mode_end) अणु
-			अगर (refresh_ptr)
-				वापस false; /* named + refresh is invalid */
+		if (ret == mode_end) {
+			if (refresh_ptr)
+				return false; /* named + refresh is invalid */
 
-			म_नकल(mode->name, drm_named_modes_whitelist[i]);
-			mode->specअगरied = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			strcpy(mode->name, drm_named_modes_whitelist[i]);
+			mode->specified = true;
+			break;
+		}
+	}
 
-	/* No named mode? Check क्रम a normal mode argument, e.g. 1024x768 */
-	अगर (!mode->specअगरied && है_अंक(name[0])) अणु
+	/* No named mode? Check for a normal mode argument, e.g. 1024x768 */
+	if (!mode->specified && isdigit(name[0])) {
 		ret = drm_mode_parse_cmdline_res_mode(name, mode_end,
 						      parse_extras,
 						      connector,
 						      mode);
-		अगर (ret)
-			वापस false;
+		if (ret)
+			return false;
 
-		mode->specअगरied = true;
-	पूर्ण
+		mode->specified = true;
+	}
 
-	/* No mode? Check क्रम मुक्तstanding extras and/or options */
-	अगर (!mode->specअगरied) अणु
-		अचिन्हित पूर्णांक len = म_माप(mode_option);
+	/* No mode? Check for freestanding extras and/or options */
+	if (!mode->specified) {
+		unsigned int len = strlen(mode_option);
 
-		अगर (bpp_ptr || refresh_ptr)
-			वापस false; /* syntax error */
+		if (bpp_ptr || refresh_ptr)
+			return false; /* syntax error */
 
-		अगर (len == 1 || (len >= 2 && mode_option[1] == ','))
+		if (len == 1 || (len >= 2 && mode_option[1] == ','))
 			extra_ptr = mode_option;
-		अन्यथा
+		else
 			options_ptr = mode_option - 1;
 
-		मुक्तstanding = true;
-	पूर्ण
+		freestanding = true;
+	}
 
-	अगर (bpp_ptr) अणु
+	if (bpp_ptr) {
 		ret = drm_mode_parse_cmdline_bpp(bpp_ptr, &bpp_end_ptr, mode);
-		अगर (ret)
-			वापस false;
+		if (ret)
+			return false;
 
-		mode->bpp_specअगरied = true;
-	पूर्ण
+		mode->bpp_specified = true;
+	}
 
-	अगर (refresh_ptr) अणु
+	if (refresh_ptr) {
 		ret = drm_mode_parse_cmdline_refresh(refresh_ptr,
 						     &refresh_end_ptr, mode);
-		अगर (ret)
-			वापस false;
+		if (ret)
+			return false;
 
-		mode->refresh_specअगरied = true;
-	पूर्ण
+		mode->refresh_specified = true;
+	}
 
 	/*
 	 * Locate the end of the bpp / refresh, and parse the extras
-	 * अगर relevant
+	 * if relevant
 	 */
-	अगर (bpp_ptr && refresh_ptr)
+	if (bpp_ptr && refresh_ptr)
 		extra_ptr = max(bpp_end_ptr, refresh_end_ptr);
-	अन्यथा अगर (bpp_ptr)
+	else if (bpp_ptr)
 		extra_ptr = bpp_end_ptr;
-	अन्यथा अगर (refresh_ptr)
+	else if (refresh_ptr)
 		extra_ptr = refresh_end_ptr;
 
-	अगर (extra_ptr) अणु
-		अगर (options_ptr)
+	if (extra_ptr) {
+		if (options_ptr)
 			len = options_ptr - extra_ptr;
-		अन्यथा
-			len = म_माप(extra_ptr);
+		else
+			len = strlen(extra_ptr);
 
-		ret = drm_mode_parse_cmdline_extra(extra_ptr, len, मुक्तstanding,
+		ret = drm_mode_parse_cmdline_extra(extra_ptr, len, freestanding,
 						   connector, mode);
-		अगर (ret)
-			वापस false;
-	पूर्ण
+		if (ret)
+			return false;
+	}
 
-	अगर (options_ptr) अणु
+	if (options_ptr) {
 		ret = drm_mode_parse_cmdline_options(options_ptr + 1,
-						     मुक्तstanding,
+						     freestanding,
 						     connector, mode);
-		अगर (ret)
-			वापस false;
-	पूर्ण
+		if (ret)
+			return false;
+	}
 
-	वापस true;
-पूर्ण
-EXPORT_SYMBOL(drm_mode_parse_command_line_क्रम_connector);
+	return true;
+}
+EXPORT_SYMBOL(drm_mode_parse_command_line_for_connector);
 
 /**
- * drm_mode_create_from_cmdline_mode - convert a command line modeline पूर्णांकo a DRM display mode
- * @dev: DRM device to create the new mode क्रम
+ * drm_mode_create_from_cmdline_mode - convert a command line modeline into a DRM display mode
+ * @dev: DRM device to create the new mode for
  * @cmd: input command line modeline
  *
  * Returns:
- * Poपूर्णांकer to converted mode on success, शून्य on error.
+ * Pointer to converted mode on success, NULL on error.
  */
-काष्ठा drm_display_mode *
-drm_mode_create_from_cmdline_mode(काष्ठा drm_device *dev,
-				  काष्ठा drm_cmdline_mode *cmd)
-अणु
-	काष्ठा drm_display_mode *mode;
+struct drm_display_mode *
+drm_mode_create_from_cmdline_mode(struct drm_device *dev,
+				  struct drm_cmdline_mode *cmd)
+{
+	struct drm_display_mode *mode;
 
-	अगर (cmd->xres == 0 || cmd->yres == 0)
-		वापस शून्य;
+	if (cmd->xres == 0 || cmd->yres == 0)
+		return NULL;
 
-	अगर (cmd->cvt)
+	if (cmd->cvt)
 		mode = drm_cvt_mode(dev,
 				    cmd->xres, cmd->yres,
-				    cmd->refresh_specअगरied ? cmd->refresh : 60,
-				    cmd->rb, cmd->पूर्णांकerlace,
+				    cmd->refresh_specified ? cmd->refresh : 60,
+				    cmd->rb, cmd->interlace,
 				    cmd->margins);
-	अन्यथा
+	else
 		mode = drm_gtf_mode(dev,
 				    cmd->xres, cmd->yres,
-				    cmd->refresh_specअगरied ? cmd->refresh : 60,
-				    cmd->पूर्णांकerlace,
+				    cmd->refresh_specified ? cmd->refresh : 60,
+				    cmd->interlace,
 				    cmd->margins);
-	अगर (!mode)
-		वापस शून्य;
+	if (!mode)
+		return NULL;
 
 	mode->type |= DRM_MODE_TYPE_USERDEF;
 	/* fix up 1368x768: GFT/CVT can't express 1366 width due to alignment */
-	अगर (cmd->xres == 1366)
+	if (cmd->xres == 1366)
 		drm_mode_fixup_1366x768(mode);
 	drm_mode_set_crtcinfo(mode, CRTC_INTERLACE_HALVE_V);
-	वापस mode;
-पूर्ण
+	return mode;
+}
 EXPORT_SYMBOL(drm_mode_create_from_cmdline_mode);
 
 /**
- * drm_mode_convert_to_umode - convert a drm_display_mode पूर्णांकo a modeinfo
- * @out: drm_mode_modeinfo काष्ठा to वापस to the user
+ * drm_mode_convert_to_umode - convert a drm_display_mode into a modeinfo
+ * @out: drm_mode_modeinfo struct to return to the user
  * @in: drm_display_mode to use
  *
- * Convert a drm_display_mode पूर्णांकo a drm_mode_modeinfo काष्ठाure to वापस to
+ * Convert a drm_display_mode into a drm_mode_modeinfo structure to return to
  * the user.
  */
-व्योम drm_mode_convert_to_umode(काष्ठा drm_mode_modeinfo *out,
-			       स्थिर काष्ठा drm_display_mode *in)
-अणु
-	out->घड़ी = in->घड़ी;
+void drm_mode_convert_to_umode(struct drm_mode_modeinfo *out,
+			       const struct drm_display_mode *in)
+{
+	out->clock = in->clock;
 	out->hdisplay = in->hdisplay;
 	out->hsync_start = in->hsync_start;
 	out->hsync_end = in->hsync_end;
@@ -1919,52 +1918,52 @@ EXPORT_SYMBOL(drm_mode_create_from_cmdline_mode);
 	out->flags = in->flags;
 	out->type = in->type;
 
-	चयन (in->picture_aspect_ratio) अणु
-	हाल HDMI_PICTURE_ASPECT_4_3:
+	switch (in->picture_aspect_ratio) {
+	case HDMI_PICTURE_ASPECT_4_3:
 		out->flags |= DRM_MODE_FLAG_PIC_AR_4_3;
-		अवरोध;
-	हाल HDMI_PICTURE_ASPECT_16_9:
+		break;
+	case HDMI_PICTURE_ASPECT_16_9:
 		out->flags |= DRM_MODE_FLAG_PIC_AR_16_9;
-		अवरोध;
-	हाल HDMI_PICTURE_ASPECT_64_27:
+		break;
+	case HDMI_PICTURE_ASPECT_64_27:
 		out->flags |= DRM_MODE_FLAG_PIC_AR_64_27;
-		अवरोध;
-	हाल HDMI_PICTURE_ASPECT_256_135:
+		break;
+	case HDMI_PICTURE_ASPECT_256_135:
 		out->flags |= DRM_MODE_FLAG_PIC_AR_256_135;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN(1, "Invalid aspect ratio (0%x) on mode\n",
 		     in->picture_aspect_ratio);
 		fallthrough;
-	हाल HDMI_PICTURE_ASPECT_NONE:
+	case HDMI_PICTURE_ASPECT_NONE:
 		out->flags |= DRM_MODE_FLAG_PIC_AR_NONE;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	म_नकलन(out->name, in->name, DRM_DISPLAY_MODE_LEN);
+	strncpy(out->name, in->name, DRM_DISPLAY_MODE_LEN);
 	out->name[DRM_DISPLAY_MODE_LEN-1] = 0;
-पूर्ण
+}
 
 /**
- * drm_mode_convert_umode - convert a modeinfo पूर्णांकo a drm_display_mode
+ * drm_mode_convert_umode - convert a modeinfo into a drm_display_mode
  * @dev: drm device
- * @out: drm_display_mode to वापस to the user
+ * @out: drm_display_mode to return to the user
  * @in: drm_mode_modeinfo to use
  *
- * Convert a drm_mode_modeinfo पूर्णांकo a drm_display_mode काष्ठाure to वापस to
+ * Convert a drm_mode_modeinfo into a drm_display_mode structure to return to
  * the caller.
  *
  * Returns:
- * Zero on success, negative त्रुटि_सं on failure.
+ * Zero on success, negative errno on failure.
  */
-पूर्णांक drm_mode_convert_umode(काष्ठा drm_device *dev,
-			   काष्ठा drm_display_mode *out,
-			   स्थिर काष्ठा drm_mode_modeinfo *in)
-अणु
-	अगर (in->घड़ी > पूर्णांक_उच्च || in->vrefresh > पूर्णांक_उच्च)
-		वापस -दुस्फल;
+int drm_mode_convert_umode(struct drm_device *dev,
+			   struct drm_display_mode *out,
+			   const struct drm_mode_modeinfo *in)
+{
+	if (in->clock > INT_MAX || in->vrefresh > INT_MAX)
+		return -ERANGE;
 
-	out->घड़ी = in->घड़ी;
+	out->clock = in->clock;
 	out->hdisplay = in->hdisplay;
 	out->hsync_start = in->hsync_start;
 	out->hsync_end = in->hsync_end;
@@ -1979,102 +1978,102 @@ EXPORT_SYMBOL(drm_mode_create_from_cmdline_mode);
 	/*
 	 * Old xf86-video-vmware (possibly others too) used to
 	 * leave 'type' unititialized. Just ignore any bits we
-	 * करोn't like. It's a just hपूर्णांक after all, and more
-	 * useful क्रम the kernel->userspace direction anyway.
+	 * don't like. It's a just hint after all, and more
+	 * useful for the kernel->userspace direction anyway.
 	 */
 	out->type = in->type & DRM_MODE_TYPE_ALL;
-	म_नकलन(out->name, in->name, DRM_DISPLAY_MODE_LEN);
+	strncpy(out->name, in->name, DRM_DISPLAY_MODE_LEN);
 	out->name[DRM_DISPLAY_MODE_LEN-1] = 0;
 
 	/* Clearing picture aspect ratio bits from out flags,
-	 * as the aspect-ratio inक्रमmation is not stored in
-	 * flags क्रम kernel-mode, but in picture_aspect_ratio.
+	 * as the aspect-ratio information is not stored in
+	 * flags for kernel-mode, but in picture_aspect_ratio.
 	 */
 	out->flags &= ~DRM_MODE_FLAG_PIC_AR_MASK;
 
-	चयन (in->flags & DRM_MODE_FLAG_PIC_AR_MASK) अणु
-	हाल DRM_MODE_FLAG_PIC_AR_4_3:
+	switch (in->flags & DRM_MODE_FLAG_PIC_AR_MASK) {
+	case DRM_MODE_FLAG_PIC_AR_4_3:
 		out->picture_aspect_ratio = HDMI_PICTURE_ASPECT_4_3;
-		अवरोध;
-	हाल DRM_MODE_FLAG_PIC_AR_16_9:
+		break;
+	case DRM_MODE_FLAG_PIC_AR_16_9:
 		out->picture_aspect_ratio = HDMI_PICTURE_ASPECT_16_9;
-		अवरोध;
-	हाल DRM_MODE_FLAG_PIC_AR_64_27:
+		break;
+	case DRM_MODE_FLAG_PIC_AR_64_27:
 		out->picture_aspect_ratio = HDMI_PICTURE_ASPECT_64_27;
-		अवरोध;
-	हाल DRM_MODE_FLAG_PIC_AR_256_135:
+		break;
+	case DRM_MODE_FLAG_PIC_AR_256_135:
 		out->picture_aspect_ratio = HDMI_PICTURE_ASPECT_256_135;
-		अवरोध;
-	हाल DRM_MODE_FLAG_PIC_AR_NONE:
+		break;
+	case DRM_MODE_FLAG_PIC_AR_NONE:
 		out->picture_aspect_ratio = HDMI_PICTURE_ASPECT_NONE;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	out->status = drm_mode_validate_driver(dev, out);
-	अगर (out->status != MODE_OK)
-		वापस -EINVAL;
+	if (out->status != MODE_OK)
+		return -EINVAL;
 
 	drm_mode_set_crtcinfo(out, CRTC_INTERLACE_HALVE_V);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * drm_mode_is_420_only - अगर a given videomode can be only supported in YCBCR420
- * output क्रमmat
+ * drm_mode_is_420_only - if a given videomode can be only supported in YCBCR420
+ * output format
  *
  * @display: display under action
  * @mode: video mode to be tested.
  *
  * Returns:
- * true अगर the mode can be supported in YCBCR420 क्रमmat
- * false अगर not.
+ * true if the mode can be supported in YCBCR420 format
+ * false if not.
  */
-bool drm_mode_is_420_only(स्थिर काष्ठा drm_display_info *display,
-			  स्थिर काष्ठा drm_display_mode *mode)
-अणु
+bool drm_mode_is_420_only(const struct drm_display_info *display,
+			  const struct drm_display_mode *mode)
+{
 	u8 vic = drm_match_cea_mode(mode);
 
-	वापस test_bit(vic, display->hdmi.y420_vdb_modes);
-पूर्ण
+	return test_bit(vic, display->hdmi.y420_vdb_modes);
+}
 EXPORT_SYMBOL(drm_mode_is_420_only);
 
 /**
- * drm_mode_is_420_also - अगर a given videomode can be supported in YCBCR420
- * output क्रमmat also (aदीर्घ with RGB/YCBCR444/422)
+ * drm_mode_is_420_also - if a given videomode can be supported in YCBCR420
+ * output format also (along with RGB/YCBCR444/422)
  *
  * @display: display under action.
  * @mode: video mode to be tested.
  *
  * Returns:
- * true अगर the mode can be support YCBCR420 क्रमmat
- * false अगर not.
+ * true if the mode can be support YCBCR420 format
+ * false if not.
  */
-bool drm_mode_is_420_also(स्थिर काष्ठा drm_display_info *display,
-			  स्थिर काष्ठा drm_display_mode *mode)
-अणु
+bool drm_mode_is_420_also(const struct drm_display_info *display,
+			  const struct drm_display_mode *mode)
+{
 	u8 vic = drm_match_cea_mode(mode);
 
-	वापस test_bit(vic, display->hdmi.y420_cmdb_modes);
-पूर्ण
+	return test_bit(vic, display->hdmi.y420_cmdb_modes);
+}
 EXPORT_SYMBOL(drm_mode_is_420_also);
 /**
- * drm_mode_is_420 - अगर a given videomode can be supported in YCBCR420
- * output क्रमmat
+ * drm_mode_is_420 - if a given videomode can be supported in YCBCR420
+ * output format
  *
  * @display: display under action.
  * @mode: video mode to be tested.
  *
  * Returns:
- * true अगर the mode can be supported in YCBCR420 क्रमmat
- * false अगर not.
+ * true if the mode can be supported in YCBCR420 format
+ * false if not.
  */
-bool drm_mode_is_420(स्थिर काष्ठा drm_display_info *display,
-		     स्थिर काष्ठा drm_display_mode *mode)
-अणु
-	वापस drm_mode_is_420_only(display, mode) ||
+bool drm_mode_is_420(const struct drm_display_info *display,
+		     const struct drm_display_mode *mode)
+{
+	return drm_mode_is_420_only(display, mode) ||
 		drm_mode_is_420_also(display, mode);
-पूर्ण
+}
 EXPORT_SYMBOL(drm_mode_is_420);

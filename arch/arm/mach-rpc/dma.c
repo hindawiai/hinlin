@@ -1,71 +1,70 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  linux/arch/arm/mach-rpc/dma.c
  *
  *  Copyright (C) 1998 Russell King
  *
- *  DMA functions specअगरic to RiscPC architecture
+ *  DMA functions specific to RiscPC architecture
  */
-#समावेश <linux/mman.h>
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/पन.स>
+#include <linux/mman.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/dma-mapping.h>
+#include <linux/io.h>
 
-#समावेश <यंत्र/page.h>
-#समावेश <यंत्र/dma.h>
-#समावेश <यंत्र/fiq.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <mach/hardware.h>
-#समावेश <linux/uaccess.h>
+#include <asm/page.h>
+#include <asm/dma.h>
+#include <asm/fiq.h>
+#include <asm/irq.h>
+#include <mach/hardware.h>
+#include <linux/uaccess.h>
 
-#समावेश <यंत्र/mach/dma.h>
-#समावेश <यंत्र/hardware/iomd.h>
+#include <asm/mach/dma.h>
+#include <asm/hardware/iomd.h>
 
-काष्ठा iomd_dma अणु
-	काष्ठा dma_काष्ठा	dma;
-	व्योम __iomem		*base;		/* Controller base address */
-	पूर्णांक			irq;		/* Controller IRQ */
-	अचिन्हित पूर्णांक		state;
+struct iomd_dma {
+	struct dma_struct	dma;
+	void __iomem		*base;		/* Controller base address */
+	int			irq;		/* Controller IRQ */
+	unsigned int		state;
 	dma_addr_t		cur_addr;
-	अचिन्हित पूर्णांक		cur_len;
+	unsigned int		cur_len;
 	dma_addr_t		dma_addr;
-	अचिन्हित पूर्णांक		dma_len;
-पूर्ण;
+	unsigned int		dma_len;
+};
 
-#अगर 0
-प्रकार क्रमागत अणु
+#if 0
+typedef enum {
 	dma_size_8	= 1,
 	dma_size_16	= 2,
 	dma_size_32	= 4,
 	dma_size_128	= 16
-पूर्ण dma_माप_प्रकार;
-#पूर्ण_अगर
+} dma_size_t;
+#endif
 
-#घोषणा TRANSFER_SIZE	2
+#define TRANSFER_SIZE	2
 
-#घोषणा CURA	(0)
-#घोषणा ENDA	(IOMD_IO0ENDA - IOMD_IO0CURA)
-#घोषणा CURB	(IOMD_IO0CURB - IOMD_IO0CURA)
-#घोषणा ENDB	(IOMD_IO0ENDB - IOMD_IO0CURA)
-#घोषणा CR	(IOMD_IO0CR - IOMD_IO0CURA)
-#घोषणा ST	(IOMD_IO0ST - IOMD_IO0CURA)
+#define CURA	(0)
+#define ENDA	(IOMD_IO0ENDA - IOMD_IO0CURA)
+#define CURB	(IOMD_IO0CURB - IOMD_IO0CURA)
+#define ENDB	(IOMD_IO0ENDB - IOMD_IO0CURA)
+#define CR	(IOMD_IO0CR - IOMD_IO0CURA)
+#define ST	(IOMD_IO0ST - IOMD_IO0CURA)
 
-अटल व्योम iomd_get_next_sg(काष्ठा iomd_dma *idma)
-अणु
-	अचिन्हित दीर्घ end, offset, flags = 0;
+static void iomd_get_next_sg(struct iomd_dma *idma)
+{
+	unsigned long end, offset, flags = 0;
 
-	अगर (idma->dma.sg) अणु
+	if (idma->dma.sg) {
 		idma->cur_addr = idma->dma_addr;
 		offset = idma->cur_addr & ~PAGE_MASK;
 
 		end = offset + idma->dma_len;
 
-		अगर (end > PAGE_SIZE)
+		if (end > PAGE_SIZE)
 			end = PAGE_SIZE;
 
-		अगर (offset + TRANSFER_SIZE >= end)
+		if (offset + TRANSFER_SIZE >= end)
 			flags |= DMA_END_L;
 
 		idma->cur_len = end - TRANSFER_SIZE;
@@ -73,100 +72,100 @@
 		idma->dma_len -= end - offset;
 		idma->dma_addr += end - offset;
 
-		अगर (idma->dma_len == 0) अणु
-			अगर (idma->dma.sgcount > 1) अणु
+		if (idma->dma_len == 0) {
+			if (idma->dma.sgcount > 1) {
 				idma->dma.sg = sg_next(idma->dma.sg);
 				idma->dma_addr = idma->dma.sg->dma_address;
 				idma->dma_len = idma->dma.sg->length;
 				idma->dma.sgcount--;
-			पूर्ण अन्यथा अणु
-				idma->dma.sg = शून्य;
+			} else {
+				idma->dma.sg = NULL;
 				flags |= DMA_END_S;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			}
+		}
+	} else {
 		flags = DMA_END_S | DMA_END_L;
 		idma->cur_addr = 0;
 		idma->cur_len = 0;
-	पूर्ण
+	}
 
 	idma->cur_len |= flags;
-पूर्ण
+}
 
-अटल irqवापस_t iomd_dma_handle(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा iomd_dma *idma = dev_id;
-	व्योम __iomem *base = idma->base;
-	अचिन्हित पूर्णांक state = idma->state;
-	अचिन्हित पूर्णांक status, cur, end;
+static irqreturn_t iomd_dma_handle(int irq, void *dev_id)
+{
+	struct iomd_dma *idma = dev_id;
+	void __iomem *base = idma->base;
+	unsigned int state = idma->state;
+	unsigned int status, cur, end;
 
-	करो अणु
-		status = पढ़ोb(base + ST);
-		अगर (!(status & DMA_ST_INT))
-			जाओ out;
+	do {
+		status = readb(base + ST);
+		if (!(status & DMA_ST_INT))
+			goto out;
 
-		अगर ((state ^ status) & DMA_ST_AB)
+		if ((state ^ status) & DMA_ST_AB)
 			iomd_get_next_sg(idma);
 
 		// This efficiently implements state = OFL != AB ? AB : 0
 		state = ((status >> 2) ^ status) & DMA_ST_AB;
-		अगर (state) अणु
+		if (state) {
 			cur = CURA;
 			end = ENDA;
-		पूर्ण अन्यथा अणु
+		} else {
 			cur = CURB;
 			end = ENDB;
-		पूर्ण
-		ग_लिखोl(idma->cur_addr, base + cur);
-		ग_लिखोl(idma->cur_len, base + end);
+		}
+		writel(idma->cur_addr, base + cur);
+		writel(idma->cur_len, base + end);
 
-		अगर (status & DMA_ST_OFL &&
+		if (status & DMA_ST_OFL &&
 		    idma->cur_len == (DMA_END_S|DMA_END_L))
-			अवरोध;
-	पूर्ण जबतक (1);
+			break;
+	} while (1);
 
 	state = ~DMA_ST_AB;
 	disable_irq_nosync(irq);
 out:
 	idma->state = state;
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक iomd_request_dma(अचिन्हित पूर्णांक chan, dma_t *dma)
-अणु
-	काष्ठा iomd_dma *idma = container_of(dma, काष्ठा iomd_dma, dma);
+static int iomd_request_dma(unsigned int chan, dma_t *dma)
+{
+	struct iomd_dma *idma = container_of(dma, struct iomd_dma, dma);
 
-	वापस request_irq(idma->irq, iomd_dma_handle,
+	return request_irq(idma->irq, iomd_dma_handle,
 			   0, idma->dma.device_id, idma);
-पूर्ण
+}
 
-अटल व्योम iomd_मुक्त_dma(अचिन्हित पूर्णांक chan, dma_t *dma)
-अणु
-	काष्ठा iomd_dma *idma = container_of(dma, काष्ठा iomd_dma, dma);
+static void iomd_free_dma(unsigned int chan, dma_t *dma)
+{
+	struct iomd_dma *idma = container_of(dma, struct iomd_dma, dma);
 
-	मुक्त_irq(idma->irq, idma);
-पूर्ण
+	free_irq(idma->irq, idma);
+}
 
-अटल काष्ठा device isa_dma_dev = अणु
+static struct device isa_dma_dev = {
 	.init_name		= "fallback device",
 	.coherent_dma_mask	= ~(dma_addr_t)0,
 	.dma_mask		= &isa_dma_dev.coherent_dma_mask,
-पूर्ण;
+};
 
-अटल व्योम iomd_enable_dma(अचिन्हित पूर्णांक chan, dma_t *dma)
-अणु
-	काष्ठा iomd_dma *idma = container_of(dma, काष्ठा iomd_dma, dma);
-	व्योम __iomem *base = idma->base;
-	अचिन्हित पूर्णांक ctrl = TRANSFER_SIZE | DMA_CR_E;
+static void iomd_enable_dma(unsigned int chan, dma_t *dma)
+{
+	struct iomd_dma *idma = container_of(dma, struct iomd_dma, dma);
+	void __iomem *base = idma->base;
+	unsigned int ctrl = TRANSFER_SIZE | DMA_CR_E;
 
-	अगर (idma->dma.invalid) अणु
+	if (idma->dma.invalid) {
 		idma->dma.invalid = 0;
 
 		/*
 		 * Cope with ISA-style drivers which expect cache
 		 * coherence.
 		 */
-		अगर (!idma->dma.sg) अणु
+		if (!idma->dma.sg) {
 			idma->dma.sg = &idma->dma.buf;
 			idma->dma.sgcount = 1;
 			idma->dma.buf.length = idma->dma.count;
@@ -174,193 +173,193 @@ out:
 				idma->dma.addr, idma->dma.count,
 				idma->dma.dma_mode == DMA_MODE_READ ?
 				DMA_FROM_DEVICE : DMA_TO_DEVICE);
-		पूर्ण
+		}
 
 		idma->dma_addr = idma->dma.sg->dma_address;
 		idma->dma_len = idma->dma.sg->length;
 
-		ग_लिखोb(DMA_CR_C, base + CR);
+		writeb(DMA_CR_C, base + CR);
 		idma->state = DMA_ST_AB;
-	पूर्ण
+	}
 
-	अगर (idma->dma.dma_mode == DMA_MODE_READ)
+	if (idma->dma.dma_mode == DMA_MODE_READ)
 		ctrl |= DMA_CR_D;
 
-	ग_लिखोb(ctrl, base + CR);
+	writeb(ctrl, base + CR);
 	enable_irq(idma->irq);
-पूर्ण
+}
 
-अटल व्योम iomd_disable_dma(अचिन्हित पूर्णांक chan, dma_t *dma)
-अणु
-	काष्ठा iomd_dma *idma = container_of(dma, काष्ठा iomd_dma, dma);
-	व्योम __iomem *base = idma->base;
-	अचिन्हित दीर्घ flags;
+static void iomd_disable_dma(unsigned int chan, dma_t *dma)
+{
+	struct iomd_dma *idma = container_of(dma, struct iomd_dma, dma);
+	void __iomem *base = idma->base;
+	unsigned long flags;
 
 	local_irq_save(flags);
-	अगर (idma->state != ~DMA_ST_AB)
+	if (idma->state != ~DMA_ST_AB)
 		disable_irq(idma->irq);
-	ग_लिखोb(0, base + CR);
+	writeb(0, base + CR);
 	local_irq_restore(flags);
-पूर्ण
+}
 
-अटल पूर्णांक iomd_set_dma_speed(अचिन्हित पूर्णांक chan, dma_t *dma, पूर्णांक cycle)
-अणु
-	पूर्णांक tcr, speed;
+static int iomd_set_dma_speed(unsigned int chan, dma_t *dma, int cycle)
+{
+	int tcr, speed;
 
-	अगर (cycle < 188)
+	if (cycle < 188)
 		speed = 3;
-	अन्यथा अगर (cycle <= 250)
+	else if (cycle <= 250)
 		speed = 2;
-	अन्यथा अगर (cycle < 438)
+	else if (cycle < 438)
 		speed = 1;
-	अन्यथा
+	else
 		speed = 0;
 
-	tcr = iomd_पढ़ोb(IOMD_DMATCR);
+	tcr = iomd_readb(IOMD_DMATCR);
 	speed &= 3;
 
-	चयन (chan) अणु
-	हाल DMA_0:
+	switch (chan) {
+	case DMA_0:
 		tcr = (tcr & ~0x03) | speed;
-		अवरोध;
+		break;
 
-	हाल DMA_1:
+	case DMA_1:
 		tcr = (tcr & ~0x0c) | (speed << 2);
-		अवरोध;
+		break;
 
-	हाल DMA_2:
+	case DMA_2:
 		tcr = (tcr & ~0x30) | (speed << 4);
-		अवरोध;
+		break;
 
-	हाल DMA_3:
+	case DMA_3:
 		tcr = (tcr & ~0xc0) | (speed << 6);
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	iomd_ग_लिखोb(tcr, IOMD_DMATCR);
+	iomd_writeb(tcr, IOMD_DMATCR);
 
-	वापस speed;
-पूर्ण
+	return speed;
+}
 
-अटल काष्ठा dma_ops iomd_dma_ops = अणु
+static struct dma_ops iomd_dma_ops = {
 	.type		= "IOMD",
 	.request	= iomd_request_dma,
-	.मुक्त		= iomd_मुक्त_dma,
+	.free		= iomd_free_dma,
 	.enable		= iomd_enable_dma,
 	.disable	= iomd_disable_dma,
 	.setspeed	= iomd_set_dma_speed,
-पूर्ण;
+};
 
-अटल काष्ठा fiq_handler fh = अणु
+static struct fiq_handler fh = {
 	.name	= "floppydma"
-पूर्ण;
+};
 
-काष्ठा floppy_dma अणु
-	काष्ठा dma_काष्ठा	dma;
-	अचिन्हित पूर्णांक		fiq;
-पूर्ण;
+struct floppy_dma {
+	struct dma_struct	dma;
+	unsigned int		fiq;
+};
 
-अटल व्योम floppy_enable_dma(अचिन्हित पूर्णांक chan, dma_t *dma)
-अणु
-	काष्ठा floppy_dma *fdma = container_of(dma, काष्ठा floppy_dma, dma);
-	व्योम *fiqhandler_start;
-	अचिन्हित पूर्णांक fiqhandler_length;
-	काष्ठा pt_regs regs;
+static void floppy_enable_dma(unsigned int chan, dma_t *dma)
+{
+	struct floppy_dma *fdma = container_of(dma, struct floppy_dma, dma);
+	void *fiqhandler_start;
+	unsigned int fiqhandler_length;
+	struct pt_regs regs;
 
-	अगर (fdma->dma.sg)
+	if (fdma->dma.sg)
 		BUG();
 
-	अगर (fdma->dma.dma_mode == DMA_MODE_READ) अणु
-		बाह्य अचिन्हित अक्षर floppy_fiqin_start, floppy_fiqin_end;
+	if (fdma->dma.dma_mode == DMA_MODE_READ) {
+		extern unsigned char floppy_fiqin_start, floppy_fiqin_end;
 		fiqhandler_start = &floppy_fiqin_start;
 		fiqhandler_length = &floppy_fiqin_end - &floppy_fiqin_start;
-	पूर्ण अन्यथा अणु
-		बाह्य अचिन्हित अक्षर floppy_fiqout_start, floppy_fiqout_end;
+	} else {
+		extern unsigned char floppy_fiqout_start, floppy_fiqout_end;
 		fiqhandler_start = &floppy_fiqout_start;
 		fiqhandler_length = &floppy_fiqout_end - &floppy_fiqout_start;
-	पूर्ण
+	}
 
 	regs.ARM_r9  = fdma->dma.count;
-	regs.ARM_r10 = (अचिन्हित दीर्घ)fdma->dma.addr;
-	regs.ARM_fp  = (अचिन्हित दीर्घ)FLOPPYDMA_BASE;
+	regs.ARM_r10 = (unsigned long)fdma->dma.addr;
+	regs.ARM_fp  = (unsigned long)FLOPPYDMA_BASE;
 
-	अगर (claim_fiq(&fh)) अणु
-		prपूर्णांकk("floppydma: couldn't claim FIQ.\n");
-		वापस;
-	पूर्ण
+	if (claim_fiq(&fh)) {
+		printk("floppydma: couldn't claim FIQ.\n");
+		return;
+	}
 
 	set_fiq_handler(fiqhandler_start, fiqhandler_length);
 	set_fiq_regs(&regs);
 	enable_fiq(fdma->fiq);
-पूर्ण
+}
 
-अटल व्योम floppy_disable_dma(अचिन्हित पूर्णांक chan, dma_t *dma)
-अणु
-	काष्ठा floppy_dma *fdma = container_of(dma, काष्ठा floppy_dma, dma);
+static void floppy_disable_dma(unsigned int chan, dma_t *dma)
+{
+	struct floppy_dma *fdma = container_of(dma, struct floppy_dma, dma);
 	disable_fiq(fdma->fiq);
 	release_fiq(&fh);
-पूर्ण
+}
 
-अटल पूर्णांक floppy_get_residue(अचिन्हित पूर्णांक chan, dma_t *dma)
-अणु
-	काष्ठा pt_regs regs;
+static int floppy_get_residue(unsigned int chan, dma_t *dma)
+{
+	struct pt_regs regs;
 	get_fiq_regs(&regs);
-	वापस regs.ARM_r9;
-पूर्ण
+	return regs.ARM_r9;
+}
 
-अटल काष्ठा dma_ops floppy_dma_ops = अणु
+static struct dma_ops floppy_dma_ops = {
 	.type		= "FIQDMA",
 	.enable		= floppy_enable_dma,
 	.disable	= floppy_disable_dma,
 	.residue	= floppy_get_residue,
-पूर्ण;
+};
 
 /*
- * This is भव DMA - we करोn't need anything here.
+ * This is virtual DMA - we don't need anything here.
  */
-अटल व्योम sound_enable_disable_dma(अचिन्हित पूर्णांक chan, dma_t *dma)
-अणु
-पूर्ण
+static void sound_enable_disable_dma(unsigned int chan, dma_t *dma)
+{
+}
 
-अटल काष्ठा dma_ops sound_dma_ops = अणु
+static struct dma_ops sound_dma_ops = {
 	.type		= "VIRTUAL",
 	.enable		= sound_enable_disable_dma,
 	.disable	= sound_enable_disable_dma,
-पूर्ण;
+};
 
-अटल काष्ठा iomd_dma iomd_dma[6];
+static struct iomd_dma iomd_dma[6];
 
-अटल काष्ठा floppy_dma floppy_dma = अणु
-	.dma		= अणु
+static struct floppy_dma floppy_dma = {
+	.dma		= {
 		.d_ops	= &floppy_dma_ops,
-	पूर्ण,
+	},
 	.fiq		= FIQ_FLOPPYDATA,
-पूर्ण;
+};
 
-अटल dma_t sound_dma = अणु
+static dma_t sound_dma = {
 	.d_ops		= &sound_dma_ops,
-पूर्ण;
+};
 
-अटल पूर्णांक __init rpc_dma_init(व्योम)
-अणु
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+static int __init rpc_dma_init(void)
+{
+	unsigned int i;
+	int ret;
 
-	iomd_ग_लिखोb(0, IOMD_IO0CR);
-	iomd_ग_लिखोb(0, IOMD_IO1CR);
-	iomd_ग_लिखोb(0, IOMD_IO2CR);
-	iomd_ग_लिखोb(0, IOMD_IO3CR);
+	iomd_writeb(0, IOMD_IO0CR);
+	iomd_writeb(0, IOMD_IO1CR);
+	iomd_writeb(0, IOMD_IO2CR);
+	iomd_writeb(0, IOMD_IO3CR);
 
-	iomd_ग_लिखोb(0xa0, IOMD_DMATCR);
+	iomd_writeb(0xa0, IOMD_DMATCR);
 
 	/*
-	 * Setup DMA channels 2,3 to be क्रम podules
-	 * and channels 0,1 क्रम पूर्णांकernal devices
+	 * Setup DMA channels 2,3 to be for podules
+	 * and channels 0,1 for internal devices
 	 */
-	iomd_ग_लिखोb(DMA_EXT_IO3|DMA_EXT_IO2, IOMD_DMAEXT);
+	iomd_writeb(DMA_EXT_IO3|DMA_EXT_IO2, IOMD_DMAEXT);
 
 	iomd_dma[DMA_0].base	= IOMD_BASE + IOMD_IO0CURA;
 	iomd_dma[DMA_0].irq	= IRQ_DMA0;
@@ -375,20 +374,20 @@ out:
 	iomd_dma[DMA_S1].base	= IOMD_BASE + IOMD_SD1CURA;
 	iomd_dma[DMA_S1].irq	= IRQ_DMAS1;
 
-	क्रम (i = DMA_0; i <= DMA_S1; i++) अणु
+	for (i = DMA_0; i <= DMA_S1; i++) {
 		iomd_dma[i].dma.d_ops = &iomd_dma_ops;
 
 		ret = isa_dma_add(i, &iomd_dma[i].dma);
-		अगर (ret)
-			prपूर्णांकk("IOMDDMA%u: unable to register: %d\n", i, ret);
-	पूर्ण
+		if (ret)
+			printk("IOMDDMA%u: unable to register: %d\n", i, ret);
+	}
 
 	ret = isa_dma_add(DMA_VIRTUAL_FLOPPY, &floppy_dma.dma);
-	अगर (ret)
-		prपूर्णांकk("IOMDFLOPPY: unable to register: %d\n", ret);
+	if (ret)
+		printk("IOMDFLOPPY: unable to register: %d\n", ret);
 	ret = isa_dma_add(DMA_VIRTUAL_SOUND, &sound_dma);
-	अगर (ret)
-		prपूर्णांकk("IOMDSOUND: unable to register: %d\n", ret);
-	वापस 0;
-पूर्ण
+	if (ret)
+		printk("IOMDSOUND: unable to register: %d\n", ret);
+	return 0;
+}
 core_initcall(rpc_dma_init);

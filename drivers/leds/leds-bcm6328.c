@@ -1,64 +1,63 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Driver क्रम BCM6328 memory-mapped LEDs, based on leds-syscon.c
+ * Driver for BCM6328 memory-mapped LEDs, based on leds-syscon.c
  *
- * Copyright 2015 थlvaro Fernथँndez Rojas <noltari@gmail.com>
- * Copyright 2015 Jonas Gorski <jogo@खोलोwrt.org>
+ * Copyright 2015 Álvaro Fernández Rojas <noltari@gmail.com>
+ * Copyright 2015 Jonas Gorski <jogo@openwrt.org>
  */
-#समावेश <linux/पन.स>
-#समावेश <linux/leds.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/spinlock.h>
+#include <linux/io.h>
+#include <linux/leds.h>
+#include <linux/module.h>
+#include <linux/of.h>
+#include <linux/platform_device.h>
+#include <linux/spinlock.h>
 
-#घोषणा BCM6328_REG_INIT		0x00
-#घोषणा BCM6328_REG_MODE_HI		0x04
-#घोषणा BCM6328_REG_MODE_LO		0x08
-#घोषणा BCM6328_REG_HWDIS		0x0c
-#घोषणा BCM6328_REG_STROBE		0x10
-#घोषणा BCM6328_REG_LNKACTSEL_HI	0x14
-#घोषणा BCM6328_REG_LNKACTSEL_LO	0x18
-#घोषणा BCM6328_REG_RBACK		0x1c
-#घोषणा BCM6328_REG_SERMUX		0x20
+#define BCM6328_REG_INIT		0x00
+#define BCM6328_REG_MODE_HI		0x04
+#define BCM6328_REG_MODE_LO		0x08
+#define BCM6328_REG_HWDIS		0x0c
+#define BCM6328_REG_STROBE		0x10
+#define BCM6328_REG_LNKACTSEL_HI	0x14
+#define BCM6328_REG_LNKACTSEL_LO	0x18
+#define BCM6328_REG_RBACK		0x1c
+#define BCM6328_REG_SERMUX		0x20
 
-#घोषणा BCM6328_LED_MAX_COUNT		24
-#घोषणा BCM6328_LED_DEF_DELAY		500
+#define BCM6328_LED_MAX_COUNT		24
+#define BCM6328_LED_DEF_DELAY		500
 
-#घोषणा BCM6328_LED_BLINK_DELAYS	2
-#घोषणा BCM6328_LED_BLINK_MS		20
+#define BCM6328_LED_BLINK_DELAYS	2
+#define BCM6328_LED_BLINK_MS		20
 
-#घोषणा BCM6328_LED_BLINK_MASK		0x3f
-#घोषणा BCM6328_LED_BLINK1_SHIFT	0
-#घोषणा BCM6328_LED_BLINK1_MASK		(BCM6328_LED_BLINK_MASK << \
+#define BCM6328_LED_BLINK_MASK		0x3f
+#define BCM6328_LED_BLINK1_SHIFT	0
+#define BCM6328_LED_BLINK1_MASK		(BCM6328_LED_BLINK_MASK << \
 					 BCM6328_LED_BLINK1_SHIFT)
-#घोषणा BCM6328_LED_BLINK2_SHIFT	6
-#घोषणा BCM6328_LED_BLINK2_MASK		(BCM6328_LED_BLINK_MASK << \
+#define BCM6328_LED_BLINK2_SHIFT	6
+#define BCM6328_LED_BLINK2_MASK		(BCM6328_LED_BLINK_MASK << \
 					 BCM6328_LED_BLINK2_SHIFT)
-#घोषणा BCM6328_SERIAL_LED_EN		BIT(12)
-#घोषणा BCM6328_SERIAL_LED_MUX		BIT(13)
-#घोषणा BCM6328_SERIAL_LED_CLK_NPOL	BIT(14)
-#घोषणा BCM6328_SERIAL_LED_DATA_PPOL	BIT(15)
-#घोषणा BCM6328_SERIAL_LED_SHIFT_सूची	BIT(16)
-#घोषणा BCM6328_LED_SHIFT_TEST		BIT(30)
-#घोषणा BCM6328_LED_TEST		BIT(31)
-#घोषणा BCM6328_INIT_MASK		(BCM6328_SERIAL_LED_EN | \
+#define BCM6328_SERIAL_LED_EN		BIT(12)
+#define BCM6328_SERIAL_LED_MUX		BIT(13)
+#define BCM6328_SERIAL_LED_CLK_NPOL	BIT(14)
+#define BCM6328_SERIAL_LED_DATA_PPOL	BIT(15)
+#define BCM6328_SERIAL_LED_SHIFT_DIR	BIT(16)
+#define BCM6328_LED_SHIFT_TEST		BIT(30)
+#define BCM6328_LED_TEST		BIT(31)
+#define BCM6328_INIT_MASK		(BCM6328_SERIAL_LED_EN | \
 					 BCM6328_SERIAL_LED_MUX | \
 					 BCM6328_SERIAL_LED_CLK_NPOL | \
 					 BCM6328_SERIAL_LED_DATA_PPOL | \
-					 BCM6328_SERIAL_LED_SHIFT_सूची)
+					 BCM6328_SERIAL_LED_SHIFT_DIR)
 
-#घोषणा BCM6328_LED_MODE_MASK		3
-#घोषणा BCM6328_LED_MODE_ON		0
-#घोषणा BCM6328_LED_MODE_BLINK1		1
-#घोषणा BCM6328_LED_MODE_BLINK2		2
-#घोषणा BCM6328_LED_MODE_OFF		3
-#घोषणा BCM6328_LED_SHIFT(X)		((X) << 1)
+#define BCM6328_LED_MODE_MASK		3
+#define BCM6328_LED_MODE_ON		0
+#define BCM6328_LED_MODE_BLINK1		1
+#define BCM6328_LED_MODE_BLINK2		2
+#define BCM6328_LED_MODE_OFF		3
+#define BCM6328_LED_SHIFT(X)		((X) << 1)
 
 /**
- * काष्ठा bcm6328_led - state container क्रम bcm6328 based LEDs
- * @cdev: LED class device क्रम this LED
+ * struct bcm6328_led - state container for bcm6328 based LEDs
+ * @cdev: LED class device for this LED
  * @mem: memory resource
  * @lock: memory lock
  * @pin: LED pin number
@@ -66,33 +65,33 @@
  * @blink_delay: blinking delay
  * @active_low: LED is active low
  */
-काष्ठा bcm6328_led अणु
-	काष्ठा led_classdev cdev;
-	व्योम __iomem *mem;
+struct bcm6328_led {
+	struct led_classdev cdev;
+	void __iomem *mem;
 	spinlock_t *lock;
-	अचिन्हित दीर्घ pin;
-	अचिन्हित दीर्घ *blink_leds;
-	अचिन्हित दीर्घ *blink_delay;
+	unsigned long pin;
+	unsigned long *blink_leds;
+	unsigned long *blink_delay;
 	bool active_low;
-पूर्ण;
+};
 
-अटल व्योम bcm6328_led_ग_लिखो(व्योम __iomem *reg, अचिन्हित दीर्घ data)
-अणु
-#अगर_घोषित CONFIG_CPU_BIG_ENDIAN
-	ioग_लिखो32be(data, reg);
-#अन्यथा
-	ग_लिखोl(data, reg);
-#पूर्ण_अगर
-पूर्ण
+static void bcm6328_led_write(void __iomem *reg, unsigned long data)
+{
+#ifdef CONFIG_CPU_BIG_ENDIAN
+	iowrite32be(data, reg);
+#else
+	writel(data, reg);
+#endif
+}
 
-अटल अचिन्हित दीर्घ bcm6328_led_पढ़ो(व्योम __iomem *reg)
-अणु
-#अगर_घोषित CONFIG_CPU_BIG_ENDIAN
-	वापस ioपढ़ो32be(reg);
-#अन्यथा
-	वापस पढ़ोl(reg);
-#पूर्ण_अगर
-पूर्ण
+static unsigned long bcm6328_led_read(void __iomem *reg)
+{
+#ifdef CONFIG_CPU_BIG_ENDIAN
+	return ioread32be(reg);
+#else
+	return readl(reg);
+#endif
+}
 
 /**
  * LEDMode 64 bits / 24 LEDs
@@ -100,243 +99,243 @@
  * bits [47:32] -> LEDs 0-7
  * bits [63:48] -> unused
  */
-अटल अचिन्हित दीर्घ bcm6328_pin2shअगरt(अचिन्हित दीर्घ pin)
-अणु
-	अगर (pin < 8)
-		वापस pin + 16; /* LEDs 0-7 (bits 47:32) */
-	अन्यथा
-		वापस pin - 8; /* LEDs 8-23 (bits 31:0) */
-पूर्ण
+static unsigned long bcm6328_pin2shift(unsigned long pin)
+{
+	if (pin < 8)
+		return pin + 16; /* LEDs 0-7 (bits 47:32) */
+	else
+		return pin - 8; /* LEDs 8-23 (bits 31:0) */
+}
 
-अटल व्योम bcm6328_led_mode(काष्ठा bcm6328_led *led, अचिन्हित दीर्घ value)
-अणु
-	व्योम __iomem *mode;
-	अचिन्हित दीर्घ val, shअगरt;
+static void bcm6328_led_mode(struct bcm6328_led *led, unsigned long value)
+{
+	void __iomem *mode;
+	unsigned long val, shift;
 
-	shअगरt = bcm6328_pin2shअगरt(led->pin);
-	अगर (shअगरt / 16)
+	shift = bcm6328_pin2shift(led->pin);
+	if (shift / 16)
 		mode = led->mem + BCM6328_REG_MODE_HI;
-	अन्यथा
+	else
 		mode = led->mem + BCM6328_REG_MODE_LO;
 
-	val = bcm6328_led_पढ़ो(mode);
-	val &= ~(BCM6328_LED_MODE_MASK << BCM6328_LED_SHIFT(shअगरt % 16));
-	val |= (value << BCM6328_LED_SHIFT(shअगरt % 16));
-	bcm6328_led_ग_लिखो(mode, val);
-पूर्ण
+	val = bcm6328_led_read(mode);
+	val &= ~(BCM6328_LED_MODE_MASK << BCM6328_LED_SHIFT(shift % 16));
+	val |= (value << BCM6328_LED_SHIFT(shift % 16));
+	bcm6328_led_write(mode, val);
+}
 
-अटल व्योम bcm6328_led_set(काष्ठा led_classdev *led_cdev,
-			    क्रमागत led_brightness value)
-अणु
-	काष्ठा bcm6328_led *led =
-		container_of(led_cdev, काष्ठा bcm6328_led, cdev);
-	अचिन्हित दीर्घ flags;
+static void bcm6328_led_set(struct led_classdev *led_cdev,
+			    enum led_brightness value)
+{
+	struct bcm6328_led *led =
+		container_of(led_cdev, struct bcm6328_led, cdev);
+	unsigned long flags;
 
 	spin_lock_irqsave(led->lock, flags);
 
-	/* Remove LED from cached HW blinking पूर्णांकervals */
+	/* Remove LED from cached HW blinking intervals */
 	led->blink_leds[0] &= ~BIT(led->pin);
 	led->blink_leds[1] &= ~BIT(led->pin);
 
 	/* Set LED on/off */
-	अगर ((led->active_low && value == LED_OFF) ||
+	if ((led->active_low && value == LED_OFF) ||
 	    (!led->active_low && value != LED_OFF))
 		bcm6328_led_mode(led, BCM6328_LED_MODE_ON);
-	अन्यथा
+	else
 		bcm6328_led_mode(led, BCM6328_LED_MODE_OFF);
 
 	spin_unlock_irqrestore(led->lock, flags);
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ bcm6328_blink_delay(अचिन्हित दीर्घ delay)
-अणु
-	अचिन्हित दीर्घ bcm6328_delay;
+static unsigned long bcm6328_blink_delay(unsigned long delay)
+{
+	unsigned long bcm6328_delay;
 
 	bcm6328_delay = delay + BCM6328_LED_BLINK_MS / 2;
 	bcm6328_delay = bcm6328_delay / BCM6328_LED_BLINK_MS;
-	अगर (bcm6328_delay == 0)
+	if (bcm6328_delay == 0)
 		bcm6328_delay = 1;
 
-	वापस bcm6328_delay;
-पूर्ण
+	return bcm6328_delay;
+}
 
-अटल पूर्णांक bcm6328_blink_set(काष्ठा led_classdev *led_cdev,
-			     अचिन्हित दीर्घ *delay_on, अचिन्हित दीर्घ *delay_off)
-अणु
-	काष्ठा bcm6328_led *led =
-		container_of(led_cdev, काष्ठा bcm6328_led, cdev);
-	अचिन्हित दीर्घ delay, flags;
-	पूर्णांक rc;
+static int bcm6328_blink_set(struct led_classdev *led_cdev,
+			     unsigned long *delay_on, unsigned long *delay_off)
+{
+	struct bcm6328_led *led =
+		container_of(led_cdev, struct bcm6328_led, cdev);
+	unsigned long delay, flags;
+	int rc;
 
-	अगर (!*delay_on)
+	if (!*delay_on)
 		*delay_on = BCM6328_LED_DEF_DELAY;
-	अगर (!*delay_off)
+	if (!*delay_off)
 		*delay_off = BCM6328_LED_DEF_DELAY;
 
 	delay = bcm6328_blink_delay(*delay_on);
-	अगर (delay != bcm6328_blink_delay(*delay_off)) अणु
+	if (delay != bcm6328_blink_delay(*delay_off)) {
 		dev_dbg(led_cdev->dev,
 			"fallback to soft blinking (delay_on != delay_off)\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (delay > BCM6328_LED_BLINK_MASK) अणु
+	if (delay > BCM6328_LED_BLINK_MASK) {
 		dev_dbg(led_cdev->dev,
 			"fallback to soft blinking (delay > %ums)\n",
 			BCM6328_LED_BLINK_MASK * BCM6328_LED_BLINK_MS);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	spin_lock_irqsave(led->lock, flags);
 	/*
-	 * Check अगर any of the two configurable HW blinking पूर्णांकervals is
+	 * Check if any of the two configurable HW blinking intervals is
 	 * available:
-	 *   1. No LEDs asचिन्हित to the HW blinking पूर्णांकerval.
-	 *   2. Only this LED is asचिन्हित to the HW blinking पूर्णांकerval.
-	 *   3. LEDs with the same delay asचिन्हित.
+	 *   1. No LEDs assigned to the HW blinking interval.
+	 *   2. Only this LED is assigned to the HW blinking interval.
+	 *   3. LEDs with the same delay assigned.
 	 */
-	अगर (led->blink_leds[0] == 0 ||
+	if (led->blink_leds[0] == 0 ||
 	    led->blink_leds[0] == BIT(led->pin) ||
-	    led->blink_delay[0] == delay) अणु
-		अचिन्हित दीर्घ val;
+	    led->blink_delay[0] == delay) {
+		unsigned long val;
 
-		/* Add LED to the first HW blinking पूर्णांकerval cache */
+		/* Add LED to the first HW blinking interval cache */
 		led->blink_leds[0] |= BIT(led->pin);
 
-		/* Remove LED from the second HW blinking पूर्णांकerval cache */
+		/* Remove LED from the second HW blinking interval cache */
 		led->blink_leds[1] &= ~BIT(led->pin);
 
-		/* Cache first HW blinking पूर्णांकerval delay */
+		/* Cache first HW blinking interval delay */
 		led->blink_delay[0] = delay;
 
-		/* Update the delay क्रम the first HW blinking पूर्णांकerval */
-		val = bcm6328_led_पढ़ो(led->mem + BCM6328_REG_INIT);
+		/* Update the delay for the first HW blinking interval */
+		val = bcm6328_led_read(led->mem + BCM6328_REG_INIT);
 		val &= ~BCM6328_LED_BLINK1_MASK;
 		val |= (delay << BCM6328_LED_BLINK1_SHIFT);
-		bcm6328_led_ग_लिखो(led->mem + BCM6328_REG_INIT, val);
+		bcm6328_led_write(led->mem + BCM6328_REG_INIT, val);
 
-		/* Set the LED to first HW blinking पूर्णांकerval */
+		/* Set the LED to first HW blinking interval */
 		bcm6328_led_mode(led, BCM6328_LED_MODE_BLINK1);
 
 		rc = 0;
-	पूर्ण अन्यथा अगर (led->blink_leds[1] == 0 ||
+	} else if (led->blink_leds[1] == 0 ||
 		   led->blink_leds[1] == BIT(led->pin) ||
-		   led->blink_delay[1] == delay) अणु
-		अचिन्हित दीर्घ val;
+		   led->blink_delay[1] == delay) {
+		unsigned long val;
 
-		/* Remove LED from the first HW blinking पूर्णांकerval */
+		/* Remove LED from the first HW blinking interval */
 		led->blink_leds[0] &= ~BIT(led->pin);
 
-		/* Add LED to the second HW blinking पूर्णांकerval */
+		/* Add LED to the second HW blinking interval */
 		led->blink_leds[1] |= BIT(led->pin);
 
-		/* Cache second HW blinking पूर्णांकerval delay */
+		/* Cache second HW blinking interval delay */
 		led->blink_delay[1] = delay;
 
-		/* Update the delay क्रम the second HW blinking पूर्णांकerval */
-		val = bcm6328_led_पढ़ो(led->mem + BCM6328_REG_INIT);
+		/* Update the delay for the second HW blinking interval */
+		val = bcm6328_led_read(led->mem + BCM6328_REG_INIT);
 		val &= ~BCM6328_LED_BLINK2_MASK;
 		val |= (delay << BCM6328_LED_BLINK2_SHIFT);
-		bcm6328_led_ग_लिखो(led->mem + BCM6328_REG_INIT, val);
+		bcm6328_led_write(led->mem + BCM6328_REG_INIT, val);
 
-		/* Set the LED to second HW blinking पूर्णांकerval */
+		/* Set the LED to second HW blinking interval */
 		bcm6328_led_mode(led, BCM6328_LED_MODE_BLINK2);
 
 		rc = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		dev_dbg(led_cdev->dev,
 			"fallback to soft blinking (delay already set)\n");
 		rc = -EINVAL;
-	पूर्ण
+	}
 	spin_unlock_irqrestore(led->lock, flags);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक bcm6328_hwled(काष्ठा device *dev, काष्ठा device_node *nc, u32 reg,
-			 व्योम __iomem *mem, spinlock_t *lock)
-अणु
-	पूर्णांक i, cnt;
-	अचिन्हित दीर्घ flags, val;
+static int bcm6328_hwled(struct device *dev, struct device_node *nc, u32 reg,
+			 void __iomem *mem, spinlock_t *lock)
+{
+	int i, cnt;
+	unsigned long flags, val;
 
 	spin_lock_irqsave(lock, flags);
-	val = bcm6328_led_पढ़ो(mem + BCM6328_REG_HWDIS);
+	val = bcm6328_led_read(mem + BCM6328_REG_HWDIS);
 	val &= ~BIT(reg);
-	bcm6328_led_ग_लिखो(mem + BCM6328_REG_HWDIS, val);
+	bcm6328_led_write(mem + BCM6328_REG_HWDIS, val);
 	spin_unlock_irqrestore(lock, flags);
 
 	/* Only LEDs 0-7 can be activity/link controlled */
-	अगर (reg >= 8)
-		वापस 0;
+	if (reg >= 8)
+		return 0;
 
 	cnt = of_property_count_elems_of_size(nc, "brcm,link-signal-sources",
-					      माप(u32));
-	क्रम (i = 0; i < cnt; i++) अणु
+					      sizeof(u32));
+	for (i = 0; i < cnt; i++) {
 		u32 sel;
-		व्योम __iomem *addr;
+		void __iomem *addr;
 
-		अगर (reg < 4)
+		if (reg < 4)
 			addr = mem + BCM6328_REG_LNKACTSEL_LO;
-		अन्यथा
+		else
 			addr = mem + BCM6328_REG_LNKACTSEL_HI;
 
-		of_property_पढ़ो_u32_index(nc, "brcm,link-signal-sources", i,
+		of_property_read_u32_index(nc, "brcm,link-signal-sources", i,
 					   &sel);
 
-		अगर (reg / 4 != sel / 4) अणु
+		if (reg / 4 != sel / 4) {
 			dev_warn(dev, "invalid link signal source\n");
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		spin_lock_irqsave(lock, flags);
-		val = bcm6328_led_पढ़ो(addr);
+		val = bcm6328_led_read(addr);
 		val |= (BIT(reg % 4) << (((sel % 4) * 4) + 16));
-		bcm6328_led_ग_लिखो(addr, val);
+		bcm6328_led_write(addr, val);
 		spin_unlock_irqrestore(lock, flags);
-	पूर्ण
+	}
 
 	cnt = of_property_count_elems_of_size(nc,
 					      "brcm,activity-signal-sources",
-					      माप(u32));
-	क्रम (i = 0; i < cnt; i++) अणु
+					      sizeof(u32));
+	for (i = 0; i < cnt; i++) {
 		u32 sel;
-		व्योम __iomem *addr;
+		void __iomem *addr;
 
-		अगर (reg < 4)
+		if (reg < 4)
 			addr = mem + BCM6328_REG_LNKACTSEL_LO;
-		अन्यथा
+		else
 			addr = mem + BCM6328_REG_LNKACTSEL_HI;
 
-		of_property_पढ़ो_u32_index(nc, "brcm,activity-signal-sources",
+		of_property_read_u32_index(nc, "brcm,activity-signal-sources",
 					   i, &sel);
 
-		अगर (reg / 4 != sel / 4) अणु
+		if (reg / 4 != sel / 4) {
 			dev_warn(dev, "invalid activity signal source\n");
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		spin_lock_irqsave(lock, flags);
-		val = bcm6328_led_पढ़ो(addr);
+		val = bcm6328_led_read(addr);
 		val |= (BIT(reg % 4) << ((sel % 4) * 4));
-		bcm6328_led_ग_लिखो(addr, val);
+		bcm6328_led_write(addr, val);
 		spin_unlock_irqrestore(lock, flags);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bcm6328_led(काष्ठा device *dev, काष्ठा device_node *nc, u32 reg,
-		       व्योम __iomem *mem, spinlock_t *lock,
-		       अचिन्हित दीर्घ *blink_leds, अचिन्हित दीर्घ *blink_delay)
-अणु
-	काष्ठा led_init_data init_data = अणुपूर्ण;
-	काष्ठा bcm6328_led *led;
-	स्थिर अक्षर *state;
-	पूर्णांक rc;
+static int bcm6328_led(struct device *dev, struct device_node *nc, u32 reg,
+		       void __iomem *mem, spinlock_t *lock,
+		       unsigned long *blink_leds, unsigned long *blink_delay)
+{
+	struct led_init_data init_data = {};
+	struct bcm6328_led *led;
+	const char *state;
+	int rc;
 
-	led = devm_kzalloc(dev, माप(*led), GFP_KERNEL);
-	अगर (!led)
-		वापस -ENOMEM;
+	led = devm_kzalloc(dev, sizeof(*led), GFP_KERNEL);
+	if (!led)
+		return -ENOMEM;
 
 	led->pin = reg;
 	led->mem = mem;
@@ -344,36 +343,36 @@
 	led->blink_leds = blink_leds;
 	led->blink_delay = blink_delay;
 
-	अगर (of_property_पढ़ो_bool(nc, "active-low"))
+	if (of_property_read_bool(nc, "active-low"))
 		led->active_low = true;
 
-	अगर (!of_property_पढ़ो_string(nc, "default-state", &state)) अणु
-		अगर (!म_भेद(state, "on")) अणु
+	if (!of_property_read_string(nc, "default-state", &state)) {
+		if (!strcmp(state, "on")) {
 			led->cdev.brightness = LED_FULL;
-		पूर्ण अन्यथा अगर (!म_भेद(state, "keep")) अणु
-			व्योम __iomem *mode;
-			अचिन्हित दीर्घ val, shअगरt;
+		} else if (!strcmp(state, "keep")) {
+			void __iomem *mode;
+			unsigned long val, shift;
 
-			shअगरt = bcm6328_pin2shअगरt(led->pin);
-			अगर (shअगरt / 16)
+			shift = bcm6328_pin2shift(led->pin);
+			if (shift / 16)
 				mode = mem + BCM6328_REG_MODE_HI;
-			अन्यथा
+			else
 				mode = mem + BCM6328_REG_MODE_LO;
 
-			val = bcm6328_led_पढ़ो(mode) >>
-			      BCM6328_LED_SHIFT(shअगरt % 16);
+			val = bcm6328_led_read(mode) >>
+			      BCM6328_LED_SHIFT(shift % 16);
 			val &= BCM6328_LED_MODE_MASK;
-			अगर ((led->active_low && val == BCM6328_LED_MODE_OFF) ||
+			if ((led->active_low && val == BCM6328_LED_MODE_OFF) ||
 			    (!led->active_low && val == BCM6328_LED_MODE_ON))
 				led->cdev.brightness = LED_FULL;
-			अन्यथा
+			else
 				led->cdev.brightness = LED_OFF;
-		पूर्ण अन्यथा अणु
+		} else {
 			led->cdev.brightness = LED_OFF;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		led->cdev.brightness = LED_OFF;
-	पूर्ण
+	}
 
 	bcm6328_led_set(&led->cdev, led->cdev.brightness);
 
@@ -381,107 +380,107 @@
 	led->cdev.blink_set = bcm6328_blink_set;
 	init_data.fwnode = of_fwnode_handle(nc);
 
-	rc = devm_led_classdev_रेजिस्टर_ext(dev, &led->cdev, &init_data);
-	अगर (rc < 0)
-		वापस rc;
+	rc = devm_led_classdev_register_ext(dev, &led->cdev, &init_data);
+	if (rc < 0)
+		return rc;
 
 	dev_dbg(dev, "registered LED %s\n", led->cdev.name);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bcm6328_leds_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *np = dev_of_node(&pdev->dev);
-	काष्ठा device_node *child;
-	व्योम __iomem *mem;
+static int bcm6328_leds_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct device_node *np = dev_of_node(&pdev->dev);
+	struct device_node *child;
+	void __iomem *mem;
 	spinlock_t *lock; /* memory lock */
-	अचिन्हित दीर्घ val, *blink_leds, *blink_delay;
+	unsigned long val, *blink_leds, *blink_delay;
 
-	mem = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(mem))
-		वापस PTR_ERR(mem);
+	mem = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(mem))
+		return PTR_ERR(mem);
 
-	lock = devm_kzalloc(dev, माप(*lock), GFP_KERNEL);
-	अगर (!lock)
-		वापस -ENOMEM;
+	lock = devm_kzalloc(dev, sizeof(*lock), GFP_KERNEL);
+	if (!lock)
+		return -ENOMEM;
 
-	blink_leds = devm_kसुस्मृति(dev, BCM6328_LED_BLINK_DELAYS,
-				  माप(*blink_leds), GFP_KERNEL);
-	अगर (!blink_leds)
-		वापस -ENOMEM;
+	blink_leds = devm_kcalloc(dev, BCM6328_LED_BLINK_DELAYS,
+				  sizeof(*blink_leds), GFP_KERNEL);
+	if (!blink_leds)
+		return -ENOMEM;
 
-	blink_delay = devm_kसुस्मृति(dev, BCM6328_LED_BLINK_DELAYS,
-				   माप(*blink_delay), GFP_KERNEL);
-	अगर (!blink_delay)
-		वापस -ENOMEM;
+	blink_delay = devm_kcalloc(dev, BCM6328_LED_BLINK_DELAYS,
+				   sizeof(*blink_delay), GFP_KERNEL);
+	if (!blink_delay)
+		return -ENOMEM;
 
 	spin_lock_init(lock);
 
-	bcm6328_led_ग_लिखो(mem + BCM6328_REG_HWDIS, ~0);
-	bcm6328_led_ग_लिखो(mem + BCM6328_REG_LNKACTSEL_HI, 0);
-	bcm6328_led_ग_लिखो(mem + BCM6328_REG_LNKACTSEL_LO, 0);
+	bcm6328_led_write(mem + BCM6328_REG_HWDIS, ~0);
+	bcm6328_led_write(mem + BCM6328_REG_LNKACTSEL_HI, 0);
+	bcm6328_led_write(mem + BCM6328_REG_LNKACTSEL_LO, 0);
 
-	val = bcm6328_led_पढ़ो(mem + BCM6328_REG_INIT);
+	val = bcm6328_led_read(mem + BCM6328_REG_INIT);
 	val &= ~(BCM6328_INIT_MASK);
-	अगर (of_property_पढ़ो_bool(np, "brcm,serial-leds"))
+	if (of_property_read_bool(np, "brcm,serial-leds"))
 		val |= BCM6328_SERIAL_LED_EN;
-	अगर (of_property_पढ़ो_bool(np, "brcm,serial-mux"))
+	if (of_property_read_bool(np, "brcm,serial-mux"))
 		val |= BCM6328_SERIAL_LED_MUX;
-	अगर (of_property_पढ़ो_bool(np, "brcm,serial-clk-low"))
+	if (of_property_read_bool(np, "brcm,serial-clk-low"))
 		val |= BCM6328_SERIAL_LED_CLK_NPOL;
-	अगर (!of_property_पढ़ो_bool(np, "brcm,serial-dat-low"))
+	if (!of_property_read_bool(np, "brcm,serial-dat-low"))
 		val |= BCM6328_SERIAL_LED_DATA_PPOL;
-	अगर (!of_property_पढ़ो_bool(np, "brcm,serial-shift-inv"))
-		val |= BCM6328_SERIAL_LED_SHIFT_सूची;
-	bcm6328_led_ग_लिखो(mem + BCM6328_REG_INIT, val);
+	if (!of_property_read_bool(np, "brcm,serial-shift-inv"))
+		val |= BCM6328_SERIAL_LED_SHIFT_DIR;
+	bcm6328_led_write(mem + BCM6328_REG_INIT, val);
 
-	क्रम_each_available_child_of_node(np, child) अणु
-		पूर्णांक rc;
+	for_each_available_child_of_node(np, child) {
+		int rc;
 		u32 reg;
 
-		अगर (of_property_पढ़ो_u32(child, "reg", &reg))
-			जारी;
+		if (of_property_read_u32(child, "reg", &reg))
+			continue;
 
-		अगर (reg >= BCM6328_LED_MAX_COUNT) अणु
+		if (reg >= BCM6328_LED_MAX_COUNT) {
 			dev_err(dev, "invalid LED (%u >= %d)\n", reg,
 				BCM6328_LED_MAX_COUNT);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (of_property_पढ़ो_bool(child, "brcm,hardware-controlled"))
+		if (of_property_read_bool(child, "brcm,hardware-controlled"))
 			rc = bcm6328_hwled(dev, child, reg, mem, lock);
-		अन्यथा
+		else
 			rc = bcm6328_led(dev, child, reg, mem, lock,
 					 blink_leds, blink_delay);
 
-		अगर (rc < 0) अणु
+		if (rc < 0) {
 			of_node_put(child);
-			वापस rc;
-		पूर्ण
-	पूर्ण
+			return rc;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id bcm6328_leds_of_match[] = अणु
-	अणु .compatible = "brcm,bcm6328-leds", पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id bcm6328_leds_of_match[] = {
+	{ .compatible = "brcm,bcm6328-leds", },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, bcm6328_leds_of_match);
 
-अटल काष्ठा platक्रमm_driver bcm6328_leds_driver = अणु
+static struct platform_driver bcm6328_leds_driver = {
 	.probe = bcm6328_leds_probe,
-	.driver = अणु
+	.driver = {
 		.name = "leds-bcm6328",
 		.of_match_table = bcm6328_leds_of_match,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-module_platक्रमm_driver(bcm6328_leds_driver);
+module_platform_driver(bcm6328_leds_driver);
 
-MODULE_AUTHOR("थlvaro Fernथँndez Rojas <noltari@gmail.com>");
+MODULE_AUTHOR("Álvaro Fernández Rojas <noltari@gmail.com>");
 MODULE_AUTHOR("Jonas Gorski <jogo@openwrt.org>");
 MODULE_DESCRIPTION("LED driver for BCM6328 controllers");
 MODULE_LICENSE("GPL v2");

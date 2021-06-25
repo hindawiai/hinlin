@@ -1,46 +1,45 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2018 Alexey Dobriyan <aकरोbriyan@gmail.com>
+ * Copyright © 2018 Alexey Dobriyan <adobriyan@gmail.com>
  *
- * Permission to use, copy, modअगरy, and distribute this software क्रम any
+ * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-// Test that values in /proc/upसमय increment monotonically.
-#अघोषित न_संशोधन
-#समावेश <निश्चित.स>
-#समावेश <मानक_निवेशt.h>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <fcntl.h>
+// Test that values in /proc/uptime increment monotonically.
+#undef NDEBUG
+#include <assert.h>
+#include <stdint.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
-#समावेश "proc-uptime.h"
+#include "proc-uptime.h"
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	uपूर्णांक64_t start, u0, u1, i0, i1;
-	पूर्णांक fd;
+int main(void)
+{
+	uint64_t start, u0, u1, i0, i1;
+	int fd;
 
-	fd = खोलो("/proc/uptime", O_RDONLY);
-	निश्चित(fd >= 0);
+	fd = open("/proc/uptime", O_RDONLY);
+	assert(fd >= 0);
 
-	proc_upसमय(fd, &u0, &i0);
+	proc_uptime(fd, &u0, &i0);
 	start = u0;
-	करो अणु
-		proc_upसमय(fd, &u1, &i1);
-		निश्चित(u1 >= u0);
-		निश्चित(i1 >= i0);
+	do {
+		proc_uptime(fd, &u1, &i1);
+		assert(u1 >= u0);
+		assert(i1 >= i0);
 		u0 = u1;
 		i0 = i1;
-	पूर्ण जबतक (u1 - start < 100);
+	} while (u1 - start < 100);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

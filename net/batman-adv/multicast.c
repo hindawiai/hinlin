@@ -1,159 +1,158 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) B.A.T.M.A.N. contributors:
  *
- * Linus Lथञssing
+ * Linus Lüssing
  */
 
-#समावेश "multicast.h"
-#समावेश "main.h"
+#include "multicast.h"
+#include "main.h"
 
-#समावेश <linux/atomic.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/byteorder/generic.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/gfp.h>
-#समावेश <linux/icmpv6.h>
-#समावेश <linux/अगर_bridge.h>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/igmp.h>
-#समावेश <linux/in.h>
-#समावेश <linux/in6.h>
-#समावेश <linux/inetdevice.h>
-#समावेश <linux/ip.h>
-#समावेश <linux/ipv6.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kref.h>
-#समावेश <linux/list.h>
-#समावेश <linux/lockdep.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/netlink.h>
-#समावेश <linux/prपूर्णांकk.h>
-#समावेश <linux/rculist.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/माला.स>
-#समावेश <linux/types.h>
-#समावेश <linux/workqueue.h>
-#समावेश <net/addrconf.h>
-#समावेश <net/genetlink.h>
-#समावेश <net/अगर_inet6.h>
-#समावेश <net/ip.h>
-#समावेश <net/ipv6.h>
-#समावेश <net/netlink.h>
-#समावेश <net/sock.h>
-#समावेश <uapi/linux/batadv_packet.h>
-#समावेश <uapi/linux/baपंचांगan_adv.h>
+#include <linux/atomic.h>
+#include <linux/bitops.h>
+#include <linux/bug.h>
+#include <linux/byteorder/generic.h>
+#include <linux/errno.h>
+#include <linux/etherdevice.h>
+#include <linux/gfp.h>
+#include <linux/icmpv6.h>
+#include <linux/if_bridge.h>
+#include <linux/if_ether.h>
+#include <linux/igmp.h>
+#include <linux/in.h>
+#include <linux/in6.h>
+#include <linux/inetdevice.h>
+#include <linux/ip.h>
+#include <linux/ipv6.h>
+#include <linux/jiffies.h>
+#include <linux/kernel.h>
+#include <linux/kref.h>
+#include <linux/list.h>
+#include <linux/lockdep.h>
+#include <linux/netdevice.h>
+#include <linux/netlink.h>
+#include <linux/printk.h>
+#include <linux/rculist.h>
+#include <linux/rcupdate.h>
+#include <linux/skbuff.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/stddef.h>
+#include <linux/string.h>
+#include <linux/types.h>
+#include <linux/workqueue.h>
+#include <net/addrconf.h>
+#include <net/genetlink.h>
+#include <net/if_inet6.h>
+#include <net/ip.h>
+#include <net/ipv6.h>
+#include <net/netlink.h>
+#include <net/sock.h>
+#include <uapi/linux/batadv_packet.h>
+#include <uapi/linux/batman_adv.h>
 
-#समावेश "bridge_loop_avoidance.h"
-#समावेश "hard-interface.h"
-#समावेश "hash.h"
-#समावेश "log.h"
-#समावेश "netlink.h"
-#समावेश "send.h"
-#समावेश "soft-interface.h"
-#समावेश "translation-table.h"
-#समावेश "tvlv.h"
+#include "bridge_loop_avoidance.h"
+#include "hard-interface.h"
+#include "hash.h"
+#include "log.h"
+#include "netlink.h"
+#include "send.h"
+#include "soft-interface.h"
+#include "translation-table.h"
+#include "tvlv.h"
 
-अटल व्योम batadv_mcast_mla_update(काष्ठा work_काष्ठा *work);
+static void batadv_mcast_mla_update(struct work_struct *work);
 
 /**
- * batadv_mcast_start_समयr() - schedule the multicast periodic worker
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_mcast_start_timer() - schedule the multicast periodic worker
+ * @bat_priv: the bat priv with all the soft interface information
  */
-अटल व्योम batadv_mcast_start_समयr(काष्ठा batadv_priv *bat_priv)
-अणु
+static void batadv_mcast_start_timer(struct batadv_priv *bat_priv)
+{
 	queue_delayed_work(batadv_event_workqueue, &bat_priv->mcast.work,
-			   msecs_to_jअगरfies(BATADV_MCAST_WORK_PERIOD));
-पूर्ण
+			   msecs_to_jiffies(BATADV_MCAST_WORK_PERIOD));
+}
 
 /**
- * batadv_mcast_get_bridge() - get the bridge on top of the softअगर अगर it exists
- * @soft_अगरace: netdev काष्ठा of the mesh पूर्णांकerface
+ * batadv_mcast_get_bridge() - get the bridge on top of the softif if it exists
+ * @soft_iface: netdev struct of the mesh interface
  *
- * If the given soft पूर्णांकerface has a bridge on top then the refcount
+ * If the given soft interface has a bridge on top then the refcount
  * of the according net device is increased.
  *
- * Return: शून्य अगर no such bridge exists. Otherwise the net device of the
+ * Return: NULL if no such bridge exists. Otherwise the net device of the
  * bridge.
  */
-अटल काष्ठा net_device *batadv_mcast_get_bridge(काष्ठा net_device *soft_अगरace)
-अणु
-	काष्ठा net_device *upper = soft_अगरace;
+static struct net_device *batadv_mcast_get_bridge(struct net_device *soft_iface)
+{
+	struct net_device *upper = soft_iface;
 
-	rcu_पढ़ो_lock();
-	करो अणु
+	rcu_read_lock();
+	do {
 		upper = netdev_master_upper_dev_get_rcu(upper);
-	पूर्ण जबतक (upper && !(upper->priv_flags & IFF_EBRIDGE));
+	} while (upper && !(upper->priv_flags & IFF_EBRIDGE));
 
-	अगर (upper)
+	if (upper)
 		dev_hold(upper);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस upper;
-पूर्ण
+	return upper;
+}
 
 /**
- * batadv_mcast_mla_rtr_flags_softअगर_get_ipv4() - get mcast router flags from
- *  node क्रम IPv4
- * @dev: the पूर्णांकerface to check
+ * batadv_mcast_mla_rtr_flags_softif_get_ipv4() - get mcast router flags from
+ *  node for IPv4
+ * @dev: the interface to check
  *
  * Checks the presence of an IPv4 multicast router on this node.
  *
- * Caller needs to hold rcu पढ़ो lock.
+ * Caller needs to hold rcu read lock.
  *
- * Return: BATADV_NO_FLAGS अगर present, BATADV_MCAST_WANT_NO_RTR4 otherwise.
+ * Return: BATADV_NO_FLAGS if present, BATADV_MCAST_WANT_NO_RTR4 otherwise.
  */
-अटल u8 batadv_mcast_mla_rtr_flags_softअगर_get_ipv4(काष्ठा net_device *dev)
-अणु
-	काष्ठा in_device *in_dev = __in_dev_get_rcu(dev);
+static u8 batadv_mcast_mla_rtr_flags_softif_get_ipv4(struct net_device *dev)
+{
+	struct in_device *in_dev = __in_dev_get_rcu(dev);
 
-	अगर (in_dev && IN_DEV_MFORWARD(in_dev))
-		वापस BATADV_NO_FLAGS;
-	अन्यथा
-		वापस BATADV_MCAST_WANT_NO_RTR4;
-पूर्ण
+	if (in_dev && IN_DEV_MFORWARD(in_dev))
+		return BATADV_NO_FLAGS;
+	else
+		return BATADV_MCAST_WANT_NO_RTR4;
+}
 
 /**
- * batadv_mcast_mla_rtr_flags_softअगर_get_ipv6() - get mcast router flags from
- *  node क्रम IPv6
- * @dev: the पूर्णांकerface to check
+ * batadv_mcast_mla_rtr_flags_softif_get_ipv6() - get mcast router flags from
+ *  node for IPv6
+ * @dev: the interface to check
  *
  * Checks the presence of an IPv6 multicast router on this node.
  *
- * Caller needs to hold rcu पढ़ो lock.
+ * Caller needs to hold rcu read lock.
  *
- * Return: BATADV_NO_FLAGS अगर present, BATADV_MCAST_WANT_NO_RTR6 otherwise.
+ * Return: BATADV_NO_FLAGS if present, BATADV_MCAST_WANT_NO_RTR6 otherwise.
  */
-#अगर IS_ENABLED(CONFIG_IPV6_MROUTE)
-अटल u8 batadv_mcast_mla_rtr_flags_softअगर_get_ipv6(काष्ठा net_device *dev)
-अणु
-	काष्ठा inet6_dev *in6_dev = __in6_dev_get(dev);
+#if IS_ENABLED(CONFIG_IPV6_MROUTE)
+static u8 batadv_mcast_mla_rtr_flags_softif_get_ipv6(struct net_device *dev)
+{
+	struct inet6_dev *in6_dev = __in6_dev_get(dev);
 
-	अगर (in6_dev && in6_dev->cnf.mc_क्रमwarding)
-		वापस BATADV_NO_FLAGS;
-	अन्यथा
-		वापस BATADV_MCAST_WANT_NO_RTR6;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत u8
-batadv_mcast_mla_rtr_flags_softअगर_get_ipv6(काष्ठा net_device *dev)
-अणु
-	वापस BATADV_MCAST_WANT_NO_RTR6;
-पूर्ण
-#पूर्ण_अगर
+	if (in6_dev && in6_dev->cnf.mc_forwarding)
+		return BATADV_NO_FLAGS;
+	else
+		return BATADV_MCAST_WANT_NO_RTR6;
+}
+#else
+static inline u8
+batadv_mcast_mla_rtr_flags_softif_get_ipv6(struct net_device *dev)
+{
+	return BATADV_MCAST_WANT_NO_RTR6;
+}
+#endif
 
 /**
- * batadv_mcast_mla_rtr_flags_softअगर_get() - get mcast router flags from node
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
- * @bridge: bridge पूर्णांकerface on top of the soft_अगरace अगर present,
- *  otherwise pass शून्य
+ * batadv_mcast_mla_rtr_flags_softif_get() - get mcast router flags from node
+ * @bat_priv: the bat priv with all the soft interface information
+ * @bridge: bridge interface on top of the soft_iface if present,
+ *  otherwise pass NULL
  *
  * Checks the presence of IPv4 and IPv6 multicast routers on this
  * node.
@@ -162,29 +161,29 @@ batadv_mcast_mla_rtr_flags_softअगर_get_ipv6(काष्ठा net_device 
  *	BATADV_NO_FLAGS: Both an IPv4 and IPv6 multicast router is present
  *	BATADV_MCAST_WANT_NO_RTR4: No IPv4 multicast router is present
  *	BATADV_MCAST_WANT_NO_RTR6: No IPv6 multicast router is present
- *	The क्रमmer two OR'd: no multicast router is present
+ *	The former two OR'd: no multicast router is present
  */
-अटल u8 batadv_mcast_mla_rtr_flags_softअगर_get(काष्ठा batadv_priv *bat_priv,
-						काष्ठा net_device *bridge)
-अणु
-	काष्ठा net_device *dev = bridge ? bridge : bat_priv->soft_अगरace;
+static u8 batadv_mcast_mla_rtr_flags_softif_get(struct batadv_priv *bat_priv,
+						struct net_device *bridge)
+{
+	struct net_device *dev = bridge ? bridge : bat_priv->soft_iface;
 	u8 flags = BATADV_NO_FLAGS;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
-	flags |= batadv_mcast_mla_rtr_flags_softअगर_get_ipv4(dev);
-	flags |= batadv_mcast_mla_rtr_flags_softअगर_get_ipv6(dev);
+	flags |= batadv_mcast_mla_rtr_flags_softif_get_ipv4(dev);
+	flags |= batadv_mcast_mla_rtr_flags_softif_get_ipv6(dev);
 
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस flags;
-पूर्ण
+	return flags;
+}
 
 /**
  * batadv_mcast_mla_rtr_flags_bridge_get() - get mcast router flags from bridge
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
- * @bridge: bridge पूर्णांकerface on top of the soft_अगरace अगर present,
- *  otherwise pass शून्य
+ * @bat_priv: the bat priv with all the soft interface information
+ * @bridge: bridge interface on top of the soft_iface if present,
+ *  otherwise pass NULL
  *
  * Checks the presence of IPv4 and IPv6 multicast routers behind a bridge.
  *
@@ -192,61 +191,61 @@ batadv_mcast_mla_rtr_flags_softअगर_get_ipv6(काष्ठा net_device 
  *	BATADV_NO_FLAGS: Both an IPv4 and IPv6 multicast router is present
  *	BATADV_MCAST_WANT_NO_RTR4: No IPv4 multicast router is present
  *	BATADV_MCAST_WANT_NO_RTR6: No IPv6 multicast router is present
- *	The क्रमmer two OR'd: no multicast router is present
+ *	The former two OR'd: no multicast router is present
  */
-#अगर IS_ENABLED(CONFIG_IPV6)
-अटल u8 batadv_mcast_mla_rtr_flags_bridge_get(काष्ठा batadv_priv *bat_priv,
-						काष्ठा net_device *bridge)
-अणु
-	काष्ठा list_head bridge_mcast_list = LIST_HEAD_INIT(bridge_mcast_list);
-	काष्ठा net_device *dev = bat_priv->soft_अगरace;
-	काष्ठा br_ip_list *br_ip_entry, *पंचांगp;
+#if IS_ENABLED(CONFIG_IPV6)
+static u8 batadv_mcast_mla_rtr_flags_bridge_get(struct batadv_priv *bat_priv,
+						struct net_device *bridge)
+{
+	struct list_head bridge_mcast_list = LIST_HEAD_INIT(bridge_mcast_list);
+	struct net_device *dev = bat_priv->soft_iface;
+	struct br_ip_list *br_ip_entry, *tmp;
 	u8 flags = BATADV_MCAST_WANT_NO_RTR6;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (!bridge)
-		वापस BATADV_MCAST_WANT_NO_RTR4 | BATADV_MCAST_WANT_NO_RTR6;
+	if (!bridge)
+		return BATADV_MCAST_WANT_NO_RTR4 | BATADV_MCAST_WANT_NO_RTR6;
 
-	/* TODO: ask the bridge अगर a multicast router is present (the bridge
-	 * is capable of perक्रमming proper RFC4286 multicast router
-	 * discovery) instead of searching क्रम a ff02::2 listener here
+	/* TODO: ask the bridge if a multicast router is present (the bridge
+	 * is capable of performing proper RFC4286 multicast router
+	 * discovery) instead of searching for a ff02::2 listener here
 	 */
 	ret = br_multicast_list_adjacent(dev, &bridge_mcast_list);
-	अगर (ret < 0)
-		वापस BATADV_NO_FLAGS;
+	if (ret < 0)
+		return BATADV_NO_FLAGS;
 
-	list_क्रम_each_entry_safe(br_ip_entry, पंचांगp, &bridge_mcast_list, list) अणु
-		/* the bridge snooping करोes not मुख्यtain IPv4 link-local
-		 * addresses - thereक्रमe we won't find any IPv4 multicast router
+	list_for_each_entry_safe(br_ip_entry, tmp, &bridge_mcast_list, list) {
+		/* the bridge snooping does not maintain IPv4 link-local
+		 * addresses - therefore we won't find any IPv4 multicast router
 		 * address here, only IPv6 ones
 		 */
-		अगर (br_ip_entry->addr.proto == htons(ETH_P_IPV6) &&
+		if (br_ip_entry->addr.proto == htons(ETH_P_IPV6) &&
 		    ipv6_addr_is_ll_all_routers(&br_ip_entry->addr.dst.ip6))
 			flags &= ~BATADV_MCAST_WANT_NO_RTR6;
 
 		list_del(&br_ip_entry->list);
-		kमुक्त(br_ip_entry);
-	पूर्ण
+		kfree(br_ip_entry);
+	}
 
-	वापस flags;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत u8
-batadv_mcast_mla_rtr_flags_bridge_get(काष्ठा batadv_priv *bat_priv,
-				      काष्ठा net_device *bridge)
-अणु
-	अगर (bridge)
-		वापस BATADV_NO_FLAGS;
-	अन्यथा
-		वापस BATADV_MCAST_WANT_NO_RTR4 | BATADV_MCAST_WANT_NO_RTR6;
-पूर्ण
-#पूर्ण_अगर
+	return flags;
+}
+#else
+static inline u8
+batadv_mcast_mla_rtr_flags_bridge_get(struct batadv_priv *bat_priv,
+				      struct net_device *bridge)
+{
+	if (bridge)
+		return BATADV_NO_FLAGS;
+	else
+		return BATADV_MCAST_WANT_NO_RTR4 | BATADV_MCAST_WANT_NO_RTR6;
+}
+#endif
 
 /**
  * batadv_mcast_mla_rtr_flags_get() - get multicast router flags
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
- * @bridge: bridge पूर्णांकerface on top of the soft_अगरace अगर present,
- *  otherwise pass शून्य
+ * @bat_priv: the bat priv with all the soft interface information
+ * @bridge: bridge interface on top of the soft_iface if present,
+ *  otherwise pass NULL
  *
  * Checks the presence of IPv4 and IPv6 multicast routers on this
  * node or behind its bridge.
@@ -255,43 +254,43 @@ batadv_mcast_mla_rtr_flags_bridge_get(काष्ठा batadv_priv *bat_priv,
  *	BATADV_NO_FLAGS: Both an IPv4 and IPv6 multicast router is present
  *	BATADV_MCAST_WANT_NO_RTR4: No IPv4 multicast router is present
  *	BATADV_MCAST_WANT_NO_RTR6: No IPv6 multicast router is present
- *	The क्रमmer two OR'd: no multicast router is present
+ *	The former two OR'd: no multicast router is present
  */
-अटल u8 batadv_mcast_mla_rtr_flags_get(काष्ठा batadv_priv *bat_priv,
-					 काष्ठा net_device *bridge)
-अणु
+static u8 batadv_mcast_mla_rtr_flags_get(struct batadv_priv *bat_priv,
+					 struct net_device *bridge)
+{
 	u8 flags = BATADV_MCAST_WANT_NO_RTR4 | BATADV_MCAST_WANT_NO_RTR6;
 
-	flags &= batadv_mcast_mla_rtr_flags_softअगर_get(bat_priv, bridge);
+	flags &= batadv_mcast_mla_rtr_flags_softif_get(bat_priv, bridge);
 	flags &= batadv_mcast_mla_rtr_flags_bridge_get(bat_priv, bridge);
 
-	वापस flags;
-पूर्ण
+	return flags;
+}
 
 /**
  * batadv_mcast_mla_flags_get() - get the new multicast flags
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @bat_priv: the bat priv with all the soft interface information
  *
- * Return: A set of flags क्रम the current/next TVLV, querier and
+ * Return: A set of flags for the current/next TVLV, querier and
  * bridge state.
  */
-अटल काष्ठा batadv_mcast_mla_flags
-batadv_mcast_mla_flags_get(काष्ठा batadv_priv *bat_priv)
-अणु
-	काष्ठा net_device *dev = bat_priv->soft_अगरace;
-	काष्ठा batadv_mcast_querier_state *qr4, *qr6;
-	काष्ठा batadv_mcast_mla_flags mla_flags;
-	काष्ठा net_device *bridge;
+static struct batadv_mcast_mla_flags
+batadv_mcast_mla_flags_get(struct batadv_priv *bat_priv)
+{
+	struct net_device *dev = bat_priv->soft_iface;
+	struct batadv_mcast_querier_state *qr4, *qr6;
+	struct batadv_mcast_mla_flags mla_flags;
+	struct net_device *bridge;
 
 	bridge = batadv_mcast_get_bridge(dev);
 
-	स_रखो(&mla_flags, 0, माप(mla_flags));
+	memset(&mla_flags, 0, sizeof(mla_flags));
 	mla_flags.enabled = 1;
 	mla_flags.tvlv_flags |= batadv_mcast_mla_rtr_flags_get(bat_priv,
 							       bridge);
 
-	अगर (!bridge)
-		वापस mla_flags;
+	if (!bridge)
+		return mla_flags;
 
 	dev_put(bridge);
 
@@ -299,550 +298,550 @@ batadv_mcast_mla_flags_get(काष्ठा batadv_priv *bat_priv)
 	qr4 = &mla_flags.querier_ipv4;
 	qr6 = &mla_flags.querier_ipv6;
 
-	अगर (!IS_ENABLED(CONFIG_BRIDGE_IGMP_SNOOPING))
+	if (!IS_ENABLED(CONFIG_BRIDGE_IGMP_SNOOPING))
 		pr_warn_once("No bridge IGMP snooping compiled - multicast optimizations disabled\n");
 
 	qr4->exists = br_multicast_has_querier_anywhere(dev, ETH_P_IP);
-	qr4->shaकरोwing = br_multicast_has_querier_adjacent(dev, ETH_P_IP);
+	qr4->shadowing = br_multicast_has_querier_adjacent(dev, ETH_P_IP);
 
 	qr6->exists = br_multicast_has_querier_anywhere(dev, ETH_P_IPV6);
-	qr6->shaकरोwing = br_multicast_has_querier_adjacent(dev, ETH_P_IPV6);
+	qr6->shadowing = br_multicast_has_querier_adjacent(dev, ETH_P_IPV6);
 
 	mla_flags.tvlv_flags |= BATADV_MCAST_WANT_ALL_UNSNOOPABLES;
 
 	/* 1) If no querier exists at all, then multicast listeners on
 	 *    our local TT clients behind the bridge will keep silent.
 	 * 2) If the selected querier is on one of our local TT clients,
-	 *    behind the bridge, then this querier might shaकरोw multicast
+	 *    behind the bridge, then this querier might shadow multicast
 	 *    listeners on our local TT clients, behind this bridge.
 	 *
-	 * In both हालs, we will संकेतize other baपंचांगan nodes that
+	 * In both cases, we will signalize other batman nodes that
 	 * we need all multicast traffic of the according protocol.
 	 */
-	अगर (!qr4->exists || qr4->shaकरोwing) अणु
+	if (!qr4->exists || qr4->shadowing) {
 		mla_flags.tvlv_flags |= BATADV_MCAST_WANT_ALL_IPV4;
 		mla_flags.tvlv_flags &= ~BATADV_MCAST_WANT_NO_RTR4;
-	पूर्ण
+	}
 
-	अगर (!qr6->exists || qr6->shaकरोwing) अणु
+	if (!qr6->exists || qr6->shadowing) {
 		mla_flags.tvlv_flags |= BATADV_MCAST_WANT_ALL_IPV6;
 		mla_flags.tvlv_flags &= ~BATADV_MCAST_WANT_NO_RTR6;
-	पूर्ण
+	}
 
-	वापस mla_flags;
-पूर्ण
+	return mla_flags;
+}
 
 /**
  * batadv_mcast_mla_is_duplicate() - check whether an address is in a list
  * @mcast_addr: the multicast address to check
  * @mcast_list: the list with multicast addresses to search in
  *
- * Return: true अगर the given address is alपढ़ोy in the given list.
- * Otherwise वापसs false.
+ * Return: true if the given address is already in the given list.
+ * Otherwise returns false.
  */
-अटल bool batadv_mcast_mla_is_duplicate(u8 *mcast_addr,
-					  काष्ठा hlist_head *mcast_list)
-अणु
-	काष्ठा batadv_hw_addr *mcast_entry;
+static bool batadv_mcast_mla_is_duplicate(u8 *mcast_addr,
+					  struct hlist_head *mcast_list)
+{
+	struct batadv_hw_addr *mcast_entry;
 
-	hlist_क्रम_each_entry(mcast_entry, mcast_list, list)
-		अगर (batadv_compare_eth(mcast_entry->addr, mcast_addr))
-			वापस true;
+	hlist_for_each_entry(mcast_entry, mcast_list, list)
+		if (batadv_compare_eth(mcast_entry->addr, mcast_addr))
+			return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /**
- * batadv_mcast_mla_softअगर_get_ipv4() - get softअगर IPv4 multicast listeners
+ * batadv_mcast_mla_softif_get_ipv4() - get softif IPv4 multicast listeners
  * @dev: the device to collect multicast addresses from
- * @mcast_list: a list to put found addresses पूर्णांकo
+ * @mcast_list: a list to put found addresses into
  * @flags: flags indicating the new multicast state
  *
  * Collects multicast addresses of IPv4 multicast listeners residing
- * on this kernel on the given soft पूर्णांकerface, dev, in
+ * on this kernel on the given soft interface, dev, in
  * the given mcast_list. In general, multicast listeners provided by
  * your multicast receiving applications run directly on this node.
  *
  * Return: -ENOMEM on memory allocation error or the number of
  * items added to the mcast_list otherwise.
  */
-अटल पूर्णांक
-batadv_mcast_mla_softअगर_get_ipv4(काष्ठा net_device *dev,
-				 काष्ठा hlist_head *mcast_list,
-				 काष्ठा batadv_mcast_mla_flags *flags)
-अणु
-	काष्ठा batadv_hw_addr *new;
-	काष्ठा in_device *in_dev;
+static int
+batadv_mcast_mla_softif_get_ipv4(struct net_device *dev,
+				 struct hlist_head *mcast_list,
+				 struct batadv_mcast_mla_flags *flags)
+{
+	struct batadv_hw_addr *new;
+	struct in_device *in_dev;
 	u8 mcast_addr[ETH_ALEN];
-	काष्ठा ip_mc_list *pmc;
-	पूर्णांक ret = 0;
+	struct ip_mc_list *pmc;
+	int ret = 0;
 
-	अगर (flags->tvlv_flags & BATADV_MCAST_WANT_ALL_IPV4)
-		वापस 0;
+	if (flags->tvlv_flags & BATADV_MCAST_WANT_ALL_IPV4)
+		return 0;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	in_dev = __in_dev_get_rcu(dev);
-	अगर (!in_dev) अणु
-		rcu_पढ़ो_unlock();
-		वापस 0;
-	पूर्ण
+	if (!in_dev) {
+		rcu_read_unlock();
+		return 0;
+	}
 
-	क्रम (pmc = rcu_dereference(in_dev->mc_list); pmc;
-	     pmc = rcu_dereference(pmc->next_rcu)) अणु
-		अगर (flags->tvlv_flags & BATADV_MCAST_WANT_ALL_UNSNOOPABLES &&
+	for (pmc = rcu_dereference(in_dev->mc_list); pmc;
+	     pmc = rcu_dereference(pmc->next_rcu)) {
+		if (flags->tvlv_flags & BATADV_MCAST_WANT_ALL_UNSNOOPABLES &&
 		    ipv4_is_local_multicast(pmc->multiaddr))
-			जारी;
+			continue;
 
-		अगर (!(flags->tvlv_flags & BATADV_MCAST_WANT_NO_RTR4) &&
+		if (!(flags->tvlv_flags & BATADV_MCAST_WANT_NO_RTR4) &&
 		    !ipv4_is_local_multicast(pmc->multiaddr))
-			जारी;
+			continue;
 
 		ip_eth_mc_map(pmc->multiaddr, mcast_addr);
 
-		अगर (batadv_mcast_mla_is_duplicate(mcast_addr, mcast_list))
-			जारी;
+		if (batadv_mcast_mla_is_duplicate(mcast_addr, mcast_list))
+			continue;
 
-		new = kदो_स्मृति(माप(*new), GFP_ATOMIC);
-		अगर (!new) अणु
+		new = kmalloc(sizeof(*new), GFP_ATOMIC);
+		if (!new) {
 			ret = -ENOMEM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		ether_addr_copy(new->addr, mcast_addr);
 		hlist_add_head(&new->list, mcast_list);
 		ret++;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * batadv_mcast_mla_softअगर_get_ipv6() - get softअगर IPv6 multicast listeners
+ * batadv_mcast_mla_softif_get_ipv6() - get softif IPv6 multicast listeners
  * @dev: the device to collect multicast addresses from
- * @mcast_list: a list to put found addresses पूर्णांकo
+ * @mcast_list: a list to put found addresses into
  * @flags: flags indicating the new multicast state
  *
  * Collects multicast addresses of IPv6 multicast listeners residing
- * on this kernel on the given soft पूर्णांकerface, dev, in
+ * on this kernel on the given soft interface, dev, in
  * the given mcast_list. In general, multicast listeners provided by
  * your multicast receiving applications run directly on this node.
  *
  * Return: -ENOMEM on memory allocation error or the number of
  * items added to the mcast_list otherwise.
  */
-#अगर IS_ENABLED(CONFIG_IPV6)
-अटल पूर्णांक
-batadv_mcast_mla_softअगर_get_ipv6(काष्ठा net_device *dev,
-				 काष्ठा hlist_head *mcast_list,
-				 काष्ठा batadv_mcast_mla_flags *flags)
-अणु
-	काष्ठा batadv_hw_addr *new;
-	काष्ठा inet6_dev *in6_dev;
+#if IS_ENABLED(CONFIG_IPV6)
+static int
+batadv_mcast_mla_softif_get_ipv6(struct net_device *dev,
+				 struct hlist_head *mcast_list,
+				 struct batadv_mcast_mla_flags *flags)
+{
+	struct batadv_hw_addr *new;
+	struct inet6_dev *in6_dev;
 	u8 mcast_addr[ETH_ALEN];
-	काष्ठा अगरmcaddr6 *pmc6;
-	पूर्णांक ret = 0;
+	struct ifmcaddr6 *pmc6;
+	int ret = 0;
 
-	अगर (flags->tvlv_flags & BATADV_MCAST_WANT_ALL_IPV6)
-		वापस 0;
+	if (flags->tvlv_flags & BATADV_MCAST_WANT_ALL_IPV6)
+		return 0;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 
 	in6_dev = __in6_dev_get(dev);
-	अगर (!in6_dev) अणु
-		rcu_पढ़ो_unlock();
-		वापस 0;
-	पूर्ण
+	if (!in6_dev) {
+		rcu_read_unlock();
+		return 0;
+	}
 
-	क्रम (pmc6 = rcu_dereference(in6_dev->mc_list);
+	for (pmc6 = rcu_dereference(in6_dev->mc_list);
 	     pmc6;
-	     pmc6 = rcu_dereference(pmc6->next)) अणु
-		अगर (IPV6_ADDR_MC_SCOPE(&pmc6->mca_addr) <
+	     pmc6 = rcu_dereference(pmc6->next)) {
+		if (IPV6_ADDR_MC_SCOPE(&pmc6->mca_addr) <
 		    IPV6_ADDR_SCOPE_LINKLOCAL)
-			जारी;
+			continue;
 
-		अगर (flags->tvlv_flags & BATADV_MCAST_WANT_ALL_UNSNOOPABLES &&
+		if (flags->tvlv_flags & BATADV_MCAST_WANT_ALL_UNSNOOPABLES &&
 		    ipv6_addr_is_ll_all_nodes(&pmc6->mca_addr))
-			जारी;
+			continue;
 
-		अगर (!(flags->tvlv_flags & BATADV_MCAST_WANT_NO_RTR6) &&
+		if (!(flags->tvlv_flags & BATADV_MCAST_WANT_NO_RTR6) &&
 		    IPV6_ADDR_MC_SCOPE(&pmc6->mca_addr) >
 		    IPV6_ADDR_SCOPE_LINKLOCAL)
-			जारी;
+			continue;
 
 		ipv6_eth_mc_map(&pmc6->mca_addr, mcast_addr);
 
-		अगर (batadv_mcast_mla_is_duplicate(mcast_addr, mcast_list))
-			जारी;
+		if (batadv_mcast_mla_is_duplicate(mcast_addr, mcast_list))
+			continue;
 
-		new = kदो_स्मृति(माप(*new), GFP_ATOMIC);
-		अगर (!new) अणु
+		new = kmalloc(sizeof(*new), GFP_ATOMIC);
+		if (!new) {
 			ret = -ENOMEM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		ether_addr_copy(new->addr, mcast_addr);
 		hlist_add_head(&new->list, mcast_list);
 		ret++;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
-	वापस ret;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत पूर्णांक
-batadv_mcast_mla_softअगर_get_ipv6(काष्ठा net_device *dev,
-				 काष्ठा hlist_head *mcast_list,
-				 काष्ठा batadv_mcast_mla_flags *flags)
-अणु
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#else
+static inline int
+batadv_mcast_mla_softif_get_ipv6(struct net_device *dev,
+				 struct hlist_head *mcast_list,
+				 struct batadv_mcast_mla_flags *flags)
+{
+	return 0;
+}
+#endif
 
 /**
- * batadv_mcast_mla_softअगर_get() - get softअगर multicast listeners
+ * batadv_mcast_mla_softif_get() - get softif multicast listeners
  * @dev: the device to collect multicast addresses from
- * @mcast_list: a list to put found addresses पूर्णांकo
+ * @mcast_list: a list to put found addresses into
  * @flags: flags indicating the new multicast state
  *
  * Collects multicast addresses of multicast listeners residing
- * on this kernel on the given soft पूर्णांकerface, dev, in
+ * on this kernel on the given soft interface, dev, in
  * the given mcast_list. In general, multicast listeners provided by
  * your multicast receiving applications run directly on this node.
  *
- * If there is a bridge पूर्णांकerface on top of dev, collect from that one
+ * If there is a bridge interface on top of dev, collect from that one
  * instead. Just like with IP addresses and routes, multicast listeners
- * will(/should) रेजिस्टर to the bridge पूर्णांकerface instead of an
+ * will(/should) register to the bridge interface instead of an
  * enslaved bat0.
  *
  * Return: -ENOMEM on memory allocation error or the number of
  * items added to the mcast_list otherwise.
  */
-अटल पूर्णांक
-batadv_mcast_mla_softअगर_get(काष्ठा net_device *dev,
-			    काष्ठा hlist_head *mcast_list,
-			    काष्ठा batadv_mcast_mla_flags *flags)
-अणु
-	काष्ठा net_device *bridge = batadv_mcast_get_bridge(dev);
-	पूर्णांक ret4, ret6 = 0;
+static int
+batadv_mcast_mla_softif_get(struct net_device *dev,
+			    struct hlist_head *mcast_list,
+			    struct batadv_mcast_mla_flags *flags)
+{
+	struct net_device *bridge = batadv_mcast_get_bridge(dev);
+	int ret4, ret6 = 0;
 
-	अगर (bridge)
+	if (bridge)
 		dev = bridge;
 
-	ret4 = batadv_mcast_mla_softअगर_get_ipv4(dev, mcast_list, flags);
-	अगर (ret4 < 0)
-		जाओ out;
+	ret4 = batadv_mcast_mla_softif_get_ipv4(dev, mcast_list, flags);
+	if (ret4 < 0)
+		goto out;
 
-	ret6 = batadv_mcast_mla_softअगर_get_ipv6(dev, mcast_list, flags);
-	अगर (ret6 < 0) अणु
+	ret6 = batadv_mcast_mla_softif_get_ipv6(dev, mcast_list, flags);
+	if (ret6 < 0) {
 		ret4 = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 out:
-	अगर (bridge)
+	if (bridge)
 		dev_put(bridge);
 
-	वापस ret4 + ret6;
-पूर्ण
+	return ret4 + ret6;
+}
 
 /**
  * batadv_mcast_mla_br_addr_cpy() - copy a bridge multicast address
- * @dst: destination to ग_लिखो to - a multicast MAC address
- * @src: source to पढ़ो from - a multicast IP address
+ * @dst: destination to write to - a multicast MAC address
+ * @src: source to read from - a multicast IP address
  *
  * Converts a given multicast IPv4/IPv6 address from a bridge
- * to its matching multicast MAC address and copies it पूर्णांकo the given
+ * to its matching multicast MAC address and copies it into the given
  * destination buffer.
  *
  * Caller needs to make sure the destination buffer can hold
  * at least ETH_ALEN bytes.
  */
-अटल व्योम batadv_mcast_mla_br_addr_cpy(अक्षर *dst, स्थिर काष्ठा br_ip *src)
-अणु
-	अगर (src->proto == htons(ETH_P_IP))
+static void batadv_mcast_mla_br_addr_cpy(char *dst, const struct br_ip *src)
+{
+	if (src->proto == htons(ETH_P_IP))
 		ip_eth_mc_map(src->dst.ip4, dst);
-#अगर IS_ENABLED(CONFIG_IPV6)
-	अन्यथा अगर (src->proto == htons(ETH_P_IPV6))
+#if IS_ENABLED(CONFIG_IPV6)
+	else if (src->proto == htons(ETH_P_IPV6))
 		ipv6_eth_mc_map(&src->dst.ip6, dst);
-#पूर्ण_अगर
-	अन्यथा
+#endif
+	else
 		eth_zero_addr(dst);
-पूर्ण
+}
 
 /**
  * batadv_mcast_mla_bridge_get() - get bridged-in multicast listeners
  * @dev: a bridge slave whose bridge to collect multicast addresses from
- * @mcast_list: a list to put found addresses पूर्णांकo
+ * @mcast_list: a list to put found addresses into
  * @flags: flags indicating the new multicast state
  *
  * Collects multicast addresses of multicast listeners residing
- * on क्रमeign, non-mesh devices which we gave access to our mesh via
- * a bridge on top of the given soft पूर्णांकerface, dev, in the given
+ * on foreign, non-mesh devices which we gave access to our mesh via
+ * a bridge on top of the given soft interface, dev, in the given
  * mcast_list.
  *
  * Return: -ENOMEM on memory allocation error or the number of
  * items added to the mcast_list otherwise.
  */
-अटल पूर्णांक batadv_mcast_mla_bridge_get(काष्ठा net_device *dev,
-				       काष्ठा hlist_head *mcast_list,
-				       काष्ठा batadv_mcast_mla_flags *flags)
-अणु
-	काष्ठा list_head bridge_mcast_list = LIST_HEAD_INIT(bridge_mcast_list);
-	काष्ठा br_ip_list *br_ip_entry, *पंचांगp;
+static int batadv_mcast_mla_bridge_get(struct net_device *dev,
+				       struct hlist_head *mcast_list,
+				       struct batadv_mcast_mla_flags *flags)
+{
+	struct list_head bridge_mcast_list = LIST_HEAD_INIT(bridge_mcast_list);
+	struct br_ip_list *br_ip_entry, *tmp;
 	u8 tvlv_flags = flags->tvlv_flags;
-	काष्ठा batadv_hw_addr *new;
+	struct batadv_hw_addr *new;
 	u8 mcast_addr[ETH_ALEN];
-	पूर्णांक ret;
+	int ret;
 
-	/* we करोn't need to detect these devices/listeners, the IGMP/MLD
-	 * snooping code of the Linux bridge alपढ़ोy करोes that क्रम us
+	/* we don't need to detect these devices/listeners, the IGMP/MLD
+	 * snooping code of the Linux bridge already does that for us
 	 */
 	ret = br_multicast_list_adjacent(dev, &bridge_mcast_list);
-	अगर (ret < 0)
-		जाओ out;
+	if (ret < 0)
+		goto out;
 
-	list_क्रम_each_entry(br_ip_entry, &bridge_mcast_list, list) अणु
-		अगर (br_ip_entry->addr.proto == htons(ETH_P_IP)) अणु
-			अगर (tvlv_flags & BATADV_MCAST_WANT_ALL_IPV4)
-				जारी;
+	list_for_each_entry(br_ip_entry, &bridge_mcast_list, list) {
+		if (br_ip_entry->addr.proto == htons(ETH_P_IP)) {
+			if (tvlv_flags & BATADV_MCAST_WANT_ALL_IPV4)
+				continue;
 
-			अगर (tvlv_flags & BATADV_MCAST_WANT_ALL_UNSNOOPABLES &&
+			if (tvlv_flags & BATADV_MCAST_WANT_ALL_UNSNOOPABLES &&
 			    ipv4_is_local_multicast(br_ip_entry->addr.dst.ip4))
-				जारी;
+				continue;
 
-			अगर (!(tvlv_flags & BATADV_MCAST_WANT_NO_RTR4) &&
+			if (!(tvlv_flags & BATADV_MCAST_WANT_NO_RTR4) &&
 			    !ipv4_is_local_multicast(br_ip_entry->addr.dst.ip4))
-				जारी;
-		पूर्ण
+				continue;
+		}
 
-#अगर IS_ENABLED(CONFIG_IPV6)
-		अगर (br_ip_entry->addr.proto == htons(ETH_P_IPV6)) अणु
-			अगर (tvlv_flags & BATADV_MCAST_WANT_ALL_IPV6)
-				जारी;
+#if IS_ENABLED(CONFIG_IPV6)
+		if (br_ip_entry->addr.proto == htons(ETH_P_IPV6)) {
+			if (tvlv_flags & BATADV_MCAST_WANT_ALL_IPV6)
+				continue;
 
-			अगर (tvlv_flags & BATADV_MCAST_WANT_ALL_UNSNOOPABLES &&
+			if (tvlv_flags & BATADV_MCAST_WANT_ALL_UNSNOOPABLES &&
 			    ipv6_addr_is_ll_all_nodes(&br_ip_entry->addr.dst.ip6))
-				जारी;
+				continue;
 
-			अगर (!(tvlv_flags & BATADV_MCAST_WANT_NO_RTR6) &&
+			if (!(tvlv_flags & BATADV_MCAST_WANT_NO_RTR6) &&
 			    IPV6_ADDR_MC_SCOPE(&br_ip_entry->addr.dst.ip6) >
 			    IPV6_ADDR_SCOPE_LINKLOCAL)
-				जारी;
-		पूर्ण
-#पूर्ण_अगर
+				continue;
+		}
+#endif
 
 		batadv_mcast_mla_br_addr_cpy(mcast_addr, &br_ip_entry->addr);
-		अगर (batadv_mcast_mla_is_duplicate(mcast_addr, mcast_list))
-			जारी;
+		if (batadv_mcast_mla_is_duplicate(mcast_addr, mcast_list))
+			continue;
 
-		new = kदो_स्मृति(माप(*new), GFP_ATOMIC);
-		अगर (!new) अणु
+		new = kmalloc(sizeof(*new), GFP_ATOMIC);
+		if (!new) {
 			ret = -ENOMEM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		ether_addr_copy(new->addr, mcast_addr);
 		hlist_add_head(&new->list, mcast_list);
-	पूर्ण
+	}
 
 out:
-	list_क्रम_each_entry_safe(br_ip_entry, पंचांगp, &bridge_mcast_list, list) अणु
+	list_for_each_entry_safe(br_ip_entry, tmp, &bridge_mcast_list, list) {
 		list_del(&br_ip_entry->list);
-		kमुक्त(br_ip_entry);
-	पूर्ण
+		kfree(br_ip_entry);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * batadv_mcast_mla_list_मुक्त() - मुक्त a list of multicast addresses
- * @mcast_list: the list to मुक्त
+ * batadv_mcast_mla_list_free() - free a list of multicast addresses
+ * @mcast_list: the list to free
  *
- * Removes and मुक्तs all items in the given mcast_list.
+ * Removes and frees all items in the given mcast_list.
  */
-अटल व्योम batadv_mcast_mla_list_मुक्त(काष्ठा hlist_head *mcast_list)
-अणु
-	काष्ठा batadv_hw_addr *mcast_entry;
-	काष्ठा hlist_node *पंचांगp;
+static void batadv_mcast_mla_list_free(struct hlist_head *mcast_list)
+{
+	struct batadv_hw_addr *mcast_entry;
+	struct hlist_node *tmp;
 
-	hlist_क्रम_each_entry_safe(mcast_entry, पंचांगp, mcast_list, list) अणु
+	hlist_for_each_entry_safe(mcast_entry, tmp, mcast_list, list) {
 		hlist_del(&mcast_entry->list);
-		kमुक्त(mcast_entry);
-	पूर्ण
-पूर्ण
+		kfree(mcast_entry);
+	}
+}
 
 /**
  * batadv_mcast_mla_tt_retract() - clean up multicast listener announcements
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
- * @mcast_list: a list of addresses which should _not_ be हटाओd
+ * @bat_priv: the bat priv with all the soft interface information
+ * @mcast_list: a list of addresses which should _not_ be removed
  *
  * Retracts the announcement of any multicast listener from the
  * translation table except the ones listed in the given mcast_list.
  *
- * If mcast_list is शून्य then all are retracted.
+ * If mcast_list is NULL then all are retracted.
  */
-अटल व्योम batadv_mcast_mla_tt_retract(काष्ठा batadv_priv *bat_priv,
-					काष्ठा hlist_head *mcast_list)
-अणु
-	काष्ठा batadv_hw_addr *mcast_entry;
-	काष्ठा hlist_node *पंचांगp;
+static void batadv_mcast_mla_tt_retract(struct batadv_priv *bat_priv,
+					struct hlist_head *mcast_list)
+{
+	struct batadv_hw_addr *mcast_entry;
+	struct hlist_node *tmp;
 
-	hlist_क्रम_each_entry_safe(mcast_entry, पंचांगp, &bat_priv->mcast.mla_list,
-				  list) अणु
-		अगर (mcast_list &&
+	hlist_for_each_entry_safe(mcast_entry, tmp, &bat_priv->mcast.mla_list,
+				  list) {
+		if (mcast_list &&
 		    batadv_mcast_mla_is_duplicate(mcast_entry->addr,
 						  mcast_list))
-			जारी;
+			continue;
 
-		batadv_tt_local_हटाओ(bat_priv, mcast_entry->addr,
+		batadv_tt_local_remove(bat_priv, mcast_entry->addr,
 				       BATADV_NO_FLAGS,
 				       "mcast TT outdated", false);
 
 		hlist_del(&mcast_entry->list);
-		kमुक्त(mcast_entry);
-	पूर्ण
-पूर्ण
+		kfree(mcast_entry);
+	}
+}
 
 /**
  * batadv_mcast_mla_tt_add() - add multicast listener announcements
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @bat_priv: the bat priv with all the soft interface information
  * @mcast_list: a list of addresses which are going to get added
  *
  * Adds multicast listener announcements from the given mcast_list to the
- * translation table अगर they have not been added yet.
+ * translation table if they have not been added yet.
  */
-अटल व्योम batadv_mcast_mla_tt_add(काष्ठा batadv_priv *bat_priv,
-				    काष्ठा hlist_head *mcast_list)
-अणु
-	काष्ठा batadv_hw_addr *mcast_entry;
-	काष्ठा hlist_node *पंचांगp;
+static void batadv_mcast_mla_tt_add(struct batadv_priv *bat_priv,
+				    struct hlist_head *mcast_list)
+{
+	struct batadv_hw_addr *mcast_entry;
+	struct hlist_node *tmp;
 
-	अगर (!mcast_list)
-		वापस;
+	if (!mcast_list)
+		return;
 
-	hlist_क्रम_each_entry_safe(mcast_entry, पंचांगp, mcast_list, list) अणु
-		अगर (batadv_mcast_mla_is_duplicate(mcast_entry->addr,
+	hlist_for_each_entry_safe(mcast_entry, tmp, mcast_list, list) {
+		if (batadv_mcast_mla_is_duplicate(mcast_entry->addr,
 						  &bat_priv->mcast.mla_list))
-			जारी;
+			continue;
 
-		अगर (!batadv_tt_local_add(bat_priv->soft_अगरace,
+		if (!batadv_tt_local_add(bat_priv->soft_iface,
 					 mcast_entry->addr, BATADV_NO_FLAGS,
-					 BATADV_शून्य_IFINDEX, BATADV_NO_MARK))
-			जारी;
+					 BATADV_NULL_IFINDEX, BATADV_NO_MARK))
+			continue;
 
 		hlist_del(&mcast_entry->list);
 		hlist_add_head(&mcast_entry->list, &bat_priv->mcast.mla_list);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * batadv_mcast_querier_log() - debug output regarding the querier status on
  *  link
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
- * @str_proto: a string क्रम the querier protocol (e.g. "IGMP" or "MLD")
+ * @bat_priv: the bat priv with all the soft interface information
+ * @str_proto: a string for the querier protocol (e.g. "IGMP" or "MLD")
  * @old_state: the previous querier state on our link
  * @new_state: the new querier state on our link
  *
- * Outमाला_दो debug messages to the logging facility with log level 'mcast'
+ * Outputs debug messages to the logging facility with log level 'mcast'
  * regarding changes to the querier status on the link which are relevant
  * to our multicast optimizations.
  *
  * Usually this is about whether a querier appeared or vanished in
  * our mesh or whether the querier is in the suboptimal position of being
- * behind our local bridge segment: Snooping चयनes will directly
- * क्रमward listener reports to the querier, thereक्रमe baपंचांगan-adv and
+ * behind our local bridge segment: Snooping switches will directly
+ * forward listener reports to the querier, therefore batman-adv and
  * the bridge will potentially not see these listeners - the querier is
- * potentially shaकरोwing listeners from us then.
+ * potentially shadowing listeners from us then.
  *
- * This is only पूर्णांकeresting क्रम nodes with a bridge on top of their
- * soft पूर्णांकerface.
+ * This is only interesting for nodes with a bridge on top of their
+ * soft interface.
  */
-अटल व्योम
-batadv_mcast_querier_log(काष्ठा batadv_priv *bat_priv, अक्षर *str_proto,
-			 काष्ठा batadv_mcast_querier_state *old_state,
-			 काष्ठा batadv_mcast_querier_state *new_state)
-अणु
-	अगर (!old_state->exists && new_state->exists)
-		batadv_info(bat_priv->soft_अगरace, "%s Querier appeared\n",
+static void
+batadv_mcast_querier_log(struct batadv_priv *bat_priv, char *str_proto,
+			 struct batadv_mcast_querier_state *old_state,
+			 struct batadv_mcast_querier_state *new_state)
+{
+	if (!old_state->exists && new_state->exists)
+		batadv_info(bat_priv->soft_iface, "%s Querier appeared\n",
 			    str_proto);
-	अन्यथा अगर (old_state->exists && !new_state->exists)
-		batadv_info(bat_priv->soft_अगरace,
+	else if (old_state->exists && !new_state->exists)
+		batadv_info(bat_priv->soft_iface,
 			    "%s Querier disappeared - multicast optimizations disabled\n",
 			    str_proto);
-	अन्यथा अगर (!bat_priv->mcast.mla_flags.bridged && !new_state->exists)
-		batadv_info(bat_priv->soft_अगरace,
+	else if (!bat_priv->mcast.mla_flags.bridged && !new_state->exists)
+		batadv_info(bat_priv->soft_iface,
 			    "No %s Querier present - multicast optimizations disabled\n",
 			    str_proto);
 
-	अगर (new_state->exists) अणु
-		अगर ((!old_state->shaकरोwing && new_state->shaकरोwing) ||
-		    (!old_state->exists && new_state->shaकरोwing))
+	if (new_state->exists) {
+		if ((!old_state->shadowing && new_state->shadowing) ||
+		    (!old_state->exists && new_state->shadowing))
 			batadv_dbg(BATADV_DBG_MCAST, bat_priv,
 				   "%s Querier is behind our bridged segment: Might shadow listeners\n",
 				   str_proto);
-		अन्यथा अगर (old_state->shaकरोwing && !new_state->shaकरोwing)
+		else if (old_state->shadowing && !new_state->shadowing)
 			batadv_dbg(BATADV_DBG_MCAST, bat_priv,
 				   "%s Querier is not behind our bridged segment\n",
 				   str_proto);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * batadv_mcast_bridge_log() - debug output क्रम topology changes in bridged
+ * batadv_mcast_bridge_log() - debug output for topology changes in bridged
  *  setups
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @bat_priv: the bat priv with all the soft interface information
  * @new_flags: flags indicating the new multicast state
  *
- * If no bridges are ever used on this node, then this function करोes nothing.
+ * If no bridges are ever used on this node, then this function does nothing.
  *
- * Otherwise this function outमाला_दो debug inक्रमmation to the 'mcast' log level
+ * Otherwise this function outputs debug information to the 'mcast' log level
  * which might be relevant to our multicast optimizations.
  *
- * More precisely, it outमाला_दो inक्रमmation when a bridge पूर्णांकerface is added or
- * हटाओd from a soft पूर्णांकerface. And when a bridge is present, it further
- * outमाला_दो inक्रमmation about the querier state which is relevant क्रम the
+ * More precisely, it outputs information when a bridge interface is added or
+ * removed from a soft interface. And when a bridge is present, it further
+ * outputs information about the querier state which is relevant for the
  * multicast flags this node is going to set.
  */
-अटल व्योम
-batadv_mcast_bridge_log(काष्ठा batadv_priv *bat_priv,
-			काष्ठा batadv_mcast_mla_flags *new_flags)
-अणु
-	काष्ठा batadv_mcast_mla_flags *old_flags = &bat_priv->mcast.mla_flags;
+static void
+batadv_mcast_bridge_log(struct batadv_priv *bat_priv,
+			struct batadv_mcast_mla_flags *new_flags)
+{
+	struct batadv_mcast_mla_flags *old_flags = &bat_priv->mcast.mla_flags;
 
-	अगर (!old_flags->bridged && new_flags->bridged)
+	if (!old_flags->bridged && new_flags->bridged)
 		batadv_dbg(BATADV_DBG_MCAST, bat_priv,
 			   "Bridge added: Setting Unsnoopables(U)-flag\n");
-	अन्यथा अगर (old_flags->bridged && !new_flags->bridged)
+	else if (old_flags->bridged && !new_flags->bridged)
 		batadv_dbg(BATADV_DBG_MCAST, bat_priv,
 			   "Bridge removed: Unsetting Unsnoopables(U)-flag\n");
 
-	अगर (new_flags->bridged) अणु
+	if (new_flags->bridged) {
 		batadv_mcast_querier_log(bat_priv, "IGMP",
 					 &old_flags->querier_ipv4,
 					 &new_flags->querier_ipv4);
 		batadv_mcast_querier_log(bat_priv, "MLD",
 					 &old_flags->querier_ipv6,
 					 &new_flags->querier_ipv6);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * batadv_mcast_flags_log() - output debug inक्रमmation about mcast flag changes
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_mcast_flags_log() - output debug information about mcast flag changes
+ * @bat_priv: the bat priv with all the soft interface information
  * @flags: TVLV flags indicating the new multicast state
  *
  * Whenever the multicast TVLV flags this node announces change, this function
- * should be used to notअगरy userspace about the change.
+ * should be used to notify userspace about the change.
  */
-अटल व्योम batadv_mcast_flags_log(काष्ठा batadv_priv *bat_priv, u8 flags)
-अणु
+static void batadv_mcast_flags_log(struct batadv_priv *bat_priv, u8 flags)
+{
 	bool old_enabled = bat_priv->mcast.mla_flags.enabled;
 	u8 old_flags = bat_priv->mcast.mla_flags.tvlv_flags;
-	अक्षर str_old_flags[] = "[.... . ]";
+	char str_old_flags[] = "[.... . ]";
 
-	प्र_लिखो(str_old_flags, "[%c%c%c%s%s]",
+	sprintf(str_old_flags, "[%c%c%c%s%s]",
 		(old_flags & BATADV_MCAST_WANT_ALL_UNSNOOPABLES) ? 'U' : '.',
 		(old_flags & BATADV_MCAST_WANT_ALL_IPV4) ? '4' : '.',
 		(old_flags & BATADV_MCAST_WANT_ALL_IPV6) ? '6' : '.',
@@ -857,65 +856,65 @@ batadv_mcast_bridge_log(काष्ठा batadv_priv *bat_priv,
 		   (flags & BATADV_MCAST_WANT_ALL_IPV6) ? '6' : '.',
 		   !(flags & BATADV_MCAST_WANT_NO_RTR4) ? "R4" : ". ",
 		   !(flags & BATADV_MCAST_WANT_NO_RTR6) ? "R6" : ". ");
-पूर्ण
+}
 
 /**
  * batadv_mcast_mla_flags_update() - update multicast flags
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @bat_priv: the bat priv with all the soft interface information
  * @flags: flags indicating the new multicast state
  *
  * Updates the own multicast tvlv with our current multicast related settings,
  * capabilities and inabilities.
  */
-अटल व्योम
-batadv_mcast_mla_flags_update(काष्ठा batadv_priv *bat_priv,
-			      काष्ठा batadv_mcast_mla_flags *flags)
-अणु
-	काष्ठा batadv_tvlv_mcast_data mcast_data;
+static void
+batadv_mcast_mla_flags_update(struct batadv_priv *bat_priv,
+			      struct batadv_mcast_mla_flags *flags)
+{
+	struct batadv_tvlv_mcast_data mcast_data;
 
-	अगर (!स_भेद(flags, &bat_priv->mcast.mla_flags, माप(*flags)))
-		वापस;
+	if (!memcmp(flags, &bat_priv->mcast.mla_flags, sizeof(*flags)))
+		return;
 
 	batadv_mcast_bridge_log(bat_priv, flags);
 	batadv_mcast_flags_log(bat_priv, flags->tvlv_flags);
 
 	mcast_data.flags = flags->tvlv_flags;
-	स_रखो(mcast_data.reserved, 0, माप(mcast_data.reserved));
+	memset(mcast_data.reserved, 0, sizeof(mcast_data.reserved));
 
-	batadv_tvlv_container_रेजिस्टर(bat_priv, BATADV_TVLV_MCAST, 2,
-				       &mcast_data, माप(mcast_data));
+	batadv_tvlv_container_register(bat_priv, BATADV_TVLV_MCAST, 2,
+				       &mcast_data, sizeof(mcast_data));
 
 	bat_priv->mcast.mla_flags = *flags;
-पूर्ण
+}
 
 /**
  * __batadv_mcast_mla_update() - update the own MLAs
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @bat_priv: the bat priv with all the soft interface information
  *
  * Updates the own multicast listener announcements in the translation
  * table as well as the own, announced multicast tvlv container.
  *
- * Note that non-conflicting पढ़ोs and ग_लिखोs to bat_priv->mcast.mla_list
+ * Note that non-conflicting reads and writes to bat_priv->mcast.mla_list
  * in batadv_mcast_mla_tt_retract() and batadv_mcast_mla_tt_add() are
  * ensured by the non-parallel execution of the worker this function
- * beदीर्घs to.
+ * belongs to.
  */
-अटल व्योम __batadv_mcast_mla_update(काष्ठा batadv_priv *bat_priv)
-अणु
-	काष्ठा net_device *soft_अगरace = bat_priv->soft_अगरace;
-	काष्ठा hlist_head mcast_list = HLIST_HEAD_INIT;
-	काष्ठा batadv_mcast_mla_flags flags;
-	पूर्णांक ret;
+static void __batadv_mcast_mla_update(struct batadv_priv *bat_priv)
+{
+	struct net_device *soft_iface = bat_priv->soft_iface;
+	struct hlist_head mcast_list = HLIST_HEAD_INIT;
+	struct batadv_mcast_mla_flags flags;
+	int ret;
 
 	flags = batadv_mcast_mla_flags_get(bat_priv);
 
-	ret = batadv_mcast_mla_softअगर_get(soft_अगरace, &mcast_list, &flags);
-	अगर (ret < 0)
-		जाओ out;
+	ret = batadv_mcast_mla_softif_get(soft_iface, &mcast_list, &flags);
+	if (ret < 0)
+		goto out;
 
-	ret = batadv_mcast_mla_bridge_get(soft_अगरace, &mcast_list, &flags);
-	अगर (ret < 0)
-		जाओ out;
+	ret = batadv_mcast_mla_bridge_get(soft_iface, &mcast_list, &flags);
+	if (ret < 0)
+		goto out;
 
 	spin_lock(&bat_priv->mcast.mla_lock);
 	batadv_mcast_mla_tt_retract(bat_priv, &mcast_list);
@@ -924,846 +923,846 @@ batadv_mcast_mla_flags_update(काष्ठा batadv_priv *bat_priv,
 	spin_unlock(&bat_priv->mcast.mla_lock);
 
 out:
-	batadv_mcast_mla_list_मुक्त(&mcast_list);
-पूर्ण
+	batadv_mcast_mla_list_free(&mcast_list);
+}
 
 /**
  * batadv_mcast_mla_update() - update the own MLAs
- * @work: kernel work काष्ठा
+ * @work: kernel work struct
  *
  * Updates the own multicast listener announcements in the translation
  * table as well as the own, announced multicast tvlv container.
  *
- * In the end, reschedules the work समयr.
+ * In the end, reschedules the work timer.
  */
-अटल व्योम batadv_mcast_mla_update(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा delayed_work *delayed_work;
-	काष्ठा batadv_priv_mcast *priv_mcast;
-	काष्ठा batadv_priv *bat_priv;
+static void batadv_mcast_mla_update(struct work_struct *work)
+{
+	struct delayed_work *delayed_work;
+	struct batadv_priv_mcast *priv_mcast;
+	struct batadv_priv *bat_priv;
 
 	delayed_work = to_delayed_work(work);
-	priv_mcast = container_of(delayed_work, काष्ठा batadv_priv_mcast, work);
-	bat_priv = container_of(priv_mcast, काष्ठा batadv_priv, mcast);
+	priv_mcast = container_of(delayed_work, struct batadv_priv_mcast, work);
+	bat_priv = container_of(priv_mcast, struct batadv_priv, mcast);
 
 	__batadv_mcast_mla_update(bat_priv);
-	batadv_mcast_start_समयr(bat_priv);
-पूर्ण
+	batadv_mcast_start_timer(bat_priv);
+}
 
 /**
- * batadv_mcast_is_report_ipv4() -ै /check क्रम IGMP reports
- * @skb: the ethernet frame destined क्रम the mesh
+ * batadv_mcast_is_report_ipv4() - check for IGMP reports
+ * @skb: the ethernet frame destined for the mesh
  *
- * This call might पुनः_स्मृतिate skb data.
+ * This call might reallocate skb data.
  *
  * Checks whether the given frame is a valid IGMP report.
  *
  * Return: If so then true, otherwise false.
  */
-अटल bool batadv_mcast_is_report_ipv4(काष्ठा sk_buff *skb)
-अणु
-	अगर (ip_mc_check_igmp(skb) < 0)
-		वापस false;
+static bool batadv_mcast_is_report_ipv4(struct sk_buff *skb)
+{
+	if (ip_mc_check_igmp(skb) < 0)
+		return false;
 
-	चयन (igmp_hdr(skb)->type) अणु
-	हाल IGMP_HOST_MEMBERSHIP_REPORT:
-	हाल IGMPV2_HOST_MEMBERSHIP_REPORT:
-	हाल IGMPV3_HOST_MEMBERSHIP_REPORT:
-		वापस true;
-	पूर्ण
+	switch (igmp_hdr(skb)->type) {
+	case IGMP_HOST_MEMBERSHIP_REPORT:
+	case IGMPV2_HOST_MEMBERSHIP_REPORT:
+	case IGMPV3_HOST_MEMBERSHIP_REPORT:
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /**
- * batadv_mcast_क्रमw_mode_check_ipv4() - check क्रम optimized क्रमwarding
+ * batadv_mcast_forw_mode_check_ipv4() - check for optimized forwarding
  *  potential
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @bat_priv: the bat priv with all the soft interface information
  * @skb: the IPv4 packet to check
  * @is_unsnoopable: stores whether the destination is snoopable
  * @is_routable: stores whether the destination is routable
  *
- * Checks whether the given IPv4 packet has the potential to be क्रमwarded with a
+ * Checks whether the given IPv4 packet has the potential to be forwarded with a
  * mode more optimal than classic flooding.
  *
- * Return: If so then 0. Otherwise -EINVAL or -ENOMEM in हाल of memory
+ * Return: If so then 0. Otherwise -EINVAL or -ENOMEM in case of memory
  * allocation failure.
  */
-अटल पूर्णांक batadv_mcast_क्रमw_mode_check_ipv4(काष्ठा batadv_priv *bat_priv,
-					     काष्ठा sk_buff *skb,
+static int batadv_mcast_forw_mode_check_ipv4(struct batadv_priv *bat_priv,
+					     struct sk_buff *skb,
 					     bool *is_unsnoopable,
-					     पूर्णांक *is_routable)
-अणु
-	काष्ठा iphdr *iphdr;
+					     int *is_routable)
+{
+	struct iphdr *iphdr;
 
 	/* We might fail due to out-of-memory -> drop it */
-	अगर (!pskb_may_pull(skb, माप(काष्ठा ethhdr) + माप(*iphdr)))
-		वापस -ENOMEM;
+	if (!pskb_may_pull(skb, sizeof(struct ethhdr) + sizeof(*iphdr)))
+		return -ENOMEM;
 
-	अगर (batadv_mcast_is_report_ipv4(skb))
-		वापस -EINVAL;
+	if (batadv_mcast_is_report_ipv4(skb))
+		return -EINVAL;
 
 	iphdr = ip_hdr(skb);
 
 	/* link-local multicast listeners behind a bridge are
 	 * not snoopable (see RFC4541, section 2.1.2.2)
 	 */
-	अगर (ipv4_is_local_multicast(iphdr->daddr))
+	if (ipv4_is_local_multicast(iphdr->daddr))
 		*is_unsnoopable = true;
-	अन्यथा
+	else
 		*is_routable = ETH_P_IP;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * batadv_mcast_is_report_ipv6() - check क्रम MLD reports
- * @skb: the ethernet frame destined क्रम the mesh
+ * batadv_mcast_is_report_ipv6() - check for MLD reports
+ * @skb: the ethernet frame destined for the mesh
  *
- * This call might पुनः_स्मृतिate skb data.
+ * This call might reallocate skb data.
  *
  * Checks whether the given frame is a valid MLD report.
  *
  * Return: If so then true, otherwise false.
  */
-अटल bool batadv_mcast_is_report_ipv6(काष्ठा sk_buff *skb)
-अणु
-	अगर (ipv6_mc_check_mld(skb) < 0)
-		वापस false;
+static bool batadv_mcast_is_report_ipv6(struct sk_buff *skb)
+{
+	if (ipv6_mc_check_mld(skb) < 0)
+		return false;
 
-	चयन (icmp6_hdr(skb)->icmp6_type) अणु
-	हाल ICMPV6_MGM_REPORT:
-	हाल ICMPV6_MLD2_REPORT:
-		वापस true;
-	पूर्ण
+	switch (icmp6_hdr(skb)->icmp6_type) {
+	case ICMPV6_MGM_REPORT:
+	case ICMPV6_MLD2_REPORT:
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /**
- * batadv_mcast_क्रमw_mode_check_ipv6() - check क्रम optimized क्रमwarding
+ * batadv_mcast_forw_mode_check_ipv6() - check for optimized forwarding
  *  potential
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @bat_priv: the bat priv with all the soft interface information
  * @skb: the IPv6 packet to check
  * @is_unsnoopable: stores whether the destination is snoopable
  * @is_routable: stores whether the destination is routable
  *
- * Checks whether the given IPv6 packet has the potential to be क्रमwarded with a
+ * Checks whether the given IPv6 packet has the potential to be forwarded with a
  * mode more optimal than classic flooding.
  *
- * Return: If so then 0. Otherwise -EINVAL is or -ENOMEM अगर we are out of memory
+ * Return: If so then 0. Otherwise -EINVAL is or -ENOMEM if we are out of memory
  */
-अटल पूर्णांक batadv_mcast_क्रमw_mode_check_ipv6(काष्ठा batadv_priv *bat_priv,
-					     काष्ठा sk_buff *skb,
+static int batadv_mcast_forw_mode_check_ipv6(struct batadv_priv *bat_priv,
+					     struct sk_buff *skb,
 					     bool *is_unsnoopable,
-					     पूर्णांक *is_routable)
-अणु
-	काष्ठा ipv6hdr *ip6hdr;
+					     int *is_routable)
+{
+	struct ipv6hdr *ip6hdr;
 
 	/* We might fail due to out-of-memory -> drop it */
-	अगर (!pskb_may_pull(skb, माप(काष्ठा ethhdr) + माप(*ip6hdr)))
-		वापस -ENOMEM;
+	if (!pskb_may_pull(skb, sizeof(struct ethhdr) + sizeof(*ip6hdr)))
+		return -ENOMEM;
 
-	अगर (batadv_mcast_is_report_ipv6(skb))
-		वापस -EINVAL;
+	if (batadv_mcast_is_report_ipv6(skb))
+		return -EINVAL;
 
 	ip6hdr = ipv6_hdr(skb);
 
-	अगर (IPV6_ADDR_MC_SCOPE(&ip6hdr->daddr) < IPV6_ADDR_SCOPE_LINKLOCAL)
-		वापस -EINVAL;
+	if (IPV6_ADDR_MC_SCOPE(&ip6hdr->daddr) < IPV6_ADDR_SCOPE_LINKLOCAL)
+		return -EINVAL;
 
 	/* link-local-all-nodes multicast listeners behind a bridge are
 	 * not snoopable (see RFC4541, section 3, paragraph 3)
 	 */
-	अगर (ipv6_addr_is_ll_all_nodes(&ip6hdr->daddr))
+	if (ipv6_addr_is_ll_all_nodes(&ip6hdr->daddr))
 		*is_unsnoopable = true;
-	अन्यथा अगर (IPV6_ADDR_MC_SCOPE(&ip6hdr->daddr) > IPV6_ADDR_SCOPE_LINKLOCAL)
+	else if (IPV6_ADDR_MC_SCOPE(&ip6hdr->daddr) > IPV6_ADDR_SCOPE_LINKLOCAL)
 		*is_routable = ETH_P_IPV6;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * batadv_mcast_क्रमw_mode_check() - check क्रम optimized क्रमwarding potential
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_mcast_forw_mode_check() - check for optimized forwarding potential
+ * @bat_priv: the bat priv with all the soft interface information
  * @skb: the multicast frame to check
  * @is_unsnoopable: stores whether the destination is snoopable
  * @is_routable: stores whether the destination is routable
  *
  * Checks whether the given multicast ethernet frame has the potential to be
- * क्रमwarded with a mode more optimal than classic flooding.
+ * forwarded with a mode more optimal than classic flooding.
  *
- * Return: If so then 0. Otherwise -EINVAL is or -ENOMEM अगर we are out of memory
+ * Return: If so then 0. Otherwise -EINVAL is or -ENOMEM if we are out of memory
  */
-अटल पूर्णांक batadv_mcast_क्रमw_mode_check(काष्ठा batadv_priv *bat_priv,
-					काष्ठा sk_buff *skb,
+static int batadv_mcast_forw_mode_check(struct batadv_priv *bat_priv,
+					struct sk_buff *skb,
 					bool *is_unsnoopable,
-					पूर्णांक *is_routable)
-अणु
-	काष्ठा ethhdr *ethhdr = eth_hdr(skb);
+					int *is_routable)
+{
+	struct ethhdr *ethhdr = eth_hdr(skb);
 
-	अगर (!atomic_पढ़ो(&bat_priv->multicast_mode))
-		वापस -EINVAL;
+	if (!atomic_read(&bat_priv->multicast_mode))
+		return -EINVAL;
 
-	चयन (ntohs(ethhdr->h_proto)) अणु
-	हाल ETH_P_IP:
-		वापस batadv_mcast_क्रमw_mode_check_ipv4(bat_priv, skb,
+	switch (ntohs(ethhdr->h_proto)) {
+	case ETH_P_IP:
+		return batadv_mcast_forw_mode_check_ipv4(bat_priv, skb,
 							 is_unsnoopable,
 							 is_routable);
-	हाल ETH_P_IPV6:
-		अगर (!IS_ENABLED(CONFIG_IPV6))
-			वापस -EINVAL;
+	case ETH_P_IPV6:
+		if (!IS_ENABLED(CONFIG_IPV6))
+			return -EINVAL;
 
-		वापस batadv_mcast_क्रमw_mode_check_ipv6(bat_priv, skb,
+		return batadv_mcast_forw_mode_check_ipv6(bat_priv, skb,
 							 is_unsnoopable,
 							 is_routable);
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	default:
+		return -EINVAL;
+	}
+}
 
 /**
- * batadv_mcast_क्रमw_want_all_ip_count() - count nodes with unspecअगरic mcast
- *  पूर्णांकerest
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_mcast_forw_want_all_ip_count() - count nodes with unspecific mcast
+ *  interest
+ * @bat_priv: the bat priv with all the soft interface information
  * @ethhdr: ethernet header of a packet
  *
- * Return: the number of nodes which want all IPv4 multicast traffic अगर the
+ * Return: the number of nodes which want all IPv4 multicast traffic if the
  * given ethhdr is from an IPv4 packet or the number of nodes which want all
- * IPv6 traffic अगर it matches an IPv6 packet.
+ * IPv6 traffic if it matches an IPv6 packet.
  */
-अटल पूर्णांक batadv_mcast_क्रमw_want_all_ip_count(काष्ठा batadv_priv *bat_priv,
-					       काष्ठा ethhdr *ethhdr)
-अणु
-	चयन (ntohs(ethhdr->h_proto)) अणु
-	हाल ETH_P_IP:
-		वापस atomic_पढ़ो(&bat_priv->mcast.num_want_all_ipv4);
-	हाल ETH_P_IPV6:
-		वापस atomic_पढ़ो(&bat_priv->mcast.num_want_all_ipv6);
-	शेष:
+static int batadv_mcast_forw_want_all_ip_count(struct batadv_priv *bat_priv,
+					       struct ethhdr *ethhdr)
+{
+	switch (ntohs(ethhdr->h_proto)) {
+	case ETH_P_IP:
+		return atomic_read(&bat_priv->mcast.num_want_all_ipv4);
+	case ETH_P_IPV6:
+		return atomic_read(&bat_priv->mcast.num_want_all_ipv6);
+	default:
 		/* we shouldn't be here... */
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 
 /**
- * batadv_mcast_क्रमw_rtr_count() - count nodes with a multicast router
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
- * @protocol: the ethernet protocol type to count multicast routers क्रम
+ * batadv_mcast_forw_rtr_count() - count nodes with a multicast router
+ * @bat_priv: the bat priv with all the soft interface information
+ * @protocol: the ethernet protocol type to count multicast routers for
  *
  * Return: the number of nodes which want all routable IPv4 multicast traffic
- * अगर the protocol is ETH_P_IP or the number of nodes which want all routable
- * IPv6 traffic अगर the protocol is ETH_P_IPV6. Otherwise वापसs 0.
+ * if the protocol is ETH_P_IP or the number of nodes which want all routable
+ * IPv6 traffic if the protocol is ETH_P_IPV6. Otherwise returns 0.
  */
 
-अटल पूर्णांक batadv_mcast_क्रमw_rtr_count(काष्ठा batadv_priv *bat_priv,
-				       पूर्णांक protocol)
-अणु
-	चयन (protocol) अणु
-	हाल ETH_P_IP:
-		वापस atomic_पढ़ो(&bat_priv->mcast.num_want_all_rtr4);
-	हाल ETH_P_IPV6:
-		वापस atomic_पढ़ो(&bat_priv->mcast.num_want_all_rtr6);
-	शेष:
-		वापस 0;
-	पूर्ण
-पूर्ण
+static int batadv_mcast_forw_rtr_count(struct batadv_priv *bat_priv,
+				       int protocol)
+{
+	switch (protocol) {
+	case ETH_P_IP:
+		return atomic_read(&bat_priv->mcast.num_want_all_rtr4);
+	case ETH_P_IPV6:
+		return atomic_read(&bat_priv->mcast.num_want_all_rtr6);
+	default:
+		return 0;
+	}
+}
 
 /**
- * batadv_mcast_क्रमw_tt_node_get() - get a multicast tt node
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_mcast_forw_tt_node_get() - get a multicast tt node
+ * @bat_priv: the bat priv with all the soft interface information
  * @ethhdr: the ether header containing the multicast destination
  *
  * Return: an orig_node matching the multicast address provided by ethhdr
- * via a translation table lookup. This increases the वापसed nodes refcount.
+ * via a translation table lookup. This increases the returned nodes refcount.
  */
-अटल काष्ठा batadv_orig_node *
-batadv_mcast_क्रमw_tt_node_get(काष्ठा batadv_priv *bat_priv,
-			      काष्ठा ethhdr *ethhdr)
-अणु
-	वापस batadv_transtable_search(bat_priv, शून्य, ethhdr->h_dest,
+static struct batadv_orig_node *
+batadv_mcast_forw_tt_node_get(struct batadv_priv *bat_priv,
+			      struct ethhdr *ethhdr)
+{
+	return batadv_transtable_search(bat_priv, NULL, ethhdr->h_dest,
 					BATADV_NO_FLAGS);
-पूर्ण
+}
 
 /**
- * batadv_mcast_क्रमw_ipv4_node_get() - get a node with an ipv4 flag
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_mcast_forw_ipv4_node_get() - get a node with an ipv4 flag
+ * @bat_priv: the bat priv with all the soft interface information
  *
  * Return: an orig_node which has the BATADV_MCAST_WANT_ALL_IPV4 flag set and
  * increases its refcount.
  */
-अटल काष्ठा batadv_orig_node *
-batadv_mcast_क्रमw_ipv4_node_get(काष्ठा batadv_priv *bat_priv)
-अणु
-	काष्ठा batadv_orig_node *पंचांगp_orig_node, *orig_node = शून्य;
+static struct batadv_orig_node *
+batadv_mcast_forw_ipv4_node_get(struct batadv_priv *bat_priv)
+{
+	struct batadv_orig_node *tmp_orig_node, *orig_node = NULL;
 
-	rcu_पढ़ो_lock();
-	hlist_क्रम_each_entry_rcu(पंचांगp_orig_node,
+	rcu_read_lock();
+	hlist_for_each_entry_rcu(tmp_orig_node,
 				 &bat_priv->mcast.want_all_ipv4_list,
-				 mcast_want_all_ipv4_node) अणु
-		अगर (!kref_get_unless_zero(&पंचांगp_orig_node->refcount))
-			जारी;
+				 mcast_want_all_ipv4_node) {
+		if (!kref_get_unless_zero(&tmp_orig_node->refcount))
+			continue;
 
-		orig_node = पंचांगp_orig_node;
-		अवरोध;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		orig_node = tmp_orig_node;
+		break;
+	}
+	rcu_read_unlock();
 
-	वापस orig_node;
-पूर्ण
+	return orig_node;
+}
 
 /**
- * batadv_mcast_क्रमw_ipv6_node_get() - get a node with an ipv6 flag
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_mcast_forw_ipv6_node_get() - get a node with an ipv6 flag
+ * @bat_priv: the bat priv with all the soft interface information
  *
  * Return: an orig_node which has the BATADV_MCAST_WANT_ALL_IPV6 flag set
  * and increases its refcount.
  */
-अटल काष्ठा batadv_orig_node *
-batadv_mcast_क्रमw_ipv6_node_get(काष्ठा batadv_priv *bat_priv)
-अणु
-	काष्ठा batadv_orig_node *पंचांगp_orig_node, *orig_node = शून्य;
+static struct batadv_orig_node *
+batadv_mcast_forw_ipv6_node_get(struct batadv_priv *bat_priv)
+{
+	struct batadv_orig_node *tmp_orig_node, *orig_node = NULL;
 
-	rcu_पढ़ो_lock();
-	hlist_क्रम_each_entry_rcu(पंचांगp_orig_node,
+	rcu_read_lock();
+	hlist_for_each_entry_rcu(tmp_orig_node,
 				 &bat_priv->mcast.want_all_ipv6_list,
-				 mcast_want_all_ipv6_node) अणु
-		अगर (!kref_get_unless_zero(&पंचांगp_orig_node->refcount))
-			जारी;
+				 mcast_want_all_ipv6_node) {
+		if (!kref_get_unless_zero(&tmp_orig_node->refcount))
+			continue;
 
-		orig_node = पंचांगp_orig_node;
-		अवरोध;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		orig_node = tmp_orig_node;
+		break;
+	}
+	rcu_read_unlock();
 
-	वापस orig_node;
-पूर्ण
+	return orig_node;
+}
 
 /**
- * batadv_mcast_क्रमw_ip_node_get() - get a node with an ipv4/ipv6 flag
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_mcast_forw_ip_node_get() - get a node with an ipv4/ipv6 flag
+ * @bat_priv: the bat priv with all the soft interface information
  * @ethhdr: an ethernet header to determine the protocol family from
  *
  * Return: an orig_node which has the BATADV_MCAST_WANT_ALL_IPV4 or
  * BATADV_MCAST_WANT_ALL_IPV6 flag, depending on the provided ethhdr, sets and
  * increases its refcount.
  */
-अटल काष्ठा batadv_orig_node *
-batadv_mcast_क्रमw_ip_node_get(काष्ठा batadv_priv *bat_priv,
-			      काष्ठा ethhdr *ethhdr)
-अणु
-	चयन (ntohs(ethhdr->h_proto)) अणु
-	हाल ETH_P_IP:
-		वापस batadv_mcast_क्रमw_ipv4_node_get(bat_priv);
-	हाल ETH_P_IPV6:
-		वापस batadv_mcast_क्रमw_ipv6_node_get(bat_priv);
-	शेष:
+static struct batadv_orig_node *
+batadv_mcast_forw_ip_node_get(struct batadv_priv *bat_priv,
+			      struct ethhdr *ethhdr)
+{
+	switch (ntohs(ethhdr->h_proto)) {
+	case ETH_P_IP:
+		return batadv_mcast_forw_ipv4_node_get(bat_priv);
+	case ETH_P_IPV6:
+		return batadv_mcast_forw_ipv6_node_get(bat_priv);
+	default:
 		/* we shouldn't be here... */
-		वापस शून्य;
-	पूर्ण
-पूर्ण
+		return NULL;
+	}
+}
 
 /**
- * batadv_mcast_क्रमw_unsnoop_node_get() - get a node with an unsnoopable flag
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_mcast_forw_unsnoop_node_get() - get a node with an unsnoopable flag
+ * @bat_priv: the bat priv with all the soft interface information
  *
  * Return: an orig_node which has the BATADV_MCAST_WANT_ALL_UNSNOOPABLES flag
  * set and increases its refcount.
  */
-अटल काष्ठा batadv_orig_node *
-batadv_mcast_क्रमw_unsnoop_node_get(काष्ठा batadv_priv *bat_priv)
-अणु
-	काष्ठा batadv_orig_node *पंचांगp_orig_node, *orig_node = शून्य;
+static struct batadv_orig_node *
+batadv_mcast_forw_unsnoop_node_get(struct batadv_priv *bat_priv)
+{
+	struct batadv_orig_node *tmp_orig_node, *orig_node = NULL;
 
-	rcu_पढ़ो_lock();
-	hlist_क्रम_each_entry_rcu(पंचांगp_orig_node,
+	rcu_read_lock();
+	hlist_for_each_entry_rcu(tmp_orig_node,
 				 &bat_priv->mcast.want_all_unsnoopables_list,
-				 mcast_want_all_unsnoopables_node) अणु
-		अगर (!kref_get_unless_zero(&पंचांगp_orig_node->refcount))
-			जारी;
+				 mcast_want_all_unsnoopables_node) {
+		if (!kref_get_unless_zero(&tmp_orig_node->refcount))
+			continue;
 
-		orig_node = पंचांगp_orig_node;
-		अवरोध;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		orig_node = tmp_orig_node;
+		break;
+	}
+	rcu_read_unlock();
 
-	वापस orig_node;
-पूर्ण
+	return orig_node;
+}
 
 /**
- * batadv_mcast_क्रमw_rtr4_node_get() - get a node with an ipv4 mcast router flag
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_mcast_forw_rtr4_node_get() - get a node with an ipv4 mcast router flag
+ * @bat_priv: the bat priv with all the soft interface information
  *
  * Return: an orig_node which has the BATADV_MCAST_WANT_NO_RTR4 flag unset and
  * increases its refcount.
  */
-अटल काष्ठा batadv_orig_node *
-batadv_mcast_क्रमw_rtr4_node_get(काष्ठा batadv_priv *bat_priv)
-अणु
-	काष्ठा batadv_orig_node *पंचांगp_orig_node, *orig_node = शून्य;
+static struct batadv_orig_node *
+batadv_mcast_forw_rtr4_node_get(struct batadv_priv *bat_priv)
+{
+	struct batadv_orig_node *tmp_orig_node, *orig_node = NULL;
 
-	rcu_पढ़ो_lock();
-	hlist_क्रम_each_entry_rcu(पंचांगp_orig_node,
+	rcu_read_lock();
+	hlist_for_each_entry_rcu(tmp_orig_node,
 				 &bat_priv->mcast.want_all_rtr4_list,
-				 mcast_want_all_rtr4_node) अणु
-		अगर (!kref_get_unless_zero(&पंचांगp_orig_node->refcount))
-			जारी;
+				 mcast_want_all_rtr4_node) {
+		if (!kref_get_unless_zero(&tmp_orig_node->refcount))
+			continue;
 
-		orig_node = पंचांगp_orig_node;
-		अवरोध;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		orig_node = tmp_orig_node;
+		break;
+	}
+	rcu_read_unlock();
 
-	वापस orig_node;
-पूर्ण
+	return orig_node;
+}
 
 /**
- * batadv_mcast_क्रमw_rtr6_node_get() - get a node with an ipv6 mcast router flag
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_mcast_forw_rtr6_node_get() - get a node with an ipv6 mcast router flag
+ * @bat_priv: the bat priv with all the soft interface information
  *
  * Return: an orig_node which has the BATADV_MCAST_WANT_NO_RTR6 flag unset
  * and increases its refcount.
  */
-अटल काष्ठा batadv_orig_node *
-batadv_mcast_क्रमw_rtr6_node_get(काष्ठा batadv_priv *bat_priv)
-अणु
-	काष्ठा batadv_orig_node *पंचांगp_orig_node, *orig_node = शून्य;
+static struct batadv_orig_node *
+batadv_mcast_forw_rtr6_node_get(struct batadv_priv *bat_priv)
+{
+	struct batadv_orig_node *tmp_orig_node, *orig_node = NULL;
 
-	rcu_पढ़ो_lock();
-	hlist_क्रम_each_entry_rcu(पंचांगp_orig_node,
+	rcu_read_lock();
+	hlist_for_each_entry_rcu(tmp_orig_node,
 				 &bat_priv->mcast.want_all_rtr6_list,
-				 mcast_want_all_rtr6_node) अणु
-		अगर (!kref_get_unless_zero(&पंचांगp_orig_node->refcount))
-			जारी;
+				 mcast_want_all_rtr6_node) {
+		if (!kref_get_unless_zero(&tmp_orig_node->refcount))
+			continue;
 
-		orig_node = पंचांगp_orig_node;
-		अवरोध;
-	पूर्ण
-	rcu_पढ़ो_unlock();
+		orig_node = tmp_orig_node;
+		break;
+	}
+	rcu_read_unlock();
 
-	वापस orig_node;
-पूर्ण
+	return orig_node;
+}
 
 /**
- * batadv_mcast_क्रमw_rtr_node_get() - get a node with an ipv4/ipv6 router flag
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_mcast_forw_rtr_node_get() - get a node with an ipv4/ipv6 router flag
+ * @bat_priv: the bat priv with all the soft interface information
  * @ethhdr: an ethernet header to determine the protocol family from
  *
  * Return: an orig_node which has no BATADV_MCAST_WANT_NO_RTR4 or
  * BATADV_MCAST_WANT_NO_RTR6 flag, depending on the provided ethhdr, set and
  * increases its refcount.
  */
-अटल काष्ठा batadv_orig_node *
-batadv_mcast_क्रमw_rtr_node_get(काष्ठा batadv_priv *bat_priv,
-			       काष्ठा ethhdr *ethhdr)
-अणु
-	चयन (ntohs(ethhdr->h_proto)) अणु
-	हाल ETH_P_IP:
-		वापस batadv_mcast_क्रमw_rtr4_node_get(bat_priv);
-	हाल ETH_P_IPV6:
-		वापस batadv_mcast_क्रमw_rtr6_node_get(bat_priv);
-	शेष:
+static struct batadv_orig_node *
+batadv_mcast_forw_rtr_node_get(struct batadv_priv *bat_priv,
+			       struct ethhdr *ethhdr)
+{
+	switch (ntohs(ethhdr->h_proto)) {
+	case ETH_P_IP:
+		return batadv_mcast_forw_rtr4_node_get(bat_priv);
+	case ETH_P_IPV6:
+		return batadv_mcast_forw_rtr6_node_get(bat_priv);
+	default:
 		/* we shouldn't be here... */
-		वापस शून्य;
-	पूर्ण
-पूर्ण
+		return NULL;
+	}
+}
 
 /**
- * batadv_mcast_क्रमw_mode() - check on how to क्रमward a multicast packet
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_mcast_forw_mode() - check on how to forward a multicast packet
+ * @bat_priv: the bat priv with all the soft interface information
  * @skb: The multicast packet to check
- * @orig: an originator to be set to क्रमward the skb to
+ * @orig: an originator to be set to forward the skb to
  *
- * Return: the क्रमwarding mode as क्रमागत batadv_क्रमw_mode and in हाल of
+ * Return: the forwarding mode as enum batadv_forw_mode and in case of
  * BATADV_FORW_SINGLE set the orig to the single originator the skb
- * should be क्रमwarded to.
+ * should be forwarded to.
  */
-क्रमागत batadv_क्रमw_mode
-batadv_mcast_क्रमw_mode(काष्ठा batadv_priv *bat_priv, काष्ठा sk_buff *skb,
-		       काष्ठा batadv_orig_node **orig)
-अणु
-	पूर्णांक ret, tt_count, ip_count, unsnoop_count, total_count;
+enum batadv_forw_mode
+batadv_mcast_forw_mode(struct batadv_priv *bat_priv, struct sk_buff *skb,
+		       struct batadv_orig_node **orig)
+{
+	int ret, tt_count, ip_count, unsnoop_count, total_count;
 	bool is_unsnoopable = false;
-	अचिन्हित पूर्णांक mcast_fanout;
-	काष्ठा ethhdr *ethhdr;
-	पूर्णांक is_routable = 0;
-	पूर्णांक rtr_count = 0;
+	unsigned int mcast_fanout;
+	struct ethhdr *ethhdr;
+	int is_routable = 0;
+	int rtr_count = 0;
 
-	ret = batadv_mcast_क्रमw_mode_check(bat_priv, skb, &is_unsnoopable,
+	ret = batadv_mcast_forw_mode_check(bat_priv, skb, &is_unsnoopable,
 					   &is_routable);
-	अगर (ret == -ENOMEM)
-		वापस BATADV_FORW_NONE;
-	अन्यथा अगर (ret < 0)
-		वापस BATADV_FORW_ALL;
+	if (ret == -ENOMEM)
+		return BATADV_FORW_NONE;
+	else if (ret < 0)
+		return BATADV_FORW_ALL;
 
 	ethhdr = eth_hdr(skb);
 
 	tt_count = batadv_tt_global_hash_count(bat_priv, ethhdr->h_dest,
 					       BATADV_NO_FLAGS);
-	ip_count = batadv_mcast_क्रमw_want_all_ip_count(bat_priv, ethhdr);
+	ip_count = batadv_mcast_forw_want_all_ip_count(bat_priv, ethhdr);
 	unsnoop_count = !is_unsnoopable ? 0 :
-			atomic_पढ़ो(&bat_priv->mcast.num_want_all_unsnoopables);
-	rtr_count = batadv_mcast_क्रमw_rtr_count(bat_priv, is_routable);
+			atomic_read(&bat_priv->mcast.num_want_all_unsnoopables);
+	rtr_count = batadv_mcast_forw_rtr_count(bat_priv, is_routable);
 
 	total_count = tt_count + ip_count + unsnoop_count + rtr_count;
 
-	चयन (total_count) अणु
-	हाल 1:
-		अगर (tt_count)
-			*orig = batadv_mcast_क्रमw_tt_node_get(bat_priv, ethhdr);
-		अन्यथा अगर (ip_count)
-			*orig = batadv_mcast_क्रमw_ip_node_get(bat_priv, ethhdr);
-		अन्यथा अगर (unsnoop_count)
-			*orig = batadv_mcast_क्रमw_unsnoop_node_get(bat_priv);
-		अन्यथा अगर (rtr_count)
-			*orig = batadv_mcast_क्रमw_rtr_node_get(bat_priv,
+	switch (total_count) {
+	case 1:
+		if (tt_count)
+			*orig = batadv_mcast_forw_tt_node_get(bat_priv, ethhdr);
+		else if (ip_count)
+			*orig = batadv_mcast_forw_ip_node_get(bat_priv, ethhdr);
+		else if (unsnoop_count)
+			*orig = batadv_mcast_forw_unsnoop_node_get(bat_priv);
+		else if (rtr_count)
+			*orig = batadv_mcast_forw_rtr_node_get(bat_priv,
 							       ethhdr);
 
-		अगर (*orig)
-			वापस BATADV_FORW_SINGLE;
+		if (*orig)
+			return BATADV_FORW_SINGLE;
 
 		fallthrough;
-	हाल 0:
-		वापस BATADV_FORW_NONE;
-	शेष:
-		mcast_fanout = atomic_पढ़ो(&bat_priv->multicast_fanout);
+	case 0:
+		return BATADV_FORW_NONE;
+	default:
+		mcast_fanout = atomic_read(&bat_priv->multicast_fanout);
 
-		अगर (!unsnoop_count && total_count <= mcast_fanout)
-			वापस BATADV_FORW_SOME;
-	पूर्ण
+		if (!unsnoop_count && total_count <= mcast_fanout)
+			return BATADV_FORW_SOME;
+	}
 
-	वापस BATADV_FORW_ALL;
-पूर्ण
+	return BATADV_FORW_ALL;
+}
 
 /**
- * batadv_mcast_क्रमw_send_orig() - send a multicast packet to an originator
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_mcast_forw_send_orig() - send a multicast packet to an originator
+ * @bat_priv: the bat priv with all the soft interface information
  * @skb: the multicast packet to send
- * @vid: the vlan identअगरier
+ * @vid: the vlan identifier
  * @orig_node: the originator to send the packet to
  *
- * Return: NET_XMIT_DROP in हाल of error or NET_XMIT_SUCCESS otherwise.
+ * Return: NET_XMIT_DROP in case of error or NET_XMIT_SUCCESS otherwise.
  */
-पूर्णांक batadv_mcast_क्रमw_send_orig(काष्ठा batadv_priv *bat_priv,
-				काष्ठा sk_buff *skb,
-				अचिन्हित लघु vid,
-				काष्ठा batadv_orig_node *orig_node)
-अणु
-	/* Aव्योम sending multicast-in-unicast packets to other BLA
-	 * gateways - they alपढ़ोy got the frame from the LAN side
+int batadv_mcast_forw_send_orig(struct batadv_priv *bat_priv,
+				struct sk_buff *skb,
+				unsigned short vid,
+				struct batadv_orig_node *orig_node)
+{
+	/* Avoid sending multicast-in-unicast packets to other BLA
+	 * gateways - they already got the frame from the LAN side
 	 * we share with them.
-	 * TODO: Refactor to take BLA पूर्णांकo account earlier, to aव्योम
+	 * TODO: Refactor to take BLA into account earlier, to avoid
 	 * reducing the mcast_fanout count.
 	 */
-	अगर (batadv_bla_is_backbone_gw_orig(bat_priv, orig_node->orig, vid)) अणु
-		dev_kमुक्त_skb(skb);
-		वापस NET_XMIT_SUCCESS;
-	पूर्ण
+	if (batadv_bla_is_backbone_gw_orig(bat_priv, orig_node->orig, vid)) {
+		dev_kfree_skb(skb);
+		return NET_XMIT_SUCCESS;
+	}
 
-	वापस batadv_send_skb_unicast(bat_priv, skb, BATADV_UNICAST, 0,
+	return batadv_send_skb_unicast(bat_priv, skb, BATADV_UNICAST, 0,
 				       orig_node, vid);
-पूर्ण
+}
 
 /**
- * batadv_mcast_क्रमw_tt() - क्रमwards a packet to multicast listeners
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_mcast_forw_tt() - forwards a packet to multicast listeners
+ * @bat_priv: the bat priv with all the soft interface information
  * @skb: the multicast packet to transmit
- * @vid: the vlan identअगरier
+ * @vid: the vlan identifier
  *
  * Sends copies of a frame with multicast destination to any multicast
- * listener रेजिस्टरed in the translation table. A transmission is perक्रमmed
- * via a baपंचांगan-adv unicast packet क्रम each such destination node.
+ * listener registered in the translation table. A transmission is performed
+ * via a batman-adv unicast packet for each such destination node.
  *
  * Return: NET_XMIT_DROP on memory allocation failure, NET_XMIT_SUCCESS
  * otherwise.
  */
-अटल पूर्णांक
-batadv_mcast_क्रमw_tt(काष्ठा batadv_priv *bat_priv, काष्ठा sk_buff *skb,
-		     अचिन्हित लघु vid)
-अणु
-	पूर्णांक ret = NET_XMIT_SUCCESS;
-	काष्ठा sk_buff *newskb;
+static int
+batadv_mcast_forw_tt(struct batadv_priv *bat_priv, struct sk_buff *skb,
+		     unsigned short vid)
+{
+	int ret = NET_XMIT_SUCCESS;
+	struct sk_buff *newskb;
 
-	काष्ठा batadv_tt_orig_list_entry *orig_entry;
+	struct batadv_tt_orig_list_entry *orig_entry;
 
-	काष्ठा batadv_tt_global_entry *tt_global;
-	स्थिर u8 *addr = eth_hdr(skb)->h_dest;
+	struct batadv_tt_global_entry *tt_global;
+	const u8 *addr = eth_hdr(skb)->h_dest;
 
 	tt_global = batadv_tt_global_hash_find(bat_priv, addr, vid);
-	अगर (!tt_global)
-		जाओ out;
+	if (!tt_global)
+		goto out;
 
-	rcu_पढ़ो_lock();
-	hlist_क्रम_each_entry_rcu(orig_entry, &tt_global->orig_list, list) अणु
+	rcu_read_lock();
+	hlist_for_each_entry_rcu(orig_entry, &tt_global->orig_list, list) {
 		newskb = skb_copy(skb, GFP_ATOMIC);
-		अगर (!newskb) अणु
+		if (!newskb) {
 			ret = NET_XMIT_DROP;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		batadv_mcast_क्रमw_send_orig(bat_priv, newskb, vid,
+		batadv_mcast_forw_send_orig(bat_priv, newskb, vid,
 					    orig_entry->orig_node);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
 	batadv_tt_global_entry_put(tt_global);
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * batadv_mcast_क्रमw_want_all_ipv4() - क्रमward to nodes with want-all-ipv4
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_mcast_forw_want_all_ipv4() - forward to nodes with want-all-ipv4
+ * @bat_priv: the bat priv with all the soft interface information
  * @skb: the multicast packet to transmit
- * @vid: the vlan identअगरier
+ * @vid: the vlan identifier
  *
  * Sends copies of a frame with multicast destination to any node with a
- * BATADV_MCAST_WANT_ALL_IPV4 flag set. A transmission is perक्रमmed via a
- * baपंचांगan-adv unicast packet क्रम each such destination node.
+ * BATADV_MCAST_WANT_ALL_IPV4 flag set. A transmission is performed via a
+ * batman-adv unicast packet for each such destination node.
  *
  * Return: NET_XMIT_DROP on memory allocation failure, NET_XMIT_SUCCESS
  * otherwise.
  */
-अटल पूर्णांक
-batadv_mcast_क्रमw_want_all_ipv4(काष्ठा batadv_priv *bat_priv,
-				काष्ठा sk_buff *skb, अचिन्हित लघु vid)
-अणु
-	काष्ठा batadv_orig_node *orig_node;
-	पूर्णांक ret = NET_XMIT_SUCCESS;
-	काष्ठा sk_buff *newskb;
+static int
+batadv_mcast_forw_want_all_ipv4(struct batadv_priv *bat_priv,
+				struct sk_buff *skb, unsigned short vid)
+{
+	struct batadv_orig_node *orig_node;
+	int ret = NET_XMIT_SUCCESS;
+	struct sk_buff *newskb;
 
-	rcu_पढ़ो_lock();
-	hlist_क्रम_each_entry_rcu(orig_node,
+	rcu_read_lock();
+	hlist_for_each_entry_rcu(orig_node,
 				 &bat_priv->mcast.want_all_ipv4_list,
-				 mcast_want_all_ipv4_node) अणु
+				 mcast_want_all_ipv4_node) {
 		newskb = skb_copy(skb, GFP_ATOMIC);
-		अगर (!newskb) अणु
+		if (!newskb) {
 			ret = NET_XMIT_DROP;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		batadv_mcast_क्रमw_send_orig(bat_priv, newskb, vid, orig_node);
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+		batadv_mcast_forw_send_orig(bat_priv, newskb, vid, orig_node);
+	}
+	rcu_read_unlock();
+	return ret;
+}
 
 /**
- * batadv_mcast_क्रमw_want_all_ipv6() - क्रमward to nodes with want-all-ipv6
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_mcast_forw_want_all_ipv6() - forward to nodes with want-all-ipv6
+ * @bat_priv: the bat priv with all the soft interface information
  * @skb: The multicast packet to transmit
- * @vid: the vlan identअगरier
+ * @vid: the vlan identifier
  *
  * Sends copies of a frame with multicast destination to any node with a
- * BATADV_MCAST_WANT_ALL_IPV6 flag set. A transmission is perक्रमmed via a
- * baपंचांगan-adv unicast packet क्रम each such destination node.
+ * BATADV_MCAST_WANT_ALL_IPV6 flag set. A transmission is performed via a
+ * batman-adv unicast packet for each such destination node.
  *
  * Return: NET_XMIT_DROP on memory allocation failure, NET_XMIT_SUCCESS
  * otherwise.
  */
-अटल पूर्णांक
-batadv_mcast_क्रमw_want_all_ipv6(काष्ठा batadv_priv *bat_priv,
-				काष्ठा sk_buff *skb, अचिन्हित लघु vid)
-अणु
-	काष्ठा batadv_orig_node *orig_node;
-	पूर्णांक ret = NET_XMIT_SUCCESS;
-	काष्ठा sk_buff *newskb;
+static int
+batadv_mcast_forw_want_all_ipv6(struct batadv_priv *bat_priv,
+				struct sk_buff *skb, unsigned short vid)
+{
+	struct batadv_orig_node *orig_node;
+	int ret = NET_XMIT_SUCCESS;
+	struct sk_buff *newskb;
 
-	rcu_पढ़ो_lock();
-	hlist_क्रम_each_entry_rcu(orig_node,
+	rcu_read_lock();
+	hlist_for_each_entry_rcu(orig_node,
 				 &bat_priv->mcast.want_all_ipv6_list,
-				 mcast_want_all_ipv6_node) अणु
+				 mcast_want_all_ipv6_node) {
 		newskb = skb_copy(skb, GFP_ATOMIC);
-		अगर (!newskb) अणु
+		if (!newskb) {
 			ret = NET_XMIT_DROP;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		batadv_mcast_क्रमw_send_orig(bat_priv, newskb, vid, orig_node);
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+		batadv_mcast_forw_send_orig(bat_priv, newskb, vid, orig_node);
+	}
+	rcu_read_unlock();
+	return ret;
+}
 
 /**
- * batadv_mcast_क्रमw_want_all() - क्रमward packet to nodes in a want-all list
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_mcast_forw_want_all() - forward packet to nodes in a want-all list
+ * @bat_priv: the bat priv with all the soft interface information
  * @skb: the multicast packet to transmit
- * @vid: the vlan identअगरier
+ * @vid: the vlan identifier
  *
  * Sends copies of a frame with multicast destination to any node with a
  * BATADV_MCAST_WANT_ALL_IPV4 or BATADV_MCAST_WANT_ALL_IPV6 flag set. A
- * transmission is perक्रमmed via a baपंचांगan-adv unicast packet क्रम each such
+ * transmission is performed via a batman-adv unicast packet for each such
  * destination node.
  *
- * Return: NET_XMIT_DROP on memory allocation failure or अगर the protocol family
+ * Return: NET_XMIT_DROP on memory allocation failure or if the protocol family
  * is neither IPv4 nor IPv6. NET_XMIT_SUCCESS otherwise.
  */
-अटल पूर्णांक
-batadv_mcast_क्रमw_want_all(काष्ठा batadv_priv *bat_priv,
-			   काष्ठा sk_buff *skb, अचिन्हित लघु vid)
-अणु
-	चयन (ntohs(eth_hdr(skb)->h_proto)) अणु
-	हाल ETH_P_IP:
-		वापस batadv_mcast_क्रमw_want_all_ipv4(bat_priv, skb, vid);
-	हाल ETH_P_IPV6:
-		वापस batadv_mcast_क्रमw_want_all_ipv6(bat_priv, skb, vid);
-	शेष:
+static int
+batadv_mcast_forw_want_all(struct batadv_priv *bat_priv,
+			   struct sk_buff *skb, unsigned short vid)
+{
+	switch (ntohs(eth_hdr(skb)->h_proto)) {
+	case ETH_P_IP:
+		return batadv_mcast_forw_want_all_ipv4(bat_priv, skb, vid);
+	case ETH_P_IPV6:
+		return batadv_mcast_forw_want_all_ipv6(bat_priv, skb, vid);
+	default:
 		/* we shouldn't be here... */
-		वापस NET_XMIT_DROP;
-	पूर्ण
-पूर्ण
+		return NET_XMIT_DROP;
+	}
+}
 
 /**
- * batadv_mcast_क्रमw_want_all_rtr4() - क्रमward to nodes with want-all-rtr4
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_mcast_forw_want_all_rtr4() - forward to nodes with want-all-rtr4
+ * @bat_priv: the bat priv with all the soft interface information
  * @skb: the multicast packet to transmit
- * @vid: the vlan identअगरier
+ * @vid: the vlan identifier
  *
  * Sends copies of a frame with multicast destination to any node with a
- * BATADV_MCAST_WANT_NO_RTR4 flag unset. A transmission is perक्रमmed via a
- * baपंचांगan-adv unicast packet क्रम each such destination node.
+ * BATADV_MCAST_WANT_NO_RTR4 flag unset. A transmission is performed via a
+ * batman-adv unicast packet for each such destination node.
  *
  * Return: NET_XMIT_DROP on memory allocation failure, NET_XMIT_SUCCESS
  * otherwise.
  */
-अटल पूर्णांक
-batadv_mcast_क्रमw_want_all_rtr4(काष्ठा batadv_priv *bat_priv,
-				काष्ठा sk_buff *skb, अचिन्हित लघु vid)
-अणु
-	काष्ठा batadv_orig_node *orig_node;
-	पूर्णांक ret = NET_XMIT_SUCCESS;
-	काष्ठा sk_buff *newskb;
+static int
+batadv_mcast_forw_want_all_rtr4(struct batadv_priv *bat_priv,
+				struct sk_buff *skb, unsigned short vid)
+{
+	struct batadv_orig_node *orig_node;
+	int ret = NET_XMIT_SUCCESS;
+	struct sk_buff *newskb;
 
-	rcu_पढ़ो_lock();
-	hlist_क्रम_each_entry_rcu(orig_node,
+	rcu_read_lock();
+	hlist_for_each_entry_rcu(orig_node,
 				 &bat_priv->mcast.want_all_rtr4_list,
-				 mcast_want_all_rtr4_node) अणु
+				 mcast_want_all_rtr4_node) {
 		newskb = skb_copy(skb, GFP_ATOMIC);
-		अगर (!newskb) अणु
+		if (!newskb) {
 			ret = NET_XMIT_DROP;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		batadv_mcast_क्रमw_send_orig(bat_priv, newskb, vid, orig_node);
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+		batadv_mcast_forw_send_orig(bat_priv, newskb, vid, orig_node);
+	}
+	rcu_read_unlock();
+	return ret;
+}
 
 /**
- * batadv_mcast_क्रमw_want_all_rtr6() - क्रमward to nodes with want-all-rtr6
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_mcast_forw_want_all_rtr6() - forward to nodes with want-all-rtr6
+ * @bat_priv: the bat priv with all the soft interface information
  * @skb: The multicast packet to transmit
- * @vid: the vlan identअगरier
+ * @vid: the vlan identifier
  *
  * Sends copies of a frame with multicast destination to any node with a
- * BATADV_MCAST_WANT_NO_RTR6 flag unset. A transmission is perक्रमmed via a
- * baपंचांगan-adv unicast packet क्रम each such destination node.
+ * BATADV_MCAST_WANT_NO_RTR6 flag unset. A transmission is performed via a
+ * batman-adv unicast packet for each such destination node.
  *
  * Return: NET_XMIT_DROP on memory allocation failure, NET_XMIT_SUCCESS
  * otherwise.
  */
-अटल पूर्णांक
-batadv_mcast_क्रमw_want_all_rtr6(काष्ठा batadv_priv *bat_priv,
-				काष्ठा sk_buff *skb, अचिन्हित लघु vid)
-अणु
-	काष्ठा batadv_orig_node *orig_node;
-	पूर्णांक ret = NET_XMIT_SUCCESS;
-	काष्ठा sk_buff *newskb;
+static int
+batadv_mcast_forw_want_all_rtr6(struct batadv_priv *bat_priv,
+				struct sk_buff *skb, unsigned short vid)
+{
+	struct batadv_orig_node *orig_node;
+	int ret = NET_XMIT_SUCCESS;
+	struct sk_buff *newskb;
 
-	rcu_पढ़ो_lock();
-	hlist_क्रम_each_entry_rcu(orig_node,
+	rcu_read_lock();
+	hlist_for_each_entry_rcu(orig_node,
 				 &bat_priv->mcast.want_all_rtr6_list,
-				 mcast_want_all_rtr6_node) अणु
+				 mcast_want_all_rtr6_node) {
 		newskb = skb_copy(skb, GFP_ATOMIC);
-		अगर (!newskb) अणु
+		if (!newskb) {
 			ret = NET_XMIT_DROP;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		batadv_mcast_क्रमw_send_orig(bat_priv, newskb, vid, orig_node);
-	पूर्ण
-	rcu_पढ़ो_unlock();
-	वापस ret;
-पूर्ण
+		batadv_mcast_forw_send_orig(bat_priv, newskb, vid, orig_node);
+	}
+	rcu_read_unlock();
+	return ret;
+}
 
 /**
- * batadv_mcast_क्रमw_want_rtr() - क्रमward packet to nodes in a want-all-rtr list
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_mcast_forw_want_rtr() - forward packet to nodes in a want-all-rtr list
+ * @bat_priv: the bat priv with all the soft interface information
  * @skb: the multicast packet to transmit
- * @vid: the vlan identअगरier
+ * @vid: the vlan identifier
  *
  * Sends copies of a frame with multicast destination to any node with a
  * BATADV_MCAST_WANT_NO_RTR4 or BATADV_MCAST_WANT_NO_RTR6 flag unset. A
- * transmission is perक्रमmed via a baपंचांगan-adv unicast packet क्रम each such
+ * transmission is performed via a batman-adv unicast packet for each such
  * destination node.
  *
- * Return: NET_XMIT_DROP on memory allocation failure or अगर the protocol family
+ * Return: NET_XMIT_DROP on memory allocation failure or if the protocol family
  * is neither IPv4 nor IPv6. NET_XMIT_SUCCESS otherwise.
  */
-अटल पूर्णांक
-batadv_mcast_क्रमw_want_rtr(काष्ठा batadv_priv *bat_priv,
-			   काष्ठा sk_buff *skb, अचिन्हित लघु vid)
-अणु
-	चयन (ntohs(eth_hdr(skb)->h_proto)) अणु
-	हाल ETH_P_IP:
-		वापस batadv_mcast_क्रमw_want_all_rtr4(bat_priv, skb, vid);
-	हाल ETH_P_IPV6:
-		वापस batadv_mcast_क्रमw_want_all_rtr6(bat_priv, skb, vid);
-	शेष:
+static int
+batadv_mcast_forw_want_rtr(struct batadv_priv *bat_priv,
+			   struct sk_buff *skb, unsigned short vid)
+{
+	switch (ntohs(eth_hdr(skb)->h_proto)) {
+	case ETH_P_IP:
+		return batadv_mcast_forw_want_all_rtr4(bat_priv, skb, vid);
+	case ETH_P_IPV6:
+		return batadv_mcast_forw_want_all_rtr6(bat_priv, skb, vid);
+	default:
 		/* we shouldn't be here... */
-		वापस NET_XMIT_DROP;
-	पूर्ण
-पूर्ण
+		return NET_XMIT_DROP;
+	}
+}
 
 /**
- * batadv_mcast_क्रमw_send() - send packet to any detected multicast recipient
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_mcast_forw_send() - send packet to any detected multicast recipient
+ * @bat_priv: the bat priv with all the soft interface information
  * @skb: the multicast packet to transmit
- * @vid: the vlan identअगरier
+ * @vid: the vlan identifier
  *
- * Sends copies of a frame with multicast destination to any node that संकेतed
- * पूर्णांकerest in it, that is either via the translation table or the according
- * want-all flags. A transmission is perक्रमmed via a baपंचांगan-adv unicast packet
- * क्रम each such destination node.
+ * Sends copies of a frame with multicast destination to any node that signaled
+ * interest in it, that is either via the translation table or the according
+ * want-all flags. A transmission is performed via a batman-adv unicast packet
+ * for each such destination node.
  *
- * The given skb is consumed/मुक्तd.
+ * The given skb is consumed/freed.
  *
- * Return: NET_XMIT_DROP on memory allocation failure or अगर the protocol family
+ * Return: NET_XMIT_DROP on memory allocation failure or if the protocol family
  * is neither IPv4 nor IPv6. NET_XMIT_SUCCESS otherwise.
  */
-पूर्णांक batadv_mcast_क्रमw_send(काष्ठा batadv_priv *bat_priv, काष्ठा sk_buff *skb,
-			   अचिन्हित लघु vid)
-अणु
-	पूर्णांक ret;
+int batadv_mcast_forw_send(struct batadv_priv *bat_priv, struct sk_buff *skb,
+			   unsigned short vid)
+{
+	int ret;
 
-	ret = batadv_mcast_क्रमw_tt(bat_priv, skb, vid);
-	अगर (ret != NET_XMIT_SUCCESS) अणु
-		kमुक्त_skb(skb);
-		वापस ret;
-	पूर्ण
+	ret = batadv_mcast_forw_tt(bat_priv, skb, vid);
+	if (ret != NET_XMIT_SUCCESS) {
+		kfree_skb(skb);
+		return ret;
+	}
 
-	ret = batadv_mcast_क्रमw_want_all(bat_priv, skb, vid);
-	अगर (ret != NET_XMIT_SUCCESS) अणु
-		kमुक्त_skb(skb);
-		वापस ret;
-	पूर्ण
+	ret = batadv_mcast_forw_want_all(bat_priv, skb, vid);
+	if (ret != NET_XMIT_SUCCESS) {
+		kfree_skb(skb);
+		return ret;
+	}
 
-	ret = batadv_mcast_क्रमw_want_rtr(bat_priv, skb, vid);
-	अगर (ret != NET_XMIT_SUCCESS) अणु
-		kमुक्त_skb(skb);
-		वापस ret;
-	पूर्ण
+	ret = batadv_mcast_forw_want_rtr(bat_priv, skb, vid);
+	if (ret != NET_XMIT_SUCCESS) {
+		kfree_skb(skb);
+		return ret;
+	}
 
 	consume_skb(skb);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * batadv_mcast_want_unsnoop_update() - update unsnoop counter and list
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @bat_priv: the bat priv with all the soft interface information
  * @orig: the orig_node which multicast state might have changed of
  * @mcast_flags: flags indicating the new multicast state
  *
@@ -1773,18 +1772,18 @@ batadv_mcast_क्रमw_want_rtr(काष्ठा batadv_priv *bat_priv,
  *
  * Caller needs to hold orig->mcast_handler_lock.
  */
-अटल व्योम batadv_mcast_want_unsnoop_update(काष्ठा batadv_priv *bat_priv,
-					     काष्ठा batadv_orig_node *orig,
+static void batadv_mcast_want_unsnoop_update(struct batadv_priv *bat_priv,
+					     struct batadv_orig_node *orig,
 					     u8 mcast_flags)
-अणु
-	काष्ठा hlist_node *node = &orig->mcast_want_all_unsnoopables_node;
-	काष्ठा hlist_head *head = &bat_priv->mcast.want_all_unsnoopables_list;
+{
+	struct hlist_node *node = &orig->mcast_want_all_unsnoopables_node;
+	struct hlist_head *head = &bat_priv->mcast.want_all_unsnoopables_list;
 
-	lockdep_निश्चित_held(&orig->mcast_handler_lock);
+	lockdep_assert_held(&orig->mcast_handler_lock);
 
-	/* चयनed from flag unset to set */
-	अगर (mcast_flags & BATADV_MCAST_WANT_ALL_UNSNOOPABLES &&
-	    !(orig->mcast_flags & BATADV_MCAST_WANT_ALL_UNSNOOPABLES)) अणु
+	/* switched from flag unset to set */
+	if (mcast_flags & BATADV_MCAST_WANT_ALL_UNSNOOPABLES &&
+	    !(orig->mcast_flags & BATADV_MCAST_WANT_ALL_UNSNOOPABLES)) {
 		atomic_inc(&bat_priv->mcast.num_want_all_unsnoopables);
 
 		spin_lock_bh(&bat_priv->mcast.want_lists_lock);
@@ -1793,9 +1792,9 @@ batadv_mcast_क्रमw_want_rtr(काष्ठा batadv_priv *bat_priv,
 
 		hlist_add_head_rcu(node, head);
 		spin_unlock_bh(&bat_priv->mcast.want_lists_lock);
-	/* चयनed from flag set to unset */
-	पूर्ण अन्यथा अगर (!(mcast_flags & BATADV_MCAST_WANT_ALL_UNSNOOPABLES) &&
-		   orig->mcast_flags & BATADV_MCAST_WANT_ALL_UNSNOOPABLES) अणु
+	/* switched from flag set to unset */
+	} else if (!(mcast_flags & BATADV_MCAST_WANT_ALL_UNSNOOPABLES) &&
+		   orig->mcast_flags & BATADV_MCAST_WANT_ALL_UNSNOOPABLES) {
 		atomic_dec(&bat_priv->mcast.num_want_all_unsnoopables);
 
 		spin_lock_bh(&bat_priv->mcast.want_lists_lock);
@@ -1804,12 +1803,12 @@ batadv_mcast_क्रमw_want_rtr(काष्ठा batadv_priv *bat_priv,
 
 		hlist_del_init_rcu(node);
 		spin_unlock_bh(&bat_priv->mcast.want_lists_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * batadv_mcast_want_ipv4_update() - update want-all-ipv4 counter and list
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @bat_priv: the bat priv with all the soft interface information
  * @orig: the orig_node which multicast state might have changed of
  * @mcast_flags: flags indicating the new multicast state
  *
@@ -1818,18 +1817,18 @@ batadv_mcast_क्रमw_want_rtr(काष्ठा batadv_priv *bat_priv,
  *
  * Caller needs to hold orig->mcast_handler_lock.
  */
-अटल व्योम batadv_mcast_want_ipv4_update(काष्ठा batadv_priv *bat_priv,
-					  काष्ठा batadv_orig_node *orig,
+static void batadv_mcast_want_ipv4_update(struct batadv_priv *bat_priv,
+					  struct batadv_orig_node *orig,
 					  u8 mcast_flags)
-अणु
-	काष्ठा hlist_node *node = &orig->mcast_want_all_ipv4_node;
-	काष्ठा hlist_head *head = &bat_priv->mcast.want_all_ipv4_list;
+{
+	struct hlist_node *node = &orig->mcast_want_all_ipv4_node;
+	struct hlist_head *head = &bat_priv->mcast.want_all_ipv4_list;
 
-	lockdep_निश्चित_held(&orig->mcast_handler_lock);
+	lockdep_assert_held(&orig->mcast_handler_lock);
 
-	/* चयनed from flag unset to set */
-	अगर (mcast_flags & BATADV_MCAST_WANT_ALL_IPV4 &&
-	    !(orig->mcast_flags & BATADV_MCAST_WANT_ALL_IPV4)) अणु
+	/* switched from flag unset to set */
+	if (mcast_flags & BATADV_MCAST_WANT_ALL_IPV4 &&
+	    !(orig->mcast_flags & BATADV_MCAST_WANT_ALL_IPV4)) {
 		atomic_inc(&bat_priv->mcast.num_want_all_ipv4);
 
 		spin_lock_bh(&bat_priv->mcast.want_lists_lock);
@@ -1838,9 +1837,9 @@ batadv_mcast_क्रमw_want_rtr(काष्ठा batadv_priv *bat_priv,
 
 		hlist_add_head_rcu(node, head);
 		spin_unlock_bh(&bat_priv->mcast.want_lists_lock);
-	/* चयनed from flag set to unset */
-	पूर्ण अन्यथा अगर (!(mcast_flags & BATADV_MCAST_WANT_ALL_IPV4) &&
-		   orig->mcast_flags & BATADV_MCAST_WANT_ALL_IPV4) अणु
+	/* switched from flag set to unset */
+	} else if (!(mcast_flags & BATADV_MCAST_WANT_ALL_IPV4) &&
+		   orig->mcast_flags & BATADV_MCAST_WANT_ALL_IPV4) {
 		atomic_dec(&bat_priv->mcast.num_want_all_ipv4);
 
 		spin_lock_bh(&bat_priv->mcast.want_lists_lock);
@@ -1849,12 +1848,12 @@ batadv_mcast_क्रमw_want_rtr(काष्ठा batadv_priv *bat_priv,
 
 		hlist_del_init_rcu(node);
 		spin_unlock_bh(&bat_priv->mcast.want_lists_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * batadv_mcast_want_ipv6_update() - update want-all-ipv6 counter and list
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @bat_priv: the bat priv with all the soft interface information
  * @orig: the orig_node which multicast state might have changed of
  * @mcast_flags: flags indicating the new multicast state
  *
@@ -1863,18 +1862,18 @@ batadv_mcast_क्रमw_want_rtr(काष्ठा batadv_priv *bat_priv,
  *
  * Caller needs to hold orig->mcast_handler_lock.
  */
-अटल व्योम batadv_mcast_want_ipv6_update(काष्ठा batadv_priv *bat_priv,
-					  काष्ठा batadv_orig_node *orig,
+static void batadv_mcast_want_ipv6_update(struct batadv_priv *bat_priv,
+					  struct batadv_orig_node *orig,
 					  u8 mcast_flags)
-अणु
-	काष्ठा hlist_node *node = &orig->mcast_want_all_ipv6_node;
-	काष्ठा hlist_head *head = &bat_priv->mcast.want_all_ipv6_list;
+{
+	struct hlist_node *node = &orig->mcast_want_all_ipv6_node;
+	struct hlist_head *head = &bat_priv->mcast.want_all_ipv6_list;
 
-	lockdep_निश्चित_held(&orig->mcast_handler_lock);
+	lockdep_assert_held(&orig->mcast_handler_lock);
 
-	/* चयनed from flag unset to set */
-	अगर (mcast_flags & BATADV_MCAST_WANT_ALL_IPV6 &&
-	    !(orig->mcast_flags & BATADV_MCAST_WANT_ALL_IPV6)) अणु
+	/* switched from flag unset to set */
+	if (mcast_flags & BATADV_MCAST_WANT_ALL_IPV6 &&
+	    !(orig->mcast_flags & BATADV_MCAST_WANT_ALL_IPV6)) {
 		atomic_inc(&bat_priv->mcast.num_want_all_ipv6);
 
 		spin_lock_bh(&bat_priv->mcast.want_lists_lock);
@@ -1883,9 +1882,9 @@ batadv_mcast_क्रमw_want_rtr(काष्ठा batadv_priv *bat_priv,
 
 		hlist_add_head_rcu(node, head);
 		spin_unlock_bh(&bat_priv->mcast.want_lists_lock);
-	/* चयनed from flag set to unset */
-	पूर्ण अन्यथा अगर (!(mcast_flags & BATADV_MCAST_WANT_ALL_IPV6) &&
-		   orig->mcast_flags & BATADV_MCAST_WANT_ALL_IPV6) अणु
+	/* switched from flag set to unset */
+	} else if (!(mcast_flags & BATADV_MCAST_WANT_ALL_IPV6) &&
+		   orig->mcast_flags & BATADV_MCAST_WANT_ALL_IPV6) {
 		atomic_dec(&bat_priv->mcast.num_want_all_ipv6);
 
 		spin_lock_bh(&bat_priv->mcast.want_lists_lock);
@@ -1894,12 +1893,12 @@ batadv_mcast_क्रमw_want_rtr(काष्ठा batadv_priv *bat_priv,
 
 		hlist_del_init_rcu(node);
 		spin_unlock_bh(&bat_priv->mcast.want_lists_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * batadv_mcast_want_rtr4_update() - update want-all-rtr4 counter and list
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @bat_priv: the bat priv with all the soft interface information
  * @orig: the orig_node which multicast state might have changed of
  * @mcast_flags: flags indicating the new multicast state
  *
@@ -1908,18 +1907,18 @@ batadv_mcast_क्रमw_want_rtr(काष्ठा batadv_priv *bat_priv,
  *
  * Caller needs to hold orig->mcast_handler_lock.
  */
-अटल व्योम batadv_mcast_want_rtr4_update(काष्ठा batadv_priv *bat_priv,
-					  काष्ठा batadv_orig_node *orig,
+static void batadv_mcast_want_rtr4_update(struct batadv_priv *bat_priv,
+					  struct batadv_orig_node *orig,
 					  u8 mcast_flags)
-अणु
-	काष्ठा hlist_node *node = &orig->mcast_want_all_rtr4_node;
-	काष्ठा hlist_head *head = &bat_priv->mcast.want_all_rtr4_list;
+{
+	struct hlist_node *node = &orig->mcast_want_all_rtr4_node;
+	struct hlist_head *head = &bat_priv->mcast.want_all_rtr4_list;
 
-	lockdep_निश्चित_held(&orig->mcast_handler_lock);
+	lockdep_assert_held(&orig->mcast_handler_lock);
 
-	/* चयनed from flag set to unset */
-	अगर (!(mcast_flags & BATADV_MCAST_WANT_NO_RTR4) &&
-	    orig->mcast_flags & BATADV_MCAST_WANT_NO_RTR4) अणु
+	/* switched from flag set to unset */
+	if (!(mcast_flags & BATADV_MCAST_WANT_NO_RTR4) &&
+	    orig->mcast_flags & BATADV_MCAST_WANT_NO_RTR4) {
 		atomic_inc(&bat_priv->mcast.num_want_all_rtr4);
 
 		spin_lock_bh(&bat_priv->mcast.want_lists_lock);
@@ -1928,9 +1927,9 @@ batadv_mcast_क्रमw_want_rtr(काष्ठा batadv_priv *bat_priv,
 
 		hlist_add_head_rcu(node, head);
 		spin_unlock_bh(&bat_priv->mcast.want_lists_lock);
-	/* चयनed from flag unset to set */
-	पूर्ण अन्यथा अगर (mcast_flags & BATADV_MCAST_WANT_NO_RTR4 &&
-		   !(orig->mcast_flags & BATADV_MCAST_WANT_NO_RTR4)) अणु
+	/* switched from flag unset to set */
+	} else if (mcast_flags & BATADV_MCAST_WANT_NO_RTR4 &&
+		   !(orig->mcast_flags & BATADV_MCAST_WANT_NO_RTR4)) {
 		atomic_dec(&bat_priv->mcast.num_want_all_rtr4);
 
 		spin_lock_bh(&bat_priv->mcast.want_lists_lock);
@@ -1939,12 +1938,12 @@ batadv_mcast_क्रमw_want_rtr(काष्ठा batadv_priv *bat_priv,
 
 		hlist_del_init_rcu(node);
 		spin_unlock_bh(&bat_priv->mcast.want_lists_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * batadv_mcast_want_rtr6_update() - update want-all-rtr6 counter and list
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @bat_priv: the bat priv with all the soft interface information
  * @orig: the orig_node which multicast state might have changed of
  * @mcast_flags: flags indicating the new multicast state
  *
@@ -1953,18 +1952,18 @@ batadv_mcast_क्रमw_want_rtr(काष्ठा batadv_priv *bat_priv,
  *
  * Caller needs to hold orig->mcast_handler_lock.
  */
-अटल व्योम batadv_mcast_want_rtr6_update(काष्ठा batadv_priv *bat_priv,
-					  काष्ठा batadv_orig_node *orig,
+static void batadv_mcast_want_rtr6_update(struct batadv_priv *bat_priv,
+					  struct batadv_orig_node *orig,
 					  u8 mcast_flags)
-अणु
-	काष्ठा hlist_node *node = &orig->mcast_want_all_rtr6_node;
-	काष्ठा hlist_head *head = &bat_priv->mcast.want_all_rtr6_list;
+{
+	struct hlist_node *node = &orig->mcast_want_all_rtr6_node;
+	struct hlist_head *head = &bat_priv->mcast.want_all_rtr6_list;
 
-	lockdep_निश्चित_held(&orig->mcast_handler_lock);
+	lockdep_assert_held(&orig->mcast_handler_lock);
 
-	/* चयनed from flag set to unset */
-	अगर (!(mcast_flags & BATADV_MCAST_WANT_NO_RTR6) &&
-	    orig->mcast_flags & BATADV_MCAST_WANT_NO_RTR6) अणु
+	/* switched from flag set to unset */
+	if (!(mcast_flags & BATADV_MCAST_WANT_NO_RTR6) &&
+	    orig->mcast_flags & BATADV_MCAST_WANT_NO_RTR6) {
 		atomic_inc(&bat_priv->mcast.num_want_all_rtr6);
 
 		spin_lock_bh(&bat_priv->mcast.want_lists_lock);
@@ -1973,9 +1972,9 @@ batadv_mcast_क्रमw_want_rtr(काष्ठा batadv_priv *bat_priv,
 
 		hlist_add_head_rcu(node, head);
 		spin_unlock_bh(&bat_priv->mcast.want_lists_lock);
-	/* चयनed from flag unset to set */
-	पूर्ण अन्यथा अगर (mcast_flags & BATADV_MCAST_WANT_NO_RTR6 &&
-		   !(orig->mcast_flags & BATADV_MCAST_WANT_NO_RTR6)) अणु
+	/* switched from flag unset to set */
+	} else if (mcast_flags & BATADV_MCAST_WANT_NO_RTR6 &&
+		   !(orig->mcast_flags & BATADV_MCAST_WANT_NO_RTR6)) {
 		atomic_dec(&bat_priv->mcast.num_want_all_rtr6);
 
 		spin_lock_bh(&bat_priv->mcast.want_lists_lock);
@@ -1984,8 +1983,8 @@ batadv_mcast_क्रमw_want_rtr(काष्ठा batadv_priv *bat_priv,
 
 		hlist_del_init_rcu(node);
 		spin_unlock_bh(&bat_priv->mcast.want_lists_lock);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * batadv_mcast_tvlv_flags_get() - get multicast flags from an OGM TVLV
@@ -1993,45 +1992,45 @@ batadv_mcast_क्रमw_want_rtr(काष्ठा batadv_priv *bat_priv,
  * @tvlv_value: tvlv buffer containing the multicast flags
  * @tvlv_value_len: tvlv buffer length
  *
- * Return: multicast flags क्रम the given tvlv buffer
+ * Return: multicast flags for the given tvlv buffer
  */
-अटल u8
-batadv_mcast_tvlv_flags_get(bool enabled, व्योम *tvlv_value, u16 tvlv_value_len)
-अणु
+static u8
+batadv_mcast_tvlv_flags_get(bool enabled, void *tvlv_value, u16 tvlv_value_len)
+{
 	u8 mcast_flags = BATADV_NO_FLAGS;
 
-	अगर (enabled && tvlv_value && tvlv_value_len >= माप(mcast_flags))
+	if (enabled && tvlv_value && tvlv_value_len >= sizeof(mcast_flags))
 		mcast_flags = *(u8 *)tvlv_value;
 
-	अगर (!enabled) अणु
+	if (!enabled) {
 		mcast_flags |= BATADV_MCAST_WANT_ALL_IPV4;
 		mcast_flags |= BATADV_MCAST_WANT_ALL_IPV6;
-	पूर्ण
+	}
 
-	/* हटाओ redundant flags to aव्योम sending duplicate packets later */
-	अगर (mcast_flags & BATADV_MCAST_WANT_ALL_IPV4)
+	/* remove redundant flags to avoid sending duplicate packets later */
+	if (mcast_flags & BATADV_MCAST_WANT_ALL_IPV4)
 		mcast_flags |= BATADV_MCAST_WANT_NO_RTR4;
 
-	अगर (mcast_flags & BATADV_MCAST_WANT_ALL_IPV6)
+	if (mcast_flags & BATADV_MCAST_WANT_ALL_IPV6)
 		mcast_flags |= BATADV_MCAST_WANT_NO_RTR6;
 
-	वापस mcast_flags;
-पूर्ण
+	return mcast_flags;
+}
 
 /**
  * batadv_mcast_tvlv_ogm_handler() - process incoming multicast tvlv container
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @bat_priv: the bat priv with all the soft interface information
  * @orig: the orig_node of the ogm
  * @flags: flags indicating the tvlv state (see batadv_tvlv_handler_flags)
  * @tvlv_value: tvlv buffer containing the multicast data
  * @tvlv_value_len: tvlv buffer length
  */
-अटल व्योम batadv_mcast_tvlv_ogm_handler(काष्ठा batadv_priv *bat_priv,
-					  काष्ठा batadv_orig_node *orig,
+static void batadv_mcast_tvlv_ogm_handler(struct batadv_priv *bat_priv,
+					  struct batadv_orig_node *orig,
 					  u8 flags,
-					  व्योम *tvlv_value,
+					  void *tvlv_value,
 					  u16 tvlv_value_len)
-अणु
+{
 	bool orig_mcast_enabled = !(flags & BATADV_TVLV_HANDLER_OGM_CIFNOTFND);
 	u8 mcast_flags;
 
@@ -2040,13 +2039,13 @@ batadv_mcast_tvlv_flags_get(bool enabled, व्योम *tvlv_value, u16 tvlv_
 
 	spin_lock_bh(&orig->mcast_handler_lock);
 
-	अगर (orig_mcast_enabled &&
-	    !test_bit(BATADV_ORIG_CAPA_HAS_MCAST, &orig->capabilities)) अणु
+	if (orig_mcast_enabled &&
+	    !test_bit(BATADV_ORIG_CAPA_HAS_MCAST, &orig->capabilities)) {
 		set_bit(BATADV_ORIG_CAPA_HAS_MCAST, &orig->capabilities);
-	पूर्ण अन्यथा अगर (!orig_mcast_enabled &&
-		   test_bit(BATADV_ORIG_CAPA_HAS_MCAST, &orig->capabilities)) अणु
+	} else if (!orig_mcast_enabled &&
+		   test_bit(BATADV_ORIG_CAPA_HAS_MCAST, &orig->capabilities)) {
 		clear_bit(BATADV_ORIG_CAPA_HAS_MCAST, &orig->capabilities);
-	पूर्ण
+	}
 
 	set_bit(BATADV_ORIG_CAPA_HAS_MCAST, &orig->capa_initialized);
 
@@ -2058,103 +2057,103 @@ batadv_mcast_tvlv_flags_get(bool enabled, व्योम *tvlv_value, u16 tvlv_
 
 	orig->mcast_flags = mcast_flags;
 	spin_unlock_bh(&orig->mcast_handler_lock);
-पूर्ण
+}
 
 /**
- * batadv_mcast_init() - initialize the multicast optimizations काष्ठाures
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_mcast_init() - initialize the multicast optimizations structures
+ * @bat_priv: the bat priv with all the soft interface information
  */
-व्योम batadv_mcast_init(काष्ठा batadv_priv *bat_priv)
-अणु
-	batadv_tvlv_handler_रेजिस्टर(bat_priv, batadv_mcast_tvlv_ogm_handler,
-				     शून्य, BATADV_TVLV_MCAST, 2,
+void batadv_mcast_init(struct batadv_priv *bat_priv)
+{
+	batadv_tvlv_handler_register(bat_priv, batadv_mcast_tvlv_ogm_handler,
+				     NULL, BATADV_TVLV_MCAST, 2,
 				     BATADV_TVLV_HANDLER_OGM_CIFNOTFND);
 
 	INIT_DELAYED_WORK(&bat_priv->mcast.work, batadv_mcast_mla_update);
-	batadv_mcast_start_समयr(bat_priv);
-पूर्ण
+	batadv_mcast_start_timer(bat_priv);
+}
 
 /**
- * batadv_mcast_mesh_info_put() - put multicast info पूर्णांकo a netlink message
- * @msg: buffer क्रम the message
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_mcast_mesh_info_put() - put multicast info into a netlink message
+ * @msg: buffer for the message
+ * @bat_priv: the bat priv with all the soft interface information
  *
  * Return: 0 or error code.
  */
-पूर्णांक batadv_mcast_mesh_info_put(काष्ठा sk_buff *msg,
-			       काष्ठा batadv_priv *bat_priv)
-अणु
+int batadv_mcast_mesh_info_put(struct sk_buff *msg,
+			       struct batadv_priv *bat_priv)
+{
 	u32 flags = bat_priv->mcast.mla_flags.tvlv_flags;
 	u32 flags_priv = BATADV_NO_FLAGS;
 
-	अगर (bat_priv->mcast.mla_flags.bridged) अणु
+	if (bat_priv->mcast.mla_flags.bridged) {
 		flags_priv |= BATADV_MCAST_FLAGS_BRIDGED;
 
-		अगर (bat_priv->mcast.mla_flags.querier_ipv4.exists)
+		if (bat_priv->mcast.mla_flags.querier_ipv4.exists)
 			flags_priv |= BATADV_MCAST_FLAGS_QUERIER_IPV4_EXISTS;
-		अगर (bat_priv->mcast.mla_flags.querier_ipv6.exists)
+		if (bat_priv->mcast.mla_flags.querier_ipv6.exists)
 			flags_priv |= BATADV_MCAST_FLAGS_QUERIER_IPV6_EXISTS;
-		अगर (bat_priv->mcast.mla_flags.querier_ipv4.shaकरोwing)
+		if (bat_priv->mcast.mla_flags.querier_ipv4.shadowing)
 			flags_priv |= BATADV_MCAST_FLAGS_QUERIER_IPV4_SHADOWING;
-		अगर (bat_priv->mcast.mla_flags.querier_ipv6.shaकरोwing)
+		if (bat_priv->mcast.mla_flags.querier_ipv6.shadowing)
 			flags_priv |= BATADV_MCAST_FLAGS_QUERIER_IPV6_SHADOWING;
-	पूर्ण
+	}
 
-	अगर (nla_put_u32(msg, BATADV_ATTR_MCAST_FLAGS, flags) ||
+	if (nla_put_u32(msg, BATADV_ATTR_MCAST_FLAGS, flags) ||
 	    nla_put_u32(msg, BATADV_ATTR_MCAST_FLAGS_PRIV, flags_priv))
-		वापस -EMSGSIZE;
+		return -EMSGSIZE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * batadv_mcast_flags_dump_entry() - dump one entry of the multicast flags table
  *  to a netlink socket
- * @msg: buffer क्रम the message
+ * @msg: buffer for the message
  * @portid: netlink port
  * @cb: Control block containing additional options
  * @orig_node: originator to dump the multicast flags of
  *
  * Return: 0 or error code.
  */
-अटल पूर्णांक
-batadv_mcast_flags_dump_entry(काष्ठा sk_buff *msg, u32 portid,
-			      काष्ठा netlink_callback *cb,
-			      काष्ठा batadv_orig_node *orig_node)
-अणु
-	व्योम *hdr;
+static int
+batadv_mcast_flags_dump_entry(struct sk_buff *msg, u32 portid,
+			      struct netlink_callback *cb,
+			      struct batadv_orig_node *orig_node)
+{
+	void *hdr;
 
 	hdr = genlmsg_put(msg, portid, cb->nlh->nlmsg_seq,
 			  &batadv_netlink_family, NLM_F_MULTI,
 			  BATADV_CMD_GET_MCAST_FLAGS);
-	अगर (!hdr)
-		वापस -ENOBUFS;
+	if (!hdr)
+		return -ENOBUFS;
 
 	genl_dump_check_consistent(cb, hdr);
 
-	अगर (nla_put(msg, BATADV_ATTR_ORIG_ADDRESS, ETH_ALEN,
-		    orig_node->orig)) अणु
+	if (nla_put(msg, BATADV_ATTR_ORIG_ADDRESS, ETH_ALEN,
+		    orig_node->orig)) {
 		genlmsg_cancel(msg, hdr);
-		वापस -EMSGSIZE;
-	पूर्ण
+		return -EMSGSIZE;
+	}
 
-	अगर (test_bit(BATADV_ORIG_CAPA_HAS_MCAST,
-		     &orig_node->capabilities)) अणु
-		अगर (nla_put_u32(msg, BATADV_ATTR_MCAST_FLAGS,
-				orig_node->mcast_flags)) अणु
+	if (test_bit(BATADV_ORIG_CAPA_HAS_MCAST,
+		     &orig_node->capabilities)) {
+		if (nla_put_u32(msg, BATADV_ATTR_MCAST_FLAGS,
+				orig_node->mcast_flags)) {
 			genlmsg_cancel(msg, hdr);
-			वापस -EMSGSIZE;
-		पूर्ण
-	पूर्ण
+			return -EMSGSIZE;
+		}
+	}
 
 	genlmsg_end(msg, hdr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * batadv_mcast_flags_dump_bucket() - dump one bucket of the multicast flags
  *  table to a netlink socket
- * @msg: buffer क्रम the message
+ * @msg: buffer for the message
  * @portid: netlink port
  * @cb: Control block containing additional options
  * @hash: hash to dump
@@ -2163,174 +2162,174 @@ batadv_mcast_flags_dump_entry(काष्ठा sk_buff *msg, u32 portid,
  *
  * Return: 0 or error code.
  */
-अटल पूर्णांक
-batadv_mcast_flags_dump_bucket(काष्ठा sk_buff *msg, u32 portid,
-			       काष्ठा netlink_callback *cb,
-			       काष्ठा batadv_hashtable *hash,
-			       अचिन्हित पूर्णांक bucket, दीर्घ *idx_skip)
-अणु
-	काष्ठा batadv_orig_node *orig_node;
-	दीर्घ idx = 0;
+static int
+batadv_mcast_flags_dump_bucket(struct sk_buff *msg, u32 portid,
+			       struct netlink_callback *cb,
+			       struct batadv_hashtable *hash,
+			       unsigned int bucket, long *idx_skip)
+{
+	struct batadv_orig_node *orig_node;
+	long idx = 0;
 
 	spin_lock_bh(&hash->list_locks[bucket]);
-	cb->seq = atomic_पढ़ो(&hash->generation) << 1 | 1;
+	cb->seq = atomic_read(&hash->generation) << 1 | 1;
 
-	hlist_क्रम_each_entry(orig_node, &hash->table[bucket], hash_entry) अणु
-		अगर (!test_bit(BATADV_ORIG_CAPA_HAS_MCAST,
+	hlist_for_each_entry(orig_node, &hash->table[bucket], hash_entry) {
+		if (!test_bit(BATADV_ORIG_CAPA_HAS_MCAST,
 			      &orig_node->capa_initialized))
-			जारी;
+			continue;
 
-		अगर (idx < *idx_skip)
-			जाओ skip;
+		if (idx < *idx_skip)
+			goto skip;
 
-		अगर (batadv_mcast_flags_dump_entry(msg, portid, cb, orig_node)) अणु
+		if (batadv_mcast_flags_dump_entry(msg, portid, cb, orig_node)) {
 			spin_unlock_bh(&hash->list_locks[bucket]);
 			*idx_skip = idx;
 
-			वापस -EMSGSIZE;
-		पूर्ण
+			return -EMSGSIZE;
+		}
 
 skip:
 		idx++;
-	पूर्ण
+	}
 	spin_unlock_bh(&hash->list_locks[bucket]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * __batadv_mcast_flags_dump() - dump multicast flags table to a netlink socket
- * @msg: buffer क्रम the message
+ * @msg: buffer for the message
  * @portid: netlink port
  * @cb: Control block containing additional options
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @bat_priv: the bat priv with all the soft interface information
  * @bucket: current bucket to dump
  * @idx: index in current bucket to the next entry to dump
  *
  * Return: 0 or error code.
  */
-अटल पूर्णांक
-__batadv_mcast_flags_dump(काष्ठा sk_buff *msg, u32 portid,
-			  काष्ठा netlink_callback *cb,
-			  काष्ठा batadv_priv *bat_priv, दीर्घ *bucket, दीर्घ *idx)
-अणु
-	काष्ठा batadv_hashtable *hash = bat_priv->orig_hash;
-	दीर्घ bucket_पंचांगp = *bucket;
-	दीर्घ idx_पंचांगp = *idx;
+static int
+__batadv_mcast_flags_dump(struct sk_buff *msg, u32 portid,
+			  struct netlink_callback *cb,
+			  struct batadv_priv *bat_priv, long *bucket, long *idx)
+{
+	struct batadv_hashtable *hash = bat_priv->orig_hash;
+	long bucket_tmp = *bucket;
+	long idx_tmp = *idx;
 
-	जबतक (bucket_पंचांगp < hash->size) अणु
-		अगर (batadv_mcast_flags_dump_bucket(msg, portid, cb, hash,
-						   bucket_पंचांगp, &idx_पंचांगp))
-			अवरोध;
+	while (bucket_tmp < hash->size) {
+		if (batadv_mcast_flags_dump_bucket(msg, portid, cb, hash,
+						   bucket_tmp, &idx_tmp))
+			break;
 
-		bucket_पंचांगp++;
-		idx_पंचांगp = 0;
-	पूर्ण
+		bucket_tmp++;
+		idx_tmp = 0;
+	}
 
-	*bucket = bucket_पंचांगp;
-	*idx = idx_पंचांगp;
+	*bucket = bucket_tmp;
+	*idx = idx_tmp;
 
-	वापस msg->len;
-पूर्ण
+	return msg->len;
+}
 
 /**
- * batadv_mcast_netlink_get_primary() - get primary पूर्णांकerface from netlink
+ * batadv_mcast_netlink_get_primary() - get primary interface from netlink
  *  callback
- * @cb: netlink callback काष्ठाure
- * @primary_अगर: the primary पूर्णांकerface poपूर्णांकer to वापस the result in
+ * @cb: netlink callback structure
+ * @primary_if: the primary interface pointer to return the result in
  *
  * Return: 0 or error code.
  */
-अटल पूर्णांक
-batadv_mcast_netlink_get_primary(काष्ठा netlink_callback *cb,
-				 काष्ठा batadv_hard_अगरace **primary_अगर)
-अणु
-	काष्ठा batadv_hard_अगरace *hard_अगरace = शून्य;
-	काष्ठा net *net = sock_net(cb->skb->sk);
-	काष्ठा net_device *soft_अगरace;
-	काष्ठा batadv_priv *bat_priv;
-	पूर्णांक अगरindex;
-	पूर्णांक ret = 0;
+static int
+batadv_mcast_netlink_get_primary(struct netlink_callback *cb,
+				 struct batadv_hard_iface **primary_if)
+{
+	struct batadv_hard_iface *hard_iface = NULL;
+	struct net *net = sock_net(cb->skb->sk);
+	struct net_device *soft_iface;
+	struct batadv_priv *bat_priv;
+	int ifindex;
+	int ret = 0;
 
-	अगरindex = batadv_netlink_get_अगरindex(cb->nlh, BATADV_ATTR_MESH_IFINDEX);
-	अगर (!अगरindex)
-		वापस -EINVAL;
+	ifindex = batadv_netlink_get_ifindex(cb->nlh, BATADV_ATTR_MESH_IFINDEX);
+	if (!ifindex)
+		return -EINVAL;
 
-	soft_अगरace = dev_get_by_index(net, अगरindex);
-	अगर (!soft_अगरace || !batadv_softअगर_is_valid(soft_अगरace)) अणु
+	soft_iface = dev_get_by_index(net, ifindex);
+	if (!soft_iface || !batadv_softif_is_valid(soft_iface)) {
 		ret = -ENODEV;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	bat_priv = netdev_priv(soft_अगरace);
+	bat_priv = netdev_priv(soft_iface);
 
-	hard_अगरace = batadv_primary_अगर_get_selected(bat_priv);
-	अगर (!hard_अगरace || hard_अगरace->अगर_status != BATADV_IF_ACTIVE) अणु
+	hard_iface = batadv_primary_if_get_selected(bat_priv);
+	if (!hard_iface || hard_iface->if_status != BATADV_IF_ACTIVE) {
 		ret = -ENOENT;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 out:
-	अगर (soft_अगरace)
-		dev_put(soft_अगरace);
+	if (soft_iface)
+		dev_put(soft_iface);
 
-	अगर (!ret && primary_अगर)
-		*primary_अगर = hard_अगरace;
-	अन्यथा अगर (hard_अगरace)
-		batadv_hardअगर_put(hard_अगरace);
+	if (!ret && primary_if)
+		*primary_if = hard_iface;
+	else if (hard_iface)
+		batadv_hardif_put(hard_iface);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * batadv_mcast_flags_dump() - dump multicast flags table to a netlink socket
- * @msg: buffer क्रम the message
- * @cb: callback काष्ठाure containing arguments
+ * @msg: buffer for the message
+ * @cb: callback structure containing arguments
  *
  * Return: message length.
  */
-पूर्णांक batadv_mcast_flags_dump(काष्ठा sk_buff *msg, काष्ठा netlink_callback *cb)
-अणु
-	काष्ठा batadv_hard_अगरace *primary_अगर = शून्य;
-	पूर्णांक portid = NETLINK_CB(cb->skb).portid;
-	काष्ठा batadv_priv *bat_priv;
-	दीर्घ *bucket = &cb->args[0];
-	दीर्घ *idx = &cb->args[1];
-	पूर्णांक ret;
+int batadv_mcast_flags_dump(struct sk_buff *msg, struct netlink_callback *cb)
+{
+	struct batadv_hard_iface *primary_if = NULL;
+	int portid = NETLINK_CB(cb->skb).portid;
+	struct batadv_priv *bat_priv;
+	long *bucket = &cb->args[0];
+	long *idx = &cb->args[1];
+	int ret;
 
-	ret = batadv_mcast_netlink_get_primary(cb, &primary_अगर);
-	अगर (ret)
-		वापस ret;
+	ret = batadv_mcast_netlink_get_primary(cb, &primary_if);
+	if (ret)
+		return ret;
 
-	bat_priv = netdev_priv(primary_अगर->soft_अगरace);
+	bat_priv = netdev_priv(primary_if->soft_iface);
 	ret = __batadv_mcast_flags_dump(msg, portid, cb, bat_priv, bucket, idx);
 
-	batadv_hardअगर_put(primary_अगर);
-	वापस ret;
-पूर्ण
+	batadv_hardif_put(primary_if);
+	return ret;
+}
 
 /**
- * batadv_mcast_मुक्त() - मुक्त the multicast optimizations काष्ठाures
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_mcast_free() - free the multicast optimizations structures
+ * @bat_priv: the bat priv with all the soft interface information
  */
-व्योम batadv_mcast_मुक्त(काष्ठा batadv_priv *bat_priv)
-अणु
+void batadv_mcast_free(struct batadv_priv *bat_priv)
+{
 	cancel_delayed_work_sync(&bat_priv->mcast.work);
 
-	batadv_tvlv_container_unरेजिस्टर(bat_priv, BATADV_TVLV_MCAST, 2);
-	batadv_tvlv_handler_unरेजिस्टर(bat_priv, BATADV_TVLV_MCAST, 2);
+	batadv_tvlv_container_unregister(bat_priv, BATADV_TVLV_MCAST, 2);
+	batadv_tvlv_handler_unregister(bat_priv, BATADV_TVLV_MCAST, 2);
 
 	/* safely calling outside of worker, as worker was canceled above */
-	batadv_mcast_mla_tt_retract(bat_priv, शून्य);
-पूर्ण
+	batadv_mcast_mla_tt_retract(bat_priv, NULL);
+}
 
 /**
- * batadv_mcast_purge_orig() - reset originator global mcast state modअगरications
+ * batadv_mcast_purge_orig() - reset originator global mcast state modifications
  * @orig: the originator which is going to get purged
  */
-व्योम batadv_mcast_purge_orig(काष्ठा batadv_orig_node *orig)
-अणु
-	काष्ठा batadv_priv *bat_priv = orig->bat_priv;
+void batadv_mcast_purge_orig(struct batadv_orig_node *orig)
+{
+	struct batadv_priv *bat_priv = orig->bat_priv;
 
 	spin_lock_bh(&orig->mcast_handler_lock);
 
@@ -2343,4 +2342,4 @@ out:
 				      BATADV_MCAST_WANT_NO_RTR6);
 
 	spin_unlock_bh(&orig->mcast_handler_lock);
-पूर्ण
+}

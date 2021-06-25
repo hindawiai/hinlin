@@ -1,42 +1,41 @@
-<शैली गुरु>
 /*
  * Copyright(c) 2015 - 2020 Intel Corporation.
  *
  * This file is provided under a dual BSD/GPLv2 license.  When using or
- * redistributing this file, you may करो so under either license.
+ * redistributing this file, you may do so under either license.
  *
  * GPL LICENSE SUMMARY
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of version 2 of the GNU General Public License as
  * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * General Public License क्रम more details.
+ * General Public License for more details.
  *
  * BSD LICENSE
  *
- * Redistribution and use in source and binary क्रमms, with or without
- * modअगरication, are permitted provided that the following conditions
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
  * are met:
  *
  *  - Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- *  - Redistributions in binary क्रमm must reproduce the above copyright
+ *  - Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
- *    the करोcumentation and/or other materials provided with the
+ *    the documentation and/or other materials provided with the
  *    distribution.
  *  - Neither the name of Intel Corporation nor the names of its
- *    contributors may be used to enकरोrse or promote products derived
- *    from this software without specअगरic prior written permission.
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY सूचीECT, INसूचीECT, INCIDENTAL,
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -47,82 +46,82 @@
  */
 
 /*
- * This file contains all of the code that is specअगरic to the HFI chip
+ * This file contains all of the code that is specific to the HFI chip
  */
 
-#समावेश <linux/pci.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/module.h>
+#include <linux/pci.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/module.h>
 
-#समावेश "hfi.h"
-#समावेश "trace.h"
-#समावेश "mad.h"
-#समावेश "pio.h"
-#समावेश "sdma.h"
-#समावेश "eprom.h"
-#समावेश "efivar.h"
-#समावेश "platform.h"
-#समावेश "aspm.h"
-#समावेश "affinity.h"
-#समावेश "debugfs.h"
-#समावेश "fault.h"
-#समावेश "netdev.h"
+#include "hfi.h"
+#include "trace.h"
+#include "mad.h"
+#include "pio.h"
+#include "sdma.h"
+#include "eprom.h"
+#include "efivar.h"
+#include "platform.h"
+#include "aspm.h"
+#include "affinity.h"
+#include "debugfs.h"
+#include "fault.h"
+#include "netdev.h"
 
-uपूर्णांक num_vls = HFI1_MAX_VLS_SUPPORTED;
-module_param(num_vls, uपूर्णांक, S_IRUGO);
+uint num_vls = HFI1_MAX_VLS_SUPPORTED;
+module_param(num_vls, uint, S_IRUGO);
 MODULE_PARM_DESC(num_vls, "Set number of Virtual Lanes to use (1-8)");
 
 /*
- * Default समय to aggregate two 10K packets from the idle state
- * (समयr not running). The समयr starts at the end of the first packet,
- * so only the समय क्रम one 10K packet and header plus a bit extra is needed.
+ * Default time to aggregate two 10K packets from the idle state
+ * (timer not running). The timer starts at the end of the first packet,
+ * so only the time for one 10K packet and header plus a bit extra is needed.
  * 10 * 1024 + 64 header byte = 10304 byte
  * 10304 byte / 12.5 GB/s = 824.32ns
  */
-uपूर्णांक rcv_पूर्णांकr_समयout = (824 + 16); /* 16 is क्रम coalescing पूर्णांकerrupt */
-module_param(rcv_पूर्णांकr_समयout, uपूर्णांक, S_IRUGO);
-MODULE_PARM_DESC(rcv_पूर्णांकr_समयout, "Receive interrupt mitigation timeout in ns");
+uint rcv_intr_timeout = (824 + 16); /* 16 is for coalescing interrupt */
+module_param(rcv_intr_timeout, uint, S_IRUGO);
+MODULE_PARM_DESC(rcv_intr_timeout, "Receive interrupt mitigation timeout in ns");
 
-uपूर्णांक rcv_पूर्णांकr_count = 16; /* same as qib */
-module_param(rcv_पूर्णांकr_count, uपूर्णांक, S_IRUGO);
-MODULE_PARM_DESC(rcv_पूर्णांकr_count, "Receive interrupt mitigation count");
+uint rcv_intr_count = 16; /* same as qib */
+module_param(rcv_intr_count, uint, S_IRUGO);
+MODULE_PARM_DESC(rcv_intr_count, "Receive interrupt mitigation count");
 
-uलघु link_crc_mask = SUPPORTED_CRCS;
-module_param(link_crc_mask, uलघु, S_IRUGO);
+ushort link_crc_mask = SUPPORTED_CRCS;
+module_param(link_crc_mask, ushort, S_IRUGO);
 MODULE_PARM_DESC(link_crc_mask, "CRCs to use on the link");
 
-uपूर्णांक loopback;
-module_param_named(loopback, loopback, uपूर्णांक, S_IRUGO);
+uint loopback;
+module_param_named(loopback, loopback, uint, S_IRUGO);
 MODULE_PARM_DESC(loopback, "Put into loopback mode (1 = serdes, 3 = external cable");
 
 /* Other driver tunables */
-uपूर्णांक rcv_पूर्णांकr_dynamic = 1; /* enable dynamic mode क्रम rcv पूर्णांक mitigation*/
-अटल uलघु crc_14b_sideband = 1;
-अटल uपूर्णांक use_flr = 1;
-uपूर्णांक quick_linkup; /* skip LNI */
+uint rcv_intr_dynamic = 1; /* enable dynamic mode for rcv int mitigation*/
+static ushort crc_14b_sideband = 1;
+static uint use_flr = 1;
+uint quick_linkup; /* skip LNI */
 
-काष्ठा flag_table अणु
+struct flag_table {
 	u64 flag;	/* the flag */
-	अक्षर *str;	/* description string */
-	u16 extra;	/* extra inक्रमmation */
+	char *str;	/* description string */
+	u16 extra;	/* extra information */
 	u16 unused0;
 	u32 unused1;
-पूर्ण;
+};
 
-/* str must be a string स्थिरant */
-#घोषणा FLAG_ENTRY(str, extra, flag) अणुflag, str, extraपूर्ण
-#घोषणा FLAG_ENTRY0(str, flag) अणुflag, str, 0पूर्ण
+/* str must be a string constant */
+#define FLAG_ENTRY(str, extra, flag) {flag, str, extra}
+#define FLAG_ENTRY0(str, flag) {flag, str, 0}
 
 /* Send Error Consequences */
-#घोषणा SEC_WRITE_DROPPED	0x1
-#घोषणा SEC_PACKET_DROPPED	0x2
-#घोषणा SEC_SC_HALTED		0x4	/* per-context only */
-#घोषणा SEC_SPC_FREEZE		0x8	/* per-HFI only */
+#define SEC_WRITE_DROPPED	0x1
+#define SEC_PACKET_DROPPED	0x2
+#define SEC_SC_HALTED		0x4	/* per-context only */
+#define SEC_SPC_FREEZE		0x8	/* per-HFI only */
 
-#घोषणा DEFAULT_KRCVQS		  2
-#घोषणा MIN_KERNEL_KCTXTS         2
-#घोषणा FIRST_KERNEL_KCTXT        1
+#define DEFAULT_KRCVQS		  2
+#define MIN_KERNEL_KCTXTS         2
+#define FIRST_KERNEL_KCTXT        1
 
 /*
  * RSM instance allocation
@@ -131,93 +130,93 @@ uपूर्णांक quick_linkup; /* skip LNI */
  *   2 - AIP
  *   3 - Verbs
  */
-#घोषणा RSM_INS_FECN              0
-#घोषणा RSM_INS_VNIC              1
-#घोषणा RSM_INS_AIP               2
-#घोषणा RSM_INS_VERBS             3
+#define RSM_INS_FECN              0
+#define RSM_INS_VNIC              1
+#define RSM_INS_AIP               2
+#define RSM_INS_VERBS             3
 
-/* Bit offset पूर्णांकo the GUID which carries HFI id inक्रमmation */
-#घोषणा GUID_HFI_INDEX_SHIFT     39
+/* Bit offset into the GUID which carries HFI id information */
+#define GUID_HFI_INDEX_SHIFT     39
 
 /* extract the emulation revision */
-#घोषणा emulator_rev(dd) ((dd)->irev >> 8)
+#define emulator_rev(dd) ((dd)->irev >> 8)
 /* parallel and serial emulation versions are 3 and 4 respectively */
-#घोषणा is_emulator_p(dd) ((((dd)->irev) & 0xf) == 3)
-#घोषणा is_emulator_s(dd) ((((dd)->irev) & 0xf) == 4)
+#define is_emulator_p(dd) ((((dd)->irev) & 0xf) == 3)
+#define is_emulator_s(dd) ((((dd)->irev) & 0xf) == 4)
 
-/* RSM fields क्रम Verbs */
+/* RSM fields for Verbs */
 /* packet type */
-#घोषणा IB_PACKET_TYPE         2ull
-#घोषणा QW_SHIFT               6ull
+#define IB_PACKET_TYPE         2ull
+#define QW_SHIFT               6ull
 /* QPN[7..1] */
-#घोषणा QPN_WIDTH              7ull
+#define QPN_WIDTH              7ull
 
-/* LRH.BTH: QW 0, OFFSET 48 - क्रम match */
-#घोषणा LRH_BTH_QW             0ull
-#घोषणा LRH_BTH_BIT_OFFSET     48ull
-#घोषणा LRH_BTH_OFFSET(off)    ((LRH_BTH_QW << QW_SHIFT) | (off))
-#घोषणा LRH_BTH_MATCH_OFFSET   LRH_BTH_OFFSET(LRH_BTH_BIT_OFFSET)
-#घोषणा LRH_BTH_SELECT
-#घोषणा LRH_BTH_MASK           3ull
-#घोषणा LRH_BTH_VALUE          2ull
+/* LRH.BTH: QW 0, OFFSET 48 - for match */
+#define LRH_BTH_QW             0ull
+#define LRH_BTH_BIT_OFFSET     48ull
+#define LRH_BTH_OFFSET(off)    ((LRH_BTH_QW << QW_SHIFT) | (off))
+#define LRH_BTH_MATCH_OFFSET   LRH_BTH_OFFSET(LRH_BTH_BIT_OFFSET)
+#define LRH_BTH_SELECT
+#define LRH_BTH_MASK           3ull
+#define LRH_BTH_VALUE          2ull
 
-/* LRH.SC[3..0] QW 0, OFFSET 56 - क्रम match */
-#घोषणा LRH_SC_QW              0ull
-#घोषणा LRH_SC_BIT_OFFSET      56ull
-#घोषणा LRH_SC_OFFSET(off)     ((LRH_SC_QW << QW_SHIFT) | (off))
-#घोषणा LRH_SC_MATCH_OFFSET    LRH_SC_OFFSET(LRH_SC_BIT_OFFSET)
-#घोषणा LRH_SC_MASK            128ull
-#घोषणा LRH_SC_VALUE           0ull
+/* LRH.SC[3..0] QW 0, OFFSET 56 - for match */
+#define LRH_SC_QW              0ull
+#define LRH_SC_BIT_OFFSET      56ull
+#define LRH_SC_OFFSET(off)     ((LRH_SC_QW << QW_SHIFT) | (off))
+#define LRH_SC_MATCH_OFFSET    LRH_SC_OFFSET(LRH_SC_BIT_OFFSET)
+#define LRH_SC_MASK            128ull
+#define LRH_SC_VALUE           0ull
 
-/* SC[n..0] QW 0, OFFSET 60 - क्रम select */
-#घोषणा LRH_SC_SELECT_OFFSET  ((LRH_SC_QW << QW_SHIFT) | (60ull))
+/* SC[n..0] QW 0, OFFSET 60 - for select */
+#define LRH_SC_SELECT_OFFSET  ((LRH_SC_QW << QW_SHIFT) | (60ull))
 
 /* QPN[m+n:1] QW 1, OFFSET 1 */
-#घोषणा QPN_SELECT_OFFSET      ((1ull << QW_SHIFT) | (1ull))
+#define QPN_SELECT_OFFSET      ((1ull << QW_SHIFT) | (1ull))
 
-/* RSM fields क्रम AIP */
-/* LRH.BTH above is reused क्रम this rule */
+/* RSM fields for AIP */
+/* LRH.BTH above is reused for this rule */
 
-/* BTH.DESTQP: QW 1, OFFSET 16 क्रम match */
-#घोषणा BTH_DESTQP_QW           1ull
-#घोषणा BTH_DESTQP_BIT_OFFSET   16ull
-#घोषणा BTH_DESTQP_OFFSET(off) ((BTH_DESTQP_QW << QW_SHIFT) | (off))
-#घोषणा BTH_DESTQP_MATCH_OFFSET BTH_DESTQP_OFFSET(BTH_DESTQP_BIT_OFFSET)
-#घोषणा BTH_DESTQP_MASK         0xFFull
-#घोषणा BTH_DESTQP_VALUE        0x81ull
+/* BTH.DESTQP: QW 1, OFFSET 16 for match */
+#define BTH_DESTQP_QW           1ull
+#define BTH_DESTQP_BIT_OFFSET   16ull
+#define BTH_DESTQP_OFFSET(off) ((BTH_DESTQP_QW << QW_SHIFT) | (off))
+#define BTH_DESTQP_MATCH_OFFSET BTH_DESTQP_OFFSET(BTH_DESTQP_BIT_OFFSET)
+#define BTH_DESTQP_MASK         0xFFull
+#define BTH_DESTQP_VALUE        0x81ull
 
-/* DETH.SQPN: QW 1 Offset 56 क्रम select */
-/* We use 8 most signअगरicant Soure QPN bits as entropy fpr AIP */
-#घोषणा DETH_AIP_SQPN_QW 3ull
-#घोषणा DETH_AIP_SQPN_BIT_OFFSET 56ull
-#घोषणा DETH_AIP_SQPN_OFFSET(off) ((DETH_AIP_SQPN_QW << QW_SHIFT) | (off))
-#घोषणा DETH_AIP_SQPN_SELECT_OFFSET \
+/* DETH.SQPN: QW 1 Offset 56 for select */
+/* We use 8 most significant Soure QPN bits as entropy fpr AIP */
+#define DETH_AIP_SQPN_QW 3ull
+#define DETH_AIP_SQPN_BIT_OFFSET 56ull
+#define DETH_AIP_SQPN_OFFSET(off) ((DETH_AIP_SQPN_QW << QW_SHIFT) | (off))
+#define DETH_AIP_SQPN_SELECT_OFFSET \
 	DETH_AIP_SQPN_OFFSET(DETH_AIP_SQPN_BIT_OFFSET)
 
-/* RSM fields क्रम Vnic */
-/* L2_TYPE: QW 0, OFFSET 61 - क्रम match */
-#घोषणा L2_TYPE_QW             0ull
-#घोषणा L2_TYPE_BIT_OFFSET     61ull
-#घोषणा L2_TYPE_OFFSET(off)    ((L2_TYPE_QW << QW_SHIFT) | (off))
-#घोषणा L2_TYPE_MATCH_OFFSET   L2_TYPE_OFFSET(L2_TYPE_BIT_OFFSET)
-#घोषणा L2_TYPE_MASK           3ull
-#घोषणा L2_16B_VALUE           2ull
+/* RSM fields for Vnic */
+/* L2_TYPE: QW 0, OFFSET 61 - for match */
+#define L2_TYPE_QW             0ull
+#define L2_TYPE_BIT_OFFSET     61ull
+#define L2_TYPE_OFFSET(off)    ((L2_TYPE_QW << QW_SHIFT) | (off))
+#define L2_TYPE_MATCH_OFFSET   L2_TYPE_OFFSET(L2_TYPE_BIT_OFFSET)
+#define L2_TYPE_MASK           3ull
+#define L2_16B_VALUE           2ull
 
-/* L4_TYPE QW 1, OFFSET 0 - क्रम match */
-#घोषणा L4_TYPE_QW              1ull
-#घोषणा L4_TYPE_BIT_OFFSET      0ull
-#घोषणा L4_TYPE_OFFSET(off)     ((L4_TYPE_QW << QW_SHIFT) | (off))
-#घोषणा L4_TYPE_MATCH_OFFSET    L4_TYPE_OFFSET(L4_TYPE_BIT_OFFSET)
-#घोषणा L4_16B_TYPE_MASK        0xFFull
-#घोषणा L4_16B_ETH_VALUE        0x78ull
+/* L4_TYPE QW 1, OFFSET 0 - for match */
+#define L4_TYPE_QW              1ull
+#define L4_TYPE_BIT_OFFSET      0ull
+#define L4_TYPE_OFFSET(off)     ((L4_TYPE_QW << QW_SHIFT) | (off))
+#define L4_TYPE_MATCH_OFFSET    L4_TYPE_OFFSET(L4_TYPE_BIT_OFFSET)
+#define L4_16B_TYPE_MASK        0xFFull
+#define L4_16B_ETH_VALUE        0x78ull
 
-/* 16B VESWID - क्रम select */
-#घोषणा L4_16B_HDR_VESWID_OFFSET  ((2 << QW_SHIFT) | (16ull))
-/* 16B ENTROPY - क्रम select */
-#घोषणा L2_16B_ENTROPY_OFFSET     ((1 << QW_SHIFT) | (32ull))
+/* 16B VESWID - for select */
+#define L4_16B_HDR_VESWID_OFFSET  ((2 << QW_SHIFT) | (16ull))
+/* 16B ENTROPY - for select */
+#define L2_16B_ENTROPY_OFFSET     ((1 << QW_SHIFT) | (32ull))
 
-/* defines to build घातer on SC2VL table */
-#घोषणा SC2VL_VAL( \
+/* defines to build power on SC2VL table */
+#define SC2VL_VAL( \
 	num, \
 	sc0, sc0val, \
 	sc1, sc1val, \
@@ -238,7 +237,7 @@ uपूर्णांक quick_linkup; /* skip LNI */
 	((u64)(sc7val) << SEND_SC2VLT##num##_SC##sc7##_SHIFT)   \
 )
 
-#घोषणा DC_SC_VL_VAL( \
+#define DC_SC_VL_VAL( \
 	range, \
 	e0, e0val, \
 	e1, e1val, \
@@ -275,25 +274,25 @@ uपूर्णांक quick_linkup; /* skip LNI */
 	((u64)(e15val) << DCC_CFG_SC_VL_TABLE_##range##_ENTRY##e15##_SHIFT) \
 )
 
-/* all CceStatus sub-block मुक्तze bits */
-#घोषणा ALL_FROZE (CCE_STATUS_SDMA_FROZE_SMASK \
+/* all CceStatus sub-block freeze bits */
+#define ALL_FROZE (CCE_STATUS_SDMA_FROZE_SMASK \
 			| CCE_STATUS_RXE_FROZE_SMASK \
 			| CCE_STATUS_TXE_FROZE_SMASK \
 			| CCE_STATUS_TXE_PIO_FROZE_SMASK)
-/* all CceStatus sub-block TXE छोड़ो bits */
-#घोषणा ALL_TXE_PAUSE (CCE_STATUS_TXE_PIO_PAUSED_SMASK \
+/* all CceStatus sub-block TXE pause bits */
+#define ALL_TXE_PAUSE (CCE_STATUS_TXE_PIO_PAUSED_SMASK \
 			| CCE_STATUS_TXE_PAUSED_SMASK \
 			| CCE_STATUS_SDMA_PAUSED_SMASK)
-/* all CceStatus sub-block RXE छोड़ो bits */
-#घोषणा ALL_RXE_PAUSE CCE_STATUS_RXE_PAUSED_SMASK
+/* all CceStatus sub-block RXE pause bits */
+#define ALL_RXE_PAUSE CCE_STATUS_RXE_PAUSED_SMASK
 
-#घोषणा CNTR_MAX 0xFFFFFFFFFFFFFFFFULL
-#घोषणा CNTR_32BIT_MAX 0x00000000FFFFFFFF
+#define CNTR_MAX 0xFFFFFFFFFFFFFFFFULL
+#define CNTR_32BIT_MAX 0x00000000FFFFFFFF
 
 /*
  * CCE Error flags.
  */
-अटल काष्ठा flag_table cce_err_status_flags[] = अणु
+static struct flag_table cce_err_status_flags[] = {
 /* 0*/	FLAG_ENTRY0("CceCsrParityErr",
 		CCE_ERR_STATUS_CCE_CSR_PARITY_ERR_SMASK),
 /* 1*/	FLAG_ENTRY0("CceCsrReadBadAddrErr",
@@ -377,13 +376,13 @@ uपूर्णांक quick_linkup; /* skip LNI */
 /*40*/	FLAG_ENTRY0("CceMsixCsrParityErr",
 		CCE_ERR_STATUS_CCE_MSIX_CSR_PARITY_ERR_SMASK),
 /*41-63 reserved*/
-पूर्ण;
+};
 
 /*
  * Misc Error flags
  */
-#घोषणा MES(text) MISC_ERR_STATUS_MISC_##text##_ERR_SMASK
-अटल काष्ठा flag_table misc_err_status_flags[] = अणु
+#define MES(text) MISC_ERR_STATUS_MISC_##text##_ERR_SMASK
+static struct flag_table misc_err_status_flags[] = {
 /* 0*/	FLAG_ENTRY0("CSR_PARITY", MES(CSR_PARITY)),
 /* 1*/	FLAG_ENTRY0("CSR_READ_BAD_ADDR", MES(CSR_READ_BAD_ADDR)),
 /* 2*/	FLAG_ENTRY0("CSR_WRITE_BAD_ADDR", MES(CSR_WRITE_BAD_ADDR)),
@@ -397,12 +396,12 @@ uपूर्णांक quick_linkup; /* skip LNI */
 /*10*/	FLAG_ENTRY0("INVALID_EEP_CMD", MES(INVALID_EEP_CMD)),
 /*11*/	FLAG_ENTRY0("MBIST_FAIL", MES(MBIST_FAIL)),
 /*12*/	FLAG_ENTRY0("PLL_LOCK_FAIL", MES(PLL_LOCK_FAIL))
-पूर्ण;
+};
 
 /*
  * TXE PIO Error flags and consequences
  */
-अटल काष्ठा flag_table pio_err_status_flags[] = अणु
+static struct flag_table pio_err_status_flags[] = {
 /* 0*/	FLAG_ENTRY("PioWriteBadCtxt",
 	SEC_WRITE_DROPPED,
 	SEND_PIO_ERR_STATUS_PIO_WRITE_BAD_CTXT_ERR_SMASK),
@@ -507,10 +506,10 @@ uपूर्णांक quick_linkup; /* skip LNI */
 	SEC_SPC_FREEZE,
 	SEND_PIO_ERR_STATUS_PIO_PEC_SOP_HEAD_PARITY_ERR_SMASK),
 /*36-63 reserved*/
-पूर्ण;
+};
 
-/* TXE PIO errors that cause an SPC मुक्तze */
-#घोषणा ALL_PIO_FREEZE_ERR \
+/* TXE PIO errors that cause an SPC freeze */
+#define ALL_PIO_FREEZE_ERR \
 	(SEND_PIO_ERR_STATUS_PIO_WRITE_ADDR_PARITY_ERR_SMASK \
 	| SEND_PIO_ERR_STATUS_PIO_CSR_PARITY_ERR_SMASK \
 	| SEND_PIO_ERR_STATUS_PIO_SB_MEM_FIFO0_ERR_SMASK \
@@ -544,7 +543,7 @@ uपूर्णांक quick_linkup; /* skip LNI */
 /*
  * TXE SDMA Error flags
  */
-अटल काष्ठा flag_table sdma_err_status_flags[] = अणु
+static struct flag_table sdma_err_status_flags[] = {
 /* 0*/	FLAG_ENTRY0("SDmaRpyTagErr",
 		SEND_DMA_ERR_STATUS_SDMA_RPY_TAG_ERR_SMASK),
 /* 1*/	FLAG_ENTRY0("SDmaCsrParityErr",
@@ -554,16 +553,16 @@ uपूर्णांक quick_linkup; /* skip LNI */
 /* 3*/	FLAG_ENTRY0("SDmaPcieReqTrackingCorErr",
 		SEND_DMA_ERR_STATUS_SDMA_PCIE_REQ_TRACKING_COR_ERR_SMASK),
 /*04-63 reserved*/
-पूर्ण;
+};
 
-/* TXE SDMA errors that cause an SPC मुक्तze */
-#घोषणा ALL_SDMA_FREEZE_ERR  \
+/* TXE SDMA errors that cause an SPC freeze */
+#define ALL_SDMA_FREEZE_ERR  \
 		(SEND_DMA_ERR_STATUS_SDMA_RPY_TAG_ERR_SMASK \
 		| SEND_DMA_ERR_STATUS_SDMA_CSR_PARITY_ERR_SMASK \
 		| SEND_DMA_ERR_STATUS_SDMA_PCIE_REQ_TRACKING_UNC_ERR_SMASK)
 
 /* SendEgressErrInfo bits that correspond to a PortXmitDiscard counter */
-#घोषणा PORT_DISCARD_EGRESS_ERRS \
+#define PORT_DISCARD_EGRESS_ERRS \
 	(SEND_EGRESS_ERR_INFO_TOO_LONG_IB_PACKET_ERR_SMASK \
 	| SEND_EGRESS_ERR_INFO_VL_MAPPING_ERR_SMASK \
 	| SEND_EGRESS_ERR_INFO_VL_ERR_SMASK)
@@ -571,8 +570,8 @@ uपूर्णांक quick_linkup; /* skip LNI */
 /*
  * TXE Egress Error flags
  */
-#घोषणा SEES(text) SEND_EGRESS_ERR_STATUS_##text##_ERR_SMASK
-अटल काष्ठा flag_table egress_err_status_flags[] = अणु
+#define SEES(text) SEND_EGRESS_ERR_STATUS_##text##_ERR_SMASK
+static struct flag_table egress_err_status_flags[] = {
 /* 0*/	FLAG_ENTRY0("TxPktIntegrityMemCorErr", SEES(TX_PKT_INTEGRITY_MEM_COR)),
 /* 1*/	FLAG_ENTRY0("TxPktIntegrityMemUncErr", SEES(TX_PKT_INTEGRITY_MEM_UNC)),
 /* 2 reserved */
@@ -667,13 +666,13 @@ uपूर्णांक quick_linkup; /* skip LNI */
 		SEES(TX_READ_SDMA_MEMORY_CSR_UNC)),
 /*63*/	FLAG_ENTRY0("TxReadPioMemoryCsrUncErr",
 		SEES(TX_READ_PIO_MEMORY_CSR_UNC)),
-पूर्ण;
+};
 
 /*
  * TXE Egress Error Info flags
  */
-#घोषणा SEEI(text) SEND_EGRESS_ERR_INFO_##text##_ERR_SMASK
-अटल काष्ठा flag_table egress_err_info_flags[] = अणु
+#define SEEI(text) SEND_EGRESS_ERR_INFO_##text##_ERR_SMASK
+static struct flag_table egress_err_info_flags[] = {
 /* 0*/	FLAG_ENTRY0("Reserved", 0ull),
 /* 1*/	FLAG_ENTRY0("VLErr", SEEI(VL)),
 /* 2*/	FLAG_ENTRY0("JobKeyErr", SEEI(JOB_KEY)),
@@ -696,10 +695,10 @@ uपूर्णांक quick_linkup; /* skip LNI */
 /*19*/	FLAG_ENTRY0("TooLongBypassPacketsErr", SEEI(TOO_LONG_BYPASS_PACKETS)),
 /*20*/	FLAG_ENTRY0("PbcStaticRateControlErr", SEEI(PBC_STATIC_RATE_CONTROL)),
 /*21*/	FLAG_ENTRY0("BypassBadPktLenErr", SEEI(BAD_PKT_LEN)),
-पूर्ण;
+};
 
-/* TXE Egress errors that cause an SPC मुक्तze */
-#घोषणा ALL_TXE_EGRESS_FREEZE_ERR \
+/* TXE Egress errors that cause an SPC freeze */
+#define ALL_TXE_EGRESS_FREEZE_ERR \
 	(SEES(TX_EGRESS_FIFO_UNDERRUN_OR_PARITY) \
 	| SEES(TX_PIO_LAUNCH_INTF_PARITY) \
 	| SEES(TX_SDMA_LAUNCH_INTF_PARITY) \
@@ -721,17 +720,17 @@ uपूर्णांक quick_linkup; /* skip LNI */
 /*
  * TXE Send error flags
  */
-#घोषणा SES(name) SEND_ERR_STATUS_SEND_##name##_ERR_SMASK
-अटल काष्ठा flag_table send_err_status_flags[] = अणु
+#define SES(name) SEND_ERR_STATUS_SEND_##name##_ERR_SMASK
+static struct flag_table send_err_status_flags[] = {
 /* 0*/	FLAG_ENTRY0("SendCsrParityErr", SES(CSR_PARITY)),
 /* 1*/	FLAG_ENTRY0("SendCsrReadBadAddrErr", SES(CSR_READ_BAD_ADDR)),
 /* 2*/	FLAG_ENTRY0("SendCsrWriteBadAddrErr", SES(CSR_WRITE_BAD_ADDR))
-पूर्ण;
+};
 
 /*
  * TXE Send Context Error flags and consequences
  */
-अटल काष्ठा flag_table sc_err_status_flags[] = अणु
+static struct flag_table sc_err_status_flags[] = {
 /* 0*/	FLAG_ENTRY("InconsistentSop",
 		SEC_PACKET_DROPPED | SEC_SC_HALTED,
 		SEND_CTXT_ERR_STATUS_PIO_INCONSISTENT_SOP_ERR_SMASK),
@@ -748,13 +747,13 @@ uपूर्णांक quick_linkup; /* skip LNI */
 		SEC_WRITE_DROPPED | SEC_SC_HALTED,
 		SEND_CTXT_ERR_STATUS_PIO_WRITE_OUT_OF_BOUNDS_ERR_SMASK),
 /* 5-63 reserved*/
-पूर्ण;
+};
 
 /*
  * RXE Receive Error flags
  */
-#घोषणा RXES(name) RCV_ERR_STATUS_RX_##name##_ERR_SMASK
-अटल काष्ठा flag_table rxe_err_status_flags[] = अणु
+#define RXES(name) RCV_ERR_STATUS_RX_##name##_ERR_SMASK
+static struct flag_table rxe_err_status_flags[] = {
 /* 0*/	FLAG_ENTRY0("RxDmaCsrCorErr", RXES(DMA_CSR_COR)),
 /* 1*/	FLAG_ENTRY0("RxDcIntfParityErr", RXES(DC_INTF_PARITY)),
 /* 2*/	FLAG_ENTRY0("RxRcvHdrUncErr", RXES(RCV_HDR_UNC)),
@@ -831,10 +830,10 @@ uपूर्णांक quick_linkup; /* skip LNI */
 /*61*/	FLAG_ENTRY0("RxCsrReadBadAddrErr", RXES(CSR_READ_BAD_ADDR)),
 /*62*/	FLAG_ENTRY0("RxCsrWriteBadAddrErr", RXES(CSR_WRITE_BAD_ADDR)),
 /*63*/	FLAG_ENTRY0("RxCsrParityErr", RXES(CSR_PARITY))
-पूर्ण;
+};
 
-/* RXE errors that will trigger an SPC मुक्तze */
-#घोषणा ALL_RXE_FREEZE_ERR  \
+/* RXE errors that will trigger an SPC freeze */
+#define ALL_RXE_FREEZE_ERR  \
 	(RCV_ERR_STATUS_RX_RCV_QP_MAP_TABLE_UNC_ERR_SMASK \
 	| RCV_ERR_STATUS_RX_RCV_CSR_PARITY_ERR_SMASK \
 	| RCV_ERR_STATUS_RX_DMA_FLAG_UNC_ERR_SMASK \
@@ -880,7 +879,7 @@ uपूर्णांक quick_linkup; /* skip LNI */
 	| RCV_ERR_STATUS_RX_DMA_CSR_UNC_ERR_SMASK \
 	| RCV_ERR_STATUS_RX_CSR_PARITY_ERR_SMASK)
 
-#घोषणा RXE_FREEZE_ABORT_MASK \
+#define RXE_FREEZE_ABORT_MASK \
 	(RCV_ERR_STATUS_RX_DMA_CSR_UNC_ERR_SMASK | \
 	RCV_ERR_STATUS_RX_DMA_HDR_FIFO_RD_UNC_ERR_SMASK | \
 	RCV_ERR_STATUS_RX_DMA_DATA_FIFO_RD_UNC_ERR_SMASK)
@@ -888,8 +887,8 @@ uपूर्णांक quick_linkup; /* skip LNI */
 /*
  * DCC Error Flags
  */
-#घोषणा DCCE(name) DCC_ERR_FLG_##name##_SMASK
-अटल काष्ठा flag_table dcc_err_flags[] = अणु
+#define DCCE(name) DCC_ERR_FLG_##name##_SMASK
+static struct flag_table dcc_err_flags[] = {
 	FLAG_ENTRY0("bad_l2_err", DCCE(BAD_L2_ERR)),
 	FLAG_ENTRY0("bad_sc_err", DCCE(BAD_SC_ERR)),
 	FLAG_ENTRY0("bad_mid_tail_err", DCCE(BAD_MID_TAIL_ERR)),
@@ -936,13 +935,13 @@ uपूर्णांक quick_linkup; /* skip LNI */
 	FLAG_ENTRY0("rx_byte_shft_parity_err", DCCE(RX_BYTE_SHFT_PARITY_ERR)),
 	FLAG_ENTRY0("fmconfig_err", DCCE(FMCONFIG_ERR)),
 	FLAG_ENTRY0("rcvport_err", DCCE(RCVPORT_ERR)),
-पूर्ण;
+};
 
 /*
  * LCB error flags
  */
-#घोषणा LCBE(name) DC_LCB_ERR_FLG_##name##_SMASK
-अटल काष्ठा flag_table lcb_err_flags[] = अणु
+#define LCBE(name) DC_LCB_ERR_FLG_##name##_SMASK
+static struct flag_table lcb_err_flags[] = {
 /* 0*/	FLAG_ENTRY0("CSR_PARITY_ERR", LCBE(CSR_PARITY_ERR)),
 /* 1*/	FLAG_ENTRY0("INVALID_CSR_ADDR", LCBE(INVALID_CSR_ADDR)),
 /* 2*/	FLAG_ENTRY0("RST_FOR_FAILED_DESKEW", LCBE(RST_FOR_FAILED_DESKEW)),
@@ -959,7 +958,7 @@ uपूर्णांक quick_linkup; /* skip LNI */
 /*12*/	FLAG_ENTRY0("UNEXPECTED_REPLAY_MARKER", LCBE(UNEXPECTED_REPLAY_MARKER)),
 /*13*/	FLAG_ENTRY0("UNEXPECTED_ROUND_TRIP_MARKER",
 		LCBE(UNEXPECTED_ROUND_TRIP_MARKER)),
-/*14*/	FLAG_ENTRY0("ILLEGAL_NULL_LTP", LCBE(ILLEGAL_शून्य_LTP)),
+/*14*/	FLAG_ENTRY0("ILLEGAL_NULL_LTP", LCBE(ILLEGAL_NULL_LTP)),
 /*15*/	FLAG_ENTRY0("ILLEGAL_FLIT_ENCODING", LCBE(ILLEGAL_FLIT_ENCODING)),
 /*16*/	FLAG_ENTRY0("FLIT_INPUT_BUF_OFLW", LCBE(FLIT_INPUT_BUF_OFLW)),
 /*17*/	FLAG_ENTRY0("VL_ACK_INPUT_BUF_OFLW", LCBE(VL_ACK_INPUT_BUF_OFLW)),
@@ -979,13 +978,13 @@ uपूर्णांक quick_linkup; /* skip LNI */
 		LCBE(NEG_EDGE_LINK_TRANSFER_ACTIVE)),
 /*29*/	FLAG_ENTRY0("REDUNDANT_FLIT_PARITY_ERR",
 		LCBE(REDUNDANT_FLIT_PARITY_ERR))
-पूर्ण;
+};
 
 /*
  * DC8051 Error Flags
  */
-#घोषणा D8E(name) DC_DC8051_ERR_FLG_##name##_SMASK
-अटल काष्ठा flag_table dc8051_err_flags[] = अणु
+#define D8E(name) DC_DC8051_ERR_FLG_##name##_SMASK
+static struct flag_table dc8051_err_flags[] = {
 	FLAG_ENTRY0("SET_BY_8051", D8E(SET_BY_8051)),
 	FLAG_ENTRY0("LOST_8051_HEART_BEAT", D8E(LOST_8051_HEART_BEAT)),
 	FLAG_ENTRY0("CRAM_MBE", D8E(CRAM_MBE)),
@@ -997,14 +996,14 @@ uपूर्णांक quick_linkup; /* skip LNI */
 	FLAG_ENTRY0("UNMATCHED_SECURE_MSG_ACROSS_BCC_LANES",
 		    D8E(UNMATCHED_SECURE_MSG_ACROSS_BCC_LANES)),
 	FLAG_ENTRY0("INVALID_CSR_ADDR", D8E(INVALID_CSR_ADDR)),
-पूर्ण;
+};
 
 /*
- * DC8051 Inक्रमmation Error flags
+ * DC8051 Information Error flags
  *
  * Flags in DC8051_DBG_ERR_INFO_SET_BY_8051.ERROR field.
  */
-अटल काष्ठा flag_table dc8051_info_err_flags[] = अणु
+static struct flag_table dc8051_info_err_flags[] = {
 	FLAG_ENTRY0("Spico ROM check failed",  SPICO_ROM_FAILED),
 	FLAG_ENTRY0("Unknown frame received",  UNKNOWN_FRAME),
 	FLAG_ENTRY0("Target BER not met",      TARGET_BER_NOT_MET),
@@ -1021,14 +1020,14 @@ uपूर्णांक quick_linkup; /* skip LNI */
 	FLAG_ENTRY0("Host Handshake Timeout",  HOST_HANDSHAKE_TIMEOUT),
 	FLAG_ENTRY0("External Device Request Timeout",
 		    EXTERNAL_DEVICE_REQ_TIMEOUT),
-पूर्ण;
+};
 
 /*
- * DC8051 Inक्रमmation Host Inक्रमmation flags
+ * DC8051 Information Host Information flags
  *
  * Flags in DC8051_DBG_ERR_INFO_SET_BY_8051.HOST_MSG field.
  */
-अटल काष्ठा flag_table dc8051_info_host_msg_flags[] = अणु
+static struct flag_table dc8051_info_host_msg_flags[] = {
 	FLAG_ENTRY0("Host request done", 0x0001),
 	FLAG_ENTRY0("BC PWR_MGM message", 0x0002),
 	FLAG_ENTRY0("BC SMA message", 0x0004),
@@ -1039,175 +1038,175 @@ uपूर्णांक quick_linkup; /* skip LNI */
 	FLAG_ENTRY0("LinkUp achieved", 0x0080),
 	FLAG_ENTRY0("Link going down", 0x0100),
 	FLAG_ENTRY0("Link width downgraded", 0x0200),
-पूर्ण;
+};
 
-अटल u32 encoded_size(u32 size);
-अटल u32 chip_to_opa_lstate(काष्ठा hfi1_devdata *dd, u32 chip_lstate);
-अटल पूर्णांक set_physical_link_state(काष्ठा hfi1_devdata *dd, u64 state);
-अटल व्योम पढ़ो_vc_remote_phy(काष्ठा hfi1_devdata *dd, u8 *घातer_management,
+static u32 encoded_size(u32 size);
+static u32 chip_to_opa_lstate(struct hfi1_devdata *dd, u32 chip_lstate);
+static int set_physical_link_state(struct hfi1_devdata *dd, u64 state);
+static void read_vc_remote_phy(struct hfi1_devdata *dd, u8 *power_management,
 			       u8 *continuous);
-अटल व्योम पढ़ो_vc_remote_fabric(काष्ठा hfi1_devdata *dd, u8 *vau, u8 *z,
+static void read_vc_remote_fabric(struct hfi1_devdata *dd, u8 *vau, u8 *z,
 				  u8 *vcu, u16 *vl15buf, u8 *crc_sizes);
-अटल व्योम पढ़ो_vc_remote_link_width(काष्ठा hfi1_devdata *dd,
+static void read_vc_remote_link_width(struct hfi1_devdata *dd,
 				      u8 *remote_tx_rate, u16 *link_widths);
-अटल व्योम पढ़ो_vc_local_link_mode(काष्ठा hfi1_devdata *dd, u8 *misc_bits,
+static void read_vc_local_link_mode(struct hfi1_devdata *dd, u8 *misc_bits,
 				    u8 *flag_bits, u16 *link_widths);
-अटल व्योम पढ़ो_remote_device_id(काष्ठा hfi1_devdata *dd, u16 *device_id,
+static void read_remote_device_id(struct hfi1_devdata *dd, u16 *device_id,
 				  u8 *device_rev);
-अटल व्योम पढ़ो_local_lni(काष्ठा hfi1_devdata *dd, u8 *enable_lane_rx);
-अटल पूर्णांक पढ़ो_tx_settings(काष्ठा hfi1_devdata *dd, u8 *enable_lane_tx,
+static void read_local_lni(struct hfi1_devdata *dd, u8 *enable_lane_rx);
+static int read_tx_settings(struct hfi1_devdata *dd, u8 *enable_lane_tx,
 			    u8 *tx_polarity_inversion,
 			    u8 *rx_polarity_inversion, u8 *max_rate);
-अटल व्योम handle_sdma_eng_err(काष्ठा hfi1_devdata *dd,
-				अचिन्हित पूर्णांक context, u64 err_status);
-अटल व्योम handle_qsfp_पूर्णांक(काष्ठा hfi1_devdata *dd, u32 source, u64 reg);
-अटल व्योम handle_dcc_err(काष्ठा hfi1_devdata *dd,
-			   अचिन्हित पूर्णांक context, u64 err_status);
-अटल व्योम handle_lcb_err(काष्ठा hfi1_devdata *dd,
-			   अचिन्हित पूर्णांक context, u64 err_status);
-अटल व्योम handle_8051_पूर्णांकerrupt(काष्ठा hfi1_devdata *dd, u32 unused, u64 reg);
-अटल व्योम handle_cce_err(काष्ठा hfi1_devdata *dd, u32 unused, u64 reg);
-अटल व्योम handle_rxe_err(काष्ठा hfi1_devdata *dd, u32 unused, u64 reg);
-अटल व्योम handle_misc_err(काष्ठा hfi1_devdata *dd, u32 unused, u64 reg);
-अटल व्योम handle_pio_err(काष्ठा hfi1_devdata *dd, u32 unused, u64 reg);
-अटल व्योम handle_sdma_err(काष्ठा hfi1_devdata *dd, u32 unused, u64 reg);
-अटल व्योम handle_egress_err(काष्ठा hfi1_devdata *dd, u32 unused, u64 reg);
-अटल व्योम handle_txe_err(काष्ठा hfi1_devdata *dd, u32 unused, u64 reg);
-अटल व्योम set_partition_keys(काष्ठा hfi1_pportdata *ppd);
-अटल स्थिर अक्षर *link_state_name(u32 state);
-अटल स्थिर अक्षर *link_state_reason_name(काष्ठा hfi1_pportdata *ppd,
+static void handle_sdma_eng_err(struct hfi1_devdata *dd,
+				unsigned int context, u64 err_status);
+static void handle_qsfp_int(struct hfi1_devdata *dd, u32 source, u64 reg);
+static void handle_dcc_err(struct hfi1_devdata *dd,
+			   unsigned int context, u64 err_status);
+static void handle_lcb_err(struct hfi1_devdata *dd,
+			   unsigned int context, u64 err_status);
+static void handle_8051_interrupt(struct hfi1_devdata *dd, u32 unused, u64 reg);
+static void handle_cce_err(struct hfi1_devdata *dd, u32 unused, u64 reg);
+static void handle_rxe_err(struct hfi1_devdata *dd, u32 unused, u64 reg);
+static void handle_misc_err(struct hfi1_devdata *dd, u32 unused, u64 reg);
+static void handle_pio_err(struct hfi1_devdata *dd, u32 unused, u64 reg);
+static void handle_sdma_err(struct hfi1_devdata *dd, u32 unused, u64 reg);
+static void handle_egress_err(struct hfi1_devdata *dd, u32 unused, u64 reg);
+static void handle_txe_err(struct hfi1_devdata *dd, u32 unused, u64 reg);
+static void set_partition_keys(struct hfi1_pportdata *ppd);
+static const char *link_state_name(u32 state);
+static const char *link_state_reason_name(struct hfi1_pportdata *ppd,
 					  u32 state);
-अटल पूर्णांक करो_8051_command(काष्ठा hfi1_devdata *dd, u32 type, u64 in_data,
+static int do_8051_command(struct hfi1_devdata *dd, u32 type, u64 in_data,
 			   u64 *out_data);
-अटल पूर्णांक पढ़ो_idle_sma(काष्ठा hfi1_devdata *dd, u64 *data);
-अटल पूर्णांक thermal_init(काष्ठा hfi1_devdata *dd);
+static int read_idle_sma(struct hfi1_devdata *dd, u64 *data);
+static int thermal_init(struct hfi1_devdata *dd);
 
-अटल व्योम update_statusp(काष्ठा hfi1_pportdata *ppd, u32 state);
-अटल पूर्णांक रुको_phys_link_offline_substates(काष्ठा hfi1_pportdata *ppd,
-					    पूर्णांक msecs);
-अटल पूर्णांक रुको_logical_linkstate(काष्ठा hfi1_pportdata *ppd, u32 state,
-				  पूर्णांक msecs);
-अटल व्योम log_state_transition(काष्ठा hfi1_pportdata *ppd, u32 state);
-अटल व्योम log_physical_state(काष्ठा hfi1_pportdata *ppd, u32 state);
-अटल पूर्णांक रुको_physical_linkstate(काष्ठा hfi1_pportdata *ppd, u32 state,
-				   पूर्णांक msecs);
-अटल पूर्णांक रुको_phys_link_out_of_offline(काष्ठा hfi1_pportdata *ppd,
-					 पूर्णांक msecs);
-अटल व्योम पढ़ो_planned_करोwn_reason_code(काष्ठा hfi1_devdata *dd, u8 *pdrrc);
-अटल व्योम पढ़ो_link_करोwn_reason(काष्ठा hfi1_devdata *dd, u8 *ldr);
-अटल व्योम handle_temp_err(काष्ठा hfi1_devdata *dd);
-अटल व्योम dc_shutकरोwn(काष्ठा hfi1_devdata *dd);
-अटल व्योम dc_start(काष्ठा hfi1_devdata *dd);
-अटल पूर्णांक qos_rmt_entries(काष्ठा hfi1_devdata *dd, अचिन्हित पूर्णांक *mp,
-			   अचिन्हित पूर्णांक *np);
-अटल व्योम clear_full_mgmt_pkey(काष्ठा hfi1_pportdata *ppd);
-अटल पूर्णांक रुको_link_transfer_active(काष्ठा hfi1_devdata *dd, पूर्णांक रुको_ms);
-अटल व्योम clear_rsm_rule(काष्ठा hfi1_devdata *dd, u8 rule_index);
-अटल व्योम update_xmit_counters(काष्ठा hfi1_pportdata *ppd, u16 link_width);
+static void update_statusp(struct hfi1_pportdata *ppd, u32 state);
+static int wait_phys_link_offline_substates(struct hfi1_pportdata *ppd,
+					    int msecs);
+static int wait_logical_linkstate(struct hfi1_pportdata *ppd, u32 state,
+				  int msecs);
+static void log_state_transition(struct hfi1_pportdata *ppd, u32 state);
+static void log_physical_state(struct hfi1_pportdata *ppd, u32 state);
+static int wait_physical_linkstate(struct hfi1_pportdata *ppd, u32 state,
+				   int msecs);
+static int wait_phys_link_out_of_offline(struct hfi1_pportdata *ppd,
+					 int msecs);
+static void read_planned_down_reason_code(struct hfi1_devdata *dd, u8 *pdrrc);
+static void read_link_down_reason(struct hfi1_devdata *dd, u8 *ldr);
+static void handle_temp_err(struct hfi1_devdata *dd);
+static void dc_shutdown(struct hfi1_devdata *dd);
+static void dc_start(struct hfi1_devdata *dd);
+static int qos_rmt_entries(struct hfi1_devdata *dd, unsigned int *mp,
+			   unsigned int *np);
+static void clear_full_mgmt_pkey(struct hfi1_pportdata *ppd);
+static int wait_link_transfer_active(struct hfi1_devdata *dd, int wait_ms);
+static void clear_rsm_rule(struct hfi1_devdata *dd, u8 rule_index);
+static void update_xmit_counters(struct hfi1_pportdata *ppd, u16 link_width);
 
 /*
- * Error पूर्णांकerrupt table entry.  This is used as input to the पूर्णांकerrupt
- * "clear down" routine used क्रम all second tier error पूर्णांकerrupt रेजिस्टर.
- * Second tier पूर्णांकerrupt रेजिस्टरs have a single bit representing them
+ * Error interrupt table entry.  This is used as input to the interrupt
+ * "clear down" routine used for all second tier error interrupt register.
+ * Second tier interrupt registers have a single bit representing them
  * in the top-level CceIntStatus.
  */
-काष्ठा err_reg_info अणु
+struct err_reg_info {
 	u32 status;		/* status CSR offset */
 	u32 clear;		/* clear CSR offset */
 	u32 mask;		/* mask CSR offset */
-	व्योम (*handler)(काष्ठा hfi1_devdata *dd, u32 source, u64 reg);
-	स्थिर अक्षर *desc;
-पूर्ण;
+	void (*handler)(struct hfi1_devdata *dd, u32 source, u64 reg);
+	const char *desc;
+};
 
-#घोषणा NUM_MISC_ERRS (IS_GENERAL_ERR_END + 1 - IS_GENERAL_ERR_START)
-#घोषणा NUM_DC_ERRS (IS_DC_END + 1 - IS_DC_START)
-#घोषणा NUM_VARIOUS (IS_VARIOUS_END + 1 - IS_VARIOUS_START)
-
-/*
- * Helpers क्रम building HFI and DC error पूर्णांकerrupt table entries.  Dअगरferent
- * helpers are needed because of inconsistent रेजिस्टर names.
- */
-#घोषणा EE(reg, handler, desc) \
-	अणु reg##_STATUS, reg##_CLEAR, reg##_MASK, \
-		handler, desc पूर्ण
-#घोषणा DC_EE1(reg, handler, desc) \
-	अणु reg##_FLG, reg##_FLG_CLR, reg##_FLG_EN, handler, desc पूर्ण
-#घोषणा DC_EE2(reg, handler, desc) \
-	अणु reg##_FLG, reg##_CLR, reg##_EN, handler, desc पूर्ण
+#define NUM_MISC_ERRS (IS_GENERAL_ERR_END + 1 - IS_GENERAL_ERR_START)
+#define NUM_DC_ERRS (IS_DC_END + 1 - IS_DC_START)
+#define NUM_VARIOUS (IS_VARIOUS_END + 1 - IS_VARIOUS_START)
 
 /*
- * Table of the "misc" grouping of error पूर्णांकerrupts.  Each entry refers to
- * another रेजिस्टर containing more inक्रमmation.
+ * Helpers for building HFI and DC error interrupt table entries.  Different
+ * helpers are needed because of inconsistent register names.
  */
-अटल स्थिर काष्ठा err_reg_info misc_errs[NUM_MISC_ERRS] = अणु
+#define EE(reg, handler, desc) \
+	{ reg##_STATUS, reg##_CLEAR, reg##_MASK, \
+		handler, desc }
+#define DC_EE1(reg, handler, desc) \
+	{ reg##_FLG, reg##_FLG_CLR, reg##_FLG_EN, handler, desc }
+#define DC_EE2(reg, handler, desc) \
+	{ reg##_FLG, reg##_CLR, reg##_EN, handler, desc }
+
+/*
+ * Table of the "misc" grouping of error interrupts.  Each entry refers to
+ * another register containing more information.
+ */
+static const struct err_reg_info misc_errs[NUM_MISC_ERRS] = {
 /* 0*/	EE(CCE_ERR,		handle_cce_err,    "CceErr"),
 /* 1*/	EE(RCV_ERR,		handle_rxe_err,    "RxeErr"),
 /* 2*/	EE(MISC_ERR,	handle_misc_err,   "MiscErr"),
-/* 3*/	अणु 0, 0, 0, शून्य पूर्ण, /* reserved */
+/* 3*/	{ 0, 0, 0, NULL }, /* reserved */
 /* 4*/	EE(SEND_PIO_ERR,    handle_pio_err,    "PioErr"),
 /* 5*/	EE(SEND_DMA_ERR,    handle_sdma_err,   "SDmaErr"),
 /* 6*/	EE(SEND_EGRESS_ERR, handle_egress_err, "EgressErr"),
 /* 7*/	EE(SEND_ERR,	handle_txe_err,    "TxeErr")
 	/* the rest are reserved */
-पूर्ण;
+};
 
 /*
- * Index पूर्णांकo the Various section of the पूर्णांकerrupt sources
- * corresponding to the Critical Temperature पूर्णांकerrupt.
+ * Index into the Various section of the interrupt sources
+ * corresponding to the Critical Temperature interrupt.
  */
-#घोषणा TCRIT_INT_SOURCE 4
+#define TCRIT_INT_SOURCE 4
 
 /*
- * SDMA error पूर्णांकerrupt entry - refers to another रेजिस्टर containing more
- * inक्रमmation.
+ * SDMA error interrupt entry - refers to another register containing more
+ * information.
  */
-अटल स्थिर काष्ठा err_reg_info sdma_eng_err =
+static const struct err_reg_info sdma_eng_err =
 	EE(SEND_DMA_ENG_ERR, handle_sdma_eng_err, "SDmaEngErr");
 
-अटल स्थिर काष्ठा err_reg_info various_err[NUM_VARIOUS] = अणु
-/* 0*/	अणु 0, 0, 0, शून्य पूर्ण, /* PbcInt */
-/* 1*/	अणु 0, 0, 0, शून्य पूर्ण, /* GpioAssertInt */
-/* 2*/	EE(ASIC_QSFP1,	handle_qsfp_पूर्णांक,	"QSFP1"),
-/* 3*/	EE(ASIC_QSFP2,	handle_qsfp_पूर्णांक,	"QSFP2"),
-/* 4*/	अणु 0, 0, 0, शून्य पूर्ण, /* TCritInt */
+static const struct err_reg_info various_err[NUM_VARIOUS] = {
+/* 0*/	{ 0, 0, 0, NULL }, /* PbcInt */
+/* 1*/	{ 0, 0, 0, NULL }, /* GpioAssertInt */
+/* 2*/	EE(ASIC_QSFP1,	handle_qsfp_int,	"QSFP1"),
+/* 3*/	EE(ASIC_QSFP2,	handle_qsfp_int,	"QSFP2"),
+/* 4*/	{ 0, 0, 0, NULL }, /* TCritInt */
 	/* rest are reserved */
-पूर्ण;
+};
 
 /*
- * The DC encoding of mtu_cap क्रम 10K MTU in the DCC_CFG_PORT_CONFIG
- * रेजिस्टर can not be derived from the MTU value because 10K is not
- * a घातer of 2. Thereक्रमe, we need a स्थिरant. Everything अन्यथा can
+ * The DC encoding of mtu_cap for 10K MTU in the DCC_CFG_PORT_CONFIG
+ * register can not be derived from the MTU value because 10K is not
+ * a power of 2. Therefore, we need a constant. Everything else can
  * be calculated.
  */
-#घोषणा DCC_CFG_PORT_MTU_CAP_10240 7
+#define DCC_CFG_PORT_MTU_CAP_10240 7
 
 /*
- * Table of the DC grouping of error पूर्णांकerrupts.  Each entry refers to
- * another रेजिस्टर containing more inक्रमmation.
+ * Table of the DC grouping of error interrupts.  Each entry refers to
+ * another register containing more information.
  */
-अटल स्थिर काष्ठा err_reg_info dc_errs[NUM_DC_ERRS] = अणु
+static const struct err_reg_info dc_errs[NUM_DC_ERRS] = {
 /* 0*/	DC_EE1(DCC_ERR,		handle_dcc_err,	       "DCC Err"),
 /* 1*/	DC_EE2(DC_LCB_ERR,	handle_lcb_err,	       "LCB Err"),
-/* 2*/	DC_EE2(DC_DC8051_ERR,	handle_8051_पूर्णांकerrupt, "DC8051 Interrupt"),
-/* 3*/	/* dc_lbm_पूर्णांक - special, see is_dc_पूर्णांक() */
+/* 2*/	DC_EE2(DC_DC8051_ERR,	handle_8051_interrupt, "DC8051 Interrupt"),
+/* 3*/	/* dc_lbm_int - special, see is_dc_int() */
 	/* the rest are reserved */
-पूर्ण;
+};
 
-काष्ठा cntr_entry अणु
+struct cntr_entry {
 	/*
 	 * counter name
 	 */
-	अक्षर *name;
+	char *name;
 
 	/*
-	 * csr to पढ़ो क्रम name (अगर applicable)
+	 * csr to read for name (if applicable)
 	 */
 	u64 csr;
 
 	/*
-	 * offset पूर्णांकo dd or ppd to store the counter's value
+	 * offset into dd or ppd to store the counter's value
 	 */
-	पूर्णांक offset;
+	int offset;
 
 	/*
 	 * flags
@@ -1215,65 +1214,65 @@ uपूर्णांक quick_linkup; /* skip LNI */
 	u8 flags;
 
 	/*
-	 * accessor क्रम stat element, context either dd or ppd
+	 * accessor for stat element, context either dd or ppd
 	 */
-	u64 (*rw_cntr)(स्थिर काष्ठा cntr_entry *, व्योम *context, पूर्णांक vl,
-		       पूर्णांक mode, u64 data);
-पूर्ण;
+	u64 (*rw_cntr)(const struct cntr_entry *, void *context, int vl,
+		       int mode, u64 data);
+};
 
-#घोषणा C_RCV_HDR_OVF_FIRST C_RCV_HDR_OVF_0
-#घोषणा C_RCV_HDR_OVF_LAST C_RCV_HDR_OVF_159
+#define C_RCV_HDR_OVF_FIRST C_RCV_HDR_OVF_0
+#define C_RCV_HDR_OVF_LAST C_RCV_HDR_OVF_159
 
-#घोषणा CNTR_ELEM(name, csr, offset, flags, accessor) \
-अणु \
+#define CNTR_ELEM(name, csr, offset, flags, accessor) \
+{ \
 	name, \
 	csr, \
 	offset, \
 	flags, \
 	accessor \
-पूर्ण
+}
 
 /* 32bit RXE */
-#घोषणा RXE32_PORT_CNTR_ELEM(name, counter, flags) \
+#define RXE32_PORT_CNTR_ELEM(name, counter, flags) \
 CNTR_ELEM(#name, \
 	  (counter * 8 + RCV_COUNTER_ARRAY32), \
 	  0, flags | CNTR_32BIT, \
 	  port_access_u32_csr)
 
-#घोषणा RXE32_DEV_CNTR_ELEM(name, counter, flags) \
+#define RXE32_DEV_CNTR_ELEM(name, counter, flags) \
 CNTR_ELEM(#name, \
 	  (counter * 8 + RCV_COUNTER_ARRAY32), \
 	  0, flags | CNTR_32BIT, \
 	  dev_access_u32_csr)
 
 /* 64bit RXE */
-#घोषणा RXE64_PORT_CNTR_ELEM(name, counter, flags) \
+#define RXE64_PORT_CNTR_ELEM(name, counter, flags) \
 CNTR_ELEM(#name, \
 	  (counter * 8 + RCV_COUNTER_ARRAY64), \
 	  0, flags, \
 	  port_access_u64_csr)
 
-#घोषणा RXE64_DEV_CNTR_ELEM(name, counter, flags) \
+#define RXE64_DEV_CNTR_ELEM(name, counter, flags) \
 CNTR_ELEM(#name, \
 	  (counter * 8 + RCV_COUNTER_ARRAY64), \
 	  0, flags, \
 	  dev_access_u64_csr)
 
-#घोषणा OVR_LBL(ctx) C_RCV_HDR_OVF_ ## ctx
-#घोषणा OVR_ELM(ctx) \
+#define OVR_LBL(ctx) C_RCV_HDR_OVF_ ## ctx
+#define OVR_ELM(ctx) \
 CNTR_ELEM("RcvHdrOvr" #ctx, \
 	  (RCV_HDR_OVFL_CNT + ctx * 0x100), \
 	  0, CNTR_NORMAL, port_access_u64_csr)
 
 /* 32bit TXE */
-#घोषणा TXE32_PORT_CNTR_ELEM(name, counter, flags) \
+#define TXE32_PORT_CNTR_ELEM(name, counter, flags) \
 CNTR_ELEM(#name, \
 	  (counter * 8 + SEND_COUNTER_ARRAY32), \
 	  0, flags | CNTR_32BIT, \
 	  port_access_u32_csr)
 
 /* 64bit TXE */
-#घोषणा TXE64_PORT_CNTR_ELEM(name, counter, flags) \
+#define TXE64_PORT_CNTR_ELEM(name, counter, flags) \
 CNTR_ELEM(#name, \
 	  (counter * 8 + SEND_COUNTER_ARRAY64), \
 	  0, flags, \
@@ -1287,27 +1286,27 @@ CNTR_ELEM(#name,\
 	  dev_access_u64_csr)
 
 /* CCE */
-#घोषणा CCE_PERF_DEV_CNTR_ELEM(name, counter, flags) \
+#define CCE_PERF_DEV_CNTR_ELEM(name, counter, flags) \
 CNTR_ELEM(#name, \
 	  (counter * 8 + CCE_COUNTER_ARRAY32), \
 	  0, flags | CNTR_32BIT, \
 	  dev_access_u32_csr)
 
-#घोषणा CCE_INT_DEV_CNTR_ELEM(name, counter, flags) \
+#define CCE_INT_DEV_CNTR_ELEM(name, counter, flags) \
 CNTR_ELEM(#name, \
 	  (counter * 8 + CCE_INT_COUNTER_ARRAY32), \
 	  0, flags | CNTR_32BIT, \
 	  dev_access_u32_csr)
 
 /* DC */
-#घोषणा DC_PERF_CNTR(name, counter, flags) \
+#define DC_PERF_CNTR(name, counter, flags) \
 CNTR_ELEM(#name, \
 	  counter, \
 	  0, \
 	  flags, \
 	  dev_access_u64_csr)
 
-#घोषणा DC_PERF_CNTR_LCB(name, counter, flags) \
+#define DC_PERF_CNTR_LCB(name, counter, flags) \
 CNTR_ELEM(#name, \
 	  counter, \
 	  0, \
@@ -1315,7 +1314,7 @@ CNTR_ELEM(#name, \
 	  dc_access_lcb_cntr)
 
 /* ibp counters */
-#घोषणा SW_IBP_CNTR(name, cntr) \
+#define SW_IBP_CNTR(name, cntr) \
 CNTR_ELEM(#name, \
 	  0, \
 	  0, \
@@ -1323,2814 +1322,2814 @@ CNTR_ELEM(#name, \
 	  access_ibp_##cntr)
 
 /**
- * hfi1_addr_from_offset - वापस addr क्रम पढ़ोq/ग_लिखोq
+ * hfi1_addr_from_offset - return addr for readq/writeq
  * @dd: the dd device
  * @offset: the offset of the CSR within bar0
  *
  * This routine selects the appropriate base address
  * based on the indicated offset.
  */
-अटल अंतरभूत व्योम __iomem *hfi1_addr_from_offset(
-	स्थिर काष्ठा hfi1_devdata *dd,
+static inline void __iomem *hfi1_addr_from_offset(
+	const struct hfi1_devdata *dd,
 	u32 offset)
-अणु
-	अगर (offset >= dd->base2_start)
-		वापस dd->kregbase2 + (offset - dd->base2_start);
-	वापस dd->kregbase1 + offset;
-पूर्ण
+{
+	if (offset >= dd->base2_start)
+		return dd->kregbase2 + (offset - dd->base2_start);
+	return dd->kregbase1 + offset;
+}
 
 /**
- * पढ़ो_csr - पढ़ो CSR at the indicated offset
+ * read_csr - read CSR at the indicated offset
  * @dd: the dd device
  * @offset: the offset of the CSR within bar0
  *
- * Return: the value पढ़ो or all FF's अगर there
+ * Return: the value read or all FF's if there
  * is no mapping
  */
-u64 पढ़ो_csr(स्थिर काष्ठा hfi1_devdata *dd, u32 offset)
-अणु
-	अगर (dd->flags & HFI1_PRESENT)
-		वापस पढ़ोq(hfi1_addr_from_offset(dd, offset));
-	वापस -1;
-पूर्ण
+u64 read_csr(const struct hfi1_devdata *dd, u32 offset)
+{
+	if (dd->flags & HFI1_PRESENT)
+		return readq(hfi1_addr_from_offset(dd, offset));
+	return -1;
+}
 
 /**
- * ग_लिखो_csr - ग_लिखो CSR at the indicated offset
+ * write_csr - write CSR at the indicated offset
  * @dd: the dd device
  * @offset: the offset of the CSR within bar0
- * @value: value to ग_लिखो
+ * @value: value to write
  */
-व्योम ग_लिखो_csr(स्थिर काष्ठा hfi1_devdata *dd, u32 offset, u64 value)
-अणु
-	अगर (dd->flags & HFI1_PRESENT) अणु
-		व्योम __iomem *base = hfi1_addr_from_offset(dd, offset);
+void write_csr(const struct hfi1_devdata *dd, u32 offset, u64 value)
+{
+	if (dd->flags & HFI1_PRESENT) {
+		void __iomem *base = hfi1_addr_from_offset(dd, offset);
 
-		/* aव्योम ग_लिखो to RcvArray */
-		अगर (WARN_ON(offset >= RCV_ARRAY && offset < dd->base2_start))
-			वापस;
-		ग_लिखोq(value, base);
-	पूर्ण
-पूर्ण
+		/* avoid write to RcvArray */
+		if (WARN_ON(offset >= RCV_ARRAY && offset < dd->base2_start))
+			return;
+		writeq(value, base);
+	}
+}
 
 /**
- * get_csr_addr - वापस te iomem address क्रम offset
+ * get_csr_addr - return te iomem address for offset
  * @dd: the dd device
  * @offset: the offset of the CSR within bar0
  *
  * Return: The iomem address to use in subsequent
- * ग_लिखोq/पढ़ोq operations.
+ * writeq/readq operations.
  */
-व्योम __iomem *get_csr_addr(
-	स्थिर काष्ठा hfi1_devdata *dd,
+void __iomem *get_csr_addr(
+	const struct hfi1_devdata *dd,
 	u32 offset)
-अणु
-	अगर (dd->flags & HFI1_PRESENT)
-		वापस hfi1_addr_from_offset(dd, offset);
-	वापस शून्य;
-पूर्ण
+{
+	if (dd->flags & HFI1_PRESENT)
+		return hfi1_addr_from_offset(dd, offset);
+	return NULL;
+}
 
-अटल अंतरभूत u64 पढ़ो_ग_लिखो_csr(स्थिर काष्ठा hfi1_devdata *dd, u32 csr,
-				 पूर्णांक mode, u64 value)
-अणु
+static inline u64 read_write_csr(const struct hfi1_devdata *dd, u32 csr,
+				 int mode, u64 value)
+{
 	u64 ret;
 
-	अगर (mode == CNTR_MODE_R) अणु
-		ret = पढ़ो_csr(dd, csr);
-	पूर्ण अन्यथा अगर (mode == CNTR_MODE_W) अणु
-		ग_लिखो_csr(dd, csr, value);
+	if (mode == CNTR_MODE_R) {
+		ret = read_csr(dd, csr);
+	} else if (mode == CNTR_MODE_W) {
+		write_csr(dd, csr, value);
 		ret = value;
-	पूर्ण अन्यथा अणु
+	} else {
 		dd_dev_err(dd, "Invalid cntr register access mode");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	hfi1_cdbg(CNTR, "csr 0x%x val 0x%llx mode %d", csr, ret, mode);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* Dev Access */
-अटल u64 dev_access_u32_csr(स्थिर काष्ठा cntr_entry *entry,
-			      व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = context;
+static u64 dev_access_u32_csr(const struct cntr_entry *entry,
+			      void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = context;
 	u64 csr = entry->csr;
 
-	अगर (entry->flags & CNTR_SDMA) अणु
-		अगर (vl == CNTR_INVALID_VL)
-			वापस 0;
+	if (entry->flags & CNTR_SDMA) {
+		if (vl == CNTR_INVALID_VL)
+			return 0;
 		csr += 0x100 * vl;
-	पूर्ण अन्यथा अणु
-		अगर (vl != CNTR_INVALID_VL)
-			वापस 0;
-	पूर्ण
-	वापस पढ़ो_ग_लिखो_csr(dd, csr, mode, data);
-पूर्ण
+	} else {
+		if (vl != CNTR_INVALID_VL)
+			return 0;
+	}
+	return read_write_csr(dd, csr, mode, data);
+}
 
-अटल u64 access_sde_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-			      व्योम *context, पूर्णांक idx, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_sde_err_cnt(const struct cntr_entry *entry,
+			      void *context, int idx, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	अगर (dd->per_sdma && idx < dd->num_sdma)
-		वापस dd->per_sdma[idx].err_cnt;
-	वापस 0;
-पूर्ण
+	if (dd->per_sdma && idx < dd->num_sdma)
+		return dd->per_sdma[idx].err_cnt;
+	return 0;
+}
 
-अटल u64 access_sde_पूर्णांक_cnt(स्थिर काष्ठा cntr_entry *entry,
-			      व्योम *context, पूर्णांक idx, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_sde_int_cnt(const struct cntr_entry *entry,
+			      void *context, int idx, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	अगर (dd->per_sdma && idx < dd->num_sdma)
-		वापस dd->per_sdma[idx].sdma_पूर्णांक_cnt;
-	वापस 0;
-पूर्ण
+	if (dd->per_sdma && idx < dd->num_sdma)
+		return dd->per_sdma[idx].sdma_int_cnt;
+	return 0;
+}
 
-अटल u64 access_sde_idle_पूर्णांक_cnt(स्थिर काष्ठा cntr_entry *entry,
-				   व्योम *context, पूर्णांक idx, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_sde_idle_int_cnt(const struct cntr_entry *entry,
+				   void *context, int idx, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	अगर (dd->per_sdma && idx < dd->num_sdma)
-		वापस dd->per_sdma[idx].idle_पूर्णांक_cnt;
-	वापस 0;
-पूर्ण
+	if (dd->per_sdma && idx < dd->num_sdma)
+		return dd->per_sdma[idx].idle_int_cnt;
+	return 0;
+}
 
-अटल u64 access_sde_progress_पूर्णांक_cnt(स्थिर काष्ठा cntr_entry *entry,
-				       व्योम *context, पूर्णांक idx, पूर्णांक mode,
+static u64 access_sde_progress_int_cnt(const struct cntr_entry *entry,
+				       void *context, int idx, int mode,
 				       u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	अगर (dd->per_sdma && idx < dd->num_sdma)
-		वापस dd->per_sdma[idx].progress_पूर्णांक_cnt;
-	वापस 0;
-पूर्ण
+	if (dd->per_sdma && idx < dd->num_sdma)
+		return dd->per_sdma[idx].progress_int_cnt;
+	return 0;
+}
 
-अटल u64 dev_access_u64_csr(स्थिर काष्ठा cntr_entry *entry, व्योम *context,
-			      पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = context;
+static u64 dev_access_u64_csr(const struct cntr_entry *entry, void *context,
+			      int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = context;
 
 	u64 val = 0;
 	u64 csr = entry->csr;
 
-	अगर (entry->flags & CNTR_VL) अणु
-		अगर (vl == CNTR_INVALID_VL)
-			वापस 0;
+	if (entry->flags & CNTR_VL) {
+		if (vl == CNTR_INVALID_VL)
+			return 0;
 		csr += 8 * vl;
-	पूर्ण अन्यथा अणु
-		अगर (vl != CNTR_INVALID_VL)
-			वापस 0;
-	पूर्ण
+	} else {
+		if (vl != CNTR_INVALID_VL)
+			return 0;
+	}
 
-	val = पढ़ो_ग_लिखो_csr(dd, csr, mode, data);
-	वापस val;
-पूर्ण
+	val = read_write_csr(dd, csr, mode, data);
+	return val;
+}
 
-अटल u64 dc_access_lcb_cntr(स्थिर काष्ठा cntr_entry *entry, व्योम *context,
-			      पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = context;
+static u64 dc_access_lcb_cntr(const struct cntr_entry *entry, void *context,
+			      int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = context;
 	u32 csr = entry->csr;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (vl != CNTR_INVALID_VL)
-		वापस 0;
-	अगर (mode == CNTR_MODE_R)
-		ret = पढ़ो_lcb_csr(dd, csr, &data);
-	अन्यथा अगर (mode == CNTR_MODE_W)
-		ret = ग_लिखो_lcb_csr(dd, csr, data);
+	if (vl != CNTR_INVALID_VL)
+		return 0;
+	if (mode == CNTR_MODE_R)
+		ret = read_lcb_csr(dd, csr, &data);
+	else if (mode == CNTR_MODE_W)
+		ret = write_lcb_csr(dd, csr, data);
 
-	अगर (ret) अणु
+	if (ret) {
 		dd_dev_err(dd, "Could not acquire LCB for counter 0x%x", csr);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	hfi1_cdbg(CNTR, "csr 0x%x val 0x%llx mode %d", csr, data, mode);
-	वापस data;
-पूर्ण
+	return data;
+}
 
 /* Port Access */
-अटल u64 port_access_u32_csr(स्थिर काष्ठा cntr_entry *entry, व्योम *context,
-			       पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_pportdata *ppd = context;
+static u64 port_access_u32_csr(const struct cntr_entry *entry, void *context,
+			       int vl, int mode, u64 data)
+{
+	struct hfi1_pportdata *ppd = context;
 
-	अगर (vl != CNTR_INVALID_VL)
-		वापस 0;
-	वापस पढ़ो_ग_लिखो_csr(ppd->dd, entry->csr, mode, data);
-पूर्ण
+	if (vl != CNTR_INVALID_VL)
+		return 0;
+	return read_write_csr(ppd->dd, entry->csr, mode, data);
+}
 
-अटल u64 port_access_u64_csr(स्थिर काष्ठा cntr_entry *entry,
-			       व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_pportdata *ppd = context;
+static u64 port_access_u64_csr(const struct cntr_entry *entry,
+			       void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_pportdata *ppd = context;
 	u64 val;
 	u64 csr = entry->csr;
 
-	अगर (entry->flags & CNTR_VL) अणु
-		अगर (vl == CNTR_INVALID_VL)
-			वापस 0;
+	if (entry->flags & CNTR_VL) {
+		if (vl == CNTR_INVALID_VL)
+			return 0;
 		csr += 8 * vl;
-	पूर्ण अन्यथा अणु
-		अगर (vl != CNTR_INVALID_VL)
-			वापस 0;
-	पूर्ण
-	val = पढ़ो_ग_लिखो_csr(ppd->dd, csr, mode, data);
-	वापस val;
-पूर्ण
+	} else {
+		if (vl != CNTR_INVALID_VL)
+			return 0;
+	}
+	val = read_write_csr(ppd->dd, csr, mode, data);
+	return val;
+}
 
 /* Software defined */
-अटल अंतरभूत u64 पढ़ो_ग_लिखो_sw(काष्ठा hfi1_devdata *dd, u64 *cntr, पूर्णांक mode,
+static inline u64 read_write_sw(struct hfi1_devdata *dd, u64 *cntr, int mode,
 				u64 data)
-अणु
+{
 	u64 ret;
 
-	अगर (mode == CNTR_MODE_R) अणु
+	if (mode == CNTR_MODE_R) {
 		ret = *cntr;
-	पूर्ण अन्यथा अगर (mode == CNTR_MODE_W) अणु
+	} else if (mode == CNTR_MODE_W) {
 		*cntr = data;
 		ret = data;
-	पूर्ण अन्यथा अणु
+	} else {
 		dd_dev_err(dd, "Invalid cntr sw access mode");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	hfi1_cdbg(CNTR, "val 0x%llx mode %d", ret, mode);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u64 access_sw_link_dn_cnt(स्थिर काष्ठा cntr_entry *entry, व्योम *context,
-				 पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_pportdata *ppd = context;
+static u64 access_sw_link_dn_cnt(const struct cntr_entry *entry, void *context,
+				 int vl, int mode, u64 data)
+{
+	struct hfi1_pportdata *ppd = context;
 
-	अगर (vl != CNTR_INVALID_VL)
-		वापस 0;
-	वापस पढ़ो_ग_लिखो_sw(ppd->dd, &ppd->link_करोwned, mode, data);
-पूर्ण
+	if (vl != CNTR_INVALID_VL)
+		return 0;
+	return read_write_sw(ppd->dd, &ppd->link_downed, mode, data);
+}
 
-अटल u64 access_sw_link_up_cnt(स्थिर काष्ठा cntr_entry *entry, व्योम *context,
-				 पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_pportdata *ppd = context;
+static u64 access_sw_link_up_cnt(const struct cntr_entry *entry, void *context,
+				 int vl, int mode, u64 data)
+{
+	struct hfi1_pportdata *ppd = context;
 
-	अगर (vl != CNTR_INVALID_VL)
-		वापस 0;
-	वापस पढ़ो_ग_लिखो_sw(ppd->dd, &ppd->link_up, mode, data);
-पूर्ण
+	if (vl != CNTR_INVALID_VL)
+		return 0;
+	return read_write_sw(ppd->dd, &ppd->link_up, mode, data);
+}
 
-अटल u64 access_sw_unknown_frame_cnt(स्थिर काष्ठा cntr_entry *entry,
-				       व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_sw_unknown_frame_cnt(const struct cntr_entry *entry,
+				       void *context, int vl, int mode,
 				       u64 data)
-अणु
-	काष्ठा hfi1_pportdata *ppd = (काष्ठा hfi1_pportdata *)context;
+{
+	struct hfi1_pportdata *ppd = (struct hfi1_pportdata *)context;
 
-	अगर (vl != CNTR_INVALID_VL)
-		वापस 0;
-	वापस पढ़ो_ग_लिखो_sw(ppd->dd, &ppd->unknown_frame_count, mode, data);
-पूर्ण
+	if (vl != CNTR_INVALID_VL)
+		return 0;
+	return read_write_sw(ppd->dd, &ppd->unknown_frame_count, mode, data);
+}
 
-अटल u64 access_sw_xmit_discards(स्थिर काष्ठा cntr_entry *entry,
-				   व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_pportdata *ppd = (काष्ठा hfi1_pportdata *)context;
+static u64 access_sw_xmit_discards(const struct cntr_entry *entry,
+				   void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_pportdata *ppd = (struct hfi1_pportdata *)context;
 	u64 zero = 0;
 	u64 *counter;
 
-	अगर (vl == CNTR_INVALID_VL)
+	if (vl == CNTR_INVALID_VL)
 		counter = &ppd->port_xmit_discards;
-	अन्यथा अगर (vl >= 0 && vl < C_VL_COUNT)
+	else if (vl >= 0 && vl < C_VL_COUNT)
 		counter = &ppd->port_xmit_discards_vl[vl];
-	अन्यथा
+	else
 		counter = &zero;
 
-	वापस पढ़ो_ग_लिखो_sw(ppd->dd, counter, mode, data);
-पूर्ण
+	return read_write_sw(ppd->dd, counter, mode, data);
+}
 
-अटल u64 access_xmit_स्थिरraपूर्णांक_errs(स्थिर काष्ठा cntr_entry *entry,
-				       व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_xmit_constraint_errs(const struct cntr_entry *entry,
+				       void *context, int vl, int mode,
 				       u64 data)
-अणु
-	काष्ठा hfi1_pportdata *ppd = context;
+{
+	struct hfi1_pportdata *ppd = context;
 
-	अगर (vl != CNTR_INVALID_VL)
-		वापस 0;
+	if (vl != CNTR_INVALID_VL)
+		return 0;
 
-	वापस पढ़ो_ग_लिखो_sw(ppd->dd, &ppd->port_xmit_स्थिरraपूर्णांक_errors,
+	return read_write_sw(ppd->dd, &ppd->port_xmit_constraint_errors,
 			     mode, data);
-पूर्ण
+}
 
-अटल u64 access_rcv_स्थिरraपूर्णांक_errs(स्थिर काष्ठा cntr_entry *entry,
-				      व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_pportdata *ppd = context;
+static u64 access_rcv_constraint_errs(const struct cntr_entry *entry,
+				      void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_pportdata *ppd = context;
 
-	अगर (vl != CNTR_INVALID_VL)
-		वापस 0;
+	if (vl != CNTR_INVALID_VL)
+		return 0;
 
-	वापस पढ़ो_ग_लिखो_sw(ppd->dd, &ppd->port_rcv_स्थिरraपूर्णांक_errors,
+	return read_write_sw(ppd->dd, &ppd->port_rcv_constraint_errors,
 			     mode, data);
-पूर्ण
+}
 
 u64 get_all_cpu_total(u64 __percpu *cntr)
-अणु
-	पूर्णांक cpu;
+{
+	int cpu;
 	u64 counter = 0;
 
-	क्रम_each_possible_cpu(cpu)
+	for_each_possible_cpu(cpu)
 		counter += *per_cpu_ptr(cntr, cpu);
-	वापस counter;
-पूर्ण
+	return counter;
+}
 
-अटल u64 पढ़ो_ग_लिखो_cpu(काष्ठा hfi1_devdata *dd, u64 *z_val,
+static u64 read_write_cpu(struct hfi1_devdata *dd, u64 *z_val,
 			  u64 __percpu *cntr,
-			  पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
+			  int vl, int mode, u64 data)
+{
 	u64 ret = 0;
 
-	अगर (vl != CNTR_INVALID_VL)
-		वापस 0;
+	if (vl != CNTR_INVALID_VL)
+		return 0;
 
-	अगर (mode == CNTR_MODE_R) अणु
+	if (mode == CNTR_MODE_R) {
 		ret = get_all_cpu_total(cntr) - *z_val;
-	पूर्ण अन्यथा अगर (mode == CNTR_MODE_W) अणु
-		/* A ग_लिखो can only zero the counter */
-		अगर (data == 0)
+	} else if (mode == CNTR_MODE_W) {
+		/* A write can only zero the counter */
+		if (data == 0)
 			*z_val = get_all_cpu_total(cntr);
-		अन्यथा
+		else
 			dd_dev_err(dd, "Per CPU cntrs can only be zeroed");
-	पूर्ण अन्यथा अणु
+	} else {
 		dd_dev_err(dd, "Invalid cntr sw cpu access mode");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u64 access_sw_cpu_पूर्णांकr(स्थिर काष्ठा cntr_entry *entry,
-			      व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = context;
+static u64 access_sw_cpu_intr(const struct cntr_entry *entry,
+			      void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = context;
 
-	वापस पढ़ो_ग_लिखो_cpu(dd, &dd->z_पूर्णांक_counter, dd->पूर्णांक_counter, vl,
+	return read_write_cpu(dd, &dd->z_int_counter, dd->int_counter, vl,
 			      mode, data);
-पूर्ण
+}
 
-अटल u64 access_sw_cpu_rcv_limit(स्थिर काष्ठा cntr_entry *entry,
-				   व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = context;
+static u64 access_sw_cpu_rcv_limit(const struct cntr_entry *entry,
+				   void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = context;
 
-	वापस पढ़ो_ग_लिखो_cpu(dd, &dd->z_rcv_limit, dd->rcv_limit, vl,
+	return read_write_cpu(dd, &dd->z_rcv_limit, dd->rcv_limit, vl,
 			      mode, data);
-पूर्ण
+}
 
-अटल u64 access_sw_pio_रुको(स्थिर काष्ठा cntr_entry *entry,
-			      व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = context;
+static u64 access_sw_pio_wait(const struct cntr_entry *entry,
+			      void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = context;
 
-	वापस dd->verbs_dev.n_pioरुको;
-पूर्ण
+	return dd->verbs_dev.n_piowait;
+}
 
-अटल u64 access_sw_pio_drain(स्थिर काष्ठा cntr_entry *entry,
-			       व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_sw_pio_drain(const struct cntr_entry *entry,
+			       void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->verbs_dev.n_piodrain;
-पूर्ण
+	return dd->verbs_dev.n_piodrain;
+}
 
-अटल u64 access_sw_ctx0_seq_drop(स्थिर काष्ठा cntr_entry *entry,
-				   व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = context;
+static u64 access_sw_ctx0_seq_drop(const struct cntr_entry *entry,
+				   void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = context;
 
-	वापस dd->ctx0_seq_drop;
-पूर्ण
+	return dd->ctx0_seq_drop;
+}
 
-अटल u64 access_sw_vtx_रुको(स्थिर काष्ठा cntr_entry *entry,
-			      व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = context;
+static u64 access_sw_vtx_wait(const struct cntr_entry *entry,
+			      void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = context;
 
-	वापस dd->verbs_dev.n_txरुको;
-पूर्ण
+	return dd->verbs_dev.n_txwait;
+}
 
-अटल u64 access_sw_kmem_रुको(स्थिर काष्ठा cntr_entry *entry,
-			       व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = context;
+static u64 access_sw_kmem_wait(const struct cntr_entry *entry,
+			       void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = context;
 
-	वापस dd->verbs_dev.n_kmem_रुको;
-पूर्ण
+	return dd->verbs_dev.n_kmem_wait;
+}
 
-अटल u64 access_sw_send_schedule(स्थिर काष्ठा cntr_entry *entry,
-				   व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_sw_send_schedule(const struct cntr_entry *entry,
+				   void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस पढ़ो_ग_लिखो_cpu(dd, &dd->z_send_schedule, dd->send_schedule, vl,
+	return read_write_cpu(dd, &dd->z_send_schedule, dd->send_schedule, vl,
 			      mode, data);
-पूर्ण
+}
 
-/* Software counters क्रम the error status bits within MISC_ERR_STATUS */
-अटल u64 access_misc_pll_lock_fail_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					     व्योम *context, पूर्णांक vl, पूर्णांक mode,
+/* Software counters for the error status bits within MISC_ERR_STATUS */
+static u64 access_misc_pll_lock_fail_err_cnt(const struct cntr_entry *entry,
+					     void *context, int vl, int mode,
 					     u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->misc_err_status_cnt[12];
-पूर्ण
+	return dd->misc_err_status_cnt[12];
+}
 
-अटल u64 access_misc_mbist_fail_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					  व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_misc_mbist_fail_err_cnt(const struct cntr_entry *entry,
+					  void *context, int vl, int mode,
 					  u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->misc_err_status_cnt[11];
-पूर्ण
+	return dd->misc_err_status_cnt[11];
+}
 
-अटल u64 access_misc_invalid_eep_cmd_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					       व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_misc_invalid_eep_cmd_err_cnt(const struct cntr_entry *entry,
+					       void *context, int vl, int mode,
 					       u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->misc_err_status_cnt[10];
-पूर्ण
+	return dd->misc_err_status_cnt[10];
+}
 
-अटल u64 access_misc_efuse_करोne_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						 व्योम *context, पूर्णांक vl,
-						 पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_misc_efuse_done_parity_err_cnt(const struct cntr_entry *entry,
+						 void *context, int vl,
+						 int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->misc_err_status_cnt[9];
-पूर्ण
+	return dd->misc_err_status_cnt[9];
+}
 
-अटल u64 access_misc_efuse_ग_लिखो_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					   व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_misc_efuse_write_err_cnt(const struct cntr_entry *entry,
+					   void *context, int vl, int mode,
 					   u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->misc_err_status_cnt[8];
-पूर्ण
+	return dd->misc_err_status_cnt[8];
+}
 
-अटल u64 access_misc_efuse_पढ़ो_bad_addr_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_misc_efuse_read_bad_addr_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->misc_err_status_cnt[7];
-पूर्ण
+	return dd->misc_err_status_cnt[7];
+}
 
-अटल u64 access_misc_efuse_csr_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						व्योम *context, पूर्णांक vl,
-						पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_misc_efuse_csr_parity_err_cnt(const struct cntr_entry *entry,
+						void *context, int vl,
+						int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->misc_err_status_cnt[6];
-पूर्ण
+	return dd->misc_err_status_cnt[6];
+}
 
-अटल u64 access_misc_fw_auth_failed_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					      व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_misc_fw_auth_failed_err_cnt(const struct cntr_entry *entry,
+					      void *context, int vl, int mode,
 					      u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->misc_err_status_cnt[5];
-पूर्ण
+	return dd->misc_err_status_cnt[5];
+}
 
-अटल u64 access_misc_key_mismatch_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					    व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_misc_key_mismatch_err_cnt(const struct cntr_entry *entry,
+					    void *context, int vl, int mode,
 					    u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->misc_err_status_cnt[4];
-पूर्ण
+	return dd->misc_err_status_cnt[4];
+}
 
-अटल u64 access_misc_sbus_ग_लिखो_failed_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						 व्योम *context, पूर्णांक vl,
-						 पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_misc_sbus_write_failed_err_cnt(const struct cntr_entry *entry,
+						 void *context, int vl,
+						 int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->misc_err_status_cnt[3];
-पूर्ण
+	return dd->misc_err_status_cnt[3];
+}
 
-अटल u64 access_misc_csr_ग_लिखो_bad_addr_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_misc_csr_write_bad_addr_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->misc_err_status_cnt[2];
-पूर्ण
+	return dd->misc_err_status_cnt[2];
+}
 
-अटल u64 access_misc_csr_पढ़ो_bad_addr_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						 व्योम *context, पूर्णांक vl,
-						 पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_misc_csr_read_bad_addr_err_cnt(const struct cntr_entry *entry,
+						 void *context, int vl,
+						 int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->misc_err_status_cnt[1];
-पूर्ण
+	return dd->misc_err_status_cnt[1];
+}
 
-अटल u64 access_misc_csr_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					  व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_misc_csr_parity_err_cnt(const struct cntr_entry *entry,
+					  void *context, int vl, int mode,
 					  u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->misc_err_status_cnt[0];
-पूर्ण
+	return dd->misc_err_status_cnt[0];
+}
 
 /*
- * Software counter क्रम the aggregate of
- * inभागidual CceErrStatus counters
+ * Software counter for the aggregate of
+ * individual CceErrStatus counters
  */
-अटल u64 access_sw_cce_err_status_aggregated_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_sw_cce_err_status_aggregated_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_cce_err_status_aggregate;
-पूर्ण
+	return dd->sw_cce_err_status_aggregate;
+}
 
 /*
  * Software counters corresponding to each of the
  * error status bits within CceErrStatus
  */
-अटल u64 access_cce_msix_csr_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					      व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_cce_msix_csr_parity_err_cnt(const struct cntr_entry *entry,
+					      void *context, int vl, int mode,
 					      u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[40];
-पूर्ण
+	return dd->cce_err_status_cnt[40];
+}
 
-अटल u64 access_cce_पूर्णांक_map_unc_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					  व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_cce_int_map_unc_err_cnt(const struct cntr_entry *entry,
+					  void *context, int vl, int mode,
 					  u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[39];
-पूर्ण
+	return dd->cce_err_status_cnt[39];
+}
 
-अटल u64 access_cce_पूर्णांक_map_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					  व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_cce_int_map_cor_err_cnt(const struct cntr_entry *entry,
+					  void *context, int vl, int mode,
 					  u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[38];
-पूर्ण
+	return dd->cce_err_status_cnt[38];
+}
 
-अटल u64 access_cce_msix_table_unc_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					     व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_cce_msix_table_unc_err_cnt(const struct cntr_entry *entry,
+					     void *context, int vl, int mode,
 					     u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[37];
-पूर्ण
+	return dd->cce_err_status_cnt[37];
+}
 
-अटल u64 access_cce_msix_table_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					     व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_cce_msix_table_cor_err_cnt(const struct cntr_entry *entry,
+					     void *context, int vl, int mode,
 					     u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[36];
-पूर्ण
+	return dd->cce_err_status_cnt[36];
+}
 
-अटल u64 access_cce_rxdma_conv_fअगरo_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_cce_rxdma_conv_fifo_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[35];
-पूर्ण
+	return dd->cce_err_status_cnt[35];
+}
 
-अटल u64 access_cce_rcpl_async_fअगरo_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_cce_rcpl_async_fifo_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[34];
-पूर्ण
+	return dd->cce_err_status_cnt[34];
+}
 
-अटल u64 access_cce_seg_ग_लिखो_bad_addr_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						 व्योम *context, पूर्णांक vl,
-						 पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_cce_seg_write_bad_addr_err_cnt(const struct cntr_entry *entry,
+						 void *context, int vl,
+						 int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[33];
-पूर्ण
+	return dd->cce_err_status_cnt[33];
+}
 
-अटल u64 access_cce_seg_पढ़ो_bad_addr_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_cce_seg_read_bad_addr_err_cnt(const struct cntr_entry *entry,
+						void *context, int vl, int mode,
 						u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[32];
-पूर्ण
+	return dd->cce_err_status_cnt[32];
+}
 
-अटल u64 access_la_triggered_cnt(स्थिर काष्ठा cntr_entry *entry,
-				   व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_la_triggered_cnt(const struct cntr_entry *entry,
+				   void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[31];
-पूर्ण
+	return dd->cce_err_status_cnt[31];
+}
 
-अटल u64 access_cce_trgt_cpl_समयout_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					       व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_cce_trgt_cpl_timeout_err_cnt(const struct cntr_entry *entry,
+					       void *context, int vl, int mode,
 					       u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[30];
-पूर्ण
+	return dd->cce_err_status_cnt[30];
+}
 
-अटल u64 access_pcic_receive_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					      व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pcic_receive_parity_err_cnt(const struct cntr_entry *entry,
+					      void *context, int vl, int mode,
 					      u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[29];
-पूर्ण
+	return dd->cce_err_status_cnt[29];
+}
 
-अटल u64 access_pcic_transmit_back_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pcic_transmit_back_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[28];
-पूर्ण
+	return dd->cce_err_status_cnt[28];
+}
 
-अटल u64 access_pcic_transmit_front_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pcic_transmit_front_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[27];
-पूर्ण
+	return dd->cce_err_status_cnt[27];
+}
 
-अटल u64 access_pcic_cpl_dat_q_unc_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					     व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pcic_cpl_dat_q_unc_err_cnt(const struct cntr_entry *entry,
+					     void *context, int vl, int mode,
 					     u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[26];
-पूर्ण
+	return dd->cce_err_status_cnt[26];
+}
 
-अटल u64 access_pcic_cpl_hd_q_unc_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					    व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pcic_cpl_hd_q_unc_err_cnt(const struct cntr_entry *entry,
+					    void *context, int vl, int mode,
 					    u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[25];
-पूर्ण
+	return dd->cce_err_status_cnt[25];
+}
 
-अटल u64 access_pcic_post_dat_q_unc_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					      व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pcic_post_dat_q_unc_err_cnt(const struct cntr_entry *entry,
+					      void *context, int vl, int mode,
 					      u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[24];
-पूर्ण
+	return dd->cce_err_status_cnt[24];
+}
 
-अटल u64 access_pcic_post_hd_q_unc_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					     व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pcic_post_hd_q_unc_err_cnt(const struct cntr_entry *entry,
+					     void *context, int vl, int mode,
 					     u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[23];
-पूर्ण
+	return dd->cce_err_status_cnt[23];
+}
 
-अटल u64 access_pcic_retry_sot_mem_unc_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						 व्योम *context, पूर्णांक vl,
-						 पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pcic_retry_sot_mem_unc_err_cnt(const struct cntr_entry *entry,
+						 void *context, int vl,
+						 int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[22];
-पूर्ण
+	return dd->cce_err_status_cnt[22];
+}
 
-अटल u64 access_pcic_retry_mem_unc_err(स्थिर काष्ठा cntr_entry *entry,
-					 व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pcic_retry_mem_unc_err(const struct cntr_entry *entry,
+					 void *context, int vl, int mode,
 					 u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[21];
-पूर्ण
+	return dd->cce_err_status_cnt[21];
+}
 
-अटल u64 access_pcic_n_post_dat_q_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pcic_n_post_dat_q_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[20];
-पूर्ण
+	return dd->cce_err_status_cnt[20];
+}
 
-अटल u64 access_pcic_n_post_h_q_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						 व्योम *context, पूर्णांक vl,
-						 पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pcic_n_post_h_q_parity_err_cnt(const struct cntr_entry *entry,
+						 void *context, int vl,
+						 int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[19];
-पूर्ण
+	return dd->cce_err_status_cnt[19];
+}
 
-अटल u64 access_pcic_cpl_dat_q_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					     व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pcic_cpl_dat_q_cor_err_cnt(const struct cntr_entry *entry,
+					     void *context, int vl, int mode,
 					     u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[18];
-पूर्ण
+	return dd->cce_err_status_cnt[18];
+}
 
-अटल u64 access_pcic_cpl_hd_q_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					    व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pcic_cpl_hd_q_cor_err_cnt(const struct cntr_entry *entry,
+					    void *context, int vl, int mode,
 					    u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[17];
-पूर्ण
+	return dd->cce_err_status_cnt[17];
+}
 
-अटल u64 access_pcic_post_dat_q_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					      व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pcic_post_dat_q_cor_err_cnt(const struct cntr_entry *entry,
+					      void *context, int vl, int mode,
 					      u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[16];
-पूर्ण
+	return dd->cce_err_status_cnt[16];
+}
 
-अटल u64 access_pcic_post_hd_q_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					     व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pcic_post_hd_q_cor_err_cnt(const struct cntr_entry *entry,
+					     void *context, int vl, int mode,
 					     u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[15];
-पूर्ण
+	return dd->cce_err_status_cnt[15];
+}
 
-अटल u64 access_pcic_retry_sot_mem_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						 व्योम *context, पूर्णांक vl,
-						 पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pcic_retry_sot_mem_cor_err_cnt(const struct cntr_entry *entry,
+						 void *context, int vl,
+						 int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[14];
-पूर्ण
+	return dd->cce_err_status_cnt[14];
+}
 
-अटल u64 access_pcic_retry_mem_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					     व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pcic_retry_mem_cor_err_cnt(const struct cntr_entry *entry,
+					     void *context, int vl, int mode,
 					     u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[13];
-पूर्ण
+	return dd->cce_err_status_cnt[13];
+}
 
-अटल u64 access_cce_cli1_async_fअगरo_dbg_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_cce_cli1_async_fifo_dbg_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[12];
-पूर्ण
+	return dd->cce_err_status_cnt[12];
+}
 
-अटल u64 access_cce_cli1_async_fअगरo_rxdma_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_cce_cli1_async_fifo_rxdma_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[11];
-पूर्ण
+	return dd->cce_err_status_cnt[11];
+}
 
-अटल u64 access_cce_cli1_async_fअगरo_sdma_hd_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_cce_cli1_async_fifo_sdma_hd_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[10];
-पूर्ण
+	return dd->cce_err_status_cnt[10];
+}
 
-अटल u64 access_cce_cl1_async_fअगरo_pio_crdt_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_cce_cl1_async_fifo_pio_crdt_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[9];
-पूर्ण
+	return dd->cce_err_status_cnt[9];
+}
 
-अटल u64 access_cce_cli2_async_fअगरo_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_cce_cli2_async_fifo_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[8];
-पूर्ण
+	return dd->cce_err_status_cnt[8];
+}
 
-अटल u64 access_cce_csr_cfg_bus_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						 व्योम *context, पूर्णांक vl,
-						 पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_cce_csr_cfg_bus_parity_err_cnt(const struct cntr_entry *entry,
+						 void *context, int vl,
+						 int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[7];
-पूर्ण
+	return dd->cce_err_status_cnt[7];
+}
 
-अटल u64 access_cce_cli0_async_fअगरo_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_cce_cli0_async_fifo_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[6];
-पूर्ण
+	return dd->cce_err_status_cnt[6];
+}
 
-अटल u64 access_cce_rspd_data_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					       व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_cce_rspd_data_parity_err_cnt(const struct cntr_entry *entry,
+					       void *context, int vl, int mode,
 					       u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[5];
-पूर्ण
+	return dd->cce_err_status_cnt[5];
+}
 
-अटल u64 access_cce_trgt_access_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					  व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_cce_trgt_access_err_cnt(const struct cntr_entry *entry,
+					  void *context, int vl, int mode,
 					  u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[4];
-पूर्ण
+	return dd->cce_err_status_cnt[4];
+}
 
-अटल u64 access_cce_trgt_async_fअगरo_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_cce_trgt_async_fifo_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[3];
-पूर्ण
+	return dd->cce_err_status_cnt[3];
+}
 
-अटल u64 access_cce_csr_ग_लिखो_bad_addr_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						 व्योम *context, पूर्णांक vl,
-						 पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_cce_csr_write_bad_addr_err_cnt(const struct cntr_entry *entry,
+						 void *context, int vl,
+						 int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[2];
-पूर्ण
+	return dd->cce_err_status_cnt[2];
+}
 
-अटल u64 access_cce_csr_पढ़ो_bad_addr_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						व्योम *context, पूर्णांक vl,
-						पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_cce_csr_read_bad_addr_err_cnt(const struct cntr_entry *entry,
+						void *context, int vl,
+						int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[1];
-पूर्ण
+	return dd->cce_err_status_cnt[1];
+}
 
-अटल u64 access_ccs_csr_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					 व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_ccs_csr_parity_err_cnt(const struct cntr_entry *entry,
+					 void *context, int vl, int mode,
 					 u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->cce_err_status_cnt[0];
-पूर्ण
+	return dd->cce_err_status_cnt[0];
+}
 
 /*
  * Software counters corresponding to each of the
  * error status bits within RcvErrStatus
  */
-अटल u64 access_rx_csr_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_rx_csr_parity_err_cnt(const struct cntr_entry *entry,
+					void *context, int vl, int mode,
 					u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[63];
-पूर्ण
+	return dd->rcv_err_status_cnt[63];
+}
 
-अटल u64 access_rx_csr_ग_लिखो_bad_addr_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						व्योम *context, पूर्णांक vl,
-						पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_csr_write_bad_addr_err_cnt(const struct cntr_entry *entry,
+						void *context, int vl,
+						int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[62];
-पूर्ण
+	return dd->rcv_err_status_cnt[62];
+}
 
-अटल u64 access_rx_csr_पढ़ो_bad_addr_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					       व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_rx_csr_read_bad_addr_err_cnt(const struct cntr_entry *entry,
+					       void *context, int vl, int mode,
 					       u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[61];
-पूर्ण
+	return dd->rcv_err_status_cnt[61];
+}
 
-अटल u64 access_rx_dma_csr_unc_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					 व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_rx_dma_csr_unc_err_cnt(const struct cntr_entry *entry,
+					 void *context, int vl, int mode,
 					 u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[60];
-पूर्ण
+	return dd->rcv_err_status_cnt[60];
+}
 
-अटल u64 access_rx_dma_dq_fsm_encoding_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						 व्योम *context, पूर्णांक vl,
-						 पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_dma_dq_fsm_encoding_err_cnt(const struct cntr_entry *entry,
+						 void *context, int vl,
+						 int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[59];
-पूर्ण
+	return dd->rcv_err_status_cnt[59];
+}
 
-अटल u64 access_rx_dma_eq_fsm_encoding_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						 व्योम *context, पूर्णांक vl,
-						 पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_dma_eq_fsm_encoding_err_cnt(const struct cntr_entry *entry,
+						 void *context, int vl,
+						 int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[58];
-पूर्ण
+	return dd->rcv_err_status_cnt[58];
+}
 
-अटल u64 access_rx_dma_csr_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					    व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_rx_dma_csr_parity_err_cnt(const struct cntr_entry *entry,
+					    void *context, int vl, int mode,
 					    u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[57];
-पूर्ण
+	return dd->rcv_err_status_cnt[57];
+}
 
-अटल u64 access_rx_rbuf_data_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					   व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_rx_rbuf_data_cor_err_cnt(const struct cntr_entry *entry,
+					   void *context, int vl, int mode,
 					   u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[56];
-पूर्ण
+	return dd->rcv_err_status_cnt[56];
+}
 
-अटल u64 access_rx_rbuf_data_unc_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					   व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_rx_rbuf_data_unc_err_cnt(const struct cntr_entry *entry,
+					   void *context, int vl, int mode,
 					   u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[55];
-पूर्ण
+	return dd->rcv_err_status_cnt[55];
+}
 
-अटल u64 access_rx_dma_data_fअगरo_rd_cor_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_dma_data_fifo_rd_cor_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[54];
-पूर्ण
+	return dd->rcv_err_status_cnt[54];
+}
 
-अटल u64 access_rx_dma_data_fअगरo_rd_unc_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_dma_data_fifo_rd_unc_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[53];
-पूर्ण
+	return dd->rcv_err_status_cnt[53];
+}
 
-अटल u64 access_rx_dma_hdr_fअगरo_rd_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						 व्योम *context, पूर्णांक vl,
-						 पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_dma_hdr_fifo_rd_cor_err_cnt(const struct cntr_entry *entry,
+						 void *context, int vl,
+						 int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[52];
-पूर्ण
+	return dd->rcv_err_status_cnt[52];
+}
 
-अटल u64 access_rx_dma_hdr_fअगरo_rd_unc_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						 व्योम *context, पूर्णांक vl,
-						 पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_dma_hdr_fifo_rd_unc_err_cnt(const struct cntr_entry *entry,
+						 void *context, int vl,
+						 int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[51];
-पूर्ण
+	return dd->rcv_err_status_cnt[51];
+}
 
-अटल u64 access_rx_rbuf_desc_part2_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						 व्योम *context, पूर्णांक vl,
-						 पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_rbuf_desc_part2_cor_err_cnt(const struct cntr_entry *entry,
+						 void *context, int vl,
+						 int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[50];
-पूर्ण
+	return dd->rcv_err_status_cnt[50];
+}
 
-अटल u64 access_rx_rbuf_desc_part2_unc_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						 व्योम *context, पूर्णांक vl,
-						 पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_rbuf_desc_part2_unc_err_cnt(const struct cntr_entry *entry,
+						 void *context, int vl,
+						 int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[49];
-पूर्ण
+	return dd->rcv_err_status_cnt[49];
+}
 
-अटल u64 access_rx_rbuf_desc_part1_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						 व्योम *context, पूर्णांक vl,
-						 पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_rbuf_desc_part1_cor_err_cnt(const struct cntr_entry *entry,
+						 void *context, int vl,
+						 int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[48];
-पूर्ण
+	return dd->rcv_err_status_cnt[48];
+}
 
-अटल u64 access_rx_rbuf_desc_part1_unc_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						 व्योम *context, पूर्णांक vl,
-						 पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_rbuf_desc_part1_unc_err_cnt(const struct cntr_entry *entry,
+						 void *context, int vl,
+						 int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[47];
-पूर्ण
+	return dd->rcv_err_status_cnt[47];
+}
 
-अटल u64 access_rx_hq_पूर्णांकr_fsm_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					 व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_rx_hq_intr_fsm_err_cnt(const struct cntr_entry *entry,
+					 void *context, int vl, int mode,
 					 u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[46];
-पूर्ण
+	return dd->rcv_err_status_cnt[46];
+}
 
-अटल u64 access_rx_hq_पूर्णांकr_csr_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_hq_intr_csr_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[45];
-पूर्ण
+	return dd->rcv_err_status_cnt[45];
+}
 
-अटल u64 access_rx_lookup_csr_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_lookup_csr_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[44];
-पूर्ण
+	return dd->rcv_err_status_cnt[44];
+}
 
-अटल u64 access_rx_lookup_rcv_array_cor_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_lookup_rcv_array_cor_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[43];
-पूर्ण
+	return dd->rcv_err_status_cnt[43];
+}
 
-अटल u64 access_rx_lookup_rcv_array_unc_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_lookup_rcv_array_unc_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[42];
-पूर्ण
+	return dd->rcv_err_status_cnt[42];
+}
 
-अटल u64 access_rx_lookup_des_part2_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_lookup_des_part2_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[41];
-पूर्ण
+	return dd->rcv_err_status_cnt[41];
+}
 
-अटल u64 access_rx_lookup_des_part1_unc_cor_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_lookup_des_part1_unc_cor_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[40];
-पूर्ण
+	return dd->rcv_err_status_cnt[40];
+}
 
-अटल u64 access_rx_lookup_des_part1_unc_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_lookup_des_part1_unc_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[39];
-पूर्ण
+	return dd->rcv_err_status_cnt[39];
+}
 
-अटल u64 access_rx_rbuf_next_मुक्त_buf_cor_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_rbuf_next_free_buf_cor_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[38];
-पूर्ण
+	return dd->rcv_err_status_cnt[38];
+}
 
-अटल u64 access_rx_rbuf_next_मुक्त_buf_unc_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_rbuf_next_free_buf_unc_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[37];
-पूर्ण
+	return dd->rcv_err_status_cnt[37];
+}
 
-अटल u64 access_rbuf_fl_init_wr_addr_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rbuf_fl_init_wr_addr_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[36];
-पूर्ण
+	return dd->rcv_err_status_cnt[36];
+}
 
-अटल u64 access_rx_rbuf_fl_initकरोne_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_rbuf_fl_initdone_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[35];
-पूर्ण
+	return dd->rcv_err_status_cnt[35];
+}
 
-अटल u64 access_rx_rbuf_fl_ग_लिखो_addr_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_rbuf_fl_write_addr_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[34];
-पूर्ण
+	return dd->rcv_err_status_cnt[34];
+}
 
-अटल u64 access_rx_rbuf_fl_rd_addr_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_rbuf_fl_rd_addr_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[33];
-पूर्ण
+	return dd->rcv_err_status_cnt[33];
+}
 
-अटल u64 access_rx_rbuf_empty_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_rx_rbuf_empty_err_cnt(const struct cntr_entry *entry,
+					void *context, int vl, int mode,
 					u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[32];
-पूर्ण
+	return dd->rcv_err_status_cnt[32];
+}
 
-अटल u64 access_rx_rbuf_full_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-				       व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_rx_rbuf_full_err_cnt(const struct cntr_entry *entry,
+				       void *context, int vl, int mode,
 				       u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[31];
-पूर्ण
+	return dd->rcv_err_status_cnt[31];
+}
 
-अटल u64 access_rbuf_bad_lookup_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					  व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_rbuf_bad_lookup_err_cnt(const struct cntr_entry *entry,
+					  void *context, int vl, int mode,
 					  u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[30];
-पूर्ण
+	return dd->rcv_err_status_cnt[30];
+}
 
-अटल u64 access_rbuf_ctx_id_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					     व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_rbuf_ctx_id_parity_err_cnt(const struct cntr_entry *entry,
+					     void *context, int vl, int mode,
 					     u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[29];
-पूर्ण
+	return dd->rcv_err_status_cnt[29];
+}
 
-अटल u64 access_rbuf_csr_qeopdw_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						 व्योम *context, पूर्णांक vl,
-						 पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rbuf_csr_qeopdw_parity_err_cnt(const struct cntr_entry *entry,
+						 void *context, int vl,
+						 int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[28];
-पूर्ण
+	return dd->rcv_err_status_cnt[28];
+}
 
-अटल u64 access_rx_rbuf_csr_q_num_of_pkt_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_rbuf_csr_q_num_of_pkt_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[27];
-पूर्ण
+	return dd->rcv_err_status_cnt[27];
+}
 
-अटल u64 access_rx_rbuf_csr_q_t1_ptr_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_rbuf_csr_q_t1_ptr_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[26];
-पूर्ण
+	return dd->rcv_err_status_cnt[26];
+}
 
-अटल u64 access_rx_rbuf_csr_q_hd_ptr_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_rbuf_csr_q_hd_ptr_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[25];
-पूर्ण
+	return dd->rcv_err_status_cnt[25];
+}
 
-अटल u64 access_rx_rbuf_csr_q_vld_bit_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_rbuf_csr_q_vld_bit_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[24];
-पूर्ण
+	return dd->rcv_err_status_cnt[24];
+}
 
-अटल u64 access_rx_rbuf_csr_q_next_buf_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_rbuf_csr_q_next_buf_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[23];
-पूर्ण
+	return dd->rcv_err_status_cnt[23];
+}
 
-अटल u64 access_rx_rbuf_csr_q_ent_cnt_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_rbuf_csr_q_ent_cnt_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[22];
-पूर्ण
+	return dd->rcv_err_status_cnt[22];
+}
 
-अटल u64 access_rx_rbuf_csr_q_head_buf_num_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_rbuf_csr_q_head_buf_num_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[21];
-पूर्ण
+	return dd->rcv_err_status_cnt[21];
+}
 
-अटल u64 access_rx_rbuf_block_list_पढ़ो_cor_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_rbuf_block_list_read_cor_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[20];
-पूर्ण
+	return dd->rcv_err_status_cnt[20];
+}
 
-अटल u64 access_rx_rbuf_block_list_पढ़ो_unc_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_rbuf_block_list_read_unc_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[19];
-पूर्ण
+	return dd->rcv_err_status_cnt[19];
+}
 
-अटल u64 access_rx_rbuf_lookup_des_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						 व्योम *context, पूर्णांक vl,
-						 पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_rbuf_lookup_des_cor_err_cnt(const struct cntr_entry *entry,
+						 void *context, int vl,
+						 int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[18];
-पूर्ण
+	return dd->rcv_err_status_cnt[18];
+}
 
-अटल u64 access_rx_rbuf_lookup_des_unc_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						 व्योम *context, पूर्णांक vl,
-						 पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_rbuf_lookup_des_unc_err_cnt(const struct cntr_entry *entry,
+						 void *context, int vl,
+						 int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[17];
-पूर्ण
+	return dd->rcv_err_status_cnt[17];
+}
 
-अटल u64 access_rx_rbuf_lookup_des_reg_unc_cor_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_rbuf_lookup_des_reg_unc_cor_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[16];
-पूर्ण
+	return dd->rcv_err_status_cnt[16];
+}
 
-अटल u64 access_rx_rbuf_lookup_des_reg_unc_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_rbuf_lookup_des_reg_unc_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[15];
-पूर्ण
+	return dd->rcv_err_status_cnt[15];
+}
 
-अटल u64 access_rx_rbuf_मुक्त_list_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						व्योम *context, पूर्णांक vl,
-						पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_rbuf_free_list_cor_err_cnt(const struct cntr_entry *entry,
+						void *context, int vl,
+						int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[14];
-पूर्ण
+	return dd->rcv_err_status_cnt[14];
+}
 
-अटल u64 access_rx_rbuf_मुक्त_list_unc_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						व्योम *context, पूर्णांक vl,
-						पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_rbuf_free_list_unc_err_cnt(const struct cntr_entry *entry,
+						void *context, int vl,
+						int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[13];
-पूर्ण
+	return dd->rcv_err_status_cnt[13];
+}
 
-अटल u64 access_rx_rcv_fsm_encoding_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					      व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_rx_rcv_fsm_encoding_err_cnt(const struct cntr_entry *entry,
+					      void *context, int vl, int mode,
 					      u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[12];
-पूर्ण
+	return dd->rcv_err_status_cnt[12];
+}
 
-अटल u64 access_rx_dma_flag_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					  व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_rx_dma_flag_cor_err_cnt(const struct cntr_entry *entry,
+					  void *context, int vl, int mode,
 					  u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[11];
-पूर्ण
+	return dd->rcv_err_status_cnt[11];
+}
 
-अटल u64 access_rx_dma_flag_unc_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					  व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_rx_dma_flag_unc_err_cnt(const struct cntr_entry *entry,
+					  void *context, int vl, int mode,
 					  u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[10];
-पूर्ण
+	return dd->rcv_err_status_cnt[10];
+}
 
-अटल u64 access_rx_dc_sop_eop_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					       व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_rx_dc_sop_eop_parity_err_cnt(const struct cntr_entry *entry,
+					       void *context, int vl, int mode,
 					       u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[9];
-पूर्ण
+	return dd->rcv_err_status_cnt[9];
+}
 
-अटल u64 access_rx_rcv_csr_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					    व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_rx_rcv_csr_parity_err_cnt(const struct cntr_entry *entry,
+					    void *context, int vl, int mode,
 					    u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[8];
-पूर्ण
+	return dd->rcv_err_status_cnt[8];
+}
 
-अटल u64 access_rx_rcv_qp_map_table_cor_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_rcv_qp_map_table_cor_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[7];
-पूर्ण
+	return dd->rcv_err_status_cnt[7];
+}
 
-अटल u64 access_rx_rcv_qp_map_table_unc_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_rx_rcv_qp_map_table_unc_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[6];
-पूर्ण
+	return dd->rcv_err_status_cnt[6];
+}
 
-अटल u64 access_rx_rcv_data_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					  व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_rx_rcv_data_cor_err_cnt(const struct cntr_entry *entry,
+					  void *context, int vl, int mode,
 					  u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[5];
-पूर्ण
+	return dd->rcv_err_status_cnt[5];
+}
 
-अटल u64 access_rx_rcv_data_unc_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					  व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_rx_rcv_data_unc_err_cnt(const struct cntr_entry *entry,
+					  void *context, int vl, int mode,
 					  u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[4];
-पूर्ण
+	return dd->rcv_err_status_cnt[4];
+}
 
-अटल u64 access_rx_rcv_hdr_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					 व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_rx_rcv_hdr_cor_err_cnt(const struct cntr_entry *entry,
+					 void *context, int vl, int mode,
 					 u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[3];
-पूर्ण
+	return dd->rcv_err_status_cnt[3];
+}
 
-अटल u64 access_rx_rcv_hdr_unc_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					 व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_rx_rcv_hdr_unc_err_cnt(const struct cntr_entry *entry,
+					 void *context, int vl, int mode,
 					 u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[2];
-पूर्ण
+	return dd->rcv_err_status_cnt[2];
+}
 
-अटल u64 access_rx_dc_पूर्णांकf_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					    व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_rx_dc_intf_parity_err_cnt(const struct cntr_entry *entry,
+					    void *context, int vl, int mode,
 					    u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[1];
-पूर्ण
+	return dd->rcv_err_status_cnt[1];
+}
 
-अटल u64 access_rx_dma_csr_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					 व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_rx_dma_csr_cor_err_cnt(const struct cntr_entry *entry,
+					 void *context, int vl, int mode,
 					 u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->rcv_err_status_cnt[0];
-पूर्ण
+	return dd->rcv_err_status_cnt[0];
+}
 
 /*
  * Software counters corresponding to each of the
  * error status bits within SendPioErrStatus
  */
-अटल u64 access_pio_pec_sop_head_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pio_pec_sop_head_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[35];
-पूर्ण
+	return dd->send_pio_err_status_cnt[35];
+}
 
-अटल u64 access_pio_pcc_sop_head_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pio_pcc_sop_head_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[34];
-पूर्ण
+	return dd->send_pio_err_status_cnt[34];
+}
 
-अटल u64 access_pio_last_वापसed_cnt_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pio_last_returned_cnt_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[33];
-पूर्ण
+	return dd->send_pio_err_status_cnt[33];
+}
 
-अटल u64 access_pio_current_मुक्त_cnt_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pio_current_free_cnt_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[32];
-पूर्ण
+	return dd->send_pio_err_status_cnt[32];
+}
 
-अटल u64 access_pio_reserved_31_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					  व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pio_reserved_31_err_cnt(const struct cntr_entry *entry,
+					  void *context, int vl, int mode,
 					  u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[31];
-पूर्ण
+	return dd->send_pio_err_status_cnt[31];
+}
 
-अटल u64 access_pio_reserved_30_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					  व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pio_reserved_30_err_cnt(const struct cntr_entry *entry,
+					  void *context, int vl, int mode,
 					  u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[30];
-पूर्ण
+	return dd->send_pio_err_status_cnt[30];
+}
 
-अटल u64 access_pio_ppmc_sop_len_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					   व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pio_ppmc_sop_len_err_cnt(const struct cntr_entry *entry,
+					   void *context, int vl, int mode,
 					   u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[29];
-पूर्ण
+	return dd->send_pio_err_status_cnt[29];
+}
 
-अटल u64 access_pio_ppmc_bqc_mem_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pio_ppmc_bqc_mem_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[28];
-पूर्ण
+	return dd->send_pio_err_status_cnt[28];
+}
 
-अटल u64 access_pio_vl_fअगरo_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					     व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pio_vl_fifo_parity_err_cnt(const struct cntr_entry *entry,
+					     void *context, int vl, int mode,
 					     u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[27];
-पूर्ण
+	return dd->send_pio_err_status_cnt[27];
+}
 
-अटल u64 access_pio_vlf_sop_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					     व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pio_vlf_sop_parity_err_cnt(const struct cntr_entry *entry,
+					     void *context, int vl, int mode,
 					     u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[26];
-पूर्ण
+	return dd->send_pio_err_status_cnt[26];
+}
 
-अटल u64 access_pio_vlf_v1_len_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						व्योम *context, पूर्णांक vl,
-						पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pio_vlf_v1_len_parity_err_cnt(const struct cntr_entry *entry,
+						void *context, int vl,
+						int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[25];
-पूर्ण
+	return dd->send_pio_err_status_cnt[25];
+}
 
-अटल u64 access_pio_block_qw_count_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pio_block_qw_count_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[24];
-पूर्ण
+	return dd->send_pio_err_status_cnt[24];
+}
 
-अटल u64 access_pio_ग_लिखो_qw_valid_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pio_write_qw_valid_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[23];
-पूर्ण
+	return dd->send_pio_err_status_cnt[23];
+}
 
-अटल u64 access_pio_state_machine_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					    व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pio_state_machine_err_cnt(const struct cntr_entry *entry,
+					    void *context, int vl, int mode,
 					    u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[22];
-पूर्ण
+	return dd->send_pio_err_status_cnt[22];
+}
 
-अटल u64 access_pio_ग_लिखो_data_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						व्योम *context, पूर्णांक vl,
-						पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pio_write_data_parity_err_cnt(const struct cntr_entry *entry,
+						void *context, int vl,
+						int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[21];
-पूर्ण
+	return dd->send_pio_err_status_cnt[21];
+}
 
-अटल u64 access_pio_host_addr_mem_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						व्योम *context, पूर्णांक vl,
-						पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pio_host_addr_mem_cor_err_cnt(const struct cntr_entry *entry,
+						void *context, int vl,
+						int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[20];
-पूर्ण
+	return dd->send_pio_err_status_cnt[20];
+}
 
-अटल u64 access_pio_host_addr_mem_unc_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						व्योम *context, पूर्णांक vl,
-						पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pio_host_addr_mem_unc_err_cnt(const struct cntr_entry *entry,
+						void *context, int vl,
+						int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[19];
-पूर्ण
+	return dd->send_pio_err_status_cnt[19];
+}
 
-अटल u64 access_pio_pkt_evict_sm_or_arb_sm_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pio_pkt_evict_sm_or_arb_sm_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[18];
-पूर्ण
+	return dd->send_pio_err_status_cnt[18];
+}
 
-अटल u64 access_pio_init_sm_in_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					 व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pio_init_sm_in_err_cnt(const struct cntr_entry *entry,
+					 void *context, int vl, int mode,
 					 u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[17];
-पूर्ण
+	return dd->send_pio_err_status_cnt[17];
+}
 
-अटल u64 access_pio_ppmc_pbl_fअगरo_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					    व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pio_ppmc_pbl_fifo_err_cnt(const struct cntr_entry *entry,
+					    void *context, int vl, int mode,
 					    u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[16];
-पूर्ण
+	return dd->send_pio_err_status_cnt[16];
+}
 
-अटल u64 access_pio_credit_ret_fअगरo_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pio_credit_ret_fifo_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[15];
-पूर्ण
+	return dd->send_pio_err_status_cnt[15];
+}
 
-अटल u64 access_pio_v1_len_mem_bank1_cor_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pio_v1_len_mem_bank1_cor_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[14];
-पूर्ण
+	return dd->send_pio_err_status_cnt[14];
+}
 
-अटल u64 access_pio_v1_len_mem_bank0_cor_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pio_v1_len_mem_bank0_cor_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[13];
-पूर्ण
+	return dd->send_pio_err_status_cnt[13];
+}
 
-अटल u64 access_pio_v1_len_mem_bank1_unc_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pio_v1_len_mem_bank1_unc_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[12];
-पूर्ण
+	return dd->send_pio_err_status_cnt[12];
+}
 
-अटल u64 access_pio_v1_len_mem_bank0_unc_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pio_v1_len_mem_bank0_unc_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[11];
-पूर्ण
+	return dd->send_pio_err_status_cnt[11];
+}
 
-अटल u64 access_pio_sm_pkt_reset_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pio_sm_pkt_reset_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[10];
-पूर्ण
+	return dd->send_pio_err_status_cnt[10];
+}
 
-अटल u64 access_pio_pkt_evict_fअगरo_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pio_pkt_evict_fifo_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[9];
-पूर्ण
+	return dd->send_pio_err_status_cnt[9];
+}
 
-अटल u64 access_pio_sbrdctrl_crrel_fअगरo_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pio_sbrdctrl_crrel_fifo_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[8];
-पूर्ण
+	return dd->send_pio_err_status_cnt[8];
+}
 
-अटल u64 access_pio_sbrdctl_crrel_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pio_sbrdctl_crrel_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[7];
-पूर्ण
+	return dd->send_pio_err_status_cnt[7];
+}
 
-अटल u64 access_pio_pec_fअगरo_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					      व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pio_pec_fifo_parity_err_cnt(const struct cntr_entry *entry,
+					      void *context, int vl, int mode,
 					      u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[6];
-पूर्ण
+	return dd->send_pio_err_status_cnt[6];
+}
 
-अटल u64 access_pio_pcc_fअगरo_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					      व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pio_pcc_fifo_parity_err_cnt(const struct cntr_entry *entry,
+					      void *context, int vl, int mode,
 					      u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[5];
-पूर्ण
+	return dd->send_pio_err_status_cnt[5];
+}
 
-अटल u64 access_pio_sb_mem_fअगरo1_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					   व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pio_sb_mem_fifo1_err_cnt(const struct cntr_entry *entry,
+					   void *context, int vl, int mode,
 					   u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[4];
-पूर्ण
+	return dd->send_pio_err_status_cnt[4];
+}
 
-अटल u64 access_pio_sb_mem_fअगरo0_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					   व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pio_sb_mem_fifo0_err_cnt(const struct cntr_entry *entry,
+					   void *context, int vl, int mode,
 					   u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[3];
-पूर्ण
+	return dd->send_pio_err_status_cnt[3];
+}
 
-अटल u64 access_pio_csr_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					 व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pio_csr_parity_err_cnt(const struct cntr_entry *entry,
+					 void *context, int vl, int mode,
 					 u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[2];
-पूर्ण
+	return dd->send_pio_err_status_cnt[2];
+}
 
-अटल u64 access_pio_ग_लिखो_addr_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						व्योम *context, पूर्णांक vl,
-						पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pio_write_addr_parity_err_cnt(const struct cntr_entry *entry,
+						void *context, int vl,
+						int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[1];
-पूर्ण
+	return dd->send_pio_err_status_cnt[1];
+}
 
-अटल u64 access_pio_ग_लिखो_bad_ctxt_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					     व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pio_write_bad_ctxt_err_cnt(const struct cntr_entry *entry,
+					     void *context, int vl, int mode,
 					     u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_pio_err_status_cnt[0];
-पूर्ण
+	return dd->send_pio_err_status_cnt[0];
+}
 
 /*
  * Software counters corresponding to each of the
  * error status bits within SendDmaErrStatus
  */
-अटल u64 access_sdma_pcie_req_tracking_cor_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_sdma_pcie_req_tracking_cor_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_dma_err_status_cnt[3];
-पूर्ण
+	return dd->send_dma_err_status_cnt[3];
+}
 
-अटल u64 access_sdma_pcie_req_tracking_unc_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_sdma_pcie_req_tracking_unc_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_dma_err_status_cnt[2];
-पूर्ण
+	return dd->send_dma_err_status_cnt[2];
+}
 
-अटल u64 access_sdma_csr_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					  व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_sdma_csr_parity_err_cnt(const struct cntr_entry *entry,
+					  void *context, int vl, int mode,
 					  u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_dma_err_status_cnt[1];
-पूर्ण
+	return dd->send_dma_err_status_cnt[1];
+}
 
-अटल u64 access_sdma_rpy_tag_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-				       व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_sdma_rpy_tag_err_cnt(const struct cntr_entry *entry,
+				       void *context, int vl, int mode,
 				       u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_dma_err_status_cnt[0];
-पूर्ण
+	return dd->send_dma_err_status_cnt[0];
+}
 
 /*
  * Software counters corresponding to each of the
  * error status bits within SendEgressErrStatus
  */
-अटल u64 access_tx_पढ़ो_pio_memory_csr_unc_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_read_pio_memory_csr_unc_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[63];
-पूर्ण
+	return dd->send_egress_err_status_cnt[63];
+}
 
-अटल u64 access_tx_पढ़ो_sdma_memory_csr_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_read_sdma_memory_csr_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[62];
-पूर्ण
+	return dd->send_egress_err_status_cnt[62];
+}
 
-अटल u64 access_tx_egress_fअगरo_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					     व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_tx_egress_fifo_cor_err_cnt(const struct cntr_entry *entry,
+					     void *context, int vl, int mode,
 					     u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[61];
-पूर्ण
+	return dd->send_egress_err_status_cnt[61];
+}
 
-अटल u64 access_tx_पढ़ो_pio_memory_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						 व्योम *context, पूर्णांक vl,
-						 पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_read_pio_memory_cor_err_cnt(const struct cntr_entry *entry,
+						 void *context, int vl,
+						 int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[60];
-पूर्ण
+	return dd->send_egress_err_status_cnt[60];
+}
 
-अटल u64 access_tx_पढ़ो_sdma_memory_cor_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_read_sdma_memory_cor_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[59];
-पूर्ण
+	return dd->send_egress_err_status_cnt[59];
+}
 
-अटल u64 access_tx_sb_hdr_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_tx_sb_hdr_cor_err_cnt(const struct cntr_entry *entry,
+					void *context, int vl, int mode,
 					u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[58];
-पूर्ण
+	return dd->send_egress_err_status_cnt[58];
+}
 
-अटल u64 access_tx_credit_overrun_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					    व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_tx_credit_overrun_err_cnt(const struct cntr_entry *entry,
+					    void *context, int vl, int mode,
 					    u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[57];
-पूर्ण
+	return dd->send_egress_err_status_cnt[57];
+}
 
-अटल u64 access_tx_launch_fअगरo8_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					      व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_tx_launch_fifo8_cor_err_cnt(const struct cntr_entry *entry,
+					      void *context, int vl, int mode,
 					      u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[56];
-पूर्ण
+	return dd->send_egress_err_status_cnt[56];
+}
 
-अटल u64 access_tx_launch_fअगरo7_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					      व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_tx_launch_fifo7_cor_err_cnt(const struct cntr_entry *entry,
+					      void *context, int vl, int mode,
 					      u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[55];
-पूर्ण
+	return dd->send_egress_err_status_cnt[55];
+}
 
-अटल u64 access_tx_launch_fअगरo6_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					      व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_tx_launch_fifo6_cor_err_cnt(const struct cntr_entry *entry,
+					      void *context, int vl, int mode,
 					      u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[54];
-पूर्ण
+	return dd->send_egress_err_status_cnt[54];
+}
 
-अटल u64 access_tx_launch_fअगरo5_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					      व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_tx_launch_fifo5_cor_err_cnt(const struct cntr_entry *entry,
+					      void *context, int vl, int mode,
 					      u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[53];
-पूर्ण
+	return dd->send_egress_err_status_cnt[53];
+}
 
-अटल u64 access_tx_launch_fअगरo4_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					      व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_tx_launch_fifo4_cor_err_cnt(const struct cntr_entry *entry,
+					      void *context, int vl, int mode,
 					      u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[52];
-पूर्ण
+	return dd->send_egress_err_status_cnt[52];
+}
 
-अटल u64 access_tx_launch_fअगरo3_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					      व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_tx_launch_fifo3_cor_err_cnt(const struct cntr_entry *entry,
+					      void *context, int vl, int mode,
 					      u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[51];
-पूर्ण
+	return dd->send_egress_err_status_cnt[51];
+}
 
-अटल u64 access_tx_launch_fअगरo2_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					      व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_tx_launch_fifo2_cor_err_cnt(const struct cntr_entry *entry,
+					      void *context, int vl, int mode,
 					      u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[50];
-पूर्ण
+	return dd->send_egress_err_status_cnt[50];
+}
 
-अटल u64 access_tx_launch_fअगरo1_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					      व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_tx_launch_fifo1_cor_err_cnt(const struct cntr_entry *entry,
+					      void *context, int vl, int mode,
 					      u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[49];
-पूर्ण
+	return dd->send_egress_err_status_cnt[49];
+}
 
-अटल u64 access_tx_launch_fअगरo0_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					      व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_tx_launch_fifo0_cor_err_cnt(const struct cntr_entry *entry,
+					      void *context, int vl, int mode,
 					      u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[48];
-पूर्ण
+	return dd->send_egress_err_status_cnt[48];
+}
 
-अटल u64 access_tx_credit_वापस_vl_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					      व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_tx_credit_return_vl_err_cnt(const struct cntr_entry *entry,
+					      void *context, int vl, int mode,
 					      u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[47];
-पूर्ण
+	return dd->send_egress_err_status_cnt[47];
+}
 
-अटल u64 access_tx_hcrc_insertion_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					    व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_tx_hcrc_insertion_err_cnt(const struct cntr_entry *entry,
+					    void *context, int vl, int mode,
 					    u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[46];
-पूर्ण
+	return dd->send_egress_err_status_cnt[46];
+}
 
-अटल u64 access_tx_egress_fअगरo_unc_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					     व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_tx_egress_fifo_unc_err_cnt(const struct cntr_entry *entry,
+					     void *context, int vl, int mode,
 					     u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[45];
-पूर्ण
+	return dd->send_egress_err_status_cnt[45];
+}
 
-अटल u64 access_tx_पढ़ो_pio_memory_unc_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						 व्योम *context, पूर्णांक vl,
-						 पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_read_pio_memory_unc_err_cnt(const struct cntr_entry *entry,
+						 void *context, int vl,
+						 int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[44];
-पूर्ण
+	return dd->send_egress_err_status_cnt[44];
+}
 
-अटल u64 access_tx_पढ़ो_sdma_memory_unc_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_read_sdma_memory_unc_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[43];
-पूर्ण
+	return dd->send_egress_err_status_cnt[43];
+}
 
-अटल u64 access_tx_sb_hdr_unc_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_tx_sb_hdr_unc_err_cnt(const struct cntr_entry *entry,
+					void *context, int vl, int mode,
 					u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[42];
-पूर्ण
+	return dd->send_egress_err_status_cnt[42];
+}
 
-अटल u64 access_tx_credit_वापस_partiy_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_credit_return_partiy_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[41];
-पूर्ण
+	return dd->send_egress_err_status_cnt[41];
+}
 
-अटल u64 access_tx_launch_fअगरo8_unc_or_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_launch_fifo8_unc_or_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[40];
-पूर्ण
+	return dd->send_egress_err_status_cnt[40];
+}
 
-अटल u64 access_tx_launch_fअगरo7_unc_or_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_launch_fifo7_unc_or_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[39];
-पूर्ण
+	return dd->send_egress_err_status_cnt[39];
+}
 
-अटल u64 access_tx_launch_fअगरo6_unc_or_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_launch_fifo6_unc_or_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[38];
-पूर्ण
+	return dd->send_egress_err_status_cnt[38];
+}
 
-अटल u64 access_tx_launch_fअगरo5_unc_or_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_launch_fifo5_unc_or_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[37];
-पूर्ण
+	return dd->send_egress_err_status_cnt[37];
+}
 
-अटल u64 access_tx_launch_fअगरo4_unc_or_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_launch_fifo4_unc_or_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[36];
-पूर्ण
+	return dd->send_egress_err_status_cnt[36];
+}
 
-अटल u64 access_tx_launch_fअगरo3_unc_or_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_launch_fifo3_unc_or_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[35];
-पूर्ण
+	return dd->send_egress_err_status_cnt[35];
+}
 
-अटल u64 access_tx_launch_fअगरo2_unc_or_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_launch_fifo2_unc_or_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[34];
-पूर्ण
+	return dd->send_egress_err_status_cnt[34];
+}
 
-अटल u64 access_tx_launch_fअगरo1_unc_or_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_launch_fifo1_unc_or_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[33];
-पूर्ण
+	return dd->send_egress_err_status_cnt[33];
+}
 
-अटल u64 access_tx_launch_fअगरo0_unc_or_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_launch_fifo0_unc_or_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[32];
-पूर्ण
+	return dd->send_egress_err_status_cnt[32];
+}
 
-अटल u64 access_tx_sdma15_disallowed_packet_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_sdma15_disallowed_packet_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[31];
-पूर्ण
+	return dd->send_egress_err_status_cnt[31];
+}
 
-अटल u64 access_tx_sdma14_disallowed_packet_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_sdma14_disallowed_packet_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[30];
-पूर्ण
+	return dd->send_egress_err_status_cnt[30];
+}
 
-अटल u64 access_tx_sdma13_disallowed_packet_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_sdma13_disallowed_packet_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[29];
-पूर्ण
+	return dd->send_egress_err_status_cnt[29];
+}
 
-अटल u64 access_tx_sdma12_disallowed_packet_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_sdma12_disallowed_packet_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[28];
-पूर्ण
+	return dd->send_egress_err_status_cnt[28];
+}
 
-अटल u64 access_tx_sdma11_disallowed_packet_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_sdma11_disallowed_packet_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[27];
-पूर्ण
+	return dd->send_egress_err_status_cnt[27];
+}
 
-अटल u64 access_tx_sdma10_disallowed_packet_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_sdma10_disallowed_packet_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[26];
-पूर्ण
+	return dd->send_egress_err_status_cnt[26];
+}
 
-अटल u64 access_tx_sdma9_disallowed_packet_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_sdma9_disallowed_packet_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[25];
-पूर्ण
+	return dd->send_egress_err_status_cnt[25];
+}
 
-अटल u64 access_tx_sdma8_disallowed_packet_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_sdma8_disallowed_packet_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[24];
-पूर्ण
+	return dd->send_egress_err_status_cnt[24];
+}
 
-अटल u64 access_tx_sdma7_disallowed_packet_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_sdma7_disallowed_packet_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[23];
-पूर्ण
+	return dd->send_egress_err_status_cnt[23];
+}
 
-अटल u64 access_tx_sdma6_disallowed_packet_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_sdma6_disallowed_packet_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[22];
-पूर्ण
+	return dd->send_egress_err_status_cnt[22];
+}
 
-अटल u64 access_tx_sdma5_disallowed_packet_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_sdma5_disallowed_packet_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[21];
-पूर्ण
+	return dd->send_egress_err_status_cnt[21];
+}
 
-अटल u64 access_tx_sdma4_disallowed_packet_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_sdma4_disallowed_packet_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[20];
-पूर्ण
+	return dd->send_egress_err_status_cnt[20];
+}
 
-अटल u64 access_tx_sdma3_disallowed_packet_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_sdma3_disallowed_packet_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[19];
-पूर्ण
+	return dd->send_egress_err_status_cnt[19];
+}
 
-अटल u64 access_tx_sdma2_disallowed_packet_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_sdma2_disallowed_packet_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[18];
-पूर्ण
+	return dd->send_egress_err_status_cnt[18];
+}
 
-अटल u64 access_tx_sdma1_disallowed_packet_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_sdma1_disallowed_packet_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[17];
-पूर्ण
+	return dd->send_egress_err_status_cnt[17];
+}
 
-अटल u64 access_tx_sdma0_disallowed_packet_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_sdma0_disallowed_packet_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[16];
-पूर्ण
+	return dd->send_egress_err_status_cnt[16];
+}
 
-अटल u64 access_tx_config_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					   व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_tx_config_parity_err_cnt(const struct cntr_entry *entry,
+					   void *context, int vl, int mode,
 					   u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[15];
-पूर्ण
+	return dd->send_egress_err_status_cnt[15];
+}
 
-अटल u64 access_tx_sbrd_ctl_csr_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						 व्योम *context, पूर्णांक vl,
-						 पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_sbrd_ctl_csr_parity_err_cnt(const struct cntr_entry *entry,
+						 void *context, int vl,
+						 int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[14];
-पूर्ण
+	return dd->send_egress_err_status_cnt[14];
+}
 
-अटल u64 access_tx_launch_csr_parity_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					       व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_tx_launch_csr_parity_err_cnt(const struct cntr_entry *entry,
+					       void *context, int vl, int mode,
 					       u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[13];
-पूर्ण
+	return dd->send_egress_err_status_cnt[13];
+}
 
-अटल u64 access_tx_illegal_vl_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_tx_illegal_vl_err_cnt(const struct cntr_entry *entry,
+					void *context, int vl, int mode,
 					u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[12];
-पूर्ण
+	return dd->send_egress_err_status_cnt[12];
+}
 
-अटल u64 access_tx_sbrd_ctl_state_machine_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_sbrd_ctl_state_machine_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[11];
-पूर्ण
+	return dd->send_egress_err_status_cnt[11];
+}
 
-अटल u64 access_egress_reserved_10_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					     व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_egress_reserved_10_err_cnt(const struct cntr_entry *entry,
+					     void *context, int vl, int mode,
 					     u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[10];
-पूर्ण
+	return dd->send_egress_err_status_cnt[10];
+}
 
-अटल u64 access_egress_reserved_9_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					    व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_egress_reserved_9_err_cnt(const struct cntr_entry *entry,
+					    void *context, int vl, int mode,
 					    u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[9];
-पूर्ण
+	return dd->send_egress_err_status_cnt[9];
+}
 
-अटल u64 access_tx_sdma_launch_पूर्णांकf_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_sdma_launch_intf_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[8];
-पूर्ण
+	return dd->send_egress_err_status_cnt[8];
+}
 
-अटल u64 access_tx_pio_launch_पूर्णांकf_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_pio_launch_intf_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[7];
-पूर्ण
+	return dd->send_egress_err_status_cnt[7];
+}
 
-अटल u64 access_egress_reserved_6_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					    व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_egress_reserved_6_err_cnt(const struct cntr_entry *entry,
+					    void *context, int vl, int mode,
 					    u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[6];
-पूर्ण
+	return dd->send_egress_err_status_cnt[6];
+}
 
-अटल u64 access_tx_incorrect_link_state_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_incorrect_link_state_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[5];
-पूर्ण
+	return dd->send_egress_err_status_cnt[5];
+}
 
-अटल u64 access_tx_linkकरोwn_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-				      व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_tx_linkdown_err_cnt(const struct cntr_entry *entry,
+				      void *context, int vl, int mode,
 				      u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[4];
-पूर्ण
+	return dd->send_egress_err_status_cnt[4];
+}
 
-अटल u64 access_tx_egress_fअगरi_underrun_or_parity_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_egress_fifi_underrun_or_parity_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[3];
-पूर्ण
+	return dd->send_egress_err_status_cnt[3];
+}
 
-अटल u64 access_egress_reserved_2_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					    व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_egress_reserved_2_err_cnt(const struct cntr_entry *entry,
+					    void *context, int vl, int mode,
 					    u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[2];
-पूर्ण
+	return dd->send_egress_err_status_cnt[2];
+}
 
-अटल u64 access_tx_pkt_पूर्णांकegrity_mem_unc_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_pkt_integrity_mem_unc_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[1];
-पूर्ण
+	return dd->send_egress_err_status_cnt[1];
+}
 
-अटल u64 access_tx_pkt_पूर्णांकegrity_mem_cor_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_tx_pkt_integrity_mem_cor_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_egress_err_status_cnt[0];
-पूर्ण
+	return dd->send_egress_err_status_cnt[0];
+}
 
 /*
  * Software counters corresponding to each of the
  * error status bits within SendErrStatus
  */
-अटल u64 access_send_csr_ग_लिखो_bad_addr_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_send_csr_write_bad_addr_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_err_status_cnt[2];
-पूर्ण
+	return dd->send_err_status_cnt[2];
+}
 
-अटल u64 access_send_csr_पढ़ो_bad_addr_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						 व्योम *context, पूर्णांक vl,
-						 पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_send_csr_read_bad_addr_err_cnt(const struct cntr_entry *entry,
+						 void *context, int vl,
+						 int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_err_status_cnt[1];
-पूर्ण
+	return dd->send_err_status_cnt[1];
+}
 
-अटल u64 access_send_csr_parity_cnt(स्थिर काष्ठा cntr_entry *entry,
-				      व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_send_csr_parity_cnt(const struct cntr_entry *entry,
+				      void *context, int vl, int mode,
 				      u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->send_err_status_cnt[0];
-पूर्ण
+	return dd->send_err_status_cnt[0];
+}
 
 /*
  * Software counters corresponding to each of the
  * error status bits within SendCtxtErrStatus
  */
-अटल u64 access_pio_ग_लिखो_out_of_bounds_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pio_write_out_of_bounds_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_ctxt_err_status_cnt[4];
-पूर्ण
+	return dd->sw_ctxt_err_status_cnt[4];
+}
 
-अटल u64 access_pio_ग_लिखो_overflow_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					     व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pio_write_overflow_err_cnt(const struct cntr_entry *entry,
+					     void *context, int vl, int mode,
 					     u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_ctxt_err_status_cnt[3];
-पूर्ण
+	return dd->sw_ctxt_err_status_cnt[3];
+}
 
-अटल u64 access_pio_ग_लिखो_crosses_boundary_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pio_write_crosses_boundary_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_ctxt_err_status_cnt[2];
-पूर्ण
+	return dd->sw_ctxt_err_status_cnt[2];
+}
 
-अटल u64 access_pio_disallowed_packet_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-						व्योम *context, पूर्णांक vl,
-						पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_pio_disallowed_packet_err_cnt(const struct cntr_entry *entry,
+						void *context, int vl,
+						int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_ctxt_err_status_cnt[1];
-पूर्ण
+	return dd->sw_ctxt_err_status_cnt[1];
+}
 
-अटल u64 access_pio_inconsistent_sop_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					       व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_pio_inconsistent_sop_err_cnt(const struct cntr_entry *entry,
+					       void *context, int vl, int mode,
 					       u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_ctxt_err_status_cnt[0];
-पूर्ण
+	return dd->sw_ctxt_err_status_cnt[0];
+}
 
 /*
  * Software counters corresponding to each of the
  * error status bits within SendDmaEngErrStatus
  */
-अटल u64 access_sdma_header_request_fअगरo_cor_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_sdma_header_request_fifo_cor_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_send_dma_eng_err_status_cnt[23];
-पूर्ण
+	return dd->sw_send_dma_eng_err_status_cnt[23];
+}
 
-अटल u64 access_sdma_header_storage_cor_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_sdma_header_storage_cor_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_send_dma_eng_err_status_cnt[22];
-पूर्ण
+	return dd->sw_send_dma_eng_err_status_cnt[22];
+}
 
-अटल u64 access_sdma_packet_tracking_cor_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_sdma_packet_tracking_cor_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_send_dma_eng_err_status_cnt[21];
-पूर्ण
+	return dd->sw_send_dma_eng_err_status_cnt[21];
+}
 
-अटल u64 access_sdma_assembly_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					    व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_sdma_assembly_cor_err_cnt(const struct cntr_entry *entry,
+					    void *context, int vl, int mode,
 					    u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_send_dma_eng_err_status_cnt[20];
-पूर्ण
+	return dd->sw_send_dma_eng_err_status_cnt[20];
+}
 
-अटल u64 access_sdma_desc_table_cor_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					      व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_sdma_desc_table_cor_err_cnt(const struct cntr_entry *entry,
+					      void *context, int vl, int mode,
 					      u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_send_dma_eng_err_status_cnt[19];
-पूर्ण
+	return dd->sw_send_dma_eng_err_status_cnt[19];
+}
 
-अटल u64 access_sdma_header_request_fअगरo_unc_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_sdma_header_request_fifo_unc_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_send_dma_eng_err_status_cnt[18];
-पूर्ण
+	return dd->sw_send_dma_eng_err_status_cnt[18];
+}
 
-अटल u64 access_sdma_header_storage_unc_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_sdma_header_storage_unc_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_send_dma_eng_err_status_cnt[17];
-पूर्ण
+	return dd->sw_send_dma_eng_err_status_cnt[17];
+}
 
-अटल u64 access_sdma_packet_tracking_unc_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_sdma_packet_tracking_unc_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_send_dma_eng_err_status_cnt[16];
-पूर्ण
+	return dd->sw_send_dma_eng_err_status_cnt[16];
+}
 
-अटल u64 access_sdma_assembly_unc_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					    व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_sdma_assembly_unc_err_cnt(const struct cntr_entry *entry,
+					    void *context, int vl, int mode,
 					    u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_send_dma_eng_err_status_cnt[15];
-पूर्ण
+	return dd->sw_send_dma_eng_err_status_cnt[15];
+}
 
-अटल u64 access_sdma_desc_table_unc_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					      व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_sdma_desc_table_unc_err_cnt(const struct cntr_entry *entry,
+					      void *context, int vl, int mode,
 					      u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_send_dma_eng_err_status_cnt[14];
-पूर्ण
+	return dd->sw_send_dma_eng_err_status_cnt[14];
+}
 
-अटल u64 access_sdma_समयout_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-				       व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_sdma_timeout_err_cnt(const struct cntr_entry *entry,
+				       void *context, int vl, int mode,
 				       u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_send_dma_eng_err_status_cnt[13];
-पूर्ण
+	return dd->sw_send_dma_eng_err_status_cnt[13];
+}
 
-अटल u64 access_sdma_header_length_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					     व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_sdma_header_length_err_cnt(const struct cntr_entry *entry,
+					     void *context, int vl, int mode,
 					     u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_send_dma_eng_err_status_cnt[12];
-पूर्ण
+	return dd->sw_send_dma_eng_err_status_cnt[12];
+}
 
-अटल u64 access_sdma_header_address_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					      व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_sdma_header_address_err_cnt(const struct cntr_entry *entry,
+					      void *context, int vl, int mode,
 					      u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_send_dma_eng_err_status_cnt[11];
-पूर्ण
+	return dd->sw_send_dma_eng_err_status_cnt[11];
+}
 
-अटल u64 access_sdma_header_select_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					     व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_sdma_header_select_err_cnt(const struct cntr_entry *entry,
+					     void *context, int vl, int mode,
 					     u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_send_dma_eng_err_status_cnt[10];
-पूर्ण
+	return dd->sw_send_dma_eng_err_status_cnt[10];
+}
 
-अटल u64 access_sdma_reserved_9_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					  व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_sdma_reserved_9_err_cnt(const struct cntr_entry *entry,
+					  void *context, int vl, int mode,
 					  u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_send_dma_eng_err_status_cnt[9];
-पूर्ण
+	return dd->sw_send_dma_eng_err_status_cnt[9];
+}
 
-अटल u64 access_sdma_packet_desc_overflow_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_sdma_packet_desc_overflow_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_send_dma_eng_err_status_cnt[8];
-पूर्ण
+	return dd->sw_send_dma_eng_err_status_cnt[8];
+}
 
-अटल u64 access_sdma_length_mismatch_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					       व्योम *context, पूर्णांक vl,
-					       पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_sdma_length_mismatch_err_cnt(const struct cntr_entry *entry,
+					       void *context, int vl,
+					       int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_send_dma_eng_err_status_cnt[7];
-पूर्ण
+	return dd->sw_send_dma_eng_err_status_cnt[7];
+}
 
-अटल u64 access_sdma_halt_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-				    व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_sdma_halt_err_cnt(const struct cntr_entry *entry,
+				    void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_send_dma_eng_err_status_cnt[6];
-पूर्ण
+	return dd->sw_send_dma_eng_err_status_cnt[6];
+}
 
-अटल u64 access_sdma_mem_पढ़ो_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_sdma_mem_read_err_cnt(const struct cntr_entry *entry,
+					void *context, int vl, int mode,
 					u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_send_dma_eng_err_status_cnt[5];
-पूर्ण
+	return dd->sw_send_dma_eng_err_status_cnt[5];
+}
 
-अटल u64 access_sdma_first_desc_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					  व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_sdma_first_desc_err_cnt(const struct cntr_entry *entry,
+					  void *context, int vl, int mode,
 					  u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_send_dma_eng_err_status_cnt[4];
-पूर्ण
+	return dd->sw_send_dma_eng_err_status_cnt[4];
+}
 
-अटल u64 access_sdma_tail_out_of_bounds_err_cnt(
-				स्थिर काष्ठा cntr_entry *entry,
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+static u64 access_sdma_tail_out_of_bounds_err_cnt(
+				const struct cntr_entry *entry,
+				void *context, int vl, int mode, u64 data)
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_send_dma_eng_err_status_cnt[3];
-पूर्ण
+	return dd->sw_send_dma_eng_err_status_cnt[3];
+}
 
-अटल u64 access_sdma_too_दीर्घ_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_sdma_too_long_err_cnt(const struct cntr_entry *entry,
+					void *context, int vl, int mode,
 					u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_send_dma_eng_err_status_cnt[2];
-पूर्ण
+	return dd->sw_send_dma_eng_err_status_cnt[2];
+}
 
-अटल u64 access_sdma_gen_mismatch_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					    व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_sdma_gen_mismatch_err_cnt(const struct cntr_entry *entry,
+					    void *context, int vl, int mode,
 					    u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_send_dma_eng_err_status_cnt[1];
-पूर्ण
+	return dd->sw_send_dma_eng_err_status_cnt[1];
+}
 
-अटल u64 access_sdma_wrong_dw_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-					व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_sdma_wrong_dw_err_cnt(const struct cntr_entry *entry,
+					void *context, int vl, int mode,
 					u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
-	वापस dd->sw_send_dma_eng_err_status_cnt[0];
-पूर्ण
+	return dd->sw_send_dma_eng_err_status_cnt[0];
+}
 
-अटल u64 access_dc_rcv_err_cnt(स्थिर काष्ठा cntr_entry *entry,
-				 व्योम *context, पूर्णांक vl, पूर्णांक mode,
+static u64 access_dc_rcv_err_cnt(const struct cntr_entry *entry,
+				 void *context, int vl, int mode,
 				 u64 data)
-अणु
-	काष्ठा hfi1_devdata *dd = (काष्ठा hfi1_devdata *)context;
+{
+	struct hfi1_devdata *dd = (struct hfi1_devdata *)context;
 
 	u64 val = 0;
 	u64 csr = entry->csr;
 
-	val = पढ़ो_ग_लिखो_csr(dd, csr, mode, data);
-	अगर (mode == CNTR_MODE_R) अणु
+	val = read_write_csr(dd, csr, mode, data);
+	if (mode == CNTR_MODE_R) {
 		val = val > CNTR_MAX - dd->sw_rcv_bypass_packet_errors ?
 			CNTR_MAX : val + dd->sw_rcv_bypass_packet_errors;
-	पूर्ण अन्यथा अगर (mode == CNTR_MODE_W) अणु
+	} else if (mode == CNTR_MODE_W) {
 		dd->sw_rcv_bypass_packet_errors = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		dd_dev_err(dd, "Invalid cntr register access mode");
-		वापस 0;
-	पूर्ण
-	वापस val;
-पूर्ण
+		return 0;
+	}
+	return val;
+}
 
-#घोषणा def_access_sw_cpu(cntr) \
-अटल u64 access_sw_cpu_##cntr(स्थिर काष्ठा cntr_entry *entry,		      \
-			      व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)      \
-अणु									      \
-	काष्ठा hfi1_pportdata *ppd = (काष्ठा hfi1_pportdata *)context;	      \
-	वापस पढ़ो_ग_लिखो_cpu(ppd->dd, &ppd->ibport_data.rvp.z_ ##cntr,	      \
+#define def_access_sw_cpu(cntr) \
+static u64 access_sw_cpu_##cntr(const struct cntr_entry *entry,		      \
+			      void *context, int vl, int mode, u64 data)      \
+{									      \
+	struct hfi1_pportdata *ppd = (struct hfi1_pportdata *)context;	      \
+	return read_write_cpu(ppd->dd, &ppd->ibport_data.rvp.z_ ##cntr,	      \
 			      ppd->ibport_data.rvp.cntr, vl,		      \
 			      mode, data);				      \
-पूर्ण
+}
 
 def_access_sw_cpu(rc_acks);
 def_access_sw_cpu(rc_qacks);
 def_access_sw_cpu(rc_delayed_comp);
 
-#घोषणा def_access_ibp_counter(cntr) \
-अटल u64 access_ibp_##cntr(स्थिर काष्ठा cntr_entry *entry,		      \
-				व्योम *context, पूर्णांक vl, पूर्णांक mode, u64 data)    \
-अणु									      \
-	काष्ठा hfi1_pportdata *ppd = (काष्ठा hfi1_pportdata *)context;	      \
+#define def_access_ibp_counter(cntr) \
+static u64 access_ibp_##cntr(const struct cntr_entry *entry,		      \
+				void *context, int vl, int mode, u64 data)    \
+{									      \
+	struct hfi1_pportdata *ppd = (struct hfi1_pportdata *)context;	      \
 									      \
-	अगर (vl != CNTR_INVALID_VL)					      \
-		वापस 0;						      \
+	if (vl != CNTR_INVALID_VL)					      \
+		return 0;						      \
 									      \
-	वापस पढ़ो_ग_लिखो_sw(ppd->dd, &ppd->ibport_data.rvp.n_ ##cntr,	      \
+	return read_write_sw(ppd->dd, &ppd->ibport_data.rvp.n_ ##cntr,	      \
 			     mode, data);				      \
-पूर्ण
+}
 
 def_access_ibp_counter(loop_pkts);
 def_access_ibp_counter(rc_resends);
 def_access_ibp_counter(rnr_naks);
 def_access_ibp_counter(other_naks);
-def_access_ibp_counter(rc_समयouts);
+def_access_ibp_counter(rc_timeouts);
 def_access_ibp_counter(pkt_drops);
-def_access_ibp_counter(dmaरुको);
+def_access_ibp_counter(dmawait);
 def_access_ibp_counter(rc_seqnak);
 def_access_ibp_counter(rc_dupreq);
 def_access_ibp_counter(rdma_seq);
 def_access_ibp_counter(unaligned);
 def_access_ibp_counter(seq_naks);
-def_access_ibp_counter(rc_crरुकोs);
+def_access_ibp_counter(rc_crwaits);
 
-अटल काष्ठा cntr_entry dev_cntrs[DEV_CNTR_LAST] = अणु
+static struct cntr_entry dev_cntrs[DEV_CNTR_LAST] = {
 [C_RCV_OVF] = RXE32_DEV_CNTR_ELEM(RcvOverflow, RCV_BUF_OVFL_CNT, CNTR_SYNTH),
 [C_RX_LEN_ERR] = RXE32_DEV_CNTR_ELEM(RxLenErr, RCV_LENGTH_ERR_CNT, CNTR_SYNTH),
 [C_RX_SHORT_ERR] = RXE32_DEV_CNTR_ELEM(RxShrErr, RCV_SHORT_ERR_CNT, CNTR_SYNTH),
@@ -4274,21 +4273,21 @@ def_access_ibp_counter(rc_crरुकोs);
 	DC_PERF_CNTR_LCB(DcStsTxMbe, DC_LCB_PG_STS_TX_MBE_CNT,
 			 CNTR_SYNTH),
 [C_SW_CPU_INTR] = CNTR_ELEM("Intr", 0, 0, CNTR_NORMAL,
-			    access_sw_cpu_पूर्णांकr),
+			    access_sw_cpu_intr),
 [C_SW_CPU_RCV_LIM] = CNTR_ELEM("RcvLimit", 0, 0, CNTR_NORMAL,
 			    access_sw_cpu_rcv_limit),
 [C_SW_CTX0_SEQ_DROP] = CNTR_ELEM("SeqDrop0", 0, 0, CNTR_NORMAL,
 			    access_sw_ctx0_seq_drop),
 [C_SW_VTX_WAIT] = CNTR_ELEM("vTxWait", 0, 0, CNTR_NORMAL,
-			    access_sw_vtx_रुको),
+			    access_sw_vtx_wait),
 [C_SW_PIO_WAIT] = CNTR_ELEM("PioWait", 0, 0, CNTR_NORMAL,
-			    access_sw_pio_रुको),
+			    access_sw_pio_wait),
 [C_SW_PIO_DRAIN] = CNTR_ELEM("PioDrain", 0, 0, CNTR_NORMAL,
 			    access_sw_pio_drain),
 [C_SW_KMEM_WAIT] = CNTR_ELEM("KmemWait", 0, 0, CNTR_NORMAL,
-			    access_sw_kmem_रुको),
+			    access_sw_kmem_wait),
 [C_SW_TID_WAIT] = CNTR_ELEM("TidWait", 0, 0, CNTR_NORMAL,
-			    hfi1_access_sw_tid_रुको),
+			    hfi1_access_sw_tid_wait),
 [C_SW_SEND_SCHED] = CNTR_ELEM("SendSched", 0, 0, CNTR_NORMAL,
 			    access_sw_send_schedule),
 [C_SDMA_DESC_FETCHED_CNT] = CNTR_ELEM("SDEDscFdCn",
@@ -4297,16 +4296,16 @@ def_access_ibp_counter(rc_crरुकोs);
 				      dev_access_u32_csr),
 [C_SDMA_INT_CNT] = CNTR_ELEM("SDMAInt", 0, 0,
 			     CNTR_NORMAL | CNTR_32BIT | CNTR_SDMA,
-			     access_sde_पूर्णांक_cnt),
+			     access_sde_int_cnt),
 [C_SDMA_ERR_CNT] = CNTR_ELEM("SDMAErrCt", 0, 0,
 			     CNTR_NORMAL | CNTR_32BIT | CNTR_SDMA,
 			     access_sde_err_cnt),
 [C_SDMA_IDLE_INT_CNT] = CNTR_ELEM("SDMAIdInt", 0, 0,
 				  CNTR_NORMAL | CNTR_32BIT | CNTR_SDMA,
-				  access_sde_idle_पूर्णांक_cnt),
+				  access_sde_idle_int_cnt),
 [C_SDMA_PROGRESS_INT_CNT] = CNTR_ELEM("SDMAPrIntCn", 0, 0,
 				      CNTR_NORMAL | CNTR_32BIT | CNTR_SDMA,
-				      access_sde_progress_पूर्णांक_cnt),
+				      access_sde_progress_int_cnt),
 /* MISC_ERR_STATUS */
 [C_MISC_PLL_LOCK_FAIL_ERR] = CNTR_ELEM("MISC_PLL_LOCK_FAIL_ERR", 0, 0,
 				CNTR_NORMAL,
@@ -4319,13 +4318,13 @@ def_access_ibp_counter(rc_crरुकोs);
 				access_misc_invalid_eep_cmd_err_cnt),
 [C_MISC_EFUSE_DONE_PARITY_ERR] = CNTR_ELEM("MISC_EFUSE_DONE_PARITY_ERR", 0, 0,
 				CNTR_NORMAL,
-				access_misc_efuse_करोne_parity_err_cnt),
+				access_misc_efuse_done_parity_err_cnt),
 [C_MISC_EFUSE_WRITE_ERR] = CNTR_ELEM("MISC_EFUSE_WRITE_ERR", 0, 0,
 				CNTR_NORMAL,
-				access_misc_efuse_ग_लिखो_err_cnt),
+				access_misc_efuse_write_err_cnt),
 [C_MISC_EFUSE_READ_BAD_ADDR_ERR] = CNTR_ELEM("MISC_EFUSE_READ_BAD_ADDR_ERR", 0,
 				0, CNTR_NORMAL,
-				access_misc_efuse_पढ़ो_bad_addr_err_cnt),
+				access_misc_efuse_read_bad_addr_err_cnt),
 [C_MISC_EFUSE_CSR_PARITY_ERR] = CNTR_ELEM("MISC_EFUSE_CSR_PARITY_ERR", 0, 0,
 				CNTR_NORMAL,
 				access_misc_efuse_csr_parity_err_cnt),
@@ -4337,13 +4336,13 @@ def_access_ibp_counter(rc_crरुकोs);
 				access_misc_key_mismatch_err_cnt),
 [C_MISC_SBUS_WRITE_FAILED_ERR] = CNTR_ELEM("MISC_SBUS_WRITE_FAILED_ERR", 0, 0,
 				CNTR_NORMAL,
-				access_misc_sbus_ग_लिखो_failed_err_cnt),
+				access_misc_sbus_write_failed_err_cnt),
 [C_MISC_CSR_WRITE_BAD_ADDR_ERR] = CNTR_ELEM("MISC_CSR_WRITE_BAD_ADDR_ERR", 0, 0,
 				CNTR_NORMAL,
-				access_misc_csr_ग_लिखो_bad_addr_err_cnt),
+				access_misc_csr_write_bad_addr_err_cnt),
 [C_MISC_CSR_READ_BAD_ADDR_ERR] = CNTR_ELEM("MISC_CSR_READ_BAD_ADDR_ERR", 0, 0,
 				CNTR_NORMAL,
-				access_misc_csr_पढ़ो_bad_addr_err_cnt),
+				access_misc_csr_read_bad_addr_err_cnt),
 [C_MISC_CSR_PARITY_ERR] = CNTR_ELEM("MISC_CSR_PARITY_ERR", 0, 0,
 				CNTR_NORMAL,
 				access_misc_csr_parity_err_cnt),
@@ -4356,10 +4355,10 @@ def_access_ibp_counter(rc_crरुकोs);
 				access_cce_msix_csr_parity_err_cnt),
 [C_CCE_INT_MAP_UNC_ERR] = CNTR_ELEM("CceIntMapUncErr", 0, 0,
 				CNTR_NORMAL,
-				access_cce_पूर्णांक_map_unc_err_cnt),
+				access_cce_int_map_unc_err_cnt),
 [C_CCE_INT_MAP_COR_ERR] = CNTR_ELEM("CceIntMapCorErr", 0, 0,
 				CNTR_NORMAL,
-				access_cce_पूर्णांक_map_cor_err_cnt),
+				access_cce_int_map_cor_err_cnt),
 [C_CCE_MSIX_TABLE_UNC_ERR] = CNTR_ELEM("CceMsixTableUncErr", 0, 0,
 				CNTR_NORMAL,
 				access_cce_msix_table_unc_err_cnt),
@@ -4368,22 +4367,22 @@ def_access_ibp_counter(rc_crरुकोs);
 				access_cce_msix_table_cor_err_cnt),
 [C_CCE_RXDMA_CONV_FIFO_PARITY_ERR] = CNTR_ELEM("CceRxdmaConvFifoParityErr", 0,
 				0, CNTR_NORMAL,
-				access_cce_rxdma_conv_fअगरo_parity_err_cnt),
+				access_cce_rxdma_conv_fifo_parity_err_cnt),
 [C_CCE_RCPL_ASYNC_FIFO_PARITY_ERR] = CNTR_ELEM("CceRcplAsyncFifoParityErr", 0,
 				0, CNTR_NORMAL,
-				access_cce_rcpl_async_fअगरo_parity_err_cnt),
+				access_cce_rcpl_async_fifo_parity_err_cnt),
 [C_CCE_SEG_WRITE_BAD_ADDR_ERR] = CNTR_ELEM("CceSegWriteBadAddrErr", 0, 0,
 				CNTR_NORMAL,
-				access_cce_seg_ग_लिखो_bad_addr_err_cnt),
+				access_cce_seg_write_bad_addr_err_cnt),
 [C_CCE_SEG_READ_BAD_ADDR_ERR] = CNTR_ELEM("CceSegReadBadAddrErr", 0, 0,
 				CNTR_NORMAL,
-				access_cce_seg_पढ़ो_bad_addr_err_cnt),
+				access_cce_seg_read_bad_addr_err_cnt),
 [C_LA_TRIGGERED] = CNTR_ELEM("Cce LATriggered", 0, 0,
 				CNTR_NORMAL,
 				access_la_triggered_cnt),
 [C_CCE_TRGT_CPL_TIMEOUT_ERR] = CNTR_ELEM("CceTrgtCplTimeoutErr", 0, 0,
 				CNTR_NORMAL,
-				access_cce_trgt_cpl_समयout_err_cnt),
+				access_cce_trgt_cpl_timeout_err_cnt),
 [C_PCIC_RECEIVE_PARITY_ERR] = CNTR_ELEM("PcicReceiveParityErr", 0, 0,
 				CNTR_NORMAL,
 				access_pcic_receive_parity_err_cnt),
@@ -4438,29 +4437,29 @@ def_access_ibp_counter(rc_crरुकोs);
 [C_CCE_CLI1_ASYNC_FIFO_DBG_PARITY_ERR] = CNTR_ELEM(
 				"CceCli1AsyncFifoDbgParityError", 0, 0,
 				CNTR_NORMAL,
-				access_cce_cli1_async_fअगरo_dbg_parity_err_cnt),
+				access_cce_cli1_async_fifo_dbg_parity_err_cnt),
 [C_CCE_CLI1_ASYNC_FIFO_RXDMA_PARITY_ERR] = CNTR_ELEM(
 				"CceCli1AsyncFifoRxdmaParityError", 0, 0,
 				CNTR_NORMAL,
-				access_cce_cli1_async_fअगरo_rxdma_parity_err_cnt
+				access_cce_cli1_async_fifo_rxdma_parity_err_cnt
 				),
 [C_CCE_CLI1_ASYNC_FIFO_SDMA_HD_PARITY_ERR] = CNTR_ELEM(
 			"CceCli1AsyncFifoSdmaHdParityErr", 0, 0,
 			CNTR_NORMAL,
-			access_cce_cli1_async_fअगरo_sdma_hd_parity_err_cnt),
+			access_cce_cli1_async_fifo_sdma_hd_parity_err_cnt),
 [C_CCE_CLI1_ASYNC_FIFO_PIO_CRDT_PARITY_ERR] = CNTR_ELEM(
 			"CceCli1AsyncFifoPioCrdtParityErr", 0, 0,
 			CNTR_NORMAL,
-			access_cce_cl1_async_fअगरo_pio_crdt_parity_err_cnt),
+			access_cce_cl1_async_fifo_pio_crdt_parity_err_cnt),
 [C_CCE_CLI2_ASYNC_FIFO_PARITY_ERR] = CNTR_ELEM("CceCli2AsyncFifoParityErr", 0,
 			0, CNTR_NORMAL,
-			access_cce_cli2_async_fअगरo_parity_err_cnt),
+			access_cce_cli2_async_fifo_parity_err_cnt),
 [C_CCE_CSR_CFG_BUS_PARITY_ERR] = CNTR_ELEM("CceCsrCfgBusParityErr", 0, 0,
 			CNTR_NORMAL,
 			access_cce_csr_cfg_bus_parity_err_cnt),
 [C_CCE_CLI0_ASYNC_FIFO_PARTIY_ERR] = CNTR_ELEM("CceCli0AsyncFifoParityErr", 0,
 			0, CNTR_NORMAL,
-			access_cce_cli0_async_fअगरo_parity_err_cnt),
+			access_cce_cli0_async_fifo_parity_err_cnt),
 [C_CCE_RSPD_DATA_PARITY_ERR] = CNTR_ELEM("CceRspdDataParityErr", 0, 0,
 			CNTR_NORMAL,
 			access_cce_rspd_data_parity_err_cnt),
@@ -4469,13 +4468,13 @@ def_access_ibp_counter(rc_crरुकोs);
 			access_cce_trgt_access_err_cnt),
 [C_CCE_TRGT_ASYNC_FIFO_PARITY_ERR] = CNTR_ELEM("CceTrgtAsyncFifoParityErr", 0,
 			0, CNTR_NORMAL,
-			access_cce_trgt_async_fअगरo_parity_err_cnt),
+			access_cce_trgt_async_fifo_parity_err_cnt),
 [C_CCE_CSR_WRITE_BAD_ADDR_ERR] = CNTR_ELEM("CceCsrWriteBadAddrErr", 0, 0,
 			CNTR_NORMAL,
-			access_cce_csr_ग_लिखो_bad_addr_err_cnt),
+			access_cce_csr_write_bad_addr_err_cnt),
 [C_CCE_CSR_READ_BAD_ADDR_ERR] = CNTR_ELEM("CceCsrReadBadAddrErr", 0, 0,
 			CNTR_NORMAL,
-			access_cce_csr_पढ़ो_bad_addr_err_cnt),
+			access_cce_csr_read_bad_addr_err_cnt),
 [C_CCE_CSR_PARITY_ERR] = CNTR_ELEM("CceCsrParityErr", 0, 0,
 			CNTR_NORMAL,
 			access_ccs_csr_parity_err_cnt),
@@ -4486,10 +4485,10 @@ def_access_ibp_counter(rc_crरुकोs);
 			access_rx_csr_parity_err_cnt),
 [C_RX_CSR_WRITE_BAD_ADDR_ERR] = CNTR_ELEM("RxCsrWriteBadAddrErr", 0, 0,
 			CNTR_NORMAL,
-			access_rx_csr_ग_लिखो_bad_addr_err_cnt),
+			access_rx_csr_write_bad_addr_err_cnt),
 [C_RX_CSR_READ_BAD_ADDR_ERR] = CNTR_ELEM("RxCsrReadBadAddrErr", 0, 0,
 			CNTR_NORMAL,
-			access_rx_csr_पढ़ो_bad_addr_err_cnt),
+			access_rx_csr_read_bad_addr_err_cnt),
 [C_RX_DMA_CSR_UNC_ERR] = CNTR_ELEM("RxDmaCsrUncErr", 0, 0,
 			CNTR_NORMAL,
 			access_rx_dma_csr_unc_err_cnt),
@@ -4510,16 +4509,16 @@ def_access_ibp_counter(rc_crरुकोs);
 			access_rx_rbuf_data_unc_err_cnt),
 [C_RX_DMA_DATA_FIFO_RD_COR_ERR] = CNTR_ELEM("RxDmaDataFifoRdCorErr", 0, 0,
 			CNTR_NORMAL,
-			access_rx_dma_data_fअगरo_rd_cor_err_cnt),
+			access_rx_dma_data_fifo_rd_cor_err_cnt),
 [C_RX_DMA_DATA_FIFO_RD_UNC_ERR] = CNTR_ELEM("RxDmaDataFifoRdUncErr", 0, 0,
 			CNTR_NORMAL,
-			access_rx_dma_data_fअगरo_rd_unc_err_cnt),
+			access_rx_dma_data_fifo_rd_unc_err_cnt),
 [C_RX_DMA_HDR_FIFO_RD_COR_ERR] = CNTR_ELEM("RxDmaHdrFifoRdCorErr", 0, 0,
 			CNTR_NORMAL,
-			access_rx_dma_hdr_fअगरo_rd_cor_err_cnt),
+			access_rx_dma_hdr_fifo_rd_cor_err_cnt),
 [C_RX_DMA_HDR_FIFO_RD_UNC_ERR] = CNTR_ELEM("RxDmaHdrFifoRdUncErr", 0, 0,
 			CNTR_NORMAL,
-			access_rx_dma_hdr_fअगरo_rd_unc_err_cnt),
+			access_rx_dma_hdr_fifo_rd_unc_err_cnt),
 [C_RX_RBUF_DESC_PART2_COR_ERR] = CNTR_ELEM("RxRbufDescPart2CorErr", 0, 0,
 			CNTR_NORMAL,
 			access_rx_rbuf_desc_part2_cor_err_cnt),
@@ -4534,10 +4533,10 @@ def_access_ibp_counter(rc_crरुकोs);
 			access_rx_rbuf_desc_part1_unc_err_cnt),
 [C_RX_HQ_INTR_FSM_ERR] = CNTR_ELEM("RxHqIntrFsmErr", 0, 0,
 			CNTR_NORMAL,
-			access_rx_hq_पूर्णांकr_fsm_err_cnt),
+			access_rx_hq_intr_fsm_err_cnt),
 [C_RX_HQ_INTR_CSR_PARITY_ERR] = CNTR_ELEM("RxHqIntrCsrParityErr", 0, 0,
 			CNTR_NORMAL,
-			access_rx_hq_पूर्णांकr_csr_parity_err_cnt),
+			access_rx_hq_intr_csr_parity_err_cnt),
 [C_RX_LOOKUP_CSR_PARITY_ERR] = CNTR_ELEM("RxLookupCsrParityErr", 0, 0,
 			CNTR_NORMAL,
 			access_rx_lookup_csr_parity_err_cnt),
@@ -4558,20 +4557,20 @@ def_access_ibp_counter(rc_crरुकोs);
 			access_rx_lookup_des_part1_unc_err_cnt),
 [C_RX_RBUF_NEXT_FREE_BUF_COR_ERR] = CNTR_ELEM("RxRbufNextFreeBufCorErr", 0, 0,
 			CNTR_NORMAL,
-			access_rx_rbuf_next_मुक्त_buf_cor_err_cnt),
+			access_rx_rbuf_next_free_buf_cor_err_cnt),
 [C_RX_RBUF_NEXT_FREE_BUF_UNC_ERR] = CNTR_ELEM("RxRbufNextFreeBufUncErr", 0, 0,
 			CNTR_NORMAL,
-			access_rx_rbuf_next_मुक्त_buf_unc_err_cnt),
+			access_rx_rbuf_next_free_buf_unc_err_cnt),
 [C_RX_RBUF_FL_INIT_WR_ADDR_PARITY_ERR] = CNTR_ELEM(
 			"RxRbufFlInitWrAddrParityErr", 0, 0,
 			CNTR_NORMAL,
 			access_rbuf_fl_init_wr_addr_parity_err_cnt),
 [C_RX_RBUF_FL_INITDONE_PARITY_ERR] = CNTR_ELEM("RxRbufFlInitdoneParityErr", 0,
 			0, CNTR_NORMAL,
-			access_rx_rbuf_fl_initकरोne_parity_err_cnt),
+			access_rx_rbuf_fl_initdone_parity_err_cnt),
 [C_RX_RBUF_FL_WRITE_ADDR_PARITY_ERR] = CNTR_ELEM("RxRbufFlWrAddrParityErr", 0,
 			0, CNTR_NORMAL,
-			access_rx_rbuf_fl_ग_लिखो_addr_parity_err_cnt),
+			access_rx_rbuf_fl_write_addr_parity_err_cnt),
 [C_RX_RBUF_FL_RD_ADDR_PARITY_ERR] = CNTR_ELEM("RxRbufFlRdAddrParityErr", 0, 0,
 			CNTR_NORMAL,
 			access_rx_rbuf_fl_rd_addr_parity_err_cnt),
@@ -4616,10 +4615,10 @@ def_access_ibp_counter(rc_crरुकोs);
 			access_rx_rbuf_csr_q_head_buf_num_parity_err_cnt),
 [C_RX_RBUF_BLOCK_LIST_READ_COR_ERR] = CNTR_ELEM("RxRbufBlockListReadCorErr", 0,
 			0, CNTR_NORMAL,
-			access_rx_rbuf_block_list_पढ़ो_cor_err_cnt),
+			access_rx_rbuf_block_list_read_cor_err_cnt),
 [C_RX_RBUF_BLOCK_LIST_READ_UNC_ERR] = CNTR_ELEM("RxRbufBlockListReadUncErr", 0,
 			0, CNTR_NORMAL,
-			access_rx_rbuf_block_list_पढ़ो_unc_err_cnt),
+			access_rx_rbuf_block_list_read_unc_err_cnt),
 [C_RX_RBUF_LOOKUP_DES_COR_ERR] = CNTR_ELEM("RxRbufLookupDesCorErr", 0, 0,
 			CNTR_NORMAL,
 			access_rx_rbuf_lookup_des_cor_err_cnt),
@@ -4635,10 +4634,10 @@ def_access_ibp_counter(rc_crरुकोs);
 			access_rx_rbuf_lookup_des_reg_unc_err_cnt),
 [C_RX_RBUF_FREE_LIST_COR_ERR] = CNTR_ELEM("RxRbufFreeListCorErr", 0, 0,
 			CNTR_NORMAL,
-			access_rx_rbuf_मुक्त_list_cor_err_cnt),
+			access_rx_rbuf_free_list_cor_err_cnt),
 [C_RX_RBUF_FREE_LIST_UNC_ERR] = CNTR_ELEM("RxRbufFreeListUncErr", 0, 0,
 			CNTR_NORMAL,
-			access_rx_rbuf_मुक्त_list_unc_err_cnt),
+			access_rx_rbuf_free_list_unc_err_cnt),
 [C_RX_RCV_FSM_ENCODING_ERR] = CNTR_ELEM("RxRcvFsmEncodingErr", 0, 0,
 			CNTR_NORMAL,
 			access_rx_rcv_fsm_encoding_err_cnt),
@@ -4674,7 +4673,7 @@ def_access_ibp_counter(rc_crरुकोs);
 			access_rx_rcv_hdr_unc_err_cnt),
 [C_RX_DC_INTF_PARITY_ERR] = CNTR_ELEM("RxDcIntfParityErr", 0, 0,
 			CNTR_NORMAL,
-			access_rx_dc_पूर्णांकf_parity_err_cnt),
+			access_rx_dc_intf_parity_err_cnt),
 [C_RX_DMA_CSR_COR_ERR] = CNTR_ELEM("RxDmaCsrCorErr", 0, 0,
 			CNTR_NORMAL,
 			access_rx_dma_csr_cor_err_cnt),
@@ -4687,10 +4686,10 @@ def_access_ibp_counter(rc_crरुकोs);
 			access_pio_pcc_sop_head_parity_err_cnt),
 [C_PIO_LAST_RETURNED_CNT_PARITY_ERR] = CNTR_ELEM("PioLastReturnedCntParityErr",
 			0, 0, CNTR_NORMAL,
-			access_pio_last_वापसed_cnt_parity_err_cnt),
+			access_pio_last_returned_cnt_parity_err_cnt),
 [C_PIO_CURRENT_FREE_CNT_PARITY_ERR] = CNTR_ELEM("PioCurrentFreeCntParityErr", 0,
 			0, CNTR_NORMAL,
-			access_pio_current_मुक्त_cnt_parity_err_cnt),
+			access_pio_current_free_cnt_parity_err_cnt),
 [C_PIO_RSVD_31_ERR] = CNTR_ELEM("Pio Reserved 31", 0, 0,
 			CNTR_NORMAL,
 			access_pio_reserved_31_err_cnt),
@@ -4705,7 +4704,7 @@ def_access_ibp_counter(rc_crरुकोs);
 			access_pio_ppmc_bqc_mem_parity_err_cnt),
 [C_PIO_VL_FIFO_PARITY_ERR] = CNTR_ELEM("PioVlFifoParityErr", 0, 0,
 			CNTR_NORMAL,
-			access_pio_vl_fअगरo_parity_err_cnt),
+			access_pio_vl_fifo_parity_err_cnt),
 [C_PIO_VLF_SOP_PARITY_ERR] = CNTR_ELEM("PioVlfSopParityErr", 0, 0,
 			CNTR_NORMAL,
 			access_pio_vlf_sop_parity_err_cnt),
@@ -4717,13 +4716,13 @@ def_access_ibp_counter(rc_crरुकोs);
 			access_pio_block_qw_count_parity_err_cnt),
 [C_PIO_WRITE_QW_VALID_PARITY_ERR] = CNTR_ELEM("PioWriteQwValidParityErr", 0, 0,
 			CNTR_NORMAL,
-			access_pio_ग_लिखो_qw_valid_parity_err_cnt),
+			access_pio_write_qw_valid_parity_err_cnt),
 [C_PIO_STATE_MACHINE_ERR] = CNTR_ELEM("PioStateMachineErr", 0, 0,
 			CNTR_NORMAL,
 			access_pio_state_machine_err_cnt),
 [C_PIO_WRITE_DATA_PARITY_ERR] = CNTR_ELEM("PioWriteDataParityErr", 0, 0,
 			CNTR_NORMAL,
-			access_pio_ग_लिखो_data_parity_err_cnt),
+			access_pio_write_data_parity_err_cnt),
 [C_PIO_HOST_ADDR_MEM_COR_ERR] = CNTR_ELEM("PioHostAddrMemCorErr", 0, 0,
 			CNTR_NORMAL,
 			access_pio_host_addr_mem_cor_err_cnt),
@@ -4738,10 +4737,10 @@ def_access_ibp_counter(rc_crरुकोs);
 			access_pio_init_sm_in_err_cnt),
 [C_PIO_PPMC_PBL_FIFO_ERR] = CNTR_ELEM("PioPpmcPblFifoErr", 0, 0,
 			CNTR_NORMAL,
-			access_pio_ppmc_pbl_fअगरo_err_cnt),
+			access_pio_ppmc_pbl_fifo_err_cnt),
 [C_PIO_CREDIT_RET_FIFO_PARITY_ERR] = CNTR_ELEM("PioCreditRetFifoParityErr", 0,
 			0, CNTR_NORMAL,
-			access_pio_credit_ret_fअगरo_parity_err_cnt),
+			access_pio_credit_ret_fifo_parity_err_cnt),
 [C_PIO_V1_LEN_MEM_BANK1_COR_ERR] = CNTR_ELEM("PioVlLenMemBank1CorErr", 0, 0,
 			CNTR_NORMAL,
 			access_pio_v1_len_mem_bank1_cor_err_cnt),
@@ -4759,35 +4758,35 @@ def_access_ibp_counter(rc_crरुकोs);
 			access_pio_sm_pkt_reset_parity_err_cnt),
 [C_PIO_PKT_EVICT_FIFO_PARITY_ERR] = CNTR_ELEM("PioPktEvictFifoParityErr", 0, 0,
 			CNTR_NORMAL,
-			access_pio_pkt_evict_fअगरo_parity_err_cnt),
+			access_pio_pkt_evict_fifo_parity_err_cnt),
 [C_PIO_SBRDCTRL_CRREL_FIFO_PARITY_ERR] = CNTR_ELEM(
 			"PioSbrdctrlCrrelFifoParityErr", 0, 0,
 			CNTR_NORMAL,
-			access_pio_sbrdctrl_crrel_fअगरo_parity_err_cnt),
+			access_pio_sbrdctrl_crrel_fifo_parity_err_cnt),
 [C_PIO_SBRDCTL_CRREL_PARITY_ERR] = CNTR_ELEM("PioSbrdctlCrrelParityErr", 0, 0,
 			CNTR_NORMAL,
 			access_pio_sbrdctl_crrel_parity_err_cnt),
 [C_PIO_PEC_FIFO_PARITY_ERR] = CNTR_ELEM("PioPecFifoParityErr", 0, 0,
 			CNTR_NORMAL,
-			access_pio_pec_fअगरo_parity_err_cnt),
+			access_pio_pec_fifo_parity_err_cnt),
 [C_PIO_PCC_FIFO_PARITY_ERR] = CNTR_ELEM("PioPccFifoParityErr", 0, 0,
 			CNTR_NORMAL,
-			access_pio_pcc_fअगरo_parity_err_cnt),
+			access_pio_pcc_fifo_parity_err_cnt),
 [C_PIO_SB_MEM_FIFO1_ERR] = CNTR_ELEM("PioSbMemFifo1Err", 0, 0,
 			CNTR_NORMAL,
-			access_pio_sb_mem_fअगरo1_err_cnt),
+			access_pio_sb_mem_fifo1_err_cnt),
 [C_PIO_SB_MEM_FIFO0_ERR] = CNTR_ELEM("PioSbMemFifo0Err", 0, 0,
 			CNTR_NORMAL,
-			access_pio_sb_mem_fअगरo0_err_cnt),
+			access_pio_sb_mem_fifo0_err_cnt),
 [C_PIO_CSR_PARITY_ERR] = CNTR_ELEM("PioCsrParityErr", 0, 0,
 			CNTR_NORMAL,
 			access_pio_csr_parity_err_cnt),
 [C_PIO_WRITE_ADDR_PARITY_ERR] = CNTR_ELEM("PioWriteAddrParityErr", 0, 0,
 			CNTR_NORMAL,
-			access_pio_ग_लिखो_addr_parity_err_cnt),
+			access_pio_write_addr_parity_err_cnt),
 [C_PIO_WRITE_BAD_CTXT_ERR] = CNTR_ELEM("PioWriteBadCtxtErr", 0, 0,
 			CNTR_NORMAL,
-			access_pio_ग_लिखो_bad_ctxt_err_cnt),
+			access_pio_write_bad_ctxt_err_cnt),
 /* SendDmaErrStatus */
 [C_SDMA_PCIE_REQ_TRACKING_COR_ERR] = CNTR_ELEM("SDmaPcieReqTrackingCorErr", 0,
 			0, CNTR_NORMAL,
@@ -4804,19 +4803,19 @@ def_access_ibp_counter(rc_crरुकोs);
 /* SendEgressErrStatus */
 [C_TX_READ_PIO_MEMORY_CSR_UNC_ERR] = CNTR_ELEM("TxReadPioMemoryCsrUncErr", 0, 0,
 			CNTR_NORMAL,
-			access_tx_पढ़ो_pio_memory_csr_unc_err_cnt),
+			access_tx_read_pio_memory_csr_unc_err_cnt),
 [C_TX_READ_SDMA_MEMORY_CSR_UNC_ERR] = CNTR_ELEM("TxReadSdmaMemoryCsrUncErr", 0,
 			0, CNTR_NORMAL,
-			access_tx_पढ़ो_sdma_memory_csr_err_cnt),
+			access_tx_read_sdma_memory_csr_err_cnt),
 [C_TX_EGRESS_FIFO_COR_ERR] = CNTR_ELEM("TxEgressFifoCorErr", 0, 0,
 			CNTR_NORMAL,
-			access_tx_egress_fअगरo_cor_err_cnt),
+			access_tx_egress_fifo_cor_err_cnt),
 [C_TX_READ_PIO_MEMORY_COR_ERR] = CNTR_ELEM("TxReadPioMemoryCorErr", 0, 0,
 			CNTR_NORMAL,
-			access_tx_पढ़ो_pio_memory_cor_err_cnt),
+			access_tx_read_pio_memory_cor_err_cnt),
 [C_TX_READ_SDMA_MEMORY_COR_ERR] = CNTR_ELEM("TxReadSdmaMemoryCorErr", 0, 0,
 			CNTR_NORMAL,
-			access_tx_पढ़ो_sdma_memory_cor_err_cnt),
+			access_tx_read_sdma_memory_cor_err_cnt),
 [C_TX_SB_HDR_COR_ERR] = CNTR_ELEM("TxSbHdrCorErr", 0, 0,
 			CNTR_NORMAL,
 			access_tx_sb_hdr_cor_err_cnt),
@@ -4825,79 +4824,79 @@ def_access_ibp_counter(rc_crरुकोs);
 			access_tx_credit_overrun_err_cnt),
 [C_TX_LAUNCH_FIFO8_COR_ERR] = CNTR_ELEM("TxLaunchFifo8CorErr", 0, 0,
 			CNTR_NORMAL,
-			access_tx_launch_fअगरo8_cor_err_cnt),
+			access_tx_launch_fifo8_cor_err_cnt),
 [C_TX_LAUNCH_FIFO7_COR_ERR] = CNTR_ELEM("TxLaunchFifo7CorErr", 0, 0,
 			CNTR_NORMAL,
-			access_tx_launch_fअगरo7_cor_err_cnt),
+			access_tx_launch_fifo7_cor_err_cnt),
 [C_TX_LAUNCH_FIFO6_COR_ERR] = CNTR_ELEM("TxLaunchFifo6CorErr", 0, 0,
 			CNTR_NORMAL,
-			access_tx_launch_fअगरo6_cor_err_cnt),
+			access_tx_launch_fifo6_cor_err_cnt),
 [C_TX_LAUNCH_FIFO5_COR_ERR] = CNTR_ELEM("TxLaunchFifo5CorErr", 0, 0,
 			CNTR_NORMAL,
-			access_tx_launch_fअगरo5_cor_err_cnt),
+			access_tx_launch_fifo5_cor_err_cnt),
 [C_TX_LAUNCH_FIFO4_COR_ERR] = CNTR_ELEM("TxLaunchFifo4CorErr", 0, 0,
 			CNTR_NORMAL,
-			access_tx_launch_fअगरo4_cor_err_cnt),
+			access_tx_launch_fifo4_cor_err_cnt),
 [C_TX_LAUNCH_FIFO3_COR_ERR] = CNTR_ELEM("TxLaunchFifo3CorErr", 0, 0,
 			CNTR_NORMAL,
-			access_tx_launch_fअगरo3_cor_err_cnt),
+			access_tx_launch_fifo3_cor_err_cnt),
 [C_TX_LAUNCH_FIFO2_COR_ERR] = CNTR_ELEM("TxLaunchFifo2CorErr", 0, 0,
 			CNTR_NORMAL,
-			access_tx_launch_fअगरo2_cor_err_cnt),
+			access_tx_launch_fifo2_cor_err_cnt),
 [C_TX_LAUNCH_FIFO1_COR_ERR] = CNTR_ELEM("TxLaunchFifo1CorErr", 0, 0,
 			CNTR_NORMAL,
-			access_tx_launch_fअगरo1_cor_err_cnt),
+			access_tx_launch_fifo1_cor_err_cnt),
 [C_TX_LAUNCH_FIFO0_COR_ERR] = CNTR_ELEM("TxLaunchFifo0CorErr", 0, 0,
 			CNTR_NORMAL,
-			access_tx_launch_fअगरo0_cor_err_cnt),
+			access_tx_launch_fifo0_cor_err_cnt),
 [C_TX_CREDIT_RETURN_VL_ERR] = CNTR_ELEM("TxCreditReturnVLErr", 0, 0,
 			CNTR_NORMAL,
-			access_tx_credit_वापस_vl_err_cnt),
+			access_tx_credit_return_vl_err_cnt),
 [C_TX_HCRC_INSERTION_ERR] = CNTR_ELEM("TxHcrcInsertionErr", 0, 0,
 			CNTR_NORMAL,
 			access_tx_hcrc_insertion_err_cnt),
 [C_TX_EGRESS_FIFI_UNC_ERR] = CNTR_ELEM("TxEgressFifoUncErr", 0, 0,
 			CNTR_NORMAL,
-			access_tx_egress_fअगरo_unc_err_cnt),
+			access_tx_egress_fifo_unc_err_cnt),
 [C_TX_READ_PIO_MEMORY_UNC_ERR] = CNTR_ELEM("TxReadPioMemoryUncErr", 0, 0,
 			CNTR_NORMAL,
-			access_tx_पढ़ो_pio_memory_unc_err_cnt),
+			access_tx_read_pio_memory_unc_err_cnt),
 [C_TX_READ_SDMA_MEMORY_UNC_ERR] = CNTR_ELEM("TxReadSdmaMemoryUncErr", 0, 0,
 			CNTR_NORMAL,
-			access_tx_पढ़ो_sdma_memory_unc_err_cnt),
+			access_tx_read_sdma_memory_unc_err_cnt),
 [C_TX_SB_HDR_UNC_ERR] = CNTR_ELEM("TxSbHdrUncErr", 0, 0,
 			CNTR_NORMAL,
 			access_tx_sb_hdr_unc_err_cnt),
 [C_TX_CREDIT_RETURN_PARITY_ERR] = CNTR_ELEM("TxCreditReturnParityErr", 0, 0,
 			CNTR_NORMAL,
-			access_tx_credit_वापस_partiy_err_cnt),
+			access_tx_credit_return_partiy_err_cnt),
 [C_TX_LAUNCH_FIFO8_UNC_OR_PARITY_ERR] = CNTR_ELEM("TxLaunchFifo8UncOrParityErr",
 			0, 0, CNTR_NORMAL,
-			access_tx_launch_fअगरo8_unc_or_parity_err_cnt),
+			access_tx_launch_fifo8_unc_or_parity_err_cnt),
 [C_TX_LAUNCH_FIFO7_UNC_OR_PARITY_ERR] = CNTR_ELEM("TxLaunchFifo7UncOrParityErr",
 			0, 0, CNTR_NORMAL,
-			access_tx_launch_fअगरo7_unc_or_parity_err_cnt),
+			access_tx_launch_fifo7_unc_or_parity_err_cnt),
 [C_TX_LAUNCH_FIFO6_UNC_OR_PARITY_ERR] = CNTR_ELEM("TxLaunchFifo6UncOrParityErr",
 			0, 0, CNTR_NORMAL,
-			access_tx_launch_fअगरo6_unc_or_parity_err_cnt),
+			access_tx_launch_fifo6_unc_or_parity_err_cnt),
 [C_TX_LAUNCH_FIFO5_UNC_OR_PARITY_ERR] = CNTR_ELEM("TxLaunchFifo5UncOrParityErr",
 			0, 0, CNTR_NORMAL,
-			access_tx_launch_fअगरo5_unc_or_parity_err_cnt),
+			access_tx_launch_fifo5_unc_or_parity_err_cnt),
 [C_TX_LAUNCH_FIFO4_UNC_OR_PARITY_ERR] = CNTR_ELEM("TxLaunchFifo4UncOrParityErr",
 			0, 0, CNTR_NORMAL,
-			access_tx_launch_fअगरo4_unc_or_parity_err_cnt),
+			access_tx_launch_fifo4_unc_or_parity_err_cnt),
 [C_TX_LAUNCH_FIFO3_UNC_OR_PARITY_ERR] = CNTR_ELEM("TxLaunchFifo3UncOrParityErr",
 			0, 0, CNTR_NORMAL,
-			access_tx_launch_fअगरo3_unc_or_parity_err_cnt),
+			access_tx_launch_fifo3_unc_or_parity_err_cnt),
 [C_TX_LAUNCH_FIFO2_UNC_OR_PARITY_ERR] = CNTR_ELEM("TxLaunchFifo2UncOrParityErr",
 			0, 0, CNTR_NORMAL,
-			access_tx_launch_fअगरo2_unc_or_parity_err_cnt),
+			access_tx_launch_fifo2_unc_or_parity_err_cnt),
 [C_TX_LAUNCH_FIFO1_UNC_OR_PARITY_ERR] = CNTR_ELEM("TxLaunchFifo1UncOrParityErr",
 			0, 0, CNTR_NORMAL,
-			access_tx_launch_fअगरo1_unc_or_parity_err_cnt),
+			access_tx_launch_fifo1_unc_or_parity_err_cnt),
 [C_TX_LAUNCH_FIFO0_UNC_OR_PARITY_ERR] = CNTR_ELEM("TxLaunchFifo0UncOrParityErr",
 			0, 0, CNTR_NORMAL,
-			access_tx_launch_fअगरo0_unc_or_parity_err_cnt),
+			access_tx_launch_fifo0_unc_or_parity_err_cnt),
 [C_TX_SDMA15_DISALLOWED_PACKET_ERR] = CNTR_ELEM("TxSdma15DisallowedPacketErr",
 			0, 0, CNTR_NORMAL,
 			access_tx_sdma15_disallowed_packet_err_cnt),
@@ -4970,10 +4969,10 @@ def_access_ibp_counter(rc_crरुकोs);
 			access_egress_reserved_9_err_cnt),
 [C_TX_SDMA_LAUNCH_INTF_PARITY_ERR] = CNTR_ELEM("TxSdmaLaunchIntfParityErr",
 			0, 0, CNTR_NORMAL,
-			access_tx_sdma_launch_पूर्णांकf_parity_err_cnt),
+			access_tx_sdma_launch_intf_parity_err_cnt),
 [C_TX_PIO_LAUNCH_INTF_PARITY_ERR] = CNTR_ELEM("TxPioLaunchIntfParityErr", 0, 0,
 			CNTR_NORMAL,
-			access_tx_pio_launch_पूर्णांकf_parity_err_cnt),
+			access_tx_pio_launch_intf_parity_err_cnt),
 [C_TX_RESERVED_6] = CNTR_ELEM("Tx Egress Reserved 6", 0, 0,
 			CNTR_NORMAL,
 			access_egress_reserved_6_err_cnt),
@@ -4982,40 +4981,40 @@ def_access_ibp_counter(rc_crरुकोs);
 			access_tx_incorrect_link_state_err_cnt),
 [C_TX_LINK_DOWN_ERR] = CNTR_ELEM("TxLinkdownErr", 0, 0,
 			CNTR_NORMAL,
-			access_tx_linkकरोwn_err_cnt),
+			access_tx_linkdown_err_cnt),
 [C_TX_EGRESS_FIFO_UNDERRUN_OR_PARITY_ERR] = CNTR_ELEM(
 			"EgressFifoUnderrunOrParityErr", 0, 0,
 			CNTR_NORMAL,
-			access_tx_egress_fअगरi_underrun_or_parity_err_cnt),
+			access_tx_egress_fifi_underrun_or_parity_err_cnt),
 [C_TX_RESERVED_2] = CNTR_ELEM("Tx Egress Reserved 2", 0, 0,
 			CNTR_NORMAL,
 			access_egress_reserved_2_err_cnt),
 [C_TX_PKT_INTEGRITY_MEM_UNC_ERR] = CNTR_ELEM("TxPktIntegrityMemUncErr", 0, 0,
 			CNTR_NORMAL,
-			access_tx_pkt_पूर्णांकegrity_mem_unc_err_cnt),
+			access_tx_pkt_integrity_mem_unc_err_cnt),
 [C_TX_PKT_INTEGRITY_MEM_COR_ERR] = CNTR_ELEM("TxPktIntegrityMemCorErr", 0, 0,
 			CNTR_NORMAL,
-			access_tx_pkt_पूर्णांकegrity_mem_cor_err_cnt),
+			access_tx_pkt_integrity_mem_cor_err_cnt),
 /* SendErrStatus */
 [C_SEND_CSR_WRITE_BAD_ADDR_ERR] = CNTR_ELEM("SendCsrWriteBadAddrErr", 0, 0,
 			CNTR_NORMAL,
-			access_send_csr_ग_लिखो_bad_addr_err_cnt),
+			access_send_csr_write_bad_addr_err_cnt),
 [C_SEND_CSR_READ_BAD_ADD_ERR] = CNTR_ELEM("SendCsrReadBadAddrErr", 0, 0,
 			CNTR_NORMAL,
-			access_send_csr_पढ़ो_bad_addr_err_cnt),
+			access_send_csr_read_bad_addr_err_cnt),
 [C_SEND_CSR_PARITY_ERR] = CNTR_ELEM("SendCsrParityErr", 0, 0,
 			CNTR_NORMAL,
 			access_send_csr_parity_cnt),
 /* SendCtxtErrStatus */
 [C_PIO_WRITE_OUT_OF_BOUNDS_ERR] = CNTR_ELEM("PioWriteOutOfBoundsErr", 0, 0,
 			CNTR_NORMAL,
-			access_pio_ग_लिखो_out_of_bounds_err_cnt),
+			access_pio_write_out_of_bounds_err_cnt),
 [C_PIO_WRITE_OVERFLOW_ERR] = CNTR_ELEM("PioWriteOverflowErr", 0, 0,
 			CNTR_NORMAL,
-			access_pio_ग_लिखो_overflow_err_cnt),
+			access_pio_write_overflow_err_cnt),
 [C_PIO_WRITE_CROSSES_BOUNDARY_ERR] = CNTR_ELEM("PioWriteCrossesBoundaryErr",
 			0, 0, CNTR_NORMAL,
-			access_pio_ग_लिखो_crosses_boundary_err_cnt),
+			access_pio_write_crosses_boundary_err_cnt),
 [C_PIO_DISALLOWED_PACKET_ERR] = CNTR_ELEM("PioDisallowedPacketErr", 0, 0,
 			CNTR_NORMAL,
 			access_pio_disallowed_packet_err_cnt),
@@ -5025,7 +5024,7 @@ def_access_ibp_counter(rc_crरुकोs);
 /* SendDmaEngErrStatus */
 [C_SDMA_HEADER_REQUEST_FIFO_COR_ERR] = CNTR_ELEM("SDmaHeaderRequestFifoCorErr",
 			0, 0, CNTR_NORMAL,
-			access_sdma_header_request_fअगरo_cor_err_cnt),
+			access_sdma_header_request_fifo_cor_err_cnt),
 [C_SDMA_HEADER_STORAGE_COR_ERR] = CNTR_ELEM("SDmaHeaderStorageCorErr", 0, 0,
 			CNTR_NORMAL,
 			access_sdma_header_storage_cor_err_cnt),
@@ -5040,7 +5039,7 @@ def_access_ibp_counter(rc_crरुकोs);
 			access_sdma_desc_table_cor_err_cnt),
 [C_SDMA_HEADER_REQUEST_FIFO_UNC_ERR] = CNTR_ELEM("SDmaHeaderRequestFifoUncErr",
 			0, 0, CNTR_NORMAL,
-			access_sdma_header_request_fअगरo_unc_err_cnt),
+			access_sdma_header_request_fifo_unc_err_cnt),
 [C_SDMA_HEADER_STORAGE_UNC_ERR] = CNTR_ELEM("SDmaHeaderStorageUncErr", 0, 0,
 			CNTR_NORMAL,
 			access_sdma_header_storage_unc_err_cnt),
@@ -5055,7 +5054,7 @@ def_access_ibp_counter(rc_crरुकोs);
 			access_sdma_desc_table_unc_err_cnt),
 [C_SDMA_TIMEOUT_ERR] = CNTR_ELEM("SDmaTimeoutErr", 0, 0,
 			CNTR_NORMAL,
-			access_sdma_समयout_err_cnt),
+			access_sdma_timeout_err_cnt),
 [C_SDMA_HEADER_LENGTH_ERR] = CNTR_ELEM("SDmaHeaderLengthErr", 0, 0,
 			CNTR_NORMAL,
 			access_sdma_header_length_err_cnt),
@@ -5079,7 +5078,7 @@ def_access_ibp_counter(rc_crरुकोs);
 			access_sdma_halt_err_cnt),
 [C_SDMA_MEM_READ_ERR] = CNTR_ELEM("SDmaMemReadErr", 0, 0,
 			CNTR_NORMAL,
-			access_sdma_mem_पढ़ो_err_cnt),
+			access_sdma_mem_read_err_cnt),
 [C_SDMA_FIRST_DESC_ERR] = CNTR_ELEM("SDmaFirstDescErr", 0, 0,
 			CNTR_NORMAL,
 			access_sdma_first_desc_err_cnt),
@@ -5088,16 +5087,16 @@ def_access_ibp_counter(rc_crरुकोs);
 			access_sdma_tail_out_of_bounds_err_cnt),
 [C_SDMA_TOO_LONG_ERR] = CNTR_ELEM("SDmaTooLongErr", 0, 0,
 			CNTR_NORMAL,
-			access_sdma_too_दीर्घ_err_cnt),
+			access_sdma_too_long_err_cnt),
 [C_SDMA_GEN_MISMATCH_ERR] = CNTR_ELEM("SDmaGenMismatchErr", 0, 0,
 			CNTR_NORMAL,
 			access_sdma_gen_mismatch_err_cnt),
 [C_SDMA_WRONG_DW_ERR] = CNTR_ELEM("SDmaWrongDwErr", 0, 0,
 			CNTR_NORMAL,
 			access_sdma_wrong_dw_err_cnt),
-पूर्ण;
+};
 
-अटल काष्ठा cntr_entry port_cntrs[PORT_CNTR_LAST] = अणु
+static struct cntr_entry port_cntrs[PORT_CNTR_LAST] = {
 [C_TX_UNSUP_VL] = TXE32_PORT_CNTR_ELEM(TxUnVLErr, SEND_UNSUP_VL_ERR_CNT,
 			CNTR_NORMAL),
 [C_TX_INVAL_LEN] = TXE32_PORT_CNTR_ELEM(TxInvalLen, SEND_LEN_ERR_CNT,
@@ -5135,22 +5134,22 @@ def_access_ibp_counter(rc_crरुकोs);
 				CNTR_SYNTH | CNTR_32BIT | CNTR_VL,
 				access_sw_xmit_discards),
 [C_SW_XMIT_CSTR_ERR] = CNTR_ELEM("XmitCstrErr", 0, 0, CNTR_SYNTH,
-				 access_xmit_स्थिरraपूर्णांक_errs),
+				 access_xmit_constraint_errs),
 [C_SW_RCV_CSTR_ERR] = CNTR_ELEM("RcvCstrErr", 0, 0, CNTR_SYNTH,
-				access_rcv_स्थिरraपूर्णांक_errs),
+				access_rcv_constraint_errs),
 [C_SW_IBP_LOOP_PKTS] = SW_IBP_CNTR(LoopPkts, loop_pkts),
 [C_SW_IBP_RC_RESENDS] = SW_IBP_CNTR(RcResend, rc_resends),
 [C_SW_IBP_RNR_NAKS] = SW_IBP_CNTR(RnrNak, rnr_naks),
 [C_SW_IBP_OTHER_NAKS] = SW_IBP_CNTR(OtherNak, other_naks),
-[C_SW_IBP_RC_TIMEOUTS] = SW_IBP_CNTR(RcTimeOut, rc_समयouts),
+[C_SW_IBP_RC_TIMEOUTS] = SW_IBP_CNTR(RcTimeOut, rc_timeouts),
 [C_SW_IBP_PKT_DROPS] = SW_IBP_CNTR(PktDrop, pkt_drops),
-[C_SW_IBP_DMA_WAIT] = SW_IBP_CNTR(DmaWait, dmaरुको),
+[C_SW_IBP_DMA_WAIT] = SW_IBP_CNTR(DmaWait, dmawait),
 [C_SW_IBP_RC_SEQNAK] = SW_IBP_CNTR(RcSeqNak, rc_seqnak),
 [C_SW_IBP_RC_DUPREQ] = SW_IBP_CNTR(RcDupRew, rc_dupreq),
 [C_SW_IBP_RDMA_SEQ] = SW_IBP_CNTR(RdmaSeq, rdma_seq),
 [C_SW_IBP_UNALIGNED] = SW_IBP_CNTR(Unaligned, unaligned),
 [C_SW_IBP_SEQ_NAK] = SW_IBP_CNTR(SeqNak, seq_naks),
-[C_SW_IBP_RC_CRWAITS] = SW_IBP_CNTR(RcCrWait, rc_crरुकोs),
+[C_SW_IBP_RC_CRWAITS] = SW_IBP_CNTR(RcCrWait, rc_crwaits),
 [C_SW_CPU_RC_ACKS] = CNTR_ELEM("RcAcks", 0, 0, CNTR_NORMAL,
 			       access_sw_cpu_rc_acks),
 [C_SW_CPU_RC_QACKS] = CNTR_ELEM("RcQacks", 0, 0, CNTR_NORMAL,
@@ -5237,128 +5236,128 @@ def_access_ibp_counter(rc_crरुकोs);
 [OVR_LBL(154)] = OVR_ELM(154), [OVR_LBL(155)] = OVR_ELM(155),
 [OVR_LBL(156)] = OVR_ELM(156), [OVR_LBL(157)] = OVR_ELM(157),
 [OVR_LBL(158)] = OVR_ELM(158), [OVR_LBL(159)] = OVR_ELM(159),
-पूर्ण;
+};
 
 /* ======================================================================== */
 
-/* वापस true अगर this is chip revision revision a */
-पूर्णांक is_ax(काष्ठा hfi1_devdata *dd)
-अणु
+/* return true if this is chip revision revision a */
+int is_ax(struct hfi1_devdata *dd)
+{
 	u8 chip_rev_minor =
 		dd->revision >> CCE_REVISION_CHIP_REV_MINOR_SHIFT
 			& CCE_REVISION_CHIP_REV_MINOR_MASK;
-	वापस (chip_rev_minor & 0xf0) == 0;
-पूर्ण
+	return (chip_rev_minor & 0xf0) == 0;
+}
 
-/* वापस true अगर this is chip revision revision b */
-पूर्णांक is_bx(काष्ठा hfi1_devdata *dd)
-अणु
+/* return true if this is chip revision revision b */
+int is_bx(struct hfi1_devdata *dd)
+{
 	u8 chip_rev_minor =
 		dd->revision >> CCE_REVISION_CHIP_REV_MINOR_SHIFT
 			& CCE_REVISION_CHIP_REV_MINOR_MASK;
-	वापस (chip_rev_minor & 0xF0) == 0x10;
-पूर्ण
+	return (chip_rev_minor & 0xF0) == 0x10;
+}
 
-/* वापस true is kernel urg disabled क्रम rcd */
-bool is_urg_masked(काष्ठा hfi1_ctxtdata *rcd)
-अणु
+/* return true is kernel urg disabled for rcd */
+bool is_urg_masked(struct hfi1_ctxtdata *rcd)
+{
 	u64 mask;
 	u32 is = IS_RCVURGENT_START + rcd->ctxt;
 	u8 bit = is % 64;
 
-	mask = पढ़ो_csr(rcd->dd, CCE_INT_MASK + (8 * (is / 64)));
-	वापस !(mask & BIT_ULL(bit));
-पूर्ण
+	mask = read_csr(rcd->dd, CCE_INT_MASK + (8 * (is / 64)));
+	return !(mask & BIT_ULL(bit));
+}
 
 /*
  * Append string s to buffer buf.  Arguments curp and len are the current
- * position and reमुख्यing length, respectively.
+ * position and remaining length, respectively.
  *
- * वापस 0 on success, 1 on out of room
+ * return 0 on success, 1 on out of room
  */
-अटल पूर्णांक append_str(अक्षर *buf, अक्षर **curp, पूर्णांक *lenp, स्थिर अक्षर *s)
-अणु
-	अक्षर *p = *curp;
-	पूर्णांक len = *lenp;
-	पूर्णांक result = 0; /* success */
-	अक्षर c;
+static int append_str(char *buf, char **curp, int *lenp, const char *s)
+{
+	char *p = *curp;
+	int len = *lenp;
+	int result = 0; /* success */
+	char c;
 
-	/* add a comma, अगर first in the buffer */
-	अगर (p != buf) अणु
-		अगर (len == 0) अणु
+	/* add a comma, if first in the buffer */
+	if (p != buf) {
+		if (len == 0) {
 			result = 1; /* out of room */
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 		*p++ = ',';
 		len--;
-	पूर्ण
+	}
 
 	/* copy the string */
-	जबतक ((c = *s++) != 0) अणु
-		अगर (len == 0) अणु
+	while ((c = *s++) != 0) {
+		if (len == 0) {
 			result = 1; /* out of room */
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 		*p++ = c;
 		len--;
-	पूर्ण
+	}
 
-करोne:
-	/* ग_लिखो वापस values */
+done:
+	/* write return values */
 	*curp = p;
 	*lenp = len;
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
 /*
- * Using the given flag table, prपूर्णांक a comma separated string पूर्णांकo
- * the buffer.  End in '*' अगर the buffer is too लघु.
+ * Using the given flag table, print a comma separated string into
+ * the buffer.  End in '*' if the buffer is too short.
  */
-अटल अक्षर *flag_string(अक्षर *buf, पूर्णांक buf_len, u64 flags,
-			 काष्ठा flag_table *table, पूर्णांक table_size)
-अणु
-	अक्षर extra[32];
-	अक्षर *p = buf;
-	पूर्णांक len = buf_len;
-	पूर्णांक no_room = 0;
-	पूर्णांक i;
+static char *flag_string(char *buf, int buf_len, u64 flags,
+			 struct flag_table *table, int table_size)
+{
+	char extra[32];
+	char *p = buf;
+	int len = buf_len;
+	int no_room = 0;
+	int i;
 
-	/* make sure there is at least 2 so we can क्रमm "*" */
-	अगर (len < 2)
-		वापस "";
+	/* make sure there is at least 2 so we can form "*" */
+	if (len < 2)
+		return "";
 
-	len--;	/* leave room क्रम a nul */
-	क्रम (i = 0; i < table_size; i++) अणु
-		अगर (flags & table[i].flag) अणु
+	len--;	/* leave room for a nul */
+	for (i = 0; i < table_size; i++) {
+		if (flags & table[i].flag) {
 			no_room = append_str(buf, &p, &len, table[i].str);
-			अगर (no_room)
-				अवरोध;
+			if (no_room)
+				break;
 			flags &= ~table[i].flag;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* any unकरोcumented bits left? */
-	अगर (!no_room && flags) अणु
-		snम_लिखो(extra, माप(extra), "bits 0x%llx", flags);
+	/* any undocumented bits left? */
+	if (!no_room && flags) {
+		snprintf(extra, sizeof(extra), "bits 0x%llx", flags);
 		no_room = append_str(buf, &p, &len, extra);
-	पूर्ण
+	}
 
-	/* add * अगर ran out of room */
-	अगर (no_room) अणु
-		/* may need to back up to add space क्रम a '*' */
-		अगर (len == 0)
+	/* add * if ran out of room */
+	if (no_room) {
+		/* may need to back up to add space for a '*' */
+		if (len == 0)
 			--p;
 		*p++ = '*';
-	पूर्ण
+	}
 
-	/* add final nul - space alपढ़ोy allocated above */
+	/* add final nul - space already allocated above */
 	*p = 0;
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
-/* first 8 CCE error पूर्णांकerrupt source names */
-अटल स्थिर अक्षर * स्थिर cce_misc_names[] = अणु
+/* first 8 CCE error interrupt source names */
+static const char * const cce_misc_names[] = {
 	"CceErrInt",		/* 0 */
 	"RxeErrInt",		/* 1 */
 	"MiscErrInt",		/* 2 */
@@ -5367,770 +5366,770 @@ bool is_urg_masked(काष्ठा hfi1_ctxtdata *rcd)
 	"SDmaErrInt",		/* 5 */
 	"EgressErrInt",		/* 6 */
 	"TxeErrInt"		/* 7 */
-पूर्ण;
+};
 
 /*
- * Return the miscellaneous error पूर्णांकerrupt name.
+ * Return the miscellaneous error interrupt name.
  */
-अटल अक्षर *is_misc_err_name(अक्षर *buf, माप_प्रकार bsize, अचिन्हित पूर्णांक source)
-अणु
-	अगर (source < ARRAY_SIZE(cce_misc_names))
-		म_नकलन(buf, cce_misc_names[source], bsize);
-	अन्यथा
-		snम_लिखो(buf, bsize, "Reserved%u",
+static char *is_misc_err_name(char *buf, size_t bsize, unsigned int source)
+{
+	if (source < ARRAY_SIZE(cce_misc_names))
+		strncpy(buf, cce_misc_names[source], bsize);
+	else
+		snprintf(buf, bsize, "Reserved%u",
 			 source + IS_GENERAL_ERR_START);
 
-	वापस buf;
-पूर्ण
+	return buf;
+}
 
 /*
- * Return the SDMA engine error पूर्णांकerrupt name.
+ * Return the SDMA engine error interrupt name.
  */
-अटल अक्षर *is_sdma_eng_err_name(अक्षर *buf, माप_प्रकार bsize, अचिन्हित पूर्णांक source)
-अणु
-	snम_लिखो(buf, bsize, "SDmaEngErrInt%u", source);
-	वापस buf;
-पूर्ण
+static char *is_sdma_eng_err_name(char *buf, size_t bsize, unsigned int source)
+{
+	snprintf(buf, bsize, "SDmaEngErrInt%u", source);
+	return buf;
+}
 
 /*
- * Return the send context error पूर्णांकerrupt name.
+ * Return the send context error interrupt name.
  */
-अटल अक्षर *is_sendctxt_err_name(अक्षर *buf, माप_प्रकार bsize, अचिन्हित पूर्णांक source)
-अणु
-	snम_लिखो(buf, bsize, "SendCtxtErrInt%u", source);
-	वापस buf;
-पूर्ण
+static char *is_sendctxt_err_name(char *buf, size_t bsize, unsigned int source)
+{
+	snprintf(buf, bsize, "SendCtxtErrInt%u", source);
+	return buf;
+}
 
-अटल स्थिर अक्षर * स्थिर various_names[] = अणु
+static const char * const various_names[] = {
 	"PbcInt",
 	"GpioAssertInt",
 	"Qsfp1Int",
 	"Qsfp2Int",
 	"TCritInt"
-पूर्ण;
+};
 
 /*
- * Return the various पूर्णांकerrupt name.
+ * Return the various interrupt name.
  */
-अटल अक्षर *is_various_name(अक्षर *buf, माप_प्रकार bsize, अचिन्हित पूर्णांक source)
-अणु
-	अगर (source < ARRAY_SIZE(various_names))
-		म_नकलन(buf, various_names[source], bsize);
-	अन्यथा
-		snम_लिखो(buf, bsize, "Reserved%u", source + IS_VARIOUS_START);
-	वापस buf;
-पूर्ण
+static char *is_various_name(char *buf, size_t bsize, unsigned int source)
+{
+	if (source < ARRAY_SIZE(various_names))
+		strncpy(buf, various_names[source], bsize);
+	else
+		snprintf(buf, bsize, "Reserved%u", source + IS_VARIOUS_START);
+	return buf;
+}
 
 /*
- * Return the DC पूर्णांकerrupt name.
+ * Return the DC interrupt name.
  */
-अटल अक्षर *is_dc_name(अक्षर *buf, माप_प्रकार bsize, अचिन्हित पूर्णांक source)
-अणु
-	अटल स्थिर अक्षर * स्थिर dc_पूर्णांक_names[] = अणु
+static char *is_dc_name(char *buf, size_t bsize, unsigned int source)
+{
+	static const char * const dc_int_names[] = {
 		"common",
 		"lcb",
 		"8051",
 		"lbm"	/* local block merge */
-	पूर्ण;
+	};
 
-	अगर (source < ARRAY_SIZE(dc_पूर्णांक_names))
-		snम_लिखो(buf, bsize, "dc_%s_int", dc_पूर्णांक_names[source]);
-	अन्यथा
-		snम_लिखो(buf, bsize, "DCInt%u", source);
-	वापस buf;
-पूर्ण
+	if (source < ARRAY_SIZE(dc_int_names))
+		snprintf(buf, bsize, "dc_%s_int", dc_int_names[source]);
+	else
+		snprintf(buf, bsize, "DCInt%u", source);
+	return buf;
+}
 
-अटल स्थिर अक्षर * स्थिर sdma_पूर्णांक_names[] = अणु
+static const char * const sdma_int_names[] = {
 	"SDmaInt",
 	"SdmaIdleInt",
 	"SdmaProgressInt",
-पूर्ण;
+};
 
 /*
- * Return the SDMA engine पूर्णांकerrupt name.
+ * Return the SDMA engine interrupt name.
  */
-अटल अक्षर *is_sdma_eng_name(अक्षर *buf, माप_प्रकार bsize, अचिन्हित पूर्णांक source)
-अणु
-	/* what पूर्णांकerrupt */
-	अचिन्हित पूर्णांक what  = source / TXE_NUM_SDMA_ENGINES;
+static char *is_sdma_eng_name(char *buf, size_t bsize, unsigned int source)
+{
+	/* what interrupt */
+	unsigned int what  = source / TXE_NUM_SDMA_ENGINES;
 	/* which engine */
-	अचिन्हित पूर्णांक which = source % TXE_NUM_SDMA_ENGINES;
+	unsigned int which = source % TXE_NUM_SDMA_ENGINES;
 
-	अगर (likely(what < 3))
-		snम_लिखो(buf, bsize, "%s%u", sdma_पूर्णांक_names[what], which);
-	अन्यथा
-		snम_लिखो(buf, bsize, "Invalid SDMA interrupt %u", source);
-	वापस buf;
-पूर्ण
-
-/*
- * Return the receive available पूर्णांकerrupt name.
- */
-अटल अक्षर *is_rcv_avail_name(अक्षर *buf, माप_प्रकार bsize, अचिन्हित पूर्णांक source)
-अणु
-	snम_लिखो(buf, bsize, "RcvAvailInt%u", source);
-	वापस buf;
-पूर्ण
+	if (likely(what < 3))
+		snprintf(buf, bsize, "%s%u", sdma_int_names[what], which);
+	else
+		snprintf(buf, bsize, "Invalid SDMA interrupt %u", source);
+	return buf;
+}
 
 /*
- * Return the receive urgent पूर्णांकerrupt name.
+ * Return the receive available interrupt name.
  */
-अटल अक्षर *is_rcv_urgent_name(अक्षर *buf, माप_प्रकार bsize, अचिन्हित पूर्णांक source)
-अणु
-	snम_लिखो(buf, bsize, "RcvUrgentInt%u", source);
-	वापस buf;
-पूर्ण
+static char *is_rcv_avail_name(char *buf, size_t bsize, unsigned int source)
+{
+	snprintf(buf, bsize, "RcvAvailInt%u", source);
+	return buf;
+}
 
 /*
- * Return the send credit पूर्णांकerrupt name.
+ * Return the receive urgent interrupt name.
  */
-अटल अक्षर *is_send_credit_name(अक्षर *buf, माप_प्रकार bsize, अचिन्हित पूर्णांक source)
-अणु
-	snम_लिखो(buf, bsize, "SendCreditInt%u", source);
-	वापस buf;
-पूर्ण
+static char *is_rcv_urgent_name(char *buf, size_t bsize, unsigned int source)
+{
+	snprintf(buf, bsize, "RcvUrgentInt%u", source);
+	return buf;
+}
 
 /*
- * Return the reserved पूर्णांकerrupt name.
+ * Return the send credit interrupt name.
  */
-अटल अक्षर *is_reserved_name(अक्षर *buf, माप_प्रकार bsize, अचिन्हित पूर्णांक source)
-अणु
-	snम_लिखो(buf, bsize, "Reserved%u", source + IS_RESERVED_START);
-	वापस buf;
-पूर्ण
+static char *is_send_credit_name(char *buf, size_t bsize, unsigned int source)
+{
+	snprintf(buf, bsize, "SendCreditInt%u", source);
+	return buf;
+}
 
-अटल अक्षर *cce_err_status_string(अक्षर *buf, पूर्णांक buf_len, u64 flags)
-अणु
-	वापस flag_string(buf, buf_len, flags,
+/*
+ * Return the reserved interrupt name.
+ */
+static char *is_reserved_name(char *buf, size_t bsize, unsigned int source)
+{
+	snprintf(buf, bsize, "Reserved%u", source + IS_RESERVED_START);
+	return buf;
+}
+
+static char *cce_err_status_string(char *buf, int buf_len, u64 flags)
+{
+	return flag_string(buf, buf_len, flags,
 			   cce_err_status_flags,
 			   ARRAY_SIZE(cce_err_status_flags));
-पूर्ण
+}
 
-अटल अक्षर *rxe_err_status_string(अक्षर *buf, पूर्णांक buf_len, u64 flags)
-अणु
-	वापस flag_string(buf, buf_len, flags,
+static char *rxe_err_status_string(char *buf, int buf_len, u64 flags)
+{
+	return flag_string(buf, buf_len, flags,
 			   rxe_err_status_flags,
 			   ARRAY_SIZE(rxe_err_status_flags));
-पूर्ण
+}
 
-अटल अक्षर *misc_err_status_string(अक्षर *buf, पूर्णांक buf_len, u64 flags)
-अणु
-	वापस flag_string(buf, buf_len, flags, misc_err_status_flags,
+static char *misc_err_status_string(char *buf, int buf_len, u64 flags)
+{
+	return flag_string(buf, buf_len, flags, misc_err_status_flags,
 			   ARRAY_SIZE(misc_err_status_flags));
-पूर्ण
+}
 
-अटल अक्षर *pio_err_status_string(अक्षर *buf, पूर्णांक buf_len, u64 flags)
-अणु
-	वापस flag_string(buf, buf_len, flags,
+static char *pio_err_status_string(char *buf, int buf_len, u64 flags)
+{
+	return flag_string(buf, buf_len, flags,
 			   pio_err_status_flags,
 			   ARRAY_SIZE(pio_err_status_flags));
-पूर्ण
+}
 
-अटल अक्षर *sdma_err_status_string(अक्षर *buf, पूर्णांक buf_len, u64 flags)
-अणु
-	वापस flag_string(buf, buf_len, flags,
+static char *sdma_err_status_string(char *buf, int buf_len, u64 flags)
+{
+	return flag_string(buf, buf_len, flags,
 			   sdma_err_status_flags,
 			   ARRAY_SIZE(sdma_err_status_flags));
-पूर्ण
+}
 
-अटल अक्षर *egress_err_status_string(अक्षर *buf, पूर्णांक buf_len, u64 flags)
-अणु
-	वापस flag_string(buf, buf_len, flags,
+static char *egress_err_status_string(char *buf, int buf_len, u64 flags)
+{
+	return flag_string(buf, buf_len, flags,
 			   egress_err_status_flags,
 			   ARRAY_SIZE(egress_err_status_flags));
-पूर्ण
+}
 
-अटल अक्षर *egress_err_info_string(अक्षर *buf, पूर्णांक buf_len, u64 flags)
-अणु
-	वापस flag_string(buf, buf_len, flags,
+static char *egress_err_info_string(char *buf, int buf_len, u64 flags)
+{
+	return flag_string(buf, buf_len, flags,
 			   egress_err_info_flags,
 			   ARRAY_SIZE(egress_err_info_flags));
-पूर्ण
+}
 
-अटल अक्षर *send_err_status_string(अक्षर *buf, पूर्णांक buf_len, u64 flags)
-अणु
-	वापस flag_string(buf, buf_len, flags,
+static char *send_err_status_string(char *buf, int buf_len, u64 flags)
+{
+	return flag_string(buf, buf_len, flags,
 			   send_err_status_flags,
 			   ARRAY_SIZE(send_err_status_flags));
-पूर्ण
+}
 
-अटल व्योम handle_cce_err(काष्ठा hfi1_devdata *dd, u32 unused, u64 reg)
-अणु
-	अक्षर buf[96];
-	पूर्णांक i = 0;
+static void handle_cce_err(struct hfi1_devdata *dd, u32 unused, u64 reg)
+{
+	char buf[96];
+	int i = 0;
 
 	/*
-	 * For most these errors, there is nothing that can be करोne except
+	 * For most these errors, there is nothing that can be done except
 	 * report or record it.
 	 */
 	dd_dev_info(dd, "CCE Error: %s\n",
-		    cce_err_status_string(buf, माप(buf), reg));
+		    cce_err_status_string(buf, sizeof(buf), reg));
 
-	अगर ((reg & CCE_ERR_STATUS_CCE_CLI2_ASYNC_FIFO_PARITY_ERR_SMASK) &&
-	    is_ax(dd) && (dd->icode != ICODE_FUNCTIONAL_SIMULATOR)) अणु
-		/* this error requires a manual drop पूर्णांकo SPC मुक्तze mode */
+	if ((reg & CCE_ERR_STATUS_CCE_CLI2_ASYNC_FIFO_PARITY_ERR_SMASK) &&
+	    is_ax(dd) && (dd->icode != ICODE_FUNCTIONAL_SIMULATOR)) {
+		/* this error requires a manual drop into SPC freeze mode */
 		/* then a fix up */
-		start_मुक्तze_handling(dd->pport, FREEZE_SELF);
-	पूर्ण
+		start_freeze_handling(dd->pport, FREEZE_SELF);
+	}
 
-	क्रम (i = 0; i < NUM_CCE_ERR_STATUS_COUNTERS; i++) अणु
-		अगर (reg & (1ull << i)) अणु
+	for (i = 0; i < NUM_CCE_ERR_STATUS_COUNTERS; i++) {
+		if (reg & (1ull << i)) {
 			incr_cntr64(&dd->cce_err_status_cnt[i]);
-			/* मुख्यtain a counter over all cce_err_status errors */
+			/* maintain a counter over all cce_err_status errors */
 			incr_cntr64(&dd->sw_cce_err_status_aggregate);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
- * Check counters क्रम receive errors that करो not have an पूर्णांकerrupt
+ * Check counters for receive errors that do not have an interrupt
  * associated with them.
  */
-#घोषणा RCVERR_CHECK_TIME 10
-अटल व्योम update_rcverr_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा hfi1_devdata *dd = from_समयr(dd, t, rcverr_समयr);
-	काष्ठा hfi1_pportdata *ppd = dd->pport;
-	u32 cur_ovfl_cnt = पढ़ो_dev_cntr(dd, C_RCV_OVF, CNTR_INVALID_VL);
+#define RCVERR_CHECK_TIME 10
+static void update_rcverr_timer(struct timer_list *t)
+{
+	struct hfi1_devdata *dd = from_timer(dd, t, rcverr_timer);
+	struct hfi1_pportdata *ppd = dd->pport;
+	u32 cur_ovfl_cnt = read_dev_cntr(dd, C_RCV_OVF, CNTR_INVALID_VL);
 
-	अगर (dd->rcv_ovfl_cnt < cur_ovfl_cnt &&
-	    ppd->port_error_action & OPA_PI_MASK_EX_BUFFER_OVERRUN) अणु
+	if (dd->rcv_ovfl_cnt < cur_ovfl_cnt &&
+	    ppd->port_error_action & OPA_PI_MASK_EX_BUFFER_OVERRUN) {
 		dd_dev_info(dd, "%s: PortErrorAction bounce\n", __func__);
-		set_link_करोwn_reason(
+		set_link_down_reason(
 		ppd, OPA_LINKDOWN_REASON_EXCESSIVE_BUFFER_OVERRUN, 0,
 		OPA_LINKDOWN_REASON_EXCESSIVE_BUFFER_OVERRUN);
 		queue_work(ppd->link_wq, &ppd->link_bounce_work);
-	पूर्ण
+	}
 	dd->rcv_ovfl_cnt = (u32)cur_ovfl_cnt;
 
-	mod_समयr(&dd->rcverr_समयr, jअगरfies + HZ * RCVERR_CHECK_TIME);
-पूर्ण
+	mod_timer(&dd->rcverr_timer, jiffies + HZ * RCVERR_CHECK_TIME);
+}
 
-अटल पूर्णांक init_rcverr(काष्ठा hfi1_devdata *dd)
-अणु
-	समयr_setup(&dd->rcverr_समयr, update_rcverr_समयr, 0);
+static int init_rcverr(struct hfi1_devdata *dd)
+{
+	timer_setup(&dd->rcverr_timer, update_rcverr_timer, 0);
 	/* Assume the hardware counter has been reset */
 	dd->rcv_ovfl_cnt = 0;
-	वापस mod_समयr(&dd->rcverr_समयr, jअगरfies + HZ * RCVERR_CHECK_TIME);
-पूर्ण
+	return mod_timer(&dd->rcverr_timer, jiffies + HZ * RCVERR_CHECK_TIME);
+}
 
-अटल व्योम मुक्त_rcverr(काष्ठा hfi1_devdata *dd)
-अणु
-	अगर (dd->rcverr_समयr.function)
-		del_समयr_sync(&dd->rcverr_समयr);
-पूर्ण
+static void free_rcverr(struct hfi1_devdata *dd)
+{
+	if (dd->rcverr_timer.function)
+		del_timer_sync(&dd->rcverr_timer);
+}
 
-अटल व्योम handle_rxe_err(काष्ठा hfi1_devdata *dd, u32 unused, u64 reg)
-अणु
-	अक्षर buf[96];
-	पूर्णांक i = 0;
+static void handle_rxe_err(struct hfi1_devdata *dd, u32 unused, u64 reg)
+{
+	char buf[96];
+	int i = 0;
 
 	dd_dev_info(dd, "Receive Error: %s\n",
-		    rxe_err_status_string(buf, माप(buf), reg));
+		    rxe_err_status_string(buf, sizeof(buf), reg));
 
-	अगर (reg & ALL_RXE_FREEZE_ERR) अणु
-		पूर्णांक flags = 0;
+	if (reg & ALL_RXE_FREEZE_ERR) {
+		int flags = 0;
 
 		/*
-		 * Freeze mode recovery is disabled क्रम the errors
+		 * Freeze mode recovery is disabled for the errors
 		 * in RXE_FREEZE_ABORT_MASK
 		 */
-		अगर (is_ax(dd) && (reg & RXE_FREEZE_ABORT_MASK))
+		if (is_ax(dd) && (reg & RXE_FREEZE_ABORT_MASK))
 			flags = FREEZE_ABORT;
 
-		start_मुक्तze_handling(dd->pport, flags);
-	पूर्ण
+		start_freeze_handling(dd->pport, flags);
+	}
 
-	क्रम (i = 0; i < NUM_RCV_ERR_STATUS_COUNTERS; i++) अणु
-		अगर (reg & (1ull << i))
+	for (i = 0; i < NUM_RCV_ERR_STATUS_COUNTERS; i++) {
+		if (reg & (1ull << i))
 			incr_cntr64(&dd->rcv_err_status_cnt[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम handle_misc_err(काष्ठा hfi1_devdata *dd, u32 unused, u64 reg)
-अणु
-	अक्षर buf[96];
-	पूर्णांक i = 0;
+static void handle_misc_err(struct hfi1_devdata *dd, u32 unused, u64 reg)
+{
+	char buf[96];
+	int i = 0;
 
 	dd_dev_info(dd, "Misc Error: %s",
-		    misc_err_status_string(buf, माप(buf), reg));
-	क्रम (i = 0; i < NUM_MISC_ERR_STATUS_COUNTERS; i++) अणु
-		अगर (reg & (1ull << i))
+		    misc_err_status_string(buf, sizeof(buf), reg));
+	for (i = 0; i < NUM_MISC_ERR_STATUS_COUNTERS; i++) {
+		if (reg & (1ull << i))
 			incr_cntr64(&dd->misc_err_status_cnt[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम handle_pio_err(काष्ठा hfi1_devdata *dd, u32 unused, u64 reg)
-अणु
-	अक्षर buf[96];
-	पूर्णांक i = 0;
+static void handle_pio_err(struct hfi1_devdata *dd, u32 unused, u64 reg)
+{
+	char buf[96];
+	int i = 0;
 
 	dd_dev_info(dd, "PIO Error: %s\n",
-		    pio_err_status_string(buf, माप(buf), reg));
+		    pio_err_status_string(buf, sizeof(buf), reg));
 
-	अगर (reg & ALL_PIO_FREEZE_ERR)
-		start_मुक्तze_handling(dd->pport, 0);
+	if (reg & ALL_PIO_FREEZE_ERR)
+		start_freeze_handling(dd->pport, 0);
 
-	क्रम (i = 0; i < NUM_SEND_PIO_ERR_STATUS_COUNTERS; i++) अणु
-		अगर (reg & (1ull << i))
+	for (i = 0; i < NUM_SEND_PIO_ERR_STATUS_COUNTERS; i++) {
+		if (reg & (1ull << i))
 			incr_cntr64(&dd->send_pio_err_status_cnt[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम handle_sdma_err(काष्ठा hfi1_devdata *dd, u32 unused, u64 reg)
-अणु
-	अक्षर buf[96];
-	पूर्णांक i = 0;
+static void handle_sdma_err(struct hfi1_devdata *dd, u32 unused, u64 reg)
+{
+	char buf[96];
+	int i = 0;
 
 	dd_dev_info(dd, "SDMA Error: %s\n",
-		    sdma_err_status_string(buf, माप(buf), reg));
+		    sdma_err_status_string(buf, sizeof(buf), reg));
 
-	अगर (reg & ALL_SDMA_FREEZE_ERR)
-		start_मुक्तze_handling(dd->pport, 0);
+	if (reg & ALL_SDMA_FREEZE_ERR)
+		start_freeze_handling(dd->pport, 0);
 
-	क्रम (i = 0; i < NUM_SEND_DMA_ERR_STATUS_COUNTERS; i++) अणु
-		अगर (reg & (1ull << i))
+	for (i = 0; i < NUM_SEND_DMA_ERR_STATUS_COUNTERS; i++) {
+		if (reg & (1ull << i))
 			incr_cntr64(&dd->send_dma_err_status_cnt[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अंतरभूत व्योम __count_port_discards(काष्ठा hfi1_pportdata *ppd)
-अणु
+static inline void __count_port_discards(struct hfi1_pportdata *ppd)
+{
 	incr_cntr64(&ppd->port_xmit_discards);
-पूर्ण
+}
 
-अटल व्योम count_port_inactive(काष्ठा hfi1_devdata *dd)
-अणु
+static void count_port_inactive(struct hfi1_devdata *dd)
+{
 	__count_port_discards(dd->pport);
-पूर्ण
+}
 
 /*
  * We have had a "disallowed packet" error during egress. Determine the
- * पूर्णांकegrity check which failed, and update relevant error counter, etc.
+ * integrity check which failed, and update relevant error counter, etc.
  *
- * Note that the SEND_EGRESS_ERR_INFO रेजिस्टर has only a single
- * bit of state per पूर्णांकegrity check, and so we can miss the reason क्रम an
- * egress error अगर more than one packet fails the same पूर्णांकegrity check
+ * Note that the SEND_EGRESS_ERR_INFO register has only a single
+ * bit of state per integrity check, and so we can miss the reason for an
+ * egress error if more than one packet fails the same integrity check
  * since we cleared the corresponding bit in SEND_EGRESS_ERR_INFO.
  */
-अटल व्योम handle_send_egress_err_info(काष्ठा hfi1_devdata *dd,
-					पूर्णांक vl)
-अणु
-	काष्ठा hfi1_pportdata *ppd = dd->pport;
-	u64 src = पढ़ो_csr(dd, SEND_EGRESS_ERR_SOURCE); /* पढ़ो first */
-	u64 info = पढ़ो_csr(dd, SEND_EGRESS_ERR_INFO);
-	अक्षर buf[96];
+static void handle_send_egress_err_info(struct hfi1_devdata *dd,
+					int vl)
+{
+	struct hfi1_pportdata *ppd = dd->pport;
+	u64 src = read_csr(dd, SEND_EGRESS_ERR_SOURCE); /* read first */
+	u64 info = read_csr(dd, SEND_EGRESS_ERR_INFO);
+	char buf[96];
 
-	/* clear करोwn all observed info as quickly as possible after पढ़ो */
-	ग_लिखो_csr(dd, SEND_EGRESS_ERR_INFO, info);
+	/* clear down all observed info as quickly as possible after read */
+	write_csr(dd, SEND_EGRESS_ERR_INFO, info);
 
 	dd_dev_info(dd,
 		    "Egress Error Info: 0x%llx, %s Egress Error Src 0x%llx\n",
-		    info, egress_err_info_string(buf, माप(buf), info), src);
+		    info, egress_err_info_string(buf, sizeof(buf), info), src);
 
-	/* Eventually add other counters क्रम each bit */
-	अगर (info & PORT_DISCARD_EGRESS_ERRS) अणु
-		पूर्णांक weight, i;
+	/* Eventually add other counters for each bit */
+	if (info & PORT_DISCARD_EGRESS_ERRS) {
+		int weight, i;
 
 		/*
-		 * Count all applicable bits as inभागidual errors and
+		 * Count all applicable bits as individual errors and
 		 * attribute them to the packet that triggered this handler.
 		 * This may not be completely accurate due to limitations
-		 * on the available hardware error inक्रमmation.  There is
-		 * a single inक्रमmation रेजिस्टर and any number of error
-		 * packets may have occurred and contributed to it beक्रमe
+		 * on the available hardware error information.  There is
+		 * a single information register and any number of error
+		 * packets may have occurred and contributed to it before
 		 * this routine is called.  This means that:
-		 * a) If multiple packets with the same error occur beक्रमe
+		 * a) If multiple packets with the same error occur before
 		 *    this routine is called, earlier packets are missed.
-		 *    There is only a single bit क्रम each error type.
+		 *    There is only a single bit for each error type.
 		 * b) Errors may not be attributed to the correct VL.
-		 *    The driver is attributing all bits in the info रेजिस्टर
+		 *    The driver is attributing all bits in the info register
 		 *    to the packet that triggered this call, but bits
-		 *    could be an accumulation of dअगरferent packets with
-		 *    dअगरferent VLs.
+		 *    could be an accumulation of different packets with
+		 *    different VLs.
 		 * c) A single error packet may have multiple counts attached
-		 *    to it.  There is no way क्रम the driver to know अगर
-		 *    multiple bits set in the info रेजिस्टर are due to a
+		 *    to it.  There is no way for the driver to know if
+		 *    multiple bits set in the info register are due to a
 		 *    single packet or multiple packets.  The driver assumes
 		 *    multiple packets.
 		 */
 		weight = hweight64(info & PORT_DISCARD_EGRESS_ERRS);
-		क्रम (i = 0; i < weight; i++) अणु
+		for (i = 0; i < weight; i++) {
 			__count_port_discards(ppd);
-			अगर (vl >= 0 && vl < TXE_NUM_DATA_VL)
+			if (vl >= 0 && vl < TXE_NUM_DATA_VL)
 				incr_cntr64(&ppd->port_xmit_discards_vl[vl]);
-			अन्यथा अगर (vl == 15)
+			else if (vl == 15)
 				incr_cntr64(&ppd->port_xmit_discards_vl
 					    [C_VL_15]);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
  * Input value is a bit position within the SEND_EGRESS_ERR_STATUS
- * रेजिस्टर. Does it represent a 'port inactive' error?
+ * register. Does it represent a 'port inactive' error?
  */
-अटल अंतरभूत पूर्णांक port_inactive_err(u64 posn)
-अणु
-	वापस (posn >= SEES(TX_LINKDOWN) &&
+static inline int port_inactive_err(u64 posn)
+{
+	return (posn >= SEES(TX_LINKDOWN) &&
 		posn <= SEES(TX_INCORRECT_LINK_STATE));
-पूर्ण
+}
 
 /*
  * Input value is a bit position within the SEND_EGRESS_ERR_STATUS
- * रेजिस्टर. Does it represent a 'disallowed packet' error?
+ * register. Does it represent a 'disallowed packet' error?
  */
-अटल अंतरभूत पूर्णांक disallowed_pkt_err(पूर्णांक posn)
-अणु
-	वापस (posn >= SEES(TX_SDMA0_DISALLOWED_PACKET) &&
+static inline int disallowed_pkt_err(int posn)
+{
+	return (posn >= SEES(TX_SDMA0_DISALLOWED_PACKET) &&
 		posn <= SEES(TX_SDMA15_DISALLOWED_PACKET));
-पूर्ण
+}
 
 /*
  * Input value is a bit position of one of the SDMA engine disallowed
  * packet errors.  Return which engine.  Use of this must be guarded by
  * disallowed_pkt_err().
  */
-अटल अंतरभूत पूर्णांक disallowed_pkt_engine(पूर्णांक posn)
-अणु
-	वापस posn - SEES(TX_SDMA0_DISALLOWED_PACKET);
-पूर्ण
+static inline int disallowed_pkt_engine(int posn)
+{
+	return posn - SEES(TX_SDMA0_DISALLOWED_PACKET);
+}
 
 /*
- * Translate an SDMA engine to a VL.  Return -1 अगर the tranlation cannot
- * be करोne.
+ * Translate an SDMA engine to a VL.  Return -1 if the tranlation cannot
+ * be done.
  */
-अटल पूर्णांक engine_to_vl(काष्ठा hfi1_devdata *dd, पूर्णांक engine)
-अणु
-	काष्ठा sdma_vl_map *m;
-	पूर्णांक vl;
+static int engine_to_vl(struct hfi1_devdata *dd, int engine)
+{
+	struct sdma_vl_map *m;
+	int vl;
 
 	/* range check */
-	अगर (engine < 0 || engine >= TXE_NUM_SDMA_ENGINES)
-		वापस -1;
+	if (engine < 0 || engine >= TXE_NUM_SDMA_ENGINES)
+		return -1;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	m = rcu_dereference(dd->sdma_map);
 	vl = m->engine_to_vl[engine];
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
-	वापस vl;
-पूर्ण
+	return vl;
+}
 
 /*
- * Translate the send context (sofware index) पूर्णांकo a VL.  Return -1 अगर the
- * translation cannot be करोne.
+ * Translate the send context (sofware index) into a VL.  Return -1 if the
+ * translation cannot be done.
  */
-अटल पूर्णांक sc_to_vl(काष्ठा hfi1_devdata *dd, पूर्णांक sw_index)
-अणु
-	काष्ठा send_context_info *sci;
-	काष्ठा send_context *sc;
-	पूर्णांक i;
+static int sc_to_vl(struct hfi1_devdata *dd, int sw_index)
+{
+	struct send_context_info *sci;
+	struct send_context *sc;
+	int i;
 
 	sci = &dd->send_contexts[sw_index];
 
-	/* there is no inक्रमmation क्रम user (PSM) and ack contexts */
-	अगर ((sci->type != SC_KERNEL) && (sci->type != SC_VL15))
-		वापस -1;
+	/* there is no information for user (PSM) and ack contexts */
+	if ((sci->type != SC_KERNEL) && (sci->type != SC_VL15))
+		return -1;
 
 	sc = sci->sc;
-	अगर (!sc)
-		वापस -1;
-	अगर (dd->vld[15].sc == sc)
-		वापस 15;
-	क्रम (i = 0; i < num_vls; i++)
-		अगर (dd->vld[i].sc == sc)
-			वापस i;
+	if (!sc)
+		return -1;
+	if (dd->vld[15].sc == sc)
+		return 15;
+	for (i = 0; i < num_vls; i++)
+		if (dd->vld[i].sc == sc)
+			return i;
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल व्योम handle_egress_err(काष्ठा hfi1_devdata *dd, u32 unused, u64 reg)
-अणु
+static void handle_egress_err(struct hfi1_devdata *dd, u32 unused, u64 reg)
+{
 	u64 reg_copy = reg, handled = 0;
-	अक्षर buf[96];
-	पूर्णांक i = 0;
+	char buf[96];
+	int i = 0;
 
-	अगर (reg & ALL_TXE_EGRESS_FREEZE_ERR)
-		start_मुक्तze_handling(dd->pport, 0);
-	अन्यथा अगर (is_ax(dd) &&
+	if (reg & ALL_TXE_EGRESS_FREEZE_ERR)
+		start_freeze_handling(dd->pport, 0);
+	else if (is_ax(dd) &&
 		 (reg & SEND_EGRESS_ERR_STATUS_TX_CREDIT_RETURN_VL_ERR_SMASK) &&
 		 (dd->icode != ICODE_FUNCTIONAL_SIMULATOR))
-		start_मुक्तze_handling(dd->pport, 0);
+		start_freeze_handling(dd->pport, 0);
 
-	जबतक (reg_copy) अणु
-		पूर्णांक posn = fls64(reg_copy);
-		/* fls64() वापसs a 1-based offset, we want it zero based */
-		पूर्णांक shअगरt = posn - 1;
-		u64 mask = 1ULL << shअगरt;
+	while (reg_copy) {
+		int posn = fls64(reg_copy);
+		/* fls64() returns a 1-based offset, we want it zero based */
+		int shift = posn - 1;
+		u64 mask = 1ULL << shift;
 
-		अगर (port_inactive_err(shअगरt)) अणु
+		if (port_inactive_err(shift)) {
 			count_port_inactive(dd);
 			handled |= mask;
-		पूर्ण अन्यथा अगर (disallowed_pkt_err(shअगरt)) अणु
-			पूर्णांक vl = engine_to_vl(dd, disallowed_pkt_engine(shअगरt));
+		} else if (disallowed_pkt_err(shift)) {
+			int vl = engine_to_vl(dd, disallowed_pkt_engine(shift));
 
 			handle_send_egress_err_info(dd, vl);
 			handled |= mask;
-		पूर्ण
+		}
 		reg_copy &= ~mask;
-	पूर्ण
+	}
 
 	reg &= ~handled;
 
-	अगर (reg)
+	if (reg)
 		dd_dev_info(dd, "Egress Error: %s\n",
-			    egress_err_status_string(buf, माप(buf), reg));
+			    egress_err_status_string(buf, sizeof(buf), reg));
 
-	क्रम (i = 0; i < NUM_SEND_EGRESS_ERR_STATUS_COUNTERS; i++) अणु
-		अगर (reg & (1ull << i))
+	for (i = 0; i < NUM_SEND_EGRESS_ERR_STATUS_COUNTERS; i++) {
+		if (reg & (1ull << i))
 			incr_cntr64(&dd->send_egress_err_status_cnt[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम handle_txe_err(काष्ठा hfi1_devdata *dd, u32 unused, u64 reg)
-अणु
-	अक्षर buf[96];
-	पूर्णांक i = 0;
+static void handle_txe_err(struct hfi1_devdata *dd, u32 unused, u64 reg)
+{
+	char buf[96];
+	int i = 0;
 
 	dd_dev_info(dd, "Send Error: %s\n",
-		    send_err_status_string(buf, माप(buf), reg));
+		    send_err_status_string(buf, sizeof(buf), reg));
 
-	क्रम (i = 0; i < NUM_SEND_ERR_STATUS_COUNTERS; i++) अणु
-		अगर (reg & (1ull << i))
+	for (i = 0; i < NUM_SEND_ERR_STATUS_COUNTERS; i++) {
+		if (reg & (1ull << i))
 			incr_cntr64(&dd->send_err_status_cnt[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * The maximum number of बार the error clear करोwn will loop beक्रमe
+ * The maximum number of times the error clear down will loop before
  * blocking a repeating error.  This value is arbitrary.
  */
-#घोषणा MAX_CLEAR_COUNT 20
+#define MAX_CLEAR_COUNT 20
 
 /*
- * Clear and handle an error रेजिस्टर.  All error पूर्णांकerrupts are funneled
+ * Clear and handle an error register.  All error interrupts are funneled
  * through here to have a central location to correctly handle single-
  * or multi-shot errors.
  *
- * For non per-context रेजिस्टरs, call this routine with a context value
+ * For non per-context registers, call this routine with a context value
  * of 0 so the per-context offset is zero.
  *
- * If the handler loops too many बार, assume that something is wrong
+ * If the handler loops too many times, assume that something is wrong
  * and can't be fixed, so mask the error bits.
  */
-अटल व्योम पूर्णांकerrupt_clear_करोwn(काष्ठा hfi1_devdata *dd,
+static void interrupt_clear_down(struct hfi1_devdata *dd,
 				 u32 context,
-				 स्थिर काष्ठा err_reg_info *eri)
-अणु
+				 const struct err_reg_info *eri)
+{
 	u64 reg;
 	u32 count;
 
-	/* पढ़ो in a loop until no more errors are seen */
+	/* read in a loop until no more errors are seen */
 	count = 0;
-	जबतक (1) अणु
-		reg = पढ़ो_kctxt_csr(dd, context, eri->status);
-		अगर (reg == 0)
-			अवरोध;
-		ग_लिखो_kctxt_csr(dd, context, eri->clear, reg);
-		अगर (likely(eri->handler))
+	while (1) {
+		reg = read_kctxt_csr(dd, context, eri->status);
+		if (reg == 0)
+			break;
+		write_kctxt_csr(dd, context, eri->clear, reg);
+		if (likely(eri->handler))
 			eri->handler(dd, context, reg);
 		count++;
-		अगर (count > MAX_CLEAR_COUNT) अणु
+		if (count > MAX_CLEAR_COUNT) {
 			u64 mask;
 
 			dd_dev_err(dd, "Repeating %s bits 0x%llx - masking\n",
 				   eri->desc, reg);
 			/*
-			 * Read-modअगरy-ग_लिखो so any other masked bits
-			 * reमुख्य masked.
+			 * Read-modify-write so any other masked bits
+			 * remain masked.
 			 */
-			mask = पढ़ो_kctxt_csr(dd, context, eri->mask);
+			mask = read_kctxt_csr(dd, context, eri->mask);
 			mask &= ~reg;
-			ग_लिखो_kctxt_csr(dd, context, eri->mask, mask);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			write_kctxt_csr(dd, context, eri->mask, mask);
+			break;
+		}
+	}
+}
 
 /*
- * CCE block "misc" पूर्णांकerrupt.  Source is < 16.
+ * CCE block "misc" interrupt.  Source is < 16.
  */
-अटल व्योम is_misc_err_पूर्णांक(काष्ठा hfi1_devdata *dd, अचिन्हित पूर्णांक source)
-अणु
-	स्थिर काष्ठा err_reg_info *eri = &misc_errs[source];
+static void is_misc_err_int(struct hfi1_devdata *dd, unsigned int source)
+{
+	const struct err_reg_info *eri = &misc_errs[source];
 
-	अगर (eri->handler) अणु
-		पूर्णांकerrupt_clear_करोwn(dd, 0, eri);
-	पूर्ण अन्यथा अणु
+	if (eri->handler) {
+		interrupt_clear_down(dd, 0, eri);
+	} else {
 		dd_dev_err(dd, "Unexpected misc interrupt (%u) - reserved\n",
 			   source);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल अक्षर *send_context_err_status_string(अक्षर *buf, पूर्णांक buf_len, u64 flags)
-अणु
-	वापस flag_string(buf, buf_len, flags,
+static char *send_context_err_status_string(char *buf, int buf_len, u64 flags)
+{
+	return flag_string(buf, buf_len, flags,
 			   sc_err_status_flags,
 			   ARRAY_SIZE(sc_err_status_flags));
-पूर्ण
+}
 
 /*
- * Send context error पूर्णांकerrupt.  Source (hw_context) is < 160.
+ * Send context error interrupt.  Source (hw_context) is < 160.
  *
  * All send context errors cause the send context to halt.  The normal
- * clear-करोwn mechanism cannot be used because we cannot clear the
- * error bits until several other दीर्घ-running items are करोne first.
- * This is OK because with the context halted, nothing अन्यथा is going
+ * clear-down mechanism cannot be used because we cannot clear the
+ * error bits until several other long-running items are done first.
+ * This is OK because with the context halted, nothing else is going
  * to happen on it anyway.
  */
-अटल व्योम is_sendctxt_err_पूर्णांक(काष्ठा hfi1_devdata *dd,
-				अचिन्हित पूर्णांक hw_context)
-अणु
-	काष्ठा send_context_info *sci;
-	काष्ठा send_context *sc;
-	अक्षर flags[96];
+static void is_sendctxt_err_int(struct hfi1_devdata *dd,
+				unsigned int hw_context)
+{
+	struct send_context_info *sci;
+	struct send_context *sc;
+	char flags[96];
 	u64 status;
 	u32 sw_index;
-	पूर्णांक i = 0;
-	अचिन्हित दीर्घ irq_flags;
+	int i = 0;
+	unsigned long irq_flags;
 
 	sw_index = dd->hw_to_sw[hw_context];
-	अगर (sw_index >= dd->num_send_contexts) अणु
+	if (sw_index >= dd->num_send_contexts) {
 		dd_dev_err(dd,
 			   "out of range sw index %u for send context %u\n",
 			   sw_index, hw_context);
-		वापस;
-	पूर्ण
+		return;
+	}
 	sci = &dd->send_contexts[sw_index];
 	spin_lock_irqsave(&dd->sc_lock, irq_flags);
 	sc = sci->sc;
-	अगर (!sc) अणु
+	if (!sc) {
 		dd_dev_err(dd, "%s: context %u(%u): no sc?\n", __func__,
 			   sw_index, hw_context);
 		spin_unlock_irqrestore(&dd->sc_lock, irq_flags);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* tell the software that a halt has begun */
 	sc_stop(sc, SCF_HALTED);
 
-	status = पढ़ो_kctxt_csr(dd, hw_context, SEND_CTXT_ERR_STATUS);
+	status = read_kctxt_csr(dd, hw_context, SEND_CTXT_ERR_STATUS);
 
 	dd_dev_info(dd, "Send Context %u(%u) Error: %s\n", sw_index, hw_context,
-		    send_context_err_status_string(flags, माप(flags),
+		    send_context_err_status_string(flags, sizeof(flags),
 						   status));
 
-	अगर (status & SEND_CTXT_ERR_STATUS_PIO_DISALLOWED_PACKET_ERR_SMASK)
+	if (status & SEND_CTXT_ERR_STATUS_PIO_DISALLOWED_PACKET_ERR_SMASK)
 		handle_send_egress_err_info(dd, sc_to_vl(dd, sw_index));
 
 	/*
-	 * Automatically restart halted kernel contexts out of पूर्णांकerrupt
+	 * Automatically restart halted kernel contexts out of interrupt
 	 * context.  User contexts must ask the driver to restart the context.
 	 */
-	अगर (sc->type != SC_USER)
+	if (sc->type != SC_USER)
 		queue_work(dd->pport->hfi1_wq, &sc->halt_work);
 	spin_unlock_irqrestore(&dd->sc_lock, irq_flags);
 
 	/*
-	 * Update the counters क्रम the corresponding status bits.
+	 * Update the counters for the corresponding status bits.
 	 * Note that these particular counters are aggregated over all
 	 * 160 contexts.
 	 */
-	क्रम (i = 0; i < NUM_SEND_CTXT_ERR_STATUS_COUNTERS; i++) अणु
-		अगर (status & (1ull << i))
+	for (i = 0; i < NUM_SEND_CTXT_ERR_STATUS_COUNTERS; i++) {
+		if (status & (1ull << i))
 			incr_cntr64(&dd->sw_ctxt_err_status_cnt[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम handle_sdma_eng_err(काष्ठा hfi1_devdata *dd,
-				अचिन्हित पूर्णांक source, u64 status)
-अणु
-	काष्ठा sdma_engine *sde;
-	पूर्णांक i = 0;
+static void handle_sdma_eng_err(struct hfi1_devdata *dd,
+				unsigned int source, u64 status)
+{
+	struct sdma_engine *sde;
+	int i = 0;
 
 	sde = &dd->per_sdma[source];
-#अगर_घोषित CONFIG_SDMA_VERBOSITY
+#ifdef CONFIG_SDMA_VERBOSITY
 	dd_dev_err(sde->dd, "CONFIG SDMA(%u) %s:%d %s()\n", sde->this_idx,
-		   slashstrip(__खाता__), __LINE__, __func__);
+		   slashstrip(__FILE__), __LINE__, __func__);
 	dd_dev_err(sde->dd, "CONFIG SDMA(%u) source: %u status 0x%llx\n",
-		   sde->this_idx, source, (अचिन्हित दीर्घ दीर्घ)status);
-#पूर्ण_अगर
+		   sde->this_idx, source, (unsigned long long)status);
+#endif
 	sde->err_cnt++;
 	sdma_engine_error(sde, status);
 
 	/*
-	* Update the counters क्रम the corresponding status bits.
+	* Update the counters for the corresponding status bits.
 	* Note that these particular counters are aggregated over
 	* all 16 DMA engines.
 	*/
-	क्रम (i = 0; i < NUM_SEND_DMA_ENG_ERR_STATUS_COUNTERS; i++) अणु
-		अगर (status & (1ull << i))
+	for (i = 0; i < NUM_SEND_DMA_ENG_ERR_STATUS_COUNTERS; i++) {
+		if (status & (1ull << i))
 			incr_cntr64(&dd->sw_send_dma_eng_err_status_cnt[i]);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * CCE block SDMA error पूर्णांकerrupt.  Source is < 16.
+ * CCE block SDMA error interrupt.  Source is < 16.
  */
-अटल व्योम is_sdma_eng_err_पूर्णांक(काष्ठा hfi1_devdata *dd, अचिन्हित पूर्णांक source)
-अणु
-#अगर_घोषित CONFIG_SDMA_VERBOSITY
-	काष्ठा sdma_engine *sde = &dd->per_sdma[source];
+static void is_sdma_eng_err_int(struct hfi1_devdata *dd, unsigned int source)
+{
+#ifdef CONFIG_SDMA_VERBOSITY
+	struct sdma_engine *sde = &dd->per_sdma[source];
 
 	dd_dev_err(dd, "CONFIG SDMA(%u) %s:%d %s()\n", sde->this_idx,
-		   slashstrip(__खाता__), __LINE__, __func__);
+		   slashstrip(__FILE__), __LINE__, __func__);
 	dd_dev_err(dd, "CONFIG SDMA(%u) source: %u\n", sde->this_idx,
 		   source);
 	sdma_dumpstate(sde);
-#पूर्ण_अगर
-	पूर्णांकerrupt_clear_करोwn(dd, source, &sdma_eng_err);
-पूर्ण
+#endif
+	interrupt_clear_down(dd, source, &sdma_eng_err);
+}
 
 /*
- * CCE block "various" पूर्णांकerrupt.  Source is < 8.
+ * CCE block "various" interrupt.  Source is < 8.
  */
-अटल व्योम is_various_पूर्णांक(काष्ठा hfi1_devdata *dd, अचिन्हित पूर्णांक source)
-अणु
-	स्थिर काष्ठा err_reg_info *eri = &various_err[source];
+static void is_various_int(struct hfi1_devdata *dd, unsigned int source)
+{
+	const struct err_reg_info *eri = &various_err[source];
 
 	/*
-	 * TCritInt cannot go through पूर्णांकerrupt_clear_करोwn()
-	 * because it is not a second tier पूर्णांकerrupt. The handler
+	 * TCritInt cannot go through interrupt_clear_down()
+	 * because it is not a second tier interrupt. The handler
 	 * should be called directly.
 	 */
-	अगर (source == TCRIT_INT_SOURCE)
+	if (source == TCRIT_INT_SOURCE)
 		handle_temp_err(dd);
-	अन्यथा अगर (eri->handler)
-		पूर्णांकerrupt_clear_करोwn(dd, 0, eri);
-	अन्यथा
+	else if (eri->handler)
+		interrupt_clear_down(dd, 0, eri);
+	else
 		dd_dev_info(dd,
 			    "%s: Unimplemented/reserved interrupt %d\n",
 			    __func__, source);
-पूर्ण
+}
 
-अटल व्योम handle_qsfp_पूर्णांक(काष्ठा hfi1_devdata *dd, u32 src_ctx, u64 reg)
-अणु
+static void handle_qsfp_int(struct hfi1_devdata *dd, u32 src_ctx, u64 reg)
+{
 	/* src_ctx is always zero */
-	काष्ठा hfi1_pportdata *ppd = dd->pport;
-	अचिन्हित दीर्घ flags;
-	u64 qsfp_पूर्णांक_mgmt = (u64)(QSFP_HFI0_INT_N | QSFP_HFI0_MODPRST_N);
+	struct hfi1_pportdata *ppd = dd->pport;
+	unsigned long flags;
+	u64 qsfp_int_mgmt = (u64)(QSFP_HFI0_INT_N | QSFP_HFI0_MODPRST_N);
 
-	अगर (reg & QSFP_HFI0_MODPRST_N) अणु
-		अगर (!qsfp_mod_present(ppd)) अणु
+	if (reg & QSFP_HFI0_MODPRST_N) {
+		if (!qsfp_mod_present(ppd)) {
 			dd_dev_info(dd, "%s: QSFP module removed\n",
 				    __func__);
 
-			ppd->driver_link_पढ़ोy = 0;
+			ppd->driver_link_ready = 0;
 			/*
-			 * Cable हटाओd, reset all our inक्रमmation about the
+			 * Cable removed, reset all our information about the
 			 * cache and cable capabilities
 			 */
 
 			spin_lock_irqsave(&ppd->qsfp_info.qsfp_lock, flags);
 			/*
-			 * We करोn't set cache_refresh_required here as we expect
-			 * an पूर्णांकerrupt when a cable is inserted
+			 * We don't set cache_refresh_required here as we expect
+			 * an interrupt when a cable is inserted
 			 */
 			ppd->qsfp_info.cache_valid = 0;
 			ppd->qsfp_info.reset_needed = 0;
@@ -6138,10 +6137,10 @@ bool is_urg_masked(काष्ठा hfi1_ctxtdata *rcd)
 			spin_unlock_irqrestore(&ppd->qsfp_info.qsfp_lock,
 					       flags);
 			/* Invert the ModPresent pin now to detect plug-in */
-			ग_लिखो_csr(dd, dd->hfi1_id ? ASIC_QSFP2_INVERT :
-				  ASIC_QSFP1_INVERT, qsfp_पूर्णांक_mgmt);
+			write_csr(dd, dd->hfi1_id ? ASIC_QSFP2_INVERT :
+				  ASIC_QSFP1_INVERT, qsfp_int_mgmt);
 
-			अगर ((ppd->offline_disabled_reason >
+			if ((ppd->offline_disabled_reason >
 			  HFI1_ODR_MASK(
 			  OPA_LINKDOWN_REASON_LOCAL_MEDIA_NOT_INSTALLED)) ||
 			  (ppd->offline_disabled_reason ==
@@ -6150,16 +6149,16 @@ bool is_urg_masked(काष्ठा hfi1_ctxtdata *rcd)
 				HFI1_ODR_MASK(
 				OPA_LINKDOWN_REASON_LOCAL_MEDIA_NOT_INSTALLED);
 
-			अगर (ppd->host_link_state == HLS_DN_POLL) अणु
+			if (ppd->host_link_state == HLS_DN_POLL) {
 				/*
 				 * The link is still in POLL. This means
-				 * that the normal link करोwn processing
-				 * will not happen. We have to करो it here
-				 * beक्रमe turning the DC off.
+				 * that the normal link down processing
+				 * will not happen. We have to do it here
+				 * before turning the DC off.
 				 */
-				queue_work(ppd->link_wq, &ppd->link_करोwn_work);
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				queue_work(ppd->link_wq, &ppd->link_down_work);
+			}
+		} else {
 			dd_dev_info(dd, "%s: QSFP module inserted\n",
 				    __func__);
 
@@ -6173,219 +6172,219 @@ bool is_urg_masked(काष्ठा hfi1_ctxtdata *rcd)
 			 * Stop inversion of ModPresent pin to detect
 			 * removal of the cable
 			 */
-			qsfp_पूर्णांक_mgmt &= ~(u64)QSFP_HFI0_MODPRST_N;
-			ग_लिखो_csr(dd, dd->hfi1_id ? ASIC_QSFP2_INVERT :
-				  ASIC_QSFP1_INVERT, qsfp_पूर्णांक_mgmt);
+			qsfp_int_mgmt &= ~(u64)QSFP_HFI0_MODPRST_N;
+			write_csr(dd, dd->hfi1_id ? ASIC_QSFP2_INVERT :
+				  ASIC_QSFP1_INVERT, qsfp_int_mgmt);
 
 			ppd->offline_disabled_reason =
 				HFI1_ODR_MASK(OPA_LINKDOWN_REASON_TRANSIENT);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (reg & QSFP_HFI0_INT_N) अणु
+	if (reg & QSFP_HFI0_INT_N) {
 		dd_dev_info(dd, "%s: Interrupt received from QSFP module\n",
 			    __func__);
 		spin_lock_irqsave(&ppd->qsfp_info.qsfp_lock, flags);
-		ppd->qsfp_info.check_पूर्णांकerrupt_flags = 1;
+		ppd->qsfp_info.check_interrupt_flags = 1;
 		spin_unlock_irqrestore(&ppd->qsfp_info.qsfp_lock, flags);
-	पूर्ण
+	}
 
-	/* Schedule the QSFP work only अगर there is a cable attached. */
-	अगर (qsfp_mod_present(ppd))
+	/* Schedule the QSFP work only if there is a cable attached. */
+	if (qsfp_mod_present(ppd))
 		queue_work(ppd->link_wq, &ppd->qsfp_info.qsfp_work);
-पूर्ण
+}
 
-अटल पूर्णांक request_host_lcb_access(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक ret;
+static int request_host_lcb_access(struct hfi1_devdata *dd)
+{
+	int ret;
 
-	ret = करो_8051_command(dd, HCMD_MISC,
+	ret = do_8051_command(dd, HCMD_MISC,
 			      (u64)HCMD_MISC_REQUEST_LCB_ACCESS <<
-			      LOAD_DATA_FIELD_ID_SHIFT, शून्य);
-	अगर (ret != HCMD_SUCCESS) अणु
+			      LOAD_DATA_FIELD_ID_SHIFT, NULL);
+	if (ret != HCMD_SUCCESS) {
 		dd_dev_err(dd, "%s: command failed with error %d\n",
 			   __func__, ret);
-	पूर्ण
-	वापस ret == HCMD_SUCCESS ? 0 : -EBUSY;
-पूर्ण
+	}
+	return ret == HCMD_SUCCESS ? 0 : -EBUSY;
+}
 
-अटल पूर्णांक request_8051_lcb_access(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक ret;
+static int request_8051_lcb_access(struct hfi1_devdata *dd)
+{
+	int ret;
 
-	ret = करो_8051_command(dd, HCMD_MISC,
+	ret = do_8051_command(dd, HCMD_MISC,
 			      (u64)HCMD_MISC_GRANT_LCB_ACCESS <<
-			      LOAD_DATA_FIELD_ID_SHIFT, शून्य);
-	अगर (ret != HCMD_SUCCESS) अणु
+			      LOAD_DATA_FIELD_ID_SHIFT, NULL);
+	if (ret != HCMD_SUCCESS) {
 		dd_dev_err(dd, "%s: command failed with error %d\n",
 			   __func__, ret);
-	पूर्ण
-	वापस ret == HCMD_SUCCESS ? 0 : -EBUSY;
-पूर्ण
+	}
+	return ret == HCMD_SUCCESS ? 0 : -EBUSY;
+}
 
 /*
  * Set the LCB selector - allow host access.  The DCC selector always
- * poपूर्णांकs to the host.
+ * points to the host.
  */
-अटल अंतरभूत व्योम set_host_lcb_access(काष्ठा hfi1_devdata *dd)
-अणु
-	ग_लिखो_csr(dd, DC_DC8051_CFG_CSR_ACCESS_SEL,
+static inline void set_host_lcb_access(struct hfi1_devdata *dd)
+{
+	write_csr(dd, DC_DC8051_CFG_CSR_ACCESS_SEL,
 		  DC_DC8051_CFG_CSR_ACCESS_SEL_DCC_SMASK |
 		  DC_DC8051_CFG_CSR_ACCESS_SEL_LCB_SMASK);
-पूर्ण
+}
 
 /*
  * Clear the LCB selector - allow 8051 access.  The DCC selector always
- * poपूर्णांकs to the host.
+ * points to the host.
  */
-अटल अंतरभूत व्योम set_8051_lcb_access(काष्ठा hfi1_devdata *dd)
-अणु
-	ग_लिखो_csr(dd, DC_DC8051_CFG_CSR_ACCESS_SEL,
+static inline void set_8051_lcb_access(struct hfi1_devdata *dd)
+{
+	write_csr(dd, DC_DC8051_CFG_CSR_ACCESS_SEL,
 		  DC_DC8051_CFG_CSR_ACCESS_SEL_DCC_SMASK);
-पूर्ण
+}
 
 /*
- * Acquire LCB access from the 8051.  If the host alपढ़ोy has access,
- * just increment a counter.  Otherwise, inक्रमm the 8051 that the
+ * Acquire LCB access from the 8051.  If the host already has access,
+ * just increment a counter.  Otherwise, inform the 8051 that the
  * host is taking access.
  *
  * Returns:
  *	0 on success
- *	-EBUSY अगर the 8051 has control and cannot be disturbed
- *	-त्रुटि_सं अगर unable to acquire access from the 8051
+ *	-EBUSY if the 8051 has control and cannot be disturbed
+ *	-errno if unable to acquire access from the 8051
  */
-पूर्णांक acquire_lcb_access(काष्ठा hfi1_devdata *dd, पूर्णांक sleep_ok)
-अणु
-	काष्ठा hfi1_pportdata *ppd = dd->pport;
-	पूर्णांक ret = 0;
+int acquire_lcb_access(struct hfi1_devdata *dd, int sleep_ok)
+{
+	struct hfi1_pportdata *ppd = dd->pport;
+	int ret = 0;
 
 	/*
 	 * Use the host link state lock so the operation of this routine
-	 * अणु link state check, selector change, count increment पूर्ण can occur
+	 * { link state check, selector change, count increment } can occur
 	 * as a unit against a link state change.  Otherwise there is a
 	 * race between the state change and the count increment.
 	 */
-	अगर (sleep_ok) अणु
+	if (sleep_ok) {
 		mutex_lock(&ppd->hls_lock);
-	पूर्ण अन्यथा अणु
-		जबतक (!mutex_trylock(&ppd->hls_lock))
+	} else {
+		while (!mutex_trylock(&ppd->hls_lock))
 			udelay(1);
-	पूर्ण
+	}
 
 	/* this access is valid only when the link is up */
-	अगर (ppd->host_link_state & HLS_DOWN) अणु
+	if (ppd->host_link_state & HLS_DOWN) {
 		dd_dev_info(dd, "%s: link state %s not up\n",
 			    __func__, link_state_name(ppd->host_link_state));
 		ret = -EBUSY;
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (dd->lcb_access_count == 0) अणु
+	if (dd->lcb_access_count == 0) {
 		ret = request_host_lcb_access(dd);
-		अगर (ret) अणु
+		if (ret) {
 			dd_dev_err(dd,
 				   "%s: unable to acquire LCB access, err %d\n",
 				   __func__, ret);
-			जाओ करोne;
-		पूर्ण
+			goto done;
+		}
 		set_host_lcb_access(dd);
-	पूर्ण
+	}
 	dd->lcb_access_count++;
-करोne:
+done:
 	mutex_unlock(&ppd->hls_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Release LCB access by decrementing the use count.  If the count is moving
- * from 1 to 0, inक्रमm 8051 that it has control back.
+ * from 1 to 0, inform 8051 that it has control back.
  *
  * Returns:
  *	0 on success
- *	-त्रुटि_सं अगर unable to release access to the 8051
+ *	-errno if unable to release access to the 8051
  */
-पूर्णांक release_lcb_access(काष्ठा hfi1_devdata *dd, पूर्णांक sleep_ok)
-अणु
-	पूर्णांक ret = 0;
+int release_lcb_access(struct hfi1_devdata *dd, int sleep_ok)
+{
+	int ret = 0;
 
 	/*
 	 * Use the host link state lock because the acquire needed it.
-	 * Here, we only need to keep अणु selector change, count decrement पूर्ण
+	 * Here, we only need to keep { selector change, count decrement }
 	 * as a unit.
 	 */
-	अगर (sleep_ok) अणु
+	if (sleep_ok) {
 		mutex_lock(&dd->pport->hls_lock);
-	पूर्ण अन्यथा अणु
-		जबतक (!mutex_trylock(&dd->pport->hls_lock))
+	} else {
+		while (!mutex_trylock(&dd->pport->hls_lock))
 			udelay(1);
-	पूर्ण
+	}
 
-	अगर (dd->lcb_access_count == 0) अणु
+	if (dd->lcb_access_count == 0) {
 		dd_dev_err(dd, "%s: LCB access count is zero.  Skipping.\n",
 			   __func__);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 
-	अगर (dd->lcb_access_count == 1) अणु
+	if (dd->lcb_access_count == 1) {
 		set_8051_lcb_access(dd);
 		ret = request_8051_lcb_access(dd);
-		अगर (ret) अणु
+		if (ret) {
 			dd_dev_err(dd,
 				   "%s: unable to release LCB access, err %d\n",
 				   __func__, ret);
-			/* restore host access अगर the grant didn't work */
+			/* restore host access if the grant didn't work */
 			set_host_lcb_access(dd);
-			जाओ करोne;
-		पूर्ण
-	पूर्ण
+			goto done;
+		}
+	}
 	dd->lcb_access_count--;
-करोne:
+done:
 	mutex_unlock(&dd->pport->hls_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Initialize LCB access variables and state.  Called during driver load,
  * after most of the initialization is finished.
  *
- * The DC शेष is LCB access on क्रम the host.  The driver शेषs to
- * leaving access to the 8051.  Assign access now - this स्थिरrains the call
- * to this routine to be after all LCB set-up is करोne.  In particular, after
- * hf1_init_dd() -> set_up_पूर्णांकerrupts() -> clear_all_पूर्णांकerrupts()
+ * The DC default is LCB access on for the host.  The driver defaults to
+ * leaving access to the 8051.  Assign access now - this constrains the call
+ * to this routine to be after all LCB set-up is done.  In particular, after
+ * hf1_init_dd() -> set_up_interrupts() -> clear_all_interrupts()
  */
-अटल व्योम init_lcb_access(काष्ठा hfi1_devdata *dd)
-अणु
+static void init_lcb_access(struct hfi1_devdata *dd)
+{
 	dd->lcb_access_count = 0;
-पूर्ण
+}
 
 /*
  * Write a response back to a 8051 request.
  */
-अटल व्योम hreq_response(काष्ठा hfi1_devdata *dd, u8 वापस_code, u16 rsp_data)
-अणु
-	ग_लिखो_csr(dd, DC_DC8051_CFG_EXT_DEV_0,
+static void hreq_response(struct hfi1_devdata *dd, u8 return_code, u16 rsp_data)
+{
+	write_csr(dd, DC_DC8051_CFG_EXT_DEV_0,
 		  DC_DC8051_CFG_EXT_DEV_0_COMPLETED_SMASK |
-		  (u64)वापस_code <<
+		  (u64)return_code <<
 		  DC_DC8051_CFG_EXT_DEV_0_RETURN_CODE_SHIFT |
 		  (u64)rsp_data << DC_DC8051_CFG_EXT_DEV_0_RSP_DATA_SHIFT);
-पूर्ण
+}
 
 /*
  * Handle host requests from the 8051.
  */
-अटल व्योम handle_8051_request(काष्ठा hfi1_pportdata *ppd)
-अणु
-	काष्ठा hfi1_devdata *dd = ppd->dd;
+static void handle_8051_request(struct hfi1_pportdata *ppd)
+{
+	struct hfi1_devdata *dd = ppd->dd;
 	u64 reg;
 	u16 data = 0;
 	u8 type;
 
-	reg = पढ़ो_csr(dd, DC_DC8051_CFG_EXT_DEV_1);
-	अगर ((reg & DC_DC8051_CFG_EXT_DEV_1_REQ_NEW_SMASK) == 0)
-		वापस;	/* no request */
+	reg = read_csr(dd, DC_DC8051_CFG_EXT_DEV_1);
+	if ((reg & DC_DC8051_CFG_EXT_DEV_1_REQ_NEW_SMASK) == 0)
+		return;	/* no request */
 
 	/* zero out COMPLETED so the response is seen */
-	ग_लिखो_csr(dd, DC_DC8051_CFG_EXT_DEV_0, 0);
+	write_csr(dd, DC_DC8051_CFG_EXT_DEV_0, 0);
 
 	/* extract request details */
 	type = (reg >> DC_DC8051_CFG_EXT_DEV_1_REQ_TYPE_SHIFT)
@@ -6393,66 +6392,66 @@ bool is_urg_masked(काष्ठा hfi1_ctxtdata *rcd)
 	data = (reg >> DC_DC8051_CFG_EXT_DEV_1_REQ_DATA_SHIFT)
 			& DC_DC8051_CFG_EXT_DEV_1_REQ_DATA_MASK;
 
-	चयन (type) अणु
-	हाल HREQ_LOAD_CONFIG:
-	हाल HREQ_SAVE_CONFIG:
-	हाल HREQ_READ_CONFIG:
-	हाल HREQ_SET_TX_EQ_ABS:
-	हाल HREQ_SET_TX_EQ_REL:
-	हाल HREQ_ENABLE:
+	switch (type) {
+	case HREQ_LOAD_CONFIG:
+	case HREQ_SAVE_CONFIG:
+	case HREQ_READ_CONFIG:
+	case HREQ_SET_TX_EQ_ABS:
+	case HREQ_SET_TX_EQ_REL:
+	case HREQ_ENABLE:
 		dd_dev_info(dd, "8051 request: request 0x%x not supported\n",
 			    type);
 		hreq_response(dd, HREQ_NOT_SUPPORTED, 0);
-		अवरोध;
-	हाल HREQ_LCB_RESET:
-		/* Put the LCB, RX FPE and TX FPE पूर्णांकo reset */
-		ग_लिखो_csr(dd, DCC_CFG_RESET, LCB_RX_FPE_TX_FPE_INTO_RESET);
-		/* Make sure the ग_लिखो completed */
-		(व्योम)पढ़ो_csr(dd, DCC_CFG_RESET);
-		/* Hold the reset दीर्घ enough to take effect */
+		break;
+	case HREQ_LCB_RESET:
+		/* Put the LCB, RX FPE and TX FPE into reset */
+		write_csr(dd, DCC_CFG_RESET, LCB_RX_FPE_TX_FPE_INTO_RESET);
+		/* Make sure the write completed */
+		(void)read_csr(dd, DCC_CFG_RESET);
+		/* Hold the reset long enough to take effect */
 		udelay(1);
 		/* Take the LCB, RX FPE and TX FPE out of reset */
-		ग_लिखो_csr(dd, DCC_CFG_RESET, LCB_RX_FPE_TX_FPE_OUT_OF_RESET);
+		write_csr(dd, DCC_CFG_RESET, LCB_RX_FPE_TX_FPE_OUT_OF_RESET);
 		hreq_response(dd, HREQ_SUCCESS, 0);
 
-		अवरोध;
-	हाल HREQ_CONFIG_DONE:
+		break;
+	case HREQ_CONFIG_DONE:
 		hreq_response(dd, HREQ_SUCCESS, 0);
-		अवरोध;
+		break;
 
-	हाल HREQ_INTERFACE_TEST:
+	case HREQ_INTERFACE_TEST:
 		hreq_response(dd, HREQ_SUCCESS, data);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dd_dev_err(dd, "8051 request: unknown request 0x%x\n", type);
 		hreq_response(dd, HREQ_NOT_SUPPORTED, 0);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 /*
  * Set up allocation unit vaulue.
  */
-व्योम set_up_vau(काष्ठा hfi1_devdata *dd, u8 vau)
-अणु
-	u64 reg = पढ़ो_csr(dd, SEND_CM_GLOBAL_CREDIT);
+void set_up_vau(struct hfi1_devdata *dd, u8 vau)
+{
+	u64 reg = read_csr(dd, SEND_CM_GLOBAL_CREDIT);
 
-	/* करो not modअगरy other values in the रेजिस्टर */
+	/* do not modify other values in the register */
 	reg &= ~SEND_CM_GLOBAL_CREDIT_AU_SMASK;
 	reg |= (u64)vau << SEND_CM_GLOBAL_CREDIT_AU_SHIFT;
-	ग_लिखो_csr(dd, SEND_CM_GLOBAL_CREDIT, reg);
-पूर्ण
+	write_csr(dd, SEND_CM_GLOBAL_CREDIT, reg);
+}
 
 /*
  * Set up initial VL15 credits of the remote.  Assumes the rest of
- * the CM credit रेजिस्टरs are zero from a previous global or credit reset.
- * Shared limit क्रम VL15 will always be 0.
+ * the CM credit registers are zero from a previous global or credit reset.
+ * Shared limit for VL15 will always be 0.
  */
-व्योम set_up_vl15(काष्ठा hfi1_devdata *dd, u16 vl15buf)
-अणु
-	u64 reg = पढ़ो_csr(dd, SEND_CM_GLOBAL_CREDIT);
+void set_up_vl15(struct hfi1_devdata *dd, u16 vl15buf)
+{
+	u64 reg = read_csr(dd, SEND_CM_GLOBAL_CREDIT);
 
-	/* set initial values क्रम total and shared credit limit */
+	/* set initial values for total and shared credit limit */
 	reg &= ~(SEND_CM_GLOBAL_CREDIT_TOTAL_CREDIT_LIMIT_SMASK |
 		 SEND_CM_GLOBAL_CREDIT_SHARED_LIMIT_SMASK);
 
@@ -6461,176 +6460,176 @@ bool is_urg_masked(काष्ठा hfi1_ctxtdata *rcd)
 	 * Leave shared limit at 0.
 	 */
 	reg |= (u64)vl15buf << SEND_CM_GLOBAL_CREDIT_TOTAL_CREDIT_LIMIT_SHIFT;
-	ग_लिखो_csr(dd, SEND_CM_GLOBAL_CREDIT, reg);
+	write_csr(dd, SEND_CM_GLOBAL_CREDIT, reg);
 
-	ग_लिखो_csr(dd, SEND_CM_CREDIT_VL15, (u64)vl15buf
+	write_csr(dd, SEND_CM_CREDIT_VL15, (u64)vl15buf
 		  << SEND_CM_CREDIT_VL15_DEDICATED_LIMIT_VL_SHIFT);
-पूर्ण
+}
 
 /*
  * Zero all credit details from the previous connection and
- * reset the CM manager's पूर्णांकernal counters.
+ * reset the CM manager's internal counters.
  */
-व्योम reset_link_credits(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक i;
+void reset_link_credits(struct hfi1_devdata *dd)
+{
+	int i;
 
-	/* हटाओ all previous VL credit limits */
-	क्रम (i = 0; i < TXE_NUM_DATA_VL; i++)
-		ग_लिखो_csr(dd, SEND_CM_CREDIT_VL + (8 * i), 0);
-	ग_लिखो_csr(dd, SEND_CM_CREDIT_VL15, 0);
-	ग_लिखो_csr(dd, SEND_CM_GLOBAL_CREDIT, 0);
+	/* remove all previous VL credit limits */
+	for (i = 0; i < TXE_NUM_DATA_VL; i++)
+		write_csr(dd, SEND_CM_CREDIT_VL + (8 * i), 0);
+	write_csr(dd, SEND_CM_CREDIT_VL15, 0);
+	write_csr(dd, SEND_CM_GLOBAL_CREDIT, 0);
 	/* reset the CM block */
 	pio_send_control(dd, PSC_CM_RESET);
 	/* reset cached value */
 	dd->vl15buf_cached = 0;
-पूर्ण
+}
 
 /* convert a vCU to a CU */
-अटल u32 vcu_to_cu(u8 vcu)
-अणु
-	वापस 1 << vcu;
-पूर्ण
+static u32 vcu_to_cu(u8 vcu)
+{
+	return 1 << vcu;
+}
 
 /* convert a CU to a vCU */
-अटल u8 cu_to_vcu(u32 cu)
-अणु
-	वापस ilog2(cu);
-पूर्ण
+static u8 cu_to_vcu(u32 cu)
+{
+	return ilog2(cu);
+}
 
 /* convert a vAU to an AU */
-अटल u32 vau_to_au(u8 vau)
-अणु
-	वापस 8 * (1 << vau);
-पूर्ण
+static u32 vau_to_au(u8 vau)
+{
+	return 8 * (1 << vau);
+}
 
-अटल व्योम set_linkup_शेषs(काष्ठा hfi1_pportdata *ppd)
-अणु
+static void set_linkup_defaults(struct hfi1_pportdata *ppd)
+{
 	ppd->sm_trap_qp = 0x0;
 	ppd->sa_qp = 0x1;
-पूर्ण
+}
 
 /*
- * Graceful LCB shutकरोwn.  This leaves the LCB FIFOs in reset.
+ * Graceful LCB shutdown.  This leaves the LCB FIFOs in reset.
  */
-अटल व्योम lcb_shutकरोwn(काष्ठा hfi1_devdata *dd, पूर्णांक पात)
-अणु
+static void lcb_shutdown(struct hfi1_devdata *dd, int abort)
+{
 	u64 reg;
 
 	/* clear lcb run: LCB_CFG_RUN.EN = 0 */
-	ग_लिखो_csr(dd, DC_LCB_CFG_RUN, 0);
-	/* set tx fअगरo reset: LCB_CFG_TX_FIFOS_RESET.VAL = 1 */
-	ग_लिखो_csr(dd, DC_LCB_CFG_TX_FIFOS_RESET,
+	write_csr(dd, DC_LCB_CFG_RUN, 0);
+	/* set tx fifo reset: LCB_CFG_TX_FIFOS_RESET.VAL = 1 */
+	write_csr(dd, DC_LCB_CFG_TX_FIFOS_RESET,
 		  1ull << DC_LCB_CFG_TX_FIFOS_RESET_VAL_SHIFT);
-	/* set dcc reset csr: DCC_CFG_RESET.अणुreset_lcb,reset_rx_fpeपूर्ण = 1 */
-	dd->lcb_err_en = पढ़ो_csr(dd, DC_LCB_ERR_EN);
-	reg = पढ़ो_csr(dd, DCC_CFG_RESET);
-	ग_लिखो_csr(dd, DCC_CFG_RESET, reg |
+	/* set dcc reset csr: DCC_CFG_RESET.{reset_lcb,reset_rx_fpe} = 1 */
+	dd->lcb_err_en = read_csr(dd, DC_LCB_ERR_EN);
+	reg = read_csr(dd, DCC_CFG_RESET);
+	write_csr(dd, DCC_CFG_RESET, reg |
 		  DCC_CFG_RESET_RESET_LCB | DCC_CFG_RESET_RESET_RX_FPE);
-	(व्योम)पढ़ो_csr(dd, DCC_CFG_RESET); /* make sure the ग_लिखो completed */
-	अगर (!पात) अणु
-		udelay(1);    /* must hold क्रम the दीर्घer of 16cclks or 20ns */
-		ग_लिखो_csr(dd, DCC_CFG_RESET, reg);
-		ग_लिखो_csr(dd, DC_LCB_ERR_EN, dd->lcb_err_en);
-	पूर्ण
-पूर्ण
+	(void)read_csr(dd, DCC_CFG_RESET); /* make sure the write completed */
+	if (!abort) {
+		udelay(1);    /* must hold for the longer of 16cclks or 20ns */
+		write_csr(dd, DCC_CFG_RESET, reg);
+		write_csr(dd, DC_LCB_ERR_EN, dd->lcb_err_en);
+	}
+}
 
 /*
  * This routine should be called after the link has been transitioned to
- * OFFLINE (OFFLINE state has the side effect of putting the SerDes पूर्णांकo
+ * OFFLINE (OFFLINE state has the side effect of putting the SerDes into
  * reset).
  *
  * The expectation is that the caller of this routine would have taken
- * care of properly transitioning the link पूर्णांकo the correct state.
+ * care of properly transitioning the link into the correct state.
  * NOTE: the caller needs to acquire the dd->dc8051_lock lock
- *       beक्रमe calling this function.
+ *       before calling this function.
  */
-अटल व्योम _dc_shutकरोwn(काष्ठा hfi1_devdata *dd)
-अणु
-	lockdep_निश्चित_held(&dd->dc8051_lock);
+static void _dc_shutdown(struct hfi1_devdata *dd)
+{
+	lockdep_assert_held(&dd->dc8051_lock);
 
-	अगर (dd->dc_shutकरोwn)
-		वापस;
+	if (dd->dc_shutdown)
+		return;
 
-	dd->dc_shutकरोwn = 1;
-	/* Shutकरोwn the LCB */
-	lcb_shutकरोwn(dd, 1);
+	dd->dc_shutdown = 1;
+	/* Shutdown the LCB */
+	lcb_shutdown(dd, 1);
 	/*
 	 * Going to OFFLINE would have causes the 8051 to put the
-	 * SerDes पूर्णांकo reset alपढ़ोy. Just need to shut करोwn the 8051,
+	 * SerDes into reset already. Just need to shut down the 8051,
 	 * itself.
 	 */
-	ग_लिखो_csr(dd, DC_DC8051_CFG_RST, 0x1);
-पूर्ण
+	write_csr(dd, DC_DC8051_CFG_RST, 0x1);
+}
 
-अटल व्योम dc_shutकरोwn(काष्ठा hfi1_devdata *dd)
-अणु
+static void dc_shutdown(struct hfi1_devdata *dd)
+{
 	mutex_lock(&dd->dc8051_lock);
-	_dc_shutकरोwn(dd);
+	_dc_shutdown(dd);
 	mutex_unlock(&dd->dc8051_lock);
-पूर्ण
+}
 
 /*
  * Calling this after the DC has been brought out of reset should not
- * करो any damage.
+ * do any damage.
  * NOTE: the caller needs to acquire the dd->dc8051_lock lock
- *       beक्रमe calling this function.
+ *       before calling this function.
  */
-अटल व्योम _dc_start(काष्ठा hfi1_devdata *dd)
-अणु
-	lockdep_निश्चित_held(&dd->dc8051_lock);
+static void _dc_start(struct hfi1_devdata *dd)
+{
+	lockdep_assert_held(&dd->dc8051_lock);
 
-	अगर (!dd->dc_shutकरोwn)
-		वापस;
+	if (!dd->dc_shutdown)
+		return;
 
 	/* Take the 8051 out of reset */
-	ग_लिखो_csr(dd, DC_DC8051_CFG_RST, 0ull);
-	/* Wait until 8051 is पढ़ोy */
-	अगर (रुको_fm_पढ़ोy(dd, TIMEOUT_8051_START))
+	write_csr(dd, DC_DC8051_CFG_RST, 0ull);
+	/* Wait until 8051 is ready */
+	if (wait_fm_ready(dd, TIMEOUT_8051_START))
 		dd_dev_err(dd, "%s: timeout starting 8051 firmware\n",
 			   __func__);
 
-	/* Take away reset क्रम LCB and RX FPE (set in lcb_shutकरोwn). */
-	ग_लिखो_csr(dd, DCC_CFG_RESET, LCB_RX_FPE_TX_FPE_OUT_OF_RESET);
-	/* lcb_shutकरोwn() with पात=1 करोes not restore these */
-	ग_लिखो_csr(dd, DC_LCB_ERR_EN, dd->lcb_err_en);
-	dd->dc_shutकरोwn = 0;
-पूर्ण
+	/* Take away reset for LCB and RX FPE (set in lcb_shutdown). */
+	write_csr(dd, DCC_CFG_RESET, LCB_RX_FPE_TX_FPE_OUT_OF_RESET);
+	/* lcb_shutdown() with abort=1 does not restore these */
+	write_csr(dd, DC_LCB_ERR_EN, dd->lcb_err_en);
+	dd->dc_shutdown = 0;
+}
 
-अटल व्योम dc_start(काष्ठा hfi1_devdata *dd)
-अणु
+static void dc_start(struct hfi1_devdata *dd)
+{
 	mutex_lock(&dd->dc8051_lock);
 	_dc_start(dd);
 	mutex_unlock(&dd->dc8051_lock);
-पूर्ण
+}
 
 /*
- * These LCB adjusपंचांगents are क्रम the Aurora SerDes core in the FPGA.
+ * These LCB adjustments are for the Aurora SerDes core in the FPGA.
  */
-अटल व्योम adjust_lcb_क्रम_fpga_serdes(काष्ठा hfi1_devdata *dd)
-अणु
+static void adjust_lcb_for_fpga_serdes(struct hfi1_devdata *dd)
+{
 	u64 rx_radr, tx_radr;
 	u32 version;
 
-	अगर (dd->icode != ICODE_FPGA_EMULATION)
-		वापस;
+	if (dd->icode != ICODE_FPGA_EMULATION)
+		return;
 
 	/*
-	 * These LCB शेषs on emulator _s are good, nothing to करो here:
+	 * These LCB defaults on emulator _s are good, nothing to do here:
 	 *	LCB_CFG_TX_FIFOS_RADR
 	 *	LCB_CFG_RX_FIFOS_RADR
 	 *	LCB_CFG_LN_DCLK
 	 *	LCB_CFG_IGNORE_LOST_RCLK
 	 */
-	अगर (is_emulator_s(dd))
-		वापस;
-	/* अन्यथा this is _p */
+	if (is_emulator_s(dd))
+		return;
+	/* else this is _p */
 
 	version = emulator_rev(dd);
-	अगर (!is_ax(dd))
+	if (!is_ax(dd))
 		version = 0x2d;	/* all B0 use 0x2d or higher settings */
 
-	अगर (version <= 0x12) अणु
+	if (version <= 0x12) {
 		/* release 0x12 and below */
 
 		/*
@@ -6643,11 +6642,11 @@ bool is_urg_masked(काष्ठा hfi1_ctxtdata *rcd)
 		    | 0x9ull << DC_LCB_CFG_RX_FIFOS_RADR_OK_TO_JUMP_VAL_SHIFT
 		    | 0x9ull << DC_LCB_CFG_RX_FIFOS_RADR_RST_VAL_SHIFT;
 		/*
-		 * LCB_CFG_TX_FIFOS_RADR.ON_REINIT = 0 (शेष)
+		 * LCB_CFG_TX_FIFOS_RADR.ON_REINIT = 0 (default)
 		 * LCB_CFG_TX_FIFOS_RADR.RST_VAL = 6
 		 */
 		tx_radr = 6ull << DC_LCB_CFG_TX_FIFOS_RADR_RST_VAL_SHIFT;
-	पूर्ण अन्यथा अगर (version <= 0x18) अणु
+	} else if (version <= 0x18) {
 		/* release 0x13 up to 0x18 */
 		/* LCB_CFG_RX_FIFOS_RADR = 0x988 */
 		rx_radr =
@@ -6655,7 +6654,7 @@ bool is_urg_masked(काष्ठा hfi1_ctxtdata *rcd)
 		    | 0x8ull << DC_LCB_CFG_RX_FIFOS_RADR_OK_TO_JUMP_VAL_SHIFT
 		    | 0x8ull << DC_LCB_CFG_RX_FIFOS_RADR_RST_VAL_SHIFT;
 		tx_radr = 7ull << DC_LCB_CFG_TX_FIFOS_RADR_RST_VAL_SHIFT;
-	पूर्ण अन्यथा अगर (version == 0x19) अणु
+	} else if (version == 0x19) {
 		/* release 0x19 */
 		/* LCB_CFG_RX_FIFOS_RADR = 0xa99 */
 		rx_radr =
@@ -6663,7 +6662,7 @@ bool is_urg_masked(काष्ठा hfi1_ctxtdata *rcd)
 		    | 0x9ull << DC_LCB_CFG_RX_FIFOS_RADR_OK_TO_JUMP_VAL_SHIFT
 		    | 0x9ull << DC_LCB_CFG_RX_FIFOS_RADR_RST_VAL_SHIFT;
 		tx_radr = 3ull << DC_LCB_CFG_TX_FIFOS_RADR_RST_VAL_SHIFT;
-	पूर्ण अन्यथा अगर (version == 0x1a) अणु
+	} else if (version == 0x1a) {
 		/* release 0x1a */
 		/* LCB_CFG_RX_FIFOS_RADR = 0x988 */
 		rx_radr =
@@ -6671,8 +6670,8 @@ bool is_urg_masked(काष्ठा hfi1_ctxtdata *rcd)
 		    | 0x8ull << DC_LCB_CFG_RX_FIFOS_RADR_OK_TO_JUMP_VAL_SHIFT
 		    | 0x8ull << DC_LCB_CFG_RX_FIFOS_RADR_RST_VAL_SHIFT;
 		tx_radr = 7ull << DC_LCB_CFG_TX_FIFOS_RADR_RST_VAL_SHIFT;
-		ग_लिखो_csr(dd, DC_LCB_CFG_LN_DCLK, 1ull);
-	पूर्ण अन्यथा अणु
+		write_csr(dd, DC_LCB_CFG_LN_DCLK, 1ull);
+	} else {
 		/* release 0x1b and higher */
 		/* LCB_CFG_RX_FIFOS_RADR = 0x877 */
 		rx_radr =
@@ -6680,311 +6679,311 @@ bool is_urg_masked(काष्ठा hfi1_ctxtdata *rcd)
 		    | 0x7ull << DC_LCB_CFG_RX_FIFOS_RADR_OK_TO_JUMP_VAL_SHIFT
 		    | 0x7ull << DC_LCB_CFG_RX_FIFOS_RADR_RST_VAL_SHIFT;
 		tx_radr = 3ull << DC_LCB_CFG_TX_FIFOS_RADR_RST_VAL_SHIFT;
-	पूर्ण
+	}
 
-	ग_लिखो_csr(dd, DC_LCB_CFG_RX_FIFOS_RADR, rx_radr);
+	write_csr(dd, DC_LCB_CFG_RX_FIFOS_RADR, rx_radr);
 	/* LCB_CFG_IGNORE_LOST_RCLK.EN = 1 */
-	ग_लिखो_csr(dd, DC_LCB_CFG_IGNORE_LOST_RCLK,
+	write_csr(dd, DC_LCB_CFG_IGNORE_LOST_RCLK,
 		  DC_LCB_CFG_IGNORE_LOST_RCLK_EN_SMASK);
-	ग_लिखो_csr(dd, DC_LCB_CFG_TX_FIFOS_RADR, tx_radr);
-पूर्ण
+	write_csr(dd, DC_LCB_CFG_TX_FIFOS_RADR, tx_radr);
+}
 
 /*
  * Handle a SMA idle message
  *
- * This is a work-queue function outside of the पूर्णांकerrupt.
+ * This is a work-queue function outside of the interrupt.
  */
-व्योम handle_sma_message(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा hfi1_pportdata *ppd = container_of(work, काष्ठा hfi1_pportdata,
+void handle_sma_message(struct work_struct *work)
+{
+	struct hfi1_pportdata *ppd = container_of(work, struct hfi1_pportdata,
 							sma_message_work);
-	काष्ठा hfi1_devdata *dd = ppd->dd;
+	struct hfi1_devdata *dd = ppd->dd;
 	u64 msg;
-	पूर्णांक ret;
+	int ret;
 
 	/*
 	 * msg is bytes 1-4 of the 40-bit idle message - the command code
 	 * is stripped off
 	 */
-	ret = पढ़ो_idle_sma(dd, &msg);
-	अगर (ret)
-		वापस;
+	ret = read_idle_sma(dd, &msg);
+	if (ret)
+		return;
 	dd_dev_info(dd, "%s: SMA message 0x%llx\n", __func__, msg);
 	/*
-	 * React to the SMA message.  Byte[1] (0 क्रम us) is the command.
+	 * React to the SMA message.  Byte[1] (0 for us) is the command.
 	 */
-	चयन (msg & 0xff) अणु
-	हाल SMA_IDLE_ARM:
+	switch (msg & 0xff) {
+	case SMA_IDLE_ARM:
 		/*
 		 * See OPAv1 table 9-14 - HFI and External Switch Ports Key
 		 * State Transitions
 		 *
 		 * Only expected in INIT or ARMED, discard otherwise.
 		 */
-		अगर (ppd->host_link_state & (HLS_UP_INIT | HLS_UP_ARMED))
+		if (ppd->host_link_state & (HLS_UP_INIT | HLS_UP_ARMED))
 			ppd->neighbor_normal = 1;
-		अवरोध;
-	हाल SMA_IDLE_ACTIVE:
+		break;
+	case SMA_IDLE_ACTIVE:
 		/*
 		 * See OPAv1 table 9-14 - HFI and External Switch Ports Key
 		 * State Transitions
 		 *
 		 * Can activate the node.  Discard otherwise.
 		 */
-		अगर (ppd->host_link_state == HLS_UP_ARMED &&
-		    ppd->is_active_optimize_enabled) अणु
+		if (ppd->host_link_state == HLS_UP_ARMED &&
+		    ppd->is_active_optimize_enabled) {
 			ppd->neighbor_normal = 1;
 			ret = set_link_state(ppd, HLS_UP_ACTIVE);
-			अगर (ret)
+			if (ret)
 				dd_dev_err(
 					dd,
 					"%s: received Active SMA idle message, couldn't set link to Active\n",
 					__func__);
-		पूर्ण
-		अवरोध;
-	शेष:
+		}
+		break;
+	default:
 		dd_dev_err(dd,
 			   "%s: received unexpected SMA idle message 0x%llx\n",
 			   __func__, msg);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम adjust_rcvctrl(काष्ठा hfi1_devdata *dd, u64 add, u64 clear)
-अणु
+static void adjust_rcvctrl(struct hfi1_devdata *dd, u64 add, u64 clear)
+{
 	u64 rcvctrl;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&dd->rcvctrl_lock, flags);
-	rcvctrl = पढ़ो_csr(dd, RCV_CTRL);
+	rcvctrl = read_csr(dd, RCV_CTRL);
 	rcvctrl |= add;
 	rcvctrl &= ~clear;
-	ग_लिखो_csr(dd, RCV_CTRL, rcvctrl);
+	write_csr(dd, RCV_CTRL, rcvctrl);
 	spin_unlock_irqrestore(&dd->rcvctrl_lock, flags);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम add_rcvctrl(काष्ठा hfi1_devdata *dd, u64 add)
-अणु
+static inline void add_rcvctrl(struct hfi1_devdata *dd, u64 add)
+{
 	adjust_rcvctrl(dd, add, 0);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम clear_rcvctrl(काष्ठा hfi1_devdata *dd, u64 clear)
-अणु
+static inline void clear_rcvctrl(struct hfi1_devdata *dd, u64 clear)
+{
 	adjust_rcvctrl(dd, 0, clear);
-पूर्ण
+}
 
 /*
- * Called from all पूर्णांकerrupt handlers to start handling an SPC मुक्तze.
+ * Called from all interrupt handlers to start handling an SPC freeze.
  */
-व्योम start_मुक्तze_handling(काष्ठा hfi1_pportdata *ppd, पूर्णांक flags)
-अणु
-	काष्ठा hfi1_devdata *dd = ppd->dd;
-	काष्ठा send_context *sc;
-	पूर्णांक i;
-	पूर्णांक sc_flags;
+void start_freeze_handling(struct hfi1_pportdata *ppd, int flags)
+{
+	struct hfi1_devdata *dd = ppd->dd;
+	struct send_context *sc;
+	int i;
+	int sc_flags;
 
-	अगर (flags & FREEZE_SELF)
-		ग_लिखो_csr(dd, CCE_CTRL, CCE_CTRL_SPC_FREEZE_SMASK);
+	if (flags & FREEZE_SELF)
+		write_csr(dd, CCE_CTRL, CCE_CTRL_SPC_FREEZE_SMASK);
 
 	/* enter frozen mode */
 	dd->flags |= HFI1_FROZEN;
 
-	/* notअगरy all SDMA engines that they are going पूर्णांकo a मुक्तze */
-	sdma_मुक्तze_notअगरy(dd, !!(flags & FREEZE_LINK_DOWN));
+	/* notify all SDMA engines that they are going into a freeze */
+	sdma_freeze_notify(dd, !!(flags & FREEZE_LINK_DOWN));
 
 	sc_flags = SCF_FROZEN | SCF_HALTED | (flags & FREEZE_LINK_DOWN ?
 					      SCF_LINK_DOWN : 0);
-	/* करो halt pre-handling on all enabled send contexts */
-	क्रम (i = 0; i < dd->num_send_contexts; i++) अणु
+	/* do halt pre-handling on all enabled send contexts */
+	for (i = 0; i < dd->num_send_contexts; i++) {
 		sc = dd->send_contexts[i].sc;
-		अगर (sc && (sc->flags & SCF_ENABLED))
+		if (sc && (sc->flags & SCF_ENABLED))
 			sc_stop(sc, sc_flags);
-	पूर्ण
+	}
 
-	/* Send context are frozen. Notअगरy user space */
+	/* Send context are frozen. Notify user space */
 	hfi1_set_uevent_bits(ppd, _HFI1_EVENT_FROZEN_BIT);
 
-	अगर (flags & FREEZE_ABORT) अणु
+	if (flags & FREEZE_ABORT) {
 		dd_dev_err(dd,
 			   "Aborted freeze recovery. Please REBOOT system\n");
-		वापस;
-	पूर्ण
-	/* queue non-पूर्णांकerrupt handler */
-	queue_work(ppd->hfi1_wq, &ppd->मुक्तze_work);
-पूर्ण
+		return;
+	}
+	/* queue non-interrupt handler */
+	queue_work(ppd->hfi1_wq, &ppd->freeze_work);
+}
 
 /*
  * Wait until all 4 sub-blocks indicate that they have frozen or unfrozen,
  * depending on the "freeze" parameter.
  *
- * No need to वापस an error अगर it बार out, our only option
+ * No need to return an error if it times out, our only option
  * is to proceed anyway.
  */
-अटल व्योम रुको_क्रम_मुक्तze_status(काष्ठा hfi1_devdata *dd, पूर्णांक मुक्तze)
-अणु
-	अचिन्हित दीर्घ समयout;
+static void wait_for_freeze_status(struct hfi1_devdata *dd, int freeze)
+{
+	unsigned long timeout;
 	u64 reg;
 
-	समयout = jअगरfies + msecs_to_jअगरfies(FREEZE_STATUS_TIMEOUT);
-	जबतक (1) अणु
-		reg = पढ़ो_csr(dd, CCE_STATUS);
-		अगर (मुक्तze) अणु
-			/* रुकोing until all indicators are set */
-			अगर ((reg & ALL_FROZE) == ALL_FROZE)
-				वापस;	/* all करोne */
-		पूर्ण अन्यथा अणु
-			/* रुकोing until all indicators are clear */
-			अगर ((reg & ALL_FROZE) == 0)
-				वापस; /* all करोne */
-		पूर्ण
+	timeout = jiffies + msecs_to_jiffies(FREEZE_STATUS_TIMEOUT);
+	while (1) {
+		reg = read_csr(dd, CCE_STATUS);
+		if (freeze) {
+			/* waiting until all indicators are set */
+			if ((reg & ALL_FROZE) == ALL_FROZE)
+				return;	/* all done */
+		} else {
+			/* waiting until all indicators are clear */
+			if ((reg & ALL_FROZE) == 0)
+				return; /* all done */
+		}
 
-		अगर (समय_after(jअगरfies, समयout)) अणु
+		if (time_after(jiffies, timeout)) {
 			dd_dev_err(dd,
 				   "Time out waiting for SPC %sfreeze, bits 0x%llx, expecting 0x%llx, continuing",
-				   मुक्तze ? "" : "un", reg & ALL_FROZE,
-				   मुक्तze ? ALL_FROZE : 0ull);
-			वापस;
-		पूर्ण
+				   freeze ? "" : "un", reg & ALL_FROZE,
+				   freeze ? ALL_FROZE : 0ull);
+			return;
+		}
 		usleep_range(80, 120);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Do all मुक्तze handling क्रम the RXE block.
+ * Do all freeze handling for the RXE block.
  */
-अटल व्योम rxe_मुक्तze(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक i;
-	काष्ठा hfi1_ctxtdata *rcd;
+static void rxe_freeze(struct hfi1_devdata *dd)
+{
+	int i;
+	struct hfi1_ctxtdata *rcd;
 
 	/* disable port */
 	clear_rcvctrl(dd, RCV_CTRL_RCV_PORT_ENABLE_SMASK);
 
 	/* disable all receive contexts */
-	क्रम (i = 0; i < dd->num_rcv_contexts; i++) अणु
+	for (i = 0; i < dd->num_rcv_contexts; i++) {
 		rcd = hfi1_rcd_get_by_index(dd, i);
 		hfi1_rcvctrl(dd, HFI1_RCVCTRL_CTXT_DIS, rcd);
 		hfi1_rcd_put(rcd);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Unमुक्तze handling क्रम the RXE block - kernel contexts only.
- * This will also enable the port.  User contexts will करो unमुक्तze
- * handling on a per-context basis as they call पूर्णांकo the driver.
+ * Unfreeze handling for the RXE block - kernel contexts only.
+ * This will also enable the port.  User contexts will do unfreeze
+ * handling on a per-context basis as they call into the driver.
  *
  */
-अटल व्योम rxe_kernel_unमुक्तze(काष्ठा hfi1_devdata *dd)
-अणु
+static void rxe_kernel_unfreeze(struct hfi1_devdata *dd)
+{
 	u32 rcvmask;
 	u16 i;
-	काष्ठा hfi1_ctxtdata *rcd;
+	struct hfi1_ctxtdata *rcd;
 
 	/* enable all kernel contexts */
-	क्रम (i = 0; i < dd->num_rcv_contexts; i++) अणु
+	for (i = 0; i < dd->num_rcv_contexts; i++) {
 		rcd = hfi1_rcd_get_by_index(dd, i);
 
 		/* Ensure all non-user contexts(including vnic) are enabled */
-		अगर (!rcd ||
-		    (i >= dd->first_dyn_alloc_ctxt && !rcd->is_vnic)) अणु
+		if (!rcd ||
+		    (i >= dd->first_dyn_alloc_ctxt && !rcd->is_vnic)) {
 			hfi1_rcd_put(rcd);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		rcvmask = HFI1_RCVCTRL_CTXT_ENB;
 		/* HFI1_RCVCTRL_TAILUPD_[ENB|DIS] needs to be set explicitly */
 		rcvmask |= hfi1_rcvhdrtail_kvaddr(rcd) ?
 			HFI1_RCVCTRL_TAILUPD_ENB : HFI1_RCVCTRL_TAILUPD_DIS;
 		hfi1_rcvctrl(dd, rcvmask, rcd);
 		hfi1_rcd_put(rcd);
-	पूर्ण
+	}
 
 	/* enable port */
 	add_rcvctrl(dd, RCV_CTRL_RCV_PORT_ENABLE_SMASK);
-पूर्ण
+}
 
 /*
- * Non-पूर्णांकerrupt SPC मुक्तze handling.
+ * Non-interrupt SPC freeze handling.
  *
- * This is a work-queue function outside of the triggering पूर्णांकerrupt.
+ * This is a work-queue function outside of the triggering interrupt.
  */
-व्योम handle_मुक्तze(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा hfi1_pportdata *ppd = container_of(work, काष्ठा hfi1_pportdata,
-								मुक्तze_work);
-	काष्ठा hfi1_devdata *dd = ppd->dd;
+void handle_freeze(struct work_struct *work)
+{
+	struct hfi1_pportdata *ppd = container_of(work, struct hfi1_pportdata,
+								freeze_work);
+	struct hfi1_devdata *dd = ppd->dd;
 
-	/* रुको क्रम मुक्तze indicators on all affected blocks */
-	रुको_क्रम_मुक्तze_status(dd, 1);
+	/* wait for freeze indicators on all affected blocks */
+	wait_for_freeze_status(dd, 1);
 
 	/* SPC is now frozen */
 
-	/* करो send PIO मुक्तze steps */
-	pio_मुक्तze(dd);
+	/* do send PIO freeze steps */
+	pio_freeze(dd);
 
-	/* करो send DMA मुक्तze steps */
-	sdma_मुक्तze(dd);
+	/* do send DMA freeze steps */
+	sdma_freeze(dd);
 
-	/* करो send egress मुक्तze steps - nothing to करो */
+	/* do send egress freeze steps - nothing to do */
 
-	/* करो receive मुक्तze steps */
-	rxe_मुक्तze(dd);
+	/* do receive freeze steps */
+	rxe_freeze(dd);
 
 	/*
-	 * Unमुक्तze the hardware - clear the मुक्तze, रुको क्रम each
+	 * Unfreeze the hardware - clear the freeze, wait for each
 	 * block's frozen bit to clear, then clear the frozen flag.
 	 */
-	ग_लिखो_csr(dd, CCE_CTRL, CCE_CTRL_SPC_UNFREEZE_SMASK);
-	रुको_क्रम_मुक्तze_status(dd, 0);
+	write_csr(dd, CCE_CTRL, CCE_CTRL_SPC_UNFREEZE_SMASK);
+	wait_for_freeze_status(dd, 0);
 
-	अगर (is_ax(dd)) अणु
-		ग_लिखो_csr(dd, CCE_CTRL, CCE_CTRL_SPC_FREEZE_SMASK);
-		रुको_क्रम_मुक्तze_status(dd, 1);
-		ग_लिखो_csr(dd, CCE_CTRL, CCE_CTRL_SPC_UNFREEZE_SMASK);
-		रुको_क्रम_मुक्तze_status(dd, 0);
-	पूर्ण
+	if (is_ax(dd)) {
+		write_csr(dd, CCE_CTRL, CCE_CTRL_SPC_FREEZE_SMASK);
+		wait_for_freeze_status(dd, 1);
+		write_csr(dd, CCE_CTRL, CCE_CTRL_SPC_UNFREEZE_SMASK);
+		wait_for_freeze_status(dd, 0);
+	}
 
-	/* करो send PIO unमुक्तze steps क्रम kernel contexts */
-	pio_kernel_unमुक्तze(dd);
+	/* do send PIO unfreeze steps for kernel contexts */
+	pio_kernel_unfreeze(dd);
 
-	/* करो send DMA unमुक्तze steps */
-	sdma_unमुक्तze(dd);
+	/* do send DMA unfreeze steps */
+	sdma_unfreeze(dd);
 
-	/* करो send egress unमुक्तze steps - nothing to करो */
+	/* do send egress unfreeze steps - nothing to do */
 
-	/* करो receive unमुक्तze steps क्रम kernel contexts */
-	rxe_kernel_unमुक्तze(dd);
+	/* do receive unfreeze steps for kernel contexts */
+	rxe_kernel_unfreeze(dd);
 
 	/*
-	 * The unमुक्तze procedure touches global device रेजिस्टरs when
+	 * The unfreeze procedure touches global device registers when
 	 * it disables and re-enables RXE. Mark the device unfrozen
-	 * after all that is करोne so other parts of the driver रुकोing
-	 * क्रम the device to unमुक्तze करोn't करो things out of order.
+	 * after all that is done so other parts of the driver waiting
+	 * for the device to unfreeze don't do things out of order.
 	 *
 	 * The above implies that the meaning of HFI1_FROZEN flag is
-	 * "Device has gone पूर्णांकo मुक्तze mode and मुक्तze mode handling
+	 * "Device has gone into freeze mode and freeze mode handling
 	 * is still in progress."
 	 *
-	 * The flag will be हटाओd when मुक्तze mode processing has
+	 * The flag will be removed when freeze mode processing has
 	 * completed.
 	 */
 	dd->flags &= ~HFI1_FROZEN;
 	wake_up(&dd->event_queue);
 
-	/* no दीर्घer frozen */
-पूर्ण
+	/* no longer frozen */
+}
 
 /**
  * update_xmit_counters - update PortXmitWait/PortVlXmitWait
  * counters.
  * @ppd: info of physical Hfi port
- * @link_width: new link width after link up or करोwngrade
+ * @link_width: new link width after link up or downgrade
  *
  * Update the PortXmitWait and PortVlXmitWait counters after
- * a link up or करोwngrade event to reflect a link width change.
+ * a link up or downgrade event to reflect a link width change.
  */
-अटल व्योम update_xmit_counters(काष्ठा hfi1_pportdata *ppd, u16 link_width)
-अणु
-	पूर्णांक i;
+static void update_xmit_counters(struct hfi1_pportdata *ppd, u16 link_width)
+{
+	int i;
 	u16 tx_width;
 	u16 link_speed;
 
@@ -6995,70 +6994,70 @@ bool is_urg_masked(काष्ठा hfi1_ctxtdata *rcd)
 	 * There are C_VL_COUNT number of PortVLXmitWait counters.
 	 * Adding 1 to C_VL_COUNT to include the PortXmitWait counter.
 	 */
-	क्रम (i = 0; i < C_VL_COUNT + 1; i++)
-		get_xmit_रुको_counters(ppd, tx_width, link_speed, i);
-पूर्ण
+	for (i = 0; i < C_VL_COUNT + 1; i++)
+		get_xmit_wait_counters(ppd, tx_width, link_speed, i);
+}
 
 /*
- * Handle a link up पूर्णांकerrupt from the 8051.
+ * Handle a link up interrupt from the 8051.
  *
- * This is a work-queue function outside of the पूर्णांकerrupt.
+ * This is a work-queue function outside of the interrupt.
  */
-व्योम handle_link_up(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा hfi1_pportdata *ppd = container_of(work, काष्ठा hfi1_pportdata,
+void handle_link_up(struct work_struct *work)
+{
+	struct hfi1_pportdata *ppd = container_of(work, struct hfi1_pportdata,
 						  link_up_work);
-	काष्ठा hfi1_devdata *dd = ppd->dd;
+	struct hfi1_devdata *dd = ppd->dd;
 
 	set_link_state(ppd, HLS_UP_INIT);
 
-	/* cache the पढ़ो of DC_LCB_STS_ROUND_TRIP_LTP_CNT */
-	पढ़ो_ltp_rtt(dd);
+	/* cache the read of DC_LCB_STS_ROUND_TRIP_LTP_CNT */
+	read_ltp_rtt(dd);
 	/*
-	 * OPA specअगरies that certain counters are cleared on a transition
-	 * to link up, so करो that.
+	 * OPA specifies that certain counters are cleared on a transition
+	 * to link up, so do that.
 	 */
 	clear_linkup_counters(dd);
 	/*
-	 * And (re)set link up शेष values.
+	 * And (re)set link up default values.
 	 */
-	set_linkup_शेषs(ppd);
+	set_linkup_defaults(ppd);
 
 	/*
-	 * Set VL15 credits. Use cached value from verअगरy cap पूर्णांकerrupt.
-	 * In हाल of quick linkup or simulator, vl15 value will be set by
-	 * handle_linkup_change. VerअगरyCap पूर्णांकerrupt handler will not be
+	 * Set VL15 credits. Use cached value from verify cap interrupt.
+	 * In case of quick linkup or simulator, vl15 value will be set by
+	 * handle_linkup_change. VerifyCap interrupt handler will not be
 	 * called in those scenarios.
 	 */
-	अगर (!(quick_linkup || dd->icode == ICODE_FUNCTIONAL_SIMULATOR))
+	if (!(quick_linkup || dd->icode == ICODE_FUNCTIONAL_SIMULATOR))
 		set_up_vl15(dd, dd->vl15buf_cached);
 
-	/* enक्रमce link speed enabled */
-	अगर ((ppd->link_speed_active & ppd->link_speed_enabled) == 0) अणु
+	/* enforce link speed enabled */
+	if ((ppd->link_speed_active & ppd->link_speed_enabled) == 0) {
 		/* oops - current speed is not enabled, bounce */
 		dd_dev_err(dd,
 			   "Link speed active 0x%x is outside enabled 0x%x, downing link\n",
 			   ppd->link_speed_active, ppd->link_speed_enabled);
-		set_link_करोwn_reason(ppd, OPA_LINKDOWN_REASON_SPEED_POLICY, 0,
+		set_link_down_reason(ppd, OPA_LINKDOWN_REASON_SPEED_POLICY, 0,
 				     OPA_LINKDOWN_REASON_SPEED_POLICY);
 		set_link_state(ppd, HLS_DN_OFFLINE);
 		start_link(ppd);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Several pieces of LNI inक्रमmation were cached क्रम SMA in ppd.
- * Reset these on link करोwn
+ * Several pieces of LNI information were cached for SMA in ppd.
+ * Reset these on link down
  */
-अटल व्योम reset_neighbor_info(काष्ठा hfi1_pportdata *ppd)
-अणु
+static void reset_neighbor_info(struct hfi1_pportdata *ppd)
+{
 	ppd->neighbor_guid = 0;
 	ppd->neighbor_port_number = 0;
 	ppd->neighbor_type = 0;
 	ppd->neighbor_fm_security = 0;
-पूर्ण
+}
 
-अटल स्थिर अक्षर * स्थिर link_करोwn_reason_strs[] = अणु
+static const char * const link_down_reason_strs[] = {
 	[OPA_LINKDOWN_REASON_NONE] = "None",
 	[OPA_LINKDOWN_REASON_RCV_ERROR_0] = "Receive error 0",
 	[OPA_LINKDOWN_REASON_BAD_PKT_LEN] = "Bad packet length",
@@ -7112,99 +7111,99 @@ bool is_urg_masked(काष्ठा hfi1_ctxtdata *rcd)
 	[OPA_LINKDOWN_REASON_SWITCH_MGMT] = "Switch management",
 	[OPA_LINKDOWN_REASON_SMA_DISABLED] = "SMA disabled",
 	[OPA_LINKDOWN_REASON_TRANSIENT] = "Transient"
-पूर्ण;
+};
 
-/* वापस the neighbor link करोwn reason string */
-अटल स्थिर अक्षर *link_करोwn_reason_str(u8 reason)
-अणु
-	स्थिर अक्षर *str = शून्य;
+/* return the neighbor link down reason string */
+static const char *link_down_reason_str(u8 reason)
+{
+	const char *str = NULL;
 
-	अगर (reason < ARRAY_SIZE(link_करोwn_reason_strs))
-		str = link_करोwn_reason_strs[reason];
-	अगर (!str)
+	if (reason < ARRAY_SIZE(link_down_reason_strs))
+		str = link_down_reason_strs[reason];
+	if (!str)
 		str = "(invalid)";
 
-	वापस str;
-पूर्ण
+	return str;
+}
 
 /*
- * Handle a link करोwn पूर्णांकerrupt from the 8051.
+ * Handle a link down interrupt from the 8051.
  *
- * This is a work-queue function outside of the पूर्णांकerrupt.
+ * This is a work-queue function outside of the interrupt.
  */
-व्योम handle_link_करोwn(काष्ठा work_काष्ठा *work)
-अणु
+void handle_link_down(struct work_struct *work)
+{
 	u8 lcl_reason, neigh_reason = 0;
-	u8 link_करोwn_reason;
-	काष्ठा hfi1_pportdata *ppd = container_of(work, काष्ठा hfi1_pportdata,
-						  link_करोwn_work);
-	पूर्णांक was_up;
-	अटल स्थिर अक्षर ldr_str[] = "Link down reason: ";
+	u8 link_down_reason;
+	struct hfi1_pportdata *ppd = container_of(work, struct hfi1_pportdata,
+						  link_down_work);
+	int was_up;
+	static const char ldr_str[] = "Link down reason: ";
 
-	अगर ((ppd->host_link_state &
+	if ((ppd->host_link_state &
 	     (HLS_DN_POLL | HLS_VERIFY_CAP | HLS_GOING_UP)) &&
 	     ppd->port_type == PORT_TYPE_FIXED)
 		ppd->offline_disabled_reason =
 			HFI1_ODR_MASK(OPA_LINKDOWN_REASON_NOT_INSTALLED);
 
-	/* Go offline first, then deal with पढ़ोing/writing through 8051 */
+	/* Go offline first, then deal with reading/writing through 8051 */
 	was_up = !!(ppd->host_link_state & HLS_UP);
 	set_link_state(ppd, HLS_DN_OFFLINE);
-	xchg(&ppd->is_link_करोwn_queued, 0);
+	xchg(&ppd->is_link_down_queued, 0);
 
-	अगर (was_up) अणु
+	if (was_up) {
 		lcl_reason = 0;
-		/* link करोwn reason is only valid अगर the link was up */
-		पढ़ो_link_करोwn_reason(ppd->dd, &link_करोwn_reason);
-		चयन (link_करोwn_reason) अणु
-		हाल LDR_LINK_TRANSFER_ACTIVE_LOW:
-			/* the link went करोwn, no idle message reason */
+		/* link down reason is only valid if the link was up */
+		read_link_down_reason(ppd->dd, &link_down_reason);
+		switch (link_down_reason) {
+		case LDR_LINK_TRANSFER_ACTIVE_LOW:
+			/* the link went down, no idle message reason */
 			dd_dev_info(ppd->dd, "%sUnexpected link down\n",
 				    ldr_str);
-			अवरोध;
-		हाल LDR_RECEIVED_LINKDOWN_IDLE_MSG:
+			break;
+		case LDR_RECEIVED_LINKDOWN_IDLE_MSG:
 			/*
-			 * The neighbor reason is only valid अगर an idle message
-			 * was received क्रम it.
+			 * The neighbor reason is only valid if an idle message
+			 * was received for it.
 			 */
-			पढ़ो_planned_करोwn_reason_code(ppd->dd, &neigh_reason);
+			read_planned_down_reason_code(ppd->dd, &neigh_reason);
 			dd_dev_info(ppd->dd,
 				    "%sNeighbor link down message %d, %s\n",
 				    ldr_str, neigh_reason,
-				    link_करोwn_reason_str(neigh_reason));
-			अवरोध;
-		हाल LDR_RECEIVED_HOST_OFFLINE_REQ:
+				    link_down_reason_str(neigh_reason));
+			break;
+		case LDR_RECEIVED_HOST_OFFLINE_REQ:
 			dd_dev_info(ppd->dd,
 				    "%sHost requested link to go offline\n",
 				    ldr_str);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dd_dev_info(ppd->dd, "%sUnknown reason 0x%x\n",
-				    ldr_str, link_करोwn_reason);
-			अवरोध;
-		पूर्ण
+				    ldr_str, link_down_reason);
+			break;
+		}
 
 		/*
 		 * If no reason, assume peer-initiated but missed
 		 * LinkGoingDown idle flits.
 		 */
-		अगर (neigh_reason == 0)
+		if (neigh_reason == 0)
 			lcl_reason = OPA_LINKDOWN_REASON_NEIGHBOR_UNKNOWN;
-	पूर्ण अन्यथा अणु
-		/* went करोwn जबतक polling or going up */
+	} else {
+		/* went down while polling or going up */
 		lcl_reason = OPA_LINKDOWN_REASON_TRANSIENT;
-	पूर्ण
+	}
 
-	set_link_करोwn_reason(ppd, lcl_reason, neigh_reason, 0);
+	set_link_down_reason(ppd, lcl_reason, neigh_reason, 0);
 
-	/* inक्रमm the SMA when the link transitions from up to करोwn */
-	अगर (was_up && ppd->local_link_करोwn_reason.sma == 0 &&
-	    ppd->neigh_link_करोwn_reason.sma == 0) अणु
-		ppd->local_link_करोwn_reason.sma =
-					ppd->local_link_करोwn_reason.latest;
-		ppd->neigh_link_करोwn_reason.sma =
-					ppd->neigh_link_करोwn_reason.latest;
-	पूर्ण
+	/* inform the SMA when the link transitions from up to down */
+	if (was_up && ppd->local_link_down_reason.sma == 0 &&
+	    ppd->neigh_link_down_reason.sma == 0) {
+		ppd->local_link_down_reason.sma =
+					ppd->local_link_down_reason.latest;
+		ppd->neigh_link_down_reason.sma =
+					ppd->neigh_link_down_reason.latest;
+	}
 
 	reset_neighbor_info(ppd);
 
@@ -7215,140 +7214,140 @@ bool is_urg_masked(काष्ठा hfi1_ctxtdata *rcd)
 	 * If there is no cable attached, turn the DC off. Otherwise,
 	 * start the link bring up.
 	 */
-	अगर (ppd->port_type == PORT_TYPE_QSFP && !qsfp_mod_present(ppd))
-		dc_shutकरोwn(ppd->dd);
-	अन्यथा
+	if (ppd->port_type == PORT_TYPE_QSFP && !qsfp_mod_present(ppd))
+		dc_shutdown(ppd->dd);
+	else
 		start_link(ppd);
-पूर्ण
+}
 
-व्योम handle_link_bounce(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा hfi1_pportdata *ppd = container_of(work, काष्ठा hfi1_pportdata,
+void handle_link_bounce(struct work_struct *work)
+{
+	struct hfi1_pportdata *ppd = container_of(work, struct hfi1_pportdata,
 							link_bounce_work);
 
 	/*
-	 * Only करो something अगर the link is currently up.
+	 * Only do something if the link is currently up.
 	 */
-	अगर (ppd->host_link_state & HLS_UP) अणु
+	if (ppd->host_link_state & HLS_UP) {
 		set_link_state(ppd, HLS_DN_OFFLINE);
 		start_link(ppd);
-	पूर्ण अन्यथा अणु
+	} else {
 		dd_dev_info(ppd->dd, "%s: link not up (%s), nothing to do\n",
 			    __func__, link_state_name(ppd->host_link_state));
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Mask conversion: Capability exchange to Port LTP.  The capability
  * exchange has an implicit 16b CRC that is mandatory.
  */
-अटल पूर्णांक cap_to_port_ltp(पूर्णांक cap)
-अणु
-	पूर्णांक port_ltp = PORT_LTP_CRC_MODE_16; /* this mode is mandatory */
+static int cap_to_port_ltp(int cap)
+{
+	int port_ltp = PORT_LTP_CRC_MODE_16; /* this mode is mandatory */
 
-	अगर (cap & CAP_CRC_14B)
+	if (cap & CAP_CRC_14B)
 		port_ltp |= PORT_LTP_CRC_MODE_14;
-	अगर (cap & CAP_CRC_48B)
+	if (cap & CAP_CRC_48B)
 		port_ltp |= PORT_LTP_CRC_MODE_48;
-	अगर (cap & CAP_CRC_12B_16B_PER_LANE)
+	if (cap & CAP_CRC_12B_16B_PER_LANE)
 		port_ltp |= PORT_LTP_CRC_MODE_PER_LANE;
 
-	वापस port_ltp;
-पूर्ण
+	return port_ltp;
+}
 
 /*
  * Convert an OPA Port LTP mask to capability mask
  */
-पूर्णांक port_ltp_to_cap(पूर्णांक port_ltp)
-अणु
-	पूर्णांक cap_mask = 0;
+int port_ltp_to_cap(int port_ltp)
+{
+	int cap_mask = 0;
 
-	अगर (port_ltp & PORT_LTP_CRC_MODE_14)
+	if (port_ltp & PORT_LTP_CRC_MODE_14)
 		cap_mask |= CAP_CRC_14B;
-	अगर (port_ltp & PORT_LTP_CRC_MODE_48)
+	if (port_ltp & PORT_LTP_CRC_MODE_48)
 		cap_mask |= CAP_CRC_48B;
-	अगर (port_ltp & PORT_LTP_CRC_MODE_PER_LANE)
+	if (port_ltp & PORT_LTP_CRC_MODE_PER_LANE)
 		cap_mask |= CAP_CRC_12B_16B_PER_LANE;
 
-	वापस cap_mask;
-पूर्ण
+	return cap_mask;
+}
 
 /*
  * Convert a single DC LCB CRC mode to an OPA Port LTP mask.
  */
-अटल पूर्णांक lcb_to_port_ltp(पूर्णांक lcb_crc)
-अणु
-	पूर्णांक port_ltp = 0;
+static int lcb_to_port_ltp(int lcb_crc)
+{
+	int port_ltp = 0;
 
-	अगर (lcb_crc == LCB_CRC_12B_16B_PER_LANE)
+	if (lcb_crc == LCB_CRC_12B_16B_PER_LANE)
 		port_ltp = PORT_LTP_CRC_MODE_PER_LANE;
-	अन्यथा अगर (lcb_crc == LCB_CRC_48B)
+	else if (lcb_crc == LCB_CRC_48B)
 		port_ltp = PORT_LTP_CRC_MODE_48;
-	अन्यथा अगर (lcb_crc == LCB_CRC_14B)
+	else if (lcb_crc == LCB_CRC_14B)
 		port_ltp = PORT_LTP_CRC_MODE_14;
-	अन्यथा
+	else
 		port_ltp = PORT_LTP_CRC_MODE_16;
 
-	वापस port_ltp;
-पूर्ण
+	return port_ltp;
+}
 
-अटल व्योम clear_full_mgmt_pkey(काष्ठा hfi1_pportdata *ppd)
-अणु
-	अगर (ppd->pkeys[2] != 0) अणु
+static void clear_full_mgmt_pkey(struct hfi1_pportdata *ppd)
+{
+	if (ppd->pkeys[2] != 0) {
 		ppd->pkeys[2] = 0;
-		(व्योम)hfi1_set_ib_cfg(ppd, HFI1_IB_CFG_PKEYS, 0);
+		(void)hfi1_set_ib_cfg(ppd, HFI1_IB_CFG_PKEYS, 0);
 		hfi1_event_pkey_change(ppd->dd, ppd->port);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Convert the given link width to the OPA link width biपंचांगask.
+ * Convert the given link width to the OPA link width bitmask.
  */
-अटल u16 link_width_to_bits(काष्ठा hfi1_devdata *dd, u16 width)
-अणु
-	चयन (width) अणु
-	हाल 0:
+static u16 link_width_to_bits(struct hfi1_devdata *dd, u16 width)
+{
+	switch (width) {
+	case 0:
 		/*
-		 * Simulator and quick linkup करो not set the width.
-		 * Just set it to 4x without complaपूर्णांक.
+		 * Simulator and quick linkup do not set the width.
+		 * Just set it to 4x without complaint.
 		 */
-		अगर (dd->icode == ICODE_FUNCTIONAL_SIMULATOR || quick_linkup)
-			वापस OPA_LINK_WIDTH_4X;
-		वापस 0; /* no lanes up */
-	हाल 1: वापस OPA_LINK_WIDTH_1X;
-	हाल 2: वापस OPA_LINK_WIDTH_2X;
-	हाल 3: वापस OPA_LINK_WIDTH_3X;
-	हाल 4: वापस OPA_LINK_WIDTH_4X;
-	शेष:
+		if (dd->icode == ICODE_FUNCTIONAL_SIMULATOR || quick_linkup)
+			return OPA_LINK_WIDTH_4X;
+		return 0; /* no lanes up */
+	case 1: return OPA_LINK_WIDTH_1X;
+	case 2: return OPA_LINK_WIDTH_2X;
+	case 3: return OPA_LINK_WIDTH_3X;
+	case 4: return OPA_LINK_WIDTH_4X;
+	default:
 		dd_dev_info(dd, "%s: invalid width %d, using 4\n",
 			    __func__, width);
-		वापस OPA_LINK_WIDTH_4X;
-	पूर्ण
-पूर्ण
+		return OPA_LINK_WIDTH_4X;
+	}
+}
 
 /*
  * Do a population count on the bottom nibble.
  */
-अटल स्थिर u8 bit_counts[16] = अणु
+static const u8 bit_counts[16] = {
 	0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4
-पूर्ण;
+};
 
-अटल अंतरभूत u8 nibble_to_count(u8 nibble)
-अणु
-	वापस bit_counts[nibble & 0xf];
-पूर्ण
+static inline u8 nibble_to_count(u8 nibble)
+{
+	return bit_counts[nibble & 0xf];
+}
 
 /*
- * Read the active lane inक्रमmation from the 8051 रेजिस्टरs and वापस
+ * Read the active lane information from the 8051 registers and return
  * their widths.
  *
- * Active lane inक्रमmation is found in these 8051 रेजिस्टरs:
+ * Active lane information is found in these 8051 registers:
  *	enable_lane_tx
  *	enable_lane_rx
  */
-अटल व्योम get_link_widths(काष्ठा hfi1_devdata *dd, u16 *tx_width,
+static void get_link_widths(struct hfi1_devdata *dd, u16 *tx_width,
 			    u16 *rx_width)
-अणु
+{
 	u16 tx, rx;
 	u8 enable_lane_rx;
 	u8 enable_lane_tx;
@@ -7356,10 +7355,10 @@ bool is_urg_masked(काष्ठा hfi1_ctxtdata *rcd)
 	u8 rx_polarity_inversion;
 	u8 max_rate;
 
-	/* पढ़ो the active lanes */
-	पढ़ो_tx_settings(dd, &enable_lane_tx, &tx_polarity_inversion,
+	/* read the active lanes */
+	read_tx_settings(dd, &enable_lane_tx, &tx_polarity_inversion,
 			 &rx_polarity_inversion, &max_rate);
-	पढ़ो_local_lni(dd, &enable_lane_rx);
+	read_local_lni(dd, &enable_lane_rx);
 
 	/* convert to counts */
 	tx = nibble_to_count(enable_lane_tx);
@@ -7367,76 +7366,76 @@ bool is_urg_masked(काष्ठा hfi1_ctxtdata *rcd)
 
 	/*
 	 * Set link_speed_active here, overriding what was set in
-	 * handle_verअगरy_cap().  The ASIC 8051 firmware करोes not correctly
-	 * set the max_rate field in handle_verअगरy_cap until v0.19.
+	 * handle_verify_cap().  The ASIC 8051 firmware does not correctly
+	 * set the max_rate field in handle_verify_cap until v0.19.
 	 */
-	अगर ((dd->icode == ICODE_RTL_SILICON) &&
-	    (dd->dc8051_ver < dc8051_ver(0, 19, 0))) अणु
+	if ((dd->icode == ICODE_RTL_SILICON) &&
+	    (dd->dc8051_ver < dc8051_ver(0, 19, 0))) {
 		/* max_rate: 0 = 12.5G, 1 = 25G */
-		चयन (max_rate) अणु
-		हाल 0:
+		switch (max_rate) {
+		case 0:
 			dd->pport[0].link_speed_active = OPA_LINK_SPEED_12_5G;
-			अवरोध;
-		हाल 1:
+			break;
+		case 1:
 			dd->pport[0].link_speed_active = OPA_LINK_SPEED_25G;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dd_dev_err(dd,
 				   "%s: unexpected max rate %d, using 25Gb\n",
-				   __func__, (पूर्णांक)max_rate);
+				   __func__, (int)max_rate);
 			dd->pport[0].link_speed_active = OPA_LINK_SPEED_25G;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	dd_dev_info(dd,
 		    "Fabric active lanes (width): tx 0x%x (%d), rx 0x%x (%d)\n",
 		    enable_lane_tx, tx, enable_lane_rx, rx);
 	*tx_width = link_width_to_bits(dd, tx);
 	*rx_width = link_width_to_bits(dd, rx);
-पूर्ण
+}
 
 /*
- * Read verअगरy_cap_local_fm_link_width[1] to obtain the link widths.
- * Valid after the end of VerअगरyCap and during LinkUp.  Does not change
- * after link up.  I.e. look अन्यथाwhere क्रम करोwngrade inक्रमmation.
+ * Read verify_cap_local_fm_link_width[1] to obtain the link widths.
+ * Valid after the end of VerifyCap and during LinkUp.  Does not change
+ * after link up.  I.e. look elsewhere for downgrade information.
  *
  * Bits are:
  *	+ bits [7:4] contain the number of active transmitters
  *	+ bits [3:0] contain the number of active receivers
- * These are numbers 1 through 4 and can be dअगरferent values अगर the
+ * These are numbers 1 through 4 and can be different values if the
  * link is asymmetric.
  *
- * verअगरy_cap_local_fm_link_width[0] retains its original value.
+ * verify_cap_local_fm_link_width[0] retains its original value.
  */
-अटल व्योम get_linkup_widths(काष्ठा hfi1_devdata *dd, u16 *tx_width,
+static void get_linkup_widths(struct hfi1_devdata *dd, u16 *tx_width,
 			      u16 *rx_width)
-अणु
+{
 	u16 widths, tx, rx;
 	u8 misc_bits, local_flags;
 	u16 active_tx, active_rx;
 
-	पढ़ो_vc_local_link_mode(dd, &misc_bits, &local_flags, &widths);
+	read_vc_local_link_mode(dd, &misc_bits, &local_flags, &widths);
 	tx = widths >> 12;
 	rx = (widths >> 8) & 0xf;
 
 	*tx_width = link_width_to_bits(dd, tx);
 	*rx_width = link_width_to_bits(dd, rx);
 
-	/* prपूर्णांक the active widths */
+	/* print the active widths */
 	get_link_widths(dd, &active_tx, &active_rx);
-पूर्ण
+}
 
 /*
- * Set ppd->link_width_active and ppd->link_width_करोwngrade_active using
- * hardware inक्रमmation when the link first comes up.
+ * Set ppd->link_width_active and ppd->link_width_downgrade_active using
+ * hardware information when the link first comes up.
  *
- * The link width is not available until after VerअगरyCap.AllFramesReceived
- * (the trigger क्रम handle_verअगरy_cap), so this is outside that routine
- * and should be called when the 8051 संकेतs linkup.
+ * The link width is not available until after VerifyCap.AllFramesReceived
+ * (the trigger for handle_verify_cap), so this is outside that routine
+ * and should be called when the 8051 signals linkup.
  */
-व्योम get_linkup_link_widths(काष्ठा hfi1_pportdata *ppd)
-अणु
+void get_linkup_link_widths(struct hfi1_pportdata *ppd)
+{
 	u16 tx_width, rx_width;
 
 	/* get end-of-LNI link widths */
@@ -7444,27 +7443,27 @@ bool is_urg_masked(काष्ठा hfi1_ctxtdata *rcd)
 
 	/* use tx_width as the link is supposed to be symmetric on link up */
 	ppd->link_width_active = tx_width;
-	/* link width करोwngrade active (LWD.A) starts out matching LW.A */
-	ppd->link_width_करोwngrade_tx_active = ppd->link_width_active;
-	ppd->link_width_करोwngrade_rx_active = ppd->link_width_active;
+	/* link width downgrade active (LWD.A) starts out matching LW.A */
+	ppd->link_width_downgrade_tx_active = ppd->link_width_active;
+	ppd->link_width_downgrade_rx_active = ppd->link_width_active;
 	/* per OPA spec, on link up LWD.E resets to LWD.S */
-	ppd->link_width_करोwngrade_enabled = ppd->link_width_करोwngrade_supported;
-	/* cache the active egress rate (units अणु10^6 bits/sec]) */
+	ppd->link_width_downgrade_enabled = ppd->link_width_downgrade_supported;
+	/* cache the active egress rate (units {10^6 bits/sec]) */
 	ppd->current_egress_rate = active_egress_rate(ppd);
-पूर्ण
+}
 
 /*
- * Handle a verअगरy capabilities पूर्णांकerrupt from the 8051.
+ * Handle a verify capabilities interrupt from the 8051.
  *
- * This is a work-queue function outside of the पूर्णांकerrupt.
+ * This is a work-queue function outside of the interrupt.
  */
-व्योम handle_verअगरy_cap(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा hfi1_pportdata *ppd = container_of(work, काष्ठा hfi1_pportdata,
+void handle_verify_cap(struct work_struct *work)
+{
+	struct hfi1_pportdata *ppd = container_of(work, struct hfi1_pportdata,
 								link_vc_work);
-	काष्ठा hfi1_devdata *dd = ppd->dd;
+	struct hfi1_devdata *dd = ppd->dd;
 	u64 reg;
-	u8 घातer_management;
+	u8 power_management;
 	u8 continuous;
 	u8 vcu;
 	u8 vau;
@@ -7481,44 +7480,44 @@ bool is_urg_masked(काष्ठा hfi1_ctxtdata *rcd)
 
 	set_link_state(ppd, HLS_VERIFY_CAP);
 
-	lcb_shutकरोwn(dd, 0);
-	adjust_lcb_क्रम_fpga_serdes(dd);
+	lcb_shutdown(dd, 0);
+	adjust_lcb_for_fpga_serdes(dd);
 
-	पढ़ो_vc_remote_phy(dd, &घातer_management, &continuous);
-	पढ़ो_vc_remote_fabric(dd, &vau, &z, &vcu, &vl15buf,
+	read_vc_remote_phy(dd, &power_management, &continuous);
+	read_vc_remote_fabric(dd, &vau, &z, &vcu, &vl15buf,
 			      &partner_supported_crc);
-	पढ़ो_vc_remote_link_width(dd, &remote_tx_rate, &link_widths);
-	पढ़ो_remote_device_id(dd, &device_id, &device_rev);
+	read_vc_remote_link_width(dd, &remote_tx_rate, &link_widths);
+	read_remote_device_id(dd, &device_id, &device_rev);
 
-	/* prपूर्णांक the active widths */
+	/* print the active widths */
 	get_link_widths(dd, &active_tx, &active_rx);
 	dd_dev_info(dd,
 		    "Peer PHY: power management 0x%x, continuous updates 0x%x\n",
-		    (पूर्णांक)घातer_management, (पूर्णांक)continuous);
+		    (int)power_management, (int)continuous);
 	dd_dev_info(dd,
 		    "Peer Fabric: vAU %d, Z %d, vCU %d, vl15 credits 0x%x, CRC sizes 0x%x\n",
-		    (पूर्णांक)vau, (पूर्णांक)z, (पूर्णांक)vcu, (पूर्णांक)vl15buf,
-		    (पूर्णांक)partner_supported_crc);
+		    (int)vau, (int)z, (int)vcu, (int)vl15buf,
+		    (int)partner_supported_crc);
 	dd_dev_info(dd, "Peer Link Width: tx rate 0x%x, widths 0x%x\n",
 		    (u32)remote_tx_rate, (u32)link_widths);
 	dd_dev_info(dd, "Peer Device ID: 0x%04x, Revision 0x%02x\n",
 		    (u32)device_id, (u32)device_rev);
 	/*
-	 * The peer vAU value just पढ़ो is the peer receiver value.  HFI करोes
+	 * The peer vAU value just read is the peer receiver value.  HFI does
 	 * not support a transmit vAU of 0 (AU == 8).  We advertised that
 	 * with Z=1 in the fabric capabilities sent to the peer.  The peer
-	 * will see our Z=1, and, अगर it advertised a vAU of 0, will move its
-	 * receive to vAU of 1 (AU == 16).  Do the same here.  We करो not care
+	 * will see our Z=1, and, if it advertised a vAU of 0, will move its
+	 * receive to vAU of 1 (AU == 16).  Do the same here.  We do not care
 	 * about the peer Z value - our sent vAU is 3 (hardwired) and is not
 	 * subject to the Z value exception.
 	 */
-	अगर (vau == 0)
+	if (vau == 0)
 		vau = 1;
 	set_up_vau(dd, vau);
 
 	/*
-	 * Set VL15 credits to 0 in global credit रेजिस्टर. Cache remote VL15
-	 * credits value and रुको क्रम link-up पूर्णांकerrupt ot set it.
+	 * Set VL15 credits to 0 in global credit register. Cache remote VL15
+	 * credits value and wait for link-up interrupt ot set it.
 	 */
 	set_up_vl15(dd, 0);
 	dd->vl15buf_cached = vl15buf;
@@ -7527,59 +7526,59 @@ bool is_urg_masked(काष्ठा hfi1_ctxtdata *rcd)
 	crc_mask = ppd->port_crc_mode_enabled & partner_supported_crc;
 
 	/* order is important: use the lowest bit in common */
-	अगर (crc_mask & CAP_CRC_14B)
+	if (crc_mask & CAP_CRC_14B)
 		crc_val = LCB_CRC_14B;
-	अन्यथा अगर (crc_mask & CAP_CRC_48B)
+	else if (crc_mask & CAP_CRC_48B)
 		crc_val = LCB_CRC_48B;
-	अन्यथा अगर (crc_mask & CAP_CRC_12B_16B_PER_LANE)
+	else if (crc_mask & CAP_CRC_12B_16B_PER_LANE)
 		crc_val = LCB_CRC_12B_16B_PER_LANE;
-	अन्यथा
+	else
 		crc_val = LCB_CRC_16B;
 
-	dd_dev_info(dd, "Final LCB CRC mode: %d\n", (पूर्णांक)crc_val);
-	ग_लिखो_csr(dd, DC_LCB_CFG_CRC_MODE,
+	dd_dev_info(dd, "Final LCB CRC mode: %d\n", (int)crc_val);
+	write_csr(dd, DC_LCB_CFG_CRC_MODE,
 		  (u64)crc_val << DC_LCB_CFG_CRC_MODE_TX_VAL_SHIFT);
 
 	/* set (14b only) or clear sideband credit */
-	reg = पढ़ो_csr(dd, SEND_CM_CTRL);
-	अगर (crc_val == LCB_CRC_14B && crc_14b_sideband) अणु
-		ग_लिखो_csr(dd, SEND_CM_CTRL,
+	reg = read_csr(dd, SEND_CM_CTRL);
+	if (crc_val == LCB_CRC_14B && crc_14b_sideband) {
+		write_csr(dd, SEND_CM_CTRL,
 			  reg | SEND_CM_CTRL_FORCE_CREDIT_MODE_SMASK);
-	पूर्ण अन्यथा अणु
-		ग_लिखो_csr(dd, SEND_CM_CTRL,
+	} else {
+		write_csr(dd, SEND_CM_CTRL,
 			  reg & ~SEND_CM_CTRL_FORCE_CREDIT_MODE_SMASK);
-	पूर्ण
+	}
 
 	ppd->link_speed_active = 0;	/* invalid value */
-	अगर (dd->dc8051_ver < dc8051_ver(0, 20, 0)) अणु
+	if (dd->dc8051_ver < dc8051_ver(0, 20, 0)) {
 		/* remote_tx_rate: 0 = 12.5G, 1 = 25G */
-		चयन (remote_tx_rate) अणु
-		हाल 0:
+		switch (remote_tx_rate) {
+		case 0:
 			ppd->link_speed_active = OPA_LINK_SPEED_12_5G;
-			अवरोध;
-		हाल 1:
+			break;
+		case 1:
 			ppd->link_speed_active = OPA_LINK_SPEED_25G;
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			break;
+		}
+	} else {
 		/* actual rate is highest bit of the ANDed rates */
 		u8 rate = remote_tx_rate & ppd->local_tx_rate;
 
-		अगर (rate & 2)
+		if (rate & 2)
 			ppd->link_speed_active = OPA_LINK_SPEED_25G;
-		अन्यथा अगर (rate & 1)
+		else if (rate & 1)
 			ppd->link_speed_active = OPA_LINK_SPEED_12_5G;
-	पूर्ण
-	अगर (ppd->link_speed_active == 0) अणु
+	}
+	if (ppd->link_speed_active == 0) {
 		dd_dev_err(dd, "%s: unexpected remote tx rate %d, using 25Gb\n",
-			   __func__, (पूर्णांक)remote_tx_rate);
+			   __func__, (int)remote_tx_rate);
 		ppd->link_speed_active = OPA_LINK_SPEED_25G;
-	पूर्ण
+	}
 
 	/*
 	 * Cache the values of the supported, enabled, and active
-	 * LTP CRC modes to वापस in 'portinfo' queries. But the bit
-	 * flags that are वापसed in the portinfo query dअगरfer from
+	 * LTP CRC modes to return in 'portinfo' queries. But the bit
+	 * flags that are returned in the portinfo query differ from
 	 * what's in the link_crc_mask, crc_sizes, and crc_val
 	 * variables. Convert these here.
 	 */
@@ -7591,194 +7590,194 @@ bool is_urg_masked(काष्ठा hfi1_ctxtdata *rcd)
 	ppd->port_ltp_crc_mode |= lcb_to_port_ltp(crc_val);
 		/* active crc mode */
 
-	/* set up the remote credit वापस table */
+	/* set up the remote credit return table */
 	assign_remote_cm_au_table(dd, vcu);
 
 	/*
-	 * The LCB is reset on entry to handle_verअगरy_cap(), so this must
+	 * The LCB is reset on entry to handle_verify_cap(), so this must
 	 * be applied on every link up.
 	 *
-	 * Adjust LCB error समाप्त enable to समाप्त the link अगर
+	 * Adjust LCB error kill enable to kill the link if
 	 * these RBUF errors are seen:
 	 *	REPLAY_BUF_MBE_SMASK
 	 *	FLIT_INPUT_BUF_MBE_SMASK
 	 */
-	अगर (is_ax(dd)) अणु			/* fixed in B0 */
-		reg = पढ़ो_csr(dd, DC_LCB_CFG_LINK_KILL_EN);
+	if (is_ax(dd)) {			/* fixed in B0 */
+		reg = read_csr(dd, DC_LCB_CFG_LINK_KILL_EN);
 		reg |= DC_LCB_CFG_LINK_KILL_EN_REPLAY_BUF_MBE_SMASK
 			| DC_LCB_CFG_LINK_KILL_EN_FLIT_INPUT_BUF_MBE_SMASK;
-		ग_लिखो_csr(dd, DC_LCB_CFG_LINK_KILL_EN, reg);
-	पूर्ण
+		write_csr(dd, DC_LCB_CFG_LINK_KILL_EN, reg);
+	}
 
-	/* pull LCB fअगरos out of reset - all fअगरo घड़ीs must be stable */
-	ग_लिखो_csr(dd, DC_LCB_CFG_TX_FIFOS_RESET, 0);
+	/* pull LCB fifos out of reset - all fifo clocks must be stable */
+	write_csr(dd, DC_LCB_CFG_TX_FIFOS_RESET, 0);
 
 	/* give 8051 access to the LCB CSRs */
-	ग_लिखो_csr(dd, DC_LCB_ERR_EN, 0); /* mask LCB errors */
+	write_csr(dd, DC_LCB_ERR_EN, 0); /* mask LCB errors */
 	set_8051_lcb_access(dd);
 
 	/* tell the 8051 to go to LinkUp */
 	set_link_state(ppd, HLS_GOING_UP);
-पूर्ण
+}
 
 /**
- * apply_link_करोwngrade_policy - Apply the link width करोwngrade enabled
+ * apply_link_downgrade_policy - Apply the link width downgrade enabled
  * policy against the current active link widths.
  * @ppd: info of physical Hfi port
- * @refresh_widths: True indicates link करोwngrade event
- * @वापस: True indicates a successful link करोwngrade. False indicates
- *	    link करोwngrade event failed and the link will bounce back to
- *	    शेष link width.
+ * @refresh_widths: True indicates link downgrade event
+ * @return: True indicates a successful link downgrade. False indicates
+ *	    link downgrade event failed and the link will bounce back to
+ *	    default link width.
  *
  * Called when the enabled policy changes or the active link widths
  * change.
- * Refresh_widths indicates that a link करोwngrade occurred. The
- * link_करोwngraded variable is set by refresh_widths and
+ * Refresh_widths indicates that a link downgrade occurred. The
+ * link_downgraded variable is set by refresh_widths and
  * determines the success/failure of the policy application.
  */
-bool apply_link_करोwngrade_policy(काष्ठा hfi1_pportdata *ppd,
+bool apply_link_downgrade_policy(struct hfi1_pportdata *ppd,
 				 bool refresh_widths)
-अणु
-	पूर्णांक करो_bounce = 0;
-	पूर्णांक tries;
+{
+	int do_bounce = 0;
+	int tries;
 	u16 lwde;
 	u16 tx, rx;
-	bool link_करोwngraded = refresh_widths;
+	bool link_downgraded = refresh_widths;
 
-	/* use the hls lock to aव्योम a race with actual link up */
+	/* use the hls lock to avoid a race with actual link up */
 	tries = 0;
 retry:
 	mutex_lock(&ppd->hls_lock);
-	/* only apply अगर the link is up */
-	अगर (ppd->host_link_state & HLS_DOWN) अणु
-		/* still going up..रुको and retry */
-		अगर (ppd->host_link_state & HLS_GOING_UP) अणु
-			अगर (++tries < 1000) अणु
+	/* only apply if the link is up */
+	if (ppd->host_link_state & HLS_DOWN) {
+		/* still going up..wait and retry */
+		if (ppd->host_link_state & HLS_GOING_UP) {
+			if (++tries < 1000) {
 				mutex_unlock(&ppd->hls_lock);
 				usleep_range(100, 120); /* arbitrary */
-				जाओ retry;
-			पूर्ण
+				goto retry;
+			}
 			dd_dev_err(ppd->dd,
 				   "%s: giving up waiting for link state change\n",
 				   __func__);
-		पूर्ण
-		जाओ करोne;
-	पूर्ण
+		}
+		goto done;
+	}
 
-	lwde = ppd->link_width_करोwngrade_enabled;
+	lwde = ppd->link_width_downgrade_enabled;
 
-	अगर (refresh_widths) अणु
+	if (refresh_widths) {
 		get_link_widths(ppd->dd, &tx, &rx);
-		ppd->link_width_करोwngrade_tx_active = tx;
-		ppd->link_width_करोwngrade_rx_active = rx;
-	पूर्ण
+		ppd->link_width_downgrade_tx_active = tx;
+		ppd->link_width_downgrade_rx_active = rx;
+	}
 
-	अगर (ppd->link_width_करोwngrade_tx_active == 0 ||
-	    ppd->link_width_करोwngrade_rx_active == 0) अणु
-		/* the 8051 reported a dead link as a करोwngrade */
+	if (ppd->link_width_downgrade_tx_active == 0 ||
+	    ppd->link_width_downgrade_rx_active == 0) {
+		/* the 8051 reported a dead link as a downgrade */
 		dd_dev_err(ppd->dd, "Link downgrade is really a link down, ignoring\n");
-		link_करोwngraded = false;
-	पूर्ण अन्यथा अगर (lwde == 0) अणु
-		/* करोwngrade is disabled */
+		link_downgraded = false;
+	} else if (lwde == 0) {
+		/* downgrade is disabled */
 
-		/* bounce अगर not at starting active width */
-		अगर ((ppd->link_width_active !=
-		     ppd->link_width_करोwngrade_tx_active) ||
+		/* bounce if not at starting active width */
+		if ((ppd->link_width_active !=
+		     ppd->link_width_downgrade_tx_active) ||
 		    (ppd->link_width_active !=
-		     ppd->link_width_करोwngrade_rx_active)) अणु
+		     ppd->link_width_downgrade_rx_active)) {
 			dd_dev_err(ppd->dd,
 				   "Link downgrade is disabled and link has downgraded, downing link\n");
 			dd_dev_err(ppd->dd,
 				   "  original 0x%x, tx active 0x%x, rx active 0x%x\n",
 				   ppd->link_width_active,
-				   ppd->link_width_करोwngrade_tx_active,
-				   ppd->link_width_करोwngrade_rx_active);
-			करो_bounce = 1;
-			link_करोwngraded = false;
-		पूर्ण
-	पूर्ण अन्यथा अगर ((lwde & ppd->link_width_करोwngrade_tx_active) == 0 ||
-		   (lwde & ppd->link_width_करोwngrade_rx_active) == 0) अणु
+				   ppd->link_width_downgrade_tx_active,
+				   ppd->link_width_downgrade_rx_active);
+			do_bounce = 1;
+			link_downgraded = false;
+		}
+	} else if ((lwde & ppd->link_width_downgrade_tx_active) == 0 ||
+		   (lwde & ppd->link_width_downgrade_rx_active) == 0) {
 		/* Tx or Rx is outside the enabled policy */
 		dd_dev_err(ppd->dd,
 			   "Link is outside of downgrade allowed, downing link\n");
 		dd_dev_err(ppd->dd,
 			   "  enabled 0x%x, tx active 0x%x, rx active 0x%x\n",
-			   lwde, ppd->link_width_करोwngrade_tx_active,
-			   ppd->link_width_करोwngrade_rx_active);
-		करो_bounce = 1;
-		link_करोwngraded = false;
-	पूर्ण
+			   lwde, ppd->link_width_downgrade_tx_active,
+			   ppd->link_width_downgrade_rx_active);
+		do_bounce = 1;
+		link_downgraded = false;
+	}
 
-करोne:
+done:
 	mutex_unlock(&ppd->hls_lock);
 
-	अगर (करो_bounce) अणु
-		set_link_करोwn_reason(ppd, OPA_LINKDOWN_REASON_WIDTH_POLICY, 0,
+	if (do_bounce) {
+		set_link_down_reason(ppd, OPA_LINKDOWN_REASON_WIDTH_POLICY, 0,
 				     OPA_LINKDOWN_REASON_WIDTH_POLICY);
 		set_link_state(ppd, HLS_DN_OFFLINE);
 		start_link(ppd);
-	पूर्ण
+	}
 
-	वापस link_करोwngraded;
-पूर्ण
+	return link_downgraded;
+}
 
 /*
- * Handle a link करोwngrade पूर्णांकerrupt from the 8051.
+ * Handle a link downgrade interrupt from the 8051.
  *
- * This is a work-queue function outside of the पूर्णांकerrupt.
+ * This is a work-queue function outside of the interrupt.
  */
-व्योम handle_link_करोwngrade(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा hfi1_pportdata *ppd = container_of(work, काष्ठा hfi1_pportdata,
-							link_करोwngrade_work);
+void handle_link_downgrade(struct work_struct *work)
+{
+	struct hfi1_pportdata *ppd = container_of(work, struct hfi1_pportdata,
+							link_downgrade_work);
 
 	dd_dev_info(ppd->dd, "8051: Link width downgrade\n");
-	अगर (apply_link_करोwngrade_policy(ppd, true))
-		update_xmit_counters(ppd, ppd->link_width_करोwngrade_tx_active);
-पूर्ण
+	if (apply_link_downgrade_policy(ppd, true))
+		update_xmit_counters(ppd, ppd->link_width_downgrade_tx_active);
+}
 
-अटल अक्षर *dcc_err_string(अक्षर *buf, पूर्णांक buf_len, u64 flags)
-अणु
-	वापस flag_string(buf, buf_len, flags, dcc_err_flags,
+static char *dcc_err_string(char *buf, int buf_len, u64 flags)
+{
+	return flag_string(buf, buf_len, flags, dcc_err_flags,
 		ARRAY_SIZE(dcc_err_flags));
-पूर्ण
+}
 
-अटल अक्षर *lcb_err_string(अक्षर *buf, पूर्णांक buf_len, u64 flags)
-अणु
-	वापस flag_string(buf, buf_len, flags, lcb_err_flags,
+static char *lcb_err_string(char *buf, int buf_len, u64 flags)
+{
+	return flag_string(buf, buf_len, flags, lcb_err_flags,
 		ARRAY_SIZE(lcb_err_flags));
-पूर्ण
+}
 
-अटल अक्षर *dc8051_err_string(अक्षर *buf, पूर्णांक buf_len, u64 flags)
-अणु
-	वापस flag_string(buf, buf_len, flags, dc8051_err_flags,
+static char *dc8051_err_string(char *buf, int buf_len, u64 flags)
+{
+	return flag_string(buf, buf_len, flags, dc8051_err_flags,
 		ARRAY_SIZE(dc8051_err_flags));
-पूर्ण
+}
 
-अटल अक्षर *dc8051_info_err_string(अक्षर *buf, पूर्णांक buf_len, u64 flags)
-अणु
-	वापस flag_string(buf, buf_len, flags, dc8051_info_err_flags,
+static char *dc8051_info_err_string(char *buf, int buf_len, u64 flags)
+{
+	return flag_string(buf, buf_len, flags, dc8051_info_err_flags,
 		ARRAY_SIZE(dc8051_info_err_flags));
-पूर्ण
+}
 
-अटल अक्षर *dc8051_info_host_msg_string(अक्षर *buf, पूर्णांक buf_len, u64 flags)
-अणु
-	वापस flag_string(buf, buf_len, flags, dc8051_info_host_msg_flags,
+static char *dc8051_info_host_msg_string(char *buf, int buf_len, u64 flags)
+{
+	return flag_string(buf, buf_len, flags, dc8051_info_host_msg_flags,
 		ARRAY_SIZE(dc8051_info_host_msg_flags));
-पूर्ण
+}
 
-अटल व्योम handle_8051_पूर्णांकerrupt(काष्ठा hfi1_devdata *dd, u32 unused, u64 reg)
-अणु
-	काष्ठा hfi1_pportdata *ppd = dd->pport;
+static void handle_8051_interrupt(struct hfi1_devdata *dd, u32 unused, u64 reg)
+{
+	struct hfi1_pportdata *ppd = dd->pport;
 	u64 info, err, host_msg;
-	पूर्णांक queue_link_करोwn = 0;
-	अक्षर buf[96];
+	int queue_link_down = 0;
+	char buf[96];
 
 	/* look at the flags */
-	अगर (reg & DC_DC8051_ERR_FLG_SET_BY_8051_SMASK) अणु
-		/* 8051 inक्रमmation set by firmware */
-		/* पढ़ो DC8051_DBG_ERR_INFO_SET_BY_8051 क्रम details */
-		info = पढ़ो_csr(dd, DC_DC8051_DBG_ERR_INFO_SET_BY_8051);
+	if (reg & DC_DC8051_ERR_FLG_SET_BY_8051_SMASK) {
+		/* 8051 information set by firmware */
+		/* read DC8051_DBG_ERR_INFO_SET_BY_8051 for details */
+		info = read_csr(dd, DC_DC8051_DBG_ERR_INFO_SET_BY_8051);
 		err = (info >> DC_DC8051_DBG_ERR_INFO_SET_BY_8051_ERROR_SHIFT)
 			& DC_DC8051_DBG_ERR_INFO_SET_BY_8051_ERROR_MASK;
 		host_msg = (info >>
@@ -7788,136 +7787,136 @@ retry:
 		/*
 		 * Handle error flags.
 		 */
-		अगर (err & FAILED_LNI) अणु
+		if (err & FAILED_LNI) {
 			/*
 			 * LNI error indications are cleared by the 8051
 			 * only when starting polling.  Only pay attention
 			 * to them when in the states that occur during
 			 * LNI.
 			 */
-			अगर (ppd->host_link_state
-			    & (HLS_DN_POLL | HLS_VERIFY_CAP | HLS_GOING_UP)) अणु
-				queue_link_करोwn = 1;
+			if (ppd->host_link_state
+			    & (HLS_DN_POLL | HLS_VERIFY_CAP | HLS_GOING_UP)) {
+				queue_link_down = 1;
 				dd_dev_info(dd, "Link error: %s\n",
 					    dc8051_info_err_string(buf,
-								   माप(buf),
+								   sizeof(buf),
 								   err &
 								   FAILED_LNI));
-			पूर्ण
+			}
 			err &= ~(u64)FAILED_LNI;
-		पूर्ण
+		}
 		/* unknown frames can happen durning LNI, just count */
-		अगर (err & UNKNOWN_FRAME) अणु
+		if (err & UNKNOWN_FRAME) {
 			ppd->unknown_frame_count++;
 			err &= ~(u64)UNKNOWN_FRAME;
-		पूर्ण
-		अगर (err) अणु
-			/* report reमुख्यing errors, but करो not करो anything */
+		}
+		if (err) {
+			/* report remaining errors, but do not do anything */
 			dd_dev_err(dd, "8051 info error: %s\n",
-				   dc8051_info_err_string(buf, माप(buf),
+				   dc8051_info_err_string(buf, sizeof(buf),
 							  err));
-		पूर्ण
+		}
 
 		/*
 		 * Handle host message flags.
 		 */
-		अगर (host_msg & HOST_REQ_DONE) अणु
+		if (host_msg & HOST_REQ_DONE) {
 			/*
-			 * Presently, the driver करोes a busy रुको क्रम
+			 * Presently, the driver does a busy wait for
 			 * host requests to complete.  This is only an
-			 * inक्रमmational message.
+			 * informational message.
 			 * NOTE: The 8051 clears the host message
-			 * inक्रमmation *on the next 8051 command*.
-			 * Thereक्रमe, when linkup is achieved,
+			 * information *on the next 8051 command*.
+			 * Therefore, when linkup is achieved,
 			 * this flag will still be set.
 			 */
 			host_msg &= ~(u64)HOST_REQ_DONE;
-		पूर्ण
-		अगर (host_msg & BC_SMA_MSG) अणु
+		}
+		if (host_msg & BC_SMA_MSG) {
 			queue_work(ppd->link_wq, &ppd->sma_message_work);
 			host_msg &= ~(u64)BC_SMA_MSG;
-		पूर्ण
-		अगर (host_msg & LINKUP_ACHIEVED) अणु
+		}
+		if (host_msg & LINKUP_ACHIEVED) {
 			dd_dev_info(dd, "8051: Link up\n");
 			queue_work(ppd->link_wq, &ppd->link_up_work);
 			host_msg &= ~(u64)LINKUP_ACHIEVED;
-		पूर्ण
-		अगर (host_msg & EXT_DEVICE_CFG_REQ) अणु
+		}
+		if (host_msg & EXT_DEVICE_CFG_REQ) {
 			handle_8051_request(ppd);
 			host_msg &= ~(u64)EXT_DEVICE_CFG_REQ;
-		पूर्ण
-		अगर (host_msg & VERIFY_CAP_FRAME) अणु
+		}
+		if (host_msg & VERIFY_CAP_FRAME) {
 			queue_work(ppd->link_wq, &ppd->link_vc_work);
 			host_msg &= ~(u64)VERIFY_CAP_FRAME;
-		पूर्ण
-		अगर (host_msg & LINK_GOING_DOWN) अणु
-			स्थिर अक्षर *extra = "";
-			/* no करोwngrade action needed अगर going करोwn */
-			अगर (host_msg & LINK_WIDTH_DOWNGRADED) अणु
+		}
+		if (host_msg & LINK_GOING_DOWN) {
+			const char *extra = "";
+			/* no downgrade action needed if going down */
+			if (host_msg & LINK_WIDTH_DOWNGRADED) {
 				host_msg &= ~(u64)LINK_WIDTH_DOWNGRADED;
 				extra = " (ignoring downgrade)";
-			पूर्ण
+			}
 			dd_dev_info(dd, "8051: Link down%s\n", extra);
-			queue_link_करोwn = 1;
+			queue_link_down = 1;
 			host_msg &= ~(u64)LINK_GOING_DOWN;
-		पूर्ण
-		अगर (host_msg & LINK_WIDTH_DOWNGRADED) अणु
-			queue_work(ppd->link_wq, &ppd->link_करोwngrade_work);
+		}
+		if (host_msg & LINK_WIDTH_DOWNGRADED) {
+			queue_work(ppd->link_wq, &ppd->link_downgrade_work);
 			host_msg &= ~(u64)LINK_WIDTH_DOWNGRADED;
-		पूर्ण
-		अगर (host_msg) अणु
-			/* report reमुख्यing messages, but करो not करो anything */
+		}
+		if (host_msg) {
+			/* report remaining messages, but do not do anything */
 			dd_dev_info(dd, "8051 info host message: %s\n",
 				    dc8051_info_host_msg_string(buf,
-								माप(buf),
+								sizeof(buf),
 								host_msg));
-		पूर्ण
+		}
 
 		reg &= ~DC_DC8051_ERR_FLG_SET_BY_8051_SMASK;
-	पूर्ण
-	अगर (reg & DC_DC8051_ERR_FLG_LOST_8051_HEART_BEAT_SMASK) अणु
+	}
+	if (reg & DC_DC8051_ERR_FLG_LOST_8051_HEART_BEAT_SMASK) {
 		/*
 		 * Lost the 8051 heartbeat.  If this happens, we
-		 * receive स्थिरant पूर्णांकerrupts about it.  Disable
-		 * the पूर्णांकerrupt after the first.
+		 * receive constant interrupts about it.  Disable
+		 * the interrupt after the first.
 		 */
 		dd_dev_err(dd, "Lost 8051 heartbeat\n");
-		ग_लिखो_csr(dd, DC_DC8051_ERR_EN,
-			  पढ़ो_csr(dd, DC_DC8051_ERR_EN) &
+		write_csr(dd, DC_DC8051_ERR_EN,
+			  read_csr(dd, DC_DC8051_ERR_EN) &
 			  ~DC_DC8051_ERR_EN_LOST_8051_HEART_BEAT_SMASK);
 
 		reg &= ~DC_DC8051_ERR_FLG_LOST_8051_HEART_BEAT_SMASK;
-	पूर्ण
-	अगर (reg) अणु
-		/* report the error, but करो not करो anything */
+	}
+	if (reg) {
+		/* report the error, but do not do anything */
 		dd_dev_err(dd, "8051 error: %s\n",
-			   dc8051_err_string(buf, माप(buf), reg));
-	पूर्ण
+			   dc8051_err_string(buf, sizeof(buf), reg));
+	}
 
-	अगर (queue_link_करोwn) अणु
+	if (queue_link_down) {
 		/*
-		 * अगर the link is alपढ़ोy going करोwn or disabled, करो not
-		 * queue another. If there's a link करोwn entry alपढ़ोy
-		 * queued, करोn't queue another one.
+		 * if the link is already going down or disabled, do not
+		 * queue another. If there's a link down entry already
+		 * queued, don't queue another one.
 		 */
-		अगर ((ppd->host_link_state &
+		if ((ppd->host_link_state &
 		    (HLS_GOING_OFFLINE | HLS_LINK_COOLDOWN)) ||
-		    ppd->link_enabled == 0) अणु
+		    ppd->link_enabled == 0) {
 			dd_dev_info(dd, "%s: not queuing link down. host_link_state %x, link_enabled %x\n",
 				    __func__, ppd->host_link_state,
 				    ppd->link_enabled);
-		पूर्ण अन्यथा अणु
-			अगर (xchg(&ppd->is_link_करोwn_queued, 1) == 1)
+		} else {
+			if (xchg(&ppd->is_link_down_queued, 1) == 1)
 				dd_dev_info(dd,
 					    "%s: link down request already queued\n",
 					    __func__);
-			अन्यथा
-				queue_work(ppd->link_wq, &ppd->link_करोwn_work);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			else
+				queue_work(ppd->link_wq, &ppd->link_down_work);
+		}
+	}
+}
 
-अटल स्थिर अक्षर * स्थिर fm_config_txt[] = अणु
+static const char * const fm_config_txt[] = {
 [0] =
 	"BadHeadDist: Distance violation between two head flits",
 [1] =
@@ -7935,9 +7934,9 @@ retry:
 /* no 7 */
 [8] =
 	"UnsupportedVLMarker: Received VL Marker for unconfigured or disabled VL",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर port_rcv_txt[] = अणु
+static const char * const port_rcv_txt[] = {
 [1] =
 	"BadPktLen: Illegal PktLen",
 [2] =
@@ -7958,96 +7957,96 @@ retry:
 	"PreemptError: Preempting with same VL",
 [12] =
 	"PreemptVL15: Preempting a VL15 packet",
-पूर्ण;
+};
 
-#घोषणा OPA_LDR_FMCONFIG_OFFSET 16
-#घोषणा OPA_LDR_PORTRCV_OFFSET 0
-अटल व्योम handle_dcc_err(काष्ठा hfi1_devdata *dd, u32 unused, u64 reg)
-अणु
+#define OPA_LDR_FMCONFIG_OFFSET 16
+#define OPA_LDR_PORTRCV_OFFSET 0
+static void handle_dcc_err(struct hfi1_devdata *dd, u32 unused, u64 reg)
+{
 	u64 info, hdr0, hdr1;
-	स्थिर अक्षर *extra;
-	अक्षर buf[96];
-	काष्ठा hfi1_pportdata *ppd = dd->pport;
+	const char *extra;
+	char buf[96];
+	struct hfi1_pportdata *ppd = dd->pport;
 	u8 lcl_reason = 0;
-	पूर्णांक करो_bounce = 0;
+	int do_bounce = 0;
 
-	अगर (reg & DCC_ERR_FLG_UNCORRECTABLE_ERR_SMASK) अणु
-		अगर (!(dd->err_info_uncorrectable & OPA_EI_STATUS_SMASK)) अणु
-			info = पढ़ो_csr(dd, DCC_ERR_INFO_UNCORRECTABLE);
+	if (reg & DCC_ERR_FLG_UNCORRECTABLE_ERR_SMASK) {
+		if (!(dd->err_info_uncorrectable & OPA_EI_STATUS_SMASK)) {
+			info = read_csr(dd, DCC_ERR_INFO_UNCORRECTABLE);
 			dd->err_info_uncorrectable = info & OPA_EI_CODE_SMASK;
 			/* set status bit */
 			dd->err_info_uncorrectable |= OPA_EI_STATUS_SMASK;
-		पूर्ण
+		}
 		reg &= ~DCC_ERR_FLG_UNCORRECTABLE_ERR_SMASK;
-	पूर्ण
+	}
 
-	अगर (reg & DCC_ERR_FLG_LINK_ERR_SMASK) अणु
-		काष्ठा hfi1_pportdata *ppd = dd->pport;
+	if (reg & DCC_ERR_FLG_LINK_ERR_SMASK) {
+		struct hfi1_pportdata *ppd = dd->pport;
 		/* this counter saturates at (2^32) - 1 */
-		अगर (ppd->link_करोwned < (u32)अच_पूर्णांक_उच्च)
-			ppd->link_करोwned++;
+		if (ppd->link_downed < (u32)UINT_MAX)
+			ppd->link_downed++;
 		reg &= ~DCC_ERR_FLG_LINK_ERR_SMASK;
-	पूर्ण
+	}
 
-	अगर (reg & DCC_ERR_FLG_FMCONFIG_ERR_SMASK) अणु
+	if (reg & DCC_ERR_FLG_FMCONFIG_ERR_SMASK) {
 		u8 reason_valid = 1;
 
-		info = पढ़ो_csr(dd, DCC_ERR_INFO_FMCONFIG);
-		अगर (!(dd->err_info_fmconfig & OPA_EI_STATUS_SMASK)) अणु
+		info = read_csr(dd, DCC_ERR_INFO_FMCONFIG);
+		if (!(dd->err_info_fmconfig & OPA_EI_STATUS_SMASK)) {
 			dd->err_info_fmconfig = info & OPA_EI_CODE_SMASK;
 			/* set status bit */
 			dd->err_info_fmconfig |= OPA_EI_STATUS_SMASK;
-		पूर्ण
-		चयन (info) अणु
-		हाल 0:
-		हाल 1:
-		हाल 2:
-		हाल 3:
-		हाल 4:
-		हाल 5:
-		हाल 6:
+		}
+		switch (info) {
+		case 0:
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+		case 6:
 			extra = fm_config_txt[info];
-			अवरोध;
-		हाल 8:
+			break;
+		case 8:
 			extra = fm_config_txt[info];
-			अगर (ppd->port_error_action &
-			    OPA_PI_MASK_FM_CFG_UNSUPPORTED_VL_MARKER) अणु
-				करो_bounce = 1;
+			if (ppd->port_error_action &
+			    OPA_PI_MASK_FM_CFG_UNSUPPORTED_VL_MARKER) {
+				do_bounce = 1;
 				/*
 				 * lcl_reason cannot be derived from info
-				 * क्रम this error
+				 * for this error
 				 */
 				lcl_reason =
 				  OPA_LINKDOWN_REASON_UNSUPPORTED_VL_MARKER;
-			पूर्ण
-			अवरोध;
-		शेष:
+			}
+			break;
+		default:
 			reason_valid = 0;
-			snम_लिखो(buf, माप(buf), "reserved%lld", info);
+			snprintf(buf, sizeof(buf), "reserved%lld", info);
 			extra = buf;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (reason_valid && !करो_bounce) अणु
-			करो_bounce = ppd->port_error_action &
+		if (reason_valid && !do_bounce) {
+			do_bounce = ppd->port_error_action &
 					(1 << (OPA_LDR_FMCONFIG_OFFSET + info));
 			lcl_reason = info + OPA_LINKDOWN_REASON_BAD_HEAD_DIST;
-		पूर्ण
+		}
 
 		/* just report this */
 		dd_dev_info_ratelimited(dd, "DCC Error: fmconfig error: %s\n",
 					extra);
 		reg &= ~DCC_ERR_FLG_FMCONFIG_ERR_SMASK;
-	पूर्ण
+	}
 
-	अगर (reg & DCC_ERR_FLG_RCVPORT_ERR_SMASK) अणु
+	if (reg & DCC_ERR_FLG_RCVPORT_ERR_SMASK) {
 		u8 reason_valid = 1;
 
-		info = पढ़ो_csr(dd, DCC_ERR_INFO_PORTRCV);
-		hdr0 = पढ़ो_csr(dd, DCC_ERR_INFO_PORTRCV_HDR0);
-		hdr1 = पढ़ो_csr(dd, DCC_ERR_INFO_PORTRCV_HDR1);
-		अगर (!(dd->err_info_rcvport.status_and_code &
-		      OPA_EI_STATUS_SMASK)) अणु
+		info = read_csr(dd, DCC_ERR_INFO_PORTRCV);
+		hdr0 = read_csr(dd, DCC_ERR_INFO_PORTRCV_HDR0);
+		hdr1 = read_csr(dd, DCC_ERR_INFO_PORTRCV_HDR1);
+		if (!(dd->err_info_rcvport.status_and_code &
+		      OPA_EI_STATUS_SMASK)) {
 			dd->err_info_rcvport.status_and_code =
 				info & OPA_EI_CODE_SMASK;
 			/* set status bit */
@@ -8059,32 +8058,32 @@ retry:
 			 */
 			dd->err_info_rcvport.packet_flit1 = hdr0;
 			dd->err_info_rcvport.packet_flit2 = hdr1;
-		पूर्ण
-		चयन (info) अणु
-		हाल 1:
-		हाल 2:
-		हाल 3:
-		हाल 4:
-		हाल 5:
-		हाल 6:
-		हाल 7:
-		हाल 9:
-		हाल 11:
-		हाल 12:
+		}
+		switch (info) {
+		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+		case 6:
+		case 7:
+		case 9:
+		case 11:
+		case 12:
 			extra = port_rcv_txt[info];
-			अवरोध;
-		शेष:
+			break;
+		default:
 			reason_valid = 0;
-			snम_लिखो(buf, माप(buf), "reserved%lld", info);
+			snprintf(buf, sizeof(buf), "reserved%lld", info);
 			extra = buf;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (reason_valid && !करो_bounce) अणु
-			करो_bounce = ppd->port_error_action &
+		if (reason_valid && !do_bounce) {
+			do_bounce = ppd->port_error_action &
 					(1 << (OPA_LDR_PORTRCV_OFFSET + info));
 			lcl_reason = info + OPA_LINKDOWN_REASON_RCV_ERROR_0;
-		पूर्ण
+		}
 
 		/* just report this */
 		dd_dev_info_ratelimited(dd, "DCC Error: PortRcv error: %s\n"
@@ -8092,857 +8091,857 @@ retry:
 					extra, hdr0, hdr1);
 
 		reg &= ~DCC_ERR_FLG_RCVPORT_ERR_SMASK;
-	पूर्ण
+	}
 
-	अगर (reg & DCC_ERR_FLG_EN_CSR_ACCESS_BLOCKED_UC_SMASK) अणु
-		/* inक्रमmative only */
+	if (reg & DCC_ERR_FLG_EN_CSR_ACCESS_BLOCKED_UC_SMASK) {
+		/* informative only */
 		dd_dev_info_ratelimited(dd, "8051 access to LCB blocked\n");
 		reg &= ~DCC_ERR_FLG_EN_CSR_ACCESS_BLOCKED_UC_SMASK;
-	पूर्ण
-	अगर (reg & DCC_ERR_FLG_EN_CSR_ACCESS_BLOCKED_HOST_SMASK) अणु
-		/* inक्रमmative only */
+	}
+	if (reg & DCC_ERR_FLG_EN_CSR_ACCESS_BLOCKED_HOST_SMASK) {
+		/* informative only */
 		dd_dev_info_ratelimited(dd, "host access to LCB blocked\n");
 		reg &= ~DCC_ERR_FLG_EN_CSR_ACCESS_BLOCKED_HOST_SMASK;
-	पूर्ण
+	}
 
-	अगर (unlikely(hfi1_dbg_fault_suppress_err(&dd->verbs_dev)))
+	if (unlikely(hfi1_dbg_fault_suppress_err(&dd->verbs_dev)))
 		reg &= ~DCC_ERR_FLG_LATE_EBP_ERR_SMASK;
 
-	/* report any reमुख्यing errors */
-	अगर (reg)
+	/* report any remaining errors */
+	if (reg)
 		dd_dev_info_ratelimited(dd, "DCC Error: %s\n",
-					dcc_err_string(buf, माप(buf), reg));
+					dcc_err_string(buf, sizeof(buf), reg));
 
-	अगर (lcl_reason == 0)
+	if (lcl_reason == 0)
 		lcl_reason = OPA_LINKDOWN_REASON_UNKNOWN;
 
-	अगर (करो_bounce) अणु
+	if (do_bounce) {
 		dd_dev_info_ratelimited(dd, "%s: PortErrorAction bounce\n",
 					__func__);
-		set_link_करोwn_reason(ppd, lcl_reason, 0, lcl_reason);
+		set_link_down_reason(ppd, lcl_reason, 0, lcl_reason);
 		queue_work(ppd->link_wq, &ppd->link_bounce_work);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम handle_lcb_err(काष्ठा hfi1_devdata *dd, u32 unused, u64 reg)
-अणु
-	अक्षर buf[96];
+static void handle_lcb_err(struct hfi1_devdata *dd, u32 unused, u64 reg)
+{
+	char buf[96];
 
 	dd_dev_info(dd, "LCB Error: %s\n",
-		    lcb_err_string(buf, माप(buf), reg));
-पूर्ण
+		    lcb_err_string(buf, sizeof(buf), reg));
+}
 
 /*
- * CCE block DC पूर्णांकerrupt.  Source is < 8.
+ * CCE block DC interrupt.  Source is < 8.
  */
-अटल व्योम is_dc_पूर्णांक(काष्ठा hfi1_devdata *dd, अचिन्हित पूर्णांक source)
-अणु
-	स्थिर काष्ठा err_reg_info *eri = &dc_errs[source];
+static void is_dc_int(struct hfi1_devdata *dd, unsigned int source)
+{
+	const struct err_reg_info *eri = &dc_errs[source];
 
-	अगर (eri->handler) अणु
-		पूर्णांकerrupt_clear_करोwn(dd, 0, eri);
-	पूर्ण अन्यथा अगर (source == 3 /* dc_lbm_पूर्णांक */) अणु
+	if (eri->handler) {
+		interrupt_clear_down(dd, 0, eri);
+	} else if (source == 3 /* dc_lbm_int */) {
 		/*
 		 * This indicates that a parity error has occurred on the
 		 * address/control lines presented to the LBM.  The error
 		 * is a single pulse, there is no associated error flag,
-		 * and it is non-maskable.  This is because अगर a parity
+		 * and it is non-maskable.  This is because if a parity
 		 * error occurs on the request the request is dropped.
-		 * This should never occur, but it is nice to know अगर it
-		 * ever करोes.
+		 * This should never occur, but it is nice to know if it
+		 * ever does.
 		 */
 		dd_dev_err(dd, "Parity error in DC LBM block\n");
-	पूर्ण अन्यथा अणु
+	} else {
 		dd_dev_err(dd, "Invalid DC interrupt %u\n", source);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * TX block send credit पूर्णांकerrupt.  Source is < 160.
+ * TX block send credit interrupt.  Source is < 160.
  */
-अटल व्योम is_send_credit_पूर्णांक(काष्ठा hfi1_devdata *dd, अचिन्हित पूर्णांक source)
-अणु
+static void is_send_credit_int(struct hfi1_devdata *dd, unsigned int source)
+{
 	sc_group_release_update(dd, source);
-पूर्ण
+}
 
 /*
- * TX block SDMA पूर्णांकerrupt.  Source is < 48.
+ * TX block SDMA interrupt.  Source is < 48.
  *
- * SDMA पूर्णांकerrupts are grouped by type:
+ * SDMA interrupts are grouped by type:
  *
  *	 0 -  N-1 = SDma
  *	 N - 2N-1 = SDmaProgress
  *	2N - 3N-1 = SDmaIdle
  */
-अटल व्योम is_sdma_eng_पूर्णांक(काष्ठा hfi1_devdata *dd, अचिन्हित पूर्णांक source)
-अणु
-	/* what पूर्णांकerrupt */
-	अचिन्हित पूर्णांक what  = source / TXE_NUM_SDMA_ENGINES;
+static void is_sdma_eng_int(struct hfi1_devdata *dd, unsigned int source)
+{
+	/* what interrupt */
+	unsigned int what  = source / TXE_NUM_SDMA_ENGINES;
 	/* which engine */
-	अचिन्हित पूर्णांक which = source % TXE_NUM_SDMA_ENGINES;
+	unsigned int which = source % TXE_NUM_SDMA_ENGINES;
 
-#अगर_घोषित CONFIG_SDMA_VERBOSITY
+#ifdef CONFIG_SDMA_VERBOSITY
 	dd_dev_err(dd, "CONFIG SDMA(%u) %s:%d %s()\n", which,
-		   slashstrip(__खाता__), __LINE__, __func__);
+		   slashstrip(__FILE__), __LINE__, __func__);
 	sdma_dumpstate(&dd->per_sdma[which]);
-#पूर्ण_अगर
+#endif
 
-	अगर (likely(what < 3 && which < dd->num_sdma)) अणु
-		sdma_engine_पूर्णांकerrupt(&dd->per_sdma[which], 1ull << source);
-	पूर्ण अन्यथा अणु
+	if (likely(what < 3 && which < dd->num_sdma)) {
+		sdma_engine_interrupt(&dd->per_sdma[which], 1ull << source);
+	} else {
 		/* should not happen */
 		dd_dev_err(dd, "Invalid SDMA interrupt 0x%x\n", source);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * is_rcv_avail_पूर्णांक() - User receive context available IRQ handler
+ * is_rcv_avail_int() - User receive context available IRQ handler
  * @dd: valid dd
  * @source: logical IRQ source (offset from IS_RCVAVAIL_START)
  *
- * RX block receive available पूर्णांकerrupt.  Source is < 160.
+ * RX block receive available interrupt.  Source is < 160.
  *
- * This is the general पूर्णांकerrupt handler क्रम user (PSM) receive contexts,
- * and can only be used क्रम non-thपढ़ोed IRQs.
+ * This is the general interrupt handler for user (PSM) receive contexts,
+ * and can only be used for non-threaded IRQs.
  */
-अटल व्योम is_rcv_avail_पूर्णांक(काष्ठा hfi1_devdata *dd, अचिन्हित पूर्णांक source)
-अणु
-	काष्ठा hfi1_ctxtdata *rcd;
-	अक्षर *err_detail;
+static void is_rcv_avail_int(struct hfi1_devdata *dd, unsigned int source)
+{
+	struct hfi1_ctxtdata *rcd;
+	char *err_detail;
 
-	अगर (likely(source < dd->num_rcv_contexts)) अणु
+	if (likely(source < dd->num_rcv_contexts)) {
 		rcd = hfi1_rcd_get_by_index(dd, source);
-		अगर (rcd) अणु
-			handle_user_पूर्णांकerrupt(rcd);
+		if (rcd) {
+			handle_user_interrupt(rcd);
 			hfi1_rcd_put(rcd);
-			वापस;	/* OK */
-		पूर्ण
-		/* received an पूर्णांकerrupt, but no rcd */
+			return;	/* OK */
+		}
+		/* received an interrupt, but no rcd */
 		err_detail = "dataless";
-	पूर्ण अन्यथा अणु
-		/* received an पूर्णांकerrupt, but are not using that context */
+	} else {
+		/* received an interrupt, but are not using that context */
 		err_detail = "out of range";
-	पूर्ण
+	}
 	dd_dev_err(dd, "unexpected %s receive available context interrupt %u\n",
 		   err_detail, source);
-पूर्ण
+}
 
 /**
- * is_rcv_urgent_पूर्णांक() - User receive context urgent IRQ handler
+ * is_rcv_urgent_int() - User receive context urgent IRQ handler
  * @dd: valid dd
  * @source: logical IRQ source (offset from IS_RCVURGENT_START)
  *
- * RX block receive urgent पूर्णांकerrupt.  Source is < 160.
+ * RX block receive urgent interrupt.  Source is < 160.
  *
- * NOTE: kernel receive contexts specअगरically करो NOT enable this IRQ.
+ * NOTE: kernel receive contexts specifically do NOT enable this IRQ.
  */
-अटल व्योम is_rcv_urgent_पूर्णांक(काष्ठा hfi1_devdata *dd, अचिन्हित पूर्णांक source)
-अणु
-	काष्ठा hfi1_ctxtdata *rcd;
-	अक्षर *err_detail;
+static void is_rcv_urgent_int(struct hfi1_devdata *dd, unsigned int source)
+{
+	struct hfi1_ctxtdata *rcd;
+	char *err_detail;
 
-	अगर (likely(source < dd->num_rcv_contexts)) अणु
+	if (likely(source < dd->num_rcv_contexts)) {
 		rcd = hfi1_rcd_get_by_index(dd, source);
-		अगर (rcd) अणु
-			handle_user_पूर्णांकerrupt(rcd);
+		if (rcd) {
+			handle_user_interrupt(rcd);
 			hfi1_rcd_put(rcd);
-			वापस;	/* OK */
-		पूर्ण
-		/* received an पूर्णांकerrupt, but no rcd */
+			return;	/* OK */
+		}
+		/* received an interrupt, but no rcd */
 		err_detail = "dataless";
-	पूर्ण अन्यथा अणु
-		/* received an पूर्णांकerrupt, but are not using that context */
+	} else {
+		/* received an interrupt, but are not using that context */
 		err_detail = "out of range";
-	पूर्ण
+	}
 	dd_dev_err(dd, "unexpected %s receive urgent context interrupt %u\n",
 		   err_detail, source);
-पूर्ण
+}
 
 /*
- * Reserved range पूर्णांकerrupt.  Should not be called in normal operation.
+ * Reserved range interrupt.  Should not be called in normal operation.
  */
-अटल व्योम is_reserved_पूर्णांक(काष्ठा hfi1_devdata *dd, अचिन्हित पूर्णांक source)
-अणु
-	अक्षर name[64];
+static void is_reserved_int(struct hfi1_devdata *dd, unsigned int source)
+{
+	char name[64];
 
 	dd_dev_err(dd, "unexpected %s interrupt\n",
-		   is_reserved_name(name, माप(name), source));
-पूर्ण
+		   is_reserved_name(name, sizeof(name), source));
+}
 
-अटल स्थिर काष्ठा is_table is_table[] = अणु
+static const struct is_table is_table[] = {
 /*
  * start		 end
- *				name func		पूर्णांकerrupt func
+ *				name func		interrupt func
  */
-अणु IS_GENERAL_ERR_START,  IS_GENERAL_ERR_END,
-				is_misc_err_name,	is_misc_err_पूर्णांक पूर्ण,
-अणु IS_SDMAENG_ERR_START,  IS_SDMAENG_ERR_END,
-				is_sdma_eng_err_name,	is_sdma_eng_err_पूर्णांक पूर्ण,
-अणु IS_SENDCTXT_ERR_START, IS_SENDCTXT_ERR_END,
-				is_sendctxt_err_name,	is_sendctxt_err_पूर्णांक पूर्ण,
-अणु IS_SDMA_START,	     IS_SDMA_IDLE_END,
-				is_sdma_eng_name,	is_sdma_eng_पूर्णांक पूर्ण,
-अणु IS_VARIOUS_START,	     IS_VARIOUS_END,
-				is_various_name,	is_various_पूर्णांक पूर्ण,
-अणु IS_DC_START,	     IS_DC_END,
-				is_dc_name,		is_dc_पूर्णांक पूर्ण,
-अणु IS_RCVAVAIL_START,     IS_RCVAVAIL_END,
-				is_rcv_avail_name,	is_rcv_avail_पूर्णांक पूर्ण,
-अणु IS_RCVURGENT_START,    IS_RCVURGENT_END,
-				is_rcv_urgent_name,	is_rcv_urgent_पूर्णांक पूर्ण,
-अणु IS_SENDCREDIT_START,   IS_SENDCREDIT_END,
-				is_send_credit_name,	is_send_credit_पूर्णांकपूर्ण,
-अणु IS_RESERVED_START,     IS_RESERVED_END,
-				is_reserved_name,	is_reserved_पूर्णांकपूर्ण,
-पूर्ण;
+{ IS_GENERAL_ERR_START,  IS_GENERAL_ERR_END,
+				is_misc_err_name,	is_misc_err_int },
+{ IS_SDMAENG_ERR_START,  IS_SDMAENG_ERR_END,
+				is_sdma_eng_err_name,	is_sdma_eng_err_int },
+{ IS_SENDCTXT_ERR_START, IS_SENDCTXT_ERR_END,
+				is_sendctxt_err_name,	is_sendctxt_err_int },
+{ IS_SDMA_START,	     IS_SDMA_IDLE_END,
+				is_sdma_eng_name,	is_sdma_eng_int },
+{ IS_VARIOUS_START,	     IS_VARIOUS_END,
+				is_various_name,	is_various_int },
+{ IS_DC_START,	     IS_DC_END,
+				is_dc_name,		is_dc_int },
+{ IS_RCVAVAIL_START,     IS_RCVAVAIL_END,
+				is_rcv_avail_name,	is_rcv_avail_int },
+{ IS_RCVURGENT_START,    IS_RCVURGENT_END,
+				is_rcv_urgent_name,	is_rcv_urgent_int },
+{ IS_SENDCREDIT_START,   IS_SENDCREDIT_END,
+				is_send_credit_name,	is_send_credit_int},
+{ IS_RESERVED_START,     IS_RESERVED_END,
+				is_reserved_name,	is_reserved_int},
+};
 
 /*
- * Interrupt source पूर्णांकerrupt - called when the given source has an पूर्णांकerrupt.
- * Source is a bit index पूर्णांकo an array of 64-bit पूर्णांकegers.
+ * Interrupt source interrupt - called when the given source has an interrupt.
+ * Source is a bit index into an array of 64-bit integers.
  */
-अटल व्योम is_पूर्णांकerrupt(काष्ठा hfi1_devdata *dd, अचिन्हित पूर्णांक source)
-अणु
-	स्थिर काष्ठा is_table *entry;
+static void is_interrupt(struct hfi1_devdata *dd, unsigned int source)
+{
+	const struct is_table *entry;
 
-	/* aव्योमs a द्विगुन compare by walking the table in-order */
-	क्रम (entry = &is_table[0]; entry->is_name; entry++) अणु
-		अगर (source <= entry->end) अणु
-			trace_hfi1_पूर्णांकerrupt(dd, entry, source);
-			entry->is_पूर्णांक(dd, source - entry->start);
-			वापस;
-		पूर्ण
-	पूर्ण
+	/* avoids a double compare by walking the table in-order */
+	for (entry = &is_table[0]; entry->is_name; entry++) {
+		if (source <= entry->end) {
+			trace_hfi1_interrupt(dd, entry, source);
+			entry->is_int(dd, source - entry->start);
+			return;
+		}
+	}
 	/* fell off the end */
 	dd_dev_err(dd, "invalid interrupt source %u\n", source);
-पूर्ण
+}
 
 /**
- * general_पूर्णांकerrupt -  General पूर्णांकerrupt handler
+ * general_interrupt -  General interrupt handler
  * @irq: MSIx IRQ vector
  * @data: hfi1 devdata
  *
- * This is able to correctly handle all non-thपढ़ोed पूर्णांकerrupts.  Receive
- * context DATA IRQs are thपढ़ोed and are not supported by this handler.
+ * This is able to correctly handle all non-threaded interrupts.  Receive
+ * context DATA IRQs are threaded and are not supported by this handler.
  *
  */
-irqवापस_t general_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा hfi1_devdata *dd = data;
+irqreturn_t general_interrupt(int irq, void *data)
+{
+	struct hfi1_devdata *dd = data;
 	u64 regs[CCE_NUM_INT_CSRS];
 	u32 bit;
-	पूर्णांक i;
-	irqवापस_t handled = IRQ_NONE;
+	int i;
+	irqreturn_t handled = IRQ_NONE;
 
-	this_cpu_inc(*dd->पूर्णांक_counter);
+	this_cpu_inc(*dd->int_counter);
 
-	/* phase 1: scan and clear all handled पूर्णांकerrupts */
-	क्रम (i = 0; i < CCE_NUM_INT_CSRS; i++) अणु
-		अगर (dd->gi_mask[i] == 0) अणु
+	/* phase 1: scan and clear all handled interrupts */
+	for (i = 0; i < CCE_NUM_INT_CSRS; i++) {
+		if (dd->gi_mask[i] == 0) {
 			regs[i] = 0;	/* used later */
-			जारी;
-		पूर्ण
-		regs[i] = पढ़ो_csr(dd, CCE_INT_STATUS + (8 * i)) &
+			continue;
+		}
+		regs[i] = read_csr(dd, CCE_INT_STATUS + (8 * i)) &
 				dd->gi_mask[i];
-		/* only clear अगर anything is set */
-		अगर (regs[i])
-			ग_लिखो_csr(dd, CCE_INT_CLEAR + (8 * i), regs[i]);
-	पूर्ण
+		/* only clear if anything is set */
+		if (regs[i])
+			write_csr(dd, CCE_INT_CLEAR + (8 * i), regs[i]);
+	}
 
 	/* phase 2: call the appropriate handler */
-	क्रम_each_set_bit(bit, (अचिन्हित दीर्घ *)&regs[0],
-			 CCE_NUM_INT_CSRS * 64) अणु
-		is_पूर्णांकerrupt(dd, bit);
+	for_each_set_bit(bit, (unsigned long *)&regs[0],
+			 CCE_NUM_INT_CSRS * 64) {
+		is_interrupt(dd, bit);
 		handled = IRQ_HANDLED;
-	पूर्ण
+	}
 
-	वापस handled;
-पूर्ण
+	return handled;
+}
 
-irqवापस_t sdma_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा sdma_engine *sde = data;
-	काष्ठा hfi1_devdata *dd = sde->dd;
+irqreturn_t sdma_interrupt(int irq, void *data)
+{
+	struct sdma_engine *sde = data;
+	struct hfi1_devdata *dd = sde->dd;
 	u64 status;
 
-#अगर_घोषित CONFIG_SDMA_VERBOSITY
+#ifdef CONFIG_SDMA_VERBOSITY
 	dd_dev_err(dd, "CONFIG SDMA(%u) %s:%d %s()\n", sde->this_idx,
-		   slashstrip(__खाता__), __LINE__, __func__);
+		   slashstrip(__FILE__), __LINE__, __func__);
 	sdma_dumpstate(sde);
-#पूर्ण_अगर
+#endif
 
-	this_cpu_inc(*dd->पूर्णांक_counter);
+	this_cpu_inc(*dd->int_counter);
 
-	/* This पढ़ो_csr is really bad in the hot path */
-	status = पढ़ो_csr(dd,
+	/* This read_csr is really bad in the hot path */
+	status = read_csr(dd,
 			  CCE_INT_STATUS + (8 * (IS_SDMA_START / 64)))
 			  & sde->imask;
-	अगर (likely(status)) अणु
-		/* clear the पूर्णांकerrupt(s) */
-		ग_लिखो_csr(dd,
+	if (likely(status)) {
+		/* clear the interrupt(s) */
+		write_csr(dd,
 			  CCE_INT_CLEAR + (8 * (IS_SDMA_START / 64)),
 			  status);
 
-		/* handle the पूर्णांकerrupt(s) */
-		sdma_engine_पूर्णांकerrupt(sde, status);
-	पूर्ण अन्यथा अणु
+		/* handle the interrupt(s) */
+		sdma_engine_interrupt(sde, status);
+	} else {
 		dd_dev_info_ratelimited(dd, "SDMA engine %u interrupt, but no status bits set\n",
 					sde->this_idx);
-	पूर्ण
-	वापस IRQ_HANDLED;
-पूर्ण
+	}
+	return IRQ_HANDLED;
+}
 
 /*
- * Clear the receive पूर्णांकerrupt.  Use a पढ़ो of the पूर्णांकerrupt clear CSR
- * to insure that the ग_लिखो completed.  This करोes NOT guarantee that
- * queued DMA ग_लिखोs to memory from the chip are pushed.
+ * Clear the receive interrupt.  Use a read of the interrupt clear CSR
+ * to insure that the write completed.  This does NOT guarantee that
+ * queued DMA writes to memory from the chip are pushed.
  */
-अटल अंतरभूत व्योम clear_recv_पूर्णांकr(काष्ठा hfi1_ctxtdata *rcd)
-अणु
-	काष्ठा hfi1_devdata *dd = rcd->dd;
+static inline void clear_recv_intr(struct hfi1_ctxtdata *rcd)
+{
+	struct hfi1_devdata *dd = rcd->dd;
 	u32 addr = CCE_INT_CLEAR + (8 * rcd->ireg);
 
-	ग_लिखो_csr(dd, addr, rcd->imask);
-	/* क्रमce the above ग_लिखो on the chip and get a value back */
-	(व्योम)पढ़ो_csr(dd, addr);
-पूर्ण
+	write_csr(dd, addr, rcd->imask);
+	/* force the above write on the chip and get a value back */
+	(void)read_csr(dd, addr);
+}
 
-/* क्रमce the receive पूर्णांकerrupt */
-व्योम क्रमce_recv_पूर्णांकr(काष्ठा hfi1_ctxtdata *rcd)
-अणु
-	ग_लिखो_csr(rcd->dd, CCE_INT_FORCE + (8 * rcd->ireg), rcd->imask);
-पूर्ण
+/* force the receive interrupt */
+void force_recv_intr(struct hfi1_ctxtdata *rcd)
+{
+	write_csr(rcd->dd, CCE_INT_FORCE + (8 * rcd->ireg), rcd->imask);
+}
 
 /*
- * Return non-zero अगर a packet is present.
+ * Return non-zero if a packet is present.
  *
- * This routine is called when rechecking क्रम packets after the RcvAvail
- * पूर्णांकerrupt has been cleared करोwn.  First, करो a quick check of memory क्रम
- * a packet present.  If not found, use an expensive CSR पढ़ो of the context
- * tail to determine the actual tail.  The CSR पढ़ो is necessary because there
- * is no method to push pending DMAs to memory other than an पूर्णांकerrupt and we
- * are trying to determine अगर we need to क्रमce an पूर्णांकerrupt.
+ * This routine is called when rechecking for packets after the RcvAvail
+ * interrupt has been cleared down.  First, do a quick check of memory for
+ * a packet present.  If not found, use an expensive CSR read of the context
+ * tail to determine the actual tail.  The CSR read is necessary because there
+ * is no method to push pending DMAs to memory other than an interrupt and we
+ * are trying to determine if we need to force an interrupt.
  */
-अटल अंतरभूत पूर्णांक check_packet_present(काष्ठा hfi1_ctxtdata *rcd)
-अणु
+static inline int check_packet_present(struct hfi1_ctxtdata *rcd)
+{
 	u32 tail;
 
-	अगर (hfi1_packet_present(rcd))
-		वापस 1;
+	if (hfi1_packet_present(rcd))
+		return 1;
 
-	/* fall back to a CSR पढ़ो, correct indpendent of DMA_RTAIL */
-	tail = (u32)पढ़ो_uctxt_csr(rcd->dd, rcd->ctxt, RCV_HDR_TAIL);
-	वापस hfi1_rcd_head(rcd) != tail;
-पूर्ण
+	/* fall back to a CSR read, correct indpendent of DMA_RTAIL */
+	tail = (u32)read_uctxt_csr(rcd->dd, rcd->ctxt, RCV_HDR_TAIL);
+	return hfi1_rcd_head(rcd) != tail;
+}
 
 /*
- * Common code क्रम receive contexts पूर्णांकerrupt handlers.
+ * Common code for receive contexts interrupt handlers.
  * Update traces, increment kernel IRQ counter and
  * setup ASPM when needed.
  */
-अटल व्योम receive_पूर्णांकerrupt_common(काष्ठा hfi1_ctxtdata *rcd)
-अणु
-	काष्ठा hfi1_devdata *dd = rcd->dd;
+static void receive_interrupt_common(struct hfi1_ctxtdata *rcd)
+{
+	struct hfi1_devdata *dd = rcd->dd;
 
-	trace_hfi1_receive_पूर्णांकerrupt(dd, rcd);
-	this_cpu_inc(*dd->पूर्णांक_counter);
+	trace_hfi1_receive_interrupt(dd, rcd);
+	this_cpu_inc(*dd->int_counter);
 	aspm_ctx_disable(rcd);
-पूर्ण
+}
 
 /*
- * __hfi1_rcd_eoi_पूर्णांकr() - Make HW issue receive पूर्णांकerrupt
+ * __hfi1_rcd_eoi_intr() - Make HW issue receive interrupt
  * when there are packets present in the queue. When calling
- * with पूर्णांकerrupts enabled please use hfi1_rcd_eoi_पूर्णांकr.
+ * with interrupts enabled please use hfi1_rcd_eoi_intr.
  *
  * @rcd: valid receive context
  */
-अटल व्योम __hfi1_rcd_eoi_पूर्णांकr(काष्ठा hfi1_ctxtdata *rcd)
-अणु
-	clear_recv_पूर्णांकr(rcd);
-	अगर (check_packet_present(rcd))
-		क्रमce_recv_पूर्णांकr(rcd);
-पूर्ण
+static void __hfi1_rcd_eoi_intr(struct hfi1_ctxtdata *rcd)
+{
+	clear_recv_intr(rcd);
+	if (check_packet_present(rcd))
+		force_recv_intr(rcd);
+}
 
 /**
- * hfi1_rcd_eoi_पूर्णांकr() - End of Interrupt processing action
+ * hfi1_rcd_eoi_intr() - End of Interrupt processing action
  *
  * @rcd: Ptr to hfi1_ctxtdata of receive context
  *
- *  Hold IRQs so we can safely clear the पूर्णांकerrupt and
- *  recheck क्रम a packet that may have arrived after the previous
- *  check and the पूर्णांकerrupt clear.  If a packet arrived, क्रमce another
- *  पूर्णांकerrupt. This routine can be called at the end of receive packet
- *  processing in पूर्णांकerrupt service routines, पूर्णांकerrupt service thपढ़ो
+ *  Hold IRQs so we can safely clear the interrupt and
+ *  recheck for a packet that may have arrived after the previous
+ *  check and the interrupt clear.  If a packet arrived, force another
+ *  interrupt. This routine can be called at the end of receive packet
+ *  processing in interrupt service routines, interrupt service thread
  *  and softirqs
  */
-अटल व्योम hfi1_rcd_eoi_पूर्णांकr(काष्ठा hfi1_ctxtdata *rcd)
-अणु
-	अचिन्हित दीर्घ flags;
+static void hfi1_rcd_eoi_intr(struct hfi1_ctxtdata *rcd)
+{
+	unsigned long flags;
 
 	local_irq_save(flags);
-	__hfi1_rcd_eoi_पूर्णांकr(rcd);
+	__hfi1_rcd_eoi_intr(rcd);
 	local_irq_restore(flags);
-पूर्ण
+}
 
 /**
- * hfi1_netdev_rx_napi - napi poll function to move eoi अंतरभूत
- * @napi: poपूर्णांकer to napi object
+ * hfi1_netdev_rx_napi - napi poll function to move eoi inline
+ * @napi: pointer to napi object
  * @budget: netdev budget
  */
-पूर्णांक hfi1_netdev_rx_napi(काष्ठा napi_काष्ठा *napi, पूर्णांक budget)
-अणु
-	काष्ठा hfi1_netdev_rxq *rxq = container_of(napi,
-			काष्ठा hfi1_netdev_rxq, napi);
-	काष्ठा hfi1_ctxtdata *rcd = rxq->rcd;
-	पूर्णांक work_करोne = 0;
+int hfi1_netdev_rx_napi(struct napi_struct *napi, int budget)
+{
+	struct hfi1_netdev_rxq *rxq = container_of(napi,
+			struct hfi1_netdev_rxq, napi);
+	struct hfi1_ctxtdata *rcd = rxq->rcd;
+	int work_done = 0;
 
-	work_करोne = rcd->करो_पूर्णांकerrupt(rcd, budget);
+	work_done = rcd->do_interrupt(rcd, budget);
 
-	अगर (work_करोne < budget) अणु
-		napi_complete_करोne(napi, work_करोne);
-		hfi1_rcd_eoi_पूर्णांकr(rcd);
-	पूर्ण
+	if (work_done < budget) {
+		napi_complete_done(napi, work_done);
+		hfi1_rcd_eoi_intr(rcd);
+	}
 
-	वापस work_करोne;
-पूर्ण
+	return work_done;
+}
 
-/* Receive packet napi handler क्रम netdevs VNIC and AIP  */
-irqवापस_t receive_context_पूर्णांकerrupt_napi(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा hfi1_ctxtdata *rcd = data;
+/* Receive packet napi handler for netdevs VNIC and AIP  */
+irqreturn_t receive_context_interrupt_napi(int irq, void *data)
+{
+	struct hfi1_ctxtdata *rcd = data;
 
-	receive_पूर्णांकerrupt_common(rcd);
+	receive_interrupt_common(rcd);
 
-	अगर (likely(rcd->napi)) अणु
-		अगर (likely(napi_schedule_prep(rcd->napi)))
+	if (likely(rcd->napi)) {
+		if (likely(napi_schedule_prep(rcd->napi)))
 			__napi_schedule_irqoff(rcd->napi);
-		अन्यथा
-			__hfi1_rcd_eoi_पूर्णांकr(rcd);
-	पूर्ण अन्यथा अणु
+		else
+			__hfi1_rcd_eoi_intr(rcd);
+	} else {
 		WARN_ONCE(1, "Napi IRQ handler without napi set up ctxt=%d\n",
 			  rcd->ctxt);
-		__hfi1_rcd_eoi_पूर्णांकr(rcd);
-	पूर्ण
+		__hfi1_rcd_eoi_intr(rcd);
+	}
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
  * Receive packet IRQ handler.  This routine expects to be on its own IRQ.
- * This routine will try to handle packets immediately (latency), but अगर
- * it finds too many, it will invoke the thपढ़ो handler (bandwitdh).  The
- * chip receive पूर्णांकerrupt is *not* cleared करोwn until this or the thपढ़ो (अगर
- * invoked) is finished.  The पूर्णांकent is to aव्योम extra पूर्णांकerrupts जबतक we
+ * This routine will try to handle packets immediately (latency), but if
+ * it finds too many, it will invoke the thread handler (bandwitdh).  The
+ * chip receive interrupt is *not* cleared down until this or the thread (if
+ * invoked) is finished.  The intent is to avoid extra interrupts while we
  * are processing packets anyway.
  */
-irqवापस_t receive_context_पूर्णांकerrupt(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा hfi1_ctxtdata *rcd = data;
-	पूर्णांक disposition;
+irqreturn_t receive_context_interrupt(int irq, void *data)
+{
+	struct hfi1_ctxtdata *rcd = data;
+	int disposition;
 
-	receive_पूर्णांकerrupt_common(rcd);
+	receive_interrupt_common(rcd);
 
-	/* receive पूर्णांकerrupt reमुख्यs blocked जबतक processing packets */
-	disposition = rcd->करो_पूर्णांकerrupt(rcd, 0);
+	/* receive interrupt remains blocked while processing packets */
+	disposition = rcd->do_interrupt(rcd, 0);
 
 	/*
-	 * Too many packets were seen जबतक processing packets in this
-	 * IRQ handler.  Invoke the handler thपढ़ो.  The receive पूर्णांकerrupt
-	 * reमुख्यs blocked.
+	 * Too many packets were seen while processing packets in this
+	 * IRQ handler.  Invoke the handler thread.  The receive interrupt
+	 * remains blocked.
 	 */
-	अगर (disposition == RCV_PKT_LIMIT)
-		वापस IRQ_WAKE_THREAD;
+	if (disposition == RCV_PKT_LIMIT)
+		return IRQ_WAKE_THREAD;
 
-	__hfi1_rcd_eoi_पूर्णांकr(rcd);
-	वापस IRQ_HANDLED;
-पूर्ण
+	__hfi1_rcd_eoi_intr(rcd);
+	return IRQ_HANDLED;
+}
 
 /*
- * Receive packet thपढ़ो handler.  This expects to be invoked with the
- * receive पूर्णांकerrupt still blocked.
+ * Receive packet thread handler.  This expects to be invoked with the
+ * receive interrupt still blocked.
  */
-irqवापस_t receive_context_thपढ़ो(पूर्णांक irq, व्योम *data)
-अणु
-	काष्ठा hfi1_ctxtdata *rcd = data;
+irqreturn_t receive_context_thread(int irq, void *data)
+{
+	struct hfi1_ctxtdata *rcd = data;
 
-	/* receive पूर्णांकerrupt is still blocked from the IRQ handler */
-	(व्योम)rcd->करो_पूर्णांकerrupt(rcd, 1);
+	/* receive interrupt is still blocked from the IRQ handler */
+	(void)rcd->do_interrupt(rcd, 1);
 
-	hfi1_rcd_eoi_पूर्णांकr(rcd);
+	hfi1_rcd_eoi_intr(rcd);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /* ========================================================================= */
 
-u32 पढ़ो_physical_state(काष्ठा hfi1_devdata *dd)
-अणु
+u32 read_physical_state(struct hfi1_devdata *dd)
+{
 	u64 reg;
 
-	reg = पढ़ो_csr(dd, DC_DC8051_STS_CUR_STATE);
-	वापस (reg >> DC_DC8051_STS_CUR_STATE_PORT_SHIFT)
+	reg = read_csr(dd, DC_DC8051_STS_CUR_STATE);
+	return (reg >> DC_DC8051_STS_CUR_STATE_PORT_SHIFT)
 				& DC_DC8051_STS_CUR_STATE_PORT_MASK;
-पूर्ण
+}
 
-u32 पढ़ो_logical_state(काष्ठा hfi1_devdata *dd)
-अणु
+u32 read_logical_state(struct hfi1_devdata *dd)
+{
 	u64 reg;
 
-	reg = पढ़ो_csr(dd, DCC_CFG_PORT_CONFIG);
-	वापस (reg >> DCC_CFG_PORT_CONFIG_LINK_STATE_SHIFT)
+	reg = read_csr(dd, DCC_CFG_PORT_CONFIG);
+	return (reg >> DCC_CFG_PORT_CONFIG_LINK_STATE_SHIFT)
 				& DCC_CFG_PORT_CONFIG_LINK_STATE_MASK;
-पूर्ण
+}
 
-अटल व्योम set_logical_state(काष्ठा hfi1_devdata *dd, u32 chip_lstate)
-अणु
+static void set_logical_state(struct hfi1_devdata *dd, u32 chip_lstate)
+{
 	u64 reg;
 
-	reg = पढ़ो_csr(dd, DCC_CFG_PORT_CONFIG);
+	reg = read_csr(dd, DCC_CFG_PORT_CONFIG);
 	/* clear current state, set new state */
 	reg &= ~DCC_CFG_PORT_CONFIG_LINK_STATE_SMASK;
 	reg |= (u64)chip_lstate << DCC_CFG_PORT_CONFIG_LINK_STATE_SHIFT;
-	ग_लिखो_csr(dd, DCC_CFG_PORT_CONFIG, reg);
-पूर्ण
+	write_csr(dd, DCC_CFG_PORT_CONFIG, reg);
+}
 
 /*
- * Use the 8051 to पढ़ो a LCB CSR.
+ * Use the 8051 to read a LCB CSR.
  */
-अटल पूर्णांक पढ़ो_lcb_via_8051(काष्ठा hfi1_devdata *dd, u32 addr, u64 *data)
-अणु
+static int read_lcb_via_8051(struct hfi1_devdata *dd, u32 addr, u64 *data)
+{
 	u32 regno;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (dd->icode == ICODE_FUNCTIONAL_SIMULATOR) अणु
-		अगर (acquire_lcb_access(dd, 0) == 0) अणु
-			*data = पढ़ो_csr(dd, addr);
+	if (dd->icode == ICODE_FUNCTIONAL_SIMULATOR) {
+		if (acquire_lcb_access(dd, 0) == 0) {
+			*data = read_csr(dd, addr);
 			release_lcb_access(dd, 0);
-			वापस 0;
-		पूर्ण
-		वापस -EBUSY;
-	पूर्ण
+			return 0;
+		}
+		return -EBUSY;
+	}
 
-	/* रेजिस्टर is an index of LCB रेजिस्टरs: (offset - base) / 8 */
+	/* register is an index of LCB registers: (offset - base) / 8 */
 	regno = (addr - DC_LCB_CFG_RUN) >> 3;
-	ret = करो_8051_command(dd, HCMD_READ_LCB_CSR, regno, data);
-	अगर (ret != HCMD_SUCCESS)
-		वापस -EBUSY;
-	वापस 0;
-पूर्ण
+	ret = do_8051_command(dd, HCMD_READ_LCB_CSR, regno, data);
+	if (ret != HCMD_SUCCESS)
+		return -EBUSY;
+	return 0;
+}
 
 /*
- * Provide a cache क्रम some of the LCB रेजिस्टरs in हाल the LCB is
+ * Provide a cache for some of the LCB registers in case the LCB is
  * unavailable.
- * (The LCB is unavailable in certain link states, क्रम example.)
+ * (The LCB is unavailable in certain link states, for example.)
  */
-काष्ठा lcb_datum अणु
+struct lcb_datum {
 	u32 off;
 	u64 val;
-पूर्ण;
+};
 
-अटल काष्ठा lcb_datum lcb_cache[] = अणु
-	अणु DC_LCB_ERR_INFO_RX_REPLAY_CNT, 0पूर्ण,
-	अणु DC_LCB_ERR_INFO_SEQ_CRC_CNT, 0 पूर्ण,
-	अणु DC_LCB_ERR_INFO_REINIT_FROM_PEER_CNT, 0 पूर्ण,
-पूर्ण;
+static struct lcb_datum lcb_cache[] = {
+	{ DC_LCB_ERR_INFO_RX_REPLAY_CNT, 0},
+	{ DC_LCB_ERR_INFO_SEQ_CRC_CNT, 0 },
+	{ DC_LCB_ERR_INFO_REINIT_FROM_PEER_CNT, 0 },
+};
 
-अटल व्योम update_lcb_cache(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक i;
-	पूर्णांक ret;
+static void update_lcb_cache(struct hfi1_devdata *dd)
+{
+	int i;
+	int ret;
 	u64 val;
 
-	क्रम (i = 0; i < ARRAY_SIZE(lcb_cache); i++) अणु
-		ret = पढ़ो_lcb_csr(dd, lcb_cache[i].off, &val);
+	for (i = 0; i < ARRAY_SIZE(lcb_cache); i++) {
+		ret = read_lcb_csr(dd, lcb_cache[i].off, &val);
 
-		/* Update अगर we get good data */
-		अगर (likely(ret != -EBUSY))
+		/* Update if we get good data */
+		if (likely(ret != -EBUSY))
 			lcb_cache[i].val = val;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक पढ़ो_lcb_cache(u32 off, u64 *val)
-अणु
-	पूर्णांक i;
+static int read_lcb_cache(u32 off, u64 *val)
+{
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(lcb_cache); i++) अणु
-		अगर (lcb_cache[i].off == off) अणु
+	for (i = 0; i < ARRAY_SIZE(lcb_cache); i++) {
+		if (lcb_cache[i].off == off) {
 			*val = lcb_cache[i].val;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
 	pr_warn("%s bad offset 0x%x\n", __func__, off);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
 /*
  * Read an LCB CSR.  Access may not be in host control, so check.
  * Return 0 on success, -EBUSY on failure.
  */
-पूर्णांक पढ़ो_lcb_csr(काष्ठा hfi1_devdata *dd, u32 addr, u64 *data)
-अणु
-	काष्ठा hfi1_pportdata *ppd = dd->pport;
+int read_lcb_csr(struct hfi1_devdata *dd, u32 addr, u64 *data)
+{
+	struct hfi1_pportdata *ppd = dd->pport;
 
-	/* अगर up, go through the 8051 क्रम the value */
-	अगर (ppd->host_link_state & HLS_UP)
-		वापस पढ़ो_lcb_via_8051(dd, addr, data);
-	/* अगर going up or करोwn, check the cache, otherwise, no access */
-	अगर (ppd->host_link_state & (HLS_GOING_UP | HLS_GOING_OFFLINE)) अणु
-		अगर (पढ़ो_lcb_cache(addr, data))
-			वापस -EBUSY;
-		वापस 0;
-	पूर्ण
+	/* if up, go through the 8051 for the value */
+	if (ppd->host_link_state & HLS_UP)
+		return read_lcb_via_8051(dd, addr, data);
+	/* if going up or down, check the cache, otherwise, no access */
+	if (ppd->host_link_state & (HLS_GOING_UP | HLS_GOING_OFFLINE)) {
+		if (read_lcb_cache(addr, data))
+			return -EBUSY;
+		return 0;
+	}
 
 	/* otherwise, host has access */
-	*data = पढ़ो_csr(dd, addr);
-	वापस 0;
-पूर्ण
+	*data = read_csr(dd, addr);
+	return 0;
+}
 
 /*
- * Use the 8051 to ग_लिखो a LCB CSR.
+ * Use the 8051 to write a LCB CSR.
  */
-अटल पूर्णांक ग_लिखो_lcb_via_8051(काष्ठा hfi1_devdata *dd, u32 addr, u64 data)
-अणु
+static int write_lcb_via_8051(struct hfi1_devdata *dd, u32 addr, u64 data)
+{
 	u32 regno;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (dd->icode == ICODE_FUNCTIONAL_SIMULATOR ||
-	    (dd->dc8051_ver < dc8051_ver(0, 20, 0))) अणु
-		अगर (acquire_lcb_access(dd, 0) == 0) अणु
-			ग_लिखो_csr(dd, addr, data);
+	if (dd->icode == ICODE_FUNCTIONAL_SIMULATOR ||
+	    (dd->dc8051_ver < dc8051_ver(0, 20, 0))) {
+		if (acquire_lcb_access(dd, 0) == 0) {
+			write_csr(dd, addr, data);
 			release_lcb_access(dd, 0);
-			वापस 0;
-		पूर्ण
-		वापस -EBUSY;
-	पूर्ण
+			return 0;
+		}
+		return -EBUSY;
+	}
 
-	/* रेजिस्टर is an index of LCB रेजिस्टरs: (offset - base) / 8 */
+	/* register is an index of LCB registers: (offset - base) / 8 */
 	regno = (addr - DC_LCB_CFG_RUN) >> 3;
-	ret = करो_8051_command(dd, HCMD_WRITE_LCB_CSR, regno, &data);
-	अगर (ret != HCMD_SUCCESS)
-		वापस -EBUSY;
-	वापस 0;
-पूर्ण
+	ret = do_8051_command(dd, HCMD_WRITE_LCB_CSR, regno, &data);
+	if (ret != HCMD_SUCCESS)
+		return -EBUSY;
+	return 0;
+}
 
 /*
  * Write an LCB CSR.  Access may not be in host control, so check.
  * Return 0 on success, -EBUSY on failure.
  */
-पूर्णांक ग_लिखो_lcb_csr(काष्ठा hfi1_devdata *dd, u32 addr, u64 data)
-अणु
-	काष्ठा hfi1_pportdata *ppd = dd->pport;
+int write_lcb_csr(struct hfi1_devdata *dd, u32 addr, u64 data)
+{
+	struct hfi1_pportdata *ppd = dd->pport;
 
-	/* अगर up, go through the 8051 क्रम the value */
-	अगर (ppd->host_link_state & HLS_UP)
-		वापस ग_लिखो_lcb_via_8051(dd, addr, data);
-	/* अगर going up or करोwn, no access */
-	अगर (ppd->host_link_state & (HLS_GOING_UP | HLS_GOING_OFFLINE))
-		वापस -EBUSY;
+	/* if up, go through the 8051 for the value */
+	if (ppd->host_link_state & HLS_UP)
+		return write_lcb_via_8051(dd, addr, data);
+	/* if going up or down, no access */
+	if (ppd->host_link_state & (HLS_GOING_UP | HLS_GOING_OFFLINE))
+		return -EBUSY;
 	/* otherwise, host has access */
-	ग_लिखो_csr(dd, addr, data);
-	वापस 0;
-पूर्ण
+	write_csr(dd, addr, data);
+	return 0;
+}
 
 /*
  * Returns:
  *	< 0 = Linux error, not able to get access
  *	> 0 = 8051 command RETURN_CODE
  */
-अटल पूर्णांक करो_8051_command(काष्ठा hfi1_devdata *dd, u32 type, u64 in_data,
+static int do_8051_command(struct hfi1_devdata *dd, u32 type, u64 in_data,
 			   u64 *out_data)
-अणु
+{
 	u64 reg, completed;
-	पूर्णांक वापस_code;
-	अचिन्हित दीर्घ समयout;
+	int return_code;
+	unsigned long timeout;
 
 	hfi1_cdbg(DC8051, "type %d, data 0x%012llx", type, in_data);
 
 	mutex_lock(&dd->dc8051_lock);
 
 	/* We can't send any commands to the 8051 if it's in reset */
-	अगर (dd->dc_shutकरोwn) अणु
-		वापस_code = -ENODEV;
-		जाओ fail;
-	पूर्ण
+	if (dd->dc_shutdown) {
+		return_code = -ENODEV;
+		goto fail;
+	}
 
 	/*
-	 * If an 8051 host command समयd out previously, then the 8051 is
+	 * If an 8051 host command timed out previously, then the 8051 is
 	 * stuck.
 	 *
-	 * On first समयout, attempt to reset and restart the entire DC
+	 * On first timeout, attempt to reset and restart the entire DC
 	 * block (including 8051). (Is this too big of a hammer?)
 	 *
-	 * If the 8051 बार out a second समय, the reset did not bring it
-	 * back to healthy lअगरe. In that हाल, fail any subsequent commands.
+	 * If the 8051 times out a second time, the reset did not bring it
+	 * back to healthy life. In that case, fail any subsequent commands.
 	 */
-	अगर (dd->dc8051_समयd_out) अणु
-		अगर (dd->dc8051_समयd_out > 1) अणु
+	if (dd->dc8051_timed_out) {
+		if (dd->dc8051_timed_out > 1) {
 			dd_dev_err(dd,
 				   "Previous 8051 host command timed out, skipping command %u\n",
 				   type);
-			वापस_code = -ENXIO;
-			जाओ fail;
-		पूर्ण
-		_dc_shutकरोwn(dd);
+			return_code = -ENXIO;
+			goto fail;
+		}
+		_dc_shutdown(dd);
 		_dc_start(dd);
-	पूर्ण
+	}
 
 	/*
-	 * If there is no समयout, then the 8051 command पूर्णांकerface is
-	 * रुकोing क्रम a command.
+	 * If there is no timeout, then the 8051 command interface is
+	 * waiting for a command.
 	 */
 
 	/*
 	 * When writing a LCB CSR, out_data contains the full value to
-	 * to be written, जबतक in_data contains the relative LCB
+	 * to be written, while in_data contains the relative LCB
 	 * address in 7:0.  Do the work here, rather than the caller,
-	 * of distrubting the ग_लिखो data to where it needs to go:
+	 * of distrubting the write data to where it needs to go:
 	 *
 	 * Write data
 	 *   39:00 -> in_data[47:8]
 	 *   47:40 -> DC8051_CFG_EXT_DEV_0.RETURN_CODE
 	 *   63:48 -> DC8051_CFG_EXT_DEV_0.RSP_DATA
 	 */
-	अगर (type == HCMD_WRITE_LCB_CSR) अणु
+	if (type == HCMD_WRITE_LCB_CSR) {
 		in_data |= ((*out_data) & 0xffffffffffull) << 8;
 		/* must preserve COMPLETED - it is tied to hardware */
-		reg = पढ़ो_csr(dd, DC_DC8051_CFG_EXT_DEV_0);
+		reg = read_csr(dd, DC_DC8051_CFG_EXT_DEV_0);
 		reg &= DC_DC8051_CFG_EXT_DEV_0_COMPLETED_SMASK;
 		reg |= ((((*out_data) >> 40) & 0xff) <<
 				DC_DC8051_CFG_EXT_DEV_0_RETURN_CODE_SHIFT)
 		      | ((((*out_data) >> 48) & 0xffff) <<
 				DC_DC8051_CFG_EXT_DEV_0_RSP_DATA_SHIFT);
-		ग_लिखो_csr(dd, DC_DC8051_CFG_EXT_DEV_0, reg);
-	पूर्ण
+		write_csr(dd, DC_DC8051_CFG_EXT_DEV_0, reg);
+	}
 
 	/*
-	 * Do two ग_लिखोs: the first to stabilize the type and req_data, the
+	 * Do two writes: the first to stabilize the type and req_data, the
 	 * second to activate.
 	 */
 	reg = ((u64)type & DC_DC8051_CFG_HOST_CMD_0_REQ_TYPE_MASK)
 			<< DC_DC8051_CFG_HOST_CMD_0_REQ_TYPE_SHIFT
 		| (in_data & DC_DC8051_CFG_HOST_CMD_0_REQ_DATA_MASK)
 			<< DC_DC8051_CFG_HOST_CMD_0_REQ_DATA_SHIFT;
-	ग_लिखो_csr(dd, DC_DC8051_CFG_HOST_CMD_0, reg);
+	write_csr(dd, DC_DC8051_CFG_HOST_CMD_0, reg);
 	reg |= DC_DC8051_CFG_HOST_CMD_0_REQ_NEW_SMASK;
-	ग_लिखो_csr(dd, DC_DC8051_CFG_HOST_CMD_0, reg);
+	write_csr(dd, DC_DC8051_CFG_HOST_CMD_0, reg);
 
-	/* रुको क्रम completion, alternate: पूर्णांकerrupt */
-	समयout = jअगरfies + msecs_to_jअगरfies(DC8051_COMMAND_TIMEOUT);
-	जबतक (1) अणु
-		reg = पढ़ो_csr(dd, DC_DC8051_CFG_HOST_CMD_1);
+	/* wait for completion, alternate: interrupt */
+	timeout = jiffies + msecs_to_jiffies(DC8051_COMMAND_TIMEOUT);
+	while (1) {
+		reg = read_csr(dd, DC_DC8051_CFG_HOST_CMD_1);
 		completed = reg & DC_DC8051_CFG_HOST_CMD_1_COMPLETED_SMASK;
-		अगर (completed)
-			अवरोध;
-		अगर (समय_after(jअगरfies, समयout)) अणु
-			dd->dc8051_समयd_out++;
+		if (completed)
+			break;
+		if (time_after(jiffies, timeout)) {
+			dd->dc8051_timed_out++;
 			dd_dev_err(dd, "8051 host command %u timeout\n", type);
-			अगर (out_data)
+			if (out_data)
 				*out_data = 0;
-			वापस_code = -ETIMEDOUT;
-			जाओ fail;
-		पूर्ण
+			return_code = -ETIMEDOUT;
+			goto fail;
+		}
 		udelay(2);
-	पूर्ण
+	}
 
-	अगर (out_data) अणु
+	if (out_data) {
 		*out_data = (reg >> DC_DC8051_CFG_HOST_CMD_1_RSP_DATA_SHIFT)
 				& DC_DC8051_CFG_HOST_CMD_1_RSP_DATA_MASK;
-		अगर (type == HCMD_READ_LCB_CSR) अणु
-			/* top 16 bits are in a dअगरferent रेजिस्टर */
-			*out_data |= (पढ़ो_csr(dd, DC_DC8051_CFG_EXT_DEV_1)
+		if (type == HCMD_READ_LCB_CSR) {
+			/* top 16 bits are in a different register */
+			*out_data |= (read_csr(dd, DC_DC8051_CFG_EXT_DEV_1)
 				& DC_DC8051_CFG_EXT_DEV_1_REQ_DATA_SMASK)
 				<< (48
 				    - DC_DC8051_CFG_EXT_DEV_1_REQ_DATA_SHIFT);
-		पूर्ण
-	पूर्ण
-	वापस_code = (reg >> DC_DC8051_CFG_HOST_CMD_1_RETURN_CODE_SHIFT)
+		}
+	}
+	return_code = (reg >> DC_DC8051_CFG_HOST_CMD_1_RETURN_CODE_SHIFT)
 				& DC_DC8051_CFG_HOST_CMD_1_RETURN_CODE_MASK;
-	dd->dc8051_समयd_out = 0;
+	dd->dc8051_timed_out = 0;
 	/*
-	 * Clear command क्रम next user.
+	 * Clear command for next user.
 	 */
-	ग_लिखो_csr(dd, DC_DC8051_CFG_HOST_CMD_0, 0);
+	write_csr(dd, DC_DC8051_CFG_HOST_CMD_0, 0);
 
 fail:
 	mutex_unlock(&dd->dc8051_lock);
-	वापस वापस_code;
-पूर्ण
+	return return_code;
+}
 
-अटल पूर्णांक set_physical_link_state(काष्ठा hfi1_devdata *dd, u64 state)
-अणु
-	वापस करो_8051_command(dd, HCMD_CHANGE_PHY_STATE, state, शून्य);
-पूर्ण
+static int set_physical_link_state(struct hfi1_devdata *dd, u64 state)
+{
+	return do_8051_command(dd, HCMD_CHANGE_PHY_STATE, state, NULL);
+}
 
-पूर्णांक load_8051_config(काष्ठा hfi1_devdata *dd, u8 field_id,
+int load_8051_config(struct hfi1_devdata *dd, u8 field_id,
 		     u8 lane_id, u32 config_data)
-अणु
+{
 	u64 data;
-	पूर्णांक ret;
+	int ret;
 
 	data = (u64)field_id << LOAD_DATA_FIELD_ID_SHIFT
 		| (u64)lane_id << LOAD_DATA_LANE_ID_SHIFT
 		| (u64)config_data << LOAD_DATA_DATA_SHIFT;
-	ret = करो_8051_command(dd, HCMD_LOAD_CONFIG_DATA, data, शून्य);
-	अगर (ret != HCMD_SUCCESS) अणु
+	ret = do_8051_command(dd, HCMD_LOAD_CONFIG_DATA, data, NULL);
+	if (ret != HCMD_SUCCESS) {
 		dd_dev_err(dd,
 			   "load 8051 config: field id %d, lane %d, err %d\n",
-			   (पूर्णांक)field_id, (पूर्णांक)lane_id, ret);
-	पूर्ण
-	वापस ret;
-पूर्ण
+			   (int)field_id, (int)lane_id, ret);
+	}
+	return ret;
+}
 
 /*
  * Read the 8051 firmware "registers".  Use the RAM directly.  Always
  * set the result, even on error.
- * Return 0 on success, -त्रुटि_सं on failure
+ * Return 0 on success, -errno on failure
  */
-पूर्णांक पढ़ो_8051_config(काष्ठा hfi1_devdata *dd, u8 field_id, u8 lane_id,
+int read_8051_config(struct hfi1_devdata *dd, u8 field_id, u8 lane_id,
 		     u32 *result)
-अणु
+{
 	u64 big_data;
 	u32 addr;
-	पूर्णांक ret;
+	int ret;
 
 	/* address start depends on the lane_id */
-	अगर (lane_id < 4)
+	if (lane_id < 4)
 		addr = (4 * NUM_GENERAL_FIELDS)
 			+ (lane_id * 4 * NUM_LANE_FIELDS);
-	अन्यथा
+	else
 		addr = 0;
 	addr += field_id * 4;
 
-	/* पढ़ो is in 8-byte chunks, hardware will truncate the address करोwn */
-	ret = पढ़ो_8051_data(dd, addr, 8, &big_data);
+	/* read is in 8-byte chunks, hardware will truncate the address down */
+	ret = read_8051_data(dd, addr, 8, &big_data);
 
-	अगर (ret == 0) अणु
+	if (ret == 0) {
 		/* extract the 4 bytes we want */
-		अगर (addr & 0x4)
+		if (addr & 0x4)
 			*result = (u32)(big_data >> 32);
-		अन्यथा
+		else
 			*result = (u32)big_data;
-	पूर्ण अन्यथा अणु
+	} else {
 		*result = 0;
 		dd_dev_err(dd, "%s: direct read failed, lane %d, field %d!\n",
 			   __func__, lane_id, field_id);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ग_लिखो_vc_local_phy(काष्ठा hfi1_devdata *dd, u8 घातer_management,
+static int write_vc_local_phy(struct hfi1_devdata *dd, u8 power_management,
 			      u8 continuous)
-अणु
+{
 	u32 frame;
 
 	frame = continuous << CONTINIOUS_REMOTE_UPDATE_SUPPORT_SHIFT
-		| घातer_management << POWER_MANAGEMENT_SHIFT;
-	वापस load_8051_config(dd, VERIFY_CAP_LOCAL_PHY,
+		| power_management << POWER_MANAGEMENT_SHIFT;
+	return load_8051_config(dd, VERIFY_CAP_LOCAL_PHY,
 				GENERAL_CONFIG, frame);
-पूर्ण
+}
 
-अटल पूर्णांक ग_लिखो_vc_local_fabric(काष्ठा hfi1_devdata *dd, u8 vau, u8 z, u8 vcu,
+static int write_vc_local_fabric(struct hfi1_devdata *dd, u8 vau, u8 z, u8 vcu,
 				 u16 vl15buf, u8 crc_sizes)
-अणु
+{
 	u32 frame;
 
 	frame = (u32)vau << VAU_SHIFT
@@ -8950,184 +8949,184 @@ fail:
 		| (u32)vcu << VCU_SHIFT
 		| (u32)vl15buf << VL15BUF_SHIFT
 		| (u32)crc_sizes << CRC_SIZES_SHIFT;
-	वापस load_8051_config(dd, VERIFY_CAP_LOCAL_FABRIC,
+	return load_8051_config(dd, VERIFY_CAP_LOCAL_FABRIC,
 				GENERAL_CONFIG, frame);
-पूर्ण
+}
 
-अटल व्योम पढ़ो_vc_local_link_mode(काष्ठा hfi1_devdata *dd, u8 *misc_bits,
+static void read_vc_local_link_mode(struct hfi1_devdata *dd, u8 *misc_bits,
 				    u8 *flag_bits, u16 *link_widths)
-अणु
+{
 	u32 frame;
 
-	पढ़ो_8051_config(dd, VERIFY_CAP_LOCAL_LINK_MODE, GENERAL_CONFIG,
+	read_8051_config(dd, VERIFY_CAP_LOCAL_LINK_MODE, GENERAL_CONFIG,
 			 &frame);
 	*misc_bits = (frame >> MISC_CONFIG_BITS_SHIFT) & MISC_CONFIG_BITS_MASK;
 	*flag_bits = (frame >> LOCAL_FLAG_BITS_SHIFT) & LOCAL_FLAG_BITS_MASK;
 	*link_widths = (frame >> LINK_WIDTH_SHIFT) & LINK_WIDTH_MASK;
-पूर्ण
+}
 
-अटल पूर्णांक ग_लिखो_vc_local_link_mode(काष्ठा hfi1_devdata *dd,
+static int write_vc_local_link_mode(struct hfi1_devdata *dd,
 				    u8 misc_bits,
 				    u8 flag_bits,
 				    u16 link_widths)
-अणु
+{
 	u32 frame;
 
 	frame = (u32)misc_bits << MISC_CONFIG_BITS_SHIFT
 		| (u32)flag_bits << LOCAL_FLAG_BITS_SHIFT
 		| (u32)link_widths << LINK_WIDTH_SHIFT;
-	वापस load_8051_config(dd, VERIFY_CAP_LOCAL_LINK_MODE, GENERAL_CONFIG,
+	return load_8051_config(dd, VERIFY_CAP_LOCAL_LINK_MODE, GENERAL_CONFIG,
 		     frame);
-पूर्ण
+}
 
-अटल पूर्णांक ग_लिखो_local_device_id(काष्ठा hfi1_devdata *dd, u16 device_id,
+static int write_local_device_id(struct hfi1_devdata *dd, u16 device_id,
 				 u8 device_rev)
-अणु
+{
 	u32 frame;
 
 	frame = ((u32)device_id << LOCAL_DEVICE_ID_SHIFT)
 		| ((u32)device_rev << LOCAL_DEVICE_REV_SHIFT);
-	वापस load_8051_config(dd, LOCAL_DEVICE_ID, GENERAL_CONFIG, frame);
-पूर्ण
+	return load_8051_config(dd, LOCAL_DEVICE_ID, GENERAL_CONFIG, frame);
+}
 
-अटल व्योम पढ़ो_remote_device_id(काष्ठा hfi1_devdata *dd, u16 *device_id,
+static void read_remote_device_id(struct hfi1_devdata *dd, u16 *device_id,
 				  u8 *device_rev)
-अणु
+{
 	u32 frame;
 
-	पढ़ो_8051_config(dd, REMOTE_DEVICE_ID, GENERAL_CONFIG, &frame);
+	read_8051_config(dd, REMOTE_DEVICE_ID, GENERAL_CONFIG, &frame);
 	*device_id = (frame >> REMOTE_DEVICE_ID_SHIFT) & REMOTE_DEVICE_ID_MASK;
 	*device_rev = (frame >> REMOTE_DEVICE_REV_SHIFT)
 			& REMOTE_DEVICE_REV_MASK;
-पूर्ण
+}
 
-पूर्णांक ग_लिखो_host_पूर्णांकerface_version(काष्ठा hfi1_devdata *dd, u8 version)
-अणु
+int write_host_interface_version(struct hfi1_devdata *dd, u8 version)
+{
 	u32 frame;
 	u32 mask;
 
 	mask = (HOST_INTERFACE_VERSION_MASK << HOST_INTERFACE_VERSION_SHIFT);
-	पढ़ो_8051_config(dd, RESERVED_REGISTERS, GENERAL_CONFIG, &frame);
+	read_8051_config(dd, RESERVED_REGISTERS, GENERAL_CONFIG, &frame);
 	/* Clear, then set field */
 	frame &= ~mask;
 	frame |= ((u32)version << HOST_INTERFACE_VERSION_SHIFT);
-	वापस load_8051_config(dd, RESERVED_REGISTERS, GENERAL_CONFIG,
+	return load_8051_config(dd, RESERVED_REGISTERS, GENERAL_CONFIG,
 				frame);
-पूर्ण
+}
 
-व्योम पढ़ो_misc_status(काष्ठा hfi1_devdata *dd, u8 *ver_major, u8 *ver_minor,
+void read_misc_status(struct hfi1_devdata *dd, u8 *ver_major, u8 *ver_minor,
 		      u8 *ver_patch)
-अणु
+{
 	u32 frame;
 
-	पढ़ो_8051_config(dd, MISC_STATUS, GENERAL_CONFIG, &frame);
+	read_8051_config(dd, MISC_STATUS, GENERAL_CONFIG, &frame);
 	*ver_major = (frame >> STS_FM_VERSION_MAJOR_SHIFT) &
 		STS_FM_VERSION_MAJOR_MASK;
 	*ver_minor = (frame >> STS_FM_VERSION_MINOR_SHIFT) &
 		STS_FM_VERSION_MINOR_MASK;
 
-	पढ़ो_8051_config(dd, VERSION_PATCH, GENERAL_CONFIG, &frame);
+	read_8051_config(dd, VERSION_PATCH, GENERAL_CONFIG, &frame);
 	*ver_patch = (frame >> STS_FM_VERSION_PATCH_SHIFT) &
 		STS_FM_VERSION_PATCH_MASK;
-पूर्ण
+}
 
-अटल व्योम पढ़ो_vc_remote_phy(काष्ठा hfi1_devdata *dd, u8 *घातer_management,
+static void read_vc_remote_phy(struct hfi1_devdata *dd, u8 *power_management,
 			       u8 *continuous)
-अणु
+{
 	u32 frame;
 
-	पढ़ो_8051_config(dd, VERIFY_CAP_REMOTE_PHY, GENERAL_CONFIG, &frame);
-	*घातer_management = (frame >> POWER_MANAGEMENT_SHIFT)
+	read_8051_config(dd, VERIFY_CAP_REMOTE_PHY, GENERAL_CONFIG, &frame);
+	*power_management = (frame >> POWER_MANAGEMENT_SHIFT)
 					& POWER_MANAGEMENT_MASK;
 	*continuous = (frame >> CONTINIOUS_REMOTE_UPDATE_SUPPORT_SHIFT)
 					& CONTINIOUS_REMOTE_UPDATE_SUPPORT_MASK;
-पूर्ण
+}
 
-अटल व्योम पढ़ो_vc_remote_fabric(काष्ठा hfi1_devdata *dd, u8 *vau, u8 *z,
+static void read_vc_remote_fabric(struct hfi1_devdata *dd, u8 *vau, u8 *z,
 				  u8 *vcu, u16 *vl15buf, u8 *crc_sizes)
-अणु
+{
 	u32 frame;
 
-	पढ़ो_8051_config(dd, VERIFY_CAP_REMOTE_FABRIC, GENERAL_CONFIG, &frame);
+	read_8051_config(dd, VERIFY_CAP_REMOTE_FABRIC, GENERAL_CONFIG, &frame);
 	*vau = (frame >> VAU_SHIFT) & VAU_MASK;
 	*z = (frame >> Z_SHIFT) & Z_MASK;
 	*vcu = (frame >> VCU_SHIFT) & VCU_MASK;
 	*vl15buf = (frame >> VL15BUF_SHIFT) & VL15BUF_MASK;
 	*crc_sizes = (frame >> CRC_SIZES_SHIFT) & CRC_SIZES_MASK;
-पूर्ण
+}
 
-अटल व्योम पढ़ो_vc_remote_link_width(काष्ठा hfi1_devdata *dd,
+static void read_vc_remote_link_width(struct hfi1_devdata *dd,
 				      u8 *remote_tx_rate,
 				      u16 *link_widths)
-अणु
+{
 	u32 frame;
 
-	पढ़ो_8051_config(dd, VERIFY_CAP_REMOTE_LINK_WIDTH, GENERAL_CONFIG,
+	read_8051_config(dd, VERIFY_CAP_REMOTE_LINK_WIDTH, GENERAL_CONFIG,
 			 &frame);
 	*remote_tx_rate = (frame >> REMOTE_TX_RATE_SHIFT)
 				& REMOTE_TX_RATE_MASK;
 	*link_widths = (frame >> LINK_WIDTH_SHIFT) & LINK_WIDTH_MASK;
-पूर्ण
+}
 
-अटल व्योम पढ़ो_local_lni(काष्ठा hfi1_devdata *dd, u8 *enable_lane_rx)
-अणु
+static void read_local_lni(struct hfi1_devdata *dd, u8 *enable_lane_rx)
+{
 	u32 frame;
 
-	पढ़ो_8051_config(dd, LOCAL_LNI_INFO, GENERAL_CONFIG, &frame);
+	read_8051_config(dd, LOCAL_LNI_INFO, GENERAL_CONFIG, &frame);
 	*enable_lane_rx = (frame >> ENABLE_LANE_RX_SHIFT) & ENABLE_LANE_RX_MASK;
-पूर्ण
+}
 
-अटल व्योम पढ़ो_last_local_state(काष्ठा hfi1_devdata *dd, u32 *lls)
-अणु
-	पढ़ो_8051_config(dd, LAST_LOCAL_STATE_COMPLETE, GENERAL_CONFIG, lls);
-पूर्ण
+static void read_last_local_state(struct hfi1_devdata *dd, u32 *lls)
+{
+	read_8051_config(dd, LAST_LOCAL_STATE_COMPLETE, GENERAL_CONFIG, lls);
+}
 
-अटल व्योम पढ़ो_last_remote_state(काष्ठा hfi1_devdata *dd, u32 *lrs)
-अणु
-	पढ़ो_8051_config(dd, LAST_REMOTE_STATE_COMPLETE, GENERAL_CONFIG, lrs);
-पूर्ण
+static void read_last_remote_state(struct hfi1_devdata *dd, u32 *lrs)
+{
+	read_8051_config(dd, LAST_REMOTE_STATE_COMPLETE, GENERAL_CONFIG, lrs);
+}
 
-व्योम hfi1_पढ़ो_link_quality(काष्ठा hfi1_devdata *dd, u8 *link_quality)
-अणु
+void hfi1_read_link_quality(struct hfi1_devdata *dd, u8 *link_quality)
+{
 	u32 frame;
-	पूर्णांक ret;
+	int ret;
 
 	*link_quality = 0;
-	अगर (dd->pport->host_link_state & HLS_UP) अणु
-		ret = पढ़ो_8051_config(dd, LINK_QUALITY_INFO, GENERAL_CONFIG,
+	if (dd->pport->host_link_state & HLS_UP) {
+		ret = read_8051_config(dd, LINK_QUALITY_INFO, GENERAL_CONFIG,
 				       &frame);
-		अगर (ret == 0)
+		if (ret == 0)
 			*link_quality = (frame >> LINK_QUALITY_SHIFT)
 						& LINK_QUALITY_MASK;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम पढ़ो_planned_करोwn_reason_code(काष्ठा hfi1_devdata *dd, u8 *pdrrc)
-अणु
+static void read_planned_down_reason_code(struct hfi1_devdata *dd, u8 *pdrrc)
+{
 	u32 frame;
 
-	पढ़ो_8051_config(dd, LINK_QUALITY_INFO, GENERAL_CONFIG, &frame);
+	read_8051_config(dd, LINK_QUALITY_INFO, GENERAL_CONFIG, &frame);
 	*pdrrc = (frame >> DOWN_REMOTE_REASON_SHIFT) & DOWN_REMOTE_REASON_MASK;
-पूर्ण
+}
 
-अटल व्योम पढ़ो_link_करोwn_reason(काष्ठा hfi1_devdata *dd, u8 *ldr)
-अणु
+static void read_link_down_reason(struct hfi1_devdata *dd, u8 *ldr)
+{
 	u32 frame;
 
-	पढ़ो_8051_config(dd, LINK_DOWN_REASON, GENERAL_CONFIG, &frame);
+	read_8051_config(dd, LINK_DOWN_REASON, GENERAL_CONFIG, &frame);
 	*ldr = (frame & 0xff);
-पूर्ण
+}
 
-अटल पूर्णांक पढ़ो_tx_settings(काष्ठा hfi1_devdata *dd,
+static int read_tx_settings(struct hfi1_devdata *dd,
 			    u8 *enable_lane_tx,
 			    u8 *tx_polarity_inversion,
 			    u8 *rx_polarity_inversion,
 			    u8 *max_rate)
-अणु
+{
 	u32 frame;
-	पूर्णांक ret;
+	int ret;
 
-	ret = पढ़ो_8051_config(dd, TX_SETTINGS, GENERAL_CONFIG, &frame);
+	ret = read_8051_config(dd, TX_SETTINGS, GENERAL_CONFIG, &frame);
 	*enable_lane_tx = (frame >> ENABLE_LANE_TX_SHIFT)
 				& ENABLE_LANE_TX_MASK;
 	*tx_polarity_inversion = (frame >> TX_POLARITY_INVERSION_SHIFT)
@@ -9135,15 +9134,15 @@ fail:
 	*rx_polarity_inversion = (frame >> RX_POLARITY_INVERSION_SHIFT)
 				& RX_POLARITY_INVERSION_MASK;
 	*max_rate = (frame >> MAX_RATE_SHIFT) & MAX_RATE_MASK;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ग_लिखो_tx_settings(काष्ठा hfi1_devdata *dd,
+static int write_tx_settings(struct hfi1_devdata *dd,
 			     u8 enable_lane_tx,
 			     u8 tx_polarity_inversion,
 			     u8 rx_polarity_inversion,
 			     u8 max_rate)
-अणु
+{
 	u32 frame;
 
 	/* no need to mask, all variable sizes match field widths */
@@ -9151,162 +9150,162 @@ fail:
 		| tx_polarity_inversion << TX_POLARITY_INVERSION_SHIFT
 		| rx_polarity_inversion << RX_POLARITY_INVERSION_SHIFT
 		| max_rate << MAX_RATE_SHIFT;
-	वापस load_8051_config(dd, TX_SETTINGS, GENERAL_CONFIG, frame);
-पूर्ण
+	return load_8051_config(dd, TX_SETTINGS, GENERAL_CONFIG, frame);
+}
 
 /*
  * Read an idle LCB message.
  *
  * Returns 0 on success, -EINVAL on error
  */
-अटल पूर्णांक पढ़ो_idle_message(काष्ठा hfi1_devdata *dd, u64 type, u64 *data_out)
-अणु
-	पूर्णांक ret;
+static int read_idle_message(struct hfi1_devdata *dd, u64 type, u64 *data_out)
+{
+	int ret;
 
-	ret = करो_8051_command(dd, HCMD_READ_LCB_IDLE_MSG, type, data_out);
-	अगर (ret != HCMD_SUCCESS) अणु
+	ret = do_8051_command(dd, HCMD_READ_LCB_IDLE_MSG, type, data_out);
+	if (ret != HCMD_SUCCESS) {
 		dd_dev_err(dd, "read idle message: type %d, err %d\n",
 			   (u32)type, ret);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	dd_dev_info(dd, "%s: read idle message 0x%llx\n", __func__, *data_out);
-	/* वापस only the payload as we alपढ़ोy know the type */
+	/* return only the payload as we already know the type */
 	*data_out >>= IDLE_PAYLOAD_SHIFT;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Read an idle SMA message.  To be करोne in response to a notअगरication from
+ * Read an idle SMA message.  To be done in response to a notification from
  * the 8051.
  *
  * Returns 0 on success, -EINVAL on error
  */
-अटल पूर्णांक पढ़ो_idle_sma(काष्ठा hfi1_devdata *dd, u64 *data)
-अणु
-	वापस पढ़ो_idle_message(dd, (u64)IDLE_SMA << IDLE_MSG_TYPE_SHIFT,
+static int read_idle_sma(struct hfi1_devdata *dd, u64 *data)
+{
+	return read_idle_message(dd, (u64)IDLE_SMA << IDLE_MSG_TYPE_SHIFT,
 				 data);
-पूर्ण
+}
 
 /*
  * Send an idle LCB message.
  *
  * Returns 0 on success, -EINVAL on error
  */
-अटल पूर्णांक send_idle_message(काष्ठा hfi1_devdata *dd, u64 data)
-अणु
-	पूर्णांक ret;
+static int send_idle_message(struct hfi1_devdata *dd, u64 data)
+{
+	int ret;
 
 	dd_dev_info(dd, "%s: sending idle message 0x%llx\n", __func__, data);
-	ret = करो_8051_command(dd, HCMD_SEND_LCB_IDLE_MSG, data, शून्य);
-	अगर (ret != HCMD_SUCCESS) अणु
+	ret = do_8051_command(dd, HCMD_SEND_LCB_IDLE_MSG, data, NULL);
+	if (ret != HCMD_SUCCESS) {
 		dd_dev_err(dd, "send idle message: data 0x%llx, err %d\n",
 			   data, ret);
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
 /*
  * Send an idle SMA message.
  *
  * Returns 0 on success, -EINVAL on error
  */
-पूर्णांक send_idle_sma(काष्ठा hfi1_devdata *dd, u64 message)
-अणु
+int send_idle_sma(struct hfi1_devdata *dd, u64 message)
+{
 	u64 data;
 
 	data = ((message & IDLE_PAYLOAD_MASK) << IDLE_PAYLOAD_SHIFT) |
 		((u64)IDLE_SMA << IDLE_MSG_TYPE_SHIFT);
-	वापस send_idle_message(dd, data);
-पूर्ण
+	return send_idle_message(dd, data);
+}
 
 /*
- * Initialize the LCB then करो a quick link up.  This may or may not be
+ * Initialize the LCB then do a quick link up.  This may or may not be
  * in loopback.
  *
- * वापस 0 on success, -त्रुटि_सं on error
+ * return 0 on success, -errno on error
  */
-अटल पूर्णांक करो_quick_linkup(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक ret;
+static int do_quick_linkup(struct hfi1_devdata *dd)
+{
+	int ret;
 
-	lcb_shutकरोwn(dd, 0);
+	lcb_shutdown(dd, 0);
 
-	अगर (loopback) अणु
+	if (loopback) {
 		/* LCB_CFG_LOOPBACK.VAL = 2 */
 		/* LCB_CFG_LANE_WIDTH.VAL = 0 */
-		ग_लिखो_csr(dd, DC_LCB_CFG_LOOPBACK,
+		write_csr(dd, DC_LCB_CFG_LOOPBACK,
 			  IB_PACKET_TYPE << DC_LCB_CFG_LOOPBACK_VAL_SHIFT);
-		ग_लिखो_csr(dd, DC_LCB_CFG_LANE_WIDTH, 0);
-	पूर्ण
+		write_csr(dd, DC_LCB_CFG_LANE_WIDTH, 0);
+	}
 
 	/* start the LCBs */
 	/* LCB_CFG_TX_FIFOS_RESET.VAL = 0 */
-	ग_लिखो_csr(dd, DC_LCB_CFG_TX_FIFOS_RESET, 0);
+	write_csr(dd, DC_LCB_CFG_TX_FIFOS_RESET, 0);
 
 	/* simulator only loopback steps */
-	अगर (loopback && dd->icode == ICODE_FUNCTIONAL_SIMULATOR) अणु
+	if (loopback && dd->icode == ICODE_FUNCTIONAL_SIMULATOR) {
 		/* LCB_CFG_RUN.EN = 1 */
-		ग_लिखो_csr(dd, DC_LCB_CFG_RUN,
+		write_csr(dd, DC_LCB_CFG_RUN,
 			  1ull << DC_LCB_CFG_RUN_EN_SHIFT);
 
-		ret = रुको_link_transfer_active(dd, 10);
-		अगर (ret)
-			वापस ret;
+		ret = wait_link_transfer_active(dd, 10);
+		if (ret)
+			return ret;
 
-		ग_लिखो_csr(dd, DC_LCB_CFG_ALLOW_LINK_UP,
+		write_csr(dd, DC_LCB_CFG_ALLOW_LINK_UP,
 			  1ull << DC_LCB_CFG_ALLOW_LINK_UP_VAL_SHIFT);
-	पूर्ण
+	}
 
-	अगर (!loopback) अणु
+	if (!loopback) {
 		/*
-		 * When करोing quick linkup and not in loopback, both
-		 * sides must be करोne with LCB set-up beक्रमe either
+		 * When doing quick linkup and not in loopback, both
+		 * sides must be done with LCB set-up before either
 		 * starts the quick linkup.  Put a delay here so that
 		 * both sides can be started and have a chance to be
-		 * करोne with LCB set up beक्रमe resuming.
+		 * done with LCB set up before resuming.
 		 */
 		dd_dev_err(dd,
 			   "Pausing for peer to be finished with LCB set up\n");
 		msleep(5000);
 		dd_dev_err(dd, "Continuing with quick linkup\n");
-	पूर्ण
+	}
 
-	ग_लिखो_csr(dd, DC_LCB_ERR_EN, 0); /* mask LCB errors */
+	write_csr(dd, DC_LCB_ERR_EN, 0); /* mask LCB errors */
 	set_8051_lcb_access(dd);
 
 	/*
 	 * State "quick" LinkUp request sets the physical link state to
-	 * LinkUp without a verअगरy capability sequence.
+	 * LinkUp without a verify capability sequence.
 	 * This state is in simulator v37 and later.
 	 */
 	ret = set_physical_link_state(dd, PLS_QUICK_LINKUP);
-	अगर (ret != HCMD_SUCCESS) अणु
+	if (ret != HCMD_SUCCESS) {
 		dd_dev_err(dd,
 			   "%s: set physical link state to quick LinkUp failed with return %d\n",
 			   __func__, ret);
 
 		set_host_lcb_access(dd);
-		ग_लिखो_csr(dd, DC_LCB_ERR_EN, ~0ull); /* watch LCB errors */
+		write_csr(dd, DC_LCB_ERR_EN, ~0ull); /* watch LCB errors */
 
-		अगर (ret >= 0)
+		if (ret >= 0)
 			ret = -EINVAL;
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	वापस 0; /* success */
-पूर्ण
+	return 0; /* success */
+}
 
 /*
  * Do all special steps to set up loopback.
  */
-अटल पूर्णांक init_loopback(काष्ठा hfi1_devdata *dd)
-अणु
+static int init_loopback(struct hfi1_devdata *dd)
+{
 	dd_dev_info(dd, "Entering loopback mode\n");
 
 	/* all loopbacks should disable self GUID check */
-	ग_लिखो_csr(dd, DC_DC8051_CFG_MODE,
-		  (पढ़ो_csr(dd, DC_DC8051_CFG_MODE) | DISABLE_SELF_GUID_CHECK));
+	write_csr(dd, DC_DC8051_CFG_MODE,
+		  (read_csr(dd, DC_DC8051_CFG_MODE) | DISABLE_SELF_GUID_CHECK));
 
 	/*
 	 * The simulator has only one loopback option - LCB.  Switch
@@ -9314,619 +9313,619 @@ fail:
 	 *
 	 * Accept all valid loopback values.
 	 */
-	अगर ((dd->icode == ICODE_FUNCTIONAL_SIMULATOR) &&
+	if ((dd->icode == ICODE_FUNCTIONAL_SIMULATOR) &&
 	    (loopback == LOOPBACK_SERDES || loopback == LOOPBACK_LCB ||
-	     loopback == LOOPBACK_CABLE)) अणु
+	     loopback == LOOPBACK_CABLE)) {
 		loopback = LOOPBACK_LCB;
 		quick_linkup = 1;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
 	 * SerDes loopback init sequence is handled in set_local_link_attributes
 	 */
-	अगर (loopback == LOOPBACK_SERDES)
-		वापस 0;
+	if (loopback == LOOPBACK_SERDES)
+		return 0;
 
-	/* LCB loopback - handled at poll समय */
-	अगर (loopback == LOOPBACK_LCB) अणु
+	/* LCB loopback - handled at poll time */
+	if (loopback == LOOPBACK_LCB) {
 		quick_linkup = 1; /* LCB is always quick linkup */
 
 		/* not supported in emulation due to emulation RTL changes */
-		अगर (dd->icode == ICODE_FPGA_EMULATION) अणु
+		if (dd->icode == ICODE_FPGA_EMULATION) {
 			dd_dev_err(dd,
 				   "LCB loopback not supported in emulation\n");
-			वापस -EINVAL;
-		पूर्ण
-		वापस 0;
-	पूर्ण
+			return -EINVAL;
+		}
+		return 0;
+	}
 
-	/* बाह्यal cable loopback requires no extra steps */
-	अगर (loopback == LOOPBACK_CABLE)
-		वापस 0;
+	/* external cable loopback requires no extra steps */
+	if (loopback == LOOPBACK_CABLE)
+		return 0;
 
 	dd_dev_err(dd, "Invalid loopback mode %d\n", loopback);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /*
  * Translate from the OPA_LINK_WIDTH handed to us by the FM to bits
- * used in the Verअगरy Capability link width attribute.
+ * used in the Verify Capability link width attribute.
  */
-अटल u16 opa_to_vc_link_widths(u16 opa_widths)
-अणु
-	पूर्णांक i;
+static u16 opa_to_vc_link_widths(u16 opa_widths)
+{
+	int i;
 	u16 result = 0;
 
-	अटल स्थिर काष्ठा link_bits अणु
+	static const struct link_bits {
 		u16 from;
 		u16 to;
-	पूर्ण opa_link_xlate[] = अणु
-		अणु OPA_LINK_WIDTH_1X, 1 << (1 - 1)  पूर्ण,
-		अणु OPA_LINK_WIDTH_2X, 1 << (2 - 1)  पूर्ण,
-		अणु OPA_LINK_WIDTH_3X, 1 << (3 - 1)  पूर्ण,
-		अणु OPA_LINK_WIDTH_4X, 1 << (4 - 1)  पूर्ण,
-	पूर्ण;
+	} opa_link_xlate[] = {
+		{ OPA_LINK_WIDTH_1X, 1 << (1 - 1)  },
+		{ OPA_LINK_WIDTH_2X, 1 << (2 - 1)  },
+		{ OPA_LINK_WIDTH_3X, 1 << (3 - 1)  },
+		{ OPA_LINK_WIDTH_4X, 1 << (4 - 1)  },
+	};
 
-	क्रम (i = 0; i < ARRAY_SIZE(opa_link_xlate); i++) अणु
-		अगर (opa_widths & opa_link_xlate[i].from)
+	for (i = 0; i < ARRAY_SIZE(opa_link_xlate); i++) {
+		if (opa_widths & opa_link_xlate[i].from)
 			result |= opa_link_xlate[i].to;
-	पूर्ण
-	वापस result;
-पूर्ण
+	}
+	return result;
+}
 
 /*
- * Set link attributes beक्रमe moving to polling.
+ * Set link attributes before moving to polling.
  */
-अटल पूर्णांक set_local_link_attributes(काष्ठा hfi1_pportdata *ppd)
-अणु
-	काष्ठा hfi1_devdata *dd = ppd->dd;
+static int set_local_link_attributes(struct hfi1_pportdata *ppd)
+{
+	struct hfi1_devdata *dd = ppd->dd;
 	u8 enable_lane_tx;
 	u8 tx_polarity_inversion;
 	u8 rx_polarity_inversion;
-	पूर्णांक ret;
+	int ret;
 	u32 misc_bits = 0;
 	/* reset our fabric serdes to clear any lingering problems */
 	fabric_serdes_reset(dd);
 
-	/* set the local tx rate - need to पढ़ो-modअगरy-ग_लिखो */
-	ret = पढ़ो_tx_settings(dd, &enable_lane_tx, &tx_polarity_inversion,
+	/* set the local tx rate - need to read-modify-write */
+	ret = read_tx_settings(dd, &enable_lane_tx, &tx_polarity_inversion,
 			       &rx_polarity_inversion, &ppd->local_tx_rate);
-	अगर (ret)
-		जाओ set_local_link_attributes_fail;
+	if (ret)
+		goto set_local_link_attributes_fail;
 
-	अगर (dd->dc8051_ver < dc8051_ver(0, 20, 0)) अणु
+	if (dd->dc8051_ver < dc8051_ver(0, 20, 0)) {
 		/* set the tx rate to the fastest enabled */
-		अगर (ppd->link_speed_enabled & OPA_LINK_SPEED_25G)
+		if (ppd->link_speed_enabled & OPA_LINK_SPEED_25G)
 			ppd->local_tx_rate = 1;
-		अन्यथा
+		else
 			ppd->local_tx_rate = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* set the tx rate to all enabled */
 		ppd->local_tx_rate = 0;
-		अगर (ppd->link_speed_enabled & OPA_LINK_SPEED_25G)
+		if (ppd->link_speed_enabled & OPA_LINK_SPEED_25G)
 			ppd->local_tx_rate |= 2;
-		अगर (ppd->link_speed_enabled & OPA_LINK_SPEED_12_5G)
+		if (ppd->link_speed_enabled & OPA_LINK_SPEED_12_5G)
 			ppd->local_tx_rate |= 1;
-	पूर्ण
+	}
 
 	enable_lane_tx = 0xF; /* enable all four lanes */
-	ret = ग_लिखो_tx_settings(dd, enable_lane_tx, tx_polarity_inversion,
+	ret = write_tx_settings(dd, enable_lane_tx, tx_polarity_inversion,
 				rx_polarity_inversion, ppd->local_tx_rate);
-	अगर (ret != HCMD_SUCCESS)
-		जाओ set_local_link_attributes_fail;
+	if (ret != HCMD_SUCCESS)
+		goto set_local_link_attributes_fail;
 
-	ret = ग_लिखो_host_पूर्णांकerface_version(dd, HOST_INTERFACE_VERSION);
-	अगर (ret != HCMD_SUCCESS) अणु
+	ret = write_host_interface_version(dd, HOST_INTERFACE_VERSION);
+	if (ret != HCMD_SUCCESS) {
 		dd_dev_err(dd,
 			   "Failed to set host interface version, return 0x%x\n",
 			   ret);
-		जाओ set_local_link_attributes_fail;
-	पूर्ण
+		goto set_local_link_attributes_fail;
+	}
 
 	/*
 	 * DC supports continuous updates.
 	 */
-	ret = ग_लिखो_vc_local_phy(dd,
-				 0 /* no घातer management */,
+	ret = write_vc_local_phy(dd,
+				 0 /* no power management */,
 				 1 /* continuous updates */);
-	अगर (ret != HCMD_SUCCESS)
-		जाओ set_local_link_attributes_fail;
+	if (ret != HCMD_SUCCESS)
+		goto set_local_link_attributes_fail;
 
 	/* z=1 in the next call: AU of 0 is not supported by the hardware */
-	ret = ग_लिखो_vc_local_fabric(dd, dd->vau, 1, dd->vcu, dd->vl15_init,
+	ret = write_vc_local_fabric(dd, dd->vau, 1, dd->vcu, dd->vl15_init,
 				    ppd->port_crc_mode_enabled);
-	अगर (ret != HCMD_SUCCESS)
-		जाओ set_local_link_attributes_fail;
+	if (ret != HCMD_SUCCESS)
+		goto set_local_link_attributes_fail;
 
 	/*
 	 * SerDes loopback init sequence requires
 	 * setting bit 0 of MISC_CONFIG_BITS
 	 */
-	अगर (loopback == LOOPBACK_SERDES)
+	if (loopback == LOOPBACK_SERDES)
 		misc_bits |= 1 << LOOPBACK_SERDES_CONFIG_BIT_MASK_SHIFT;
 
 	/*
-	 * An बाह्यal device configuration request is used to reset the LCB
+	 * An external device configuration request is used to reset the LCB
 	 * to retry to obtain operational lanes when the first attempt is
 	 * unsuccesful.
 	 */
-	अगर (dd->dc8051_ver >= dc8051_ver(1, 25, 0))
+	if (dd->dc8051_ver >= dc8051_ver(1, 25, 0))
 		misc_bits |= 1 << EXT_CFG_LCB_RESET_SUPPORTED_SHIFT;
 
-	ret = ग_लिखो_vc_local_link_mode(dd, misc_bits, 0,
+	ret = write_vc_local_link_mode(dd, misc_bits, 0,
 				       opa_to_vc_link_widths(
 						ppd->link_width_enabled));
-	अगर (ret != HCMD_SUCCESS)
-		जाओ set_local_link_attributes_fail;
+	if (ret != HCMD_SUCCESS)
+		goto set_local_link_attributes_fail;
 
 	/* let peer know who we are */
-	ret = ग_लिखो_local_device_id(dd, dd->pcidev->device, dd->minrev);
-	अगर (ret == HCMD_SUCCESS)
-		वापस 0;
+	ret = write_local_device_id(dd, dd->pcidev->device, dd->minrev);
+	if (ret == HCMD_SUCCESS)
+		return 0;
 
 set_local_link_attributes_fail:
 	dd_dev_err(dd,
 		   "Failed to set local link attributes, return 0x%x\n",
 		   ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Call this to start the link.
- * Do not करो anything अगर the link is disabled.
- * Returns 0 अगर link is disabled, moved to polling, or the driver is not पढ़ोy.
+ * Do not do anything if the link is disabled.
+ * Returns 0 if link is disabled, moved to polling, or the driver is not ready.
  */
-पूर्णांक start_link(काष्ठा hfi1_pportdata *ppd)
-अणु
+int start_link(struct hfi1_pportdata *ppd)
+{
 	/*
-	 * Tune the SerDes to a ballpark setting क्रम optimal संकेत and bit
-	 * error rate.  Needs to be करोne beक्रमe starting the link.
+	 * Tune the SerDes to a ballpark setting for optimal signal and bit
+	 * error rate.  Needs to be done before starting the link.
 	 */
 	tune_serdes(ppd);
 
-	अगर (!ppd->driver_link_पढ़ोy) अणु
+	if (!ppd->driver_link_ready) {
 		dd_dev_info(ppd->dd,
 			    "%s: stopping link start because driver is not ready\n",
 			    __func__);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/*
 	 * FULL_MGMT_P_KEY is cleared from the pkey table, so that the
-	 * pkey table can be configured properly अगर the HFI unit is connected
-	 * to चयन port with MgmtAllowed=NO
+	 * pkey table can be configured properly if the HFI unit is connected
+	 * to switch port with MgmtAllowed=NO
 	 */
 	clear_full_mgmt_pkey(ppd);
 
-	वापस set_link_state(ppd, HLS_DN_POLL);
-पूर्ण
+	return set_link_state(ppd, HLS_DN_POLL);
+}
 
-अटल व्योम रुको_क्रम_qsfp_init(काष्ठा hfi1_pportdata *ppd)
-अणु
-	काष्ठा hfi1_devdata *dd = ppd->dd;
+static void wait_for_qsfp_init(struct hfi1_pportdata *ppd)
+{
+	struct hfi1_devdata *dd = ppd->dd;
 	u64 mask;
-	अचिन्हित दीर्घ समयout;
+	unsigned long timeout;
 
 	/*
-	 * Some QSFP cables have a quirk that निश्चितs the IntN line as a side
-	 * effect of घातer up on plug-in. We ignore this false positive
-	 * पूर्णांकerrupt until the module has finished घातering up by रुकोing क्रम
-	 * a minimum समयout of the module inrush initialization समय of
+	 * Some QSFP cables have a quirk that asserts the IntN line as a side
+	 * effect of power up on plug-in. We ignore this false positive
+	 * interrupt until the module has finished powering up by waiting for
+	 * a minimum timeout of the module inrush initialization time of
 	 * 500 ms (SFF 8679 Table 5-6) to ensure the voltage rails in the
 	 * module have stabilized.
 	 */
 	msleep(500);
 
 	/*
-	 * Check क्रम QSFP पूर्णांकerrupt क्रम t_init (SFF 8679 Table 8-1)
+	 * Check for QSFP interrupt for t_init (SFF 8679 Table 8-1)
 	 */
-	समयout = jअगरfies + msecs_to_jअगरfies(2000);
-	जबतक (1) अणु
-		mask = पढ़ो_csr(dd, dd->hfi1_id ?
+	timeout = jiffies + msecs_to_jiffies(2000);
+	while (1) {
+		mask = read_csr(dd, dd->hfi1_id ?
 				ASIC_QSFP2_IN : ASIC_QSFP1_IN);
-		अगर (!(mask & QSFP_HFI0_INT_N))
-			अवरोध;
-		अगर (समय_after(jअगरfies, समयout)) अणु
+		if (!(mask & QSFP_HFI0_INT_N))
+			break;
+		if (time_after(jiffies, timeout)) {
 			dd_dev_info(dd, "%s: No IntN detected, reset complete\n",
 				    __func__);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		udelay(2);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम set_qsfp_पूर्णांक_n(काष्ठा hfi1_pportdata *ppd, u8 enable)
-अणु
-	काष्ठा hfi1_devdata *dd = ppd->dd;
+static void set_qsfp_int_n(struct hfi1_pportdata *ppd, u8 enable)
+{
+	struct hfi1_devdata *dd = ppd->dd;
 	u64 mask;
 
-	mask = पढ़ो_csr(dd, dd->hfi1_id ? ASIC_QSFP2_MASK : ASIC_QSFP1_MASK);
-	अगर (enable) अणु
+	mask = read_csr(dd, dd->hfi1_id ? ASIC_QSFP2_MASK : ASIC_QSFP1_MASK);
+	if (enable) {
 		/*
-		 * Clear the status रेजिस्टर to aव्योम an immediate पूर्णांकerrupt
+		 * Clear the status register to avoid an immediate interrupt
 		 * when we re-enable the IntN pin
 		 */
-		ग_लिखो_csr(dd, dd->hfi1_id ? ASIC_QSFP2_CLEAR : ASIC_QSFP1_CLEAR,
+		write_csr(dd, dd->hfi1_id ? ASIC_QSFP2_CLEAR : ASIC_QSFP1_CLEAR,
 			  QSFP_HFI0_INT_N);
 		mask |= (u64)QSFP_HFI0_INT_N;
-	पूर्ण अन्यथा अणु
+	} else {
 		mask &= ~(u64)QSFP_HFI0_INT_N;
-	पूर्ण
-	ग_लिखो_csr(dd, dd->hfi1_id ? ASIC_QSFP2_MASK : ASIC_QSFP1_MASK, mask);
-पूर्ण
+	}
+	write_csr(dd, dd->hfi1_id ? ASIC_QSFP2_MASK : ASIC_QSFP1_MASK, mask);
+}
 
-पूर्णांक reset_qsfp(काष्ठा hfi1_pportdata *ppd)
-अणु
-	काष्ठा hfi1_devdata *dd = ppd->dd;
+int reset_qsfp(struct hfi1_pportdata *ppd)
+{
+	struct hfi1_devdata *dd = ppd->dd;
 	u64 mask, qsfp_mask;
 
-	/* Disable INT_N from triggering QSFP पूर्णांकerrupts */
-	set_qsfp_पूर्णांक_n(ppd, 0);
+	/* Disable INT_N from triggering QSFP interrupts */
+	set_qsfp_int_n(ppd, 0);
 
 	/* Reset the QSFP */
 	mask = (u64)QSFP_HFI0_RESET_N;
 
-	qsfp_mask = पढ़ो_csr(dd,
+	qsfp_mask = read_csr(dd,
 			     dd->hfi1_id ? ASIC_QSFP2_OUT : ASIC_QSFP1_OUT);
 	qsfp_mask &= ~mask;
-	ग_लिखो_csr(dd,
+	write_csr(dd,
 		  dd->hfi1_id ? ASIC_QSFP2_OUT : ASIC_QSFP1_OUT, qsfp_mask);
 
 	udelay(10);
 
 	qsfp_mask |= mask;
-	ग_लिखो_csr(dd,
+	write_csr(dd,
 		  dd->hfi1_id ? ASIC_QSFP2_OUT : ASIC_QSFP1_OUT, qsfp_mask);
 
-	रुको_क्रम_qsfp_init(ppd);
+	wait_for_qsfp_init(ppd);
 
 	/*
-	 * Allow INT_N to trigger the QSFP पूर्णांकerrupt to watch
-	 * क्रम alarms and warnings
+	 * Allow INT_N to trigger the QSFP interrupt to watch
+	 * for alarms and warnings
 	 */
-	set_qsfp_पूर्णांक_n(ppd, 1);
+	set_qsfp_int_n(ppd, 1);
 
 	/*
-	 * After the reset, AOC transmitters are enabled by शेष. They need
-	 * to be turned off to complete the QSFP setup beक्रमe they can be
+	 * After the reset, AOC transmitters are enabled by default. They need
+	 * to be turned off to complete the QSFP setup before they can be
 	 * enabled again.
 	 */
-	वापस set_qsfp_tx(ppd, 0);
-पूर्ण
+	return set_qsfp_tx(ppd, 0);
+}
 
-अटल पूर्णांक handle_qsfp_error_conditions(काष्ठा hfi1_pportdata *ppd,
-					u8 *qsfp_पूर्णांकerrupt_status)
-अणु
-	काष्ठा hfi1_devdata *dd = ppd->dd;
+static int handle_qsfp_error_conditions(struct hfi1_pportdata *ppd,
+					u8 *qsfp_interrupt_status)
+{
+	struct hfi1_devdata *dd = ppd->dd;
 
-	अगर ((qsfp_पूर्णांकerrupt_status[0] & QSFP_HIGH_TEMP_ALARM) ||
-	    (qsfp_पूर्णांकerrupt_status[0] & QSFP_HIGH_TEMP_WARNING))
+	if ((qsfp_interrupt_status[0] & QSFP_HIGH_TEMP_ALARM) ||
+	    (qsfp_interrupt_status[0] & QSFP_HIGH_TEMP_WARNING))
 		dd_dev_err(dd, "%s: QSFP cable temperature too high\n",
 			   __func__);
 
-	अगर ((qsfp_पूर्णांकerrupt_status[0] & QSFP_LOW_TEMP_ALARM) ||
-	    (qsfp_पूर्णांकerrupt_status[0] & QSFP_LOW_TEMP_WARNING))
+	if ((qsfp_interrupt_status[0] & QSFP_LOW_TEMP_ALARM) ||
+	    (qsfp_interrupt_status[0] & QSFP_LOW_TEMP_WARNING))
 		dd_dev_err(dd, "%s: QSFP cable temperature too low\n",
 			   __func__);
 
 	/*
-	 * The reमुख्यing alarms/warnings करोn't matter अगर the link is करोwn.
+	 * The remaining alarms/warnings don't matter if the link is down.
 	 */
-	अगर (ppd->host_link_state & HLS_DOWN)
-		वापस 0;
+	if (ppd->host_link_state & HLS_DOWN)
+		return 0;
 
-	अगर ((qsfp_पूर्णांकerrupt_status[1] & QSFP_HIGH_VCC_ALARM) ||
-	    (qsfp_पूर्णांकerrupt_status[1] & QSFP_HIGH_VCC_WARNING))
+	if ((qsfp_interrupt_status[1] & QSFP_HIGH_VCC_ALARM) ||
+	    (qsfp_interrupt_status[1] & QSFP_HIGH_VCC_WARNING))
 		dd_dev_err(dd, "%s: QSFP supply voltage too high\n",
 			   __func__);
 
-	अगर ((qsfp_पूर्णांकerrupt_status[1] & QSFP_LOW_VCC_ALARM) ||
-	    (qsfp_पूर्णांकerrupt_status[1] & QSFP_LOW_VCC_WARNING))
+	if ((qsfp_interrupt_status[1] & QSFP_LOW_VCC_ALARM) ||
+	    (qsfp_interrupt_status[1] & QSFP_LOW_VCC_WARNING))
 		dd_dev_err(dd, "%s: QSFP supply voltage too low\n",
 			   __func__);
 
-	/* Byte 2 is venकरोr specअगरic */
+	/* Byte 2 is vendor specific */
 
-	अगर ((qsfp_पूर्णांकerrupt_status[3] & QSFP_HIGH_POWER_ALARM) ||
-	    (qsfp_पूर्णांकerrupt_status[3] & QSFP_HIGH_POWER_WARNING))
+	if ((qsfp_interrupt_status[3] & QSFP_HIGH_POWER_ALARM) ||
+	    (qsfp_interrupt_status[3] & QSFP_HIGH_POWER_WARNING))
 		dd_dev_err(dd, "%s: Cable RX channel 1/2 power too high\n",
 			   __func__);
 
-	अगर ((qsfp_पूर्णांकerrupt_status[3] & QSFP_LOW_POWER_ALARM) ||
-	    (qsfp_पूर्णांकerrupt_status[3] & QSFP_LOW_POWER_WARNING))
+	if ((qsfp_interrupt_status[3] & QSFP_LOW_POWER_ALARM) ||
+	    (qsfp_interrupt_status[3] & QSFP_LOW_POWER_WARNING))
 		dd_dev_err(dd, "%s: Cable RX channel 1/2 power too low\n",
 			   __func__);
 
-	अगर ((qsfp_पूर्णांकerrupt_status[4] & QSFP_HIGH_POWER_ALARM) ||
-	    (qsfp_पूर्णांकerrupt_status[4] & QSFP_HIGH_POWER_WARNING))
+	if ((qsfp_interrupt_status[4] & QSFP_HIGH_POWER_ALARM) ||
+	    (qsfp_interrupt_status[4] & QSFP_HIGH_POWER_WARNING))
 		dd_dev_err(dd, "%s: Cable RX channel 3/4 power too high\n",
 			   __func__);
 
-	अगर ((qsfp_पूर्णांकerrupt_status[4] & QSFP_LOW_POWER_ALARM) ||
-	    (qsfp_पूर्णांकerrupt_status[4] & QSFP_LOW_POWER_WARNING))
+	if ((qsfp_interrupt_status[4] & QSFP_LOW_POWER_ALARM) ||
+	    (qsfp_interrupt_status[4] & QSFP_LOW_POWER_WARNING))
 		dd_dev_err(dd, "%s: Cable RX channel 3/4 power too low\n",
 			   __func__);
 
-	अगर ((qsfp_पूर्णांकerrupt_status[5] & QSFP_HIGH_BIAS_ALARM) ||
-	    (qsfp_पूर्णांकerrupt_status[5] & QSFP_HIGH_BIAS_WARNING))
+	if ((qsfp_interrupt_status[5] & QSFP_HIGH_BIAS_ALARM) ||
+	    (qsfp_interrupt_status[5] & QSFP_HIGH_BIAS_WARNING))
 		dd_dev_err(dd, "%s: Cable TX channel 1/2 bias too high\n",
 			   __func__);
 
-	अगर ((qsfp_पूर्णांकerrupt_status[5] & QSFP_LOW_BIAS_ALARM) ||
-	    (qsfp_पूर्णांकerrupt_status[5] & QSFP_LOW_BIAS_WARNING))
+	if ((qsfp_interrupt_status[5] & QSFP_LOW_BIAS_ALARM) ||
+	    (qsfp_interrupt_status[5] & QSFP_LOW_BIAS_WARNING))
 		dd_dev_err(dd, "%s: Cable TX channel 1/2 bias too low\n",
 			   __func__);
 
-	अगर ((qsfp_पूर्णांकerrupt_status[6] & QSFP_HIGH_BIAS_ALARM) ||
-	    (qsfp_पूर्णांकerrupt_status[6] & QSFP_HIGH_BIAS_WARNING))
+	if ((qsfp_interrupt_status[6] & QSFP_HIGH_BIAS_ALARM) ||
+	    (qsfp_interrupt_status[6] & QSFP_HIGH_BIAS_WARNING))
 		dd_dev_err(dd, "%s: Cable TX channel 3/4 bias too high\n",
 			   __func__);
 
-	अगर ((qsfp_पूर्णांकerrupt_status[6] & QSFP_LOW_BIAS_ALARM) ||
-	    (qsfp_पूर्णांकerrupt_status[6] & QSFP_LOW_BIAS_WARNING))
+	if ((qsfp_interrupt_status[6] & QSFP_LOW_BIAS_ALARM) ||
+	    (qsfp_interrupt_status[6] & QSFP_LOW_BIAS_WARNING))
 		dd_dev_err(dd, "%s: Cable TX channel 3/4 bias too low\n",
 			   __func__);
 
-	अगर ((qsfp_पूर्णांकerrupt_status[7] & QSFP_HIGH_POWER_ALARM) ||
-	    (qsfp_पूर्णांकerrupt_status[7] & QSFP_HIGH_POWER_WARNING))
+	if ((qsfp_interrupt_status[7] & QSFP_HIGH_POWER_ALARM) ||
+	    (qsfp_interrupt_status[7] & QSFP_HIGH_POWER_WARNING))
 		dd_dev_err(dd, "%s: Cable TX channel 1/2 power too high\n",
 			   __func__);
 
-	अगर ((qsfp_पूर्णांकerrupt_status[7] & QSFP_LOW_POWER_ALARM) ||
-	    (qsfp_पूर्णांकerrupt_status[7] & QSFP_LOW_POWER_WARNING))
+	if ((qsfp_interrupt_status[7] & QSFP_LOW_POWER_ALARM) ||
+	    (qsfp_interrupt_status[7] & QSFP_LOW_POWER_WARNING))
 		dd_dev_err(dd, "%s: Cable TX channel 1/2 power too low\n",
 			   __func__);
 
-	अगर ((qsfp_पूर्णांकerrupt_status[8] & QSFP_HIGH_POWER_ALARM) ||
-	    (qsfp_पूर्णांकerrupt_status[8] & QSFP_HIGH_POWER_WARNING))
+	if ((qsfp_interrupt_status[8] & QSFP_HIGH_POWER_ALARM) ||
+	    (qsfp_interrupt_status[8] & QSFP_HIGH_POWER_WARNING))
 		dd_dev_err(dd, "%s: Cable TX channel 3/4 power too high\n",
 			   __func__);
 
-	अगर ((qsfp_पूर्णांकerrupt_status[8] & QSFP_LOW_POWER_ALARM) ||
-	    (qsfp_पूर्णांकerrupt_status[8] & QSFP_LOW_POWER_WARNING))
+	if ((qsfp_interrupt_status[8] & QSFP_LOW_POWER_ALARM) ||
+	    (qsfp_interrupt_status[8] & QSFP_LOW_POWER_WARNING))
 		dd_dev_err(dd, "%s: Cable TX channel 3/4 power too low\n",
 			   __func__);
 
 	/* Bytes 9-10 and 11-12 are reserved */
-	/* Bytes 13-15 are venकरोr specअगरic */
+	/* Bytes 13-15 are vendor specific */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* This routine will only be scheduled अगर the QSFP module present is निश्चितed */
-व्योम qsfp_event(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा qsfp_data *qd;
-	काष्ठा hfi1_pportdata *ppd;
-	काष्ठा hfi1_devdata *dd;
+/* This routine will only be scheduled if the QSFP module present is asserted */
+void qsfp_event(struct work_struct *work)
+{
+	struct qsfp_data *qd;
+	struct hfi1_pportdata *ppd;
+	struct hfi1_devdata *dd;
 
-	qd = container_of(work, काष्ठा qsfp_data, qsfp_work);
+	qd = container_of(work, struct qsfp_data, qsfp_work);
 	ppd = qd->ppd;
 	dd = ppd->dd;
 
 	/* Sanity check */
-	अगर (!qsfp_mod_present(ppd))
-		वापस;
+	if (!qsfp_mod_present(ppd))
+		return;
 
-	अगर (ppd->host_link_state == HLS_DN_DISABLE) अणु
+	if (ppd->host_link_state == HLS_DN_DISABLE) {
 		dd_dev_info(ppd->dd,
 			    "%s: stopping link start because link is disabled\n",
 			    __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * Turn DC back on after cable has been re-inserted. Up until
-	 * now, the DC has been in reset to save घातer.
+	 * now, the DC has been in reset to save power.
 	 */
 	dc_start(dd);
 
-	अगर (qd->cache_refresh_required) अणु
-		set_qsfp_पूर्णांक_n(ppd, 0);
+	if (qd->cache_refresh_required) {
+		set_qsfp_int_n(ppd, 0);
 
-		रुको_क्रम_qsfp_init(ppd);
+		wait_for_qsfp_init(ppd);
 
 		/*
-		 * Allow INT_N to trigger the QSFP पूर्णांकerrupt to watch
-		 * क्रम alarms and warnings
+		 * Allow INT_N to trigger the QSFP interrupt to watch
+		 * for alarms and warnings
 		 */
-		set_qsfp_पूर्णांक_n(ppd, 1);
+		set_qsfp_int_n(ppd, 1);
 
 		start_link(ppd);
-	पूर्ण
+	}
 
-	अगर (qd->check_पूर्णांकerrupt_flags) अणु
-		u8 qsfp_पूर्णांकerrupt_status[16] = अणु0,पूर्ण;
+	if (qd->check_interrupt_flags) {
+		u8 qsfp_interrupt_status[16] = {0,};
 
-		अगर (one_qsfp_पढ़ो(ppd, dd->hfi1_id, 6,
-				  &qsfp_पूर्णांकerrupt_status[0], 16) != 16) अणु
+		if (one_qsfp_read(ppd, dd->hfi1_id, 6,
+				  &qsfp_interrupt_status[0], 16) != 16) {
 			dd_dev_info(dd,
 				    "%s: Failed to read status of QSFP module\n",
 				    __func__);
-		पूर्ण अन्यथा अणु
-			अचिन्हित दीर्घ flags;
+		} else {
+			unsigned long flags;
 
 			handle_qsfp_error_conditions(
-					ppd, qsfp_पूर्णांकerrupt_status);
+					ppd, qsfp_interrupt_status);
 			spin_lock_irqsave(&ppd->qsfp_info.qsfp_lock, flags);
-			ppd->qsfp_info.check_पूर्णांकerrupt_flags = 0;
+			ppd->qsfp_info.check_interrupt_flags = 0;
 			spin_unlock_irqrestore(&ppd->qsfp_info.qsfp_lock,
 					       flags);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम init_qsfp_पूर्णांक(काष्ठा hfi1_devdata *dd)
-अणु
-	काष्ठा hfi1_pportdata *ppd = dd->pport;
+void init_qsfp_int(struct hfi1_devdata *dd)
+{
+	struct hfi1_pportdata *ppd = dd->pport;
 	u64 qsfp_mask;
 
 	qsfp_mask = (u64)(QSFP_HFI0_INT_N | QSFP_HFI0_MODPRST_N);
-	/* Clear current status to aव्योम spurious पूर्णांकerrupts */
-	ग_लिखो_csr(dd, dd->hfi1_id ? ASIC_QSFP2_CLEAR : ASIC_QSFP1_CLEAR,
+	/* Clear current status to avoid spurious interrupts */
+	write_csr(dd, dd->hfi1_id ? ASIC_QSFP2_CLEAR : ASIC_QSFP1_CLEAR,
 		  qsfp_mask);
-	ग_लिखो_csr(dd, dd->hfi1_id ? ASIC_QSFP2_MASK : ASIC_QSFP1_MASK,
+	write_csr(dd, dd->hfi1_id ? ASIC_QSFP2_MASK : ASIC_QSFP1_MASK,
 		  qsfp_mask);
 
-	set_qsfp_पूर्णांक_n(ppd, 0);
+	set_qsfp_int_n(ppd, 0);
 
 	/* Handle active low nature of INT_N and MODPRST_N pins */
-	अगर (qsfp_mod_present(ppd))
+	if (qsfp_mod_present(ppd))
 		qsfp_mask &= ~(u64)QSFP_HFI0_MODPRST_N;
-	ग_लिखो_csr(dd,
+	write_csr(dd,
 		  dd->hfi1_id ? ASIC_QSFP2_INVERT : ASIC_QSFP1_INVERT,
 		  qsfp_mask);
 
 	/* Enable the appropriate QSFP IRQ source */
-	अगर (!dd->hfi1_id)
-		set_पूर्णांकr_bits(dd, QSFP1_INT, QSFP1_INT, true);
-	अन्यथा
-		set_पूर्णांकr_bits(dd, QSFP2_INT, QSFP2_INT, true);
-पूर्ण
+	if (!dd->hfi1_id)
+		set_intr_bits(dd, QSFP1_INT, QSFP1_INT, true);
+	else
+		set_intr_bits(dd, QSFP2_INT, QSFP2_INT, true);
+}
 
 /*
- * Do a one-समय initialize of the LCB block.
+ * Do a one-time initialize of the LCB block.
  */
-अटल व्योम init_lcb(काष्ठा hfi1_devdata *dd)
-अणु
-	/* simulator करोes not correctly handle LCB cclk loopback, skip */
-	अगर (dd->icode == ICODE_FUNCTIONAL_SIMULATOR)
-		वापस;
+static void init_lcb(struct hfi1_devdata *dd)
+{
+	/* simulator does not correctly handle LCB cclk loopback, skip */
+	if (dd->icode == ICODE_FUNCTIONAL_SIMULATOR)
+		return;
 
 	/* the DC has been reset earlier in the driver load */
 
-	/* set LCB क्रम cclk loopback on the port */
-	ग_लिखो_csr(dd, DC_LCB_CFG_TX_FIFOS_RESET, 0x01);
-	ग_लिखो_csr(dd, DC_LCB_CFG_LANE_WIDTH, 0x00);
-	ग_लिखो_csr(dd, DC_LCB_CFG_REINIT_AS_SLAVE, 0x00);
-	ग_लिखो_csr(dd, DC_LCB_CFG_CNT_FOR_SKIP_STALL, 0x110);
-	ग_लिखो_csr(dd, DC_LCB_CFG_CLK_CNTR, 0x08);
-	ग_लिखो_csr(dd, DC_LCB_CFG_LOOPBACK, 0x02);
-	ग_लिखो_csr(dd, DC_LCB_CFG_TX_FIFOS_RESET, 0x00);
-पूर्ण
+	/* set LCB for cclk loopback on the port */
+	write_csr(dd, DC_LCB_CFG_TX_FIFOS_RESET, 0x01);
+	write_csr(dd, DC_LCB_CFG_LANE_WIDTH, 0x00);
+	write_csr(dd, DC_LCB_CFG_REINIT_AS_SLAVE, 0x00);
+	write_csr(dd, DC_LCB_CFG_CNT_FOR_SKIP_STALL, 0x110);
+	write_csr(dd, DC_LCB_CFG_CLK_CNTR, 0x08);
+	write_csr(dd, DC_LCB_CFG_LOOPBACK, 0x02);
+	write_csr(dd, DC_LCB_CFG_TX_FIFOS_RESET, 0x00);
+}
 
 /*
- * Perक्रमm a test पढ़ो on the QSFP.  Return 0 on success, -ERRNO
+ * Perform a test read on the QSFP.  Return 0 on success, -ERRNO
  * on error.
  */
-अटल पूर्णांक test_qsfp_पढ़ो(काष्ठा hfi1_pportdata *ppd)
-अणु
-	पूर्णांक ret;
+static int test_qsfp_read(struct hfi1_pportdata *ppd)
+{
+	int ret;
 	u8 status;
 
 	/*
-	 * Report success अगर not a QSFP or, अगर it is a QSFP, but the cable is
+	 * Report success if not a QSFP or, if it is a QSFP, but the cable is
 	 * not present
 	 */
-	अगर (ppd->port_type != PORT_TYPE_QSFP || !qsfp_mod_present(ppd))
-		वापस 0;
+	if (ppd->port_type != PORT_TYPE_QSFP || !qsfp_mod_present(ppd))
+		return 0;
 
-	/* पढ़ो byte 2, the status byte */
-	ret = one_qsfp_पढ़ो(ppd, ppd->dd->hfi1_id, 2, &status, 1);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (ret != 1)
-		वापस -EIO;
+	/* read byte 2, the status byte */
+	ret = one_qsfp_read(ppd, ppd->dd->hfi1_id, 2, &status, 1);
+	if (ret < 0)
+		return ret;
+	if (ret != 1)
+		return -EIO;
 
-	वापस 0; /* success */
-पूर्ण
+	return 0; /* success */
+}
 
 /*
- * Values क्रम QSFP retry.
+ * Values for QSFP retry.
  *
- * Give up after 10s (20 x 500ms).  The overall समयout was empirically
+ * Give up after 10s (20 x 500ms).  The overall timeout was empirically
  * arrived at from experience on a large cluster.
  */
-#घोषणा MAX_QSFP_RETRIES 20
-#घोषणा QSFP_RETRY_WAIT 500 /* msec */
+#define MAX_QSFP_RETRIES 20
+#define QSFP_RETRY_WAIT 500 /* msec */
 
 /*
- * Try a QSFP पढ़ो.  If it fails, schedule a retry क्रम later.
+ * Try a QSFP read.  If it fails, schedule a retry for later.
  * Called on first link activation after driver load.
  */
-अटल व्योम try_start_link(काष्ठा hfi1_pportdata *ppd)
-अणु
-	अगर (test_qsfp_पढ़ो(ppd)) अणु
-		/* पढ़ो failed */
-		अगर (ppd->qsfp_retry_count >= MAX_QSFP_RETRIES) अणु
+static void try_start_link(struct hfi1_pportdata *ppd)
+{
+	if (test_qsfp_read(ppd)) {
+		/* read failed */
+		if (ppd->qsfp_retry_count >= MAX_QSFP_RETRIES) {
 			dd_dev_err(ppd->dd, "QSFP not responding, giving up\n");
-			वापस;
-		पूर्ण
+			return;
+		}
 		dd_dev_info(ppd->dd,
 			    "QSFP not responding, waiting and retrying %d\n",
-			    (पूर्णांक)ppd->qsfp_retry_count);
+			    (int)ppd->qsfp_retry_count);
 		ppd->qsfp_retry_count++;
 		queue_delayed_work(ppd->link_wq, &ppd->start_link_work,
-				   msecs_to_jअगरfies(QSFP_RETRY_WAIT));
-		वापस;
-	पूर्ण
+				   msecs_to_jiffies(QSFP_RETRY_WAIT));
+		return;
+	}
 	ppd->qsfp_retry_count = 0;
 
 	start_link(ppd);
-पूर्ण
+}
 
 /*
  * Workqueue function to start the link after a delay.
  */
-व्योम handle_start_link(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा hfi1_pportdata *ppd = container_of(work, काष्ठा hfi1_pportdata,
+void handle_start_link(struct work_struct *work)
+{
+	struct hfi1_pportdata *ppd = container_of(work, struct hfi1_pportdata,
 						  start_link_work.work);
 	try_start_link(ppd);
-पूर्ण
+}
 
-पूर्णांक bringup_serdes(काष्ठा hfi1_pportdata *ppd)
-अणु
-	काष्ठा hfi1_devdata *dd = ppd->dd;
+int bringup_serdes(struct hfi1_pportdata *ppd)
+{
+	struct hfi1_devdata *dd = ppd->dd;
 	u64 guid;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (HFI1_CAP_IS_KSET(EXTENDED_PSN))
+	if (HFI1_CAP_IS_KSET(EXTENDED_PSN))
 		add_rcvctrl(dd, RCV_CTRL_RCV_EXTENDED_PSN_ENABLE_SMASK);
 
 	guid = ppd->guids[HFI1_PORT_GUID_INDEX];
-	अगर (!guid) अणु
-		अगर (dd->base_guid)
+	if (!guid) {
+		if (dd->base_guid)
 			guid = dd->base_guid + ppd->port - 1;
 		ppd->guids[HFI1_PORT_GUID_INDEX] = guid;
-	पूर्ण
+	}
 
-	/* Set linkinit_reason on घातer up per OPA spec */
+	/* Set linkinit_reason on power up per OPA spec */
 	ppd->linkinit_reason = OPA_LINKINIT_REASON_LINKUP;
 
-	/* one-समय init of the LCB */
+	/* one-time init of the LCB */
 	init_lcb(dd);
 
-	अगर (loopback) अणु
+	if (loopback) {
 		ret = init_loopback(dd);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
 	get_port_type(ppd);
-	अगर (ppd->port_type == PORT_TYPE_QSFP) अणु
-		set_qsfp_पूर्णांक_n(ppd, 0);
-		रुको_क्रम_qsfp_init(ppd);
-		set_qsfp_पूर्णांक_n(ppd, 1);
-	पूर्ण
+	if (ppd->port_type == PORT_TYPE_QSFP) {
+		set_qsfp_int_n(ppd, 0);
+		wait_for_qsfp_init(ppd);
+		set_qsfp_int_n(ppd, 1);
+	}
 
 	try_start_link(ppd);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम hfi1_quiet_serdes(काष्ठा hfi1_pportdata *ppd)
-अणु
-	काष्ठा hfi1_devdata *dd = ppd->dd;
+void hfi1_quiet_serdes(struct hfi1_pportdata *ppd)
+{
+	struct hfi1_devdata *dd = ppd->dd;
 
 	/*
-	 * Shut करोwn the link and keep it करोwn.   First turn off that the
-	 * driver wants to allow the link to be up (driver_link_पढ़ोy).
-	 * Then make sure the link is not स्वतःmatically restarted
+	 * Shut down the link and keep it down.   First turn off that the
+	 * driver wants to allow the link to be up (driver_link_ready).
+	 * Then make sure the link is not automatically restarted
 	 * (link_enabled).  Cancel any pending restart.  And finally
 	 * go offline.
 	 */
-	ppd->driver_link_पढ़ोy = 0;
+	ppd->driver_link_ready = 0;
 	ppd->link_enabled = 0;
 
 	ppd->qsfp_retry_count = MAX_QSFP_RETRIES; /* prevent more retries */
@@ -9935,93 +9934,93 @@ set_local_link_attributes_fail:
 
 	ppd->offline_disabled_reason =
 			HFI1_ODR_MASK(OPA_LINKDOWN_REASON_REBOOT);
-	set_link_करोwn_reason(ppd, OPA_LINKDOWN_REASON_REBOOT, 0,
+	set_link_down_reason(ppd, OPA_LINKDOWN_REASON_REBOOT, 0,
 			     OPA_LINKDOWN_REASON_REBOOT);
 	set_link_state(ppd, HLS_DN_OFFLINE);
 
 	/* disable the port */
 	clear_rcvctrl(dd, RCV_CTRL_RCV_PORT_ENABLE_SMASK);
-	cancel_work_sync(&ppd->मुक्तze_work);
-पूर्ण
+	cancel_work_sync(&ppd->freeze_work);
+}
 
-अटल अंतरभूत पूर्णांक init_cpu_counters(काष्ठा hfi1_devdata *dd)
-अणु
-	काष्ठा hfi1_pportdata *ppd;
-	पूर्णांक i;
+static inline int init_cpu_counters(struct hfi1_devdata *dd)
+{
+	struct hfi1_pportdata *ppd;
+	int i;
 
-	ppd = (काष्ठा hfi1_pportdata *)(dd + 1);
-	क्रम (i = 0; i < dd->num_pports; i++, ppd++) अणु
-		ppd->ibport_data.rvp.rc_acks = शून्य;
-		ppd->ibport_data.rvp.rc_qacks = शून्य;
+	ppd = (struct hfi1_pportdata *)(dd + 1);
+	for (i = 0; i < dd->num_pports; i++, ppd++) {
+		ppd->ibport_data.rvp.rc_acks = NULL;
+		ppd->ibport_data.rvp.rc_qacks = NULL;
 		ppd->ibport_data.rvp.rc_acks = alloc_percpu(u64);
 		ppd->ibport_data.rvp.rc_qacks = alloc_percpu(u64);
 		ppd->ibport_data.rvp.rc_delayed_comp = alloc_percpu(u64);
-		अगर (!ppd->ibport_data.rvp.rc_acks ||
+		if (!ppd->ibport_data.rvp.rc_acks ||
 		    !ppd->ibport_data.rvp.rc_delayed_comp ||
 		    !ppd->ibport_data.rvp.rc_qacks)
-			वापस -ENOMEM;
-	पूर्ण
+			return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * index is the index पूर्णांकo the receive array
+ * index is the index into the receive array
  */
-व्योम hfi1_put_tid(काष्ठा hfi1_devdata *dd, u32 index,
-		  u32 type, अचिन्हित दीर्घ pa, u16 order)
-अणु
+void hfi1_put_tid(struct hfi1_devdata *dd, u32 index,
+		  u32 type, unsigned long pa, u16 order)
+{
 	u64 reg;
 
-	अगर (!(dd->flags & HFI1_PRESENT))
-		जाओ करोne;
+	if (!(dd->flags & HFI1_PRESENT))
+		goto done;
 
-	अगर (type == PT_INVALID || type == PT_INVALID_FLUSH) अणु
+	if (type == PT_INVALID || type == PT_INVALID_FLUSH) {
 		pa = 0;
 		order = 0;
-	पूर्ण अन्यथा अगर (type > PT_INVALID) अणु
+	} else if (type > PT_INVALID) {
 		dd_dev_err(dd,
 			   "unexpected receive array type %u for index %u, not handled\n",
 			   type, index);
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	trace_hfi1_put_tid(dd, index, type, pa, order);
 
-#घोषणा RT_ADDR_SHIFT 12	/* 4KB kernel address boundary */
+#define RT_ADDR_SHIFT 12	/* 4KB kernel address boundary */
 	reg = RCV_ARRAY_RT_WRITE_ENABLE_SMASK
 		| (u64)order << RCV_ARRAY_RT_BUF_SIZE_SHIFT
 		| ((pa >> RT_ADDR_SHIFT) & RCV_ARRAY_RT_ADDR_MASK)
 					<< RCV_ARRAY_RT_ADDR_SHIFT;
-	trace_hfi1_ग_लिखो_rcvarray(dd->rcvarray_wc + (index * 8), reg);
-	ग_लिखोq(reg, dd->rcvarray_wc + (index * 8));
+	trace_hfi1_write_rcvarray(dd->rcvarray_wc + (index * 8), reg);
+	writeq(reg, dd->rcvarray_wc + (index * 8));
 
-	अगर (type == PT_EAGER || type == PT_INVALID_FLUSH || (index & 3) == 3)
+	if (type == PT_EAGER || type == PT_INVALID_FLUSH || (index & 3) == 3)
 		/*
 		 * Eager entries are written and flushed
 		 *
-		 * Expected entries are flushed every 4 ग_लिखोs
+		 * Expected entries are flushed every 4 writes
 		 */
 		flush_wc();
-करोne:
-	वापस;
-पूर्ण
+done:
+	return;
+}
 
-व्योम hfi1_clear_tids(काष्ठा hfi1_ctxtdata *rcd)
-अणु
-	काष्ठा hfi1_devdata *dd = rcd->dd;
+void hfi1_clear_tids(struct hfi1_ctxtdata *rcd)
+{
+	struct hfi1_devdata *dd = rcd->dd;
 	u32 i;
 
 	/* this could be optimized */
-	क्रम (i = rcd->eager_base; i < rcd->eager_base +
+	for (i = rcd->eager_base; i < rcd->eager_base +
 		     rcd->egrbufs.alloced; i++)
 		hfi1_put_tid(dd, i, PT_INVALID, 0, 0);
 
-	क्रम (i = rcd->expected_base;
+	for (i = rcd->expected_base;
 			i < rcd->expected_base + rcd->expected_count; i++)
 		hfi1_put_tid(dd, i, PT_INVALID, 0, 0);
-पूर्ण
+}
 
-अटल स्थिर अक्षर * स्थिर ib_cfg_name_strings[] = अणु
+static const char * const ib_cfg_name_strings[] = {
 	"HFI1_IB_CFG_LIDLMC",
 	"HFI1_IB_CFG_LWID_DG_ENB",
 	"HFI1_IB_CFG_LWID_ENB",
@@ -10044,179 +10043,179 @@ set_local_link_attributes_fail:
 	"HFI1_IB_CFG_VL_HIGH_LIMIT",
 	"HFI1_IB_CFG_PMA_TICKS",
 	"HFI1_IB_CFG_PORT"
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *ib_cfg_name(पूर्णांक which)
-अणु
-	अगर (which < 0 || which >= ARRAY_SIZE(ib_cfg_name_strings))
-		वापस "invalid";
-	वापस ib_cfg_name_strings[which];
-पूर्ण
+static const char *ib_cfg_name(int which)
+{
+	if (which < 0 || which >= ARRAY_SIZE(ib_cfg_name_strings))
+		return "invalid";
+	return ib_cfg_name_strings[which];
+}
 
-पूर्णांक hfi1_get_ib_cfg(काष्ठा hfi1_pportdata *ppd, पूर्णांक which)
-अणु
-	काष्ठा hfi1_devdata *dd = ppd->dd;
-	पूर्णांक val = 0;
+int hfi1_get_ib_cfg(struct hfi1_pportdata *ppd, int which)
+{
+	struct hfi1_devdata *dd = ppd->dd;
+	int val = 0;
 
-	चयन (which) अणु
-	हाल HFI1_IB_CFG_LWID_ENB: /* allowed Link-width */
+	switch (which) {
+	case HFI1_IB_CFG_LWID_ENB: /* allowed Link-width */
 		val = ppd->link_width_enabled;
-		अवरोध;
-	हाल HFI1_IB_CFG_LWID: /* currently active Link-width */
+		break;
+	case HFI1_IB_CFG_LWID: /* currently active Link-width */
 		val = ppd->link_width_active;
-		अवरोध;
-	हाल HFI1_IB_CFG_SPD_ENB: /* allowed Link speeds */
+		break;
+	case HFI1_IB_CFG_SPD_ENB: /* allowed Link speeds */
 		val = ppd->link_speed_enabled;
-		अवरोध;
-	हाल HFI1_IB_CFG_SPD: /* current Link speed */
+		break;
+	case HFI1_IB_CFG_SPD: /* current Link speed */
 		val = ppd->link_speed_active;
-		अवरोध;
+		break;
 
-	हाल HFI1_IB_CFG_RXPOL_ENB: /* Auto-RX-polarity enable */
-	हाल HFI1_IB_CFG_LREV_ENB: /* Auto-Lane-reversal enable */
-	हाल HFI1_IB_CFG_LINKLATENCY:
-		जाओ unimplemented;
+	case HFI1_IB_CFG_RXPOL_ENB: /* Auto-RX-polarity enable */
+	case HFI1_IB_CFG_LREV_ENB: /* Auto-Lane-reversal enable */
+	case HFI1_IB_CFG_LINKLATENCY:
+		goto unimplemented;
 
-	हाल HFI1_IB_CFG_OP_VLS:
+	case HFI1_IB_CFG_OP_VLS:
 		val = ppd->actual_vls_operational;
-		अवरोध;
-	हाल HFI1_IB_CFG_VL_HIGH_CAP: /* VL arb high priority table size */
+		break;
+	case HFI1_IB_CFG_VL_HIGH_CAP: /* VL arb high priority table size */
 		val = VL_ARB_HIGH_PRIO_TABLE_SIZE;
-		अवरोध;
-	हाल HFI1_IB_CFG_VL_LOW_CAP: /* VL arb low priority table size */
+		break;
+	case HFI1_IB_CFG_VL_LOW_CAP: /* VL arb low priority table size */
 		val = VL_ARB_LOW_PRIO_TABLE_SIZE;
-		अवरोध;
-	हाल HFI1_IB_CFG_OVERRUN_THRESH: /* IB overrun threshold */
+		break;
+	case HFI1_IB_CFG_OVERRUN_THRESH: /* IB overrun threshold */
 		val = ppd->overrun_threshold;
-		अवरोध;
-	हाल HFI1_IB_CFG_PHYERR_THRESH: /* IB PHY error threshold */
+		break;
+	case HFI1_IB_CFG_PHYERR_THRESH: /* IB PHY error threshold */
 		val = ppd->phy_error_threshold;
-		अवरोध;
-	हाल HFI1_IB_CFG_LINKDEFAULT: /* IB link शेष (sleep/poll) */
+		break;
+	case HFI1_IB_CFG_LINKDEFAULT: /* IB link default (sleep/poll) */
 		val = HLS_DEFAULT;
-		अवरोध;
+		break;
 
-	हाल HFI1_IB_CFG_HRTBT: /* Heartbeat off/enable/स्वतः */
-	हाल HFI1_IB_CFG_PMA_TICKS:
-	शेष:
+	case HFI1_IB_CFG_HRTBT: /* Heartbeat off/enable/auto */
+	case HFI1_IB_CFG_PMA_TICKS:
+	default:
 unimplemented:
-		अगर (HFI1_CAP_IS_KSET(PRINT_UNIMPL))
+		if (HFI1_CAP_IS_KSET(PRINT_UNIMPL))
 			dd_dev_info(
 				dd,
 				"%s: which %s: not implemented\n",
 				__func__,
 				ib_cfg_name(which));
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
 /*
  * The largest MAD packet size.
  */
-#घोषणा MAX_MAD_PACKET 2048
+#define MAX_MAD_PACKET 2048
 
 /*
  * Return the maximum header bytes that can go on the _wire_
- * क्रम this device. This count includes the ICRC which is
+ * for this device. This count includes the ICRC which is
  * not part of the packet held in memory but it is appended
  * by the HW.
  * This is dependent on the device's receive header entry size.
  * HFI allows this to be set per-receive context, but the
- * driver presently enक्रमces a global value.
+ * driver presently enforces a global value.
  */
-u32 lrh_max_header_bytes(काष्ठा hfi1_devdata *dd)
-अणु
+u32 lrh_max_header_bytes(struct hfi1_devdata *dd)
+{
 	/*
 	 * The maximum non-payload (MTU) bytes in LRH.PktLen are
 	 * the Receive Header Entry Size minus the PBC (or RHF) size
-	 * plus one DW क्रम the ICRC appended by HW.
+	 * plus one DW for the ICRC appended by HW.
 	 *
 	 * dd->rcd[0].rcvhdrqentsize is in DW.
 	 * We use rcd[0] as all context will have the same value. Also,
 	 * the first kernel context would have been allocated by now so
 	 * we are guaranteed a valid value.
 	 */
-	वापस (get_hdrqentsize(dd->rcd[0]) - 2/*PBC/RHF*/ + 1/*ICRC*/) << 2;
-पूर्ण
+	return (get_hdrqentsize(dd->rcd[0]) - 2/*PBC/RHF*/ + 1/*ICRC*/) << 2;
+}
 
 /*
  * Set Send Length
  * @ppd: per port data
  *
  * Set the MTU by limiting how many DWs may be sent.  The SendLenCheck*
- * रेजिस्टरs compare against LRH.PktLen, so use the max bytes included
+ * registers compare against LRH.PktLen, so use the max bytes included
  * in the LRH.
  *
- * This routine changes all VL values except VL15, which it मुख्यtains at
+ * This routine changes all VL values except VL15, which it maintains at
  * the same value.
  */
-अटल व्योम set_send_length(काष्ठा hfi1_pportdata *ppd)
-अणु
-	काष्ठा hfi1_devdata *dd = ppd->dd;
+static void set_send_length(struct hfi1_pportdata *ppd)
+{
+	struct hfi1_devdata *dd = ppd->dd;
 	u32 max_hb = lrh_max_header_bytes(dd), dcmtu;
 	u32 maxvlmtu = dd->vld[15].mtu;
 	u64 len1 = 0, len2 = (((dd->vld[15].mtu + max_hb) >> 2)
 			      & SEND_LEN_CHECK1_LEN_VL15_MASK) <<
 		SEND_LEN_CHECK1_LEN_VL15_SHIFT;
-	पूर्णांक i, j;
+	int i, j;
 	u32 thres;
 
-	क्रम (i = 0; i < ppd->vls_supported; i++) अणु
-		अगर (dd->vld[i].mtu > maxvlmtu)
+	for (i = 0; i < ppd->vls_supported; i++) {
+		if (dd->vld[i].mtu > maxvlmtu)
 			maxvlmtu = dd->vld[i].mtu;
-		अगर (i <= 3)
+		if (i <= 3)
 			len1 |= (((dd->vld[i].mtu + max_hb) >> 2)
 				 & SEND_LEN_CHECK0_LEN_VL0_MASK) <<
 				((i % 4) * SEND_LEN_CHECK0_LEN_VL1_SHIFT);
-		अन्यथा
+		else
 			len2 |= (((dd->vld[i].mtu + max_hb) >> 2)
 				 & SEND_LEN_CHECK1_LEN_VL4_MASK) <<
 				((i % 4) * SEND_LEN_CHECK1_LEN_VL5_SHIFT);
-	पूर्ण
-	ग_लिखो_csr(dd, SEND_LEN_CHECK0, len1);
-	ग_लिखो_csr(dd, SEND_LEN_CHECK1, len2);
-	/* adjust kernel credit वापस thresholds based on new MTUs */
+	}
+	write_csr(dd, SEND_LEN_CHECK0, len1);
+	write_csr(dd, SEND_LEN_CHECK1, len2);
+	/* adjust kernel credit return thresholds based on new MTUs */
 	/* all kernel receive contexts have the same hdrqentsize */
-	क्रम (i = 0; i < ppd->vls_supported; i++) अणु
+	for (i = 0; i < ppd->vls_supported; i++) {
 		thres = min(sc_percent_to_threshold(dd->vld[i].sc, 50),
 			    sc_mtu_to_threshold(dd->vld[i].sc,
 						dd->vld[i].mtu,
 						get_hdrqentsize(dd->rcd[0])));
-		क्रम (j = 0; j < INIT_SC_PER_VL; j++)
+		for (j = 0; j < INIT_SC_PER_VL; j++)
 			sc_set_cr_threshold(
 					pio_select_send_context_vl(dd, j, i),
 					    thres);
-	पूर्ण
+	}
 	thres = min(sc_percent_to_threshold(dd->vld[15].sc, 50),
 		    sc_mtu_to_threshold(dd->vld[15].sc,
 					dd->vld[15].mtu,
 					dd->rcd[0]->rcvhdrqentsize));
 	sc_set_cr_threshold(dd->vld[15].sc, thres);
 
-	/* Adjust maximum MTU क्रम the port in DC */
+	/* Adjust maximum MTU for the port in DC */
 	dcmtu = maxvlmtu == 10240 ? DCC_CFG_PORT_MTU_CAP_10240 :
 		(ilog2(maxvlmtu >> 8) + 1);
-	len1 = पढ़ो_csr(ppd->dd, DCC_CFG_PORT_CONFIG);
+	len1 = read_csr(ppd->dd, DCC_CFG_PORT_CONFIG);
 	len1 &= ~DCC_CFG_PORT_CONFIG_MTU_CAP_SMASK;
 	len1 |= ((u64)dcmtu & DCC_CFG_PORT_CONFIG_MTU_CAP_MASK) <<
 		DCC_CFG_PORT_CONFIG_MTU_CAP_SHIFT;
-	ग_लिखो_csr(ppd->dd, DCC_CFG_PORT_CONFIG, len1);
-पूर्ण
+	write_csr(ppd->dd, DCC_CFG_PORT_CONFIG, len1);
+}
 
-अटल व्योम set_lidlmc(काष्ठा hfi1_pportdata *ppd)
-अणु
-	पूर्णांक i;
+static void set_lidlmc(struct hfi1_pportdata *ppd)
+{
+	int i;
 	u64 sreg = 0;
-	काष्ठा hfi1_devdata *dd = ppd->dd;
+	struct hfi1_devdata *dd = ppd->dd;
 	u32 mask = ~((1U << ppd->lmc) - 1);
-	u64 c1 = पढ़ो_csr(ppd->dd, DCC_CFG_PORT_CONFIG1);
+	u64 c1 = read_csr(ppd->dd, DCC_CFG_PORT_CONFIG1);
 	u32 lid;
 
 	/*
-	 * Program 0 in CSR अगर port lid is extended. This prevents
-	 * 9B packets being sent out क्रम large lids.
+	 * Program 0 in CSR if port lid is extended. This prevents
+	 * 9B packets being sent out for large lids.
 	 */
 	lid = (ppd->lid >= be16_to_cpu(IB_MULTICAST_LID_BASE)) ? 0 : ppd->lid;
 	c1 &= ~(DCC_CFG_PORT_CONFIG1_TARGET_DLID_SMASK
@@ -10225,7 +10224,7 @@ u32 lrh_max_header_bytes(काष्ठा hfi1_devdata *dd)
 			<< DCC_CFG_PORT_CONFIG1_TARGET_DLID_SHIFT) |
 	      ((mask & DCC_CFG_PORT_CONFIG1_DLID_MASK_MASK)
 			<< DCC_CFG_PORT_CONFIG1_DLID_MASK_SHIFT);
-	ग_लिखो_csr(ppd->dd, DCC_CFG_PORT_CONFIG1, c1);
+	write_csr(ppd->dd, DCC_CFG_PORT_CONFIG1, c1);
 
 	/*
 	 * Iterate over all the send contexts and set their SLID check
@@ -10235,37 +10234,37 @@ u32 lrh_max_header_bytes(काष्ठा hfi1_devdata *dd)
 	       (((lid & mask) & SEND_CTXT_CHECK_SLID_VALUE_MASK) <<
 			SEND_CTXT_CHECK_SLID_VALUE_SHIFT);
 
-	क्रम (i = 0; i < chip_send_contexts(dd); i++) अणु
+	for (i = 0; i < chip_send_contexts(dd); i++) {
 		hfi1_cdbg(LINKVERB, "SendContext[%d].SLID_CHECK = 0x%x",
 			  i, (u32)sreg);
-		ग_लिखो_kctxt_csr(dd, i, SEND_CTXT_CHECK_SLID, sreg);
-	पूर्ण
+		write_kctxt_csr(dd, i, SEND_CTXT_CHECK_SLID, sreg);
+	}
 
-	/* Now we have to करो the same thing क्रम the sdma engines */
+	/* Now we have to do the same thing for the sdma engines */
 	sdma_update_lmc(dd, mask, lid);
-पूर्ण
+}
 
-अटल स्थिर अक्षर *state_completed_string(u32 completed)
-अणु
-	अटल स्थिर अक्षर * स्थिर state_completed[] = अणु
+static const char *state_completed_string(u32 completed)
+{
+	static const char * const state_completed[] = {
 		"EstablishComm",
 		"OptimizeEQ",
 		"VerifyCap"
-	पूर्ण;
+	};
 
-	अगर (completed < ARRAY_SIZE(state_completed))
-		वापस state_completed[completed];
+	if (completed < ARRAY_SIZE(state_completed))
+		return state_completed[completed];
 
-	वापस "unknown";
-पूर्ण
+	return "unknown";
+}
 
-अटल स्थिर अक्षर all_lanes_dead_समयout_expired[] =
-	"All lanes were inactive ै  was the interconnect media removed?";
-अटल स्थिर अक्षर tx_out_of_policy[] =
+static const char all_lanes_dead_timeout_expired[] =
+	"All lanes were inactive – was the interconnect media removed?";
+static const char tx_out_of_policy[] =
 	"Passing lanes on local port do not meet the local link width policy";
-अटल स्थिर अक्षर no_state_complete[] =
+static const char no_state_complete[] =
 	"State timeout occurred before link partner completed the state";
-अटल स्थिर अक्षर * स्थिर state_complete_reasons[] = अणु
+static const char * const state_complete_reasons[] = {
 	[0x00] = "Reason unknown",
 	[0x01] = "Link was halted by driver, refer to LinkDownReason",
 	[0x02] = "Link partner reported failure",
@@ -10282,14 +10281,14 @@ u32 lrh_max_header_bytes(काष्ठा hfi1_devdata *dd)
 	[0x16] =
 	  "Link partner completed the EstablishComm state, but the passing lanes do not meet the local link width policy",
 	[0x17] = tx_out_of_policy,
-	[0x20] = all_lanes_dead_समयout_expired,
+	[0x20] = all_lanes_dead_timeout_expired,
 	[0x21] =
 	  "Unable to achieve acceptable BER on sufficient lanes to meet the local link width policy",
 	[0x22] = no_state_complete,
 	[0x23] =
 	  "Link partner completed the OptimizeEq state, but the passing lanes do not meet the local link width policy",
 	[0x24] = tx_out_of_policy,
-	[0x30] = all_lanes_dead_समयout_expired,
+	[0x30] = all_lanes_dead_timeout_expired,
 	[0x31] =
 	  "State timeout occurred waiting for host to process received frames",
 	[0x32] = no_state_complete,
@@ -10300,26 +10299,26 @@ u32 lrh_max_header_bytes(काष्ठा hfi1_devdata *dd)
 	[0x36] =
 	  "Timed out before receiving verifycap frames in VerifyCap.Exchange",
 	[0x37] = "Unable to resolve secure data exchange",
-पूर्ण;
+};
 
-अटल स्थिर अक्षर *state_complete_reason_code_string(काष्ठा hfi1_pportdata *ppd,
+static const char *state_complete_reason_code_string(struct hfi1_pportdata *ppd,
 						     u32 code)
-अणु
-	स्थिर अक्षर *str = शून्य;
+{
+	const char *str = NULL;
 
-	अगर (code < ARRAY_SIZE(state_complete_reasons))
+	if (code < ARRAY_SIZE(state_complete_reasons))
 		str = state_complete_reasons[code];
 
-	अगर (str)
-		वापस str;
-	वापस "Reserved";
-पूर्ण
+	if (str)
+		return str;
+	return "Reserved";
+}
 
 /* describe the given last state complete frame */
-अटल व्योम decode_state_complete(काष्ठा hfi1_pportdata *ppd, u32 frame,
-				  स्थिर अक्षर *prefix)
-अणु
-	काष्ठा hfi1_devdata *dd = ppd->dd;
+static void decode_state_complete(struct hfi1_pportdata *ppd, u32 frame,
+				  const char *prefix)
+{
+	struct hfi1_devdata *dd = ppd->dd;
 	u32 success;
 	u32 state;
 	u32 reason;
@@ -10329,7 +10328,7 @@ u32 lrh_max_header_bytes(काष्ठा hfi1_devdata *dd)
 	 * Decode frame:
 	 *  [ 0: 0] - success
 	 *  [ 3: 1] - state
-	 *  [ 7: 4] - next state समयout
+	 *  [ 7: 4] - next state timeout
 	 *  [15: 8] - reason code
 	 *  [31:16] - lanes
 	 */
@@ -10347,104 +10346,104 @@ u32 lrh_max_header_bytes(काष्ठा hfi1_devdata *dd)
 	dd_dev_err(dd, "    fail reason 0x%x: %s\n",
 		   reason, state_complete_reason_code_string(ppd, reason));
 	dd_dev_err(dd, "    passing lane mask: 0x%x", lanes);
-पूर्ण
+}
 
 /*
  * Read the last state complete frames and explain them.  This routine
- * expects to be called अगर the link went करोwn during link negotiation
+ * expects to be called if the link went down during link negotiation
  * and initialization (LNI).  That is, anywhere between polling and link up.
  */
-अटल व्योम check_lni_states(काष्ठा hfi1_pportdata *ppd)
-अणु
+static void check_lni_states(struct hfi1_pportdata *ppd)
+{
 	u32 last_local_state;
 	u32 last_remote_state;
 
-	पढ़ो_last_local_state(ppd->dd, &last_local_state);
-	पढ़ो_last_remote_state(ppd->dd, &last_remote_state);
+	read_last_local_state(ppd->dd, &last_local_state);
+	read_last_remote_state(ppd->dd, &last_remote_state);
 
 	/*
-	 * Don't report anything अगर there is nothing to report.  A value of
-	 * 0 means the link was taken करोwn जबतक polling and there was no
+	 * Don't report anything if there is nothing to report.  A value of
+	 * 0 means the link was taken down while polling and there was no
 	 * training in-process.
 	 */
-	अगर (last_local_state == 0 && last_remote_state == 0)
-		वापस;
+	if (last_local_state == 0 && last_remote_state == 0)
+		return;
 
 	decode_state_complete(ppd, last_local_state, "transmitted");
 	decode_state_complete(ppd, last_remote_state, "received");
-पूर्ण
+}
 
-/* रुको क्रम रुको_ms क्रम LINK_TRANSFER_ACTIVE to go to 1 */
-अटल पूर्णांक रुको_link_transfer_active(काष्ठा hfi1_devdata *dd, पूर्णांक रुको_ms)
-अणु
+/* wait for wait_ms for LINK_TRANSFER_ACTIVE to go to 1 */
+static int wait_link_transfer_active(struct hfi1_devdata *dd, int wait_ms)
+{
 	u64 reg;
-	अचिन्हित दीर्घ समयout;
+	unsigned long timeout;
 
 	/* watch LCB_STS_LINK_TRANSFER_ACTIVE */
-	समयout = jअगरfies + msecs_to_jअगरfies(रुको_ms);
-	जबतक (1) अणु
-		reg = पढ़ो_csr(dd, DC_LCB_STS_LINK_TRANSFER_ACTIVE);
-		अगर (reg)
-			अवरोध;
-		अगर (समय_after(jअगरfies, समयout)) अणु
+	timeout = jiffies + msecs_to_jiffies(wait_ms);
+	while (1) {
+		reg = read_csr(dd, DC_LCB_STS_LINK_TRANSFER_ACTIVE);
+		if (reg)
+			break;
+		if (time_after(jiffies, timeout)) {
 			dd_dev_err(dd,
 				   "timeout waiting for LINK_TRANSFER_ACTIVE\n");
-			वापस -ETIMEDOUT;
-		पूर्ण
+			return -ETIMEDOUT;
+		}
 		udelay(2);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-/* called when the logical link state is not करोwn as it should be */
-अटल व्योम क्रमce_logical_link_state_करोwn(काष्ठा hfi1_pportdata *ppd)
-अणु
-	काष्ठा hfi1_devdata *dd = ppd->dd;
+/* called when the logical link state is not down as it should be */
+static void force_logical_link_state_down(struct hfi1_pportdata *ppd)
+{
+	struct hfi1_devdata *dd = ppd->dd;
 
 	/*
 	 * Bring link up in LCB loopback
 	 */
-	ग_लिखो_csr(dd, DC_LCB_CFG_TX_FIFOS_RESET, 1);
-	ग_लिखो_csr(dd, DC_LCB_CFG_IGNORE_LOST_RCLK,
+	write_csr(dd, DC_LCB_CFG_TX_FIFOS_RESET, 1);
+	write_csr(dd, DC_LCB_CFG_IGNORE_LOST_RCLK,
 		  DC_LCB_CFG_IGNORE_LOST_RCLK_EN_SMASK);
 
-	ग_लिखो_csr(dd, DC_LCB_CFG_LANE_WIDTH, 0);
-	ग_लिखो_csr(dd, DC_LCB_CFG_REINIT_AS_SLAVE, 0);
-	ग_लिखो_csr(dd, DC_LCB_CFG_CNT_FOR_SKIP_STALL, 0x110);
-	ग_लिखो_csr(dd, DC_LCB_CFG_LOOPBACK, 0x2);
+	write_csr(dd, DC_LCB_CFG_LANE_WIDTH, 0);
+	write_csr(dd, DC_LCB_CFG_REINIT_AS_SLAVE, 0);
+	write_csr(dd, DC_LCB_CFG_CNT_FOR_SKIP_STALL, 0x110);
+	write_csr(dd, DC_LCB_CFG_LOOPBACK, 0x2);
 
-	ग_लिखो_csr(dd, DC_LCB_CFG_TX_FIFOS_RESET, 0);
-	(व्योम)पढ़ो_csr(dd, DC_LCB_CFG_TX_FIFOS_RESET);
+	write_csr(dd, DC_LCB_CFG_TX_FIFOS_RESET, 0);
+	(void)read_csr(dd, DC_LCB_CFG_TX_FIFOS_RESET);
 	udelay(3);
-	ग_लिखो_csr(dd, DC_LCB_CFG_ALLOW_LINK_UP, 1);
-	ग_लिखो_csr(dd, DC_LCB_CFG_RUN, 1ull << DC_LCB_CFG_RUN_EN_SHIFT);
+	write_csr(dd, DC_LCB_CFG_ALLOW_LINK_UP, 1);
+	write_csr(dd, DC_LCB_CFG_RUN, 1ull << DC_LCB_CFG_RUN_EN_SHIFT);
 
-	रुको_link_transfer_active(dd, 100);
+	wait_link_transfer_active(dd, 100);
 
 	/*
-	 * Bring the link करोwn again.
+	 * Bring the link down again.
 	 */
-	ग_लिखो_csr(dd, DC_LCB_CFG_TX_FIFOS_RESET, 1);
-	ग_लिखो_csr(dd, DC_LCB_CFG_ALLOW_LINK_UP, 0);
-	ग_लिखो_csr(dd, DC_LCB_CFG_IGNORE_LOST_RCLK, 0);
+	write_csr(dd, DC_LCB_CFG_TX_FIFOS_RESET, 1);
+	write_csr(dd, DC_LCB_CFG_ALLOW_LINK_UP, 0);
+	write_csr(dd, DC_LCB_CFG_IGNORE_LOST_RCLK, 0);
 
 	dd_dev_info(ppd->dd, "logical state forced to LINK_DOWN\n");
-पूर्ण
+}
 
 /*
- * Helper क्रम set_link_state().  Do not call except from that routine.
+ * Helper for set_link_state().  Do not call except from that routine.
  * Expects ppd->hls_mutex to be held.
  *
  * @rem_reason value to be sent to the neighbor
  *
- * LinkDownReasons only set अगर transition succeeds.
+ * LinkDownReasons only set if transition succeeds.
  */
-अटल पूर्णांक जाओ_offline(काष्ठा hfi1_pportdata *ppd, u8 rem_reason)
-अणु
-	काष्ठा hfi1_devdata *dd = ppd->dd;
+static int goto_offline(struct hfi1_pportdata *ppd, u8 rem_reason)
+{
+	struct hfi1_devdata *dd = ppd->dd;
 	u32 previous_state;
-	पूर्णांक offline_state_ret;
-	पूर्णांक ret;
+	int offline_state_ret;
+	int ret;
 
 	update_lcb_cache(dd);
 
@@ -10454,114 +10453,114 @@ u32 lrh_max_header_bytes(काष्ठा hfi1_devdata *dd)
 	/* start offline transition */
 	ret = set_physical_link_state(dd, (rem_reason << 8) | PLS_OFFLINE);
 
-	अगर (ret != HCMD_SUCCESS) अणु
+	if (ret != HCMD_SUCCESS) {
 		dd_dev_err(dd,
 			   "Failed to transition to Offline link state, return %d\n",
 			   ret);
-		वापस -EINVAL;
-	पूर्ण
-	अगर (ppd->offline_disabled_reason ==
+		return -EINVAL;
+	}
+	if (ppd->offline_disabled_reason ==
 			HFI1_ODR_MASK(OPA_LINKDOWN_REASON_NONE))
 		ppd->offline_disabled_reason =
 		HFI1_ODR_MASK(OPA_LINKDOWN_REASON_TRANSIENT);
 
-	offline_state_ret = रुको_phys_link_offline_substates(ppd, 10000);
-	अगर (offline_state_ret < 0)
-		वापस offline_state_ret;
+	offline_state_ret = wait_phys_link_offline_substates(ppd, 10000);
+	if (offline_state_ret < 0)
+		return offline_state_ret;
 
 	/* Disabling AOC transmitters */
-	अगर (ppd->port_type == PORT_TYPE_QSFP &&
+	if (ppd->port_type == PORT_TYPE_QSFP &&
 	    ppd->qsfp_info.limiting_active &&
-	    qsfp_mod_present(ppd)) अणु
-		पूर्णांक ret;
+	    qsfp_mod_present(ppd)) {
+		int ret;
 
 		ret = acquire_chip_resource(dd, qsfp_resource(dd), QSFP_WAIT);
-		अगर (ret == 0) अणु
+		if (ret == 0) {
 			set_qsfp_tx(ppd, 0);
 			release_chip_resource(dd, qsfp_resource(dd));
-		पूर्ण अन्यथा अणु
+		} else {
 			/* not fatal, but should warn */
 			dd_dev_err(dd,
 				   "Unable to acquire lock to turn off QSFP TX\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
-	 * Wait क्रम the offline.Quiet transition अगर it hasn't happened yet. It
-	 * can take a जबतक क्रम the link to go करोwn.
+	 * Wait for the offline.Quiet transition if it hasn't happened yet. It
+	 * can take a while for the link to go down.
 	 */
-	अगर (offline_state_ret != PLS_OFFLINE_QUIET) अणु
-		ret = रुको_physical_linkstate(ppd, PLS_OFFLINE, 30000);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+	if (offline_state_ret != PLS_OFFLINE_QUIET) {
+		ret = wait_physical_linkstate(ppd, PLS_OFFLINE, 30000);
+		if (ret < 0)
+			return ret;
+	}
 
 	/*
-	 * Now in अक्षरge of LCB - must be after the physical state is
-	 * offline.quiet and beक्रमe host_link_state is changed.
+	 * Now in charge of LCB - must be after the physical state is
+	 * offline.quiet and before host_link_state is changed.
 	 */
 	set_host_lcb_access(dd);
-	ग_लिखो_csr(dd, DC_LCB_ERR_EN, ~0ull); /* watch LCB errors */
+	write_csr(dd, DC_LCB_ERR_EN, ~0ull); /* watch LCB errors */
 
-	/* make sure the logical state is also करोwn */
-	ret = रुको_logical_linkstate(ppd, IB_PORT_DOWN, 1000);
-	अगर (ret)
-		क्रमce_logical_link_state_करोwn(ppd);
+	/* make sure the logical state is also down */
+	ret = wait_logical_linkstate(ppd, IB_PORT_DOWN, 1000);
+	if (ret)
+		force_logical_link_state_down(ppd);
 
 	ppd->host_link_state = HLS_LINK_COOLDOWN; /* LCB access allowed */
 	update_statusp(ppd, IB_PORT_DOWN);
 
 	/*
-	 * The LNI has a mandatory रुको समय after the physical state
-	 * moves to Offline.Quiet.  The रुको समय may be dअगरferent
-	 * depending on how the link went करोwn.  The 8051 firmware
-	 * will observe the needed रुको समय and only move to पढ़ोy
-	 * when that is completed.  The largest of the quiet समयouts
-	 * is 6s, so रुको that दीर्घ and then at least 0.5s more क्रम
-	 * other transitions, and another 0.5s क्रम a buffer.
+	 * The LNI has a mandatory wait time after the physical state
+	 * moves to Offline.Quiet.  The wait time may be different
+	 * depending on how the link went down.  The 8051 firmware
+	 * will observe the needed wait time and only move to ready
+	 * when that is completed.  The largest of the quiet timeouts
+	 * is 6s, so wait that long and then at least 0.5s more for
+	 * other transitions, and another 0.5s for a buffer.
 	 */
-	ret = रुको_fm_पढ़ोy(dd, 7000);
-	अगर (ret) अणु
+	ret = wait_fm_ready(dd, 7000);
+	if (ret) {
 		dd_dev_err(dd,
 			   "After going offline, timed out waiting for the 8051 to become ready to accept host requests\n");
 		/* state is really offline, so make it so */
 		ppd->host_link_state = HLS_DN_OFFLINE;
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/*
-	 * The state is now offline and the 8051 is पढ़ोy to accept host
+	 * The state is now offline and the 8051 is ready to accept host
 	 * requests.
 	 *	- change our state
-	 *	- notअगरy others अगर we were previously in a linkup state
+	 *	- notify others if we were previously in a linkup state
 	 */
 	ppd->host_link_state = HLS_DN_OFFLINE;
-	अगर (previous_state & HLS_UP) अणु
-		/* went करोwn जबतक link was up */
+	if (previous_state & HLS_UP) {
+		/* went down while link was up */
 		handle_linkup_change(dd, 0);
-	पूर्ण अन्यथा अगर (previous_state
-			& (HLS_DN_POLL | HLS_VERIFY_CAP | HLS_GOING_UP)) अणु
-		/* went करोwn जबतक attempting link up */
+	} else if (previous_state
+			& (HLS_DN_POLL | HLS_VERIFY_CAP | HLS_GOING_UP)) {
+		/* went down while attempting link up */
 		check_lni_states(ppd);
 
-		/* The QSFP करोesn't need to be reset on LNI failure */
+		/* The QSFP doesn't need to be reset on LNI failure */
 		ppd->qsfp_info.reset_needed = 0;
-	पूर्ण
+	}
 
-	/* the active link width (करोwngrade) is 0 on link करोwn */
+	/* the active link width (downgrade) is 0 on link down */
 	ppd->link_width_active = 0;
-	ppd->link_width_करोwngrade_tx_active = 0;
-	ppd->link_width_करोwngrade_rx_active = 0;
+	ppd->link_width_downgrade_tx_active = 0;
+	ppd->link_width_downgrade_rx_active = 0;
 	ppd->current_egress_rate = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* वापस the link state name */
-अटल स्थिर अक्षर *link_state_name(u32 state)
-अणु
-	स्थिर अक्षर *name;
-	पूर्णांक n = ilog2(state);
-	अटल स्थिर अक्षर * स्थिर names[] = अणु
+/* return the link state name */
+static const char *link_state_name(u32 state)
+{
+	const char *name;
+	int n = ilog2(state);
+	static const char * const names[] = {
 		[__HLS_UP_INIT_BP]	 = "INIT",
 		[__HLS_UP_ARMED_BP]	 = "ARMED",
 		[__HLS_UP_ACTIVE_BP]	 = "ACTIVE",
@@ -10573,150 +10572,150 @@ u32 lrh_max_header_bytes(काष्ठा hfi1_devdata *dd)
 		[__HLS_GOING_UP_BP]	 = "GOING_UP",
 		[__HLS_GOING_OFFLINE_BP] = "GOING_OFFLINE",
 		[__HLS_LINK_COOLDOWN_BP] = "LINK_COOLDOWN"
-	पूर्ण;
+	};
 
-	name = n < ARRAY_SIZE(names) ? names[n] : शून्य;
-	वापस name ? name : "unknown";
-पूर्ण
+	name = n < ARRAY_SIZE(names) ? names[n] : NULL;
+	return name ? name : "unknown";
+}
 
-/* वापस the link state reason name */
-अटल स्थिर अक्षर *link_state_reason_name(काष्ठा hfi1_pportdata *ppd, u32 state)
-अणु
-	अगर (state == HLS_UP_INIT) अणु
-		चयन (ppd->linkinit_reason) अणु
-		हाल OPA_LINKINIT_REASON_LINKUP:
-			वापस "(LINKUP)";
-		हाल OPA_LINKINIT_REASON_FLAPPING:
-			वापस "(FLAPPING)";
-		हाल OPA_LINKINIT_OUTSIDE_POLICY:
-			वापस "(OUTSIDE_POLICY)";
-		हाल OPA_LINKINIT_QUARANTINED:
-			वापस "(QUARANTINED)";
-		हाल OPA_LINKINIT_INSUFIC_CAPABILITY:
-			वापस "(INSUFIC_CAPABILITY)";
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	वापस "";
-पूर्ण
+/* return the link state reason name */
+static const char *link_state_reason_name(struct hfi1_pportdata *ppd, u32 state)
+{
+	if (state == HLS_UP_INIT) {
+		switch (ppd->linkinit_reason) {
+		case OPA_LINKINIT_REASON_LINKUP:
+			return "(LINKUP)";
+		case OPA_LINKINIT_REASON_FLAPPING:
+			return "(FLAPPING)";
+		case OPA_LINKINIT_OUTSIDE_POLICY:
+			return "(OUTSIDE_POLICY)";
+		case OPA_LINKINIT_QUARANTINED:
+			return "(QUARANTINED)";
+		case OPA_LINKINIT_INSUFIC_CAPABILITY:
+			return "(INSUFIC_CAPABILITY)";
+		default:
+			break;
+		}
+	}
+	return "";
+}
 
 /*
  * driver_pstate - convert the driver's notion of a port's
- * state (an HLS_*) पूर्णांकo a physical state (a अणुIB,OPAपूर्ण_PORTPHYSSTATE_*).
+ * state (an HLS_*) into a physical state (a {IB,OPA}_PORTPHYSSTATE_*).
  * Return -1 (converted to a u32) to indicate error.
  */
-u32 driver_pstate(काष्ठा hfi1_pportdata *ppd)
-अणु
-	चयन (ppd->host_link_state) अणु
-	हाल HLS_UP_INIT:
-	हाल HLS_UP_ARMED:
-	हाल HLS_UP_ACTIVE:
-		वापस IB_PORTPHYSSTATE_LINKUP;
-	हाल HLS_DN_POLL:
-		वापस IB_PORTPHYSSTATE_POLLING;
-	हाल HLS_DN_DISABLE:
-		वापस IB_PORTPHYSSTATE_DISABLED;
-	हाल HLS_DN_OFFLINE:
-		वापस OPA_PORTPHYSSTATE_OFFLINE;
-	हाल HLS_VERIFY_CAP:
-		वापस IB_PORTPHYSSTATE_TRAINING;
-	हाल HLS_GOING_UP:
-		वापस IB_PORTPHYSSTATE_TRAINING;
-	हाल HLS_GOING_OFFLINE:
-		वापस OPA_PORTPHYSSTATE_OFFLINE;
-	हाल HLS_LINK_COOLDOWN:
-		वापस OPA_PORTPHYSSTATE_OFFLINE;
-	हाल HLS_DN_DOWNDEF:
-	शेष:
+u32 driver_pstate(struct hfi1_pportdata *ppd)
+{
+	switch (ppd->host_link_state) {
+	case HLS_UP_INIT:
+	case HLS_UP_ARMED:
+	case HLS_UP_ACTIVE:
+		return IB_PORTPHYSSTATE_LINKUP;
+	case HLS_DN_POLL:
+		return IB_PORTPHYSSTATE_POLLING;
+	case HLS_DN_DISABLE:
+		return IB_PORTPHYSSTATE_DISABLED;
+	case HLS_DN_OFFLINE:
+		return OPA_PORTPHYSSTATE_OFFLINE;
+	case HLS_VERIFY_CAP:
+		return IB_PORTPHYSSTATE_TRAINING;
+	case HLS_GOING_UP:
+		return IB_PORTPHYSSTATE_TRAINING;
+	case HLS_GOING_OFFLINE:
+		return OPA_PORTPHYSSTATE_OFFLINE;
+	case HLS_LINK_COOLDOWN:
+		return OPA_PORTPHYSSTATE_OFFLINE;
+	case HLS_DN_DOWNDEF:
+	default:
 		dd_dev_err(ppd->dd, "invalid host_link_state 0x%x\n",
 			   ppd->host_link_state);
-		वापस  -1;
-	पूर्ण
-पूर्ण
+		return  -1;
+	}
+}
 
 /*
  * driver_lstate - convert the driver's notion of a port's
- * state (an HLS_*) पूर्णांकo a logical state (a IB_PORT_*). Return -1
+ * state (an HLS_*) into a logical state (a IB_PORT_*). Return -1
  * (converted to a u32) to indicate error.
  */
-u32 driver_lstate(काष्ठा hfi1_pportdata *ppd)
-अणु
-	अगर (ppd->host_link_state && (ppd->host_link_state & HLS_DOWN))
-		वापस IB_PORT_DOWN;
+u32 driver_lstate(struct hfi1_pportdata *ppd)
+{
+	if (ppd->host_link_state && (ppd->host_link_state & HLS_DOWN))
+		return IB_PORT_DOWN;
 
-	चयन (ppd->host_link_state & HLS_UP) अणु
-	हाल HLS_UP_INIT:
-		वापस IB_PORT_INIT;
-	हाल HLS_UP_ARMED:
-		वापस IB_PORT_ARMED;
-	हाल HLS_UP_ACTIVE:
-		वापस IB_PORT_ACTIVE;
-	शेष:
+	switch (ppd->host_link_state & HLS_UP) {
+	case HLS_UP_INIT:
+		return IB_PORT_INIT;
+	case HLS_UP_ARMED:
+		return IB_PORT_ARMED;
+	case HLS_UP_ACTIVE:
+		return IB_PORT_ACTIVE;
+	default:
 		dd_dev_err(ppd->dd, "invalid host_link_state 0x%x\n",
 			   ppd->host_link_state);
-	वापस -1;
-	पूर्ण
-पूर्ण
+	return -1;
+	}
+}
 
-व्योम set_link_करोwn_reason(काष्ठा hfi1_pportdata *ppd, u8 lcl_reason,
+void set_link_down_reason(struct hfi1_pportdata *ppd, u8 lcl_reason,
 			  u8 neigh_reason, u8 rem_reason)
-अणु
-	अगर (ppd->local_link_करोwn_reason.latest == 0 &&
-	    ppd->neigh_link_करोwn_reason.latest == 0) अणु
-		ppd->local_link_करोwn_reason.latest = lcl_reason;
-		ppd->neigh_link_करोwn_reason.latest = neigh_reason;
-		ppd->remote_link_करोwn_reason = rem_reason;
-	पूर्ण
-पूर्ण
+{
+	if (ppd->local_link_down_reason.latest == 0 &&
+	    ppd->neigh_link_down_reason.latest == 0) {
+		ppd->local_link_down_reason.latest = lcl_reason;
+		ppd->neigh_link_down_reason.latest = neigh_reason;
+		ppd->remote_link_down_reason = rem_reason;
+	}
+}
 
 /**
- * data_vls_operational() - Verअगरy अगर data VL BCT credits and MTU
+ * data_vls_operational() - Verify if data VL BCT credits and MTU
  *			    are both set.
- * @ppd: poपूर्णांकer to hfi1_pportdata काष्ठाure
+ * @ppd: pointer to hfi1_pportdata structure
  *
  * Return: true - Ok, false -otherwise.
  */
-अटल अंतरभूत bool data_vls_operational(काष्ठा hfi1_pportdata *ppd)
-अणु
-	पूर्णांक i;
+static inline bool data_vls_operational(struct hfi1_pportdata *ppd)
+{
+	int i;
 	u64 reg;
 
-	अगर (!ppd->actual_vls_operational)
-		वापस false;
+	if (!ppd->actual_vls_operational)
+		return false;
 
-	क्रम (i = 0; i < ppd->vls_supported; i++) अणु
-		reg = पढ़ो_csr(ppd->dd, SEND_CM_CREDIT_VL + (8 * i));
-		अगर ((reg && !ppd->dd->vld[i].mtu) ||
+	for (i = 0; i < ppd->vls_supported; i++) {
+		reg = read_csr(ppd->dd, SEND_CM_CREDIT_VL + (8 * i));
+		if ((reg && !ppd->dd->vld[i].mtu) ||
 		    (!reg && ppd->dd->vld[i].mtu))
-			वापस false;
-	पूर्ण
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /*
  * Change the physical and/or logical link state.
  *
- * Do not call this routine जबतक inside an पूर्णांकerrupt.  It contains
+ * Do not call this routine while inside an interrupt.  It contains
  * calls to routines that can take multiple seconds to finish.
  *
- * Returns 0 on success, -त्रुटि_सं on failure.
+ * Returns 0 on success, -errno on failure.
  */
-पूर्णांक set_link_state(काष्ठा hfi1_pportdata *ppd, u32 state)
-अणु
-	काष्ठा hfi1_devdata *dd = ppd->dd;
-	काष्ठा ib_event event = अणु.device = शून्यपूर्ण;
-	पूर्णांक ret1, ret = 0;
-	पूर्णांक orig_new_state, poll_bounce;
+int set_link_state(struct hfi1_pportdata *ppd, u32 state)
+{
+	struct hfi1_devdata *dd = ppd->dd;
+	struct ib_event event = {.device = NULL};
+	int ret1, ret = 0;
+	int orig_new_state, poll_bounce;
 
 	mutex_lock(&ppd->hls_lock);
 
 	orig_new_state = state;
-	अगर (state == HLS_DN_DOWNDEF)
+	if (state == HLS_DN_DOWNDEF)
 		state = HLS_DEFAULT;
 
-	/* पूर्णांकerpret poll -> poll as a link bounce */
+	/* interpret poll -> poll as a link bounce */
 	poll_bounce = ppd->host_link_state == HLS_DN_POLL &&
 		      state == HLS_DN_POLL;
 
@@ -10731,20 +10730,20 @@ u32 driver_lstate(काष्ठा hfi1_pportdata *ppd)
 	 * link state is neither of (IB_PORT_ARMED, IB_PORT_ACTIVE), then
 	 * reset is_sm_config_started to 0.
 	 */
-	अगर (!(state & (HLS_UP_ARMED | HLS_UP_ACTIVE)))
+	if (!(state & (HLS_UP_ARMED | HLS_UP_ACTIVE)))
 		ppd->is_sm_config_started = 0;
 
 	/*
-	 * Do nothing अगर the states match.  Let a poll to poll link bounce
+	 * Do nothing if the states match.  Let a poll to poll link bounce
 	 * go through.
 	 */
-	अगर (ppd->host_link_state == state && !poll_bounce)
-		जाओ करोne;
+	if (ppd->host_link_state == state && !poll_bounce)
+		goto done;
 
-	चयन (state) अणु
-	हाल HLS_UP_INIT:
-		अगर (ppd->host_link_state == HLS_DN_POLL &&
-		    (quick_linkup || dd->icode == ICODE_FUNCTIONAL_SIMULATOR)) अणु
+	switch (state) {
+	case HLS_UP_INIT:
+		if (ppd->host_link_state == HLS_DN_POLL &&
+		    (quick_linkup || dd->icode == ICODE_FUNCTIONAL_SIMULATOR)) {
 			/*
 			 * Quick link up jumps from polling to here.
 			 *
@@ -10753,33 +10752,33 @@ u32 driver_lstate(काष्ठा hfi1_pportdata *ppd)
 			 * Accept that here.
 			 */
 			/* OK */
-		पूर्ण अन्यथा अगर (ppd->host_link_state != HLS_GOING_UP) अणु
-			जाओ unexpected;
-		पूर्ण
+		} else if (ppd->host_link_state != HLS_GOING_UP) {
+			goto unexpected;
+		}
 
 		/*
-		 * Wait क्रम Link_Up physical state.
-		 * Physical and Logical states should alपढ़ोy be
+		 * Wait for Link_Up physical state.
+		 * Physical and Logical states should already be
 		 * be transitioned to LinkUp and LinkInit respectively.
 		 */
-		ret = रुको_physical_linkstate(ppd, PLS_LINKUP, 1000);
-		अगर (ret) अणु
+		ret = wait_physical_linkstate(ppd, PLS_LINKUP, 1000);
+		if (ret) {
 			dd_dev_err(dd,
 				   "%s: physical state did not change to LINK-UP\n",
 				   __func__);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		ret = रुको_logical_linkstate(ppd, IB_PORT_INIT, 1000);
-		अगर (ret) अणु
+		ret = wait_logical_linkstate(ppd, IB_PORT_INIT, 1000);
+		if (ret) {
 			dd_dev_err(dd,
 				   "%s: logical state did not change to INIT\n",
 				   __func__);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		/* clear old transient LINKINIT_REASON code */
-		अगर (ppd->linkinit_reason >= OPA_LINKINIT_REASON_CLEAR)
+		if (ppd->linkinit_reason >= OPA_LINKINIT_REASON_CLEAR)
 			ppd->linkinit_reason =
 				OPA_LINKINIT_REASON_LINKUP;
 
@@ -10798,48 +10797,48 @@ u32 driver_lstate(काष्ठा hfi1_pportdata *ppd)
 
 		ppd->host_link_state = HLS_UP_INIT;
 		update_statusp(ppd, IB_PORT_INIT);
-		अवरोध;
-	हाल HLS_UP_ARMED:
-		अगर (ppd->host_link_state != HLS_UP_INIT)
-			जाओ unexpected;
+		break;
+	case HLS_UP_ARMED:
+		if (ppd->host_link_state != HLS_UP_INIT)
+			goto unexpected;
 
-		अगर (!data_vls_operational(ppd)) अणु
+		if (!data_vls_operational(ppd)) {
 			dd_dev_err(dd,
 				   "%s: Invalid data VL credits or mtu\n",
 				   __func__);
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		set_logical_state(dd, LSTATE_ARMED);
-		ret = रुको_logical_linkstate(ppd, IB_PORT_ARMED, 1000);
-		अगर (ret) अणु
+		ret = wait_logical_linkstate(ppd, IB_PORT_ARMED, 1000);
+		if (ret) {
 			dd_dev_err(dd,
 				   "%s: logical state did not change to ARMED\n",
 				   __func__);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ppd->host_link_state = HLS_UP_ARMED;
 		update_statusp(ppd, IB_PORT_ARMED);
 		/*
-		 * The simulator करोes not currently implement SMA messages,
+		 * The simulator does not currently implement SMA messages,
 		 * so neighbor_normal is not set.  Set it here when we first
 		 * move to Armed.
 		 */
-		अगर (dd->icode == ICODE_FUNCTIONAL_SIMULATOR)
+		if (dd->icode == ICODE_FUNCTIONAL_SIMULATOR)
 			ppd->neighbor_normal = 1;
-		अवरोध;
-	हाल HLS_UP_ACTIVE:
-		अगर (ppd->host_link_state != HLS_UP_ARMED)
-			जाओ unexpected;
+		break;
+	case HLS_UP_ACTIVE:
+		if (ppd->host_link_state != HLS_UP_ARMED)
+			goto unexpected;
 
 		set_logical_state(dd, LSTATE_ACTIVE);
-		ret = रुको_logical_linkstate(ppd, IB_PORT_ACTIVE, 1000);
-		अगर (ret) अणु
+		ret = wait_logical_linkstate(ppd, IB_PORT_ACTIVE, 1000);
+		if (ret) {
 			dd_dev_err(dd,
 				   "%s: logical state did not change to ACTIVE\n",
 				   __func__);
-		पूर्ण अन्यथा अणु
+		} else {
 			/* tell all engines to go running */
 			sdma_all_running(dd);
 			ppd->host_link_state = HLS_UP_ACTIVE;
@@ -10849,57 +10848,57 @@ u32 driver_lstate(काष्ठा hfi1_pportdata *ppd)
 			event.device = &dd->verbs_dev.rdi.ibdev;
 			event.element.port_num = ppd->port;
 			event.event = IB_EVENT_PORT_ACTIVE;
-		पूर्ण
-		अवरोध;
-	हाल HLS_DN_POLL:
-		अगर ((ppd->host_link_state == HLS_DN_DISABLE ||
+		}
+		break;
+	case HLS_DN_POLL:
+		if ((ppd->host_link_state == HLS_DN_DISABLE ||
 		     ppd->host_link_state == HLS_DN_OFFLINE) &&
-		    dd->dc_shutकरोwn)
+		    dd->dc_shutdown)
 			dc_start(dd);
 		/* Hand LED control to the DC */
-		ग_लिखो_csr(dd, DCC_CFG_LED_CNTRL, 0);
+		write_csr(dd, DCC_CFG_LED_CNTRL, 0);
 
-		अगर (ppd->host_link_state != HLS_DN_OFFLINE) अणु
-			u8 पंचांगp = ppd->link_enabled;
+		if (ppd->host_link_state != HLS_DN_OFFLINE) {
+			u8 tmp = ppd->link_enabled;
 
-			ret = जाओ_offline(ppd, ppd->remote_link_करोwn_reason);
-			अगर (ret) अणु
-				ppd->link_enabled = पंचांगp;
-				अवरोध;
-			पूर्ण
-			ppd->remote_link_करोwn_reason = 0;
+			ret = goto_offline(ppd, ppd->remote_link_down_reason);
+			if (ret) {
+				ppd->link_enabled = tmp;
+				break;
+			}
+			ppd->remote_link_down_reason = 0;
 
-			अगर (ppd->driver_link_पढ़ोy)
+			if (ppd->driver_link_ready)
 				ppd->link_enabled = 1;
-		पूर्ण
+		}
 
 		set_all_slowpath(ppd->dd);
 		ret = set_local_link_attributes(ppd);
-		अगर (ret)
-			अवरोध;
+		if (ret)
+			break;
 
 		ppd->port_error_action = 0;
 
-		अगर (quick_linkup) अणु
-			/* quick linkup करोes not go पूर्णांकo polling */
-			ret = करो_quick_linkup(dd);
-		पूर्ण अन्यथा अणु
+		if (quick_linkup) {
+			/* quick linkup does not go into polling */
+			ret = do_quick_linkup(dd);
+		} else {
 			ret1 = set_physical_link_state(dd, PLS_POLLING);
-			अगर (!ret1)
-				ret1 = रुको_phys_link_out_of_offline(ppd,
+			if (!ret1)
+				ret1 = wait_phys_link_out_of_offline(ppd,
 								     3000);
-			अगर (ret1 != HCMD_SUCCESS) अणु
+			if (ret1 != HCMD_SUCCESS) {
 				dd_dev_err(dd,
 					   "Failed to transition to Polling link state, return 0x%x\n",
 					   ret1);
 				ret = -EINVAL;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/*
 		 * Change the host link state after requesting DC8051 to
 		 * change its physical state so that we can ignore any
-		 * पूर्णांकerrupt with stale LNI(XX) error, which will not be
+		 * interrupt with stale LNI(XX) error, which will not be
 		 * cleared until DC8051 transitions to Polling state.
 		 */
 		ppd->host_link_state = HLS_DN_POLL;
@@ -10909,85 +10908,85 @@ u32 driver_lstate(काष्ठा hfi1_pportdata *ppd)
 		 * If an error occurred above, go back to offline.  The
 		 * caller may reschedule another attempt.
 		 */
-		अगर (ret)
-			जाओ_offline(ppd, 0);
-		अन्यथा
+		if (ret)
+			goto_offline(ppd, 0);
+		else
 			log_physical_state(ppd, PLS_POLLING);
-		अवरोध;
-	हाल HLS_DN_DISABLE:
+		break;
+	case HLS_DN_DISABLE:
 		/* link is disabled */
 		ppd->link_enabled = 0;
 
 		/* allow any state to transition to disabled */
 
 		/* must transition to offline first */
-		अगर (ppd->host_link_state != HLS_DN_OFFLINE) अणु
-			ret = जाओ_offline(ppd, ppd->remote_link_करोwn_reason);
-			अगर (ret)
-				अवरोध;
-			ppd->remote_link_करोwn_reason = 0;
-		पूर्ण
+		if (ppd->host_link_state != HLS_DN_OFFLINE) {
+			ret = goto_offline(ppd, ppd->remote_link_down_reason);
+			if (ret)
+				break;
+			ppd->remote_link_down_reason = 0;
+		}
 
-		अगर (!dd->dc_shutकरोwn) अणु
+		if (!dd->dc_shutdown) {
 			ret1 = set_physical_link_state(dd, PLS_DISABLED);
-			अगर (ret1 != HCMD_SUCCESS) अणु
+			if (ret1 != HCMD_SUCCESS) {
 				dd_dev_err(dd,
 					   "Failed to transition to Disabled link state, return 0x%x\n",
 					   ret1);
 				ret = -EINVAL;
-				अवरोध;
-			पूर्ण
-			ret = रुको_physical_linkstate(ppd, PLS_DISABLED, 10000);
-			अगर (ret) अणु
+				break;
+			}
+			ret = wait_physical_linkstate(ppd, PLS_DISABLED, 10000);
+			if (ret) {
 				dd_dev_err(dd,
 					   "%s: physical state did not change to DISABLED\n",
 					   __func__);
-				अवरोध;
-			पूर्ण
-			dc_shutकरोwn(dd);
-		पूर्ण
+				break;
+			}
+			dc_shutdown(dd);
+		}
 		ppd->host_link_state = HLS_DN_DISABLE;
-		अवरोध;
-	हाल HLS_DN_OFFLINE:
-		अगर (ppd->host_link_state == HLS_DN_DISABLE)
+		break;
+	case HLS_DN_OFFLINE:
+		if (ppd->host_link_state == HLS_DN_DISABLE)
 			dc_start(dd);
 
 		/* allow any state to transition to offline */
-		ret = जाओ_offline(ppd, ppd->remote_link_करोwn_reason);
-		अगर (!ret)
-			ppd->remote_link_करोwn_reason = 0;
-		अवरोध;
-	हाल HLS_VERIFY_CAP:
-		अगर (ppd->host_link_state != HLS_DN_POLL)
-			जाओ unexpected;
+		ret = goto_offline(ppd, ppd->remote_link_down_reason);
+		if (!ret)
+			ppd->remote_link_down_reason = 0;
+		break;
+	case HLS_VERIFY_CAP:
+		if (ppd->host_link_state != HLS_DN_POLL)
+			goto unexpected;
 		ppd->host_link_state = HLS_VERIFY_CAP;
 		log_physical_state(ppd, PLS_CONFIGPHY_VERIFYCAP);
-		अवरोध;
-	हाल HLS_GOING_UP:
-		अगर (ppd->host_link_state != HLS_VERIFY_CAP)
-			जाओ unexpected;
+		break;
+	case HLS_GOING_UP:
+		if (ppd->host_link_state != HLS_VERIFY_CAP)
+			goto unexpected;
 
 		ret1 = set_physical_link_state(dd, PLS_LINKUP);
-		अगर (ret1 != HCMD_SUCCESS) अणु
+		if (ret1 != HCMD_SUCCESS) {
 			dd_dev_err(dd,
 				   "Failed to transition to link up state, return 0x%x\n",
 				   ret1);
 			ret = -EINVAL;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ppd->host_link_state = HLS_GOING_UP;
-		अवरोध;
+		break;
 
-	हाल HLS_GOING_OFFLINE:		/* transient within जाओ_offline() */
-	हाल HLS_LINK_COOLDOWN:		/* transient within जाओ_offline() */
-	शेष:
+	case HLS_GOING_OFFLINE:		/* transient within goto_offline() */
+	case HLS_LINK_COOLDOWN:		/* transient within goto_offline() */
+	default:
 		dd_dev_info(dd, "%s: state 0x%x: not supported\n",
 			    __func__, state);
 		ret = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	जाओ करोne;
+	goto done;
 
 unexpected:
 	dd_dev_err(dd, "%s: unexpected state transition from %s to %s\n",
@@ -10995,102 +10994,102 @@ unexpected:
 		   link_state_name(state));
 	ret = -EINVAL;
 
-करोne:
+done:
 	mutex_unlock(&ppd->hls_lock);
 
-	अगर (event.device)
+	if (event.device)
 		ib_dispatch_event(&event);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक hfi1_set_ib_cfg(काष्ठा hfi1_pportdata *ppd, पूर्णांक which, u32 val)
-अणु
+int hfi1_set_ib_cfg(struct hfi1_pportdata *ppd, int which, u32 val)
+{
 	u64 reg;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	चयन (which) अणु
-	हाल HFI1_IB_CFG_LIDLMC:
+	switch (which) {
+	case HFI1_IB_CFG_LIDLMC:
 		set_lidlmc(ppd);
-		अवरोध;
-	हाल HFI1_IB_CFG_VL_HIGH_LIMIT:
+		break;
+	case HFI1_IB_CFG_VL_HIGH_LIMIT:
 		/*
 		 * The VL Arbitrator high limit is sent in units of 4k
-		 * bytes, जबतक HFI stores it in units of 64 bytes.
+		 * bytes, while HFI stores it in units of 64 bytes.
 		 */
 		val *= 4096 / 64;
 		reg = ((u64)val & SEND_HIGH_PRIORITY_LIMIT_LIMIT_MASK)
 			<< SEND_HIGH_PRIORITY_LIMIT_LIMIT_SHIFT;
-		ग_लिखो_csr(ppd->dd, SEND_HIGH_PRIORITY_LIMIT, reg);
-		अवरोध;
-	हाल HFI1_IB_CFG_LINKDEFAULT: /* IB link शेष (sleep/poll) */
-		/* HFI only supports POLL as the शेष link करोwn state */
-		अगर (val != HLS_DN_POLL)
+		write_csr(ppd->dd, SEND_HIGH_PRIORITY_LIMIT, reg);
+		break;
+	case HFI1_IB_CFG_LINKDEFAULT: /* IB link default (sleep/poll) */
+		/* HFI only supports POLL as the default link down state */
+		if (val != HLS_DN_POLL)
 			ret = -EINVAL;
-		अवरोध;
-	हाल HFI1_IB_CFG_OP_VLS:
-		अगर (ppd->vls_operational != val) अणु
+		break;
+	case HFI1_IB_CFG_OP_VLS:
+		if (ppd->vls_operational != val) {
 			ppd->vls_operational = val;
-			अगर (!ppd->port)
+			if (!ppd->port)
 				ret = -EINVAL;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 	/*
-	 * For link width, link width करोwngrade, and speed enable, always AND
+	 * For link width, link width downgrade, and speed enable, always AND
 	 * the setting with what is actually supported.  This has two benefits.
 	 * First, enabled can't have unsupported values, no matter what the
 	 * SM or FM might want.  Second, the ALL_SUPPORTED wildcards that mean
 	 * "fill in with your supported value" have all the bits in the
 	 * field set, so simply ANDing with supported has the desired result.
 	 */
-	हाल HFI1_IB_CFG_LWID_ENB: /* set allowed Link-width */
+	case HFI1_IB_CFG_LWID_ENB: /* set allowed Link-width */
 		ppd->link_width_enabled = val & ppd->link_width_supported;
-		अवरोध;
-	हाल HFI1_IB_CFG_LWID_DG_ENB: /* set allowed link width करोwngrade */
-		ppd->link_width_करोwngrade_enabled =
-				val & ppd->link_width_करोwngrade_supported;
-		अवरोध;
-	हाल HFI1_IB_CFG_SPD_ENB: /* allowed Link speeds */
+		break;
+	case HFI1_IB_CFG_LWID_DG_ENB: /* set allowed link width downgrade */
+		ppd->link_width_downgrade_enabled =
+				val & ppd->link_width_downgrade_supported;
+		break;
+	case HFI1_IB_CFG_SPD_ENB: /* allowed Link speeds */
 		ppd->link_speed_enabled = val & ppd->link_speed_supported;
-		अवरोध;
-	हाल HFI1_IB_CFG_OVERRUN_THRESH: /* IB overrun threshold */
+		break;
+	case HFI1_IB_CFG_OVERRUN_THRESH: /* IB overrun threshold */
 		/*
-		 * HFI करोes not follow IB specs, save this value
-		 * so we can report it, अगर asked.
+		 * HFI does not follow IB specs, save this value
+		 * so we can report it, if asked.
 		 */
 		ppd->overrun_threshold = val;
-		अवरोध;
-	हाल HFI1_IB_CFG_PHYERR_THRESH: /* IB PHY error threshold */
+		break;
+	case HFI1_IB_CFG_PHYERR_THRESH: /* IB PHY error threshold */
 		/*
-		 * HFI करोes not follow IB specs, save this value
-		 * so we can report it, अगर asked.
+		 * HFI does not follow IB specs, save this value
+		 * so we can report it, if asked.
 		 */
 		ppd->phy_error_threshold = val;
-		अवरोध;
+		break;
 
-	हाल HFI1_IB_CFG_MTU:
+	case HFI1_IB_CFG_MTU:
 		set_send_length(ppd);
-		अवरोध;
+		break;
 
-	हाल HFI1_IB_CFG_PKEYS:
-		अगर (HFI1_CAP_IS_KSET(PKEY_CHECK))
+	case HFI1_IB_CFG_PKEYS:
+		if (HFI1_CAP_IS_KSET(PKEY_CHECK))
 			set_partition_keys(ppd);
-		अवरोध;
+		break;
 
-	शेष:
-		अगर (HFI1_CAP_IS_KSET(PRINT_UNIMPL))
+	default:
+		if (HFI1_CAP_IS_KSET(PRINT_UNIMPL))
 			dd_dev_info(ppd->dd,
 				    "%s: which %s, val 0x%x: not implemented\n",
 				    __func__, ib_cfg_name(which), val);
-		अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		break;
+	}
+	return ret;
+}
 
 /* begin functions related to vl arbitration table caching */
-अटल व्योम init_vl_arb_caches(काष्ठा hfi1_pportdata *ppd)
-अणु
-	पूर्णांक i;
+static void init_vl_arb_caches(struct hfi1_pportdata *ppd)
+{
+	int i;
 
 	BUILD_BUG_ON(VL_ARB_TABLE_SIZE !=
 			VL_ARB_LOW_PRIO_TABLE_SIZE);
@@ -11098,18 +11097,18 @@ unexpected:
 			VL_ARB_HIGH_PRIO_TABLE_SIZE);
 
 	/*
-	 * Note that we always वापस values directly from the
-	 * 'vl_arb_cache' (and करो no CSR पढ़ोs) in response to a
+	 * Note that we always return values directly from the
+	 * 'vl_arb_cache' (and do no CSR reads) in response to a
 	 * 'Get(VLArbTable)'. This is obviously correct after a
 	 * 'Set(VLArbTable)', since the cache will then be up to
 	 * date. But it's also correct prior to any 'Set(VLArbTable)'
-	 * since then both the cache, and the relevant h/w रेजिस्टरs
+	 * since then both the cache, and the relevant h/w registers
 	 * will be zeroed.
 	 */
 
-	क्रम (i = 0; i < MAX_PRIO_TABLE; i++)
+	for (i = 0; i < MAX_PRIO_TABLE; i++)
 		spin_lock_init(&ppd->vl_arb_cache[i].lock);
-पूर्ण
+}
 
 /*
  * vl_arb_lock_cache
@@ -11117,102 +11116,102 @@ unexpected:
  * All other vl_arb_* functions should be called only after locking
  * the cache.
  */
-अटल अंतरभूत काष्ठा vl_arb_cache *
-vl_arb_lock_cache(काष्ठा hfi1_pportdata *ppd, पूर्णांक idx)
-अणु
-	अगर (idx != LO_PRIO_TABLE && idx != HI_PRIO_TABLE)
-		वापस शून्य;
+static inline struct vl_arb_cache *
+vl_arb_lock_cache(struct hfi1_pportdata *ppd, int idx)
+{
+	if (idx != LO_PRIO_TABLE && idx != HI_PRIO_TABLE)
+		return NULL;
 	spin_lock(&ppd->vl_arb_cache[idx].lock);
-	वापस &ppd->vl_arb_cache[idx];
-पूर्ण
+	return &ppd->vl_arb_cache[idx];
+}
 
-अटल अंतरभूत व्योम vl_arb_unlock_cache(काष्ठा hfi1_pportdata *ppd, पूर्णांक idx)
-अणु
+static inline void vl_arb_unlock_cache(struct hfi1_pportdata *ppd, int idx)
+{
 	spin_unlock(&ppd->vl_arb_cache[idx].lock);
-पूर्ण
+}
 
-अटल व्योम vl_arb_get_cache(काष्ठा vl_arb_cache *cache,
-			     काष्ठा ib_vl_weight_elem *vl)
-अणु
-	स_नकल(vl, cache->table, VL_ARB_TABLE_SIZE * माप(*vl));
-पूर्ण
+static void vl_arb_get_cache(struct vl_arb_cache *cache,
+			     struct ib_vl_weight_elem *vl)
+{
+	memcpy(vl, cache->table, VL_ARB_TABLE_SIZE * sizeof(*vl));
+}
 
-अटल व्योम vl_arb_set_cache(काष्ठा vl_arb_cache *cache,
-			     काष्ठा ib_vl_weight_elem *vl)
-अणु
-	स_नकल(cache->table, vl, VL_ARB_TABLE_SIZE * माप(*vl));
-पूर्ण
+static void vl_arb_set_cache(struct vl_arb_cache *cache,
+			     struct ib_vl_weight_elem *vl)
+{
+	memcpy(cache->table, vl, VL_ARB_TABLE_SIZE * sizeof(*vl));
+}
 
-अटल पूर्णांक vl_arb_match_cache(काष्ठा vl_arb_cache *cache,
-			      काष्ठा ib_vl_weight_elem *vl)
-अणु
-	वापस !स_भेद(cache->table, vl, VL_ARB_TABLE_SIZE * माप(*vl));
-पूर्ण
+static int vl_arb_match_cache(struct vl_arb_cache *cache,
+			      struct ib_vl_weight_elem *vl)
+{
+	return !memcmp(cache->table, vl, VL_ARB_TABLE_SIZE * sizeof(*vl));
+}
 
 /* end functions related to vl arbitration table caching */
 
-अटल पूर्णांक set_vl_weights(काष्ठा hfi1_pportdata *ppd, u32 target,
-			  u32 size, काष्ठा ib_vl_weight_elem *vl)
-अणु
-	काष्ठा hfi1_devdata *dd = ppd->dd;
+static int set_vl_weights(struct hfi1_pportdata *ppd, u32 target,
+			  u32 size, struct ib_vl_weight_elem *vl)
+{
+	struct hfi1_devdata *dd = ppd->dd;
 	u64 reg;
-	अचिन्हित पूर्णांक i, is_up = 0;
-	पूर्णांक drain, ret = 0;
+	unsigned int i, is_up = 0;
+	int drain, ret = 0;
 
 	mutex_lock(&ppd->hls_lock);
 
-	अगर (ppd->host_link_state & HLS_UP)
+	if (ppd->host_link_state & HLS_UP)
 		is_up = 1;
 
 	drain = !is_ax(dd) && is_up;
 
-	अगर (drain)
+	if (drain)
 		/*
-		 * Beक्रमe adjusting VL arbitration weights, empty per-VL
+		 * Before adjusting VL arbitration weights, empty per-VL
 		 * FIFOs, otherwise a packet whose VL weight is being
 		 * set to 0 could get stuck in a FIFO with no chance to
 		 * egress.
 		 */
 		ret = stop_drain_data_vls(dd);
 
-	अगर (ret) अणु
+	if (ret) {
 		dd_dev_err(
 			dd,
 			"%s: cannot stop/drain VLs - refusing to change VL arbitration weights\n",
 			__func__);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	क्रम (i = 0; i < size; i++, vl++) अणु
+	for (i = 0; i < size; i++, vl++) {
 		/*
-		 * NOTE: The low priority shअगरt and mask are used here, but
-		 * they are the same क्रम both the low and high रेजिस्टरs.
+		 * NOTE: The low priority shift and mask are used here, but
+		 * they are the same for both the low and high registers.
 		 */
 		reg = (((u64)vl->vl & SEND_LOW_PRIORITY_LIST_VL_MASK)
 				<< SEND_LOW_PRIORITY_LIST_VL_SHIFT)
 		      | (((u64)vl->weight
 				& SEND_LOW_PRIORITY_LIST_WEIGHT_MASK)
 				<< SEND_LOW_PRIORITY_LIST_WEIGHT_SHIFT);
-		ग_लिखो_csr(dd, target + (i * 8), reg);
-	पूर्ण
+		write_csr(dd, target + (i * 8), reg);
+	}
 	pio_send_control(dd, PSC_GLOBAL_VLARB_ENABLE);
 
-	अगर (drain)
-		खोलो_fill_data_vls(dd); /* reखोलो all VLs */
+	if (drain)
+		open_fill_data_vls(dd); /* reopen all VLs */
 
 err:
 	mutex_unlock(&ppd->hls_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Read one credit merge VL रेजिस्टर.
+ * Read one credit merge VL register.
  */
-अटल व्योम पढ़ो_one_cm_vl(काष्ठा hfi1_devdata *dd, u32 csr,
-			   काष्ठा vl_limit *vll)
-अणु
-	u64 reg = पढ़ो_csr(dd, csr);
+static void read_one_cm_vl(struct hfi1_devdata *dd, u32 csr,
+			   struct vl_limit *vll)
+{
+	u64 reg = read_csr(dd, csr);
 
 	vll->dedicated = cpu_to_be16(
 		(reg >> SEND_CM_CREDIT_VL_DEDICATED_LIMIT_VL_SHIFT)
@@ -11220,76 +11219,76 @@ err:
 	vll->shared = cpu_to_be16(
 		(reg >> SEND_CM_CREDIT_VL_SHARED_LIMIT_VL_SHIFT)
 		& SEND_CM_CREDIT_VL_SHARED_LIMIT_VL_MASK);
-पूर्ण
+}
 
 /*
  * Read the current credit merge limits.
  */
-अटल पूर्णांक get_buffer_control(काष्ठा hfi1_devdata *dd,
-			      काष्ठा buffer_control *bc, u16 *overall_limit)
-अणु
+static int get_buffer_control(struct hfi1_devdata *dd,
+			      struct buffer_control *bc, u16 *overall_limit)
+{
 	u64 reg;
-	पूर्णांक i;
+	int i;
 
 	/* not all entries are filled in */
-	स_रखो(bc, 0, माप(*bc));
+	memset(bc, 0, sizeof(*bc));
 
 	/* OPA and HFI have a 1-1 mapping */
-	क्रम (i = 0; i < TXE_NUM_DATA_VL; i++)
-		पढ़ो_one_cm_vl(dd, SEND_CM_CREDIT_VL + (8 * i), &bc->vl[i]);
+	for (i = 0; i < TXE_NUM_DATA_VL; i++)
+		read_one_cm_vl(dd, SEND_CM_CREDIT_VL + (8 * i), &bc->vl[i]);
 
 	/* NOTE: assumes that VL* and VL15 CSRs are bit-wise identical */
-	पढ़ो_one_cm_vl(dd, SEND_CM_CREDIT_VL15, &bc->vl[15]);
+	read_one_cm_vl(dd, SEND_CM_CREDIT_VL15, &bc->vl[15]);
 
-	reg = पढ़ो_csr(dd, SEND_CM_GLOBAL_CREDIT);
+	reg = read_csr(dd, SEND_CM_GLOBAL_CREDIT);
 	bc->overall_shared_limit = cpu_to_be16(
 		(reg >> SEND_CM_GLOBAL_CREDIT_SHARED_LIMIT_SHIFT)
 		& SEND_CM_GLOBAL_CREDIT_SHARED_LIMIT_MASK);
-	अगर (overall_limit)
+	if (overall_limit)
 		*overall_limit = (reg
 			>> SEND_CM_GLOBAL_CREDIT_TOTAL_CREDIT_LIMIT_SHIFT)
 			& SEND_CM_GLOBAL_CREDIT_TOTAL_CREDIT_LIMIT_MASK;
-	वापस माप(काष्ठा buffer_control);
-पूर्ण
+	return sizeof(struct buffer_control);
+}
 
-अटल पूर्णांक get_sc2vlnt(काष्ठा hfi1_devdata *dd, काष्ठा sc2vlnt *dp)
-अणु
+static int get_sc2vlnt(struct hfi1_devdata *dd, struct sc2vlnt *dp)
+{
 	u64 reg;
-	पूर्णांक i;
+	int i;
 
-	/* each रेजिस्टर contains 16 SC->VLnt mappings, 4 bits each */
-	reg = पढ़ो_csr(dd, DCC_CFG_SC_VL_TABLE_15_0);
-	क्रम (i = 0; i < माप(u64); i++) अणु
+	/* each register contains 16 SC->VLnt mappings, 4 bits each */
+	reg = read_csr(dd, DCC_CFG_SC_VL_TABLE_15_0);
+	for (i = 0; i < sizeof(u64); i++) {
 		u8 byte = *(((u8 *)&reg) + i);
 
 		dp->vlnt[2 * i] = byte & 0xf;
 		dp->vlnt[(2 * i) + 1] = (byte & 0xf0) >> 4;
-	पूर्ण
+	}
 
-	reg = पढ़ो_csr(dd, DCC_CFG_SC_VL_TABLE_31_16);
-	क्रम (i = 0; i < माप(u64); i++) अणु
+	reg = read_csr(dd, DCC_CFG_SC_VL_TABLE_31_16);
+	for (i = 0; i < sizeof(u64); i++) {
 		u8 byte = *(((u8 *)&reg) + i);
 
 		dp->vlnt[16 + (2 * i)] = byte & 0xf;
 		dp->vlnt[16 + (2 * i) + 1] = (byte & 0xf0) >> 4;
-	पूर्ण
-	वापस माप(काष्ठा sc2vlnt);
-पूर्ण
+	}
+	return sizeof(struct sc2vlnt);
+}
 
-अटल व्योम get_vlarb_preempt(काष्ठा hfi1_devdata *dd, u32 nelems,
-			      काष्ठा ib_vl_weight_elem *vl)
-अणु
-	अचिन्हित पूर्णांक i;
+static void get_vlarb_preempt(struct hfi1_devdata *dd, u32 nelems,
+			      struct ib_vl_weight_elem *vl)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < nelems; i++, vl++) अणु
+	for (i = 0; i < nelems; i++, vl++) {
 		vl->vl = 0xf;
 		vl->weight = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम set_sc2vlnt(काष्ठा hfi1_devdata *dd, काष्ठा sc2vlnt *dp)
-अणु
-	ग_लिखो_csr(dd, DCC_CFG_SC_VL_TABLE_15_0,
+static void set_sc2vlnt(struct hfi1_devdata *dd, struct sc2vlnt *dp)
+{
+	write_csr(dd, DCC_CFG_SC_VL_TABLE_15_0,
 		  DC_SC_VL_VAL(15_0,
 			       0, dp->vlnt[0] & 0xf,
 			       1, dp->vlnt[1] & 0xf,
@@ -11307,7 +11306,7 @@ err:
 			       13, dp->vlnt[13] & 0xf,
 			       14, dp->vlnt[14] & 0xf,
 			       15, dp->vlnt[15] & 0xf));
-	ग_लिखो_csr(dd, DCC_CFG_SC_VL_TABLE_31_16,
+	write_csr(dd, DCC_CFG_SC_VL_TABLE_31_16,
 		  DC_SC_VL_VAL(31_16,
 			       16, dp->vlnt[16] & 0xf,
 			       17, dp->vlnt[17] & 0xf,
@@ -11325,89 +11324,89 @@ err:
 			       29, dp->vlnt[29] & 0xf,
 			       30, dp->vlnt[30] & 0xf,
 			       31, dp->vlnt[31] & 0xf));
-पूर्ण
+}
 
-अटल व्योम nonzero_msg(काष्ठा hfi1_devdata *dd, पूर्णांक idx, स्थिर अक्षर *what,
+static void nonzero_msg(struct hfi1_devdata *dd, int idx, const char *what,
 			u16 limit)
-अणु
-	अगर (limit != 0)
+{
+	if (limit != 0)
 		dd_dev_info(dd, "Invalid %s limit %d on VL %d, ignoring\n",
-			    what, (पूर्णांक)limit, idx);
-पूर्ण
+			    what, (int)limit, idx);
+}
 
 /* change only the shared limit portion of SendCmGLobalCredit */
-अटल व्योम set_global_shared(काष्ठा hfi1_devdata *dd, u16 limit)
-अणु
+static void set_global_shared(struct hfi1_devdata *dd, u16 limit)
+{
 	u64 reg;
 
-	reg = पढ़ो_csr(dd, SEND_CM_GLOBAL_CREDIT);
+	reg = read_csr(dd, SEND_CM_GLOBAL_CREDIT);
 	reg &= ~SEND_CM_GLOBAL_CREDIT_SHARED_LIMIT_SMASK;
 	reg |= (u64)limit << SEND_CM_GLOBAL_CREDIT_SHARED_LIMIT_SHIFT;
-	ग_लिखो_csr(dd, SEND_CM_GLOBAL_CREDIT, reg);
-पूर्ण
+	write_csr(dd, SEND_CM_GLOBAL_CREDIT, reg);
+}
 
 /* change only the total credit limit portion of SendCmGLobalCredit */
-अटल व्योम set_global_limit(काष्ठा hfi1_devdata *dd, u16 limit)
-अणु
+static void set_global_limit(struct hfi1_devdata *dd, u16 limit)
+{
 	u64 reg;
 
-	reg = पढ़ो_csr(dd, SEND_CM_GLOBAL_CREDIT);
+	reg = read_csr(dd, SEND_CM_GLOBAL_CREDIT);
 	reg &= ~SEND_CM_GLOBAL_CREDIT_TOTAL_CREDIT_LIMIT_SMASK;
 	reg |= (u64)limit << SEND_CM_GLOBAL_CREDIT_TOTAL_CREDIT_LIMIT_SHIFT;
-	ग_लिखो_csr(dd, SEND_CM_GLOBAL_CREDIT, reg);
-पूर्ण
+	write_csr(dd, SEND_CM_GLOBAL_CREDIT, reg);
+}
 
 /* set the given per-VL shared limit */
-अटल व्योम set_vl_shared(काष्ठा hfi1_devdata *dd, पूर्णांक vl, u16 limit)
-अणु
+static void set_vl_shared(struct hfi1_devdata *dd, int vl, u16 limit)
+{
 	u64 reg;
 	u32 addr;
 
-	अगर (vl < TXE_NUM_DATA_VL)
+	if (vl < TXE_NUM_DATA_VL)
 		addr = SEND_CM_CREDIT_VL + (8 * vl);
-	अन्यथा
+	else
 		addr = SEND_CM_CREDIT_VL15;
 
-	reg = पढ़ो_csr(dd, addr);
+	reg = read_csr(dd, addr);
 	reg &= ~SEND_CM_CREDIT_VL_SHARED_LIMIT_VL_SMASK;
 	reg |= (u64)limit << SEND_CM_CREDIT_VL_SHARED_LIMIT_VL_SHIFT;
-	ग_लिखो_csr(dd, addr, reg);
-पूर्ण
+	write_csr(dd, addr, reg);
+}
 
 /* set the given per-VL dedicated limit */
-अटल व्योम set_vl_dedicated(काष्ठा hfi1_devdata *dd, पूर्णांक vl, u16 limit)
-अणु
+static void set_vl_dedicated(struct hfi1_devdata *dd, int vl, u16 limit)
+{
 	u64 reg;
 	u32 addr;
 
-	अगर (vl < TXE_NUM_DATA_VL)
+	if (vl < TXE_NUM_DATA_VL)
 		addr = SEND_CM_CREDIT_VL + (8 * vl);
-	अन्यथा
+	else
 		addr = SEND_CM_CREDIT_VL15;
 
-	reg = पढ़ो_csr(dd, addr);
+	reg = read_csr(dd, addr);
 	reg &= ~SEND_CM_CREDIT_VL_DEDICATED_LIMIT_VL_SMASK;
 	reg |= (u64)limit << SEND_CM_CREDIT_VL_DEDICATED_LIMIT_VL_SHIFT;
-	ग_लिखो_csr(dd, addr, reg);
-पूर्ण
+	write_csr(dd, addr, reg);
+}
 
 /* spin until the given per-VL status mask bits clear */
-अटल व्योम रुको_क्रम_vl_status_clear(काष्ठा hfi1_devdata *dd, u64 mask,
-				     स्थिर अक्षर *which)
-अणु
-	अचिन्हित दीर्घ समयout;
+static void wait_for_vl_status_clear(struct hfi1_devdata *dd, u64 mask,
+				     const char *which)
+{
+	unsigned long timeout;
 	u64 reg;
 
-	समयout = jअगरfies + msecs_to_jअगरfies(VL_STATUS_CLEAR_TIMEOUT);
-	जबतक (1) अणु
-		reg = पढ़ो_csr(dd, SEND_CM_CREDIT_USED_STATUS) & mask;
+	timeout = jiffies + msecs_to_jiffies(VL_STATUS_CLEAR_TIMEOUT);
+	while (1) {
+		reg = read_csr(dd, SEND_CM_CREDIT_USED_STATUS) & mask;
 
-		अगर (reg == 0)
-			वापस;	/* success */
-		अगर (समय_after(jअगरfies, समयout))
-			अवरोध;		/* समयd out */
+		if (reg == 0)
+			return;	/* success */
+		if (time_after(jiffies, timeout))
+			break;		/* timed out */
 		udelay(1);
-	पूर्ण
+	}
 
 	dd_dev_err(dd,
 		   "%s credit change status not clearing after %dms, mask 0x%llx, not clear 0x%llx\n",
@@ -11418,52 +11417,52 @@ err:
 	 */
 	dd_dev_err(dd,
 		   "Continuing anyway.  A credit loss may occur.  Suggest a link bounce\n");
-पूर्ण
+}
 
 /*
- * The number of credits on the VLs may be changed जबतक everything
+ * The number of credits on the VLs may be changed while everything
  * is "live", but the following algorithm must be followed due to
  * how the hardware is actually implemented.  In particular,
  * Return_Credit_Status[] is the only correct status check.
  *
- * अगर (reducing Global_Shared_Credit_Limit or any shared limit changing)
+ * if (reducing Global_Shared_Credit_Limit or any shared limit changing)
  *     set Global_Shared_Credit_Limit = 0
  *     use_all_vl = 1
  * mask0 = all VLs that are changing either dedicated or shared limits
  * set Shared_Limit[mask0] = 0
  * spin until Return_Credit_Status[use_all_vl ? all VL : mask0] == 0
- * अगर (changing any dedicated limit)
+ * if (changing any dedicated limit)
  *     mask1 = all VLs that are lowering dedicated limits
  *     lower Dedicated_Limit[mask1]
  *     spin until Return_Credit_Status[mask1] == 0
- *     उठाओ Dedicated_Limits
- * उठाओ Shared_Limits
- * उठाओ Global_Shared_Credit_Limit
+ *     raise Dedicated_Limits
+ * raise Shared_Limits
+ * raise Global_Shared_Credit_Limit
  *
- * lower = अगर the new limit is lower, set the limit to the new value
- * उठाओ = अगर the new limit is higher than the current value (may be changed
+ * lower = if the new limit is lower, set the limit to the new value
+ * raise = if the new limit is higher than the current value (may be changed
  *	earlier in the algorithm), set the new limit to the new value
  */
-पूर्णांक set_buffer_control(काष्ठा hfi1_pportdata *ppd,
-		       काष्ठा buffer_control *new_bc)
-अणु
-	काष्ठा hfi1_devdata *dd = ppd->dd;
+int set_buffer_control(struct hfi1_pportdata *ppd,
+		       struct buffer_control *new_bc)
+{
+	struct hfi1_devdata *dd = ppd->dd;
 	u64 changing_mask, ld_mask, stat_mask;
-	पूर्णांक change_count;
-	पूर्णांक i, use_all_mask;
-	पूर्णांक this_shared_changing;
-	पूर्णांक vl_count = 0, ret;
+	int change_count;
+	int i, use_all_mask;
+	int this_shared_changing;
+	int vl_count = 0, ret;
 	/*
 	 * A0: add the variable any_shared_limit_changing below and in the
-	 * algorithm above.  If removing A0 support, it can be हटाओd.
+	 * algorithm above.  If removing A0 support, it can be removed.
 	 */
-	पूर्णांक any_shared_limit_changing;
-	काष्ठा buffer_control cur_bc;
+	int any_shared_limit_changing;
+	struct buffer_control cur_bc;
 	u8 changing[OPA_MAX_VLS];
 	u8 lowering_dedicated[OPA_MAX_VLS];
 	u16 cur_total;
 	u32 new_total = 0;
-	स्थिर u64 all_mask =
+	const u64 all_mask =
 	SEND_CM_CREDIT_USED_STATUS_VL0_RETURN_CREDIT_STATUS_SMASK
 	 | SEND_CM_CREDIT_USED_STATUS_VL1_RETURN_CREDIT_STATUS_SMASK
 	 | SEND_CM_CREDIT_USED_STATUS_VL2_RETURN_CREDIT_STATUS_SMASK
@@ -11474,22 +11473,22 @@ err:
 	 | SEND_CM_CREDIT_USED_STATUS_VL7_RETURN_CREDIT_STATUS_SMASK
 	 | SEND_CM_CREDIT_USED_STATUS_VL15_RETURN_CREDIT_STATUS_SMASK;
 
-#घोषणा valid_vl(idx) ((idx) < TXE_NUM_DATA_VL || (idx) == 15)
-#घोषणा NUM_USABLE_VLS 16	/* look at VL15 and less */
+#define valid_vl(idx) ((idx) < TXE_NUM_DATA_VL || (idx) == 15)
+#define NUM_USABLE_VLS 16	/* look at VL15 and less */
 
-	/* find the new total credits, करो sanity check on unused VLs */
-	क्रम (i = 0; i < OPA_MAX_VLS; i++) अणु
-		अगर (valid_vl(i)) अणु
+	/* find the new total credits, do sanity check on unused VLs */
+	for (i = 0; i < OPA_MAX_VLS; i++) {
+		if (valid_vl(i)) {
 			new_total += be16_to_cpu(new_bc->vl[i].dedicated);
-			जारी;
-		पूर्ण
+			continue;
+		}
 		nonzero_msg(dd, i, "dedicated",
 			    be16_to_cpu(new_bc->vl[i].dedicated));
 		nonzero_msg(dd, i, "shared",
 			    be16_to_cpu(new_bc->vl[i].shared));
 		new_bc->vl[i].dedicated = 0;
 		new_bc->vl[i].shared = 0;
-	पूर्ण
+	}
 	new_total += be16_to_cpu(new_bc->overall_shared_limit);
 
 	/* fetch the current values */
@@ -11498,10 +11497,10 @@ err:
 	/*
 	 * Create the masks we will use.
 	 */
-	स_रखो(changing, 0, माप(changing));
-	स_रखो(lowering_dedicated, 0, माप(lowering_dedicated));
+	memset(changing, 0, sizeof(changing));
+	memset(lowering_dedicated, 0, sizeof(lowering_dedicated));
 	/*
-	 * NOTE: Assumes that the inभागidual VL bits are adjacent and in
+	 * NOTE: Assumes that the individual VL bits are adjacent and in
 	 * increasing order
 	 */
 	stat_mask =
@@ -11510,416 +11509,416 @@ err:
 	ld_mask = 0;
 	change_count = 0;
 	any_shared_limit_changing = 0;
-	क्रम (i = 0; i < NUM_USABLE_VLS; i++, stat_mask <<= 1) अणु
-		अगर (!valid_vl(i))
-			जारी;
+	for (i = 0; i < NUM_USABLE_VLS; i++, stat_mask <<= 1) {
+		if (!valid_vl(i))
+			continue;
 		this_shared_changing = new_bc->vl[i].shared
 						!= cur_bc.vl[i].shared;
-		अगर (this_shared_changing)
+		if (this_shared_changing)
 			any_shared_limit_changing = 1;
-		अगर (new_bc->vl[i].dedicated != cur_bc.vl[i].dedicated ||
-		    this_shared_changing) अणु
+		if (new_bc->vl[i].dedicated != cur_bc.vl[i].dedicated ||
+		    this_shared_changing) {
 			changing[i] = 1;
 			changing_mask |= stat_mask;
 			change_count++;
-		पूर्ण
-		अगर (be16_to_cpu(new_bc->vl[i].dedicated) <
-					be16_to_cpu(cur_bc.vl[i].dedicated)) अणु
+		}
+		if (be16_to_cpu(new_bc->vl[i].dedicated) <
+					be16_to_cpu(cur_bc.vl[i].dedicated)) {
 			lowering_dedicated[i] = 1;
 			ld_mask |= stat_mask;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* bracket the credit change with a total adjusपंचांगent */
-	अगर (new_total > cur_total)
+	/* bracket the credit change with a total adjustment */
+	if (new_total > cur_total)
 		set_global_limit(dd, new_total);
 
 	/*
 	 * Start the credit change algorithm.
 	 */
 	use_all_mask = 0;
-	अगर ((be16_to_cpu(new_bc->overall_shared_limit) <
+	if ((be16_to_cpu(new_bc->overall_shared_limit) <
 	     be16_to_cpu(cur_bc.overall_shared_limit)) ||
-	    (is_ax(dd) && any_shared_limit_changing)) अणु
+	    (is_ax(dd) && any_shared_limit_changing)) {
 		set_global_shared(dd, 0);
 		cur_bc.overall_shared_limit = 0;
 		use_all_mask = 1;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < NUM_USABLE_VLS; i++) अणु
-		अगर (!valid_vl(i))
-			जारी;
+	for (i = 0; i < NUM_USABLE_VLS; i++) {
+		if (!valid_vl(i))
+			continue;
 
-		अगर (changing[i]) अणु
+		if (changing[i]) {
 			set_vl_shared(dd, i, 0);
 			cur_bc.vl[i].shared = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	रुको_क्रम_vl_status_clear(dd, use_all_mask ? all_mask : changing_mask,
+	wait_for_vl_status_clear(dd, use_all_mask ? all_mask : changing_mask,
 				 "shared");
 
-	अगर (change_count > 0) अणु
-		क्रम (i = 0; i < NUM_USABLE_VLS; i++) अणु
-			अगर (!valid_vl(i))
-				जारी;
+	if (change_count > 0) {
+		for (i = 0; i < NUM_USABLE_VLS; i++) {
+			if (!valid_vl(i))
+				continue;
 
-			अगर (lowering_dedicated[i]) अणु
+			if (lowering_dedicated[i]) {
 				set_vl_dedicated(dd, i,
 						 be16_to_cpu(new_bc->
 							     vl[i].dedicated));
 				cur_bc.vl[i].dedicated =
 						new_bc->vl[i].dedicated;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		रुको_क्रम_vl_status_clear(dd, ld_mask, "dedicated");
+		wait_for_vl_status_clear(dd, ld_mask, "dedicated");
 
-		/* now उठाओ all dedicated that are going up */
-		क्रम (i = 0; i < NUM_USABLE_VLS; i++) अणु
-			अगर (!valid_vl(i))
-				जारी;
+		/* now raise all dedicated that are going up */
+		for (i = 0; i < NUM_USABLE_VLS; i++) {
+			if (!valid_vl(i))
+				continue;
 
-			अगर (be16_to_cpu(new_bc->vl[i].dedicated) >
+			if (be16_to_cpu(new_bc->vl[i].dedicated) >
 					be16_to_cpu(cur_bc.vl[i].dedicated))
 				set_vl_dedicated(dd, i,
 						 be16_to_cpu(new_bc->
 							     vl[i].dedicated));
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* next उठाओ all shared that are going up */
-	क्रम (i = 0; i < NUM_USABLE_VLS; i++) अणु
-		अगर (!valid_vl(i))
-			जारी;
+	/* next raise all shared that are going up */
+	for (i = 0; i < NUM_USABLE_VLS; i++) {
+		if (!valid_vl(i))
+			continue;
 
-		अगर (be16_to_cpu(new_bc->vl[i].shared) >
+		if (be16_to_cpu(new_bc->vl[i].shared) >
 				be16_to_cpu(cur_bc.vl[i].shared))
 			set_vl_shared(dd, i, be16_to_cpu(new_bc->vl[i].shared));
-	पूर्ण
+	}
 
-	/* finally उठाओ the global shared */
-	अगर (be16_to_cpu(new_bc->overall_shared_limit) >
+	/* finally raise the global shared */
+	if (be16_to_cpu(new_bc->overall_shared_limit) >
 	    be16_to_cpu(cur_bc.overall_shared_limit))
 		set_global_shared(dd,
 				  be16_to_cpu(new_bc->overall_shared_limit));
 
-	/* bracket the credit change with a total adjusपंचांगent */
-	अगर (new_total < cur_total)
+	/* bracket the credit change with a total adjustment */
+	if (new_total < cur_total)
 		set_global_limit(dd, new_total);
 
 	/*
 	 * Determine the actual number of operational VLS using the number of
-	 * dedicated and shared credits क्रम each VL.
+	 * dedicated and shared credits for each VL.
 	 */
-	अगर (change_count > 0) अणु
-		क्रम (i = 0; i < TXE_NUM_DATA_VL; i++)
-			अगर (be16_to_cpu(new_bc->vl[i].dedicated) > 0 ||
+	if (change_count > 0) {
+		for (i = 0; i < TXE_NUM_DATA_VL; i++)
+			if (be16_to_cpu(new_bc->vl[i].dedicated) > 0 ||
 			    be16_to_cpu(new_bc->vl[i].shared) > 0)
 				vl_count++;
 		ppd->actual_vls_operational = vl_count;
 		ret = sdma_map_init(dd, ppd->port - 1, vl_count ?
 				    ppd->actual_vls_operational :
 				    ppd->vls_operational,
-				    शून्य);
-		अगर (ret == 0)
+				    NULL);
+		if (ret == 0)
 			ret = pio_map_init(dd, ppd->port - 1, vl_count ?
 					   ppd->actual_vls_operational :
-					   ppd->vls_operational, शून्य);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+					   ppd->vls_operational, NULL);
+		if (ret)
+			return ret;
+	}
+	return 0;
+}
 
 /*
  * Read the given fabric manager table. Return the size of the
  * table (in bytes) on success, and a negative error code on
  * failure.
  */
-पूर्णांक fm_get_table(काष्ठा hfi1_pportdata *ppd, पूर्णांक which, व्योम *t)
+int fm_get_table(struct hfi1_pportdata *ppd, int which, void *t)
 
-अणु
-	पूर्णांक size;
-	काष्ठा vl_arb_cache *vlc;
+{
+	int size;
+	struct vl_arb_cache *vlc;
 
-	चयन (which) अणु
-	हाल FM_TBL_VL_HIGH_ARB:
+	switch (which) {
+	case FM_TBL_VL_HIGH_ARB:
 		size = 256;
 		/*
-		 * OPA specअगरies 128 elements (of 2 bytes each), though
+		 * OPA specifies 128 elements (of 2 bytes each), though
 		 * HFI supports only 16 elements in h/w.
 		 */
 		vlc = vl_arb_lock_cache(ppd, HI_PRIO_TABLE);
 		vl_arb_get_cache(vlc, t);
 		vl_arb_unlock_cache(ppd, HI_PRIO_TABLE);
-		अवरोध;
-	हाल FM_TBL_VL_LOW_ARB:
+		break;
+	case FM_TBL_VL_LOW_ARB:
 		size = 256;
 		/*
-		 * OPA specअगरies 128 elements (of 2 bytes each), though
+		 * OPA specifies 128 elements (of 2 bytes each), though
 		 * HFI supports only 16 elements in h/w.
 		 */
 		vlc = vl_arb_lock_cache(ppd, LO_PRIO_TABLE);
 		vl_arb_get_cache(vlc, t);
 		vl_arb_unlock_cache(ppd, LO_PRIO_TABLE);
-		अवरोध;
-	हाल FM_TBL_BUFFER_CONTROL:
-		size = get_buffer_control(ppd->dd, t, शून्य);
-		अवरोध;
-	हाल FM_TBL_SC2VLNT:
+		break;
+	case FM_TBL_BUFFER_CONTROL:
+		size = get_buffer_control(ppd->dd, t, NULL);
+		break;
+	case FM_TBL_SC2VLNT:
 		size = get_sc2vlnt(ppd->dd, t);
-		अवरोध;
-	हाल FM_TBL_VL_PREEMPT_ELEMS:
+		break;
+	case FM_TBL_VL_PREEMPT_ELEMS:
 		size = 256;
-		/* OPA specअगरies 128 elements, of 2 bytes each */
+		/* OPA specifies 128 elements, of 2 bytes each */
 		get_vlarb_preempt(ppd->dd, OPA_MAX_VLS, t);
-		अवरोध;
-	हाल FM_TBL_VL_PREEMPT_MATRIX:
+		break;
+	case FM_TBL_VL_PREEMPT_MATRIX:
 		size = 256;
 		/*
-		 * OPA specअगरies that this is the same size as the VL
+		 * OPA specifies that this is the same size as the VL
 		 * arbitration tables (i.e., 256 bytes).
 		 */
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस size;
-पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
+	return size;
+}
 
 /*
  * Write the given fabric manager table.
  */
-पूर्णांक fm_set_table(काष्ठा hfi1_pportdata *ppd, पूर्णांक which, व्योम *t)
-अणु
-	पूर्णांक ret = 0;
-	काष्ठा vl_arb_cache *vlc;
+int fm_set_table(struct hfi1_pportdata *ppd, int which, void *t)
+{
+	int ret = 0;
+	struct vl_arb_cache *vlc;
 
-	चयन (which) अणु
-	हाल FM_TBL_VL_HIGH_ARB:
+	switch (which) {
+	case FM_TBL_VL_HIGH_ARB:
 		vlc = vl_arb_lock_cache(ppd, HI_PRIO_TABLE);
-		अगर (vl_arb_match_cache(vlc, t)) अणु
+		if (vl_arb_match_cache(vlc, t)) {
 			vl_arb_unlock_cache(ppd, HI_PRIO_TABLE);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		vl_arb_set_cache(vlc, t);
 		vl_arb_unlock_cache(ppd, HI_PRIO_TABLE);
 		ret = set_vl_weights(ppd, SEND_HIGH_PRIORITY_LIST,
 				     VL_ARB_HIGH_PRIO_TABLE_SIZE, t);
-		अवरोध;
-	हाल FM_TBL_VL_LOW_ARB:
+		break;
+	case FM_TBL_VL_LOW_ARB:
 		vlc = vl_arb_lock_cache(ppd, LO_PRIO_TABLE);
-		अगर (vl_arb_match_cache(vlc, t)) अणु
+		if (vl_arb_match_cache(vlc, t)) {
 			vl_arb_unlock_cache(ppd, LO_PRIO_TABLE);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		vl_arb_set_cache(vlc, t);
 		vl_arb_unlock_cache(ppd, LO_PRIO_TABLE);
 		ret = set_vl_weights(ppd, SEND_LOW_PRIORITY_LIST,
 				     VL_ARB_LOW_PRIO_TABLE_SIZE, t);
-		अवरोध;
-	हाल FM_TBL_BUFFER_CONTROL:
+		break;
+	case FM_TBL_BUFFER_CONTROL:
 		ret = set_buffer_control(ppd, t);
-		अवरोध;
-	हाल FM_TBL_SC2VLNT:
+		break;
+	case FM_TBL_SC2VLNT:
 		set_sc2vlnt(ppd->dd, t);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
 /*
  * Disable all data VLs.
  *
- * Return 0 अगर disabled, non-zero अगर the VLs cannot be disabled.
+ * Return 0 if disabled, non-zero if the VLs cannot be disabled.
  */
-अटल पूर्णांक disable_data_vls(काष्ठा hfi1_devdata *dd)
-अणु
-	अगर (is_ax(dd))
-		वापस 1;
+static int disable_data_vls(struct hfi1_devdata *dd)
+{
+	if (is_ax(dd))
+		return 1;
 
 	pio_send_control(dd, PSC_DATA_VL_DISABLE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * खोलो_fill_data_vls() - the counterpart to stop_drain_data_vls().
+ * open_fill_data_vls() - the counterpart to stop_drain_data_vls().
  * Just re-enables all data VLs (the "fill" part happens
- * स्वतःmatically - the name was chosen क्रम symmetry with
+ * automatically - the name was chosen for symmetry with
  * stop_drain_data_vls()).
  *
- * Return 0 अगर successful, non-zero अगर the VLs cannot be enabled.
+ * Return 0 if successful, non-zero if the VLs cannot be enabled.
  */
-पूर्णांक खोलो_fill_data_vls(काष्ठा hfi1_devdata *dd)
-अणु
-	अगर (is_ax(dd))
-		वापस 1;
+int open_fill_data_vls(struct hfi1_devdata *dd)
+{
+	if (is_ax(dd))
+		return 1;
 
 	pio_send_control(dd, PSC_DATA_VL_ENABLE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * drain_data_vls() - assumes that disable_data_vls() has been called,
- * रुको क्रम occupancy (of per-VL FIFOs) क्रम all contexts, and SDMA
+ * wait for occupancy (of per-VL FIFOs) for all contexts, and SDMA
  * engines to drop to 0.
  */
-अटल व्योम drain_data_vls(काष्ठा hfi1_devdata *dd)
-अणु
-	sc_रुको(dd);
-	sdma_रुको(dd);
-	छोड़ो_क्रम_credit_वापस(dd);
-पूर्ण
+static void drain_data_vls(struct hfi1_devdata *dd)
+{
+	sc_wait(dd);
+	sdma_wait(dd);
+	pause_for_credit_return(dd);
+}
 
 /*
- * stop_drain_data_vls() - disable, then drain all per-VL fअगरos.
+ * stop_drain_data_vls() - disable, then drain all per-VL fifos.
  *
- * Use खोलो_fill_data_vls() to resume using data VLs.  This pair is
+ * Use open_fill_data_vls() to resume using data VLs.  This pair is
  * meant to be used like this:
  *
  * stop_drain_data_vls(dd);
- * // करो things with per-VL resources
- * खोलो_fill_data_vls(dd);
+ * // do things with per-VL resources
+ * open_fill_data_vls(dd);
  */
-पूर्णांक stop_drain_data_vls(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक ret;
+int stop_drain_data_vls(struct hfi1_devdata *dd)
+{
+	int ret;
 
 	ret = disable_data_vls(dd);
-	अगर (ret == 0)
+	if (ret == 0)
 		drain_data_vls(dd);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Convert a nanosecond समय to a cघड़ी count.  No matter how slow
- * the cघड़ी, a non-zero ns will always have a non-zero result.
+ * Convert a nanosecond time to a cclock count.  No matter how slow
+ * the cclock, a non-zero ns will always have a non-zero result.
  */
-u32 ns_to_cघड़ी(काष्ठा hfi1_devdata *dd, u32 ns)
-अणु
-	u32 cघड़ीs;
+u32 ns_to_cclock(struct hfi1_devdata *dd, u32 ns)
+{
+	u32 cclocks;
 
-	अगर (dd->icode == ICODE_FPGA_EMULATION)
-		cघड़ीs = (ns * 1000) / FPGA_CCLOCK_PS;
-	अन्यथा  /* simulation pretends to be ASIC */
-		cघड़ीs = (ns * 1000) / ASIC_CCLOCK_PS;
-	अगर (ns && !cघड़ीs)	/* अगर ns nonzero, must be at least 1 */
-		cघड़ीs = 1;
-	वापस cघड़ीs;
-पूर्ण
+	if (dd->icode == ICODE_FPGA_EMULATION)
+		cclocks = (ns * 1000) / FPGA_CCLOCK_PS;
+	else  /* simulation pretends to be ASIC */
+		cclocks = (ns * 1000) / ASIC_CCLOCK_PS;
+	if (ns && !cclocks)	/* if ns nonzero, must be at least 1 */
+		cclocks = 1;
+	return cclocks;
+}
 
 /*
- * Convert a cघड़ी count to nanoseconds. Not matter how slow
- * the cघड़ी, a non-zero cघड़ीs will always have a non-zero result.
+ * Convert a cclock count to nanoseconds. Not matter how slow
+ * the cclock, a non-zero cclocks will always have a non-zero result.
  */
-u32 cघड़ी_प्रकारo_ns(काष्ठा hfi1_devdata *dd, u32 cघड़ीs)
-अणु
+u32 cclock_to_ns(struct hfi1_devdata *dd, u32 cclocks)
+{
 	u32 ns;
 
-	अगर (dd->icode == ICODE_FPGA_EMULATION)
-		ns = (cघड़ीs * FPGA_CCLOCK_PS) / 1000;
-	अन्यथा  /* simulation pretends to be ASIC */
-		ns = (cघड़ीs * ASIC_CCLOCK_PS) / 1000;
-	अगर (cघड़ीs && !ns)
+	if (dd->icode == ICODE_FPGA_EMULATION)
+		ns = (cclocks * FPGA_CCLOCK_PS) / 1000;
+	else  /* simulation pretends to be ASIC */
+		ns = (cclocks * ASIC_CCLOCK_PS) / 1000;
+	if (cclocks && !ns)
 		ns = 1;
-	वापस ns;
-पूर्ण
+	return ns;
+}
 
 /*
- * Dynamically adjust the receive पूर्णांकerrupt समयout क्रम a context based on
+ * Dynamically adjust the receive interrupt timeout for a context based on
  * incoming packet rate.
  *
- * NOTE: Dynamic adjusपंचांगent करोes not allow rcv_पूर्णांकr_count to be zero.
+ * NOTE: Dynamic adjustment does not allow rcv_intr_count to be zero.
  */
-अटल व्योम adjust_rcv_समयout(काष्ठा hfi1_ctxtdata *rcd, u32 npkts)
-अणु
-	काष्ठा hfi1_devdata *dd = rcd->dd;
-	u32 समयout = rcd->rcvavail_समयout;
+static void adjust_rcv_timeout(struct hfi1_ctxtdata *rcd, u32 npkts)
+{
+	struct hfi1_devdata *dd = rcd->dd;
+	u32 timeout = rcd->rcvavail_timeout;
 
 	/*
-	 * This algorithm द्विगुनs or halves the समयout depending on whether
-	 * the number of packets received in this पूर्णांकerrupt were less than or
-	 * greater equal the पूर्णांकerrupt count.
+	 * This algorithm doubles or halves the timeout depending on whether
+	 * the number of packets received in this interrupt were less than or
+	 * greater equal the interrupt count.
 	 *
-	 * The calculations below करो not allow a steady state to be achieved.
-	 * Only at the endpoपूर्णांकs it is possible to have an unchanging
-	 * समयout.
+	 * The calculations below do not allow a steady state to be achieved.
+	 * Only at the endpoints it is possible to have an unchanging
+	 * timeout.
 	 */
-	अगर (npkts < rcv_पूर्णांकr_count) अणु
+	if (npkts < rcv_intr_count) {
 		/*
-		 * Not enough packets arrived beक्रमe the समयout, adjust
-		 * समयout करोwnward.
+		 * Not enough packets arrived before the timeout, adjust
+		 * timeout downward.
 		 */
-		अगर (समयout < 2) /* alपढ़ोy at minimum? */
-			वापस;
-		समयout >>= 1;
-	पूर्ण अन्यथा अणु
+		if (timeout < 2) /* already at minimum? */
+			return;
+		timeout >>= 1;
+	} else {
 		/*
-		 * More than enough packets arrived beक्रमe the समयout, adjust
-		 * समयout upward.
+		 * More than enough packets arrived before the timeout, adjust
+		 * timeout upward.
 		 */
-		अगर (समयout >= dd->rcv_पूर्णांकr_समयout_csr) /* alपढ़ोy at max? */
-			वापस;
-		समयout = min(समयout << 1, dd->rcv_पूर्णांकr_समयout_csr);
-	पूर्ण
+		if (timeout >= dd->rcv_intr_timeout_csr) /* already at max? */
+			return;
+		timeout = min(timeout << 1, dd->rcv_intr_timeout_csr);
+	}
 
-	rcd->rcvavail_समयout = समयout;
+	rcd->rcvavail_timeout = timeout;
 	/*
-	 * समयout cannot be larger than rcv_पूर्णांकr_समयout_csr which has alपढ़ोy
-	 * been verअगरied to be in range
+	 * timeout cannot be larger than rcv_intr_timeout_csr which has already
+	 * been verified to be in range
 	 */
-	ग_लिखो_kctxt_csr(dd, rcd->ctxt, RCV_AVAIL_TIME_OUT,
-			(u64)समयout <<
+	write_kctxt_csr(dd, rcd->ctxt, RCV_AVAIL_TIME_OUT,
+			(u64)timeout <<
 			RCV_AVAIL_TIME_OUT_TIME_OUT_RELOAD_SHIFT);
-पूर्ण
+}
 
-व्योम update_usrhead(काष्ठा hfi1_ctxtdata *rcd, u32 hd, u32 updegr, u32 egrhd,
-		    u32 पूर्णांकr_adjust, u32 npkts)
-अणु
-	काष्ठा hfi1_devdata *dd = rcd->dd;
+void update_usrhead(struct hfi1_ctxtdata *rcd, u32 hd, u32 updegr, u32 egrhd,
+		    u32 intr_adjust, u32 npkts)
+{
+	struct hfi1_devdata *dd = rcd->dd;
 	u64 reg;
 	u32 ctxt = rcd->ctxt;
 
 	/*
-	 * Need to ग_लिखो समयout रेजिस्टर beक्रमe updating RcvHdrHead to ensure
+	 * Need to write timeout register before updating RcvHdrHead to ensure
 	 * that a new value is used when the HW decides to restart counting.
 	 */
-	अगर (पूर्णांकr_adjust)
-		adjust_rcv_समयout(rcd, npkts);
-	अगर (updegr) अणु
+	if (intr_adjust)
+		adjust_rcv_timeout(rcd, npkts);
+	if (updegr) {
 		reg = (egrhd & RCV_EGR_INDEX_HEAD_HEAD_MASK)
 			<< RCV_EGR_INDEX_HEAD_HEAD_SHIFT;
-		ग_लिखो_uctxt_csr(dd, ctxt, RCV_EGR_INDEX_HEAD, reg);
-	पूर्ण
-	reg = ((u64)rcv_पूर्णांकr_count << RCV_HDR_HEAD_COUNTER_SHIFT) |
+		write_uctxt_csr(dd, ctxt, RCV_EGR_INDEX_HEAD, reg);
+	}
+	reg = ((u64)rcv_intr_count << RCV_HDR_HEAD_COUNTER_SHIFT) |
 		(((u64)hd & RCV_HDR_HEAD_HEAD_MASK)
 			<< RCV_HDR_HEAD_HEAD_SHIFT);
-	ग_लिखो_uctxt_csr(dd, ctxt, RCV_HDR_HEAD, reg);
-पूर्ण
+	write_uctxt_csr(dd, ctxt, RCV_HDR_HEAD, reg);
+}
 
-u32 hdrqempty(काष्ठा hfi1_ctxtdata *rcd)
-अणु
+u32 hdrqempty(struct hfi1_ctxtdata *rcd)
+{
 	u32 head, tail;
 
-	head = (पढ़ो_uctxt_csr(rcd->dd, rcd->ctxt, RCV_HDR_HEAD)
+	head = (read_uctxt_csr(rcd->dd, rcd->ctxt, RCV_HDR_HEAD)
 		& RCV_HDR_HEAD_HEAD_SMASK) >> RCV_HDR_HEAD_HEAD_SHIFT;
 
-	अगर (hfi1_rcvhdrtail_kvaddr(rcd))
+	if (hfi1_rcvhdrtail_kvaddr(rcd))
 		tail = get_rcvhdrtail(rcd);
-	अन्यथा
-		tail = पढ़ो_uctxt_csr(rcd->dd, rcd->ctxt, RCV_HDR_TAIL);
+	else
+		tail = read_uctxt_csr(rcd->dd, rcd->ctxt, RCV_HDR_TAIL);
 
-	वापस head == tail;
-पूर्ण
+	return head == tail;
+}
 
 /*
- * Context Control and Receive Array encoding क्रम buffer size:
+ * Context Control and Receive Array encoding for buffer size:
  *	0x0 invalid
  *	0x1   4 KB
  *	0x2   8 KB
@@ -11935,126 +11934,126 @@ u32 hdrqempty(काष्ठा hfi1_ctxtdata *rcd)
  *	0xB-0xF - reserved (Receive Array only)
  *
  *
- * This routine assumes that the value has alपढ़ोy been sanity checked.
+ * This routine assumes that the value has already been sanity checked.
  */
-अटल u32 encoded_size(u32 size)
-अणु
-	चयन (size) अणु
-	हाल   4 * 1024: वापस 0x1;
-	हाल   8 * 1024: वापस 0x2;
-	हाल  16 * 1024: वापस 0x3;
-	हाल  32 * 1024: वापस 0x4;
-	हाल  64 * 1024: वापस 0x5;
-	हाल 128 * 1024: वापस 0x6;
-	हाल 256 * 1024: वापस 0x7;
-	हाल 512 * 1024: वापस 0x8;
-	हाल   1 * 1024 * 1024: वापस 0x9;
-	हाल   2 * 1024 * 1024: वापस 0xa;
-	पूर्ण
-	वापस 0x1;	/* अगर invalid, go with the minimum size */
-पूर्ण
+static u32 encoded_size(u32 size)
+{
+	switch (size) {
+	case   4 * 1024: return 0x1;
+	case   8 * 1024: return 0x2;
+	case  16 * 1024: return 0x3;
+	case  32 * 1024: return 0x4;
+	case  64 * 1024: return 0x5;
+	case 128 * 1024: return 0x6;
+	case 256 * 1024: return 0x7;
+	case 512 * 1024: return 0x8;
+	case   1 * 1024 * 1024: return 0x9;
+	case   2 * 1024 * 1024: return 0xa;
+	}
+	return 0x1;	/* if invalid, go with the minimum size */
+}
 
 /**
- * encode_rcv_header_entry_size - वापस chip specअगरic encoding क्रम size
+ * encode_rcv_header_entry_size - return chip specific encoding for size
  * @size: size in dwords
  *
  * Convert a receive header entry size that to the encoding used in the CSR.
  *
- * Return a zero अगर the given size is invalid, otherwise the encoding.
+ * Return a zero if the given size is invalid, otherwise the encoding.
  */
 u8 encode_rcv_header_entry_size(u8 size)
-अणु
+{
 	/* there are only 3 valid receive header entry sizes */
-	अगर (size == 2)
-		वापस 1;
-	अगर (size == 16)
-		वापस 2;
-	अगर (size == 32)
-		वापस 4;
-	वापस 0; /* invalid */
-पूर्ण
+	if (size == 2)
+		return 1;
+	if (size == 16)
+		return 2;
+	if (size == 32)
+		return 4;
+	return 0; /* invalid */
+}
 
 /**
  * hfi1_validate_rcvhdrcnt - validate hdrcnt
  * @dd: the device data
  * @thecnt: the header count
  */
-पूर्णांक hfi1_validate_rcvhdrcnt(काष्ठा hfi1_devdata *dd, uपूर्णांक thecnt)
-अणु
-	अगर (thecnt <= HFI1_MIN_HDRQ_EGRBUF_CNT) अणु
+int hfi1_validate_rcvhdrcnt(struct hfi1_devdata *dd, uint thecnt)
+{
+	if (thecnt <= HFI1_MIN_HDRQ_EGRBUF_CNT) {
 		dd_dev_err(dd, "Receive header queue count too small\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (thecnt > HFI1_MAX_HDRQ_EGRBUF_CNT) अणु
+	if (thecnt > HFI1_MAX_HDRQ_EGRBUF_CNT) {
 		dd_dev_err(dd,
 			   "Receive header queue count cannot be greater than %u\n",
 			   HFI1_MAX_HDRQ_EGRBUF_CNT);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (thecnt % HDRQ_INCREMENT) अणु
+	if (thecnt % HDRQ_INCREMENT) {
 		dd_dev_err(dd, "Receive header queue count %d must be divisible by %lu\n",
 			   thecnt, HDRQ_INCREMENT);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * set_hdrq_regs - set header queue रेजिस्टरs क्रम context
+ * set_hdrq_regs - set header queue registers for context
  * @dd: the device data
  * @ctxt: the context
  * @entsize: the dword entry size
  * @hdrcnt: the number of header entries
  */
-व्योम set_hdrq_regs(काष्ठा hfi1_devdata *dd, u8 ctxt, u8 entsize, u16 hdrcnt)
-अणु
+void set_hdrq_regs(struct hfi1_devdata *dd, u8 ctxt, u8 entsize, u16 hdrcnt)
+{
 	u64 reg;
 
 	reg = (((u64)hdrcnt >> HDRQ_SIZE_SHIFT) & RCV_HDR_CNT_CNT_MASK) <<
 	      RCV_HDR_CNT_CNT_SHIFT;
-	ग_लिखो_kctxt_csr(dd, ctxt, RCV_HDR_CNT, reg);
+	write_kctxt_csr(dd, ctxt, RCV_HDR_CNT, reg);
 	reg = ((u64)encode_rcv_header_entry_size(entsize) &
 	       RCV_HDR_ENT_SIZE_ENT_SIZE_MASK) <<
 	      RCV_HDR_ENT_SIZE_ENT_SIZE_SHIFT;
-	ग_लिखो_kctxt_csr(dd, ctxt, RCV_HDR_ENT_SIZE, reg);
+	write_kctxt_csr(dd, ctxt, RCV_HDR_ENT_SIZE, reg);
 	reg = ((u64)DEFAULT_RCVHDRSIZE & RCV_HDR_SIZE_HDR_SIZE_MASK) <<
 	      RCV_HDR_SIZE_HDR_SIZE_SHIFT;
-	ग_लिखो_kctxt_csr(dd, ctxt, RCV_HDR_SIZE, reg);
+	write_kctxt_csr(dd, ctxt, RCV_HDR_SIZE, reg);
 
 	/*
-	 * Program dummy tail address क्रम every receive context
-	 * beक्रमe enabling any receive context
+	 * Program dummy tail address for every receive context
+	 * before enabling any receive context
 	 */
-	ग_लिखो_kctxt_csr(dd, ctxt, RCV_HDR_TAIL_ADDR,
+	write_kctxt_csr(dd, ctxt, RCV_HDR_TAIL_ADDR,
 			dd->rcvhdrtail_dummy_dma);
-पूर्ण
+}
 
-व्योम hfi1_rcvctrl(काष्ठा hfi1_devdata *dd, अचिन्हित पूर्णांक op,
-		  काष्ठा hfi1_ctxtdata *rcd)
-अणु
+void hfi1_rcvctrl(struct hfi1_devdata *dd, unsigned int op,
+		  struct hfi1_ctxtdata *rcd)
+{
 	u64 rcvctrl, reg;
-	पूर्णांक did_enable = 0;
+	int did_enable = 0;
 	u16 ctxt;
 
-	अगर (!rcd)
-		वापस;
+	if (!rcd)
+		return;
 
 	ctxt = rcd->ctxt;
 
 	hfi1_cdbg(RCVCTRL, "ctxt %d op 0x%x", ctxt, op);
 
-	rcvctrl = पढ़ो_kctxt_csr(dd, ctxt, RCV_CTXT_CTRL);
-	/* अगर the context alपढ़ोy enabled, करोn't करो the extra steps */
-	अगर ((op & HFI1_RCVCTRL_CTXT_ENB) &&
-	    !(rcvctrl & RCV_CTXT_CTRL_ENABLE_SMASK)) अणु
+	rcvctrl = read_kctxt_csr(dd, ctxt, RCV_CTXT_CTRL);
+	/* if the context already enabled, don't do the extra steps */
+	if ((op & HFI1_RCVCTRL_CTXT_ENB) &&
+	    !(rcvctrl & RCV_CTXT_CTRL_ENABLE_SMASK)) {
 		/* reset the tail and hdr addresses, and sequence count */
-		ग_लिखो_kctxt_csr(dd, ctxt, RCV_HDR_ADDR,
+		write_kctxt_csr(dd, ctxt, RCV_HDR_ADDR,
 				rcd->rcvhdrq_dma);
-		अगर (hfi1_rcvhdrtail_kvaddr(rcd))
-			ग_लिखो_kctxt_csr(dd, ctxt, RCV_HDR_TAIL_ADDR,
+		if (hfi1_rcvhdrtail_kvaddr(rcd))
+			write_kctxt_csr(dd, ctxt, RCV_HDR_TAIL_ADDR,
 					rcd->rcvhdrqtailaddr_dma);
 		hfi1_set_seq_cnt(rcd, 1);
 
@@ -12062,15 +12061,15 @@ u8 encode_rcv_header_entry_size(u8 size)
 		hfi1_set_rcd_head(rcd, 0);
 
 		/*
-		 * Zero the receive header queue so we करोn't get false
+		 * Zero the receive header queue so we don't get false
 		 * positives when checking the sequence number.  The
 		 * sequence numbers could land exactly on the same spot.
-		 * E.g. a rcd restart beक्रमe the receive header wrapped.
+		 * E.g. a rcd restart before the receive header wrapped.
 		 */
-		स_रखो(rcd->rcvhdrq, 0, rcvhdrq_size(rcd));
+		memset(rcd->rcvhdrq, 0, rcvhdrq_size(rcd));
 
-		/* starting समयout */
-		rcd->rcvavail_समयout = dd->rcv_पूर्णांकr_समयout_csr;
+		/* starting timeout */
+		rcd->rcvavail_timeout = dd->rcv_intr_timeout_csr;
 
 		/* enable the context */
 		rcvctrl |= RCV_CTXT_CTRL_ENABLE_SMASK;
@@ -12082,11 +12081,11 @@ u8 encode_rcv_header_entry_size(u8 size)
 					<< RCV_CTXT_CTRL_EGR_BUF_SIZE_SHIFT;
 
 		/* zero RcvHdrHead - set RcvHdrHead.Counter after enable */
-		ग_लिखो_uctxt_csr(dd, ctxt, RCV_HDR_HEAD, 0);
+		write_uctxt_csr(dd, ctxt, RCV_HDR_HEAD, 0);
 		did_enable = 1;
 
 		/* zero RcvEgrIndexHead */
-		ग_लिखो_uctxt_csr(dd, ctxt, RCV_EGR_INDEX_HEAD, 0);
+		write_uctxt_csr(dd, ctxt, RCV_EGR_INDEX_HEAD, 0);
 
 		/* set eager count and base index */
 		reg = (((u64)(rcd->egrbufs.alloced >> RCV_SHIFT)
@@ -12095,13 +12094,13 @@ u8 encode_rcv_header_entry_size(u8 size)
 			(((rcd->eager_base >> RCV_SHIFT)
 			  & RCV_EGR_CTRL_EGR_BASE_INDEX_MASK)
 			 << RCV_EGR_CTRL_EGR_BASE_INDEX_SHIFT);
-		ग_लिखो_kctxt_csr(dd, ctxt, RCV_EGR_CTRL, reg);
+		write_kctxt_csr(dd, ctxt, RCV_EGR_CTRL, reg);
 
 		/*
 		 * Set TID (expected) count and base index.
-		 * rcd->expected_count is set to inभागidual RcvArray entries,
+		 * rcd->expected_count is set to individual RcvArray entries,
 		 * not pairs, and the CSR takes a pair-count in groups of
-		 * four, so भागide by 8.
+		 * four, so divide by 8.
 		 */
 		reg = (((rcd->expected_count >> RCV_SHIFT)
 					& RCV_TID_CTRL_TID_PAIR_CNT_MASK)
@@ -12109,130 +12108,130 @@ u8 encode_rcv_header_entry_size(u8 size)
 		      (((rcd->expected_base >> RCV_SHIFT)
 					& RCV_TID_CTRL_TID_BASE_INDEX_MASK)
 				<< RCV_TID_CTRL_TID_BASE_INDEX_SHIFT);
-		ग_लिखो_kctxt_csr(dd, ctxt, RCV_TID_CTRL, reg);
-		अगर (ctxt == HFI1_CTRL_CTXT)
-			ग_लिखो_csr(dd, RCV_VL15, HFI1_CTRL_CTXT);
-	पूर्ण
-	अगर (op & HFI1_RCVCTRL_CTXT_DIS) अणु
-		ग_लिखो_csr(dd, RCV_VL15, 0);
+		write_kctxt_csr(dd, ctxt, RCV_TID_CTRL, reg);
+		if (ctxt == HFI1_CTRL_CTXT)
+			write_csr(dd, RCV_VL15, HFI1_CTRL_CTXT);
+	}
+	if (op & HFI1_RCVCTRL_CTXT_DIS) {
+		write_csr(dd, RCV_VL15, 0);
 		/*
 		 * When receive context is being disabled turn on tail
 		 * update with a dummy tail address and then disable
 		 * receive context.
 		 */
-		अगर (dd->rcvhdrtail_dummy_dma) अणु
-			ग_लिखो_kctxt_csr(dd, ctxt, RCV_HDR_TAIL_ADDR,
+		if (dd->rcvhdrtail_dummy_dma) {
+			write_kctxt_csr(dd, ctxt, RCV_HDR_TAIL_ADDR,
 					dd->rcvhdrtail_dummy_dma);
-			/* Enabling RcvCtxtCtrl.TailUpd is पूर्णांकentional. */
+			/* Enabling RcvCtxtCtrl.TailUpd is intentional. */
 			rcvctrl |= RCV_CTXT_CTRL_TAIL_UPD_SMASK;
-		पूर्ण
+		}
 
 		rcvctrl &= ~RCV_CTXT_CTRL_ENABLE_SMASK;
-	पूर्ण
-	अगर (op & HFI1_RCVCTRL_INTRAVAIL_ENB) अणु
-		set_पूर्णांकr_bits(dd, IS_RCVAVAIL_START + rcd->ctxt,
+	}
+	if (op & HFI1_RCVCTRL_INTRAVAIL_ENB) {
+		set_intr_bits(dd, IS_RCVAVAIL_START + rcd->ctxt,
 			      IS_RCVAVAIL_START + rcd->ctxt, true);
 		rcvctrl |= RCV_CTXT_CTRL_INTR_AVAIL_SMASK;
-	पूर्ण
-	अगर (op & HFI1_RCVCTRL_INTRAVAIL_DIS) अणु
-		set_पूर्णांकr_bits(dd, IS_RCVAVAIL_START + rcd->ctxt,
+	}
+	if (op & HFI1_RCVCTRL_INTRAVAIL_DIS) {
+		set_intr_bits(dd, IS_RCVAVAIL_START + rcd->ctxt,
 			      IS_RCVAVAIL_START + rcd->ctxt, false);
 		rcvctrl &= ~RCV_CTXT_CTRL_INTR_AVAIL_SMASK;
-	पूर्ण
-	अगर ((op & HFI1_RCVCTRL_TAILUPD_ENB) && hfi1_rcvhdrtail_kvaddr(rcd))
+	}
+	if ((op & HFI1_RCVCTRL_TAILUPD_ENB) && hfi1_rcvhdrtail_kvaddr(rcd))
 		rcvctrl |= RCV_CTXT_CTRL_TAIL_UPD_SMASK;
-	अगर (op & HFI1_RCVCTRL_TAILUPD_DIS) अणु
+	if (op & HFI1_RCVCTRL_TAILUPD_DIS) {
 		/* See comment on RcvCtxtCtrl.TailUpd above */
-		अगर (!(op & HFI1_RCVCTRL_CTXT_DIS))
+		if (!(op & HFI1_RCVCTRL_CTXT_DIS))
 			rcvctrl &= ~RCV_CTXT_CTRL_TAIL_UPD_SMASK;
-	पूर्ण
-	अगर (op & HFI1_RCVCTRL_TIDFLOW_ENB)
+	}
+	if (op & HFI1_RCVCTRL_TIDFLOW_ENB)
 		rcvctrl |= RCV_CTXT_CTRL_TID_FLOW_ENABLE_SMASK;
-	अगर (op & HFI1_RCVCTRL_TIDFLOW_DIS)
+	if (op & HFI1_RCVCTRL_TIDFLOW_DIS)
 		rcvctrl &= ~RCV_CTXT_CTRL_TID_FLOW_ENABLE_SMASK;
-	अगर (op & HFI1_RCVCTRL_ONE_PKT_EGR_ENB) अणु
+	if (op & HFI1_RCVCTRL_ONE_PKT_EGR_ENB) {
 		/*
 		 * In one-packet-per-eager mode, the size comes from
 		 * the RcvArray entry.
 		 */
 		rcvctrl &= ~RCV_CTXT_CTRL_EGR_BUF_SIZE_SMASK;
 		rcvctrl |= RCV_CTXT_CTRL_ONE_PACKET_PER_EGR_BUFFER_SMASK;
-	पूर्ण
-	अगर (op & HFI1_RCVCTRL_ONE_PKT_EGR_DIS)
+	}
+	if (op & HFI1_RCVCTRL_ONE_PKT_EGR_DIS)
 		rcvctrl &= ~RCV_CTXT_CTRL_ONE_PACKET_PER_EGR_BUFFER_SMASK;
-	अगर (op & HFI1_RCVCTRL_NO_RHQ_DROP_ENB)
+	if (op & HFI1_RCVCTRL_NO_RHQ_DROP_ENB)
 		rcvctrl |= RCV_CTXT_CTRL_DONT_DROP_RHQ_FULL_SMASK;
-	अगर (op & HFI1_RCVCTRL_NO_RHQ_DROP_DIS)
+	if (op & HFI1_RCVCTRL_NO_RHQ_DROP_DIS)
 		rcvctrl &= ~RCV_CTXT_CTRL_DONT_DROP_RHQ_FULL_SMASK;
-	अगर (op & HFI1_RCVCTRL_NO_EGR_DROP_ENB)
+	if (op & HFI1_RCVCTRL_NO_EGR_DROP_ENB)
 		rcvctrl |= RCV_CTXT_CTRL_DONT_DROP_EGR_FULL_SMASK;
-	अगर (op & HFI1_RCVCTRL_NO_EGR_DROP_DIS)
+	if (op & HFI1_RCVCTRL_NO_EGR_DROP_DIS)
 		rcvctrl &= ~RCV_CTXT_CTRL_DONT_DROP_EGR_FULL_SMASK;
-	अगर (op & HFI1_RCVCTRL_URGENT_ENB)
-		set_पूर्णांकr_bits(dd, IS_RCVURGENT_START + rcd->ctxt,
+	if (op & HFI1_RCVCTRL_URGENT_ENB)
+		set_intr_bits(dd, IS_RCVURGENT_START + rcd->ctxt,
 			      IS_RCVURGENT_START + rcd->ctxt, true);
-	अगर (op & HFI1_RCVCTRL_URGENT_DIS)
-		set_पूर्णांकr_bits(dd, IS_RCVURGENT_START + rcd->ctxt,
+	if (op & HFI1_RCVCTRL_URGENT_DIS)
+		set_intr_bits(dd, IS_RCVURGENT_START + rcd->ctxt,
 			      IS_RCVURGENT_START + rcd->ctxt, false);
 
 	hfi1_cdbg(RCVCTRL, "ctxt %d rcvctrl 0x%llx\n", ctxt, rcvctrl);
-	ग_लिखो_kctxt_csr(dd, ctxt, RCV_CTXT_CTRL, rcvctrl);
+	write_kctxt_csr(dd, ctxt, RCV_CTXT_CTRL, rcvctrl);
 
 	/* work around sticky RcvCtxtStatus.BlockedRHQFull */
-	अगर (did_enable &&
-	    (rcvctrl & RCV_CTXT_CTRL_DONT_DROP_RHQ_FULL_SMASK)) अणु
-		reg = पढ़ो_kctxt_csr(dd, ctxt, RCV_CTXT_STATUS);
-		अगर (reg != 0) अणु
+	if (did_enable &&
+	    (rcvctrl & RCV_CTXT_CTRL_DONT_DROP_RHQ_FULL_SMASK)) {
+		reg = read_kctxt_csr(dd, ctxt, RCV_CTXT_STATUS);
+		if (reg != 0) {
 			dd_dev_info(dd, "ctxt %d status %lld (blocked)\n",
 				    ctxt, reg);
-			पढ़ो_uctxt_csr(dd, ctxt, RCV_HDR_HEAD);
-			ग_लिखो_uctxt_csr(dd, ctxt, RCV_HDR_HEAD, 0x10);
-			ग_लिखो_uctxt_csr(dd, ctxt, RCV_HDR_HEAD, 0x00);
-			पढ़ो_uctxt_csr(dd, ctxt, RCV_HDR_HEAD);
-			reg = पढ़ो_kctxt_csr(dd, ctxt, RCV_CTXT_STATUS);
+			read_uctxt_csr(dd, ctxt, RCV_HDR_HEAD);
+			write_uctxt_csr(dd, ctxt, RCV_HDR_HEAD, 0x10);
+			write_uctxt_csr(dd, ctxt, RCV_HDR_HEAD, 0x00);
+			read_uctxt_csr(dd, ctxt, RCV_HDR_HEAD);
+			reg = read_kctxt_csr(dd, ctxt, RCV_CTXT_STATUS);
 			dd_dev_info(dd, "ctxt %d status %lld (%s blocked)\n",
 				    ctxt, reg, reg == 0 ? "not" : "still");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (did_enable) अणु
+	if (did_enable) {
 		/*
-		 * The पूर्णांकerrupt समयout and count must be set after
+		 * The interrupt timeout and count must be set after
 		 * the context is enabled to take effect.
 		 */
-		/* set पूर्णांकerrupt समयout */
-		ग_लिखो_kctxt_csr(dd, ctxt, RCV_AVAIL_TIME_OUT,
-				(u64)rcd->rcvavail_समयout <<
+		/* set interrupt timeout */
+		write_kctxt_csr(dd, ctxt, RCV_AVAIL_TIME_OUT,
+				(u64)rcd->rcvavail_timeout <<
 				RCV_AVAIL_TIME_OUT_TIME_OUT_RELOAD_SHIFT);
 
 		/* set RcvHdrHead.Counter, zero RcvHdrHead.Head (again) */
-		reg = (u64)rcv_पूर्णांकr_count << RCV_HDR_HEAD_COUNTER_SHIFT;
-		ग_लिखो_uctxt_csr(dd, ctxt, RCV_HDR_HEAD, reg);
-	पूर्ण
+		reg = (u64)rcv_intr_count << RCV_HDR_HEAD_COUNTER_SHIFT;
+		write_uctxt_csr(dd, ctxt, RCV_HDR_HEAD, reg);
+	}
 
-	अगर (op & (HFI1_RCVCTRL_TAILUPD_DIS | HFI1_RCVCTRL_CTXT_DIS))
+	if (op & (HFI1_RCVCTRL_TAILUPD_DIS | HFI1_RCVCTRL_CTXT_DIS))
 		/*
 		 * If the context has been disabled and the Tail Update has
 		 * been cleared, set the RCV_HDR_TAIL_ADDR CSR to dummy address
-		 * so it करोesn't contain an address that is invalid.
+		 * so it doesn't contain an address that is invalid.
 		 */
-		ग_लिखो_kctxt_csr(dd, ctxt, RCV_HDR_TAIL_ADDR,
+		write_kctxt_csr(dd, ctxt, RCV_HDR_TAIL_ADDR,
 				dd->rcvhdrtail_dummy_dma);
-पूर्ण
+}
 
-u32 hfi1_पढ़ो_cntrs(काष्ठा hfi1_devdata *dd, अक्षर **namep, u64 **cntrp)
-अणु
-	पूर्णांक ret;
+u32 hfi1_read_cntrs(struct hfi1_devdata *dd, char **namep, u64 **cntrp)
+{
+	int ret;
 	u64 val = 0;
 
-	अगर (namep) अणु
+	if (namep) {
 		ret = dd->cntrnameslen;
 		*namep = dd->cntrnames;
-	पूर्ण अन्यथा अणु
-		स्थिर काष्ठा cntr_entry *entry;
-		पूर्णांक i, j;
+	} else {
+		const struct cntr_entry *entry;
+		int i, j;
 
-		ret = (dd->ndevcntrs) * माप(u64);
+		ret = (dd->ndevcntrs) * sizeof(u64);
 
 		/* Get the start of the block of counters */
 		*cntrp = dd->cntrs;
@@ -12240,16 +12239,16 @@ u32 hfi1_पढ़ो_cntrs(काष्ठा hfi1_devdata *dd, अक्षर
 		/*
 		 * Now go and fill in each counter in the block.
 		 */
-		क्रम (i = 0; i < DEV_CNTR_LAST; i++) अणु
+		for (i = 0; i < DEV_CNTR_LAST; i++) {
 			entry = &dev_cntrs[i];
 			hfi1_cdbg(CNTR, "reading %s", entry->name);
-			अगर (entry->flags & CNTR_DISABLED) अणु
+			if (entry->flags & CNTR_DISABLED) {
 				/* Nothing */
 				hfi1_cdbg(CNTR, "\tDisabled\n");
-			पूर्ण अन्यथा अणु
-				अगर (entry->flags & CNTR_VL) अणु
+			} else {
+				if (entry->flags & CNTR_VL) {
 					hfi1_cdbg(CNTR, "\tPer VL\n");
-					क्रम (j = 0; j < C_VL_COUNT; j++) अणु
+					for (j = 0; j < C_VL_COUNT; j++) {
 						val = entry->rw_cntr(entry,
 								  dd, j,
 								  CNTR_MODE_R,
@@ -12260,12 +12259,12 @@ u32 hfi1_पढ़ो_cntrs(काष्ठा hfi1_devdata *dd, अक्षर
 						   val, j);
 						dd->cntrs[entry->offset + j] =
 									    val;
-					पूर्ण
-				पूर्ण अन्यथा अगर (entry->flags & CNTR_SDMA) अणु
+					}
+				} else if (entry->flags & CNTR_SDMA) {
 					hfi1_cdbg(CNTR,
 						  "\t Per SDMA Engine\n");
-					क्रम (j = 0; j < chip_sdma_engines(dd);
-					     j++) अणु
+					for (j = 0; j < chip_sdma_engines(dd);
+					     j++) {
 						val =
 						entry->rw_cntr(entry, dd, j,
 							       CNTR_MODE_R, 0);
@@ -12274,50 +12273,50 @@ u32 hfi1_पढ़ो_cntrs(काष्ठा hfi1_devdata *dd, अक्षर
 							  val, j);
 						dd->cntrs[entry->offset + j] =
 									val;
-					पूर्ण
-				पूर्ण अन्यथा अणु
+					}
+				} else {
 					val = entry->rw_cntr(entry, dd,
 							CNTR_INVALID_VL,
 							CNTR_MODE_R, 0);
 					dd->cntrs[entry->offset] = val;
 					hfi1_cdbg(CNTR, "\tRead 0x%llx", val);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+				}
+			}
+		}
+	}
+	return ret;
+}
 
 /*
- * Used by sysfs to create files क्रम hfi stats to पढ़ो
+ * Used by sysfs to create files for hfi stats to read
  */
-u32 hfi1_पढ़ो_portcntrs(काष्ठा hfi1_pportdata *ppd, अक्षर **namep, u64 **cntrp)
-अणु
-	पूर्णांक ret;
+u32 hfi1_read_portcntrs(struct hfi1_pportdata *ppd, char **namep, u64 **cntrp)
+{
+	int ret;
 	u64 val = 0;
 
-	अगर (namep) अणु
+	if (namep) {
 		ret = ppd->dd->portcntrnameslen;
 		*namep = ppd->dd->portcntrnames;
-	पूर्ण अन्यथा अणु
-		स्थिर काष्ठा cntr_entry *entry;
-		पूर्णांक i, j;
+	} else {
+		const struct cntr_entry *entry;
+		int i, j;
 
-		ret = ppd->dd->nportcntrs * माप(u64);
+		ret = ppd->dd->nportcntrs * sizeof(u64);
 		*cntrp = ppd->cntrs;
 
-		क्रम (i = 0; i < PORT_CNTR_LAST; i++) अणु
+		for (i = 0; i < PORT_CNTR_LAST; i++) {
 			entry = &port_cntrs[i];
 			hfi1_cdbg(CNTR, "reading %s", entry->name);
-			अगर (entry->flags & CNTR_DISABLED) अणु
+			if (entry->flags & CNTR_DISABLED) {
 				/* Nothing */
 				hfi1_cdbg(CNTR, "\tDisabled\n");
-				जारी;
-			पूर्ण
+				continue;
+			}
 
-			अगर (entry->flags & CNTR_VL) अणु
+			if (entry->flags & CNTR_VL) {
 				hfi1_cdbg(CNTR, "\tPer VL");
-				क्रम (j = 0; j < C_VL_COUNT; j++) अणु
+				for (j = 0; j < C_VL_COUNT; j++) {
 					val = entry->rw_cntr(entry, ppd, j,
 							       CNTR_MODE_R,
 							       0);
@@ -12326,222 +12325,222 @@ u32 hfi1_पढ़ो_portcntrs(काष्ठा hfi1_pportdata *ppd, अक�
 					   "\t\tRead 0x%llx for %d",
 					   val, j);
 					ppd->cntrs[entry->offset + j] = val;
-				पूर्ण
-			पूर्ण अन्यथा अणु
+				}
+			} else {
 				val = entry->rw_cntr(entry, ppd,
 						       CNTR_INVALID_VL,
 						       CNTR_MODE_R,
 						       0);
 				ppd->cntrs[entry->offset] = val;
 				hfi1_cdbg(CNTR, "\tRead 0x%llx", val);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस ret;
-पूर्ण
+			}
+		}
+	}
+	return ret;
+}
 
-अटल व्योम मुक्त_cntrs(काष्ठा hfi1_devdata *dd)
-अणु
-	काष्ठा hfi1_pportdata *ppd;
-	पूर्णांक i;
+static void free_cntrs(struct hfi1_devdata *dd)
+{
+	struct hfi1_pportdata *ppd;
+	int i;
 
-	अगर (dd->synth_stats_समयr.function)
-		del_समयr_sync(&dd->synth_stats_समयr);
-	ppd = (काष्ठा hfi1_pportdata *)(dd + 1);
-	क्रम (i = 0; i < dd->num_pports; i++, ppd++) अणु
-		kमुक्त(ppd->cntrs);
-		kमुक्त(ppd->scntrs);
-		मुक्त_percpu(ppd->ibport_data.rvp.rc_acks);
-		मुक्त_percpu(ppd->ibport_data.rvp.rc_qacks);
-		मुक्त_percpu(ppd->ibport_data.rvp.rc_delayed_comp);
-		ppd->cntrs = शून्य;
-		ppd->scntrs = शून्य;
-		ppd->ibport_data.rvp.rc_acks = शून्य;
-		ppd->ibport_data.rvp.rc_qacks = शून्य;
-		ppd->ibport_data.rvp.rc_delayed_comp = शून्य;
-	पूर्ण
-	kमुक्त(dd->portcntrnames);
-	dd->portcntrnames = शून्य;
-	kमुक्त(dd->cntrs);
-	dd->cntrs = शून्य;
-	kमुक्त(dd->scntrs);
-	dd->scntrs = शून्य;
-	kमुक्त(dd->cntrnames);
-	dd->cntrnames = शून्य;
-	अगर (dd->update_cntr_wq) अणु
+	if (dd->synth_stats_timer.function)
+		del_timer_sync(&dd->synth_stats_timer);
+	ppd = (struct hfi1_pportdata *)(dd + 1);
+	for (i = 0; i < dd->num_pports; i++, ppd++) {
+		kfree(ppd->cntrs);
+		kfree(ppd->scntrs);
+		free_percpu(ppd->ibport_data.rvp.rc_acks);
+		free_percpu(ppd->ibport_data.rvp.rc_qacks);
+		free_percpu(ppd->ibport_data.rvp.rc_delayed_comp);
+		ppd->cntrs = NULL;
+		ppd->scntrs = NULL;
+		ppd->ibport_data.rvp.rc_acks = NULL;
+		ppd->ibport_data.rvp.rc_qacks = NULL;
+		ppd->ibport_data.rvp.rc_delayed_comp = NULL;
+	}
+	kfree(dd->portcntrnames);
+	dd->portcntrnames = NULL;
+	kfree(dd->cntrs);
+	dd->cntrs = NULL;
+	kfree(dd->scntrs);
+	dd->scntrs = NULL;
+	kfree(dd->cntrnames);
+	dd->cntrnames = NULL;
+	if (dd->update_cntr_wq) {
 		destroy_workqueue(dd->update_cntr_wq);
-		dd->update_cntr_wq = शून्य;
-	पूर्ण
-पूर्ण
+		dd->update_cntr_wq = NULL;
+	}
+}
 
-अटल u64 पढ़ो_dev_port_cntr(काष्ठा hfi1_devdata *dd, काष्ठा cntr_entry *entry,
-			      u64 *psval, व्योम *context, पूर्णांक vl)
-अणु
+static u64 read_dev_port_cntr(struct hfi1_devdata *dd, struct cntr_entry *entry,
+			      u64 *psval, void *context, int vl)
+{
 	u64 val;
 	u64 sval = *psval;
 
-	अगर (entry->flags & CNTR_DISABLED) अणु
+	if (entry->flags & CNTR_DISABLED) {
 		dd_dev_err(dd, "Counter %s not enabled", entry->name);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	hfi1_cdbg(CNTR, "cntr: %s vl %d psval 0x%llx", entry->name, vl, *psval);
 
 	val = entry->rw_cntr(entry, context, vl, CNTR_MODE_R, 0);
 
-	/* If its a synthetic counter there is more work we need to करो */
-	अगर (entry->flags & CNTR_SYNTH) अणु
-		अगर (sval == CNTR_MAX) अणु
-			/* No need to पढ़ो alपढ़ोy saturated */
-			वापस CNTR_MAX;
-		पूर्ण
+	/* If its a synthetic counter there is more work we need to do */
+	if (entry->flags & CNTR_SYNTH) {
+		if (sval == CNTR_MAX) {
+			/* No need to read already saturated */
+			return CNTR_MAX;
+		}
 
-		अगर (entry->flags & CNTR_32BIT) अणु
-			/* 32bit counters can wrap multiple बार */
+		if (entry->flags & CNTR_32BIT) {
+			/* 32bit counters can wrap multiple times */
 			u64 upper = sval >> 32;
 			u64 lower = (sval << 32) >> 32;
 
-			अगर (lower > val) अणु /* hw wrapped */
-				अगर (upper == CNTR_32BIT_MAX)
+			if (lower > val) { /* hw wrapped */
+				if (upper == CNTR_32BIT_MAX)
 					val = CNTR_MAX;
-				अन्यथा
+				else
 					upper++;
-			पूर्ण
+			}
 
-			अगर (val != CNTR_MAX)
+			if (val != CNTR_MAX)
 				val = (upper << 32) | val;
 
-		पूर्ण अन्यथा अणु
+		} else {
 			/* If we rolled we are saturated */
-			अगर ((val < sval) || (val > CNTR_MAX))
+			if ((val < sval) || (val > CNTR_MAX))
 				val = CNTR_MAX;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	*psval = val;
 
 	hfi1_cdbg(CNTR, "\tNew val=0x%llx", val);
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल u64 ग_लिखो_dev_port_cntr(काष्ठा hfi1_devdata *dd,
-			       काष्ठा cntr_entry *entry,
-			       u64 *psval, व्योम *context, पूर्णांक vl, u64 data)
-अणु
+static u64 write_dev_port_cntr(struct hfi1_devdata *dd,
+			       struct cntr_entry *entry,
+			       u64 *psval, void *context, int vl, u64 data)
+{
 	u64 val;
 
-	अगर (entry->flags & CNTR_DISABLED) अणु
+	if (entry->flags & CNTR_DISABLED) {
 		dd_dev_err(dd, "Counter %s not enabled", entry->name);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	hfi1_cdbg(CNTR, "cntr: %s vl %d psval 0x%llx", entry->name, vl, *psval);
 
-	अगर (entry->flags & CNTR_SYNTH) अणु
+	if (entry->flags & CNTR_SYNTH) {
 		*psval = data;
-		अगर (entry->flags & CNTR_32BIT) अणु
+		if (entry->flags & CNTR_32BIT) {
 			val = entry->rw_cntr(entry, context, vl, CNTR_MODE_W,
 					     (data << 32) >> 32);
-			val = data; /* वापस the full 64bit value */
-		पूर्ण अन्यथा अणु
+			val = data; /* return the full 64bit value */
+		} else {
 			val = entry->rw_cntr(entry, context, vl, CNTR_MODE_W,
 					     data);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		val = entry->rw_cntr(entry, context, vl, CNTR_MODE_W, data);
-	पूर्ण
+	}
 
 	*psval = val;
 
 	hfi1_cdbg(CNTR, "\tNew val=0x%llx", val);
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-u64 पढ़ो_dev_cntr(काष्ठा hfi1_devdata *dd, पूर्णांक index, पूर्णांक vl)
-अणु
-	काष्ठा cntr_entry *entry;
+u64 read_dev_cntr(struct hfi1_devdata *dd, int index, int vl)
+{
+	struct cntr_entry *entry;
 	u64 *sval;
 
 	entry = &dev_cntrs[index];
 	sval = dd->scntrs + entry->offset;
 
-	अगर (vl != CNTR_INVALID_VL)
+	if (vl != CNTR_INVALID_VL)
 		sval += vl;
 
-	वापस पढ़ो_dev_port_cntr(dd, entry, sval, dd, vl);
-पूर्ण
+	return read_dev_port_cntr(dd, entry, sval, dd, vl);
+}
 
-u64 ग_लिखो_dev_cntr(काष्ठा hfi1_devdata *dd, पूर्णांक index, पूर्णांक vl, u64 data)
-अणु
-	काष्ठा cntr_entry *entry;
+u64 write_dev_cntr(struct hfi1_devdata *dd, int index, int vl, u64 data)
+{
+	struct cntr_entry *entry;
 	u64 *sval;
 
 	entry = &dev_cntrs[index];
 	sval = dd->scntrs + entry->offset;
 
-	अगर (vl != CNTR_INVALID_VL)
+	if (vl != CNTR_INVALID_VL)
 		sval += vl;
 
-	वापस ग_लिखो_dev_port_cntr(dd, entry, sval, dd, vl, data);
-पूर्ण
+	return write_dev_port_cntr(dd, entry, sval, dd, vl, data);
+}
 
-u64 पढ़ो_port_cntr(काष्ठा hfi1_pportdata *ppd, पूर्णांक index, पूर्णांक vl)
-अणु
-	काष्ठा cntr_entry *entry;
+u64 read_port_cntr(struct hfi1_pportdata *ppd, int index, int vl)
+{
+	struct cntr_entry *entry;
 	u64 *sval;
 
 	entry = &port_cntrs[index];
 	sval = ppd->scntrs + entry->offset;
 
-	अगर (vl != CNTR_INVALID_VL)
+	if (vl != CNTR_INVALID_VL)
 		sval += vl;
 
-	अगर ((index >= C_RCV_HDR_OVF_FIRST + ppd->dd->num_rcv_contexts) &&
-	    (index <= C_RCV_HDR_OVF_LAST)) अणु
-		/* We करो not want to bother क्रम disabled contexts */
-		वापस 0;
-	पूर्ण
+	if ((index >= C_RCV_HDR_OVF_FIRST + ppd->dd->num_rcv_contexts) &&
+	    (index <= C_RCV_HDR_OVF_LAST)) {
+		/* We do not want to bother for disabled contexts */
+		return 0;
+	}
 
-	वापस पढ़ो_dev_port_cntr(ppd->dd, entry, sval, ppd, vl);
-पूर्ण
+	return read_dev_port_cntr(ppd->dd, entry, sval, ppd, vl);
+}
 
-u64 ग_लिखो_port_cntr(काष्ठा hfi1_pportdata *ppd, पूर्णांक index, पूर्णांक vl, u64 data)
-अणु
-	काष्ठा cntr_entry *entry;
+u64 write_port_cntr(struct hfi1_pportdata *ppd, int index, int vl, u64 data)
+{
+	struct cntr_entry *entry;
 	u64 *sval;
 
 	entry = &port_cntrs[index];
 	sval = ppd->scntrs + entry->offset;
 
-	अगर (vl != CNTR_INVALID_VL)
+	if (vl != CNTR_INVALID_VL)
 		sval += vl;
 
-	अगर ((index >= C_RCV_HDR_OVF_FIRST + ppd->dd->num_rcv_contexts) &&
-	    (index <= C_RCV_HDR_OVF_LAST)) अणु
-		/* We करो not want to bother क्रम disabled contexts */
-		वापस 0;
-	पूर्ण
+	if ((index >= C_RCV_HDR_OVF_FIRST + ppd->dd->num_rcv_contexts) &&
+	    (index <= C_RCV_HDR_OVF_LAST)) {
+		/* We do not want to bother for disabled contexts */
+		return 0;
+	}
 
-	वापस ग_लिखो_dev_port_cntr(ppd->dd, entry, sval, ppd, vl, data);
-पूर्ण
+	return write_dev_port_cntr(ppd->dd, entry, sval, ppd, vl, data);
+}
 
-अटल व्योम करो_update_synth_समयr(काष्ठा work_काष्ठा *work)
-अणु
+static void do_update_synth_timer(struct work_struct *work)
+{
 	u64 cur_tx;
 	u64 cur_rx;
 	u64 total_flits;
 	u8 update = 0;
-	पूर्णांक i, j, vl;
-	काष्ठा hfi1_pportdata *ppd;
-	काष्ठा cntr_entry *entry;
-	काष्ठा hfi1_devdata *dd = container_of(work, काष्ठा hfi1_devdata,
+	int i, j, vl;
+	struct hfi1_pportdata *ppd;
+	struct cntr_entry *entry;
+	struct hfi1_devdata *dd = container_of(work, struct hfi1_devdata,
 					       update_cntr_work);
 
 	/*
 	 * Rather than keep beating on the CSRs pick a minimal set that we can
-	 * check to watch क्रम potential roll over. We can करो this by looking at
+	 * check to watch for potential roll over. We can do this by looking at
 	 * the number of flits sent/recv. If the total flits exceeds 32bits then
 	 * we have to iterate all the counters and update.
 	 */
@@ -12556,55 +12555,55 @@ u64 ग_लिखो_port_cntr(काष्ठा hfi1_pportdata *ppd, पूर
 	    "[%d] curr tx=0x%llx rx=0x%llx :: last tx=0x%llx rx=0x%llx\n",
 	    dd->unit, cur_tx, cur_rx, dd->last_tx, dd->last_rx);
 
-	अगर ((cur_tx < dd->last_tx) || (cur_rx < dd->last_rx)) अणु
+	if ((cur_tx < dd->last_tx) || (cur_rx < dd->last_rx)) {
 		/*
 		 * May not be strictly necessary to update but it won't hurt and
-		 * simplअगरies the logic here.
+		 * simplifies the logic here.
 		 */
 		update = 1;
 		hfi1_cdbg(CNTR, "[%d] Tripwire counter rolled, updating",
 			  dd->unit);
-	पूर्ण अन्यथा अणु
+	} else {
 		total_flits = (cur_tx - dd->last_tx) + (cur_rx - dd->last_rx);
 		hfi1_cdbg(CNTR,
 			  "[%d] total flits 0x%llx limit 0x%llx\n", dd->unit,
 			  total_flits, (u64)CNTR_32BIT_MAX);
-		अगर (total_flits >= CNTR_32BIT_MAX) अणु
+		if (total_flits >= CNTR_32BIT_MAX) {
 			hfi1_cdbg(CNTR, "[%d] 32bit limit hit, updating",
 				  dd->unit);
 			update = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (update) अणु
+	if (update) {
 		hfi1_cdbg(CNTR, "[%d] Updating dd and ppd counters", dd->unit);
-		क्रम (i = 0; i < DEV_CNTR_LAST; i++) अणु
+		for (i = 0; i < DEV_CNTR_LAST; i++) {
 			entry = &dev_cntrs[i];
-			अगर (entry->flags & CNTR_VL) अणु
-				क्रम (vl = 0; vl < C_VL_COUNT; vl++)
-					पढ़ो_dev_cntr(dd, i, vl);
-			पूर्ण अन्यथा अणु
-				पढ़ो_dev_cntr(dd, i, CNTR_INVALID_VL);
-			पूर्ण
-		पूर्ण
-		ppd = (काष्ठा hfi1_pportdata *)(dd + 1);
-		क्रम (i = 0; i < dd->num_pports; i++, ppd++) अणु
-			क्रम (j = 0; j < PORT_CNTR_LAST; j++) अणु
+			if (entry->flags & CNTR_VL) {
+				for (vl = 0; vl < C_VL_COUNT; vl++)
+					read_dev_cntr(dd, i, vl);
+			} else {
+				read_dev_cntr(dd, i, CNTR_INVALID_VL);
+			}
+		}
+		ppd = (struct hfi1_pportdata *)(dd + 1);
+		for (i = 0; i < dd->num_pports; i++, ppd++) {
+			for (j = 0; j < PORT_CNTR_LAST; j++) {
 				entry = &port_cntrs[j];
-				अगर (entry->flags & CNTR_VL) अणु
-					क्रम (vl = 0; vl < C_VL_COUNT; vl++)
-						पढ़ो_port_cntr(ppd, j, vl);
-				पूर्ण अन्यथा अणु
-					पढ़ो_port_cntr(ppd, j, CNTR_INVALID_VL);
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				if (entry->flags & CNTR_VL) {
+					for (vl = 0; vl < C_VL_COUNT; vl++)
+						read_port_cntr(ppd, j, vl);
+				} else {
+					read_port_cntr(ppd, j, CNTR_INVALID_VL);
+				}
+			}
+		}
 
 		/*
-		 * We want the value in the रेजिस्टर. The goal is to keep track
+		 * We want the value in the register. The goal is to keep track
 		 * of the number of "ticks" not the counter value. In other
-		 * words अगर the रेजिस्टर rolls we want to notice it and go ahead
-		 * and क्रमce an update.
+		 * words if the register rolls we want to notice it and go ahead
+		 * and force an update.
 		 */
 		entry = &dev_cntrs[C_DC_XMIT_FLITS];
 		dd->last_tx = entry->rw_cntr(entry, dd, CNTR_INVALID_VL,
@@ -12617,33 +12616,33 @@ u64 ग_लिखो_port_cntr(काष्ठा hfi1_pportdata *ppd, पूर
 		hfi1_cdbg(CNTR, "[%d] setting last tx/rx to 0x%llx 0x%llx",
 			  dd->unit, dd->last_tx, dd->last_rx);
 
-	पूर्ण अन्यथा अणु
+	} else {
 		hfi1_cdbg(CNTR, "[%d] No update necessary", dd->unit);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम update_synth_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा hfi1_devdata *dd = from_समयr(dd, t, synth_stats_समयr);
+static void update_synth_timer(struct timer_list *t)
+{
+	struct hfi1_devdata *dd = from_timer(dd, t, synth_stats_timer);
 
 	queue_work(dd->update_cntr_wq, &dd->update_cntr_work);
-	mod_समयr(&dd->synth_stats_समयr, jअगरfies + HZ * SYNTH_CNT_TIME);
-पूर्ण
+	mod_timer(&dd->synth_stats_timer, jiffies + HZ * SYNTH_CNT_TIME);
+}
 
-#घोषणा C_MAX_NAME 16 /* 15 अक्षरs + one क्रम /0 */
-अटल पूर्णांक init_cntrs(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक i, rcv_ctxts, j;
-	माप_प्रकार sz;
-	अक्षर *p;
-	अक्षर name[C_MAX_NAME];
-	काष्ठा hfi1_pportdata *ppd;
-	स्थिर अक्षर *bit_type_32 = ",32";
-	स्थिर पूर्णांक bit_type_32_sz = म_माप(bit_type_32);
+#define C_MAX_NAME 16 /* 15 chars + one for /0 */
+static int init_cntrs(struct hfi1_devdata *dd)
+{
+	int i, rcv_ctxts, j;
+	size_t sz;
+	char *p;
+	char name[C_MAX_NAME];
+	struct hfi1_pportdata *ppd;
+	const char *bit_type_32 = ",32";
+	const int bit_type_32_sz = strlen(bit_type_32);
 	u32 sdma_engines = chip_sdma_engines(dd);
 
-	/* set up the stats समयr; the add_समयr is करोne at the end */
-	समयr_setup(&dd->synth_stats_समयr, update_synth_समयr, 0);
+	/* set up the stats timer; the add_timer is done at the end */
+	timer_setup(&dd->synth_stats_timer, update_synth_timer, 0);
 
 	/***********************/
 	/* per device counters */
@@ -12653,292 +12652,292 @@ u64 ग_लिखो_port_cntr(काष्ठा hfi1_pportdata *ppd, पूर
 	dd->ndevcntrs = 0;
 	sz = 0;
 
-	क्रम (i = 0; i < DEV_CNTR_LAST; i++) अणु
-		अगर (dev_cntrs[i].flags & CNTR_DISABLED) अणु
+	for (i = 0; i < DEV_CNTR_LAST; i++) {
+		if (dev_cntrs[i].flags & CNTR_DISABLED) {
 			hfi1_dbg_early("\tSkipping %s\n", dev_cntrs[i].name);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (dev_cntrs[i].flags & CNTR_VL) अणु
+		if (dev_cntrs[i].flags & CNTR_VL) {
 			dev_cntrs[i].offset = dd->ndevcntrs;
-			क्रम (j = 0; j < C_VL_COUNT; j++) अणु
-				snम_लिखो(name, C_MAX_NAME, "%s%d",
+			for (j = 0; j < C_VL_COUNT; j++) {
+				snprintf(name, C_MAX_NAME, "%s%d",
 					 dev_cntrs[i].name, vl_from_idx(j));
-				sz += म_माप(name);
-				/* Add ",32" क्रम 32-bit counters */
-				अगर (dev_cntrs[i].flags & CNTR_32BIT)
+				sz += strlen(name);
+				/* Add ",32" for 32-bit counters */
+				if (dev_cntrs[i].flags & CNTR_32BIT)
 					sz += bit_type_32_sz;
 				sz++;
 				dd->ndevcntrs++;
-			पूर्ण
-		पूर्ण अन्यथा अगर (dev_cntrs[i].flags & CNTR_SDMA) अणु
+			}
+		} else if (dev_cntrs[i].flags & CNTR_SDMA) {
 			dev_cntrs[i].offset = dd->ndevcntrs;
-			क्रम (j = 0; j < sdma_engines; j++) अणु
-				snम_लिखो(name, C_MAX_NAME, "%s%d",
+			for (j = 0; j < sdma_engines; j++) {
+				snprintf(name, C_MAX_NAME, "%s%d",
 					 dev_cntrs[i].name, j);
-				sz += म_माप(name);
-				/* Add ",32" क्रम 32-bit counters */
-				अगर (dev_cntrs[i].flags & CNTR_32BIT)
+				sz += strlen(name);
+				/* Add ",32" for 32-bit counters */
+				if (dev_cntrs[i].flags & CNTR_32BIT)
 					sz += bit_type_32_sz;
 				sz++;
 				dd->ndevcntrs++;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			/* +1 क्रम newline. */
-			sz += म_माप(dev_cntrs[i].name) + 1;
-			/* Add ",32" क्रम 32-bit counters */
-			अगर (dev_cntrs[i].flags & CNTR_32BIT)
+			}
+		} else {
+			/* +1 for newline. */
+			sz += strlen(dev_cntrs[i].name) + 1;
+			/* Add ",32" for 32-bit counters */
+			if (dev_cntrs[i].flags & CNTR_32BIT)
 				sz += bit_type_32_sz;
 			dev_cntrs[i].offset = dd->ndevcntrs;
 			dd->ndevcntrs++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* allocate space क्रम the counter values */
-	dd->cntrs = kसुस्मृति(dd->ndevcntrs + num_driver_cntrs, माप(u64),
+	/* allocate space for the counter values */
+	dd->cntrs = kcalloc(dd->ndevcntrs + num_driver_cntrs, sizeof(u64),
 			    GFP_KERNEL);
-	अगर (!dd->cntrs)
-		जाओ bail;
+	if (!dd->cntrs)
+		goto bail;
 
-	dd->scntrs = kसुस्मृति(dd->ndevcntrs, माप(u64), GFP_KERNEL);
-	अगर (!dd->scntrs)
-		जाओ bail;
+	dd->scntrs = kcalloc(dd->ndevcntrs, sizeof(u64), GFP_KERNEL);
+	if (!dd->scntrs)
+		goto bail;
 
-	/* allocate space क्रम the counter names */
+	/* allocate space for the counter names */
 	dd->cntrnameslen = sz;
-	dd->cntrnames = kदो_स्मृति(sz, GFP_KERNEL);
-	अगर (!dd->cntrnames)
-		जाओ bail;
+	dd->cntrnames = kmalloc(sz, GFP_KERNEL);
+	if (!dd->cntrnames)
+		goto bail;
 
 	/* fill in the names */
-	क्रम (p = dd->cntrnames, i = 0; i < DEV_CNTR_LAST; i++) अणु
-		अगर (dev_cntrs[i].flags & CNTR_DISABLED) अणु
+	for (p = dd->cntrnames, i = 0; i < DEV_CNTR_LAST; i++) {
+		if (dev_cntrs[i].flags & CNTR_DISABLED) {
 			/* Nothing */
-		पूर्ण अन्यथा अगर (dev_cntrs[i].flags & CNTR_VL) अणु
-			क्रम (j = 0; j < C_VL_COUNT; j++) अणु
-				snम_लिखो(name, C_MAX_NAME, "%s%d",
+		} else if (dev_cntrs[i].flags & CNTR_VL) {
+			for (j = 0; j < C_VL_COUNT; j++) {
+				snprintf(name, C_MAX_NAME, "%s%d",
 					 dev_cntrs[i].name,
 					 vl_from_idx(j));
-				स_नकल(p, name, म_माप(name));
-				p += म_माप(name);
+				memcpy(p, name, strlen(name));
+				p += strlen(name);
 
 				/* Counter is 32 bits */
-				अगर (dev_cntrs[i].flags & CNTR_32BIT) अणु
-					स_नकल(p, bit_type_32, bit_type_32_sz);
+				if (dev_cntrs[i].flags & CNTR_32BIT) {
+					memcpy(p, bit_type_32, bit_type_32_sz);
 					p += bit_type_32_sz;
-				पूर्ण
+				}
 
 				*p++ = '\n';
-			पूर्ण
-		पूर्ण अन्यथा अगर (dev_cntrs[i].flags & CNTR_SDMA) अणु
-			क्रम (j = 0; j < sdma_engines; j++) अणु
-				snम_लिखो(name, C_MAX_NAME, "%s%d",
+			}
+		} else if (dev_cntrs[i].flags & CNTR_SDMA) {
+			for (j = 0; j < sdma_engines; j++) {
+				snprintf(name, C_MAX_NAME, "%s%d",
 					 dev_cntrs[i].name, j);
-				स_नकल(p, name, म_माप(name));
-				p += म_माप(name);
+				memcpy(p, name, strlen(name));
+				p += strlen(name);
 
 				/* Counter is 32 bits */
-				अगर (dev_cntrs[i].flags & CNTR_32BIT) अणु
-					स_नकल(p, bit_type_32, bit_type_32_sz);
+				if (dev_cntrs[i].flags & CNTR_32BIT) {
+					memcpy(p, bit_type_32, bit_type_32_sz);
 					p += bit_type_32_sz;
-				पूर्ण
+				}
 
 				*p++ = '\n';
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			स_नकल(p, dev_cntrs[i].name, म_माप(dev_cntrs[i].name));
-			p += म_माप(dev_cntrs[i].name);
+			}
+		} else {
+			memcpy(p, dev_cntrs[i].name, strlen(dev_cntrs[i].name));
+			p += strlen(dev_cntrs[i].name);
 
 			/* Counter is 32 bits */
-			अगर (dev_cntrs[i].flags & CNTR_32BIT) अणु
-				स_नकल(p, bit_type_32, bit_type_32_sz);
+			if (dev_cntrs[i].flags & CNTR_32BIT) {
+				memcpy(p, bit_type_32, bit_type_32_sz);
 				p += bit_type_32_sz;
-			पूर्ण
+			}
 
 			*p++ = '\n';
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*********************/
 	/* per port counters */
 	/*********************/
 
 	/*
-	 * Go through the counters क्रम the overflows and disable the ones we
-	 * करोn't need. This varies based on platक्रमm so we need to करो it
+	 * Go through the counters for the overflows and disable the ones we
+	 * don't need. This varies based on platform so we need to do it
 	 * dynamically here.
 	 */
 	rcv_ctxts = dd->num_rcv_contexts;
-	क्रम (i = C_RCV_HDR_OVF_FIRST + rcv_ctxts;
-	     i <= C_RCV_HDR_OVF_LAST; i++) अणु
+	for (i = C_RCV_HDR_OVF_FIRST + rcv_ctxts;
+	     i <= C_RCV_HDR_OVF_LAST; i++) {
 		port_cntrs[i].flags |= CNTR_DISABLED;
-	पूर्ण
+	}
 
 	/* size port counter names and determine how many we have*/
 	sz = 0;
 	dd->nportcntrs = 0;
-	क्रम (i = 0; i < PORT_CNTR_LAST; i++) अणु
-		अगर (port_cntrs[i].flags & CNTR_DISABLED) अणु
+	for (i = 0; i < PORT_CNTR_LAST; i++) {
+		if (port_cntrs[i].flags & CNTR_DISABLED) {
 			hfi1_dbg_early("\tSkipping %s\n", port_cntrs[i].name);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (port_cntrs[i].flags & CNTR_VL) अणु
+		if (port_cntrs[i].flags & CNTR_VL) {
 			port_cntrs[i].offset = dd->nportcntrs;
-			क्रम (j = 0; j < C_VL_COUNT; j++) अणु
-				snम_लिखो(name, C_MAX_NAME, "%s%d",
+			for (j = 0; j < C_VL_COUNT; j++) {
+				snprintf(name, C_MAX_NAME, "%s%d",
 					 port_cntrs[i].name, vl_from_idx(j));
-				sz += म_माप(name);
-				/* Add ",32" क्रम 32-bit counters */
-				अगर (port_cntrs[i].flags & CNTR_32BIT)
+				sz += strlen(name);
+				/* Add ",32" for 32-bit counters */
+				if (port_cntrs[i].flags & CNTR_32BIT)
 					sz += bit_type_32_sz;
 				sz++;
 				dd->nportcntrs++;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			/* +1 क्रम newline */
-			sz += म_माप(port_cntrs[i].name) + 1;
-			/* Add ",32" क्रम 32-bit counters */
-			अगर (port_cntrs[i].flags & CNTR_32BIT)
+			}
+		} else {
+			/* +1 for newline */
+			sz += strlen(port_cntrs[i].name) + 1;
+			/* Add ",32" for 32-bit counters */
+			if (port_cntrs[i].flags & CNTR_32BIT)
 				sz += bit_type_32_sz;
 			port_cntrs[i].offset = dd->nportcntrs;
 			dd->nportcntrs++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* allocate space क्रम the counter names */
+	/* allocate space for the counter names */
 	dd->portcntrnameslen = sz;
-	dd->portcntrnames = kदो_स्मृति(sz, GFP_KERNEL);
-	अगर (!dd->portcntrnames)
-		जाओ bail;
+	dd->portcntrnames = kmalloc(sz, GFP_KERNEL);
+	if (!dd->portcntrnames)
+		goto bail;
 
 	/* fill in port cntr names */
-	क्रम (p = dd->portcntrnames, i = 0; i < PORT_CNTR_LAST; i++) अणु
-		अगर (port_cntrs[i].flags & CNTR_DISABLED)
-			जारी;
+	for (p = dd->portcntrnames, i = 0; i < PORT_CNTR_LAST; i++) {
+		if (port_cntrs[i].flags & CNTR_DISABLED)
+			continue;
 
-		अगर (port_cntrs[i].flags & CNTR_VL) अणु
-			क्रम (j = 0; j < C_VL_COUNT; j++) अणु
-				snम_लिखो(name, C_MAX_NAME, "%s%d",
+		if (port_cntrs[i].flags & CNTR_VL) {
+			for (j = 0; j < C_VL_COUNT; j++) {
+				snprintf(name, C_MAX_NAME, "%s%d",
 					 port_cntrs[i].name, vl_from_idx(j));
-				स_नकल(p, name, म_माप(name));
-				p += म_माप(name);
+				memcpy(p, name, strlen(name));
+				p += strlen(name);
 
 				/* Counter is 32 bits */
-				अगर (port_cntrs[i].flags & CNTR_32BIT) अणु
-					स_नकल(p, bit_type_32, bit_type_32_sz);
+				if (port_cntrs[i].flags & CNTR_32BIT) {
+					memcpy(p, bit_type_32, bit_type_32_sz);
 					p += bit_type_32_sz;
-				पूर्ण
+				}
 
 				*p++ = '\n';
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			स_नकल(p, port_cntrs[i].name,
-			       म_माप(port_cntrs[i].name));
-			p += म_माप(port_cntrs[i].name);
+			}
+		} else {
+			memcpy(p, port_cntrs[i].name,
+			       strlen(port_cntrs[i].name));
+			p += strlen(port_cntrs[i].name);
 
 			/* Counter is 32 bits */
-			अगर (port_cntrs[i].flags & CNTR_32BIT) अणु
-				स_नकल(p, bit_type_32, bit_type_32_sz);
+			if (port_cntrs[i].flags & CNTR_32BIT) {
+				memcpy(p, bit_type_32, bit_type_32_sz);
 				p += bit_type_32_sz;
-			पूर्ण
+			}
 
 			*p++ = '\n';
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* allocate per port storage क्रम counter values */
-	ppd = (काष्ठा hfi1_pportdata *)(dd + 1);
-	क्रम (i = 0; i < dd->num_pports; i++, ppd++) अणु
-		ppd->cntrs = kसुस्मृति(dd->nportcntrs, माप(u64), GFP_KERNEL);
-		अगर (!ppd->cntrs)
-			जाओ bail;
+	/* allocate per port storage for counter values */
+	ppd = (struct hfi1_pportdata *)(dd + 1);
+	for (i = 0; i < dd->num_pports; i++, ppd++) {
+		ppd->cntrs = kcalloc(dd->nportcntrs, sizeof(u64), GFP_KERNEL);
+		if (!ppd->cntrs)
+			goto bail;
 
-		ppd->scntrs = kसुस्मृति(dd->nportcntrs, माप(u64), GFP_KERNEL);
-		अगर (!ppd->scntrs)
-			जाओ bail;
-	पूर्ण
+		ppd->scntrs = kcalloc(dd->nportcntrs, sizeof(u64), GFP_KERNEL);
+		if (!ppd->scntrs)
+			goto bail;
+	}
 
 	/* CPU counters need to be allocated and zeroed */
-	अगर (init_cpu_counters(dd))
-		जाओ bail;
+	if (init_cpu_counters(dd))
+		goto bail;
 
 	dd->update_cntr_wq = alloc_ordered_workqueue("hfi1_update_cntr_%d",
 						     WQ_MEM_RECLAIM, dd->unit);
-	अगर (!dd->update_cntr_wq)
-		जाओ bail;
+	if (!dd->update_cntr_wq)
+		goto bail;
 
-	INIT_WORK(&dd->update_cntr_work, करो_update_synth_समयr);
+	INIT_WORK(&dd->update_cntr_work, do_update_synth_timer);
 
-	mod_समयr(&dd->synth_stats_समयr, jअगरfies + HZ * SYNTH_CNT_TIME);
-	वापस 0;
+	mod_timer(&dd->synth_stats_timer, jiffies + HZ * SYNTH_CNT_TIME);
+	return 0;
 bail:
-	मुक्त_cntrs(dd);
-	वापस -ENOMEM;
-पूर्ण
+	free_cntrs(dd);
+	return -ENOMEM;
+}
 
-अटल u32 chip_to_opa_lstate(काष्ठा hfi1_devdata *dd, u32 chip_lstate)
-अणु
-	चयन (chip_lstate) अणु
-	हाल LSTATE_DOWN:
-		वापस IB_PORT_DOWN;
-	हाल LSTATE_INIT:
-		वापस IB_PORT_INIT;
-	हाल LSTATE_ARMED:
-		वापस IB_PORT_ARMED;
-	हाल LSTATE_ACTIVE:
-		वापस IB_PORT_ACTIVE;
-	शेष:
+static u32 chip_to_opa_lstate(struct hfi1_devdata *dd, u32 chip_lstate)
+{
+	switch (chip_lstate) {
+	case LSTATE_DOWN:
+		return IB_PORT_DOWN;
+	case LSTATE_INIT:
+		return IB_PORT_INIT;
+	case LSTATE_ARMED:
+		return IB_PORT_ARMED;
+	case LSTATE_ACTIVE:
+		return IB_PORT_ACTIVE;
+	default:
 		dd_dev_err(dd,
 			   "Unknown logical state 0x%x, reporting IB_PORT_DOWN\n",
 			   chip_lstate);
-		वापस IB_PORT_DOWN;
-	पूर्ण
-पूर्ण
+		return IB_PORT_DOWN;
+	}
+}
 
-u32 chip_to_opa_pstate(काष्ठा hfi1_devdata *dd, u32 chip_pstate)
-अणु
+u32 chip_to_opa_pstate(struct hfi1_devdata *dd, u32 chip_pstate)
+{
 	/* look at the HFI meta-states only */
-	चयन (chip_pstate & 0xf0) अणु
-	हाल PLS_DISABLED:
-		वापस IB_PORTPHYSSTATE_DISABLED;
-	हाल PLS_OFFLINE:
-		वापस OPA_PORTPHYSSTATE_OFFLINE;
-	हाल PLS_POLLING:
-		वापस IB_PORTPHYSSTATE_POLLING;
-	हाल PLS_CONFIGPHY:
-		वापस IB_PORTPHYSSTATE_TRAINING;
-	हाल PLS_LINKUP:
-		वापस IB_PORTPHYSSTATE_LINKUP;
-	हाल PLS_PHYTEST:
-		वापस IB_PORTPHYSSTATE_PHY_TEST;
-	शेष:
+	switch (chip_pstate & 0xf0) {
+	case PLS_DISABLED:
+		return IB_PORTPHYSSTATE_DISABLED;
+	case PLS_OFFLINE:
+		return OPA_PORTPHYSSTATE_OFFLINE;
+	case PLS_POLLING:
+		return IB_PORTPHYSSTATE_POLLING;
+	case PLS_CONFIGPHY:
+		return IB_PORTPHYSSTATE_TRAINING;
+	case PLS_LINKUP:
+		return IB_PORTPHYSSTATE_LINKUP;
+	case PLS_PHYTEST:
+		return IB_PORTPHYSSTATE_PHY_TEST;
+	default:
 		dd_dev_err(dd, "Unexpected chip physical state of 0x%x\n",
 			   chip_pstate);
-		वापस IB_PORTPHYSSTATE_DISABLED;
-	पूर्ण
-पूर्ण
+		return IB_PORTPHYSSTATE_DISABLED;
+	}
+}
 
-/* वापस the OPA port logical state name */
-स्थिर अक्षर *opa_lstate_name(u32 lstate)
-अणु
-	अटल स्थिर अक्षर * स्थिर port_logical_names[] = अणु
+/* return the OPA port logical state name */
+const char *opa_lstate_name(u32 lstate)
+{
+	static const char * const port_logical_names[] = {
 		"PORT_NOP",
 		"PORT_DOWN",
 		"PORT_INIT",
 		"PORT_ARMED",
 		"PORT_ACTIVE",
 		"PORT_ACTIVE_DEFER",
-	पूर्ण;
-	अगर (lstate < ARRAY_SIZE(port_logical_names))
-		वापस port_logical_names[lstate];
-	वापस "unknown";
-पूर्ण
+	};
+	if (lstate < ARRAY_SIZE(port_logical_names))
+		return port_logical_names[lstate];
+	return "unknown";
+}
 
-/* वापस the OPA port physical state name */
-स्थिर अक्षर *opa_pstate_name(u32 pstate)
-अणु
-	अटल स्थिर अक्षर * स्थिर port_physical_names[] = अणु
+/* return the OPA port physical state name */
+const char *opa_pstate_name(u32 pstate)
+{
+	static const char * const port_physical_names[] = {
 		"PHYS_NOP",
 		"reserved1",
 		"PHYS_POLL",
@@ -12951,248 +12950,248 @@ u32 chip_to_opa_pstate(काष्ठा hfi1_devdata *dd, u32 chip_pstate)
 		"PHYS_OFFLINE",
 		"PHYS_GANGED",
 		"PHYS_TEST",
-	पूर्ण;
-	अगर (pstate < ARRAY_SIZE(port_physical_names))
-		वापस port_physical_names[pstate];
-	वापस "unknown";
-पूर्ण
+	};
+	if (pstate < ARRAY_SIZE(port_physical_names))
+		return port_physical_names[pstate];
+	return "unknown";
+}
 
 /**
  * update_statusp - Update userspace status flag
- * @ppd: Port data काष्ठाure
- * @state: port state inक्रमmation
+ * @ppd: Port data structure
+ * @state: port state information
  *
  * Actual port status is determined by the host_link_state value
  * in the ppd.
  *
- * host_link_state MUST be updated beक्रमe updating the user space
+ * host_link_state MUST be updated before updating the user space
  * statusp.
  */
-अटल व्योम update_statusp(काष्ठा hfi1_pportdata *ppd, u32 state)
-अणु
+static void update_statusp(struct hfi1_pportdata *ppd, u32 state)
+{
 	/*
-	 * Set port status flags in the page mapped पूर्णांकo userspace
+	 * Set port status flags in the page mapped into userspace
 	 * memory. Do it here to ensure a reliable state - this is
 	 * the only function called by all state handling code.
 	 * Always set the flags due to the fact that the cache value
 	 * might have been changed explicitly outside of this
 	 * function.
 	 */
-	अगर (ppd->statusp) अणु
-		चयन (state) अणु
-		हाल IB_PORT_DOWN:
-		हाल IB_PORT_INIT:
+	if (ppd->statusp) {
+		switch (state) {
+		case IB_PORT_DOWN:
+		case IB_PORT_INIT:
 			*ppd->statusp &= ~(HFI1_STATUS_IB_CONF |
 					   HFI1_STATUS_IB_READY);
-			अवरोध;
-		हाल IB_PORT_ARMED:
+			break;
+		case IB_PORT_ARMED:
 			*ppd->statusp |= HFI1_STATUS_IB_CONF;
-			अवरोध;
-		हाल IB_PORT_ACTIVE:
+			break;
+		case IB_PORT_ACTIVE:
 			*ppd->statusp |= HFI1_STATUS_IB_READY;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	dd_dev_info(ppd->dd, "logical state changed to %s (0x%x)\n",
 		    opa_lstate_name(state), state);
-पूर्ण
+}
 
 /**
- * रुको_logical_linkstate - रुको क्रम an IB link state change to occur
+ * wait_logical_linkstate - wait for an IB link state change to occur
  * @ppd: port device
- * @state: the state to रुको क्रम
- * @msecs: the number of milliseconds to रुको
+ * @state: the state to wait for
+ * @msecs: the number of milliseconds to wait
  *
- * Wait up to msecs milliseconds क्रम IB link state change to occur.
+ * Wait up to msecs milliseconds for IB link state change to occur.
  * For now, take the easy polling route.
- * Returns 0 अगर state reached, otherwise -ETIMEDOUT.
+ * Returns 0 if state reached, otherwise -ETIMEDOUT.
  */
-अटल पूर्णांक रुको_logical_linkstate(काष्ठा hfi1_pportdata *ppd, u32 state,
-				  पूर्णांक msecs)
-अणु
-	अचिन्हित दीर्घ समयout;
+static int wait_logical_linkstate(struct hfi1_pportdata *ppd, u32 state,
+				  int msecs)
+{
+	unsigned long timeout;
 	u32 new_state;
 
-	समयout = jअगरfies + msecs_to_jअगरfies(msecs);
-	जबतक (1) अणु
+	timeout = jiffies + msecs_to_jiffies(msecs);
+	while (1) {
 		new_state = chip_to_opa_lstate(ppd->dd,
-					       पढ़ो_logical_state(ppd->dd));
-		अगर (new_state == state)
-			अवरोध;
-		अगर (समय_after(jअगरfies, समयout)) अणु
+					       read_logical_state(ppd->dd));
+		if (new_state == state)
+			break;
+		if (time_after(jiffies, timeout)) {
 			dd_dev_err(ppd->dd,
 				   "timeout waiting for link state 0x%x\n",
 				   state);
-			वापस -ETIMEDOUT;
-		पूर्ण
+			return -ETIMEDOUT;
+		}
 		msleep(20);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम log_state_transition(काष्ठा hfi1_pportdata *ppd, u32 state)
-अणु
+static void log_state_transition(struct hfi1_pportdata *ppd, u32 state)
+{
 	u32 ib_pstate = chip_to_opa_pstate(ppd->dd, state);
 
 	dd_dev_info(ppd->dd,
 		    "physical state changed to %s (0x%x), phy 0x%x\n",
 		    opa_pstate_name(ib_pstate), ib_pstate, state);
-पूर्ण
+}
 
 /*
- * Read the physical hardware link state and check अगर it matches host
+ * Read the physical hardware link state and check if it matches host
  * drivers anticipated state.
  */
-अटल व्योम log_physical_state(काष्ठा hfi1_pportdata *ppd, u32 state)
-अणु
-	u32 पढ़ो_state = पढ़ो_physical_state(ppd->dd);
+static void log_physical_state(struct hfi1_pportdata *ppd, u32 state)
+{
+	u32 read_state = read_physical_state(ppd->dd);
 
-	अगर (पढ़ो_state == state) अणु
+	if (read_state == state) {
 		log_state_transition(ppd, state);
-	पूर्ण अन्यथा अणु
+	} else {
 		dd_dev_err(ppd->dd,
 			   "anticipated phy link state 0x%x, read 0x%x\n",
-			   state, पढ़ो_state);
-	पूर्ण
-पूर्ण
+			   state, read_state);
+	}
+}
 
 /*
- * रुको_physical_linkstate - रुको क्रम an physical link state change to occur
+ * wait_physical_linkstate - wait for an physical link state change to occur
  * @ppd: port device
- * @state: the state to रुको क्रम
- * @msecs: the number of milliseconds to रुको
+ * @state: the state to wait for
+ * @msecs: the number of milliseconds to wait
  *
- * Wait up to msecs milliseconds क्रम physical link state change to occur.
- * Returns 0 अगर state reached, otherwise -ETIMEDOUT.
+ * Wait up to msecs milliseconds for physical link state change to occur.
+ * Returns 0 if state reached, otherwise -ETIMEDOUT.
  */
-अटल पूर्णांक रुको_physical_linkstate(काष्ठा hfi1_pportdata *ppd, u32 state,
-				   पूर्णांक msecs)
-अणु
-	u32 पढ़ो_state;
-	अचिन्हित दीर्घ समयout;
+static int wait_physical_linkstate(struct hfi1_pportdata *ppd, u32 state,
+				   int msecs)
+{
+	u32 read_state;
+	unsigned long timeout;
 
-	समयout = jअगरfies + msecs_to_jअगरfies(msecs);
-	जबतक (1) अणु
-		पढ़ो_state = पढ़ो_physical_state(ppd->dd);
-		अगर (पढ़ो_state == state)
-			अवरोध;
-		अगर (समय_after(jअगरfies, समयout)) अणु
+	timeout = jiffies + msecs_to_jiffies(msecs);
+	while (1) {
+		read_state = read_physical_state(ppd->dd);
+		if (read_state == state)
+			break;
+		if (time_after(jiffies, timeout)) {
 			dd_dev_err(ppd->dd,
 				   "timeout waiting for phy link state 0x%x\n",
 				   state);
-			वापस -ETIMEDOUT;
-		पूर्ण
+			return -ETIMEDOUT;
+		}
 		usleep_range(1950, 2050); /* sleep 2ms-ish */
-	पूर्ण
+	}
 
 	log_state_transition(ppd, state);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * रुको_phys_link_offline_quiet_substates - रुको क्रम any offline substate
+ * wait_phys_link_offline_quiet_substates - wait for any offline substate
  * @ppd: port device
- * @msecs: the number of milliseconds to रुको
+ * @msecs: the number of milliseconds to wait
  *
- * Wait up to msecs milliseconds क्रम any offline physical link
+ * Wait up to msecs milliseconds for any offline physical link
  * state change to occur.
- * Returns 0 अगर at least one state is reached, otherwise -ETIMEDOUT.
+ * Returns 0 if at least one state is reached, otherwise -ETIMEDOUT.
  */
-अटल पूर्णांक रुको_phys_link_offline_substates(काष्ठा hfi1_pportdata *ppd,
-					    पूर्णांक msecs)
-अणु
-	u32 पढ़ो_state;
-	अचिन्हित दीर्घ समयout;
+static int wait_phys_link_offline_substates(struct hfi1_pportdata *ppd,
+					    int msecs)
+{
+	u32 read_state;
+	unsigned long timeout;
 
-	समयout = jअगरfies + msecs_to_jअगरfies(msecs);
-	जबतक (1) अणु
-		पढ़ो_state = पढ़ो_physical_state(ppd->dd);
-		अगर ((पढ़ो_state & 0xF0) == PLS_OFFLINE)
-			अवरोध;
-		अगर (समय_after(jअगरfies, समयout)) अणु
+	timeout = jiffies + msecs_to_jiffies(msecs);
+	while (1) {
+		read_state = read_physical_state(ppd->dd);
+		if ((read_state & 0xF0) == PLS_OFFLINE)
+			break;
+		if (time_after(jiffies, timeout)) {
 			dd_dev_err(ppd->dd,
 				   "timeout waiting for phy link offline.quiet substates. Read state 0x%x, %dms\n",
-				   पढ़ो_state, msecs);
-			वापस -ETIMEDOUT;
-		पूर्ण
+				   read_state, msecs);
+			return -ETIMEDOUT;
+		}
 		usleep_range(1950, 2050); /* sleep 2ms-ish */
-	पूर्ण
+	}
 
-	log_state_transition(ppd, पढ़ो_state);
-	वापस पढ़ो_state;
-पूर्ण
+	log_state_transition(ppd, read_state);
+	return read_state;
+}
 
 /*
- * रुको_phys_link_out_of_offline - रुको क्रम any out of offline state
+ * wait_phys_link_out_of_offline - wait for any out of offline state
  * @ppd: port device
- * @msecs: the number of milliseconds to रुको
+ * @msecs: the number of milliseconds to wait
  *
- * Wait up to msecs milliseconds क्रम any out of offline physical link
+ * Wait up to msecs milliseconds for any out of offline physical link
  * state change to occur.
- * Returns 0 अगर at least one state is reached, otherwise -ETIMEDOUT.
+ * Returns 0 if at least one state is reached, otherwise -ETIMEDOUT.
  */
-अटल पूर्णांक रुको_phys_link_out_of_offline(काष्ठा hfi1_pportdata *ppd,
-					 पूर्णांक msecs)
-अणु
-	u32 पढ़ो_state;
-	अचिन्हित दीर्घ समयout;
+static int wait_phys_link_out_of_offline(struct hfi1_pportdata *ppd,
+					 int msecs)
+{
+	u32 read_state;
+	unsigned long timeout;
 
-	समयout = jअगरfies + msecs_to_jअगरfies(msecs);
-	जबतक (1) अणु
-		पढ़ो_state = पढ़ो_physical_state(ppd->dd);
-		अगर ((पढ़ो_state & 0xF0) != PLS_OFFLINE)
-			अवरोध;
-		अगर (समय_after(jअगरfies, समयout)) अणु
+	timeout = jiffies + msecs_to_jiffies(msecs);
+	while (1) {
+		read_state = read_physical_state(ppd->dd);
+		if ((read_state & 0xF0) != PLS_OFFLINE)
+			break;
+		if (time_after(jiffies, timeout)) {
 			dd_dev_err(ppd->dd,
 				   "timeout waiting for phy link out of offline. Read state 0x%x, %dms\n",
-				   पढ़ो_state, msecs);
-			वापस -ETIMEDOUT;
-		पूर्ण
+				   read_state, msecs);
+			return -ETIMEDOUT;
+		}
 		usleep_range(1950, 2050); /* sleep 2ms-ish */
-	पूर्ण
+	}
 
-	log_state_transition(ppd, पढ़ो_state);
-	वापस पढ़ो_state;
-पूर्ण
+	log_state_transition(ppd, read_state);
+	return read_state;
+}
 
-#घोषणा CLEAR_STATIC_RATE_CONTROL_SMASK(r) \
+#define CLEAR_STATIC_RATE_CONTROL_SMASK(r) \
 (r &= ~SEND_CTXT_CHECK_ENABLE_DISALLOW_PBC_STATIC_RATE_CONTROL_SMASK)
 
-#घोषणा SET_STATIC_RATE_CONTROL_SMASK(r) \
+#define SET_STATIC_RATE_CONTROL_SMASK(r) \
 (r |= SEND_CTXT_CHECK_ENABLE_DISALLOW_PBC_STATIC_RATE_CONTROL_SMASK)
 
-व्योम hfi1_init_ctxt(काष्ठा send_context *sc)
-अणु
-	अगर (sc) अणु
-		काष्ठा hfi1_devdata *dd = sc->dd;
+void hfi1_init_ctxt(struct send_context *sc)
+{
+	if (sc) {
+		struct hfi1_devdata *dd = sc->dd;
 		u64 reg;
 		u8 set = (sc->type == SC_USER ?
 			  HFI1_CAP_IS_USET(STATIC_RATE_CTRL) :
 			  HFI1_CAP_IS_KSET(STATIC_RATE_CTRL));
-		reg = पढ़ो_kctxt_csr(dd, sc->hw_context,
+		reg = read_kctxt_csr(dd, sc->hw_context,
 				     SEND_CTXT_CHECK_ENABLE);
-		अगर (set)
+		if (set)
 			CLEAR_STATIC_RATE_CONTROL_SMASK(reg);
-		अन्यथा
+		else
 			SET_STATIC_RATE_CONTROL_SMASK(reg);
-		ग_लिखो_kctxt_csr(dd, sc->hw_context,
+		write_kctxt_csr(dd, sc->hw_context,
 				SEND_CTXT_CHECK_ENABLE, reg);
-	पूर्ण
-पूर्ण
+	}
+}
 
-पूर्णांक hfi1_tempsense_rd(काष्ठा hfi1_devdata *dd, काष्ठा hfi1_temp *temp)
-अणु
-	पूर्णांक ret = 0;
+int hfi1_tempsense_rd(struct hfi1_devdata *dd, struct hfi1_temp *temp)
+{
+	int ret = 0;
 	u64 reg;
 
-	अगर (dd->icode != ICODE_RTL_SILICON) अणु
-		अगर (HFI1_CAP_IS_KSET(PRINT_UNIMPL))
+	if (dd->icode != ICODE_RTL_SILICON) {
+		if (HFI1_CAP_IS_KSET(PRINT_UNIMPL))
 			dd_dev_info(dd, "%s: tempsense not supported by HW\n",
 				    __func__);
-		वापस -EINVAL;
-	पूर्ण
-	reg = पढ़ो_csr(dd, ASIC_STS_THERM);
+		return -EINVAL;
+	}
+	reg = read_csr(dd, ASIC_STS_THERM);
 	temp->curr = ((reg >> ASIC_STS_THERM_CURR_TEMP_SHIFT) &
 		      ASIC_STS_THERM_CURR_TEMP_MASK);
 	temp->lo_lim = ((reg >> ASIC_STS_THERM_LO_TEMP_SHIFT) &
@@ -13204,37 +13203,37 @@ u32 chip_to_opa_pstate(काष्ठा hfi1_devdata *dd, u32 chip_pstate)
 	/* triggers is a 3-bit value - 1 bit per trigger. */
 	temp->triggers = (u8)((reg >> ASIC_STS_THERM_LOW_SHIFT) & 0x7);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* ========================================================================= */
 
 /**
- * पढ़ो_mod_ग_लिखो() - Calculate the IRQ रेजिस्टर index and set/clear the bits
+ * read_mod_write() - Calculate the IRQ register index and set/clear the bits
  * @dd: valid devdata
- * @src: IRQ source to determine रेजिस्टर index from
+ * @src: IRQ source to determine register index from
  * @bits: the bits to set or clear
  * @set: true == set the bits, false == clear the bits
  *
  */
-अटल व्योम पढ़ो_mod_ग_लिखो(काष्ठा hfi1_devdata *dd, u16 src, u64 bits,
+static void read_mod_write(struct hfi1_devdata *dd, u16 src, u64 bits,
 			   bool set)
-अणु
+{
 	u64 reg;
 	u16 idx = src / BITS_PER_REGISTER;
 
 	spin_lock(&dd->irq_src_lock);
-	reg = पढ़ो_csr(dd, CCE_INT_MASK + (8 * idx));
-	अगर (set)
+	reg = read_csr(dd, CCE_INT_MASK + (8 * idx));
+	if (set)
 		reg |= bits;
-	अन्यथा
+	else
 		reg &= ~bits;
-	ग_लिखो_csr(dd, CCE_INT_MASK + (8 * idx), reg);
+	write_csr(dd, CCE_INT_MASK + (8 * idx), reg);
 	spin_unlock(&dd->irq_src_lock);
-पूर्ण
+}
 
 /**
- * set_पूर्णांकr_bits() - Enable/disable a range (one or more) IRQ sources
+ * set_intr_bits() - Enable/disable a range (one or more) IRQ sources
  * @dd: valid devdata
  * @first: first IRQ source to set/clear
  * @last: last IRQ source (inclusive) to set/clear
@@ -13242,147 +13241,147 @@ u32 chip_to_opa_pstate(काष्ठा hfi1_devdata *dd, u32 chip_pstate)
  *
  * If first == last, set the exact source.
  */
-पूर्णांक set_पूर्णांकr_bits(काष्ठा hfi1_devdata *dd, u16 first, u16 last, bool set)
-अणु
+int set_intr_bits(struct hfi1_devdata *dd, u16 first, u16 last, bool set)
+{
 	u64 bits = 0;
 	u64 bit;
 	u16 src;
 
-	अगर (first > NUM_INTERRUPT_SOURCES || last > NUM_INTERRUPT_SOURCES)
-		वापस -EINVAL;
+	if (first > NUM_INTERRUPT_SOURCES || last > NUM_INTERRUPT_SOURCES)
+		return -EINVAL;
 
-	अगर (last < first)
-		वापस -दुस्फल;
+	if (last < first)
+		return -ERANGE;
 
-	क्रम (src = first; src <= last; src++) अणु
+	for (src = first; src <= last; src++) {
 		bit = src % BITS_PER_REGISTER;
-		/* wrapped to next रेजिस्टर? */
-		अगर (!bit && bits) अणु
-			पढ़ो_mod_ग_लिखो(dd, src - 1, bits, set);
+		/* wrapped to next register? */
+		if (!bit && bits) {
+			read_mod_write(dd, src - 1, bits, set);
 			bits = 0;
-		पूर्ण
+		}
 		bits |= BIT_ULL(bit);
-	पूर्ण
-	पढ़ो_mod_ग_लिखो(dd, last, bits, set);
+	}
+	read_mod_write(dd, last, bits, set);
 
-	वापस 0;
-पूर्ण
-
-/*
- * Clear all पूर्णांकerrupt sources on the chip.
- */
-व्योम clear_all_पूर्णांकerrupts(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक i;
-
-	क्रम (i = 0; i < CCE_NUM_INT_CSRS; i++)
-		ग_लिखो_csr(dd, CCE_INT_CLEAR + (8 * i), ~(u64)0);
-
-	ग_लिखो_csr(dd, CCE_ERR_CLEAR, ~(u64)0);
-	ग_लिखो_csr(dd, MISC_ERR_CLEAR, ~(u64)0);
-	ग_लिखो_csr(dd, RCV_ERR_CLEAR, ~(u64)0);
-	ग_लिखो_csr(dd, SEND_ERR_CLEAR, ~(u64)0);
-	ग_लिखो_csr(dd, SEND_PIO_ERR_CLEAR, ~(u64)0);
-	ग_लिखो_csr(dd, SEND_DMA_ERR_CLEAR, ~(u64)0);
-	ग_लिखो_csr(dd, SEND_EGRESS_ERR_CLEAR, ~(u64)0);
-	क्रम (i = 0; i < chip_send_contexts(dd); i++)
-		ग_लिखो_kctxt_csr(dd, i, SEND_CTXT_ERR_CLEAR, ~(u64)0);
-	क्रम (i = 0; i < chip_sdma_engines(dd); i++)
-		ग_लिखो_kctxt_csr(dd, i, SEND_DMA_ENG_ERR_CLEAR, ~(u64)0);
-
-	ग_लिखो_csr(dd, DCC_ERR_FLG_CLR, ~(u64)0);
-	ग_लिखो_csr(dd, DC_LCB_ERR_CLR, ~(u64)0);
-	ग_लिखो_csr(dd, DC_DC8051_ERR_CLR, ~(u64)0);
-पूर्ण
+	return 0;
+}
 
 /*
- * Remap the पूर्णांकerrupt source from the general handler to the given MSI-X
- * पूर्णांकerrupt.
+ * Clear all interrupt sources on the chip.
  */
-व्योम remap_पूर्णांकr(काष्ठा hfi1_devdata *dd, पूर्णांक isrc, पूर्णांक msix_पूर्णांकr)
-अणु
+void clear_all_interrupts(struct hfi1_devdata *dd)
+{
+	int i;
+
+	for (i = 0; i < CCE_NUM_INT_CSRS; i++)
+		write_csr(dd, CCE_INT_CLEAR + (8 * i), ~(u64)0);
+
+	write_csr(dd, CCE_ERR_CLEAR, ~(u64)0);
+	write_csr(dd, MISC_ERR_CLEAR, ~(u64)0);
+	write_csr(dd, RCV_ERR_CLEAR, ~(u64)0);
+	write_csr(dd, SEND_ERR_CLEAR, ~(u64)0);
+	write_csr(dd, SEND_PIO_ERR_CLEAR, ~(u64)0);
+	write_csr(dd, SEND_DMA_ERR_CLEAR, ~(u64)0);
+	write_csr(dd, SEND_EGRESS_ERR_CLEAR, ~(u64)0);
+	for (i = 0; i < chip_send_contexts(dd); i++)
+		write_kctxt_csr(dd, i, SEND_CTXT_ERR_CLEAR, ~(u64)0);
+	for (i = 0; i < chip_sdma_engines(dd); i++)
+		write_kctxt_csr(dd, i, SEND_DMA_ENG_ERR_CLEAR, ~(u64)0);
+
+	write_csr(dd, DCC_ERR_FLG_CLR, ~(u64)0);
+	write_csr(dd, DC_LCB_ERR_CLR, ~(u64)0);
+	write_csr(dd, DC_DC8051_ERR_CLR, ~(u64)0);
+}
+
+/*
+ * Remap the interrupt source from the general handler to the given MSI-X
+ * interrupt.
+ */
+void remap_intr(struct hfi1_devdata *dd, int isrc, int msix_intr)
+{
 	u64 reg;
-	पूर्णांक m, n;
+	int m, n;
 
-	/* clear from the handled mask of the general पूर्णांकerrupt */
+	/* clear from the handled mask of the general interrupt */
 	m = isrc / 64;
 	n = isrc % 64;
-	अगर (likely(m < CCE_NUM_INT_CSRS)) अणु
+	if (likely(m < CCE_NUM_INT_CSRS)) {
 		dd->gi_mask[m] &= ~((u64)1 << n);
-	पूर्ण अन्यथा अणु
+	} else {
 		dd_dev_err(dd, "remap interrupt err\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* direct the chip source to the given MSI-X पूर्णांकerrupt */
+	/* direct the chip source to the given MSI-X interrupt */
 	m = isrc / 8;
 	n = isrc % 8;
-	reg = पढ़ो_csr(dd, CCE_INT_MAP + (8 * m));
+	reg = read_csr(dd, CCE_INT_MAP + (8 * m));
 	reg &= ~((u64)0xff << (8 * n));
-	reg |= ((u64)msix_पूर्णांकr & 0xff) << (8 * n);
-	ग_लिखो_csr(dd, CCE_INT_MAP + (8 * m), reg);
-पूर्ण
+	reg |= ((u64)msix_intr & 0xff) << (8 * n);
+	write_csr(dd, CCE_INT_MAP + (8 * m), reg);
+}
 
-व्योम remap_sdma_पूर्णांकerrupts(काष्ठा hfi1_devdata *dd, पूर्णांक engine, पूर्णांक msix_पूर्णांकr)
-अणु
+void remap_sdma_interrupts(struct hfi1_devdata *dd, int engine, int msix_intr)
+{
 	/*
-	 * SDMA engine पूर्णांकerrupt sources grouped by type, rather than
-	 * engine.  Per-engine पूर्णांकerrupts are as follows:
+	 * SDMA engine interrupt sources grouped by type, rather than
+	 * engine.  Per-engine interrupts are as follows:
 	 *	SDMA
 	 *	SDMAProgress
 	 *	SDMAIdle
 	 */
-	remap_पूर्णांकr(dd, IS_SDMA_START + engine, msix_पूर्णांकr);
-	remap_पूर्णांकr(dd, IS_SDMA_PROGRESS_START + engine, msix_पूर्णांकr);
-	remap_पूर्णांकr(dd, IS_SDMA_IDLE_START + engine, msix_पूर्णांकr);
-पूर्ण
+	remap_intr(dd, IS_SDMA_START + engine, msix_intr);
+	remap_intr(dd, IS_SDMA_PROGRESS_START + engine, msix_intr);
+	remap_intr(dd, IS_SDMA_IDLE_START + engine, msix_intr);
+}
 
 /*
- * Set the general handler to accept all पूर्णांकerrupts, remap all
- * chip पूर्णांकerrupts back to MSI-X 0.
+ * Set the general handler to accept all interrupts, remap all
+ * chip interrupts back to MSI-X 0.
  */
-व्योम reset_पूर्णांकerrupts(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक i;
+void reset_interrupts(struct hfi1_devdata *dd)
+{
+	int i;
 
-	/* all पूर्णांकerrupts handled by the general handler */
-	क्रम (i = 0; i < CCE_NUM_INT_CSRS; i++)
+	/* all interrupts handled by the general handler */
+	for (i = 0; i < CCE_NUM_INT_CSRS; i++)
 		dd->gi_mask[i] = ~(u64)0;
 
-	/* all chip पूर्णांकerrupts map to MSI-X 0 */
-	क्रम (i = 0; i < CCE_NUM_INT_MAP_CSRS; i++)
-		ग_लिखो_csr(dd, CCE_INT_MAP + (8 * i), 0);
-पूर्ण
+	/* all chip interrupts map to MSI-X 0 */
+	for (i = 0; i < CCE_NUM_INT_MAP_CSRS; i++)
+		write_csr(dd, CCE_INT_MAP + (8 * i), 0);
+}
 
 /**
- * set_up_पूर्णांकerrupts() - Initialize the IRQ resources and state
+ * set_up_interrupts() - Initialize the IRQ resources and state
  * @dd: valid devdata
  *
  */
-अटल पूर्णांक set_up_पूर्णांकerrupts(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक ret;
+static int set_up_interrupts(struct hfi1_devdata *dd)
+{
+	int ret;
 
-	/* mask all पूर्णांकerrupts */
-	set_पूर्णांकr_bits(dd, IS_FIRST_SOURCE, IS_LAST_SOURCE, false);
+	/* mask all interrupts */
+	set_intr_bits(dd, IS_FIRST_SOURCE, IS_LAST_SOURCE, false);
 
-	/* clear all pending पूर्णांकerrupts */
-	clear_all_पूर्णांकerrupts(dd);
+	/* clear all pending interrupts */
+	clear_all_interrupts(dd);
 
 	/* reset general handler mask, chip MSI-X mappings */
-	reset_पूर्णांकerrupts(dd);
+	reset_interrupts(dd);
 
-	/* ask क्रम MSI-X पूर्णांकerrupts */
+	/* ask for MSI-X interrupts */
 	ret = msix_initialize(dd);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = msix_request_irqs(dd);
-	अगर (ret)
-		msix_clean_up_पूर्णांकerrupts(dd);
+	if (ret)
+		msix_clean_up_interrupts(dd);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Set up context values in dd.  Sets:
@@ -13391,18 +13390,18 @@ u32 chip_to_opa_pstate(काष्ठा hfi1_devdata *dd, u32 chip_pstate)
  *	n_krcv_queues - number of kernel contexts
  *	first_dyn_alloc_ctxt - first dynamically allocated context
  *                             in array of contexts
- *	मुक्तctxts  - number of मुक्त user contexts
+ *	freectxts  - number of free user contexts
  *	num_send_contexts - number of PIO send contexts being used
- *	num_netdev_contexts - number of contexts reserved क्रम netdev
+ *	num_netdev_contexts - number of contexts reserved for netdev
  */
-अटल पूर्णांक set_up_context_variables(काष्ठा hfi1_devdata *dd)
-अणु
-	अचिन्हित दीर्घ num_kernel_contexts;
+static int set_up_context_variables(struct hfi1_devdata *dd)
+{
+	unsigned long num_kernel_contexts;
 	u16 num_netdev_contexts;
-	पूर्णांक ret;
-	अचिन्हित ngroups;
-	पूर्णांक rmt_count;
-	पूर्णांक user_rmt_reduced;
+	int ret;
+	unsigned ngroups;
+	int rmt_count;
+	int user_rmt_reduced;
 	u32 n_usr_ctxts;
 	u32 send_contexts = chip_send_contexts(dd);
 	u32 rcv_contexts = chip_rcv_contexts(dd);
@@ -13414,47 +13413,47 @@ u32 chip_to_opa_pstate(काष्ठा hfi1_devdata *dd, u32 chip_pstate)
 	 * - Context 2 - second kernel context
 	 * ...
 	 */
-	अगर (n_krcvqs)
+	if (n_krcvqs)
 		/*
 		 * n_krcvqs is the sum of module parameter kernel receive
-		 * contexts, krcvqs[].  It करोes not include the control
+		 * contexts, krcvqs[].  It does not include the control
 		 * context, so add that.
 		 */
 		num_kernel_contexts = n_krcvqs + 1;
-	अन्यथा
+	else
 		num_kernel_contexts = DEFAULT_KRCVQS + 1;
 	/*
 	 * Every kernel receive context needs an ACK send context.
-	 * one send context is allocated क्रम each VLअणु0-7पूर्ण and VL15
+	 * one send context is allocated for each VL{0-7} and VL15
 	 */
-	अगर (num_kernel_contexts > (send_contexts - num_vls - 1)) अणु
+	if (num_kernel_contexts > (send_contexts - num_vls - 1)) {
 		dd_dev_err(dd,
 			   "Reducing # kernel rcv contexts to: %d, from %lu\n",
 			   send_contexts - num_vls - 1,
 			   num_kernel_contexts);
 		num_kernel_contexts = send_contexts - num_vls - 1;
-	पूर्ण
+	}
 
 	/*
 	 * User contexts:
-	 *	- शेष to 1 user context per real (non-HT) CPU core अगर
+	 *	- default to 1 user context per real (non-HT) CPU core if
 	 *	  num_user_contexts is negative
 	 */
-	अगर (num_user_contexts < 0)
+	if (num_user_contexts < 0)
 		n_usr_ctxts = cpumask_weight(&node_affinity.real_cpu_mask);
-	अन्यथा
+	else
 		n_usr_ctxts = num_user_contexts;
 	/*
 	 * Adjust the counts given a global max.
 	 */
-	अगर (num_kernel_contexts + n_usr_ctxts > rcv_contexts) अणु
+	if (num_kernel_contexts + n_usr_ctxts > rcv_contexts) {
 		dd_dev_err(dd,
 			   "Reducing # user receive contexts to: %u, from %u\n",
 			   (u32)(rcv_contexts - num_kernel_contexts),
 			   n_usr_ctxts);
 		/* recalculate */
 		n_usr_ctxts = rcv_contexts - num_kernel_contexts;
-	पूर्ण
+	}
 
 	num_netdev_contexts =
 		hfi1_num_netdev_contexts(dd, rcv_contexts -
@@ -13469,13 +13468,13 @@ u32 chip_to_opa_pstate(काष्ठा hfi1_devdata *dd, u32 chip_pstate)
 	 * It should be noted that FECN oversubscribe num_netdev_contexts
 	 * entries of RMT because both netdev and PSM could allocate any receive
 	 * context between dd->first_dyn_alloc_text and dd->num_rcv_contexts,
-	 * and PSM FECN must reserve an RMT entry क्रम each possible PSM receive
+	 * and PSM FECN must reserve an RMT entry for each possible PSM receive
 	 * context.
 	 */
-	rmt_count = qos_rmt_entries(dd, शून्य, शून्य) + (num_netdev_contexts * 2);
-	अगर (HFI1_CAP_IS_KSET(TID_RDMA))
+	rmt_count = qos_rmt_entries(dd, NULL, NULL) + (num_netdev_contexts * 2);
+	if (HFI1_CAP_IS_KSET(TID_RDMA))
 		rmt_count += num_kernel_contexts - 1;
-	अगर (rmt_count + n_usr_ctxts > NUM_MAP_ENTRIES) अणु
+	if (rmt_count + n_usr_ctxts > NUM_MAP_ENTRIES) {
 		user_rmt_reduced = NUM_MAP_ENTRIES - rmt_count;
 		dd_dev_err(dd,
 			   "RMT size is reducing the number of user receive contexts from %u to %d\n",
@@ -13483,7 +13482,7 @@ u32 chip_to_opa_pstate(काष्ठा hfi1_devdata *dd, u32 chip_pstate)
 			   user_rmt_reduced);
 		/* recalculate */
 		n_usr_ctxts = user_rmt_reduced;
-	पूर्ण
+	}
 
 	/* the first N are kernel contexts, the rest are user/netdev contexts */
 	dd->num_rcv_contexts =
@@ -13492,23 +13491,23 @@ u32 chip_to_opa_pstate(काष्ठा hfi1_devdata *dd, u32 chip_pstate)
 	dd->first_dyn_alloc_ctxt = num_kernel_contexts;
 	dd->num_netdev_contexts = num_netdev_contexts;
 	dd->num_user_contexts = n_usr_ctxts;
-	dd->मुक्तctxts = n_usr_ctxts;
+	dd->freectxts = n_usr_ctxts;
 	dd_dev_info(dd,
 		    "rcv contexts: chip %d, used %d (kernel %d, netdev %u, user %u)\n",
 		    rcv_contexts,
-		    (पूर्णांक)dd->num_rcv_contexts,
-		    (पूर्णांक)dd->n_krcv_queues,
+		    (int)dd->num_rcv_contexts,
+		    (int)dd->n_krcv_queues,
 		    dd->num_netdev_contexts,
 		    dd->num_user_contexts);
 
 	/*
 	 * Receive array allocation:
-	 *   All RcvArray entries are भागided पूर्णांकo groups of 8. This
-	 *   is required by the hardware and will speed up ग_लिखोs to
-	 *   consecutive entries by using ग_लिखो-combining of the entire
+	 *   All RcvArray entries are divided into groups of 8. This
+	 *   is required by the hardware and will speed up writes to
+	 *   consecutive entries by using write-combining of the entire
 	 *   cacheline.
 	 *
-	 *   The number of groups are evenly भागided among all contexts.
+	 *   The number of groups are evenly divided among all contexts.
 	 *   any left over groups will be given to the first N user
 	 *   contexts.
 	 */
@@ -13520,20 +13519,20 @@ u32 chip_to_opa_pstate(काष्ठा hfi1_devdata *dd, u32 chip_pstate)
 	dd_dev_info(dd, "RcvArray groups %u, ctxts extra %u\n",
 		    dd->rcv_entries.ngroups,
 		    dd->rcv_entries.nctxt_extra);
-	अगर (dd->rcv_entries.ngroups * dd->rcv_entries.group_size >
-	    MAX_EAGER_ENTRIES * 2) अणु
+	if (dd->rcv_entries.ngroups * dd->rcv_entries.group_size >
+	    MAX_EAGER_ENTRIES * 2) {
 		dd->rcv_entries.ngroups = (MAX_EAGER_ENTRIES * 2) /
 			dd->rcv_entries.group_size;
 		dd_dev_info(dd,
 			    "RcvArray group count too high, change to %u\n",
 			    dd->rcv_entries.ngroups);
 		dd->rcv_entries.nctxt_extra = 0;
-	पूर्ण
+	}
 	/*
 	 * PIO send contexts
 	 */
 	ret = init_sc_pools_and_sizes(dd);
-	अगर (ret >= 0) अणु	/* success */
+	if (ret >= 0) {	/* success */
 		dd->num_send_contexts = ret;
 		dd_dev_info(
 			dd,
@@ -13545,447 +13544,447 @@ u32 chip_to_opa_pstate(काष्ठा hfi1_devdata *dd, u32 chip_pstate)
 			dd->sc_sizes[SC_USER].count,
 			dd->sc_sizes[SC_VL15].count);
 		ret = 0;	/* success */
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Set the device/port partition key table. The MAD code
  * will ensure that, at least, the partial management
  * partition key is present in the table.
  */
-अटल व्योम set_partition_keys(काष्ठा hfi1_pportdata *ppd)
-अणु
-	काष्ठा hfi1_devdata *dd = ppd->dd;
+static void set_partition_keys(struct hfi1_pportdata *ppd)
+{
+	struct hfi1_devdata *dd = ppd->dd;
 	u64 reg = 0;
-	पूर्णांक i;
+	int i;
 
 	dd_dev_info(dd, "Setting partition keys\n");
-	क्रम (i = 0; i < hfi1_get_npkeys(dd); i++) अणु
+	for (i = 0; i < hfi1_get_npkeys(dd); i++) {
 		reg |= (ppd->pkeys[i] &
 			RCV_PARTITION_KEY_PARTITION_KEY_A_MASK) <<
 			((i % 4) *
 			 RCV_PARTITION_KEY_PARTITION_KEY_B_SHIFT);
-		/* Each रेजिस्टर holds 4 PKey values. */
-		अगर ((i % 4) == 3) अणु
-			ग_लिखो_csr(dd, RCV_PARTITION_KEY +
+		/* Each register holds 4 PKey values. */
+		if ((i % 4) == 3) {
+			write_csr(dd, RCV_PARTITION_KEY +
 				  ((i - 3) * 2), reg);
 			reg = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Always enable HW pkeys check when pkeys table is set */
 	add_rcvctrl(dd, RCV_CTRL_RCV_PARTITION_KEY_ENABLE_SMASK);
-पूर्ण
+}
 
 /*
  * These CSRs and memories are uninitialized on reset and must be
- * written beक्रमe पढ़ोing to set the ECC/parity bits.
+ * written before reading to set the ECC/parity bits.
  *
- * NOTE: All user context CSRs that are not mmaped ग_लिखो-only
- * (e.g. the TID flows) must be initialized even अगर the driver never
- * पढ़ोs them.
+ * NOTE: All user context CSRs that are not mmaped write-only
+ * (e.g. the TID flows) must be initialized even if the driver never
+ * reads them.
  */
-अटल व्योम ग_लिखो_uninitialized_csrs_and_memories(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक i, j;
+static void write_uninitialized_csrs_and_memories(struct hfi1_devdata *dd)
+{
+	int i, j;
 
 	/* CceIntMap */
-	क्रम (i = 0; i < CCE_NUM_INT_MAP_CSRS; i++)
-		ग_लिखो_csr(dd, CCE_INT_MAP + (8 * i), 0);
+	for (i = 0; i < CCE_NUM_INT_MAP_CSRS; i++)
+		write_csr(dd, CCE_INT_MAP + (8 * i), 0);
 
 	/* SendCtxtCreditReturnAddr */
-	क्रम (i = 0; i < chip_send_contexts(dd); i++)
-		ग_लिखो_kctxt_csr(dd, i, SEND_CTXT_CREDIT_RETURN_ADDR, 0);
+	for (i = 0; i < chip_send_contexts(dd); i++)
+		write_kctxt_csr(dd, i, SEND_CTXT_CREDIT_RETURN_ADDR, 0);
 
 	/* PIO Send buffers */
 	/* SDMA Send buffers */
 	/*
-	 * These are not normally पढ़ो, and (presently) have no method
-	 * to be पढ़ो, so are not pre-initialized
+	 * These are not normally read, and (presently) have no method
+	 * to be read, so are not pre-initialized
 	 */
 
 	/* RcvHdrAddr */
 	/* RcvHdrTailAddr */
 	/* RcvTidFlowTable */
-	क्रम (i = 0; i < chip_rcv_contexts(dd); i++) अणु
-		ग_लिखो_kctxt_csr(dd, i, RCV_HDR_ADDR, 0);
-		ग_लिखो_kctxt_csr(dd, i, RCV_HDR_TAIL_ADDR, 0);
-		क्रम (j = 0; j < RXE_NUM_TID_FLOWS; j++)
-			ग_लिखो_uctxt_csr(dd, i, RCV_TID_FLOW_TABLE + (8 * j), 0);
-	पूर्ण
+	for (i = 0; i < chip_rcv_contexts(dd); i++) {
+		write_kctxt_csr(dd, i, RCV_HDR_ADDR, 0);
+		write_kctxt_csr(dd, i, RCV_HDR_TAIL_ADDR, 0);
+		for (j = 0; j < RXE_NUM_TID_FLOWS; j++)
+			write_uctxt_csr(dd, i, RCV_TID_FLOW_TABLE + (8 * j), 0);
+	}
 
 	/* RcvArray */
-	क्रम (i = 0; i < chip_rcv_array_count(dd); i++)
+	for (i = 0; i < chip_rcv_array_count(dd); i++)
 		hfi1_put_tid(dd, i, PT_INVALID_FLUSH, 0, 0);
 
 	/* RcvQPMapTable */
-	क्रम (i = 0; i < 32; i++)
-		ग_लिखो_csr(dd, RCV_QP_MAP_TABLE + (8 * i), 0);
-पूर्ण
+	for (i = 0; i < 32; i++)
+		write_csr(dd, RCV_QP_MAP_TABLE + (8 * i), 0);
+}
 
 /*
  * Use the ctrl_bits in CceCtrl to clear the status_bits in CceStatus.
  */
-अटल व्योम clear_cce_status(काष्ठा hfi1_devdata *dd, u64 status_bits,
+static void clear_cce_status(struct hfi1_devdata *dd, u64 status_bits,
 			     u64 ctrl_bits)
-अणु
-	अचिन्हित दीर्घ समयout;
+{
+	unsigned long timeout;
 	u64 reg;
 
 	/* is the condition present? */
-	reg = पढ़ो_csr(dd, CCE_STATUS);
-	अगर ((reg & status_bits) == 0)
-		वापस;
+	reg = read_csr(dd, CCE_STATUS);
+	if ((reg & status_bits) == 0)
+		return;
 
 	/* clear the condition */
-	ग_लिखो_csr(dd, CCE_CTRL, ctrl_bits);
+	write_csr(dd, CCE_CTRL, ctrl_bits);
 
-	/* रुको क्रम the condition to clear */
-	समयout = jअगरfies + msecs_to_jअगरfies(CCE_STATUS_TIMEOUT);
-	जबतक (1) अणु
-		reg = पढ़ो_csr(dd, CCE_STATUS);
-		अगर ((reg & status_bits) == 0)
-			वापस;
-		अगर (समय_after(jअगरfies, समयout)) अणु
+	/* wait for the condition to clear */
+	timeout = jiffies + msecs_to_jiffies(CCE_STATUS_TIMEOUT);
+	while (1) {
+		reg = read_csr(dd, CCE_STATUS);
+		if ((reg & status_bits) == 0)
+			return;
+		if (time_after(jiffies, timeout)) {
 			dd_dev_err(dd,
 				   "Timeout waiting for CceStatus to clear bits 0x%llx, remaining 0x%llx\n",
 				   status_bits, reg & status_bits);
-			वापस;
-		पूर्ण
+			return;
+		}
 		udelay(1);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* set CCE CSRs to chip reset शेषs */
-अटल व्योम reset_cce_csrs(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक i;
+/* set CCE CSRs to chip reset defaults */
+static void reset_cce_csrs(struct hfi1_devdata *dd)
+{
+	int i;
 
-	/* CCE_REVISION पढ़ो-only */
-	/* CCE_REVISION2 पढ़ो-only */
-	/* CCE_CTRL - bits clear स्वतःmatically */
-	/* CCE_STATUS पढ़ो-only, use CceCtrl to clear */
+	/* CCE_REVISION read-only */
+	/* CCE_REVISION2 read-only */
+	/* CCE_CTRL - bits clear automatically */
+	/* CCE_STATUS read-only, use CceCtrl to clear */
 	clear_cce_status(dd, ALL_FROZE, CCE_CTRL_SPC_UNFREEZE_SMASK);
 	clear_cce_status(dd, ALL_TXE_PAUSE, CCE_CTRL_TXE_RESUME_SMASK);
 	clear_cce_status(dd, ALL_RXE_PAUSE, CCE_CTRL_RXE_RESUME_SMASK);
-	क्रम (i = 0; i < CCE_NUM_SCRATCH; i++)
-		ग_लिखो_csr(dd, CCE_SCRATCH + (8 * i), 0);
-	/* CCE_ERR_STATUS पढ़ो-only */
-	ग_लिखो_csr(dd, CCE_ERR_MASK, 0);
-	ग_लिखो_csr(dd, CCE_ERR_CLEAR, ~0ull);
+	for (i = 0; i < CCE_NUM_SCRATCH; i++)
+		write_csr(dd, CCE_SCRATCH + (8 * i), 0);
+	/* CCE_ERR_STATUS read-only */
+	write_csr(dd, CCE_ERR_MASK, 0);
+	write_csr(dd, CCE_ERR_CLEAR, ~0ull);
 	/* CCE_ERR_FORCE leave alone */
-	क्रम (i = 0; i < CCE_NUM_32_BIT_COUNTERS; i++)
-		ग_लिखो_csr(dd, CCE_COUNTER_ARRAY32 + (8 * i), 0);
-	ग_लिखो_csr(dd, CCE_DC_CTRL, CCE_DC_CTRL_RESETCSR);
+	for (i = 0; i < CCE_NUM_32_BIT_COUNTERS; i++)
+		write_csr(dd, CCE_COUNTER_ARRAY32 + (8 * i), 0);
+	write_csr(dd, CCE_DC_CTRL, CCE_DC_CTRL_RESETCSR);
 	/* CCE_PCIE_CTRL leave alone */
-	क्रम (i = 0; i < CCE_NUM_MSIX_VECTORS; i++) अणु
-		ग_लिखो_csr(dd, CCE_MSIX_TABLE_LOWER + (8 * i), 0);
-		ग_लिखो_csr(dd, CCE_MSIX_TABLE_UPPER + (8 * i),
+	for (i = 0; i < CCE_NUM_MSIX_VECTORS; i++) {
+		write_csr(dd, CCE_MSIX_TABLE_LOWER + (8 * i), 0);
+		write_csr(dd, CCE_MSIX_TABLE_UPPER + (8 * i),
 			  CCE_MSIX_TABLE_UPPER_RESETCSR);
-	पूर्ण
-	क्रम (i = 0; i < CCE_NUM_MSIX_PBAS; i++) अणु
-		/* CCE_MSIX_PBA पढ़ो-only */
-		ग_लिखो_csr(dd, CCE_MSIX_INT_GRANTED, ~0ull);
-		ग_लिखो_csr(dd, CCE_MSIX_VEC_CLR_WITHOUT_INT, ~0ull);
-	पूर्ण
-	क्रम (i = 0; i < CCE_NUM_INT_MAP_CSRS; i++)
-		ग_लिखो_csr(dd, CCE_INT_MAP, 0);
-	क्रम (i = 0; i < CCE_NUM_INT_CSRS; i++) अणु
-		/* CCE_INT_STATUS पढ़ो-only */
-		ग_लिखो_csr(dd, CCE_INT_MASK + (8 * i), 0);
-		ग_लिखो_csr(dd, CCE_INT_CLEAR + (8 * i), ~0ull);
+	}
+	for (i = 0; i < CCE_NUM_MSIX_PBAS; i++) {
+		/* CCE_MSIX_PBA read-only */
+		write_csr(dd, CCE_MSIX_INT_GRANTED, ~0ull);
+		write_csr(dd, CCE_MSIX_VEC_CLR_WITHOUT_INT, ~0ull);
+	}
+	for (i = 0; i < CCE_NUM_INT_MAP_CSRS; i++)
+		write_csr(dd, CCE_INT_MAP, 0);
+	for (i = 0; i < CCE_NUM_INT_CSRS; i++) {
+		/* CCE_INT_STATUS read-only */
+		write_csr(dd, CCE_INT_MASK + (8 * i), 0);
+		write_csr(dd, CCE_INT_CLEAR + (8 * i), ~0ull);
 		/* CCE_INT_FORCE leave alone */
-		/* CCE_INT_BLOCKED पढ़ो-only */
-	पूर्ण
-	क्रम (i = 0; i < CCE_NUM_32_BIT_INT_COUNTERS; i++)
-		ग_लिखो_csr(dd, CCE_INT_COUNTER_ARRAY32 + (8 * i), 0);
-पूर्ण
+		/* CCE_INT_BLOCKED read-only */
+	}
+	for (i = 0; i < CCE_NUM_32_BIT_INT_COUNTERS; i++)
+		write_csr(dd, CCE_INT_COUNTER_ARRAY32 + (8 * i), 0);
+}
 
-/* set MISC CSRs to chip reset शेषs */
-अटल व्योम reset_misc_csrs(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक i;
+/* set MISC CSRs to chip reset defaults */
+static void reset_misc_csrs(struct hfi1_devdata *dd)
+{
+	int i;
 
-	क्रम (i = 0; i < 32; i++) अणु
-		ग_लिखो_csr(dd, MISC_CFG_RSA_R2 + (8 * i), 0);
-		ग_लिखो_csr(dd, MISC_CFG_RSA_SIGNATURE + (8 * i), 0);
-		ग_लिखो_csr(dd, MISC_CFG_RSA_MODULUS + (8 * i), 0);
-	पूर्ण
+	for (i = 0; i < 32; i++) {
+		write_csr(dd, MISC_CFG_RSA_R2 + (8 * i), 0);
+		write_csr(dd, MISC_CFG_RSA_SIGNATURE + (8 * i), 0);
+		write_csr(dd, MISC_CFG_RSA_MODULUS + (8 * i), 0);
+	}
 	/*
-	 * MISC_CFG_SHA_PRELOAD leave alone - always पढ़ोs 0 and can
+	 * MISC_CFG_SHA_PRELOAD leave alone - always reads 0 and can
 	 * only be written 128-byte chunks
 	 */
 	/* init RSA engine to clear lingering errors */
-	ग_लिखो_csr(dd, MISC_CFG_RSA_CMD, 1);
-	ग_लिखो_csr(dd, MISC_CFG_RSA_MU, 0);
-	ग_लिखो_csr(dd, MISC_CFG_FW_CTRL, 0);
-	/* MISC_STS_8051_DIGEST पढ़ो-only */
-	/* MISC_STS_SBM_DIGEST पढ़ो-only */
-	/* MISC_STS_PCIE_DIGEST पढ़ो-only */
-	/* MISC_STS_FAB_DIGEST पढ़ो-only */
-	/* MISC_ERR_STATUS पढ़ो-only */
-	ग_लिखो_csr(dd, MISC_ERR_MASK, 0);
-	ग_लिखो_csr(dd, MISC_ERR_CLEAR, ~0ull);
+	write_csr(dd, MISC_CFG_RSA_CMD, 1);
+	write_csr(dd, MISC_CFG_RSA_MU, 0);
+	write_csr(dd, MISC_CFG_FW_CTRL, 0);
+	/* MISC_STS_8051_DIGEST read-only */
+	/* MISC_STS_SBM_DIGEST read-only */
+	/* MISC_STS_PCIE_DIGEST read-only */
+	/* MISC_STS_FAB_DIGEST read-only */
+	/* MISC_ERR_STATUS read-only */
+	write_csr(dd, MISC_ERR_MASK, 0);
+	write_csr(dd, MISC_ERR_CLEAR, ~0ull);
 	/* MISC_ERR_FORCE leave alone */
-पूर्ण
+}
 
-/* set TXE CSRs to chip reset शेषs */
-अटल व्योम reset_txe_csrs(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक i;
+/* set TXE CSRs to chip reset defaults */
+static void reset_txe_csrs(struct hfi1_devdata *dd)
+{
+	int i;
 
 	/*
 	 * TXE Kernel CSRs
 	 */
-	ग_लिखो_csr(dd, SEND_CTRL, 0);
-	__cm_reset(dd, 0);	/* reset CM पूर्णांकernal state */
-	/* SEND_CONTEXTS पढ़ो-only */
-	/* SEND_DMA_ENGINES पढ़ो-only */
-	/* SEND_PIO_MEM_SIZE पढ़ो-only */
-	/* SEND_DMA_MEM_SIZE पढ़ो-only */
-	ग_लिखो_csr(dd, SEND_HIGH_PRIORITY_LIMIT, 0);
+	write_csr(dd, SEND_CTRL, 0);
+	__cm_reset(dd, 0);	/* reset CM internal state */
+	/* SEND_CONTEXTS read-only */
+	/* SEND_DMA_ENGINES read-only */
+	/* SEND_PIO_MEM_SIZE read-only */
+	/* SEND_DMA_MEM_SIZE read-only */
+	write_csr(dd, SEND_HIGH_PRIORITY_LIMIT, 0);
 	pio_reset_all(dd);	/* SEND_PIO_INIT_CTXT */
-	/* SEND_PIO_ERR_STATUS पढ़ो-only */
-	ग_लिखो_csr(dd, SEND_PIO_ERR_MASK, 0);
-	ग_लिखो_csr(dd, SEND_PIO_ERR_CLEAR, ~0ull);
+	/* SEND_PIO_ERR_STATUS read-only */
+	write_csr(dd, SEND_PIO_ERR_MASK, 0);
+	write_csr(dd, SEND_PIO_ERR_CLEAR, ~0ull);
 	/* SEND_PIO_ERR_FORCE leave alone */
-	/* SEND_DMA_ERR_STATUS पढ़ो-only */
-	ग_लिखो_csr(dd, SEND_DMA_ERR_MASK, 0);
-	ग_लिखो_csr(dd, SEND_DMA_ERR_CLEAR, ~0ull);
+	/* SEND_DMA_ERR_STATUS read-only */
+	write_csr(dd, SEND_DMA_ERR_MASK, 0);
+	write_csr(dd, SEND_DMA_ERR_CLEAR, ~0ull);
 	/* SEND_DMA_ERR_FORCE leave alone */
-	/* SEND_EGRESS_ERR_STATUS पढ़ो-only */
-	ग_लिखो_csr(dd, SEND_EGRESS_ERR_MASK, 0);
-	ग_लिखो_csr(dd, SEND_EGRESS_ERR_CLEAR, ~0ull);
+	/* SEND_EGRESS_ERR_STATUS read-only */
+	write_csr(dd, SEND_EGRESS_ERR_MASK, 0);
+	write_csr(dd, SEND_EGRESS_ERR_CLEAR, ~0ull);
 	/* SEND_EGRESS_ERR_FORCE leave alone */
-	ग_लिखो_csr(dd, SEND_BTH_QP, 0);
-	ग_लिखो_csr(dd, SEND_STATIC_RATE_CONTROL, 0);
-	ग_लिखो_csr(dd, SEND_SC2VLT0, 0);
-	ग_लिखो_csr(dd, SEND_SC2VLT1, 0);
-	ग_लिखो_csr(dd, SEND_SC2VLT2, 0);
-	ग_लिखो_csr(dd, SEND_SC2VLT3, 0);
-	ग_लिखो_csr(dd, SEND_LEN_CHECK0, 0);
-	ग_लिखो_csr(dd, SEND_LEN_CHECK1, 0);
-	/* SEND_ERR_STATUS पढ़ो-only */
-	ग_लिखो_csr(dd, SEND_ERR_MASK, 0);
-	ग_लिखो_csr(dd, SEND_ERR_CLEAR, ~0ull);
-	/* SEND_ERR_FORCE पढ़ो-only */
-	क्रम (i = 0; i < VL_ARB_LOW_PRIO_TABLE_SIZE; i++)
-		ग_लिखो_csr(dd, SEND_LOW_PRIORITY_LIST + (8 * i), 0);
-	क्रम (i = 0; i < VL_ARB_HIGH_PRIO_TABLE_SIZE; i++)
-		ग_लिखो_csr(dd, SEND_HIGH_PRIORITY_LIST + (8 * i), 0);
-	क्रम (i = 0; i < chip_send_contexts(dd) / NUM_CONTEXTS_PER_SET; i++)
-		ग_लिखो_csr(dd, SEND_CONTEXT_SET_CTRL + (8 * i), 0);
-	क्रम (i = 0; i < TXE_NUM_32_BIT_COUNTER; i++)
-		ग_लिखो_csr(dd, SEND_COUNTER_ARRAY32 + (8 * i), 0);
-	क्रम (i = 0; i < TXE_NUM_64_BIT_COUNTER; i++)
-		ग_लिखो_csr(dd, SEND_COUNTER_ARRAY64 + (8 * i), 0);
-	ग_लिखो_csr(dd, SEND_CM_CTRL, SEND_CM_CTRL_RESETCSR);
-	ग_लिखो_csr(dd, SEND_CM_GLOBAL_CREDIT, SEND_CM_GLOBAL_CREDIT_RESETCSR);
-	/* SEND_CM_CREDIT_USED_STATUS पढ़ो-only */
-	ग_लिखो_csr(dd, SEND_CM_TIMER_CTRL, 0);
-	ग_लिखो_csr(dd, SEND_CM_LOCAL_AU_TABLE0_TO3, 0);
-	ग_लिखो_csr(dd, SEND_CM_LOCAL_AU_TABLE4_TO7, 0);
-	ग_लिखो_csr(dd, SEND_CM_REMOTE_AU_TABLE0_TO3, 0);
-	ग_लिखो_csr(dd, SEND_CM_REMOTE_AU_TABLE4_TO7, 0);
-	क्रम (i = 0; i < TXE_NUM_DATA_VL; i++)
-		ग_लिखो_csr(dd, SEND_CM_CREDIT_VL + (8 * i), 0);
-	ग_लिखो_csr(dd, SEND_CM_CREDIT_VL15, 0);
-	/* SEND_CM_CREDIT_USED_VL पढ़ो-only */
-	/* SEND_CM_CREDIT_USED_VL15 पढ़ो-only */
-	/* SEND_EGRESS_CTXT_STATUS पढ़ो-only */
-	/* SEND_EGRESS_SEND_DMA_STATUS पढ़ो-only */
-	ग_लिखो_csr(dd, SEND_EGRESS_ERR_INFO, ~0ull);
-	/* SEND_EGRESS_ERR_INFO पढ़ो-only */
-	/* SEND_EGRESS_ERR_SOURCE पढ़ो-only */
+	write_csr(dd, SEND_BTH_QP, 0);
+	write_csr(dd, SEND_STATIC_RATE_CONTROL, 0);
+	write_csr(dd, SEND_SC2VLT0, 0);
+	write_csr(dd, SEND_SC2VLT1, 0);
+	write_csr(dd, SEND_SC2VLT2, 0);
+	write_csr(dd, SEND_SC2VLT3, 0);
+	write_csr(dd, SEND_LEN_CHECK0, 0);
+	write_csr(dd, SEND_LEN_CHECK1, 0);
+	/* SEND_ERR_STATUS read-only */
+	write_csr(dd, SEND_ERR_MASK, 0);
+	write_csr(dd, SEND_ERR_CLEAR, ~0ull);
+	/* SEND_ERR_FORCE read-only */
+	for (i = 0; i < VL_ARB_LOW_PRIO_TABLE_SIZE; i++)
+		write_csr(dd, SEND_LOW_PRIORITY_LIST + (8 * i), 0);
+	for (i = 0; i < VL_ARB_HIGH_PRIO_TABLE_SIZE; i++)
+		write_csr(dd, SEND_HIGH_PRIORITY_LIST + (8 * i), 0);
+	for (i = 0; i < chip_send_contexts(dd) / NUM_CONTEXTS_PER_SET; i++)
+		write_csr(dd, SEND_CONTEXT_SET_CTRL + (8 * i), 0);
+	for (i = 0; i < TXE_NUM_32_BIT_COUNTER; i++)
+		write_csr(dd, SEND_COUNTER_ARRAY32 + (8 * i), 0);
+	for (i = 0; i < TXE_NUM_64_BIT_COUNTER; i++)
+		write_csr(dd, SEND_COUNTER_ARRAY64 + (8 * i), 0);
+	write_csr(dd, SEND_CM_CTRL, SEND_CM_CTRL_RESETCSR);
+	write_csr(dd, SEND_CM_GLOBAL_CREDIT, SEND_CM_GLOBAL_CREDIT_RESETCSR);
+	/* SEND_CM_CREDIT_USED_STATUS read-only */
+	write_csr(dd, SEND_CM_TIMER_CTRL, 0);
+	write_csr(dd, SEND_CM_LOCAL_AU_TABLE0_TO3, 0);
+	write_csr(dd, SEND_CM_LOCAL_AU_TABLE4_TO7, 0);
+	write_csr(dd, SEND_CM_REMOTE_AU_TABLE0_TO3, 0);
+	write_csr(dd, SEND_CM_REMOTE_AU_TABLE4_TO7, 0);
+	for (i = 0; i < TXE_NUM_DATA_VL; i++)
+		write_csr(dd, SEND_CM_CREDIT_VL + (8 * i), 0);
+	write_csr(dd, SEND_CM_CREDIT_VL15, 0);
+	/* SEND_CM_CREDIT_USED_VL read-only */
+	/* SEND_CM_CREDIT_USED_VL15 read-only */
+	/* SEND_EGRESS_CTXT_STATUS read-only */
+	/* SEND_EGRESS_SEND_DMA_STATUS read-only */
+	write_csr(dd, SEND_EGRESS_ERR_INFO, ~0ull);
+	/* SEND_EGRESS_ERR_INFO read-only */
+	/* SEND_EGRESS_ERR_SOURCE read-only */
 
 	/*
 	 * TXE Per-Context CSRs
 	 */
-	क्रम (i = 0; i < chip_send_contexts(dd); i++) अणु
-		ग_लिखो_kctxt_csr(dd, i, SEND_CTXT_CTRL, 0);
-		ग_लिखो_kctxt_csr(dd, i, SEND_CTXT_CREDIT_CTRL, 0);
-		ग_लिखो_kctxt_csr(dd, i, SEND_CTXT_CREDIT_RETURN_ADDR, 0);
-		ग_लिखो_kctxt_csr(dd, i, SEND_CTXT_CREDIT_FORCE, 0);
-		ग_लिखो_kctxt_csr(dd, i, SEND_CTXT_ERR_MASK, 0);
-		ग_लिखो_kctxt_csr(dd, i, SEND_CTXT_ERR_CLEAR, ~0ull);
-		ग_लिखो_kctxt_csr(dd, i, SEND_CTXT_CHECK_ENABLE, 0);
-		ग_लिखो_kctxt_csr(dd, i, SEND_CTXT_CHECK_VL, 0);
-		ग_लिखो_kctxt_csr(dd, i, SEND_CTXT_CHECK_JOB_KEY, 0);
-		ग_लिखो_kctxt_csr(dd, i, SEND_CTXT_CHECK_PARTITION_KEY, 0);
-		ग_लिखो_kctxt_csr(dd, i, SEND_CTXT_CHECK_SLID, 0);
-		ग_लिखो_kctxt_csr(dd, i, SEND_CTXT_CHECK_OPCODE, 0);
-	पूर्ण
+	for (i = 0; i < chip_send_contexts(dd); i++) {
+		write_kctxt_csr(dd, i, SEND_CTXT_CTRL, 0);
+		write_kctxt_csr(dd, i, SEND_CTXT_CREDIT_CTRL, 0);
+		write_kctxt_csr(dd, i, SEND_CTXT_CREDIT_RETURN_ADDR, 0);
+		write_kctxt_csr(dd, i, SEND_CTXT_CREDIT_FORCE, 0);
+		write_kctxt_csr(dd, i, SEND_CTXT_ERR_MASK, 0);
+		write_kctxt_csr(dd, i, SEND_CTXT_ERR_CLEAR, ~0ull);
+		write_kctxt_csr(dd, i, SEND_CTXT_CHECK_ENABLE, 0);
+		write_kctxt_csr(dd, i, SEND_CTXT_CHECK_VL, 0);
+		write_kctxt_csr(dd, i, SEND_CTXT_CHECK_JOB_KEY, 0);
+		write_kctxt_csr(dd, i, SEND_CTXT_CHECK_PARTITION_KEY, 0);
+		write_kctxt_csr(dd, i, SEND_CTXT_CHECK_SLID, 0);
+		write_kctxt_csr(dd, i, SEND_CTXT_CHECK_OPCODE, 0);
+	}
 
 	/*
 	 * TXE Per-SDMA CSRs
 	 */
-	क्रम (i = 0; i < chip_sdma_engines(dd); i++) अणु
-		ग_लिखो_kctxt_csr(dd, i, SEND_DMA_CTRL, 0);
-		/* SEND_DMA_STATUS पढ़ो-only */
-		ग_लिखो_kctxt_csr(dd, i, SEND_DMA_BASE_ADDR, 0);
-		ग_लिखो_kctxt_csr(dd, i, SEND_DMA_LEN_GEN, 0);
-		ग_लिखो_kctxt_csr(dd, i, SEND_DMA_TAIL, 0);
-		/* SEND_DMA_HEAD पढ़ो-only */
-		ग_लिखो_kctxt_csr(dd, i, SEND_DMA_HEAD_ADDR, 0);
-		ग_लिखो_kctxt_csr(dd, i, SEND_DMA_PRIORITY_THLD, 0);
-		/* SEND_DMA_IDLE_CNT पढ़ो-only */
-		ग_लिखो_kctxt_csr(dd, i, SEND_DMA_RELOAD_CNT, 0);
-		ग_लिखो_kctxt_csr(dd, i, SEND_DMA_DESC_CNT, 0);
-		/* SEND_DMA_DESC_FETCHED_CNT पढ़ो-only */
-		/* SEND_DMA_ENG_ERR_STATUS पढ़ो-only */
-		ग_लिखो_kctxt_csr(dd, i, SEND_DMA_ENG_ERR_MASK, 0);
-		ग_लिखो_kctxt_csr(dd, i, SEND_DMA_ENG_ERR_CLEAR, ~0ull);
+	for (i = 0; i < chip_sdma_engines(dd); i++) {
+		write_kctxt_csr(dd, i, SEND_DMA_CTRL, 0);
+		/* SEND_DMA_STATUS read-only */
+		write_kctxt_csr(dd, i, SEND_DMA_BASE_ADDR, 0);
+		write_kctxt_csr(dd, i, SEND_DMA_LEN_GEN, 0);
+		write_kctxt_csr(dd, i, SEND_DMA_TAIL, 0);
+		/* SEND_DMA_HEAD read-only */
+		write_kctxt_csr(dd, i, SEND_DMA_HEAD_ADDR, 0);
+		write_kctxt_csr(dd, i, SEND_DMA_PRIORITY_THLD, 0);
+		/* SEND_DMA_IDLE_CNT read-only */
+		write_kctxt_csr(dd, i, SEND_DMA_RELOAD_CNT, 0);
+		write_kctxt_csr(dd, i, SEND_DMA_DESC_CNT, 0);
+		/* SEND_DMA_DESC_FETCHED_CNT read-only */
+		/* SEND_DMA_ENG_ERR_STATUS read-only */
+		write_kctxt_csr(dd, i, SEND_DMA_ENG_ERR_MASK, 0);
+		write_kctxt_csr(dd, i, SEND_DMA_ENG_ERR_CLEAR, ~0ull);
 		/* SEND_DMA_ENG_ERR_FORCE leave alone */
-		ग_लिखो_kctxt_csr(dd, i, SEND_DMA_CHECK_ENABLE, 0);
-		ग_लिखो_kctxt_csr(dd, i, SEND_DMA_CHECK_VL, 0);
-		ग_लिखो_kctxt_csr(dd, i, SEND_DMA_CHECK_JOB_KEY, 0);
-		ग_लिखो_kctxt_csr(dd, i, SEND_DMA_CHECK_PARTITION_KEY, 0);
-		ग_लिखो_kctxt_csr(dd, i, SEND_DMA_CHECK_SLID, 0);
-		ग_लिखो_kctxt_csr(dd, i, SEND_DMA_CHECK_OPCODE, 0);
-		ग_लिखो_kctxt_csr(dd, i, SEND_DMA_MEMORY, 0);
-	पूर्ण
-पूर्ण
+		write_kctxt_csr(dd, i, SEND_DMA_CHECK_ENABLE, 0);
+		write_kctxt_csr(dd, i, SEND_DMA_CHECK_VL, 0);
+		write_kctxt_csr(dd, i, SEND_DMA_CHECK_JOB_KEY, 0);
+		write_kctxt_csr(dd, i, SEND_DMA_CHECK_PARTITION_KEY, 0);
+		write_kctxt_csr(dd, i, SEND_DMA_CHECK_SLID, 0);
+		write_kctxt_csr(dd, i, SEND_DMA_CHECK_OPCODE, 0);
+		write_kctxt_csr(dd, i, SEND_DMA_MEMORY, 0);
+	}
+}
 
 /*
  * Expect on entry:
  * o Packet ingress is disabled, i.e. RcvCtrl.RcvPortEnable == 0
  */
-अटल व्योम init_rbufs(काष्ठा hfi1_devdata *dd)
-अणु
+static void init_rbufs(struct hfi1_devdata *dd)
+{
 	u64 reg;
-	पूर्णांक count;
+	int count;
 
 	/*
-	 * Wait क्रम DMA to stop: RxRbufPktPending and RxPktInProgress are
+	 * Wait for DMA to stop: RxRbufPktPending and RxPktInProgress are
 	 * clear.
 	 */
 	count = 0;
-	जबतक (1) अणु
-		reg = पढ़ो_csr(dd, RCV_STATUS);
-		अगर ((reg & (RCV_STATUS_RX_RBUF_PKT_PENDING_SMASK
+	while (1) {
+		reg = read_csr(dd, RCV_STATUS);
+		if ((reg & (RCV_STATUS_RX_RBUF_PKT_PENDING_SMASK
 			    | RCV_STATUS_RX_PKT_IN_PROGRESS_SMASK)) == 0)
-			अवरोध;
+			break;
 		/*
-		 * Give up after 1ms - maximum रुको समय.
+		 * Give up after 1ms - maximum wait time.
 		 *
 		 * RBuf size is 136KiB.  Slowest possible is PCIe Gen1 x1 at
-		 * 250MB/s bandwidth.  Lower rate to 66% क्रम overhead to get:
+		 * 250MB/s bandwidth.  Lower rate to 66% for overhead to get:
 		 *	136 KB / (66% * 250MB/s) = 844us
 		 */
-		अगर (count++ > 500) अणु
+		if (count++ > 500) {
 			dd_dev_err(dd,
 				   "%s: in-progress DMA not clearing: RcvStatus 0x%llx, continuing\n",
 				   __func__, reg);
-			अवरोध;
-		पूर्ण
-		udelay(2); /* करो not busy-रुको the CSR */
-	पूर्ण
+			break;
+		}
+		udelay(2); /* do not busy-wait the CSR */
+	}
 
 	/* start the init - expect RcvCtrl to be 0 */
-	ग_लिखो_csr(dd, RCV_CTRL, RCV_CTRL_RX_RBUF_INIT_SMASK);
+	write_csr(dd, RCV_CTRL, RCV_CTRL_RX_RBUF_INIT_SMASK);
 
 	/*
-	 * Read to क्रमce the ग_लिखो of Rcvtrl.RxRbufInit.  There is a brief
-	 * period after the ग_लिखो beक्रमe RcvStatus.RxRbufInitDone is valid.
+	 * Read to force the write of Rcvtrl.RxRbufInit.  There is a brief
+	 * period after the write before RcvStatus.RxRbufInitDone is valid.
 	 * The delay in the first run through the loop below is sufficient and
-	 * required beक्रमe the first पढ़ो of RcvStatus.RxRbufInपूर्णांकDone.
+	 * required before the first read of RcvStatus.RxRbufInintDone.
 	 */
-	पढ़ो_csr(dd, RCV_CTRL);
+	read_csr(dd, RCV_CTRL);
 
-	/* रुको क्रम the init to finish */
+	/* wait for the init to finish */
 	count = 0;
-	जबतक (1) अणु
-		/* delay is required first समय through - see above */
-		udelay(2); /* करो not busy-रुको the CSR */
-		reg = पढ़ो_csr(dd, RCV_STATUS);
-		अगर (reg & (RCV_STATUS_RX_RBUF_INIT_DONE_SMASK))
-			अवरोध;
+	while (1) {
+		/* delay is required first time through - see above */
+		udelay(2); /* do not busy-wait the CSR */
+		reg = read_csr(dd, RCV_STATUS);
+		if (reg & (RCV_STATUS_RX_RBUF_INIT_DONE_SMASK))
+			break;
 
 		/* give up after 100us - slowest possible at 33MHz is 73us */
-		अगर (count++ > 50) अणु
+		if (count++ > 50) {
 			dd_dev_err(dd,
 				   "%s: RcvStatus.RxRbufInit not set, continuing\n",
 				   __func__);
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			break;
+		}
+	}
+}
 
-/* set RXE CSRs to chip reset शेषs */
-अटल व्योम reset_rxe_csrs(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक i, j;
+/* set RXE CSRs to chip reset defaults */
+static void reset_rxe_csrs(struct hfi1_devdata *dd)
+{
+	int i, j;
 
 	/*
 	 * RXE Kernel CSRs
 	 */
-	ग_लिखो_csr(dd, RCV_CTRL, 0);
+	write_csr(dd, RCV_CTRL, 0);
 	init_rbufs(dd);
-	/* RCV_STATUS पढ़ो-only */
-	/* RCV_CONTEXTS पढ़ो-only */
-	/* RCV_ARRAY_CNT पढ़ो-only */
-	/* RCV_BUF_SIZE पढ़ो-only */
-	ग_लिखो_csr(dd, RCV_BTH_QP, 0);
-	ग_लिखो_csr(dd, RCV_MULTICAST, 0);
-	ग_लिखो_csr(dd, RCV_BYPASS, 0);
-	ग_लिखो_csr(dd, RCV_VL15, 0);
-	/* this is a clear-करोwn */
-	ग_लिखो_csr(dd, RCV_ERR_INFO,
+	/* RCV_STATUS read-only */
+	/* RCV_CONTEXTS read-only */
+	/* RCV_ARRAY_CNT read-only */
+	/* RCV_BUF_SIZE read-only */
+	write_csr(dd, RCV_BTH_QP, 0);
+	write_csr(dd, RCV_MULTICAST, 0);
+	write_csr(dd, RCV_BYPASS, 0);
+	write_csr(dd, RCV_VL15, 0);
+	/* this is a clear-down */
+	write_csr(dd, RCV_ERR_INFO,
 		  RCV_ERR_INFO_RCV_EXCESS_BUFFER_OVERRUN_SMASK);
-	/* RCV_ERR_STATUS पढ़ो-only */
-	ग_लिखो_csr(dd, RCV_ERR_MASK, 0);
-	ग_लिखो_csr(dd, RCV_ERR_CLEAR, ~0ull);
+	/* RCV_ERR_STATUS read-only */
+	write_csr(dd, RCV_ERR_MASK, 0);
+	write_csr(dd, RCV_ERR_CLEAR, ~0ull);
 	/* RCV_ERR_FORCE leave alone */
-	क्रम (i = 0; i < 32; i++)
-		ग_लिखो_csr(dd, RCV_QP_MAP_TABLE + (8 * i), 0);
-	क्रम (i = 0; i < 4; i++)
-		ग_लिखो_csr(dd, RCV_PARTITION_KEY + (8 * i), 0);
-	क्रम (i = 0; i < RXE_NUM_32_BIT_COUNTERS; i++)
-		ग_लिखो_csr(dd, RCV_COUNTER_ARRAY32 + (8 * i), 0);
-	क्रम (i = 0; i < RXE_NUM_64_BIT_COUNTERS; i++)
-		ग_लिखो_csr(dd, RCV_COUNTER_ARRAY64 + (8 * i), 0);
-	क्रम (i = 0; i < RXE_NUM_RSM_INSTANCES; i++)
+	for (i = 0; i < 32; i++)
+		write_csr(dd, RCV_QP_MAP_TABLE + (8 * i), 0);
+	for (i = 0; i < 4; i++)
+		write_csr(dd, RCV_PARTITION_KEY + (8 * i), 0);
+	for (i = 0; i < RXE_NUM_32_BIT_COUNTERS; i++)
+		write_csr(dd, RCV_COUNTER_ARRAY32 + (8 * i), 0);
+	for (i = 0; i < RXE_NUM_64_BIT_COUNTERS; i++)
+		write_csr(dd, RCV_COUNTER_ARRAY64 + (8 * i), 0);
+	for (i = 0; i < RXE_NUM_RSM_INSTANCES; i++)
 		clear_rsm_rule(dd, i);
-	क्रम (i = 0; i < 32; i++)
-		ग_लिखो_csr(dd, RCV_RSM_MAP_TABLE + (8 * i), 0);
+	for (i = 0; i < 32; i++)
+		write_csr(dd, RCV_RSM_MAP_TABLE + (8 * i), 0);
 
 	/*
 	 * RXE Kernel and User Per-Context CSRs
 	 */
-	क्रम (i = 0; i < chip_rcv_contexts(dd); i++) अणु
+	for (i = 0; i < chip_rcv_contexts(dd); i++) {
 		/* kernel */
-		ग_लिखो_kctxt_csr(dd, i, RCV_CTXT_CTRL, 0);
-		/* RCV_CTXT_STATUS पढ़ो-only */
-		ग_लिखो_kctxt_csr(dd, i, RCV_EGR_CTRL, 0);
-		ग_लिखो_kctxt_csr(dd, i, RCV_TID_CTRL, 0);
-		ग_लिखो_kctxt_csr(dd, i, RCV_KEY_CTRL, 0);
-		ग_लिखो_kctxt_csr(dd, i, RCV_HDR_ADDR, 0);
-		ग_लिखो_kctxt_csr(dd, i, RCV_HDR_CNT, 0);
-		ग_लिखो_kctxt_csr(dd, i, RCV_HDR_ENT_SIZE, 0);
-		ग_लिखो_kctxt_csr(dd, i, RCV_HDR_SIZE, 0);
-		ग_लिखो_kctxt_csr(dd, i, RCV_HDR_TAIL_ADDR, 0);
-		ग_लिखो_kctxt_csr(dd, i, RCV_AVAIL_TIME_OUT, 0);
-		ग_लिखो_kctxt_csr(dd, i, RCV_HDR_OVFL_CNT, 0);
+		write_kctxt_csr(dd, i, RCV_CTXT_CTRL, 0);
+		/* RCV_CTXT_STATUS read-only */
+		write_kctxt_csr(dd, i, RCV_EGR_CTRL, 0);
+		write_kctxt_csr(dd, i, RCV_TID_CTRL, 0);
+		write_kctxt_csr(dd, i, RCV_KEY_CTRL, 0);
+		write_kctxt_csr(dd, i, RCV_HDR_ADDR, 0);
+		write_kctxt_csr(dd, i, RCV_HDR_CNT, 0);
+		write_kctxt_csr(dd, i, RCV_HDR_ENT_SIZE, 0);
+		write_kctxt_csr(dd, i, RCV_HDR_SIZE, 0);
+		write_kctxt_csr(dd, i, RCV_HDR_TAIL_ADDR, 0);
+		write_kctxt_csr(dd, i, RCV_AVAIL_TIME_OUT, 0);
+		write_kctxt_csr(dd, i, RCV_HDR_OVFL_CNT, 0);
 
 		/* user */
-		/* RCV_HDR_TAIL पढ़ो-only */
-		ग_लिखो_uctxt_csr(dd, i, RCV_HDR_HEAD, 0);
-		/* RCV_EGR_INDEX_TAIL पढ़ो-only */
-		ग_लिखो_uctxt_csr(dd, i, RCV_EGR_INDEX_HEAD, 0);
-		/* RCV_EGR_OFFSET_TAIL पढ़ो-only */
-		क्रम (j = 0; j < RXE_NUM_TID_FLOWS; j++) अणु
-			ग_लिखो_uctxt_csr(dd, i,
+		/* RCV_HDR_TAIL read-only */
+		write_uctxt_csr(dd, i, RCV_HDR_HEAD, 0);
+		/* RCV_EGR_INDEX_TAIL read-only */
+		write_uctxt_csr(dd, i, RCV_EGR_INDEX_HEAD, 0);
+		/* RCV_EGR_OFFSET_TAIL read-only */
+		for (j = 0; j < RXE_NUM_TID_FLOWS; j++) {
+			write_uctxt_csr(dd, i,
 					RCV_TID_FLOW_TABLE + (8 * j), 0);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*
  * Set sc2vl tables.
  *
- * They घातer on to zeros, so to aव्योम send context errors
+ * They power on to zeros, so to avoid send context errors
  * they need to be set:
  *
  * SC 0-7 -> VL 0-7 (respectively)
@@ -13993,31 +13992,31 @@ u32 chip_to_opa_pstate(काष्ठा hfi1_devdata *dd, u32 chip_pstate)
  * otherwise
  *        -> VL 0
  */
-अटल व्योम init_sc2vl_tables(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक i;
-	/* init per architecture spec, स्थिरrained by hardware capability */
+static void init_sc2vl_tables(struct hfi1_devdata *dd)
+{
+	int i;
+	/* init per architecture spec, constrained by hardware capability */
 
 	/* HFI maps sent packets */
-	ग_लिखो_csr(dd, SEND_SC2VLT0, SC2VL_VAL(
+	write_csr(dd, SEND_SC2VLT0, SC2VL_VAL(
 		0,
 		0, 0, 1, 1,
 		2, 2, 3, 3,
 		4, 4, 5, 5,
 		6, 6, 7, 7));
-	ग_लिखो_csr(dd, SEND_SC2VLT1, SC2VL_VAL(
+	write_csr(dd, SEND_SC2VLT1, SC2VL_VAL(
 		1,
 		8, 0, 9, 0,
 		10, 0, 11, 0,
 		12, 0, 13, 0,
 		14, 0, 15, 15));
-	ग_लिखो_csr(dd, SEND_SC2VLT2, SC2VL_VAL(
+	write_csr(dd, SEND_SC2VLT2, SC2VL_VAL(
 		2,
 		16, 0, 17, 0,
 		18, 0, 19, 0,
 		20, 0, 21, 0,
 		22, 0, 23, 0));
-	ग_लिखो_csr(dd, SEND_SC2VLT3, SC2VL_VAL(
+	write_csr(dd, SEND_SC2VLT3, SC2VL_VAL(
 		3,
 		24, 0, 25, 0,
 		26, 0, 27, 0,
@@ -14025,179 +14024,179 @@ u32 chip_to_opa_pstate(काष्ठा hfi1_devdata *dd, u32 chip_pstate)
 		30, 0, 31, 0));
 
 	/* DC maps received packets */
-	ग_लिखो_csr(dd, DCC_CFG_SC_VL_TABLE_15_0, DC_SC_VL_VAL(
+	write_csr(dd, DCC_CFG_SC_VL_TABLE_15_0, DC_SC_VL_VAL(
 		15_0,
 		0, 0, 1, 1,  2, 2,  3, 3,  4, 4,  5, 5,  6, 6,  7,  7,
 		8, 0, 9, 0, 10, 0, 11, 0, 12, 0, 13, 0, 14, 0, 15, 15));
-	ग_लिखो_csr(dd, DCC_CFG_SC_VL_TABLE_31_16, DC_SC_VL_VAL(
+	write_csr(dd, DCC_CFG_SC_VL_TABLE_31_16, DC_SC_VL_VAL(
 		31_16,
 		16, 0, 17, 0, 18, 0, 19, 0, 20, 0, 21, 0, 22, 0, 23, 0,
 		24, 0, 25, 0, 26, 0, 27, 0, 28, 0, 29, 0, 30, 0, 31, 0));
 
 	/* initialize the cached sc2vl values consistently with h/w */
-	क्रम (i = 0; i < 32; i++) अणु
-		अगर (i < 8 || i == 15)
+	for (i = 0; i < 32; i++) {
+		if (i < 8 || i == 15)
 			*((u8 *)(dd->sc2vl) + i) = (u8)i;
-		अन्यथा
+		else
 			*((u8 *)(dd->sc2vl) + i) = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * Read chip sizes and then reset parts to sane, disabled, values.  We cannot
- * depend on the chip going through a घातer-on reset - a driver may be loaded
- * and unloaded many बार.
+ * depend on the chip going through a power-on reset - a driver may be loaded
+ * and unloaded many times.
  *
- * Do not ग_लिखो any CSR values to the chip in this routine - there may be
+ * Do not write any CSR values to the chip in this routine - there may be
  * a reset following the (possible) FLR in this routine.
  *
  */
-अटल पूर्णांक init_chip(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक i;
-	पूर्णांक ret = 0;
+static int init_chip(struct hfi1_devdata *dd)
+{
+	int i;
+	int ret = 0;
 
 	/*
 	 * Put the HFI CSRs in a known state.
 	 * Combine this with a DC reset.
 	 *
-	 * Stop the device from करोing anything जबतक we करो a
+	 * Stop the device from doing anything while we do a
 	 * reset.  We know there are no other active users of
-	 * the device since we are now in अक्षरge.  Turn off
+	 * the device since we are now in charge.  Turn off
 	 * off all outbound and inbound traffic and make sure
-	 * the device करोes not generate any पूर्णांकerrupts.
+	 * the device does not generate any interrupts.
 	 */
 
 	/* disable send contexts and SDMA engines */
-	ग_लिखो_csr(dd, SEND_CTRL, 0);
-	क्रम (i = 0; i < chip_send_contexts(dd); i++)
-		ग_लिखो_kctxt_csr(dd, i, SEND_CTXT_CTRL, 0);
-	क्रम (i = 0; i < chip_sdma_engines(dd); i++)
-		ग_लिखो_kctxt_csr(dd, i, SEND_DMA_CTRL, 0);
+	write_csr(dd, SEND_CTRL, 0);
+	for (i = 0; i < chip_send_contexts(dd); i++)
+		write_kctxt_csr(dd, i, SEND_CTXT_CTRL, 0);
+	for (i = 0; i < chip_sdma_engines(dd); i++)
+		write_kctxt_csr(dd, i, SEND_DMA_CTRL, 0);
 	/* disable port (turn off RXE inbound traffic) and contexts */
-	ग_लिखो_csr(dd, RCV_CTRL, 0);
-	क्रम (i = 0; i < chip_rcv_contexts(dd); i++)
-		ग_लिखो_csr(dd, RCV_CTXT_CTRL, 0);
-	/* mask all पूर्णांकerrupt sources */
-	क्रम (i = 0; i < CCE_NUM_INT_CSRS; i++)
-		ग_लिखो_csr(dd, CCE_INT_MASK + (8 * i), 0ull);
+	write_csr(dd, RCV_CTRL, 0);
+	for (i = 0; i < chip_rcv_contexts(dd); i++)
+		write_csr(dd, RCV_CTXT_CTRL, 0);
+	/* mask all interrupt sources */
+	for (i = 0; i < CCE_NUM_INT_CSRS; i++)
+		write_csr(dd, CCE_INT_MASK + (8 * i), 0ull);
 
 	/*
-	 * DC Reset: करो a full DC reset beक्रमe the रेजिस्टर clear.
-	 * A recommended length of समय to hold is one CSR पढ़ो,
-	 * so reपढ़ो the CceDcCtrl.  Then, hold the DC in reset
+	 * DC Reset: do a full DC reset before the register clear.
+	 * A recommended length of time to hold is one CSR read,
+	 * so reread the CceDcCtrl.  Then, hold the DC in reset
 	 * across the clear.
 	 */
-	ग_लिखो_csr(dd, CCE_DC_CTRL, CCE_DC_CTRL_DC_RESET_SMASK);
-	(व्योम)पढ़ो_csr(dd, CCE_DC_CTRL);
+	write_csr(dd, CCE_DC_CTRL, CCE_DC_CTRL_DC_RESET_SMASK);
+	(void)read_csr(dd, CCE_DC_CTRL);
 
-	अगर (use_flr) अणु
+	if (use_flr) {
 		/*
 		 * A FLR will reset the SPC core and part of the PCIe.
-		 * The parts that need to be restored have alपढ़ोy been
+		 * The parts that need to be restored have already been
 		 * saved.
 		 */
 		dd_dev_info(dd, "Resetting CSRs with FLR\n");
 
-		/* करो the FLR, the DC reset will reमुख्य */
+		/* do the FLR, the DC reset will remain */
 		pcie_flr(dd->pcidev);
 
 		/* restore command and BARs */
 		ret = restore_pci_variables(dd);
-		अगर (ret) अणु
+		if (ret) {
 			dd_dev_err(dd, "%s: Could not restore PCI variables\n",
 				   __func__);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		अगर (is_ax(dd)) अणु
+		if (is_ax(dd)) {
 			dd_dev_info(dd, "Resetting CSRs with FLR\n");
 			pcie_flr(dd->pcidev);
 			ret = restore_pci_variables(dd);
-			अगर (ret) अणु
+			if (ret) {
 				dd_dev_err(dd, "%s: Could not restore PCI variables\n",
 					   __func__);
-				वापस ret;
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+				return ret;
+			}
+		}
+	} else {
 		dd_dev_info(dd, "Resetting CSRs with writes\n");
 		reset_cce_csrs(dd);
 		reset_txe_csrs(dd);
 		reset_rxe_csrs(dd);
 		reset_misc_csrs(dd);
-	पूर्ण
+	}
 	/* clear the DC reset */
-	ग_लिखो_csr(dd, CCE_DC_CTRL, 0);
+	write_csr(dd, CCE_DC_CTRL, 0);
 
 	/* Set the LED off */
 	setextled(dd, 0);
 
 	/*
 	 * Clear the QSFP reset.
-	 * An FLR enक्रमces a 0 on all out pins. The driver करोes not touch
+	 * An FLR enforces a 0 on all out pins. The driver does not touch
 	 * ASIC_QSFPn_OUT otherwise.  This leaves RESET_N low and
-	 * anything plugged स्थिरantly in reset, अगर it pays attention
+	 * anything plugged constantly in reset, if it pays attention
 	 * to RESET_N.
 	 * Prime examples of this are optical cables. Set all pins high.
 	 * I2CCLK and I2CDAT will change per direction, and INT_N and
 	 * MODPRS_N are input only and their value is ignored.
 	 */
-	ग_लिखो_csr(dd, ASIC_QSFP1_OUT, 0x1f);
-	ग_लिखो_csr(dd, ASIC_QSFP2_OUT, 0x1f);
+	write_csr(dd, ASIC_QSFP1_OUT, 0x1f);
+	write_csr(dd, ASIC_QSFP2_OUT, 0x1f);
 	init_chip_resources(dd);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम init_early_variables(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक i;
+static void init_early_variables(struct hfi1_devdata *dd)
+{
+	int i;
 
 	/* assign link credit variables */
 	dd->vau = CM_VAU;
 	dd->link_credits = CM_GLOBAL_CREDITS;
-	अगर (is_ax(dd))
+	if (is_ax(dd))
 		dd->link_credits--;
 	dd->vcu = cu_to_vcu(hfi1_cu);
-	/* enough room क्रम 8 MAD packets plus header - 17K */
+	/* enough room for 8 MAD packets plus header - 17K */
 	dd->vl15_init = (8 * (2048 + 128)) / vau_to_au(dd->vau);
-	अगर (dd->vl15_init > dd->link_credits)
+	if (dd->vl15_init > dd->link_credits)
 		dd->vl15_init = dd->link_credits;
 
-	ग_लिखो_uninitialized_csrs_and_memories(dd);
+	write_uninitialized_csrs_and_memories(dd);
 
-	अगर (HFI1_CAP_IS_KSET(PKEY_CHECK))
-		क्रम (i = 0; i < dd->num_pports; i++) अणु
-			काष्ठा hfi1_pportdata *ppd = &dd->pport[i];
+	if (HFI1_CAP_IS_KSET(PKEY_CHECK))
+		for (i = 0; i < dd->num_pports; i++) {
+			struct hfi1_pportdata *ppd = &dd->pport[i];
 
 			set_partition_keys(ppd);
-		पूर्ण
+		}
 	init_sc2vl_tables(dd);
-पूर्ण
+}
 
-अटल व्योम init_kdeth_qp(काष्ठा hfi1_devdata *dd)
-अणु
-	ग_लिखो_csr(dd, SEND_BTH_QP,
+static void init_kdeth_qp(struct hfi1_devdata *dd)
+{
+	write_csr(dd, SEND_BTH_QP,
 		  (RVT_KDETH_QP_PREFIX & SEND_BTH_QP_KDETH_QP_MASK) <<
 		  SEND_BTH_QP_KDETH_QP_SHIFT);
 
-	ग_लिखो_csr(dd, RCV_BTH_QP,
+	write_csr(dd, RCV_BTH_QP,
 		  (RVT_KDETH_QP_PREFIX & RCV_BTH_QP_KDETH_QP_MASK) <<
 		  RCV_BTH_QP_KDETH_QP_SHIFT);
-पूर्ण
+}
 
 /**
  * hfi1_get_qp_map
  * @dd: device data
- * @idx: index to पढ़ो
+ * @idx: index to read
  */
-u8 hfi1_get_qp_map(काष्ठा hfi1_devdata *dd, u8 idx)
-अणु
-	u64 reg = पढ़ो_csr(dd, RCV_QP_MAP_TABLE + (idx / 8) * 8);
+u8 hfi1_get_qp_map(struct hfi1_devdata *dd, u8 idx)
+{
+	u64 reg = read_csr(dd, RCV_QP_MAP_TABLE + (idx / 8) * 8);
 
 	reg >>= (idx % 8) * 8;
-	वापस reg;
-पूर्ण
+	return reg;
+}
 
 /**
  * init_qpmap_table
@@ -14205,48 +14204,48 @@ u8 hfi1_get_qp_map(काष्ठा hfi1_devdata *dd, u8 idx)
  * @first_ctxt: first context
  * @last_ctxt: first context
  *
- * This वापस sets the qpn mapping table that
+ * This return sets the qpn mapping table that
  * is indexed by qpn[8:1].
  *
  * The routine will round robin the 256 settings
  * from first_ctxt to last_ctxt.
  *
  * The first/last looks ahead to having specialized
- * receive contexts क्रम mgmt and bypass.  Normal
+ * receive contexts for mgmt and bypass.  Normal
  * verbs traffic will assumed to be on a range
  * of receive contexts.
  */
-अटल व्योम init_qpmap_table(काष्ठा hfi1_devdata *dd,
+static void init_qpmap_table(struct hfi1_devdata *dd,
 			     u32 first_ctxt,
 			     u32 last_ctxt)
-अणु
+{
 	u64 reg = 0;
 	u64 regno = RCV_QP_MAP_TABLE;
-	पूर्णांक i;
+	int i;
 	u64 ctxt = first_ctxt;
 
-	क्रम (i = 0; i < 256; i++) अणु
+	for (i = 0; i < 256; i++) {
 		reg |= ctxt << (8 * (i % 8));
 		ctxt++;
-		अगर (ctxt > last_ctxt)
+		if (ctxt > last_ctxt)
 			ctxt = first_ctxt;
-		अगर (i % 8 == 7) अणु
-			ग_लिखो_csr(dd, regno, reg);
+		if (i % 8 == 7) {
+			write_csr(dd, regno, reg);
 			reg = 0;
 			regno += 8;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	add_rcvctrl(dd, RCV_CTRL_RCV_QP_MAP_ENABLE_SMASK
 			| RCV_CTRL_RCV_BYPASS_ENABLE_SMASK);
-पूर्ण
+}
 
-काष्ठा rsm_map_table अणु
+struct rsm_map_table {
 	u64 map[NUM_MAP_REGS];
-	अचिन्हित पूर्णांक used;
-पूर्ण;
+	unsigned int used;
+};
 
-काष्ठा rsm_rule_data अणु
+struct rsm_rule_data {
 	u8 offset;
 	u8 pkt_type;
 	u32 field1_off;
@@ -14259,128 +14258,128 @@ u8 hfi1_get_qp_map(काष्ठा hfi1_devdata *dd, u8 idx)
 	u32 value1;
 	u32 mask2;
 	u32 value2;
-पूर्ण;
+};
 
 /*
- * Return an initialized RMT map table क्रम users to fill in.  OK अगर it
- * वापसs शून्य, indicating no table.
+ * Return an initialized RMT map table for users to fill in.  OK if it
+ * returns NULL, indicating no table.
  */
-अटल काष्ठा rsm_map_table *alloc_rsm_map_table(काष्ठा hfi1_devdata *dd)
-अणु
-	काष्ठा rsm_map_table *rmt;
-	u8 rxcontext = is_ax(dd) ? 0 : 0xff;  /* 0 is शेष अगर a0 ver. */
+static struct rsm_map_table *alloc_rsm_map_table(struct hfi1_devdata *dd)
+{
+	struct rsm_map_table *rmt;
+	u8 rxcontext = is_ax(dd) ? 0 : 0xff;  /* 0 is default if a0 ver. */
 
-	rmt = kदो_स्मृति(माप(*rmt), GFP_KERNEL);
-	अगर (rmt) अणु
-		स_रखो(rmt->map, rxcontext, माप(rmt->map));
+	rmt = kmalloc(sizeof(*rmt), GFP_KERNEL);
+	if (rmt) {
+		memset(rmt->map, rxcontext, sizeof(rmt->map));
 		rmt->used = 0;
-	पूर्ण
+	}
 
-	वापस rmt;
-पूर्ण
+	return rmt;
+}
 
 /*
- * Write the final RMT map table to the chip and मुक्त the table.  OK अगर
- * table is शून्य.
+ * Write the final RMT map table to the chip and free the table.  OK if
+ * table is NULL.
  */
-अटल व्योम complete_rsm_map_table(काष्ठा hfi1_devdata *dd,
-				   काष्ठा rsm_map_table *rmt)
-अणु
-	पूर्णांक i;
+static void complete_rsm_map_table(struct hfi1_devdata *dd,
+				   struct rsm_map_table *rmt)
+{
+	int i;
 
-	अगर (rmt) अणु
-		/* ग_लिखो table to chip */
-		क्रम (i = 0; i < NUM_MAP_REGS; i++)
-			ग_लिखो_csr(dd, RCV_RSM_MAP_TABLE + (8 * i), rmt->map[i]);
+	if (rmt) {
+		/* write table to chip */
+		for (i = 0; i < NUM_MAP_REGS; i++)
+			write_csr(dd, RCV_RSM_MAP_TABLE + (8 * i), rmt->map[i]);
 
 		/* enable RSM */
 		add_rcvctrl(dd, RCV_CTRL_RCV_RSM_ENABLE_SMASK);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* Is a receive side mapping rule */
-अटल bool has_rsm_rule(काष्ठा hfi1_devdata *dd, u8 rule_index)
-अणु
-	वापस पढ़ो_csr(dd, RCV_RSM_CFG + (8 * rule_index)) != 0;
-पूर्ण
+static bool has_rsm_rule(struct hfi1_devdata *dd, u8 rule_index)
+{
+	return read_csr(dd, RCV_RSM_CFG + (8 * rule_index)) != 0;
+}
 
 /*
  * Add a receive side mapping rule.
  */
-अटल व्योम add_rsm_rule(काष्ठा hfi1_devdata *dd, u8 rule_index,
-			 काष्ठा rsm_rule_data *rrd)
-अणु
-	ग_लिखो_csr(dd, RCV_RSM_CFG + (8 * rule_index),
+static void add_rsm_rule(struct hfi1_devdata *dd, u8 rule_index,
+			 struct rsm_rule_data *rrd)
+{
+	write_csr(dd, RCV_RSM_CFG + (8 * rule_index),
 		  (u64)rrd->offset << RCV_RSM_CFG_OFFSET_SHIFT |
 		  1ull << rule_index | /* enable bit */
 		  (u64)rrd->pkt_type << RCV_RSM_CFG_PACKET_TYPE_SHIFT);
-	ग_लिखो_csr(dd, RCV_RSM_SELECT + (8 * rule_index),
+	write_csr(dd, RCV_RSM_SELECT + (8 * rule_index),
 		  (u64)rrd->field1_off << RCV_RSM_SELECT_FIELD1_OFFSET_SHIFT |
 		  (u64)rrd->field2_off << RCV_RSM_SELECT_FIELD2_OFFSET_SHIFT |
 		  (u64)rrd->index1_off << RCV_RSM_SELECT_INDEX1_OFFSET_SHIFT |
 		  (u64)rrd->index1_width << RCV_RSM_SELECT_INDEX1_WIDTH_SHIFT |
 		  (u64)rrd->index2_off << RCV_RSM_SELECT_INDEX2_OFFSET_SHIFT |
 		  (u64)rrd->index2_width << RCV_RSM_SELECT_INDEX2_WIDTH_SHIFT);
-	ग_लिखो_csr(dd, RCV_RSM_MATCH + (8 * rule_index),
+	write_csr(dd, RCV_RSM_MATCH + (8 * rule_index),
 		  (u64)rrd->mask1 << RCV_RSM_MATCH_MASK1_SHIFT |
 		  (u64)rrd->value1 << RCV_RSM_MATCH_VALUE1_SHIFT |
 		  (u64)rrd->mask2 << RCV_RSM_MATCH_MASK2_SHIFT |
 		  (u64)rrd->value2 << RCV_RSM_MATCH_VALUE2_SHIFT);
-पूर्ण
+}
 
 /*
  * Clear a receive side mapping rule.
  */
-अटल व्योम clear_rsm_rule(काष्ठा hfi1_devdata *dd, u8 rule_index)
-अणु
-	ग_लिखो_csr(dd, RCV_RSM_CFG + (8 * rule_index), 0);
-	ग_लिखो_csr(dd, RCV_RSM_SELECT + (8 * rule_index), 0);
-	ग_लिखो_csr(dd, RCV_RSM_MATCH + (8 * rule_index), 0);
-पूर्ण
+static void clear_rsm_rule(struct hfi1_devdata *dd, u8 rule_index)
+{
+	write_csr(dd, RCV_RSM_CFG + (8 * rule_index), 0);
+	write_csr(dd, RCV_RSM_SELECT + (8 * rule_index), 0);
+	write_csr(dd, RCV_RSM_MATCH + (8 * rule_index), 0);
+}
 
-/* वापस the number of RSM map table entries that will be used क्रम QOS */
-अटल पूर्णांक qos_rmt_entries(काष्ठा hfi1_devdata *dd, अचिन्हित पूर्णांक *mp,
-			   अचिन्हित पूर्णांक *np)
-अणु
-	पूर्णांक i;
-	अचिन्हित पूर्णांक m, n;
+/* return the number of RSM map table entries that will be used for QOS */
+static int qos_rmt_entries(struct hfi1_devdata *dd, unsigned int *mp,
+			   unsigned int *np)
+{
+	int i;
+	unsigned int m, n;
 	u8 max_by_vl = 0;
 
 	/* is QOS active at all? */
-	अगर (dd->n_krcv_queues <= MIN_KERNEL_KCTXTS ||
+	if (dd->n_krcv_queues <= MIN_KERNEL_KCTXTS ||
 	    num_vls == 1 ||
 	    krcvqsset <= 1)
-		जाओ no_qos;
+		goto no_qos;
 
-	/* determine bits क्रम qpn */
-	क्रम (i = 0; i < min_t(अचिन्हित पूर्णांक, num_vls, krcvqsset); i++)
-		अगर (krcvqs[i] > max_by_vl)
+	/* determine bits for qpn */
+	for (i = 0; i < min_t(unsigned int, num_vls, krcvqsset); i++)
+		if (krcvqs[i] > max_by_vl)
 			max_by_vl = krcvqs[i];
-	अगर (max_by_vl > 32)
-		जाओ no_qos;
-	m = ilog2(__roundup_घात_of_two(max_by_vl));
+	if (max_by_vl > 32)
+		goto no_qos;
+	m = ilog2(__roundup_pow_of_two(max_by_vl));
 
-	/* determine bits क्रम vl */
-	n = ilog2(__roundup_घात_of_two(num_vls));
+	/* determine bits for vl */
+	n = ilog2(__roundup_pow_of_two(num_vls));
 
-	/* reject अगर too much is used */
-	अगर ((m + n) > 7)
-		जाओ no_qos;
+	/* reject if too much is used */
+	if ((m + n) > 7)
+		goto no_qos;
 
-	अगर (mp)
+	if (mp)
 		*mp = m;
-	अगर (np)
+	if (np)
 		*np = n;
 
-	वापस 1 << (m + n);
+	return 1 << (m + n);
 
 no_qos:
-	अगर (mp)
+	if (mp)
 		*mp = 0;
-	अगर (np)
+	if (np)
 		*np = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * init_qos - init RX qos
@@ -14391,53 +14390,53 @@ no_qos:
  * quality of service (qos).
  *
  * If all of the limit tests succeed, qos is applied based on the array
- * पूर्णांकerpretation of krcvqs where entry 0 is VL0.
+ * interpretation of krcvqs where entry 0 is VL0.
  *
  * The number of vl bits (n) and the number of qpn bits (m) are computed to
  * feed both the RSM map table and the single rule.
  */
-अटल व्योम init_qos(काष्ठा hfi1_devdata *dd, काष्ठा rsm_map_table *rmt)
-अणु
-	काष्ठा rsm_rule_data rrd;
-	अचिन्हित qpns_per_vl, ctxt, i, qpn, n = 1, m;
-	अचिन्हित पूर्णांक rmt_entries;
+static void init_qos(struct hfi1_devdata *dd, struct rsm_map_table *rmt)
+{
+	struct rsm_rule_data rrd;
+	unsigned qpns_per_vl, ctxt, i, qpn, n = 1, m;
+	unsigned int rmt_entries;
 	u64 reg;
 
-	अगर (!rmt)
-		जाओ bail;
+	if (!rmt)
+		goto bail;
 	rmt_entries = qos_rmt_entries(dd, &m, &n);
-	अगर (rmt_entries == 0)
-		जाओ bail;
+	if (rmt_entries == 0)
+		goto bail;
 	qpns_per_vl = 1 << m;
 
 	/* enough room in the map table? */
 	rmt_entries = 1 << (m + n);
-	अगर (rmt->used + rmt_entries >= NUM_MAP_ENTRIES)
-		जाओ bail;
+	if (rmt->used + rmt_entries >= NUM_MAP_ENTRIES)
+		goto bail;
 
 	/* add qos entries to the the RSM map table */
-	क्रम (i = 0, ctxt = FIRST_KERNEL_KCTXT; i < num_vls; i++) अणु
-		अचिन्हित tctxt;
+	for (i = 0, ctxt = FIRST_KERNEL_KCTXT; i < num_vls; i++) {
+		unsigned tctxt;
 
-		क्रम (qpn = 0, tctxt = ctxt;
-		     krcvqs[i] && qpn < qpns_per_vl; qpn++) अणु
-			अचिन्हित idx, regoff, regidx;
+		for (qpn = 0, tctxt = ctxt;
+		     krcvqs[i] && qpn < qpns_per_vl; qpn++) {
+			unsigned idx, regoff, regidx;
 
 			/* generate the index the hardware will produce */
 			idx = rmt->used + ((qpn << n) ^ i);
 			regoff = (idx % 8) * 8;
 			regidx = idx / 8;
-			/* replace शेष with context number */
+			/* replace default with context number */
 			reg = rmt->map[regidx];
 			reg &= ~(RCV_RSM_MAP_TABLE_RCV_CONTEXT_A_MASK
 				<< regoff);
 			reg |= (u64)(tctxt++) << regoff;
 			rmt->map[regidx] = reg;
-			अगर (tctxt == ctxt + krcvqs[i])
+			if (tctxt == ctxt + krcvqs[i])
 				tctxt = ctxt;
-		पूर्ण
+		}
 		ctxt += krcvqs[i];
-	पूर्ण
+	}
 
 	rrd.offset = rmt->used;
 	rrd.pkt_type = 2;
@@ -14457,52 +14456,52 @@ no_qos:
 
 	/* mark RSM map entries as used */
 	rmt->used += rmt_entries;
-	/* map everything अन्यथा to the mcast/err/vl15 context */
+	/* map everything else to the mcast/err/vl15 context */
 	init_qpmap_table(dd, HFI1_CTRL_CTXT, HFI1_CTRL_CTXT);
-	dd->qos_shअगरt = n + 1;
-	वापस;
+	dd->qos_shift = n + 1;
+	return;
 bail:
-	dd->qos_shअगरt = 1;
+	dd->qos_shift = 1;
 	init_qpmap_table(dd, FIRST_KERNEL_KCTXT, dd->n_krcv_queues - 1);
-पूर्ण
+}
 
-अटल व्योम init_fecn_handling(काष्ठा hfi1_devdata *dd,
-			       काष्ठा rsm_map_table *rmt)
-अणु
-	काष्ठा rsm_rule_data rrd;
+static void init_fecn_handling(struct hfi1_devdata *dd,
+			       struct rsm_map_table *rmt)
+{
+	struct rsm_rule_data rrd;
 	u64 reg;
-	पूर्णांक i, idx, regoff, regidx, start;
+	int i, idx, regoff, regidx, start;
 	u8 offset;
 	u32 total_cnt;
 
-	अगर (HFI1_CAP_IS_KSET(TID_RDMA))
+	if (HFI1_CAP_IS_KSET(TID_RDMA))
 		/* Exclude context 0 */
 		start = 1;
-	अन्यथा
+	else
 		start = dd->first_dyn_alloc_ctxt;
 
 	total_cnt = dd->num_rcv_contexts - start;
 
 	/* there needs to be enough room in the map table */
-	अगर (rmt->used + total_cnt >= NUM_MAP_ENTRIES) अणु
+	if (rmt->used + total_cnt >= NUM_MAP_ENTRIES) {
 		dd_dev_err(dd, "FECN handling disabled - too many contexts allocated\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * RSM will extract the destination context as an index पूर्णांकo the
+	 * RSM will extract the destination context as an index into the
 	 * map table.  The destination contexts are a sequential block
 	 * in the range start...num_rcv_contexts-1 (inclusive).
 	 * Map entries are accessed as offset + extracted value.  Adjust
 	 * the added offset so this sequence can be placed anywhere in
-	 * the table - as दीर्घ as the entries themselves करो not wrap.
-	 * There are only enough bits in offset क्रम the table size, so
-	 * start with that to allow क्रम a "negative" offset.
+	 * the table - as long as the entries themselves do not wrap.
+	 * There are only enough bits in offset for the table size, so
+	 * start with that to allow for a "negative" offset.
 	 */
 	offset = (u8)(NUM_MAP_ENTRIES + rmt->used - start);
 
-	क्रम (i = start, idx = rmt->used; i < dd->num_rcv_contexts;
-	     i++, idx++) अणु
+	for (i = start, idx = rmt->used; i < dd->num_rcv_contexts;
+	     i++, idx++) {
 		/* replace with identity mapping */
 		regoff = (idx % 8) * 8;
 		regidx = idx / 8;
@@ -14510,10 +14509,10 @@ bail:
 		reg &= ~(RCV_RSM_MAP_TABLE_RCV_CONTEXT_A_MASK << regoff);
 		reg |= (u64)i << regoff;
 		rmt->map[regidx] = reg;
-	पूर्ण
+	}
 
 	/*
-	 * For RSM पूर्णांकercept of Expected FECN packets:
+	 * For RSM intercept of Expected FECN packets:
 	 * o packet type 0 - expected
 	 * o match on F (bit 95), using select/match 1, and
 	 * o match on SH (bit 133), using select/match 2.
@@ -14538,33 +14537,33 @@ bail:
 	add_rsm_rule(dd, RSM_INS_FECN, &rrd);
 
 	rmt->used += total_cnt;
-पूर्ण
+}
 
-अटल अंतरभूत bool hfi1_is_rmt_full(पूर्णांक start, पूर्णांक spare)
-अणु
-	वापस (start + spare) > NUM_MAP_ENTRIES;
-पूर्ण
+static inline bool hfi1_is_rmt_full(int start, int spare)
+{
+	return (start + spare) > NUM_MAP_ENTRIES;
+}
 
-अटल bool hfi1_netdev_update_rmt(काष्ठा hfi1_devdata *dd)
-अणु
+static bool hfi1_netdev_update_rmt(struct hfi1_devdata *dd)
+{
 	u8 i, j;
 	u8 ctx_id = 0;
 	u64 reg;
 	u32 regoff;
-	पूर्णांक rmt_start = hfi1_netdev_get_मुक्त_rmt_idx(dd);
-	पूर्णांक ctxt_count = hfi1_netdev_ctxt_count(dd);
+	int rmt_start = hfi1_netdev_get_free_rmt_idx(dd);
+	int ctxt_count = hfi1_netdev_ctxt_count(dd);
 
-	/* We alपढ़ोy have contexts mapped in RMT */
-	अगर (has_rsm_rule(dd, RSM_INS_VNIC) || has_rsm_rule(dd, RSM_INS_AIP)) अणु
+	/* We already have contexts mapped in RMT */
+	if (has_rsm_rule(dd, RSM_INS_VNIC) || has_rsm_rule(dd, RSM_INS_AIP)) {
 		dd_dev_info(dd, "Contexts are already mapped in RMT\n");
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	अगर (hfi1_is_rmt_full(rmt_start, NUM_NETDEV_MAP_ENTRIES)) अणु
+	if (hfi1_is_rmt_full(rmt_start, NUM_NETDEV_MAP_ENTRIES)) {
 		dd_dev_err(dd, "Not enough RMT entries used = %d\n",
 			   rmt_start);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	dev_dbg(&(dd)->pcidev->dev, "RMT start = %d, end %d\n",
 		rmt_start,
@@ -14572,51 +14571,51 @@ bail:
 
 	/* Update RSM mapping table, 32 regs, 256 entries - 1 ctx per byte */
 	regoff = RCV_RSM_MAP_TABLE + (rmt_start / 8) * 8;
-	reg = पढ़ो_csr(dd, regoff);
-	क्रम (i = 0; i < NUM_NETDEV_MAP_ENTRIES; i++) अणु
-		/* Update map रेजिस्टर with netdev context */
+	reg = read_csr(dd, regoff);
+	for (i = 0; i < NUM_NETDEV_MAP_ENTRIES; i++) {
+		/* Update map register with netdev context */
 		j = (rmt_start + i) % 8;
 		reg &= ~(0xffllu << (j * 8));
 		reg |= (u64)hfi1_netdev_get_ctxt(dd, ctx_id++)->ctxt << (j * 8);
 		/* Wrap up netdev ctx index */
 		ctx_id %= ctxt_count;
-		/* Write back map रेजिस्टर */
-		अगर (j == 7 || ((i + 1) == NUM_NETDEV_MAP_ENTRIES)) अणु
+		/* Write back map register */
+		if (j == 7 || ((i + 1) == NUM_NETDEV_MAP_ENTRIES)) {
 			dev_dbg(&(dd)->pcidev->dev,
 				"RMT[%d] =0x%llx\n",
 				regoff - RCV_RSM_MAP_TABLE, reg);
 
-			ग_लिखो_csr(dd, regoff, reg);
+			write_csr(dd, regoff, reg);
 			regoff += 8;
-			अगर (i < (NUM_NETDEV_MAP_ENTRIES - 1))
-				reg = पढ़ो_csr(dd, regoff);
-		पूर्ण
-	पूर्ण
+			if (i < (NUM_NETDEV_MAP_ENTRIES - 1))
+				reg = read_csr(dd, regoff);
+		}
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम hfi1_enable_rsm_rule(काष्ठा hfi1_devdata *dd,
-				 पूर्णांक rule, काष्ठा rsm_rule_data *rrd)
-अणु
-	अगर (!hfi1_netdev_update_rmt(dd)) अणु
+static void hfi1_enable_rsm_rule(struct hfi1_devdata *dd,
+				 int rule, struct rsm_rule_data *rrd)
+{
+	if (!hfi1_netdev_update_rmt(dd)) {
 		dd_dev_err(dd, "Failed to update RMT for RSM%d rule\n", rule);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	add_rsm_rule(dd, rule, rrd);
 	add_rcvctrl(dd, RCV_CTRL_RCV_RSM_ENABLE_SMASK);
-पूर्ण
+}
 
-व्योम hfi1_init_aip_rsm(काष्ठा hfi1_devdata *dd)
-अणु
+void hfi1_init_aip_rsm(struct hfi1_devdata *dd)
+{
 	/*
-	 * go through with the initialisation only अगर this rule actually करोesn't
+	 * go through with the initialisation only if this rule actually doesn't
 	 * exist yet
 	 */
-	अगर (atomic_fetch_inc(&dd->ipoib_rsm_usr_num) == 0) अणु
-		पूर्णांक rmt_start = hfi1_netdev_get_मुक्त_rmt_idx(dd);
-		काष्ठा rsm_rule_data rrd = अणु
+	if (atomic_fetch_inc(&dd->ipoib_rsm_usr_num) == 0) {
+		int rmt_start = hfi1_netdev_get_free_rmt_idx(dd);
+		struct rsm_rule_data rrd = {
 			.offset = rmt_start,
 			.pkt_type = IB_PACKET_TYPE,
 			.field1_off = LRH_BTH_MATCH_OFFSET,
@@ -14630,18 +14629,18 @@ bail:
 			.index1_width = ilog2(NUM_NETDEV_MAP_ENTRIES),
 			.index2_off = DETH_AIP_SQPN_SELECT_OFFSET,
 			.index2_width = ilog2(NUM_NETDEV_MAP_ENTRIES)
-		पूर्ण;
+		};
 
 		hfi1_enable_rsm_rule(dd, RSM_INS_AIP, &rrd);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Initialize RSM क्रम VNIC */
-व्योम hfi1_init_vnic_rsm(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक rmt_start = hfi1_netdev_get_मुक्त_rmt_idx(dd);
-	काष्ठा rsm_rule_data rrd = अणु
-		/* Add rule क्रम vnic */
+/* Initialize RSM for VNIC */
+void hfi1_init_vnic_rsm(struct hfi1_devdata *dd)
+{
+	int rmt_start = hfi1_netdev_get_free_rmt_idx(dd);
+	struct rsm_rule_data rrd = {
+		/* Add rule for vnic */
 		.offset = rmt_start,
 		.pkt_type = 4,
 		/* Match 16B packets */
@@ -14657,42 +14656,42 @@ bail:
 		.index1_width = ilog2(NUM_NETDEV_MAP_ENTRIES),
 		.index2_off = L2_16B_ENTROPY_OFFSET,
 		.index2_width = ilog2(NUM_NETDEV_MAP_ENTRIES)
-	पूर्ण;
+	};
 
 	hfi1_enable_rsm_rule(dd, RSM_INS_VNIC, &rrd);
-पूर्ण
+}
 
-व्योम hfi1_deinit_vnic_rsm(काष्ठा hfi1_devdata *dd)
-अणु
+void hfi1_deinit_vnic_rsm(struct hfi1_devdata *dd)
+{
 	clear_rsm_rule(dd, RSM_INS_VNIC);
-पूर्ण
+}
 
-व्योम hfi1_deinit_aip_rsm(काष्ठा hfi1_devdata *dd)
-अणु
-	/* only actually clear the rule अगर it's the last user asking to करो so */
-	अगर (atomic_fetch_add_unless(&dd->ipoib_rsm_usr_num, -1, 0) == 1)
+void hfi1_deinit_aip_rsm(struct hfi1_devdata *dd)
+{
+	/* only actually clear the rule if it's the last user asking to do so */
+	if (atomic_fetch_add_unless(&dd->ipoib_rsm_usr_num, -1, 0) == 1)
 		clear_rsm_rule(dd, RSM_INS_AIP);
-पूर्ण
+}
 
-अटल पूर्णांक init_rxe(काष्ठा hfi1_devdata *dd)
-अणु
-	काष्ठा rsm_map_table *rmt;
+static int init_rxe(struct hfi1_devdata *dd)
+{
+	struct rsm_map_table *rmt;
 	u64 val;
 
 	/* enable all receive errors */
-	ग_लिखो_csr(dd, RCV_ERR_MASK, ~0ull);
+	write_csr(dd, RCV_ERR_MASK, ~0ull);
 
 	rmt = alloc_rsm_map_table(dd);
-	अगर (!rmt)
-		वापस -ENOMEM;
+	if (!rmt)
+		return -ENOMEM;
 
 	/* set up QOS, including the QPN map table */
 	init_qos(dd, rmt);
 	init_fecn_handling(dd, rmt);
 	complete_rsm_map_table(dd, rmt);
-	/* record number of used rsm map entries क्रम netdev */
-	hfi1_netdev_set_मुक्त_rmt_idx(dd, rmt->used);
-	kमुक्त(rmt);
+	/* record number of used rsm map entries for netdev */
+	hfi1_netdev_set_free_rmt_idx(dd, rmt->used);
+	kfree(rmt);
 
 	/*
 	 * make sure RcvCtrl.RcvWcb <= PCIe Device Control
@@ -14701,50 +14700,50 @@ bail:
 	 * invalid configuration: RcvCtrl.RcvWcb set to its max of 256 and
 	 * Max_PayLoad_Size set to its minimum of 128.
 	 *
-	 * Presently, RcvCtrl.RcvWcb is not modअगरied from its शेष of 0
-	 * (64 bytes).  Max_Payload_Size is possibly modअगरied upward in
+	 * Presently, RcvCtrl.RcvWcb is not modified from its default of 0
+	 * (64 bytes).  Max_Payload_Size is possibly modified upward in
 	 * tune_pcie_caps() which is called after this routine.
 	 */
 
 	/* Have 16 bytes (4DW) of bypass header available in header queue */
-	val = पढ़ो_csr(dd, RCV_BYPASS);
+	val = read_csr(dd, RCV_BYPASS);
 	val &= ~RCV_BYPASS_HDR_SIZE_SMASK;
 	val |= ((4ull & RCV_BYPASS_HDR_SIZE_MASK) <<
 		RCV_BYPASS_HDR_SIZE_SHIFT);
-	ग_लिखो_csr(dd, RCV_BYPASS, val);
-	वापस 0;
-पूर्ण
+	write_csr(dd, RCV_BYPASS, val);
+	return 0;
+}
 
-अटल व्योम init_other(काष्ठा hfi1_devdata *dd)
-अणु
+static void init_other(struct hfi1_devdata *dd)
+{
 	/* enable all CCE errors */
-	ग_लिखो_csr(dd, CCE_ERR_MASK, ~0ull);
+	write_csr(dd, CCE_ERR_MASK, ~0ull);
 	/* enable *some* Misc errors */
-	ग_लिखो_csr(dd, MISC_ERR_MASK, DRIVER_MISC_MASK);
+	write_csr(dd, MISC_ERR_MASK, DRIVER_MISC_MASK);
 	/* enable all DC errors, except LCB */
-	ग_लिखो_csr(dd, DCC_ERR_FLG_EN, ~0ull);
-	ग_लिखो_csr(dd, DC_DC8051_ERR_EN, ~0ull);
-पूर्ण
+	write_csr(dd, DCC_ERR_FLG_EN, ~0ull);
+	write_csr(dd, DC_DC8051_ERR_EN, ~0ull);
+}
 
 /*
  * Fill out the given AU table using the given CU.  A CU is defined in terms
- * AUs.  The table is a an encoding: given the index, how many AUs करोes that
+ * AUs.  The table is a an encoding: given the index, how many AUs does that
  * represent?
  *
- * NOTE: Assumes that the रेजिस्टर layout is the same क्रम the
+ * NOTE: Assumes that the register layout is the same for the
  * local and remote tables.
  */
-अटल व्योम assign_cm_au_table(काष्ठा hfi1_devdata *dd, u32 cu,
+static void assign_cm_au_table(struct hfi1_devdata *dd, u32 cu,
 			       u32 csr0to3, u32 csr4to7)
-अणु
-	ग_लिखो_csr(dd, csr0to3,
+{
+	write_csr(dd, csr0to3,
 		  0ull << SEND_CM_LOCAL_AU_TABLE0_TO3_LOCAL_AU_TABLE0_SHIFT |
 		  1ull << SEND_CM_LOCAL_AU_TABLE0_TO3_LOCAL_AU_TABLE1_SHIFT |
 		  2ull * cu <<
 		  SEND_CM_LOCAL_AU_TABLE0_TO3_LOCAL_AU_TABLE2_SHIFT |
 		  4ull * cu <<
 		  SEND_CM_LOCAL_AU_TABLE0_TO3_LOCAL_AU_TABLE3_SHIFT);
-	ग_लिखो_csr(dd, csr4to7,
+	write_csr(dd, csr4to7,
 		  8ull * cu <<
 		  SEND_CM_LOCAL_AU_TABLE4_TO7_LOCAL_AU_TABLE4_SHIFT |
 		  16ull * cu <<
@@ -14753,329 +14752,329 @@ bail:
 		  SEND_CM_LOCAL_AU_TABLE4_TO7_LOCAL_AU_TABLE6_SHIFT |
 		  64ull * cu <<
 		  SEND_CM_LOCAL_AU_TABLE4_TO7_LOCAL_AU_TABLE7_SHIFT);
-पूर्ण
+}
 
-अटल व्योम assign_local_cm_au_table(काष्ठा hfi1_devdata *dd, u8 vcu)
-अणु
+static void assign_local_cm_au_table(struct hfi1_devdata *dd, u8 vcu)
+{
 	assign_cm_au_table(dd, vcu_to_cu(vcu), SEND_CM_LOCAL_AU_TABLE0_TO3,
 			   SEND_CM_LOCAL_AU_TABLE4_TO7);
-पूर्ण
+}
 
-व्योम assign_remote_cm_au_table(काष्ठा hfi1_devdata *dd, u8 vcu)
-अणु
+void assign_remote_cm_au_table(struct hfi1_devdata *dd, u8 vcu)
+{
 	assign_cm_au_table(dd, vcu_to_cu(vcu), SEND_CM_REMOTE_AU_TABLE0_TO3,
 			   SEND_CM_REMOTE_AU_TABLE4_TO7);
-पूर्ण
+}
 
-अटल व्योम init_txe(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक i;
+static void init_txe(struct hfi1_devdata *dd)
+{
+	int i;
 
 	/* enable all PIO, SDMA, general, and Egress errors */
-	ग_लिखो_csr(dd, SEND_PIO_ERR_MASK, ~0ull);
-	ग_लिखो_csr(dd, SEND_DMA_ERR_MASK, ~0ull);
-	ग_लिखो_csr(dd, SEND_ERR_MASK, ~0ull);
-	ग_लिखो_csr(dd, SEND_EGRESS_ERR_MASK, ~0ull);
+	write_csr(dd, SEND_PIO_ERR_MASK, ~0ull);
+	write_csr(dd, SEND_DMA_ERR_MASK, ~0ull);
+	write_csr(dd, SEND_ERR_MASK, ~0ull);
+	write_csr(dd, SEND_EGRESS_ERR_MASK, ~0ull);
 
 	/* enable all per-context and per-SDMA engine errors */
-	क्रम (i = 0; i < chip_send_contexts(dd); i++)
-		ग_लिखो_kctxt_csr(dd, i, SEND_CTXT_ERR_MASK, ~0ull);
-	क्रम (i = 0; i < chip_sdma_engines(dd); i++)
-		ग_लिखो_kctxt_csr(dd, i, SEND_DMA_ENG_ERR_MASK, ~0ull);
+	for (i = 0; i < chip_send_contexts(dd); i++)
+		write_kctxt_csr(dd, i, SEND_CTXT_ERR_MASK, ~0ull);
+	for (i = 0; i < chip_sdma_engines(dd); i++)
+		write_kctxt_csr(dd, i, SEND_DMA_ENG_ERR_MASK, ~0ull);
 
 	/* set the local CU to AU mapping */
 	assign_local_cm_au_table(dd, dd->vcu);
 
 	/*
-	 * Set reasonable शेष क्रम Credit Return Timer
+	 * Set reasonable default for Credit Return Timer
 	 * Don't set on Simulator - causes it to choke.
 	 */
-	अगर (dd->icode != ICODE_FUNCTIONAL_SIMULATOR)
-		ग_लिखो_csr(dd, SEND_CM_TIMER_CTRL, HFI1_CREDIT_RETURN_RATE);
-पूर्ण
+	if (dd->icode != ICODE_FUNCTIONAL_SIMULATOR)
+		write_csr(dd, SEND_CM_TIMER_CTRL, HFI1_CREDIT_RETURN_RATE);
+}
 
-पूर्णांक hfi1_set_ctxt_jkey(काष्ठा hfi1_devdata *dd, काष्ठा hfi1_ctxtdata *rcd,
+int hfi1_set_ctxt_jkey(struct hfi1_devdata *dd, struct hfi1_ctxtdata *rcd,
 		       u16 jkey)
-अणु
+{
 	u8 hw_ctxt;
 	u64 reg;
 
-	अगर (!rcd || !rcd->sc)
-		वापस -EINVAL;
+	if (!rcd || !rcd->sc)
+		return -EINVAL;
 
 	hw_ctxt = rcd->sc->hw_context;
 	reg = SEND_CTXT_CHECK_JOB_KEY_MASK_SMASK | /* mask is always 1's */
 		((jkey & SEND_CTXT_CHECK_JOB_KEY_VALUE_MASK) <<
 		 SEND_CTXT_CHECK_JOB_KEY_VALUE_SHIFT);
-	/* JOB_KEY_ALLOW_PERMISSIVE is not allowed by शेष */
-	अगर (HFI1_CAP_KGET_MASK(rcd->flags, ALLOW_PERM_JKEY))
+	/* JOB_KEY_ALLOW_PERMISSIVE is not allowed by default */
+	if (HFI1_CAP_KGET_MASK(rcd->flags, ALLOW_PERM_JKEY))
 		reg |= SEND_CTXT_CHECK_JOB_KEY_ALLOW_PERMISSIVE_SMASK;
-	ग_लिखो_kctxt_csr(dd, hw_ctxt, SEND_CTXT_CHECK_JOB_KEY, reg);
+	write_kctxt_csr(dd, hw_ctxt, SEND_CTXT_CHECK_JOB_KEY, reg);
 	/*
-	 * Enable send-side J_KEY पूर्णांकegrity check, unless this is A0 h/w
+	 * Enable send-side J_KEY integrity check, unless this is A0 h/w
 	 */
-	अगर (!is_ax(dd)) अणु
-		reg = पढ़ो_kctxt_csr(dd, hw_ctxt, SEND_CTXT_CHECK_ENABLE);
+	if (!is_ax(dd)) {
+		reg = read_kctxt_csr(dd, hw_ctxt, SEND_CTXT_CHECK_ENABLE);
 		reg |= SEND_CTXT_CHECK_ENABLE_CHECK_JOB_KEY_SMASK;
-		ग_लिखो_kctxt_csr(dd, hw_ctxt, SEND_CTXT_CHECK_ENABLE, reg);
-	पूर्ण
+		write_kctxt_csr(dd, hw_ctxt, SEND_CTXT_CHECK_ENABLE, reg);
+	}
 
 	/* Enable J_KEY check on receive context. */
 	reg = RCV_KEY_CTRL_JOB_KEY_ENABLE_SMASK |
 		((jkey & RCV_KEY_CTRL_JOB_KEY_VALUE_MASK) <<
 		 RCV_KEY_CTRL_JOB_KEY_VALUE_SHIFT);
-	ग_लिखो_kctxt_csr(dd, rcd->ctxt, RCV_KEY_CTRL, reg);
+	write_kctxt_csr(dd, rcd->ctxt, RCV_KEY_CTRL, reg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hfi1_clear_ctxt_jkey(काष्ठा hfi1_devdata *dd, काष्ठा hfi1_ctxtdata *rcd)
-अणु
+int hfi1_clear_ctxt_jkey(struct hfi1_devdata *dd, struct hfi1_ctxtdata *rcd)
+{
 	u8 hw_ctxt;
 	u64 reg;
 
-	अगर (!rcd || !rcd->sc)
-		वापस -EINVAL;
+	if (!rcd || !rcd->sc)
+		return -EINVAL;
 
 	hw_ctxt = rcd->sc->hw_context;
-	ग_लिखो_kctxt_csr(dd, hw_ctxt, SEND_CTXT_CHECK_JOB_KEY, 0);
+	write_kctxt_csr(dd, hw_ctxt, SEND_CTXT_CHECK_JOB_KEY, 0);
 	/*
-	 * Disable send-side J_KEY पूर्णांकegrity check, unless this is A0 h/w.
-	 * This check would not have been enabled क्रम A0 h/w, see
+	 * Disable send-side J_KEY integrity check, unless this is A0 h/w.
+	 * This check would not have been enabled for A0 h/w, see
 	 * set_ctxt_jkey().
 	 */
-	अगर (!is_ax(dd)) अणु
-		reg = पढ़ो_kctxt_csr(dd, hw_ctxt, SEND_CTXT_CHECK_ENABLE);
+	if (!is_ax(dd)) {
+		reg = read_kctxt_csr(dd, hw_ctxt, SEND_CTXT_CHECK_ENABLE);
 		reg &= ~SEND_CTXT_CHECK_ENABLE_CHECK_JOB_KEY_SMASK;
-		ग_लिखो_kctxt_csr(dd, hw_ctxt, SEND_CTXT_CHECK_ENABLE, reg);
-	पूर्ण
+		write_kctxt_csr(dd, hw_ctxt, SEND_CTXT_CHECK_ENABLE, reg);
+	}
 	/* Turn off the J_KEY on the receive side */
-	ग_लिखो_kctxt_csr(dd, rcd->ctxt, RCV_KEY_CTRL, 0);
+	write_kctxt_csr(dd, rcd->ctxt, RCV_KEY_CTRL, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hfi1_set_ctxt_pkey(काष्ठा hfi1_devdata *dd, काष्ठा hfi1_ctxtdata *rcd,
+int hfi1_set_ctxt_pkey(struct hfi1_devdata *dd, struct hfi1_ctxtdata *rcd,
 		       u16 pkey)
-अणु
+{
 	u8 hw_ctxt;
 	u64 reg;
 
-	अगर (!rcd || !rcd->sc)
-		वापस -EINVAL;
+	if (!rcd || !rcd->sc)
+		return -EINVAL;
 
 	hw_ctxt = rcd->sc->hw_context;
 	reg = ((u64)pkey & SEND_CTXT_CHECK_PARTITION_KEY_VALUE_MASK) <<
 		SEND_CTXT_CHECK_PARTITION_KEY_VALUE_SHIFT;
-	ग_लिखो_kctxt_csr(dd, hw_ctxt, SEND_CTXT_CHECK_PARTITION_KEY, reg);
-	reg = पढ़ो_kctxt_csr(dd, hw_ctxt, SEND_CTXT_CHECK_ENABLE);
+	write_kctxt_csr(dd, hw_ctxt, SEND_CTXT_CHECK_PARTITION_KEY, reg);
+	reg = read_kctxt_csr(dd, hw_ctxt, SEND_CTXT_CHECK_ENABLE);
 	reg |= SEND_CTXT_CHECK_ENABLE_CHECK_PARTITION_KEY_SMASK;
 	reg &= ~SEND_CTXT_CHECK_ENABLE_DISALLOW_KDETH_PACKETS_SMASK;
-	ग_लिखो_kctxt_csr(dd, hw_ctxt, SEND_CTXT_CHECK_ENABLE, reg);
+	write_kctxt_csr(dd, hw_ctxt, SEND_CTXT_CHECK_ENABLE, reg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक hfi1_clear_ctxt_pkey(काष्ठा hfi1_devdata *dd, काष्ठा hfi1_ctxtdata *ctxt)
-अणु
+int hfi1_clear_ctxt_pkey(struct hfi1_devdata *dd, struct hfi1_ctxtdata *ctxt)
+{
 	u8 hw_ctxt;
 	u64 reg;
 
-	अगर (!ctxt || !ctxt->sc)
-		वापस -EINVAL;
+	if (!ctxt || !ctxt->sc)
+		return -EINVAL;
 
 	hw_ctxt = ctxt->sc->hw_context;
-	reg = पढ़ो_kctxt_csr(dd, hw_ctxt, SEND_CTXT_CHECK_ENABLE);
+	reg = read_kctxt_csr(dd, hw_ctxt, SEND_CTXT_CHECK_ENABLE);
 	reg &= ~SEND_CTXT_CHECK_ENABLE_CHECK_PARTITION_KEY_SMASK;
-	ग_लिखो_kctxt_csr(dd, hw_ctxt, SEND_CTXT_CHECK_ENABLE, reg);
-	ग_लिखो_kctxt_csr(dd, hw_ctxt, SEND_CTXT_CHECK_PARTITION_KEY, 0);
+	write_kctxt_csr(dd, hw_ctxt, SEND_CTXT_CHECK_ENABLE, reg);
+	write_kctxt_csr(dd, hw_ctxt, SEND_CTXT_CHECK_PARTITION_KEY, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Start करोing the clean up the the chip. Our clean up happens in multiple
+ * Start doing the clean up the the chip. Our clean up happens in multiple
  * stages and this is just the first.
  */
-व्योम hfi1_start_cleanup(काष्ठा hfi1_devdata *dd)
-अणु
-	aspm_निकास(dd);
-	मुक्त_cntrs(dd);
-	मुक्त_rcverr(dd);
+void hfi1_start_cleanup(struct hfi1_devdata *dd)
+{
+	aspm_exit(dd);
+	free_cntrs(dd);
+	free_rcverr(dd);
 	finish_chip_resources(dd);
-पूर्ण
+}
 
-#घोषणा HFI_BASE_GUID(dev) \
+#define HFI_BASE_GUID(dev) \
 	((dev)->base_guid & ~(1ULL << GUID_HFI_INDEX_SHIFT))
 
 /*
- * Inक्रमmation can be shared between the two HFIs on the same ASIC
+ * Information can be shared between the two HFIs on the same ASIC
  * in the same OS.  This function finds the peer device and sets
- * up a shared काष्ठाure.
+ * up a shared structure.
  */
-अटल पूर्णांक init_asic_data(काष्ठा hfi1_devdata *dd)
-अणु
-	अचिन्हित दीर्घ index;
-	काष्ठा hfi1_devdata *peer;
-	काष्ठा hfi1_asic_data *asic_data;
-	पूर्णांक ret = 0;
+static int init_asic_data(struct hfi1_devdata *dd)
+{
+	unsigned long index;
+	struct hfi1_devdata *peer;
+	struct hfi1_asic_data *asic_data;
+	int ret = 0;
 
-	/* pre-allocate the asic काष्ठाure in हाल we are the first device */
-	asic_data = kzalloc(माप(*dd->asic_data), GFP_KERNEL);
-	अगर (!asic_data)
-		वापस -ENOMEM;
+	/* pre-allocate the asic structure in case we are the first device */
+	asic_data = kzalloc(sizeof(*dd->asic_data), GFP_KERNEL);
+	if (!asic_data)
+		return -ENOMEM;
 
 	xa_lock_irq(&hfi1_dev_table);
 	/* Find our peer device */
-	xa_क्रम_each(&hfi1_dev_table, index, peer) अणु
-		अगर ((HFI_BASE_GUID(dd) == HFI_BASE_GUID(peer)) &&
+	xa_for_each(&hfi1_dev_table, index, peer) {
+		if ((HFI_BASE_GUID(dd) == HFI_BASE_GUID(peer)) &&
 		    dd->unit != peer->unit)
-			अवरोध;
-	पूर्ण
+			break;
+	}
 
-	अगर (peer) अणु
-		/* use alपढ़ोy allocated काष्ठाure */
+	if (peer) {
+		/* use already allocated structure */
 		dd->asic_data = peer->asic_data;
-		kमुक्त(asic_data);
-	पूर्ण अन्यथा अणु
+		kfree(asic_data);
+	} else {
 		dd->asic_data = asic_data;
 		mutex_init(&dd->asic_data->asic_resource_mutex);
-	पूर्ण
-	dd->asic_data->dds[dd->hfi1_id] = dd; /* self back-poपूर्णांकer */
+	}
+	dd->asic_data->dds[dd->hfi1_id] = dd; /* self back-pointer */
 	xa_unlock_irq(&hfi1_dev_table);
 
 	/* first one through - set up i2c devices */
-	अगर (!peer)
+	if (!peer)
 		ret = set_up_i2c(dd, dd->asic_data);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Set dd->boardname.  Use a generic name अगर a name is not वापसed from
+ * Set dd->boardname.  Use a generic name if a name is not returned from
  * EFI variable space.
  *
- * Return 0 on success, -ENOMEM अगर space could not be allocated.
+ * Return 0 on success, -ENOMEM if space could not be allocated.
  */
-अटल पूर्णांक obtain_boardname(काष्ठा hfi1_devdata *dd)
-अणु
+static int obtain_boardname(struct hfi1_devdata *dd)
+{
 	/* generic board description */
-	स्थिर अक्षर generic[] =
+	const char generic[] =
 		"Intel Omni-Path Host Fabric Interface Adapter 100 Series";
-	अचिन्हित दीर्घ size;
-	पूर्णांक ret;
+	unsigned long size;
+	int ret;
 
-	ret = पढ़ो_hfi1_efi_var(dd, "description", &size,
-				(व्योम **)&dd->boardname);
-	अगर (ret) अणु
+	ret = read_hfi1_efi_var(dd, "description", &size,
+				(void **)&dd->boardname);
+	if (ret) {
 		dd_dev_info(dd, "Board description not found\n");
 		/* use generic description */
 		dd->boardname = kstrdup(generic, GFP_KERNEL);
-		अगर (!dd->boardname)
-			वापस -ENOMEM;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (!dd->boardname)
+			return -ENOMEM;
+	}
+	return 0;
+}
 
 /*
- * Check the पूर्णांकerrupt रेजिस्टरs to make sure that they are mapped correctly.
- * It is पूर्णांकended to help user identअगरy any mismapping by VMM when the driver
- * is running in a VM. This function should only be called beक्रमe पूर्णांकerrupt
+ * Check the interrupt registers to make sure that they are mapped correctly.
+ * It is intended to help user identify any mismapping by VMM when the driver
+ * is running in a VM. This function should only be called before interrupt
  * is set up properly.
  *
  * Return 0 on success, -EINVAL on failure.
  */
-अटल पूर्णांक check_पूर्णांक_रेजिस्टरs(काष्ठा hfi1_devdata *dd)
-अणु
+static int check_int_registers(struct hfi1_devdata *dd)
+{
 	u64 reg;
 	u64 all_bits = ~(u64)0;
 	u64 mask;
 
-	/* Clear CceIntMask[0] to aव्योम raising any पूर्णांकerrupts */
-	mask = पढ़ो_csr(dd, CCE_INT_MASK);
-	ग_लिखो_csr(dd, CCE_INT_MASK, 0ull);
-	reg = पढ़ो_csr(dd, CCE_INT_MASK);
-	अगर (reg)
-		जाओ err_निकास;
+	/* Clear CceIntMask[0] to avoid raising any interrupts */
+	mask = read_csr(dd, CCE_INT_MASK);
+	write_csr(dd, CCE_INT_MASK, 0ull);
+	reg = read_csr(dd, CCE_INT_MASK);
+	if (reg)
+		goto err_exit;
 
-	/* Clear all पूर्णांकerrupt status bits */
-	ग_लिखो_csr(dd, CCE_INT_CLEAR, all_bits);
-	reg = पढ़ो_csr(dd, CCE_INT_STATUS);
-	अगर (reg)
-		जाओ err_निकास;
+	/* Clear all interrupt status bits */
+	write_csr(dd, CCE_INT_CLEAR, all_bits);
+	reg = read_csr(dd, CCE_INT_STATUS);
+	if (reg)
+		goto err_exit;
 
-	/* Set all पूर्णांकerrupt status bits */
-	ग_लिखो_csr(dd, CCE_INT_FORCE, all_bits);
-	reg = पढ़ो_csr(dd, CCE_INT_STATUS);
-	अगर (reg != all_bits)
-		जाओ err_निकास;
+	/* Set all interrupt status bits */
+	write_csr(dd, CCE_INT_FORCE, all_bits);
+	reg = read_csr(dd, CCE_INT_STATUS);
+	if (reg != all_bits)
+		goto err_exit;
 
-	/* Restore the पूर्णांकerrupt mask */
-	ग_लिखो_csr(dd, CCE_INT_CLEAR, all_bits);
-	ग_लिखो_csr(dd, CCE_INT_MASK, mask);
+	/* Restore the interrupt mask */
+	write_csr(dd, CCE_INT_CLEAR, all_bits);
+	write_csr(dd, CCE_INT_MASK, mask);
 
-	वापस 0;
-err_निकास:
-	ग_लिखो_csr(dd, CCE_INT_MASK, mask);
+	return 0;
+err_exit:
+	write_csr(dd, CCE_INT_MASK, mask);
 	dd_dev_err(dd, "Interrupt registers not properly mapped by VMM\n");
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
 /**
- * hfi1_init_dd() - Initialize most of the dd काष्ठाure.
+ * hfi1_init_dd() - Initialize most of the dd structure.
  * @dd: the dd device
  *
  * This is global, and is called directly at init to set up the
- * chip-specअगरic function poपूर्णांकers क्रम later use.
+ * chip-specific function pointers for later use.
  */
-पूर्णांक hfi1_init_dd(काष्ठा hfi1_devdata *dd)
-अणु
-	काष्ठा pci_dev *pdev = dd->pcidev;
-	काष्ठा hfi1_pportdata *ppd;
+int hfi1_init_dd(struct hfi1_devdata *dd)
+{
+	struct pci_dev *pdev = dd->pcidev;
+	struct hfi1_pportdata *ppd;
 	u64 reg;
-	पूर्णांक i, ret;
-	अटल स्थिर अक्षर * स्थिर inames[] = अणु /* implementation names */
+	int i, ret;
+	static const char * const inames[] = { /* implementation names */
 		"RTL silicon",
 		"RTL VCS simulation",
 		"RTL FPGA emulation",
 		"Functional simulator"
-	पूर्ण;
-	काष्ठा pci_dev *parent = pdev->bus->self;
+	};
+	struct pci_dev *parent = pdev->bus->self;
 	u32 sdma_engines = chip_sdma_engines(dd);
 
 	ppd = dd->pport;
-	क्रम (i = 0; i < dd->num_pports; i++, ppd++) अणु
-		पूर्णांक vl;
+	for (i = 0; i < dd->num_pports; i++, ppd++) {
+		int vl;
 		/* init common fields */
 		hfi1_init_pportdata(pdev, ppd, dd, 0, 1);
 		/* DC supports 4 link widths */
 		ppd->link_width_supported =
 			OPA_LINK_WIDTH_1X | OPA_LINK_WIDTH_2X |
 			OPA_LINK_WIDTH_3X | OPA_LINK_WIDTH_4X;
-		ppd->link_width_करोwngrade_supported =
+		ppd->link_width_downgrade_supported =
 			ppd->link_width_supported;
 		/* start out enabling only 4X */
 		ppd->link_width_enabled = OPA_LINK_WIDTH_4X;
-		ppd->link_width_करोwngrade_enabled =
-					ppd->link_width_करोwngrade_supported;
-		/* link width active is 0 when link is करोwn */
-		/* link width करोwngrade active is 0 when link is करोwn */
+		ppd->link_width_downgrade_enabled =
+					ppd->link_width_downgrade_supported;
+		/* link width active is 0 when link is down */
+		/* link width downgrade active is 0 when link is down */
 
-		अगर (num_vls < HFI1_MIN_VLS_SUPPORTED ||
-		    num_vls > HFI1_MAX_VLS_SUPPORTED) अणु
+		if (num_vls < HFI1_MIN_VLS_SUPPORTED ||
+		    num_vls > HFI1_MAX_VLS_SUPPORTED) {
 			dd_dev_err(dd, "Invalid num_vls %u, using %u VLs\n",
 				   num_vls, HFI1_MAX_VLS_SUPPORTED);
 			num_vls = HFI1_MAX_VLS_SUPPORTED;
-		पूर्ण
+		}
 		ppd->vls_supported = num_vls;
 		ppd->vls_operational = ppd->vls_supported;
-		/* Set the शेष MTU. */
-		क्रम (vl = 0; vl < num_vls; vl++)
+		/* Set the default MTU. */
+		for (vl = 0; vl < num_vls; vl++)
 			dd->vld[vl].mtu = hfi1_max_mtu;
 		dd->vld[15].mtu = MAX_MAD_PACKET;
 		/*
-		 * Set the initial values to reasonable शेष, will be set
-		 * क्रम real when link is up.
+		 * Set the initial values to reasonable default, will be set
+		 * for real when link is up.
 		 */
 		ppd->overrun_threshold = 0x4;
 		ppd->phy_error_threshold = 0xf;
@@ -15087,21 +15086,21 @@ err_निकास:
 		/* start in offline */
 		ppd->host_link_state = HLS_DN_OFFLINE;
 		init_vl_arb_caches(ppd);
-	पूर्ण
+	}
 
 	/*
-	 * Do reमुख्यing PCIe setup and save PCIe values in dd.
-	 * Any error prपूर्णांकing is alपढ़ोy करोne by the init code.
-	 * On वापस, we have the chip mapped.
+	 * Do remaining PCIe setup and save PCIe values in dd.
+	 * Any error printing is already done by the init code.
+	 * On return, we have the chip mapped.
 	 */
 	ret = hfi1_pcie_ddinit(dd, pdev);
-	अगर (ret < 0)
-		जाओ bail_मुक्त;
+	if (ret < 0)
+		goto bail_free;
 
-	/* Save PCI space रेजिस्टरs to reग_लिखो after device reset */
+	/* Save PCI space registers to rewrite after device reset */
 	ret = save_pci_variables(dd);
-	अगर (ret < 0)
-		जाओ bail_cleanup;
+	if (ret < 0)
+		goto bail_cleanup;
 
 	dd->majrev = (dd->revision >> CCE_REVISION_CHIP_REV_MAJOR_SHIFT)
 			& CCE_REVISION_CHIP_REV_MAJOR_MASK;
@@ -15109,29 +15108,29 @@ err_निकास:
 			& CCE_REVISION_CHIP_REV_MINOR_MASK;
 
 	/*
-	 * Check पूर्णांकerrupt रेजिस्टरs mapping अगर the driver has no access to
-	 * the upstream component. In this हाल, it is likely that the driver
+	 * Check interrupt registers mapping if the driver has no access to
+	 * the upstream component. In this case, it is likely that the driver
 	 * is running in a VM.
 	 */
-	अगर (!parent) अणु
-		ret = check_पूर्णांक_रेजिस्टरs(dd);
-		अगर (ret)
-			जाओ bail_cleanup;
-	पूर्ण
+	if (!parent) {
+		ret = check_int_registers(dd);
+		if (ret)
+			goto bail_cleanup;
+	}
 
 	/*
 	 * obtain the hardware ID - NOT related to unit, which is a
-	 * software क्रमागतeration
+	 * software enumeration
 	 */
-	reg = पढ़ो_csr(dd, CCE_REVISION2);
+	reg = read_csr(dd, CCE_REVISION2);
 	dd->hfi1_id = (reg >> CCE_REVISION2_HFI_ID_SHIFT)
 					& CCE_REVISION2_HFI_ID_MASK;
-	/* the variable size will हटाओ unwanted bits */
+	/* the variable size will remove unwanted bits */
 	dd->icode = reg >> CCE_REVISION2_IMPL_CODE_SHIFT;
 	dd->irev = reg >> CCE_REVISION2_IMPL_REVISION_SHIFT;
 	dd_dev_info(dd, "Implementation: %s, revision 0x%x\n",
 		    dd->icode < ARRAY_SIZE(inames) ?
-		    inames[dd->icode] : "unknown", (पूर्णांक)dd->irev);
+		    inames[dd->icode] : "unknown", (int)dd->irev);
 
 	/* speeds the hardware can support */
 	dd->pport->link_speed_supported = OPA_LINK_SPEED_25G;
@@ -15140,103 +15139,103 @@ err_निकास:
 	/* give a reasonable active value, will be set on link up */
 	dd->pport->link_speed_active = OPA_LINK_SPEED_25G;
 
-	/* fix up link widths क्रम emulation _p */
+	/* fix up link widths for emulation _p */
 	ppd = dd->pport;
-	अगर (dd->icode == ICODE_FPGA_EMULATION && is_emulator_p(dd)) अणु
+	if (dd->icode == ICODE_FPGA_EMULATION && is_emulator_p(dd)) {
 		ppd->link_width_supported =
 			ppd->link_width_enabled =
-			ppd->link_width_करोwngrade_supported =
-			ppd->link_width_करोwngrade_enabled =
+			ppd->link_width_downgrade_supported =
+			ppd->link_width_downgrade_enabled =
 				OPA_LINK_WIDTH_1X;
-	पूर्ण
+	}
 	/* insure num_vls isn't larger than number of sdma engines */
-	अगर (HFI1_CAP_IS_KSET(SDMA) && num_vls > sdma_engines) अणु
+	if (HFI1_CAP_IS_KSET(SDMA) && num_vls > sdma_engines) {
 		dd_dev_err(dd, "num_vls %u too large, using %u VLs\n",
 			   num_vls, sdma_engines);
 		num_vls = sdma_engines;
 		ppd->vls_supported = sdma_engines;
 		ppd->vls_operational = ppd->vls_supported;
-	पूर्ण
+	}
 
 	/*
-	 * Convert the ns parameter to the 64 * cघड़ीs used in the CSR.
-	 * Limit the max अगर larger than the field holds.  If समयout is
+	 * Convert the ns parameter to the 64 * cclocks used in the CSR.
+	 * Limit the max if larger than the field holds.  If timeout is
 	 * non-zero, then the calculated field will be at least 1.
 	 *
-	 * Must be after icode is set up - the cघड़ी rate depends
+	 * Must be after icode is set up - the cclock rate depends
 	 * on knowing the hardware being used.
 	 */
-	dd->rcv_पूर्णांकr_समयout_csr = ns_to_cघड़ी(dd, rcv_पूर्णांकr_समयout) / 64;
-	अगर (dd->rcv_पूर्णांकr_समयout_csr >
+	dd->rcv_intr_timeout_csr = ns_to_cclock(dd, rcv_intr_timeout) / 64;
+	if (dd->rcv_intr_timeout_csr >
 			RCV_AVAIL_TIME_OUT_TIME_OUT_RELOAD_MASK)
-		dd->rcv_पूर्णांकr_समयout_csr =
+		dd->rcv_intr_timeout_csr =
 			RCV_AVAIL_TIME_OUT_TIME_OUT_RELOAD_MASK;
-	अन्यथा अगर (dd->rcv_पूर्णांकr_समयout_csr == 0 && rcv_पूर्णांकr_समयout)
-		dd->rcv_पूर्णांकr_समयout_csr = 1;
+	else if (dd->rcv_intr_timeout_csr == 0 && rcv_intr_timeout)
+		dd->rcv_intr_timeout_csr = 1;
 
-	/* needs to be करोne beक्रमe we look क्रम the peer device */
-	पढ़ो_guid(dd);
+	/* needs to be done before we look for the peer device */
+	read_guid(dd);
 
 	/* set up shared ASIC data with peer device */
 	ret = init_asic_data(dd);
-	अगर (ret)
-		जाओ bail_cleanup;
+	if (ret)
+		goto bail_cleanup;
 
 	/* obtain chip sizes, reset chip CSRs */
 	ret = init_chip(dd);
-	अगर (ret)
-		जाओ bail_cleanup;
+	if (ret)
+		goto bail_cleanup;
 
-	/* पढ़ो in the PCIe link speed inक्रमmation */
+	/* read in the PCIe link speed information */
 	ret = pcie_speeds(dd);
-	अगर (ret)
-		जाओ bail_cleanup;
+	if (ret)
+		goto bail_cleanup;
 
-	/* call beक्रमe get_platक्रमm_config(), after init_chip_resources() */
+	/* call before get_platform_config(), after init_chip_resources() */
 	ret = eprom_init(dd);
-	अगर (ret)
-		जाओ bail_मुक्त_rcverr;
+	if (ret)
+		goto bail_free_rcverr;
 
-	/* Needs to be called beक्रमe hfi1_firmware_init */
-	get_platक्रमm_config(dd);
+	/* Needs to be called before hfi1_firmware_init */
+	get_platform_config(dd);
 
-	/* पढ़ो in firmware */
+	/* read in firmware */
 	ret = hfi1_firmware_init(dd);
-	अगर (ret)
-		जाओ bail_cleanup;
+	if (ret)
+		goto bail_cleanup;
 
 	/*
 	 * In general, the PCIe Gen3 transition must occur after the
 	 * chip has been idled (so it won't initiate any PCIe transactions
-	 * e.g. an पूर्णांकerrupt) and beक्रमe the driver changes any रेजिस्टरs
-	 * (the transition will reset the रेजिस्टरs).
+	 * e.g. an interrupt) and before the driver changes any registers
+	 * (the transition will reset the registers).
 	 *
 	 * In particular, place this call after:
 	 * - init_chip()     - the chip will not initiate any PCIe transactions
-	 * - pcie_speeds()   - पढ़ोs the current link speed
-	 * - hfi1_firmware_init() - the needed firmware is पढ़ोy to be
-	 *			    करोwnloaded
+	 * - pcie_speeds()   - reads the current link speed
+	 * - hfi1_firmware_init() - the needed firmware is ready to be
+	 *			    downloaded
 	 */
-	ret = करो_pcie_gen3_transition(dd);
-	अगर (ret)
-		जाओ bail_cleanup;
+	ret = do_pcie_gen3_transition(dd);
+	if (ret)
+		goto bail_cleanup;
 
 	/*
 	 * This should probably occur in hfi1_pcie_init(), but historically
-	 * occurs after the करो_pcie_gen3_transition() code.
+	 * occurs after the do_pcie_gen3_transition() code.
 	 */
 	tune_pcie_caps(dd);
 
 	/* start setting dd values and adjusting CSRs */
 	init_early_variables(dd);
 
-	parse_platक्रमm_config(dd);
+	parse_platform_config(dd);
 
 	ret = obtain_boardname(dd);
-	अगर (ret)
-		जाओ bail_cleanup;
+	if (ret)
+		goto bail_cleanup;
 
-	snम_लिखो(dd->boardversion, BOARD_VERS_MAX,
+	snprintf(dd->boardversion, BOARD_VERS_MAX,
 		 "ChipABI %u.%u, ChipRev %u.%u, SW Compat %llu\n",
 		 HFI1_CHIP_VERS_MAJ, HFI1_CHIP_VERS_MIN,
 		 (u32)dd->majrev,
@@ -15246,17 +15245,17 @@ err_निकास:
 
 	/* alloc VNIC/AIP rx data */
 	ret = hfi1_alloc_rx(dd);
-	अगर (ret)
-		जाओ bail_cleanup;
+	if (ret)
+		goto bail_cleanup;
 
 	ret = set_up_context_variables(dd);
-	अगर (ret)
-		जाओ bail_cleanup;
+	if (ret)
+		goto bail_cleanup;
 
 	/* set initial RXE CSRs */
 	ret = init_rxe(dd);
-	अगर (ret)
-		जाओ bail_cleanup;
+	if (ret)
+		goto bail_cleanup;
 
 	/* set initial TXE CSRs */
 	init_txe(dd);
@@ -15266,45 +15265,45 @@ err_निकास:
 	init_kdeth_qp(dd);
 
 	ret = hfi1_dev_affinity_init(dd);
-	अगर (ret)
-		जाओ bail_cleanup;
+	if (ret)
+		goto bail_cleanup;
 
-	/* send contexts must be set up beक्रमe receive contexts */
+	/* send contexts must be set up before receive contexts */
 	ret = init_send_contexts(dd);
-	अगर (ret)
-		जाओ bail_cleanup;
+	if (ret)
+		goto bail_cleanup;
 
 	ret = hfi1_create_kctxts(dd);
-	अगर (ret)
-		जाओ bail_cleanup;
+	if (ret)
+		goto bail_cleanup;
 
 	/*
-	 * Initialize aspm, to be करोne after gen3 transition and setting up
-	 * contexts and beक्रमe enabling पूर्णांकerrupts
+	 * Initialize aspm, to be done after gen3 transition and setting up
+	 * contexts and before enabling interrupts
 	 */
 	aspm_init(dd);
 
 	ret = init_pervl_scs(dd);
-	अगर (ret)
-		जाओ bail_cleanup;
+	if (ret)
+		goto bail_cleanup;
 
 	/* sdma init */
-	क्रम (i = 0; i < dd->num_pports; ++i) अणु
+	for (i = 0; i < dd->num_pports; ++i) {
 		ret = sdma_init(dd, i);
-		अगर (ret)
-			जाओ bail_cleanup;
-	पूर्ण
+		if (ret)
+			goto bail_cleanup;
+	}
 
 	/* use contexts created by hfi1_create_kctxts */
-	ret = set_up_पूर्णांकerrupts(dd);
-	अगर (ret)
-		जाओ bail_cleanup;
+	ret = set_up_interrupts(dd);
+	if (ret)
+		goto bail_cleanup;
 
 	ret = hfi1_comp_vectors_set_up(dd);
-	अगर (ret)
-		जाओ bail_clear_पूर्णांकr;
+	if (ret)
+		goto bail_clear_intr;
 
-	/* set up LCB access - must be after set_up_पूर्णांकerrupts() */
+	/* set up LCB access - must be after set_up_interrupts() */
 	init_lcb_access(dd);
 
 	/*
@@ -15312,7 +15311,7 @@ err_निकास:
 	 * [27:24] = base guid [38:35]
 	 * [23: 0] = base guid [23: 0]
 	 */
-	snम_लिखो(dd->serial, SERIAL_MAX, "0x%08llx\n",
+	snprintf(dd->serial, SERIAL_MAX, "0x%08llx\n",
 		 (dd->base_guid & 0xFFFFFF) |
 		     ((dd->base_guid >> 11) & 0xF000000));
 
@@ -15321,82 +15320,82 @@ err_निकास:
 	dd->oui3 = dd->base_guid >> 40 & 0xFF;
 
 	ret = load_firmware(dd); /* asymmetric with dispose_firmware() */
-	अगर (ret)
-		जाओ bail_clear_पूर्णांकr;
+	if (ret)
+		goto bail_clear_intr;
 
 	thermal_init(dd);
 
 	ret = init_cntrs(dd);
-	अगर (ret)
-		जाओ bail_clear_पूर्णांकr;
+	if (ret)
+		goto bail_clear_intr;
 
 	ret = init_rcverr(dd);
-	अगर (ret)
-		जाओ bail_मुक्त_cntrs;
+	if (ret)
+		goto bail_free_cntrs;
 
 	init_completion(&dd->user_comp);
 
 	/* The user refcount starts with one to inidicate an active device */
 	atomic_set(&dd->user_refcount, 1);
 
-	जाओ bail;
+	goto bail;
 
-bail_मुक्त_rcverr:
-	मुक्त_rcverr(dd);
-bail_मुक्त_cntrs:
-	मुक्त_cntrs(dd);
-bail_clear_पूर्णांकr:
+bail_free_rcverr:
+	free_rcverr(dd);
+bail_free_cntrs:
+	free_cntrs(dd);
+bail_clear_intr:
 	hfi1_comp_vectors_clean_up(dd);
-	msix_clean_up_पूर्णांकerrupts(dd);
+	msix_clean_up_interrupts(dd);
 bail_cleanup:
-	hfi1_मुक्त_rx(dd);
+	hfi1_free_rx(dd);
 	hfi1_pcie_ddcleanup(dd);
-bail_मुक्त:
-	hfi1_मुक्त_devdata(dd);
+bail_free:
+	hfi1_free_devdata(dd);
 bail:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u16 delay_cycles(काष्ठा hfi1_pportdata *ppd, u32 desired_egress_rate,
+static u16 delay_cycles(struct hfi1_pportdata *ppd, u32 desired_egress_rate,
 			u32 dw_len)
-अणु
+{
 	u32 delta_cycles;
 	u32 current_egress_rate = ppd->current_egress_rate;
 	/* rates here are in units of 10^6 bits/sec */
 
-	अगर (desired_egress_rate == -1)
-		वापस 0; /* shouldn't happen */
+	if (desired_egress_rate == -1)
+		return 0; /* shouldn't happen */
 
-	अगर (desired_egress_rate >= current_egress_rate)
-		वापस 0; /* we can't help go faster, only slower */
+	if (desired_egress_rate >= current_egress_rate)
+		return 0; /* we can't help go faster, only slower */
 
 	delta_cycles = egress_cycles(dw_len * 4, desired_egress_rate) -
 			egress_cycles(dw_len * 4, current_egress_rate);
 
-	वापस (u16)delta_cycles;
-पूर्ण
+	return (u16)delta_cycles;
+}
 
 /**
- * create_pbc - build a pbc क्रम transmission
+ * create_pbc - build a pbc for transmission
  * @ppd: info of physical Hfi port
- * @flags: special हाल flags or-ed in built pbc
- * @srate_mbs: अटल rate
+ * @flags: special case flags or-ed in built pbc
+ * @srate_mbs: static rate
  * @vl: vl
  * @dw_len: dword length (header words + data words + pbc words)
  *
  * Create a PBC with the given flags, rate, VL, and length.
  *
  * NOTE: The PBC created will not insert any HCRC - all callers but one are
- * क्रम verbs, which करोes not use this PSM feature.  The lone other caller
- * is क्रम the diagnostic पूर्णांकerface which calls this अगर the user करोes not
+ * for verbs, which does not use this PSM feature.  The lone other caller
+ * is for the diagnostic interface which calls this if the user does not
  * supply their own PBC.
  */
-u64 create_pbc(काष्ठा hfi1_pportdata *ppd, u64 flags, पूर्णांक srate_mbs, u32 vl,
+u64 create_pbc(struct hfi1_pportdata *ppd, u64 flags, int srate_mbs, u32 vl,
 	       u32 dw_len)
-अणु
+{
 	u64 pbc, delay = 0;
 
-	अगर (unlikely(srate_mbs))
+	if (unlikely(srate_mbs))
 		delay = delay_cycles(ppd, srate_mbs, dw_len);
 
 	pbc = flags
@@ -15406,13 +15405,13 @@ u64 create_pbc(काष्ठा hfi1_pportdata *ppd, u64 flags, पूर्�
 		| (dw_len & PBC_LENGTH_DWS_MASK)
 			<< PBC_LENGTH_DWS_SHIFT;
 
-	वापस pbc;
-पूर्ण
+	return pbc;
+}
 
-#घोषणा SBUS_THERMAL    0x4f
-#घोषणा SBUS_THERM_MONITOR_MODE 0x1
+#define SBUS_THERMAL    0x4f
+#define SBUS_THERM_MONITOR_MODE 0x1
 
-#घोषणा THERM_FAILURE(dev, ret, reason) \
+#define THERM_FAILURE(dev, ret, reason) \
 	dd_dev_err((dd),						\
 		   "Thermal sensor initialization failed: %s (%d)\n",	\
 		   (reason), (ret))
@@ -15421,113 +15420,113 @@ u64 create_pbc(काष्ठा hfi1_pportdata *ppd, u64 flags, पूर्�
  * Initialize the thermal sensor.
  *
  * After initialization, enable polling of thermal sensor through
- * SBus पूर्णांकerface. In order क्रम this to work, the SBus Master
+ * SBus interface. In order for this to work, the SBus Master
  * firmware has to be loaded due to the fact that the HW polling
- * logic uses SBus पूर्णांकerrupts, which are not supported with
- * शेष firmware. Otherwise, no data will be वापसed through
+ * logic uses SBus interrupts, which are not supported with
+ * default firmware. Otherwise, no data will be returned through
  * the ASIC_STS_THERM CSR.
  */
-अटल पूर्णांक thermal_init(काष्ठा hfi1_devdata *dd)
-अणु
-	पूर्णांक ret = 0;
+static int thermal_init(struct hfi1_devdata *dd)
+{
+	int ret = 0;
 
-	अगर (dd->icode != ICODE_RTL_SILICON ||
-	    check_chip_resource(dd, CR_THERM_INIT, शून्य))
-		वापस ret;
+	if (dd->icode != ICODE_RTL_SILICON ||
+	    check_chip_resource(dd, CR_THERM_INIT, NULL))
+		return ret;
 
 	ret = acquire_chip_resource(dd, CR_SBUS, SBUS_TIMEOUT);
-	अगर (ret) अणु
+	if (ret) {
 		THERM_FAILURE(dd, ret, "Acquire SBus");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dd_dev_info(dd, "Initializing thermal sensor\n");
-	/* Disable polling of thermal पढ़ोings */
-	ग_लिखो_csr(dd, ASIC_CFG_THERM_POLL_EN, 0x0);
+	/* Disable polling of thermal readings */
+	write_csr(dd, ASIC_CFG_THERM_POLL_EN, 0x0);
 	msleep(100);
 	/* Thermal Sensor Initialization */
 	/*    Step 1: Reset the Thermal SBus Receiver */
 	ret = sbus_request_slow(dd, SBUS_THERMAL, 0x0,
 				RESET_SBUS_RECEIVER, 0);
-	अगर (ret) अणु
+	if (ret) {
 		THERM_FAILURE(dd, ret, "Bus Reset");
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	/*    Step 2: Set Reset bit in Thermal block */
 	ret = sbus_request_slow(dd, SBUS_THERMAL, 0x0,
 				WRITE_SBUS_RECEIVER, 0x1);
-	अगर (ret) अणु
+	if (ret) {
 		THERM_FAILURE(dd, ret, "Therm Block Reset");
-		जाओ करोne;
-	पूर्ण
-	/*    Step 3: Write घड़ी भागider value (100MHz -> 2MHz) */
+		goto done;
+	}
+	/*    Step 3: Write clock divider value (100MHz -> 2MHz) */
 	ret = sbus_request_slow(dd, SBUS_THERMAL, 0x1,
 				WRITE_SBUS_RECEIVER, 0x32);
-	अगर (ret) अणु
+	if (ret) {
 		THERM_FAILURE(dd, ret, "Write Clock Div");
-		जाओ करोne;
-	पूर्ण
+		goto done;
+	}
 	/*    Step 4: Select temperature mode */
 	ret = sbus_request_slow(dd, SBUS_THERMAL, 0x3,
 				WRITE_SBUS_RECEIVER,
 				SBUS_THERM_MONITOR_MODE);
-	अगर (ret) अणु
+	if (ret) {
 		THERM_FAILURE(dd, ret, "Write Mode Sel");
-		जाओ करोne;
-	पूर्ण
-	/*    Step 5: De-निश्चित block reset and start conversion */
+		goto done;
+	}
+	/*    Step 5: De-assert block reset and start conversion */
 	ret = sbus_request_slow(dd, SBUS_THERMAL, 0x0,
 				WRITE_SBUS_RECEIVER, 0x2);
-	अगर (ret) अणु
+	if (ret) {
 		THERM_FAILURE(dd, ret, "Write Reset Deassert");
-		जाओ करोne;
-	पूर्ण
-	/*    Step 5.1: Wait क्रम first conversion (21.5ms per spec) */
+		goto done;
+	}
+	/*    Step 5.1: Wait for first conversion (21.5ms per spec) */
 	msleep(22);
 
-	/* Enable polling of thermal पढ़ोings */
-	ग_लिखो_csr(dd, ASIC_CFG_THERM_POLL_EN, 0x1);
+	/* Enable polling of thermal readings */
+	write_csr(dd, ASIC_CFG_THERM_POLL_EN, 0x1);
 
 	/* Set initialized flag */
 	ret = acquire_chip_resource(dd, CR_THERM_INIT, 0);
-	अगर (ret)
+	if (ret)
 		THERM_FAILURE(dd, ret, "Unable to set thermal init flag");
 
-करोne:
+done:
 	release_chip_resource(dd, CR_SBUS);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम handle_temp_err(काष्ठा hfi1_devdata *dd)
-अणु
-	काष्ठा hfi1_pportdata *ppd = &dd->pport[0];
+static void handle_temp_err(struct hfi1_devdata *dd)
+{
+	struct hfi1_pportdata *ppd = &dd->pport[0];
 	/*
 	 * Thermal Critical Interrupt
-	 * Put the device पूर्णांकo क्रमced मुक्तze mode, take link करोwn to
-	 * offline, and put DC पूर्णांकo reset.
+	 * Put the device into forced freeze mode, take link down to
+	 * offline, and put DC into reset.
 	 */
 	dd_dev_emerg(dd,
 		     "Critical temperature reached! Forcing device into freeze mode!\n");
 	dd->flags |= HFI1_FORCED_FREEZE;
-	start_मुक्तze_handling(ppd, FREEZE_SELF | FREEZE_ABORT);
+	start_freeze_handling(ppd, FREEZE_SELF | FREEZE_ABORT);
 	/*
-	 * Shut DC करोwn as much and as quickly as possible.
+	 * Shut DC down as much and as quickly as possible.
 	 *
-	 * Step 1: Take the link करोwn to OFFLINE. This will cause the
-	 *         8051 to put the Serdes in reset. However, we करोn't want to
+	 * Step 1: Take the link down to OFFLINE. This will cause the
+	 *         8051 to put the Serdes in reset. However, we don't want to
 	 *         go through the entire link state machine since we want to
-	 *         shutकरोwn ASAP. Furthermore, this is not a graceful shutकरोwn
+	 *         shutdown ASAP. Furthermore, this is not a graceful shutdown
 	 *         but rather an attempt to save the chip.
-	 *         Code below is almost the same as quiet_serdes() but aव्योमs
+	 *         Code below is almost the same as quiet_serdes() but avoids
 	 *         all the extra work and the sleeps.
 	 */
-	ppd->driver_link_पढ़ोy = 0;
+	ppd->driver_link_ready = 0;
 	ppd->link_enabled = 0;
 	set_physical_link_state(dd, (OPA_LINKDOWN_REASON_SMA_DISABLED << 8) |
 				PLS_OFFLINE);
 	/*
-	 * Step 2: Shutकरोwn LCB and 8051
-	 *         After shutकरोwn, करो not restore DC_CFG_RESET value.
+	 * Step 2: Shutdown LCB and 8051
+	 *         After shutdown, do not restore DC_CFG_RESET value.
 	 */
-	dc_shutकरोwn(dd);
-पूर्ण
+	dc_shutdown(dd);
+}

@@ -1,9 +1,8 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Broadcom BM2835 V4L2 driver
  *
- * Copyright तऊ 2013 Raspberry Pi (Trading) Ltd.
+ * Copyright © 2013 Raspberry Pi (Trading) Ltd.
  *
  * Authors: Vincent Sanders @ Collabora
  *          Dave Stevenson @ Broadcom
@@ -15,29 +14,29 @@
 /* common parameters */
 
 /** @name Parameter groups
- * Parameters are भागided पूर्णांकo groups, and then allocated sequentially within
- * a group using an क्रमागत.
- * @अणु
+ * Parameters are divided into groups, and then allocated sequentially within
+ * a group using an enum.
+ * @{
  */
 
-#अगर_अघोषित MMAL_PARAMETERS_H
-#घोषणा MMAL_PARAMETERS_H
+#ifndef MMAL_PARAMETERS_H
+#define MMAL_PARAMETERS_H
 
 /** Common parameter ID group, used with many types of component. */
-#घोषणा MMAL_PARAMETER_GROUP_COMMON		(0 << 16)
-/** Camera-specअगरic parameter ID group. */
-#घोषणा MMAL_PARAMETER_GROUP_CAMERA		(1 << 16)
-/** Video-specअगरic parameter ID group. */
-#घोषणा MMAL_PARAMETER_GROUP_VIDEO		(2 << 16)
-/** Audio-specअगरic parameter ID group. */
-#घोषणा MMAL_PARAMETER_GROUP_AUDIO		(3 << 16)
-/** Clock-specअगरic parameter ID group. */
-#घोषणा MMAL_PARAMETER_GROUP_CLOCK		(4 << 16)
-/** Miracast-specअगरic parameter ID group. */
-#घोषणा MMAL_PARAMETER_GROUP_MIRACAST		(5 << 16)
+#define MMAL_PARAMETER_GROUP_COMMON		(0 << 16)
+/** Camera-specific parameter ID group. */
+#define MMAL_PARAMETER_GROUP_CAMERA		(1 << 16)
+/** Video-specific parameter ID group. */
+#define MMAL_PARAMETER_GROUP_VIDEO		(2 << 16)
+/** Audio-specific parameter ID group. */
+#define MMAL_PARAMETER_GROUP_AUDIO		(3 << 16)
+/** Clock-specific parameter ID group. */
+#define MMAL_PARAMETER_GROUP_CLOCK		(4 << 16)
+/** Miracast-specific parameter ID group. */
+#define MMAL_PARAMETER_GROUP_MIRACAST		(5 << 16)
 
 /* Common parameters */
-क्रमागत mmal_parameter_common_type अणु
+enum mmal_parameter_common_type {
 	/**< Never a valid parameter ID */
 	MMAL_PARAMETER_UNUSED = MMAL_PARAMETER_GROUP_COMMON,
 
@@ -69,11 +68,11 @@
 	MMAL_PARAMETER_SYSTEM_TIME,
 		/**< MMAL_PARAMETER_BOOLEAN_T */
 	MMAL_PARAMETER_NO_IMAGE_PADDING,
-पूर्ण;
+};
 
 /* camera parameters */
 
-क्रमागत mmal_parameter_camera_type अणु
+enum mmal_parameter_camera_type {
 	/* 0 */
 		/** @ref MMAL_PARAMETER_THUMBNAIL_CONFIG_T */
 	MMAL_PARAMETER_THUMBNAIL_CONFIGURATION =
@@ -145,9 +144,9 @@
 
 	/* 0x20 */
 		/**< @ref MMAL_PARAMETER_URI_T */
-	MMAL_PARAMETER_DPF_खाता,
+	MMAL_PARAMETER_DPF_FILE,
 		/**< @ref MMAL_PARAMETER_BOOLEAN_T */
-	MMAL_PARAMETER_ENABLE_DPF_खाता,
+	MMAL_PARAMETER_ENABLE_DPF_FILE,
 		/**< @ref MMAL_PARAMETER_BOOLEAN_T */
 	MMAL_PARAMETER_DPF_FAIL_IS_FATAL,
 		/**< @ref MMAL_PARAMETER_CAPTUREMODE_T */
@@ -195,13 +194,13 @@
 		/** @ref MMAL_PARAMETER_UINT32_T */
 	MMAL_PARAMETER_CAMERA_CUSTOM_SENSOR_CONFIG,
 		/** @ref MMAL_PARAMETER_BOOLEAN_T */
-	MMAL_PARAMETER_ENABLE_REGISTER_खाता,
+	MMAL_PARAMETER_ENABLE_REGISTER_FILE,
 		/** @ref MMAL_PARAMETER_BOOLEAN_T */
 	MMAL_PARAMETER_REGISTER_FAIL_IS_FATAL,
-		/** @ref MMAL_PARAMETER_CONFIGखाता_T */
-	MMAL_PARAMETER_CONFIGखाता_REGISTERS,
-		/** @ref MMAL_PARAMETER_CONFIGखाता_CHUNK_T */
-	MMAL_PARAMETER_CONFIGखाता_CHUNK_REGISTERS,
+		/** @ref MMAL_PARAMETER_CONFIGFILE_T */
+	MMAL_PARAMETER_CONFIGFILE_REGISTERS,
+		/** @ref MMAL_PARAMETER_CONFIGFILE_CHUNK_T */
+	MMAL_PARAMETER_CONFIGFILE_CHUNK_REGISTERS,
 		/**< @ref MMAL_PARAMETER_BOOLEAN_T */
 	MMAL_PARAMETER_JPEG_ATTACH_LOG,
 		/**< @ref MMAL_PARAMETER_ZEROSHUTTERLAG_T */
@@ -222,36 +221,36 @@
 	MMAL_PARAMETER_SHUTTER_SPEED,
 		/**< Takes a @ref MMAL_PARAMETER_AWB_GAINS_T */
 	MMAL_PARAMETER_CUSTOM_AWB_GAINS,
-पूर्ण;
+};
 
-काष्ठा mmal_parameter_rational अणु
+struct mmal_parameter_rational {
 	s32 num;    /**< Numerator */
 	s32 den;    /**< Denominator */
-पूर्ण;
+};
 
-क्रमागत mmal_parameter_camera_config_बारtamp_mode अणु
-	MMAL_PARAM_TIMESTAMP_MODE_ZERO = 0, /* Always बारtamp frames as 0 */
+enum mmal_parameter_camera_config_timestamp_mode {
+	MMAL_PARAM_TIMESTAMP_MODE_ZERO = 0, /* Always timestamp frames as 0 */
 	MMAL_PARAM_TIMESTAMP_MODE_RAW_STC,  /* Use the raw STC value
-					     * क्रम the frame बारtamp
+					     * for the frame timestamp
 					     */
-	MMAL_PARAM_TIMESTAMP_MODE_RESET_STC, /* Use the STC बारtamp
+	MMAL_PARAM_TIMESTAMP_MODE_RESET_STC, /* Use the STC timestamp
 					      * but subtract the
-					      * बारtamp of the first
+					      * timestamp of the first
 					      * frame sent to give a
-					      * zero based बारtamp.
+					      * zero based timestamp.
 					      */
-पूर्ण;
+};
 
-काष्ठा mmal_parameter_fps_range अणु
+struct mmal_parameter_fps_range {
 	/**< Low end of the permitted framerate range */
-	काष्ठा mmal_parameter_rational	fps_low;
+	struct mmal_parameter_rational	fps_low;
 	/**< High end of the permitted framerate range */
-	काष्ठा mmal_parameter_rational	fps_high;
-पूर्ण;
+	struct mmal_parameter_rational	fps_high;
+};
 
 /* camera configuration parameter */
-काष्ठा mmal_parameter_camera_config अणु
-	/* Parameters क्रम setting up the image pools */
+struct mmal_parameter_camera_config {
+	/* Parameters for setting up the image pools */
 	u32 max_stills_w; /* Max size of stills capture */
 	u32 max_stills_h;
 	u32 stills_yuv422; /* Allow YUV422 stills capture */
@@ -263,7 +262,7 @@
 	u32 max_preview_video_h;
 	u32 num_preview_video_frames;
 
-	/** Sets the height of the circular buffer क्रम stills capture. */
+	/** Sets the height of the circular buffer for stills capture. */
 	u32 stills_capture_circular_buffer_height;
 
 	/** Allows preview/encode to resume as fast as possible after the stills
@@ -273,14 +272,14 @@
 	 */
 	u32 fast_preview_resume;
 
-	/** Selects algorithm क्रम बारtamping frames अगर
-	 * there is no घड़ी component connected.
-	 * क्रमागत mmal_parameter_camera_config_बारtamp_mode
+	/** Selects algorithm for timestamping frames if
+	 * there is no clock component connected.
+	 * enum mmal_parameter_camera_config_timestamp_mode
 	 */
-	s32 use_stc_बारtamp;
-पूर्ण;
+	s32 use_stc_timestamp;
+};
 
-क्रमागत mmal_parameter_exposuremode अणु
+enum mmal_parameter_exposuremode {
 	MMAL_PARAM_EXPOSUREMODE_OFF,
 	MMAL_PARAM_EXPOSUREMODE_AUTO,
 	MMAL_PARAM_EXPOSUREMODE_NIGHT,
@@ -294,16 +293,16 @@
 	MMAL_PARAM_EXPOSUREMODE_FIXEDFPS,
 	MMAL_PARAM_EXPOSUREMODE_ANTISHAKE,
 	MMAL_PARAM_EXPOSUREMODE_FIREWORKS,
-पूर्ण;
+};
 
-क्रमागत mmal_parameter_exposuremeteringmode अणु
+enum mmal_parameter_exposuremeteringmode {
 	MMAL_PARAM_EXPOSUREMETERINGMODE_AVERAGE,
 	MMAL_PARAM_EXPOSUREMETERINGMODE_SPOT,
 	MMAL_PARAM_EXPOSUREMETERINGMODE_BACKLIT,
 	MMAL_PARAM_EXPOSUREMETERINGMODE_MATRIX,
-पूर्ण;
+};
 
-क्रमागत mmal_parameter_awbmode अणु
+enum mmal_parameter_awbmode {
 	MMAL_PARAM_AWBMODE_OFF,
 	MMAL_PARAM_AWBMODE_AUTO,
 	MMAL_PARAM_AWBMODE_SUNLIGHT,
@@ -314,9 +313,9 @@
 	MMAL_PARAM_AWBMODE_INCANDESCENT,
 	MMAL_PARAM_AWBMODE_FLASH,
 	MMAL_PARAM_AWBMODE_HORIZON,
-पूर्ण;
+};
 
-क्रमागत mmal_parameter_imagefx अणु
+enum mmal_parameter_imagefx {
 	MMAL_PARAM_IMAGEFX_NONE,
 	MMAL_PARAM_IMAGEFX_NEGATIVE,
 	MMAL_PARAM_IMAGEFX_SOLARIZE,
@@ -340,68 +339,68 @@
 	MMAL_PARAM_IMAGEFX_COLOURPOINT,
 	MMAL_PARAM_IMAGEFX_COLOURBALANCE,
 	MMAL_PARAM_IMAGEFX_CARTOON,
-पूर्ण;
+};
 
-क्रमागत MMAL_PARAM_FLICKERAVOID अणु
+enum MMAL_PARAM_FLICKERAVOID {
 	MMAL_PARAM_FLICKERAVOID_OFF,
 	MMAL_PARAM_FLICKERAVOID_AUTO,
 	MMAL_PARAM_FLICKERAVOID_50HZ,
 	MMAL_PARAM_FLICKERAVOID_60HZ,
 	MMAL_PARAM_FLICKERAVOID_MAX = 0x7FFFFFFF
-पूर्ण;
+};
 
-काष्ठा mmal_parameter_awbgains अणु
-	काष्ठा mmal_parameter_rational r_gain;	/**< Red gain */
-	काष्ठा mmal_parameter_rational b_gain;	/**< Blue gain */
-पूर्ण;
+struct mmal_parameter_awbgains {
+	struct mmal_parameter_rational r_gain;	/**< Red gain */
+	struct mmal_parameter_rational b_gain;	/**< Blue gain */
+};
 
 /** Manner of video rate control */
-क्रमागत mmal_parameter_rate_control_mode अणु
+enum mmal_parameter_rate_control_mode {
 	MMAL_VIDEO_RATECONTROL_DEFAULT,
 	MMAL_VIDEO_RATECONTROL_VARIABLE,
 	MMAL_VIDEO_RATECONTROL_CONSTANT,
 	MMAL_VIDEO_RATECONTROL_VARIABLE_SKIP_FRAMES,
 	MMAL_VIDEO_RATECONTROL_CONSTANT_SKIP_FRAMES
-पूर्ण;
+};
 
-क्रमागत mmal_video_profile अणु
-	MMAL_VIDEO_PROखाता_H263_BASELINE,
-	MMAL_VIDEO_PROखाता_H263_H320CODING,
-	MMAL_VIDEO_PROखाता_H263_BACKWARDCOMPATIBLE,
-	MMAL_VIDEO_PROखाता_H263_ISWV2,
-	MMAL_VIDEO_PROखाता_H263_ISWV3,
-	MMAL_VIDEO_PROखाता_H263_HIGHCOMPRESSION,
-	MMAL_VIDEO_PROखाता_H263_INTERNET,
-	MMAL_VIDEO_PROखाता_H263_INTERLACE,
-	MMAL_VIDEO_PROखाता_H263_HIGHLATENCY,
-	MMAL_VIDEO_PROखाता_MP4V_SIMPLE,
-	MMAL_VIDEO_PROखाता_MP4V_SIMPLESCALABLE,
-	MMAL_VIDEO_PROखाता_MP4V_CORE,
-	MMAL_VIDEO_PROखाता_MP4V_MAIN,
-	MMAL_VIDEO_PROखाता_MP4V_NBIT,
-	MMAL_VIDEO_PROखाता_MP4V_SCALABLETEXTURE,
-	MMAL_VIDEO_PROखाता_MP4V_SIMPLEFACE,
-	MMAL_VIDEO_PROखाता_MP4V_SIMPLEFBA,
-	MMAL_VIDEO_PROखाता_MP4V_BASICANIMATED,
-	MMAL_VIDEO_PROखाता_MP4V_HYBRID,
-	MMAL_VIDEO_PROखाता_MP4V_ADVANCEDREALTIME,
-	MMAL_VIDEO_PROखाता_MP4V_CORESCALABLE,
-	MMAL_VIDEO_PROखाता_MP4V_ADVANCEDCODING,
-	MMAL_VIDEO_PROखाता_MP4V_ADVANCEDCORE,
-	MMAL_VIDEO_PROखाता_MP4V_ADVANCEDSCALABLE,
-	MMAL_VIDEO_PROखाता_MP4V_ADVANCEDSIMPLE,
-	MMAL_VIDEO_PROखाता_H264_BASELINE,
-	MMAL_VIDEO_PROखाता_H264_MAIN,
-	MMAL_VIDEO_PROखाता_H264_EXTENDED,
-	MMAL_VIDEO_PROखाता_H264_HIGH,
-	MMAL_VIDEO_PROखाता_H264_HIGH10,
-	MMAL_VIDEO_PROखाता_H264_HIGH422,
-	MMAL_VIDEO_PROखाता_H264_HIGH444,
-	MMAL_VIDEO_PROखाता_H264_CONSTRAINED_BASELINE,
-	MMAL_VIDEO_PROखाता_DUMMY = 0x7FFFFFFF
-पूर्ण;
+enum mmal_video_profile {
+	MMAL_VIDEO_PROFILE_H263_BASELINE,
+	MMAL_VIDEO_PROFILE_H263_H320CODING,
+	MMAL_VIDEO_PROFILE_H263_BACKWARDCOMPATIBLE,
+	MMAL_VIDEO_PROFILE_H263_ISWV2,
+	MMAL_VIDEO_PROFILE_H263_ISWV3,
+	MMAL_VIDEO_PROFILE_H263_HIGHCOMPRESSION,
+	MMAL_VIDEO_PROFILE_H263_INTERNET,
+	MMAL_VIDEO_PROFILE_H263_INTERLACE,
+	MMAL_VIDEO_PROFILE_H263_HIGHLATENCY,
+	MMAL_VIDEO_PROFILE_MP4V_SIMPLE,
+	MMAL_VIDEO_PROFILE_MP4V_SIMPLESCALABLE,
+	MMAL_VIDEO_PROFILE_MP4V_CORE,
+	MMAL_VIDEO_PROFILE_MP4V_MAIN,
+	MMAL_VIDEO_PROFILE_MP4V_NBIT,
+	MMAL_VIDEO_PROFILE_MP4V_SCALABLETEXTURE,
+	MMAL_VIDEO_PROFILE_MP4V_SIMPLEFACE,
+	MMAL_VIDEO_PROFILE_MP4V_SIMPLEFBA,
+	MMAL_VIDEO_PROFILE_MP4V_BASICANIMATED,
+	MMAL_VIDEO_PROFILE_MP4V_HYBRID,
+	MMAL_VIDEO_PROFILE_MP4V_ADVANCEDREALTIME,
+	MMAL_VIDEO_PROFILE_MP4V_CORESCALABLE,
+	MMAL_VIDEO_PROFILE_MP4V_ADVANCEDCODING,
+	MMAL_VIDEO_PROFILE_MP4V_ADVANCEDCORE,
+	MMAL_VIDEO_PROFILE_MP4V_ADVANCEDSCALABLE,
+	MMAL_VIDEO_PROFILE_MP4V_ADVANCEDSIMPLE,
+	MMAL_VIDEO_PROFILE_H264_BASELINE,
+	MMAL_VIDEO_PROFILE_H264_MAIN,
+	MMAL_VIDEO_PROFILE_H264_EXTENDED,
+	MMAL_VIDEO_PROFILE_H264_HIGH,
+	MMAL_VIDEO_PROFILE_H264_HIGH10,
+	MMAL_VIDEO_PROFILE_H264_HIGH422,
+	MMAL_VIDEO_PROFILE_H264_HIGH444,
+	MMAL_VIDEO_PROFILE_H264_CONSTRAINED_BASELINE,
+	MMAL_VIDEO_PROFILE_DUMMY = 0x7FFFFFFF
+};
 
-क्रमागत mmal_video_level अणु
+enum mmal_video_level {
 	MMAL_VIDEO_LEVEL_H263_10,
 	MMAL_VIDEO_LEVEL_H263_20,
 	MMAL_VIDEO_LEVEL_H263_30,
@@ -436,24 +435,24 @@
 	MMAL_VIDEO_LEVEL_H264_5,
 	MMAL_VIDEO_LEVEL_H264_51,
 	MMAL_VIDEO_LEVEL_DUMMY = 0x7FFFFFFF
-पूर्ण;
+};
 
-काष्ठा mmal_parameter_video_profile अणु
-	क्रमागत mmal_video_profile profile;
-	क्रमागत mmal_video_level level;
-पूर्ण;
+struct mmal_parameter_video_profile {
+	enum mmal_video_profile profile;
+	enum mmal_video_level level;
+};
 
 /* video parameters */
 
-क्रमागत mmal_parameter_video_type अणु
+enum mmal_parameter_video_type {
 	/** @ref MMAL_DISPLAYREGION_T */
 	MMAL_PARAMETER_DISPLAYREGION = MMAL_PARAMETER_GROUP_VIDEO,
 
-	/** @ref MMAL_PARAMETER_VIDEO_PROखाता_T */
-	MMAL_PARAMETER_SUPPORTED_PROखाताS,
+	/** @ref MMAL_PARAMETER_VIDEO_PROFILE_T */
+	MMAL_PARAMETER_SUPPORTED_PROFILES,
 
-	/** @ref MMAL_PARAMETER_VIDEO_PROखाता_T */
-	MMAL_PARAMETER_PROखाता,
+	/** @ref MMAL_PARAMETER_VIDEO_PROFILE_T */
+	MMAL_PARAMETER_PROFILE,
 
 	/** @ref MMAL_PARAMETER_UINT32_T */
 	MMAL_PARAMETER_INTRAPERIOD,
@@ -468,7 +467,7 @@
 	MMAL_PARAMETER_MINIMISE_FRAGMENTATION,
 
 	/** @ref MMAL_PARAMETER_UINT32_T.
-	 * Setting the value to zero resets to the शेष (one slice per
+	 * Setting the value to zero resets to the default (one slice per
 	 * frame).
 	 */
 	MMAL_PARAMETER_MB_ROWS_PER_SLICE,
@@ -490,7 +489,7 @@
 	/** @ref MMAL_PARAMETER_BOOLEAN_T. */
 	MMAL_PARAMETER_VIDEO_IMMUTABLE_INPUT,
 
-	/** @ref MMAL_PARAMETER_UINT32_T. Run-समय bit rate control */
+	/** @ref MMAL_PARAMETER_UINT32_T. Run-time bit rate control */
 	MMAL_PARAMETER_VIDEO_BIT_RATE,
 
 	/** @ref MMAL_PARAMETER_FRAME_RATE_T */
@@ -507,13 +506,13 @@
 
 	MMAL_PARAMETER_EXTRA_BUFFERS, /**< @ref MMAL_PARAMETER_UINT32_T. */
 	/** @ref MMAL_PARAMETER_UINT32_T.
-	 * Changing this parameter from the शेष can reduce frame rate
+	 * Changing this parameter from the default can reduce frame rate
 	 * because image buffers need to be re-pitched.
 	 */
 	MMAL_PARAMETER_VIDEO_ALIGN_HORIZ,
 
 	/** @ref MMAL_PARAMETER_UINT32_T.
-	 * Changing this parameter from the शेष can reduce frame rate
+	 * Changing this parameter from the default can reduce frame rate
 	 * because image buffers need to be re-pitched.
 	 */
 	MMAL_PARAMETER_VIDEO_ALIGN_VERT,
@@ -536,7 +535,7 @@
 	/** @ref MMAL_PARAMETER_UINT32_T. */
 	MMAL_PARAMETER_VIDEO_ENCODE_PEAK_RATE,
 
-	/* H264 specअगरic parameters */
+	/* H264 specific parameters */
 
 	/** @ref MMAL_PARAMETER_BOOLEAN_T. */
 	MMAL_PARAMETER_VIDEO_ENCODE_H264_DISABLE_CABAC,
@@ -582,17 +581,17 @@
 
 	/**< @ref MMAL_PARAMETER_BOOLEAN_T */
 	MMAL_PARAMETER_VIDEO_ENCODE_INLINE_HEADER
-पूर्ण;
+};
 
 /** Valid mirror modes */
-क्रमागत mmal_parameter_mirror अणु
+enum mmal_parameter_mirror {
 	MMAL_PARAM_MIRROR_NONE,
 	MMAL_PARAM_MIRROR_VERTICAL,
 	MMAL_PARAM_MIRROR_HORIZONTAL,
 	MMAL_PARAM_MIRROR_BOTH,
-पूर्ण;
+};
 
-क्रमागत mmal_parameter_displaytransक्रमm अणु
+enum mmal_parameter_displaytransform {
 	MMAL_DISPLAY_ROT0 = 0,
 	MMAL_DISPLAY_MIRROR_ROT0 = 1,
 	MMAL_DISPLAY_MIRROR_ROT180 = 2,
@@ -601,14 +600,14 @@
 	MMAL_DISPLAY_ROT270 = 5,
 	MMAL_DISPLAY_ROT90 = 6,
 	MMAL_DISPLAY_MIRROR_ROT270 = 7,
-पूर्ण;
+};
 
-क्रमागत mmal_parameter_displaymode अणु
+enum mmal_parameter_displaymode {
 	MMAL_DISPLAY_MODE_FILL = 0,
 	MMAL_DISPLAY_MODE_LETTERBOX = 1,
-पूर्ण;
+};
 
-क्रमागत mmal_parameter_displayset अणु
+enum mmal_parameter_displayset {
 	MMAL_DISPLAY_SET_NONE = 0,
 	MMAL_DISPLAY_SET_NUM = 1,
 	MMAL_DISPLAY_SET_FULLSCREEN = 2,
@@ -621,20 +620,20 @@
 	MMAL_DISPLAY_SET_LAYER = 0x100,
 	MMAL_DISPLAY_SET_COPYPROTECT = 0x200,
 	MMAL_DISPLAY_SET_ALPHA = 0x400,
-पूर्ण;
+};
 
-/* rectangle, used lots so it माला_लो its own काष्ठा */
-काष्ठा vchiq_mmal_rect अणु
+/* rectangle, used lots so it gets its own struct */
+struct vchiq_mmal_rect {
 	s32 x;
 	s32 y;
 	s32 width;
 	s32 height;
-पूर्ण;
+};
 
-काष्ठा mmal_parameter_displayregion अणु
+struct mmal_parameter_displayregion {
 	/** Bitfield that indicates which fields are set and should be
-	 * used. All other fields will मुख्यtain their current value.
-	 * \लef MMAL_DISPLAYSET_T defines the bits that can be
+	 * used. All other fields will maintain their current value.
+	 * \ref MMAL_DISPLAYSET_T defines the bits that can be
 	 * combined.
 	 */
 	u32 set;
@@ -647,8 +646,8 @@
 
 	u32 display_num;
 	/** Indicates that we are using the full device screen area,
-	 * rather than a winकरोw of the display.  If zero, then
-	 * dest_rect is used to specअगरy a region of the display to
+	 * rather than a window of the display.  If zero, then
+	 * dest_rect is used to specify a region of the display to
 	 * use.
 	 */
 
@@ -656,17 +655,17 @@
 	/** Indicates any rotation or flipping used to map frames onto
 	 * the natural display orientation.
 	 */
-	u32 transक्रमm; /* क्रमागत mmal_parameter_displaytransक्रमm */
+	u32 transform; /* enum mmal_parameter_displaytransform */
 
-	/** Where to display the frame within the screen, अगर
+	/** Where to display the frame within the screen, if
 	 * fullscreen is zero.
 	 */
-	काष्ठा vchiq_mmal_rect dest_rect;
+	struct vchiq_mmal_rect dest_rect;
 
 	/** Indicates which area of the frame to display. If all
 	 * values are zero, the whole frame will be used.
 	 */
-	काष्ठा vchiq_mmal_rect src_rect;
+	struct vchiq_mmal_rect src_rect;
 
 	/** If set to non-zero, indicates that any display scaling
 	 * should disregard the aspect ratio of the frame region being
@@ -679,19 +678,19 @@
 	 * that the image should fill the screen by potentially
 	 * cropping the frames.  Setting \code mode \endcode to \code
 	 * MMAL_DISPLAY_MODE_LETTERBOX \endcode indicates that all the
-	 * source region should be displayed and black bars added अगर
+	 * source region should be displayed and black bars added if
 	 * necessary.
 	 */
-	u32 mode; /* क्रमागत mmal_parameter_displaymode */
+	u32 mode; /* enum mmal_parameter_displaymode */
 
 	/** If non-zero, defines the width of a source pixel relative
-	 * to \code pixel_y \endcode.  If zero, then pixels शेष to
+	 * to \code pixel_y \endcode.  If zero, then pixels default to
 	 * being square.
 	 */
 	u32 pixel_x;
 
 	/** If non-zero, defines the height of a source pixel relative
-	 * to \code pixel_x \endcode.  If zero, then pixels शेष to
+	 * to \code pixel_x \endcode.  If zero, then pixels default to
 	 * being square.
 	 */
 	u32 pixel_y;
@@ -710,47 +709,47 @@
 	 * transparent and 255 is fully opaque.
 	 */
 	u32 alpha;
-पूर्ण;
+};
 
-#घोषणा MMAL_MAX_IMAGEFX_PARAMETERS 5
+#define MMAL_MAX_IMAGEFX_PARAMETERS 5
 
-काष्ठा mmal_parameter_imagefx_parameters अणु
-	क्रमागत mmal_parameter_imagefx effect;
+struct mmal_parameter_imagefx_parameters {
+	enum mmal_parameter_imagefx effect;
 	u32 num_effect_params;
 	u32 effect_parameter[MMAL_MAX_IMAGEFX_PARAMETERS];
-पूर्ण;
+};
 
-#घोषणा MMAL_PARAMETER_CAMERA_INFO_MAX_CAMERAS 4
-#घोषणा MMAL_PARAMETER_CAMERA_INFO_MAX_FLASHES 2
-#घोषणा MMAL_PARAMETER_CAMERA_INFO_MAX_STR_LEN 16
+#define MMAL_PARAMETER_CAMERA_INFO_MAX_CAMERAS 4
+#define MMAL_PARAMETER_CAMERA_INFO_MAX_FLASHES 2
+#define MMAL_PARAMETER_CAMERA_INFO_MAX_STR_LEN 16
 
-काष्ठा mmal_parameter_camera_info_camera अणु
+struct mmal_parameter_camera_info_camera {
 	u32 port_id;
 	u32 max_width;
 	u32 max_height;
 	u32 lens_present;
 	u8 camera_name[MMAL_PARAMETER_CAMERA_INFO_MAX_STR_LEN];
-पूर्ण;
+};
 
-क्रमागत mmal_parameter_camera_info_flash_type अणु
+enum mmal_parameter_camera_info_flash_type {
 	/* Make values explicit to ensure they match values in config ini */
 	MMAL_PARAMETER_CAMERA_INFO_FLASH_TYPE_XENON = 0,
 	MMAL_PARAMETER_CAMERA_INFO_FLASH_TYPE_LED   = 1,
 	MMAL_PARAMETER_CAMERA_INFO_FLASH_TYPE_OTHER = 2,
 	MMAL_PARAMETER_CAMERA_INFO_FLASH_TYPE_MAX = 0x7FFFFFFF
-पूर्ण;
+};
 
-काष्ठा mmal_parameter_camera_info_flash अणु
-	क्रमागत mmal_parameter_camera_info_flash_type flash_type;
-पूर्ण;
+struct mmal_parameter_camera_info_flash {
+	enum mmal_parameter_camera_info_flash_type flash_type;
+};
 
-काष्ठा mmal_parameter_camera_info अणु
+struct mmal_parameter_camera_info {
 	u32 num_cameras;
 	u32 num_flashes;
-	काष्ठा mmal_parameter_camera_info_camera
+	struct mmal_parameter_camera_info_camera
 		cameras[MMAL_PARAMETER_CAMERA_INFO_MAX_CAMERAS];
-	काष्ठा mmal_parameter_camera_info_flash
+	struct mmal_parameter_camera_info_flash
 				flashes[MMAL_PARAMETER_CAMERA_INFO_MAX_FLASHES];
-पूर्ण;
+};
 
-#पूर्ण_अगर
+#endif

@@ -1,12 +1,11 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
-/* ir-rc6-decoder.c - A decoder क्रम the RC6 IR protocol
+// SPDX-License-Identifier: GPL-2.0-only
+/* ir-rc6-decoder.c - A decoder for the RC6 IR protocol
  *
- * Copyright (C) 2010 by David Hथअrdeman <david@hardeman.nu>
+ * Copyright (C) 2010 by David Härdeman <david@hardeman.nu>
  */
 
-#समावेश "rc-core-priv.h"
-#समावेश <linux/module.h>
+#include "rc-core-priv.h"
+#include <linux/module.h>
 
 /*
  * This decoder currently supports:
@@ -16,36 +15,36 @@
  * RC6-6A-32	(MCE version with toggle bit in body)
  */
 
-#घोषणा RC6_UNIT		444	/* microseconds */
-#घोषणा RC6_HEADER_NBITS	4	/* not including toggle bit */
-#घोषणा RC6_0_NBITS		16
-#घोषणा RC6_6A_32_NBITS		32
-#घोषणा RC6_6A_NBITS		128	/* Variable 8..128 */
-#घोषणा RC6_PREFIX_PULSE	(6 * RC6_UNIT)
-#घोषणा RC6_PREFIX_SPACE	(2 * RC6_UNIT)
-#घोषणा RC6_BIT_START		(1 * RC6_UNIT)
-#घोषणा RC6_BIT_END		(1 * RC6_UNIT)
-#घोषणा RC6_TOGGLE_START	(2 * RC6_UNIT)
-#घोषणा RC6_TOGGLE_END		(2 * RC6_UNIT)
-#घोषणा RC6_SUFFIX_SPACE	(6 * RC6_UNIT)
-#घोषणा RC6_MODE_MASK		0x07	/* क्रम the header bits */
-#घोषणा RC6_STARTBIT_MASK	0x08	/* क्रम the header bits */
-#घोषणा RC6_6A_MCE_TOGGLE_MASK	0x8000	/* क्रम the body bits */
-#घोषणा RC6_6A_LCC_MASK		0xffff0000 /* RC6-6A-32 दीर्घ customer code mask */
-#घोषणा RC6_6A_MCE_CC		0x800f0000 /* MCE customer code */
-#घोषणा RC6_6A_ZOTAC_CC		0x80340000 /* Zotac customer code */
-#घोषणा RC6_6A_KATHREIN_CC	0x80460000 /* Kathrein RCU-676 customer code */
-#अगर_अघोषित अक्षर_बिट
-#घोषणा अक्षर_बिट 8	/* Normally in <सीमा.स> */
-#पूर्ण_अगर
+#define RC6_UNIT		444	/* microseconds */
+#define RC6_HEADER_NBITS	4	/* not including toggle bit */
+#define RC6_0_NBITS		16
+#define RC6_6A_32_NBITS		32
+#define RC6_6A_NBITS		128	/* Variable 8..128 */
+#define RC6_PREFIX_PULSE	(6 * RC6_UNIT)
+#define RC6_PREFIX_SPACE	(2 * RC6_UNIT)
+#define RC6_BIT_START		(1 * RC6_UNIT)
+#define RC6_BIT_END		(1 * RC6_UNIT)
+#define RC6_TOGGLE_START	(2 * RC6_UNIT)
+#define RC6_TOGGLE_END		(2 * RC6_UNIT)
+#define RC6_SUFFIX_SPACE	(6 * RC6_UNIT)
+#define RC6_MODE_MASK		0x07	/* for the header bits */
+#define RC6_STARTBIT_MASK	0x08	/* for the header bits */
+#define RC6_6A_MCE_TOGGLE_MASK	0x8000	/* for the body bits */
+#define RC6_6A_LCC_MASK		0xffff0000 /* RC6-6A-32 long customer code mask */
+#define RC6_6A_MCE_CC		0x800f0000 /* MCE customer code */
+#define RC6_6A_ZOTAC_CC		0x80340000 /* Zotac customer code */
+#define RC6_6A_KATHREIN_CC	0x80460000 /* Kathrein RCU-676 customer code */
+#ifndef CHAR_BIT
+#define CHAR_BIT 8	/* Normally in <limits.h> */
+#endif
 
-क्रमागत rc6_mode अणु
+enum rc6_mode {
 	RC6_MODE_0,
 	RC6_MODE_6A,
 	RC6_MODE_UNKNOWN,
-पूर्ण;
+};
 
-क्रमागत rc6_state अणु
+enum rc6_state {
 	STATE_INACTIVE,
 	STATE_PREFIX_SPACE,
 	STATE_HEADER_BIT_START,
@@ -55,354 +54,354 @@
 	STATE_BODY_BIT_START,
 	STATE_BODY_BIT_END,
 	STATE_FINISHED,
-पूर्ण;
+};
 
-अटल क्रमागत rc6_mode rc6_mode(काष्ठा rc6_dec *data)
-अणु
-	चयन (data->header & RC6_MODE_MASK) अणु
-	हाल 0:
-		वापस RC6_MODE_0;
-	हाल 6:
-		अगर (!data->toggle)
-			वापस RC6_MODE_6A;
+static enum rc6_mode rc6_mode(struct rc6_dec *data)
+{
+	switch (data->header & RC6_MODE_MASK) {
+	case 0:
+		return RC6_MODE_0;
+	case 6:
+		if (!data->toggle)
+			return RC6_MODE_6A;
 		fallthrough;
-	शेष:
-		वापस RC6_MODE_UNKNOWN;
-	पूर्ण
-पूर्ण
+	default:
+		return RC6_MODE_UNKNOWN;
+	}
+}
 
 /**
  * ir_rc6_decode() - Decode one RC6 pulse or space
- * @dev:	the काष्ठा rc_dev descriptor of the device
- * @ev:		the काष्ठा ir_raw_event descriptor of the pulse/space
+ * @dev:	the struct rc_dev descriptor of the device
+ * @ev:		the struct ir_raw_event descriptor of the pulse/space
  *
- * This function वापसs -EINVAL अगर the pulse violates the state machine
+ * This function returns -EINVAL if the pulse violates the state machine
  */
-अटल पूर्णांक ir_rc6_decode(काष्ठा rc_dev *dev, काष्ठा ir_raw_event ev)
-अणु
-	काष्ठा rc6_dec *data = &dev->raw->rc6;
+static int ir_rc6_decode(struct rc_dev *dev, struct ir_raw_event ev)
+{
+	struct rc6_dec *data = &dev->raw->rc6;
 	u32 scancode;
 	u8 toggle;
-	क्रमागत rc_proto protocol;
+	enum rc_proto protocol;
 
-	अगर (!is_timing_event(ev)) अणु
-		अगर (ev.reset)
+	if (!is_timing_event(ev)) {
+		if (ev.reset)
 			data->state = STATE_INACTIVE;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!geq_margin(ev.duration, RC6_UNIT, RC6_UNIT / 2))
-		जाओ out;
+	if (!geq_margin(ev.duration, RC6_UNIT, RC6_UNIT / 2))
+		goto out;
 
 again:
 	dev_dbg(&dev->dev, "RC6 decode started at state %i (%uus %s)\n",
 		data->state, ev.duration, TO_STR(ev.pulse));
 
-	अगर (!geq_margin(ev.duration, RC6_UNIT, RC6_UNIT / 2))
-		वापस 0;
+	if (!geq_margin(ev.duration, RC6_UNIT, RC6_UNIT / 2))
+		return 0;
 
-	चयन (data->state) अणु
+	switch (data->state) {
 
-	हाल STATE_INACTIVE:
-		अगर (!ev.pulse)
-			अवरोध;
+	case STATE_INACTIVE:
+		if (!ev.pulse)
+			break;
 
 		/* Note: larger margin on first pulse since each RC6_UNIT
-		   is quite लघु and some hardware takes some समय to
-		   adjust to the संकेत */
-		अगर (!eq_margin(ev.duration, RC6_PREFIX_PULSE, RC6_UNIT))
-			अवरोध;
+		   is quite short and some hardware takes some time to
+		   adjust to the signal */
+		if (!eq_margin(ev.duration, RC6_PREFIX_PULSE, RC6_UNIT))
+			break;
 
 		data->state = STATE_PREFIX_SPACE;
 		data->count = 0;
-		वापस 0;
+		return 0;
 
-	हाल STATE_PREFIX_SPACE:
-		अगर (ev.pulse)
-			अवरोध;
+	case STATE_PREFIX_SPACE:
+		if (ev.pulse)
+			break;
 
-		अगर (!eq_margin(ev.duration, RC6_PREFIX_SPACE, RC6_UNIT / 2))
-			अवरोध;
+		if (!eq_margin(ev.duration, RC6_PREFIX_SPACE, RC6_UNIT / 2))
+			break;
 
 		data->state = STATE_HEADER_BIT_START;
 		data->header = 0;
-		वापस 0;
+		return 0;
 
-	हाल STATE_HEADER_BIT_START:
-		अगर (!eq_margin(ev.duration, RC6_BIT_START, RC6_UNIT / 2))
-			अवरोध;
+	case STATE_HEADER_BIT_START:
+		if (!eq_margin(ev.duration, RC6_BIT_START, RC6_UNIT / 2))
+			break;
 
 		data->header <<= 1;
-		अगर (ev.pulse)
+		if (ev.pulse)
 			data->header |= 1;
 		data->count++;
 		data->state = STATE_HEADER_BIT_END;
-		वापस 0;
+		return 0;
 
-	हाल STATE_HEADER_BIT_END:
-		अगर (data->count == RC6_HEADER_NBITS)
+	case STATE_HEADER_BIT_END:
+		if (data->count == RC6_HEADER_NBITS)
 			data->state = STATE_TOGGLE_START;
-		अन्यथा
+		else
 			data->state = STATE_HEADER_BIT_START;
 
 		decrease_duration(&ev, RC6_BIT_END);
-		जाओ again;
+		goto again;
 
-	हाल STATE_TOGGLE_START:
-		अगर (!eq_margin(ev.duration, RC6_TOGGLE_START, RC6_UNIT / 2))
-			अवरोध;
+	case STATE_TOGGLE_START:
+		if (!eq_margin(ev.duration, RC6_TOGGLE_START, RC6_UNIT / 2))
+			break;
 
 		data->toggle = ev.pulse;
 		data->state = STATE_TOGGLE_END;
-		वापस 0;
+		return 0;
 
-	हाल STATE_TOGGLE_END:
-		अगर (!(data->header & RC6_STARTBIT_MASK)) अणु
+	case STATE_TOGGLE_END:
+		if (!(data->header & RC6_STARTBIT_MASK)) {
 			dev_dbg(&dev->dev, "RC6 invalid start bit\n");
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		data->state = STATE_BODY_BIT_START;
 		decrease_duration(&ev, RC6_TOGGLE_END);
 		data->count = 0;
 		data->body = 0;
 
-		चयन (rc6_mode(data)) अणु
-		हाल RC6_MODE_0:
+		switch (rc6_mode(data)) {
+		case RC6_MODE_0:
 			data->wanted_bits = RC6_0_NBITS;
-			अवरोध;
-		हाल RC6_MODE_6A:
+			break;
+		case RC6_MODE_6A:
 			data->wanted_bits = RC6_6A_NBITS;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_dbg(&dev->dev, "RC6 unknown mode\n");
-			जाओ out;
-		पूर्ण
-		जाओ again;
+			goto out;
+		}
+		goto again;
 
-	हाल STATE_BODY_BIT_START:
-		अगर (eq_margin(ev.duration, RC6_BIT_START, RC6_UNIT / 2)) अणु
+	case STATE_BODY_BIT_START:
+		if (eq_margin(ev.duration, RC6_BIT_START, RC6_UNIT / 2)) {
 			/* Discard LSB's that won't fit in data->body */
-			अगर (data->count++ < अक्षर_बिट * माप data->body) अणु
+			if (data->count++ < CHAR_BIT * sizeof data->body) {
 				data->body <<= 1;
-				अगर (ev.pulse)
+				if (ev.pulse)
 					data->body |= 1;
-			पूर्ण
+			}
 			data->state = STATE_BODY_BIT_END;
-			वापस 0;
-		पूर्ण अन्यथा अगर (RC6_MODE_6A == rc6_mode(data) && !ev.pulse &&
-				geq_margin(ev.duration, RC6_SUFFIX_SPACE, RC6_UNIT / 2)) अणु
+			return 0;
+		} else if (RC6_MODE_6A == rc6_mode(data) && !ev.pulse &&
+				geq_margin(ev.duration, RC6_SUFFIX_SPACE, RC6_UNIT / 2)) {
 			data->state = STATE_FINISHED;
-			जाओ again;
-		पूर्ण
-		अवरोध;
+			goto again;
+		}
+		break;
 
-	हाल STATE_BODY_BIT_END:
-		अगर (data->count == data->wanted_bits)
+	case STATE_BODY_BIT_END:
+		if (data->count == data->wanted_bits)
 			data->state = STATE_FINISHED;
-		अन्यथा
+		else
 			data->state = STATE_BODY_BIT_START;
 
 		decrease_duration(&ev, RC6_BIT_END);
-		जाओ again;
+		goto again;
 
-	हाल STATE_FINISHED:
-		अगर (ev.pulse)
-			अवरोध;
+	case STATE_FINISHED:
+		if (ev.pulse)
+			break;
 
-		चयन (rc6_mode(data)) अणु
-		हाल RC6_MODE_0:
+		switch (rc6_mode(data)) {
+		case RC6_MODE_0:
 			scancode = data->body;
 			toggle = data->toggle;
 			protocol = RC_PROTO_RC6_0;
 			dev_dbg(&dev->dev, "RC6(0) scancode 0x%04x (toggle: %u)\n",
 				scancode, toggle);
-			अवरोध;
+			break;
 
-		हाल RC6_MODE_6A:
-			अगर (data->count > अक्षर_बिट * माप data->body) अणु
+		case RC6_MODE_6A:
+			if (data->count > CHAR_BIT * sizeof data->body) {
 				dev_dbg(&dev->dev, "RC6 too many (%u) data bits\n",
 					data->count);
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			scancode = data->body;
-			चयन (data->count) अणु
-			हाल 20:
+			switch (data->count) {
+			case 20:
 				protocol = RC_PROTO_RC6_6A_20;
 				toggle = 0;
-				अवरोध;
-			हाल 24:
+				break;
+			case 24:
 				protocol = RC_PROTO_RC6_6A_24;
 				toggle = 0;
-				अवरोध;
-			हाल 32:
-				चयन (scancode & RC6_6A_LCC_MASK) अणु
-				हाल RC6_6A_MCE_CC:
-				हाल RC6_6A_KATHREIN_CC:
-				हाल RC6_6A_ZOTAC_CC:
+				break;
+			case 32:
+				switch (scancode & RC6_6A_LCC_MASK) {
+				case RC6_6A_MCE_CC:
+				case RC6_6A_KATHREIN_CC:
+				case RC6_6A_ZOTAC_CC:
 					protocol = RC_PROTO_RC6_MCE;
 					toggle = !!(scancode & RC6_6A_MCE_TOGGLE_MASK);
 					scancode &= ~RC6_6A_MCE_TOGGLE_MASK;
-					अवरोध;
-				शेष:
+					break;
+				default:
 					protocol = RC_PROTO_RC6_6A_32;
 					toggle = 0;
-					अवरोध;
-				पूर्ण
-				अवरोध;
-			शेष:
+					break;
+				}
+				break;
+			default:
 				dev_dbg(&dev->dev, "RC6(6A) unsupported length\n");
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
 			dev_dbg(&dev->dev, "RC6(6A) proto 0x%04x, scancode 0x%08x (toggle: %u)\n",
 				protocol, scancode, toggle);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_dbg(&dev->dev, "RC6 unknown mode\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		rc_keyकरोwn(dev, protocol, scancode, toggle);
+		rc_keydown(dev, protocol, scancode, toggle);
 		data->state = STATE_INACTIVE;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 out:
 	dev_dbg(&dev->dev, "RC6 decode failed at state %i (%uus %s)\n",
 		data->state, ev.duration, TO_STR(ev.pulse));
 	data->state = STATE_INACTIVE;
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा ir_raw_timings_manchester ir_rc6_timings[4] = अणु
-	अणु
+static const struct ir_raw_timings_manchester ir_rc6_timings[4] = {
+	{
 		.leader_pulse		= RC6_PREFIX_PULSE,
 		.leader_space		= RC6_PREFIX_SPACE,
-		.घड़ी			= RC6_UNIT,
+		.clock			= RC6_UNIT,
 		.invert			= 1,
-	पूर्ण,
-	अणु
-		.घड़ी			= RC6_UNIT * 2,
+	},
+	{
+		.clock			= RC6_UNIT * 2,
 		.invert			= 1,
-	पूर्ण,
-	अणु
-		.घड़ी			= RC6_UNIT,
+	},
+	{
+		.clock			= RC6_UNIT,
 		.invert			= 1,
 		.trailer_space		= RC6_SUFFIX_SPACE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /**
  * ir_rc6_encode() - Encode a scancode as a stream of raw events
  *
  * @protocol:	protocol to encode
  * @scancode:	scancode to encode
- * @events:	array of raw ir events to ग_लिखो पूर्णांकo
+ * @events:	array of raw ir events to write into
  * @max:	maximum size of @events
  *
  * Returns:	The number of events written.
- *		-ENOBUFS अगर there isn't enough space in the array to fit the
- *		encoding. In this हाल all @max events will have been written.
- *		-EINVAL अगर the scancode is ambiguous or invalid.
+ *		-ENOBUFS if there isn't enough space in the array to fit the
+ *		encoding. In this case all @max events will have been written.
+ *		-EINVAL if the scancode is ambiguous or invalid.
  */
-अटल पूर्णांक ir_rc6_encode(क्रमागत rc_proto protocol, u32 scancode,
-			 काष्ठा ir_raw_event *events, अचिन्हित पूर्णांक max)
-अणु
-	पूर्णांक ret;
-	काष्ठा ir_raw_event *e = events;
+static int ir_rc6_encode(enum rc_proto protocol, u32 scancode,
+			 struct ir_raw_event *events, unsigned int max)
+{
+	int ret;
+	struct ir_raw_event *e = events;
 
-	अगर (protocol == RC_PROTO_RC6_0) अणु
+	if (protocol == RC_PROTO_RC6_0) {
 		/* Modulate the header (Start Bit & Mode-0) */
 		ret = ir_raw_gen_manchester(&e, max - (e - events),
 					    &ir_rc6_timings[0],
 					    RC6_HEADER_NBITS, (1 << 3));
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		/* Modulate Trailer Bit */
 		ret = ir_raw_gen_manchester(&e, max - (e - events),
 					    &ir_rc6_timings[1], 1, 0);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		/* Modulate rest of the data */
 		ret = ir_raw_gen_manchester(&e, max - (e - events),
 					    &ir_rc6_timings[2], RC6_0_NBITS,
 					    scancode);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
-	पूर्ण अन्यथा अणु
-		पूर्णांक bits;
+	} else {
+		int bits;
 
-		चयन (protocol) अणु
-		हाल RC_PROTO_RC6_MCE:
-		हाल RC_PROTO_RC6_6A_32:
+		switch (protocol) {
+		case RC_PROTO_RC6_MCE:
+		case RC_PROTO_RC6_6A_32:
 			bits = 32;
-			अवरोध;
-		हाल RC_PROTO_RC6_6A_24:
+			break;
+		case RC_PROTO_RC6_6A_24:
 			bits = 24;
-			अवरोध;
-		हाल RC_PROTO_RC6_6A_20:
+			break;
+		case RC_PROTO_RC6_6A_20:
 			bits = 20;
-			अवरोध;
-		शेष:
-			वापस -EINVAL;
-		पूर्ण
+			break;
+		default:
+			return -EINVAL;
+		}
 
 		/* Modulate the header (Start Bit & Header-version 6 */
 		ret = ir_raw_gen_manchester(&e, max - (e - events),
 					    &ir_rc6_timings[0],
 					    RC6_HEADER_NBITS, (1 << 3 | 6));
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		/* Modulate Trailer Bit */
 		ret = ir_raw_gen_manchester(&e, max - (e - events),
 					    &ir_rc6_timings[1], 1, 0);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		/* Modulate rest of the data */
 		ret = ir_raw_gen_manchester(&e, max - (e - events),
 					    &ir_rc6_timings[2],
 					    bits,
 					    scancode);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
-	वापस e - events;
-पूर्ण
+	return e - events;
+}
 
-अटल काष्ठा ir_raw_handler rc6_handler = अणु
+static struct ir_raw_handler rc6_handler = {
 	.protocols	= RC_PROTO_BIT_RC6_0 | RC_PROTO_BIT_RC6_6A_20 |
 			  RC_PROTO_BIT_RC6_6A_24 | RC_PROTO_BIT_RC6_6A_32 |
 			  RC_PROTO_BIT_RC6_MCE,
 	.decode		= ir_rc6_decode,
 	.encode		= ir_rc6_encode,
 	.carrier	= 36000,
-	.min_समयout	= RC6_SUFFIX_SPACE,
-पूर्ण;
+	.min_timeout	= RC6_SUFFIX_SPACE,
+};
 
-अटल पूर्णांक __init ir_rc6_decode_init(व्योम)
-अणु
-	ir_raw_handler_रेजिस्टर(&rc6_handler);
+static int __init ir_rc6_decode_init(void)
+{
+	ir_raw_handler_register(&rc6_handler);
 
-	prपूर्णांकk(KERN_INFO "IR RC6 protocol handler initialized\n");
-	वापस 0;
-पूर्ण
+	printk(KERN_INFO "IR RC6 protocol handler initialized\n");
+	return 0;
+}
 
-अटल व्योम __निकास ir_rc6_decode_निकास(व्योम)
-अणु
-	ir_raw_handler_unरेजिस्टर(&rc6_handler);
-पूर्ण
+static void __exit ir_rc6_decode_exit(void)
+{
+	ir_raw_handler_unregister(&rc6_handler);
+}
 
 module_init(ir_rc6_decode_init);
-module_निकास(ir_rc6_decode_निकास);
+module_exit(ir_rc6_decode_exit);
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("David Hथअrdeman <david@hardeman.nu>");
+MODULE_AUTHOR("David Härdeman <david@hardeman.nu>");
 MODULE_DESCRIPTION("RC6 IR protocol decoder");

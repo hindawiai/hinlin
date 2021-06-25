@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2012 Intel Corporation
+ * Copyright © 2012 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,37 +21,37 @@
  * IN THE SOFTWARE.
  *
  * Authors:
- *    Eugeni Doकरोnov <eugeni.करोकरोnov@पूर्णांकel.com>
+ *    Eugeni Dodonov <eugeni.dodonov@intel.com>
  *
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/pm_runसमय.स>
+#include <linux/module.h>
+#include <linux/pm_runtime.h>
 
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_fourcc.h>
-#समावेश <drm/drm_plane_helper.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_plane_helper.h>
 
-#समावेश "display/intel_atomic.h"
-#समावेश "display/intel_atomic_plane.h"
-#समावेश "display/intel_bw.h"
-#समावेश "display/intel_display_types.h"
-#समावेश "display/intel_fbc.h"
-#समावेश "display/intel_sprite.h"
-#समावेश "display/skl_universal_plane.h"
+#include "display/intel_atomic.h"
+#include "display/intel_atomic_plane.h"
+#include "display/intel_bw.h"
+#include "display/intel_display_types.h"
+#include "display/intel_fbc.h"
+#include "display/intel_sprite.h"
+#include "display/skl_universal_plane.h"
 
-#समावेश "gt/intel_llc.h"
+#include "gt/intel_llc.h"
 
-#समावेश "i915_drv.h"
-#समावेश "i915_fixed.h"
-#समावेश "i915_irq.h"
-#समावेश "i915_trace.h"
-#समावेश "intel_pm.h"
-#समावेश "intel_sideband.h"
-#समावेश "../../../platform/x86/intel_ips.h"
+#include "i915_drv.h"
+#include "i915_fixed.h"
+#include "i915_irq.h"
+#include "i915_trace.h"
+#include "intel_pm.h"
+#include "intel_sideband.h"
+#include "../../../platform/x86/intel_ips.h"
 
-/* Stores plane specअगरic WM parameters */
-काष्ठा skl_wm_params अणु
+/* Stores plane specific WM parameters */
+struct skl_wm_params {
 	bool x_tiled, y_tiled;
 	bool rc_surface;
 	bool is_planar;
@@ -61,22 +60,22 @@
 	u32 plane_pixel_rate;
 	u32 y_min_scanlines;
 	u32 plane_bytes_per_line;
-	uपूर्णांक_fixed_16_16_t plane_blocks_per_line;
-	uपूर्णांक_fixed_16_16_t y_tile_minimum;
-	u32 lineसमय_us;
+	uint_fixed_16_16_t plane_blocks_per_line;
+	uint_fixed_16_16_t y_tile_minimum;
+	u32 linetime_us;
 	u32 dbuf_block_size;
-पूर्ण;
+};
 
 /* used in computing the new watermarks state */
-काष्ठा पूर्णांकel_wm_config अणु
-	अचिन्हित पूर्णांक num_pipes_active;
+struct intel_wm_config {
+	unsigned int num_pipes_active;
 	bool sprites_enabled;
 	bool sprites_scaled;
-पूर्ण;
+};
 
-अटल व्योम gen9_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	अगर (HAS_LLC(dev_priv)) अणु
+static void gen9_init_clock_gating(struct drm_i915_private *dev_priv)
+{
+	if (HAS_LLC(dev_priv)) {
 		/*
 		 * WaCompressedResourceDisplayNewHashMode:skl,kbl
 		 * Display WA #0390: skl,kbl
@@ -84,484 +83,484 @@
 		 * Must match Sampler, Pixel Back End, and Media. See
 		 * WaCompressedResourceSamplerPbeMediaNewHashMode.
 		 */
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, CHICKEN_PAR1_1,
-			   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, CHICKEN_PAR1_1) |
+		intel_uncore_write(&dev_priv->uncore, CHICKEN_PAR1_1,
+			   intel_uncore_read(&dev_priv->uncore, CHICKEN_PAR1_1) |
 			   SKL_DE_COMPRESSED_HASH_MODE);
-	पूर्ण
+	}
 
-	/* See Bspec note क्रम PSR2_CTL bit 31, Wa#828:skl,bxt,kbl,cfl */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, CHICKEN_PAR1_1,
-		   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, CHICKEN_PAR1_1) | SKL_EDP_PSR_FIX_RDWRAP);
+	/* See Bspec note for PSR2_CTL bit 31, Wa#828:skl,bxt,kbl,cfl */
+	intel_uncore_write(&dev_priv->uncore, CHICKEN_PAR1_1,
+		   intel_uncore_read(&dev_priv->uncore, CHICKEN_PAR1_1) | SKL_EDP_PSR_FIX_RDWRAP);
 
 	/* WaEnableChickenDCPR:skl,bxt,kbl,glk,cfl */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN8_CHICKEN_DCPR_1,
-		   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GEN8_CHICKEN_DCPR_1) | MASK_WAKEMEM);
+	intel_uncore_write(&dev_priv->uncore, GEN8_CHICKEN_DCPR_1,
+		   intel_uncore_read(&dev_priv->uncore, GEN8_CHICKEN_DCPR_1) | MASK_WAKEMEM);
 
 	/*
 	 * WaFbcWakeMemOn:skl,bxt,kbl,glk,cfl
 	 * Display WA #0859: skl,bxt,kbl,glk,cfl
 	 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DISP_ARB_CTL, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DISP_ARB_CTL) |
+	intel_uncore_write(&dev_priv->uncore, DISP_ARB_CTL, intel_uncore_read(&dev_priv->uncore, DISP_ARB_CTL) |
 		   DISP_FBC_MEMORY_WAKE);
-पूर्ण
+}
 
-अटल व्योम bxt_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	gen9_init_घड़ी_gating(dev_priv);
+static void bxt_init_clock_gating(struct drm_i915_private *dev_priv)
+{
+	gen9_init_clock_gating(dev_priv);
 
 	/* WaDisableSDEUnitClockGating:bxt */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN8_UCGCTL6, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GEN8_UCGCTL6) |
+	intel_uncore_write(&dev_priv->uncore, GEN8_UCGCTL6, intel_uncore_read(&dev_priv->uncore, GEN8_UCGCTL6) |
 		   GEN8_SDEUNIT_CLOCK_GATE_DISABLE);
 
 	/*
 	 * FIXME:
 	 * GEN8_HDCUNIT_CLOCK_GATE_DISABLE_HDCREQ applies on 3x6 GT SKUs only.
 	 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN8_UCGCTL6, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GEN8_UCGCTL6) |
+	intel_uncore_write(&dev_priv->uncore, GEN8_UCGCTL6, intel_uncore_read(&dev_priv->uncore, GEN8_UCGCTL6) |
 		   GEN8_HDCUNIT_CLOCK_GATE_DISABLE_HDCREQ);
 
 	/*
-	 * Wa: Backlight PWM may stop in the निश्चितed state, causing backlight
+	 * Wa: Backlight PWM may stop in the asserted state, causing backlight
 	 * to stay fully on.
 	 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN9_CLKGATE_DIS_0, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GEN9_CLKGATE_DIS_0) |
+	intel_uncore_write(&dev_priv->uncore, GEN9_CLKGATE_DIS_0, intel_uncore_read(&dev_priv->uncore, GEN9_CLKGATE_DIS_0) |
 		   PWM1_GATING_DIS | PWM2_GATING_DIS);
 
 	/*
-	 * Lower the display पूर्णांकernal समयout.
-	 * This is needed to aव्योम any hard hangs when DSI port PLL
+	 * Lower the display internal timeout.
+	 * This is needed to avoid any hard hangs when DSI port PLL
 	 * is off and a MMIO access is attempted by any privilege
 	 * application, using batch buffers or any other means.
 	 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, RM_TIMEOUT, MMIO_TIMEOUT_US(950));
+	intel_uncore_write(&dev_priv->uncore, RM_TIMEOUT, MMIO_TIMEOUT_US(950));
 
 	/*
 	 * WaFbcTurnOffFbcWatermark:bxt
 	 * Display WA #0562: bxt
 	 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DISP_ARB_CTL, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DISP_ARB_CTL) |
+	intel_uncore_write(&dev_priv->uncore, DISP_ARB_CTL, intel_uncore_read(&dev_priv->uncore, DISP_ARB_CTL) |
 		   DISP_FBC_WM_DIS);
 
 	/*
-	 * WaFbcHighMemBwCorruptionAव्योमance:bxt
+	 * WaFbcHighMemBwCorruptionAvoidance:bxt
 	 * Display WA #0883: bxt
 	 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, ILK_DPFC_CHICKEN, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, ILK_DPFC_CHICKEN) |
+	intel_uncore_write(&dev_priv->uncore, ILK_DPFC_CHICKEN, intel_uncore_read(&dev_priv->uncore, ILK_DPFC_CHICKEN) |
 		   ILK_DPFC_DISABLE_DUMMY0);
-पूर्ण
+}
 
-अटल व्योम glk_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	gen9_init_घड़ी_gating(dev_priv);
+static void glk_init_clock_gating(struct drm_i915_private *dev_priv)
+{
+	gen9_init_clock_gating(dev_priv);
 
 	/*
 	 * WaDisablePWMClockGating:glk
-	 * Backlight PWM may stop in the निश्चितed state, causing backlight
+	 * Backlight PWM may stop in the asserted state, causing backlight
 	 * to stay fully on.
 	 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN9_CLKGATE_DIS_0, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GEN9_CLKGATE_DIS_0) |
+	intel_uncore_write(&dev_priv->uncore, GEN9_CLKGATE_DIS_0, intel_uncore_read(&dev_priv->uncore, GEN9_CLKGATE_DIS_0) |
 		   PWM1_GATING_DIS | PWM2_GATING_DIS);
-पूर्ण
+}
 
-अटल व्योम pnv_get_mem_freq(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	u32 पंचांगp;
+static void pnv_get_mem_freq(struct drm_i915_private *dev_priv)
+{
+	u32 tmp;
 
-	पंचांगp = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, CLKCFG);
+	tmp = intel_uncore_read(&dev_priv->uncore, CLKCFG);
 
-	चयन (पंचांगp & CLKCFG_FSB_MASK) अणु
-	हाल CLKCFG_FSB_533:
+	switch (tmp & CLKCFG_FSB_MASK) {
+	case CLKCFG_FSB_533:
 		dev_priv->fsb_freq = 533; /* 133*4 */
-		अवरोध;
-	हाल CLKCFG_FSB_800:
+		break;
+	case CLKCFG_FSB_800:
 		dev_priv->fsb_freq = 800; /* 200*4 */
-		अवरोध;
-	हाल CLKCFG_FSB_667:
+		break;
+	case CLKCFG_FSB_667:
 		dev_priv->fsb_freq =  667; /* 167*4 */
-		अवरोध;
-	हाल CLKCFG_FSB_400:
+		break;
+	case CLKCFG_FSB_400:
 		dev_priv->fsb_freq = 400; /* 100*4 */
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	चयन (पंचांगp & CLKCFG_MEM_MASK) अणु
-	हाल CLKCFG_MEM_533:
+	switch (tmp & CLKCFG_MEM_MASK) {
+	case CLKCFG_MEM_533:
 		dev_priv->mem_freq = 533;
-		अवरोध;
-	हाल CLKCFG_MEM_667:
+		break;
+	case CLKCFG_MEM_667:
 		dev_priv->mem_freq = 667;
-		अवरोध;
-	हाल CLKCFG_MEM_800:
+		break;
+	case CLKCFG_MEM_800:
 		dev_priv->mem_freq = 800;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/* detect pineview DDR3 setting */
-	पंचांगp = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, CSHRDDR3CTL);
-	dev_priv->is_ddr3 = (पंचांगp & CSHRDDR3CTL_DDR3) ? 1 : 0;
-पूर्ण
+	tmp = intel_uncore_read(&dev_priv->uncore, CSHRDDR3CTL);
+	dev_priv->is_ddr3 = (tmp & CSHRDDR3CTL_DDR3) ? 1 : 0;
+}
 
-अटल व्योम ilk_get_mem_freq(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void ilk_get_mem_freq(struct drm_i915_private *dev_priv)
+{
 	u16 ddrpll, csipll;
 
-	ddrpll = पूर्णांकel_uncore_पढ़ो16(&dev_priv->uncore, DDRMPLL1);
-	csipll = पूर्णांकel_uncore_पढ़ो16(&dev_priv->uncore, CSIPLL0);
+	ddrpll = intel_uncore_read16(&dev_priv->uncore, DDRMPLL1);
+	csipll = intel_uncore_read16(&dev_priv->uncore, CSIPLL0);
 
-	चयन (ddrpll & 0xff) अणु
-	हाल 0xc:
+	switch (ddrpll & 0xff) {
+	case 0xc:
 		dev_priv->mem_freq = 800;
-		अवरोध;
-	हाल 0x10:
+		break;
+	case 0x10:
 		dev_priv->mem_freq = 1066;
-		अवरोध;
-	हाल 0x14:
+		break;
+	case 0x14:
 		dev_priv->mem_freq = 1333;
-		अवरोध;
-	हाल 0x18:
+		break;
+	case 0x18:
 		dev_priv->mem_freq = 1600;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		drm_dbg(&dev_priv->drm, "unknown memory frequency 0x%02x\n",
 			ddrpll & 0xff);
 		dev_priv->mem_freq = 0;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	चयन (csipll & 0x3ff) अणु
-	हाल 0x00c:
+	switch (csipll & 0x3ff) {
+	case 0x00c:
 		dev_priv->fsb_freq = 3200;
-		अवरोध;
-	हाल 0x00e:
+		break;
+	case 0x00e:
 		dev_priv->fsb_freq = 3733;
-		अवरोध;
-	हाल 0x010:
+		break;
+	case 0x010:
 		dev_priv->fsb_freq = 4266;
-		अवरोध;
-	हाल 0x012:
+		break;
+	case 0x012:
 		dev_priv->fsb_freq = 4800;
-		अवरोध;
-	हाल 0x014:
+		break;
+	case 0x014:
 		dev_priv->fsb_freq = 5333;
-		अवरोध;
-	हाल 0x016:
+		break;
+	case 0x016:
 		dev_priv->fsb_freq = 5866;
-		अवरोध;
-	हाल 0x018:
+		break;
+	case 0x018:
 		dev_priv->fsb_freq = 6400;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		drm_dbg(&dev_priv->drm, "unknown fsb frequency 0x%04x\n",
 			csipll & 0x3ff);
 		dev_priv->fsb_freq = 0;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल स्थिर काष्ठा cxsr_latency cxsr_latency_table[] = अणु
-	अणु1, 0, 800, 400, 3382, 33382, 3983, 33983पूर्ण,    /* DDR2-400 SC */
-	अणु1, 0, 800, 667, 3354, 33354, 3807, 33807पूर्ण,    /* DDR2-667 SC */
-	अणु1, 0, 800, 800, 3347, 33347, 3763, 33763पूर्ण,    /* DDR2-800 SC */
-	अणु1, 1, 800, 667, 6420, 36420, 6873, 36873पूर्ण,    /* DDR3-667 SC */
-	अणु1, 1, 800, 800, 5902, 35902, 6318, 36318पूर्ण,    /* DDR3-800 SC */
+static const struct cxsr_latency cxsr_latency_table[] = {
+	{1, 0, 800, 400, 3382, 33382, 3983, 33983},    /* DDR2-400 SC */
+	{1, 0, 800, 667, 3354, 33354, 3807, 33807},    /* DDR2-667 SC */
+	{1, 0, 800, 800, 3347, 33347, 3763, 33763},    /* DDR2-800 SC */
+	{1, 1, 800, 667, 6420, 36420, 6873, 36873},    /* DDR3-667 SC */
+	{1, 1, 800, 800, 5902, 35902, 6318, 36318},    /* DDR3-800 SC */
 
-	अणु1, 0, 667, 400, 3400, 33400, 4021, 34021पूर्ण,    /* DDR2-400 SC */
-	अणु1, 0, 667, 667, 3372, 33372, 3845, 33845पूर्ण,    /* DDR2-667 SC */
-	अणु1, 0, 667, 800, 3386, 33386, 3822, 33822पूर्ण,    /* DDR2-800 SC */
-	अणु1, 1, 667, 667, 6438, 36438, 6911, 36911पूर्ण,    /* DDR3-667 SC */
-	अणु1, 1, 667, 800, 5941, 35941, 6377, 36377पूर्ण,    /* DDR3-800 SC */
+	{1, 0, 667, 400, 3400, 33400, 4021, 34021},    /* DDR2-400 SC */
+	{1, 0, 667, 667, 3372, 33372, 3845, 33845},    /* DDR2-667 SC */
+	{1, 0, 667, 800, 3386, 33386, 3822, 33822},    /* DDR2-800 SC */
+	{1, 1, 667, 667, 6438, 36438, 6911, 36911},    /* DDR3-667 SC */
+	{1, 1, 667, 800, 5941, 35941, 6377, 36377},    /* DDR3-800 SC */
 
-	अणु1, 0, 400, 400, 3472, 33472, 4173, 34173पूर्ण,    /* DDR2-400 SC */
-	अणु1, 0, 400, 667, 3443, 33443, 3996, 33996पूर्ण,    /* DDR2-667 SC */
-	अणु1, 0, 400, 800, 3430, 33430, 3946, 33946पूर्ण,    /* DDR2-800 SC */
-	अणु1, 1, 400, 667, 6509, 36509, 7062, 37062पूर्ण,    /* DDR3-667 SC */
-	अणु1, 1, 400, 800, 5985, 35985, 6501, 36501पूर्ण,    /* DDR3-800 SC */
+	{1, 0, 400, 400, 3472, 33472, 4173, 34173},    /* DDR2-400 SC */
+	{1, 0, 400, 667, 3443, 33443, 3996, 33996},    /* DDR2-667 SC */
+	{1, 0, 400, 800, 3430, 33430, 3946, 33946},    /* DDR2-800 SC */
+	{1, 1, 400, 667, 6509, 36509, 7062, 37062},    /* DDR3-667 SC */
+	{1, 1, 400, 800, 5985, 35985, 6501, 36501},    /* DDR3-800 SC */
 
-	अणु0, 0, 800, 400, 3438, 33438, 4065, 34065पूर्ण,    /* DDR2-400 SC */
-	अणु0, 0, 800, 667, 3410, 33410, 3889, 33889पूर्ण,    /* DDR2-667 SC */
-	अणु0, 0, 800, 800, 3403, 33403, 3845, 33845पूर्ण,    /* DDR2-800 SC */
-	अणु0, 1, 800, 667, 6476, 36476, 6955, 36955पूर्ण,    /* DDR3-667 SC */
-	अणु0, 1, 800, 800, 5958, 35958, 6400, 36400पूर्ण,    /* DDR3-800 SC */
+	{0, 0, 800, 400, 3438, 33438, 4065, 34065},    /* DDR2-400 SC */
+	{0, 0, 800, 667, 3410, 33410, 3889, 33889},    /* DDR2-667 SC */
+	{0, 0, 800, 800, 3403, 33403, 3845, 33845},    /* DDR2-800 SC */
+	{0, 1, 800, 667, 6476, 36476, 6955, 36955},    /* DDR3-667 SC */
+	{0, 1, 800, 800, 5958, 35958, 6400, 36400},    /* DDR3-800 SC */
 
-	अणु0, 0, 667, 400, 3456, 33456, 4103, 34106पूर्ण,    /* DDR2-400 SC */
-	अणु0, 0, 667, 667, 3428, 33428, 3927, 33927पूर्ण,    /* DDR2-667 SC */
-	अणु0, 0, 667, 800, 3443, 33443, 3905, 33905पूर्ण,    /* DDR2-800 SC */
-	अणु0, 1, 667, 667, 6494, 36494, 6993, 36993पूर्ण,    /* DDR3-667 SC */
-	अणु0, 1, 667, 800, 5998, 35998, 6460, 36460पूर्ण,    /* DDR3-800 SC */
+	{0, 0, 667, 400, 3456, 33456, 4103, 34106},    /* DDR2-400 SC */
+	{0, 0, 667, 667, 3428, 33428, 3927, 33927},    /* DDR2-667 SC */
+	{0, 0, 667, 800, 3443, 33443, 3905, 33905},    /* DDR2-800 SC */
+	{0, 1, 667, 667, 6494, 36494, 6993, 36993},    /* DDR3-667 SC */
+	{0, 1, 667, 800, 5998, 35998, 6460, 36460},    /* DDR3-800 SC */
 
-	अणु0, 0, 400, 400, 3528, 33528, 4255, 34255पूर्ण,    /* DDR2-400 SC */
-	अणु0, 0, 400, 667, 3500, 33500, 4079, 34079पूर्ण,    /* DDR2-667 SC */
-	अणु0, 0, 400, 800, 3487, 33487, 4029, 34029पूर्ण,    /* DDR2-800 SC */
-	अणु0, 1, 400, 667, 6566, 36566, 7145, 37145पूर्ण,    /* DDR3-667 SC */
-	अणु0, 1, 400, 800, 6042, 36042, 6584, 36584पूर्ण,    /* DDR3-800 SC */
-पूर्ण;
+	{0, 0, 400, 400, 3528, 33528, 4255, 34255},    /* DDR2-400 SC */
+	{0, 0, 400, 667, 3500, 33500, 4079, 34079},    /* DDR2-667 SC */
+	{0, 0, 400, 800, 3487, 33487, 4029, 34029},    /* DDR2-800 SC */
+	{0, 1, 400, 667, 6566, 36566, 7145, 37145},    /* DDR3-667 SC */
+	{0, 1, 400, 800, 6042, 36042, 6584, 36584},    /* DDR3-800 SC */
+};
 
-अटल स्थिर काष्ठा cxsr_latency *पूर्णांकel_get_cxsr_latency(bool is_desktop,
+static const struct cxsr_latency *intel_get_cxsr_latency(bool is_desktop,
 							 bool is_ddr3,
-							 पूर्णांक fsb,
-							 पूर्णांक mem)
-अणु
-	स्थिर काष्ठा cxsr_latency *latency;
-	पूर्णांक i;
+							 int fsb,
+							 int mem)
+{
+	const struct cxsr_latency *latency;
+	int i;
 
-	अगर (fsb == 0 || mem == 0)
-		वापस शून्य;
+	if (fsb == 0 || mem == 0)
+		return NULL;
 
-	क्रम (i = 0; i < ARRAY_SIZE(cxsr_latency_table); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(cxsr_latency_table); i++) {
 		latency = &cxsr_latency_table[i];
-		अगर (is_desktop == latency->is_desktop &&
+		if (is_desktop == latency->is_desktop &&
 		    is_ddr3 == latency->is_ddr3 &&
 		    fsb == latency->fsb_freq && mem == latency->mem_freq)
-			वापस latency;
-	पूर्ण
+			return latency;
+	}
 
 	DRM_DEBUG_KMS("Unknown FSB/MEM found, disable CxSR\n");
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम chv_set_memory_dvfs(काष्ठा drm_i915_निजी *dev_priv, bool enable)
-अणु
+static void chv_set_memory_dvfs(struct drm_i915_private *dev_priv, bool enable)
+{
 	u32 val;
 
 	vlv_punit_get(dev_priv);
 
-	val = vlv_punit_पढ़ो(dev_priv, PUNIT_REG_DDR_SETUP2);
-	अगर (enable)
+	val = vlv_punit_read(dev_priv, PUNIT_REG_DDR_SETUP2);
+	if (enable)
 		val &= ~FORCE_DDR_HIGH_FREQ;
-	अन्यथा
+	else
 		val |= FORCE_DDR_HIGH_FREQ;
 	val &= ~FORCE_DDR_LOW_FREQ;
 	val |= FORCE_DDR_FREQ_REQ_ACK;
-	vlv_punit_ग_लिखो(dev_priv, PUNIT_REG_DDR_SETUP2, val);
+	vlv_punit_write(dev_priv, PUNIT_REG_DDR_SETUP2, val);
 
-	अगर (रुको_क्रम((vlv_punit_पढ़ो(dev_priv, PUNIT_REG_DDR_SETUP2) &
+	if (wait_for((vlv_punit_read(dev_priv, PUNIT_REG_DDR_SETUP2) &
 		      FORCE_DDR_FREQ_REQ_ACK) == 0, 3))
 		drm_err(&dev_priv->drm,
 			"timed out waiting for Punit DDR DVFS request\n");
 
 	vlv_punit_put(dev_priv);
-पूर्ण
+}
 
-अटल व्योम chv_set_memory_pm5(काष्ठा drm_i915_निजी *dev_priv, bool enable)
-अणु
+static void chv_set_memory_pm5(struct drm_i915_private *dev_priv, bool enable)
+{
 	u32 val;
 
 	vlv_punit_get(dev_priv);
 
-	val = vlv_punit_पढ़ो(dev_priv, PUNIT_REG_DSPSSPM);
-	अगर (enable)
+	val = vlv_punit_read(dev_priv, PUNIT_REG_DSPSSPM);
+	if (enable)
 		val |= DSP_MAXFIFO_PM5_ENABLE;
-	अन्यथा
+	else
 		val &= ~DSP_MAXFIFO_PM5_ENABLE;
-	vlv_punit_ग_लिखो(dev_priv, PUNIT_REG_DSPSSPM, val);
+	vlv_punit_write(dev_priv, PUNIT_REG_DSPSSPM, val);
 
 	vlv_punit_put(dev_priv);
-पूर्ण
+}
 
-#घोषणा FW_WM(value, plane) \
+#define FW_WM(value, plane) \
 	(((value) << DSPFW_ ## plane ## _SHIFT) & DSPFW_ ## plane ## _MASK)
 
-अटल bool _पूर्णांकel_set_memory_cxsr(काष्ठा drm_i915_निजी *dev_priv, bool enable)
-अणु
+static bool _intel_set_memory_cxsr(struct drm_i915_private *dev_priv, bool enable)
+{
 	bool was_enabled;
 	u32 val;
 
-	अगर (IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv)) अणु
-		was_enabled = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, FW_BLC_SELF_VLV) & FW_CSPWRDWNEN;
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, FW_BLC_SELF_VLV, enable ? FW_CSPWRDWNEN : 0);
-		पूर्णांकel_uncore_posting_पढ़ो(&dev_priv->uncore, FW_BLC_SELF_VLV);
-	पूर्ण अन्यथा अगर (IS_G4X(dev_priv) || IS_I965GM(dev_priv)) अणु
-		was_enabled = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, FW_BLC_SELF) & FW_BLC_SELF_EN;
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, FW_BLC_SELF, enable ? FW_BLC_SELF_EN : 0);
-		पूर्णांकel_uncore_posting_पढ़ो(&dev_priv->uncore, FW_BLC_SELF);
-	पूर्ण अन्यथा अगर (IS_PINEVIEW(dev_priv)) अणु
-		val = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPFW3);
+	if (IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv)) {
+		was_enabled = intel_uncore_read(&dev_priv->uncore, FW_BLC_SELF_VLV) & FW_CSPWRDWNEN;
+		intel_uncore_write(&dev_priv->uncore, FW_BLC_SELF_VLV, enable ? FW_CSPWRDWNEN : 0);
+		intel_uncore_posting_read(&dev_priv->uncore, FW_BLC_SELF_VLV);
+	} else if (IS_G4X(dev_priv) || IS_I965GM(dev_priv)) {
+		was_enabled = intel_uncore_read(&dev_priv->uncore, FW_BLC_SELF) & FW_BLC_SELF_EN;
+		intel_uncore_write(&dev_priv->uncore, FW_BLC_SELF, enable ? FW_BLC_SELF_EN : 0);
+		intel_uncore_posting_read(&dev_priv->uncore, FW_BLC_SELF);
+	} else if (IS_PINEVIEW(dev_priv)) {
+		val = intel_uncore_read(&dev_priv->uncore, DSPFW3);
 		was_enabled = val & PINEVIEW_SELF_REFRESH_EN;
-		अगर (enable)
+		if (enable)
 			val |= PINEVIEW_SELF_REFRESH_EN;
-		अन्यथा
+		else
 			val &= ~PINEVIEW_SELF_REFRESH_EN;
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPFW3, val);
-		पूर्णांकel_uncore_posting_पढ़ो(&dev_priv->uncore, DSPFW3);
-	पूर्ण अन्यथा अगर (IS_I945G(dev_priv) || IS_I945GM(dev_priv)) अणु
-		was_enabled = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, FW_BLC_SELF) & FW_BLC_SELF_EN;
+		intel_uncore_write(&dev_priv->uncore, DSPFW3, val);
+		intel_uncore_posting_read(&dev_priv->uncore, DSPFW3);
+	} else if (IS_I945G(dev_priv) || IS_I945GM(dev_priv)) {
+		was_enabled = intel_uncore_read(&dev_priv->uncore, FW_BLC_SELF) & FW_BLC_SELF_EN;
 		val = enable ? _MASKED_BIT_ENABLE(FW_BLC_SELF_EN) :
 			       _MASKED_BIT_DISABLE(FW_BLC_SELF_EN);
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, FW_BLC_SELF, val);
-		पूर्णांकel_uncore_posting_पढ़ो(&dev_priv->uncore, FW_BLC_SELF);
-	पूर्ण अन्यथा अगर (IS_I915GM(dev_priv)) अणु
+		intel_uncore_write(&dev_priv->uncore, FW_BLC_SELF, val);
+		intel_uncore_posting_read(&dev_priv->uncore, FW_BLC_SELF);
+	} else if (IS_I915GM(dev_priv)) {
 		/*
-		 * FIXME can't find a bit like this क्रम 915G, and
-		 * and yet it करोes have the related watermark in
+		 * FIXME can't find a bit like this for 915G, and
+		 * and yet it does have the related watermark in
 		 * FW_BLC_SELF. What's going on?
 		 */
-		was_enabled = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, INSTPM) & INSTPM_SELF_EN;
+		was_enabled = intel_uncore_read(&dev_priv->uncore, INSTPM) & INSTPM_SELF_EN;
 		val = enable ? _MASKED_BIT_ENABLE(INSTPM_SELF_EN) :
 			       _MASKED_BIT_DISABLE(INSTPM_SELF_EN);
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, INSTPM, val);
-		पूर्णांकel_uncore_posting_पढ़ो(&dev_priv->uncore, INSTPM);
-	पूर्ण अन्यथा अणु
-		वापस false;
-	पूर्ण
+		intel_uncore_write(&dev_priv->uncore, INSTPM, val);
+		intel_uncore_posting_read(&dev_priv->uncore, INSTPM);
+	} else {
+		return false;
+	}
 
-	trace_पूर्णांकel_memory_cxsr(dev_priv, was_enabled, enable);
+	trace_intel_memory_cxsr(dev_priv, was_enabled, enable);
 
 	drm_dbg_kms(&dev_priv->drm, "memory self-refresh is %s (was %s)\n",
 		    enableddisabled(enable),
 		    enableddisabled(was_enabled));
 
-	वापस was_enabled;
-पूर्ण
+	return was_enabled;
+}
 
 /**
- * पूर्णांकel_set_memory_cxsr - Configure CxSR state
+ * intel_set_memory_cxsr - Configure CxSR state
  * @dev_priv: i915 device
  * @enable: Allow vs. disallow CxSR
  *
- * Allow or disallow the प्रणाली to enter a special CxSR
+ * Allow or disallow the system to enter a special CxSR
  * (C-state self refresh) state. What typically happens in CxSR mode
- * is that several display FIFOs may get combined पूर्णांकo a single larger
- * FIFO क्रम a particular plane (so called max FIFO mode) to allow the
- * प्रणाली to defer memory fetches दीर्घer, and the memory will enter
+ * is that several display FIFOs may get combined into a single larger
+ * FIFO for a particular plane (so called max FIFO mode) to allow the
+ * system to defer memory fetches longer, and the memory will enter
  * self refresh.
  *
- * Note that enabling CxSR करोes not guarantee that the प्रणाली enter
- * this special mode, nor करोes it guarantee that the प्रणाली stays
- * in that mode once entered. So this just allows/disallows the प्रणाली
- * to स्वतःnomously utilize the CxSR mode. Other factors such as core
- * C-states will affect when/अगर the प्रणाली actually enters/निकासs the
+ * Note that enabling CxSR does not guarantee that the system enter
+ * this special mode, nor does it guarantee that the system stays
+ * in that mode once entered. So this just allows/disallows the system
+ * to autonomously utilize the CxSR mode. Other factors such as core
+ * C-states will affect when/if the system actually enters/exits the
  * CxSR mode.
  *
  * Note that on VLV/CHV this actually only controls the max FIFO mode,
- * and the प्रणाली is मुक्त to enter/निकास memory self refresh at any समय
+ * and the system is free to enter/exit memory self refresh at any time
  * even when the use of CxSR has been disallowed.
  *
- * While the प्रणाली is actually in the CxSR/max FIFO mode, some plane
- * control रेजिस्टरs will not get latched on vblank. Thus in order to
- * guarantee the प्रणाली will respond to changes in the plane रेजिस्टरs
- * we must always disallow CxSR prior to making changes to those रेजिस्टरs.
- * Unक्रमtunately the प्रणाली will re-evaluate the CxSR conditions at
+ * While the system is actually in the CxSR/max FIFO mode, some plane
+ * control registers will not get latched on vblank. Thus in order to
+ * guarantee the system will respond to changes in the plane registers
+ * we must always disallow CxSR prior to making changes to those registers.
+ * Unfortunately the system will re-evaluate the CxSR conditions at
  * frame start which happens after vblank start (which is when the plane
- * रेजिस्टरs would get latched), so we can't proceed with the plane update
+ * registers would get latched), so we can't proceed with the plane update
  * during the same frame where we disallowed CxSR.
  *
- * Certain platक्रमms also have a deeper HPLL SR mode. Fortunately the
- * HPLL SR mode depends on CxSR itself, so we करोn't have to hand hold
- * the hardware w.r.t. HPLL SR when writing to plane रेजिस्टरs.
+ * Certain platforms also have a deeper HPLL SR mode. Fortunately the
+ * HPLL SR mode depends on CxSR itself, so we don't have to hand hold
+ * the hardware w.r.t. HPLL SR when writing to plane registers.
  * Disallowing just CxSR is sufficient.
  */
-bool पूर्णांकel_set_memory_cxsr(काष्ठा drm_i915_निजी *dev_priv, bool enable)
-अणु
+bool intel_set_memory_cxsr(struct drm_i915_private *dev_priv, bool enable)
+{
 	bool ret;
 
 	mutex_lock(&dev_priv->wm.wm_mutex);
-	ret = _पूर्णांकel_set_memory_cxsr(dev_priv, enable);
-	अगर (IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv))
+	ret = _intel_set_memory_cxsr(dev_priv, enable);
+	if (IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv))
 		dev_priv->wm.vlv.cxsr = enable;
-	अन्यथा अगर (IS_G4X(dev_priv))
+	else if (IS_G4X(dev_priv))
 		dev_priv->wm.g4x.cxsr = enable;
 	mutex_unlock(&dev_priv->wm.wm_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Latency क्रम FIFO fetches is dependent on several factors:
+ * Latency for FIFO fetches is dependent on several factors:
  *   - memory configuration (speed, channels)
  *   - chipset
  *   - current MCH state
  * It can be fairly high in some situations, so here we assume a fairly
- * pessimal value.  It's a tradeoff between extra memory fetches (अगर we
+ * pessimal value.  It's a tradeoff between extra memory fetches (if we
  * set this value too high, the FIFO will fetch frequently to stay full)
- * and घातer consumption (set it too low to save घातer and we might see
+ * and power consumption (set it too low to save power and we might see
  * FIFO underruns and display "flicker").
  *
- * A value of 5us seems to be a good balance; safe क्रम very low end
- * platक्रमms but not overly aggressive on lower latency configs.
+ * A value of 5us seems to be a good balance; safe for very low end
+ * platforms but not overly aggressive on lower latency configs.
  */
-अटल स्थिर पूर्णांक pessimal_latency_ns = 5000;
+static const int pessimal_latency_ns = 5000;
 
-#घोषणा VLV_FIFO_START(dsparb, dsparb2, lo_shअगरt, hi_shअगरt) \
-	((((dsparb) >> (lo_shअगरt)) & 0xff) | ((((dsparb2) >> (hi_shअगरt)) & 0x1) << 8))
+#define VLV_FIFO_START(dsparb, dsparb2, lo_shift, hi_shift) \
+	((((dsparb) >> (lo_shift)) & 0xff) | ((((dsparb2) >> (hi_shift)) & 0x1) << 8))
 
-अटल व्योम vlv_get_fअगरo_size(काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
-	काष्ठा पूर्णांकel_crtc *crtc = to_पूर्णांकel_crtc(crtc_state->uapi.crtc);
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
-	काष्ठा vlv_fअगरo_state *fअगरo_state = &crtc_state->wm.vlv.fअगरo_state;
-	क्रमागत pipe pipe = crtc->pipe;
-	पूर्णांक sprite0_start, sprite1_start;
+static void vlv_get_fifo_size(struct intel_crtc_state *crtc_state)
+{
+	struct intel_crtc *crtc = to_intel_crtc(crtc_state->uapi.crtc);
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	struct vlv_fifo_state *fifo_state = &crtc_state->wm.vlv.fifo_state;
+	enum pipe pipe = crtc->pipe;
+	int sprite0_start, sprite1_start;
 	u32 dsparb, dsparb2, dsparb3;
 
-	चयन (pipe) अणु
-	हाल PIPE_A:
-		dsparb = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPARB);
-		dsparb2 = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPARB2);
+	switch (pipe) {
+	case PIPE_A:
+		dsparb = intel_uncore_read(&dev_priv->uncore, DSPARB);
+		dsparb2 = intel_uncore_read(&dev_priv->uncore, DSPARB2);
 		sprite0_start = VLV_FIFO_START(dsparb, dsparb2, 0, 0);
 		sprite1_start = VLV_FIFO_START(dsparb, dsparb2, 8, 4);
-		अवरोध;
-	हाल PIPE_B:
-		dsparb = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPARB);
-		dsparb2 = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPARB2);
+		break;
+	case PIPE_B:
+		dsparb = intel_uncore_read(&dev_priv->uncore, DSPARB);
+		dsparb2 = intel_uncore_read(&dev_priv->uncore, DSPARB2);
 		sprite0_start = VLV_FIFO_START(dsparb, dsparb2, 16, 8);
 		sprite1_start = VLV_FIFO_START(dsparb, dsparb2, 24, 12);
-		अवरोध;
-	हाल PIPE_C:
-		dsparb2 = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPARB2);
-		dsparb3 = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPARB3);
+		break;
+	case PIPE_C:
+		dsparb2 = intel_uncore_read(&dev_priv->uncore, DSPARB2);
+		dsparb3 = intel_uncore_read(&dev_priv->uncore, DSPARB3);
 		sprite0_start = VLV_FIFO_START(dsparb3, dsparb2, 0, 16);
 		sprite1_start = VLV_FIFO_START(dsparb3, dsparb2, 8, 20);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		MISSING_CASE(pipe);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	fअगरo_state->plane[PLANE_PRIMARY] = sprite0_start;
-	fअगरo_state->plane[PLANE_SPRITE0] = sprite1_start - sprite0_start;
-	fअगरo_state->plane[PLANE_SPRITE1] = 511 - sprite1_start;
-	fअगरo_state->plane[PLANE_CURSOR] = 63;
-पूर्ण
+	fifo_state->plane[PLANE_PRIMARY] = sprite0_start;
+	fifo_state->plane[PLANE_SPRITE0] = sprite1_start - sprite0_start;
+	fifo_state->plane[PLANE_SPRITE1] = 511 - sprite1_start;
+	fifo_state->plane[PLANE_CURSOR] = 63;
+}
 
-अटल पूर्णांक i9xx_get_fअगरo_size(काष्ठा drm_i915_निजी *dev_priv,
-			      क्रमागत i9xx_plane_id i9xx_plane)
-अणु
-	u32 dsparb = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPARB);
-	पूर्णांक size;
+static int i9xx_get_fifo_size(struct drm_i915_private *dev_priv,
+			      enum i9xx_plane_id i9xx_plane)
+{
+	u32 dsparb = intel_uncore_read(&dev_priv->uncore, DSPARB);
+	int size;
 
 	size = dsparb & 0x7f;
-	अगर (i9xx_plane == PLANE_B)
+	if (i9xx_plane == PLANE_B)
 		size = ((dsparb >> DSPARB_CSTART_SHIFT) & 0x7f) - size;
 
 	drm_dbg_kms(&dev_priv->drm, "FIFO size - (0x%08x) %c: %d\n",
 		    dsparb, plane_name(i9xx_plane), size);
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल पूर्णांक i830_get_fअगरo_size(काष्ठा drm_i915_निजी *dev_priv,
-			      क्रमागत i9xx_plane_id i9xx_plane)
-अणु
-	u32 dsparb = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPARB);
-	पूर्णांक size;
+static int i830_get_fifo_size(struct drm_i915_private *dev_priv,
+			      enum i9xx_plane_id i9xx_plane)
+{
+	u32 dsparb = intel_uncore_read(&dev_priv->uncore, DSPARB);
+	int size;
 
 	size = dsparb & 0x1ff;
-	अगर (i9xx_plane == PLANE_B)
+	if (i9xx_plane == PLANE_B)
 		size = ((dsparb >> DSPARB_BEND_SHIFT) & 0x1ff) - size;
 	size >>= 1; /* Convert to cachelines */
 
 	drm_dbg_kms(&dev_priv->drm, "FIFO size - (0x%08x) %c: %d\n",
 		    dsparb, plane_name(i9xx_plane), size);
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-अटल पूर्णांक i845_get_fअगरo_size(काष्ठा drm_i915_निजी *dev_priv,
-			      क्रमागत i9xx_plane_id i9xx_plane)
-अणु
-	u32 dsparb = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPARB);
-	पूर्णांक size;
+static int i845_get_fifo_size(struct drm_i915_private *dev_priv,
+			      enum i9xx_plane_id i9xx_plane)
+{
+	u32 dsparb = intel_uncore_read(&dev_priv->uncore, DSPARB);
+	int size;
 
 	size = dsparb & 0x7f;
 	size >>= 2; /* Convert to cachelines */
@@ -569,137 +568,137 @@ bool पूर्णांकel_set_memory_cxsr(काष्ठा drm_i915_न�
 	drm_dbg_kms(&dev_priv->drm, "FIFO size - (0x%08x) %c: %d\n",
 		    dsparb, plane_name(i9xx_plane), size);
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-/* Pineview has dअगरferent values क्रम various configs */
-अटल स्थिर काष्ठा पूर्णांकel_watermark_params pnv_display_wm = अणु
-	.fअगरo_size = PINEVIEW_DISPLAY_FIFO,
+/* Pineview has different values for various configs */
+static const struct intel_watermark_params pnv_display_wm = {
+	.fifo_size = PINEVIEW_DISPLAY_FIFO,
 	.max_wm = PINEVIEW_MAX_WM,
-	.शेष_wm = PINEVIEW_DFT_WM,
+	.default_wm = PINEVIEW_DFT_WM,
 	.guard_size = PINEVIEW_GUARD_WM,
 	.cacheline_size = PINEVIEW_FIFO_LINE_SIZE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_watermark_params pnv_display_hplloff_wm = अणु
-	.fअगरo_size = PINEVIEW_DISPLAY_FIFO,
+static const struct intel_watermark_params pnv_display_hplloff_wm = {
+	.fifo_size = PINEVIEW_DISPLAY_FIFO,
 	.max_wm = PINEVIEW_MAX_WM,
-	.शेष_wm = PINEVIEW_DFT_HPLLOFF_WM,
+	.default_wm = PINEVIEW_DFT_HPLLOFF_WM,
 	.guard_size = PINEVIEW_GUARD_WM,
 	.cacheline_size = PINEVIEW_FIFO_LINE_SIZE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_watermark_params pnv_cursor_wm = अणु
-	.fअगरo_size = PINEVIEW_CURSOR_FIFO,
+static const struct intel_watermark_params pnv_cursor_wm = {
+	.fifo_size = PINEVIEW_CURSOR_FIFO,
 	.max_wm = PINEVIEW_CURSOR_MAX_WM,
-	.शेष_wm = PINEVIEW_CURSOR_DFT_WM,
+	.default_wm = PINEVIEW_CURSOR_DFT_WM,
 	.guard_size = PINEVIEW_CURSOR_GUARD_WM,
 	.cacheline_size = PINEVIEW_FIFO_LINE_SIZE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_watermark_params pnv_cursor_hplloff_wm = अणु
-	.fअगरo_size = PINEVIEW_CURSOR_FIFO,
+static const struct intel_watermark_params pnv_cursor_hplloff_wm = {
+	.fifo_size = PINEVIEW_CURSOR_FIFO,
 	.max_wm = PINEVIEW_CURSOR_MAX_WM,
-	.शेष_wm = PINEVIEW_CURSOR_DFT_WM,
+	.default_wm = PINEVIEW_CURSOR_DFT_WM,
 	.guard_size = PINEVIEW_CURSOR_GUARD_WM,
 	.cacheline_size = PINEVIEW_FIFO_LINE_SIZE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_watermark_params i965_cursor_wm_info = अणु
-	.fअगरo_size = I965_CURSOR_FIFO,
+static const struct intel_watermark_params i965_cursor_wm_info = {
+	.fifo_size = I965_CURSOR_FIFO,
 	.max_wm = I965_CURSOR_MAX_WM,
-	.शेष_wm = I965_CURSOR_DFT_WM,
+	.default_wm = I965_CURSOR_DFT_WM,
 	.guard_size = 2,
 	.cacheline_size = I915_FIFO_LINE_SIZE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_watermark_params i945_wm_info = अणु
-	.fअगरo_size = I945_FIFO_SIZE,
+static const struct intel_watermark_params i945_wm_info = {
+	.fifo_size = I945_FIFO_SIZE,
 	.max_wm = I915_MAX_WM,
-	.शेष_wm = 1,
+	.default_wm = 1,
 	.guard_size = 2,
 	.cacheline_size = I915_FIFO_LINE_SIZE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_watermark_params i915_wm_info = अणु
-	.fअगरo_size = I915_FIFO_SIZE,
+static const struct intel_watermark_params i915_wm_info = {
+	.fifo_size = I915_FIFO_SIZE,
 	.max_wm = I915_MAX_WM,
-	.शेष_wm = 1,
+	.default_wm = 1,
 	.guard_size = 2,
 	.cacheline_size = I915_FIFO_LINE_SIZE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_watermark_params i830_a_wm_info = अणु
-	.fअगरo_size = I855GM_FIFO_SIZE,
+static const struct intel_watermark_params i830_a_wm_info = {
+	.fifo_size = I855GM_FIFO_SIZE,
 	.max_wm = I915_MAX_WM,
-	.शेष_wm = 1,
+	.default_wm = 1,
 	.guard_size = 2,
 	.cacheline_size = I830_FIFO_LINE_SIZE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_watermark_params i830_bc_wm_info = अणु
-	.fअगरo_size = I855GM_FIFO_SIZE,
+static const struct intel_watermark_params i830_bc_wm_info = {
+	.fifo_size = I855GM_FIFO_SIZE,
 	.max_wm = I915_MAX_WM/2,
-	.शेष_wm = 1,
+	.default_wm = 1,
 	.guard_size = 2,
 	.cacheline_size = I830_FIFO_LINE_SIZE,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा पूर्णांकel_watermark_params i845_wm_info = अणु
-	.fअगरo_size = I830_FIFO_SIZE,
+static const struct intel_watermark_params i845_wm_info = {
+	.fifo_size = I830_FIFO_SIZE,
 	.max_wm = I915_MAX_WM,
-	.शेष_wm = 1,
+	.default_wm = 1,
 	.guard_size = 2,
 	.cacheline_size = I830_FIFO_LINE_SIZE,
-पूर्ण;
+};
 
 /**
- * पूर्णांकel_wm_method1 - Method 1 / "small buffer" watermark क्रमmula
+ * intel_wm_method1 - Method 1 / "small buffer" watermark formula
  * @pixel_rate: Pipe pixel rate in kHz
  * @cpp: Plane bytes per pixel
  * @latency: Memory wakeup latency in 0.1us units
  *
  * Compute the watermark using the method 1 or "small buffer"
- * क्रमmula. The caller may additonally add extra cachelines
- * to account क्रम TLB misses and घड़ी crossings.
+ * formula. The caller may additonally add extra cachelines
+ * to account for TLB misses and clock crossings.
  *
- * This method is concerned with the लघु term drain rate
- * of the FIFO, ie. it करोes not account क्रम blanking periods
+ * This method is concerned with the short term drain rate
+ * of the FIFO, ie. it does not account for blanking periods
  * which would effectively reduce the average drain rate across
- * a दीर्घer period. The name "small" refers to the fact the
+ * a longer period. The name "small" refers to the fact the
  * FIFO is relatively small compared to the amount of data
  * fetched.
  *
- * The FIFO level vs. समय graph might look something like:
+ * The FIFO level vs. time graph might look something like:
  *
  *   |\   |\
  *   | \  | \
  * __---__---__ (- plane active, _ blanking)
- * -> समय
+ * -> time
  *
  * or perhaps like this:
  *
  *   |\|\  |\|\
  * __----__----__ (- plane active, _ blanking)
- * -> समय
+ * -> time
  *
  * Returns:
  * The watermark in bytes
  */
-अटल अचिन्हित पूर्णांक पूर्णांकel_wm_method1(अचिन्हित पूर्णांक pixel_rate,
-				     अचिन्हित पूर्णांक cpp,
-				     अचिन्हित पूर्णांक latency)
-अणु
+static unsigned int intel_wm_method1(unsigned int pixel_rate,
+				     unsigned int cpp,
+				     unsigned int latency)
+{
 	u64 ret;
 
 	ret = mul_u32_u32(pixel_rate, cpp * latency);
 	ret = DIV_ROUND_UP_ULL(ret, 10000);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * पूर्णांकel_wm_method2 - Method 2 / "large buffer" watermark क्रमmula
+ * intel_wm_method2 - Method 2 / "large buffer" watermark formula
  * @pixel_rate: Pipe pixel rate in kHz
  * @htotal: Pipe horizontal total
  * @width: Plane width in pixels
@@ -707,350 +706,350 @@ bool पूर्णांकel_set_memory_cxsr(काष्ठा drm_i915_न�
  * @latency: Memory wakeup latency in 0.1us units
  *
  * Compute the watermark using the method 2 or "large buffer"
- * क्रमmula. The caller may additonally add extra cachelines
- * to account क्रम TLB misses and घड़ी crossings.
+ * formula. The caller may additonally add extra cachelines
+ * to account for TLB misses and clock crossings.
  *
- * This method is concerned with the दीर्घ term drain rate
- * of the FIFO, ie. it करोes account क्रम blanking periods
+ * This method is concerned with the long term drain rate
+ * of the FIFO, ie. it does account for blanking periods
  * which effectively reduce the average drain rate across
- * a दीर्घer period. The name "large" refers to the fact the
+ * a longer period. The name "large" refers to the fact the
  * FIFO is relatively large compared to the amount of data
  * fetched.
  *
- * The FIFO level vs. समय graph might look something like:
+ * The FIFO level vs. time graph might look something like:
  *
  *    |\___       |\___
  *    |    \___   |    \___
  *    |        \  |        \
  * __ --__--__--__--__--__--__ (- plane active, _ blanking)
- * -> समय
+ * -> time
  *
  * Returns:
  * The watermark in bytes
  */
-अटल अचिन्हित पूर्णांक पूर्णांकel_wm_method2(अचिन्हित पूर्णांक pixel_rate,
-				     अचिन्हित पूर्णांक htotal,
-				     अचिन्हित पूर्णांक width,
-				     अचिन्हित पूर्णांक cpp,
-				     अचिन्हित पूर्णांक latency)
-अणु
-	अचिन्हित पूर्णांक ret;
+static unsigned int intel_wm_method2(unsigned int pixel_rate,
+				     unsigned int htotal,
+				     unsigned int width,
+				     unsigned int cpp,
+				     unsigned int latency)
+{
+	unsigned int ret;
 
 	/*
-	 * FIXME हटाओ once all users are computing
+	 * FIXME remove once all users are computing
 	 * watermarks in the correct place.
 	 */
-	अगर (WARN_ON_ONCE(htotal == 0))
+	if (WARN_ON_ONCE(htotal == 0))
 		htotal = 1;
 
 	ret = (latency * pixel_rate) / (htotal * 10000);
 	ret = (ret + 1) * width * cpp;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * पूर्णांकel_calculate_wm - calculate watermark level
- * @pixel_rate: pixel घड़ी
+ * intel_calculate_wm - calculate watermark level
+ * @pixel_rate: pixel clock
  * @wm: chip FIFO params
- * @fअगरo_size: size of the FIFO buffer
+ * @fifo_size: size of the FIFO buffer
  * @cpp: bytes per pixel
- * @latency_ns: memory latency क्रम the platक्रमm
+ * @latency_ns: memory latency for the platform
  *
  * Calculate the watermark level (the level at which the display plane will
- * start fetching from memory again).  Each chip has a dअगरferent display
+ * start fetching from memory again).  Each chip has a different display
  * FIFO size and allocation, so the caller needs to figure that out and pass
- * in the correct पूर्णांकel_watermark_params काष्ठाure.
+ * in the correct intel_watermark_params structure.
  *
- * As the pixel घड़ी runs, the FIFO will be drained at a rate that depends
+ * As the pixel clock runs, the FIFO will be drained at a rate that depends
  * on the pixel size.  When it reaches the watermark level, it'll start
  * fetching FIFO line sized based chunks from memory until the FIFO fills
- * past the watermark poपूर्णांक.  If the FIFO drains completely, a FIFO underrun
+ * past the watermark point.  If the FIFO drains completely, a FIFO underrun
  * will occur, and a display engine hang could result.
  */
-अटल अचिन्हित पूर्णांक पूर्णांकel_calculate_wm(पूर्णांक pixel_rate,
-				       स्थिर काष्ठा पूर्णांकel_watermark_params *wm,
-				       पूर्णांक fअगरo_size, पूर्णांक cpp,
-				       अचिन्हित पूर्णांक latency_ns)
-अणु
-	पूर्णांक entries, wm_size;
+static unsigned int intel_calculate_wm(int pixel_rate,
+				       const struct intel_watermark_params *wm,
+				       int fifo_size, int cpp,
+				       unsigned int latency_ns)
+{
+	int entries, wm_size;
 
 	/*
-	 * Note: we need to make sure we करोn't overflow क्रम various घड़ी &
+	 * Note: we need to make sure we don't overflow for various clock &
 	 * latency values.
-	 * घड़ीs go from a few thousand to several hundred thousand.
+	 * clocks go from a few thousand to several hundred thousand.
 	 * latency is usually a few thousand
 	 */
-	entries = पूर्णांकel_wm_method1(pixel_rate, cpp,
+	entries = intel_wm_method1(pixel_rate, cpp,
 				   latency_ns / 100);
 	entries = DIV_ROUND_UP(entries, wm->cacheline_size) +
 		wm->guard_size;
 	DRM_DEBUG_KMS("FIFO entries required for mode: %d\n", entries);
 
-	wm_size = fअगरo_size - entries;
+	wm_size = fifo_size - entries;
 	DRM_DEBUG_KMS("FIFO watermark level: %d\n", wm_size);
 
-	/* Don't promote wm_size to अचिन्हित... */
-	अगर (wm_size > wm->max_wm)
+	/* Don't promote wm_size to unsigned... */
+	if (wm_size > wm->max_wm)
 		wm_size = wm->max_wm;
-	अगर (wm_size <= 0)
-		wm_size = wm->शेष_wm;
+	if (wm_size <= 0)
+		wm_size = wm->default_wm;
 
 	/*
 	 * Bspec seems to indicate that the value shouldn't be lower than
 	 * 'burst size + 1'. Certainly 830 is quite unhappy with low values.
-	 * Lets go क्रम 8 which is the burst size since certain platक्रमms
-	 * alपढ़ोy use a hardcoded 8 (which is what the spec says should be
-	 * करोne).
+	 * Lets go for 8 which is the burst size since certain platforms
+	 * already use a hardcoded 8 (which is what the spec says should be
+	 * done).
 	 */
-	अगर (wm_size <= 8)
+	if (wm_size <= 8)
 		wm_size = 8;
 
-	वापस wm_size;
-पूर्ण
+	return wm_size;
+}
 
-अटल bool is_disabling(पूर्णांक old, पूर्णांक new, पूर्णांक threshold)
-अणु
-	वापस old >= threshold && new < threshold;
-पूर्ण
+static bool is_disabling(int old, int new, int threshold)
+{
+	return old >= threshold && new < threshold;
+}
 
-अटल bool is_enabling(पूर्णांक old, पूर्णांक new, पूर्णांक threshold)
-अणु
-	वापस old < threshold && new >= threshold;
-पूर्ण
+static bool is_enabling(int old, int new, int threshold)
+{
+	return old < threshold && new >= threshold;
+}
 
-अटल पूर्णांक पूर्णांकel_wm_num_levels(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	वापस dev_priv->wm.max_level + 1;
-पूर्ण
+static int intel_wm_num_levels(struct drm_i915_private *dev_priv)
+{
+	return dev_priv->wm.max_level + 1;
+}
 
-अटल bool पूर्णांकel_wm_plane_visible(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-				   स्थिर काष्ठा पूर्णांकel_plane_state *plane_state)
-अणु
-	काष्ठा पूर्णांकel_plane *plane = to_पूर्णांकel_plane(plane_state->uapi.plane);
+static bool intel_wm_plane_visible(const struct intel_crtc_state *crtc_state,
+				   const struct intel_plane_state *plane_state)
+{
+	struct intel_plane *plane = to_intel_plane(plane_state->uapi.plane);
 
 	/* FIXME check the 'enable' instead */
-	अगर (!crtc_state->hw.active)
-		वापस false;
+	if (!crtc_state->hw.active)
+		return false;
 
 	/*
 	 * Treat cursor with fb as always visible since cursor updates
 	 * can happen faster than the vrefresh rate, and the current
-	 * watermark code करोesn't handle that correctly. Cursor updates
+	 * watermark code doesn't handle that correctly. Cursor updates
 	 * which set/clear the fb or change the cursor size are going
-	 * to get throttled by पूर्णांकel_legacy_cursor_update() to work
+	 * to get throttled by intel_legacy_cursor_update() to work
 	 * around this problem with the watermark code.
 	 */
-	अगर (plane->id == PLANE_CURSOR)
-		वापस plane_state->hw.fb != शून्य;
-	अन्यथा
-		वापस plane_state->uapi.visible;
-पूर्ण
+	if (plane->id == PLANE_CURSOR)
+		return plane_state->hw.fb != NULL;
+	else
+		return plane_state->uapi.visible;
+}
 
-अटल bool पूर्णांकel_crtc_active(काष्ठा पूर्णांकel_crtc *crtc)
-अणु
+static bool intel_crtc_active(struct intel_crtc *crtc)
+{
 	/* Be paranoid as we can arrive here with only partial
 	 * state retrieved from the hardware during setup.
 	 *
-	 * We can ditch the adjusted_mode.crtc_घड़ी check as soon
-	 * as Haswell has gained घड़ी पढ़ोout/fastboot support.
+	 * We can ditch the adjusted_mode.crtc_clock check as soon
+	 * as Haswell has gained clock readout/fastboot support.
 	 *
 	 * We can ditch the crtc->primary->state->fb check as soon as we can
-	 * properly reस्थिरruct framebuffers.
+	 * properly reconstruct framebuffers.
 	 *
-	 * FIXME: The पूर्णांकel_crtc->active here should be चयनed to
+	 * FIXME: The intel_crtc->active here should be switched to
 	 * crtc->state->active once we have proper CRTC states wired up
-	 * क्रम atomic.
+	 * for atomic.
 	 */
-	वापस crtc->active && crtc->base.primary->state->fb &&
-		crtc->config->hw.adjusted_mode.crtc_घड़ी;
-पूर्ण
+	return crtc->active && crtc->base.primary->state->fb &&
+		crtc->config->hw.adjusted_mode.crtc_clock;
+}
 
-अटल काष्ठा पूर्णांकel_crtc *single_enabled_crtc(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा पूर्णांकel_crtc *crtc, *enabled = शून्य;
+static struct intel_crtc *single_enabled_crtc(struct drm_i915_private *dev_priv)
+{
+	struct intel_crtc *crtc, *enabled = NULL;
 
-	क्रम_each_पूर्णांकel_crtc(&dev_priv->drm, crtc) अणु
-		अगर (पूर्णांकel_crtc_active(crtc)) अणु
-			अगर (enabled)
-				वापस शून्य;
+	for_each_intel_crtc(&dev_priv->drm, crtc) {
+		if (intel_crtc_active(crtc)) {
+			if (enabled)
+				return NULL;
 			enabled = crtc;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस enabled;
-पूर्ण
+	return enabled;
+}
 
-अटल व्योम pnv_update_wm(काष्ठा पूर्णांकel_crtc *unused_crtc)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(unused_crtc->base.dev);
-	काष्ठा पूर्णांकel_crtc *crtc;
-	स्थिर काष्ठा cxsr_latency *latency;
+static void pnv_update_wm(struct intel_crtc *unused_crtc)
+{
+	struct drm_i915_private *dev_priv = to_i915(unused_crtc->base.dev);
+	struct intel_crtc *crtc;
+	const struct cxsr_latency *latency;
 	u32 reg;
-	अचिन्हित पूर्णांक wm;
+	unsigned int wm;
 
-	latency = पूर्णांकel_get_cxsr_latency(!IS_MOBILE(dev_priv),
+	latency = intel_get_cxsr_latency(!IS_MOBILE(dev_priv),
 					 dev_priv->is_ddr3,
 					 dev_priv->fsb_freq,
 					 dev_priv->mem_freq);
-	अगर (!latency) अणु
+	if (!latency) {
 		drm_dbg_kms(&dev_priv->drm,
 			    "Unknown FSB/MEM found, disable CxSR\n");
-		पूर्णांकel_set_memory_cxsr(dev_priv, false);
-		वापस;
-	पूर्ण
+		intel_set_memory_cxsr(dev_priv, false);
+		return;
+	}
 
 	crtc = single_enabled_crtc(dev_priv);
-	अगर (crtc) अणु
-		स्थिर काष्ठा drm_display_mode *pipe_mode =
+	if (crtc) {
+		const struct drm_display_mode *pipe_mode =
 			&crtc->config->hw.pipe_mode;
-		स्थिर काष्ठा drm_framebuffer *fb =
+		const struct drm_framebuffer *fb =
 			crtc->base.primary->state->fb;
-		पूर्णांक cpp = fb->क्रमmat->cpp[0];
-		पूर्णांक घड़ी = pipe_mode->crtc_घड़ी;
+		int cpp = fb->format->cpp[0];
+		int clock = pipe_mode->crtc_clock;
 
 		/* Display SR */
-		wm = पूर्णांकel_calculate_wm(घड़ी, &pnv_display_wm,
-					pnv_display_wm.fअगरo_size,
+		wm = intel_calculate_wm(clock, &pnv_display_wm,
+					pnv_display_wm.fifo_size,
 					cpp, latency->display_sr);
-		reg = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPFW1);
+		reg = intel_uncore_read(&dev_priv->uncore, DSPFW1);
 		reg &= ~DSPFW_SR_MASK;
 		reg |= FW_WM(wm, SR);
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPFW1, reg);
+		intel_uncore_write(&dev_priv->uncore, DSPFW1, reg);
 		drm_dbg_kms(&dev_priv->drm, "DSPFW1 register is %x\n", reg);
 
 		/* cursor SR */
-		wm = पूर्णांकel_calculate_wm(घड़ी, &pnv_cursor_wm,
-					pnv_display_wm.fअगरo_size,
+		wm = intel_calculate_wm(clock, &pnv_cursor_wm,
+					pnv_display_wm.fifo_size,
 					4, latency->cursor_sr);
-		reg = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPFW3);
+		reg = intel_uncore_read(&dev_priv->uncore, DSPFW3);
 		reg &= ~DSPFW_CURSOR_SR_MASK;
 		reg |= FW_WM(wm, CURSOR_SR);
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPFW3, reg);
+		intel_uncore_write(&dev_priv->uncore, DSPFW3, reg);
 
 		/* Display HPLL off SR */
-		wm = पूर्णांकel_calculate_wm(घड़ी, &pnv_display_hplloff_wm,
-					pnv_display_hplloff_wm.fअगरo_size,
+		wm = intel_calculate_wm(clock, &pnv_display_hplloff_wm,
+					pnv_display_hplloff_wm.fifo_size,
 					cpp, latency->display_hpll_disable);
-		reg = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPFW3);
+		reg = intel_uncore_read(&dev_priv->uncore, DSPFW3);
 		reg &= ~DSPFW_HPLL_SR_MASK;
 		reg |= FW_WM(wm, HPLL_SR);
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPFW3, reg);
+		intel_uncore_write(&dev_priv->uncore, DSPFW3, reg);
 
 		/* cursor HPLL off SR */
-		wm = पूर्णांकel_calculate_wm(घड़ी, &pnv_cursor_hplloff_wm,
-					pnv_display_hplloff_wm.fअगरo_size,
+		wm = intel_calculate_wm(clock, &pnv_cursor_hplloff_wm,
+					pnv_display_hplloff_wm.fifo_size,
 					4, latency->cursor_hpll_disable);
-		reg = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPFW3);
+		reg = intel_uncore_read(&dev_priv->uncore, DSPFW3);
 		reg &= ~DSPFW_HPLL_CURSOR_MASK;
 		reg |= FW_WM(wm, HPLL_CURSOR);
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPFW3, reg);
+		intel_uncore_write(&dev_priv->uncore, DSPFW3, reg);
 		drm_dbg_kms(&dev_priv->drm, "DSPFW3 register is %x\n", reg);
 
-		पूर्णांकel_set_memory_cxsr(dev_priv, true);
-	पूर्ण अन्यथा अणु
-		पूर्णांकel_set_memory_cxsr(dev_priv, false);
-	पूर्ण
-पूर्ण
+		intel_set_memory_cxsr(dev_priv, true);
+	} else {
+		intel_set_memory_cxsr(dev_priv, false);
+	}
+}
 
 /*
  * Documentation says:
  * "If the line size is small, the TLB fetches can get in the way of the
- *  data fetches, causing some lag in the pixel data वापस which is not
- *  accounted क्रम in the above क्रमmulas. The following adjusपंचांगent only
- *  needs to be applied अगर eight whole lines fit in the buffer at once.
- *  The WM is adjusted upwards by the dअगरference between the FIFO size
- *  and the size of 8 whole lines. This adjusपंचांगent is always perक्रमmed
+ *  data fetches, causing some lag in the pixel data return which is not
+ *  accounted for in the above formulas. The following adjustment only
+ *  needs to be applied if eight whole lines fit in the buffer at once.
+ *  The WM is adjusted upwards by the difference between the FIFO size
+ *  and the size of 8 whole lines. This adjustment is always performed
  *  in the actual pixel depth regardless of whether FBC is enabled or not."
  */
-अटल अचिन्हित पूर्णांक g4x_tlb_miss_wa(पूर्णांक fअगरo_size, पूर्णांक width, पूर्णांक cpp)
-अणु
-	पूर्णांक tlb_miss = fअगरo_size * 64 - width * cpp * 8;
+static unsigned int g4x_tlb_miss_wa(int fifo_size, int width, int cpp)
+{
+	int tlb_miss = fifo_size * 64 - width * cpp * 8;
 
-	वापस max(0, tlb_miss);
-पूर्ण
+	return max(0, tlb_miss);
+}
 
-अटल व्योम g4x_ग_लिखो_wm_values(काष्ठा drm_i915_निजी *dev_priv,
-				स्थिर काष्ठा g4x_wm_values *wm)
-अणु
-	क्रमागत pipe pipe;
+static void g4x_write_wm_values(struct drm_i915_private *dev_priv,
+				const struct g4x_wm_values *wm)
+{
+	enum pipe pipe;
 
-	क्रम_each_pipe(dev_priv, pipe)
-		trace_g4x_wm(पूर्णांकel_get_crtc_क्रम_pipe(dev_priv, pipe), wm);
+	for_each_pipe(dev_priv, pipe)
+		trace_g4x_wm(intel_get_crtc_for_pipe(dev_priv, pipe), wm);
 
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPFW1,
+	intel_uncore_write(&dev_priv->uncore, DSPFW1,
 		   FW_WM(wm->sr.plane, SR) |
 		   FW_WM(wm->pipe[PIPE_B].plane[PLANE_CURSOR], CURSORB) |
 		   FW_WM(wm->pipe[PIPE_B].plane[PLANE_PRIMARY], PLANEB) |
 		   FW_WM(wm->pipe[PIPE_A].plane[PLANE_PRIMARY], PLANEA));
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPFW2,
+	intel_uncore_write(&dev_priv->uncore, DSPFW2,
 		   (wm->fbc_en ? DSPFW_FBC_SR_EN : 0) |
 		   FW_WM(wm->sr.fbc, FBC_SR) |
 		   FW_WM(wm->hpll.fbc, FBC_HPLL_SR) |
 		   FW_WM(wm->pipe[PIPE_B].plane[PLANE_SPRITE0], SPRITEB) |
 		   FW_WM(wm->pipe[PIPE_A].plane[PLANE_CURSOR], CURSORA) |
 		   FW_WM(wm->pipe[PIPE_A].plane[PLANE_SPRITE0], SPRITEA));
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPFW3,
+	intel_uncore_write(&dev_priv->uncore, DSPFW3,
 		   (wm->hpll_en ? DSPFW_HPLL_SR_EN : 0) |
 		   FW_WM(wm->sr.cursor, CURSOR_SR) |
 		   FW_WM(wm->hpll.cursor, HPLL_CURSOR) |
 		   FW_WM(wm->hpll.plane, HPLL_SR));
 
-	पूर्णांकel_uncore_posting_पढ़ो(&dev_priv->uncore, DSPFW1);
-पूर्ण
+	intel_uncore_posting_read(&dev_priv->uncore, DSPFW1);
+}
 
-#घोषणा FW_WM_VLV(value, plane) \
+#define FW_WM_VLV(value, plane) \
 	(((value) << DSPFW_ ## plane ## _SHIFT) & DSPFW_ ## plane ## _MASK_VLV)
 
-अटल व्योम vlv_ग_लिखो_wm_values(काष्ठा drm_i915_निजी *dev_priv,
-				स्थिर काष्ठा vlv_wm_values *wm)
-अणु
-	क्रमागत pipe pipe;
+static void vlv_write_wm_values(struct drm_i915_private *dev_priv,
+				const struct vlv_wm_values *wm)
+{
+	enum pipe pipe;
 
-	क्रम_each_pipe(dev_priv, pipe) अणु
-		trace_vlv_wm(पूर्णांकel_get_crtc_क्रम_pipe(dev_priv, pipe), wm);
+	for_each_pipe(dev_priv, pipe) {
+		trace_vlv_wm(intel_get_crtc_for_pipe(dev_priv, pipe), wm);
 
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, VLV_DDL(pipe),
+		intel_uncore_write(&dev_priv->uncore, VLV_DDL(pipe),
 			   (wm->ddl[pipe].plane[PLANE_CURSOR] << DDL_CURSOR_SHIFT) |
 			   (wm->ddl[pipe].plane[PLANE_SPRITE1] << DDL_SPRITE_SHIFT(1)) |
 			   (wm->ddl[pipe].plane[PLANE_SPRITE0] << DDL_SPRITE_SHIFT(0)) |
 			   (wm->ddl[pipe].plane[PLANE_PRIMARY] << DDL_PLANE_SHIFT));
-	पूर्ण
+	}
 
 	/*
 	 * Zero the (unused) WM1 watermarks, and also clear all the
 	 * high order bits so that there are no out of bounds values
-	 * present in the रेजिस्टरs during the reprogramming.
+	 * present in the registers during the reprogramming.
 	 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPHOWM, 0);
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPHOWM1, 0);
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPFW4, 0);
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPFW5, 0);
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPFW6, 0);
+	intel_uncore_write(&dev_priv->uncore, DSPHOWM, 0);
+	intel_uncore_write(&dev_priv->uncore, DSPHOWM1, 0);
+	intel_uncore_write(&dev_priv->uncore, DSPFW4, 0);
+	intel_uncore_write(&dev_priv->uncore, DSPFW5, 0);
+	intel_uncore_write(&dev_priv->uncore, DSPFW6, 0);
 
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPFW1,
+	intel_uncore_write(&dev_priv->uncore, DSPFW1,
 		   FW_WM(wm->sr.plane, SR) |
 		   FW_WM(wm->pipe[PIPE_B].plane[PLANE_CURSOR], CURSORB) |
 		   FW_WM_VLV(wm->pipe[PIPE_B].plane[PLANE_PRIMARY], PLANEB) |
 		   FW_WM_VLV(wm->pipe[PIPE_A].plane[PLANE_PRIMARY], PLANEA));
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPFW2,
+	intel_uncore_write(&dev_priv->uncore, DSPFW2,
 		   FW_WM_VLV(wm->pipe[PIPE_A].plane[PLANE_SPRITE1], SPRITEB) |
 		   FW_WM(wm->pipe[PIPE_A].plane[PLANE_CURSOR], CURSORA) |
 		   FW_WM_VLV(wm->pipe[PIPE_A].plane[PLANE_SPRITE0], SPRITEA));
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPFW3,
+	intel_uncore_write(&dev_priv->uncore, DSPFW3,
 		   FW_WM(wm->sr.cursor, CURSOR_SR));
 
-	अगर (IS_CHERRYVIEW(dev_priv)) अणु
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPFW7_CHV,
+	if (IS_CHERRYVIEW(dev_priv)) {
+		intel_uncore_write(&dev_priv->uncore, DSPFW7_CHV,
 			   FW_WM_VLV(wm->pipe[PIPE_B].plane[PLANE_SPRITE1], SPRITED) |
 			   FW_WM_VLV(wm->pipe[PIPE_B].plane[PLANE_SPRITE0], SPRITEC));
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPFW8_CHV,
+		intel_uncore_write(&dev_priv->uncore, DSPFW8_CHV,
 			   FW_WM_VLV(wm->pipe[PIPE_C].plane[PLANE_SPRITE1], SPRITEF) |
 			   FW_WM_VLV(wm->pipe[PIPE_C].plane[PLANE_SPRITE0], SPRITEE));
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPFW9_CHV,
+		intel_uncore_write(&dev_priv->uncore, DSPFW9_CHV,
 			   FW_WM_VLV(wm->pipe[PIPE_C].plane[PLANE_PRIMARY], PLANEC) |
 			   FW_WM(wm->pipe[PIPE_C].plane[PLANE_CURSOR], CURSORC));
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPHOWM,
+		intel_uncore_write(&dev_priv->uncore, DSPHOWM,
 			   FW_WM(wm->sr.plane >> 9, SR_HI) |
 			   FW_WM(wm->pipe[PIPE_C].plane[PLANE_SPRITE1] >> 8, SPRITEF_HI) |
 			   FW_WM(wm->pipe[PIPE_C].plane[PLANE_SPRITE0] >> 8, SPRITEE_HI) |
@@ -1061,11 +1060,11 @@ bool पूर्णांकel_set_memory_cxsr(काष्ठा drm_i915_न�
 			   FW_WM(wm->pipe[PIPE_A].plane[PLANE_SPRITE1] >> 8, SPRITEB_HI) |
 			   FW_WM(wm->pipe[PIPE_A].plane[PLANE_SPRITE0] >> 8, SPRITEA_HI) |
 			   FW_WM(wm->pipe[PIPE_A].plane[PLANE_PRIMARY] >> 8, PLANEA_HI));
-	पूर्ण अन्यथा अणु
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPFW7,
+	} else {
+		intel_uncore_write(&dev_priv->uncore, DSPFW7,
 			   FW_WM_VLV(wm->pipe[PIPE_B].plane[PLANE_SPRITE1], SPRITED) |
 			   FW_WM_VLV(wm->pipe[PIPE_B].plane[PLANE_SPRITE0], SPRITEC));
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPHOWM,
+		intel_uncore_write(&dev_priv->uncore, DSPHOWM,
 			   FW_WM(wm->sr.plane >> 9, SR_HI) |
 			   FW_WM(wm->pipe[PIPE_B].plane[PLANE_SPRITE1] >> 8, SPRITED_HI) |
 			   FW_WM(wm->pipe[PIPE_B].plane[PLANE_SPRITE0] >> 8, SPRITEC_HI) |
@@ -1073,222 +1072,222 @@ bool पूर्णांकel_set_memory_cxsr(काष्ठा drm_i915_न�
 			   FW_WM(wm->pipe[PIPE_A].plane[PLANE_SPRITE1] >> 8, SPRITEB_HI) |
 			   FW_WM(wm->pipe[PIPE_A].plane[PLANE_SPRITE0] >> 8, SPRITEA_HI) |
 			   FW_WM(wm->pipe[PIPE_A].plane[PLANE_PRIMARY] >> 8, PLANEA_HI));
-	पूर्ण
+	}
 
-	पूर्णांकel_uncore_posting_पढ़ो(&dev_priv->uncore, DSPFW1);
-पूर्ण
+	intel_uncore_posting_read(&dev_priv->uncore, DSPFW1);
+}
 
-#अघोषित FW_WM_VLV
+#undef FW_WM_VLV
 
-अटल व्योम g4x_setup_wm_latency(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void g4x_setup_wm_latency(struct drm_i915_private *dev_priv)
+{
 	/* all latencies in usec */
 	dev_priv->wm.pri_latency[G4X_WM_LEVEL_NORMAL] = 5;
 	dev_priv->wm.pri_latency[G4X_WM_LEVEL_SR] = 12;
 	dev_priv->wm.pri_latency[G4X_WM_LEVEL_HPLL] = 35;
 
 	dev_priv->wm.max_level = G4X_WM_LEVEL_HPLL;
-पूर्ण
+}
 
-अटल पूर्णांक g4x_plane_fअगरo_size(क्रमागत plane_id plane_id, पूर्णांक level)
-अणु
+static int g4x_plane_fifo_size(enum plane_id plane_id, int level)
+{
 	/*
 	 * DSPCNTR[13] supposedly controls whether the
 	 * primary plane can use the FIFO space otherwise
-	 * reserved क्रम the sprite plane. It's not 100% clear
+	 * reserved for the sprite plane. It's not 100% clear
 	 * what the actual FIFO size is, but it looks like we
 	 * can happily set both primary and sprite watermarks
 	 * up to 127 cachelines. So that would seem to mean
-	 * that either DSPCNTR[13] करोesn't करो anything, or that
+	 * that either DSPCNTR[13] doesn't do anything, or that
 	 * the total FIFO is >= 256 cachelines in size. Either
-	 * way, we करोn't seem to have to worry about this
+	 * way, we don't seem to have to worry about this
 	 * repartitioning as the maximum watermark value the
-	 * रेजिस्टर can hold क्रम each plane is lower than the
+	 * register can hold for each plane is lower than the
 	 * minimum FIFO size.
 	 */
-	चयन (plane_id) अणु
-	हाल PLANE_CURSOR:
-		वापस 63;
-	हाल PLANE_PRIMARY:
-		वापस level == G4X_WM_LEVEL_NORMAL ? 127 : 511;
-	हाल PLANE_SPRITE0:
-		वापस level == G4X_WM_LEVEL_NORMAL ? 127 : 0;
-	शेष:
+	switch (plane_id) {
+	case PLANE_CURSOR:
+		return 63;
+	case PLANE_PRIMARY:
+		return level == G4X_WM_LEVEL_NORMAL ? 127 : 511;
+	case PLANE_SPRITE0:
+		return level == G4X_WM_LEVEL_NORMAL ? 127 : 0;
+	default:
 		MISSING_CASE(plane_id);
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 
-अटल पूर्णांक g4x_fbc_fअगरo_size(पूर्णांक level)
-अणु
-	चयन (level) अणु
-	हाल G4X_WM_LEVEL_SR:
-		वापस 7;
-	हाल G4X_WM_LEVEL_HPLL:
-		वापस 15;
-	शेष:
+static int g4x_fbc_fifo_size(int level)
+{
+	switch (level) {
+	case G4X_WM_LEVEL_SR:
+		return 7;
+	case G4X_WM_LEVEL_HPLL:
+		return 15;
+	default:
 		MISSING_CASE(level);
-		वापस 0;
-	पूर्ण
-पूर्ण
+		return 0;
+	}
+}
 
-अटल u16 g4x_compute_wm(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-			  स्थिर काष्ठा पूर्णांकel_plane_state *plane_state,
-			  पूर्णांक level)
-अणु
-	काष्ठा पूर्णांकel_plane *plane = to_पूर्णांकel_plane(plane_state->uapi.plane);
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(plane->base.dev);
-	स्थिर काष्ठा drm_display_mode *pipe_mode =
+static u16 g4x_compute_wm(const struct intel_crtc_state *crtc_state,
+			  const struct intel_plane_state *plane_state,
+			  int level)
+{
+	struct intel_plane *plane = to_intel_plane(plane_state->uapi.plane);
+	struct drm_i915_private *dev_priv = to_i915(plane->base.dev);
+	const struct drm_display_mode *pipe_mode =
 		&crtc_state->hw.pipe_mode;
-	अचिन्हित पूर्णांक latency = dev_priv->wm.pri_latency[level] * 10;
-	अचिन्हित पूर्णांक घड़ी, htotal, cpp, width, wm;
+	unsigned int latency = dev_priv->wm.pri_latency[level] * 10;
+	unsigned int clock, htotal, cpp, width, wm;
 
-	अगर (latency == 0)
-		वापस अच_लघु_उच्च;
+	if (latency == 0)
+		return USHRT_MAX;
 
-	अगर (!पूर्णांकel_wm_plane_visible(crtc_state, plane_state))
-		वापस 0;
+	if (!intel_wm_plane_visible(crtc_state, plane_state))
+		return 0;
 
-	cpp = plane_state->hw.fb->क्रमmat->cpp[0];
+	cpp = plane_state->hw.fb->format->cpp[0];
 
 	/*
 	 * Not 100% sure which way ELK should go here as the
 	 * spec only says CL/CTG should assume 32bpp and BW
-	 * करोesn't need to. But as these things followed the
+	 * doesn't need to. But as these things followed the
 	 * mobile vs. desktop lines on gen3 as well, let's
-	 * assume ELK करोesn't need this.
+	 * assume ELK doesn't need this.
 	 *
-	 * The spec also fails to list such a restriction क्रम
+	 * The spec also fails to list such a restriction for
 	 * the HPLL watermark, which seems a little strange.
-	 * Let's use 32bpp क्रम the HPLL watermark as well.
+	 * Let's use 32bpp for the HPLL watermark as well.
 	 */
-	अगर (IS_GM45(dev_priv) && plane->id == PLANE_PRIMARY &&
+	if (IS_GM45(dev_priv) && plane->id == PLANE_PRIMARY &&
 	    level != G4X_WM_LEVEL_NORMAL)
 		cpp = max(cpp, 4u);
 
-	घड़ी = pipe_mode->crtc_घड़ी;
+	clock = pipe_mode->crtc_clock;
 	htotal = pipe_mode->crtc_htotal;
 
 	width = drm_rect_width(&plane_state->uapi.dst);
 
-	अगर (plane->id == PLANE_CURSOR) अणु
-		wm = पूर्णांकel_wm_method2(घड़ी, htotal, width, cpp, latency);
-	पूर्ण अन्यथा अगर (plane->id == PLANE_PRIMARY &&
-		   level == G4X_WM_LEVEL_NORMAL) अणु
-		wm = पूर्णांकel_wm_method1(घड़ी, cpp, latency);
-	पूर्ण अन्यथा अणु
-		अचिन्हित पूर्णांक small, large;
+	if (plane->id == PLANE_CURSOR) {
+		wm = intel_wm_method2(clock, htotal, width, cpp, latency);
+	} else if (plane->id == PLANE_PRIMARY &&
+		   level == G4X_WM_LEVEL_NORMAL) {
+		wm = intel_wm_method1(clock, cpp, latency);
+	} else {
+		unsigned int small, large;
 
-		small = पूर्णांकel_wm_method1(घड़ी, cpp, latency);
-		large = पूर्णांकel_wm_method2(घड़ी, htotal, width, cpp, latency);
+		small = intel_wm_method1(clock, cpp, latency);
+		large = intel_wm_method2(clock, htotal, width, cpp, latency);
 
 		wm = min(small, large);
-	पूर्ण
+	}
 
-	wm += g4x_tlb_miss_wa(g4x_plane_fअगरo_size(plane->id, level),
+	wm += g4x_tlb_miss_wa(g4x_plane_fifo_size(plane->id, level),
 			      width, cpp);
 
 	wm = DIV_ROUND_UP(wm, 64) + 2;
 
-	वापस min_t(अचिन्हित पूर्णांक, wm, अच_लघु_उच्च);
-पूर्ण
+	return min_t(unsigned int, wm, USHRT_MAX);
+}
 
-अटल bool g4x_raw_plane_wm_set(काष्ठा पूर्णांकel_crtc_state *crtc_state,
-				 पूर्णांक level, क्रमागत plane_id plane_id, u16 value)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
+static bool g4x_raw_plane_wm_set(struct intel_crtc_state *crtc_state,
+				 int level, enum plane_id plane_id, u16 value)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
 	bool dirty = false;
 
-	क्रम (; level < पूर्णांकel_wm_num_levels(dev_priv); level++) अणु
-		काष्ठा g4x_pipe_wm *raw = &crtc_state->wm.g4x.raw[level];
+	for (; level < intel_wm_num_levels(dev_priv); level++) {
+		struct g4x_pipe_wm *raw = &crtc_state->wm.g4x.raw[level];
 
 		dirty |= raw->plane[plane_id] != value;
 		raw->plane[plane_id] = value;
-	पूर्ण
+	}
 
-	वापस dirty;
-पूर्ण
+	return dirty;
+}
 
-अटल bool g4x_raw_fbc_wm_set(काष्ठा पूर्णांकel_crtc_state *crtc_state,
-			       पूर्णांक level, u16 value)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
+static bool g4x_raw_fbc_wm_set(struct intel_crtc_state *crtc_state,
+			       int level, u16 value)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
 	bool dirty = false;
 
-	/* NORMAL level करोesn't have an FBC watermark */
+	/* NORMAL level doesn't have an FBC watermark */
 	level = max(level, G4X_WM_LEVEL_SR);
 
-	क्रम (; level < पूर्णांकel_wm_num_levels(dev_priv); level++) अणु
-		काष्ठा g4x_pipe_wm *raw = &crtc_state->wm.g4x.raw[level];
+	for (; level < intel_wm_num_levels(dev_priv); level++) {
+		struct g4x_pipe_wm *raw = &crtc_state->wm.g4x.raw[level];
 
 		dirty |= raw->fbc != value;
 		raw->fbc = value;
-	पूर्ण
+	}
 
-	वापस dirty;
-पूर्ण
+	return dirty;
+}
 
-अटल u32 ilk_compute_fbc_wm(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-			      स्थिर काष्ठा पूर्णांकel_plane_state *plane_state,
+static u32 ilk_compute_fbc_wm(const struct intel_crtc_state *crtc_state,
+			      const struct intel_plane_state *plane_state,
 			      u32 pri_val);
 
-अटल bool g4x_raw_plane_wm_compute(काष्ठा पूर्णांकel_crtc_state *crtc_state,
-				     स्थिर काष्ठा पूर्णांकel_plane_state *plane_state)
-अणु
-	काष्ठा पूर्णांकel_plane *plane = to_पूर्णांकel_plane(plane_state->uapi.plane);
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
-	पूर्णांक num_levels = पूर्णांकel_wm_num_levels(to_i915(plane->base.dev));
-	क्रमागत plane_id plane_id = plane->id;
+static bool g4x_raw_plane_wm_compute(struct intel_crtc_state *crtc_state,
+				     const struct intel_plane_state *plane_state)
+{
+	struct intel_plane *plane = to_intel_plane(plane_state->uapi.plane);
+	struct drm_i915_private *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
+	int num_levels = intel_wm_num_levels(to_i915(plane->base.dev));
+	enum plane_id plane_id = plane->id;
 	bool dirty = false;
-	पूर्णांक level;
+	int level;
 
-	अगर (!पूर्णांकel_wm_plane_visible(crtc_state, plane_state)) अणु
+	if (!intel_wm_plane_visible(crtc_state, plane_state)) {
 		dirty |= g4x_raw_plane_wm_set(crtc_state, 0, plane_id, 0);
-		अगर (plane_id == PLANE_PRIMARY)
+		if (plane_id == PLANE_PRIMARY)
 			dirty |= g4x_raw_fbc_wm_set(crtc_state, 0, 0);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (level = 0; level < num_levels; level++) अणु
-		काष्ठा g4x_pipe_wm *raw = &crtc_state->wm.g4x.raw[level];
-		पूर्णांक wm, max_wm;
+	for (level = 0; level < num_levels; level++) {
+		struct g4x_pipe_wm *raw = &crtc_state->wm.g4x.raw[level];
+		int wm, max_wm;
 
 		wm = g4x_compute_wm(crtc_state, plane_state, level);
-		max_wm = g4x_plane_fअगरo_size(plane_id, level);
+		max_wm = g4x_plane_fifo_size(plane_id, level);
 
-		अगर (wm > max_wm)
-			अवरोध;
+		if (wm > max_wm)
+			break;
 
 		dirty |= raw->plane[plane_id] != wm;
 		raw->plane[plane_id] = wm;
 
-		अगर (plane_id != PLANE_PRIMARY ||
+		if (plane_id != PLANE_PRIMARY ||
 		    level == G4X_WM_LEVEL_NORMAL)
-			जारी;
+			continue;
 
 		wm = ilk_compute_fbc_wm(crtc_state, plane_state,
 					raw->plane[plane_id]);
-		max_wm = g4x_fbc_fअगरo_size(level);
+		max_wm = g4x_fbc_fifo_size(level);
 
 		/*
 		 * FBC wm is not mandatory as we
 		 * can always just disable its use.
 		 */
-		अगर (wm > max_wm)
-			wm = अच_लघु_उच्च;
+		if (wm > max_wm)
+			wm = USHRT_MAX;
 
 		dirty |= raw->fbc != wm;
 		raw->fbc = wm;
-	पूर्ण
+	}
 
 	/* mark watermarks as invalid */
-	dirty |= g4x_raw_plane_wm_set(crtc_state, level, plane_id, अच_लघु_उच्च);
+	dirty |= g4x_raw_plane_wm_set(crtc_state, level, plane_id, USHRT_MAX);
 
-	अगर (plane_id == PLANE_PRIMARY)
-		dirty |= g4x_raw_fbc_wm_set(crtc_state, level, अच_लघु_उच्च);
+	if (plane_id == PLANE_PRIMARY)
+		dirty |= g4x_raw_fbc_wm_set(crtc_state, level, USHRT_MAX);
 
  out:
-	अगर (dirty) अणु
+	if (dirty) {
 		drm_dbg_kms(&dev_priv->drm,
 			    "%s watermarks: normal=%d, SR=%d, HPLL=%d\n",
 			    plane->base.name,
@@ -1296,121 +1295,121 @@ bool पूर्णांकel_set_memory_cxsr(काष्ठा drm_i915_न�
 			    crtc_state->wm.g4x.raw[G4X_WM_LEVEL_SR].plane[plane_id],
 			    crtc_state->wm.g4x.raw[G4X_WM_LEVEL_HPLL].plane[plane_id]);
 
-		अगर (plane_id == PLANE_PRIMARY)
+		if (plane_id == PLANE_PRIMARY)
 			drm_dbg_kms(&dev_priv->drm,
 				    "FBC watermarks: SR=%d, HPLL=%d\n",
 				    crtc_state->wm.g4x.raw[G4X_WM_LEVEL_SR].fbc,
 				    crtc_state->wm.g4x.raw[G4X_WM_LEVEL_HPLL].fbc);
-	पूर्ण
+	}
 
-	वापस dirty;
-पूर्ण
+	return dirty;
+}
 
-अटल bool g4x_raw_plane_wm_is_valid(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-				      क्रमागत plane_id plane_id, पूर्णांक level)
-अणु
-	स्थिर काष्ठा g4x_pipe_wm *raw = &crtc_state->wm.g4x.raw[level];
+static bool g4x_raw_plane_wm_is_valid(const struct intel_crtc_state *crtc_state,
+				      enum plane_id plane_id, int level)
+{
+	const struct g4x_pipe_wm *raw = &crtc_state->wm.g4x.raw[level];
 
-	वापस raw->plane[plane_id] <= g4x_plane_fअगरo_size(plane_id, level);
-पूर्ण
+	return raw->plane[plane_id] <= g4x_plane_fifo_size(plane_id, level);
+}
 
-अटल bool g4x_raw_crtc_wm_is_valid(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-				     पूर्णांक level)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
+static bool g4x_raw_crtc_wm_is_valid(const struct intel_crtc_state *crtc_state,
+				     int level)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
 
-	अगर (level > dev_priv->wm.max_level)
-		वापस false;
+	if (level > dev_priv->wm.max_level)
+		return false;
 
-	वापस g4x_raw_plane_wm_is_valid(crtc_state, PLANE_PRIMARY, level) &&
+	return g4x_raw_plane_wm_is_valid(crtc_state, PLANE_PRIMARY, level) &&
 		g4x_raw_plane_wm_is_valid(crtc_state, PLANE_SPRITE0, level) &&
 		g4x_raw_plane_wm_is_valid(crtc_state, PLANE_CURSOR, level);
-पूर्ण
+}
 
 /* mark all levels starting from 'level' as invalid */
-अटल व्योम g4x_invalidate_wms(काष्ठा पूर्णांकel_crtc *crtc,
-			       काष्ठा g4x_wm_state *wm_state, पूर्णांक level)
-अणु
-	अगर (level <= G4X_WM_LEVEL_NORMAL) अणु
-		क्रमागत plane_id plane_id;
+static void g4x_invalidate_wms(struct intel_crtc *crtc,
+			       struct g4x_wm_state *wm_state, int level)
+{
+	if (level <= G4X_WM_LEVEL_NORMAL) {
+		enum plane_id plane_id;
 
-		क्रम_each_plane_id_on_crtc(crtc, plane_id)
-			wm_state->wm.plane[plane_id] = अच_लघु_उच्च;
-	पूर्ण
+		for_each_plane_id_on_crtc(crtc, plane_id)
+			wm_state->wm.plane[plane_id] = USHRT_MAX;
+	}
 
-	अगर (level <= G4X_WM_LEVEL_SR) अणु
+	if (level <= G4X_WM_LEVEL_SR) {
 		wm_state->cxsr = false;
-		wm_state->sr.cursor = अच_लघु_उच्च;
-		wm_state->sr.plane = अच_लघु_उच्च;
-		wm_state->sr.fbc = अच_लघु_उच्च;
-	पूर्ण
+		wm_state->sr.cursor = USHRT_MAX;
+		wm_state->sr.plane = USHRT_MAX;
+		wm_state->sr.fbc = USHRT_MAX;
+	}
 
-	अगर (level <= G4X_WM_LEVEL_HPLL) अणु
+	if (level <= G4X_WM_LEVEL_HPLL) {
 		wm_state->hpll_en = false;
-		wm_state->hpll.cursor = अच_लघु_उच्च;
-		wm_state->hpll.plane = अच_लघु_उच्च;
-		wm_state->hpll.fbc = अच_लघु_उच्च;
-	पूर्ण
-पूर्ण
+		wm_state->hpll.cursor = USHRT_MAX;
+		wm_state->hpll.plane = USHRT_MAX;
+		wm_state->hpll.fbc = USHRT_MAX;
+	}
+}
 
-अटल bool g4x_compute_fbc_en(स्थिर काष्ठा g4x_wm_state *wm_state,
-			       पूर्णांक level)
-अणु
-	अगर (level < G4X_WM_LEVEL_SR)
-		वापस false;
+static bool g4x_compute_fbc_en(const struct g4x_wm_state *wm_state,
+			       int level)
+{
+	if (level < G4X_WM_LEVEL_SR)
+		return false;
 
-	अगर (level >= G4X_WM_LEVEL_SR &&
-	    wm_state->sr.fbc > g4x_fbc_fअगरo_size(G4X_WM_LEVEL_SR))
-		वापस false;
+	if (level >= G4X_WM_LEVEL_SR &&
+	    wm_state->sr.fbc > g4x_fbc_fifo_size(G4X_WM_LEVEL_SR))
+		return false;
 
-	अगर (level >= G4X_WM_LEVEL_HPLL &&
-	    wm_state->hpll.fbc > g4x_fbc_fअगरo_size(G4X_WM_LEVEL_HPLL))
-		वापस false;
+	if (level >= G4X_WM_LEVEL_HPLL &&
+	    wm_state->hpll.fbc > g4x_fbc_fifo_size(G4X_WM_LEVEL_HPLL))
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक g4x_compute_pipe_wm(काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
-	काष्ठा पूर्णांकel_crtc *crtc = to_पूर्णांकel_crtc(crtc_state->uapi.crtc);
-	काष्ठा पूर्णांकel_atomic_state *state =
-		to_पूर्णांकel_atomic_state(crtc_state->uapi.state);
-	काष्ठा g4x_wm_state *wm_state = &crtc_state->wm.g4x.optimal;
-	पूर्णांक num_active_planes = hweight8(crtc_state->active_planes &
+static int g4x_compute_pipe_wm(struct intel_crtc_state *crtc_state)
+{
+	struct intel_crtc *crtc = to_intel_crtc(crtc_state->uapi.crtc);
+	struct intel_atomic_state *state =
+		to_intel_atomic_state(crtc_state->uapi.state);
+	struct g4x_wm_state *wm_state = &crtc_state->wm.g4x.optimal;
+	int num_active_planes = hweight8(crtc_state->active_planes &
 					 ~BIT(PLANE_CURSOR));
-	स्थिर काष्ठा g4x_pipe_wm *raw;
-	स्थिर काष्ठा पूर्णांकel_plane_state *old_plane_state;
-	स्थिर काष्ठा पूर्णांकel_plane_state *new_plane_state;
-	काष्ठा पूर्णांकel_plane *plane;
-	क्रमागत plane_id plane_id;
-	पूर्णांक i, level;
-	अचिन्हित पूर्णांक dirty = 0;
+	const struct g4x_pipe_wm *raw;
+	const struct intel_plane_state *old_plane_state;
+	const struct intel_plane_state *new_plane_state;
+	struct intel_plane *plane;
+	enum plane_id plane_id;
+	int i, level;
+	unsigned int dirty = 0;
 
-	क्रम_each_oldnew_पूर्णांकel_plane_in_state(state, plane,
+	for_each_oldnew_intel_plane_in_state(state, plane,
 					     old_plane_state,
-					     new_plane_state, i) अणु
-		अगर (new_plane_state->hw.crtc != &crtc->base &&
+					     new_plane_state, i) {
+		if (new_plane_state->hw.crtc != &crtc->base &&
 		    old_plane_state->hw.crtc != &crtc->base)
-			जारी;
+			continue;
 
-		अगर (g4x_raw_plane_wm_compute(crtc_state, new_plane_state))
+		if (g4x_raw_plane_wm_compute(crtc_state, new_plane_state))
 			dirty |= BIT(plane->id);
-	पूर्ण
+	}
 
-	अगर (!dirty)
-		वापस 0;
+	if (!dirty)
+		return 0;
 
 	level = G4X_WM_LEVEL_NORMAL;
-	अगर (!g4x_raw_crtc_wm_is_valid(crtc_state, level))
-		जाओ out;
+	if (!g4x_raw_crtc_wm_is_valid(crtc_state, level))
+		goto out;
 
 	raw = &crtc_state->wm.g4x.raw[level];
-	क्रम_each_plane_id_on_crtc(crtc, plane_id)
+	for_each_plane_id_on_crtc(crtc, plane_id)
 		wm_state->wm.plane[plane_id] = raw->plane[plane_id];
 
 	level = G4X_WM_LEVEL_SR;
-	अगर (!g4x_raw_crtc_wm_is_valid(crtc_state, level))
-		जाओ out;
+	if (!g4x_raw_crtc_wm_is_valid(crtc_state, level))
+		goto out;
 
 	raw = &crtc_state->wm.g4x.raw[level];
 	wm_state->sr.plane = raw->plane[PLANE_PRIMARY];
@@ -1420,8 +1419,8 @@ bool पूर्णांकel_set_memory_cxsr(काष्ठा drm_i915_न�
 	wm_state->cxsr = num_active_planes == BIT(PLANE_PRIMARY);
 
 	level = G4X_WM_LEVEL_HPLL;
-	अगर (!g4x_raw_crtc_wm_is_valid(crtc_state, level))
-		जाओ out;
+	if (!g4x_raw_crtc_wm_is_valid(crtc_state, level))
+		goto out;
 
 	raw = &crtc_state->wm.g4x.raw[level];
 	wm_state->hpll.plane = raw->plane[PLANE_PRIMARY];
@@ -1433,434 +1432,434 @@ bool पूर्णांकel_set_memory_cxsr(काष्ठा drm_i915_न�
 	level++;
 
  out:
-	अगर (level == G4X_WM_LEVEL_NORMAL)
-		वापस -EINVAL;
+	if (level == G4X_WM_LEVEL_NORMAL)
+		return -EINVAL;
 
 	/* invalidate the higher levels */
 	g4x_invalidate_wms(crtc, wm_state, level);
 
 	/*
-	 * Determine अगर the FBC watermark(s) can be used. IF
-	 * this isn't the हाल we prefer to disable the FBC
+	 * Determine if the FBC watermark(s) can be used. IF
+	 * this isn't the case we prefer to disable the FBC
 	 * watermark(s) rather than disable the SR/HPLL
 	 * level(s) entirely. 'level-1' is the highest valid
 	 * level here.
 	 */
 	wm_state->fbc_en = g4x_compute_fbc_en(wm_state, level - 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक g4x_compute_पूर्णांकermediate_wm(काष्ठा पूर्णांकel_crtc_state *new_crtc_state)
-अणु
-	काष्ठा पूर्णांकel_crtc *crtc = to_पूर्णांकel_crtc(new_crtc_state->uapi.crtc);
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
-	काष्ठा g4x_wm_state *पूर्णांकermediate = &new_crtc_state->wm.g4x.पूर्णांकermediate;
-	स्थिर काष्ठा g4x_wm_state *optimal = &new_crtc_state->wm.g4x.optimal;
-	काष्ठा पूर्णांकel_atomic_state *पूर्णांकel_state =
-		to_पूर्णांकel_atomic_state(new_crtc_state->uapi.state);
-	स्थिर काष्ठा पूर्णांकel_crtc_state *old_crtc_state =
-		पूर्णांकel_atomic_get_old_crtc_state(पूर्णांकel_state, crtc);
-	स्थिर काष्ठा g4x_wm_state *active = &old_crtc_state->wm.g4x.optimal;
-	क्रमागत plane_id plane_id;
+static int g4x_compute_intermediate_wm(struct intel_crtc_state *new_crtc_state)
+{
+	struct intel_crtc *crtc = to_intel_crtc(new_crtc_state->uapi.crtc);
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	struct g4x_wm_state *intermediate = &new_crtc_state->wm.g4x.intermediate;
+	const struct g4x_wm_state *optimal = &new_crtc_state->wm.g4x.optimal;
+	struct intel_atomic_state *intel_state =
+		to_intel_atomic_state(new_crtc_state->uapi.state);
+	const struct intel_crtc_state *old_crtc_state =
+		intel_atomic_get_old_crtc_state(intel_state, crtc);
+	const struct g4x_wm_state *active = &old_crtc_state->wm.g4x.optimal;
+	enum plane_id plane_id;
 
-	अगर (!new_crtc_state->hw.active || drm_atomic_crtc_needs_modeset(&new_crtc_state->uapi)) अणु
-		*पूर्णांकermediate = *optimal;
+	if (!new_crtc_state->hw.active || drm_atomic_crtc_needs_modeset(&new_crtc_state->uapi)) {
+		*intermediate = *optimal;
 
-		पूर्णांकermediate->cxsr = false;
-		पूर्णांकermediate->hpll_en = false;
-		जाओ out;
-	पूर्ण
+		intermediate->cxsr = false;
+		intermediate->hpll_en = false;
+		goto out;
+	}
 
-	पूर्णांकermediate->cxsr = optimal->cxsr && active->cxsr &&
+	intermediate->cxsr = optimal->cxsr && active->cxsr &&
 		!new_crtc_state->disable_cxsr;
-	पूर्णांकermediate->hpll_en = optimal->hpll_en && active->hpll_en &&
+	intermediate->hpll_en = optimal->hpll_en && active->hpll_en &&
 		!new_crtc_state->disable_cxsr;
-	पूर्णांकermediate->fbc_en = optimal->fbc_en && active->fbc_en;
+	intermediate->fbc_en = optimal->fbc_en && active->fbc_en;
 
-	क्रम_each_plane_id_on_crtc(crtc, plane_id) अणु
-		पूर्णांकermediate->wm.plane[plane_id] =
+	for_each_plane_id_on_crtc(crtc, plane_id) {
+		intermediate->wm.plane[plane_id] =
 			max(optimal->wm.plane[plane_id],
 			    active->wm.plane[plane_id]);
 
-		drm_WARN_ON(&dev_priv->drm, पूर्णांकermediate->wm.plane[plane_id] >
-			    g4x_plane_fअगरo_size(plane_id, G4X_WM_LEVEL_NORMAL));
-	पूर्ण
+		drm_WARN_ON(&dev_priv->drm, intermediate->wm.plane[plane_id] >
+			    g4x_plane_fifo_size(plane_id, G4X_WM_LEVEL_NORMAL));
+	}
 
-	पूर्णांकermediate->sr.plane = max(optimal->sr.plane,
+	intermediate->sr.plane = max(optimal->sr.plane,
 				     active->sr.plane);
-	पूर्णांकermediate->sr.cursor = max(optimal->sr.cursor,
+	intermediate->sr.cursor = max(optimal->sr.cursor,
 				      active->sr.cursor);
-	पूर्णांकermediate->sr.fbc = max(optimal->sr.fbc,
+	intermediate->sr.fbc = max(optimal->sr.fbc,
 				   active->sr.fbc);
 
-	पूर्णांकermediate->hpll.plane = max(optimal->hpll.plane,
+	intermediate->hpll.plane = max(optimal->hpll.plane,
 				       active->hpll.plane);
-	पूर्णांकermediate->hpll.cursor = max(optimal->hpll.cursor,
+	intermediate->hpll.cursor = max(optimal->hpll.cursor,
 					active->hpll.cursor);
-	पूर्णांकermediate->hpll.fbc = max(optimal->hpll.fbc,
+	intermediate->hpll.fbc = max(optimal->hpll.fbc,
 				     active->hpll.fbc);
 
 	drm_WARN_ON(&dev_priv->drm,
-		    (पूर्णांकermediate->sr.plane >
-		     g4x_plane_fअगरo_size(PLANE_PRIMARY, G4X_WM_LEVEL_SR) ||
-		     पूर्णांकermediate->sr.cursor >
-		     g4x_plane_fअगरo_size(PLANE_CURSOR, G4X_WM_LEVEL_SR)) &&
-		    पूर्णांकermediate->cxsr);
+		    (intermediate->sr.plane >
+		     g4x_plane_fifo_size(PLANE_PRIMARY, G4X_WM_LEVEL_SR) ||
+		     intermediate->sr.cursor >
+		     g4x_plane_fifo_size(PLANE_CURSOR, G4X_WM_LEVEL_SR)) &&
+		    intermediate->cxsr);
 	drm_WARN_ON(&dev_priv->drm,
-		    (पूर्णांकermediate->sr.plane >
-		     g4x_plane_fअगरo_size(PLANE_PRIMARY, G4X_WM_LEVEL_HPLL) ||
-		     पूर्णांकermediate->sr.cursor >
-		     g4x_plane_fअगरo_size(PLANE_CURSOR, G4X_WM_LEVEL_HPLL)) &&
-		    पूर्णांकermediate->hpll_en);
+		    (intermediate->sr.plane >
+		     g4x_plane_fifo_size(PLANE_PRIMARY, G4X_WM_LEVEL_HPLL) ||
+		     intermediate->sr.cursor >
+		     g4x_plane_fifo_size(PLANE_CURSOR, G4X_WM_LEVEL_HPLL)) &&
+		    intermediate->hpll_en);
 
 	drm_WARN_ON(&dev_priv->drm,
-		    पूर्णांकermediate->sr.fbc > g4x_fbc_fअगरo_size(1) &&
-		    पूर्णांकermediate->fbc_en && पूर्णांकermediate->cxsr);
+		    intermediate->sr.fbc > g4x_fbc_fifo_size(1) &&
+		    intermediate->fbc_en && intermediate->cxsr);
 	drm_WARN_ON(&dev_priv->drm,
-		    पूर्णांकermediate->hpll.fbc > g4x_fbc_fअगरo_size(2) &&
-		    पूर्णांकermediate->fbc_en && पूर्णांकermediate->hpll_en);
+		    intermediate->hpll.fbc > g4x_fbc_fifo_size(2) &&
+		    intermediate->fbc_en && intermediate->hpll_en);
 
 out:
 	/*
-	 * If our पूर्णांकermediate WM are identical to the final WM, then we can
-	 * omit the post-vblank programming; only update अगर it's dअगरferent.
+	 * If our intermediate WM are identical to the final WM, then we can
+	 * omit the post-vblank programming; only update if it's different.
 	 */
-	अगर (स_भेद(पूर्णांकermediate, optimal, माप(*पूर्णांकermediate)) != 0)
+	if (memcmp(intermediate, optimal, sizeof(*intermediate)) != 0)
 		new_crtc_state->wm.need_postvbl_update = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम g4x_merge_wm(काष्ठा drm_i915_निजी *dev_priv,
-			 काष्ठा g4x_wm_values *wm)
-अणु
-	काष्ठा पूर्णांकel_crtc *crtc;
-	पूर्णांक num_active_pipes = 0;
+static void g4x_merge_wm(struct drm_i915_private *dev_priv,
+			 struct g4x_wm_values *wm)
+{
+	struct intel_crtc *crtc;
+	int num_active_pipes = 0;
 
 	wm->cxsr = true;
 	wm->hpll_en = true;
 	wm->fbc_en = true;
 
-	क्रम_each_पूर्णांकel_crtc(&dev_priv->drm, crtc) अणु
-		स्थिर काष्ठा g4x_wm_state *wm_state = &crtc->wm.active.g4x;
+	for_each_intel_crtc(&dev_priv->drm, crtc) {
+		const struct g4x_wm_state *wm_state = &crtc->wm.active.g4x;
 
-		अगर (!crtc->active)
-			जारी;
+		if (!crtc->active)
+			continue;
 
-		अगर (!wm_state->cxsr)
+		if (!wm_state->cxsr)
 			wm->cxsr = false;
-		अगर (!wm_state->hpll_en)
+		if (!wm_state->hpll_en)
 			wm->hpll_en = false;
-		अगर (!wm_state->fbc_en)
+		if (!wm_state->fbc_en)
 			wm->fbc_en = false;
 
 		num_active_pipes++;
-	पूर्ण
+	}
 
-	अगर (num_active_pipes != 1) अणु
+	if (num_active_pipes != 1) {
 		wm->cxsr = false;
 		wm->hpll_en = false;
 		wm->fbc_en = false;
-	पूर्ण
+	}
 
-	क्रम_each_पूर्णांकel_crtc(&dev_priv->drm, crtc) अणु
-		स्थिर काष्ठा g4x_wm_state *wm_state = &crtc->wm.active.g4x;
-		क्रमागत pipe pipe = crtc->pipe;
+	for_each_intel_crtc(&dev_priv->drm, crtc) {
+		const struct g4x_wm_state *wm_state = &crtc->wm.active.g4x;
+		enum pipe pipe = crtc->pipe;
 
 		wm->pipe[pipe] = wm_state->wm;
-		अगर (crtc->active && wm->cxsr)
+		if (crtc->active && wm->cxsr)
 			wm->sr = wm_state->sr;
-		अगर (crtc->active && wm->hpll_en)
+		if (crtc->active && wm->hpll_en)
 			wm->hpll = wm_state->hpll;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम g4x_program_watermarks(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा g4x_wm_values *old_wm = &dev_priv->wm.g4x;
-	काष्ठा g4x_wm_values new_wm = अणुपूर्ण;
+static void g4x_program_watermarks(struct drm_i915_private *dev_priv)
+{
+	struct g4x_wm_values *old_wm = &dev_priv->wm.g4x;
+	struct g4x_wm_values new_wm = {};
 
 	g4x_merge_wm(dev_priv, &new_wm);
 
-	अगर (स_भेद(old_wm, &new_wm, माप(new_wm)) == 0)
-		वापस;
+	if (memcmp(old_wm, &new_wm, sizeof(new_wm)) == 0)
+		return;
 
-	अगर (is_disabling(old_wm->cxsr, new_wm.cxsr, true))
-		_पूर्णांकel_set_memory_cxsr(dev_priv, false);
+	if (is_disabling(old_wm->cxsr, new_wm.cxsr, true))
+		_intel_set_memory_cxsr(dev_priv, false);
 
-	g4x_ग_लिखो_wm_values(dev_priv, &new_wm);
+	g4x_write_wm_values(dev_priv, &new_wm);
 
-	अगर (is_enabling(old_wm->cxsr, new_wm.cxsr, true))
-		_पूर्णांकel_set_memory_cxsr(dev_priv, true);
+	if (is_enabling(old_wm->cxsr, new_wm.cxsr, true))
+		_intel_set_memory_cxsr(dev_priv, true);
 
 	*old_wm = new_wm;
-पूर्ण
+}
 
-अटल व्योम g4x_initial_watermarks(काष्ठा पूर्णांकel_atomic_state *state,
-				   काष्ठा पूर्णांकel_crtc *crtc)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
-	स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state =
-		पूर्णांकel_atomic_get_new_crtc_state(state, crtc);
+static void g4x_initial_watermarks(struct intel_atomic_state *state,
+				   struct intel_crtc *crtc)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	const struct intel_crtc_state *crtc_state =
+		intel_atomic_get_new_crtc_state(state, crtc);
 
 	mutex_lock(&dev_priv->wm.wm_mutex);
-	crtc->wm.active.g4x = crtc_state->wm.g4x.पूर्णांकermediate;
+	crtc->wm.active.g4x = crtc_state->wm.g4x.intermediate;
 	g4x_program_watermarks(dev_priv);
 	mutex_unlock(&dev_priv->wm.wm_mutex);
-पूर्ण
+}
 
-अटल व्योम g4x_optimize_watermarks(काष्ठा पूर्णांकel_atomic_state *state,
-				    काष्ठा पूर्णांकel_crtc *crtc)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
-	स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state =
-		पूर्णांकel_atomic_get_new_crtc_state(state, crtc);
+static void g4x_optimize_watermarks(struct intel_atomic_state *state,
+				    struct intel_crtc *crtc)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	const struct intel_crtc_state *crtc_state =
+		intel_atomic_get_new_crtc_state(state, crtc);
 
-	अगर (!crtc_state->wm.need_postvbl_update)
-		वापस;
+	if (!crtc_state->wm.need_postvbl_update)
+		return;
 
 	mutex_lock(&dev_priv->wm.wm_mutex);
 	crtc->wm.active.g4x = crtc_state->wm.g4x.optimal;
 	g4x_program_watermarks(dev_priv);
 	mutex_unlock(&dev_priv->wm.wm_mutex);
-पूर्ण
+}
 
 /* latency must be in 0.1us units. */
-अटल अचिन्हित पूर्णांक vlv_wm_method2(अचिन्हित पूर्णांक pixel_rate,
-				   अचिन्हित पूर्णांक htotal,
-				   अचिन्हित पूर्णांक width,
-				   अचिन्हित पूर्णांक cpp,
-				   अचिन्हित पूर्णांक latency)
-अणु
-	अचिन्हित पूर्णांक ret;
+static unsigned int vlv_wm_method2(unsigned int pixel_rate,
+				   unsigned int htotal,
+				   unsigned int width,
+				   unsigned int cpp,
+				   unsigned int latency)
+{
+	unsigned int ret;
 
-	ret = पूर्णांकel_wm_method2(pixel_rate, htotal,
+	ret = intel_wm_method2(pixel_rate, htotal,
 			       width, cpp, latency);
 	ret = DIV_ROUND_UP(ret, 64);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम vlv_setup_wm_latency(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void vlv_setup_wm_latency(struct drm_i915_private *dev_priv)
+{
 	/* all latencies in usec */
 	dev_priv->wm.pri_latency[VLV_WM_LEVEL_PM2] = 3;
 
 	dev_priv->wm.max_level = VLV_WM_LEVEL_PM2;
 
-	अगर (IS_CHERRYVIEW(dev_priv)) अणु
+	if (IS_CHERRYVIEW(dev_priv)) {
 		dev_priv->wm.pri_latency[VLV_WM_LEVEL_PM5] = 12;
 		dev_priv->wm.pri_latency[VLV_WM_LEVEL_DDR_DVFS] = 33;
 
 		dev_priv->wm.max_level = VLV_WM_LEVEL_DDR_DVFS;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u16 vlv_compute_wm_level(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-				स्थिर काष्ठा पूर्णांकel_plane_state *plane_state,
-				पूर्णांक level)
-अणु
-	काष्ठा पूर्णांकel_plane *plane = to_पूर्णांकel_plane(plane_state->uapi.plane);
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(plane->base.dev);
-	स्थिर काष्ठा drm_display_mode *pipe_mode =
+static u16 vlv_compute_wm_level(const struct intel_crtc_state *crtc_state,
+				const struct intel_plane_state *plane_state,
+				int level)
+{
+	struct intel_plane *plane = to_intel_plane(plane_state->uapi.plane);
+	struct drm_i915_private *dev_priv = to_i915(plane->base.dev);
+	const struct drm_display_mode *pipe_mode =
 		&crtc_state->hw.pipe_mode;
-	अचिन्हित पूर्णांक घड़ी, htotal, cpp, width, wm;
+	unsigned int clock, htotal, cpp, width, wm;
 
-	अगर (dev_priv->wm.pri_latency[level] == 0)
-		वापस अच_लघु_उच्च;
+	if (dev_priv->wm.pri_latency[level] == 0)
+		return USHRT_MAX;
 
-	अगर (!पूर्णांकel_wm_plane_visible(crtc_state, plane_state))
-		वापस 0;
+	if (!intel_wm_plane_visible(crtc_state, plane_state))
+		return 0;
 
-	cpp = plane_state->hw.fb->क्रमmat->cpp[0];
-	घड़ी = pipe_mode->crtc_घड़ी;
+	cpp = plane_state->hw.fb->format->cpp[0];
+	clock = pipe_mode->crtc_clock;
 	htotal = pipe_mode->crtc_htotal;
 	width = crtc_state->pipe_src_w;
 
-	अगर (plane->id == PLANE_CURSOR) अणु
+	if (plane->id == PLANE_CURSOR) {
 		/*
-		 * FIXME the क्रमmula gives values that are
-		 * too big क्रम the cursor FIFO, and hence we
+		 * FIXME the formula gives values that are
+		 * too big for the cursor FIFO, and hence we
 		 * would never be able to use cursors. For
 		 * now just hardcode the watermark.
 		 */
 		wm = 63;
-	पूर्ण अन्यथा अणु
-		wm = vlv_wm_method2(घड़ी, htotal, width, cpp,
+	} else {
+		wm = vlv_wm_method2(clock, htotal, width, cpp,
 				    dev_priv->wm.pri_latency[level] * 10);
-	पूर्ण
+	}
 
-	वापस min_t(अचिन्हित पूर्णांक, wm, अच_लघु_उच्च);
-पूर्ण
+	return min_t(unsigned int, wm, USHRT_MAX);
+}
 
-अटल bool vlv_need_sprite0_fअगरo_workaround(अचिन्हित पूर्णांक active_planes)
-अणु
-	वापस (active_planes & (BIT(PLANE_SPRITE0) |
+static bool vlv_need_sprite0_fifo_workaround(unsigned int active_planes)
+{
+	return (active_planes & (BIT(PLANE_SPRITE0) |
 				 BIT(PLANE_SPRITE1))) == BIT(PLANE_SPRITE1);
-पूर्ण
+}
 
-अटल पूर्णांक vlv_compute_fअगरo(काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
-	काष्ठा पूर्णांकel_crtc *crtc = to_पूर्णांकel_crtc(crtc_state->uapi.crtc);
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
-	स्थिर काष्ठा g4x_pipe_wm *raw =
+static int vlv_compute_fifo(struct intel_crtc_state *crtc_state)
+{
+	struct intel_crtc *crtc = to_intel_crtc(crtc_state->uapi.crtc);
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	const struct g4x_pipe_wm *raw =
 		&crtc_state->wm.vlv.raw[VLV_WM_LEVEL_PM2];
-	काष्ठा vlv_fअगरo_state *fअगरo_state = &crtc_state->wm.vlv.fअगरo_state;
-	अचिन्हित पूर्णांक active_planes = crtc_state->active_planes & ~BIT(PLANE_CURSOR);
-	पूर्णांक num_active_planes = hweight8(active_planes);
-	स्थिर पूर्णांक fअगरo_size = 511;
-	पूर्णांक fअगरo_extra, fअगरo_left = fअगरo_size;
-	पूर्णांक sprite0_fअगरo_extra = 0;
-	अचिन्हित पूर्णांक total_rate;
-	क्रमागत plane_id plane_id;
+	struct vlv_fifo_state *fifo_state = &crtc_state->wm.vlv.fifo_state;
+	unsigned int active_planes = crtc_state->active_planes & ~BIT(PLANE_CURSOR);
+	int num_active_planes = hweight8(active_planes);
+	const int fifo_size = 511;
+	int fifo_extra, fifo_left = fifo_size;
+	int sprite0_fifo_extra = 0;
+	unsigned int total_rate;
+	enum plane_id plane_id;
 
 	/*
-	 * When enabling sprite0 after sprite1 has alपढ़ोy been enabled
-	 * we tend to get an underrun unless sprite0 alपढ़ोy has some
+	 * When enabling sprite0 after sprite1 has already been enabled
+	 * we tend to get an underrun unless sprite0 already has some
 	 * FIFO space allcoated. Hence we always allocate at least one
-	 * cacheline क्रम sprite0 whenever sprite1 is enabled.
+	 * cacheline for sprite0 whenever sprite1 is enabled.
 	 *
 	 * All other plane enable sequences appear immune to this problem.
 	 */
-	अगर (vlv_need_sprite0_fअगरo_workaround(active_planes))
-		sprite0_fअगरo_extra = 1;
+	if (vlv_need_sprite0_fifo_workaround(active_planes))
+		sprite0_fifo_extra = 1;
 
 	total_rate = raw->plane[PLANE_PRIMARY] +
 		raw->plane[PLANE_SPRITE0] +
 		raw->plane[PLANE_SPRITE1] +
-		sprite0_fअगरo_extra;
+		sprite0_fifo_extra;
 
-	अगर (total_rate > fअगरo_size)
-		वापस -EINVAL;
+	if (total_rate > fifo_size)
+		return -EINVAL;
 
-	अगर (total_rate == 0)
+	if (total_rate == 0)
 		total_rate = 1;
 
-	क्रम_each_plane_id_on_crtc(crtc, plane_id) अणु
-		अचिन्हित पूर्णांक rate;
+	for_each_plane_id_on_crtc(crtc, plane_id) {
+		unsigned int rate;
 
-		अगर ((active_planes & BIT(plane_id)) == 0) अणु
-			fअगरo_state->plane[plane_id] = 0;
-			जारी;
-		पूर्ण
+		if ((active_planes & BIT(plane_id)) == 0) {
+			fifo_state->plane[plane_id] = 0;
+			continue;
+		}
 
 		rate = raw->plane[plane_id];
-		fअगरo_state->plane[plane_id] = fअगरo_size * rate / total_rate;
-		fअगरo_left -= fअगरo_state->plane[plane_id];
-	पूर्ण
+		fifo_state->plane[plane_id] = fifo_size * rate / total_rate;
+		fifo_left -= fifo_state->plane[plane_id];
+	}
 
-	fअगरo_state->plane[PLANE_SPRITE0] += sprite0_fअगरo_extra;
-	fअगरo_left -= sprite0_fअगरo_extra;
+	fifo_state->plane[PLANE_SPRITE0] += sprite0_fifo_extra;
+	fifo_left -= sprite0_fifo_extra;
 
-	fअगरo_state->plane[PLANE_CURSOR] = 63;
+	fifo_state->plane[PLANE_CURSOR] = 63;
 
-	fअगरo_extra = DIV_ROUND_UP(fअगरo_left, num_active_planes ?: 1);
+	fifo_extra = DIV_ROUND_UP(fifo_left, num_active_planes ?: 1);
 
-	/* spपढ़ो the reमुख्यder evenly */
-	क्रम_each_plane_id_on_crtc(crtc, plane_id) अणु
-		पूर्णांक plane_extra;
+	/* spread the remainder evenly */
+	for_each_plane_id_on_crtc(crtc, plane_id) {
+		int plane_extra;
 
-		अगर (fअगरo_left == 0)
-			अवरोध;
+		if (fifo_left == 0)
+			break;
 
-		अगर ((active_planes & BIT(plane_id)) == 0)
-			जारी;
+		if ((active_planes & BIT(plane_id)) == 0)
+			continue;
 
-		plane_extra = min(fअगरo_extra, fअगरo_left);
-		fअगरo_state->plane[plane_id] += plane_extra;
-		fअगरo_left -= plane_extra;
-	पूर्ण
+		plane_extra = min(fifo_extra, fifo_left);
+		fifo_state->plane[plane_id] += plane_extra;
+		fifo_left -= plane_extra;
+	}
 
-	drm_WARN_ON(&dev_priv->drm, active_planes != 0 && fअगरo_left != 0);
+	drm_WARN_ON(&dev_priv->drm, active_planes != 0 && fifo_left != 0);
 
-	/* give it all to the first plane अगर none are active */
-	अगर (active_planes == 0) अणु
-		drm_WARN_ON(&dev_priv->drm, fअगरo_left != fअगरo_size);
-		fअगरo_state->plane[PLANE_PRIMARY] = fअगरo_left;
-	पूर्ण
+	/* give it all to the first plane if none are active */
+	if (active_planes == 0) {
+		drm_WARN_ON(&dev_priv->drm, fifo_left != fifo_size);
+		fifo_state->plane[PLANE_PRIMARY] = fifo_left;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* mark all levels starting from 'level' as invalid */
-अटल व्योम vlv_invalidate_wms(काष्ठा पूर्णांकel_crtc *crtc,
-			       काष्ठा vlv_wm_state *wm_state, पूर्णांक level)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
+static void vlv_invalidate_wms(struct intel_crtc *crtc,
+			       struct vlv_wm_state *wm_state, int level)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
 
-	क्रम (; level < पूर्णांकel_wm_num_levels(dev_priv); level++) अणु
-		क्रमागत plane_id plane_id;
+	for (; level < intel_wm_num_levels(dev_priv); level++) {
+		enum plane_id plane_id;
 
-		क्रम_each_plane_id_on_crtc(crtc, plane_id)
-			wm_state->wm[level].plane[plane_id] = अच_लघु_उच्च;
+		for_each_plane_id_on_crtc(crtc, plane_id)
+			wm_state->wm[level].plane[plane_id] = USHRT_MAX;
 
-		wm_state->sr[level].cursor = अच_लघु_उच्च;
-		wm_state->sr[level].plane = अच_लघु_उच्च;
-	पूर्ण
-पूर्ण
+		wm_state->sr[level].cursor = USHRT_MAX;
+		wm_state->sr[level].plane = USHRT_MAX;
+	}
+}
 
-अटल u16 vlv_invert_wm_value(u16 wm, u16 fअगरo_size)
-अणु
-	अगर (wm > fअगरo_size)
-		वापस अच_लघु_उच्च;
-	अन्यथा
-		वापस fअगरo_size - wm;
-पूर्ण
+static u16 vlv_invert_wm_value(u16 wm, u16 fifo_size)
+{
+	if (wm > fifo_size)
+		return USHRT_MAX;
+	else
+		return fifo_size - wm;
+}
 
 /*
  * Starting from 'level' set all higher
  * levels to 'value' in the "raw" watermarks.
  */
-अटल bool vlv_raw_plane_wm_set(काष्ठा पूर्णांकel_crtc_state *crtc_state,
-				 पूर्णांक level, क्रमागत plane_id plane_id, u16 value)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
-	पूर्णांक num_levels = पूर्णांकel_wm_num_levels(dev_priv);
+static bool vlv_raw_plane_wm_set(struct intel_crtc_state *crtc_state,
+				 int level, enum plane_id plane_id, u16 value)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
+	int num_levels = intel_wm_num_levels(dev_priv);
 	bool dirty = false;
 
-	क्रम (; level < num_levels; level++) अणु
-		काष्ठा g4x_pipe_wm *raw = &crtc_state->wm.vlv.raw[level];
+	for (; level < num_levels; level++) {
+		struct g4x_pipe_wm *raw = &crtc_state->wm.vlv.raw[level];
 
 		dirty |= raw->plane[plane_id] != value;
 		raw->plane[plane_id] = value;
-	पूर्ण
+	}
 
-	वापस dirty;
-पूर्ण
+	return dirty;
+}
 
-अटल bool vlv_raw_plane_wm_compute(काष्ठा पूर्णांकel_crtc_state *crtc_state,
-				     स्थिर काष्ठा पूर्णांकel_plane_state *plane_state)
-अणु
-	काष्ठा पूर्णांकel_plane *plane = to_पूर्णांकel_plane(plane_state->uapi.plane);
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
-	क्रमागत plane_id plane_id = plane->id;
-	पूर्णांक num_levels = पूर्णांकel_wm_num_levels(to_i915(plane->base.dev));
-	पूर्णांक level;
+static bool vlv_raw_plane_wm_compute(struct intel_crtc_state *crtc_state,
+				     const struct intel_plane_state *plane_state)
+{
+	struct intel_plane *plane = to_intel_plane(plane_state->uapi.plane);
+	struct drm_i915_private *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
+	enum plane_id plane_id = plane->id;
+	int num_levels = intel_wm_num_levels(to_i915(plane->base.dev));
+	int level;
 	bool dirty = false;
 
-	अगर (!पूर्णांकel_wm_plane_visible(crtc_state, plane_state)) अणु
+	if (!intel_wm_plane_visible(crtc_state, plane_state)) {
 		dirty |= vlv_raw_plane_wm_set(crtc_state, 0, plane_id, 0);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	क्रम (level = 0; level < num_levels; level++) अणु
-		काष्ठा g4x_pipe_wm *raw = &crtc_state->wm.vlv.raw[level];
-		पूर्णांक wm = vlv_compute_wm_level(crtc_state, plane_state, level);
-		पूर्णांक max_wm = plane_id == PLANE_CURSOR ? 63 : 511;
+	for (level = 0; level < num_levels; level++) {
+		struct g4x_pipe_wm *raw = &crtc_state->wm.vlv.raw[level];
+		int wm = vlv_compute_wm_level(crtc_state, plane_state, level);
+		int max_wm = plane_id == PLANE_CURSOR ? 63 : 511;
 
-		अगर (wm > max_wm)
-			अवरोध;
+		if (wm > max_wm)
+			break;
 
 		dirty |= raw->plane[plane_id] != wm;
 		raw->plane[plane_id] = wm;
-	पूर्ण
+	}
 
 	/* mark all higher levels as invalid */
-	dirty |= vlv_raw_plane_wm_set(crtc_state, level, plane_id, अच_लघु_उच्च);
+	dirty |= vlv_raw_plane_wm_set(crtc_state, level, plane_id, USHRT_MAX);
 
 out:
-	अगर (dirty)
+	if (dirty)
 		drm_dbg_kms(&dev_priv->drm,
 			    "%s watermarks: PM2=%d, PM5=%d, DDR DVFS=%d\n",
 			    plane->base.name,
@@ -1868,89 +1867,89 @@ out:
 			    crtc_state->wm.vlv.raw[VLV_WM_LEVEL_PM5].plane[plane_id],
 			    crtc_state->wm.vlv.raw[VLV_WM_LEVEL_DDR_DVFS].plane[plane_id]);
 
-	वापस dirty;
-पूर्ण
+	return dirty;
+}
 
-अटल bool vlv_raw_plane_wm_is_valid(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-				      क्रमागत plane_id plane_id, पूर्णांक level)
-अणु
-	स्थिर काष्ठा g4x_pipe_wm *raw =
+static bool vlv_raw_plane_wm_is_valid(const struct intel_crtc_state *crtc_state,
+				      enum plane_id plane_id, int level)
+{
+	const struct g4x_pipe_wm *raw =
 		&crtc_state->wm.vlv.raw[level];
-	स्थिर काष्ठा vlv_fअगरo_state *fअगरo_state =
-		&crtc_state->wm.vlv.fअगरo_state;
+	const struct vlv_fifo_state *fifo_state =
+		&crtc_state->wm.vlv.fifo_state;
 
-	वापस raw->plane[plane_id] <= fअगरo_state->plane[plane_id];
-पूर्ण
+	return raw->plane[plane_id] <= fifo_state->plane[plane_id];
+}
 
-अटल bool vlv_raw_crtc_wm_is_valid(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state, पूर्णांक level)
-अणु
-	वापस vlv_raw_plane_wm_is_valid(crtc_state, PLANE_PRIMARY, level) &&
+static bool vlv_raw_crtc_wm_is_valid(const struct intel_crtc_state *crtc_state, int level)
+{
+	return vlv_raw_plane_wm_is_valid(crtc_state, PLANE_PRIMARY, level) &&
 		vlv_raw_plane_wm_is_valid(crtc_state, PLANE_SPRITE0, level) &&
 		vlv_raw_plane_wm_is_valid(crtc_state, PLANE_SPRITE1, level) &&
 		vlv_raw_plane_wm_is_valid(crtc_state, PLANE_CURSOR, level);
-पूर्ण
+}
 
-अटल पूर्णांक vlv_compute_pipe_wm(काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
-	काष्ठा पूर्णांकel_crtc *crtc = to_पूर्णांकel_crtc(crtc_state->uapi.crtc);
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
-	काष्ठा पूर्णांकel_atomic_state *state =
-		to_पूर्णांकel_atomic_state(crtc_state->uapi.state);
-	काष्ठा vlv_wm_state *wm_state = &crtc_state->wm.vlv.optimal;
-	स्थिर काष्ठा vlv_fअगरo_state *fअगरo_state =
-		&crtc_state->wm.vlv.fअगरo_state;
-	पूर्णांक num_active_planes = hweight8(crtc_state->active_planes &
+static int vlv_compute_pipe_wm(struct intel_crtc_state *crtc_state)
+{
+	struct intel_crtc *crtc = to_intel_crtc(crtc_state->uapi.crtc);
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	struct intel_atomic_state *state =
+		to_intel_atomic_state(crtc_state->uapi.state);
+	struct vlv_wm_state *wm_state = &crtc_state->wm.vlv.optimal;
+	const struct vlv_fifo_state *fifo_state =
+		&crtc_state->wm.vlv.fifo_state;
+	int num_active_planes = hweight8(crtc_state->active_planes &
 					 ~BIT(PLANE_CURSOR));
 	bool needs_modeset = drm_atomic_crtc_needs_modeset(&crtc_state->uapi);
-	स्थिर काष्ठा पूर्णांकel_plane_state *old_plane_state;
-	स्थिर काष्ठा पूर्णांकel_plane_state *new_plane_state;
-	काष्ठा पूर्णांकel_plane *plane;
-	क्रमागत plane_id plane_id;
-	पूर्णांक level, ret, i;
-	अचिन्हित पूर्णांक dirty = 0;
+	const struct intel_plane_state *old_plane_state;
+	const struct intel_plane_state *new_plane_state;
+	struct intel_plane *plane;
+	enum plane_id plane_id;
+	int level, ret, i;
+	unsigned int dirty = 0;
 
-	क्रम_each_oldnew_पूर्णांकel_plane_in_state(state, plane,
+	for_each_oldnew_intel_plane_in_state(state, plane,
 					     old_plane_state,
-					     new_plane_state, i) अणु
-		अगर (new_plane_state->hw.crtc != &crtc->base &&
+					     new_plane_state, i) {
+		if (new_plane_state->hw.crtc != &crtc->base &&
 		    old_plane_state->hw.crtc != &crtc->base)
-			जारी;
+			continue;
 
-		अगर (vlv_raw_plane_wm_compute(crtc_state, new_plane_state))
+		if (vlv_raw_plane_wm_compute(crtc_state, new_plane_state))
 			dirty |= BIT(plane->id);
-	पूर्ण
+	}
 
 	/*
-	 * DSPARB रेजिस्टरs may have been reset due to the
-	 * घातer well being turned off. Make sure we restore
-	 * them to a consistent state even अगर no primary/sprite
+	 * DSPARB registers may have been reset due to the
+	 * power well being turned off. Make sure we restore
+	 * them to a consistent state even if no primary/sprite
 	 * planes are initially active.
 	 */
-	अगर (needs_modeset)
-		crtc_state->fअगरo_changed = true;
+	if (needs_modeset)
+		crtc_state->fifo_changed = true;
 
-	अगर (!dirty)
-		वापस 0;
+	if (!dirty)
+		return 0;
 
-	/* cursor changes करोn't warrant a FIFO recompute */
-	अगर (dirty & ~BIT(PLANE_CURSOR)) अणु
-		स्थिर काष्ठा पूर्णांकel_crtc_state *old_crtc_state =
-			पूर्णांकel_atomic_get_old_crtc_state(state, crtc);
-		स्थिर काष्ठा vlv_fअगरo_state *old_fअगरo_state =
-			&old_crtc_state->wm.vlv.fअगरo_state;
+	/* cursor changes don't warrant a FIFO recompute */
+	if (dirty & ~BIT(PLANE_CURSOR)) {
+		const struct intel_crtc_state *old_crtc_state =
+			intel_atomic_get_old_crtc_state(state, crtc);
+		const struct vlv_fifo_state *old_fifo_state =
+			&old_crtc_state->wm.vlv.fifo_state;
 
-		ret = vlv_compute_fअगरo(crtc_state);
-		अगर (ret)
-			वापस ret;
+		ret = vlv_compute_fifo(crtc_state);
+		if (ret)
+			return ret;
 
-		अगर (needs_modeset ||
-		    स_भेद(old_fअगरo_state, fअगरo_state,
-			   माप(*fअगरo_state)) != 0)
-			crtc_state->fअगरo_changed = true;
-	पूर्ण
+		if (needs_modeset ||
+		    memcmp(old_fifo_state, fifo_state,
+			   sizeof(*fifo_state)) != 0)
+			crtc_state->fifo_changed = true;
+	}
 
 	/* initially allow all levels */
-	wm_state->num_levels = पूर्णांकel_wm_num_levels(dev_priv);
+	wm_state->num_levels = intel_wm_num_levels(dev_priv);
 	/*
 	 * Note that enabling cxsr with no primary/sprite planes
 	 * enabled can wedge the pipe. Hence we only allow cxsr
@@ -1958,32 +1957,32 @@ out:
 	 */
 	wm_state->cxsr = crtc->pipe != PIPE_C && num_active_planes == 1;
 
-	क्रम (level = 0; level < wm_state->num_levels; level++) अणु
-		स्थिर काष्ठा g4x_pipe_wm *raw = &crtc_state->wm.vlv.raw[level];
-		स्थिर पूर्णांक sr_fअगरo_size = INTEL_NUM_PIPES(dev_priv) * 512 - 1;
+	for (level = 0; level < wm_state->num_levels; level++) {
+		const struct g4x_pipe_wm *raw = &crtc_state->wm.vlv.raw[level];
+		const int sr_fifo_size = INTEL_NUM_PIPES(dev_priv) * 512 - 1;
 
-		अगर (!vlv_raw_crtc_wm_is_valid(crtc_state, level))
-			अवरोध;
+		if (!vlv_raw_crtc_wm_is_valid(crtc_state, level))
+			break;
 
-		क्रम_each_plane_id_on_crtc(crtc, plane_id) अणु
+		for_each_plane_id_on_crtc(crtc, plane_id) {
 			wm_state->wm[level].plane[plane_id] =
 				vlv_invert_wm_value(raw->plane[plane_id],
-						    fअगरo_state->plane[plane_id]);
-		पूर्ण
+						    fifo_state->plane[plane_id]);
+		}
 
 		wm_state->sr[level].plane =
 			vlv_invert_wm_value(max3(raw->plane[PLANE_PRIMARY],
 						 raw->plane[PLANE_SPRITE0],
 						 raw->plane[PLANE_SPRITE1]),
-					    sr_fअगरo_size);
+					    sr_fifo_size);
 
 		wm_state->sr[level].cursor =
 			vlv_invert_wm_value(raw->plane[PLANE_CURSOR],
 					    63);
-	पूर्ण
+	}
 
-	अगर (level == 0)
-		वापस -EINVAL;
+	if (level == 0)
+		return -EINVAL;
 
 	/* limit to only levels we can actually handle */
 	wm_state->num_levels = level;
@@ -1991,51 +1990,51 @@ out:
 	/* invalidate the higher levels */
 	vlv_invalidate_wms(crtc, wm_state, level);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा VLV_FIFO(plane, value) \
+#define VLV_FIFO(plane, value) \
 	(((value) << DSPARB_ ## plane ## _SHIFT_VLV) & DSPARB_ ## plane ## _MASK_VLV)
 
-अटल व्योम vlv_atomic_update_fअगरo(काष्ठा पूर्णांकel_atomic_state *state,
-				   काष्ठा पूर्णांकel_crtc *crtc)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
-	काष्ठा पूर्णांकel_uncore *uncore = &dev_priv->uncore;
-	स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state =
-		पूर्णांकel_atomic_get_new_crtc_state(state, crtc);
-	स्थिर काष्ठा vlv_fअगरo_state *fअगरo_state =
-		&crtc_state->wm.vlv.fअगरo_state;
-	पूर्णांक sprite0_start, sprite1_start, fअगरo_size;
+static void vlv_atomic_update_fifo(struct intel_atomic_state *state,
+				   struct intel_crtc *crtc)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	struct intel_uncore *uncore = &dev_priv->uncore;
+	const struct intel_crtc_state *crtc_state =
+		intel_atomic_get_new_crtc_state(state, crtc);
+	const struct vlv_fifo_state *fifo_state =
+		&crtc_state->wm.vlv.fifo_state;
+	int sprite0_start, sprite1_start, fifo_size;
 	u32 dsparb, dsparb2, dsparb3;
 
-	अगर (!crtc_state->fअगरo_changed)
-		वापस;
+	if (!crtc_state->fifo_changed)
+		return;
 
-	sprite0_start = fअगरo_state->plane[PLANE_PRIMARY];
-	sprite1_start = fअगरo_state->plane[PLANE_SPRITE0] + sprite0_start;
-	fअगरo_size = fअगरo_state->plane[PLANE_SPRITE1] + sprite1_start;
+	sprite0_start = fifo_state->plane[PLANE_PRIMARY];
+	sprite1_start = fifo_state->plane[PLANE_SPRITE0] + sprite0_start;
+	fifo_size = fifo_state->plane[PLANE_SPRITE1] + sprite1_start;
 
-	drm_WARN_ON(&dev_priv->drm, fअगरo_state->plane[PLANE_CURSOR] != 63);
-	drm_WARN_ON(&dev_priv->drm, fअगरo_size != 511);
+	drm_WARN_ON(&dev_priv->drm, fifo_state->plane[PLANE_CURSOR] != 63);
+	drm_WARN_ON(&dev_priv->drm, fifo_size != 511);
 
-	trace_vlv_fअगरo_size(crtc, sprite0_start, sprite1_start, fअगरo_size);
+	trace_vlv_fifo_size(crtc, sprite0_start, sprite1_start, fifo_size);
 
 	/*
-	 * uncore.lock serves a द्विगुन purpose here. It allows us to
-	 * use the less expensive I915_अणुREAD,WRITEपूर्ण_FW() functions, and
-	 * it protects the DSPARB रेजिस्टरs from getting clobbered by
+	 * uncore.lock serves a double purpose here. It allows us to
+	 * use the less expensive I915_{READ,WRITE}_FW() functions, and
+	 * it protects the DSPARB registers from getting clobbered by
 	 * parallel updates from multiple pipes.
 	 *
-	 * पूर्णांकel_pipe_update_start() has alपढ़ोy disabled पूर्णांकerrupts
-	 * क्रम us, so a plain spin_lock() is sufficient here.
+	 * intel_pipe_update_start() has already disabled interrupts
+	 * for us, so a plain spin_lock() is sufficient here.
 	 */
 	spin_lock(&uncore->lock);
 
-	चयन (crtc->pipe) अणु
-	हाल PIPE_A:
-		dsparb = पूर्णांकel_uncore_पढ़ो_fw(uncore, DSPARB);
-		dsparb2 = पूर्णांकel_uncore_पढ़ो_fw(uncore, DSPARB2);
+	switch (crtc->pipe) {
+	case PIPE_A:
+		dsparb = intel_uncore_read_fw(uncore, DSPARB);
+		dsparb2 = intel_uncore_read_fw(uncore, DSPARB2);
 
 		dsparb &= ~(VLV_FIFO(SPRITEA, 0xff) |
 			    VLV_FIFO(SPRITEB, 0xff));
@@ -2047,12 +2046,12 @@ out:
 		dsparb2 |= (VLV_FIFO(SPRITEA_HI, sprite0_start >> 8) |
 			   VLV_FIFO(SPRITEB_HI, sprite1_start >> 8));
 
-		पूर्णांकel_uncore_ग_लिखो_fw(uncore, DSPARB, dsparb);
-		पूर्णांकel_uncore_ग_लिखो_fw(uncore, DSPARB2, dsparb2);
-		अवरोध;
-	हाल PIPE_B:
-		dsparb = पूर्णांकel_uncore_पढ़ो_fw(uncore, DSPARB);
-		dsparb2 = पूर्णांकel_uncore_पढ़ो_fw(uncore, DSPARB2);
+		intel_uncore_write_fw(uncore, DSPARB, dsparb);
+		intel_uncore_write_fw(uncore, DSPARB2, dsparb2);
+		break;
+	case PIPE_B:
+		dsparb = intel_uncore_read_fw(uncore, DSPARB);
+		dsparb2 = intel_uncore_read_fw(uncore, DSPARB2);
 
 		dsparb &= ~(VLV_FIFO(SPRITEC, 0xff) |
 			    VLV_FIFO(SPRITED, 0xff));
@@ -2064,12 +2063,12 @@ out:
 		dsparb2 |= (VLV_FIFO(SPRITEC_HI, sprite0_start >> 8) |
 			   VLV_FIFO(SPRITED_HI, sprite1_start >> 8));
 
-		पूर्णांकel_uncore_ग_लिखो_fw(uncore, DSPARB, dsparb);
-		पूर्णांकel_uncore_ग_लिखो_fw(uncore, DSPARB2, dsparb2);
-		अवरोध;
-	हाल PIPE_C:
-		dsparb3 = पूर्णांकel_uncore_पढ़ो_fw(uncore, DSPARB3);
-		dsparb2 = पूर्णांकel_uncore_पढ़ो_fw(uncore, DSPARB2);
+		intel_uncore_write_fw(uncore, DSPARB, dsparb);
+		intel_uncore_write_fw(uncore, DSPARB2, dsparb2);
+		break;
+	case PIPE_C:
+		dsparb3 = intel_uncore_read_fw(uncore, DSPARB3);
+		dsparb2 = intel_uncore_read_fw(uncore, DSPARB2);
 
 		dsparb3 &= ~(VLV_FIFO(SPRITEE, 0xff) |
 			     VLV_FIFO(SPRITEF, 0xff));
@@ -2081,219 +2080,219 @@ out:
 		dsparb2 |= (VLV_FIFO(SPRITEE_HI, sprite0_start >> 8) |
 			   VLV_FIFO(SPRITEF_HI, sprite1_start >> 8));
 
-		पूर्णांकel_uncore_ग_लिखो_fw(uncore, DSPARB3, dsparb3);
-		पूर्णांकel_uncore_ग_लिखो_fw(uncore, DSPARB2, dsparb2);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		intel_uncore_write_fw(uncore, DSPARB3, dsparb3);
+		intel_uncore_write_fw(uncore, DSPARB2, dsparb2);
+		break;
+	default:
+		break;
+	}
 
-	पूर्णांकel_uncore_posting_पढ़ो_fw(uncore, DSPARB);
+	intel_uncore_posting_read_fw(uncore, DSPARB);
 
 	spin_unlock(&uncore->lock);
-पूर्ण
+}
 
-#अघोषित VLV_FIFO
+#undef VLV_FIFO
 
-अटल पूर्णांक vlv_compute_पूर्णांकermediate_wm(काष्ठा पूर्णांकel_crtc_state *new_crtc_state)
-अणु
-	काष्ठा पूर्णांकel_crtc *crtc = to_पूर्णांकel_crtc(new_crtc_state->uapi.crtc);
-	काष्ठा vlv_wm_state *पूर्णांकermediate = &new_crtc_state->wm.vlv.पूर्णांकermediate;
-	स्थिर काष्ठा vlv_wm_state *optimal = &new_crtc_state->wm.vlv.optimal;
-	काष्ठा पूर्णांकel_atomic_state *पूर्णांकel_state =
-		to_पूर्णांकel_atomic_state(new_crtc_state->uapi.state);
-	स्थिर काष्ठा पूर्णांकel_crtc_state *old_crtc_state =
-		पूर्णांकel_atomic_get_old_crtc_state(पूर्णांकel_state, crtc);
-	स्थिर काष्ठा vlv_wm_state *active = &old_crtc_state->wm.vlv.optimal;
-	पूर्णांक level;
+static int vlv_compute_intermediate_wm(struct intel_crtc_state *new_crtc_state)
+{
+	struct intel_crtc *crtc = to_intel_crtc(new_crtc_state->uapi.crtc);
+	struct vlv_wm_state *intermediate = &new_crtc_state->wm.vlv.intermediate;
+	const struct vlv_wm_state *optimal = &new_crtc_state->wm.vlv.optimal;
+	struct intel_atomic_state *intel_state =
+		to_intel_atomic_state(new_crtc_state->uapi.state);
+	const struct intel_crtc_state *old_crtc_state =
+		intel_atomic_get_old_crtc_state(intel_state, crtc);
+	const struct vlv_wm_state *active = &old_crtc_state->wm.vlv.optimal;
+	int level;
 
-	अगर (!new_crtc_state->hw.active || drm_atomic_crtc_needs_modeset(&new_crtc_state->uapi)) अणु
-		*पूर्णांकermediate = *optimal;
+	if (!new_crtc_state->hw.active || drm_atomic_crtc_needs_modeset(&new_crtc_state->uapi)) {
+		*intermediate = *optimal;
 
-		पूर्णांकermediate->cxsr = false;
-		जाओ out;
-	पूर्ण
+		intermediate->cxsr = false;
+		goto out;
+	}
 
-	पूर्णांकermediate->num_levels = min(optimal->num_levels, active->num_levels);
-	पूर्णांकermediate->cxsr = optimal->cxsr && active->cxsr &&
+	intermediate->num_levels = min(optimal->num_levels, active->num_levels);
+	intermediate->cxsr = optimal->cxsr && active->cxsr &&
 		!new_crtc_state->disable_cxsr;
 
-	क्रम (level = 0; level < पूर्णांकermediate->num_levels; level++) अणु
-		क्रमागत plane_id plane_id;
+	for (level = 0; level < intermediate->num_levels; level++) {
+		enum plane_id plane_id;
 
-		क्रम_each_plane_id_on_crtc(crtc, plane_id) अणु
-			पूर्णांकermediate->wm[level].plane[plane_id] =
+		for_each_plane_id_on_crtc(crtc, plane_id) {
+			intermediate->wm[level].plane[plane_id] =
 				min(optimal->wm[level].plane[plane_id],
 				    active->wm[level].plane[plane_id]);
-		पूर्ण
+		}
 
-		पूर्णांकermediate->sr[level].plane = min(optimal->sr[level].plane,
+		intermediate->sr[level].plane = min(optimal->sr[level].plane,
 						    active->sr[level].plane);
-		पूर्णांकermediate->sr[level].cursor = min(optimal->sr[level].cursor,
+		intermediate->sr[level].cursor = min(optimal->sr[level].cursor,
 						     active->sr[level].cursor);
-	पूर्ण
+	}
 
-	vlv_invalidate_wms(crtc, पूर्णांकermediate, level);
+	vlv_invalidate_wms(crtc, intermediate, level);
 
 out:
 	/*
-	 * If our पूर्णांकermediate WM are identical to the final WM, then we can
-	 * omit the post-vblank programming; only update अगर it's dअगरferent.
+	 * If our intermediate WM are identical to the final WM, then we can
+	 * omit the post-vblank programming; only update if it's different.
 	 */
-	अगर (स_भेद(पूर्णांकermediate, optimal, माप(*पूर्णांकermediate)) != 0)
+	if (memcmp(intermediate, optimal, sizeof(*intermediate)) != 0)
 		new_crtc_state->wm.need_postvbl_update = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vlv_merge_wm(काष्ठा drm_i915_निजी *dev_priv,
-			 काष्ठा vlv_wm_values *wm)
-अणु
-	काष्ठा पूर्णांकel_crtc *crtc;
-	पूर्णांक num_active_pipes = 0;
+static void vlv_merge_wm(struct drm_i915_private *dev_priv,
+			 struct vlv_wm_values *wm)
+{
+	struct intel_crtc *crtc;
+	int num_active_pipes = 0;
 
 	wm->level = dev_priv->wm.max_level;
 	wm->cxsr = true;
 
-	क्रम_each_पूर्णांकel_crtc(&dev_priv->drm, crtc) अणु
-		स्थिर काष्ठा vlv_wm_state *wm_state = &crtc->wm.active.vlv;
+	for_each_intel_crtc(&dev_priv->drm, crtc) {
+		const struct vlv_wm_state *wm_state = &crtc->wm.active.vlv;
 
-		अगर (!crtc->active)
-			जारी;
+		if (!crtc->active)
+			continue;
 
-		अगर (!wm_state->cxsr)
+		if (!wm_state->cxsr)
 			wm->cxsr = false;
 
 		num_active_pipes++;
-		wm->level = min_t(पूर्णांक, wm->level, wm_state->num_levels - 1);
-	पूर्ण
+		wm->level = min_t(int, wm->level, wm_state->num_levels - 1);
+	}
 
-	अगर (num_active_pipes != 1)
+	if (num_active_pipes != 1)
 		wm->cxsr = false;
 
-	अगर (num_active_pipes > 1)
+	if (num_active_pipes > 1)
 		wm->level = VLV_WM_LEVEL_PM2;
 
-	क्रम_each_पूर्णांकel_crtc(&dev_priv->drm, crtc) अणु
-		स्थिर काष्ठा vlv_wm_state *wm_state = &crtc->wm.active.vlv;
-		क्रमागत pipe pipe = crtc->pipe;
+	for_each_intel_crtc(&dev_priv->drm, crtc) {
+		const struct vlv_wm_state *wm_state = &crtc->wm.active.vlv;
+		enum pipe pipe = crtc->pipe;
 
 		wm->pipe[pipe] = wm_state->wm[wm->level];
-		अगर (crtc->active && wm->cxsr)
+		if (crtc->active && wm->cxsr)
 			wm->sr = wm_state->sr[wm->level];
 
 		wm->ddl[pipe].plane[PLANE_PRIMARY] = DDL_PRECISION_HIGH | 2;
 		wm->ddl[pipe].plane[PLANE_SPRITE0] = DDL_PRECISION_HIGH | 2;
 		wm->ddl[pipe].plane[PLANE_SPRITE1] = DDL_PRECISION_HIGH | 2;
 		wm->ddl[pipe].plane[PLANE_CURSOR] = DDL_PRECISION_HIGH | 2;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम vlv_program_watermarks(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा vlv_wm_values *old_wm = &dev_priv->wm.vlv;
-	काष्ठा vlv_wm_values new_wm = अणुपूर्ण;
+static void vlv_program_watermarks(struct drm_i915_private *dev_priv)
+{
+	struct vlv_wm_values *old_wm = &dev_priv->wm.vlv;
+	struct vlv_wm_values new_wm = {};
 
 	vlv_merge_wm(dev_priv, &new_wm);
 
-	अगर (स_भेद(old_wm, &new_wm, माप(new_wm)) == 0)
-		वापस;
+	if (memcmp(old_wm, &new_wm, sizeof(new_wm)) == 0)
+		return;
 
-	अगर (is_disabling(old_wm->level, new_wm.level, VLV_WM_LEVEL_DDR_DVFS))
+	if (is_disabling(old_wm->level, new_wm.level, VLV_WM_LEVEL_DDR_DVFS))
 		chv_set_memory_dvfs(dev_priv, false);
 
-	अगर (is_disabling(old_wm->level, new_wm.level, VLV_WM_LEVEL_PM5))
+	if (is_disabling(old_wm->level, new_wm.level, VLV_WM_LEVEL_PM5))
 		chv_set_memory_pm5(dev_priv, false);
 
-	अगर (is_disabling(old_wm->cxsr, new_wm.cxsr, true))
-		_पूर्णांकel_set_memory_cxsr(dev_priv, false);
+	if (is_disabling(old_wm->cxsr, new_wm.cxsr, true))
+		_intel_set_memory_cxsr(dev_priv, false);
 
-	vlv_ग_लिखो_wm_values(dev_priv, &new_wm);
+	vlv_write_wm_values(dev_priv, &new_wm);
 
-	अगर (is_enabling(old_wm->cxsr, new_wm.cxsr, true))
-		_पूर्णांकel_set_memory_cxsr(dev_priv, true);
+	if (is_enabling(old_wm->cxsr, new_wm.cxsr, true))
+		_intel_set_memory_cxsr(dev_priv, true);
 
-	अगर (is_enabling(old_wm->level, new_wm.level, VLV_WM_LEVEL_PM5))
+	if (is_enabling(old_wm->level, new_wm.level, VLV_WM_LEVEL_PM5))
 		chv_set_memory_pm5(dev_priv, true);
 
-	अगर (is_enabling(old_wm->level, new_wm.level, VLV_WM_LEVEL_DDR_DVFS))
+	if (is_enabling(old_wm->level, new_wm.level, VLV_WM_LEVEL_DDR_DVFS))
 		chv_set_memory_dvfs(dev_priv, true);
 
 	*old_wm = new_wm;
-पूर्ण
+}
 
-अटल व्योम vlv_initial_watermarks(काष्ठा पूर्णांकel_atomic_state *state,
-				   काष्ठा पूर्णांकel_crtc *crtc)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
-	स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state =
-		पूर्णांकel_atomic_get_new_crtc_state(state, crtc);
+static void vlv_initial_watermarks(struct intel_atomic_state *state,
+				   struct intel_crtc *crtc)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	const struct intel_crtc_state *crtc_state =
+		intel_atomic_get_new_crtc_state(state, crtc);
 
 	mutex_lock(&dev_priv->wm.wm_mutex);
-	crtc->wm.active.vlv = crtc_state->wm.vlv.पूर्णांकermediate;
+	crtc->wm.active.vlv = crtc_state->wm.vlv.intermediate;
 	vlv_program_watermarks(dev_priv);
 	mutex_unlock(&dev_priv->wm.wm_mutex);
-पूर्ण
+}
 
-अटल व्योम vlv_optimize_watermarks(काष्ठा पूर्णांकel_atomic_state *state,
-				    काष्ठा पूर्णांकel_crtc *crtc)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
-	स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state =
-		पूर्णांकel_atomic_get_new_crtc_state(state, crtc);
+static void vlv_optimize_watermarks(struct intel_atomic_state *state,
+				    struct intel_crtc *crtc)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	const struct intel_crtc_state *crtc_state =
+		intel_atomic_get_new_crtc_state(state, crtc);
 
-	अगर (!crtc_state->wm.need_postvbl_update)
-		वापस;
+	if (!crtc_state->wm.need_postvbl_update)
+		return;
 
 	mutex_lock(&dev_priv->wm.wm_mutex);
 	crtc->wm.active.vlv = crtc_state->wm.vlv.optimal;
 	vlv_program_watermarks(dev_priv);
 	mutex_unlock(&dev_priv->wm.wm_mutex);
-पूर्ण
+}
 
-अटल व्योम i965_update_wm(काष्ठा पूर्णांकel_crtc *unused_crtc)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(unused_crtc->base.dev);
-	काष्ठा पूर्णांकel_crtc *crtc;
-	पूर्णांक srwm = 1;
-	पूर्णांक cursor_sr = 16;
+static void i965_update_wm(struct intel_crtc *unused_crtc)
+{
+	struct drm_i915_private *dev_priv = to_i915(unused_crtc->base.dev);
+	struct intel_crtc *crtc;
+	int srwm = 1;
+	int cursor_sr = 16;
 	bool cxsr_enabled;
 
-	/* Calc sr entries क्रम one plane configs */
+	/* Calc sr entries for one plane configs */
 	crtc = single_enabled_crtc(dev_priv);
-	अगर (crtc) अणु
+	if (crtc) {
 		/* self-refresh has much higher latency */
-		अटल स्थिर पूर्णांक sr_latency_ns = 12000;
-		स्थिर काष्ठा drm_display_mode *pipe_mode =
+		static const int sr_latency_ns = 12000;
+		const struct drm_display_mode *pipe_mode =
 			&crtc->config->hw.pipe_mode;
-		स्थिर काष्ठा drm_framebuffer *fb =
+		const struct drm_framebuffer *fb =
 			crtc->base.primary->state->fb;
-		पूर्णांक घड़ी = pipe_mode->crtc_घड़ी;
-		पूर्णांक htotal = pipe_mode->crtc_htotal;
-		पूर्णांक hdisplay = crtc->config->pipe_src_w;
-		पूर्णांक cpp = fb->क्रमmat->cpp[0];
-		पूर्णांक entries;
+		int clock = pipe_mode->crtc_clock;
+		int htotal = pipe_mode->crtc_htotal;
+		int hdisplay = crtc->config->pipe_src_w;
+		int cpp = fb->format->cpp[0];
+		int entries;
 
-		entries = पूर्णांकel_wm_method2(घड़ी, htotal,
+		entries = intel_wm_method2(clock, htotal,
 					   hdisplay, cpp, sr_latency_ns / 100);
 		entries = DIV_ROUND_UP(entries, I915_FIFO_LINE_SIZE);
 		srwm = I965_FIFO_SIZE - entries;
-		अगर (srwm < 0)
+		if (srwm < 0)
 			srwm = 1;
 		srwm &= 0x1ff;
 		drm_dbg_kms(&dev_priv->drm,
 			    "self-refresh entries: %d, wm: %d\n",
 			    entries, srwm);
 
-		entries = पूर्णांकel_wm_method2(घड़ी, htotal,
+		entries = intel_wm_method2(clock, htotal,
 					   crtc->base.cursor->state->crtc_w, 4,
 					   sr_latency_ns / 100);
 		entries = DIV_ROUND_UP(entries,
 				       i965_cursor_wm_info.cacheline_size) +
 			i965_cursor_wm_info.guard_size;
 
-		cursor_sr = i965_cursor_wm_info.fअगरo_size - entries;
-		अगर (cursor_sr > i965_cursor_wm_info.max_wm)
+		cursor_sr = i965_cursor_wm_info.fifo_size - entries;
+		if (cursor_sr > i965_cursor_wm_info.max_wm)
 			cursor_sr = i965_cursor_wm_info.max_wm;
 
 		drm_dbg_kms(&dev_priv->drm,
@@ -2301,159 +2300,159 @@ out:
 			    "cursor %d\n", srwm, cursor_sr);
 
 		cxsr_enabled = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		cxsr_enabled = false;
-		/* Turn off self refresh अगर both pipes are enabled */
-		पूर्णांकel_set_memory_cxsr(dev_priv, false);
-	पूर्ण
+		/* Turn off self refresh if both pipes are enabled */
+		intel_set_memory_cxsr(dev_priv, false);
+	}
 
 	drm_dbg_kms(&dev_priv->drm,
 		    "Setting FIFO watermarks - A: 8, B: 8, C: 8, SR %d\n",
 		    srwm);
 
 	/* 965 has limitations... */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPFW1, FW_WM(srwm, SR) |
+	intel_uncore_write(&dev_priv->uncore, DSPFW1, FW_WM(srwm, SR) |
 		   FW_WM(8, CURSORB) |
 		   FW_WM(8, PLANEB) |
 		   FW_WM(8, PLANEA));
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPFW2, FW_WM(8, CURSORA) |
+	intel_uncore_write(&dev_priv->uncore, DSPFW2, FW_WM(8, CURSORA) |
 		   FW_WM(8, PLANEC_OLD));
 	/* update cursor SR watermark */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPFW3, FW_WM(cursor_sr, CURSOR_SR));
+	intel_uncore_write(&dev_priv->uncore, DSPFW3, FW_WM(cursor_sr, CURSOR_SR));
 
-	अगर (cxsr_enabled)
-		पूर्णांकel_set_memory_cxsr(dev_priv, true);
-पूर्ण
+	if (cxsr_enabled)
+		intel_set_memory_cxsr(dev_priv, true);
+}
 
-#अघोषित FW_WM
+#undef FW_WM
 
-अटल व्योम i9xx_update_wm(काष्ठा पूर्णांकel_crtc *unused_crtc)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(unused_crtc->base.dev);
-	स्थिर काष्ठा पूर्णांकel_watermark_params *wm_info;
+static void i9xx_update_wm(struct intel_crtc *unused_crtc)
+{
+	struct drm_i915_private *dev_priv = to_i915(unused_crtc->base.dev);
+	const struct intel_watermark_params *wm_info;
 	u32 fwater_lo;
 	u32 fwater_hi;
-	पूर्णांक cwm, srwm = 1;
-	पूर्णांक fअगरo_size;
-	पूर्णांक planea_wm, planeb_wm;
-	काष्ठा पूर्णांकel_crtc *crtc, *enabled = शून्य;
+	int cwm, srwm = 1;
+	int fifo_size;
+	int planea_wm, planeb_wm;
+	struct intel_crtc *crtc, *enabled = NULL;
 
-	अगर (IS_I945GM(dev_priv))
+	if (IS_I945GM(dev_priv))
 		wm_info = &i945_wm_info;
-	अन्यथा अगर (!IS_DISPLAY_VER(dev_priv, 2))
+	else if (!IS_DISPLAY_VER(dev_priv, 2))
 		wm_info = &i915_wm_info;
-	अन्यथा
+	else
 		wm_info = &i830_a_wm_info;
 
-	fअगरo_size = dev_priv->display.get_fअगरo_size(dev_priv, PLANE_A);
-	crtc = पूर्णांकel_get_crtc_क्रम_plane(dev_priv, PLANE_A);
-	अगर (पूर्णांकel_crtc_active(crtc)) अणु
-		स्थिर काष्ठा drm_display_mode *pipe_mode =
+	fifo_size = dev_priv->display.get_fifo_size(dev_priv, PLANE_A);
+	crtc = intel_get_crtc_for_plane(dev_priv, PLANE_A);
+	if (intel_crtc_active(crtc)) {
+		const struct drm_display_mode *pipe_mode =
 			&crtc->config->hw.pipe_mode;
-		स्थिर काष्ठा drm_framebuffer *fb =
+		const struct drm_framebuffer *fb =
 			crtc->base.primary->state->fb;
-		पूर्णांक cpp;
+		int cpp;
 
-		अगर (IS_DISPLAY_VER(dev_priv, 2))
+		if (IS_DISPLAY_VER(dev_priv, 2))
 			cpp = 4;
-		अन्यथा
-			cpp = fb->क्रमmat->cpp[0];
+		else
+			cpp = fb->format->cpp[0];
 
-		planea_wm = पूर्णांकel_calculate_wm(pipe_mode->crtc_घड़ी,
-					       wm_info, fअगरo_size, cpp,
+		planea_wm = intel_calculate_wm(pipe_mode->crtc_clock,
+					       wm_info, fifo_size, cpp,
 					       pessimal_latency_ns);
 		enabled = crtc;
-	पूर्ण अन्यथा अणु
-		planea_wm = fअगरo_size - wm_info->guard_size;
-		अगर (planea_wm > (दीर्घ)wm_info->max_wm)
+	} else {
+		planea_wm = fifo_size - wm_info->guard_size;
+		if (planea_wm > (long)wm_info->max_wm)
 			planea_wm = wm_info->max_wm;
-	पूर्ण
+	}
 
-	अगर (IS_DISPLAY_VER(dev_priv, 2))
+	if (IS_DISPLAY_VER(dev_priv, 2))
 		wm_info = &i830_bc_wm_info;
 
-	fअगरo_size = dev_priv->display.get_fअगरo_size(dev_priv, PLANE_B);
-	crtc = पूर्णांकel_get_crtc_क्रम_plane(dev_priv, PLANE_B);
-	अगर (पूर्णांकel_crtc_active(crtc)) अणु
-		स्थिर काष्ठा drm_display_mode *pipe_mode =
+	fifo_size = dev_priv->display.get_fifo_size(dev_priv, PLANE_B);
+	crtc = intel_get_crtc_for_plane(dev_priv, PLANE_B);
+	if (intel_crtc_active(crtc)) {
+		const struct drm_display_mode *pipe_mode =
 			&crtc->config->hw.pipe_mode;
-		स्थिर काष्ठा drm_framebuffer *fb =
+		const struct drm_framebuffer *fb =
 			crtc->base.primary->state->fb;
-		पूर्णांक cpp;
+		int cpp;
 
-		अगर (IS_DISPLAY_VER(dev_priv, 2))
+		if (IS_DISPLAY_VER(dev_priv, 2))
 			cpp = 4;
-		अन्यथा
-			cpp = fb->क्रमmat->cpp[0];
+		else
+			cpp = fb->format->cpp[0];
 
-		planeb_wm = पूर्णांकel_calculate_wm(pipe_mode->crtc_घड़ी,
-					       wm_info, fअगरo_size, cpp,
+		planeb_wm = intel_calculate_wm(pipe_mode->crtc_clock,
+					       wm_info, fifo_size, cpp,
 					       pessimal_latency_ns);
-		अगर (enabled == शून्य)
+		if (enabled == NULL)
 			enabled = crtc;
-		अन्यथा
-			enabled = शून्य;
-	पूर्ण अन्यथा अणु
-		planeb_wm = fअगरo_size - wm_info->guard_size;
-		अगर (planeb_wm > (दीर्घ)wm_info->max_wm)
+		else
+			enabled = NULL;
+	} else {
+		planeb_wm = fifo_size - wm_info->guard_size;
+		if (planeb_wm > (long)wm_info->max_wm)
 			planeb_wm = wm_info->max_wm;
-	पूर्ण
+	}
 
 	drm_dbg_kms(&dev_priv->drm,
 		    "FIFO watermarks - A: %d, B: %d\n", planea_wm, planeb_wm);
 
-	अगर (IS_I915GM(dev_priv) && enabled) अणु
-		काष्ठा drm_i915_gem_object *obj;
+	if (IS_I915GM(dev_priv) && enabled) {
+		struct drm_i915_gem_object *obj;
 
-		obj = पूर्णांकel_fb_obj(enabled->base.primary->state->fb);
+		obj = intel_fb_obj(enabled->base.primary->state->fb);
 
 		/* self-refresh seems busted with untiled */
-		अगर (!i915_gem_object_is_tiled(obj))
-			enabled = शून्य;
-	पूर्ण
+		if (!i915_gem_object_is_tiled(obj))
+			enabled = NULL;
+	}
 
 	/*
-	 * Overlay माला_लो an aggressive शेष since video jitter is bad.
+	 * Overlay gets an aggressive default since video jitter is bad.
 	 */
 	cwm = 2;
 
-	/* Play safe and disable self-refresh beक्रमe adjusting watermarks. */
-	पूर्णांकel_set_memory_cxsr(dev_priv, false);
+	/* Play safe and disable self-refresh before adjusting watermarks. */
+	intel_set_memory_cxsr(dev_priv, false);
 
-	/* Calc sr entries क्रम one plane configs */
-	अगर (HAS_FW_BLC(dev_priv) && enabled) अणु
+	/* Calc sr entries for one plane configs */
+	if (HAS_FW_BLC(dev_priv) && enabled) {
 		/* self-refresh has much higher latency */
-		अटल स्थिर पूर्णांक sr_latency_ns = 6000;
-		स्थिर काष्ठा drm_display_mode *pipe_mode =
+		static const int sr_latency_ns = 6000;
+		const struct drm_display_mode *pipe_mode =
 			&enabled->config->hw.pipe_mode;
-		स्थिर काष्ठा drm_framebuffer *fb =
+		const struct drm_framebuffer *fb =
 			enabled->base.primary->state->fb;
-		पूर्णांक घड़ी = pipe_mode->crtc_घड़ी;
-		पूर्णांक htotal = pipe_mode->crtc_htotal;
-		पूर्णांक hdisplay = enabled->config->pipe_src_w;
-		पूर्णांक cpp;
-		पूर्णांक entries;
+		int clock = pipe_mode->crtc_clock;
+		int htotal = pipe_mode->crtc_htotal;
+		int hdisplay = enabled->config->pipe_src_w;
+		int cpp;
+		int entries;
 
-		अगर (IS_I915GM(dev_priv) || IS_I945GM(dev_priv))
+		if (IS_I915GM(dev_priv) || IS_I945GM(dev_priv))
 			cpp = 4;
-		अन्यथा
-			cpp = fb->क्रमmat->cpp[0];
+		else
+			cpp = fb->format->cpp[0];
 
-		entries = पूर्णांकel_wm_method2(घड़ी, htotal, hdisplay, cpp,
+		entries = intel_wm_method2(clock, htotal, hdisplay, cpp,
 					   sr_latency_ns / 100);
 		entries = DIV_ROUND_UP(entries, wm_info->cacheline_size);
 		drm_dbg_kms(&dev_priv->drm,
 			    "self-refresh entries: %d\n", entries);
-		srwm = wm_info->fअगरo_size - entries;
-		अगर (srwm < 0)
+		srwm = wm_info->fifo_size - entries;
+		if (srwm < 0)
 			srwm = 1;
 
-		अगर (IS_I945G(dev_priv) || IS_I945GM(dev_priv))
-			पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, FW_BLC_SELF,
+		if (IS_I945G(dev_priv) || IS_I945GM(dev_priv))
+			intel_uncore_write(&dev_priv->uncore, FW_BLC_SELF,
 				   FW_BLC_SELF_FIFO_MASK | (srwm & 0xff));
-		अन्यथा
-			पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, FW_BLC_SELF, srwm & 0x3f);
-	पूर्ण
+		else
+			intel_uncore_write(&dev_priv->uncore, FW_BLC_SELF, srwm & 0x3f);
+	}
 
 	drm_dbg_kms(&dev_priv->drm,
 		    "Setting FIFO watermarks - A: %d, B: %d, C: %d, SR %d\n",
@@ -2466,321 +2465,321 @@ out:
 	fwater_lo = fwater_lo | (1 << 24) | (1 << 8);
 	fwater_hi = fwater_hi | (1 << 8);
 
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, FW_BLC, fwater_lo);
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, FW_BLC2, fwater_hi);
+	intel_uncore_write(&dev_priv->uncore, FW_BLC, fwater_lo);
+	intel_uncore_write(&dev_priv->uncore, FW_BLC2, fwater_hi);
 
-	अगर (enabled)
-		पूर्णांकel_set_memory_cxsr(dev_priv, true);
-पूर्ण
+	if (enabled)
+		intel_set_memory_cxsr(dev_priv, true);
+}
 
-अटल व्योम i845_update_wm(काष्ठा पूर्णांकel_crtc *unused_crtc)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(unused_crtc->base.dev);
-	काष्ठा पूर्णांकel_crtc *crtc;
-	स्थिर काष्ठा drm_display_mode *pipe_mode;
+static void i845_update_wm(struct intel_crtc *unused_crtc)
+{
+	struct drm_i915_private *dev_priv = to_i915(unused_crtc->base.dev);
+	struct intel_crtc *crtc;
+	const struct drm_display_mode *pipe_mode;
 	u32 fwater_lo;
-	पूर्णांक planea_wm;
+	int planea_wm;
 
 	crtc = single_enabled_crtc(dev_priv);
-	अगर (crtc == शून्य)
-		वापस;
+	if (crtc == NULL)
+		return;
 
 	pipe_mode = &crtc->config->hw.pipe_mode;
-	planea_wm = पूर्णांकel_calculate_wm(pipe_mode->crtc_घड़ी,
+	planea_wm = intel_calculate_wm(pipe_mode->crtc_clock,
 				       &i845_wm_info,
-				       dev_priv->display.get_fअगरo_size(dev_priv, PLANE_A),
+				       dev_priv->display.get_fifo_size(dev_priv, PLANE_A),
 				       4, pessimal_latency_ns);
-	fwater_lo = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, FW_BLC) & ~0xfff;
+	fwater_lo = intel_uncore_read(&dev_priv->uncore, FW_BLC) & ~0xfff;
 	fwater_lo |= (3<<8) | planea_wm;
 
 	drm_dbg_kms(&dev_priv->drm,
 		    "Setting FIFO watermarks - A: %d\n", planea_wm);
 
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, FW_BLC, fwater_lo);
-पूर्ण
+	intel_uncore_write(&dev_priv->uncore, FW_BLC, fwater_lo);
+}
 
 /* latency must be in 0.1us units. */
-अटल अचिन्हित पूर्णांक ilk_wm_method1(अचिन्हित पूर्णांक pixel_rate,
-				   अचिन्हित पूर्णांक cpp,
-				   अचिन्हित पूर्णांक latency)
-अणु
-	अचिन्हित पूर्णांक ret;
+static unsigned int ilk_wm_method1(unsigned int pixel_rate,
+				   unsigned int cpp,
+				   unsigned int latency)
+{
+	unsigned int ret;
 
-	ret = पूर्णांकel_wm_method1(pixel_rate, cpp, latency);
+	ret = intel_wm_method1(pixel_rate, cpp, latency);
 	ret = DIV_ROUND_UP(ret, 64) + 2;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* latency must be in 0.1us units. */
-अटल अचिन्हित पूर्णांक ilk_wm_method2(अचिन्हित पूर्णांक pixel_rate,
-				   अचिन्हित पूर्णांक htotal,
-				   अचिन्हित पूर्णांक width,
-				   अचिन्हित पूर्णांक cpp,
-				   अचिन्हित पूर्णांक latency)
-अणु
-	अचिन्हित पूर्णांक ret;
+static unsigned int ilk_wm_method2(unsigned int pixel_rate,
+				   unsigned int htotal,
+				   unsigned int width,
+				   unsigned int cpp,
+				   unsigned int latency)
+{
+	unsigned int ret;
 
-	ret = पूर्णांकel_wm_method2(pixel_rate, htotal,
+	ret = intel_wm_method2(pixel_rate, htotal,
 			       width, cpp, latency);
 	ret = DIV_ROUND_UP(ret, 64) + 2;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u32 ilk_wm_fbc(u32 pri_val, u32 horiz_pixels, u8 cpp)
-अणु
+static u32 ilk_wm_fbc(u32 pri_val, u32 horiz_pixels, u8 cpp)
+{
 	/*
 	 * Neither of these should be possible since this function shouldn't be
-	 * called अगर the CRTC is off or the plane is invisible.  But let's be
-	 * extra paranoid to aव्योम a potential भागide-by-zero अगर we screw up
-	 * अन्यथाwhere in the driver.
+	 * called if the CRTC is off or the plane is invisible.  But let's be
+	 * extra paranoid to avoid a potential divide-by-zero if we screw up
+	 * elsewhere in the driver.
 	 */
-	अगर (WARN_ON(!cpp))
-		वापस 0;
-	अगर (WARN_ON(!horiz_pixels))
-		वापस 0;
+	if (WARN_ON(!cpp))
+		return 0;
+	if (WARN_ON(!horiz_pixels))
+		return 0;
 
-	वापस DIV_ROUND_UP(pri_val * 64, horiz_pixels * cpp) + 2;
-पूर्ण
+	return DIV_ROUND_UP(pri_val * 64, horiz_pixels * cpp) + 2;
+}
 
-काष्ठा ilk_wm_maximums अणु
+struct ilk_wm_maximums {
 	u16 pri;
 	u16 spr;
 	u16 cur;
 	u16 fbc;
-पूर्ण;
+};
 
 /*
  * For both WM_PIPE and WM_LP.
  * mem_value must be in 0.1us units.
  */
-अटल u32 ilk_compute_pri_wm(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-			      स्थिर काष्ठा पूर्णांकel_plane_state *plane_state,
+static u32 ilk_compute_pri_wm(const struct intel_crtc_state *crtc_state,
+			      const struct intel_plane_state *plane_state,
 			      u32 mem_value, bool is_lp)
-अणु
+{
 	u32 method1, method2;
-	पूर्णांक cpp;
+	int cpp;
 
-	अगर (mem_value == 0)
-		वापस U32_MAX;
+	if (mem_value == 0)
+		return U32_MAX;
 
-	अगर (!पूर्णांकel_wm_plane_visible(crtc_state, plane_state))
-		वापस 0;
+	if (!intel_wm_plane_visible(crtc_state, plane_state))
+		return 0;
 
-	cpp = plane_state->hw.fb->क्रमmat->cpp[0];
+	cpp = plane_state->hw.fb->format->cpp[0];
 
 	method1 = ilk_wm_method1(crtc_state->pixel_rate, cpp, mem_value);
 
-	अगर (!is_lp)
-		वापस method1;
+	if (!is_lp)
+		return method1;
 
 	method2 = ilk_wm_method2(crtc_state->pixel_rate,
 				 crtc_state->hw.pipe_mode.crtc_htotal,
 				 drm_rect_width(&plane_state->uapi.dst),
 				 cpp, mem_value);
 
-	वापस min(method1, method2);
-पूर्ण
+	return min(method1, method2);
+}
 
 /*
  * For both WM_PIPE and WM_LP.
  * mem_value must be in 0.1us units.
  */
-अटल u32 ilk_compute_spr_wm(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-			      स्थिर काष्ठा पूर्णांकel_plane_state *plane_state,
+static u32 ilk_compute_spr_wm(const struct intel_crtc_state *crtc_state,
+			      const struct intel_plane_state *plane_state,
 			      u32 mem_value)
-अणु
+{
 	u32 method1, method2;
-	पूर्णांक cpp;
+	int cpp;
 
-	अगर (mem_value == 0)
-		वापस U32_MAX;
+	if (mem_value == 0)
+		return U32_MAX;
 
-	अगर (!पूर्णांकel_wm_plane_visible(crtc_state, plane_state))
-		वापस 0;
+	if (!intel_wm_plane_visible(crtc_state, plane_state))
+		return 0;
 
-	cpp = plane_state->hw.fb->क्रमmat->cpp[0];
+	cpp = plane_state->hw.fb->format->cpp[0];
 
 	method1 = ilk_wm_method1(crtc_state->pixel_rate, cpp, mem_value);
 	method2 = ilk_wm_method2(crtc_state->pixel_rate,
 				 crtc_state->hw.pipe_mode.crtc_htotal,
 				 drm_rect_width(&plane_state->uapi.dst),
 				 cpp, mem_value);
-	वापस min(method1, method2);
-पूर्ण
+	return min(method1, method2);
+}
 
 /*
  * For both WM_PIPE and WM_LP.
  * mem_value must be in 0.1us units.
  */
-अटल u32 ilk_compute_cur_wm(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-			      स्थिर काष्ठा पूर्णांकel_plane_state *plane_state,
+static u32 ilk_compute_cur_wm(const struct intel_crtc_state *crtc_state,
+			      const struct intel_plane_state *plane_state,
 			      u32 mem_value)
-अणु
-	पूर्णांक cpp;
+{
+	int cpp;
 
-	अगर (mem_value == 0)
-		वापस U32_MAX;
+	if (mem_value == 0)
+		return U32_MAX;
 
-	अगर (!पूर्णांकel_wm_plane_visible(crtc_state, plane_state))
-		वापस 0;
+	if (!intel_wm_plane_visible(crtc_state, plane_state))
+		return 0;
 
-	cpp = plane_state->hw.fb->क्रमmat->cpp[0];
+	cpp = plane_state->hw.fb->format->cpp[0];
 
-	वापस ilk_wm_method2(crtc_state->pixel_rate,
+	return ilk_wm_method2(crtc_state->pixel_rate,
 			      crtc_state->hw.pipe_mode.crtc_htotal,
 			      drm_rect_width(&plane_state->uapi.dst),
 			      cpp, mem_value);
-पूर्ण
+}
 
-/* Only क्रम WM_LP. */
-अटल u32 ilk_compute_fbc_wm(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-			      स्थिर काष्ठा पूर्णांकel_plane_state *plane_state,
+/* Only for WM_LP. */
+static u32 ilk_compute_fbc_wm(const struct intel_crtc_state *crtc_state,
+			      const struct intel_plane_state *plane_state,
 			      u32 pri_val)
-अणु
-	पूर्णांक cpp;
+{
+	int cpp;
 
-	अगर (!पूर्णांकel_wm_plane_visible(crtc_state, plane_state))
-		वापस 0;
+	if (!intel_wm_plane_visible(crtc_state, plane_state))
+		return 0;
 
-	cpp = plane_state->hw.fb->क्रमmat->cpp[0];
+	cpp = plane_state->hw.fb->format->cpp[0];
 
-	वापस ilk_wm_fbc(pri_val, drm_rect_width(&plane_state->uapi.dst),
+	return ilk_wm_fbc(pri_val, drm_rect_width(&plane_state->uapi.dst),
 			  cpp);
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक
-ilk_display_fअगरo_size(स्थिर काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	अगर (DISPLAY_VER(dev_priv) >= 8)
-		वापस 3072;
-	अन्यथा अगर (DISPLAY_VER(dev_priv) >= 7)
-		वापस 768;
-	अन्यथा
-		वापस 512;
-पूर्ण
+static unsigned int
+ilk_display_fifo_size(const struct drm_i915_private *dev_priv)
+{
+	if (DISPLAY_VER(dev_priv) >= 8)
+		return 3072;
+	else if (DISPLAY_VER(dev_priv) >= 7)
+		return 768;
+	else
+		return 512;
+}
 
-अटल अचिन्हित पूर्णांक
-ilk_plane_wm_reg_max(स्थिर काष्ठा drm_i915_निजी *dev_priv,
-		     पूर्णांक level, bool is_sprite)
-अणु
-	अगर (DISPLAY_VER(dev_priv) >= 8)
+static unsigned int
+ilk_plane_wm_reg_max(const struct drm_i915_private *dev_priv,
+		     int level, bool is_sprite)
+{
+	if (DISPLAY_VER(dev_priv) >= 8)
 		/* BDW primary/sprite plane watermarks */
-		वापस level == 0 ? 255 : 2047;
-	अन्यथा अगर (DISPLAY_VER(dev_priv) >= 7)
+		return level == 0 ? 255 : 2047;
+	else if (DISPLAY_VER(dev_priv) >= 7)
 		/* IVB/HSW primary/sprite plane watermarks */
-		वापस level == 0 ? 127 : 1023;
-	अन्यथा अगर (!is_sprite)
+		return level == 0 ? 127 : 1023;
+	else if (!is_sprite)
 		/* ILK/SNB primary plane watermarks */
-		वापस level == 0 ? 127 : 511;
-	अन्यथा
+		return level == 0 ? 127 : 511;
+	else
 		/* ILK/SNB sprite plane watermarks */
-		वापस level == 0 ? 63 : 255;
-पूर्ण
+		return level == 0 ? 63 : 255;
+}
 
-अटल अचिन्हित पूर्णांक
-ilk_cursor_wm_reg_max(स्थिर काष्ठा drm_i915_निजी *dev_priv, पूर्णांक level)
-अणु
-	अगर (DISPLAY_VER(dev_priv) >= 7)
-		वापस level == 0 ? 63 : 255;
-	अन्यथा
-		वापस level == 0 ? 31 : 63;
-पूर्ण
+static unsigned int
+ilk_cursor_wm_reg_max(const struct drm_i915_private *dev_priv, int level)
+{
+	if (DISPLAY_VER(dev_priv) >= 7)
+		return level == 0 ? 63 : 255;
+	else
+		return level == 0 ? 31 : 63;
+}
 
-अटल अचिन्हित पूर्णांक ilk_fbc_wm_reg_max(स्थिर काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	अगर (DISPLAY_VER(dev_priv) >= 8)
-		वापस 31;
-	अन्यथा
-		वापस 15;
-पूर्ण
+static unsigned int ilk_fbc_wm_reg_max(const struct drm_i915_private *dev_priv)
+{
+	if (DISPLAY_VER(dev_priv) >= 8)
+		return 31;
+	else
+		return 15;
+}
 
 /* Calculate the maximum primary/sprite plane watermark */
-अटल अचिन्हित पूर्णांक ilk_plane_wm_max(स्थिर काष्ठा drm_i915_निजी *dev_priv,
-				     पूर्णांक level,
-				     स्थिर काष्ठा पूर्णांकel_wm_config *config,
-				     क्रमागत पूर्णांकel_ddb_partitioning ddb_partitioning,
+static unsigned int ilk_plane_wm_max(const struct drm_i915_private *dev_priv,
+				     int level,
+				     const struct intel_wm_config *config,
+				     enum intel_ddb_partitioning ddb_partitioning,
 				     bool is_sprite)
-अणु
-	अचिन्हित पूर्णांक fअगरo_size = ilk_display_fअगरo_size(dev_priv);
+{
+	unsigned int fifo_size = ilk_display_fifo_size(dev_priv);
 
-	/* अगर sprites aren't enabled, sprites get nothing */
-	अगर (is_sprite && !config->sprites_enabled)
-		वापस 0;
+	/* if sprites aren't enabled, sprites get nothing */
+	if (is_sprite && !config->sprites_enabled)
+		return 0;
 
 	/* HSW allows LP1+ watermarks even with multiple pipes */
-	अगर (level == 0 || config->num_pipes_active > 1) अणु
-		fअगरo_size /= INTEL_NUM_PIPES(dev_priv);
+	if (level == 0 || config->num_pipes_active > 1) {
+		fifo_size /= INTEL_NUM_PIPES(dev_priv);
 
 		/*
 		 * For some reason the non self refresh
 		 * FIFO size is only half of the self
 		 * refresh FIFO size on ILK/SNB.
 		 */
-		अगर (DISPLAY_VER(dev_priv) <= 6)
-			fअगरo_size /= 2;
-	पूर्ण
+		if (DISPLAY_VER(dev_priv) <= 6)
+			fifo_size /= 2;
+	}
 
-	अगर (config->sprites_enabled) अणु
+	if (config->sprites_enabled) {
 		/* level 0 is always calculated with 1:1 split */
-		अगर (level > 0 && ddb_partitioning == INTEL_DDB_PART_5_6) अणु
-			अगर (is_sprite)
-				fअगरo_size *= 5;
-			fअगरo_size /= 6;
-		पूर्ण अन्यथा अणु
-			fअगरo_size /= 2;
-		पूर्ण
-	पूर्ण
+		if (level > 0 && ddb_partitioning == INTEL_DDB_PART_5_6) {
+			if (is_sprite)
+				fifo_size *= 5;
+			fifo_size /= 6;
+		} else {
+			fifo_size /= 2;
+		}
+	}
 
-	/* clamp to max that the रेजिस्टरs can hold */
-	वापस min(fअगरo_size, ilk_plane_wm_reg_max(dev_priv, level, is_sprite));
-पूर्ण
+	/* clamp to max that the registers can hold */
+	return min(fifo_size, ilk_plane_wm_reg_max(dev_priv, level, is_sprite));
+}
 
 /* Calculate the maximum cursor plane watermark */
-अटल अचिन्हित पूर्णांक ilk_cursor_wm_max(स्थिर काष्ठा drm_i915_निजी *dev_priv,
-				      पूर्णांक level,
-				      स्थिर काष्ठा पूर्णांकel_wm_config *config)
-अणु
+static unsigned int ilk_cursor_wm_max(const struct drm_i915_private *dev_priv,
+				      int level,
+				      const struct intel_wm_config *config)
+{
 	/* HSW LP1+ watermarks w/ multiple pipes */
-	अगर (level > 0 && config->num_pipes_active > 1)
-		वापस 64;
+	if (level > 0 && config->num_pipes_active > 1)
+		return 64;
 
-	/* otherwise just report max that रेजिस्टरs can hold */
-	वापस ilk_cursor_wm_reg_max(dev_priv, level);
-पूर्ण
+	/* otherwise just report max that registers can hold */
+	return ilk_cursor_wm_reg_max(dev_priv, level);
+}
 
-अटल व्योम ilk_compute_wm_maximums(स्थिर काष्ठा drm_i915_निजी *dev_priv,
-				    पूर्णांक level,
-				    स्थिर काष्ठा पूर्णांकel_wm_config *config,
-				    क्रमागत पूर्णांकel_ddb_partitioning ddb_partitioning,
-				    काष्ठा ilk_wm_maximums *max)
-अणु
+static void ilk_compute_wm_maximums(const struct drm_i915_private *dev_priv,
+				    int level,
+				    const struct intel_wm_config *config,
+				    enum intel_ddb_partitioning ddb_partitioning,
+				    struct ilk_wm_maximums *max)
+{
 	max->pri = ilk_plane_wm_max(dev_priv, level, config, ddb_partitioning, false);
 	max->spr = ilk_plane_wm_max(dev_priv, level, config, ddb_partitioning, true);
 	max->cur = ilk_cursor_wm_max(dev_priv, level, config);
 	max->fbc = ilk_fbc_wm_reg_max(dev_priv);
-पूर्ण
+}
 
-अटल व्योम ilk_compute_wm_reg_maximums(स्थिर काष्ठा drm_i915_निजी *dev_priv,
-					पूर्णांक level,
-					काष्ठा ilk_wm_maximums *max)
-अणु
+static void ilk_compute_wm_reg_maximums(const struct drm_i915_private *dev_priv,
+					int level,
+					struct ilk_wm_maximums *max)
+{
 	max->pri = ilk_plane_wm_reg_max(dev_priv, level, false);
 	max->spr = ilk_plane_wm_reg_max(dev_priv, level, true);
 	max->cur = ilk_cursor_wm_reg_max(dev_priv, level);
 	max->fbc = ilk_fbc_wm_reg_max(dev_priv);
-पूर्ण
+}
 
-अटल bool ilk_validate_wm_level(पूर्णांक level,
-				  स्थिर काष्ठा ilk_wm_maximums *max,
-				  काष्ठा पूर्णांकel_wm_level *result)
-अणु
+static bool ilk_validate_wm_level(int level,
+				  const struct ilk_wm_maximums *max,
+				  struct intel_wm_level *result)
+{
 	bool ret;
 
-	/* alपढ़ोy determined to be invalid? */
-	अगर (!result->enable)
-		वापस false;
+	/* already determined to be invalid? */
+	if (!result->enable)
+		return false;
 
 	result->enable = result->pri_val <= max->pri &&
 			 result->spr_val <= max->spr &&
@@ -2790,17 +2789,17 @@ ilk_cursor_wm_reg_max(स्थिर काष्ठा drm_i915_निजी *
 
 	/*
 	 * HACK until we can pre-compute everything,
-	 * and thus fail gracefully अगर LP0 watermarks
+	 * and thus fail gracefully if LP0 watermarks
 	 * are exceeded...
 	 */
-	अगर (level == 0 && !result->enable) अणु
-		अगर (result->pri_val > max->pri)
+	if (level == 0 && !result->enable) {
+		if (result->pri_val > max->pri)
 			DRM_DEBUG_KMS("Primary WM%d too large %u (max %u)\n",
 				      level, result->pri_val, max->pri);
-		अगर (result->spr_val > max->spr)
+		if (result->spr_val > max->spr)
 			DRM_DEBUG_KMS("Sprite WM%d too large %u (max %u)\n",
 				      level, result->spr_val, max->spr);
-		अगर (result->cur_val > max->cur)
+		if (result->cur_val > max->cur)
 			DRM_DEBUG_KMS("Cursor WM%d too large %u (max %u)\n",
 				      level, result->cur_val, max->cur);
 
@@ -2808,67 +2807,67 @@ ilk_cursor_wm_reg_max(स्थिर काष्ठा drm_i915_निजी *
 		result->spr_val = min_t(u32, result->spr_val, max->spr);
 		result->cur_val = min_t(u32, result->cur_val, max->cur);
 		result->enable = true;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम ilk_compute_wm_level(स्थिर काष्ठा drm_i915_निजी *dev_priv,
-				 स्थिर काष्ठा पूर्णांकel_crtc *crtc,
-				 पूर्णांक level,
-				 काष्ठा पूर्णांकel_crtc_state *crtc_state,
-				 स्थिर काष्ठा पूर्णांकel_plane_state *pristate,
-				 स्थिर काष्ठा पूर्णांकel_plane_state *sprstate,
-				 स्थिर काष्ठा पूर्णांकel_plane_state *curstate,
-				 काष्ठा पूर्णांकel_wm_level *result)
-अणु
+static void ilk_compute_wm_level(const struct drm_i915_private *dev_priv,
+				 const struct intel_crtc *crtc,
+				 int level,
+				 struct intel_crtc_state *crtc_state,
+				 const struct intel_plane_state *pristate,
+				 const struct intel_plane_state *sprstate,
+				 const struct intel_plane_state *curstate,
+				 struct intel_wm_level *result)
+{
 	u16 pri_latency = dev_priv->wm.pri_latency[level];
 	u16 spr_latency = dev_priv->wm.spr_latency[level];
 	u16 cur_latency = dev_priv->wm.cur_latency[level];
 
 	/* WM1+ latency values stored in 0.5us units */
-	अगर (level > 0) अणु
+	if (level > 0) {
 		pri_latency *= 5;
 		spr_latency *= 5;
 		cur_latency *= 5;
-	पूर्ण
+	}
 
-	अगर (pristate) अणु
+	if (pristate) {
 		result->pri_val = ilk_compute_pri_wm(crtc_state, pristate,
 						     pri_latency, level);
 		result->fbc_val = ilk_compute_fbc_wm(crtc_state, pristate, result->pri_val);
-	पूर्ण
+	}
 
-	अगर (sprstate)
+	if (sprstate)
 		result->spr_val = ilk_compute_spr_wm(crtc_state, sprstate, spr_latency);
 
-	अगर (curstate)
+	if (curstate)
 		result->cur_val = ilk_compute_cur_wm(crtc_state, curstate, cur_latency);
 
 	result->enable = true;
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_पढ़ो_wm_latency(काष्ठा drm_i915_निजी *dev_priv,
+static void intel_read_wm_latency(struct drm_i915_private *dev_priv,
 				  u16 wm[8])
-अणु
-	काष्ठा पूर्णांकel_uncore *uncore = &dev_priv->uncore;
+{
+	struct intel_uncore *uncore = &dev_priv->uncore;
 
-	अगर (DISPLAY_VER(dev_priv) >= 9) अणु
+	if (DISPLAY_VER(dev_priv) >= 9) {
 		u32 val;
-		पूर्णांक ret, i;
-		पूर्णांक level, max_level = ilk_wm_max_level(dev_priv);
+		int ret, i;
+		int level, max_level = ilk_wm_max_level(dev_priv);
 
-		/* पढ़ो the first set of memory latencies[0:3] */
-		val = 0; /* data0 to be programmed to 0 क्रम first set */
-		ret = sandybridge_pcode_पढ़ो(dev_priv,
+		/* read the first set of memory latencies[0:3] */
+		val = 0; /* data0 to be programmed to 0 for first set */
+		ret = sandybridge_pcode_read(dev_priv,
 					     GEN9_PCODE_READ_MEM_LATENCY,
-					     &val, शून्य);
+					     &val, NULL);
 
-		अगर (ret) अणु
+		if (ret) {
 			drm_err(&dev_priv->drm,
 				"SKL Mailbox read error = %d\n", ret);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		wm[0] = val & GEN9_MEM_LATENCY_LEVEL_MASK;
 		wm[1] = (val >> GEN9_MEM_LATENCY_LEVEL_1_5_SHIFT) &
@@ -2878,16 +2877,16 @@ ilk_cursor_wm_reg_max(स्थिर काष्ठा drm_i915_निजी *
 		wm[3] = (val >> GEN9_MEM_LATENCY_LEVEL_3_7_SHIFT) &
 				GEN9_MEM_LATENCY_LEVEL_MASK;
 
-		/* पढ़ो the second set of memory latencies[4:7] */
-		val = 1; /* data0 to be programmed to 1 क्रम second set */
-		ret = sandybridge_pcode_पढ़ो(dev_priv,
+		/* read the second set of memory latencies[4:7] */
+		val = 1; /* data0 to be programmed to 1 for second set */
+		ret = sandybridge_pcode_read(dev_priv,
 					     GEN9_PCODE_READ_MEM_LATENCY,
-					     &val, शून्य);
-		अगर (ret) अणु
+					     &val, NULL);
+		if (ret) {
 			drm_err(&dev_priv->drm,
 				"SKL Mailbox read error = %d\n", ret);
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		wm[4] = val & GEN9_MEM_LATENCY_LEVEL_MASK;
 		wm[5] = (val >> GEN9_MEM_LATENCY_LEVEL_1_5_SHIFT) &
@@ -2902,182 +2901,182 @@ ilk_cursor_wm_reg_max(स्थिर काष्ठा drm_i915_निजी *
 		 * need to be disabled. We make sure to sanitize the values out
 		 * of the punit to satisfy this requirement.
 		 */
-		क्रम (level = 1; level <= max_level; level++) अणु
-			अगर (wm[level] == 0) अणु
-				क्रम (i = level + 1; i <= max_level; i++)
+		for (level = 1; level <= max_level; level++) {
+			if (wm[level] == 0) {
+				for (i = level + 1; i <= max_level; i++)
 					wm[i] = 0;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
 		/*
 		 * WaWmMemoryReadLatency:skl+,glk
 		 *
-		 * punit करोesn't take पूर्णांकo account the पढ़ो latency so we need
+		 * punit doesn't take into account the read latency so we need
 		 * to add 2us to the various latency levels we retrieve from the
 		 * punit when level 0 response data us 0us.
 		 */
-		अगर (wm[0] == 0) अणु
+		if (wm[0] == 0) {
 			wm[0] += 2;
-			क्रम (level = 1; level <= max_level; level++) अणु
-				अगर (wm[level] == 0)
-					अवरोध;
+			for (level = 1; level <= max_level; level++) {
+				if (wm[level] == 0)
+					break;
 				wm[level] += 2;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		/*
-		 * WA Level-0 adjusपंचांगent क्रम 16GB DIMMs: SKL+
+		 * WA Level-0 adjustment for 16GB DIMMs: SKL+
 		 * If we could not get dimm info enable this WA to prevent from
 		 * any underrun. If not able to get Dimm info assume 16GB dimm
-		 * to aव्योम any underrun.
+		 * to avoid any underrun.
 		 */
-		अगर (dev_priv->dram_info.wm_lv_0_adjust_needed)
+		if (dev_priv->dram_info.wm_lv_0_adjust_needed)
 			wm[0] += 1;
 
-	पूर्ण अन्यथा अगर (IS_HASWELL(dev_priv) || IS_BROADWELL(dev_priv)) अणु
-		u64 sskpd = पूर्णांकel_uncore_पढ़ो64(uncore, MCH_SSKPD);
+	} else if (IS_HASWELL(dev_priv) || IS_BROADWELL(dev_priv)) {
+		u64 sskpd = intel_uncore_read64(uncore, MCH_SSKPD);
 
 		wm[0] = (sskpd >> 56) & 0xFF;
-		अगर (wm[0] == 0)
+		if (wm[0] == 0)
 			wm[0] = sskpd & 0xF;
 		wm[1] = (sskpd >> 4) & 0xFF;
 		wm[2] = (sskpd >> 12) & 0xFF;
 		wm[3] = (sskpd >> 20) & 0x1FF;
 		wm[4] = (sskpd >> 32) & 0x1FF;
-	पूर्ण अन्यथा अगर (DISPLAY_VER(dev_priv) >= 6) अणु
-		u32 sskpd = पूर्णांकel_uncore_पढ़ो(uncore, MCH_SSKPD);
+	} else if (DISPLAY_VER(dev_priv) >= 6) {
+		u32 sskpd = intel_uncore_read(uncore, MCH_SSKPD);
 
 		wm[0] = (sskpd >> SSKPD_WM0_SHIFT) & SSKPD_WM_MASK;
 		wm[1] = (sskpd >> SSKPD_WM1_SHIFT) & SSKPD_WM_MASK;
 		wm[2] = (sskpd >> SSKPD_WM2_SHIFT) & SSKPD_WM_MASK;
 		wm[3] = (sskpd >> SSKPD_WM3_SHIFT) & SSKPD_WM_MASK;
-	पूर्ण अन्यथा अगर (DISPLAY_VER(dev_priv) >= 5) अणु
-		u32 mltr = पूर्णांकel_uncore_पढ़ो(uncore, MLTR_ILK);
+	} else if (DISPLAY_VER(dev_priv) >= 5) {
+		u32 mltr = intel_uncore_read(uncore, MLTR_ILK);
 
 		/* ILK primary LP0 latency is 700 ns */
 		wm[0] = 7;
 		wm[1] = (mltr >> MLTR_WM1_SHIFT) & ILK_SRLT_MASK;
 		wm[2] = (mltr >> MLTR_WM2_SHIFT) & ILK_SRLT_MASK;
-	पूर्ण अन्यथा अणु
+	} else {
 		MISSING_CASE(INTEL_DEVID(dev_priv));
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम पूर्णांकel_fixup_spr_wm_latency(काष्ठा drm_i915_निजी *dev_priv,
+static void intel_fixup_spr_wm_latency(struct drm_i915_private *dev_priv,
 				       u16 wm[5])
-अणु
+{
 	/* ILK sprite LP0 latency is 1300 ns */
-	अगर (IS_DISPLAY_VER(dev_priv, 5))
+	if (IS_DISPLAY_VER(dev_priv, 5))
 		wm[0] = 13;
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_fixup_cur_wm_latency(काष्ठा drm_i915_निजी *dev_priv,
+static void intel_fixup_cur_wm_latency(struct drm_i915_private *dev_priv,
 				       u16 wm[5])
-अणु
+{
 	/* ILK cursor LP0 latency is 1300 ns */
-	अगर (IS_DISPLAY_VER(dev_priv, 5))
+	if (IS_DISPLAY_VER(dev_priv, 5))
 		wm[0] = 13;
-पूर्ण
+}
 
-पूर्णांक ilk_wm_max_level(स्थिर काष्ठा drm_i915_निजी *dev_priv)
-अणु
+int ilk_wm_max_level(const struct drm_i915_private *dev_priv)
+{
 	/* how many WM levels are we expecting */
-	अगर (DISPLAY_VER(dev_priv) >= 9)
-		वापस 7;
-	अन्यथा अगर (IS_HASWELL(dev_priv) || IS_BROADWELL(dev_priv))
-		वापस 4;
-	अन्यथा अगर (DISPLAY_VER(dev_priv) >= 6)
-		वापस 3;
-	अन्यथा
-		वापस 2;
-पूर्ण
+	if (DISPLAY_VER(dev_priv) >= 9)
+		return 7;
+	else if (IS_HASWELL(dev_priv) || IS_BROADWELL(dev_priv))
+		return 4;
+	else if (DISPLAY_VER(dev_priv) >= 6)
+		return 3;
+	else
+		return 2;
+}
 
-अटल व्योम पूर्णांकel_prपूर्णांक_wm_latency(काष्ठा drm_i915_निजी *dev_priv,
-				   स्थिर अक्षर *name,
-				   स्थिर u16 wm[])
-अणु
-	पूर्णांक level, max_level = ilk_wm_max_level(dev_priv);
+static void intel_print_wm_latency(struct drm_i915_private *dev_priv,
+				   const char *name,
+				   const u16 wm[])
+{
+	int level, max_level = ilk_wm_max_level(dev_priv);
 
-	क्रम (level = 0; level <= max_level; level++) अणु
-		अचिन्हित पूर्णांक latency = wm[level];
+	for (level = 0; level <= max_level; level++) {
+		unsigned int latency = wm[level];
 
-		अगर (latency == 0) अणु
+		if (latency == 0) {
 			drm_dbg_kms(&dev_priv->drm,
 				    "%s WM%d latency not provided\n",
 				    name, level);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/*
 		 * - latencies are in us on gen9.
-		 * - beक्रमe then, WM1+ latency values are in 0.5us units
+		 * - before then, WM1+ latency values are in 0.5us units
 		 */
-		अगर (DISPLAY_VER(dev_priv) >= 9)
+		if (DISPLAY_VER(dev_priv) >= 9)
 			latency *= 10;
-		अन्यथा अगर (level > 0)
+		else if (level > 0)
 			latency *= 5;
 
 		drm_dbg_kms(&dev_priv->drm,
 			    "%s WM%d latency %u (%u.%u usec)\n", name, level,
 			    wm[level], latency / 10, latency % 10);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल bool ilk_increase_wm_latency(काष्ठा drm_i915_निजी *dev_priv,
+static bool ilk_increase_wm_latency(struct drm_i915_private *dev_priv,
 				    u16 wm[5], u16 min)
-अणु
-	पूर्णांक level, max_level = ilk_wm_max_level(dev_priv);
+{
+	int level, max_level = ilk_wm_max_level(dev_priv);
 
-	अगर (wm[0] >= min)
-		वापस false;
+	if (wm[0] >= min)
+		return false;
 
 	wm[0] = max(wm[0], min);
-	क्रम (level = 1; level <= max_level; level++)
+	for (level = 1; level <= max_level; level++)
 		wm[level] = max_t(u16, wm[level], DIV_ROUND_UP(min, 5));
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल व्योम snb_wm_latency_quirk(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void snb_wm_latency_quirk(struct drm_i915_private *dev_priv)
+{
 	bool changed;
 
 	/*
 	 * The BIOS provided WM memory latency values are often
-	 * inadequate क्रम high resolution displays. Adjust them.
+	 * inadequate for high resolution displays. Adjust them.
 	 */
 	changed = ilk_increase_wm_latency(dev_priv, dev_priv->wm.pri_latency, 12) |
 		ilk_increase_wm_latency(dev_priv, dev_priv->wm.spr_latency, 12) |
 		ilk_increase_wm_latency(dev_priv, dev_priv->wm.cur_latency, 12);
 
-	अगर (!changed)
-		वापस;
+	if (!changed)
+		return;
 
 	drm_dbg_kms(&dev_priv->drm,
 		    "WM latency values increased to avoid potential underruns\n");
-	पूर्णांकel_prपूर्णांक_wm_latency(dev_priv, "Primary", dev_priv->wm.pri_latency);
-	पूर्णांकel_prपूर्णांक_wm_latency(dev_priv, "Sprite", dev_priv->wm.spr_latency);
-	पूर्णांकel_prपूर्णांक_wm_latency(dev_priv, "Cursor", dev_priv->wm.cur_latency);
-पूर्ण
+	intel_print_wm_latency(dev_priv, "Primary", dev_priv->wm.pri_latency);
+	intel_print_wm_latency(dev_priv, "Sprite", dev_priv->wm.spr_latency);
+	intel_print_wm_latency(dev_priv, "Cursor", dev_priv->wm.cur_latency);
+}
 
-अटल व्योम snb_wm_lp3_irq_quirk(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void snb_wm_lp3_irq_quirk(struct drm_i915_private *dev_priv)
+{
 	/*
 	 * On some SNB machines (Thinkpad X220 Tablet at least)
-	 * LP3 usage can cause vblank पूर्णांकerrupts to be lost.
+	 * LP3 usage can cause vblank interrupts to be lost.
 	 * The DEIIR bit will go high but it looks like the CPU
-	 * never माला_लो पूर्णांकerrupted.
+	 * never gets interrupted.
 	 *
-	 * It's not clear whether other पूर्णांकerrupt source could
-	 * be affected or अगर this is somehow limited to vblank
-	 * पूर्णांकerrupts only. To play it safe we disable LP3
+	 * It's not clear whether other interrupt source could
+	 * be affected or if this is somehow limited to vblank
+	 * interrupts only. To play it safe we disable LP3
 	 * watermarks entirely.
 	 */
-	अगर (dev_priv->wm.pri_latency[3] == 0 &&
+	if (dev_priv->wm.pri_latency[3] == 0 &&
 	    dev_priv->wm.spr_latency[3] == 0 &&
 	    dev_priv->wm.cur_latency[3] == 0)
-		वापस;
+		return;
 
 	dev_priv->wm.pri_latency[3] = 0;
 	dev_priv->wm.spr_latency[3] = 0;
@@ -3085,175 +3084,175 @@ ilk_cursor_wm_reg_max(स्थिर काष्ठा drm_i915_निजी *
 
 	drm_dbg_kms(&dev_priv->drm,
 		    "LP3 watermarks disabled due to potential for lost interrupts\n");
-	पूर्णांकel_prपूर्णांक_wm_latency(dev_priv, "Primary", dev_priv->wm.pri_latency);
-	पूर्णांकel_prपूर्णांक_wm_latency(dev_priv, "Sprite", dev_priv->wm.spr_latency);
-	पूर्णांकel_prपूर्णांक_wm_latency(dev_priv, "Cursor", dev_priv->wm.cur_latency);
-पूर्ण
+	intel_print_wm_latency(dev_priv, "Primary", dev_priv->wm.pri_latency);
+	intel_print_wm_latency(dev_priv, "Sprite", dev_priv->wm.spr_latency);
+	intel_print_wm_latency(dev_priv, "Cursor", dev_priv->wm.cur_latency);
+}
 
-अटल व्योम ilk_setup_wm_latency(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	पूर्णांकel_पढ़ो_wm_latency(dev_priv, dev_priv->wm.pri_latency);
+static void ilk_setup_wm_latency(struct drm_i915_private *dev_priv)
+{
+	intel_read_wm_latency(dev_priv, dev_priv->wm.pri_latency);
 
-	स_नकल(dev_priv->wm.spr_latency, dev_priv->wm.pri_latency,
-	       माप(dev_priv->wm.pri_latency));
-	स_नकल(dev_priv->wm.cur_latency, dev_priv->wm.pri_latency,
-	       माप(dev_priv->wm.pri_latency));
+	memcpy(dev_priv->wm.spr_latency, dev_priv->wm.pri_latency,
+	       sizeof(dev_priv->wm.pri_latency));
+	memcpy(dev_priv->wm.cur_latency, dev_priv->wm.pri_latency,
+	       sizeof(dev_priv->wm.pri_latency));
 
-	पूर्णांकel_fixup_spr_wm_latency(dev_priv, dev_priv->wm.spr_latency);
-	पूर्णांकel_fixup_cur_wm_latency(dev_priv, dev_priv->wm.cur_latency);
+	intel_fixup_spr_wm_latency(dev_priv, dev_priv->wm.spr_latency);
+	intel_fixup_cur_wm_latency(dev_priv, dev_priv->wm.cur_latency);
 
-	पूर्णांकel_prपूर्णांक_wm_latency(dev_priv, "Primary", dev_priv->wm.pri_latency);
-	पूर्णांकel_prपूर्णांक_wm_latency(dev_priv, "Sprite", dev_priv->wm.spr_latency);
-	पूर्णांकel_prपूर्णांक_wm_latency(dev_priv, "Cursor", dev_priv->wm.cur_latency);
+	intel_print_wm_latency(dev_priv, "Primary", dev_priv->wm.pri_latency);
+	intel_print_wm_latency(dev_priv, "Sprite", dev_priv->wm.spr_latency);
+	intel_print_wm_latency(dev_priv, "Cursor", dev_priv->wm.cur_latency);
 
-	अगर (IS_DISPLAY_VER(dev_priv, 6)) अणु
+	if (IS_DISPLAY_VER(dev_priv, 6)) {
 		snb_wm_latency_quirk(dev_priv);
 		snb_wm_lp3_irq_quirk(dev_priv);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम skl_setup_wm_latency(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	पूर्णांकel_पढ़ो_wm_latency(dev_priv, dev_priv->wm.skl_latency);
-	पूर्णांकel_prपूर्णांक_wm_latency(dev_priv, "Gen9 Plane", dev_priv->wm.skl_latency);
-पूर्ण
+static void skl_setup_wm_latency(struct drm_i915_private *dev_priv)
+{
+	intel_read_wm_latency(dev_priv, dev_priv->wm.skl_latency);
+	intel_print_wm_latency(dev_priv, "Gen9 Plane", dev_priv->wm.skl_latency);
+}
 
-अटल bool ilk_validate_pipe_wm(स्थिर काष्ठा drm_i915_निजी *dev_priv,
-				 काष्ठा पूर्णांकel_pipe_wm *pipe_wm)
-अणु
+static bool ilk_validate_pipe_wm(const struct drm_i915_private *dev_priv,
+				 struct intel_pipe_wm *pipe_wm)
+{
 	/* LP0 watermark maximums depend on this pipe alone */
-	स्थिर काष्ठा पूर्णांकel_wm_config config = अणु
+	const struct intel_wm_config config = {
 		.num_pipes_active = 1,
 		.sprites_enabled = pipe_wm->sprites_enabled,
 		.sprites_scaled = pipe_wm->sprites_scaled,
-	पूर्ण;
-	काष्ठा ilk_wm_maximums max;
+	};
+	struct ilk_wm_maximums max;
 
 	/* LP0 watermarks always use 1/2 DDB partitioning */
 	ilk_compute_wm_maximums(dev_priv, 0, &config, INTEL_DDB_PART_1_2, &max);
 
 	/* At least LP0 must be valid */
-	अगर (!ilk_validate_wm_level(0, &max, &pipe_wm->wm[0])) अणु
+	if (!ilk_validate_wm_level(0, &max, &pipe_wm->wm[0])) {
 		drm_dbg_kms(&dev_priv->drm, "LP0 watermark invalid\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-/* Compute new watermarks क्रम the pipe */
-अटल पूर्णांक ilk_compute_pipe_wm(काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
-	काष्ठा पूर्णांकel_crtc *crtc = to_पूर्णांकel_crtc(crtc_state->uapi.crtc);
-	काष्ठा पूर्णांकel_pipe_wm *pipe_wm;
-	काष्ठा पूर्णांकel_plane *plane;
-	स्थिर काष्ठा पूर्णांकel_plane_state *plane_state;
-	स्थिर काष्ठा पूर्णांकel_plane_state *pristate = शून्य;
-	स्थिर काष्ठा पूर्णांकel_plane_state *sprstate = शून्य;
-	स्थिर काष्ठा पूर्णांकel_plane_state *curstate = शून्य;
-	पूर्णांक level, max_level = ilk_wm_max_level(dev_priv), usable_level;
-	काष्ठा ilk_wm_maximums max;
+/* Compute new watermarks for the pipe */
+static int ilk_compute_pipe_wm(struct intel_crtc_state *crtc_state)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
+	struct intel_crtc *crtc = to_intel_crtc(crtc_state->uapi.crtc);
+	struct intel_pipe_wm *pipe_wm;
+	struct intel_plane *plane;
+	const struct intel_plane_state *plane_state;
+	const struct intel_plane_state *pristate = NULL;
+	const struct intel_plane_state *sprstate = NULL;
+	const struct intel_plane_state *curstate = NULL;
+	int level, max_level = ilk_wm_max_level(dev_priv), usable_level;
+	struct ilk_wm_maximums max;
 
 	pipe_wm = &crtc_state->wm.ilk.optimal;
 
-	पूर्णांकel_atomic_crtc_state_क्रम_each_plane_state(plane, plane_state, crtc_state) अणु
-		अगर (plane->base.type == DRM_PLANE_TYPE_PRIMARY)
+	intel_atomic_crtc_state_for_each_plane_state(plane, plane_state, crtc_state) {
+		if (plane->base.type == DRM_PLANE_TYPE_PRIMARY)
 			pristate = plane_state;
-		अन्यथा अगर (plane->base.type == DRM_PLANE_TYPE_OVERLAY)
+		else if (plane->base.type == DRM_PLANE_TYPE_OVERLAY)
 			sprstate = plane_state;
-		अन्यथा अगर (plane->base.type == DRM_PLANE_TYPE_CURSOR)
+		else if (plane->base.type == DRM_PLANE_TYPE_CURSOR)
 			curstate = plane_state;
-	पूर्ण
+	}
 
 	pipe_wm->pipe_enabled = crtc_state->hw.active;
-	अगर (sprstate) अणु
+	if (sprstate) {
 		pipe_wm->sprites_enabled = sprstate->uapi.visible;
 		pipe_wm->sprites_scaled = sprstate->uapi.visible &&
 			(drm_rect_width(&sprstate->uapi.dst) != drm_rect_width(&sprstate->uapi.src) >> 16 ||
 			 drm_rect_height(&sprstate->uapi.dst) != drm_rect_height(&sprstate->uapi.src) >> 16);
-	पूर्ण
+	}
 
 	usable_level = max_level;
 
 	/* ILK/SNB: LP2+ watermarks only w/o sprites */
-	अगर (DISPLAY_VER(dev_priv) <= 6 && pipe_wm->sprites_enabled)
+	if (DISPLAY_VER(dev_priv) <= 6 && pipe_wm->sprites_enabled)
 		usable_level = 1;
 
 	/* ILK/SNB/IVB: LP1+ watermarks only w/o scaling */
-	अगर (pipe_wm->sprites_scaled)
+	if (pipe_wm->sprites_scaled)
 		usable_level = 0;
 
-	स_रखो(&pipe_wm->wm, 0, माप(pipe_wm->wm));
+	memset(&pipe_wm->wm, 0, sizeof(pipe_wm->wm));
 	ilk_compute_wm_level(dev_priv, crtc, 0, crtc_state,
 			     pristate, sprstate, curstate, &pipe_wm->wm[0]);
 
-	अगर (!ilk_validate_pipe_wm(dev_priv, pipe_wm))
-		वापस -EINVAL;
+	if (!ilk_validate_pipe_wm(dev_priv, pipe_wm))
+		return -EINVAL;
 
 	ilk_compute_wm_reg_maximums(dev_priv, 1, &max);
 
-	क्रम (level = 1; level <= usable_level; level++) अणु
-		काष्ठा पूर्णांकel_wm_level *wm = &pipe_wm->wm[level];
+	for (level = 1; level <= usable_level; level++) {
+		struct intel_wm_level *wm = &pipe_wm->wm[level];
 
 		ilk_compute_wm_level(dev_priv, crtc, level, crtc_state,
 				     pristate, sprstate, curstate, wm);
 
 		/*
 		 * Disable any watermark level that exceeds the
-		 * रेजिस्टर maximums since such watermarks are
+		 * register maximums since such watermarks are
 		 * always invalid.
 		 */
-		अगर (!ilk_validate_wm_level(level, &max, wm)) अणु
-			स_रखो(wm, 0, माप(*wm));
-			अवरोध;
-		पूर्ण
-	पूर्ण
+		if (!ilk_validate_wm_level(level, &max, wm)) {
+			memset(wm, 0, sizeof(*wm));
+			break;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Build a set of 'intermediate' watermark values that satisfy both the old
  * state and the new state.  These can be programmed to the hardware
  * immediately.
  */
-अटल पूर्णांक ilk_compute_पूर्णांकermediate_wm(काष्ठा पूर्णांकel_crtc_state *newstate)
-अणु
-	काष्ठा पूर्णांकel_crtc *पूर्णांकel_crtc = to_पूर्णांकel_crtc(newstate->uapi.crtc);
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(पूर्णांकel_crtc->base.dev);
-	काष्ठा पूर्णांकel_pipe_wm *a = &newstate->wm.ilk.पूर्णांकermediate;
-	काष्ठा पूर्णांकel_atomic_state *पूर्णांकel_state =
-		to_पूर्णांकel_atomic_state(newstate->uapi.state);
-	स्थिर काष्ठा पूर्णांकel_crtc_state *oldstate =
-		पूर्णांकel_atomic_get_old_crtc_state(पूर्णांकel_state, पूर्णांकel_crtc);
-	स्थिर काष्ठा पूर्णांकel_pipe_wm *b = &oldstate->wm.ilk.optimal;
-	पूर्णांक level, max_level = ilk_wm_max_level(dev_priv);
+static int ilk_compute_intermediate_wm(struct intel_crtc_state *newstate)
+{
+	struct intel_crtc *intel_crtc = to_intel_crtc(newstate->uapi.crtc);
+	struct drm_i915_private *dev_priv = to_i915(intel_crtc->base.dev);
+	struct intel_pipe_wm *a = &newstate->wm.ilk.intermediate;
+	struct intel_atomic_state *intel_state =
+		to_intel_atomic_state(newstate->uapi.state);
+	const struct intel_crtc_state *oldstate =
+		intel_atomic_get_old_crtc_state(intel_state, intel_crtc);
+	const struct intel_pipe_wm *b = &oldstate->wm.ilk.optimal;
+	int level, max_level = ilk_wm_max_level(dev_priv);
 
 	/*
 	 * Start with the final, target watermarks, then combine with the
-	 * currently active watermarks to get values that are safe both beक्रमe
+	 * currently active watermarks to get values that are safe both before
 	 * and after the vblank.
 	 */
 	*a = newstate->wm.ilk.optimal;
-	अगर (!newstate->hw.active || drm_atomic_crtc_needs_modeset(&newstate->uapi) ||
-	    पूर्णांकel_state->skip_पूर्णांकermediate_wm)
-		वापस 0;
+	if (!newstate->hw.active || drm_atomic_crtc_needs_modeset(&newstate->uapi) ||
+	    intel_state->skip_intermediate_wm)
+		return 0;
 
 	a->pipe_enabled |= b->pipe_enabled;
 	a->sprites_enabled |= b->sprites_enabled;
 	a->sprites_scaled |= b->sprites_scaled;
 
-	क्रम (level = 0; level <= max_level; level++) अणु
-		काष्ठा पूर्णांकel_wm_level *a_wm = &a->wm[level];
-		स्थिर काष्ठा पूर्णांकel_wm_level *b_wm = &b->wm[level];
+	for (level = 0; level <= max_level; level++) {
+		struct intel_wm_level *a_wm = &a->wm[level];
+		const struct intel_wm_level *b_wm = &b->wm[level];
 
 		a_wm->enable &= b_wm->enable;
 		a_wm->pri_val = max(a_wm->pri_val, b_wm->pri_val);
 		a_wm->spr_val = max(a_wm->spr_val, b_wm->spr_val);
 		a_wm->cur_val = max(a_wm->cur_val, b_wm->cur_val);
 		a_wm->fbc_val = max(a_wm->fbc_val, b_wm->fbc_val);
-	पूर्ण
+	}
 
 	/*
 	 * We need to make sure that these merged watermark values are
@@ -3261,65 +3260,65 @@ ilk_cursor_wm_reg_max(स्थिर काष्ठा drm_i915_निजी *
 	 * there's no safe way to transition from the old state to
 	 * the new state, so we need to fail the atomic transaction.
 	 */
-	अगर (!ilk_validate_pipe_wm(dev_priv, a))
-		वापस -EINVAL;
+	if (!ilk_validate_pipe_wm(dev_priv, a))
+		return -EINVAL;
 
 	/*
-	 * If our पूर्णांकermediate WM are identical to the final WM, then we can
-	 * omit the post-vblank programming; only update अगर it's dअगरferent.
+	 * If our intermediate WM are identical to the final WM, then we can
+	 * omit the post-vblank programming; only update if it's different.
 	 */
-	अगर (स_भेद(a, &newstate->wm.ilk.optimal, माप(*a)) != 0)
+	if (memcmp(a, &newstate->wm.ilk.optimal, sizeof(*a)) != 0)
 		newstate->wm.need_postvbl_update = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Merge the watermarks from all active pipes क्रम a specअगरic level.
+ * Merge the watermarks from all active pipes for a specific level.
  */
-अटल व्योम ilk_merge_wm_level(काष्ठा drm_i915_निजी *dev_priv,
-			       पूर्णांक level,
-			       काष्ठा पूर्णांकel_wm_level *ret_wm)
-अणु
-	स्थिर काष्ठा पूर्णांकel_crtc *पूर्णांकel_crtc;
+static void ilk_merge_wm_level(struct drm_i915_private *dev_priv,
+			       int level,
+			       struct intel_wm_level *ret_wm)
+{
+	const struct intel_crtc *intel_crtc;
 
 	ret_wm->enable = true;
 
-	क्रम_each_पूर्णांकel_crtc(&dev_priv->drm, पूर्णांकel_crtc) अणु
-		स्थिर काष्ठा पूर्णांकel_pipe_wm *active = &पूर्णांकel_crtc->wm.active.ilk;
-		स्थिर काष्ठा पूर्णांकel_wm_level *wm = &active->wm[level];
+	for_each_intel_crtc(&dev_priv->drm, intel_crtc) {
+		const struct intel_pipe_wm *active = &intel_crtc->wm.active.ilk;
+		const struct intel_wm_level *wm = &active->wm[level];
 
-		अगर (!active->pipe_enabled)
-			जारी;
+		if (!active->pipe_enabled)
+			continue;
 
 		/*
 		 * The watermark values may have been used in the past,
-		 * so we must मुख्यtain them in the रेजिस्टरs क्रम some
-		 * समय even अगर the level is now disabled.
+		 * so we must maintain them in the registers for some
+		 * time even if the level is now disabled.
 		 */
-		अगर (!wm->enable)
+		if (!wm->enable)
 			ret_wm->enable = false;
 
 		ret_wm->pri_val = max(ret_wm->pri_val, wm->pri_val);
 		ret_wm->spr_val = max(ret_wm->spr_val, wm->spr_val);
 		ret_wm->cur_val = max(ret_wm->cur_val, wm->cur_val);
 		ret_wm->fbc_val = max(ret_wm->fbc_val, wm->fbc_val);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Merge all low घातer watermarks क्रम all active pipes.
+ * Merge all low power watermarks for all active pipes.
  */
-अटल व्योम ilk_wm_merge(काष्ठा drm_i915_निजी *dev_priv,
-			 स्थिर काष्ठा पूर्णांकel_wm_config *config,
-			 स्थिर काष्ठा ilk_wm_maximums *max,
-			 काष्ठा पूर्णांकel_pipe_wm *merged)
-अणु
-	पूर्णांक level, max_level = ilk_wm_max_level(dev_priv);
-	पूर्णांक last_enabled_level = max_level;
+static void ilk_wm_merge(struct drm_i915_private *dev_priv,
+			 const struct intel_wm_config *config,
+			 const struct ilk_wm_maximums *max,
+			 struct intel_pipe_wm *merged)
+{
+	int level, max_level = ilk_wm_max_level(dev_priv);
+	int last_enabled_level = max_level;
 
 	/* ILK/SNB/IVB: LP1+ watermarks only w/ single pipe */
-	अगर ((DISPLAY_VER(dev_priv) <= 6 || IS_IVYBRIDGE(dev_priv)) &&
+	if ((DISPLAY_VER(dev_priv) <= 6 || IS_IVYBRIDGE(dev_priv)) &&
 	    config->num_pipes_active > 1)
 		last_enabled_level = 0;
 
@@ -3327,14 +3326,14 @@ ilk_cursor_wm_reg_max(स्थिर काष्ठा drm_i915_निजी *
 	merged->fbc_wm_enabled = DISPLAY_VER(dev_priv) >= 6;
 
 	/* merge each WM1+ level */
-	क्रम (level = 1; level <= max_level; level++) अणु
-		काष्ठा पूर्णांकel_wm_level *wm = &merged->wm[level];
+	for (level = 1; level <= max_level; level++) {
+		struct intel_wm_level *wm = &merged->wm[level];
 
 		ilk_merge_wm_level(dev_priv, level, wm);
 
-		अगर (level > last_enabled_level)
+		if (level > last_enabled_level)
 			wm->enable = false;
-		अन्यथा अगर (!ilk_validate_wm_level(level, max, wm))
+		else if (!ilk_validate_wm_level(level, max, wm))
 			/* make sure all following levels get disabled */
 			last_enabled_level = level - 1;
 
@@ -3342,66 +3341,66 @@ ilk_cursor_wm_reg_max(स्थिर काष्ठा drm_i915_निजी *
 		 * The spec says it is preferred to disable
 		 * FBC WMs instead of disabling a WM level.
 		 */
-		अगर (wm->fbc_val > max->fbc) अणु
-			अगर (wm->enable)
+		if (wm->fbc_val > max->fbc) {
+			if (wm->enable)
 				merged->fbc_wm_enabled = false;
 			wm->fbc_val = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* ILK: LP2+ must be disabled when FBC WM is disabled but FBC enabled */
 	/*
 	 * FIXME this is racy. FBC might get enabled later.
 	 * What we should check here is whether FBC can be
-	 * enabled someसमय later.
+	 * enabled sometime later.
 	 */
-	अगर (IS_DISPLAY_VER(dev_priv, 5) && !merged->fbc_wm_enabled &&
-	    पूर्णांकel_fbc_is_active(dev_priv)) अणु
-		क्रम (level = 2; level <= max_level; level++) अणु
-			काष्ठा पूर्णांकel_wm_level *wm = &merged->wm[level];
+	if (IS_DISPLAY_VER(dev_priv, 5) && !merged->fbc_wm_enabled &&
+	    intel_fbc_is_active(dev_priv)) {
+		for (level = 2; level <= max_level; level++) {
+			struct intel_wm_level *wm = &merged->wm[level];
 
 			wm->enable = false;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक ilk_wm_lp_to_level(पूर्णांक wm_lp, स्थिर काष्ठा पूर्णांकel_pipe_wm *pipe_wm)
-अणु
+static int ilk_wm_lp_to_level(int wm_lp, const struct intel_pipe_wm *pipe_wm)
+{
 	/* LP1,LP2,LP3 levels are either 1,2,3 or 1,3,4 */
-	वापस wm_lp + (wm_lp >= 2 && pipe_wm->wm[4].enable);
-पूर्ण
+	return wm_lp + (wm_lp >= 2 && pipe_wm->wm[4].enable);
+}
 
-/* The value we need to program पूर्णांकo the WM_LPx latency field */
-अटल अचिन्हित पूर्णांक ilk_wm_lp_latency(काष्ठा drm_i915_निजी *dev_priv,
-				      पूर्णांक level)
-अणु
-	अगर (IS_HASWELL(dev_priv) || IS_BROADWELL(dev_priv))
-		वापस 2 * level;
-	अन्यथा
-		वापस dev_priv->wm.pri_latency[level];
-पूर्ण
+/* The value we need to program into the WM_LPx latency field */
+static unsigned int ilk_wm_lp_latency(struct drm_i915_private *dev_priv,
+				      int level)
+{
+	if (IS_HASWELL(dev_priv) || IS_BROADWELL(dev_priv))
+		return 2 * level;
+	else
+		return dev_priv->wm.pri_latency[level];
+}
 
-अटल व्योम ilk_compute_wm_results(काष्ठा drm_i915_निजी *dev_priv,
-				   स्थिर काष्ठा पूर्णांकel_pipe_wm *merged,
-				   क्रमागत पूर्णांकel_ddb_partitioning partitioning,
-				   काष्ठा ilk_wm_values *results)
-अणु
-	काष्ठा पूर्णांकel_crtc *पूर्णांकel_crtc;
-	पूर्णांक level, wm_lp;
+static void ilk_compute_wm_results(struct drm_i915_private *dev_priv,
+				   const struct intel_pipe_wm *merged,
+				   enum intel_ddb_partitioning partitioning,
+				   struct ilk_wm_values *results)
+{
+	struct intel_crtc *intel_crtc;
+	int level, wm_lp;
 
 	results->enable_fbc_wm = merged->fbc_wm_enabled;
 	results->partitioning = partitioning;
 
-	/* LP1+ रेजिस्टर values */
-	क्रम (wm_lp = 1; wm_lp <= 3; wm_lp++) अणु
-		स्थिर काष्ठा पूर्णांकel_wm_level *r;
+	/* LP1+ register values */
+	for (wm_lp = 1; wm_lp <= 3; wm_lp++) {
+		const struct intel_wm_level *r;
 
 		level = ilk_wm_lp_to_level(wm_lp, merged);
 
 		r = &merged->wm[level];
 
 		/*
-		 * Maपूर्णांकain the watermark values even अगर the level is
+		 * Maintain the watermark values even if the level is
 		 * disabled. Doing otherwise could cause underruns.
 		 */
 		results->wm_lp[wm_lp - 1] =
@@ -3409,698 +3408,698 @@ ilk_cursor_wm_reg_max(स्थिर काष्ठा drm_i915_निजी *
 			(r->pri_val << WM1_LP_SR_SHIFT) |
 			r->cur_val;
 
-		अगर (r->enable)
+		if (r->enable)
 			results->wm_lp[wm_lp - 1] |= WM1_LP_SR_EN;
 
-		अगर (DISPLAY_VER(dev_priv) >= 8)
+		if (DISPLAY_VER(dev_priv) >= 8)
 			results->wm_lp[wm_lp - 1] |=
 				r->fbc_val << WM1_LP_FBC_SHIFT_BDW;
-		अन्यथा
+		else
 			results->wm_lp[wm_lp - 1] |=
 				r->fbc_val << WM1_LP_FBC_SHIFT;
 
 		/*
-		 * Always set WM1S_LP_EN when spr_val != 0, even अगर the
+		 * Always set WM1S_LP_EN when spr_val != 0, even if the
 		 * level is disabled. Doing otherwise could cause underruns.
 		 */
-		अगर (DISPLAY_VER(dev_priv) <= 6 && r->spr_val) अणु
+		if (DISPLAY_VER(dev_priv) <= 6 && r->spr_val) {
 			drm_WARN_ON(&dev_priv->drm, wm_lp != 1);
 			results->wm_lp_spr[wm_lp - 1] = WM1S_LP_EN | r->spr_val;
-		पूर्ण अन्यथा
+		} else
 			results->wm_lp_spr[wm_lp - 1] = r->spr_val;
-	पूर्ण
+	}
 
-	/* LP0 रेजिस्टर values */
-	क्रम_each_पूर्णांकel_crtc(&dev_priv->drm, पूर्णांकel_crtc) अणु
-		क्रमागत pipe pipe = पूर्णांकel_crtc->pipe;
-		स्थिर काष्ठा पूर्णांकel_pipe_wm *pipe_wm = &पूर्णांकel_crtc->wm.active.ilk;
-		स्थिर काष्ठा पूर्णांकel_wm_level *r = &pipe_wm->wm[0];
+	/* LP0 register values */
+	for_each_intel_crtc(&dev_priv->drm, intel_crtc) {
+		enum pipe pipe = intel_crtc->pipe;
+		const struct intel_pipe_wm *pipe_wm = &intel_crtc->wm.active.ilk;
+		const struct intel_wm_level *r = &pipe_wm->wm[0];
 
-		अगर (drm_WARN_ON(&dev_priv->drm, !r->enable))
-			जारी;
+		if (drm_WARN_ON(&dev_priv->drm, !r->enable))
+			continue;
 
 		results->wm_pipe[pipe] =
 			(r->pri_val << WM0_PIPE_PLANE_SHIFT) |
 			(r->spr_val << WM0_PIPE_SPRITE_SHIFT) |
 			r->cur_val;
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* Find the result with the highest level enabled. Check क्रम enable_fbc_wm in
- * हाल both are at the same level. Prefer r1 in हाल they're the same. */
-अटल काष्ठा पूर्णांकel_pipe_wm *
-ilk_find_best_result(काष्ठा drm_i915_निजी *dev_priv,
-		     काष्ठा पूर्णांकel_pipe_wm *r1,
-		     काष्ठा पूर्णांकel_pipe_wm *r2)
-अणु
-	पूर्णांक level, max_level = ilk_wm_max_level(dev_priv);
-	पूर्णांक level1 = 0, level2 = 0;
+/* Find the result with the highest level enabled. Check for enable_fbc_wm in
+ * case both are at the same level. Prefer r1 in case they're the same. */
+static struct intel_pipe_wm *
+ilk_find_best_result(struct drm_i915_private *dev_priv,
+		     struct intel_pipe_wm *r1,
+		     struct intel_pipe_wm *r2)
+{
+	int level, max_level = ilk_wm_max_level(dev_priv);
+	int level1 = 0, level2 = 0;
 
-	क्रम (level = 1; level <= max_level; level++) अणु
-		अगर (r1->wm[level].enable)
+	for (level = 1; level <= max_level; level++) {
+		if (r1->wm[level].enable)
 			level1 = level;
-		अगर (r2->wm[level].enable)
+		if (r2->wm[level].enable)
 			level2 = level;
-	पूर्ण
+	}
 
-	अगर (level1 == level2) अणु
-		अगर (r2->fbc_wm_enabled && !r1->fbc_wm_enabled)
-			वापस r2;
-		अन्यथा
-			वापस r1;
-	पूर्ण अन्यथा अगर (level1 > level2) अणु
-		वापस r1;
-	पूर्ण अन्यथा अणु
-		वापस r2;
-	पूर्ण
-पूर्ण
+	if (level1 == level2) {
+		if (r2->fbc_wm_enabled && !r1->fbc_wm_enabled)
+			return r2;
+		else
+			return r1;
+	} else if (level1 > level2) {
+		return r1;
+	} else {
+		return r2;
+	}
+}
 
 /* dirty bits used to track which watermarks need changes */
-#घोषणा WM_सूचीTY_PIPE(pipe) (1 << (pipe))
-#घोषणा WM_सूचीTY_LP(wm_lp) (1 << (15 + (wm_lp)))
-#घोषणा WM_सूचीTY_LP_ALL (WM_सूचीTY_LP(1) | WM_सूचीTY_LP(2) | WM_सूचीTY_LP(3))
-#घोषणा WM_सूचीTY_FBC (1 << 24)
-#घोषणा WM_सूचीTY_DDB (1 << 25)
+#define WM_DIRTY_PIPE(pipe) (1 << (pipe))
+#define WM_DIRTY_LP(wm_lp) (1 << (15 + (wm_lp)))
+#define WM_DIRTY_LP_ALL (WM_DIRTY_LP(1) | WM_DIRTY_LP(2) | WM_DIRTY_LP(3))
+#define WM_DIRTY_FBC (1 << 24)
+#define WM_DIRTY_DDB (1 << 25)
 
-अटल अचिन्हित पूर्णांक ilk_compute_wm_dirty(काष्ठा drm_i915_निजी *dev_priv,
-					 स्थिर काष्ठा ilk_wm_values *old,
-					 स्थिर काष्ठा ilk_wm_values *new)
-अणु
-	अचिन्हित पूर्णांक dirty = 0;
-	क्रमागत pipe pipe;
-	पूर्णांक wm_lp;
+static unsigned int ilk_compute_wm_dirty(struct drm_i915_private *dev_priv,
+					 const struct ilk_wm_values *old,
+					 const struct ilk_wm_values *new)
+{
+	unsigned int dirty = 0;
+	enum pipe pipe;
+	int wm_lp;
 
-	क्रम_each_pipe(dev_priv, pipe) अणु
-		अगर (old->wm_pipe[pipe] != new->wm_pipe[pipe]) अणु
-			dirty |= WM_सूचीTY_PIPE(pipe);
+	for_each_pipe(dev_priv, pipe) {
+		if (old->wm_pipe[pipe] != new->wm_pipe[pipe]) {
+			dirty |= WM_DIRTY_PIPE(pipe);
 			/* Must disable LP1+ watermarks too */
-			dirty |= WM_सूचीTY_LP_ALL;
-		पूर्ण
-	पूर्ण
+			dirty |= WM_DIRTY_LP_ALL;
+		}
+	}
 
-	अगर (old->enable_fbc_wm != new->enable_fbc_wm) अणु
-		dirty |= WM_सूचीTY_FBC;
+	if (old->enable_fbc_wm != new->enable_fbc_wm) {
+		dirty |= WM_DIRTY_FBC;
 		/* Must disable LP1+ watermarks too */
-		dirty |= WM_सूचीTY_LP_ALL;
-	पूर्ण
+		dirty |= WM_DIRTY_LP_ALL;
+	}
 
-	अगर (old->partitioning != new->partitioning) अणु
-		dirty |= WM_सूचीTY_DDB;
+	if (old->partitioning != new->partitioning) {
+		dirty |= WM_DIRTY_DDB;
 		/* Must disable LP1+ watermarks too */
-		dirty |= WM_सूचीTY_LP_ALL;
-	पूर्ण
+		dirty |= WM_DIRTY_LP_ALL;
+	}
 
-	/* LP1+ watermarks alपढ़ोy deemed dirty, no need to जारी */
-	अगर (dirty & WM_सूचीTY_LP_ALL)
-		वापस dirty;
+	/* LP1+ watermarks already deemed dirty, no need to continue */
+	if (dirty & WM_DIRTY_LP_ALL)
+		return dirty;
 
 	/* Find the lowest numbered LP1+ watermark in need of an update... */
-	क्रम (wm_lp = 1; wm_lp <= 3; wm_lp++) अणु
-		अगर (old->wm_lp[wm_lp - 1] != new->wm_lp[wm_lp - 1] ||
+	for (wm_lp = 1; wm_lp <= 3; wm_lp++) {
+		if (old->wm_lp[wm_lp - 1] != new->wm_lp[wm_lp - 1] ||
 		    old->wm_lp_spr[wm_lp - 1] != new->wm_lp_spr[wm_lp - 1])
-			अवरोध;
-	पूर्ण
+			break;
+	}
 
 	/* ...and mark it and all higher numbered LP1+ watermarks as dirty */
-	क्रम (; wm_lp <= 3; wm_lp++)
-		dirty |= WM_सूचीTY_LP(wm_lp);
+	for (; wm_lp <= 3; wm_lp++)
+		dirty |= WM_DIRTY_LP(wm_lp);
 
-	वापस dirty;
-पूर्ण
+	return dirty;
+}
 
-अटल bool _ilk_disable_lp_wm(काष्ठा drm_i915_निजी *dev_priv,
-			       अचिन्हित पूर्णांक dirty)
-अणु
-	काष्ठा ilk_wm_values *previous = &dev_priv->wm.hw;
+static bool _ilk_disable_lp_wm(struct drm_i915_private *dev_priv,
+			       unsigned int dirty)
+{
+	struct ilk_wm_values *previous = &dev_priv->wm.hw;
 	bool changed = false;
 
-	अगर (dirty & WM_सूचीTY_LP(3) && previous->wm_lp[2] & WM1_LP_SR_EN) अणु
+	if (dirty & WM_DIRTY_LP(3) && previous->wm_lp[2] & WM1_LP_SR_EN) {
 		previous->wm_lp[2] &= ~WM1_LP_SR_EN;
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, WM3_LP_ILK, previous->wm_lp[2]);
+		intel_uncore_write(&dev_priv->uncore, WM3_LP_ILK, previous->wm_lp[2]);
 		changed = true;
-	पूर्ण
-	अगर (dirty & WM_सूचीTY_LP(2) && previous->wm_lp[1] & WM1_LP_SR_EN) अणु
+	}
+	if (dirty & WM_DIRTY_LP(2) && previous->wm_lp[1] & WM1_LP_SR_EN) {
 		previous->wm_lp[1] &= ~WM1_LP_SR_EN;
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, WM2_LP_ILK, previous->wm_lp[1]);
+		intel_uncore_write(&dev_priv->uncore, WM2_LP_ILK, previous->wm_lp[1]);
 		changed = true;
-	पूर्ण
-	अगर (dirty & WM_सूचीTY_LP(1) && previous->wm_lp[0] & WM1_LP_SR_EN) अणु
+	}
+	if (dirty & WM_DIRTY_LP(1) && previous->wm_lp[0] & WM1_LP_SR_EN) {
 		previous->wm_lp[0] &= ~WM1_LP_SR_EN;
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, WM1_LP_ILK, previous->wm_lp[0]);
+		intel_uncore_write(&dev_priv->uncore, WM1_LP_ILK, previous->wm_lp[0]);
 		changed = true;
-	पूर्ण
+	}
 
 	/*
 	 * Don't touch WM1S_LP_EN here.
 	 * Doing so could cause underruns.
 	 */
 
-	वापस changed;
-पूर्ण
+	return changed;
+}
 
 /*
- * The spec says we shouldn't write when we don't need, because every ग_लिखो
- * causes WMs to be re-evaluated, expending some घातer.
+ * The spec says we shouldn't write when we don't need, because every write
+ * causes WMs to be re-evaluated, expending some power.
  */
-अटल व्योम ilk_ग_लिखो_wm_values(काष्ठा drm_i915_निजी *dev_priv,
-				काष्ठा ilk_wm_values *results)
-अणु
-	काष्ठा ilk_wm_values *previous = &dev_priv->wm.hw;
-	अचिन्हित पूर्णांक dirty;
+static void ilk_write_wm_values(struct drm_i915_private *dev_priv,
+				struct ilk_wm_values *results)
+{
+	struct ilk_wm_values *previous = &dev_priv->wm.hw;
+	unsigned int dirty;
 	u32 val;
 
 	dirty = ilk_compute_wm_dirty(dev_priv, previous, results);
-	अगर (!dirty)
-		वापस;
+	if (!dirty)
+		return;
 
 	_ilk_disable_lp_wm(dev_priv, dirty);
 
-	अगर (dirty & WM_सूचीTY_PIPE(PIPE_A))
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, WM0_PIPE_ILK(PIPE_A), results->wm_pipe[0]);
-	अगर (dirty & WM_सूचीTY_PIPE(PIPE_B))
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, WM0_PIPE_ILK(PIPE_B), results->wm_pipe[1]);
-	अगर (dirty & WM_सूचीTY_PIPE(PIPE_C))
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, WM0_PIPE_ILK(PIPE_C), results->wm_pipe[2]);
+	if (dirty & WM_DIRTY_PIPE(PIPE_A))
+		intel_uncore_write(&dev_priv->uncore, WM0_PIPE_ILK(PIPE_A), results->wm_pipe[0]);
+	if (dirty & WM_DIRTY_PIPE(PIPE_B))
+		intel_uncore_write(&dev_priv->uncore, WM0_PIPE_ILK(PIPE_B), results->wm_pipe[1]);
+	if (dirty & WM_DIRTY_PIPE(PIPE_C))
+		intel_uncore_write(&dev_priv->uncore, WM0_PIPE_ILK(PIPE_C), results->wm_pipe[2]);
 
-	अगर (dirty & WM_सूचीTY_DDB) अणु
-		अगर (IS_HASWELL(dev_priv) || IS_BROADWELL(dev_priv)) अणु
-			val = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, WM_MISC);
-			अगर (results->partitioning == INTEL_DDB_PART_1_2)
+	if (dirty & WM_DIRTY_DDB) {
+		if (IS_HASWELL(dev_priv) || IS_BROADWELL(dev_priv)) {
+			val = intel_uncore_read(&dev_priv->uncore, WM_MISC);
+			if (results->partitioning == INTEL_DDB_PART_1_2)
 				val &= ~WM_MISC_DATA_PARTITION_5_6;
-			अन्यथा
+			else
 				val |= WM_MISC_DATA_PARTITION_5_6;
-			पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, WM_MISC, val);
-		पूर्ण अन्यथा अणु
-			val = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DISP_ARB_CTL2);
-			अगर (results->partitioning == INTEL_DDB_PART_1_2)
+			intel_uncore_write(&dev_priv->uncore, WM_MISC, val);
+		} else {
+			val = intel_uncore_read(&dev_priv->uncore, DISP_ARB_CTL2);
+			if (results->partitioning == INTEL_DDB_PART_1_2)
 				val &= ~DISP_DATA_PARTITION_5_6;
-			अन्यथा
+			else
 				val |= DISP_DATA_PARTITION_5_6;
-			पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DISP_ARB_CTL2, val);
-		पूर्ण
-	पूर्ण
+			intel_uncore_write(&dev_priv->uncore, DISP_ARB_CTL2, val);
+		}
+	}
 
-	अगर (dirty & WM_सूचीTY_FBC) अणु
-		val = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DISP_ARB_CTL);
-		अगर (results->enable_fbc_wm)
+	if (dirty & WM_DIRTY_FBC) {
+		val = intel_uncore_read(&dev_priv->uncore, DISP_ARB_CTL);
+		if (results->enable_fbc_wm)
 			val &= ~DISP_FBC_WM_DIS;
-		अन्यथा
+		else
 			val |= DISP_FBC_WM_DIS;
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DISP_ARB_CTL, val);
-	पूर्ण
+		intel_uncore_write(&dev_priv->uncore, DISP_ARB_CTL, val);
+	}
 
-	अगर (dirty & WM_सूचीTY_LP(1) &&
+	if (dirty & WM_DIRTY_LP(1) &&
 	    previous->wm_lp_spr[0] != results->wm_lp_spr[0])
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, WM1S_LP_ILK, results->wm_lp_spr[0]);
+		intel_uncore_write(&dev_priv->uncore, WM1S_LP_ILK, results->wm_lp_spr[0]);
 
-	अगर (DISPLAY_VER(dev_priv) >= 7) अणु
-		अगर (dirty & WM_सूचीTY_LP(2) && previous->wm_lp_spr[1] != results->wm_lp_spr[1])
-			पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, WM2S_LP_IVB, results->wm_lp_spr[1]);
-		अगर (dirty & WM_सूचीTY_LP(3) && previous->wm_lp_spr[2] != results->wm_lp_spr[2])
-			पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, WM3S_LP_IVB, results->wm_lp_spr[2]);
-	पूर्ण
+	if (DISPLAY_VER(dev_priv) >= 7) {
+		if (dirty & WM_DIRTY_LP(2) && previous->wm_lp_spr[1] != results->wm_lp_spr[1])
+			intel_uncore_write(&dev_priv->uncore, WM2S_LP_IVB, results->wm_lp_spr[1]);
+		if (dirty & WM_DIRTY_LP(3) && previous->wm_lp_spr[2] != results->wm_lp_spr[2])
+			intel_uncore_write(&dev_priv->uncore, WM3S_LP_IVB, results->wm_lp_spr[2]);
+	}
 
-	अगर (dirty & WM_सूचीTY_LP(1) && previous->wm_lp[0] != results->wm_lp[0])
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, WM1_LP_ILK, results->wm_lp[0]);
-	अगर (dirty & WM_सूचीTY_LP(2) && previous->wm_lp[1] != results->wm_lp[1])
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, WM2_LP_ILK, results->wm_lp[1]);
-	अगर (dirty & WM_सूचीTY_LP(3) && previous->wm_lp[2] != results->wm_lp[2])
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, WM3_LP_ILK, results->wm_lp[2]);
+	if (dirty & WM_DIRTY_LP(1) && previous->wm_lp[0] != results->wm_lp[0])
+		intel_uncore_write(&dev_priv->uncore, WM1_LP_ILK, results->wm_lp[0]);
+	if (dirty & WM_DIRTY_LP(2) && previous->wm_lp[1] != results->wm_lp[1])
+		intel_uncore_write(&dev_priv->uncore, WM2_LP_ILK, results->wm_lp[1]);
+	if (dirty & WM_DIRTY_LP(3) && previous->wm_lp[2] != results->wm_lp[2])
+		intel_uncore_write(&dev_priv->uncore, WM3_LP_ILK, results->wm_lp[2]);
 
 	dev_priv->wm.hw = *results;
-पूर्ण
+}
 
-bool ilk_disable_lp_wm(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	वापस _ilk_disable_lp_wm(dev_priv, WM_सूचीTY_LP_ALL);
-पूर्ण
+bool ilk_disable_lp_wm(struct drm_i915_private *dev_priv)
+{
+	return _ilk_disable_lp_wm(dev_priv, WM_DIRTY_LP_ALL);
+}
 
-u8 पूर्णांकel_enabled_dbuf_slices_mask(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	पूर्णांक i;
-	पूर्णांक max_slices = INTEL_INFO(dev_priv)->num_supported_dbuf_slices;
+u8 intel_enabled_dbuf_slices_mask(struct drm_i915_private *dev_priv)
+{
+	int i;
+	int max_slices = INTEL_INFO(dev_priv)->num_supported_dbuf_slices;
 	u8 enabled_slices_mask = 0;
 
-	क्रम (i = 0; i < max_slices; i++) अणु
-		अगर (पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DBUF_CTL_S(i)) & DBUF_POWER_STATE)
+	for (i = 0; i < max_slices; i++) {
+		if (intel_uncore_read(&dev_priv->uncore, DBUF_CTL_S(i)) & DBUF_POWER_STATE)
 			enabled_slices_mask |= BIT(i);
-	पूर्ण
+	}
 
-	वापस enabled_slices_mask;
-पूर्ण
+	return enabled_slices_mask;
+}
 
 /*
- * FIXME: We still करोn't have the proper code detect अगर we need to apply the WA,
- * so assume we'll always need it in order to aव्योम underruns.
+ * FIXME: We still don't have the proper code detect if we need to apply the WA,
+ * so assume we'll always need it in order to avoid underruns.
  */
-अटल bool skl_needs_memory_bw_wa(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	वापस IS_GEN9_BC(dev_priv) || IS_BROXTON(dev_priv);
-पूर्ण
+static bool skl_needs_memory_bw_wa(struct drm_i915_private *dev_priv)
+{
+	return IS_GEN9_BC(dev_priv) || IS_BROXTON(dev_priv);
+}
 
-अटल bool
-पूर्णांकel_has_sagv(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	वापस (IS_GEN9_BC(dev_priv) || DISPLAY_VER(dev_priv) >= 11 || IS_CANNONLAKE(dev_priv)) &&
+static bool
+intel_has_sagv(struct drm_i915_private *dev_priv)
+{
+	return (IS_GEN9_BC(dev_priv) || DISPLAY_VER(dev_priv) >= 11 || IS_CANNONLAKE(dev_priv)) &&
 		dev_priv->sagv_status != I915_SAGV_NOT_CONTROLLED;
-पूर्ण
+}
 
-अटल व्योम
-skl_setup_sagv_block_समय(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	अगर (DISPLAY_VER(dev_priv) >= 12) अणु
+static void
+skl_setup_sagv_block_time(struct drm_i915_private *dev_priv)
+{
+	if (DISPLAY_VER(dev_priv) >= 12) {
 		u32 val = 0;
-		पूर्णांक ret;
+		int ret;
 
-		ret = sandybridge_pcode_पढ़ो(dev_priv,
+		ret = sandybridge_pcode_read(dev_priv,
 					     GEN12_PCODE_READ_SAGV_BLOCK_TIME_US,
-					     &val, शून्य);
-		अगर (!ret) अणु
-			dev_priv->sagv_block_समय_us = val;
-			वापस;
-		पूर्ण
+					     &val, NULL);
+		if (!ret) {
+			dev_priv->sagv_block_time_us = val;
+			return;
+		}
 
 		drm_dbg(&dev_priv->drm, "Couldn't read SAGV block time!\n");
-	पूर्ण अन्यथा अगर (IS_DISPLAY_VER(dev_priv, 11)) अणु
-		dev_priv->sagv_block_समय_us = 10;
-		वापस;
-	पूर्ण अन्यथा अगर (IS_DISPLAY_VER(dev_priv, 10)) अणु
-		dev_priv->sagv_block_समय_us = 20;
-		वापस;
-	पूर्ण अन्यथा अगर (IS_DISPLAY_VER(dev_priv, 9)) अणु
-		dev_priv->sagv_block_समय_us = 30;
-		वापस;
-	पूर्ण अन्यथा अणु
+	} else if (IS_DISPLAY_VER(dev_priv, 11)) {
+		dev_priv->sagv_block_time_us = 10;
+		return;
+	} else if (IS_DISPLAY_VER(dev_priv, 10)) {
+		dev_priv->sagv_block_time_us = 20;
+		return;
+	} else if (IS_DISPLAY_VER(dev_priv, 9)) {
+		dev_priv->sagv_block_time_us = 30;
+		return;
+	} else {
 		MISSING_CASE(DISPLAY_VER(dev_priv));
-	पूर्ण
+	}
 
-	/* Default to an unusable block समय */
-	dev_priv->sagv_block_समय_us = -1;
-पूर्ण
+	/* Default to an unusable block time */
+	dev_priv->sagv_block_time_us = -1;
+}
 
 /*
- * SAGV dynamically adjusts the प्रणाली agent voltage and घड़ी frequencies
- * depending on घातer and perक्रमmance requirements. The display engine access
- * to प्रणाली memory is blocked during the adjusपंचांगent समय. Because of the
- * blocking समय, having this enabled can cause full प्रणाली hangs and/or pipe
- * underruns अगर we करोn't meet all of the following requirements:
+ * SAGV dynamically adjusts the system agent voltage and clock frequencies
+ * depending on power and performance requirements. The display engine access
+ * to system memory is blocked during the adjustment time. Because of the
+ * blocking time, having this enabled can cause full system hangs and/or pipe
+ * underruns if we don't meet all of the following requirements:
  *
  *  - <= 1 pipe enabled
- *  - All planes can enable watermarks क्रम latencies >= SAGV engine block समय
- *  - We're not using an पूर्णांकerlaced display configuration
+ *  - All planes can enable watermarks for latencies >= SAGV engine block time
+ *  - We're not using an interlaced display configuration
  */
-अटल पूर्णांक
-पूर्णांकel_enable_sagv(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	पूर्णांक ret;
+static int
+intel_enable_sagv(struct drm_i915_private *dev_priv)
+{
+	int ret;
 
-	अगर (!पूर्णांकel_has_sagv(dev_priv))
-		वापस 0;
+	if (!intel_has_sagv(dev_priv))
+		return 0;
 
-	अगर (dev_priv->sagv_status == I915_SAGV_ENABLED)
-		वापस 0;
+	if (dev_priv->sagv_status == I915_SAGV_ENABLED)
+		return 0;
 
 	drm_dbg_kms(&dev_priv->drm, "Enabling SAGV\n");
-	ret = sandybridge_pcode_ग_लिखो(dev_priv, GEN9_PCODE_SAGV_CONTROL,
+	ret = sandybridge_pcode_write(dev_priv, GEN9_PCODE_SAGV_CONTROL,
 				      GEN9_SAGV_ENABLE);
 
-	/* We करोn't need to रुको क्रम SAGV when enabling */
+	/* We don't need to wait for SAGV when enabling */
 
 	/*
-	 * Some skl प्रणालीs, pre-release machines in particular,
-	 * करोn't actually have SAGV.
+	 * Some skl systems, pre-release machines in particular,
+	 * don't actually have SAGV.
 	 */
-	अगर (IS_SKYLAKE(dev_priv) && ret == -ENXIO) अणु
+	if (IS_SKYLAKE(dev_priv) && ret == -ENXIO) {
 		drm_dbg(&dev_priv->drm, "No SAGV found on system, ignoring\n");
 		dev_priv->sagv_status = I915_SAGV_NOT_CONTROLLED;
-		वापस 0;
-	पूर्ण अन्यथा अगर (ret < 0) अणु
+		return 0;
+	} else if (ret < 0) {
 		drm_err(&dev_priv->drm, "Failed to enable SAGV\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dev_priv->sagv_status = I915_SAGV_ENABLED;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-पूर्णांकel_disable_sagv(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	पूर्णांक ret;
+static int
+intel_disable_sagv(struct drm_i915_private *dev_priv)
+{
+	int ret;
 
-	अगर (!पूर्णांकel_has_sagv(dev_priv))
-		वापस 0;
+	if (!intel_has_sagv(dev_priv))
+		return 0;
 
-	अगर (dev_priv->sagv_status == I915_SAGV_DISABLED)
-		वापस 0;
+	if (dev_priv->sagv_status == I915_SAGV_DISABLED)
+		return 0;
 
 	drm_dbg_kms(&dev_priv->drm, "Disabling SAGV\n");
-	/* bspec says to keep retrying क्रम at least 1 ms */
+	/* bspec says to keep retrying for at least 1 ms */
 	ret = skl_pcode_request(dev_priv, GEN9_PCODE_SAGV_CONTROL,
 				GEN9_SAGV_DISABLE,
 				GEN9_SAGV_IS_DISABLED, GEN9_SAGV_IS_DISABLED,
 				1);
 	/*
-	 * Some skl प्रणालीs, pre-release machines in particular,
-	 * करोn't actually have SAGV.
+	 * Some skl systems, pre-release machines in particular,
+	 * don't actually have SAGV.
 	 */
-	अगर (IS_SKYLAKE(dev_priv) && ret == -ENXIO) अणु
+	if (IS_SKYLAKE(dev_priv) && ret == -ENXIO) {
 		drm_dbg(&dev_priv->drm, "No SAGV found on system, ignoring\n");
 		dev_priv->sagv_status = I915_SAGV_NOT_CONTROLLED;
-		वापस 0;
-	पूर्ण अन्यथा अगर (ret < 0) अणु
+		return 0;
+	} else if (ret < 0) {
 		drm_err(&dev_priv->drm, "Failed to disable SAGV (%d)\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	dev_priv->sagv_status = I915_SAGV_DISABLED;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम पूर्णांकel_sagv_pre_plane_update(काष्ठा पूर्णांकel_atomic_state *state)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(state->base.dev);
-	स्थिर काष्ठा पूर्णांकel_bw_state *new_bw_state;
-	स्थिर काष्ठा पूर्णांकel_bw_state *old_bw_state;
+void intel_sagv_pre_plane_update(struct intel_atomic_state *state)
+{
+	struct drm_i915_private *dev_priv = to_i915(state->base.dev);
+	const struct intel_bw_state *new_bw_state;
+	const struct intel_bw_state *old_bw_state;
 	u32 new_mask = 0;
 
 	/*
-	 * Just वापस अगर we can't control SAGV or don't have it.
-	 * This is dअगरferent from situation when we have SAGV but just can't
-	 * afक्रमd it due to DBuf limitation - in हाल अगर SAGV is completely
+	 * Just return if we can't control SAGV or don't have it.
+	 * This is different from situation when we have SAGV but just can't
+	 * afford it due to DBuf limitation - in case if SAGV is completely
 	 * disabled in a BIOS, we are not even allowed to send a PCode request,
 	 * as it will throw an error. So have to check it here.
 	 */
-	अगर (!पूर्णांकel_has_sagv(dev_priv))
-		वापस;
+	if (!intel_has_sagv(dev_priv))
+		return;
 
-	new_bw_state = पूर्णांकel_atomic_get_new_bw_state(state);
-	अगर (!new_bw_state)
-		वापस;
+	new_bw_state = intel_atomic_get_new_bw_state(state);
+	if (!new_bw_state)
+		return;
 
-	अगर (DISPLAY_VER(dev_priv) < 11 && !पूर्णांकel_can_enable_sagv(dev_priv, new_bw_state)) अणु
-		पूर्णांकel_disable_sagv(dev_priv);
-		वापस;
-	पूर्ण
+	if (DISPLAY_VER(dev_priv) < 11 && !intel_can_enable_sagv(dev_priv, new_bw_state)) {
+		intel_disable_sagv(dev_priv);
+		return;
+	}
 
-	old_bw_state = पूर्णांकel_atomic_get_old_bw_state(state);
+	old_bw_state = intel_atomic_get_old_bw_state(state);
 	/*
 	 * Nothing to mask
 	 */
-	अगर (new_bw_state->qgv_poपूर्णांकs_mask == old_bw_state->qgv_poपूर्णांकs_mask)
-		वापस;
+	if (new_bw_state->qgv_points_mask == old_bw_state->qgv_points_mask)
+		return;
 
-	new_mask = old_bw_state->qgv_poपूर्णांकs_mask | new_bw_state->qgv_poपूर्णांकs_mask;
+	new_mask = old_bw_state->qgv_points_mask | new_bw_state->qgv_points_mask;
 
 	/*
 	 * If new mask is zero - means there is nothing to mask,
-	 * we can only unmask, which should be करोne in unmask.
+	 * we can only unmask, which should be done in unmask.
 	 */
-	अगर (!new_mask)
-		वापस;
+	if (!new_mask)
+		return;
 
 	/*
-	 * Restrict required qgv poपूर्णांकs beक्रमe updating the configuration.
-	 * According to BSpec we can't mask and unmask qgv poपूर्णांकs at the same
-	 * समय. Also masking should be करोne beक्रमe updating the configuration
+	 * Restrict required qgv points before updating the configuration.
+	 * According to BSpec we can't mask and unmask qgv points at the same
+	 * time. Also masking should be done before updating the configuration
 	 * and unmasking afterwards.
 	 */
-	icl_pcode_restrict_qgv_poपूर्णांकs(dev_priv, new_mask);
-पूर्ण
+	icl_pcode_restrict_qgv_points(dev_priv, new_mask);
+}
 
-व्योम पूर्णांकel_sagv_post_plane_update(काष्ठा पूर्णांकel_atomic_state *state)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(state->base.dev);
-	स्थिर काष्ठा पूर्णांकel_bw_state *new_bw_state;
-	स्थिर काष्ठा पूर्णांकel_bw_state *old_bw_state;
+void intel_sagv_post_plane_update(struct intel_atomic_state *state)
+{
+	struct drm_i915_private *dev_priv = to_i915(state->base.dev);
+	const struct intel_bw_state *new_bw_state;
+	const struct intel_bw_state *old_bw_state;
 	u32 new_mask = 0;
 
 	/*
-	 * Just वापस अगर we can't control SAGV or don't have it.
-	 * This is dअगरferent from situation when we have SAGV but just can't
-	 * afक्रमd it due to DBuf limitation - in हाल अगर SAGV is completely
+	 * Just return if we can't control SAGV or don't have it.
+	 * This is different from situation when we have SAGV but just can't
+	 * afford it due to DBuf limitation - in case if SAGV is completely
 	 * disabled in a BIOS, we are not even allowed to send a PCode request,
 	 * as it will throw an error. So have to check it here.
 	 */
-	अगर (!पूर्णांकel_has_sagv(dev_priv))
-		वापस;
+	if (!intel_has_sagv(dev_priv))
+		return;
 
-	new_bw_state = पूर्णांकel_atomic_get_new_bw_state(state);
-	अगर (!new_bw_state)
-		वापस;
+	new_bw_state = intel_atomic_get_new_bw_state(state);
+	if (!new_bw_state)
+		return;
 
-	अगर (DISPLAY_VER(dev_priv) < 11 && पूर्णांकel_can_enable_sagv(dev_priv, new_bw_state)) अणु
-		पूर्णांकel_enable_sagv(dev_priv);
-		वापस;
-	पूर्ण
+	if (DISPLAY_VER(dev_priv) < 11 && intel_can_enable_sagv(dev_priv, new_bw_state)) {
+		intel_enable_sagv(dev_priv);
+		return;
+	}
 
-	old_bw_state = पूर्णांकel_atomic_get_old_bw_state(state);
+	old_bw_state = intel_atomic_get_old_bw_state(state);
 	/*
 	 * Nothing to unmask
 	 */
-	अगर (new_bw_state->qgv_poपूर्णांकs_mask == old_bw_state->qgv_poपूर्णांकs_mask)
-		वापस;
+	if (new_bw_state->qgv_points_mask == old_bw_state->qgv_points_mask)
+		return;
 
-	new_mask = new_bw_state->qgv_poपूर्णांकs_mask;
+	new_mask = new_bw_state->qgv_points_mask;
 
 	/*
-	 * Allow required qgv poपूर्णांकs after updating the configuration.
-	 * According to BSpec we can't mask and unmask qgv poपूर्णांकs at the same
-	 * समय. Also masking should be करोne beक्रमe updating the configuration
+	 * Allow required qgv points after updating the configuration.
+	 * According to BSpec we can't mask and unmask qgv points at the same
+	 * time. Also masking should be done before updating the configuration
 	 * and unmasking afterwards.
 	 */
-	icl_pcode_restrict_qgv_poपूर्णांकs(dev_priv, new_mask);
-पूर्ण
+	icl_pcode_restrict_qgv_points(dev_priv, new_mask);
+}
 
-अटल bool skl_crtc_can_enable_sagv(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
-	काष्ठा पूर्णांकel_crtc *crtc = to_पूर्णांकel_crtc(crtc_state->uapi.crtc);
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
-	क्रमागत plane_id plane_id;
-	पूर्णांक max_level = पूर्णांक_उच्च;
+static bool skl_crtc_can_enable_sagv(const struct intel_crtc_state *crtc_state)
+{
+	struct intel_crtc *crtc = to_intel_crtc(crtc_state->uapi.crtc);
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	enum plane_id plane_id;
+	int max_level = INT_MAX;
 
-	अगर (!पूर्णांकel_has_sagv(dev_priv))
-		वापस false;
+	if (!intel_has_sagv(dev_priv))
+		return false;
 
-	अगर (!crtc_state->hw.active)
-		वापस true;
+	if (!crtc_state->hw.active)
+		return true;
 
-	अगर (crtc_state->hw.pipe_mode.flags & DRM_MODE_FLAG_INTERLACE)
-		वापस false;
+	if (crtc_state->hw.pipe_mode.flags & DRM_MODE_FLAG_INTERLACE)
+		return false;
 
-	क्रम_each_plane_id_on_crtc(crtc, plane_id) अणु
-		स्थिर काष्ठा skl_plane_wm *wm =
+	for_each_plane_id_on_crtc(crtc, plane_id) {
+		const struct skl_plane_wm *wm =
 			&crtc_state->wm.skl.optimal.planes[plane_id];
-		पूर्णांक level;
+		int level;
 
-		/* Skip this plane अगर it's not enabled */
-		अगर (!wm->wm[0].enable)
-			जारी;
+		/* Skip this plane if it's not enabled */
+		if (!wm->wm[0].enable)
+			continue;
 
-		/* Find the highest enabled wm level क्रम this plane */
-		क्रम (level = ilk_wm_max_level(dev_priv);
+		/* Find the highest enabled wm level for this plane */
+		for (level = ilk_wm_max_level(dev_priv);
 		     !wm->wm[level].enable; --level)
-		     अणु पूर्ण
+		     { }
 
-		/* Highest common enabled wm level क्रम all planes */
+		/* Highest common enabled wm level for all planes */
 		max_level = min(level, max_level);
-	पूर्ण
+	}
 
 	/* No enabled planes? */
-	अगर (max_level == पूर्णांक_उच्च)
-		वापस true;
+	if (max_level == INT_MAX)
+		return true;
 
-	क्रम_each_plane_id_on_crtc(crtc, plane_id) अणु
-		स्थिर काष्ठा skl_plane_wm *wm =
+	for_each_plane_id_on_crtc(crtc, plane_id) {
+		const struct skl_plane_wm *wm =
 			&crtc_state->wm.skl.optimal.planes[plane_id];
 
 		/*
 		 * All enabled planes must have enabled a common wm level that
-		 * can tolerate memory latencies higher than sagv_block_समय_us
+		 * can tolerate memory latencies higher than sagv_block_time_us
 		 */
-		अगर (wm->wm[0].enable && !wm->wm[max_level].can_sagv)
-			वापस false;
-	पूर्ण
+		if (wm->wm[0].enable && !wm->wm[max_level].can_sagv)
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool tgl_crtc_can_enable_sagv(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
-	काष्ठा पूर्णांकel_crtc *crtc = to_पूर्णांकel_crtc(crtc_state->uapi.crtc);
-	क्रमागत plane_id plane_id;
+static bool tgl_crtc_can_enable_sagv(const struct intel_crtc_state *crtc_state)
+{
+	struct intel_crtc *crtc = to_intel_crtc(crtc_state->uapi.crtc);
+	enum plane_id plane_id;
 
-	अगर (!crtc_state->hw.active)
-		वापस true;
+	if (!crtc_state->hw.active)
+		return true;
 
-	क्रम_each_plane_id_on_crtc(crtc, plane_id) अणु
-		स्थिर काष्ठा skl_plane_wm *wm =
+	for_each_plane_id_on_crtc(crtc, plane_id) {
+		const struct skl_plane_wm *wm =
 			&crtc_state->wm.skl.optimal.planes[plane_id];
 
-		अगर (wm->wm[0].enable && !wm->sagv.wm0.enable)
-			वापस false;
-	पूर्ण
+		if (wm->wm[0].enable && !wm->sagv.wm0.enable)
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool पूर्णांकel_crtc_can_enable_sagv(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
-	काष्ठा पूर्णांकel_crtc *crtc = to_पूर्णांकel_crtc(crtc_state->uapi.crtc);
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
+static bool intel_crtc_can_enable_sagv(const struct intel_crtc_state *crtc_state)
+{
+	struct intel_crtc *crtc = to_intel_crtc(crtc_state->uapi.crtc);
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
 
-	अगर (DISPLAY_VER(dev_priv) >= 12)
-		वापस tgl_crtc_can_enable_sagv(crtc_state);
-	अन्यथा
-		वापस skl_crtc_can_enable_sagv(crtc_state);
-पूर्ण
+	if (DISPLAY_VER(dev_priv) >= 12)
+		return tgl_crtc_can_enable_sagv(crtc_state);
+	else
+		return skl_crtc_can_enable_sagv(crtc_state);
+}
 
-bool पूर्णांकel_can_enable_sagv(काष्ठा drm_i915_निजी *dev_priv,
-			   स्थिर काष्ठा पूर्णांकel_bw_state *bw_state)
-अणु
-	अगर (DISPLAY_VER(dev_priv) < 11 &&
-	    bw_state->active_pipes && !is_घातer_of_2(bw_state->active_pipes))
-		वापस false;
+bool intel_can_enable_sagv(struct drm_i915_private *dev_priv,
+			   const struct intel_bw_state *bw_state)
+{
+	if (DISPLAY_VER(dev_priv) < 11 &&
+	    bw_state->active_pipes && !is_power_of_2(bw_state->active_pipes))
+		return false;
 
-	वापस bw_state->pipe_sagv_reject == 0;
-पूर्ण
+	return bw_state->pipe_sagv_reject == 0;
+}
 
-अटल पूर्णांक पूर्णांकel_compute_sagv_mask(काष्ठा पूर्णांकel_atomic_state *state)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(state->base.dev);
-	पूर्णांक ret;
-	काष्ठा पूर्णांकel_crtc *crtc;
-	काष्ठा पूर्णांकel_crtc_state *new_crtc_state;
-	काष्ठा पूर्णांकel_bw_state *new_bw_state = शून्य;
-	स्थिर काष्ठा पूर्णांकel_bw_state *old_bw_state = शून्य;
-	पूर्णांक i;
+static int intel_compute_sagv_mask(struct intel_atomic_state *state)
+{
+	struct drm_i915_private *dev_priv = to_i915(state->base.dev);
+	int ret;
+	struct intel_crtc *crtc;
+	struct intel_crtc_state *new_crtc_state;
+	struct intel_bw_state *new_bw_state = NULL;
+	const struct intel_bw_state *old_bw_state = NULL;
+	int i;
 
-	क्रम_each_new_पूर्णांकel_crtc_in_state(state, crtc,
-					 new_crtc_state, i) अणु
-		new_bw_state = पूर्णांकel_atomic_get_bw_state(state);
-		अगर (IS_ERR(new_bw_state))
-			वापस PTR_ERR(new_bw_state);
+	for_each_new_intel_crtc_in_state(state, crtc,
+					 new_crtc_state, i) {
+		new_bw_state = intel_atomic_get_bw_state(state);
+		if (IS_ERR(new_bw_state))
+			return PTR_ERR(new_bw_state);
 
-		old_bw_state = पूर्णांकel_atomic_get_old_bw_state(state);
+		old_bw_state = intel_atomic_get_old_bw_state(state);
 
-		अगर (पूर्णांकel_crtc_can_enable_sagv(new_crtc_state))
+		if (intel_crtc_can_enable_sagv(new_crtc_state))
 			new_bw_state->pipe_sagv_reject &= ~BIT(crtc->pipe);
-		अन्यथा
+		else
 			new_bw_state->pipe_sagv_reject |= BIT(crtc->pipe);
-	पूर्ण
+	}
 
-	अगर (!new_bw_state)
-		वापस 0;
+	if (!new_bw_state)
+		return 0;
 
 	new_bw_state->active_pipes =
-		पूर्णांकel_calc_active_pipes(state, old_bw_state->active_pipes);
+		intel_calc_active_pipes(state, old_bw_state->active_pipes);
 
-	अगर (new_bw_state->active_pipes != old_bw_state->active_pipes) अणु
-		ret = पूर्णांकel_atomic_lock_global_state(&new_bw_state->base);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (new_bw_state->active_pipes != old_bw_state->active_pipes) {
+		ret = intel_atomic_lock_global_state(&new_bw_state->base);
+		if (ret)
+			return ret;
+	}
 
-	क्रम_each_new_पूर्णांकel_crtc_in_state(state, crtc,
-					 new_crtc_state, i) अणु
-		काष्ठा skl_pipe_wm *pipe_wm = &new_crtc_state->wm.skl.optimal;
+	for_each_new_intel_crtc_in_state(state, crtc,
+					 new_crtc_state, i) {
+		struct skl_pipe_wm *pipe_wm = &new_crtc_state->wm.skl.optimal;
 
 		/*
 		 * We store use_sagv_wm in the crtc state rather than relying on
 		 * that bw state since we have no convenient way to get at the
 		 * latter from the plane commit hooks (especially in the legacy
-		 * cursor हाल)
+		 * cursor case)
 		 */
 		pipe_wm->use_sagv_wm = DISPLAY_VER(dev_priv) >= 12 &&
-				       पूर्णांकel_can_enable_sagv(dev_priv, new_bw_state);
-	पूर्ण
+				       intel_can_enable_sagv(dev_priv, new_bw_state);
+	}
 
-	अगर (पूर्णांकel_can_enable_sagv(dev_priv, new_bw_state) !=
-	    पूर्णांकel_can_enable_sagv(dev_priv, old_bw_state)) अणु
-		ret = पूर्णांकel_atomic_serialize_global_state(&new_bw_state->base);
-		अगर (ret)
-			वापस ret;
-	पूर्ण अन्यथा अगर (new_bw_state->pipe_sagv_reject != old_bw_state->pipe_sagv_reject) अणु
-		ret = पूर्णांकel_atomic_lock_global_state(&new_bw_state->base);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (intel_can_enable_sagv(dev_priv, new_bw_state) !=
+	    intel_can_enable_sagv(dev_priv, old_bw_state)) {
+		ret = intel_atomic_serialize_global_state(&new_bw_state->base);
+		if (ret)
+			return ret;
+	} else if (new_bw_state->pipe_sagv_reject != old_bw_state->pipe_sagv_reject) {
+		ret = intel_atomic_lock_global_state(&new_bw_state->base);
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_dbuf_size(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	पूर्णांक ddb_size = INTEL_INFO(dev_priv)->ddb_size;
+static int intel_dbuf_size(struct drm_i915_private *dev_priv)
+{
+	int ddb_size = INTEL_INFO(dev_priv)->ddb_size;
 
 	drm_WARN_ON(&dev_priv->drm, ddb_size == 0);
 
-	अगर (DISPLAY_VER(dev_priv) < 11)
-		वापस ddb_size - 4; /* 4 blocks क्रम bypass path allocation */
+	if (DISPLAY_VER(dev_priv) < 11)
+		return ddb_size - 4; /* 4 blocks for bypass path allocation */
 
-	वापस ddb_size;
-पूर्ण
+	return ddb_size;
+}
 
-अटल पूर्णांक पूर्णांकel_dbuf_slice_size(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	वापस पूर्णांकel_dbuf_size(dev_priv) /
+static int intel_dbuf_slice_size(struct drm_i915_private *dev_priv)
+{
+	return intel_dbuf_size(dev_priv) /
 		INTEL_INFO(dev_priv)->num_supported_dbuf_slices;
-पूर्ण
+}
 
-अटल व्योम
-skl_ddb_entry_क्रम_slices(काष्ठा drm_i915_निजी *dev_priv, u8 slice_mask,
-			 काष्ठा skl_ddb_entry *ddb)
-अणु
-	पूर्णांक slice_size = पूर्णांकel_dbuf_slice_size(dev_priv);
+static void
+skl_ddb_entry_for_slices(struct drm_i915_private *dev_priv, u8 slice_mask,
+			 struct skl_ddb_entry *ddb)
+{
+	int slice_size = intel_dbuf_slice_size(dev_priv);
 
-	अगर (!slice_mask) अणु
+	if (!slice_mask) {
 		ddb->start = 0;
 		ddb->end = 0;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	ddb->start = (ffs(slice_mask) - 1) * slice_size;
 	ddb->end = fls(slice_mask) * slice_size;
 
 	WARN_ON(ddb->start >= ddb->end);
-	WARN_ON(ddb->end > पूर्णांकel_dbuf_size(dev_priv));
-पूर्ण
+	WARN_ON(ddb->end > intel_dbuf_size(dev_priv));
+}
 
-u32 skl_ddb_dbuf_slice_mask(काष्ठा drm_i915_निजी *dev_priv,
-			    स्थिर काष्ठा skl_ddb_entry *entry)
-अणु
+u32 skl_ddb_dbuf_slice_mask(struct drm_i915_private *dev_priv,
+			    const struct skl_ddb_entry *entry)
+{
 	u32 slice_mask = 0;
-	u16 ddb_size = पूर्णांकel_dbuf_size(dev_priv);
+	u16 ddb_size = intel_dbuf_size(dev_priv);
 	u16 num_supported_slices = INTEL_INFO(dev_priv)->num_supported_dbuf_slices;
 	u16 slice_size = ddb_size / num_supported_slices;
 	u16 start_slice;
 	u16 end_slice;
 
-	अगर (!skl_ddb_entry_size(entry))
-		वापस 0;
+	if (!skl_ddb_entry_size(entry))
+		return 0;
 
 	start_slice = entry->start / slice_size;
 	end_slice = (entry->end - 1) / slice_size;
 
 	/*
-	 * Per plane DDB entry can in a really worst हाल be on multiple slices
+	 * Per plane DDB entry can in a really worst case be on multiple slices
 	 * but single entry is anyway contigious.
 	 */
-	जबतक (start_slice <= end_slice) अणु
+	while (start_slice <= end_slice) {
 		slice_mask |= BIT(start_slice);
 		start_slice++;
-	पूर्ण
+	}
 
-	वापस slice_mask;
-पूर्ण
+	return slice_mask;
+}
 
-अटल अचिन्हित पूर्णांक पूर्णांकel_crtc_ddb_weight(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
-	स्थिर काष्ठा drm_display_mode *pipe_mode = &crtc_state->hw.pipe_mode;
-	पूर्णांक hdisplay, vdisplay;
+static unsigned int intel_crtc_ddb_weight(const struct intel_crtc_state *crtc_state)
+{
+	const struct drm_display_mode *pipe_mode = &crtc_state->hw.pipe_mode;
+	int hdisplay, vdisplay;
 
-	अगर (!crtc_state->hw.active)
-		वापस 0;
+	if (!crtc_state->hw.active)
+		return 0;
 
 	/*
 	 * Watermark/ddb requirement highly depends upon width of the
@@ -4109,75 +4108,75 @@ u32 skl_ddb_dbuf_slice_mask(काष्ठा drm_i915_निजी *dev_priv,
 	 */
 	drm_mode_get_hv_timing(pipe_mode, &hdisplay, &vdisplay);
 
-	वापस hdisplay;
-पूर्ण
+	return hdisplay;
+}
 
-अटल व्योम पूर्णांकel_crtc_dbuf_weights(स्थिर काष्ठा पूर्णांकel_dbuf_state *dbuf_state,
-				    क्रमागत pipe क्रम_pipe,
-				    अचिन्हित पूर्णांक *weight_start,
-				    अचिन्हित पूर्णांक *weight_end,
-				    अचिन्हित पूर्णांक *weight_total)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv =
+static void intel_crtc_dbuf_weights(const struct intel_dbuf_state *dbuf_state,
+				    enum pipe for_pipe,
+				    unsigned int *weight_start,
+				    unsigned int *weight_end,
+				    unsigned int *weight_total)
+{
+	struct drm_i915_private *dev_priv =
 		to_i915(dbuf_state->base.state->base.dev);
-	क्रमागत pipe pipe;
+	enum pipe pipe;
 
 	*weight_start = 0;
 	*weight_end = 0;
 	*weight_total = 0;
 
-	क्रम_each_pipe(dev_priv, pipe) अणु
-		पूर्णांक weight = dbuf_state->weight[pipe];
+	for_each_pipe(dev_priv, pipe) {
+		int weight = dbuf_state->weight[pipe];
 
 		/*
 		 * Do not account pipes using other slice sets
-		 * luckily as of current BSpec slice sets करो not partially
-		 * पूर्णांकersect(pipes share either same one slice or same slice set
-		 * i.e no partial पूर्णांकersection), so it is enough to check क्रम
-		 * equality क्रम now.
+		 * luckily as of current BSpec slice sets do not partially
+		 * intersect(pipes share either same one slice or same slice set
+		 * i.e no partial intersection), so it is enough to check for
+		 * equality for now.
 		 */
-		अगर (dbuf_state->slices[pipe] != dbuf_state->slices[क्रम_pipe])
-			जारी;
+		if (dbuf_state->slices[pipe] != dbuf_state->slices[for_pipe])
+			continue;
 
 		*weight_total += weight;
-		अगर (pipe < क्रम_pipe) अणु
+		if (pipe < for_pipe) {
 			*weight_start += weight;
 			*weight_end += weight;
-		पूर्ण अन्यथा अगर (pipe == क्रम_pipe) अणु
+		} else if (pipe == for_pipe) {
 			*weight_end += weight;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक
-skl_crtc_allocate_ddb(काष्ठा पूर्णांकel_atomic_state *state, काष्ठा पूर्णांकel_crtc *crtc)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
-	अचिन्हित पूर्णांक weight_total, weight_start, weight_end;
-	स्थिर काष्ठा पूर्णांकel_dbuf_state *old_dbuf_state =
-		पूर्णांकel_atomic_get_old_dbuf_state(state);
-	काष्ठा पूर्णांकel_dbuf_state *new_dbuf_state =
-		पूर्णांकel_atomic_get_new_dbuf_state(state);
-	काष्ठा पूर्णांकel_crtc_state *crtc_state;
-	काष्ठा skl_ddb_entry ddb_slices;
-	क्रमागत pipe pipe = crtc->pipe;
+static int
+skl_crtc_allocate_ddb(struct intel_atomic_state *state, struct intel_crtc *crtc)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	unsigned int weight_total, weight_start, weight_end;
+	const struct intel_dbuf_state *old_dbuf_state =
+		intel_atomic_get_old_dbuf_state(state);
+	struct intel_dbuf_state *new_dbuf_state =
+		intel_atomic_get_new_dbuf_state(state);
+	struct intel_crtc_state *crtc_state;
+	struct skl_ddb_entry ddb_slices;
+	enum pipe pipe = crtc->pipe;
 	u32 ddb_range_size;
 	u32 dbuf_slice_mask;
 	u32 start, end;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (new_dbuf_state->weight[pipe] == 0) अणु
+	if (new_dbuf_state->weight[pipe] == 0) {
 		new_dbuf_state->ddb[pipe].start = 0;
 		new_dbuf_state->ddb[pipe].end = 0;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	dbuf_slice_mask = new_dbuf_state->slices[pipe];
 
-	skl_ddb_entry_क्रम_slices(dev_priv, dbuf_slice_mask, &ddb_slices);
+	skl_ddb_entry_for_slices(dev_priv, dbuf_slice_mask, &ddb_slices);
 	ddb_range_size = skl_ddb_entry_size(&ddb_slices);
 
-	पूर्णांकel_crtc_dbuf_weights(new_dbuf_state, pipe,
+	intel_crtc_dbuf_weights(new_dbuf_state, pipe,
 				&weight_start, &weight_end, &weight_total);
 
 	start = ddb_range_size * weight_start / weight_total;
@@ -4187,17 +4186,17 @@ skl_crtc_allocate_ddb(काष्ठा पूर्णांकel_atomic_state
 	new_dbuf_state->ddb[pipe].end = ddb_slices.start + end;
 
 out:
-	अगर (skl_ddb_entry_equal(&old_dbuf_state->ddb[pipe],
+	if (skl_ddb_entry_equal(&old_dbuf_state->ddb[pipe],
 				&new_dbuf_state->ddb[pipe]))
-		वापस 0;
+		return 0;
 
-	ret = पूर्णांकel_atomic_lock_global_state(&new_dbuf_state->base);
-	अगर (ret)
-		वापस ret;
+	ret = intel_atomic_lock_global_state(&new_dbuf_state->base);
+	if (ret)
+		return ret;
 
-	crtc_state = पूर्णांकel_atomic_get_crtc_state(&state->base, crtc);
-	अगर (IS_ERR(crtc_state))
-		वापस PTR_ERR(crtc_state);
+	crtc_state = intel_atomic_get_crtc_state(&state->base, crtc);
+	if (IS_ERR(crtc_state))
+		return PTR_ERR(crtc_state);
 
 	crtc_state->wm.skl.ddb = new_dbuf_state->ddb[pipe];
 
@@ -4209,484 +4208,484 @@ out:
 		    new_dbuf_state->ddb[pipe].start, new_dbuf_state->ddb[pipe].end,
 		    old_dbuf_state->active_pipes, new_dbuf_state->active_pipes);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक skl_compute_wm_params(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-				 पूर्णांक width, स्थिर काष्ठा drm_क्रमmat_info *क्रमmat,
-				 u64 modअगरier, अचिन्हित पूर्णांक rotation,
-				 u32 plane_pixel_rate, काष्ठा skl_wm_params *wp,
-				 पूर्णांक color_plane);
-अटल व्योम skl_compute_plane_wm(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-				 पूर्णांक level,
-				 अचिन्हित पूर्णांक latency,
-				 स्थिर काष्ठा skl_wm_params *wp,
-				 स्थिर काष्ठा skl_wm_level *result_prev,
-				 काष्ठा skl_wm_level *result /* out */);
+static int skl_compute_wm_params(const struct intel_crtc_state *crtc_state,
+				 int width, const struct drm_format_info *format,
+				 u64 modifier, unsigned int rotation,
+				 u32 plane_pixel_rate, struct skl_wm_params *wp,
+				 int color_plane);
+static void skl_compute_plane_wm(const struct intel_crtc_state *crtc_state,
+				 int level,
+				 unsigned int latency,
+				 const struct skl_wm_params *wp,
+				 const struct skl_wm_level *result_prev,
+				 struct skl_wm_level *result /* out */);
 
-अटल अचिन्हित पूर्णांक
-skl_cursor_allocation(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-		      पूर्णांक num_active)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
-	पूर्णांक level, max_level = ilk_wm_max_level(dev_priv);
-	काष्ठा skl_wm_level wm = अणुपूर्ण;
-	पूर्णांक ret, min_ddb_alloc = 0;
-	काष्ठा skl_wm_params wp;
+static unsigned int
+skl_cursor_allocation(const struct intel_crtc_state *crtc_state,
+		      int num_active)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
+	int level, max_level = ilk_wm_max_level(dev_priv);
+	struct skl_wm_level wm = {};
+	int ret, min_ddb_alloc = 0;
+	struct skl_wm_params wp;
 
 	ret = skl_compute_wm_params(crtc_state, 256,
-				    drm_क्रमmat_info(DRM_FORMAT_ARGB8888),
+				    drm_format_info(DRM_FORMAT_ARGB8888),
 				    DRM_FORMAT_MOD_LINEAR,
 				    DRM_MODE_ROTATE_0,
 				    crtc_state->pixel_rate, &wp, 0);
 	drm_WARN_ON(&dev_priv->drm, ret);
 
-	क्रम (level = 0; level <= max_level; level++) अणु
-		अचिन्हित पूर्णांक latency = dev_priv->wm.skl_latency[level];
+	for (level = 0; level <= max_level; level++) {
+		unsigned int latency = dev_priv->wm.skl_latency[level];
 
 		skl_compute_plane_wm(crtc_state, level, latency, &wp, &wm, &wm);
-		अगर (wm.min_ddb_alloc == U16_MAX)
-			अवरोध;
+		if (wm.min_ddb_alloc == U16_MAX)
+			break;
 
 		min_ddb_alloc = wm.min_ddb_alloc;
-	पूर्ण
+	}
 
-	वापस max(num_active == 1 ? 32 : 8, min_ddb_alloc);
-पूर्ण
+	return max(num_active == 1 ? 32 : 8, min_ddb_alloc);
+}
 
-अटल व्योम skl_ddb_entry_init_from_hw(काष्ठा drm_i915_निजी *dev_priv,
-				       काष्ठा skl_ddb_entry *entry, u32 reg)
-अणु
+static void skl_ddb_entry_init_from_hw(struct drm_i915_private *dev_priv,
+				       struct skl_ddb_entry *entry, u32 reg)
+{
 
 	entry->start = reg & DDB_ENTRY_MASK;
 	entry->end = (reg >> DDB_ENTRY_END_SHIFT) & DDB_ENTRY_MASK;
 
-	अगर (entry->end)
+	if (entry->end)
 		entry->end += 1;
-पूर्ण
+}
 
-अटल व्योम
-skl_ddb_get_hw_plane_state(काष्ठा drm_i915_निजी *dev_priv,
-			   स्थिर क्रमागत pipe pipe,
-			   स्थिर क्रमागत plane_id plane_id,
-			   काष्ठा skl_ddb_entry *ddb_y,
-			   काष्ठा skl_ddb_entry *ddb_uv)
-अणु
+static void
+skl_ddb_get_hw_plane_state(struct drm_i915_private *dev_priv,
+			   const enum pipe pipe,
+			   const enum plane_id plane_id,
+			   struct skl_ddb_entry *ddb_y,
+			   struct skl_ddb_entry *ddb_uv)
+{
 	u32 val, val2;
 	u32 fourcc = 0;
 
-	/* Cursor करोesn't support NV12/planar, so no extra calculation needed */
-	अगर (plane_id == PLANE_CURSOR) अणु
-		val = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, CUR_BUF_CFG(pipe));
+	/* Cursor doesn't support NV12/planar, so no extra calculation needed */
+	if (plane_id == PLANE_CURSOR) {
+		val = intel_uncore_read(&dev_priv->uncore, CUR_BUF_CFG(pipe));
 		skl_ddb_entry_init_from_hw(dev_priv, ddb_y, val);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	val = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, PLANE_CTL(pipe, plane_id));
+	val = intel_uncore_read(&dev_priv->uncore, PLANE_CTL(pipe, plane_id));
 
-	/* No DDB allocated क्रम disabled planes */
-	अगर (val & PLANE_CTL_ENABLE)
-		fourcc = skl_क्रमmat_to_fourcc(val & PLANE_CTL_FORMAT_MASK,
+	/* No DDB allocated for disabled planes */
+	if (val & PLANE_CTL_ENABLE)
+		fourcc = skl_format_to_fourcc(val & PLANE_CTL_FORMAT_MASK,
 					      val & PLANE_CTL_ORDER_RGBX,
 					      val & PLANE_CTL_ALPHA_MASK);
 
-	अगर (DISPLAY_VER(dev_priv) >= 11) अणु
-		val = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, PLANE_BUF_CFG(pipe, plane_id));
+	if (DISPLAY_VER(dev_priv) >= 11) {
+		val = intel_uncore_read(&dev_priv->uncore, PLANE_BUF_CFG(pipe, plane_id));
 		skl_ddb_entry_init_from_hw(dev_priv, ddb_y, val);
-	पूर्ण अन्यथा अणु
-		val = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, PLANE_BUF_CFG(pipe, plane_id));
-		val2 = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, PLANE_NV12_BUF_CFG(pipe, plane_id));
+	} else {
+		val = intel_uncore_read(&dev_priv->uncore, PLANE_BUF_CFG(pipe, plane_id));
+		val2 = intel_uncore_read(&dev_priv->uncore, PLANE_NV12_BUF_CFG(pipe, plane_id));
 
-		अगर (fourcc &&
-		    drm_क्रमmat_info_is_yuv_semiplanar(drm_क्रमmat_info(fourcc)))
+		if (fourcc &&
+		    drm_format_info_is_yuv_semiplanar(drm_format_info(fourcc)))
 			swap(val, val2);
 
 		skl_ddb_entry_init_from_hw(dev_priv, ddb_y, val);
 		skl_ddb_entry_init_from_hw(dev_priv, ddb_uv, val2);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम skl_pipe_ddb_get_hw_state(काष्ठा पूर्णांकel_crtc *crtc,
-			       काष्ठा skl_ddb_entry *ddb_y,
-			       काष्ठा skl_ddb_entry *ddb_uv)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
-	क्रमागत पूर्णांकel_display_घातer_करोमुख्य घातer_करोमुख्य;
-	क्रमागत pipe pipe = crtc->pipe;
-	पूर्णांकel_wakeref_t wakeref;
-	क्रमागत plane_id plane_id;
+void skl_pipe_ddb_get_hw_state(struct intel_crtc *crtc,
+			       struct skl_ddb_entry *ddb_y,
+			       struct skl_ddb_entry *ddb_uv)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	enum intel_display_power_domain power_domain;
+	enum pipe pipe = crtc->pipe;
+	intel_wakeref_t wakeref;
+	enum plane_id plane_id;
 
-	घातer_करोमुख्य = POWER_DOMAIN_PIPE(pipe);
-	wakeref = पूर्णांकel_display_घातer_get_अगर_enabled(dev_priv, घातer_करोमुख्य);
-	अगर (!wakeref)
-		वापस;
+	power_domain = POWER_DOMAIN_PIPE(pipe);
+	wakeref = intel_display_power_get_if_enabled(dev_priv, power_domain);
+	if (!wakeref)
+		return;
 
-	क्रम_each_plane_id_on_crtc(crtc, plane_id)
+	for_each_plane_id_on_crtc(crtc, plane_id)
 		skl_ddb_get_hw_plane_state(dev_priv, pipe,
 					   plane_id,
 					   &ddb_y[plane_id],
 					   &ddb_uv[plane_id]);
 
-	पूर्णांकel_display_घातer_put(dev_priv, घातer_करोमुख्य, wakeref);
-पूर्ण
+	intel_display_power_put(dev_priv, power_domain, wakeref);
+}
 
 /*
- * Determines the करोwnscale amount of a plane क्रम the purposes of watermark calculations.
- * The bspec defines करोwnscale amount as:
+ * Determines the downscale amount of a plane for the purposes of watermark calculations.
+ * The bspec defines downscale amount as:
  *
  * """
- * Horizontal करोwn scale amount = maximum[1, Horizontal source size /
+ * Horizontal down scale amount = maximum[1, Horizontal source size /
  *                                           Horizontal destination size]
- * Vertical करोwn scale amount = maximum[1, Vertical source size /
+ * Vertical down scale amount = maximum[1, Vertical source size /
  *                                         Vertical destination size]
- * Total करोwn scale amount = Horizontal करोwn scale amount *
- *                           Vertical करोwn scale amount
+ * Total down scale amount = Horizontal down scale amount *
+ *                           Vertical down scale amount
  * """
  *
- * Return value is provided in 16.16 fixed poपूर्णांक क्रमm to retain fractional part.
- * Caller should take care of भागiding & rounding off the value.
+ * Return value is provided in 16.16 fixed point form to retain fractional part.
+ * Caller should take care of dividing & rounding off the value.
  */
-अटल uपूर्णांक_fixed_16_16_t
-skl_plane_करोwnscale_amount(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-			   स्थिर काष्ठा पूर्णांकel_plane_state *plane_state)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
+static uint_fixed_16_16_t
+skl_plane_downscale_amount(const struct intel_crtc_state *crtc_state,
+			   const struct intel_plane_state *plane_state)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
 	u32 src_w, src_h, dst_w, dst_h;
-	uपूर्णांक_fixed_16_16_t fp_w_ratio, fp_h_ratio;
-	uपूर्णांक_fixed_16_16_t करोwnscale_h, करोwnscale_w;
+	uint_fixed_16_16_t fp_w_ratio, fp_h_ratio;
+	uint_fixed_16_16_t downscale_h, downscale_w;
 
-	अगर (drm_WARN_ON(&dev_priv->drm,
-			!पूर्णांकel_wm_plane_visible(crtc_state, plane_state)))
-		वापस u32_to_fixed16(0);
+	if (drm_WARN_ON(&dev_priv->drm,
+			!intel_wm_plane_visible(crtc_state, plane_state)))
+		return u32_to_fixed16(0);
 
 	/*
-	 * Src coordinates are alपढ़ोy rotated by 270 degrees क्रम
-	 * the 90/270 degree plane rotation हालs (to match the
-	 * GTT mapping), hence no need to account क्रम rotation here.
+	 * Src coordinates are already rotated by 270 degrees for
+	 * the 90/270 degree plane rotation cases (to match the
+	 * GTT mapping), hence no need to account for rotation here.
 	 *
-	 * n.b., src is 16.16 fixed poपूर्णांक, dst is whole पूर्णांकeger.
+	 * n.b., src is 16.16 fixed point, dst is whole integer.
 	 */
 	src_w = drm_rect_width(&plane_state->uapi.src) >> 16;
 	src_h = drm_rect_height(&plane_state->uapi.src) >> 16;
 	dst_w = drm_rect_width(&plane_state->uapi.dst);
 	dst_h = drm_rect_height(&plane_state->uapi.dst);
 
-	fp_w_ratio = भाग_fixed16(src_w, dst_w);
-	fp_h_ratio = भाग_fixed16(src_h, dst_h);
-	करोwnscale_w = max_fixed16(fp_w_ratio, u32_to_fixed16(1));
-	करोwnscale_h = max_fixed16(fp_h_ratio, u32_to_fixed16(1));
+	fp_w_ratio = div_fixed16(src_w, dst_w);
+	fp_h_ratio = div_fixed16(src_h, dst_h);
+	downscale_w = max_fixed16(fp_w_ratio, u32_to_fixed16(1));
+	downscale_h = max_fixed16(fp_h_ratio, u32_to_fixed16(1));
 
-	वापस mul_fixed16(करोwnscale_w, करोwnscale_h);
-पूर्ण
+	return mul_fixed16(downscale_w, downscale_h);
+}
 
-काष्ठा dbuf_slice_conf_entry अणु
+struct dbuf_slice_conf_entry {
 	u8 active_pipes;
 	u8 dbuf_mask[I915_MAX_PIPES];
-पूर्ण;
+};
 
 /*
  * Table taken from Bspec 12716
- * Pipes करो have some preferred DBuf slice affinity,
+ * Pipes do have some preferred DBuf slice affinity,
  * plus there are some hardcoded requirements on how
- * those should be distributed क्रम multipipe scenarios.
+ * those should be distributed for multipipe scenarios.
  * For more DBuf slices algorithm can get even more messy
- * and less पढ़ोable, so decided to use a table almost
+ * and less readable, so decided to use a table almost
  * as is from BSpec itself - that way it is at least easier
  * to compare, change and check.
  */
-अटल स्थिर काष्ठा dbuf_slice_conf_entry icl_allowed_dbufs[] =
-/* Autogenerated with igt/tools/पूर्णांकel_dbuf_map tool: */
-अणु
-	अणु
+static const struct dbuf_slice_conf_entry icl_allowed_dbufs[] =
+/* Autogenerated with igt/tools/intel_dbuf_map tool: */
+{
+	{
 		.active_pipes = BIT(PIPE_A),
-		.dbuf_mask = अणु
+		.dbuf_mask = {
 			[PIPE_A] = BIT(DBUF_S1),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.active_pipes = BIT(PIPE_B),
-		.dbuf_mask = अणु
+		.dbuf_mask = {
 			[PIPE_B] = BIT(DBUF_S1),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.active_pipes = BIT(PIPE_A) | BIT(PIPE_B),
-		.dbuf_mask = अणु
+		.dbuf_mask = {
 			[PIPE_A] = BIT(DBUF_S1),
 			[PIPE_B] = BIT(DBUF_S2),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.active_pipes = BIT(PIPE_C),
-		.dbuf_mask = अणु
+		.dbuf_mask = {
 			[PIPE_C] = BIT(DBUF_S2),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.active_pipes = BIT(PIPE_A) | BIT(PIPE_C),
-		.dbuf_mask = अणु
+		.dbuf_mask = {
 			[PIPE_A] = BIT(DBUF_S1),
 			[PIPE_C] = BIT(DBUF_S2),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.active_pipes = BIT(PIPE_B) | BIT(PIPE_C),
-		.dbuf_mask = अणु
+		.dbuf_mask = {
 			[PIPE_B] = BIT(DBUF_S1),
 			[PIPE_C] = BIT(DBUF_S2),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.active_pipes = BIT(PIPE_A) | BIT(PIPE_B) | BIT(PIPE_C),
-		.dbuf_mask = अणु
+		.dbuf_mask = {
 			[PIPE_A] = BIT(DBUF_S1),
 			[PIPE_B] = BIT(DBUF_S1),
 			[PIPE_C] = BIT(DBUF_S2),
-		पूर्ण,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+		},
+	},
+	{}
+};
 
 /*
  * Table taken from Bspec 49255
- * Pipes करो have some preferred DBuf slice affinity,
+ * Pipes do have some preferred DBuf slice affinity,
  * plus there are some hardcoded requirements on how
- * those should be distributed क्रम multipipe scenarios.
+ * those should be distributed for multipipe scenarios.
  * For more DBuf slices algorithm can get even more messy
- * and less पढ़ोable, so decided to use a table almost
+ * and less readable, so decided to use a table almost
  * as is from BSpec itself - that way it is at least easier
  * to compare, change and check.
  */
-अटल स्थिर काष्ठा dbuf_slice_conf_entry tgl_allowed_dbufs[] =
-/* Autogenerated with igt/tools/पूर्णांकel_dbuf_map tool: */
-अणु
-	अणु
+static const struct dbuf_slice_conf_entry tgl_allowed_dbufs[] =
+/* Autogenerated with igt/tools/intel_dbuf_map tool: */
+{
+	{
 		.active_pipes = BIT(PIPE_A),
-		.dbuf_mask = अणु
+		.dbuf_mask = {
 			[PIPE_A] = BIT(DBUF_S1) | BIT(DBUF_S2),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.active_pipes = BIT(PIPE_B),
-		.dbuf_mask = अणु
+		.dbuf_mask = {
 			[PIPE_B] = BIT(DBUF_S1) | BIT(DBUF_S2),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.active_pipes = BIT(PIPE_A) | BIT(PIPE_B),
-		.dbuf_mask = अणु
+		.dbuf_mask = {
 			[PIPE_A] = BIT(DBUF_S2),
 			[PIPE_B] = BIT(DBUF_S1),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.active_pipes = BIT(PIPE_C),
-		.dbuf_mask = अणु
+		.dbuf_mask = {
 			[PIPE_C] = BIT(DBUF_S2) | BIT(DBUF_S1),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.active_pipes = BIT(PIPE_A) | BIT(PIPE_C),
-		.dbuf_mask = अणु
+		.dbuf_mask = {
 			[PIPE_A] = BIT(DBUF_S1),
 			[PIPE_C] = BIT(DBUF_S2),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.active_pipes = BIT(PIPE_B) | BIT(PIPE_C),
-		.dbuf_mask = अणु
+		.dbuf_mask = {
 			[PIPE_B] = BIT(DBUF_S1),
 			[PIPE_C] = BIT(DBUF_S2),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.active_pipes = BIT(PIPE_A) | BIT(PIPE_B) | BIT(PIPE_C),
-		.dbuf_mask = अणु
+		.dbuf_mask = {
 			[PIPE_A] = BIT(DBUF_S1),
 			[PIPE_B] = BIT(DBUF_S1),
 			[PIPE_C] = BIT(DBUF_S2),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.active_pipes = BIT(PIPE_D),
-		.dbuf_mask = अणु
+		.dbuf_mask = {
 			[PIPE_D] = BIT(DBUF_S2) | BIT(DBUF_S1),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.active_pipes = BIT(PIPE_A) | BIT(PIPE_D),
-		.dbuf_mask = अणु
+		.dbuf_mask = {
 			[PIPE_A] = BIT(DBUF_S1),
 			[PIPE_D] = BIT(DBUF_S2),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.active_pipes = BIT(PIPE_B) | BIT(PIPE_D),
-		.dbuf_mask = अणु
+		.dbuf_mask = {
 			[PIPE_B] = BIT(DBUF_S1),
 			[PIPE_D] = BIT(DBUF_S2),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.active_pipes = BIT(PIPE_A) | BIT(PIPE_B) | BIT(PIPE_D),
-		.dbuf_mask = अणु
+		.dbuf_mask = {
 			[PIPE_A] = BIT(DBUF_S1),
 			[PIPE_B] = BIT(DBUF_S1),
 			[PIPE_D] = BIT(DBUF_S2),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.active_pipes = BIT(PIPE_C) | BIT(PIPE_D),
-		.dbuf_mask = अणु
+		.dbuf_mask = {
 			[PIPE_C] = BIT(DBUF_S1),
 			[PIPE_D] = BIT(DBUF_S2),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.active_pipes = BIT(PIPE_A) | BIT(PIPE_C) | BIT(PIPE_D),
-		.dbuf_mask = अणु
+		.dbuf_mask = {
 			[PIPE_A] = BIT(DBUF_S1),
 			[PIPE_C] = BIT(DBUF_S2),
 			[PIPE_D] = BIT(DBUF_S2),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.active_pipes = BIT(PIPE_B) | BIT(PIPE_C) | BIT(PIPE_D),
-		.dbuf_mask = अणु
+		.dbuf_mask = {
 			[PIPE_B] = BIT(DBUF_S1),
 			[PIPE_C] = BIT(DBUF_S2),
 			[PIPE_D] = BIT(DBUF_S2),
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.active_pipes = BIT(PIPE_A) | BIT(PIPE_B) | BIT(PIPE_C) | BIT(PIPE_D),
-		.dbuf_mask = अणु
+		.dbuf_mask = {
 			[PIPE_A] = BIT(DBUF_S1),
 			[PIPE_B] = BIT(DBUF_S1),
 			[PIPE_C] = BIT(DBUF_S2),
 			[PIPE_D] = BIT(DBUF_S2),
-		पूर्ण,
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+		},
+	},
+	{}
+};
 
-अटल u8 compute_dbuf_slices(क्रमागत pipe pipe, u8 active_pipes,
-			      स्थिर काष्ठा dbuf_slice_conf_entry *dbuf_slices)
-अणु
-	पूर्णांक i;
+static u8 compute_dbuf_slices(enum pipe pipe, u8 active_pipes,
+			      const struct dbuf_slice_conf_entry *dbuf_slices)
+{
+	int i;
 
-	क्रम (i = 0; i < dbuf_slices[i].active_pipes; i++) अणु
-		अगर (dbuf_slices[i].active_pipes == active_pipes)
-			वापस dbuf_slices[i].dbuf_mask[pipe];
-	पूर्ण
-	वापस 0;
-पूर्ण
+	for (i = 0; i < dbuf_slices[i].active_pipes; i++) {
+		if (dbuf_slices[i].active_pipes == active_pipes)
+			return dbuf_slices[i].dbuf_mask[pipe];
+	}
+	return 0;
+}
 
 /*
  * This function finds an entry with same enabled pipe configuration and
- * वापसs correspondent DBuf slice mask as stated in BSpec क्रम particular
- * platक्रमm.
+ * returns correspondent DBuf slice mask as stated in BSpec for particular
+ * platform.
  */
-अटल u8 icl_compute_dbuf_slices(क्रमागत pipe pipe, u8 active_pipes)
-अणु
+static u8 icl_compute_dbuf_slices(enum pipe pipe, u8 active_pipes)
+{
 	/*
 	 * FIXME: For ICL this is still a bit unclear as prev BSpec revision
 	 * required calculating "pipe ratio" in order to determine
-	 * अगर one or two slices can be used क्रम single pipe configurations
-	 * as additional स्थिरraपूर्णांक to the existing table.
+	 * if one or two slices can be used for single pipe configurations
+	 * as additional constraint to the existing table.
 	 * However based on recent info, it should be not "pipe ratio"
 	 * but rather ratio between pixel_rate and cdclk with additional
-	 * स्थिरants, so क्रम now we are using only table until this is
-	 * clarअगरied. Also this is the reason why crtc_state param is
-	 * still here - we will need it once those additional स्थिरraपूर्णांकs
+	 * constants, so for now we are using only table until this is
+	 * clarified. Also this is the reason why crtc_state param is
+	 * still here - we will need it once those additional constraints
 	 * pop up.
 	 */
-	वापस compute_dbuf_slices(pipe, active_pipes, icl_allowed_dbufs);
-पूर्ण
+	return compute_dbuf_slices(pipe, active_pipes, icl_allowed_dbufs);
+}
 
-अटल u8 tgl_compute_dbuf_slices(क्रमागत pipe pipe, u8 active_pipes)
-अणु
-	वापस compute_dbuf_slices(pipe, active_pipes, tgl_allowed_dbufs);
-पूर्ण
+static u8 tgl_compute_dbuf_slices(enum pipe pipe, u8 active_pipes)
+{
+	return compute_dbuf_slices(pipe, active_pipes, tgl_allowed_dbufs);
+}
 
-अटल u8 skl_compute_dbuf_slices(काष्ठा पूर्णांकel_crtc *crtc, u8 active_pipes)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
-	क्रमागत pipe pipe = crtc->pipe;
+static u8 skl_compute_dbuf_slices(struct intel_crtc *crtc, u8 active_pipes)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	enum pipe pipe = crtc->pipe;
 
-	अगर (IS_DISPLAY_VER(dev_priv, 12))
-		वापस tgl_compute_dbuf_slices(pipe, active_pipes);
-	अन्यथा अगर (IS_DISPLAY_VER(dev_priv, 11))
-		वापस icl_compute_dbuf_slices(pipe, active_pipes);
+	if (IS_DISPLAY_VER(dev_priv, 12))
+		return tgl_compute_dbuf_slices(pipe, active_pipes);
+	else if (IS_DISPLAY_VER(dev_priv, 11))
+		return icl_compute_dbuf_slices(pipe, active_pipes);
 	/*
-	 * For anything अन्यथा just वापस one slice yet.
-	 * Should be extended क्रम other platक्रमms.
+	 * For anything else just return one slice yet.
+	 * Should be extended for other platforms.
 	 */
-	वापस active_pipes & BIT(pipe) ? BIT(DBUF_S1) : 0;
-पूर्ण
+	return active_pipes & BIT(pipe) ? BIT(DBUF_S1) : 0;
+}
 
-अटल u64
-skl_plane_relative_data_rate(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-			     स्थिर काष्ठा पूर्णांकel_plane_state *plane_state,
-			     पूर्णांक color_plane)
-अणु
-	काष्ठा पूर्णांकel_plane *plane = to_पूर्णांकel_plane(plane_state->uapi.plane);
-	स्थिर काष्ठा drm_framebuffer *fb = plane_state->hw.fb;
+static u64
+skl_plane_relative_data_rate(const struct intel_crtc_state *crtc_state,
+			     const struct intel_plane_state *plane_state,
+			     int color_plane)
+{
+	struct intel_plane *plane = to_intel_plane(plane_state->uapi.plane);
+	const struct drm_framebuffer *fb = plane_state->hw.fb;
 	u32 data_rate;
 	u32 width = 0, height = 0;
-	uपूर्णांक_fixed_16_16_t करोwn_scale_amount;
+	uint_fixed_16_16_t down_scale_amount;
 	u64 rate;
 
-	अगर (!plane_state->uapi.visible)
-		वापस 0;
+	if (!plane_state->uapi.visible)
+		return 0;
 
-	अगर (plane->id == PLANE_CURSOR)
-		वापस 0;
+	if (plane->id == PLANE_CURSOR)
+		return 0;
 
-	अगर (color_plane == 1 &&
-	    !पूर्णांकel_क्रमmat_info_is_yuv_semiplanar(fb->क्रमmat, fb->modअगरier))
-		वापस 0;
+	if (color_plane == 1 &&
+	    !intel_format_info_is_yuv_semiplanar(fb->format, fb->modifier))
+		return 0;
 
 	/*
-	 * Src coordinates are alपढ़ोy rotated by 270 degrees क्रम
-	 * the 90/270 degree plane rotation हालs (to match the
-	 * GTT mapping), hence no need to account क्रम rotation here.
+	 * Src coordinates are already rotated by 270 degrees for
+	 * the 90/270 degree plane rotation cases (to match the
+	 * GTT mapping), hence no need to account for rotation here.
 	 */
 	width = drm_rect_width(&plane_state->uapi.src) >> 16;
 	height = drm_rect_height(&plane_state->uapi.src) >> 16;
 
-	/* UV plane करोes 1/2 pixel sub-sampling */
-	अगर (color_plane == 1) अणु
+	/* UV plane does 1/2 pixel sub-sampling */
+	if (color_plane == 1) {
 		width /= 2;
 		height /= 2;
-	पूर्ण
+	}
 
 	data_rate = width * height;
 
-	करोwn_scale_amount = skl_plane_करोwnscale_amount(crtc_state, plane_state);
+	down_scale_amount = skl_plane_downscale_amount(crtc_state, plane_state);
 
-	rate = mul_round_up_u32_fixed16(data_rate, करोwn_scale_amount);
+	rate = mul_round_up_u32_fixed16(data_rate, down_scale_amount);
 
-	rate *= fb->क्रमmat->cpp[color_plane];
-	वापस rate;
-पूर्ण
+	rate *= fb->format->cpp[color_plane];
+	return rate;
+}
 
-अटल u64
-skl_get_total_relative_data_rate(काष्ठा पूर्णांकel_atomic_state *state,
-				 काष्ठा पूर्णांकel_crtc *crtc)
-अणु
-	काष्ठा पूर्णांकel_crtc_state *crtc_state =
-		पूर्णांकel_atomic_get_new_crtc_state(state, crtc);
-	स्थिर काष्ठा पूर्णांकel_plane_state *plane_state;
-	काष्ठा पूर्णांकel_plane *plane;
+static u64
+skl_get_total_relative_data_rate(struct intel_atomic_state *state,
+				 struct intel_crtc *crtc)
+{
+	struct intel_crtc_state *crtc_state =
+		intel_atomic_get_new_crtc_state(state, crtc);
+	const struct intel_plane_state *plane_state;
+	struct intel_plane *plane;
 	u64 total_data_rate = 0;
-	क्रमागत plane_id plane_id;
-	पूर्णांक i;
+	enum plane_id plane_id;
+	int i;
 
-	/* Calculate and cache data rate क्रम each plane */
-	क्रम_each_new_पूर्णांकel_plane_in_state(state, plane, plane_state, i) अणु
-		अगर (plane->pipe != crtc->pipe)
-			जारी;
+	/* Calculate and cache data rate for each plane */
+	for_each_new_intel_plane_in_state(state, plane, plane_state, i) {
+		if (plane->pipe != crtc->pipe)
+			continue;
 
 		plane_id = plane->id;
 
@@ -4697,50 +4696,50 @@ skl_get_total_relative_data_rate(काष्ठा पूर्णांकel_a
 		/* uv-plane */
 		crtc_state->uv_plane_data_rate[plane_id] =
 			skl_plane_relative_data_rate(crtc_state, plane_state, 1);
-	पूर्ण
+	}
 
-	क्रम_each_plane_id_on_crtc(crtc, plane_id) अणु
+	for_each_plane_id_on_crtc(crtc, plane_id) {
 		total_data_rate += crtc_state->plane_data_rate[plane_id];
 		total_data_rate += crtc_state->uv_plane_data_rate[plane_id];
-	पूर्ण
+	}
 
-	वापस total_data_rate;
-पूर्ण
+	return total_data_rate;
+}
 
-अटल u64
-icl_get_total_relative_data_rate(काष्ठा पूर्णांकel_atomic_state *state,
-				 काष्ठा पूर्णांकel_crtc *crtc)
-अणु
-	काष्ठा पूर्णांकel_crtc_state *crtc_state =
-		पूर्णांकel_atomic_get_new_crtc_state(state, crtc);
-	स्थिर काष्ठा पूर्णांकel_plane_state *plane_state;
-	काष्ठा पूर्णांकel_plane *plane;
+static u64
+icl_get_total_relative_data_rate(struct intel_atomic_state *state,
+				 struct intel_crtc *crtc)
+{
+	struct intel_crtc_state *crtc_state =
+		intel_atomic_get_new_crtc_state(state, crtc);
+	const struct intel_plane_state *plane_state;
+	struct intel_plane *plane;
 	u64 total_data_rate = 0;
-	क्रमागत plane_id plane_id;
-	पूर्णांक i;
+	enum plane_id plane_id;
+	int i;
 
-	/* Calculate and cache data rate क्रम each plane */
-	क्रम_each_new_पूर्णांकel_plane_in_state(state, plane, plane_state, i) अणु
-		अगर (plane->pipe != crtc->pipe)
-			जारी;
+	/* Calculate and cache data rate for each plane */
+	for_each_new_intel_plane_in_state(state, plane, plane_state, i) {
+		if (plane->pipe != crtc->pipe)
+			continue;
 
 		plane_id = plane->id;
 
-		अगर (!plane_state->planar_linked_plane) अणु
+		if (!plane_state->planar_linked_plane) {
 			crtc_state->plane_data_rate[plane_id] =
 				skl_plane_relative_data_rate(crtc_state, plane_state, 0);
-		पूर्ण अन्यथा अणु
-			क्रमागत plane_id y_plane_id;
+		} else {
+			enum plane_id y_plane_id;
 
 			/*
 			 * The slave plane might not iterate in
-			 * पूर्णांकel_atomic_crtc_state_क्रम_each_plane_state(),
+			 * intel_atomic_crtc_state_for_each_plane_state(),
 			 * and needs the master plane state which may be
-			 * शून्य अगर we try get_new_plane_state(), so we
+			 * NULL if we try get_new_plane_state(), so we
 			 * always calculate from the master.
 			 */
-			अगर (plane_state->planar_slave)
-				जारी;
+			if (plane_state->planar_slave)
+				continue;
 
 			/* Y plane rate is calculated on the slave */
 			y_plane_id = plane_state->planar_linked_plane->id;
@@ -4749,175 +4748,175 @@ icl_get_total_relative_data_rate(काष्ठा पूर्णांकel_a
 
 			crtc_state->plane_data_rate[plane_id] =
 				skl_plane_relative_data_rate(crtc_state, plane_state, 1);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम_each_plane_id_on_crtc(crtc, plane_id)
+	for_each_plane_id_on_crtc(crtc, plane_id)
 		total_data_rate += crtc_state->plane_data_rate[plane_id];
 
-	वापस total_data_rate;
-पूर्ण
+	return total_data_rate;
+}
 
-स्थिर काष्ठा skl_wm_level *
-skl_plane_wm_level(स्थिर काष्ठा skl_pipe_wm *pipe_wm,
-		   क्रमागत plane_id plane_id,
-		   पूर्णांक level)
-अणु
-	स्थिर काष्ठा skl_plane_wm *wm = &pipe_wm->planes[plane_id];
+const struct skl_wm_level *
+skl_plane_wm_level(const struct skl_pipe_wm *pipe_wm,
+		   enum plane_id plane_id,
+		   int level)
+{
+	const struct skl_plane_wm *wm = &pipe_wm->planes[plane_id];
 
-	अगर (level == 0 && pipe_wm->use_sagv_wm)
-		वापस &wm->sagv.wm0;
+	if (level == 0 && pipe_wm->use_sagv_wm)
+		return &wm->sagv.wm0;
 
-	वापस &wm->wm[level];
-पूर्ण
+	return &wm->wm[level];
+}
 
-स्थिर काष्ठा skl_wm_level *
-skl_plane_trans_wm(स्थिर काष्ठा skl_pipe_wm *pipe_wm,
-		   क्रमागत plane_id plane_id)
-अणु
-	स्थिर काष्ठा skl_plane_wm *wm = &pipe_wm->planes[plane_id];
+const struct skl_wm_level *
+skl_plane_trans_wm(const struct skl_pipe_wm *pipe_wm,
+		   enum plane_id plane_id)
+{
+	const struct skl_plane_wm *wm = &pipe_wm->planes[plane_id];
 
-	अगर (pipe_wm->use_sagv_wm)
-		वापस &wm->sagv.trans_wm;
+	if (pipe_wm->use_sagv_wm)
+		return &wm->sagv.trans_wm;
 
-	वापस &wm->trans_wm;
-पूर्ण
+	return &wm->trans_wm;
+}
 
 /*
- * We only disable the watermarks क्रम each plane अगर
+ * We only disable the watermarks for each plane if
  * they exceed the ddb allocation of said plane. This
- * is करोne so that we करोn't end up touching cursor
+ * is done so that we don't end up touching cursor
  * watermarks needlessly when some other plane reduces
  * our max possible watermark level.
  *
  * Bspec has this to say about the PLANE_WM enable bit:
- * "All the watermarks at this level क्रम all enabled
- *  planes must be enabled beक्रमe the level will be used."
- * So this is actually safe to करो.
+ * "All the watermarks at this level for all enabled
+ *  planes must be enabled before the level will be used."
+ * So this is actually safe to do.
  */
-अटल व्योम
-skl_check_wm_level(काष्ठा skl_wm_level *wm, u64 total)
-अणु
-	अगर (wm->min_ddb_alloc > total)
-		स_रखो(wm, 0, माप(*wm));
-पूर्ण
+static void
+skl_check_wm_level(struct skl_wm_level *wm, u64 total)
+{
+	if (wm->min_ddb_alloc > total)
+		memset(wm, 0, sizeof(*wm));
+}
 
-अटल व्योम
-skl_check_nv12_wm_level(काष्ठा skl_wm_level *wm, काष्ठा skl_wm_level *uv_wm,
+static void
+skl_check_nv12_wm_level(struct skl_wm_level *wm, struct skl_wm_level *uv_wm,
 			u64 total, u64 uv_total)
-अणु
-	अगर (wm->min_ddb_alloc > total ||
-	    uv_wm->min_ddb_alloc > uv_total) अणु
-		स_रखो(wm, 0, माप(*wm));
-		स_रखो(uv_wm, 0, माप(*uv_wm));
-	पूर्ण
-पूर्ण
+{
+	if (wm->min_ddb_alloc > total ||
+	    uv_wm->min_ddb_alloc > uv_total) {
+		memset(wm, 0, sizeof(*wm));
+		memset(uv_wm, 0, sizeof(*uv_wm));
+	}
+}
 
-अटल पूर्णांक
-skl_allocate_plane_ddb(काष्ठा पूर्णांकel_atomic_state *state,
-		       काष्ठा पूर्णांकel_crtc *crtc)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
-	काष्ठा पूर्णांकel_crtc_state *crtc_state =
-		पूर्णांकel_atomic_get_new_crtc_state(state, crtc);
-	स्थिर काष्ठा पूर्णांकel_dbuf_state *dbuf_state =
-		पूर्णांकel_atomic_get_new_dbuf_state(state);
-	स्थिर काष्ठा skl_ddb_entry *alloc = &dbuf_state->ddb[crtc->pipe];
-	पूर्णांक num_active = hweight8(dbuf_state->active_pipes);
+static int
+skl_allocate_plane_ddb(struct intel_atomic_state *state,
+		       struct intel_crtc *crtc)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	struct intel_crtc_state *crtc_state =
+		intel_atomic_get_new_crtc_state(state, crtc);
+	const struct intel_dbuf_state *dbuf_state =
+		intel_atomic_get_new_dbuf_state(state);
+	const struct skl_ddb_entry *alloc = &dbuf_state->ddb[crtc->pipe];
+	int num_active = hweight8(dbuf_state->active_pipes);
 	u16 alloc_size, start = 0;
-	u16 total[I915_MAX_PLANES] = अणुपूर्ण;
-	u16 uv_total[I915_MAX_PLANES] = अणुपूर्ण;
+	u16 total[I915_MAX_PLANES] = {};
+	u16 uv_total[I915_MAX_PLANES] = {};
 	u64 total_data_rate;
-	क्रमागत plane_id plane_id;
+	enum plane_id plane_id;
 	u32 blocks;
-	पूर्णांक level;
+	int level;
 
-	/* Clear the partitioning क्रम disabled planes. */
-	स_रखो(crtc_state->wm.skl.plane_ddb_y, 0, माप(crtc_state->wm.skl.plane_ddb_y));
-	स_रखो(crtc_state->wm.skl.plane_ddb_uv, 0, माप(crtc_state->wm.skl.plane_ddb_uv));
+	/* Clear the partitioning for disabled planes. */
+	memset(crtc_state->wm.skl.plane_ddb_y, 0, sizeof(crtc_state->wm.skl.plane_ddb_y));
+	memset(crtc_state->wm.skl.plane_ddb_uv, 0, sizeof(crtc_state->wm.skl.plane_ddb_uv));
 
-	अगर (!crtc_state->hw.active)
-		वापस 0;
+	if (!crtc_state->hw.active)
+		return 0;
 
-	अगर (DISPLAY_VER(dev_priv) >= 11)
+	if (DISPLAY_VER(dev_priv) >= 11)
 		total_data_rate =
 			icl_get_total_relative_data_rate(state, crtc);
-	अन्यथा
+	else
 		total_data_rate =
 			skl_get_total_relative_data_rate(state, crtc);
 
 	alloc_size = skl_ddb_entry_size(alloc);
-	अगर (alloc_size == 0)
-		वापस 0;
+	if (alloc_size == 0)
+		return 0;
 
-	/* Allocate fixed number of blocks क्रम cursor. */
+	/* Allocate fixed number of blocks for cursor. */
 	total[PLANE_CURSOR] = skl_cursor_allocation(crtc_state, num_active);
 	alloc_size -= total[PLANE_CURSOR];
 	crtc_state->wm.skl.plane_ddb_y[PLANE_CURSOR].start =
 		alloc->end - total[PLANE_CURSOR];
 	crtc_state->wm.skl.plane_ddb_y[PLANE_CURSOR].end = alloc->end;
 
-	अगर (total_data_rate == 0)
-		वापस 0;
+	if (total_data_rate == 0)
+		return 0;
 
 	/*
-	 * Find the highest watermark level क्रम which we can satisfy the block
+	 * Find the highest watermark level for which we can satisfy the block
 	 * requirement of active planes.
 	 */
-	क्रम (level = ilk_wm_max_level(dev_priv); level >= 0; level--) अणु
+	for (level = ilk_wm_max_level(dev_priv); level >= 0; level--) {
 		blocks = 0;
-		क्रम_each_plane_id_on_crtc(crtc, plane_id) अणु
-			स्थिर काष्ठा skl_plane_wm *wm =
+		for_each_plane_id_on_crtc(crtc, plane_id) {
+			const struct skl_plane_wm *wm =
 				&crtc_state->wm.skl.optimal.planes[plane_id];
 
-			अगर (plane_id == PLANE_CURSOR) अणु
-				अगर (wm->wm[level].min_ddb_alloc > total[PLANE_CURSOR]) अणु
+			if (plane_id == PLANE_CURSOR) {
+				if (wm->wm[level].min_ddb_alloc > total[PLANE_CURSOR]) {
 					drm_WARN_ON(&dev_priv->drm,
 						    wm->wm[level].min_ddb_alloc != U16_MAX);
 					blocks = U32_MAX;
-					अवरोध;
-				पूर्ण
-				जारी;
-			पूर्ण
+					break;
+				}
+				continue;
+			}
 
 			blocks += wm->wm[level].min_ddb_alloc;
 			blocks += wm->uv_wm[level].min_ddb_alloc;
-		पूर्ण
+		}
 
-		अगर (blocks <= alloc_size) अणु
+		if (blocks <= alloc_size) {
 			alloc_size -= blocks;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (level < 0) अणु
+	if (level < 0) {
 		drm_dbg_kms(&dev_priv->drm,
 			    "Requested display configuration exceeds system DDB limitations");
 		drm_dbg_kms(&dev_priv->drm, "minimum required %d/%d\n",
 			    blocks, alloc_size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
 	 * Grant each plane the blocks it requires at the highest achievable
 	 * watermark level, plus an extra share of the leftover blocks
 	 * proportional to its relative data rate.
 	 */
-	क्रम_each_plane_id_on_crtc(crtc, plane_id) अणु
-		स्थिर काष्ठा skl_plane_wm *wm =
+	for_each_plane_id_on_crtc(crtc, plane_id) {
+		const struct skl_plane_wm *wm =
 			&crtc_state->wm.skl.optimal.planes[plane_id];
 		u64 rate;
 		u16 extra;
 
-		अगर (plane_id == PLANE_CURSOR)
-			जारी;
+		if (plane_id == PLANE_CURSOR)
+			continue;
 
 		/*
-		 * We've accounted क्रम all active planes; reमुख्यing planes are
+		 * We've accounted for all active planes; remaining planes are
 		 * all disabled.
 		 */
-		अगर (total_data_rate == 0)
-			अवरोध;
+		if (total_data_rate == 0)
+			break;
 
 		rate = crtc_state->plane_data_rate[plane_id];
 		extra = min_t(u16, alloc_size,
@@ -4927,8 +4926,8 @@ skl_allocate_plane_ddb(काष्ठा पूर्णांकel_atomic_stat
 		alloc_size -= extra;
 		total_data_rate -= rate;
 
-		अगर (total_data_rate == 0)
-			अवरोध;
+		if (total_data_rate == 0)
+			break;
 
 		rate = crtc_state->uv_plane_data_rate[plane_id];
 		extra = min_t(u16, alloc_size,
@@ -4937,37 +4936,37 @@ skl_allocate_plane_ddb(काष्ठा पूर्णांकel_atomic_stat
 		uv_total[plane_id] = wm->uv_wm[level].min_ddb_alloc + extra;
 		alloc_size -= extra;
 		total_data_rate -= rate;
-	पूर्ण
+	}
 	drm_WARN_ON(&dev_priv->drm, alloc_size != 0 || total_data_rate != 0);
 
-	/* Set the actual DDB start/end poपूर्णांकs क्रम each plane */
+	/* Set the actual DDB start/end points for each plane */
 	start = alloc->start;
-	क्रम_each_plane_id_on_crtc(crtc, plane_id) अणु
-		काष्ठा skl_ddb_entry *plane_alloc =
+	for_each_plane_id_on_crtc(crtc, plane_id) {
+		struct skl_ddb_entry *plane_alloc =
 			&crtc_state->wm.skl.plane_ddb_y[plane_id];
-		काष्ठा skl_ddb_entry *uv_plane_alloc =
+		struct skl_ddb_entry *uv_plane_alloc =
 			&crtc_state->wm.skl.plane_ddb_uv[plane_id];
 
-		अगर (plane_id == PLANE_CURSOR)
-			जारी;
+		if (plane_id == PLANE_CURSOR)
+			continue;
 
-		/* Gen11+ uses a separate plane क्रम UV watermarks */
+		/* Gen11+ uses a separate plane for UV watermarks */
 		drm_WARN_ON(&dev_priv->drm,
 			    DISPLAY_VER(dev_priv) >= 11 && uv_total[plane_id]);
 
 		/* Leave disabled planes at (0,0) */
-		अगर (total[plane_id]) अणु
+		if (total[plane_id]) {
 			plane_alloc->start = start;
 			start += total[plane_id];
 			plane_alloc->end = start;
-		पूर्ण
+		}
 
-		अगर (uv_total[plane_id]) अणु
+		if (uv_total[plane_id]) {
 			uv_plane_alloc->start = start;
 			start += uv_total[plane_id];
 			uv_plane_alloc->end = start;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/*
 	 * When we calculated watermark values we didn't know how high
@@ -4975,9 +4974,9 @@ skl_allocate_plane_ddb(काष्ठा पूर्णांकel_atomic_stat
 	 * all levels as "enabled."  Go back now and disable the ones
 	 * that aren't actually possible.
 	 */
-	क्रम (level++; level <= ilk_wm_max_level(dev_priv); level++) अणु
-		क्रम_each_plane_id_on_crtc(crtc, plane_id) अणु
-			काष्ठा skl_plane_wm *wm =
+	for (level++; level <= ilk_wm_max_level(dev_priv); level++) {
+		for_each_plane_id_on_crtc(crtc, plane_id) {
+			struct skl_plane_wm *wm =
 				&crtc_state->wm.skl.optimal.planes[plane_id];
 
 			skl_check_nv12_wm_level(&wm->wm[level], &wm->uv_wm[level],
@@ -4987,248 +4986,248 @@ skl_allocate_plane_ddb(काष्ठा पूर्णांकel_atomic_stat
 			 * Wa_1408961008:icl, ehl
 			 * Underruns with WM1+ disabled
 			 */
-			अगर (IS_DISPLAY_VER(dev_priv, 11) &&
-			    level == 1 && wm->wm[0].enable) अणु
+			if (IS_DISPLAY_VER(dev_priv, 11) &&
+			    level == 1 && wm->wm[0].enable) {
 				wm->wm[level].blocks = wm->wm[0].blocks;
 				wm->wm[level].lines = wm->wm[0].lines;
 				wm->wm[level].ignore_lines = wm->wm[0].ignore_lines;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	/*
 	 * Go back and disable the transition and SAGV watermarks
-	 * अगर it turns out we करोn't have enough DDB blocks क्रम them.
+	 * if it turns out we don't have enough DDB blocks for them.
 	 */
-	क्रम_each_plane_id_on_crtc(crtc, plane_id) अणु
-		काष्ठा skl_plane_wm *wm =
+	for_each_plane_id_on_crtc(crtc, plane_id) {
+		struct skl_plane_wm *wm =
 			&crtc_state->wm.skl.optimal.planes[plane_id];
 
 		skl_check_wm_level(&wm->trans_wm, total[plane_id]);
 		skl_check_wm_level(&wm->sagv.wm0, total[plane_id]);
 		skl_check_wm_level(&wm->sagv.trans_wm, total[plane_id]);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * The max latency should be 257 (max the punit can code is 255 and we add 2us
- * क्रम the पढ़ो latency) and cpp should always be <= 8, so that
+ * for the read latency) and cpp should always be <= 8, so that
  * should allow pixel_rate up to ~2 GHz which seems sufficient since max
  * 2xcdclk is 1350 MHz and the pixel rate should never exceed that.
 */
-अटल uपूर्णांक_fixed_16_16_t
-skl_wm_method1(स्थिर काष्ठा drm_i915_निजी *dev_priv, u32 pixel_rate,
+static uint_fixed_16_16_t
+skl_wm_method1(const struct drm_i915_private *dev_priv, u32 pixel_rate,
 	       u8 cpp, u32 latency, u32 dbuf_block_size)
-अणु
-	u32 wm_पूर्णांकermediate_val;
-	uपूर्णांक_fixed_16_16_t ret;
+{
+	u32 wm_intermediate_val;
+	uint_fixed_16_16_t ret;
 
-	अगर (latency == 0)
-		वापस FP_16_16_MAX;
+	if (latency == 0)
+		return FP_16_16_MAX;
 
-	wm_पूर्णांकermediate_val = latency * pixel_rate * cpp;
-	ret = भाग_fixed16(wm_पूर्णांकermediate_val, 1000 * dbuf_block_size);
+	wm_intermediate_val = latency * pixel_rate * cpp;
+	ret = div_fixed16(wm_intermediate_val, 1000 * dbuf_block_size);
 
-	अगर (DISPLAY_VER(dev_priv) >= 10)
+	if (DISPLAY_VER(dev_priv) >= 10)
 		ret = add_fixed16_u32(ret, 1);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल uपूर्णांक_fixed_16_16_t
+static uint_fixed_16_16_t
 skl_wm_method2(u32 pixel_rate, u32 pipe_htotal, u32 latency,
-	       uपूर्णांक_fixed_16_16_t plane_blocks_per_line)
-अणु
-	u32 wm_पूर्णांकermediate_val;
-	uपूर्णांक_fixed_16_16_t ret;
+	       uint_fixed_16_16_t plane_blocks_per_line)
+{
+	u32 wm_intermediate_val;
+	uint_fixed_16_16_t ret;
 
-	अगर (latency == 0)
-		वापस FP_16_16_MAX;
+	if (latency == 0)
+		return FP_16_16_MAX;
 
-	wm_पूर्णांकermediate_val = latency * pixel_rate;
-	wm_पूर्णांकermediate_val = DIV_ROUND_UP(wm_पूर्णांकermediate_val,
+	wm_intermediate_val = latency * pixel_rate;
+	wm_intermediate_val = DIV_ROUND_UP(wm_intermediate_val,
 					   pipe_htotal * 1000);
-	ret = mul_u32_fixed16(wm_पूर्णांकermediate_val, plane_blocks_per_line);
-	वापस ret;
-पूर्ण
+	ret = mul_u32_fixed16(wm_intermediate_val, plane_blocks_per_line);
+	return ret;
+}
 
-अटल uपूर्णांक_fixed_16_16_t
-पूर्णांकel_get_lineसमय_us(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
+static uint_fixed_16_16_t
+intel_get_linetime_us(const struct intel_crtc_state *crtc_state)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
 	u32 pixel_rate;
 	u32 crtc_htotal;
-	uपूर्णांक_fixed_16_16_t lineसमय_us;
+	uint_fixed_16_16_t linetime_us;
 
-	अगर (!crtc_state->hw.active)
-		वापस u32_to_fixed16(0);
+	if (!crtc_state->hw.active)
+		return u32_to_fixed16(0);
 
 	pixel_rate = crtc_state->pixel_rate;
 
-	अगर (drm_WARN_ON(&dev_priv->drm, pixel_rate == 0))
-		वापस u32_to_fixed16(0);
+	if (drm_WARN_ON(&dev_priv->drm, pixel_rate == 0))
+		return u32_to_fixed16(0);
 
 	crtc_htotal = crtc_state->hw.pipe_mode.crtc_htotal;
-	lineसमय_us = भाग_fixed16(crtc_htotal * 1000, pixel_rate);
+	linetime_us = div_fixed16(crtc_htotal * 1000, pixel_rate);
 
-	वापस lineसमय_us;
-पूर्ण
+	return linetime_us;
+}
 
-अटल पूर्णांक
-skl_compute_wm_params(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-		      पूर्णांक width, स्थिर काष्ठा drm_क्रमmat_info *क्रमmat,
-		      u64 modअगरier, अचिन्हित पूर्णांक rotation,
-		      u32 plane_pixel_rate, काष्ठा skl_wm_params *wp,
-		      पूर्णांक color_plane)
-अणु
-	काष्ठा पूर्णांकel_crtc *crtc = to_पूर्णांकel_crtc(crtc_state->uapi.crtc);
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
-	u32 पूर्णांकerm_pbpl;
+static int
+skl_compute_wm_params(const struct intel_crtc_state *crtc_state,
+		      int width, const struct drm_format_info *format,
+		      u64 modifier, unsigned int rotation,
+		      u32 plane_pixel_rate, struct skl_wm_params *wp,
+		      int color_plane)
+{
+	struct intel_crtc *crtc = to_intel_crtc(crtc_state->uapi.crtc);
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	u32 interm_pbpl;
 
-	/* only planar क्रमmat has two planes */
-	अगर (color_plane == 1 &&
-	    !पूर्णांकel_क्रमmat_info_is_yuv_semiplanar(क्रमmat, modअगरier)) अणु
+	/* only planar format has two planes */
+	if (color_plane == 1 &&
+	    !intel_format_info_is_yuv_semiplanar(format, modifier)) {
 		drm_dbg_kms(&dev_priv->drm,
 			    "Non planar format have single plane\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	wp->y_tiled = modअगरier == I915_FORMAT_MOD_Y_TILED ||
-		      modअगरier == I915_FORMAT_MOD_Yf_TILED ||
-		      modअगरier == I915_FORMAT_MOD_Y_TILED_CCS ||
-		      modअगरier == I915_FORMAT_MOD_Yf_TILED_CCS;
-	wp->x_tiled = modअगरier == I915_FORMAT_MOD_X_TILED;
-	wp->rc_surface = modअगरier == I915_FORMAT_MOD_Y_TILED_CCS ||
-			 modअगरier == I915_FORMAT_MOD_Yf_TILED_CCS;
-	wp->is_planar = पूर्णांकel_क्रमmat_info_is_yuv_semiplanar(क्रमmat, modअगरier);
+	wp->y_tiled = modifier == I915_FORMAT_MOD_Y_TILED ||
+		      modifier == I915_FORMAT_MOD_Yf_TILED ||
+		      modifier == I915_FORMAT_MOD_Y_TILED_CCS ||
+		      modifier == I915_FORMAT_MOD_Yf_TILED_CCS;
+	wp->x_tiled = modifier == I915_FORMAT_MOD_X_TILED;
+	wp->rc_surface = modifier == I915_FORMAT_MOD_Y_TILED_CCS ||
+			 modifier == I915_FORMAT_MOD_Yf_TILED_CCS;
+	wp->is_planar = intel_format_info_is_yuv_semiplanar(format, modifier);
 
 	wp->width = width;
-	अगर (color_plane == 1 && wp->is_planar)
+	if (color_plane == 1 && wp->is_planar)
 		wp->width /= 2;
 
-	wp->cpp = क्रमmat->cpp[color_plane];
+	wp->cpp = format->cpp[color_plane];
 	wp->plane_pixel_rate = plane_pixel_rate;
 
-	अगर (DISPLAY_VER(dev_priv) >= 11 &&
-	    modअगरier == I915_FORMAT_MOD_Yf_TILED  && wp->cpp == 1)
+	if (DISPLAY_VER(dev_priv) >= 11 &&
+	    modifier == I915_FORMAT_MOD_Yf_TILED  && wp->cpp == 1)
 		wp->dbuf_block_size = 256;
-	अन्यथा
+	else
 		wp->dbuf_block_size = 512;
 
-	अगर (drm_rotation_90_or_270(rotation)) अणु
-		चयन (wp->cpp) अणु
-		हाल 1:
+	if (drm_rotation_90_or_270(rotation)) {
+		switch (wp->cpp) {
+		case 1:
 			wp->y_min_scanlines = 16;
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			wp->y_min_scanlines = 8;
-			अवरोध;
-		हाल 4:
+			break;
+		case 4:
 			wp->y_min_scanlines = 4;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			MISSING_CASE(wp->cpp);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return -EINVAL;
+		}
+	} else {
 		wp->y_min_scanlines = 4;
-	पूर्ण
+	}
 
-	अगर (skl_needs_memory_bw_wa(dev_priv))
+	if (skl_needs_memory_bw_wa(dev_priv))
 		wp->y_min_scanlines *= 2;
 
 	wp->plane_bytes_per_line = wp->width * wp->cpp;
-	अगर (wp->y_tiled) अणु
-		पूर्णांकerm_pbpl = DIV_ROUND_UP(wp->plane_bytes_per_line *
+	if (wp->y_tiled) {
+		interm_pbpl = DIV_ROUND_UP(wp->plane_bytes_per_line *
 					   wp->y_min_scanlines,
 					   wp->dbuf_block_size);
 
-		अगर (DISPLAY_VER(dev_priv) >= 10)
-			पूर्णांकerm_pbpl++;
+		if (DISPLAY_VER(dev_priv) >= 10)
+			interm_pbpl++;
 
-		wp->plane_blocks_per_line = भाग_fixed16(पूर्णांकerm_pbpl,
+		wp->plane_blocks_per_line = div_fixed16(interm_pbpl,
 							wp->y_min_scanlines);
-	पूर्ण अन्यथा अणु
-		पूर्णांकerm_pbpl = DIV_ROUND_UP(wp->plane_bytes_per_line,
+	} else {
+		interm_pbpl = DIV_ROUND_UP(wp->plane_bytes_per_line,
 					   wp->dbuf_block_size);
 
-		अगर (!wp->x_tiled || DISPLAY_VER(dev_priv) >= 10)
-			पूर्णांकerm_pbpl++;
+		if (!wp->x_tiled || DISPLAY_VER(dev_priv) >= 10)
+			interm_pbpl++;
 
-		wp->plane_blocks_per_line = u32_to_fixed16(पूर्णांकerm_pbpl);
-	पूर्ण
+		wp->plane_blocks_per_line = u32_to_fixed16(interm_pbpl);
+	}
 
 	wp->y_tile_minimum = mul_u32_fixed16(wp->y_min_scanlines,
 					     wp->plane_blocks_per_line);
 
-	wp->lineसमय_us = fixed16_to_u32_round_up(
-					पूर्णांकel_get_lineसमय_us(crtc_state));
+	wp->linetime_us = fixed16_to_u32_round_up(
+					intel_get_linetime_us(crtc_state));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-skl_compute_plane_wm_params(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-			    स्थिर काष्ठा पूर्णांकel_plane_state *plane_state,
-			    काष्ठा skl_wm_params *wp, पूर्णांक color_plane)
-अणु
-	स्थिर काष्ठा drm_framebuffer *fb = plane_state->hw.fb;
-	पूर्णांक width;
+static int
+skl_compute_plane_wm_params(const struct intel_crtc_state *crtc_state,
+			    const struct intel_plane_state *plane_state,
+			    struct skl_wm_params *wp, int color_plane)
+{
+	const struct drm_framebuffer *fb = plane_state->hw.fb;
+	int width;
 
 	/*
-	 * Src coordinates are alपढ़ोy rotated by 270 degrees क्रम
-	 * the 90/270 degree plane rotation हालs (to match the
-	 * GTT mapping), hence no need to account क्रम rotation here.
+	 * Src coordinates are already rotated by 270 degrees for
+	 * the 90/270 degree plane rotation cases (to match the
+	 * GTT mapping), hence no need to account for rotation here.
 	 */
 	width = drm_rect_width(&plane_state->uapi.src) >> 16;
 
-	वापस skl_compute_wm_params(crtc_state, width,
-				     fb->क्रमmat, fb->modअगरier,
+	return skl_compute_wm_params(crtc_state, width,
+				     fb->format, fb->modifier,
 				     plane_state->hw.rotation,
-				     पूर्णांकel_plane_pixel_rate(crtc_state, plane_state),
+				     intel_plane_pixel_rate(crtc_state, plane_state),
 				     wp, color_plane);
-पूर्ण
+}
 
-अटल bool skl_wm_has_lines(काष्ठा drm_i915_निजी *dev_priv, पूर्णांक level)
-अणु
-	अगर (DISPLAY_VER(dev_priv) >= 10)
-		वापस true;
+static bool skl_wm_has_lines(struct drm_i915_private *dev_priv, int level)
+{
+	if (DISPLAY_VER(dev_priv) >= 10)
+		return true;
 
-	/* The number of lines are ignored क्रम the level 0 watermark. */
-	वापस level > 0;
-पूर्ण
+	/* The number of lines are ignored for the level 0 watermark. */
+	return level > 0;
+}
 
-अटल व्योम skl_compute_plane_wm(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-				 पूर्णांक level,
-				 अचिन्हित पूर्णांक latency,
-				 स्थिर काष्ठा skl_wm_params *wp,
-				 स्थिर काष्ठा skl_wm_level *result_prev,
-				 काष्ठा skl_wm_level *result /* out */)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
-	uपूर्णांक_fixed_16_16_t method1, method2;
-	uपूर्णांक_fixed_16_16_t selected_result;
+static void skl_compute_plane_wm(const struct intel_crtc_state *crtc_state,
+				 int level,
+				 unsigned int latency,
+				 const struct skl_wm_params *wp,
+				 const struct skl_wm_level *result_prev,
+				 struct skl_wm_level *result /* out */)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
+	uint_fixed_16_16_t method1, method2;
+	uint_fixed_16_16_t selected_result;
 	u32 blocks, lines, min_ddb_alloc = 0;
 
-	अगर (latency == 0) अणु
+	if (latency == 0) {
 		/* reject it */
 		result->min_ddb_alloc = U16_MAX;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * WaIncreaseLatencyIPCEnabled: kbl,cfl
 	 * Display WA #1141: kbl,cfl
 	 */
-	अगर ((IS_KABYLAKE(dev_priv) ||
+	if ((IS_KABYLAKE(dev_priv) ||
 	     IS_COFFEELAKE(dev_priv) ||
 	     IS_COMETLAKE(dev_priv)) &&
 	    dev_priv->ipc_enabled)
 		latency += 4;
 
-	अगर (skl_needs_memory_bw_wa(dev_priv) && wp->x_tiled)
+	if (skl_needs_memory_bw_wa(dev_priv) && wp->x_tiled)
 		latency += 15;
 
 	method1 = skl_wm_method1(dev_priv, wp->plane_pixel_rate,
@@ -5238,82 +5237,82 @@ skl_compute_plane_wm_params(स्थिर काष्ठा पूर्ण�
 				 latency,
 				 wp->plane_blocks_per_line);
 
-	अगर (wp->y_tiled) अणु
+	if (wp->y_tiled) {
 		selected_result = max_fixed16(method2, wp->y_tile_minimum);
-	पूर्ण अन्यथा अणु
-		अगर ((wp->cpp * crtc_state->hw.pipe_mode.crtc_htotal /
+	} else {
+		if ((wp->cpp * crtc_state->hw.pipe_mode.crtc_htotal /
 		     wp->dbuf_block_size < 1) &&
-		     (wp->plane_bytes_per_line / wp->dbuf_block_size < 1)) अणु
+		     (wp->plane_bytes_per_line / wp->dbuf_block_size < 1)) {
 			selected_result = method2;
-		पूर्ण अन्यथा अगर (latency >= wp->lineसमय_us) अणु
-			अगर (IS_DISPLAY_VER(dev_priv, 9))
+		} else if (latency >= wp->linetime_us) {
+			if (IS_DISPLAY_VER(dev_priv, 9))
 				selected_result = min_fixed16(method1, method2);
-			अन्यथा
+			else
 				selected_result = method2;
-		पूर्ण अन्यथा अणु
+		} else {
 			selected_result = method1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	blocks = fixed16_to_u32_round_up(selected_result) + 1;
-	lines = भाग_round_up_fixed16(selected_result,
+	lines = div_round_up_fixed16(selected_result,
 				     wp->plane_blocks_per_line);
 
-	अगर (IS_GEN9_BC(dev_priv) || IS_BROXTON(dev_priv)) अणु
+	if (IS_GEN9_BC(dev_priv) || IS_BROXTON(dev_priv)) {
 		/* Display WA #1125: skl,bxt,kbl */
-		अगर (level == 0 && wp->rc_surface)
+		if (level == 0 && wp->rc_surface)
 			blocks += fixed16_to_u32_round_up(wp->y_tile_minimum);
 
 		/* Display WA #1126: skl,bxt,kbl */
-		अगर (level >= 1 && level <= 7) अणु
-			अगर (wp->y_tiled) अणु
+		if (level >= 1 && level <= 7) {
+			if (wp->y_tiled) {
 				blocks += fixed16_to_u32_round_up(wp->y_tile_minimum);
 				lines += wp->y_min_scanlines;
-			पूर्ण अन्यथा अणु
+			} else {
 				blocks++;
-			पूर्ण
+			}
 
 			/*
-			 * Make sure result blocks क्रम higher latency levels are
+			 * Make sure result blocks for higher latency levels are
 			 * atleast as high as level below the current level.
-			 * Assumption in DDB algorithm optimization क्रम special
-			 * हालs. Also covers Display WA #1125 क्रम RC.
+			 * Assumption in DDB algorithm optimization for special
+			 * cases. Also covers Display WA #1125 for RC.
 			 */
-			अगर (result_prev->blocks > blocks)
+			if (result_prev->blocks > blocks)
 				blocks = result_prev->blocks;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (DISPLAY_VER(dev_priv) >= 11) अणु
-		अगर (wp->y_tiled) अणु
-			पूर्णांक extra_lines;
+	if (DISPLAY_VER(dev_priv) >= 11) {
+		if (wp->y_tiled) {
+			int extra_lines;
 
-			अगर (lines % wp->y_min_scanlines == 0)
+			if (lines % wp->y_min_scanlines == 0)
 				extra_lines = wp->y_min_scanlines;
-			अन्यथा
+			else
 				extra_lines = wp->y_min_scanlines * 2 -
 					lines % wp->y_min_scanlines;
 
 			min_ddb_alloc = mul_round_up_u32_fixed16(lines + extra_lines,
 								 wp->plane_blocks_per_line);
-		पूर्ण अन्यथा अणु
+		} else {
 			min_ddb_alloc = blocks + DIV_ROUND_UP(blocks, 10);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!skl_wm_has_lines(dev_priv, level))
+	if (!skl_wm_has_lines(dev_priv, level))
 		lines = 0;
 
-	अगर (lines > 31) अणु
+	if (lines > 31) {
 		/* reject it */
 		result->min_ddb_alloc = U16_MAX;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
 	 * If lines is valid, assume we can use this watermark level
-	 * क्रम now.  We'll come back and disable it after we calculate the
-	 * DDB allocation अगर it turns out we करोn't actually have enough
+	 * for now.  We'll come back and disable it after we calculate the
+	 * DDB allocation if it turns out we don't actually have enough
 	 * blocks to satisfy it.
 	 */
 	result->blocks = blocks;
@@ -5322,443 +5321,443 @@ skl_compute_plane_wm_params(स्थिर काष्ठा पूर्ण�
 	result->min_ddb_alloc = max(min_ddb_alloc, blocks) + 1;
 	result->enable = true;
 
-	अगर (DISPLAY_VER(dev_priv) < 12)
-		result->can_sagv = latency >= dev_priv->sagv_block_समय_us;
-पूर्ण
+	if (DISPLAY_VER(dev_priv) < 12)
+		result->can_sagv = latency >= dev_priv->sagv_block_time_us;
+}
 
-अटल व्योम
-skl_compute_wm_levels(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-		      स्थिर काष्ठा skl_wm_params *wm_params,
-		      काष्ठा skl_wm_level *levels)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
-	पूर्णांक level, max_level = ilk_wm_max_level(dev_priv);
-	काष्ठा skl_wm_level *result_prev = &levels[0];
+static void
+skl_compute_wm_levels(const struct intel_crtc_state *crtc_state,
+		      const struct skl_wm_params *wm_params,
+		      struct skl_wm_level *levels)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
+	int level, max_level = ilk_wm_max_level(dev_priv);
+	struct skl_wm_level *result_prev = &levels[0];
 
-	क्रम (level = 0; level <= max_level; level++) अणु
-		काष्ठा skl_wm_level *result = &levels[level];
-		अचिन्हित पूर्णांक latency = dev_priv->wm.skl_latency[level];
+	for (level = 0; level <= max_level; level++) {
+		struct skl_wm_level *result = &levels[level];
+		unsigned int latency = dev_priv->wm.skl_latency[level];
 
 		skl_compute_plane_wm(crtc_state, level, latency,
 				     wm_params, result_prev, result);
 
 		result_prev = result;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम tgl_compute_sagv_wm(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-				स्थिर काष्ठा skl_wm_params *wm_params,
-				काष्ठा skl_plane_wm *plane_wm)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
-	काष्ठा skl_wm_level *sagv_wm = &plane_wm->sagv.wm0;
-	काष्ठा skl_wm_level *levels = plane_wm->wm;
-	अचिन्हित पूर्णांक latency = dev_priv->wm.skl_latency[0] + dev_priv->sagv_block_समय_us;
+static void tgl_compute_sagv_wm(const struct intel_crtc_state *crtc_state,
+				const struct skl_wm_params *wm_params,
+				struct skl_plane_wm *plane_wm)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
+	struct skl_wm_level *sagv_wm = &plane_wm->sagv.wm0;
+	struct skl_wm_level *levels = plane_wm->wm;
+	unsigned int latency = dev_priv->wm.skl_latency[0] + dev_priv->sagv_block_time_us;
 
 	skl_compute_plane_wm(crtc_state, 0, latency,
 			     wm_params, &levels[0],
 			     sagv_wm);
-पूर्ण
+}
 
-अटल व्योम skl_compute_transition_wm(काष्ठा drm_i915_निजी *dev_priv,
-				      काष्ठा skl_wm_level *trans_wm,
-				      स्थिर काष्ठा skl_wm_level *wm0,
-				      स्थिर काष्ठा skl_wm_params *wp)
-अणु
+static void skl_compute_transition_wm(struct drm_i915_private *dev_priv,
+				      struct skl_wm_level *trans_wm,
+				      const struct skl_wm_level *wm0,
+				      const struct skl_wm_params *wp)
+{
 	u16 trans_min, trans_amount, trans_y_tile_min;
 	u16 wm0_blocks, trans_offset, blocks;
 
-	/* Transition WM करोn't make any sense अगर ipc is disabled */
-	अगर (!dev_priv->ipc_enabled)
-		वापस;
+	/* Transition WM don't make any sense if ipc is disabled */
+	if (!dev_priv->ipc_enabled)
+		return;
 
 	/*
 	 * WaDisableTWM:skl,kbl,cfl,bxt
-	 * Transition WM are not recommended by HW team क्रम GEN9
+	 * Transition WM are not recommended by HW team for GEN9
 	 */
-	अगर (IS_GEN9_BC(dev_priv) || IS_BROXTON(dev_priv))
-		वापस;
+	if (IS_GEN9_BC(dev_priv) || IS_BROXTON(dev_priv))
+		return;
 
-	अगर (DISPLAY_VER(dev_priv) >= 11)
+	if (DISPLAY_VER(dev_priv) >= 11)
 		trans_min = 4;
-	अन्यथा
+	else
 		trans_min = 14;
 
 	/* Display WA #1140: glk,cnl */
-	अगर (IS_DISPLAY_VER(dev_priv, 10))
+	if (IS_DISPLAY_VER(dev_priv, 10))
 		trans_amount = 0;
-	अन्यथा
+	else
 		trans_amount = 10; /* This is configurable amount */
 
 	trans_offset = trans_min + trans_amount;
 
 	/*
-	 * The spec asks क्रम Selected Result Blocks क्रम wm0 (the real value),
-	 * not Result Blocks (the पूर्णांकeger value). Pay attention to the capital
+	 * The spec asks for Selected Result Blocks for wm0 (the real value),
+	 * not Result Blocks (the integer value). Pay attention to the capital
 	 * letters. The value wm_l0->blocks is actually Result Blocks, but
-	 * since Result Blocks is the उच्चमानing of Selected Result Blocks plus 1,
-	 * and since we later will have to get the उच्चमानing of the sum in the
+	 * since Result Blocks is the ceiling of Selected Result Blocks plus 1,
+	 * and since we later will have to get the ceiling of the sum in the
 	 * transition watermarks calculation, we can just pretend Selected
-	 * Result Blocks is Result Blocks minus 1 and it should work क्रम the
-	 * current platक्रमms.
+	 * Result Blocks is Result Blocks minus 1 and it should work for the
+	 * current platforms.
 	 */
 	wm0_blocks = wm0->blocks - 1;
 
-	अगर (wp->y_tiled) अणु
+	if (wp->y_tiled) {
 		trans_y_tile_min =
 			(u16)mul_round_up_u32_fixed16(2, wp->y_tile_minimum);
 		blocks = max(wm0_blocks, trans_y_tile_min) + trans_offset;
-	पूर्ण अन्यथा अणु
+	} else {
 		blocks = wm0_blocks + trans_offset;
-	पूर्ण
+	}
 	blocks++;
 
 	/*
 	 * Just assume we can enable the transition watermark.  After
-	 * computing the DDB we'll come back and disable it अगर that
+	 * computing the DDB we'll come back and disable it if that
 	 * assumption turns out to be false.
 	 */
 	trans_wm->blocks = blocks;
 	trans_wm->min_ddb_alloc = max_t(u16, wm0->min_ddb_alloc, blocks + 1);
 	trans_wm->enable = true;
-पूर्ण
+}
 
-अटल पूर्णांक skl_build_plane_wm_single(काष्ठा पूर्णांकel_crtc_state *crtc_state,
-				     स्थिर काष्ठा पूर्णांकel_plane_state *plane_state,
-				     क्रमागत plane_id plane_id, पूर्णांक color_plane)
-अणु
-	काष्ठा पूर्णांकel_crtc *crtc = to_पूर्णांकel_crtc(crtc_state->uapi.crtc);
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
-	काष्ठा skl_plane_wm *wm = &crtc_state->wm.skl.raw.planes[plane_id];
-	काष्ठा skl_wm_params wm_params;
-	पूर्णांक ret;
+static int skl_build_plane_wm_single(struct intel_crtc_state *crtc_state,
+				     const struct intel_plane_state *plane_state,
+				     enum plane_id plane_id, int color_plane)
+{
+	struct intel_crtc *crtc = to_intel_crtc(crtc_state->uapi.crtc);
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	struct skl_plane_wm *wm = &crtc_state->wm.skl.raw.planes[plane_id];
+	struct skl_wm_params wm_params;
+	int ret;
 
 	ret = skl_compute_plane_wm_params(crtc_state, plane_state,
 					  &wm_params, color_plane);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	skl_compute_wm_levels(crtc_state, &wm_params, wm->wm);
 
 	skl_compute_transition_wm(dev_priv, &wm->trans_wm,
 				  &wm->wm[0], &wm_params);
 
-	अगर (DISPLAY_VER(dev_priv) >= 12) अणु
+	if (DISPLAY_VER(dev_priv) >= 12) {
 		tgl_compute_sagv_wm(crtc_state, &wm_params, wm);
 
 		skl_compute_transition_wm(dev_priv, &wm->sagv.trans_wm,
 					  &wm->sagv.wm0, &wm_params);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक skl_build_plane_wm_uv(काष्ठा पूर्णांकel_crtc_state *crtc_state,
-				 स्थिर काष्ठा पूर्णांकel_plane_state *plane_state,
-				 क्रमागत plane_id plane_id)
-अणु
-	काष्ठा skl_plane_wm *wm = &crtc_state->wm.skl.raw.planes[plane_id];
-	काष्ठा skl_wm_params wm_params;
-	पूर्णांक ret;
+static int skl_build_plane_wm_uv(struct intel_crtc_state *crtc_state,
+				 const struct intel_plane_state *plane_state,
+				 enum plane_id plane_id)
+{
+	struct skl_plane_wm *wm = &crtc_state->wm.skl.raw.planes[plane_id];
+	struct skl_wm_params wm_params;
+	int ret;
 
 	wm->is_planar = true;
 
-	/* uv plane watermarks must also be validated क्रम NV12/Planar */
+	/* uv plane watermarks must also be validated for NV12/Planar */
 	ret = skl_compute_plane_wm_params(crtc_state, plane_state,
 					  &wm_params, 1);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	skl_compute_wm_levels(crtc_state, &wm_params, wm->uv_wm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक skl_build_plane_wm(काष्ठा पूर्णांकel_crtc_state *crtc_state,
-			      स्थिर काष्ठा पूर्णांकel_plane_state *plane_state)
-अणु
-	काष्ठा पूर्णांकel_plane *plane = to_पूर्णांकel_plane(plane_state->uapi.plane);
-	क्रमागत plane_id plane_id = plane->id;
-	काष्ठा skl_plane_wm *wm = &crtc_state->wm.skl.raw.planes[plane_id];
-	स्थिर काष्ठा drm_framebuffer *fb = plane_state->hw.fb;
-	पूर्णांक ret;
+static int skl_build_plane_wm(struct intel_crtc_state *crtc_state,
+			      const struct intel_plane_state *plane_state)
+{
+	struct intel_plane *plane = to_intel_plane(plane_state->uapi.plane);
+	enum plane_id plane_id = plane->id;
+	struct skl_plane_wm *wm = &crtc_state->wm.skl.raw.planes[plane_id];
+	const struct drm_framebuffer *fb = plane_state->hw.fb;
+	int ret;
 
-	स_रखो(wm, 0, माप(*wm));
+	memset(wm, 0, sizeof(*wm));
 
-	अगर (!पूर्णांकel_wm_plane_visible(crtc_state, plane_state))
-		वापस 0;
+	if (!intel_wm_plane_visible(crtc_state, plane_state))
+		return 0;
 
 	ret = skl_build_plane_wm_single(crtc_state, plane_state,
 					plane_id, 0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (fb->क्रमmat->is_yuv && fb->क्रमmat->num_planes > 1) अणु
+	if (fb->format->is_yuv && fb->format->num_planes > 1) {
 		ret = skl_build_plane_wm_uv(crtc_state, plane_state,
 					    plane_id);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक icl_build_plane_wm(काष्ठा पूर्णांकel_crtc_state *crtc_state,
-			      स्थिर काष्ठा पूर्णांकel_plane_state *plane_state)
-अणु
-	काष्ठा पूर्णांकel_plane *plane = to_पूर्णांकel_plane(plane_state->uapi.plane);
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(plane->base.dev);
-	क्रमागत plane_id plane_id = plane->id;
-	काष्ठा skl_plane_wm *wm = &crtc_state->wm.skl.raw.planes[plane_id];
-	पूर्णांक ret;
+static int icl_build_plane_wm(struct intel_crtc_state *crtc_state,
+			      const struct intel_plane_state *plane_state)
+{
+	struct intel_plane *plane = to_intel_plane(plane_state->uapi.plane);
+	struct drm_i915_private *dev_priv = to_i915(plane->base.dev);
+	enum plane_id plane_id = plane->id;
+	struct skl_plane_wm *wm = &crtc_state->wm.skl.raw.planes[plane_id];
+	int ret;
 
 	/* Watermarks calculated in master */
-	अगर (plane_state->planar_slave)
-		वापस 0;
+	if (plane_state->planar_slave)
+		return 0;
 
-	स_रखो(wm, 0, माप(*wm));
+	memset(wm, 0, sizeof(*wm));
 
-	अगर (plane_state->planar_linked_plane) अणु
-		स्थिर काष्ठा drm_framebuffer *fb = plane_state->hw.fb;
-		क्रमागत plane_id y_plane_id = plane_state->planar_linked_plane->id;
+	if (plane_state->planar_linked_plane) {
+		const struct drm_framebuffer *fb = plane_state->hw.fb;
+		enum plane_id y_plane_id = plane_state->planar_linked_plane->id;
 
 		drm_WARN_ON(&dev_priv->drm,
-			    !पूर्णांकel_wm_plane_visible(crtc_state, plane_state));
-		drm_WARN_ON(&dev_priv->drm, !fb->क्रमmat->is_yuv ||
-			    fb->क्रमmat->num_planes == 1);
+			    !intel_wm_plane_visible(crtc_state, plane_state));
+		drm_WARN_ON(&dev_priv->drm, !fb->format->is_yuv ||
+			    fb->format->num_planes == 1);
 
 		ret = skl_build_plane_wm_single(crtc_state, plane_state,
 						y_plane_id, 0);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		ret = skl_build_plane_wm_single(crtc_state, plane_state,
 						plane_id, 1);
-		अगर (ret)
-			वापस ret;
-	पूर्ण अन्यथा अगर (पूर्णांकel_wm_plane_visible(crtc_state, plane_state)) अणु
+		if (ret)
+			return ret;
+	} else if (intel_wm_plane_visible(crtc_state, plane_state)) {
 		ret = skl_build_plane_wm_single(crtc_state, plane_state,
 						plane_id, 0);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक skl_build_pipe_wm(काष्ठा पूर्णांकel_atomic_state *state,
-			     काष्ठा पूर्णांकel_crtc *crtc)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
-	काष्ठा पूर्णांकel_crtc_state *crtc_state =
-		पूर्णांकel_atomic_get_new_crtc_state(state, crtc);
-	स्थिर काष्ठा पूर्णांकel_plane_state *plane_state;
-	काष्ठा पूर्णांकel_plane *plane;
-	पूर्णांक ret, i;
+static int skl_build_pipe_wm(struct intel_atomic_state *state,
+			     struct intel_crtc *crtc)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	struct intel_crtc_state *crtc_state =
+		intel_atomic_get_new_crtc_state(state, crtc);
+	const struct intel_plane_state *plane_state;
+	struct intel_plane *plane;
+	int ret, i;
 
-	क्रम_each_new_पूर्णांकel_plane_in_state(state, plane, plane_state, i) अणु
+	for_each_new_intel_plane_in_state(state, plane, plane_state, i) {
 		/*
-		 * FIXME should perhaps check अणुold,newपूर्ण_plane_crtc->hw.crtc
-		 * instead but we करोn't populate that correctly क्रम NV12 Y
-		 * planes so क्रम now hack this.
+		 * FIXME should perhaps check {old,new}_plane_crtc->hw.crtc
+		 * instead but we don't populate that correctly for NV12 Y
+		 * planes so for now hack this.
 		 */
-		अगर (plane->pipe != crtc->pipe)
-			जारी;
+		if (plane->pipe != crtc->pipe)
+			continue;
 
-		अगर (DISPLAY_VER(dev_priv) >= 11)
+		if (DISPLAY_VER(dev_priv) >= 11)
 			ret = icl_build_plane_wm(crtc_state, plane_state);
-		अन्यथा
+		else
 			ret = skl_build_plane_wm(crtc_state, plane_state);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	crtc_state->wm.skl.optimal = crtc_state->wm.skl.raw;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम skl_ddb_entry_ग_लिखो(काष्ठा drm_i915_निजी *dev_priv,
+static void skl_ddb_entry_write(struct drm_i915_private *dev_priv,
 				i915_reg_t reg,
-				स्थिर काष्ठा skl_ddb_entry *entry)
-अणु
-	अगर (entry->end)
-		पूर्णांकel_de_ग_लिखो_fw(dev_priv, reg,
+				const struct skl_ddb_entry *entry)
+{
+	if (entry->end)
+		intel_de_write_fw(dev_priv, reg,
 				  (entry->end - 1) << 16 | entry->start);
-	अन्यथा
-		पूर्णांकel_de_ग_लिखो_fw(dev_priv, reg, 0);
-पूर्ण
+	else
+		intel_de_write_fw(dev_priv, reg, 0);
+}
 
-अटल व्योम skl_ग_लिखो_wm_level(काष्ठा drm_i915_निजी *dev_priv,
+static void skl_write_wm_level(struct drm_i915_private *dev_priv,
 			       i915_reg_t reg,
-			       स्थिर काष्ठा skl_wm_level *level)
-अणु
+			       const struct skl_wm_level *level)
+{
 	u32 val = 0;
 
-	अगर (level->enable)
+	if (level->enable)
 		val |= PLANE_WM_EN;
-	अगर (level->ignore_lines)
+	if (level->ignore_lines)
 		val |= PLANE_WM_IGNORE_LINES;
 	val |= level->blocks;
 	val |= level->lines << PLANE_WM_LINES_SHIFT;
 
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, reg, val);
-पूर्ण
+	intel_de_write_fw(dev_priv, reg, val);
+}
 
-व्योम skl_ग_लिखो_plane_wm(काष्ठा पूर्णांकel_plane *plane,
-			स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(plane->base.dev);
-	पूर्णांक level, max_level = ilk_wm_max_level(dev_priv);
-	क्रमागत plane_id plane_id = plane->id;
-	क्रमागत pipe pipe = plane->pipe;
-	स्थिर काष्ठा skl_pipe_wm *pipe_wm = &crtc_state->wm.skl.optimal;
-	स्थिर काष्ठा skl_plane_wm *wm = &pipe_wm->planes[plane_id];
-	स्थिर काष्ठा skl_ddb_entry *ddb_y =
+void skl_write_plane_wm(struct intel_plane *plane,
+			const struct intel_crtc_state *crtc_state)
+{
+	struct drm_i915_private *dev_priv = to_i915(plane->base.dev);
+	int level, max_level = ilk_wm_max_level(dev_priv);
+	enum plane_id plane_id = plane->id;
+	enum pipe pipe = plane->pipe;
+	const struct skl_pipe_wm *pipe_wm = &crtc_state->wm.skl.optimal;
+	const struct skl_plane_wm *wm = &pipe_wm->planes[plane_id];
+	const struct skl_ddb_entry *ddb_y =
 		&crtc_state->wm.skl.plane_ddb_y[plane_id];
-	स्थिर काष्ठा skl_ddb_entry *ddb_uv =
+	const struct skl_ddb_entry *ddb_uv =
 		&crtc_state->wm.skl.plane_ddb_uv[plane_id];
 
-	क्रम (level = 0; level <= max_level; level++)
-		skl_ग_लिखो_wm_level(dev_priv, PLANE_WM(pipe, plane_id, level),
+	for (level = 0; level <= max_level; level++)
+		skl_write_wm_level(dev_priv, PLANE_WM(pipe, plane_id, level),
 				   skl_plane_wm_level(pipe_wm, plane_id, level));
 
-	skl_ग_लिखो_wm_level(dev_priv, PLANE_WM_TRANS(pipe, plane_id),
+	skl_write_wm_level(dev_priv, PLANE_WM_TRANS(pipe, plane_id),
 			   skl_plane_trans_wm(pipe_wm, plane_id));
 
-	अगर (DISPLAY_VER(dev_priv) >= 11) अणु
-		skl_ddb_entry_ग_लिखो(dev_priv,
+	if (DISPLAY_VER(dev_priv) >= 11) {
+		skl_ddb_entry_write(dev_priv,
 				    PLANE_BUF_CFG(pipe, plane_id), ddb_y);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (wm->is_planar)
+	if (wm->is_planar)
 		swap(ddb_y, ddb_uv);
 
-	skl_ddb_entry_ग_लिखो(dev_priv,
+	skl_ddb_entry_write(dev_priv,
 			    PLANE_BUF_CFG(pipe, plane_id), ddb_y);
-	skl_ddb_entry_ग_लिखो(dev_priv,
+	skl_ddb_entry_write(dev_priv,
 			    PLANE_NV12_BUF_CFG(pipe, plane_id), ddb_uv);
-पूर्ण
+}
 
-व्योम skl_ग_लिखो_cursor_wm(काष्ठा पूर्णांकel_plane *plane,
-			 स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(plane->base.dev);
-	पूर्णांक level, max_level = ilk_wm_max_level(dev_priv);
-	क्रमागत plane_id plane_id = plane->id;
-	क्रमागत pipe pipe = plane->pipe;
-	स्थिर काष्ठा skl_pipe_wm *pipe_wm = &crtc_state->wm.skl.optimal;
-	स्थिर काष्ठा skl_ddb_entry *ddb =
+void skl_write_cursor_wm(struct intel_plane *plane,
+			 const struct intel_crtc_state *crtc_state)
+{
+	struct drm_i915_private *dev_priv = to_i915(plane->base.dev);
+	int level, max_level = ilk_wm_max_level(dev_priv);
+	enum plane_id plane_id = plane->id;
+	enum pipe pipe = plane->pipe;
+	const struct skl_pipe_wm *pipe_wm = &crtc_state->wm.skl.optimal;
+	const struct skl_ddb_entry *ddb =
 		&crtc_state->wm.skl.plane_ddb_y[plane_id];
 
-	क्रम (level = 0; level <= max_level; level++)
-		skl_ग_लिखो_wm_level(dev_priv, CUR_WM(pipe, level),
+	for (level = 0; level <= max_level; level++)
+		skl_write_wm_level(dev_priv, CUR_WM(pipe, level),
 				   skl_plane_wm_level(pipe_wm, plane_id, level));
 
-	skl_ग_लिखो_wm_level(dev_priv, CUR_WM_TRANS(pipe),
+	skl_write_wm_level(dev_priv, CUR_WM_TRANS(pipe),
 			   skl_plane_trans_wm(pipe_wm, plane_id));
 
-	skl_ddb_entry_ग_लिखो(dev_priv, CUR_BUF_CFG(pipe), ddb);
-पूर्ण
+	skl_ddb_entry_write(dev_priv, CUR_BUF_CFG(pipe), ddb);
+}
 
-bool skl_wm_level_equals(स्थिर काष्ठा skl_wm_level *l1,
-			 स्थिर काष्ठा skl_wm_level *l2)
-अणु
-	वापस l1->enable == l2->enable &&
+bool skl_wm_level_equals(const struct skl_wm_level *l1,
+			 const struct skl_wm_level *l2)
+{
+	return l1->enable == l2->enable &&
 		l1->ignore_lines == l2->ignore_lines &&
 		l1->lines == l2->lines &&
 		l1->blocks == l2->blocks;
-पूर्ण
+}
 
-अटल bool skl_plane_wm_equals(काष्ठा drm_i915_निजी *dev_priv,
-				स्थिर काष्ठा skl_plane_wm *wm1,
-				स्थिर काष्ठा skl_plane_wm *wm2)
-अणु
-	पूर्णांक level, max_level = ilk_wm_max_level(dev_priv);
+static bool skl_plane_wm_equals(struct drm_i915_private *dev_priv,
+				const struct skl_plane_wm *wm1,
+				const struct skl_plane_wm *wm2)
+{
+	int level, max_level = ilk_wm_max_level(dev_priv);
 
-	क्रम (level = 0; level <= max_level; level++) अणु
+	for (level = 0; level <= max_level; level++) {
 		/*
-		 * We करोn't check uv_wm as the hardware doesn't actually
-		 * use it. It only माला_लो used क्रम calculating the required
+		 * We don't check uv_wm as the hardware doesn't actually
+		 * use it. It only gets used for calculating the required
 		 * ddb allocation.
 		 */
-		अगर (!skl_wm_level_equals(&wm1->wm[level], &wm2->wm[level]))
-			वापस false;
-	पूर्ण
+		if (!skl_wm_level_equals(&wm1->wm[level], &wm2->wm[level]))
+			return false;
+	}
 
-	वापस skl_wm_level_equals(&wm1->trans_wm, &wm2->trans_wm) &&
+	return skl_wm_level_equals(&wm1->trans_wm, &wm2->trans_wm) &&
 		skl_wm_level_equals(&wm1->sagv.wm0, &wm2->sagv.wm0) &&
 		skl_wm_level_equals(&wm1->sagv.trans_wm, &wm2->sagv.trans_wm);
-पूर्ण
+}
 
-अटल bool skl_ddb_entries_overlap(स्थिर काष्ठा skl_ddb_entry *a,
-				    स्थिर काष्ठा skl_ddb_entry *b)
-अणु
-	वापस a->start < b->end && b->start < a->end;
-पूर्ण
+static bool skl_ddb_entries_overlap(const struct skl_ddb_entry *a,
+				    const struct skl_ddb_entry *b)
+{
+	return a->start < b->end && b->start < a->end;
+}
 
-अटल व्योम skl_ddb_entry_जोड़(काष्ठा skl_ddb_entry *a,
-				स्थिर काष्ठा skl_ddb_entry *b)
-अणु
-	अगर (a->end && b->end) अणु
+static void skl_ddb_entry_union(struct skl_ddb_entry *a,
+				const struct skl_ddb_entry *b)
+{
+	if (a->end && b->end) {
 		a->start = min(a->start, b->start);
 		a->end = max(a->end, b->end);
-	पूर्ण अन्यथा अगर (b->end) अणु
+	} else if (b->end) {
 		a->start = b->start;
 		a->end = b->end;
-	पूर्ण
-पूर्ण
+	}
+}
 
-bool skl_ddb_allocation_overlaps(स्थिर काष्ठा skl_ddb_entry *ddb,
-				 स्थिर काष्ठा skl_ddb_entry *entries,
-				 पूर्णांक num_entries, पूर्णांक ignore_idx)
-अणु
-	पूर्णांक i;
+bool skl_ddb_allocation_overlaps(const struct skl_ddb_entry *ddb,
+				 const struct skl_ddb_entry *entries,
+				 int num_entries, int ignore_idx)
+{
+	int i;
 
-	क्रम (i = 0; i < num_entries; i++) अणु
-		अगर (i != ignore_idx &&
+	for (i = 0; i < num_entries; i++) {
+		if (i != ignore_idx &&
 		    skl_ddb_entries_overlap(ddb, &entries[i]))
-			वापस true;
-	पूर्ण
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक
-skl_ddb_add_affected_planes(स्थिर काष्ठा पूर्णांकel_crtc_state *old_crtc_state,
-			    काष्ठा पूर्णांकel_crtc_state *new_crtc_state)
-अणु
-	काष्ठा पूर्णांकel_atomic_state *state = to_पूर्णांकel_atomic_state(new_crtc_state->uapi.state);
-	काष्ठा पूर्णांकel_crtc *crtc = to_पूर्णांकel_crtc(new_crtc_state->uapi.crtc);
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
-	काष्ठा पूर्णांकel_plane *plane;
+static int
+skl_ddb_add_affected_planes(const struct intel_crtc_state *old_crtc_state,
+			    struct intel_crtc_state *new_crtc_state)
+{
+	struct intel_atomic_state *state = to_intel_atomic_state(new_crtc_state->uapi.state);
+	struct intel_crtc *crtc = to_intel_crtc(new_crtc_state->uapi.crtc);
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	struct intel_plane *plane;
 
-	क्रम_each_पूर्णांकel_plane_on_crtc(&dev_priv->drm, crtc, plane) अणु
-		काष्ठा पूर्णांकel_plane_state *plane_state;
-		क्रमागत plane_id plane_id = plane->id;
+	for_each_intel_plane_on_crtc(&dev_priv->drm, crtc, plane) {
+		struct intel_plane_state *plane_state;
+		enum plane_id plane_id = plane->id;
 
-		अगर (skl_ddb_entry_equal(&old_crtc_state->wm.skl.plane_ddb_y[plane_id],
+		if (skl_ddb_entry_equal(&old_crtc_state->wm.skl.plane_ddb_y[plane_id],
 					&new_crtc_state->wm.skl.plane_ddb_y[plane_id]) &&
 		    skl_ddb_entry_equal(&old_crtc_state->wm.skl.plane_ddb_uv[plane_id],
 					&new_crtc_state->wm.skl.plane_ddb_uv[plane_id]))
-			जारी;
+			continue;
 
-		plane_state = पूर्णांकel_atomic_get_plane_state(state, plane);
-		अगर (IS_ERR(plane_state))
-			वापस PTR_ERR(plane_state);
+		plane_state = intel_atomic_get_plane_state(state, plane);
+		if (IS_ERR(plane_state))
+			return PTR_ERR(plane_state);
 
 		new_crtc_state->update_planes |= BIT(plane_id);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u8 पूर्णांकel_dbuf_enabled_slices(स्थिर काष्ठा पूर्णांकel_dbuf_state *dbuf_state)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(dbuf_state->base.state->base.dev);
+static u8 intel_dbuf_enabled_slices(const struct intel_dbuf_state *dbuf_state)
+{
+	struct drm_i915_private *dev_priv = to_i915(dbuf_state->base.state->base.dev);
 	u8 enabled_slices;
-	क्रमागत pipe pipe;
+	enum pipe pipe;
 
 	/*
 	 * FIXME: For now we always enable slice S1 as per
@@ -5766,157 +5765,157 @@ skl_ddb_add_affected_planes(स्थिर काष्ठा पूर्ण�
 	 */
 	enabled_slices = BIT(DBUF_S1);
 
-	क्रम_each_pipe(dev_priv, pipe)
+	for_each_pipe(dev_priv, pipe)
 		enabled_slices |= dbuf_state->slices[pipe];
 
-	वापस enabled_slices;
-पूर्ण
+	return enabled_slices;
+}
 
-अटल पूर्णांक
-skl_compute_ddb(काष्ठा पूर्णांकel_atomic_state *state)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(state->base.dev);
-	स्थिर काष्ठा पूर्णांकel_dbuf_state *old_dbuf_state;
-	काष्ठा पूर्णांकel_dbuf_state *new_dbuf_state = शून्य;
-	स्थिर काष्ठा पूर्णांकel_crtc_state *old_crtc_state;
-	काष्ठा पूर्णांकel_crtc_state *new_crtc_state;
-	काष्ठा पूर्णांकel_crtc *crtc;
-	पूर्णांक ret, i;
+static int
+skl_compute_ddb(struct intel_atomic_state *state)
+{
+	struct drm_i915_private *dev_priv = to_i915(state->base.dev);
+	const struct intel_dbuf_state *old_dbuf_state;
+	struct intel_dbuf_state *new_dbuf_state = NULL;
+	const struct intel_crtc_state *old_crtc_state;
+	struct intel_crtc_state *new_crtc_state;
+	struct intel_crtc *crtc;
+	int ret, i;
 
-	क्रम_each_new_पूर्णांकel_crtc_in_state(state, crtc, new_crtc_state, i) अणु
-		new_dbuf_state = पूर्णांकel_atomic_get_dbuf_state(state);
-		अगर (IS_ERR(new_dbuf_state))
-			वापस PTR_ERR(new_dbuf_state);
+	for_each_new_intel_crtc_in_state(state, crtc, new_crtc_state, i) {
+		new_dbuf_state = intel_atomic_get_dbuf_state(state);
+		if (IS_ERR(new_dbuf_state))
+			return PTR_ERR(new_dbuf_state);
 
-		old_dbuf_state = पूर्णांकel_atomic_get_old_dbuf_state(state);
-		अवरोध;
-	पूर्ण
+		old_dbuf_state = intel_atomic_get_old_dbuf_state(state);
+		break;
+	}
 
-	अगर (!new_dbuf_state)
-		वापस 0;
+	if (!new_dbuf_state)
+		return 0;
 
 	new_dbuf_state->active_pipes =
-		पूर्णांकel_calc_active_pipes(state, old_dbuf_state->active_pipes);
+		intel_calc_active_pipes(state, old_dbuf_state->active_pipes);
 
-	अगर (old_dbuf_state->active_pipes != new_dbuf_state->active_pipes) अणु
-		ret = पूर्णांकel_atomic_lock_global_state(&new_dbuf_state->base);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+	if (old_dbuf_state->active_pipes != new_dbuf_state->active_pipes) {
+		ret = intel_atomic_lock_global_state(&new_dbuf_state->base);
+		if (ret)
+			return ret;
+	}
 
-	क्रम_each_पूर्णांकel_crtc(&dev_priv->drm, crtc) अणु
-		क्रमागत pipe pipe = crtc->pipe;
+	for_each_intel_crtc(&dev_priv->drm, crtc) {
+		enum pipe pipe = crtc->pipe;
 
 		new_dbuf_state->slices[pipe] =
 			skl_compute_dbuf_slices(crtc, new_dbuf_state->active_pipes);
 
-		अगर (old_dbuf_state->slices[pipe] == new_dbuf_state->slices[pipe])
-			जारी;
+		if (old_dbuf_state->slices[pipe] == new_dbuf_state->slices[pipe])
+			continue;
 
-		ret = पूर्णांकel_atomic_lock_global_state(&new_dbuf_state->base);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		ret = intel_atomic_lock_global_state(&new_dbuf_state->base);
+		if (ret)
+			return ret;
+	}
 
-	new_dbuf_state->enabled_slices = पूर्णांकel_dbuf_enabled_slices(new_dbuf_state);
+	new_dbuf_state->enabled_slices = intel_dbuf_enabled_slices(new_dbuf_state);
 
-	अगर (old_dbuf_state->enabled_slices != new_dbuf_state->enabled_slices) अणु
-		ret = पूर्णांकel_atomic_serialize_global_state(&new_dbuf_state->base);
-		अगर (ret)
-			वापस ret;
+	if (old_dbuf_state->enabled_slices != new_dbuf_state->enabled_slices) {
+		ret = intel_atomic_serialize_global_state(&new_dbuf_state->base);
+		if (ret)
+			return ret;
 
 		drm_dbg_kms(&dev_priv->drm,
 			    "Enabled dbuf slices 0x%x -> 0x%x (out of %d dbuf slices)\n",
 			    old_dbuf_state->enabled_slices,
 			    new_dbuf_state->enabled_slices,
 			    INTEL_INFO(dev_priv)->num_supported_dbuf_slices);
-	पूर्ण
+	}
 
-	क्रम_each_new_पूर्णांकel_crtc_in_state(state, crtc, new_crtc_state, i) अणु
-		क्रमागत pipe pipe = crtc->pipe;
+	for_each_new_intel_crtc_in_state(state, crtc, new_crtc_state, i) {
+		enum pipe pipe = crtc->pipe;
 
-		new_dbuf_state->weight[pipe] = पूर्णांकel_crtc_ddb_weight(new_crtc_state);
+		new_dbuf_state->weight[pipe] = intel_crtc_ddb_weight(new_crtc_state);
 
-		अगर (old_dbuf_state->weight[pipe] == new_dbuf_state->weight[pipe])
-			जारी;
+		if (old_dbuf_state->weight[pipe] == new_dbuf_state->weight[pipe])
+			continue;
 
-		ret = पूर्णांकel_atomic_lock_global_state(&new_dbuf_state->base);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		ret = intel_atomic_lock_global_state(&new_dbuf_state->base);
+		if (ret)
+			return ret;
+	}
 
-	क्रम_each_पूर्णांकel_crtc(&dev_priv->drm, crtc) अणु
+	for_each_intel_crtc(&dev_priv->drm, crtc) {
 		ret = skl_crtc_allocate_ddb(state, crtc);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	क्रम_each_oldnew_पूर्णांकel_crtc_in_state(state, crtc, old_crtc_state,
-					    new_crtc_state, i) अणु
+	for_each_oldnew_intel_crtc_in_state(state, crtc, old_crtc_state,
+					    new_crtc_state, i) {
 		ret = skl_allocate_plane_ddb(state, crtc);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		ret = skl_ddb_add_affected_planes(old_crtc_state,
 						  new_crtc_state);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अक्षर enast(bool enable)
-अणु
-	वापस enable ? '*' : ' ';
-पूर्ण
+static char enast(bool enable)
+{
+	return enable ? '*' : ' ';
+}
 
-अटल व्योम
-skl_prपूर्णांक_wm_changes(काष्ठा पूर्णांकel_atomic_state *state)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(state->base.dev);
-	स्थिर काष्ठा पूर्णांकel_crtc_state *old_crtc_state;
-	स्थिर काष्ठा पूर्णांकel_crtc_state *new_crtc_state;
-	काष्ठा पूर्णांकel_plane *plane;
-	काष्ठा पूर्णांकel_crtc *crtc;
-	पूर्णांक i;
+static void
+skl_print_wm_changes(struct intel_atomic_state *state)
+{
+	struct drm_i915_private *dev_priv = to_i915(state->base.dev);
+	const struct intel_crtc_state *old_crtc_state;
+	const struct intel_crtc_state *new_crtc_state;
+	struct intel_plane *plane;
+	struct intel_crtc *crtc;
+	int i;
 
-	अगर (!drm_debug_enabled(DRM_UT_KMS))
-		वापस;
+	if (!drm_debug_enabled(DRM_UT_KMS))
+		return;
 
-	क्रम_each_oldnew_पूर्णांकel_crtc_in_state(state, crtc, old_crtc_state,
-					    new_crtc_state, i) अणु
-		स्थिर काष्ठा skl_pipe_wm *old_pipe_wm, *new_pipe_wm;
+	for_each_oldnew_intel_crtc_in_state(state, crtc, old_crtc_state,
+					    new_crtc_state, i) {
+		const struct skl_pipe_wm *old_pipe_wm, *new_pipe_wm;
 
 		old_pipe_wm = &old_crtc_state->wm.skl.optimal;
 		new_pipe_wm = &new_crtc_state->wm.skl.optimal;
 
-		क्रम_each_पूर्णांकel_plane_on_crtc(&dev_priv->drm, crtc, plane) अणु
-			क्रमागत plane_id plane_id = plane->id;
-			स्थिर काष्ठा skl_ddb_entry *old, *new;
+		for_each_intel_plane_on_crtc(&dev_priv->drm, crtc, plane) {
+			enum plane_id plane_id = plane->id;
+			const struct skl_ddb_entry *old, *new;
 
 			old = &old_crtc_state->wm.skl.plane_ddb_y[plane_id];
 			new = &new_crtc_state->wm.skl.plane_ddb_y[plane_id];
 
-			अगर (skl_ddb_entry_equal(old, new))
-				जारी;
+			if (skl_ddb_entry_equal(old, new))
+				continue;
 
 			drm_dbg_kms(&dev_priv->drm,
 				    "[PLANE:%d:%s] ddb (%4d - %4d) -> (%4d - %4d), size %4d -> %4d\n",
 				    plane->base.base.id, plane->base.name,
 				    old->start, old->end, new->start, new->end,
 				    skl_ddb_entry_size(old), skl_ddb_entry_size(new));
-		पूर्ण
+		}
 
-		क्रम_each_पूर्णांकel_plane_on_crtc(&dev_priv->drm, crtc, plane) अणु
-			क्रमागत plane_id plane_id = plane->id;
-			स्थिर काष्ठा skl_plane_wm *old_wm, *new_wm;
+		for_each_intel_plane_on_crtc(&dev_priv->drm, crtc, plane) {
+			enum plane_id plane_id = plane->id;
+			const struct skl_plane_wm *old_wm, *new_wm;
 
 			old_wm = &old_pipe_wm->planes[plane_id];
 			new_wm = &new_pipe_wm->planes[plane_id];
 
-			अगर (skl_plane_wm_equals(dev_priv, old_wm, new_wm))
-				जारी;
+			if (skl_plane_wm_equals(dev_priv, old_wm, new_wm))
+				continue;
 
 			drm_dbg_kms(&dev_priv->drm,
 				    "[PLANE:%d:%s]   level %cwm0,%cwm1,%cwm2,%cwm3,%cwm4,%cwm5,%cwm6,%cwm7,%ctwm,%cswm,%cstwm"
@@ -6001,154 +6000,154 @@ skl_prपूर्णांक_wm_changes(काष्ठा पूर्णा�
 				    new_wm->trans_wm.min_ddb_alloc,
 				    new_wm->sagv.wm0.min_ddb_alloc,
 				    new_wm->sagv.trans_wm.min_ddb_alloc);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल bool skl_plane_selected_wm_equals(काष्ठा पूर्णांकel_plane *plane,
-					 स्थिर काष्ठा skl_pipe_wm *old_pipe_wm,
-					 स्थिर काष्ठा skl_pipe_wm *new_pipe_wm)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(plane->base.dev);
-	पूर्णांक level, max_level = ilk_wm_max_level(i915);
+static bool skl_plane_selected_wm_equals(struct intel_plane *plane,
+					 const struct skl_pipe_wm *old_pipe_wm,
+					 const struct skl_pipe_wm *new_pipe_wm)
+{
+	struct drm_i915_private *i915 = to_i915(plane->base.dev);
+	int level, max_level = ilk_wm_max_level(i915);
 
-	क्रम (level = 0; level <= max_level; level++) अणु
+	for (level = 0; level <= max_level; level++) {
 		/*
-		 * We करोn't check uv_wm as the hardware doesn't actually
-		 * use it. It only माला_लो used क्रम calculating the required
+		 * We don't check uv_wm as the hardware doesn't actually
+		 * use it. It only gets used for calculating the required
 		 * ddb allocation.
 		 */
-		अगर (!skl_wm_level_equals(skl_plane_wm_level(old_pipe_wm, plane->id, level),
+		if (!skl_wm_level_equals(skl_plane_wm_level(old_pipe_wm, plane->id, level),
 					 skl_plane_wm_level(new_pipe_wm, plane->id, level)))
-			वापस false;
-	पूर्ण
+			return false;
+	}
 
-	वापस skl_wm_level_equals(skl_plane_trans_wm(old_pipe_wm, plane->id),
+	return skl_wm_level_equals(skl_plane_trans_wm(old_pipe_wm, plane->id),
 				   skl_plane_trans_wm(new_pipe_wm, plane->id));
-पूर्ण
+}
 
 /*
- * To make sure the cursor watermark रेजिस्टरs are always consistent
+ * To make sure the cursor watermark registers are always consistent
  * with our computed state the following scenario needs special
- * treaपंचांगent:
+ * treatment:
  *
  * 1. enable cursor
  * 2. move cursor entirely offscreen
  * 3. disable cursor
  *
- * Step 2. करोes call .disable_plane() but करोes not zero the watermarks
- * (since we consider an offscreen cursor still active क्रम the purposes
+ * Step 2. does call .disable_plane() but does not zero the watermarks
+ * (since we consider an offscreen cursor still active for the purposes
  * of watermarks). Step 3. would not normally call .disable_plane()
  * because the actual plane visibility isn't changing, and we don't
- * deallocate the cursor ddb until the pipe माला_लो disabled. So we must
- * क्रमce step 3. to call .disable_plane() to update the watermark
- * रेजिस्टरs properly.
+ * deallocate the cursor ddb until the pipe gets disabled. So we must
+ * force step 3. to call .disable_plane() to update the watermark
+ * registers properly.
  *
- * Other planes करो not suffer from this issues as their watermarks are
- * calculated based on the actual plane visibility. The only समय this
- * can trigger क्रम the other planes is during the initial पढ़ोout as the
- * शेष value of the watermarks रेजिस्टरs is not zero.
+ * Other planes do not suffer from this issues as their watermarks are
+ * calculated based on the actual plane visibility. The only time this
+ * can trigger for the other planes is during the initial readout as the
+ * default value of the watermarks registers is not zero.
  */
-अटल पूर्णांक skl_wm_add_affected_planes(काष्ठा पूर्णांकel_atomic_state *state,
-				      काष्ठा पूर्णांकel_crtc *crtc)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
-	स्थिर काष्ठा पूर्णांकel_crtc_state *old_crtc_state =
-		पूर्णांकel_atomic_get_old_crtc_state(state, crtc);
-	काष्ठा पूर्णांकel_crtc_state *new_crtc_state =
-		पूर्णांकel_atomic_get_new_crtc_state(state, crtc);
-	काष्ठा पूर्णांकel_plane *plane;
+static int skl_wm_add_affected_planes(struct intel_atomic_state *state,
+				      struct intel_crtc *crtc)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	const struct intel_crtc_state *old_crtc_state =
+		intel_atomic_get_old_crtc_state(state, crtc);
+	struct intel_crtc_state *new_crtc_state =
+		intel_atomic_get_new_crtc_state(state, crtc);
+	struct intel_plane *plane;
 
-	क्रम_each_पूर्णांकel_plane_on_crtc(&dev_priv->drm, crtc, plane) अणु
-		काष्ठा पूर्णांकel_plane_state *plane_state;
-		क्रमागत plane_id plane_id = plane->id;
+	for_each_intel_plane_on_crtc(&dev_priv->drm, crtc, plane) {
+		struct intel_plane_state *plane_state;
+		enum plane_id plane_id = plane->id;
 
 		/*
-		 * Force a full wm update क्रम every plane on modeset.
-		 * Required because the reset value of the wm रेजिस्टरs
+		 * Force a full wm update for every plane on modeset.
+		 * Required because the reset value of the wm registers
 		 * is non-zero, whereas we want all disabled planes to
-		 * have zero watermarks. So अगर we turn off the relevant
-		 * घातer well the hardware state will go out of sync
+		 * have zero watermarks. So if we turn off the relevant
+		 * power well the hardware state will go out of sync
 		 * with the software state.
 		 */
-		अगर (!drm_atomic_crtc_needs_modeset(&new_crtc_state->uapi) &&
+		if (!drm_atomic_crtc_needs_modeset(&new_crtc_state->uapi) &&
 		    skl_plane_selected_wm_equals(plane,
 						 &old_crtc_state->wm.skl.optimal,
 						 &new_crtc_state->wm.skl.optimal))
-			जारी;
+			continue;
 
-		plane_state = पूर्णांकel_atomic_get_plane_state(state, plane);
-		अगर (IS_ERR(plane_state))
-			वापस PTR_ERR(plane_state);
+		plane_state = intel_atomic_get_plane_state(state, plane);
+		if (IS_ERR(plane_state))
+			return PTR_ERR(plane_state);
 
 		new_crtc_state->update_planes |= BIT(plane_id);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-skl_compute_wm(काष्ठा पूर्णांकel_atomic_state *state)
-अणु
-	काष्ठा पूर्णांकel_crtc *crtc;
-	काष्ठा पूर्णांकel_crtc_state *new_crtc_state;
-	पूर्णांक ret, i;
+static int
+skl_compute_wm(struct intel_atomic_state *state)
+{
+	struct intel_crtc *crtc;
+	struct intel_crtc_state *new_crtc_state;
+	int ret, i;
 
-	क्रम_each_new_पूर्णांकel_crtc_in_state(state, crtc, new_crtc_state, i) अणु
+	for_each_new_intel_crtc_in_state(state, crtc, new_crtc_state, i) {
 		ret = skl_build_pipe_wm(state, crtc);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	ret = skl_compute_ddb(state);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = पूर्णांकel_compute_sagv_mask(state);
-	अगर (ret)
-		वापस ret;
+	ret = intel_compute_sagv_mask(state);
+	if (ret)
+		return ret;
 
 	/*
 	 * skl_compute_ddb() will have adjusted the final watermarks
 	 * based on how much ddb is available. Now we can actually
-	 * check अगर the final watermarks changed.
+	 * check if the final watermarks changed.
 	 */
-	क्रम_each_new_पूर्णांकel_crtc_in_state(state, crtc, new_crtc_state, i) अणु
+	for_each_new_intel_crtc_in_state(state, crtc, new_crtc_state, i) {
 		ret = skl_wm_add_affected_planes(state, crtc);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	skl_prपूर्णांक_wm_changes(state);
+	skl_print_wm_changes(state);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ilk_compute_wm_config(काष्ठा drm_i915_निजी *dev_priv,
-				  काष्ठा पूर्णांकel_wm_config *config)
-अणु
-	काष्ठा पूर्णांकel_crtc *crtc;
+static void ilk_compute_wm_config(struct drm_i915_private *dev_priv,
+				  struct intel_wm_config *config)
+{
+	struct intel_crtc *crtc;
 
 	/* Compute the currently _active_ config */
-	क्रम_each_पूर्णांकel_crtc(&dev_priv->drm, crtc) अणु
-		स्थिर काष्ठा पूर्णांकel_pipe_wm *wm = &crtc->wm.active.ilk;
+	for_each_intel_crtc(&dev_priv->drm, crtc) {
+		const struct intel_pipe_wm *wm = &crtc->wm.active.ilk;
 
-		अगर (!wm->pipe_enabled)
-			जारी;
+		if (!wm->pipe_enabled)
+			continue;
 
 		config->sprites_enabled |= wm->sprites_enabled;
 		config->sprites_scaled |= wm->sprites_scaled;
 		config->num_pipes_active++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम ilk_program_watermarks(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा पूर्णांकel_pipe_wm lp_wm_1_2 = अणुपूर्ण, lp_wm_5_6 = अणुपूर्ण, *best_lp_wm;
-	काष्ठा ilk_wm_maximums max;
-	काष्ठा पूर्णांकel_wm_config config = अणुपूर्ण;
-	काष्ठा ilk_wm_values results = अणुपूर्ण;
-	क्रमागत पूर्णांकel_ddb_partitioning partitioning;
+static void ilk_program_watermarks(struct drm_i915_private *dev_priv)
+{
+	struct intel_pipe_wm lp_wm_1_2 = {}, lp_wm_5_6 = {}, *best_lp_wm;
+	struct ilk_wm_maximums max;
+	struct intel_wm_config config = {};
+	struct ilk_wm_values results = {};
+	enum intel_ddb_partitioning partitioning;
 
 	ilk_compute_wm_config(dev_priv, &config);
 
@@ -6156,133 +6155,133 @@ skl_compute_wm(काष्ठा पूर्णांकel_atomic_state *state
 	ilk_wm_merge(dev_priv, &config, &max, &lp_wm_1_2);
 
 	/* 5/6 split only in single pipe config on IVB+ */
-	अगर (DISPLAY_VER(dev_priv) >= 7 &&
-	    config.num_pipes_active == 1 && config.sprites_enabled) अणु
+	if (DISPLAY_VER(dev_priv) >= 7 &&
+	    config.num_pipes_active == 1 && config.sprites_enabled) {
 		ilk_compute_wm_maximums(dev_priv, 1, &config, INTEL_DDB_PART_5_6, &max);
 		ilk_wm_merge(dev_priv, &config, &max, &lp_wm_5_6);
 
 		best_lp_wm = ilk_find_best_result(dev_priv, &lp_wm_1_2, &lp_wm_5_6);
-	पूर्ण अन्यथा अणु
+	} else {
 		best_lp_wm = &lp_wm_1_2;
-	पूर्ण
+	}
 
 	partitioning = (best_lp_wm == &lp_wm_1_2) ?
 		       INTEL_DDB_PART_1_2 : INTEL_DDB_PART_5_6;
 
 	ilk_compute_wm_results(dev_priv, best_lp_wm, partitioning, &results);
 
-	ilk_ग_लिखो_wm_values(dev_priv, &results);
-पूर्ण
+	ilk_write_wm_values(dev_priv, &results);
+}
 
-अटल व्योम ilk_initial_watermarks(काष्ठा पूर्णांकel_atomic_state *state,
-				   काष्ठा पूर्णांकel_crtc *crtc)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
-	स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state =
-		पूर्णांकel_atomic_get_new_crtc_state(state, crtc);
+static void ilk_initial_watermarks(struct intel_atomic_state *state,
+				   struct intel_crtc *crtc)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	const struct intel_crtc_state *crtc_state =
+		intel_atomic_get_new_crtc_state(state, crtc);
 
 	mutex_lock(&dev_priv->wm.wm_mutex);
-	crtc->wm.active.ilk = crtc_state->wm.ilk.पूर्णांकermediate;
+	crtc->wm.active.ilk = crtc_state->wm.ilk.intermediate;
 	ilk_program_watermarks(dev_priv);
 	mutex_unlock(&dev_priv->wm.wm_mutex);
-पूर्ण
+}
 
-अटल व्योम ilk_optimize_watermarks(काष्ठा पूर्णांकel_atomic_state *state,
-				    काष्ठा पूर्णांकel_crtc *crtc)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
-	स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state =
-		पूर्णांकel_atomic_get_new_crtc_state(state, crtc);
+static void ilk_optimize_watermarks(struct intel_atomic_state *state,
+				    struct intel_crtc *crtc)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	const struct intel_crtc_state *crtc_state =
+		intel_atomic_get_new_crtc_state(state, crtc);
 
-	अगर (!crtc_state->wm.need_postvbl_update)
-		वापस;
+	if (!crtc_state->wm.need_postvbl_update)
+		return;
 
 	mutex_lock(&dev_priv->wm.wm_mutex);
 	crtc->wm.active.ilk = crtc_state->wm.ilk.optimal;
 	ilk_program_watermarks(dev_priv);
 	mutex_unlock(&dev_priv->wm.wm_mutex);
-पूर्ण
+}
 
-अटल व्योम skl_wm_level_from_reg_val(u32 val, काष्ठा skl_wm_level *level)
-अणु
+static void skl_wm_level_from_reg_val(u32 val, struct skl_wm_level *level)
+{
 	level->enable = val & PLANE_WM_EN;
 	level->ignore_lines = val & PLANE_WM_IGNORE_LINES;
 	level->blocks = val & PLANE_WM_BLOCKS_MASK;
 	level->lines = (val >> PLANE_WM_LINES_SHIFT) &
 		PLANE_WM_LINES_MASK;
-पूर्ण
+}
 
-व्योम skl_pipe_wm_get_hw_state(काष्ठा पूर्णांकel_crtc *crtc,
-			      काष्ठा skl_pipe_wm *out)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
-	क्रमागत pipe pipe = crtc->pipe;
-	पूर्णांक level, max_level;
-	क्रमागत plane_id plane_id;
+void skl_pipe_wm_get_hw_state(struct intel_crtc *crtc,
+			      struct skl_pipe_wm *out)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	enum pipe pipe = crtc->pipe;
+	int level, max_level;
+	enum plane_id plane_id;
 	u32 val;
 
 	max_level = ilk_wm_max_level(dev_priv);
 
-	क्रम_each_plane_id_on_crtc(crtc, plane_id) अणु
-		काष्ठा skl_plane_wm *wm = &out->planes[plane_id];
+	for_each_plane_id_on_crtc(crtc, plane_id) {
+		struct skl_plane_wm *wm = &out->planes[plane_id];
 
-		क्रम (level = 0; level <= max_level; level++) अणु
-			अगर (plane_id != PLANE_CURSOR)
-				val = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, PLANE_WM(pipe, plane_id, level));
-			अन्यथा
-				val = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, CUR_WM(pipe, level));
+		for (level = 0; level <= max_level; level++) {
+			if (plane_id != PLANE_CURSOR)
+				val = intel_uncore_read(&dev_priv->uncore, PLANE_WM(pipe, plane_id, level));
+			else
+				val = intel_uncore_read(&dev_priv->uncore, CUR_WM(pipe, level));
 
 			skl_wm_level_from_reg_val(val, &wm->wm[level]);
-		पूर्ण
+		}
 
-		अगर (plane_id != PLANE_CURSOR)
-			val = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, PLANE_WM_TRANS(pipe, plane_id));
-		अन्यथा
-			val = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, CUR_WM_TRANS(pipe));
+		if (plane_id != PLANE_CURSOR)
+			val = intel_uncore_read(&dev_priv->uncore, PLANE_WM_TRANS(pipe, plane_id));
+		else
+			val = intel_uncore_read(&dev_priv->uncore, CUR_WM_TRANS(pipe));
 
 		skl_wm_level_from_reg_val(val, &wm->trans_wm);
 
-		अगर (DISPLAY_VER(dev_priv) >= 12) अणु
+		if (DISPLAY_VER(dev_priv) >= 12) {
 			wm->sagv.wm0 = wm->wm[0];
 			wm->sagv.trans_wm = wm->trans_wm;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम skl_wm_get_hw_state(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा पूर्णांकel_dbuf_state *dbuf_state =
-		to_पूर्णांकel_dbuf_state(dev_priv->dbuf.obj.state);
-	काष्ठा पूर्णांकel_crtc *crtc;
+void skl_wm_get_hw_state(struct drm_i915_private *dev_priv)
+{
+	struct intel_dbuf_state *dbuf_state =
+		to_intel_dbuf_state(dev_priv->dbuf.obj.state);
+	struct intel_crtc *crtc;
 
-	क्रम_each_पूर्णांकel_crtc(&dev_priv->drm, crtc) अणु
-		काष्ठा पूर्णांकel_crtc_state *crtc_state =
-			to_पूर्णांकel_crtc_state(crtc->base.state);
-		क्रमागत pipe pipe = crtc->pipe;
-		क्रमागत plane_id plane_id;
+	for_each_intel_crtc(&dev_priv->drm, crtc) {
+		struct intel_crtc_state *crtc_state =
+			to_intel_crtc_state(crtc->base.state);
+		enum pipe pipe = crtc->pipe;
+		enum plane_id plane_id;
 
 		skl_pipe_wm_get_hw_state(crtc, &crtc_state->wm.skl.optimal);
 		crtc_state->wm.skl.raw = crtc_state->wm.skl.optimal;
 
-		स_रखो(&dbuf_state->ddb[pipe], 0, माप(dbuf_state->ddb[pipe]));
+		memset(&dbuf_state->ddb[pipe], 0, sizeof(dbuf_state->ddb[pipe]));
 
-		क्रम_each_plane_id_on_crtc(crtc, plane_id) अणु
-			काष्ठा skl_ddb_entry *ddb_y =
+		for_each_plane_id_on_crtc(crtc, plane_id) {
+			struct skl_ddb_entry *ddb_y =
 				&crtc_state->wm.skl.plane_ddb_y[plane_id];
-			काष्ठा skl_ddb_entry *ddb_uv =
+			struct skl_ddb_entry *ddb_uv =
 				&crtc_state->wm.skl.plane_ddb_uv[plane_id];
 
 			skl_ddb_get_hw_plane_state(dev_priv, crtc->pipe,
 						   plane_id, ddb_y, ddb_uv);
 
-			skl_ddb_entry_जोड़(&dbuf_state->ddb[pipe], ddb_y);
-			skl_ddb_entry_जोड़(&dbuf_state->ddb[pipe], ddb_uv);
-		पूर्ण
+			skl_ddb_entry_union(&dbuf_state->ddb[pipe], ddb_y);
+			skl_ddb_entry_union(&dbuf_state->ddb[pipe], ddb_uv);
+		}
 
 		dbuf_state->slices[pipe] =
 			skl_compute_dbuf_slices(crtc, dbuf_state->active_pipes);
 
-		dbuf_state->weight[pipe] = पूर्णांकel_crtc_ddb_weight(crtc_state);
+		dbuf_state->weight[pipe] = intel_crtc_ddb_weight(crtc_state);
 
 		crtc_state->wm.skl.ddb = dbuf_state->ddb[pipe];
 
@@ -6291,178 +6290,178 @@ skl_compute_wm(काष्ठा पूर्णांकel_atomic_state *state
 			    crtc->base.base.id, crtc->base.name,
 			    dbuf_state->slices[pipe], dbuf_state->ddb[pipe].start,
 			    dbuf_state->ddb[pipe].end, dbuf_state->active_pipes);
-	पूर्ण
+	}
 
 	dbuf_state->enabled_slices = dev_priv->dbuf.enabled_slices;
-पूर्ण
+}
 
-अटल व्योम ilk_pipe_wm_get_hw_state(काष्ठा पूर्णांकel_crtc *crtc)
-अणु
-	काष्ठा drm_device *dev = crtc->base.dev;
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(dev);
-	काष्ठा ilk_wm_values *hw = &dev_priv->wm.hw;
-	काष्ठा पूर्णांकel_crtc_state *crtc_state = to_पूर्णांकel_crtc_state(crtc->base.state);
-	काष्ठा पूर्णांकel_pipe_wm *active = &crtc_state->wm.ilk.optimal;
-	क्रमागत pipe pipe = crtc->pipe;
+static void ilk_pipe_wm_get_hw_state(struct intel_crtc *crtc)
+{
+	struct drm_device *dev = crtc->base.dev;
+	struct drm_i915_private *dev_priv = to_i915(dev);
+	struct ilk_wm_values *hw = &dev_priv->wm.hw;
+	struct intel_crtc_state *crtc_state = to_intel_crtc_state(crtc->base.state);
+	struct intel_pipe_wm *active = &crtc_state->wm.ilk.optimal;
+	enum pipe pipe = crtc->pipe;
 
-	hw->wm_pipe[pipe] = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, WM0_PIPE_ILK(pipe));
+	hw->wm_pipe[pipe] = intel_uncore_read(&dev_priv->uncore, WM0_PIPE_ILK(pipe));
 
-	स_रखो(active, 0, माप(*active));
+	memset(active, 0, sizeof(*active));
 
 	active->pipe_enabled = crtc->active;
 
-	अगर (active->pipe_enabled) अणु
-		u32 पंचांगp = hw->wm_pipe[pipe];
+	if (active->pipe_enabled) {
+		u32 tmp = hw->wm_pipe[pipe];
 
 		/*
 		 * For active pipes LP0 watermark is marked as
 		 * enabled, and LP1+ watermaks as disabled since
-		 * we can't really reverse compute them in हाल
+		 * we can't really reverse compute them in case
 		 * multiple pipes are active.
 		 */
 		active->wm[0].enable = true;
-		active->wm[0].pri_val = (पंचांगp & WM0_PIPE_PLANE_MASK) >> WM0_PIPE_PLANE_SHIFT;
-		active->wm[0].spr_val = (पंचांगp & WM0_PIPE_SPRITE_MASK) >> WM0_PIPE_SPRITE_SHIFT;
-		active->wm[0].cur_val = पंचांगp & WM0_PIPE_CURSOR_MASK;
-	पूर्ण अन्यथा अणु
-		पूर्णांक level, max_level = ilk_wm_max_level(dev_priv);
+		active->wm[0].pri_val = (tmp & WM0_PIPE_PLANE_MASK) >> WM0_PIPE_PLANE_SHIFT;
+		active->wm[0].spr_val = (tmp & WM0_PIPE_SPRITE_MASK) >> WM0_PIPE_SPRITE_SHIFT;
+		active->wm[0].cur_val = tmp & WM0_PIPE_CURSOR_MASK;
+	} else {
+		int level, max_level = ilk_wm_max_level(dev_priv);
 
 		/*
 		 * For inactive pipes, all watermark levels
 		 * should be marked as enabled but zeroed,
 		 * which is what we'd compute them to.
 		 */
-		क्रम (level = 0; level <= max_level; level++)
+		for (level = 0; level <= max_level; level++)
 			active->wm[level].enable = true;
-	पूर्ण
+	}
 
 	crtc->wm.active.ilk = *active;
-पूर्ण
+}
 
-#घोषणा _FW_WM(value, plane) \
+#define _FW_WM(value, plane) \
 	(((value) & DSPFW_ ## plane ## _MASK) >> DSPFW_ ## plane ## _SHIFT)
-#घोषणा _FW_WM_VLV(value, plane) \
+#define _FW_WM_VLV(value, plane) \
 	(((value) & DSPFW_ ## plane ## _MASK_VLV) >> DSPFW_ ## plane ## _SHIFT)
 
-अटल व्योम g4x_पढ़ो_wm_values(काष्ठा drm_i915_निजी *dev_priv,
-			       काष्ठा g4x_wm_values *wm)
-अणु
-	u32 पंचांगp;
+static void g4x_read_wm_values(struct drm_i915_private *dev_priv,
+			       struct g4x_wm_values *wm)
+{
+	u32 tmp;
 
-	पंचांगp = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPFW1);
-	wm->sr.plane = _FW_WM(पंचांगp, SR);
-	wm->pipe[PIPE_B].plane[PLANE_CURSOR] = _FW_WM(पंचांगp, CURSORB);
-	wm->pipe[PIPE_B].plane[PLANE_PRIMARY] = _FW_WM(पंचांगp, PLANEB);
-	wm->pipe[PIPE_A].plane[PLANE_PRIMARY] = _FW_WM(पंचांगp, PLANEA);
+	tmp = intel_uncore_read(&dev_priv->uncore, DSPFW1);
+	wm->sr.plane = _FW_WM(tmp, SR);
+	wm->pipe[PIPE_B].plane[PLANE_CURSOR] = _FW_WM(tmp, CURSORB);
+	wm->pipe[PIPE_B].plane[PLANE_PRIMARY] = _FW_WM(tmp, PLANEB);
+	wm->pipe[PIPE_A].plane[PLANE_PRIMARY] = _FW_WM(tmp, PLANEA);
 
-	पंचांगp = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPFW2);
-	wm->fbc_en = पंचांगp & DSPFW_FBC_SR_EN;
-	wm->sr.fbc = _FW_WM(पंचांगp, FBC_SR);
-	wm->hpll.fbc = _FW_WM(पंचांगp, FBC_HPLL_SR);
-	wm->pipe[PIPE_B].plane[PLANE_SPRITE0] = _FW_WM(पंचांगp, SPRITEB);
-	wm->pipe[PIPE_A].plane[PLANE_CURSOR] = _FW_WM(पंचांगp, CURSORA);
-	wm->pipe[PIPE_A].plane[PLANE_SPRITE0] = _FW_WM(पंचांगp, SPRITEA);
+	tmp = intel_uncore_read(&dev_priv->uncore, DSPFW2);
+	wm->fbc_en = tmp & DSPFW_FBC_SR_EN;
+	wm->sr.fbc = _FW_WM(tmp, FBC_SR);
+	wm->hpll.fbc = _FW_WM(tmp, FBC_HPLL_SR);
+	wm->pipe[PIPE_B].plane[PLANE_SPRITE0] = _FW_WM(tmp, SPRITEB);
+	wm->pipe[PIPE_A].plane[PLANE_CURSOR] = _FW_WM(tmp, CURSORA);
+	wm->pipe[PIPE_A].plane[PLANE_SPRITE0] = _FW_WM(tmp, SPRITEA);
 
-	पंचांगp = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPFW3);
-	wm->hpll_en = पंचांगp & DSPFW_HPLL_SR_EN;
-	wm->sr.cursor = _FW_WM(पंचांगp, CURSOR_SR);
-	wm->hpll.cursor = _FW_WM(पंचांगp, HPLL_CURSOR);
-	wm->hpll.plane = _FW_WM(पंचांगp, HPLL_SR);
-पूर्ण
+	tmp = intel_uncore_read(&dev_priv->uncore, DSPFW3);
+	wm->hpll_en = tmp & DSPFW_HPLL_SR_EN;
+	wm->sr.cursor = _FW_WM(tmp, CURSOR_SR);
+	wm->hpll.cursor = _FW_WM(tmp, HPLL_CURSOR);
+	wm->hpll.plane = _FW_WM(tmp, HPLL_SR);
+}
 
-अटल व्योम vlv_पढ़ो_wm_values(काष्ठा drm_i915_निजी *dev_priv,
-			       काष्ठा vlv_wm_values *wm)
-अणु
-	क्रमागत pipe pipe;
-	u32 पंचांगp;
+static void vlv_read_wm_values(struct drm_i915_private *dev_priv,
+			       struct vlv_wm_values *wm)
+{
+	enum pipe pipe;
+	u32 tmp;
 
-	क्रम_each_pipe(dev_priv, pipe) अणु
-		पंचांगp = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, VLV_DDL(pipe));
+	for_each_pipe(dev_priv, pipe) {
+		tmp = intel_uncore_read(&dev_priv->uncore, VLV_DDL(pipe));
 
 		wm->ddl[pipe].plane[PLANE_PRIMARY] =
-			(पंचांगp >> DDL_PLANE_SHIFT) & (DDL_PRECISION_HIGH | DRAIN_LATENCY_MASK);
+			(tmp >> DDL_PLANE_SHIFT) & (DDL_PRECISION_HIGH | DRAIN_LATENCY_MASK);
 		wm->ddl[pipe].plane[PLANE_CURSOR] =
-			(पंचांगp >> DDL_CURSOR_SHIFT) & (DDL_PRECISION_HIGH | DRAIN_LATENCY_MASK);
+			(tmp >> DDL_CURSOR_SHIFT) & (DDL_PRECISION_HIGH | DRAIN_LATENCY_MASK);
 		wm->ddl[pipe].plane[PLANE_SPRITE0] =
-			(पंचांगp >> DDL_SPRITE_SHIFT(0)) & (DDL_PRECISION_HIGH | DRAIN_LATENCY_MASK);
+			(tmp >> DDL_SPRITE_SHIFT(0)) & (DDL_PRECISION_HIGH | DRAIN_LATENCY_MASK);
 		wm->ddl[pipe].plane[PLANE_SPRITE1] =
-			(पंचांगp >> DDL_SPRITE_SHIFT(1)) & (DDL_PRECISION_HIGH | DRAIN_LATENCY_MASK);
-	पूर्ण
+			(tmp >> DDL_SPRITE_SHIFT(1)) & (DDL_PRECISION_HIGH | DRAIN_LATENCY_MASK);
+	}
 
-	पंचांगp = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPFW1);
-	wm->sr.plane = _FW_WM(पंचांगp, SR);
-	wm->pipe[PIPE_B].plane[PLANE_CURSOR] = _FW_WM(पंचांगp, CURSORB);
-	wm->pipe[PIPE_B].plane[PLANE_PRIMARY] = _FW_WM_VLV(पंचांगp, PLANEB);
-	wm->pipe[PIPE_A].plane[PLANE_PRIMARY] = _FW_WM_VLV(पंचांगp, PLANEA);
+	tmp = intel_uncore_read(&dev_priv->uncore, DSPFW1);
+	wm->sr.plane = _FW_WM(tmp, SR);
+	wm->pipe[PIPE_B].plane[PLANE_CURSOR] = _FW_WM(tmp, CURSORB);
+	wm->pipe[PIPE_B].plane[PLANE_PRIMARY] = _FW_WM_VLV(tmp, PLANEB);
+	wm->pipe[PIPE_A].plane[PLANE_PRIMARY] = _FW_WM_VLV(tmp, PLANEA);
 
-	पंचांगp = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPFW2);
-	wm->pipe[PIPE_A].plane[PLANE_SPRITE1] = _FW_WM_VLV(पंचांगp, SPRITEB);
-	wm->pipe[PIPE_A].plane[PLANE_CURSOR] = _FW_WM(पंचांगp, CURSORA);
-	wm->pipe[PIPE_A].plane[PLANE_SPRITE0] = _FW_WM_VLV(पंचांगp, SPRITEA);
+	tmp = intel_uncore_read(&dev_priv->uncore, DSPFW2);
+	wm->pipe[PIPE_A].plane[PLANE_SPRITE1] = _FW_WM_VLV(tmp, SPRITEB);
+	wm->pipe[PIPE_A].plane[PLANE_CURSOR] = _FW_WM(tmp, CURSORA);
+	wm->pipe[PIPE_A].plane[PLANE_SPRITE0] = _FW_WM_VLV(tmp, SPRITEA);
 
-	पंचांगp = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPFW3);
-	wm->sr.cursor = _FW_WM(पंचांगp, CURSOR_SR);
+	tmp = intel_uncore_read(&dev_priv->uncore, DSPFW3);
+	wm->sr.cursor = _FW_WM(tmp, CURSOR_SR);
 
-	अगर (IS_CHERRYVIEW(dev_priv)) अणु
-		पंचांगp = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPFW7_CHV);
-		wm->pipe[PIPE_B].plane[PLANE_SPRITE1] = _FW_WM_VLV(पंचांगp, SPRITED);
-		wm->pipe[PIPE_B].plane[PLANE_SPRITE0] = _FW_WM_VLV(पंचांगp, SPRITEC);
+	if (IS_CHERRYVIEW(dev_priv)) {
+		tmp = intel_uncore_read(&dev_priv->uncore, DSPFW7_CHV);
+		wm->pipe[PIPE_B].plane[PLANE_SPRITE1] = _FW_WM_VLV(tmp, SPRITED);
+		wm->pipe[PIPE_B].plane[PLANE_SPRITE0] = _FW_WM_VLV(tmp, SPRITEC);
 
-		पंचांगp = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPFW8_CHV);
-		wm->pipe[PIPE_C].plane[PLANE_SPRITE1] = _FW_WM_VLV(पंचांगp, SPRITEF);
-		wm->pipe[PIPE_C].plane[PLANE_SPRITE0] = _FW_WM_VLV(पंचांगp, SPRITEE);
+		tmp = intel_uncore_read(&dev_priv->uncore, DSPFW8_CHV);
+		wm->pipe[PIPE_C].plane[PLANE_SPRITE1] = _FW_WM_VLV(tmp, SPRITEF);
+		wm->pipe[PIPE_C].plane[PLANE_SPRITE0] = _FW_WM_VLV(tmp, SPRITEE);
 
-		पंचांगp = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPFW9_CHV);
-		wm->pipe[PIPE_C].plane[PLANE_PRIMARY] = _FW_WM_VLV(पंचांगp, PLANEC);
-		wm->pipe[PIPE_C].plane[PLANE_CURSOR] = _FW_WM(पंचांगp, CURSORC);
+		tmp = intel_uncore_read(&dev_priv->uncore, DSPFW9_CHV);
+		wm->pipe[PIPE_C].plane[PLANE_PRIMARY] = _FW_WM_VLV(tmp, PLANEC);
+		wm->pipe[PIPE_C].plane[PLANE_CURSOR] = _FW_WM(tmp, CURSORC);
 
-		पंचांगp = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPHOWM);
-		wm->sr.plane |= _FW_WM(पंचांगp, SR_HI) << 9;
-		wm->pipe[PIPE_C].plane[PLANE_SPRITE1] |= _FW_WM(पंचांगp, SPRITEF_HI) << 8;
-		wm->pipe[PIPE_C].plane[PLANE_SPRITE0] |= _FW_WM(पंचांगp, SPRITEE_HI) << 8;
-		wm->pipe[PIPE_C].plane[PLANE_PRIMARY] |= _FW_WM(पंचांगp, PLANEC_HI) << 8;
-		wm->pipe[PIPE_B].plane[PLANE_SPRITE1] |= _FW_WM(पंचांगp, SPRITED_HI) << 8;
-		wm->pipe[PIPE_B].plane[PLANE_SPRITE0] |= _FW_WM(पंचांगp, SPRITEC_HI) << 8;
-		wm->pipe[PIPE_B].plane[PLANE_PRIMARY] |= _FW_WM(पंचांगp, PLANEB_HI) << 8;
-		wm->pipe[PIPE_A].plane[PLANE_SPRITE1] |= _FW_WM(पंचांगp, SPRITEB_HI) << 8;
-		wm->pipe[PIPE_A].plane[PLANE_SPRITE0] |= _FW_WM(पंचांगp, SPRITEA_HI) << 8;
-		wm->pipe[PIPE_A].plane[PLANE_PRIMARY] |= _FW_WM(पंचांगp, PLANEA_HI) << 8;
-	पूर्ण अन्यथा अणु
-		पंचांगp = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPFW7);
-		wm->pipe[PIPE_B].plane[PLANE_SPRITE1] = _FW_WM_VLV(पंचांगp, SPRITED);
-		wm->pipe[PIPE_B].plane[PLANE_SPRITE0] = _FW_WM_VLV(पंचांगp, SPRITEC);
+		tmp = intel_uncore_read(&dev_priv->uncore, DSPHOWM);
+		wm->sr.plane |= _FW_WM(tmp, SR_HI) << 9;
+		wm->pipe[PIPE_C].plane[PLANE_SPRITE1] |= _FW_WM(tmp, SPRITEF_HI) << 8;
+		wm->pipe[PIPE_C].plane[PLANE_SPRITE0] |= _FW_WM(tmp, SPRITEE_HI) << 8;
+		wm->pipe[PIPE_C].plane[PLANE_PRIMARY] |= _FW_WM(tmp, PLANEC_HI) << 8;
+		wm->pipe[PIPE_B].plane[PLANE_SPRITE1] |= _FW_WM(tmp, SPRITED_HI) << 8;
+		wm->pipe[PIPE_B].plane[PLANE_SPRITE0] |= _FW_WM(tmp, SPRITEC_HI) << 8;
+		wm->pipe[PIPE_B].plane[PLANE_PRIMARY] |= _FW_WM(tmp, PLANEB_HI) << 8;
+		wm->pipe[PIPE_A].plane[PLANE_SPRITE1] |= _FW_WM(tmp, SPRITEB_HI) << 8;
+		wm->pipe[PIPE_A].plane[PLANE_SPRITE0] |= _FW_WM(tmp, SPRITEA_HI) << 8;
+		wm->pipe[PIPE_A].plane[PLANE_PRIMARY] |= _FW_WM(tmp, PLANEA_HI) << 8;
+	} else {
+		tmp = intel_uncore_read(&dev_priv->uncore, DSPFW7);
+		wm->pipe[PIPE_B].plane[PLANE_SPRITE1] = _FW_WM_VLV(tmp, SPRITED);
+		wm->pipe[PIPE_B].plane[PLANE_SPRITE0] = _FW_WM_VLV(tmp, SPRITEC);
 
-		पंचांगp = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPHOWM);
-		wm->sr.plane |= _FW_WM(पंचांगp, SR_HI) << 9;
-		wm->pipe[PIPE_B].plane[PLANE_SPRITE1] |= _FW_WM(पंचांगp, SPRITED_HI) << 8;
-		wm->pipe[PIPE_B].plane[PLANE_SPRITE0] |= _FW_WM(पंचांगp, SPRITEC_HI) << 8;
-		wm->pipe[PIPE_B].plane[PLANE_PRIMARY] |= _FW_WM(पंचांगp, PLANEB_HI) << 8;
-		wm->pipe[PIPE_A].plane[PLANE_SPRITE1] |= _FW_WM(पंचांगp, SPRITEB_HI) << 8;
-		wm->pipe[PIPE_A].plane[PLANE_SPRITE0] |= _FW_WM(पंचांगp, SPRITEA_HI) << 8;
-		wm->pipe[PIPE_A].plane[PLANE_PRIMARY] |= _FW_WM(पंचांगp, PLANEA_HI) << 8;
-	पूर्ण
-पूर्ण
+		tmp = intel_uncore_read(&dev_priv->uncore, DSPHOWM);
+		wm->sr.plane |= _FW_WM(tmp, SR_HI) << 9;
+		wm->pipe[PIPE_B].plane[PLANE_SPRITE1] |= _FW_WM(tmp, SPRITED_HI) << 8;
+		wm->pipe[PIPE_B].plane[PLANE_SPRITE0] |= _FW_WM(tmp, SPRITEC_HI) << 8;
+		wm->pipe[PIPE_B].plane[PLANE_PRIMARY] |= _FW_WM(tmp, PLANEB_HI) << 8;
+		wm->pipe[PIPE_A].plane[PLANE_SPRITE1] |= _FW_WM(tmp, SPRITEB_HI) << 8;
+		wm->pipe[PIPE_A].plane[PLANE_SPRITE0] |= _FW_WM(tmp, SPRITEA_HI) << 8;
+		wm->pipe[PIPE_A].plane[PLANE_PRIMARY] |= _FW_WM(tmp, PLANEA_HI) << 8;
+	}
+}
 
-#अघोषित _FW_WM
-#अघोषित _FW_WM_VLV
+#undef _FW_WM
+#undef _FW_WM_VLV
 
-व्योम g4x_wm_get_hw_state(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा g4x_wm_values *wm = &dev_priv->wm.g4x;
-	काष्ठा पूर्णांकel_crtc *crtc;
+void g4x_wm_get_hw_state(struct drm_i915_private *dev_priv)
+{
+	struct g4x_wm_values *wm = &dev_priv->wm.g4x;
+	struct intel_crtc *crtc;
 
-	g4x_पढ़ो_wm_values(dev_priv, wm);
+	g4x_read_wm_values(dev_priv, wm);
 
-	wm->cxsr = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, FW_BLC_SELF) & FW_BLC_SELF_EN;
+	wm->cxsr = intel_uncore_read(&dev_priv->uncore, FW_BLC_SELF) & FW_BLC_SELF_EN;
 
-	क्रम_each_पूर्णांकel_crtc(&dev_priv->drm, crtc) अणु
-		काष्ठा पूर्णांकel_crtc_state *crtc_state =
-			to_पूर्णांकel_crtc_state(crtc->base.state);
-		काष्ठा g4x_wm_state *active = &crtc->wm.active.g4x;
-		काष्ठा g4x_pipe_wm *raw;
-		क्रमागत pipe pipe = crtc->pipe;
-		क्रमागत plane_id plane_id;
-		पूर्णांक level, max_level;
+	for_each_intel_crtc(&dev_priv->drm, crtc) {
+		struct intel_crtc_state *crtc_state =
+			to_intel_crtc_state(crtc->base.state);
+		struct g4x_wm_state *active = &crtc->wm.active.g4x;
+		struct g4x_pipe_wm *raw;
+		enum pipe pipe = crtc->pipe;
+		enum plane_id plane_id;
+		int level, max_level;
 
 		active->cxsr = wm->cxsr;
 		active->hpll_en = wm->hpll_en;
@@ -6471,25 +6470,25 @@ skl_compute_wm(काष्ठा पूर्णांकel_atomic_state *state
 		active->sr = wm->sr;
 		active->hpll = wm->hpll;
 
-		क्रम_each_plane_id_on_crtc(crtc, plane_id) अणु
+		for_each_plane_id_on_crtc(crtc, plane_id) {
 			active->wm.plane[plane_id] =
 				wm->pipe[pipe].plane[plane_id];
-		पूर्ण
+		}
 
-		अगर (wm->cxsr && wm->hpll_en)
+		if (wm->cxsr && wm->hpll_en)
 			max_level = G4X_WM_LEVEL_HPLL;
-		अन्यथा अगर (wm->cxsr)
+		else if (wm->cxsr)
 			max_level = G4X_WM_LEVEL_SR;
-		अन्यथा
+		else
 			max_level = G4X_WM_LEVEL_NORMAL;
 
 		level = G4X_WM_LEVEL_NORMAL;
 		raw = &crtc_state->wm.g4x.raw[level];
-		क्रम_each_plane_id_on_crtc(crtc, plane_id)
+		for_each_plane_id_on_crtc(crtc, plane_id)
 			raw->plane[plane_id] = active->wm.plane[plane_id];
 
-		अगर (++level > max_level)
-			जाओ out;
+		if (++level > max_level)
+			goto out;
 
 		raw = &crtc_state->wm.g4x.raw[level];
 		raw->plane[PLANE_PRIMARY] = active->sr.plane;
@@ -6497,8 +6496,8 @@ skl_compute_wm(काष्ठा पूर्णांकel_atomic_state *state
 		raw->plane[PLANE_SPRITE0] = 0;
 		raw->fbc = active->sr.fbc;
 
-		अगर (++level > max_level)
-			जाओ out;
+		if (++level > max_level)
+			goto out;
 
 		raw = &crtc_state->wm.g4x.raw[level];
 		raw->plane[PLANE_PRIMARY] = active->hpll.plane;
@@ -6507,13 +6506,13 @@ skl_compute_wm(काष्ठा पूर्णांकel_atomic_state *state
 		raw->fbc = active->hpll.fbc;
 
 	out:
-		क्रम_each_plane_id_on_crtc(crtc, plane_id)
+		for_each_plane_id_on_crtc(crtc, plane_id)
 			g4x_raw_plane_wm_set(crtc_state, level,
-					     plane_id, अच_लघु_उच्च);
-		g4x_raw_fbc_wm_set(crtc_state, level, अच_लघु_उच्च);
+					     plane_id, USHRT_MAX);
+		g4x_raw_fbc_wm_set(crtc_state, level, USHRT_MAX);
 
 		crtc_state->wm.g4x.optimal = *active;
-		crtc_state->wm.g4x.पूर्णांकermediate = *active;
+		crtc_state->wm.g4x.intermediate = *active;
 
 		drm_dbg_kms(&dev_priv->drm,
 			    "Initial watermarks: pipe %c, plane=%d, cursor=%d, sprite=%d\n",
@@ -6521,7 +6520,7 @@ skl_compute_wm(काष्ठा पूर्णांकel_atomic_state *state
 			    wm->pipe[pipe].plane[PLANE_PRIMARY],
 			    wm->pipe[pipe].plane[PLANE_CURSOR],
 			    wm->pipe[pipe].plane[PLANE_SPRITE0]);
-	पूर्ण
+	}
 
 	drm_dbg_kms(&dev_priv->drm,
 		    "Initial SR watermarks: plane=%d, cursor=%d fbc=%d\n",
@@ -6531,149 +6530,149 @@ skl_compute_wm(काष्ठा पूर्णांकel_atomic_state *state
 		    wm->hpll.plane, wm->hpll.cursor, wm->hpll.fbc);
 	drm_dbg_kms(&dev_priv->drm, "Initial SR=%s HPLL=%s FBC=%s\n",
 		    yesno(wm->cxsr), yesno(wm->hpll_en), yesno(wm->fbc_en));
-पूर्ण
+}
 
-व्योम g4x_wm_sanitize(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा पूर्णांकel_plane *plane;
-	काष्ठा पूर्णांकel_crtc *crtc;
+void g4x_wm_sanitize(struct drm_i915_private *dev_priv)
+{
+	struct intel_plane *plane;
+	struct intel_crtc *crtc;
 
 	mutex_lock(&dev_priv->wm.wm_mutex);
 
-	क्रम_each_पूर्णांकel_plane(&dev_priv->drm, plane) अणु
-		काष्ठा पूर्णांकel_crtc *crtc =
-			पूर्णांकel_get_crtc_क्रम_pipe(dev_priv, plane->pipe);
-		काष्ठा पूर्णांकel_crtc_state *crtc_state =
-			to_पूर्णांकel_crtc_state(crtc->base.state);
-		काष्ठा पूर्णांकel_plane_state *plane_state =
-			to_पूर्णांकel_plane_state(plane->base.state);
-		काष्ठा g4x_wm_state *wm_state = &crtc_state->wm.g4x.optimal;
-		क्रमागत plane_id plane_id = plane->id;
-		पूर्णांक level;
+	for_each_intel_plane(&dev_priv->drm, plane) {
+		struct intel_crtc *crtc =
+			intel_get_crtc_for_pipe(dev_priv, plane->pipe);
+		struct intel_crtc_state *crtc_state =
+			to_intel_crtc_state(crtc->base.state);
+		struct intel_plane_state *plane_state =
+			to_intel_plane_state(plane->base.state);
+		struct g4x_wm_state *wm_state = &crtc_state->wm.g4x.optimal;
+		enum plane_id plane_id = plane->id;
+		int level;
 
-		अगर (plane_state->uapi.visible)
-			जारी;
+		if (plane_state->uapi.visible)
+			continue;
 
-		क्रम (level = 0; level < 3; level++) अणु
-			काष्ठा g4x_pipe_wm *raw =
+		for (level = 0; level < 3; level++) {
+			struct g4x_pipe_wm *raw =
 				&crtc_state->wm.g4x.raw[level];
 
 			raw->plane[plane_id] = 0;
 			wm_state->wm.plane[plane_id] = 0;
-		पूर्ण
+		}
 
-		अगर (plane_id == PLANE_PRIMARY) अणु
-			क्रम (level = 0; level < 3; level++) अणु
-				काष्ठा g4x_pipe_wm *raw =
+		if (plane_id == PLANE_PRIMARY) {
+			for (level = 0; level < 3; level++) {
+				struct g4x_pipe_wm *raw =
 					&crtc_state->wm.g4x.raw[level];
 				raw->fbc = 0;
-			पूर्ण
+			}
 
 			wm_state->sr.fbc = 0;
 			wm_state->hpll.fbc = 0;
 			wm_state->fbc_en = false;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम_each_पूर्णांकel_crtc(&dev_priv->drm, crtc) अणु
-		काष्ठा पूर्णांकel_crtc_state *crtc_state =
-			to_पूर्णांकel_crtc_state(crtc->base.state);
+	for_each_intel_crtc(&dev_priv->drm, crtc) {
+		struct intel_crtc_state *crtc_state =
+			to_intel_crtc_state(crtc->base.state);
 
-		crtc_state->wm.g4x.पूर्णांकermediate =
+		crtc_state->wm.g4x.intermediate =
 			crtc_state->wm.g4x.optimal;
 		crtc->wm.active.g4x = crtc_state->wm.g4x.optimal;
-	पूर्ण
+	}
 
 	g4x_program_watermarks(dev_priv);
 
 	mutex_unlock(&dev_priv->wm.wm_mutex);
-पूर्ण
+}
 
-व्योम vlv_wm_get_hw_state(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा vlv_wm_values *wm = &dev_priv->wm.vlv;
-	काष्ठा पूर्णांकel_crtc *crtc;
+void vlv_wm_get_hw_state(struct drm_i915_private *dev_priv)
+{
+	struct vlv_wm_values *wm = &dev_priv->wm.vlv;
+	struct intel_crtc *crtc;
 	u32 val;
 
-	vlv_पढ़ो_wm_values(dev_priv, wm);
+	vlv_read_wm_values(dev_priv, wm);
 
-	wm->cxsr = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, FW_BLC_SELF_VLV) & FW_CSPWRDWNEN;
+	wm->cxsr = intel_uncore_read(&dev_priv->uncore, FW_BLC_SELF_VLV) & FW_CSPWRDWNEN;
 	wm->level = VLV_WM_LEVEL_PM2;
 
-	अगर (IS_CHERRYVIEW(dev_priv)) अणु
+	if (IS_CHERRYVIEW(dev_priv)) {
 		vlv_punit_get(dev_priv);
 
-		val = vlv_punit_पढ़ो(dev_priv, PUNIT_REG_DSPSSPM);
-		अगर (val & DSP_MAXFIFO_PM5_ENABLE)
+		val = vlv_punit_read(dev_priv, PUNIT_REG_DSPSSPM);
+		if (val & DSP_MAXFIFO_PM5_ENABLE)
 			wm->level = VLV_WM_LEVEL_PM5;
 
 		/*
 		 * If DDR DVFS is disabled in the BIOS, Punit
-		 * will never ack the request. So अगर that happens
-		 * assume we करोn't have to enable/disable DDR DVFS
+		 * will never ack the request. So if that happens
+		 * assume we don't have to enable/disable DDR DVFS
 		 * dynamically. To test that just set the REQ_ACK
-		 * bit to poke the Punit, but करोn't change the
-		 * HIGH/LOW bits so that we करोn't actually change
+		 * bit to poke the Punit, but don't change the
+		 * HIGH/LOW bits so that we don't actually change
 		 * the current state.
 		 */
-		val = vlv_punit_पढ़ो(dev_priv, PUNIT_REG_DDR_SETUP2);
+		val = vlv_punit_read(dev_priv, PUNIT_REG_DDR_SETUP2);
 		val |= FORCE_DDR_FREQ_REQ_ACK;
-		vlv_punit_ग_लिखो(dev_priv, PUNIT_REG_DDR_SETUP2, val);
+		vlv_punit_write(dev_priv, PUNIT_REG_DDR_SETUP2, val);
 
-		अगर (रुको_क्रम((vlv_punit_पढ़ो(dev_priv, PUNIT_REG_DDR_SETUP2) &
-			      FORCE_DDR_FREQ_REQ_ACK) == 0, 3)) अणु
+		if (wait_for((vlv_punit_read(dev_priv, PUNIT_REG_DDR_SETUP2) &
+			      FORCE_DDR_FREQ_REQ_ACK) == 0, 3)) {
 			drm_dbg_kms(&dev_priv->drm,
 				    "Punit not acking DDR DVFS request, "
 				    "assuming DDR DVFS is disabled\n");
 			dev_priv->wm.max_level = VLV_WM_LEVEL_PM5;
-		पूर्ण अन्यथा अणु
-			val = vlv_punit_पढ़ो(dev_priv, PUNIT_REG_DDR_SETUP2);
-			अगर ((val & FORCE_DDR_HIGH_FREQ) == 0)
+		} else {
+			val = vlv_punit_read(dev_priv, PUNIT_REG_DDR_SETUP2);
+			if ((val & FORCE_DDR_HIGH_FREQ) == 0)
 				wm->level = VLV_WM_LEVEL_DDR_DVFS;
-		पूर्ण
+		}
 
 		vlv_punit_put(dev_priv);
-	पूर्ण
+	}
 
-	क्रम_each_पूर्णांकel_crtc(&dev_priv->drm, crtc) अणु
-		काष्ठा पूर्णांकel_crtc_state *crtc_state =
-			to_पूर्णांकel_crtc_state(crtc->base.state);
-		काष्ठा vlv_wm_state *active = &crtc->wm.active.vlv;
-		स्थिर काष्ठा vlv_fअगरo_state *fअगरo_state =
-			&crtc_state->wm.vlv.fअगरo_state;
-		क्रमागत pipe pipe = crtc->pipe;
-		क्रमागत plane_id plane_id;
-		पूर्णांक level;
+	for_each_intel_crtc(&dev_priv->drm, crtc) {
+		struct intel_crtc_state *crtc_state =
+			to_intel_crtc_state(crtc->base.state);
+		struct vlv_wm_state *active = &crtc->wm.active.vlv;
+		const struct vlv_fifo_state *fifo_state =
+			&crtc_state->wm.vlv.fifo_state;
+		enum pipe pipe = crtc->pipe;
+		enum plane_id plane_id;
+		int level;
 
-		vlv_get_fअगरo_size(crtc_state);
+		vlv_get_fifo_size(crtc_state);
 
 		active->num_levels = wm->level + 1;
 		active->cxsr = wm->cxsr;
 
-		क्रम (level = 0; level < active->num_levels; level++) अणु
-			काष्ठा g4x_pipe_wm *raw =
+		for (level = 0; level < active->num_levels; level++) {
+			struct g4x_pipe_wm *raw =
 				&crtc_state->wm.vlv.raw[level];
 
 			active->sr[level].plane = wm->sr.plane;
 			active->sr[level].cursor = wm->sr.cursor;
 
-			क्रम_each_plane_id_on_crtc(crtc, plane_id) अणु
+			for_each_plane_id_on_crtc(crtc, plane_id) {
 				active->wm[level].plane[plane_id] =
 					wm->pipe[pipe].plane[plane_id];
 
 				raw->plane[plane_id] =
 					vlv_invert_wm_value(active->wm[level].plane[plane_id],
-							    fअगरo_state->plane[plane_id]);
-			पूर्ण
-		पूर्ण
+							    fifo_state->plane[plane_id]);
+			}
+		}
 
-		क्रम_each_plane_id_on_crtc(crtc, plane_id)
+		for_each_plane_id_on_crtc(crtc, plane_id)
 			vlv_raw_plane_wm_set(crtc_state, level,
-					     plane_id, अच_लघु_उच्च);
+					     plane_id, USHRT_MAX);
 		vlv_invalidate_wms(crtc, active, level);
 
 		crtc_state->wm.vlv.optimal = *active;
-		crtc_state->wm.vlv.पूर्णांकermediate = *active;
+		crtc_state->wm.vlv.intermediate = *active;
 
 		drm_dbg_kms(&dev_priv->drm,
 			    "Initial watermarks: pipe %c, plane=%d, cursor=%d, sprite0=%d, sprite1=%d\n",
@@ -6682,232 +6681,232 @@ skl_compute_wm(काष्ठा पूर्णांकel_atomic_state *state
 			    wm->pipe[pipe].plane[PLANE_CURSOR],
 			    wm->pipe[pipe].plane[PLANE_SPRITE0],
 			    wm->pipe[pipe].plane[PLANE_SPRITE1]);
-	पूर्ण
+	}
 
 	drm_dbg_kms(&dev_priv->drm,
 		    "Initial watermarks: SR plane=%d, SR cursor=%d level=%d cxsr=%d\n",
 		    wm->sr.plane, wm->sr.cursor, wm->level, wm->cxsr);
-पूर्ण
+}
 
-व्योम vlv_wm_sanitize(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा पूर्णांकel_plane *plane;
-	काष्ठा पूर्णांकel_crtc *crtc;
+void vlv_wm_sanitize(struct drm_i915_private *dev_priv)
+{
+	struct intel_plane *plane;
+	struct intel_crtc *crtc;
 
 	mutex_lock(&dev_priv->wm.wm_mutex);
 
-	क्रम_each_पूर्णांकel_plane(&dev_priv->drm, plane) अणु
-		काष्ठा पूर्णांकel_crtc *crtc =
-			पूर्णांकel_get_crtc_क्रम_pipe(dev_priv, plane->pipe);
-		काष्ठा पूर्णांकel_crtc_state *crtc_state =
-			to_पूर्णांकel_crtc_state(crtc->base.state);
-		काष्ठा पूर्णांकel_plane_state *plane_state =
-			to_पूर्णांकel_plane_state(plane->base.state);
-		काष्ठा vlv_wm_state *wm_state = &crtc_state->wm.vlv.optimal;
-		स्थिर काष्ठा vlv_fअगरo_state *fअगरo_state =
-			&crtc_state->wm.vlv.fअगरo_state;
-		क्रमागत plane_id plane_id = plane->id;
-		पूर्णांक level;
+	for_each_intel_plane(&dev_priv->drm, plane) {
+		struct intel_crtc *crtc =
+			intel_get_crtc_for_pipe(dev_priv, plane->pipe);
+		struct intel_crtc_state *crtc_state =
+			to_intel_crtc_state(crtc->base.state);
+		struct intel_plane_state *plane_state =
+			to_intel_plane_state(plane->base.state);
+		struct vlv_wm_state *wm_state = &crtc_state->wm.vlv.optimal;
+		const struct vlv_fifo_state *fifo_state =
+			&crtc_state->wm.vlv.fifo_state;
+		enum plane_id plane_id = plane->id;
+		int level;
 
-		अगर (plane_state->uapi.visible)
-			जारी;
+		if (plane_state->uapi.visible)
+			continue;
 
-		क्रम (level = 0; level < wm_state->num_levels; level++) अणु
-			काष्ठा g4x_pipe_wm *raw =
+		for (level = 0; level < wm_state->num_levels; level++) {
+			struct g4x_pipe_wm *raw =
 				&crtc_state->wm.vlv.raw[level];
 
 			raw->plane[plane_id] = 0;
 
 			wm_state->wm[level].plane[plane_id] =
 				vlv_invert_wm_value(raw->plane[plane_id],
-						    fअगरo_state->plane[plane_id]);
-		पूर्ण
-	पूर्ण
+						    fifo_state->plane[plane_id]);
+		}
+	}
 
-	क्रम_each_पूर्णांकel_crtc(&dev_priv->drm, crtc) अणु
-		काष्ठा पूर्णांकel_crtc_state *crtc_state =
-			to_पूर्णांकel_crtc_state(crtc->base.state);
+	for_each_intel_crtc(&dev_priv->drm, crtc) {
+		struct intel_crtc_state *crtc_state =
+			to_intel_crtc_state(crtc->base.state);
 
-		crtc_state->wm.vlv.पूर्णांकermediate =
+		crtc_state->wm.vlv.intermediate =
 			crtc_state->wm.vlv.optimal;
 		crtc->wm.active.vlv = crtc_state->wm.vlv.optimal;
-	पूर्ण
+	}
 
 	vlv_program_watermarks(dev_priv);
 
 	mutex_unlock(&dev_priv->wm.wm_mutex);
-पूर्ण
+}
 
 /*
- * FIXME should probably समाप्त this and improve
- * the real watermark पढ़ोout/sanitation instead
+ * FIXME should probably kill this and improve
+ * the real watermark readout/sanitation instead
  */
-अटल व्योम ilk_init_lp_watermarks(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, WM3_LP_ILK, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, WM3_LP_ILK) & ~WM1_LP_SR_EN);
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, WM2_LP_ILK, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, WM2_LP_ILK) & ~WM1_LP_SR_EN);
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, WM1_LP_ILK, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, WM1_LP_ILK) & ~WM1_LP_SR_EN);
+static void ilk_init_lp_watermarks(struct drm_i915_private *dev_priv)
+{
+	intel_uncore_write(&dev_priv->uncore, WM3_LP_ILK, intel_uncore_read(&dev_priv->uncore, WM3_LP_ILK) & ~WM1_LP_SR_EN);
+	intel_uncore_write(&dev_priv->uncore, WM2_LP_ILK, intel_uncore_read(&dev_priv->uncore, WM2_LP_ILK) & ~WM1_LP_SR_EN);
+	intel_uncore_write(&dev_priv->uncore, WM1_LP_ILK, intel_uncore_read(&dev_priv->uncore, WM1_LP_ILK) & ~WM1_LP_SR_EN);
 
 	/*
 	 * Don't touch WM1S_LP_EN here.
 	 * Doing so could cause underruns.
 	 */
-पूर्ण
+}
 
-व्योम ilk_wm_get_hw_state(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा ilk_wm_values *hw = &dev_priv->wm.hw;
-	काष्ठा पूर्णांकel_crtc *crtc;
+void ilk_wm_get_hw_state(struct drm_i915_private *dev_priv)
+{
+	struct ilk_wm_values *hw = &dev_priv->wm.hw;
+	struct intel_crtc *crtc;
 
 	ilk_init_lp_watermarks(dev_priv);
 
-	क्रम_each_पूर्णांकel_crtc(&dev_priv->drm, crtc)
+	for_each_intel_crtc(&dev_priv->drm, crtc)
 		ilk_pipe_wm_get_hw_state(crtc);
 
-	hw->wm_lp[0] = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, WM1_LP_ILK);
-	hw->wm_lp[1] = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, WM2_LP_ILK);
-	hw->wm_lp[2] = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, WM3_LP_ILK);
+	hw->wm_lp[0] = intel_uncore_read(&dev_priv->uncore, WM1_LP_ILK);
+	hw->wm_lp[1] = intel_uncore_read(&dev_priv->uncore, WM2_LP_ILK);
+	hw->wm_lp[2] = intel_uncore_read(&dev_priv->uncore, WM3_LP_ILK);
 
-	hw->wm_lp_spr[0] = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, WM1S_LP_ILK);
-	अगर (DISPLAY_VER(dev_priv) >= 7) अणु
-		hw->wm_lp_spr[1] = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, WM2S_LP_IVB);
-		hw->wm_lp_spr[2] = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, WM3S_LP_IVB);
-	पूर्ण
+	hw->wm_lp_spr[0] = intel_uncore_read(&dev_priv->uncore, WM1S_LP_ILK);
+	if (DISPLAY_VER(dev_priv) >= 7) {
+		hw->wm_lp_spr[1] = intel_uncore_read(&dev_priv->uncore, WM2S_LP_IVB);
+		hw->wm_lp_spr[2] = intel_uncore_read(&dev_priv->uncore, WM3S_LP_IVB);
+	}
 
-	अगर (IS_HASWELL(dev_priv) || IS_BROADWELL(dev_priv))
-		hw->partitioning = (पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, WM_MISC) & WM_MISC_DATA_PARTITION_5_6) ?
+	if (IS_HASWELL(dev_priv) || IS_BROADWELL(dev_priv))
+		hw->partitioning = (intel_uncore_read(&dev_priv->uncore, WM_MISC) & WM_MISC_DATA_PARTITION_5_6) ?
 			INTEL_DDB_PART_5_6 : INTEL_DDB_PART_1_2;
-	अन्यथा अगर (IS_IVYBRIDGE(dev_priv))
-		hw->partitioning = (पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DISP_ARB_CTL2) & DISP_DATA_PARTITION_5_6) ?
+	else if (IS_IVYBRIDGE(dev_priv))
+		hw->partitioning = (intel_uncore_read(&dev_priv->uncore, DISP_ARB_CTL2) & DISP_DATA_PARTITION_5_6) ?
 			INTEL_DDB_PART_5_6 : INTEL_DDB_PART_1_2;
 
 	hw->enable_fbc_wm =
-		!(पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DISP_ARB_CTL) & DISP_FBC_WM_DIS);
-पूर्ण
+		!(intel_uncore_read(&dev_priv->uncore, DISP_ARB_CTL) & DISP_FBC_WM_DIS);
+}
 
 /**
- * पूर्णांकel_update_watermarks - update FIFO watermark values based on current modes
- * @crtc: the #पूर्णांकel_crtc on which to compute the WM
+ * intel_update_watermarks - update FIFO watermark values based on current modes
+ * @crtc: the #intel_crtc on which to compute the WM
  *
- * Calculate watermark values क्रम the various WM regs based on current mode
+ * Calculate watermark values for the various WM regs based on current mode
  * and plane configuration.
  *
- * There are several हालs to deal with here:
+ * There are several cases to deal with here:
  *   - normal (i.e. non-self-refresh)
  *   - self-refresh (SR) mode
  *   - lines are large relative to FIFO size (buffer can hold up to 2)
  *   - lines are small relative to FIFO size (buffer can hold more than 2
- *     lines), so need to account क्रम TLB latency
+ *     lines), so need to account for TLB latency
  *
  *   The normal calculation is:
- *     watermark = करोtघड़ी * bytes per pixel * latency
- *   where latency is platक्रमm & configuration dependent (we assume pessimal
+ *     watermark = dotclock * bytes per pixel * latency
+ *   where latency is platform & configuration dependent (we assume pessimal
  *   values here).
  *
  *   The SR calculation is:
- *     watermark = (trunc(latency/line समय)+1) * surface width *
+ *     watermark = (trunc(latency/line time)+1) * surface width *
  *       bytes per pixel
  *   where
- *     line समय = htotal / करोtघड़ी
- *     surface width = hdisplay क्रम normal plane and 64 क्रम cursor
+ *     line time = htotal / dotclock
+ *     surface width = hdisplay for normal plane and 64 for cursor
  *   and latency is assumed to be high, as above.
  *
- * The final value programmed to the रेजिस्टर should always be rounded up,
- * and include an extra 2 entries to account क्रम घड़ी crossings.
+ * The final value programmed to the register should always be rounded up,
+ * and include an extra 2 entries to account for clock crossings.
  *
- * We करोn't use the sprite, so we can ignore that.  And on Crestline we have
+ * We don't use the sprite, so we can ignore that.  And on Crestline we have
  * to set the non-SR watermarks to 8.
  */
-व्योम पूर्णांकel_update_watermarks(काष्ठा पूर्णांकel_crtc *crtc)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
+void intel_update_watermarks(struct intel_crtc *crtc)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
 
-	अगर (dev_priv->display.update_wm)
+	if (dev_priv->display.update_wm)
 		dev_priv->display.update_wm(crtc);
-पूर्ण
+}
 
-व्योम पूर्णांकel_enable_ipc(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+void intel_enable_ipc(struct drm_i915_private *dev_priv)
+{
 	u32 val;
 
-	अगर (!HAS_IPC(dev_priv))
-		वापस;
+	if (!HAS_IPC(dev_priv))
+		return;
 
-	val = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DISP_ARB_CTL2);
+	val = intel_uncore_read(&dev_priv->uncore, DISP_ARB_CTL2);
 
-	अगर (dev_priv->ipc_enabled)
+	if (dev_priv->ipc_enabled)
 		val |= DISP_IPC_ENABLE;
-	अन्यथा
+	else
 		val &= ~DISP_IPC_ENABLE;
 
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DISP_ARB_CTL2, val);
-पूर्ण
+	intel_uncore_write(&dev_priv->uncore, DISP_ARB_CTL2, val);
+}
 
-अटल bool पूर्णांकel_can_enable_ipc(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static bool intel_can_enable_ipc(struct drm_i915_private *dev_priv)
+{
 	/* Display WA #0477 WaDisableIPC: skl */
-	अगर (IS_SKYLAKE(dev_priv))
-		वापस false;
+	if (IS_SKYLAKE(dev_priv))
+		return false;
 
 	/* Display WA #1141: SKL:all KBL:all CFL */
-	अगर (IS_KABYLAKE(dev_priv) ||
+	if (IS_KABYLAKE(dev_priv) ||
 	    IS_COFFEELAKE(dev_priv) ||
 	    IS_COMETLAKE(dev_priv))
-		वापस dev_priv->dram_info.symmetric_memory;
+		return dev_priv->dram_info.symmetric_memory;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम पूर्णांकel_init_ipc(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	अगर (!HAS_IPC(dev_priv))
-		वापस;
+void intel_init_ipc(struct drm_i915_private *dev_priv)
+{
+	if (!HAS_IPC(dev_priv))
+		return;
 
-	dev_priv->ipc_enabled = पूर्णांकel_can_enable_ipc(dev_priv);
+	dev_priv->ipc_enabled = intel_can_enable_ipc(dev_priv);
 
-	पूर्णांकel_enable_ipc(dev_priv);
-पूर्ण
+	intel_enable_ipc(dev_priv);
+}
 
-अटल व्योम ibx_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void ibx_init_clock_gating(struct drm_i915_private *dev_priv)
+{
 	/*
-	 * On Ibex Peak and Cougar Poपूर्णांक, we need to disable घड़ी
-	 * gating क्रम the panel घातer sequencer or it will fail to
+	 * On Ibex Peak and Cougar Point, we need to disable clock
+	 * gating for the panel power sequencer or it will fail to
 	 * start up when no ports are active.
 	 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, SOUTH_DSPCLK_GATE_D, PCH_DPLSUNIT_CLOCK_GATE_DISABLE);
-पूर्ण
+	intel_uncore_write(&dev_priv->uncore, SOUTH_DSPCLK_GATE_D, PCH_DPLSUNIT_CLOCK_GATE_DISABLE);
+}
 
-अटल व्योम g4x_disable_trickle_feed(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	क्रमागत pipe pipe;
+static void g4x_disable_trickle_feed(struct drm_i915_private *dev_priv)
+{
+	enum pipe pipe;
 
-	क्रम_each_pipe(dev_priv, pipe) अणु
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPCNTR(pipe),
-			   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPCNTR(pipe)) |
+	for_each_pipe(dev_priv, pipe) {
+		intel_uncore_write(&dev_priv->uncore, DSPCNTR(pipe),
+			   intel_uncore_read(&dev_priv->uncore, DSPCNTR(pipe)) |
 			   DISPPLANE_TRICKLE_FEED_DISABLE);
 
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPSURF(pipe), पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DSPSURF(pipe)));
-		पूर्णांकel_uncore_posting_पढ़ो(&dev_priv->uncore, DSPSURF(pipe));
-	पूर्ण
-पूर्ण
+		intel_uncore_write(&dev_priv->uncore, DSPSURF(pipe), intel_uncore_read(&dev_priv->uncore, DSPSURF(pipe)));
+		intel_uncore_posting_read(&dev_priv->uncore, DSPSURF(pipe));
+	}
+}
 
-अटल व्योम ilk_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void ilk_init_clock_gating(struct drm_i915_private *dev_priv)
+{
 	u32 dspclk_gate = ILK_VRHUNIT_CLOCK_GATE_DISABLE;
 
 	/*
-	 * Required क्रम FBC
+	 * Required for FBC
 	 * WaFbcDisableDpfcClockGating:ilk
 	 */
 	dspclk_gate |= ILK_DPFCRUNIT_CLOCK_GATE_DISABLE |
 		   ILK_DPFCUNIT_CLOCK_GATE_DISABLE |
 		   ILK_DPFDUNIT_CLOCK_GATE_ENABLE;
 
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, PCH_3DCGDIS0,
+	intel_uncore_write(&dev_priv->uncore, PCH_3DCGDIS0,
 		   MARIUNIT_CLOCK_GATE_DISABLE |
 		   SVSMUNIT_CLOCK_GATE_DISABLE);
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, PCH_3DCGDIS1,
+	intel_uncore_write(&dev_priv->uncore, PCH_3DCGDIS1,
 		   VFMUNIT_CLOCK_GATE_DISABLE);
 
 	/*
@@ -6917,117 +6916,117 @@ skl_compute_wm(काष्ठा पूर्णांकel_atomic_state *state
 	 * The bit 5 of 0x42020
 	 * The bit 15 of 0x45000
 	 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, ILK_DISPLAY_CHICKEN2,
-		   (पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, ILK_DISPLAY_CHICKEN2) |
+	intel_uncore_write(&dev_priv->uncore, ILK_DISPLAY_CHICKEN2,
+		   (intel_uncore_read(&dev_priv->uncore, ILK_DISPLAY_CHICKEN2) |
 		    ILK_DPARB_GATE | ILK_VSDPFD_FULL));
 	dspclk_gate |= ILK_DPARBUNIT_CLOCK_GATE_ENABLE;
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DISP_ARB_CTL,
-		   (पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DISP_ARB_CTL) |
+	intel_uncore_write(&dev_priv->uncore, DISP_ARB_CTL,
+		   (intel_uncore_read(&dev_priv->uncore, DISP_ARB_CTL) |
 		    DISP_FBC_WM_DIS));
 
 	/*
-	 * Based on the करोcument from hardware guys the following bits
+	 * Based on the document from hardware guys the following bits
 	 * should be set unconditionally in order to enable FBC.
 	 * The bit 22 of 0x42000
 	 * The bit 22 of 0x42004
 	 * The bit 7,8,9 of 0x42020.
 	 */
-	अगर (IS_IRONLAKE_M(dev_priv)) अणु
+	if (IS_IRONLAKE_M(dev_priv)) {
 		/* WaFbcAsynchFlipDisableFbcQueue:ilk */
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, ILK_DISPLAY_CHICKEN1,
-			   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, ILK_DISPLAY_CHICKEN1) |
+		intel_uncore_write(&dev_priv->uncore, ILK_DISPLAY_CHICKEN1,
+			   intel_uncore_read(&dev_priv->uncore, ILK_DISPLAY_CHICKEN1) |
 			   ILK_FBCQ_DIS);
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, ILK_DISPLAY_CHICKEN2,
-			   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, ILK_DISPLAY_CHICKEN2) |
+		intel_uncore_write(&dev_priv->uncore, ILK_DISPLAY_CHICKEN2,
+			   intel_uncore_read(&dev_priv->uncore, ILK_DISPLAY_CHICKEN2) |
 			   ILK_DPARB_GATE);
-	पूर्ण
+	}
 
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, ILK_DSPCLK_GATE_D, dspclk_gate);
+	intel_uncore_write(&dev_priv->uncore, ILK_DSPCLK_GATE_D, dspclk_gate);
 
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, ILK_DISPLAY_CHICKEN2,
-		   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, ILK_DISPLAY_CHICKEN2) |
+	intel_uncore_write(&dev_priv->uncore, ILK_DISPLAY_CHICKEN2,
+		   intel_uncore_read(&dev_priv->uncore, ILK_DISPLAY_CHICKEN2) |
 		   ILK_ELPIN_409_SELECT);
 
 	g4x_disable_trickle_feed(dev_priv);
 
-	ibx_init_घड़ी_gating(dev_priv);
-पूर्ण
+	ibx_init_clock_gating(dev_priv);
+}
 
-अटल व्योम cpt_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	क्रमागत pipe pipe;
+static void cpt_init_clock_gating(struct drm_i915_private *dev_priv)
+{
+	enum pipe pipe;
 	u32 val;
 
 	/*
-	 * On Ibex Peak and Cougar Poपूर्णांक, we need to disable घड़ी
-	 * gating क्रम the panel घातer sequencer or it will fail to
+	 * On Ibex Peak and Cougar Point, we need to disable clock
+	 * gating for the panel power sequencer or it will fail to
 	 * start up when no ports are active.
 	 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, SOUTH_DSPCLK_GATE_D, PCH_DPLSUNIT_CLOCK_GATE_DISABLE |
+	intel_uncore_write(&dev_priv->uncore, SOUTH_DSPCLK_GATE_D, PCH_DPLSUNIT_CLOCK_GATE_DISABLE |
 		   PCH_DPLUNIT_CLOCK_GATE_DISABLE |
 		   PCH_CPUNIT_CLOCK_GATE_DISABLE);
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, SOUTH_CHICKEN2, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, SOUTH_CHICKEN2) |
+	intel_uncore_write(&dev_priv->uncore, SOUTH_CHICKEN2, intel_uncore_read(&dev_priv->uncore, SOUTH_CHICKEN2) |
 		   DPLS_EDP_PPS_FIX_DIS);
-	/* The below fixes the weird display corruption, a few pixels shअगरted
-	 * करोwnward, on (only) LVDS of some HP laptops with IVY.
+	/* The below fixes the weird display corruption, a few pixels shifted
+	 * downward, on (only) LVDS of some HP laptops with IVY.
 	 */
-	क्रम_each_pipe(dev_priv, pipe) अणु
-		val = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, TRANS_CHICKEN2(pipe));
+	for_each_pipe(dev_priv, pipe) {
+		val = intel_uncore_read(&dev_priv->uncore, TRANS_CHICKEN2(pipe));
 		val |= TRANS_CHICKEN2_TIMING_OVERRIDE;
 		val &= ~TRANS_CHICKEN2_FDI_POLARITY_REVERSED;
-		अगर (dev_priv->vbt.fdi_rx_polarity_inverted)
+		if (dev_priv->vbt.fdi_rx_polarity_inverted)
 			val |= TRANS_CHICKEN2_FDI_POLARITY_REVERSED;
 		val &= ~TRANS_CHICKEN2_DISABLE_DEEP_COLOR_COUNTER;
 		val &= ~TRANS_CHICKEN2_DISABLE_DEEP_COLOR_MODESWITCH;
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, TRANS_CHICKEN2(pipe), val);
-	पूर्ण
+		intel_uncore_write(&dev_priv->uncore, TRANS_CHICKEN2(pipe), val);
+	}
 	/* WADP0ClockGatingDisable */
-	क्रम_each_pipe(dev_priv, pipe) अणु
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, TRANS_CHICKEN1(pipe),
+	for_each_pipe(dev_priv, pipe) {
+		intel_uncore_write(&dev_priv->uncore, TRANS_CHICKEN1(pipe),
 			   TRANS_CHICKEN1_DP0UNIT_GC_DISABLE);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम gen6_check_mch_setup(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	u32 पंचांगp;
+static void gen6_check_mch_setup(struct drm_i915_private *dev_priv)
+{
+	u32 tmp;
 
-	पंचांगp = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, MCH_SSKPD);
-	अगर ((पंचांगp & MCH_SSKPD_WM0_MASK) != MCH_SSKPD_WM0_VAL)
+	tmp = intel_uncore_read(&dev_priv->uncore, MCH_SSKPD);
+	if ((tmp & MCH_SSKPD_WM0_MASK) != MCH_SSKPD_WM0_VAL)
 		drm_dbg_kms(&dev_priv->drm,
 			    "Wrong MCH_SSKPD value: 0x%08x This can cause underruns.\n",
-			    पंचांगp);
-पूर्ण
+			    tmp);
+}
 
-अटल व्योम gen6_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void gen6_init_clock_gating(struct drm_i915_private *dev_priv)
+{
 	u32 dspclk_gate = ILK_VRHUNIT_CLOCK_GATE_DISABLE;
 
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, ILK_DSPCLK_GATE_D, dspclk_gate);
+	intel_uncore_write(&dev_priv->uncore, ILK_DSPCLK_GATE_D, dspclk_gate);
 
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, ILK_DISPLAY_CHICKEN2,
-		   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, ILK_DISPLAY_CHICKEN2) |
+	intel_uncore_write(&dev_priv->uncore, ILK_DISPLAY_CHICKEN2,
+		   intel_uncore_read(&dev_priv->uncore, ILK_DISPLAY_CHICKEN2) |
 		   ILK_ELPIN_409_SELECT);
 
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN6_UCGCTL1,
-		   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GEN6_UCGCTL1) |
+	intel_uncore_write(&dev_priv->uncore, GEN6_UCGCTL1,
+		   intel_uncore_read(&dev_priv->uncore, GEN6_UCGCTL1) |
 		   GEN6_BLBUNIT_CLOCK_GATE_DISABLE |
 		   GEN6_CSUNIT_CLOCK_GATE_DISABLE);
 
-	/* According to the BSpec vol1g, bit 12 (RCPBUNIT) घड़ी
+	/* According to the BSpec vol1g, bit 12 (RCPBUNIT) clock
 	 * gating disable must be set.  Failure to set it results in
-	 * flickering pixels due to Z ग_लिखो ordering failures after
-	 * some amount of runसमय in the Mesa "fire" demo, and Unigine
-	 * Sanctuary and Tropics, and apparently anything अन्यथा with
+	 * flickering pixels due to Z write ordering failures after
+	 * some amount of runtime in the Mesa "fire" demo, and Unigine
+	 * Sanctuary and Tropics, and apparently anything else with
 	 * alpha test or pixel discard.
 	 *
 	 * According to the spec, bit 11 (RCCUNIT) must also be set,
-	 * but we didn't debug actual testहालs to find it out.
+	 * but we didn't debug actual testcases to find it out.
 	 *
 	 * WaDisableRCCUnitClockGating:snb
 	 * WaDisableRCPBUnitClockGating:snb
 	 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN6_UCGCTL2,
+	intel_uncore_write(&dev_priv->uncore, GEN6_UCGCTL2,
 		   GEN6_RCPBUNIT_CLOCK_GATE_DISABLE |
 		   GEN6_RCCUNIT_CLOCK_GATE_DISABLE);
 
@@ -7042,688 +7041,688 @@ skl_compute_wm(काष्ठा पूर्णांकel_atomic_state *state
 	 *
 	 * WaFbcAsynchFlipDisableFbcQueue:snb
 	 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, ILK_DISPLAY_CHICKEN1,
-		   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, ILK_DISPLAY_CHICKEN1) |
+	intel_uncore_write(&dev_priv->uncore, ILK_DISPLAY_CHICKEN1,
+		   intel_uncore_read(&dev_priv->uncore, ILK_DISPLAY_CHICKEN1) |
 		   ILK_FBCQ_DIS | ILK_PABSTRETCH_DIS);
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, ILK_DISPLAY_CHICKEN2,
-		   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, ILK_DISPLAY_CHICKEN2) |
+	intel_uncore_write(&dev_priv->uncore, ILK_DISPLAY_CHICKEN2,
+		   intel_uncore_read(&dev_priv->uncore, ILK_DISPLAY_CHICKEN2) |
 		   ILK_DPARB_GATE | ILK_VSDPFD_FULL);
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, ILK_DSPCLK_GATE_D,
-		   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, ILK_DSPCLK_GATE_D) |
+	intel_uncore_write(&dev_priv->uncore, ILK_DSPCLK_GATE_D,
+		   intel_uncore_read(&dev_priv->uncore, ILK_DSPCLK_GATE_D) |
 		   ILK_DPARBUNIT_CLOCK_GATE_ENABLE  |
 		   ILK_DPFDUNIT_CLOCK_GATE_ENABLE);
 
 	g4x_disable_trickle_feed(dev_priv);
 
-	cpt_init_घड़ी_gating(dev_priv);
+	cpt_init_clock_gating(dev_priv);
 
 	gen6_check_mch_setup(dev_priv);
-पूर्ण
+}
 
-अटल व्योम lpt_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void lpt_init_clock_gating(struct drm_i915_private *dev_priv)
+{
 	/*
 	 * TODO: this bit should only be enabled when really needed, then
-	 * disabled when not needed anymore in order to save घातer.
+	 * disabled when not needed anymore in order to save power.
 	 */
-	अगर (HAS_PCH_LPT_LP(dev_priv))
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, SOUTH_DSPCLK_GATE_D,
-			   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, SOUTH_DSPCLK_GATE_D) |
+	if (HAS_PCH_LPT_LP(dev_priv))
+		intel_uncore_write(&dev_priv->uncore, SOUTH_DSPCLK_GATE_D,
+			   intel_uncore_read(&dev_priv->uncore, SOUTH_DSPCLK_GATE_D) |
 			   PCH_LP_PARTITION_LEVEL_DISABLE);
 
 	/* WADPOClockGatingDisable:hsw */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, TRANS_CHICKEN1(PIPE_A),
-		   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, TRANS_CHICKEN1(PIPE_A)) |
+	intel_uncore_write(&dev_priv->uncore, TRANS_CHICKEN1(PIPE_A),
+		   intel_uncore_read(&dev_priv->uncore, TRANS_CHICKEN1(PIPE_A)) |
 		   TRANS_CHICKEN1_DP0UNIT_GC_DISABLE);
-पूर्ण
+}
 
-अटल व्योम lpt_suspend_hw(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	अगर (HAS_PCH_LPT_LP(dev_priv)) अणु
-		u32 val = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, SOUTH_DSPCLK_GATE_D);
+static void lpt_suspend_hw(struct drm_i915_private *dev_priv)
+{
+	if (HAS_PCH_LPT_LP(dev_priv)) {
+		u32 val = intel_uncore_read(&dev_priv->uncore, SOUTH_DSPCLK_GATE_D);
 
 		val &= ~PCH_LP_PARTITION_LEVEL_DISABLE;
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, SOUTH_DSPCLK_GATE_D, val);
-	पूर्ण
-पूर्ण
+		intel_uncore_write(&dev_priv->uncore, SOUTH_DSPCLK_GATE_D, val);
+	}
+}
 
-अटल व्योम gen8_set_l3sqc_credits(काष्ठा drm_i915_निजी *dev_priv,
-				   पूर्णांक general_prio_credits,
-				   पूर्णांक high_prio_credits)
-अणु
+static void gen8_set_l3sqc_credits(struct drm_i915_private *dev_priv,
+				   int general_prio_credits,
+				   int high_prio_credits)
+{
 	u32 misccpctl;
 	u32 val;
 
 	/* WaTempDisableDOPClkGating:bdw */
-	misccpctl = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GEN7_MISCCPCTL);
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN7_MISCCPCTL, misccpctl & ~GEN7_DOP_CLOCK_GATE_ENABLE);
+	misccpctl = intel_uncore_read(&dev_priv->uncore, GEN7_MISCCPCTL);
+	intel_uncore_write(&dev_priv->uncore, GEN7_MISCCPCTL, misccpctl & ~GEN7_DOP_CLOCK_GATE_ENABLE);
 
-	val = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GEN8_L3SQCREG1);
+	val = intel_uncore_read(&dev_priv->uncore, GEN8_L3SQCREG1);
 	val &= ~L3_PRIO_CREDITS_MASK;
 	val |= L3_GENERAL_PRIO_CREDITS(general_prio_credits);
 	val |= L3_HIGH_PRIO_CREDITS(high_prio_credits);
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN8_L3SQCREG1, val);
+	intel_uncore_write(&dev_priv->uncore, GEN8_L3SQCREG1, val);
 
 	/*
-	 * Wait at least 100 घड़ीs beक्रमe re-enabling घड़ी gating.
+	 * Wait at least 100 clocks before re-enabling clock gating.
 	 * See the definition of L3SQCREG1 in BSpec.
 	 */
-	पूर्णांकel_uncore_posting_पढ़ो(&dev_priv->uncore, GEN8_L3SQCREG1);
+	intel_uncore_posting_read(&dev_priv->uncore, GEN8_L3SQCREG1);
 	udelay(1);
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN7_MISCCPCTL, misccpctl);
-पूर्ण
+	intel_uncore_write(&dev_priv->uncore, GEN7_MISCCPCTL, misccpctl);
+}
 
-अटल व्योम icl_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void icl_init_clock_gating(struct drm_i915_private *dev_priv)
+{
 	/* Wa_1409120013:icl,ehl */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, ILK_DPFC_CHICKEN,
+	intel_uncore_write(&dev_priv->uncore, ILK_DPFC_CHICKEN,
 		   ILK_DPFC_CHICKEN_COMP_DUMMY_PIXEL);
 
-	/* This is not an Wa. Enable to reduce Sampler घातer */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN10_DFR_RATIO_EN_AND_CHICKEN,
-		   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GEN10_DFR_RATIO_EN_AND_CHICKEN) & ~DFR_DISABLE);
+	/* This is not an Wa. Enable to reduce Sampler power */
+	intel_uncore_write(&dev_priv->uncore, GEN10_DFR_RATIO_EN_AND_CHICKEN,
+		   intel_uncore_read(&dev_priv->uncore, GEN10_DFR_RATIO_EN_AND_CHICKEN) & ~DFR_DISABLE);
 
 	/*Wa_14010594013:icl, ehl */
-	पूर्णांकel_uncore_rmw(&dev_priv->uncore, GEN8_CHICKEN_DCPR_1,
+	intel_uncore_rmw(&dev_priv->uncore, GEN8_CHICKEN_DCPR_1,
 			 0, CNL_DELAY_PMRSP);
-पूर्ण
+}
 
-अटल व्योम gen12lp_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void gen12lp_init_clock_gating(struct drm_i915_private *dev_priv)
+{
 	/* Wa_1409120013:tgl,rkl,adl_s,dg1 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, ILK_DPFC_CHICKEN,
+	intel_uncore_write(&dev_priv->uncore, ILK_DPFC_CHICKEN,
 			   ILK_DPFC_CHICKEN_COMP_DUMMY_PIXEL);
 
 	/* Wa_1409825376:tgl (pre-prod)*/
-	अगर (IS_TGL_DISPLAY_STEP(dev_priv, STEP_A0, STEP_B1))
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN9_CLKGATE_DIS_3, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GEN9_CLKGATE_DIS_3) |
+	if (IS_TGL_DISPLAY_STEP(dev_priv, STEP_A0, STEP_B1))
+		intel_uncore_write(&dev_priv->uncore, GEN9_CLKGATE_DIS_3, intel_uncore_read(&dev_priv->uncore, GEN9_CLKGATE_DIS_3) |
 			   TGL_VRH_GATING_DIS);
 
 	/* Wa_14011059788:tgl,rkl,adl_s,dg1 */
-	पूर्णांकel_uncore_rmw(&dev_priv->uncore, GEN10_DFR_RATIO_EN_AND_CHICKEN,
+	intel_uncore_rmw(&dev_priv->uncore, GEN10_DFR_RATIO_EN_AND_CHICKEN,
 			 0, DFR_DISABLE);
-पूर्ण
+}
 
-अटल व्योम dg1_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	gen12lp_init_घड़ी_gating(dev_priv);
+static void dg1_init_clock_gating(struct drm_i915_private *dev_priv)
+{
+	gen12lp_init_clock_gating(dev_priv);
 
 	/* Wa_1409836686:dg1[a0] */
-	अगर (IS_DG1_REVID(dev_priv, DG1_REVID_A0, DG1_REVID_A0))
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN9_CLKGATE_DIS_3, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GEN9_CLKGATE_DIS_3) |
+	if (IS_DG1_REVID(dev_priv, DG1_REVID_A0, DG1_REVID_A0))
+		intel_uncore_write(&dev_priv->uncore, GEN9_CLKGATE_DIS_3, intel_uncore_read(&dev_priv->uncore, GEN9_CLKGATE_DIS_3) |
 			   DPT_GATING_DIS);
-पूर्ण
+}
 
-अटल व्योम cnp_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	अगर (!HAS_PCH_CNP(dev_priv))
-		वापस;
+static void cnp_init_clock_gating(struct drm_i915_private *dev_priv)
+{
+	if (!HAS_PCH_CNP(dev_priv))
+		return;
 
 	/* Display WA #1181 WaSouthDisplayDisablePWMCGEGating: cnp */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, SOUTH_DSPCLK_GATE_D, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, SOUTH_DSPCLK_GATE_D) |
+	intel_uncore_write(&dev_priv->uncore, SOUTH_DSPCLK_GATE_D, intel_uncore_read(&dev_priv->uncore, SOUTH_DSPCLK_GATE_D) |
 		   CNP_PWM_CGE_GATING_DISABLE);
-पूर्ण
+}
 
-अटल व्योम cnl_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void cnl_init_clock_gating(struct drm_i915_private *dev_priv)
+{
 	u32 val;
-	cnp_init_घड़ी_gating(dev_priv);
+	cnp_init_clock_gating(dev_priv);
 
-	/* This is not an Wa. Enable क्रम better image quality */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, _3D_CHICKEN3,
+	/* This is not an Wa. Enable for better image quality */
+	intel_uncore_write(&dev_priv->uncore, _3D_CHICKEN3,
 		   _MASKED_BIT_ENABLE(_3D_CHICKEN3_AA_LINE_QUALITY_FIX_ENABLE));
 
 	/* WaEnableChickenDCPR:cnl */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN8_CHICKEN_DCPR_1,
-		   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GEN8_CHICKEN_DCPR_1) | MASK_WAKEMEM);
+	intel_uncore_write(&dev_priv->uncore, GEN8_CHICKEN_DCPR_1,
+		   intel_uncore_read(&dev_priv->uncore, GEN8_CHICKEN_DCPR_1) | MASK_WAKEMEM);
 
 	/*
 	 * WaFbcWakeMemOn:cnl
 	 * Display WA #0859: cnl
 	 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DISP_ARB_CTL, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DISP_ARB_CTL) |
+	intel_uncore_write(&dev_priv->uncore, DISP_ARB_CTL, intel_uncore_read(&dev_priv->uncore, DISP_ARB_CTL) |
 		   DISP_FBC_MEMORY_WAKE);
 
-	val = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, SLICE_UNIT_LEVEL_CLKGATE);
+	val = intel_uncore_read(&dev_priv->uncore, SLICE_UNIT_LEVEL_CLKGATE);
 	/* ReadHitWriteOnlyDisable:cnl */
 	val |= RCCUNIT_CLKGATE_DIS;
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, SLICE_UNIT_LEVEL_CLKGATE, val);
+	intel_uncore_write(&dev_priv->uncore, SLICE_UNIT_LEVEL_CLKGATE, val);
 
 	/* Wa_2201832410:cnl */
-	val = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, SUBSLICE_UNIT_LEVEL_CLKGATE);
+	val = intel_uncore_read(&dev_priv->uncore, SUBSLICE_UNIT_LEVEL_CLKGATE);
 	val |= GWUNIT_CLKGATE_DIS;
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, SUBSLICE_UNIT_LEVEL_CLKGATE, val);
+	intel_uncore_write(&dev_priv->uncore, SUBSLICE_UNIT_LEVEL_CLKGATE, val);
 
 	/* WaDisableVFclkgate:cnl */
 	/* WaVFUnitClockGatingDisable:cnl */
-	val = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, UNSLICE_UNIT_LEVEL_CLKGATE);
+	val = intel_uncore_read(&dev_priv->uncore, UNSLICE_UNIT_LEVEL_CLKGATE);
 	val |= VFUNIT_CLKGATE_DIS;
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, UNSLICE_UNIT_LEVEL_CLKGATE, val);
-पूर्ण
+	intel_uncore_write(&dev_priv->uncore, UNSLICE_UNIT_LEVEL_CLKGATE, val);
+}
 
-अटल व्योम cfl_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	cnp_init_घड़ी_gating(dev_priv);
-	gen9_init_घड़ी_gating(dev_priv);
+static void cfl_init_clock_gating(struct drm_i915_private *dev_priv)
+{
+	cnp_init_clock_gating(dev_priv);
+	gen9_init_clock_gating(dev_priv);
 
 	/* WAC6entrylatency:cfl */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, FBC_LLC_READ_CTRL, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, FBC_LLC_READ_CTRL) |
+	intel_uncore_write(&dev_priv->uncore, FBC_LLC_READ_CTRL, intel_uncore_read(&dev_priv->uncore, FBC_LLC_READ_CTRL) |
 		   FBC_LLC_FULLY_OPEN);
 
 	/*
 	 * WaFbcTurnOffFbcWatermark:cfl
 	 * Display WA #0562: cfl
 	 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DISP_ARB_CTL, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DISP_ARB_CTL) |
+	intel_uncore_write(&dev_priv->uncore, DISP_ARB_CTL, intel_uncore_read(&dev_priv->uncore, DISP_ARB_CTL) |
 		   DISP_FBC_WM_DIS);
 
 	/*
-	 * WaFbcNukeOnHostModअगरy:cfl
+	 * WaFbcNukeOnHostModify:cfl
 	 * Display WA #0873: cfl
 	 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, ILK_DPFC_CHICKEN, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, ILK_DPFC_CHICKEN) |
+	intel_uncore_write(&dev_priv->uncore, ILK_DPFC_CHICKEN, intel_uncore_read(&dev_priv->uncore, ILK_DPFC_CHICKEN) |
 		   ILK_DPFC_NUKE_ON_ANY_MODIFICATION);
-पूर्ण
+}
 
-अटल व्योम kbl_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	gen9_init_घड़ी_gating(dev_priv);
+static void kbl_init_clock_gating(struct drm_i915_private *dev_priv)
+{
+	gen9_init_clock_gating(dev_priv);
 
 	/* WAC6entrylatency:kbl */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, FBC_LLC_READ_CTRL, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, FBC_LLC_READ_CTRL) |
+	intel_uncore_write(&dev_priv->uncore, FBC_LLC_READ_CTRL, intel_uncore_read(&dev_priv->uncore, FBC_LLC_READ_CTRL) |
 		   FBC_LLC_FULLY_OPEN);
 
 	/* WaDisableSDEUnitClockGating:kbl */
-	अगर (IS_KBL_GT_STEP(dev_priv, 0, STEP_B0))
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN8_UCGCTL6, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GEN8_UCGCTL6) |
+	if (IS_KBL_GT_STEP(dev_priv, 0, STEP_B0))
+		intel_uncore_write(&dev_priv->uncore, GEN8_UCGCTL6, intel_uncore_read(&dev_priv->uncore, GEN8_UCGCTL6) |
 			   GEN8_SDEUNIT_CLOCK_GATE_DISABLE);
 
 	/* WaDisableGamClockGating:kbl */
-	अगर (IS_KBL_GT_STEP(dev_priv, 0, STEP_B0))
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN6_UCGCTL1, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GEN6_UCGCTL1) |
+	if (IS_KBL_GT_STEP(dev_priv, 0, STEP_B0))
+		intel_uncore_write(&dev_priv->uncore, GEN6_UCGCTL1, intel_uncore_read(&dev_priv->uncore, GEN6_UCGCTL1) |
 			   GEN6_GAMUNIT_CLOCK_GATE_DISABLE);
 
 	/*
 	 * WaFbcTurnOffFbcWatermark:kbl
 	 * Display WA #0562: kbl
 	 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DISP_ARB_CTL, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DISP_ARB_CTL) |
+	intel_uncore_write(&dev_priv->uncore, DISP_ARB_CTL, intel_uncore_read(&dev_priv->uncore, DISP_ARB_CTL) |
 		   DISP_FBC_WM_DIS);
 
 	/*
-	 * WaFbcNukeOnHostModअगरy:kbl
+	 * WaFbcNukeOnHostModify:kbl
 	 * Display WA #0873: kbl
 	 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, ILK_DPFC_CHICKEN, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, ILK_DPFC_CHICKEN) |
+	intel_uncore_write(&dev_priv->uncore, ILK_DPFC_CHICKEN, intel_uncore_read(&dev_priv->uncore, ILK_DPFC_CHICKEN) |
 		   ILK_DPFC_NUKE_ON_ANY_MODIFICATION);
-पूर्ण
+}
 
-अटल व्योम skl_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	gen9_init_घड़ी_gating(dev_priv);
+static void skl_init_clock_gating(struct drm_i915_private *dev_priv)
+{
+	gen9_init_clock_gating(dev_priv);
 
 	/* WaDisableDopClockGating:skl */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN7_MISCCPCTL, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GEN7_MISCCPCTL) &
+	intel_uncore_write(&dev_priv->uncore, GEN7_MISCCPCTL, intel_uncore_read(&dev_priv->uncore, GEN7_MISCCPCTL) &
 		   ~GEN7_DOP_CLOCK_GATE_ENABLE);
 
 	/* WAC6entrylatency:skl */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, FBC_LLC_READ_CTRL, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, FBC_LLC_READ_CTRL) |
+	intel_uncore_write(&dev_priv->uncore, FBC_LLC_READ_CTRL, intel_uncore_read(&dev_priv->uncore, FBC_LLC_READ_CTRL) |
 		   FBC_LLC_FULLY_OPEN);
 
 	/*
 	 * WaFbcTurnOffFbcWatermark:skl
 	 * Display WA #0562: skl
 	 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DISP_ARB_CTL, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, DISP_ARB_CTL) |
+	intel_uncore_write(&dev_priv->uncore, DISP_ARB_CTL, intel_uncore_read(&dev_priv->uncore, DISP_ARB_CTL) |
 		   DISP_FBC_WM_DIS);
 
 	/*
-	 * WaFbcNukeOnHostModअगरy:skl
+	 * WaFbcNukeOnHostModify:skl
 	 * Display WA #0873: skl
 	 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, ILK_DPFC_CHICKEN, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, ILK_DPFC_CHICKEN) |
+	intel_uncore_write(&dev_priv->uncore, ILK_DPFC_CHICKEN, intel_uncore_read(&dev_priv->uncore, ILK_DPFC_CHICKEN) |
 		   ILK_DPFC_NUKE_ON_ANY_MODIFICATION);
 
 	/*
-	 * WaFbcHighMemBwCorruptionAव्योमance:skl
+	 * WaFbcHighMemBwCorruptionAvoidance:skl
 	 * Display WA #0883: skl
 	 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, ILK_DPFC_CHICKEN, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, ILK_DPFC_CHICKEN) |
+	intel_uncore_write(&dev_priv->uncore, ILK_DPFC_CHICKEN, intel_uncore_read(&dev_priv->uncore, ILK_DPFC_CHICKEN) |
 		   ILK_DPFC_DISABLE_DUMMY0);
-पूर्ण
+}
 
-अटल व्योम bdw_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	क्रमागत pipe pipe;
+static void bdw_init_clock_gating(struct drm_i915_private *dev_priv)
+{
+	enum pipe pipe;
 
 	/* WaFbcAsynchFlipDisableFbcQueue:hsw,bdw */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, CHICKEN_PIPESL_1(PIPE_A),
-		   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, CHICKEN_PIPESL_1(PIPE_A)) |
+	intel_uncore_write(&dev_priv->uncore, CHICKEN_PIPESL_1(PIPE_A),
+		   intel_uncore_read(&dev_priv->uncore, CHICKEN_PIPESL_1(PIPE_A)) |
 		   HSW_FBCQ_DIS);
 
 	/* WaSwitchSolVfFArbitrationPriority:bdw */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GAM_ECOCHK, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GAM_ECOCHK) | HSW_ECOCHK_ARB_PRIO_SOL);
+	intel_uncore_write(&dev_priv->uncore, GAM_ECOCHK, intel_uncore_read(&dev_priv->uncore, GAM_ECOCHK) | HSW_ECOCHK_ARB_PRIO_SOL);
 
 	/* WaPsrDPAMaskVBlankInSRD:bdw */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, CHICKEN_PAR1_1,
-		   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, CHICKEN_PAR1_1) | DPA_MASK_VBLANK_SRD);
+	intel_uncore_write(&dev_priv->uncore, CHICKEN_PAR1_1,
+		   intel_uncore_read(&dev_priv->uncore, CHICKEN_PAR1_1) | DPA_MASK_VBLANK_SRD);
 
-	क्रम_each_pipe(dev_priv, pipe) अणु
+	for_each_pipe(dev_priv, pipe) {
 		/* WaPsrDPRSUnmaskVBlankInSRD:bdw */
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, CHICKEN_PIPESL_1(pipe),
-			   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, CHICKEN_PIPESL_1(pipe)) |
+		intel_uncore_write(&dev_priv->uncore, CHICKEN_PIPESL_1(pipe),
+			   intel_uncore_read(&dev_priv->uncore, CHICKEN_PIPESL_1(pipe)) |
 			   BDW_DPRS_MASK_VBLANK_SRD);
 
-		/* Unकरोcumented but fixes async flip + VT-d corruption */
-		अगर (पूर्णांकel_vtd_active())
-			पूर्णांकel_uncore_rmw(&dev_priv->uncore, CHICKEN_PIPESL_1(pipe),
+		/* Undocumented but fixes async flip + VT-d corruption */
+		if (intel_vtd_active())
+			intel_uncore_rmw(&dev_priv->uncore, CHICKEN_PIPESL_1(pipe),
 					 HSW_PRI_STRETCH_MAX_MASK, HSW_PRI_STRETCH_MAX_X1);
-	पूर्ण
+	}
 
-	/* WaVSRefCountFullक्रमceMissDisable:bdw */
-	/* WaDSRefCountFullक्रमceMissDisable:bdw */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN7_FF_THREAD_MODE,
-		   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GEN7_FF_THREAD_MODE) &
+	/* WaVSRefCountFullforceMissDisable:bdw */
+	/* WaDSRefCountFullforceMissDisable:bdw */
+	intel_uncore_write(&dev_priv->uncore, GEN7_FF_THREAD_MODE,
+		   intel_uncore_read(&dev_priv->uncore, GEN7_FF_THREAD_MODE) &
 		   ~(GEN8_FF_DS_REF_CNT_FFME | GEN7_FF_VS_REF_CNT_FFME));
 
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN6_RC_SLEEP_PSMI_CONTROL,
+	intel_uncore_write(&dev_priv->uncore, GEN6_RC_SLEEP_PSMI_CONTROL,
 		   _MASKED_BIT_ENABLE(GEN8_RC_SEMA_IDLE_MSG_DISABLE));
 
 	/* WaDisableSDEUnitClockGating:bdw */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN8_UCGCTL6, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GEN8_UCGCTL6) |
+	intel_uncore_write(&dev_priv->uncore, GEN8_UCGCTL6, intel_uncore_read(&dev_priv->uncore, GEN8_UCGCTL6) |
 		   GEN8_SDEUNIT_CLOCK_GATE_DISABLE);
 
 	/* WaProgramL3SqcReg1Default:bdw */
 	gen8_set_l3sqc_credits(dev_priv, 30, 2);
 
-	/* WaKVMNotअगरicationOnConfigChange:bdw */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, CHICKEN_PAR2_1, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, CHICKEN_PAR2_1)
+	/* WaKVMNotificationOnConfigChange:bdw */
+	intel_uncore_write(&dev_priv->uncore, CHICKEN_PAR2_1, intel_uncore_read(&dev_priv->uncore, CHICKEN_PAR2_1)
 		   | KVM_CONFIG_CHANGE_NOTIFICATION_SELECT);
 
-	lpt_init_घड़ी_gating(dev_priv);
+	lpt_init_clock_gating(dev_priv);
 
 	/* WaDisableDopClockGating:bdw
 	 *
-	 * Also see the CHICKEN2 ग_लिखो in bdw_init_workarounds() to disable DOP
-	 * घड़ी gating.
+	 * Also see the CHICKEN2 write in bdw_init_workarounds() to disable DOP
+	 * clock gating.
 	 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN6_UCGCTL1,
-		   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GEN6_UCGCTL1) | GEN6_EU_TCUNIT_CLOCK_GATE_DISABLE);
-पूर्ण
+	intel_uncore_write(&dev_priv->uncore, GEN6_UCGCTL1,
+		   intel_uncore_read(&dev_priv->uncore, GEN6_UCGCTL1) | GEN6_EU_TCUNIT_CLOCK_GATE_DISABLE);
+}
 
-अटल व्योम hsw_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	क्रमागत pipe pipe;
+static void hsw_init_clock_gating(struct drm_i915_private *dev_priv)
+{
+	enum pipe pipe;
 
 	/* WaFbcAsynchFlipDisableFbcQueue:hsw,bdw */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, CHICKEN_PIPESL_1(PIPE_A),
-		   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, CHICKEN_PIPESL_1(PIPE_A)) |
+	intel_uncore_write(&dev_priv->uncore, CHICKEN_PIPESL_1(PIPE_A),
+		   intel_uncore_read(&dev_priv->uncore, CHICKEN_PIPESL_1(PIPE_A)) |
 		   HSW_FBCQ_DIS);
 
-	क्रम_each_pipe(dev_priv, pipe) अणु
-		/* Unकरोcumented but fixes async flip + VT-d corruption */
-		अगर (पूर्णांकel_vtd_active())
-			पूर्णांकel_uncore_rmw(&dev_priv->uncore, CHICKEN_PIPESL_1(pipe),
+	for_each_pipe(dev_priv, pipe) {
+		/* Undocumented but fixes async flip + VT-d corruption */
+		if (intel_vtd_active())
+			intel_uncore_rmw(&dev_priv->uncore, CHICKEN_PIPESL_1(pipe),
 					 HSW_PRI_STRETCH_MAX_MASK, HSW_PRI_STRETCH_MAX_X1);
-	पूर्ण
+	}
 
 	/* This is required by WaCatErrorRejectionIssue:hsw */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN7_SQ_CHICKEN_MBCUNIT_CONFIG,
-		   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GEN7_SQ_CHICKEN_MBCUNIT_CONFIG) |
+	intel_uncore_write(&dev_priv->uncore, GEN7_SQ_CHICKEN_MBCUNIT_CONFIG,
+		   intel_uncore_read(&dev_priv->uncore, GEN7_SQ_CHICKEN_MBCUNIT_CONFIG) |
 		   GEN7_SQ_CHICKEN_MBCUNIT_SQINTMOB);
 
 	/* WaSwitchSolVfFArbitrationPriority:hsw */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GAM_ECOCHK, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GAM_ECOCHK) | HSW_ECOCHK_ARB_PRIO_SOL);
+	intel_uncore_write(&dev_priv->uncore, GAM_ECOCHK, intel_uncore_read(&dev_priv->uncore, GAM_ECOCHK) | HSW_ECOCHK_ARB_PRIO_SOL);
 
-	lpt_init_घड़ी_gating(dev_priv);
-पूर्ण
+	lpt_init_clock_gating(dev_priv);
+}
 
-अटल व्योम ivb_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void ivb_init_clock_gating(struct drm_i915_private *dev_priv)
+{
 	u32 snpcr;
 
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, ILK_DSPCLK_GATE_D, ILK_VRHUNIT_CLOCK_GATE_DISABLE);
+	intel_uncore_write(&dev_priv->uncore, ILK_DSPCLK_GATE_D, ILK_VRHUNIT_CLOCK_GATE_DISABLE);
 
 	/* WaFbcAsynchFlipDisableFbcQueue:ivb */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, ILK_DISPLAY_CHICKEN1,
-		   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, ILK_DISPLAY_CHICKEN1) |
+	intel_uncore_write(&dev_priv->uncore, ILK_DISPLAY_CHICKEN1,
+		   intel_uncore_read(&dev_priv->uncore, ILK_DISPLAY_CHICKEN1) |
 		   ILK_FBCQ_DIS);
 
 	/* WaDisableBackToBackFlipFix:ivb */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, IVB_CHICKEN3,
+	intel_uncore_write(&dev_priv->uncore, IVB_CHICKEN3,
 		   CHICKEN3_DGMG_REQ_OUT_FIX_DISABLE |
 		   CHICKEN3_DGMG_DONE_FIX_DISABLE);
 
-	अगर (IS_IVB_GT1(dev_priv))
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN7_ROW_CHICKEN2,
+	if (IS_IVB_GT1(dev_priv))
+		intel_uncore_write(&dev_priv->uncore, GEN7_ROW_CHICKEN2,
 			   _MASKED_BIT_ENABLE(DOP_CLOCK_GATING_DISABLE));
-	अन्यथा अणु
-		/* must ग_लिखो both रेजिस्टरs */
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN7_ROW_CHICKEN2,
+	else {
+		/* must write both registers */
+		intel_uncore_write(&dev_priv->uncore, GEN7_ROW_CHICKEN2,
 			   _MASKED_BIT_ENABLE(DOP_CLOCK_GATING_DISABLE));
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN7_ROW_CHICKEN2_GT2,
+		intel_uncore_write(&dev_priv->uncore, GEN7_ROW_CHICKEN2_GT2,
 			   _MASKED_BIT_ENABLE(DOP_CLOCK_GATING_DISABLE));
-	पूर्ण
+	}
 
 	/*
 	 * According to the spec, bit 13 (RCZUNIT) must be set on IVB.
 	 * This implements the WaDisableRCZUnitClockGating:ivb workaround.
 	 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN6_UCGCTL2,
+	intel_uncore_write(&dev_priv->uncore, GEN6_UCGCTL2,
 		   GEN6_RCZUNIT_CLOCK_GATE_DISABLE);
 
 	/* This is required by WaCatErrorRejectionIssue:ivb */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN7_SQ_CHICKEN_MBCUNIT_CONFIG,
-			पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GEN7_SQ_CHICKEN_MBCUNIT_CONFIG) |
+	intel_uncore_write(&dev_priv->uncore, GEN7_SQ_CHICKEN_MBCUNIT_CONFIG,
+			intel_uncore_read(&dev_priv->uncore, GEN7_SQ_CHICKEN_MBCUNIT_CONFIG) |
 			GEN7_SQ_CHICKEN_MBCUNIT_SQINTMOB);
 
 	g4x_disable_trickle_feed(dev_priv);
 
-	snpcr = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GEN6_MBCUNIT_SNPCR);
+	snpcr = intel_uncore_read(&dev_priv->uncore, GEN6_MBCUNIT_SNPCR);
 	snpcr &= ~GEN6_MBC_SNPCR_MASK;
 	snpcr |= GEN6_MBC_SNPCR_MED;
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN6_MBCUNIT_SNPCR, snpcr);
+	intel_uncore_write(&dev_priv->uncore, GEN6_MBCUNIT_SNPCR, snpcr);
 
-	अगर (!HAS_PCH_NOP(dev_priv))
-		cpt_init_घड़ी_gating(dev_priv);
+	if (!HAS_PCH_NOP(dev_priv))
+		cpt_init_clock_gating(dev_priv);
 
 	gen6_check_mch_setup(dev_priv);
-पूर्ण
+}
 
-अटल व्योम vlv_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void vlv_init_clock_gating(struct drm_i915_private *dev_priv)
+{
 	/* WaDisableBackToBackFlipFix:vlv */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, IVB_CHICKEN3,
+	intel_uncore_write(&dev_priv->uncore, IVB_CHICKEN3,
 		   CHICKEN3_DGMG_REQ_OUT_FIX_DISABLE |
 		   CHICKEN3_DGMG_DONE_FIX_DISABLE);
 
 	/* WaDisableDopClockGating:vlv */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN7_ROW_CHICKEN2,
+	intel_uncore_write(&dev_priv->uncore, GEN7_ROW_CHICKEN2,
 		   _MASKED_BIT_ENABLE(DOP_CLOCK_GATING_DISABLE));
 
 	/* This is required by WaCatErrorRejectionIssue:vlv */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN7_SQ_CHICKEN_MBCUNIT_CONFIG,
-		   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GEN7_SQ_CHICKEN_MBCUNIT_CONFIG) |
+	intel_uncore_write(&dev_priv->uncore, GEN7_SQ_CHICKEN_MBCUNIT_CONFIG,
+		   intel_uncore_read(&dev_priv->uncore, GEN7_SQ_CHICKEN_MBCUNIT_CONFIG) |
 		   GEN7_SQ_CHICKEN_MBCUNIT_SQINTMOB);
 
 	/*
 	 * According to the spec, bit 13 (RCZUNIT) must be set on IVB.
 	 * This implements the WaDisableRCZUnitClockGating:vlv workaround.
 	 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN6_UCGCTL2,
+	intel_uncore_write(&dev_priv->uncore, GEN6_UCGCTL2,
 		   GEN6_RCZUNIT_CLOCK_GATE_DISABLE);
 
 	/* WaDisableL3Bank2xClockGate:vlv
-	 * Disabling L3 घड़ी gating- MMIO 940c[25] = 1
+	 * Disabling L3 clock gating- MMIO 940c[25] = 1
 	 * Set bit 25, to disable L3_BANK_2x_CLK_GATING */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN7_UCGCTL4,
-		   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GEN7_UCGCTL4) | GEN7_L3BANK2X_CLOCK_GATE_DISABLE);
+	intel_uncore_write(&dev_priv->uncore, GEN7_UCGCTL4,
+		   intel_uncore_read(&dev_priv->uncore, GEN7_UCGCTL4) | GEN7_L3BANK2X_CLOCK_GATE_DISABLE);
 
 	/*
 	 * WaDisableVLVClockGating_VBIIssue:vlv
-	 * Disable घड़ी gating on th GCFG unit to prevent a delay
+	 * Disable clock gating on th GCFG unit to prevent a delay
 	 * in the reporting of vblank events.
 	 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, VLV_GUNIT_CLOCK_GATE, GCFG_DIS);
-पूर्ण
+	intel_uncore_write(&dev_priv->uncore, VLV_GUNIT_CLOCK_GATE, GCFG_DIS);
+}
 
-अटल व्योम chv_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	/* WaVSRefCountFullक्रमceMissDisable:chv */
-	/* WaDSRefCountFullक्रमceMissDisable:chv */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN7_FF_THREAD_MODE,
-		   पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GEN7_FF_THREAD_MODE) &
+static void chv_init_clock_gating(struct drm_i915_private *dev_priv)
+{
+	/* WaVSRefCountFullforceMissDisable:chv */
+	/* WaDSRefCountFullforceMissDisable:chv */
+	intel_uncore_write(&dev_priv->uncore, GEN7_FF_THREAD_MODE,
+		   intel_uncore_read(&dev_priv->uncore, GEN7_FF_THREAD_MODE) &
 		   ~(GEN8_FF_DS_REF_CNT_FFME | GEN7_FF_VS_REF_CNT_FFME));
 
 	/* WaDisableSemaphoreAndSyncFlipWait:chv */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN6_RC_SLEEP_PSMI_CONTROL,
+	intel_uncore_write(&dev_priv->uncore, GEN6_RC_SLEEP_PSMI_CONTROL,
 		   _MASKED_BIT_ENABLE(GEN8_RC_SEMA_IDLE_MSG_DISABLE));
 
 	/* WaDisableCSUnitClockGating:chv */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN6_UCGCTL1, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GEN6_UCGCTL1) |
+	intel_uncore_write(&dev_priv->uncore, GEN6_UCGCTL1, intel_uncore_read(&dev_priv->uncore, GEN6_UCGCTL1) |
 		   GEN6_CSUNIT_CLOCK_GATE_DISABLE);
 
 	/* WaDisableSDEUnitClockGating:chv */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, GEN8_UCGCTL6, पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, GEN8_UCGCTL6) |
+	intel_uncore_write(&dev_priv->uncore, GEN8_UCGCTL6, intel_uncore_read(&dev_priv->uncore, GEN8_UCGCTL6) |
 		   GEN8_SDEUNIT_CLOCK_GATE_DISABLE);
 
 	/*
 	 * WaProgramL3SqcReg1Default:chv
-	 * See gfxspecs/Related Documents/Perक्रमmance Guide/
+	 * See gfxspecs/Related Documents/Performance Guide/
 	 * LSQC Setting Recommendations.
 	 */
 	gen8_set_l3sqc_credits(dev_priv, 38, 2);
-पूर्ण
+}
 
-अटल व्योम g4x_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void g4x_init_clock_gating(struct drm_i915_private *dev_priv)
+{
 	u32 dspclk_gate;
 
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, RENCLK_GATE_D1, 0);
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, RENCLK_GATE_D2, VF_UNIT_CLOCK_GATE_DISABLE |
+	intel_uncore_write(&dev_priv->uncore, RENCLK_GATE_D1, 0);
+	intel_uncore_write(&dev_priv->uncore, RENCLK_GATE_D2, VF_UNIT_CLOCK_GATE_DISABLE |
 		   GS_UNIT_CLOCK_GATE_DISABLE |
 		   CL_UNIT_CLOCK_GATE_DISABLE);
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, RAMCLK_GATE_D, 0);
+	intel_uncore_write(&dev_priv->uncore, RAMCLK_GATE_D, 0);
 	dspclk_gate = VRHUNIT_CLOCK_GATE_DISABLE |
 		OVRUNIT_CLOCK_GATE_DISABLE |
 		OVCUNIT_CLOCK_GATE_DISABLE;
-	अगर (IS_GM45(dev_priv))
+	if (IS_GM45(dev_priv))
 		dspclk_gate |= DSSUNIT_CLOCK_GATE_DISABLE;
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, DSPCLK_GATE_D, dspclk_gate);
+	intel_uncore_write(&dev_priv->uncore, DSPCLK_GATE_D, dspclk_gate);
 
 	g4x_disable_trickle_feed(dev_priv);
-पूर्ण
+}
 
-अटल व्योम i965gm_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा पूर्णांकel_uncore *uncore = &dev_priv->uncore;
+static void i965gm_init_clock_gating(struct drm_i915_private *dev_priv)
+{
+	struct intel_uncore *uncore = &dev_priv->uncore;
 
-	पूर्णांकel_uncore_ग_लिखो(uncore, RENCLK_GATE_D1, I965_RCC_CLOCK_GATE_DISABLE);
-	पूर्णांकel_uncore_ग_लिखो(uncore, RENCLK_GATE_D2, 0);
-	पूर्णांकel_uncore_ग_लिखो(uncore, DSPCLK_GATE_D, 0);
-	पूर्णांकel_uncore_ग_लिखो(uncore, RAMCLK_GATE_D, 0);
-	पूर्णांकel_uncore_ग_लिखो16(uncore, DEUC, 0);
-	पूर्णांकel_uncore_ग_लिखो(uncore,
+	intel_uncore_write(uncore, RENCLK_GATE_D1, I965_RCC_CLOCK_GATE_DISABLE);
+	intel_uncore_write(uncore, RENCLK_GATE_D2, 0);
+	intel_uncore_write(uncore, DSPCLK_GATE_D, 0);
+	intel_uncore_write(uncore, RAMCLK_GATE_D, 0);
+	intel_uncore_write16(uncore, DEUC, 0);
+	intel_uncore_write(uncore,
 			   MI_ARB_STATE,
 			   _MASKED_BIT_ENABLE(MI_ARB_DISPLAY_TRICKLE_FEED_DISABLE));
-पूर्ण
+}
 
-अटल व्योम i965g_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, RENCLK_GATE_D1, I965_RCZ_CLOCK_GATE_DISABLE |
+static void i965g_init_clock_gating(struct drm_i915_private *dev_priv)
+{
+	intel_uncore_write(&dev_priv->uncore, RENCLK_GATE_D1, I965_RCZ_CLOCK_GATE_DISABLE |
 		   I965_RCC_CLOCK_GATE_DISABLE |
 		   I965_RCPB_CLOCK_GATE_DISABLE |
 		   I965_ISC_CLOCK_GATE_DISABLE |
 		   I965_FBC_CLOCK_GATE_DISABLE);
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, RENCLK_GATE_D2, 0);
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, MI_ARB_STATE,
+	intel_uncore_write(&dev_priv->uncore, RENCLK_GATE_D2, 0);
+	intel_uncore_write(&dev_priv->uncore, MI_ARB_STATE,
 		   _MASKED_BIT_ENABLE(MI_ARB_DISPLAY_TRICKLE_FEED_DISABLE));
-पूर्ण
+}
 
-अटल व्योम gen3_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	u32 dstate = पूर्णांकel_uncore_पढ़ो(&dev_priv->uncore, D_STATE);
+static void gen3_init_clock_gating(struct drm_i915_private *dev_priv)
+{
+	u32 dstate = intel_uncore_read(&dev_priv->uncore, D_STATE);
 
 	dstate |= DSTATE_PLL_D3_OFF | DSTATE_GFX_CLOCK_GATING |
 		DSTATE_DOT_CLOCK_GATING;
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, D_STATE, dstate);
+	intel_uncore_write(&dev_priv->uncore, D_STATE, dstate);
 
-	अगर (IS_PINEVIEW(dev_priv))
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, ECOSKPD, _MASKED_BIT_ENABLE(ECO_GATING_CX_ONLY));
+	if (IS_PINEVIEW(dev_priv))
+		intel_uncore_write(&dev_priv->uncore, ECOSKPD, _MASKED_BIT_ENABLE(ECO_GATING_CX_ONLY));
 
-	/* IIR "flip pending" means करोne अगर this bit is set */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, ECOSKPD, _MASKED_BIT_DISABLE(ECO_FLIP_DONE));
+	/* IIR "flip pending" means done if this bit is set */
+	intel_uncore_write(&dev_priv->uncore, ECOSKPD, _MASKED_BIT_DISABLE(ECO_FLIP_DONE));
 
-	/* पूर्णांकerrupts should cause a wake up from C3 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, INSTPM, _MASKED_BIT_ENABLE(INSTPM_AGPBUSY_INT_EN));
+	/* interrupts should cause a wake up from C3 */
+	intel_uncore_write(&dev_priv->uncore, INSTPM, _MASKED_BIT_ENABLE(INSTPM_AGPBUSY_INT_EN));
 
 	/* On GEN3 we really need to make sure the ARB C3 LP bit is set */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, MI_ARB_STATE, _MASKED_BIT_ENABLE(MI_ARB_C3_LP_WRITE_ENABLE));
+	intel_uncore_write(&dev_priv->uncore, MI_ARB_STATE, _MASKED_BIT_ENABLE(MI_ARB_C3_LP_WRITE_ENABLE));
 
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, MI_ARB_STATE,
+	intel_uncore_write(&dev_priv->uncore, MI_ARB_STATE,
 		   _MASKED_BIT_ENABLE(MI_ARB_DISPLAY_TRICKLE_FEED_DISABLE));
-पूर्ण
+}
 
-अटल व्योम i85x_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, RENCLK_GATE_D1, SV_CLOCK_GATE_DISABLE);
+static void i85x_init_clock_gating(struct drm_i915_private *dev_priv)
+{
+	intel_uncore_write(&dev_priv->uncore, RENCLK_GATE_D1, SV_CLOCK_GATE_DISABLE);
 
-	/* पूर्णांकerrupts should cause a wake up from C3 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, MI_STATE, _MASKED_BIT_ENABLE(MI_AGPBUSY_INT_EN) |
+	/* interrupts should cause a wake up from C3 */
+	intel_uncore_write(&dev_priv->uncore, MI_STATE, _MASKED_BIT_ENABLE(MI_AGPBUSY_INT_EN) |
 		   _MASKED_BIT_DISABLE(MI_AGPBUSY_830_MODE));
 
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, MEM_MODE,
+	intel_uncore_write(&dev_priv->uncore, MEM_MODE,
 		   _MASKED_BIT_ENABLE(MEM_DISPLAY_TRICKLE_FEED_DISABLE));
 
 	/*
 	 * Have FBC ignore 3D activity since we use software
 	 * render tracking, and otherwise a pure 3D workload
-	 * (even अगर it just renders a single frame and then करोes
+	 * (even if it just renders a single frame and then does
 	 * abosultely nothing) would not allow FBC to recompress
 	 * until a 2D blit occurs.
 	 */
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, SCPD0,
+	intel_uncore_write(&dev_priv->uncore, SCPD0,
 		   _MASKED_BIT_ENABLE(SCPD_FBC_IGNORE_3D));
-पूर्ण
+}
 
-अटल व्योम i830_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, MEM_MODE,
+static void i830_init_clock_gating(struct drm_i915_private *dev_priv)
+{
+	intel_uncore_write(&dev_priv->uncore, MEM_MODE,
 		   _MASKED_BIT_ENABLE(MEM_DISPLAY_A_TRICKLE_FEED_DISABLE) |
 		   _MASKED_BIT_ENABLE(MEM_DISPLAY_B_TRICKLE_FEED_DISABLE));
-पूर्ण
+}
 
-व्योम पूर्णांकel_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	dev_priv->display.init_घड़ी_gating(dev_priv);
-पूर्ण
+void intel_init_clock_gating(struct drm_i915_private *dev_priv)
+{
+	dev_priv->display.init_clock_gating(dev_priv);
+}
 
-व्योम पूर्णांकel_suspend_hw(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	अगर (HAS_PCH_LPT(dev_priv))
+void intel_suspend_hw(struct drm_i915_private *dev_priv)
+{
+	if (HAS_PCH_LPT(dev_priv))
 		lpt_suspend_hw(dev_priv);
-पूर्ण
+}
 
-अटल व्योम nop_init_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void nop_init_clock_gating(struct drm_i915_private *dev_priv)
+{
 	drm_dbg_kms(&dev_priv->drm,
 		    "No clock gating settings or workarounds applied.\n");
-पूर्ण
+}
 
 /**
- * पूर्णांकel_init_घड़ी_gating_hooks - setup the घड़ी gating hooks
- * @dev_priv: device निजी
+ * intel_init_clock_gating_hooks - setup the clock gating hooks
+ * @dev_priv: device private
  *
- * Setup the hooks that configure which घड़ीs of a given platक्रमm can be
- * gated and also apply various GT and display specअगरic workarounds क्रम these
- * platक्रमms. Note that some GT specअगरic workarounds are applied separately
+ * Setup the hooks that configure which clocks of a given platform can be
+ * gated and also apply various GT and display specific workarounds for these
+ * platforms. Note that some GT specific workarounds are applied separately
  * when GPU contexts or batchbuffers start their execution.
  */
-व्योम पूर्णांकel_init_घड़ी_gating_hooks(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	अगर (IS_DG1(dev_priv))
-		dev_priv->display.init_घड़ी_gating = dg1_init_घड़ी_gating;
-	अन्यथा अगर (IS_GEN(dev_priv, 12))
-		dev_priv->display.init_घड़ी_gating = gen12lp_init_घड़ी_gating;
-	अन्यथा अगर (IS_GEN(dev_priv, 11))
-		dev_priv->display.init_घड़ी_gating = icl_init_घड़ी_gating;
-	अन्यथा अगर (IS_CANNONLAKE(dev_priv))
-		dev_priv->display.init_घड़ी_gating = cnl_init_घड़ी_gating;
-	अन्यथा अगर (IS_COFFEELAKE(dev_priv) || IS_COMETLAKE(dev_priv))
-		dev_priv->display.init_घड़ी_gating = cfl_init_घड़ी_gating;
-	अन्यथा अगर (IS_SKYLAKE(dev_priv))
-		dev_priv->display.init_घड़ी_gating = skl_init_घड़ी_gating;
-	अन्यथा अगर (IS_KABYLAKE(dev_priv))
-		dev_priv->display.init_घड़ी_gating = kbl_init_घड़ी_gating;
-	अन्यथा अगर (IS_BROXTON(dev_priv))
-		dev_priv->display.init_घड़ी_gating = bxt_init_घड़ी_gating;
-	अन्यथा अगर (IS_GEMINILAKE(dev_priv))
-		dev_priv->display.init_घड़ी_gating = glk_init_घड़ी_gating;
-	अन्यथा अगर (IS_BROADWELL(dev_priv))
-		dev_priv->display.init_घड़ी_gating = bdw_init_घड़ी_gating;
-	अन्यथा अगर (IS_CHERRYVIEW(dev_priv))
-		dev_priv->display.init_घड़ी_gating = chv_init_घड़ी_gating;
-	अन्यथा अगर (IS_HASWELL(dev_priv))
-		dev_priv->display.init_घड़ी_gating = hsw_init_घड़ी_gating;
-	अन्यथा अगर (IS_IVYBRIDGE(dev_priv))
-		dev_priv->display.init_घड़ी_gating = ivb_init_घड़ी_gating;
-	अन्यथा अगर (IS_VALLEYVIEW(dev_priv))
-		dev_priv->display.init_घड़ी_gating = vlv_init_घड़ी_gating;
-	अन्यथा अगर (IS_GEN(dev_priv, 6))
-		dev_priv->display.init_घड़ी_gating = gen6_init_घड़ी_gating;
-	अन्यथा अगर (IS_GEN(dev_priv, 5))
-		dev_priv->display.init_घड़ी_gating = ilk_init_घड़ी_gating;
-	अन्यथा अगर (IS_G4X(dev_priv))
-		dev_priv->display.init_घड़ी_gating = g4x_init_घड़ी_gating;
-	अन्यथा अगर (IS_I965GM(dev_priv))
-		dev_priv->display.init_घड़ी_gating = i965gm_init_घड़ी_gating;
-	अन्यथा अगर (IS_I965G(dev_priv))
-		dev_priv->display.init_घड़ी_gating = i965g_init_घड़ी_gating;
-	अन्यथा अगर (IS_GEN(dev_priv, 3))
-		dev_priv->display.init_घड़ी_gating = gen3_init_घड़ी_gating;
-	अन्यथा अगर (IS_I85X(dev_priv) || IS_I865G(dev_priv))
-		dev_priv->display.init_घड़ी_gating = i85x_init_घड़ी_gating;
-	अन्यथा अगर (IS_GEN(dev_priv, 2))
-		dev_priv->display.init_घड़ी_gating = i830_init_घड़ी_gating;
-	अन्यथा अणु
+void intel_init_clock_gating_hooks(struct drm_i915_private *dev_priv)
+{
+	if (IS_DG1(dev_priv))
+		dev_priv->display.init_clock_gating = dg1_init_clock_gating;
+	else if (IS_GEN(dev_priv, 12))
+		dev_priv->display.init_clock_gating = gen12lp_init_clock_gating;
+	else if (IS_GEN(dev_priv, 11))
+		dev_priv->display.init_clock_gating = icl_init_clock_gating;
+	else if (IS_CANNONLAKE(dev_priv))
+		dev_priv->display.init_clock_gating = cnl_init_clock_gating;
+	else if (IS_COFFEELAKE(dev_priv) || IS_COMETLAKE(dev_priv))
+		dev_priv->display.init_clock_gating = cfl_init_clock_gating;
+	else if (IS_SKYLAKE(dev_priv))
+		dev_priv->display.init_clock_gating = skl_init_clock_gating;
+	else if (IS_KABYLAKE(dev_priv))
+		dev_priv->display.init_clock_gating = kbl_init_clock_gating;
+	else if (IS_BROXTON(dev_priv))
+		dev_priv->display.init_clock_gating = bxt_init_clock_gating;
+	else if (IS_GEMINILAKE(dev_priv))
+		dev_priv->display.init_clock_gating = glk_init_clock_gating;
+	else if (IS_BROADWELL(dev_priv))
+		dev_priv->display.init_clock_gating = bdw_init_clock_gating;
+	else if (IS_CHERRYVIEW(dev_priv))
+		dev_priv->display.init_clock_gating = chv_init_clock_gating;
+	else if (IS_HASWELL(dev_priv))
+		dev_priv->display.init_clock_gating = hsw_init_clock_gating;
+	else if (IS_IVYBRIDGE(dev_priv))
+		dev_priv->display.init_clock_gating = ivb_init_clock_gating;
+	else if (IS_VALLEYVIEW(dev_priv))
+		dev_priv->display.init_clock_gating = vlv_init_clock_gating;
+	else if (IS_GEN(dev_priv, 6))
+		dev_priv->display.init_clock_gating = gen6_init_clock_gating;
+	else if (IS_GEN(dev_priv, 5))
+		dev_priv->display.init_clock_gating = ilk_init_clock_gating;
+	else if (IS_G4X(dev_priv))
+		dev_priv->display.init_clock_gating = g4x_init_clock_gating;
+	else if (IS_I965GM(dev_priv))
+		dev_priv->display.init_clock_gating = i965gm_init_clock_gating;
+	else if (IS_I965G(dev_priv))
+		dev_priv->display.init_clock_gating = i965g_init_clock_gating;
+	else if (IS_GEN(dev_priv, 3))
+		dev_priv->display.init_clock_gating = gen3_init_clock_gating;
+	else if (IS_I85X(dev_priv) || IS_I865G(dev_priv))
+		dev_priv->display.init_clock_gating = i85x_init_clock_gating;
+	else if (IS_GEN(dev_priv, 2))
+		dev_priv->display.init_clock_gating = i830_init_clock_gating;
+	else {
 		MISSING_CASE(INTEL_DEVID(dev_priv));
-		dev_priv->display.init_घड़ी_gating = nop_init_घड़ी_gating;
-	पूर्ण
-पूर्ण
+		dev_priv->display.init_clock_gating = nop_init_clock_gating;
+	}
+}
 
-/* Set up chip specअगरic घातer management-related functions */
-व्योम पूर्णांकel_init_pm(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+/* Set up chip specific power management-related functions */
+void intel_init_pm(struct drm_i915_private *dev_priv)
+{
 	/* For cxsr */
-	अगर (IS_PINEVIEW(dev_priv))
+	if (IS_PINEVIEW(dev_priv))
 		pnv_get_mem_freq(dev_priv);
-	अन्यथा अगर (IS_GEN(dev_priv, 5))
+	else if (IS_GEN(dev_priv, 5))
 		ilk_get_mem_freq(dev_priv);
 
-	अगर (पूर्णांकel_has_sagv(dev_priv))
-		skl_setup_sagv_block_समय(dev_priv);
+	if (intel_has_sagv(dev_priv))
+		skl_setup_sagv_block_time(dev_priv);
 
 	/* For FIFO watermark updates */
-	अगर (DISPLAY_VER(dev_priv) >= 9) अणु
+	if (DISPLAY_VER(dev_priv) >= 9) {
 		skl_setup_wm_latency(dev_priv);
 		dev_priv->display.compute_global_watermarks = skl_compute_wm;
-	पूर्ण अन्यथा अगर (HAS_PCH_SPLIT(dev_priv)) अणु
+	} else if (HAS_PCH_SPLIT(dev_priv)) {
 		ilk_setup_wm_latency(dev_priv);
 
-		अगर ((IS_DISPLAY_VER(dev_priv, 5) && dev_priv->wm.pri_latency[1] &&
+		if ((IS_DISPLAY_VER(dev_priv, 5) && dev_priv->wm.pri_latency[1] &&
 		     dev_priv->wm.spr_latency[1] && dev_priv->wm.cur_latency[1]) ||
 		    (!IS_DISPLAY_VER(dev_priv, 5) && dev_priv->wm.pri_latency[0] &&
-		     dev_priv->wm.spr_latency[0] && dev_priv->wm.cur_latency[0])) अणु
+		     dev_priv->wm.spr_latency[0] && dev_priv->wm.cur_latency[0])) {
 			dev_priv->display.compute_pipe_wm = ilk_compute_pipe_wm;
-			dev_priv->display.compute_पूर्णांकermediate_wm =
-				ilk_compute_पूर्णांकermediate_wm;
+			dev_priv->display.compute_intermediate_wm =
+				ilk_compute_intermediate_wm;
 			dev_priv->display.initial_watermarks =
 				ilk_initial_watermarks;
 			dev_priv->display.optimize_watermarks =
 				ilk_optimize_watermarks;
-		पूर्ण अन्यथा अणु
+		} else {
 			drm_dbg_kms(&dev_priv->drm,
 				    "Failed to read display plane latency. "
 				    "Disable CxSR\n");
-		पूर्ण
-	पूर्ण अन्यथा अगर (IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv)) अणु
+		}
+	} else if (IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv)) {
 		vlv_setup_wm_latency(dev_priv);
 		dev_priv->display.compute_pipe_wm = vlv_compute_pipe_wm;
-		dev_priv->display.compute_पूर्णांकermediate_wm = vlv_compute_पूर्णांकermediate_wm;
+		dev_priv->display.compute_intermediate_wm = vlv_compute_intermediate_wm;
 		dev_priv->display.initial_watermarks = vlv_initial_watermarks;
 		dev_priv->display.optimize_watermarks = vlv_optimize_watermarks;
-		dev_priv->display.atomic_update_watermarks = vlv_atomic_update_fअगरo;
-	पूर्ण अन्यथा अगर (IS_G4X(dev_priv)) अणु
+		dev_priv->display.atomic_update_watermarks = vlv_atomic_update_fifo;
+	} else if (IS_G4X(dev_priv)) {
 		g4x_setup_wm_latency(dev_priv);
 		dev_priv->display.compute_pipe_wm = g4x_compute_pipe_wm;
-		dev_priv->display.compute_पूर्णांकermediate_wm = g4x_compute_पूर्णांकermediate_wm;
+		dev_priv->display.compute_intermediate_wm = g4x_compute_intermediate_wm;
 		dev_priv->display.initial_watermarks = g4x_initial_watermarks;
 		dev_priv->display.optimize_watermarks = g4x_optimize_watermarks;
-	पूर्ण अन्यथा अगर (IS_PINEVIEW(dev_priv)) अणु
-		अगर (!पूर्णांकel_get_cxsr_latency(!IS_MOBILE(dev_priv),
+	} else if (IS_PINEVIEW(dev_priv)) {
+		if (!intel_get_cxsr_latency(!IS_MOBILE(dev_priv),
 					    dev_priv->is_ddr3,
 					    dev_priv->fsb_freq,
-					    dev_priv->mem_freq)) अणु
+					    dev_priv->mem_freq)) {
 			drm_info(&dev_priv->drm,
 				 "failed to find known CxSR latency "
 				 "(found ddr%s fsb freq %d, mem freq %d), "
@@ -7731,117 +7730,117 @@ skl_compute_wm(काष्ठा पूर्णांकel_atomic_state *state
 				 (dev_priv->is_ddr3 == 1) ? "3" : "2",
 				 dev_priv->fsb_freq, dev_priv->mem_freq);
 			/* Disable CxSR and never update its watermark again */
-			पूर्णांकel_set_memory_cxsr(dev_priv, false);
-			dev_priv->display.update_wm = शून्य;
-		पूर्ण अन्यथा
+			intel_set_memory_cxsr(dev_priv, false);
+			dev_priv->display.update_wm = NULL;
+		} else
 			dev_priv->display.update_wm = pnv_update_wm;
-	पूर्ण अन्यथा अगर (IS_DISPLAY_VER(dev_priv, 4)) अणु
+	} else if (IS_DISPLAY_VER(dev_priv, 4)) {
 		dev_priv->display.update_wm = i965_update_wm;
-	पूर्ण अन्यथा अगर (IS_DISPLAY_VER(dev_priv, 3)) अणु
+	} else if (IS_DISPLAY_VER(dev_priv, 3)) {
 		dev_priv->display.update_wm = i9xx_update_wm;
-		dev_priv->display.get_fअगरo_size = i9xx_get_fअगरo_size;
-	पूर्ण अन्यथा अगर (IS_DISPLAY_VER(dev_priv, 2)) अणु
-		अगर (INTEL_NUM_PIPES(dev_priv) == 1) अणु
+		dev_priv->display.get_fifo_size = i9xx_get_fifo_size;
+	} else if (IS_DISPLAY_VER(dev_priv, 2)) {
+		if (INTEL_NUM_PIPES(dev_priv) == 1) {
 			dev_priv->display.update_wm = i845_update_wm;
-			dev_priv->display.get_fअगरo_size = i845_get_fअगरo_size;
-		पूर्ण अन्यथा अणु
+			dev_priv->display.get_fifo_size = i845_get_fifo_size;
+		} else {
 			dev_priv->display.update_wm = i9xx_update_wm;
-			dev_priv->display.get_fअगरo_size = i830_get_fअगरo_size;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			dev_priv->display.get_fifo_size = i830_get_fifo_size;
+		}
+	} else {
 		drm_err(&dev_priv->drm,
 			"unexpected fall-through in %s\n", __func__);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम पूर्णांकel_pm_setup(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	dev_priv->runसमय_pm.suspended = false;
-	atomic_set(&dev_priv->runसमय_pm.wakeref_count, 0);
-पूर्ण
+void intel_pm_setup(struct drm_i915_private *dev_priv)
+{
+	dev_priv->runtime_pm.suspended = false;
+	atomic_set(&dev_priv->runtime_pm.wakeref_count, 0);
+}
 
-अटल काष्ठा पूर्णांकel_global_state *पूर्णांकel_dbuf_duplicate_state(काष्ठा पूर्णांकel_global_obj *obj)
-अणु
-	काष्ठा पूर्णांकel_dbuf_state *dbuf_state;
+static struct intel_global_state *intel_dbuf_duplicate_state(struct intel_global_obj *obj)
+{
+	struct intel_dbuf_state *dbuf_state;
 
-	dbuf_state = kmemdup(obj->state, माप(*dbuf_state), GFP_KERNEL);
-	अगर (!dbuf_state)
-		वापस शून्य;
+	dbuf_state = kmemdup(obj->state, sizeof(*dbuf_state), GFP_KERNEL);
+	if (!dbuf_state)
+		return NULL;
 
-	वापस &dbuf_state->base;
-पूर्ण
+	return &dbuf_state->base;
+}
 
-अटल व्योम पूर्णांकel_dbuf_destroy_state(काष्ठा पूर्णांकel_global_obj *obj,
-				     काष्ठा पूर्णांकel_global_state *state)
-अणु
-	kमुक्त(state);
-पूर्ण
+static void intel_dbuf_destroy_state(struct intel_global_obj *obj,
+				     struct intel_global_state *state)
+{
+	kfree(state);
+}
 
-अटल स्थिर काष्ठा पूर्णांकel_global_state_funcs पूर्णांकel_dbuf_funcs = अणु
-	.atomic_duplicate_state = पूर्णांकel_dbuf_duplicate_state,
-	.atomic_destroy_state = पूर्णांकel_dbuf_destroy_state,
-पूर्ण;
+static const struct intel_global_state_funcs intel_dbuf_funcs = {
+	.atomic_duplicate_state = intel_dbuf_duplicate_state,
+	.atomic_destroy_state = intel_dbuf_destroy_state,
+};
 
-काष्ठा पूर्णांकel_dbuf_state *
-पूर्णांकel_atomic_get_dbuf_state(काष्ठा पूर्णांकel_atomic_state *state)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(state->base.dev);
-	काष्ठा पूर्णांकel_global_state *dbuf_state;
+struct intel_dbuf_state *
+intel_atomic_get_dbuf_state(struct intel_atomic_state *state)
+{
+	struct drm_i915_private *dev_priv = to_i915(state->base.dev);
+	struct intel_global_state *dbuf_state;
 
-	dbuf_state = पूर्णांकel_atomic_get_global_obj_state(state, &dev_priv->dbuf.obj);
-	अगर (IS_ERR(dbuf_state))
-		वापस ERR_CAST(dbuf_state);
+	dbuf_state = intel_atomic_get_global_obj_state(state, &dev_priv->dbuf.obj);
+	if (IS_ERR(dbuf_state))
+		return ERR_CAST(dbuf_state);
 
-	वापस to_पूर्णांकel_dbuf_state(dbuf_state);
-पूर्ण
+	return to_intel_dbuf_state(dbuf_state);
+}
 
-पूर्णांक पूर्णांकel_dbuf_init(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा पूर्णांकel_dbuf_state *dbuf_state;
+int intel_dbuf_init(struct drm_i915_private *dev_priv)
+{
+	struct intel_dbuf_state *dbuf_state;
 
-	dbuf_state = kzalloc(माप(*dbuf_state), GFP_KERNEL);
-	अगर (!dbuf_state)
-		वापस -ENOMEM;
+	dbuf_state = kzalloc(sizeof(*dbuf_state), GFP_KERNEL);
+	if (!dbuf_state)
+		return -ENOMEM;
 
-	पूर्णांकel_atomic_global_obj_init(dev_priv, &dev_priv->dbuf.obj,
-				     &dbuf_state->base, &पूर्णांकel_dbuf_funcs);
+	intel_atomic_global_obj_init(dev_priv, &dev_priv->dbuf.obj,
+				     &dbuf_state->base, &intel_dbuf_funcs);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम पूर्णांकel_dbuf_pre_plane_update(काष्ठा पूर्णांकel_atomic_state *state)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(state->base.dev);
-	स्थिर काष्ठा पूर्णांकel_dbuf_state *new_dbuf_state =
-		पूर्णांकel_atomic_get_new_dbuf_state(state);
-	स्थिर काष्ठा पूर्णांकel_dbuf_state *old_dbuf_state =
-		पूर्णांकel_atomic_get_old_dbuf_state(state);
+void intel_dbuf_pre_plane_update(struct intel_atomic_state *state)
+{
+	struct drm_i915_private *dev_priv = to_i915(state->base.dev);
+	const struct intel_dbuf_state *new_dbuf_state =
+		intel_atomic_get_new_dbuf_state(state);
+	const struct intel_dbuf_state *old_dbuf_state =
+		intel_atomic_get_old_dbuf_state(state);
 
-	अगर (!new_dbuf_state ||
+	if (!new_dbuf_state ||
 	    new_dbuf_state->enabled_slices == old_dbuf_state->enabled_slices)
-		वापस;
+		return;
 
 	WARN_ON(!new_dbuf_state->base.changed);
 
 	gen9_dbuf_slices_update(dev_priv,
 				old_dbuf_state->enabled_slices |
 				new_dbuf_state->enabled_slices);
-पूर्ण
+}
 
-व्योम पूर्णांकel_dbuf_post_plane_update(काष्ठा पूर्णांकel_atomic_state *state)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(state->base.dev);
-	स्थिर काष्ठा पूर्णांकel_dbuf_state *new_dbuf_state =
-		पूर्णांकel_atomic_get_new_dbuf_state(state);
-	स्थिर काष्ठा पूर्णांकel_dbuf_state *old_dbuf_state =
-		पूर्णांकel_atomic_get_old_dbuf_state(state);
+void intel_dbuf_post_plane_update(struct intel_atomic_state *state)
+{
+	struct drm_i915_private *dev_priv = to_i915(state->base.dev);
+	const struct intel_dbuf_state *new_dbuf_state =
+		intel_atomic_get_new_dbuf_state(state);
+	const struct intel_dbuf_state *old_dbuf_state =
+		intel_atomic_get_old_dbuf_state(state);
 
-	अगर (!new_dbuf_state ||
+	if (!new_dbuf_state ||
 	    new_dbuf_state->enabled_slices == old_dbuf_state->enabled_slices)
-		वापस;
+		return;
 
 	WARN_ON(!new_dbuf_state->base.changed);
 
 	gen9_dbuf_slices_update(dev_priv,
 				new_dbuf_state->enabled_slices);
-पूर्ण
+}

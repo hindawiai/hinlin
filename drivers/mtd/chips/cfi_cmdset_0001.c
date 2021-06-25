@@ -1,105 +1,104 @@
-<शैली गुरु>
 /*
  * Common Flash Interface support:
- *   Intel Extended Venकरोr Command Set (ID 0x0001)
+ *   Intel Extended Vendor Command Set (ID 0x0001)
  *
  * (C) 2000 Red Hat. GPL'd
  *
  *
  * 10/10/2000	Nicolas Pitre <nico@fluxnic.net>
  * 	- completely revamped method functions so they are aware and
- * 	  independent of the flash geometry (buswidth, पूर्णांकerleave, etc.)
- * 	- scalability vs code size is completely set at compile-समय
- * 	  (see include/linux/mtd/cfi.h क्रम selection)
- *	- optimized ग_लिखो buffer method
+ * 	  independent of the flash geometry (buswidth, interleave, etc.)
+ * 	- scalability vs code size is completely set at compile-time
+ * 	  (see include/linux/mtd/cfi.h for selection)
+ *	- optimized write buffer method
  * 02/05/2002	Christopher Hoover <ch@hpl.hp.com>/<ch@murgatroid.com>
- *	- reworked lock/unlock/erase support क्रम var size flash
- * 21/03/2007   Roकरोlfo Giometti <giometti@linux.it>
- * 	- स्वतः unlock sectors on resume क्रम स्वतः locking flash on घातer up
+ *	- reworked lock/unlock/erase support for var size flash
+ * 21/03/2007   Rodolfo Giometti <giometti@linux.it>
+ * 	- auto unlock sectors on resume for auto locking flash on power up
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sched.h>
-#समावेश <यंत्र/पन.स>
-#समावेश <यंत्र/byteorder.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/sched.h>
+#include <asm/io.h>
+#include <asm/byteorder.h>
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/reboot.h>
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/mtd/xip.h>
-#समावेश <linux/mtd/map.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/cfi.h>
+#include <linux/errno.h>
+#include <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/reboot.h>
+#include <linux/bitmap.h>
+#include <linux/mtd/xip.h>
+#include <linux/mtd/map.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/cfi.h>
 
-/* #घोषणा CMDSET0001_DISABLE_ERASE_SUSPEND_ON_WRITE */
-/* #घोषणा CMDSET0001_DISABLE_WRITE_SUSPEND */
+/* #define CMDSET0001_DISABLE_ERASE_SUSPEND_ON_WRITE */
+/* #define CMDSET0001_DISABLE_WRITE_SUSPEND */
 
-// debugging, turns off buffer ग_लिखो mode अगर set to 1
-#घोषणा FORCE_WORD_WRITE 0
+// debugging, turns off buffer write mode if set to 1
+#define FORCE_WORD_WRITE 0
 
 /* Intel chips */
-#घोषणा I82802AB	0x00ad
-#घोषणा I82802AC	0x00ac
-#घोषणा PF38F4476	0x881c
-#घोषणा M28F00AP30	0x8963
+#define I82802AB	0x00ad
+#define I82802AC	0x00ac
+#define PF38F4476	0x881c
+#define M28F00AP30	0x8963
 /* STMicroelectronics chips */
-#घोषणा M50LPW080       0x002F
-#घोषणा M50FLW080A	0x0080
-#घोषणा M50FLW080B	0x0081
-/* Aपंचांगel chips */
-#घोषणा AT49BV640D	0x02de
-#घोषणा AT49BV640DT	0x02db
+#define M50LPW080       0x002F
+#define M50FLW080A	0x0080
+#define M50FLW080B	0x0081
+/* Atmel chips */
+#define AT49BV640D	0x02de
+#define AT49BV640DT	0x02db
 /* Sharp chips */
-#घोषणा LH28F640BFHE_PTTL90	0x00b0
-#घोषणा LH28F640BFHE_PBTL90	0x00b1
-#घोषणा LH28F640BFHE_PTTL70A	0x00b2
-#घोषणा LH28F640BFHE_PBTL70A	0x00b3
+#define LH28F640BFHE_PTTL90	0x00b0
+#define LH28F640BFHE_PBTL90	0x00b1
+#define LH28F640BFHE_PTTL70A	0x00b2
+#define LH28F640BFHE_PBTL70A	0x00b3
 
-अटल पूर्णांक cfi_पूर्णांकelext_पढ़ो (काष्ठा mtd_info *, loff_t, माप_प्रकार, माप_प्रकार *, u_अक्षर *);
-अटल पूर्णांक cfi_पूर्णांकelext_ग_लिखो_words(काष्ठा mtd_info *, loff_t, माप_प्रकार, माप_प्रकार *, स्थिर u_अक्षर *);
-अटल पूर्णांक cfi_पूर्णांकelext_ग_लिखो_buffers(काष्ठा mtd_info *, loff_t, माप_प्रकार, माप_प्रकार *, स्थिर u_अक्षर *);
-अटल पूर्णांक cfi_पूर्णांकelext_ग_लिखोv(काष्ठा mtd_info *, स्थिर काष्ठा kvec *, अचिन्हित दीर्घ, loff_t, माप_प्रकार *);
-अटल पूर्णांक cfi_पूर्णांकelext_erase_varsize(काष्ठा mtd_info *, काष्ठा erase_info *);
-अटल व्योम cfi_पूर्णांकelext_sync (काष्ठा mtd_info *);
-अटल पूर्णांक cfi_पूर्णांकelext_lock(काष्ठा mtd_info *mtd, loff_t ofs, uपूर्णांक64_t len);
-अटल पूर्णांक cfi_पूर्णांकelext_unlock(काष्ठा mtd_info *mtd, loff_t ofs, uपूर्णांक64_t len);
-अटल पूर्णांक cfi_पूर्णांकelext_is_locked(काष्ठा mtd_info *mtd, loff_t ofs,
-				  uपूर्णांक64_t len);
-#अगर_घोषित CONFIG_MTD_OTP
-अटल पूर्णांक cfi_पूर्णांकelext_पढ़ो_fact_prot_reg (काष्ठा mtd_info *, loff_t, माप_प्रकार, माप_प्रकार *, u_अक्षर *);
-अटल पूर्णांक cfi_पूर्णांकelext_पढ़ो_user_prot_reg (काष्ठा mtd_info *, loff_t, माप_प्रकार, माप_प्रकार *, u_अक्षर *);
-अटल पूर्णांक cfi_पूर्णांकelext_ग_लिखो_user_prot_reg(काष्ठा mtd_info *, loff_t, माप_प्रकार,
-					    माप_प्रकार *, स्थिर u_अक्षर *);
-अटल पूर्णांक cfi_पूर्णांकelext_lock_user_prot_reg (काष्ठा mtd_info *, loff_t, माप_प्रकार);
-अटल पूर्णांक cfi_पूर्णांकelext_get_fact_prot_info(काष्ठा mtd_info *, माप_प्रकार,
-					   माप_प्रकार *, काष्ठा otp_info *);
-अटल पूर्णांक cfi_पूर्णांकelext_get_user_prot_info(काष्ठा mtd_info *, माप_प्रकार,
-					   माप_प्रकार *, काष्ठा otp_info *);
-#पूर्ण_अगर
-अटल पूर्णांक cfi_पूर्णांकelext_suspend (काष्ठा mtd_info *);
-अटल व्योम cfi_पूर्णांकelext_resume (काष्ठा mtd_info *);
-अटल पूर्णांक cfi_पूर्णांकelext_reboot (काष्ठा notअगरier_block *, अचिन्हित दीर्घ, व्योम *);
+static int cfi_intelext_read (struct mtd_info *, loff_t, size_t, size_t *, u_char *);
+static int cfi_intelext_write_words(struct mtd_info *, loff_t, size_t, size_t *, const u_char *);
+static int cfi_intelext_write_buffers(struct mtd_info *, loff_t, size_t, size_t *, const u_char *);
+static int cfi_intelext_writev(struct mtd_info *, const struct kvec *, unsigned long, loff_t, size_t *);
+static int cfi_intelext_erase_varsize(struct mtd_info *, struct erase_info *);
+static void cfi_intelext_sync (struct mtd_info *);
+static int cfi_intelext_lock(struct mtd_info *mtd, loff_t ofs, uint64_t len);
+static int cfi_intelext_unlock(struct mtd_info *mtd, loff_t ofs, uint64_t len);
+static int cfi_intelext_is_locked(struct mtd_info *mtd, loff_t ofs,
+				  uint64_t len);
+#ifdef CONFIG_MTD_OTP
+static int cfi_intelext_read_fact_prot_reg (struct mtd_info *, loff_t, size_t, size_t *, u_char *);
+static int cfi_intelext_read_user_prot_reg (struct mtd_info *, loff_t, size_t, size_t *, u_char *);
+static int cfi_intelext_write_user_prot_reg(struct mtd_info *, loff_t, size_t,
+					    size_t *, const u_char *);
+static int cfi_intelext_lock_user_prot_reg (struct mtd_info *, loff_t, size_t);
+static int cfi_intelext_get_fact_prot_info(struct mtd_info *, size_t,
+					   size_t *, struct otp_info *);
+static int cfi_intelext_get_user_prot_info(struct mtd_info *, size_t,
+					   size_t *, struct otp_info *);
+#endif
+static int cfi_intelext_suspend (struct mtd_info *);
+static void cfi_intelext_resume (struct mtd_info *);
+static int cfi_intelext_reboot (struct notifier_block *, unsigned long, void *);
 
-अटल व्योम cfi_पूर्णांकelext_destroy(काष्ठा mtd_info *);
+static void cfi_intelext_destroy(struct mtd_info *);
 
-काष्ठा mtd_info *cfi_cmdset_0001(काष्ठा map_info *, पूर्णांक);
+struct mtd_info *cfi_cmdset_0001(struct map_info *, int);
 
-अटल काष्ठा mtd_info *cfi_पूर्णांकelext_setup (काष्ठा mtd_info *);
-अटल पूर्णांक cfi_पूर्णांकelext_partition_fixup(काष्ठा mtd_info *, काष्ठा cfi_निजी **);
+static struct mtd_info *cfi_intelext_setup (struct mtd_info *);
+static int cfi_intelext_partition_fixup(struct mtd_info *, struct cfi_private **);
 
-अटल पूर्णांक cfi_पूर्णांकelext_poपूर्णांक (काष्ठा mtd_info *mtd, loff_t from, माप_प्रकार len,
-		     माप_प्रकार *retlen, व्योम **virt, resource_माप_प्रकार *phys);
-अटल पूर्णांक cfi_पूर्णांकelext_unpoपूर्णांक(काष्ठा mtd_info *mtd, loff_t from, माप_प्रकार len);
+static int cfi_intelext_point (struct mtd_info *mtd, loff_t from, size_t len,
+		     size_t *retlen, void **virt, resource_size_t *phys);
+static int cfi_intelext_unpoint(struct mtd_info *mtd, loff_t from, size_t len);
 
-अटल पूर्णांक chip_पढ़ोy (काष्ठा map_info *map, काष्ठा flchip *chip, अचिन्हित दीर्घ adr, पूर्णांक mode);
-अटल पूर्णांक get_chip(काष्ठा map_info *map, काष्ठा flchip *chip, अचिन्हित दीर्घ adr, पूर्णांक mode);
-अटल व्योम put_chip(काष्ठा map_info *map, काष्ठा flchip *chip, अचिन्हित दीर्घ adr);
-#समावेश "fwh_lock.h"
+static int chip_ready (struct map_info *map, struct flchip *chip, unsigned long adr, int mode);
+static int get_chip(struct map_info *map, struct flchip *chip, unsigned long adr, int mode);
+static void put_chip(struct map_info *map, struct flchip *chip, unsigned long adr);
+#include "fwh_lock.h"
 
 
 
@@ -107,607 +106,607 @@
  *  *********** SETUP AND PROBE BITS  ***********
  */
 
-अटल काष्ठा mtd_chip_driver cfi_पूर्णांकelext_chipdrv = अणु
-	.probe		= शून्य, /* Not usable directly */
-	.destroy	= cfi_पूर्णांकelext_destroy,
+static struct mtd_chip_driver cfi_intelext_chipdrv = {
+	.probe		= NULL, /* Not usable directly */
+	.destroy	= cfi_intelext_destroy,
 	.name		= "cfi_cmdset_0001",
 	.module		= THIS_MODULE
-पूर्ण;
+};
 
-/* #घोषणा DEBUG_LOCK_BITS */
-/* #घोषणा DEBUG_CFI_FEATURES */
+/* #define DEBUG_LOCK_BITS */
+/* #define DEBUG_CFI_FEATURES */
 
-#अगर_घोषित DEBUG_CFI_FEATURES
-अटल व्योम cfi_tell_features(काष्ठा cfi_pri_पूर्णांकelext *extp)
-अणु
-	पूर्णांक i;
-	prपूर्णांकk("  Extended Query version %c.%c\n", extp->MajorVersion, extp->MinorVersion);
-	prपूर्णांकk("  Feature/Command Support:      %4.4X\n", extp->FeatureSupport);
-	prपूर्णांकk("     - Chip Erase:              %s\n", extp->FeatureSupport&1?"supported":"unsupported");
-	prपूर्णांकk("     - Suspend Erase:           %s\n", extp->FeatureSupport&2?"supported":"unsupported");
-	prपूर्णांकk("     - Suspend Program:         %s\n", extp->FeatureSupport&4?"supported":"unsupported");
-	prपूर्णांकk("     - Legacy Lock/Unlock:      %s\n", extp->FeatureSupport&8?"supported":"unsupported");
-	prपूर्णांकk("     - Queued Erase:            %s\n", extp->FeatureSupport&16?"supported":"unsupported");
-	prपूर्णांकk("     - Instant block lock:      %s\n", extp->FeatureSupport&32?"supported":"unsupported");
-	prपूर्णांकk("     - Protection Bits:         %s\n", extp->FeatureSupport&64?"supported":"unsupported");
-	prपूर्णांकk("     - Page-mode read:          %s\n", extp->FeatureSupport&128?"supported":"unsupported");
-	prपूर्णांकk("     - Synchronous read:        %s\n", extp->FeatureSupport&256?"supported":"unsupported");
-	prपूर्णांकk("     - Simultaneous operations: %s\n", extp->FeatureSupport&512?"supported":"unsupported");
-	prपूर्णांकk("     - Extended Flash Array:    %s\n", extp->FeatureSupport&1024?"supported":"unsupported");
-	क्रम (i=11; i<32; i++) अणु
-		अगर (extp->FeatureSupport & (1<<i))
-			prपूर्णांकk("     - Unknown Bit %X:      supported\n", i);
-	पूर्ण
+#ifdef DEBUG_CFI_FEATURES
+static void cfi_tell_features(struct cfi_pri_intelext *extp)
+{
+	int i;
+	printk("  Extended Query version %c.%c\n", extp->MajorVersion, extp->MinorVersion);
+	printk("  Feature/Command Support:      %4.4X\n", extp->FeatureSupport);
+	printk("     - Chip Erase:              %s\n", extp->FeatureSupport&1?"supported":"unsupported");
+	printk("     - Suspend Erase:           %s\n", extp->FeatureSupport&2?"supported":"unsupported");
+	printk("     - Suspend Program:         %s\n", extp->FeatureSupport&4?"supported":"unsupported");
+	printk("     - Legacy Lock/Unlock:      %s\n", extp->FeatureSupport&8?"supported":"unsupported");
+	printk("     - Queued Erase:            %s\n", extp->FeatureSupport&16?"supported":"unsupported");
+	printk("     - Instant block lock:      %s\n", extp->FeatureSupport&32?"supported":"unsupported");
+	printk("     - Protection Bits:         %s\n", extp->FeatureSupport&64?"supported":"unsupported");
+	printk("     - Page-mode read:          %s\n", extp->FeatureSupport&128?"supported":"unsupported");
+	printk("     - Synchronous read:        %s\n", extp->FeatureSupport&256?"supported":"unsupported");
+	printk("     - Simultaneous operations: %s\n", extp->FeatureSupport&512?"supported":"unsupported");
+	printk("     - Extended Flash Array:    %s\n", extp->FeatureSupport&1024?"supported":"unsupported");
+	for (i=11; i<32; i++) {
+		if (extp->FeatureSupport & (1<<i))
+			printk("     - Unknown Bit %X:      supported\n", i);
+	}
 
-	prपूर्णांकk("  Supported functions after Suspend: %2.2X\n", extp->SuspendCmdSupport);
-	prपूर्णांकk("     - Program after Erase Suspend: %s\n", extp->SuspendCmdSupport&1?"supported":"unsupported");
-	क्रम (i=1; i<8; i++) अणु
-		अगर (extp->SuspendCmdSupport & (1<<i))
-			prपूर्णांकk("     - Unknown Bit %X:               supported\n", i);
-	पूर्ण
+	printk("  Supported functions after Suspend: %2.2X\n", extp->SuspendCmdSupport);
+	printk("     - Program after Erase Suspend: %s\n", extp->SuspendCmdSupport&1?"supported":"unsupported");
+	for (i=1; i<8; i++) {
+		if (extp->SuspendCmdSupport & (1<<i))
+			printk("     - Unknown Bit %X:               supported\n", i);
+	}
 
-	prपूर्णांकk("  Block Status Register Mask: %4.4X\n", extp->BlkStatusRegMask);
-	prपूर्णांकk("     - Lock Bit Active:      %s\n", extp->BlkStatusRegMask&1?"yes":"no");
-	prपूर्णांकk("     - Lock-Down Bit Active: %s\n", extp->BlkStatusRegMask&2?"yes":"no");
-	क्रम (i=2; i<3; i++) अणु
-		अगर (extp->BlkStatusRegMask & (1<<i))
-			prपूर्णांकk("     - Unknown Bit %X Active: yes\n",i);
-	पूर्ण
-	prपूर्णांकk("     - EFA Lock Bit:         %s\n", extp->BlkStatusRegMask&16?"yes":"no");
-	prपूर्णांकk("     - EFA Lock-Down Bit:    %s\n", extp->BlkStatusRegMask&32?"yes":"no");
-	क्रम (i=6; i<16; i++) अणु
-		अगर (extp->BlkStatusRegMask & (1<<i))
-			prपूर्णांकk("     - Unknown Bit %X Active: yes\n",i);
-	पूर्ण
+	printk("  Block Status Register Mask: %4.4X\n", extp->BlkStatusRegMask);
+	printk("     - Lock Bit Active:      %s\n", extp->BlkStatusRegMask&1?"yes":"no");
+	printk("     - Lock-Down Bit Active: %s\n", extp->BlkStatusRegMask&2?"yes":"no");
+	for (i=2; i<3; i++) {
+		if (extp->BlkStatusRegMask & (1<<i))
+			printk("     - Unknown Bit %X Active: yes\n",i);
+	}
+	printk("     - EFA Lock Bit:         %s\n", extp->BlkStatusRegMask&16?"yes":"no");
+	printk("     - EFA Lock-Down Bit:    %s\n", extp->BlkStatusRegMask&32?"yes":"no");
+	for (i=6; i<16; i++) {
+		if (extp->BlkStatusRegMask & (1<<i))
+			printk("     - Unknown Bit %X Active: yes\n",i);
+	}
 
-	prपूर्णांकk("  Vcc Logic Supply Optimum Program/Erase Voltage: %d.%d V\n",
+	printk("  Vcc Logic Supply Optimum Program/Erase Voltage: %d.%d V\n",
 	       extp->VccOptimal >> 4, extp->VccOptimal & 0xf);
-	अगर (extp->VppOptimal)
-		prपूर्णांकk("  Vpp Programming Supply Optimum Program/Erase Voltage: %d.%d V\n",
+	if (extp->VppOptimal)
+		printk("  Vpp Programming Supply Optimum Program/Erase Voltage: %d.%d V\n",
 		       extp->VppOptimal >> 4, extp->VppOptimal & 0xf);
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-/* Aपंचांगel chips करोn't use the same PRI क्रमmat as Intel chips */
-अटल व्योम fixup_convert_aपंचांगel_pri(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा map_info *map = mtd->priv;
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	काष्ठा cfi_pri_पूर्णांकelext *extp = cfi->cmdset_priv;
-	काष्ठा cfi_pri_aपंचांगel aपंचांगel_pri;
-	uपूर्णांक32_t features = 0;
+/* Atmel chips don't use the same PRI format as Intel chips */
+static void fixup_convert_atmel_pri(struct mtd_info *mtd)
+{
+	struct map_info *map = mtd->priv;
+	struct cfi_private *cfi = map->fldrv_priv;
+	struct cfi_pri_intelext *extp = cfi->cmdset_priv;
+	struct cfi_pri_atmel atmel_pri;
+	uint32_t features = 0;
 
 	/* Reverse byteswapping */
 	extp->FeatureSupport = cpu_to_le32(extp->FeatureSupport);
 	extp->BlkStatusRegMask = cpu_to_le16(extp->BlkStatusRegMask);
 	extp->ProtRegAddr = cpu_to_le16(extp->ProtRegAddr);
 
-	स_नकल(&aपंचांगel_pri, extp, माप(aपंचांगel_pri));
-	स_रखो((अक्षर *)extp + 5, 0, माप(*extp) - 5);
+	memcpy(&atmel_pri, extp, sizeof(atmel_pri));
+	memset((char *)extp + 5, 0, sizeof(*extp) - 5);
 
-	prपूर्णांकk(KERN_ERR "atmel Features: %02x\n", aपंचांगel_pri.Features);
+	printk(KERN_ERR "atmel Features: %02x\n", atmel_pri.Features);
 
-	अगर (aपंचांगel_pri.Features & 0x01) /* chip erase supported */
+	if (atmel_pri.Features & 0x01) /* chip erase supported */
 		features |= (1<<0);
-	अगर (aपंचांगel_pri.Features & 0x02) /* erase suspend supported */
+	if (atmel_pri.Features & 0x02) /* erase suspend supported */
 		features |= (1<<1);
-	अगर (aपंचांगel_pri.Features & 0x04) /* program suspend supported */
+	if (atmel_pri.Features & 0x04) /* program suspend supported */
 		features |= (1<<2);
-	अगर (aपंचांगel_pri.Features & 0x08) /* simultaneous operations supported */
+	if (atmel_pri.Features & 0x08) /* simultaneous operations supported */
 		features |= (1<<9);
-	अगर (aपंचांगel_pri.Features & 0x20) /* page mode पढ़ो supported */
+	if (atmel_pri.Features & 0x20) /* page mode read supported */
 		features |= (1<<7);
-	अगर (aपंचांगel_pri.Features & 0x40) /* queued erase supported */
+	if (atmel_pri.Features & 0x40) /* queued erase supported */
 		features |= (1<<4);
-	अगर (aपंचांगel_pri.Features & 0x80) /* Protection bits supported */
+	if (atmel_pri.Features & 0x80) /* Protection bits supported */
 		features |= (1<<6);
 
 	extp->FeatureSupport = features;
 
-	/* burst ग_लिखो mode not supported */
+	/* burst write mode not supported */
 	cfi->cfiq->BufWriteTimeoutTyp = 0;
 	cfi->cfiq->BufWriteTimeoutMax = 0;
-पूर्ण
+}
 
-अटल व्योम fixup_at49bv640dx_lock(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा map_info *map = mtd->priv;
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	काष्ठा cfi_pri_पूर्णांकelext *cfip = cfi->cmdset_priv;
+static void fixup_at49bv640dx_lock(struct mtd_info *mtd)
+{
+	struct map_info *map = mtd->priv;
+	struct cfi_private *cfi = map->fldrv_priv;
+	struct cfi_pri_intelext *cfip = cfi->cmdset_priv;
 
 	cfip->FeatureSupport |= (1 << 5);
 	mtd->flags |= MTD_POWERUP_LOCK;
-पूर्ण
+}
 
-#अगर_घोषित CMDSET0001_DISABLE_ERASE_SUSPEND_ON_WRITE
+#ifdef CMDSET0001_DISABLE_ERASE_SUSPEND_ON_WRITE
 /* Some Intel Strata Flash prior to FPO revision C has bugs in this area */
-अटल व्योम fixup_पूर्णांकel_strataflash(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा map_info *map = mtd->priv;
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	काष्ठा cfi_pri_पूर्णांकelext *extp = cfi->cmdset_priv;
+static void fixup_intel_strataflash(struct mtd_info *mtd)
+{
+	struct map_info *map = mtd->priv;
+	struct cfi_private *cfi = map->fldrv_priv;
+	struct cfi_pri_intelext *extp = cfi->cmdset_priv;
 
-	prपूर्णांकk(KERN_WARNING "cfi_cmdset_0001: Suspend "
+	printk(KERN_WARNING "cfi_cmdset_0001: Suspend "
 	                    "erase on write disabled.\n");
 	extp->SuspendCmdSupport &= ~1;
-पूर्ण
-#पूर्ण_अगर
+}
+#endif
 
-#अगर_घोषित CMDSET0001_DISABLE_WRITE_SUSPEND
-अटल व्योम fixup_no_ग_लिखो_suspend(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा map_info *map = mtd->priv;
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	काष्ठा cfi_pri_पूर्णांकelext *cfip = cfi->cmdset_priv;
+#ifdef CMDSET0001_DISABLE_WRITE_SUSPEND
+static void fixup_no_write_suspend(struct mtd_info *mtd)
+{
+	struct map_info *map = mtd->priv;
+	struct cfi_private *cfi = map->fldrv_priv;
+	struct cfi_pri_intelext *cfip = cfi->cmdset_priv;
 
-	अगर (cfip && (cfip->FeatureSupport&4)) अणु
+	if (cfip && (cfip->FeatureSupport&4)) {
 		cfip->FeatureSupport &= ~4;
-		prपूर्णांकk(KERN_WARNING "cfi_cmdset_0001: write suspend disabled\n");
-	पूर्ण
-पूर्ण
-#पूर्ण_अगर
+		printk(KERN_WARNING "cfi_cmdset_0001: write suspend disabled\n");
+	}
+}
+#endif
 
-अटल व्योम fixup_st_m28w320ct(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा map_info *map = mtd->priv;
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
+static void fixup_st_m28w320ct(struct mtd_info *mtd)
+{
+	struct map_info *map = mtd->priv;
+	struct cfi_private *cfi = map->fldrv_priv;
 
 	cfi->cfiq->BufWriteTimeoutTyp = 0;	/* Not supported */
 	cfi->cfiq->BufWriteTimeoutMax = 0;	/* Not supported */
-पूर्ण
+}
 
-अटल व्योम fixup_st_m28w320cb(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा map_info *map = mtd->priv;
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
+static void fixup_st_m28w320cb(struct mtd_info *mtd)
+{
+	struct map_info *map = mtd->priv;
+	struct cfi_private *cfi = map->fldrv_priv;
 
-	/* Note this is करोne after the region info is endian swapped */
+	/* Note this is done after the region info is endian swapped */
 	cfi->cfiq->EraseRegionInfo[1] =
 		(cfi->cfiq->EraseRegionInfo[1] & 0xffff0000) | 0x3e;
-पूर्ण;
+};
 
-अटल पूर्णांक is_LH28F640BF(काष्ठा cfi_निजी *cfi)
-अणु
+static int is_LH28F640BF(struct cfi_private *cfi)
+{
 	/* Sharp LH28F640BF Family */
-	अगर (cfi->mfr == CFI_MFR_SHARP && (
+	if (cfi->mfr == CFI_MFR_SHARP && (
 	    cfi->id == LH28F640BFHE_PTTL90 || cfi->id == LH28F640BFHE_PBTL90 ||
 	    cfi->id == LH28F640BFHE_PTTL70A || cfi->id == LH28F640BFHE_PBTL70A))
-		वापस 1;
-	वापस 0;
-पूर्ण
+		return 1;
+	return 0;
+}
 
-अटल व्योम fixup_LH28F640BF(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा map_info *map = mtd->priv;
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	काष्ठा cfi_pri_पूर्णांकelext *extp = cfi->cmdset_priv;
+static void fixup_LH28F640BF(struct mtd_info *mtd)
+{
+	struct map_info *map = mtd->priv;
+	struct cfi_private *cfi = map->fldrv_priv;
+	struct cfi_pri_intelext *extp = cfi->cmdset_priv;
 
 	/* Reset the Partition Configuration Register on LH28F640BF
-	 * to a single partition (PCR = 0x000): PCR is embedded पूर्णांकo A0-A15. */
-	अगर (is_LH28F640BF(cfi)) अणु
-		prपूर्णांकk(KERN_INFO "Reset Partition Config. Register: 1 Partition of 4 planes\n");
-		map_ग_लिखो(map, CMD(0x60), 0);
-		map_ग_लिखो(map, CMD(0x04), 0);
+	 * to a single partition (PCR = 0x000): PCR is embedded into A0-A15. */
+	if (is_LH28F640BF(cfi)) {
+		printk(KERN_INFO "Reset Partition Config. Register: 1 Partition of 4 planes\n");
+		map_write(map, CMD(0x60), 0);
+		map_write(map, CMD(0x04), 0);
 
 		/* We have set one single partition thus
 		 * Simultaneous Operations are not allowed */
-		prपूर्णांकk(KERN_INFO "cfi_cmdset_0001: Simultaneous Operations disabled\n");
+		printk(KERN_INFO "cfi_cmdset_0001: Simultaneous Operations disabled\n");
 		extp->FeatureSupport &= ~512;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम fixup_use_poपूर्णांक(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा map_info *map = mtd->priv;
-	अगर (!mtd->_poपूर्णांक && map_is_linear(map)) अणु
-		mtd->_poपूर्णांक   = cfi_पूर्णांकelext_poपूर्णांक;
-		mtd->_unpoपूर्णांक = cfi_पूर्णांकelext_unpoपूर्णांक;
-	पूर्ण
-पूर्ण
+static void fixup_use_point(struct mtd_info *mtd)
+{
+	struct map_info *map = mtd->priv;
+	if (!mtd->_point && map_is_linear(map)) {
+		mtd->_point   = cfi_intelext_point;
+		mtd->_unpoint = cfi_intelext_unpoint;
+	}
+}
 
-अटल व्योम fixup_use_ग_लिखो_buffers(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा map_info *map = mtd->priv;
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	अगर (cfi->cfiq->BufWriteTimeoutTyp) अणु
-		prपूर्णांकk(KERN_INFO "Using buffer write method\n" );
-		mtd->_ग_लिखो = cfi_पूर्णांकelext_ग_लिखो_buffers;
-		mtd->_ग_लिखोv = cfi_पूर्णांकelext_ग_लिखोv;
-	पूर्ण
-पूर्ण
+static void fixup_use_write_buffers(struct mtd_info *mtd)
+{
+	struct map_info *map = mtd->priv;
+	struct cfi_private *cfi = map->fldrv_priv;
+	if (cfi->cfiq->BufWriteTimeoutTyp) {
+		printk(KERN_INFO "Using buffer write method\n" );
+		mtd->_write = cfi_intelext_write_buffers;
+		mtd->_writev = cfi_intelext_writev;
+	}
+}
 
 /*
- * Some chips घातer-up with all sectors locked by शेष.
+ * Some chips power-up with all sectors locked by default.
  */
-अटल व्योम fixup_unlock_घातerup_lock(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा map_info *map = mtd->priv;
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	काष्ठा cfi_pri_पूर्णांकelext *cfip = cfi->cmdset_priv;
+static void fixup_unlock_powerup_lock(struct mtd_info *mtd)
+{
+	struct map_info *map = mtd->priv;
+	struct cfi_private *cfi = map->fldrv_priv;
+	struct cfi_pri_intelext *cfip = cfi->cmdset_priv;
 
-	अगर (cfip->FeatureSupport&32) अणु
-		prपूर्णांकk(KERN_INFO "Using auto-unlock on power-up/resume\n" );
+	if (cfip->FeatureSupport&32) {
+		printk(KERN_INFO "Using auto-unlock on power-up/resume\n" );
 		mtd->flags |= MTD_POWERUP_LOCK;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल काष्ठा cfi_fixup cfi_fixup_table[] = अणु
-	अणु CFI_MFR_ATMEL, CFI_ID_ANY, fixup_convert_aपंचांगel_pri पूर्ण,
-	अणु CFI_MFR_ATMEL, AT49BV640D, fixup_at49bv640dx_lock पूर्ण,
-	अणु CFI_MFR_ATMEL, AT49BV640DT, fixup_at49bv640dx_lock पूर्ण,
-#अगर_घोषित CMDSET0001_DISABLE_ERASE_SUSPEND_ON_WRITE
-	अणु CFI_MFR_ANY, CFI_ID_ANY, fixup_पूर्णांकel_strataflash पूर्ण,
-#पूर्ण_अगर
-#अगर_घोषित CMDSET0001_DISABLE_WRITE_SUSPEND
-	अणु CFI_MFR_ANY, CFI_ID_ANY, fixup_no_ग_लिखो_suspend पूर्ण,
-#पूर्ण_अगर
-#अगर !FORCE_WORD_WRITE
-	अणु CFI_MFR_ANY, CFI_ID_ANY, fixup_use_ग_लिखो_buffers पूर्ण,
-#पूर्ण_अगर
-	अणु CFI_MFR_ST, 0x00ba, /* M28W320CT */ fixup_st_m28w320ct पूर्ण,
-	अणु CFI_MFR_ST, 0x00bb, /* M28W320CB */ fixup_st_m28w320cb पूर्ण,
-	अणु CFI_MFR_INTEL, CFI_ID_ANY, fixup_unlock_घातerup_lock पूर्ण,
-	अणु CFI_MFR_SHARP, CFI_ID_ANY, fixup_unlock_घातerup_lock पूर्ण,
-	अणु CFI_MFR_SHARP, CFI_ID_ANY, fixup_LH28F640BF पूर्ण,
-	अणु 0, 0, शून्य पूर्ण
-पूर्ण;
+static struct cfi_fixup cfi_fixup_table[] = {
+	{ CFI_MFR_ATMEL, CFI_ID_ANY, fixup_convert_atmel_pri },
+	{ CFI_MFR_ATMEL, AT49BV640D, fixup_at49bv640dx_lock },
+	{ CFI_MFR_ATMEL, AT49BV640DT, fixup_at49bv640dx_lock },
+#ifdef CMDSET0001_DISABLE_ERASE_SUSPEND_ON_WRITE
+	{ CFI_MFR_ANY, CFI_ID_ANY, fixup_intel_strataflash },
+#endif
+#ifdef CMDSET0001_DISABLE_WRITE_SUSPEND
+	{ CFI_MFR_ANY, CFI_ID_ANY, fixup_no_write_suspend },
+#endif
+#if !FORCE_WORD_WRITE
+	{ CFI_MFR_ANY, CFI_ID_ANY, fixup_use_write_buffers },
+#endif
+	{ CFI_MFR_ST, 0x00ba, /* M28W320CT */ fixup_st_m28w320ct },
+	{ CFI_MFR_ST, 0x00bb, /* M28W320CB */ fixup_st_m28w320cb },
+	{ CFI_MFR_INTEL, CFI_ID_ANY, fixup_unlock_powerup_lock },
+	{ CFI_MFR_SHARP, CFI_ID_ANY, fixup_unlock_powerup_lock },
+	{ CFI_MFR_SHARP, CFI_ID_ANY, fixup_LH28F640BF },
+	{ 0, 0, NULL }
+};
 
-अटल काष्ठा cfi_fixup jedec_fixup_table[] = अणु
-	अणु CFI_MFR_INTEL, I82802AB,   fixup_use_fwh_lock पूर्ण,
-	अणु CFI_MFR_INTEL, I82802AC,   fixup_use_fwh_lock पूर्ण,
-	अणु CFI_MFR_ST,    M50LPW080,  fixup_use_fwh_lock पूर्ण,
-	अणु CFI_MFR_ST,    M50FLW080A, fixup_use_fwh_lock पूर्ण,
-	अणु CFI_MFR_ST,    M50FLW080B, fixup_use_fwh_lock पूर्ण,
-	अणु 0, 0, शून्य पूर्ण
-पूर्ण;
-अटल काष्ठा cfi_fixup fixup_table[] = अणु
-	/* The CFI venकरोr ids and the JEDEC venकरोr IDs appear
+static struct cfi_fixup jedec_fixup_table[] = {
+	{ CFI_MFR_INTEL, I82802AB,   fixup_use_fwh_lock },
+	{ CFI_MFR_INTEL, I82802AC,   fixup_use_fwh_lock },
+	{ CFI_MFR_ST,    M50LPW080,  fixup_use_fwh_lock },
+	{ CFI_MFR_ST,    M50FLW080A, fixup_use_fwh_lock },
+	{ CFI_MFR_ST,    M50FLW080B, fixup_use_fwh_lock },
+	{ 0, 0, NULL }
+};
+static struct cfi_fixup fixup_table[] = {
+	/* The CFI vendor ids and the JEDEC vendor IDs appear
 	 * to be common.  It is like the devices id's are as
-	 * well.  This table is to pick all हालs where
-	 * we know that is the हाल.
+	 * well.  This table is to pick all cases where
+	 * we know that is the case.
 	 */
-	अणु CFI_MFR_ANY, CFI_ID_ANY, fixup_use_poपूर्णांक पूर्ण,
-	अणु 0, 0, शून्य पूर्ण
-पूर्ण;
+	{ CFI_MFR_ANY, CFI_ID_ANY, fixup_use_point },
+	{ 0, 0, NULL }
+};
 
-अटल व्योम cfi_fixup_major_minor(काष्ठा cfi_निजी *cfi,
-						काष्ठा cfi_pri_पूर्णांकelext *extp)
-अणु
-	अगर (cfi->mfr == CFI_MFR_INTEL &&
+static void cfi_fixup_major_minor(struct cfi_private *cfi,
+						struct cfi_pri_intelext *extp)
+{
+	if (cfi->mfr == CFI_MFR_INTEL &&
 			cfi->id == PF38F4476 && extp->MinorVersion == '3')
 		extp->MinorVersion = '1';
-पूर्ण
+}
 
-अटल पूर्णांक cfi_is_micron_28F00AP30(काष्ठा cfi_निजी *cfi, काष्ठा flchip *chip)
-अणु
+static int cfi_is_micron_28F00AP30(struct cfi_private *cfi, struct flchip *chip)
+{
 	/*
 	 * Micron(was Numonyx) 1Gbit bottom boot are buggy w.r.t
-	 * Erase Supend क्रम their small Erase Blocks(0x8000)
+	 * Erase Supend for their small Erase Blocks(0x8000)
 	 */
-	अगर (cfi->mfr == CFI_MFR_INTEL && cfi->id == M28F00AP30)
-		वापस 1;
-	वापस 0;
-पूर्ण
+	if (cfi->mfr == CFI_MFR_INTEL && cfi->id == M28F00AP30)
+		return 1;
+	return 0;
+}
 
-अटल अंतरभूत काष्ठा cfi_pri_पूर्णांकelext *
-पढ़ो_pri_पूर्णांकelext(काष्ठा map_info *map, __u16 adr)
-अणु
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	काष्ठा cfi_pri_पूर्णांकelext *extp;
-	अचिन्हित पूर्णांक extra_size = 0;
-	अचिन्हित पूर्णांक extp_size = माप(*extp);
+static inline struct cfi_pri_intelext *
+read_pri_intelext(struct map_info *map, __u16 adr)
+{
+	struct cfi_private *cfi = map->fldrv_priv;
+	struct cfi_pri_intelext *extp;
+	unsigned int extra_size = 0;
+	unsigned int extp_size = sizeof(*extp);
 
  again:
-	extp = (काष्ठा cfi_pri_पूर्णांकelext *)cfi_पढ़ो_pri(map, adr, extp_size, "Intel/Sharp");
-	अगर (!extp)
-		वापस शून्य;
+	extp = (struct cfi_pri_intelext *)cfi_read_pri(map, adr, extp_size, "Intel/Sharp");
+	if (!extp)
+		return NULL;
 
 	cfi_fixup_major_minor(cfi, extp);
 
-	अगर (extp->MajorVersion != '1' ||
-	    (extp->MinorVersion < '0' || extp->MinorVersion > '5')) अणु
-		prपूर्णांकk(KERN_ERR "  Unknown Intel/Sharp Extended Query "
+	if (extp->MajorVersion != '1' ||
+	    (extp->MinorVersion < '0' || extp->MinorVersion > '5')) {
+		printk(KERN_ERR "  Unknown Intel/Sharp Extended Query "
 		       "version %c.%c.\n",  extp->MajorVersion,
 		       extp->MinorVersion);
-		kमुक्त(extp);
-		वापस शून्य;
-	पूर्ण
+		kfree(extp);
+		return NULL;
+	}
 
-	/* Do some byteswapping अगर necessary */
+	/* Do some byteswapping if necessary */
 	extp->FeatureSupport = le32_to_cpu(extp->FeatureSupport);
 	extp->BlkStatusRegMask = le16_to_cpu(extp->BlkStatusRegMask);
 	extp->ProtRegAddr = le16_to_cpu(extp->ProtRegAddr);
 
-	अगर (extp->MinorVersion >= '0') अणु
+	if (extp->MinorVersion >= '0') {
 		extra_size = 0;
 
 		/* Protection Register info */
-		अगर (extp->NumProtectionFields)
+		if (extp->NumProtectionFields)
 			extra_size += (extp->NumProtectionFields - 1) *
-				      माप(काष्ठा cfi_पूर्णांकelext_otpinfo);
-	पूर्ण
+				      sizeof(struct cfi_intelext_otpinfo);
+	}
 
-	अगर (extp->MinorVersion >= '1') अणु
+	if (extp->MinorVersion >= '1') {
 		/* Burst Read info */
 		extra_size += 2;
-		अगर (extp_size < माप(*extp) + extra_size)
-			जाओ need_more;
+		if (extp_size < sizeof(*extp) + extra_size)
+			goto need_more;
 		extra_size += extp->extra[extra_size - 1];
-	पूर्ण
+	}
 
-	अगर (extp->MinorVersion >= '3') अणु
-		पूर्णांक nb_parts, i;
+	if (extp->MinorVersion >= '3') {
+		int nb_parts, i;
 
 		/* Number of hardware-partitions */
 		extra_size += 1;
-		अगर (extp_size < माप(*extp) + extra_size)
-			जाओ need_more;
+		if (extp_size < sizeof(*extp) + extra_size)
+			goto need_more;
 		nb_parts = extp->extra[extra_size - 1];
 
-		/* skip the माप(partregion) field in CFI 1.4 */
-		अगर (extp->MinorVersion >= '4')
+		/* skip the sizeof(partregion) field in CFI 1.4 */
+		if (extp->MinorVersion >= '4')
 			extra_size += 2;
 
-		क्रम (i = 0; i < nb_parts; i++) अणु
-			काष्ठा cfi_पूर्णांकelext_regioninfo *rinfo;
-			rinfo = (काष्ठा cfi_पूर्णांकelext_regioninfo *)&extp->extra[extra_size];
-			extra_size += माप(*rinfo);
-			अगर (extp_size < माप(*extp) + extra_size)
-				जाओ need_more;
+		for (i = 0; i < nb_parts; i++) {
+			struct cfi_intelext_regioninfo *rinfo;
+			rinfo = (struct cfi_intelext_regioninfo *)&extp->extra[extra_size];
+			extra_size += sizeof(*rinfo);
+			if (extp_size < sizeof(*extp) + extra_size)
+				goto need_more;
 			rinfo->NumIdentPartitions=le16_to_cpu(rinfo->NumIdentPartitions);
 			extra_size += (rinfo->NumBlockTypes - 1)
-				      * माप(काष्ठा cfi_पूर्णांकelext_blockinfo);
-		पूर्ण
+				      * sizeof(struct cfi_intelext_blockinfo);
+		}
 
-		अगर (extp->MinorVersion >= '4')
-			extra_size += माप(काष्ठा cfi_पूर्णांकelext_programming_regioninfo);
+		if (extp->MinorVersion >= '4')
+			extra_size += sizeof(struct cfi_intelext_programming_regioninfo);
 
-		अगर (extp_size < माप(*extp) + extra_size) अणु
+		if (extp_size < sizeof(*extp) + extra_size) {
 			need_more:
-			extp_size = माप(*extp) + extra_size;
-			kमुक्त(extp);
-			अगर (extp_size > 4096) अणु
-				prपूर्णांकk(KERN_ERR
+			extp_size = sizeof(*extp) + extra_size;
+			kfree(extp);
+			if (extp_size > 4096) {
+				printk(KERN_ERR
 					"%s: cfi_pri_intelext is too fat\n",
 					__func__);
-				वापस शून्य;
-			पूर्ण
-			जाओ again;
-		पूर्ण
-	पूर्ण
+				return NULL;
+			}
+			goto again;
+		}
+	}
 
-	वापस extp;
-पूर्ण
+	return extp;
+}
 
-काष्ठा mtd_info *cfi_cmdset_0001(काष्ठा map_info *map, पूर्णांक primary)
-अणु
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	काष्ठा mtd_info *mtd;
-	पूर्णांक i;
+struct mtd_info *cfi_cmdset_0001(struct map_info *map, int primary)
+{
+	struct cfi_private *cfi = map->fldrv_priv;
+	struct mtd_info *mtd;
+	int i;
 
-	mtd = kzalloc(माप(*mtd), GFP_KERNEL);
-	अगर (!mtd)
-		वापस शून्य;
+	mtd = kzalloc(sizeof(*mtd), GFP_KERNEL);
+	if (!mtd)
+		return NULL;
 	mtd->priv = map;
 	mtd->type = MTD_NORFLASH;
 
-	/* Fill in the शेष mtd operations */
-	mtd->_erase   = cfi_पूर्णांकelext_erase_varsize;
-	mtd->_पढ़ो    = cfi_पूर्णांकelext_पढ़ो;
-	mtd->_ग_लिखो   = cfi_पूर्णांकelext_ग_लिखो_words;
-	mtd->_sync    = cfi_पूर्णांकelext_sync;
-	mtd->_lock    = cfi_पूर्णांकelext_lock;
-	mtd->_unlock  = cfi_पूर्णांकelext_unlock;
-	mtd->_is_locked = cfi_पूर्णांकelext_is_locked;
-	mtd->_suspend = cfi_पूर्णांकelext_suspend;
-	mtd->_resume  = cfi_पूर्णांकelext_resume;
+	/* Fill in the default mtd operations */
+	mtd->_erase   = cfi_intelext_erase_varsize;
+	mtd->_read    = cfi_intelext_read;
+	mtd->_write   = cfi_intelext_write_words;
+	mtd->_sync    = cfi_intelext_sync;
+	mtd->_lock    = cfi_intelext_lock;
+	mtd->_unlock  = cfi_intelext_unlock;
+	mtd->_is_locked = cfi_intelext_is_locked;
+	mtd->_suspend = cfi_intelext_suspend;
+	mtd->_resume  = cfi_intelext_resume;
 	mtd->flags   = MTD_CAP_NORFLASH;
 	mtd->name    = map->name;
-	mtd->ग_लिखोsize = 1;
-	mtd->ग_लिखोbufsize = cfi_पूर्णांकerleave(cfi) << cfi->cfiq->MaxBufWriteSize;
+	mtd->writesize = 1;
+	mtd->writebufsize = cfi_interleave(cfi) << cfi->cfiq->MaxBufWriteSize;
 
-	mtd->reboot_notअगरier.notअगरier_call = cfi_पूर्णांकelext_reboot;
+	mtd->reboot_notifier.notifier_call = cfi_intelext_reboot;
 
-	अगर (cfi->cfi_mode == CFI_MODE_CFI) अणु
+	if (cfi->cfi_mode == CFI_MODE_CFI) {
 		/*
-		 * It's a real CFI chip, not one क्रम which the probe
-		 * routine faked a CFI काष्ठाure. So we पढ़ो the feature
+		 * It's a real CFI chip, not one for which the probe
+		 * routine faked a CFI structure. So we read the feature
 		 * table from it.
 		 */
 		__u16 adr = primary?cfi->cfiq->P_ADR:cfi->cfiq->A_ADR;
-		काष्ठा cfi_pri_पूर्णांकelext *extp;
+		struct cfi_pri_intelext *extp;
 
-		extp = पढ़ो_pri_पूर्णांकelext(map, adr);
-		अगर (!extp) अणु
-			kमुक्त(mtd);
-			वापस शून्य;
-		पूर्ण
+		extp = read_pri_intelext(map, adr);
+		if (!extp) {
+			kfree(mtd);
+			return NULL;
+		}
 
-		/* Install our own निजी info काष्ठाure */
+		/* Install our own private info structure */
 		cfi->cmdset_priv = extp;
 
 		cfi_fixup(mtd, cfi_fixup_table);
 
-#अगर_घोषित DEBUG_CFI_FEATURES
+#ifdef DEBUG_CFI_FEATURES
 		/* Tell the user about it in lots of lovely detail */
 		cfi_tell_features(extp);
-#पूर्ण_अगर
+#endif
 
-		अगर(extp->SuspendCmdSupport & 1) अणु
-			prपूर्णांकk(KERN_NOTICE "cfi_cmdset_0001: Erase suspend on write enabled\n");
-		पूर्ण
-	पूर्ण
-	अन्यथा अगर (cfi->cfi_mode == CFI_MODE_JEDEC) अणु
-		/* Apply jedec specअगरic fixups */
+		if(extp->SuspendCmdSupport & 1) {
+			printk(KERN_NOTICE "cfi_cmdset_0001: Erase suspend on write enabled\n");
+		}
+	}
+	else if (cfi->cfi_mode == CFI_MODE_JEDEC) {
+		/* Apply jedec specific fixups */
 		cfi_fixup(mtd, jedec_fixup_table);
-	पूर्ण
+	}
 	/* Apply generic fixups */
 	cfi_fixup(mtd, fixup_table);
 
-	क्रम (i=0; i< cfi->numchips; i++) अणु
-		अगर (cfi->cfiq->WordWriteTimeoutTyp)
-			cfi->chips[i].word_ग_लिखो_समय =
+	for (i=0; i< cfi->numchips; i++) {
+		if (cfi->cfiq->WordWriteTimeoutTyp)
+			cfi->chips[i].word_write_time =
 				1<<cfi->cfiq->WordWriteTimeoutTyp;
-		अन्यथा
-			cfi->chips[i].word_ग_लिखो_समय = 50000;
+		else
+			cfi->chips[i].word_write_time = 50000;
 
-		अगर (cfi->cfiq->BufWriteTimeoutTyp)
-			cfi->chips[i].buffer_ग_लिखो_समय =
+		if (cfi->cfiq->BufWriteTimeoutTyp)
+			cfi->chips[i].buffer_write_time =
 				1<<cfi->cfiq->BufWriteTimeoutTyp;
-		/* No शेष; अगर it isn't specified, we won't use it */
+		/* No default; if it isn't specified, we won't use it */
 
-		अगर (cfi->cfiq->BlockEraseTimeoutTyp)
-			cfi->chips[i].erase_समय =
+		if (cfi->cfiq->BlockEraseTimeoutTyp)
+			cfi->chips[i].erase_time =
 				1000<<cfi->cfiq->BlockEraseTimeoutTyp;
-		अन्यथा
-			cfi->chips[i].erase_समय = 2000000;
+		else
+			cfi->chips[i].erase_time = 2000000;
 
-		अगर (cfi->cfiq->WordWriteTimeoutTyp &&
+		if (cfi->cfiq->WordWriteTimeoutTyp &&
 		    cfi->cfiq->WordWriteTimeoutMax)
-			cfi->chips[i].word_ग_लिखो_समय_max =
+			cfi->chips[i].word_write_time_max =
 				1<<(cfi->cfiq->WordWriteTimeoutTyp +
 				    cfi->cfiq->WordWriteTimeoutMax);
-		अन्यथा
-			cfi->chips[i].word_ग_लिखो_समय_max = 50000 * 8;
+		else
+			cfi->chips[i].word_write_time_max = 50000 * 8;
 
-		अगर (cfi->cfiq->BufWriteTimeoutTyp &&
+		if (cfi->cfiq->BufWriteTimeoutTyp &&
 		    cfi->cfiq->BufWriteTimeoutMax)
-			cfi->chips[i].buffer_ग_लिखो_समय_max =
+			cfi->chips[i].buffer_write_time_max =
 				1<<(cfi->cfiq->BufWriteTimeoutTyp +
 				    cfi->cfiq->BufWriteTimeoutMax);
 
-		अगर (cfi->cfiq->BlockEraseTimeoutTyp &&
+		if (cfi->cfiq->BlockEraseTimeoutTyp &&
 		    cfi->cfiq->BlockEraseTimeoutMax)
-			cfi->chips[i].erase_समय_max =
+			cfi->chips[i].erase_time_max =
 				1000<<(cfi->cfiq->BlockEraseTimeoutTyp +
 				       cfi->cfiq->BlockEraseTimeoutMax);
-		अन्यथा
-			cfi->chips[i].erase_समय_max = 2000000 * 8;
+		else
+			cfi->chips[i].erase_time_max = 2000000 * 8;
 
-		cfi->chips[i].ref_poपूर्णांक_counter = 0;
-		init_रुकोqueue_head(&(cfi->chips[i].wq));
-	पूर्ण
+		cfi->chips[i].ref_point_counter = 0;
+		init_waitqueue_head(&(cfi->chips[i].wq));
+	}
 
-	map->fldrv = &cfi_पूर्णांकelext_chipdrv;
+	map->fldrv = &cfi_intelext_chipdrv;
 
-	वापस cfi_पूर्णांकelext_setup(mtd);
-पूर्ण
-काष्ठा mtd_info *cfi_cmdset_0003(काष्ठा map_info *map, पूर्णांक primary) __attribute__((alias("cfi_cmdset_0001")));
-काष्ठा mtd_info *cfi_cmdset_0200(काष्ठा map_info *map, पूर्णांक primary) __attribute__((alias("cfi_cmdset_0001")));
+	return cfi_intelext_setup(mtd);
+}
+struct mtd_info *cfi_cmdset_0003(struct map_info *map, int primary) __attribute__((alias("cfi_cmdset_0001")));
+struct mtd_info *cfi_cmdset_0200(struct map_info *map, int primary) __attribute__((alias("cfi_cmdset_0001")));
 EXPORT_SYMBOL_GPL(cfi_cmdset_0001);
 EXPORT_SYMBOL_GPL(cfi_cmdset_0003);
 EXPORT_SYMBOL_GPL(cfi_cmdset_0200);
 
-अटल काष्ठा mtd_info *cfi_पूर्णांकelext_setup(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा map_info *map = mtd->priv;
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	अचिन्हित दीर्घ offset = 0;
-	पूर्णांक i,j;
-	अचिन्हित दीर्घ devsize = (1<<cfi->cfiq->DevSize) * cfi->पूर्णांकerleave;
+static struct mtd_info *cfi_intelext_setup(struct mtd_info *mtd)
+{
+	struct map_info *map = mtd->priv;
+	struct cfi_private *cfi = map->fldrv_priv;
+	unsigned long offset = 0;
+	int i,j;
+	unsigned long devsize = (1<<cfi->cfiq->DevSize) * cfi->interleave;
 
-	//prपूर्णांकk(KERN_DEBUG "number of CFI chips: %d\n", cfi->numchips);
+	//printk(KERN_DEBUG "number of CFI chips: %d\n", cfi->numchips);
 
 	mtd->size = devsize * cfi->numchips;
 
 	mtd->numeraseregions = cfi->cfiq->NumEraseRegions * cfi->numchips;
-	mtd->eraseregions = kसुस्मृति(mtd->numeraseregions,
-				    माप(काष्ठा mtd_erase_region_info),
+	mtd->eraseregions = kcalloc(mtd->numeraseregions,
+				    sizeof(struct mtd_erase_region_info),
 				    GFP_KERNEL);
-	अगर (!mtd->eraseregions)
-		जाओ setup_err;
+	if (!mtd->eraseregions)
+		goto setup_err;
 
-	क्रम (i=0; i<cfi->cfiq->NumEraseRegions; i++) अणु
-		अचिन्हित दीर्घ ernum, ersize;
-		ersize = ((cfi->cfiq->EraseRegionInfo[i] >> 8) & ~0xff) * cfi->पूर्णांकerleave;
+	for (i=0; i<cfi->cfiq->NumEraseRegions; i++) {
+		unsigned long ernum, ersize;
+		ersize = ((cfi->cfiq->EraseRegionInfo[i] >> 8) & ~0xff) * cfi->interleave;
 		ernum = (cfi->cfiq->EraseRegionInfo[i] & 0xffff) + 1;
 
-		अगर (mtd->erasesize < ersize) अणु
+		if (mtd->erasesize < ersize) {
 			mtd->erasesize = ersize;
-		पूर्ण
-		क्रम (j=0; j<cfi->numchips; j++) अणु
+		}
+		for (j=0; j<cfi->numchips; j++) {
 			mtd->eraseregions[(j*cfi->cfiq->NumEraseRegions)+i].offset = (j*devsize)+offset;
 			mtd->eraseregions[(j*cfi->cfiq->NumEraseRegions)+i].erasesize = ersize;
 			mtd->eraseregions[(j*cfi->cfiq->NumEraseRegions)+i].numblocks = ernum;
-			mtd->eraseregions[(j*cfi->cfiq->NumEraseRegions)+i].lockmap = kदो_स्मृति(ernum / 8 + 1, GFP_KERNEL);
-			अगर (!mtd->eraseregions[(j*cfi->cfiq->NumEraseRegions)+i].lockmap)
-				जाओ setup_err;
-		पूर्ण
+			mtd->eraseregions[(j*cfi->cfiq->NumEraseRegions)+i].lockmap = kmalloc(ernum / 8 + 1, GFP_KERNEL);
+			if (!mtd->eraseregions[(j*cfi->cfiq->NumEraseRegions)+i].lockmap)
+				goto setup_err;
+		}
 		offset += (ersize * ernum);
-	पूर्ण
+	}
 
-	अगर (offset != devsize) अणु
+	if (offset != devsize) {
 		/* Argh */
-		prपूर्णांकk(KERN_WARNING "Sum of regions (%lx) != total size of set of interleaved chips (%lx)\n", offset, devsize);
-		जाओ setup_err;
-	पूर्ण
+		printk(KERN_WARNING "Sum of regions (%lx) != total size of set of interleaved chips (%lx)\n", offset, devsize);
+		goto setup_err;
+	}
 
-	क्रम (i=0; i<mtd->numeraseregions;i++)अणु
-		prपूर्णांकk(KERN_DEBUG "erase region %d: offset=0x%llx,size=0x%x,blocks=%d\n",
-		       i,(अचिन्हित दीर्घ दीर्घ)mtd->eraseregions[i].offset,
+	for (i=0; i<mtd->numeraseregions;i++){
+		printk(KERN_DEBUG "erase region %d: offset=0x%llx,size=0x%x,blocks=%d\n",
+		       i,(unsigned long long)mtd->eraseregions[i].offset,
 		       mtd->eraseregions[i].erasesize,
 		       mtd->eraseregions[i].numblocks);
-	पूर्ण
+	}
 
-#अगर_घोषित CONFIG_MTD_OTP
-	mtd->_पढ़ो_fact_prot_reg = cfi_पूर्णांकelext_पढ़ो_fact_prot_reg;
-	mtd->_पढ़ो_user_prot_reg = cfi_पूर्णांकelext_पढ़ो_user_prot_reg;
-	mtd->_ग_लिखो_user_prot_reg = cfi_पूर्णांकelext_ग_लिखो_user_prot_reg;
-	mtd->_lock_user_prot_reg = cfi_पूर्णांकelext_lock_user_prot_reg;
-	mtd->_get_fact_prot_info = cfi_पूर्णांकelext_get_fact_prot_info;
-	mtd->_get_user_prot_info = cfi_पूर्णांकelext_get_user_prot_info;
-#पूर्ण_अगर
+#ifdef CONFIG_MTD_OTP
+	mtd->_read_fact_prot_reg = cfi_intelext_read_fact_prot_reg;
+	mtd->_read_user_prot_reg = cfi_intelext_read_user_prot_reg;
+	mtd->_write_user_prot_reg = cfi_intelext_write_user_prot_reg;
+	mtd->_lock_user_prot_reg = cfi_intelext_lock_user_prot_reg;
+	mtd->_get_fact_prot_info = cfi_intelext_get_fact_prot_info;
+	mtd->_get_user_prot_info = cfi_intelext_get_user_prot_info;
+#endif
 
 	/* This function has the potential to distort the reality
-	   a bit and thereक्रमe should be called last. */
-	अगर (cfi_पूर्णांकelext_partition_fixup(mtd, &cfi) != 0)
-		जाओ setup_err;
+	   a bit and therefore should be called last. */
+	if (cfi_intelext_partition_fixup(mtd, &cfi) != 0)
+		goto setup_err;
 
 	__module_get(THIS_MODULE);
-	रेजिस्टर_reboot_notअगरier(&mtd->reboot_notअगरier);
-	वापस mtd;
+	register_reboot_notifier(&mtd->reboot_notifier);
+	return mtd;
 
  setup_err:
-	अगर (mtd->eraseregions)
-		क्रम (i=0; i<cfi->cfiq->NumEraseRegions; i++)
-			क्रम (j=0; j<cfi->numchips; j++)
-				kमुक्त(mtd->eraseregions[(j*cfi->cfiq->NumEraseRegions)+i].lockmap);
-	kमुक्त(mtd->eraseregions);
-	kमुक्त(mtd);
-	kमुक्त(cfi->cmdset_priv);
-	वापस शून्य;
-पूर्ण
+	if (mtd->eraseregions)
+		for (i=0; i<cfi->cfiq->NumEraseRegions; i++)
+			for (j=0; j<cfi->numchips; j++)
+				kfree(mtd->eraseregions[(j*cfi->cfiq->NumEraseRegions)+i].lockmap);
+	kfree(mtd->eraseregions);
+	kfree(mtd);
+	kfree(cfi->cmdset_priv);
+	return NULL;
+}
 
-अटल पूर्णांक cfi_पूर्णांकelext_partition_fixup(काष्ठा mtd_info *mtd,
-					काष्ठा cfi_निजी **pcfi)
-अणु
-	काष्ठा map_info *map = mtd->priv;
-	काष्ठा cfi_निजी *cfi = *pcfi;
-	काष्ठा cfi_pri_पूर्णांकelext *extp = cfi->cmdset_priv;
+static int cfi_intelext_partition_fixup(struct mtd_info *mtd,
+					struct cfi_private **pcfi)
+{
+	struct map_info *map = mtd->priv;
+	struct cfi_private *cfi = *pcfi;
+	struct cfi_pri_intelext *extp = cfi->cmdset_priv;
 
 	/*
 	 * Probing of multi-partition flash chips.
 	 *
 	 * To support multiple partitions when available, we simply arrange
-	 * क्रम each of them to have their own flchip काष्ठाure even अगर they
+	 * for each of them to have their own flchip structure even if they
 	 * are on the same physical chip.  This means completely recreating
-	 * a new cfi_निजी काष्ठाure right here which is a blatent code
-	 * layering violation, but this is still the least पूर्णांकrusive
-	 * arrangement at this poपूर्णांक. This can be rearranged in the future
-	 * अगर someone feels motivated enough.  --nico
+	 * a new cfi_private structure right here which is a blatent code
+	 * layering violation, but this is still the least intrusive
+	 * arrangement at this point. This can be rearranged in the future
+	 * if someone feels motivated enough.  --nico
 	 */
-	अगर (extp && extp->MajorVersion == '1' && extp->MinorVersion >= '3'
-	    && extp->FeatureSupport & (1 << 9)) अणु
-		पूर्णांक offs = 0;
-		काष्ठा cfi_निजी *newcfi;
-		काष्ठा flchip *chip;
-		काष्ठा flchip_shared *shared;
-		पूर्णांक numregions, numparts, partshअगरt, numvirtchips, i, j;
+	if (extp && extp->MajorVersion == '1' && extp->MinorVersion >= '3'
+	    && extp->FeatureSupport & (1 << 9)) {
+		int offs = 0;
+		struct cfi_private *newcfi;
+		struct flchip *chip;
+		struct flchip_shared *shared;
+		int numregions, numparts, partshift, numvirtchips, i, j;
 
 		/* Protection Register info */
-		अगर (extp->NumProtectionFields)
+		if (extp->NumProtectionFields)
 			offs = (extp->NumProtectionFields - 1) *
-			       माप(काष्ठा cfi_पूर्णांकelext_otpinfo);
+			       sizeof(struct cfi_intelext_otpinfo);
 
 		/* Burst Read info */
 		offs += extp->extra[offs+1]+2;
@@ -716,324 +715,324 @@ EXPORT_SYMBOL_GPL(cfi_cmdset_0200);
 		numregions = extp->extra[offs];
 		offs += 1;
 
-		/* skip the माप(partregion) field in CFI 1.4 */
-		अगर (extp->MinorVersion >= '4')
+		/* skip the sizeof(partregion) field in CFI 1.4 */
+		if (extp->MinorVersion >= '4')
 			offs += 2;
 
 		/* Number of hardware partitions */
 		numparts = 0;
-		क्रम (i = 0; i < numregions; i++) अणु
-			काष्ठा cfi_पूर्णांकelext_regioninfo *rinfo;
-			rinfo = (काष्ठा cfi_पूर्णांकelext_regioninfo *)&extp->extra[offs];
+		for (i = 0; i < numregions; i++) {
+			struct cfi_intelext_regioninfo *rinfo;
+			rinfo = (struct cfi_intelext_regioninfo *)&extp->extra[offs];
 			numparts += rinfo->NumIdentPartitions;
-			offs += माप(*rinfo)
+			offs += sizeof(*rinfo)
 				+ (rinfo->NumBlockTypes - 1) *
-				  माप(काष्ठा cfi_पूर्णांकelext_blockinfo);
-		पूर्ण
+				  sizeof(struct cfi_intelext_blockinfo);
+		}
 
-		अगर (!numparts)
+		if (!numparts)
 			numparts = 1;
 
 		/* Programming Region info */
-		अगर (extp->MinorVersion >= '4') अणु
-			काष्ठा cfi_पूर्णांकelext_programming_regioninfo *prinfo;
-			prinfo = (काष्ठा cfi_पूर्णांकelext_programming_regioninfo *)&extp->extra[offs];
-			mtd->ग_लिखोsize = cfi->पूर्णांकerleave << prinfo->ProgRegShअगरt;
+		if (extp->MinorVersion >= '4') {
+			struct cfi_intelext_programming_regioninfo *prinfo;
+			prinfo = (struct cfi_intelext_programming_regioninfo *)&extp->extra[offs];
+			mtd->writesize = cfi->interleave << prinfo->ProgRegShift;
 			mtd->flags &= ~MTD_BIT_WRITEABLE;
-			prपूर्णांकk(KERN_DEBUG "%s: program region size/ctrl_valid/ctrl_inval = %d/%d/%d\n",
-			       map->name, mtd->ग_लिखोsize,
-			       cfi->पूर्णांकerleave * prinfo->ControlValid,
-			       cfi->पूर्णांकerleave * prinfo->ControlInvalid);
-		पूर्ण
+			printk(KERN_DEBUG "%s: program region size/ctrl_valid/ctrl_inval = %d/%d/%d\n",
+			       map->name, mtd->writesize,
+			       cfi->interleave * prinfo->ControlValid,
+			       cfi->interleave * prinfo->ControlInvalid);
+		}
 
 		/*
 		 * All functions below currently rely on all chips having
 		 * the same geometry so we'll just assume that all hardware
 		 * partitions are of the same size too.
 		 */
-		partshअगरt = cfi->chipshअगरt - __ffs(numparts);
+		partshift = cfi->chipshift - __ffs(numparts);
 
-		अगर ((1 << partshअगरt) < mtd->erasesize) अणु
-			prपूर्णांकk( KERN_ERR
+		if ((1 << partshift) < mtd->erasesize) {
+			printk( KERN_ERR
 				"%s: bad number of hw partitions (%d)\n",
 				__func__, numparts);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		numvirtchips = cfi->numchips * numparts;
-		newcfi = kदो_स्मृति(काष्ठा_size(newcfi, chips, numvirtchips),
+		newcfi = kmalloc(struct_size(newcfi, chips, numvirtchips),
 				 GFP_KERNEL);
-		अगर (!newcfi)
-			वापस -ENOMEM;
-		shared = kदो_स्मृति_array(cfi->numchips,
-				       माप(काष्ठा flchip_shared),
+		if (!newcfi)
+			return -ENOMEM;
+		shared = kmalloc_array(cfi->numchips,
+				       sizeof(struct flchip_shared),
 				       GFP_KERNEL);
-		अगर (!shared) अणु
-			kमुक्त(newcfi);
-			वापस -ENOMEM;
-		पूर्ण
-		स_नकल(newcfi, cfi, माप(काष्ठा cfi_निजी));
+		if (!shared) {
+			kfree(newcfi);
+			return -ENOMEM;
+		}
+		memcpy(newcfi, cfi, sizeof(struct cfi_private));
 		newcfi->numchips = numvirtchips;
-		newcfi->chipshअगरt = partshअगरt;
+		newcfi->chipshift = partshift;
 
 		chip = &newcfi->chips[0];
-		क्रम (i = 0; i < cfi->numchips; i++) अणु
-			shared[i].writing = shared[i].erasing = शून्य;
+		for (i = 0; i < cfi->numchips; i++) {
+			shared[i].writing = shared[i].erasing = NULL;
 			mutex_init(&shared[i].lock);
-			क्रम (j = 0; j < numparts; j++) अणु
+			for (j = 0; j < numparts; j++) {
 				*chip = cfi->chips[i];
-				chip->start += j << partshअगरt;
+				chip->start += j << partshift;
 				chip->priv = &shared[i];
 				/* those should be reset too since
 				   they create memory references. */
-				init_रुकोqueue_head(&chip->wq);
+				init_waitqueue_head(&chip->wq);
 				mutex_init(&chip->mutex);
 				chip++;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		prपूर्णांकk(KERN_DEBUG "%s: %d set(s) of %d interleaved chips "
+		printk(KERN_DEBUG "%s: %d set(s) of %d interleaved chips "
 				  "--> %d partitions of %d KiB\n",
-				  map->name, cfi->numchips, cfi->पूर्णांकerleave,
-				  newcfi->numchips, 1<<(newcfi->chipshअगरt-10));
+				  map->name, cfi->numchips, cfi->interleave,
+				  newcfi->numchips, 1<<(newcfi->chipshift-10));
 
 		map->fldrv_priv = newcfi;
 		*pcfi = newcfi;
-		kमुक्त(cfi);
-	पूर्ण
+		kfree(cfi);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  *  *********** CHIP ACCESS FUNCTIONS ***********
  */
-अटल पूर्णांक chip_पढ़ोy (काष्ठा map_info *map, काष्ठा flchip *chip, अचिन्हित दीर्घ adr, पूर्णांक mode)
-अणु
-	DECLARE_WAITQUEUE(रुको, current);
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
+static int chip_ready (struct map_info *map, struct flchip *chip, unsigned long adr, int mode)
+{
+	DECLARE_WAITQUEUE(wait, current);
+	struct cfi_private *cfi = map->fldrv_priv;
 	map_word status, status_OK = CMD(0x80), status_PWS = CMD(0x01);
-	काष्ठा cfi_pri_पूर्णांकelext *cfip = cfi->cmdset_priv;
-	अचिन्हित दीर्घ समयo = jअगरfies + HZ;
+	struct cfi_pri_intelext *cfip = cfi->cmdset_priv;
+	unsigned long timeo = jiffies + HZ;
 
-	/* Prevent setting state FL_SYNCING क्रम chip in suspended state. */
-	अगर (mode == FL_SYNCING && chip->oldstate != FL_READY)
-		जाओ sleep;
+	/* Prevent setting state FL_SYNCING for chip in suspended state. */
+	if (mode == FL_SYNCING && chip->oldstate != FL_READY)
+		goto sleep;
 
-	चयन (chip->state) अणु
+	switch (chip->state) {
 
-	हाल FL_STATUS:
-		क्रम (;;) अणु
-			status = map_पढ़ो(map, adr);
-			अगर (map_word_andequal(map, status, status_OK, status_OK))
-				अवरोध;
+	case FL_STATUS:
+		for (;;) {
+			status = map_read(map, adr);
+			if (map_word_andequal(map, status, status_OK, status_OK))
+				break;
 
-			/* At this poपूर्णांक we're fine with ग_लिखो operations
-			   in other partitions as they करोn't conflict. */
-			अगर (chip->priv && map_word_andequal(map, status, status_PWS, status_PWS))
-				अवरोध;
+			/* At this point we're fine with write operations
+			   in other partitions as they don't conflict. */
+			if (chip->priv && map_word_andequal(map, status, status_PWS, status_PWS))
+				break;
 
 			mutex_unlock(&chip->mutex);
 			cfi_udelay(1);
 			mutex_lock(&chip->mutex);
-			/* Someone अन्यथा might have been playing with it. */
-			वापस -EAGAIN;
-		पूर्ण
+			/* Someone else might have been playing with it. */
+			return -EAGAIN;
+		}
 		fallthrough;
-	हाल FL_READY:
-	हाल FL_CFI_QUERY:
-	हाल FL_JEDEC_QUERY:
-		वापस 0;
+	case FL_READY:
+	case FL_CFI_QUERY:
+	case FL_JEDEC_QUERY:
+		return 0;
 
-	हाल FL_ERASING:
-		अगर (!cfip ||
+	case FL_ERASING:
+		if (!cfip ||
 		    !(cfip->FeatureSupport & 2) ||
 		    !(mode == FL_READY || mode == FL_POINT ||
 		     (mode == FL_WRITING && (cfip->SuspendCmdSupport & 1))))
-			जाओ sleep;
+			goto sleep;
 
-		/* Do not allow suspend अगरf पढ़ो/ग_लिखो to EB address */
-		अगर ((adr & chip->in_progress_block_mask) ==
+		/* Do not allow suspend iff read/write to EB address */
+		if ((adr & chip->in_progress_block_mask) ==
 		    chip->in_progress_block_addr)
-			जाओ sleep;
+			goto sleep;
 
-		/* करो not suspend small EBs, buggy Micron Chips */
-		अगर (cfi_is_micron_28F00AP30(cfi, chip) &&
+		/* do not suspend small EBs, buggy Micron Chips */
+		if (cfi_is_micron_28F00AP30(cfi, chip) &&
 		    (chip->in_progress_block_mask == ~(0x8000-1)))
-			जाओ sleep;
+			goto sleep;
 
 		/* Erase suspend */
-		map_ग_लिखो(map, CMD(0xB0), chip->in_progress_block_addr);
+		map_write(map, CMD(0xB0), chip->in_progress_block_addr);
 
 		/* If the flash has finished erasing, then 'erase suspend'
-		 * appears to make some (28F320) flash devices चयन to
+		 * appears to make some (28F320) flash devices switch to
 		 * 'read' mode.  Make sure that we switch to 'read status'
 		 * mode so we get the right data. --rmk
 		 */
-		map_ग_लिखो(map, CMD(0x70), chip->in_progress_block_addr);
+		map_write(map, CMD(0x70), chip->in_progress_block_addr);
 		chip->oldstate = FL_ERASING;
 		chip->state = FL_ERASE_SUSPENDING;
 		chip->erase_suspended = 1;
-		क्रम (;;) अणु
-			status = map_पढ़ो(map, chip->in_progress_block_addr);
-			अगर (map_word_andequal(map, status, status_OK, status_OK))
-			        अवरोध;
+		for (;;) {
+			status = map_read(map, chip->in_progress_block_addr);
+			if (map_word_andequal(map, status, status_OK, status_OK))
+			        break;
 
-			अगर (समय_after(jअगरfies, समयo)) अणु
+			if (time_after(jiffies, timeo)) {
 				/* Urgh. Resume and pretend we weren't here.
-				 * Make sure we're in 'read status' mode अगर it had finished */
+				 * Make sure we're in 'read status' mode if it had finished */
 				put_chip(map, chip, adr);
-				prपूर्णांकk(KERN_ERR "%s: Chip not ready after erase "
+				printk(KERN_ERR "%s: Chip not ready after erase "
 				       "suspended: status = 0x%lx\n", map->name, status.x[0]);
-				वापस -EIO;
-			पूर्ण
+				return -EIO;
+			}
 
 			mutex_unlock(&chip->mutex);
 			cfi_udelay(1);
 			mutex_lock(&chip->mutex);
-			/* Nobody will touch it जबतक it's in state FL_ERASE_SUSPENDING.
+			/* Nobody will touch it while it's in state FL_ERASE_SUSPENDING.
 			   So we can just loop here. */
-		पूर्ण
+		}
 		chip->state = FL_STATUS;
-		वापस 0;
+		return 0;
 
-	हाल FL_XIP_WHILE_ERASING:
-		अगर (mode != FL_READY && mode != FL_POINT &&
+	case FL_XIP_WHILE_ERASING:
+		if (mode != FL_READY && mode != FL_POINT &&
 		    (mode != FL_WRITING || !cfip || !(cfip->SuspendCmdSupport&1)))
-			जाओ sleep;
+			goto sleep;
 		chip->oldstate = chip->state;
 		chip->state = FL_READY;
-		वापस 0;
+		return 0;
 
-	हाल FL_SHUTDOWN:
+	case FL_SHUTDOWN:
 		/* The machine is rebooting now,so no one can get chip anymore */
-		वापस -EIO;
-	हाल FL_POINT:
-		/* Only अगर there's no operation suspended... */
-		अगर (mode == FL_READY && chip->oldstate == FL_READY)
-			वापस 0;
+		return -EIO;
+	case FL_POINT:
+		/* Only if there's no operation suspended... */
+		if (mode == FL_READY && chip->oldstate == FL_READY)
+			return 0;
 		fallthrough;
-	शेष:
+	default:
 	sleep:
 		set_current_state(TASK_UNINTERRUPTIBLE);
-		add_रुको_queue(&chip->wq, &रुको);
+		add_wait_queue(&chip->wq, &wait);
 		mutex_unlock(&chip->mutex);
 		schedule();
-		हटाओ_रुको_queue(&chip->wq, &रुको);
+		remove_wait_queue(&chip->wq, &wait);
 		mutex_lock(&chip->mutex);
-		वापस -EAGAIN;
-	पूर्ण
-पूर्ण
+		return -EAGAIN;
+	}
+}
 
-अटल पूर्णांक get_chip(काष्ठा map_info *map, काष्ठा flchip *chip, अचिन्हित दीर्घ adr, पूर्णांक mode)
-अणु
-	पूर्णांक ret;
-	DECLARE_WAITQUEUE(रुको, current);
+static int get_chip(struct map_info *map, struct flchip *chip, unsigned long adr, int mode)
+{
+	int ret;
+	DECLARE_WAITQUEUE(wait, current);
 
  retry:
-	अगर (chip->priv &&
+	if (chip->priv &&
 	    (mode == FL_WRITING || mode == FL_ERASING || mode == FL_OTP_WRITE
-	    || mode == FL_SHUTDOWN) && chip->state != FL_SYNCING) अणु
+	    || mode == FL_SHUTDOWN) && chip->state != FL_SYNCING) {
 		/*
-		 * OK. We have possibility क्रम contention on the ग_लिखो/erase
+		 * OK. We have possibility for contention on the write/erase
 		 * operations which are global to the real chip and not per
 		 * partition.  So let's fight it over in the partition which
 		 * currently has authority on the operation.
 		 *
 		 * The rules are as follows:
 		 *
-		 * - any ग_लिखो operation must own shared->writing.
+		 * - any write operation must own shared->writing.
 		 *
 		 * - any erase operation must own _both_ shared->writing and
 		 *   shared->erasing.
 		 *
 		 * - contention arbitration is handled in the owner's context.
 		 *
-		 * The 'shared' काष्ठा can be पढ़ो and/or written only when
+		 * The 'shared' struct can be read and/or written only when
 		 * its lock is taken.
 		 */
-		काष्ठा flchip_shared *shared = chip->priv;
-		काष्ठा flchip *contender;
+		struct flchip_shared *shared = chip->priv;
+		struct flchip *contender;
 		mutex_lock(&shared->lock);
 		contender = shared->writing;
-		अगर (contender && contender != chip) अणु
+		if (contender && contender != chip) {
 			/*
-			 * The engine to perक्रमm desired operation on this
-			 * partition is alपढ़ोy in use by someone अन्यथा.
+			 * The engine to perform desired operation on this
+			 * partition is already in use by someone else.
 			 * Let's fight over it in the context of the chip
 			 * currently using it.  If it is possible to suspend,
-			 * that other partition will करो just that, otherwise
-			 * it'll happily send us to sleep.  In any हाल, when
-			 * get_chip वापसs success we're clear to go ahead.
+			 * that other partition will do just that, otherwise
+			 * it'll happily send us to sleep.  In any case, when
+			 * get_chip returns success we're clear to go ahead.
 			 */
 			ret = mutex_trylock(&contender->mutex);
 			mutex_unlock(&shared->lock);
-			अगर (!ret)
-				जाओ retry;
+			if (!ret)
+				goto retry;
 			mutex_unlock(&chip->mutex);
-			ret = chip_पढ़ोy(map, contender, contender->start, mode);
+			ret = chip_ready(map, contender, contender->start, mode);
 			mutex_lock(&chip->mutex);
 
-			अगर (ret == -EAGAIN) अणु
+			if (ret == -EAGAIN) {
 				mutex_unlock(&contender->mutex);
-				जाओ retry;
-			पूर्ण
-			अगर (ret) अणु
+				goto retry;
+			}
+			if (ret) {
 				mutex_unlock(&contender->mutex);
-				वापस ret;
-			पूर्ण
+				return ret;
+			}
 			mutex_lock(&shared->lock);
 
-			/* We should not own chip अगर it is alपढ़ोy
+			/* We should not own chip if it is already
 			 * in FL_SYNCING state. Put contender and retry. */
-			अगर (chip->state == FL_SYNCING) अणु
+			if (chip->state == FL_SYNCING) {
 				put_chip(map, contender, contender->start);
 				mutex_unlock(&contender->mutex);
-				जाओ retry;
-			पूर्ण
+				goto retry;
+			}
 			mutex_unlock(&contender->mutex);
-		पूर्ण
+		}
 
-		/* Check अगर we alपढ़ोy have suspended erase
+		/* Check if we already have suspended erase
 		 * on this chip. Sleep. */
-		अगर (mode == FL_ERASING && shared->erasing
-		    && shared->erasing->oldstate == FL_ERASING) अणु
+		if (mode == FL_ERASING && shared->erasing
+		    && shared->erasing->oldstate == FL_ERASING) {
 			mutex_unlock(&shared->lock);
 			set_current_state(TASK_UNINTERRUPTIBLE);
-			add_रुको_queue(&chip->wq, &रुको);
+			add_wait_queue(&chip->wq, &wait);
 			mutex_unlock(&chip->mutex);
 			schedule();
-			हटाओ_रुको_queue(&chip->wq, &रुको);
+			remove_wait_queue(&chip->wq, &wait);
 			mutex_lock(&chip->mutex);
-			जाओ retry;
-		पूर्ण
+			goto retry;
+		}
 
 		/* We now own it */
 		shared->writing = chip;
-		अगर (mode == FL_ERASING)
+		if (mode == FL_ERASING)
 			shared->erasing = chip;
 		mutex_unlock(&shared->lock);
-	पूर्ण
-	ret = chip_पढ़ोy(map, chip, adr, mode);
-	अगर (ret == -EAGAIN)
-		जाओ retry;
+	}
+	ret = chip_ready(map, chip, adr, mode);
+	if (ret == -EAGAIN)
+		goto retry;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम put_chip(काष्ठा map_info *map, काष्ठा flchip *chip, अचिन्हित दीर्घ adr)
-अणु
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
+static void put_chip(struct map_info *map, struct flchip *chip, unsigned long adr)
+{
+	struct cfi_private *cfi = map->fldrv_priv;
 
-	अगर (chip->priv) अणु
-		काष्ठा flchip_shared *shared = chip->priv;
+	if (chip->priv) {
+		struct flchip_shared *shared = chip->priv;
 		mutex_lock(&shared->lock);
-		अगर (shared->writing == chip && chip->oldstate == FL_READY) अणु
-			/* We own the ability to ग_लिखो, but we're करोne */
+		if (shared->writing == chip && chip->oldstate == FL_READY) {
+			/* We own the ability to write, but we're done */
 			shared->writing = shared->erasing;
-			अगर (shared->writing && shared->writing != chip) अणु
+			if (shared->writing && shared->writing != chip) {
 				/* give back ownership to who we loaned it from */
-				काष्ठा flchip *loaner = shared->writing;
+				struct flchip *loaner = shared->writing;
 				mutex_lock(&loaner->mutex);
 				mutex_unlock(&shared->lock);
 				mutex_unlock(&chip->mutex);
@@ -1041,169 +1040,169 @@ EXPORT_SYMBOL_GPL(cfi_cmdset_0200);
 				mutex_lock(&chip->mutex);
 				mutex_unlock(&loaner->mutex);
 				wake_up(&chip->wq);
-				वापस;
-			पूर्ण
-			shared->erasing = शून्य;
-			shared->writing = शून्य;
-		पूर्ण अन्यथा अगर (shared->erasing == chip && shared->writing != chip) अणु
+				return;
+			}
+			shared->erasing = NULL;
+			shared->writing = NULL;
+		} else if (shared->erasing == chip && shared->writing != chip) {
 			/*
 			 * We own the ability to erase without the ability
-			 * to ग_लिखो, which means the erase was suspended
+			 * to write, which means the erase was suspended
 			 * and some other partition is currently writing.
-			 * Don't let the चयन below mess things up since
-			 * we करोn't have ownership to resume anything.
+			 * Don't let the switch below mess things up since
+			 * we don't have ownership to resume anything.
 			 */
 			mutex_unlock(&shared->lock);
 			wake_up(&chip->wq);
-			वापस;
-		पूर्ण
+			return;
+		}
 		mutex_unlock(&shared->lock);
-	पूर्ण
+	}
 
-	चयन(chip->oldstate) अणु
-	हाल FL_ERASING:
-		/* What अगर one पूर्णांकerleaved chip has finished and the
+	switch(chip->oldstate) {
+	case FL_ERASING:
+		/* What if one interleaved chip has finished and the
 		   other hasn't? The old code would leave the finished
 		   one in READY mode. That's bad, and caused -EROFS
-		   errors to be वापसed from करो_erase_oneblock because
-		   that's the only bit it checked क्रम at the समय.
+		   errors to be returned from do_erase_oneblock because
+		   that's the only bit it checked for at the time.
 		   As the state machine appears to explicitly allow
 		   sending the 0x70 (Read Status) command to an erasing
 		   chip and expecting it to be ignored, that's what we
-		   करो. */
-		map_ग_लिखो(map, CMD(0xd0), chip->in_progress_block_addr);
-		map_ग_लिखो(map, CMD(0x70), chip->in_progress_block_addr);
+		   do. */
+		map_write(map, CMD(0xd0), chip->in_progress_block_addr);
+		map_write(map, CMD(0x70), chip->in_progress_block_addr);
 		chip->oldstate = FL_READY;
 		chip->state = FL_ERASING;
-		अवरोध;
+		break;
 
-	हाल FL_XIP_WHILE_ERASING:
+	case FL_XIP_WHILE_ERASING:
 		chip->state = chip->oldstate;
 		chip->oldstate = FL_READY;
-		अवरोध;
+		break;
 
-	हाल FL_READY:
-	हाल FL_STATUS:
-	हाल FL_JEDEC_QUERY:
-		अवरोध;
-	शेष:
-		prपूर्णांकk(KERN_ERR "%s: put_chip() called with oldstate %d!!\n", map->name, chip->oldstate);
-	पूर्ण
+	case FL_READY:
+	case FL_STATUS:
+	case FL_JEDEC_QUERY:
+		break;
+	default:
+		printk(KERN_ERR "%s: put_chip() called with oldstate %d!!\n", map->name, chip->oldstate);
+	}
 	wake_up(&chip->wq);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_MTD_XIP
+#ifdef CONFIG_MTD_XIP
 
 /*
- * No पूर्णांकerrupt what so ever can be serviced जबतक the flash isn't in array
+ * No interrupt what so ever can be serviced while the flash isn't in array
  * mode.  This is ensured by the xip_disable() and xip_enable() functions
  * enclosing any code path where the flash is known not to be in array mode.
  * And within a XIP disabled code path, only functions marked with __xipram
- * may be called and nothing अन्यथा (it's a good thing to inspect generated
- * assembly to make sure अंतरभूत functions were actually अंतरभूतd and that gcc
+ * may be called and nothing else (it's a good thing to inspect generated
+ * assembly to make sure inline functions were actually inlined and that gcc
  * didn't emit calls to its own support functions). Also configuring MTD CFI
- * support to a single buswidth and a single पूर्णांकerleave is also recommended.
+ * support to a single buswidth and a single interleave is also recommended.
  */
 
-अटल व्योम xip_disable(काष्ठा map_info *map, काष्ठा flchip *chip,
-			अचिन्हित दीर्घ adr)
-अणु
-	/* TODO: chips with no XIP use should ignore and वापस */
-	(व्योम) map_पढ़ो(map, adr); /* ensure mmu mapping is up to date */
+static void xip_disable(struct map_info *map, struct flchip *chip,
+			unsigned long adr)
+{
+	/* TODO: chips with no XIP use should ignore and return */
+	(void) map_read(map, adr); /* ensure mmu mapping is up to date */
 	local_irq_disable();
-पूर्ण
+}
 
-अटल व्योम __xipram xip_enable(काष्ठा map_info *map, काष्ठा flchip *chip,
-				अचिन्हित दीर्घ adr)
-अणु
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	अगर (chip->state != FL_POINT && chip->state != FL_READY) अणु
-		map_ग_लिखो(map, CMD(0xff), adr);
+static void __xipram xip_enable(struct map_info *map, struct flchip *chip,
+				unsigned long adr)
+{
+	struct cfi_private *cfi = map->fldrv_priv;
+	if (chip->state != FL_POINT && chip->state != FL_READY) {
+		map_write(map, CMD(0xff), adr);
 		chip->state = FL_READY;
-	पूर्ण
-	(व्योम) map_पढ़ो(map, adr);
+	}
+	(void) map_read(map, adr);
 	xip_iprefetch();
 	local_irq_enable();
-पूर्ण
+}
 
 /*
- * When a delay is required क्रम the flash operation to complete, the
- * xip_रुको_क्रम_operation() function is polling क्रम both the given समयout
- * and pending (but still masked) hardware पूर्णांकerrupts.  Whenever there is an
- * पूर्णांकerrupt pending then the flash erase or ग_लिखो operation is suspended,
- * array mode restored and पूर्णांकerrupts unmasked.  Task scheduling might also
- * happen at that poपूर्णांक.  The CPU eventually वापसs from the पूर्णांकerrupt or
- * the call to schedule() and the suspended flash operation is resumed क्रम
- * the reमुख्यing of the delay period.
+ * When a delay is required for the flash operation to complete, the
+ * xip_wait_for_operation() function is polling for both the given timeout
+ * and pending (but still masked) hardware interrupts.  Whenever there is an
+ * interrupt pending then the flash erase or write operation is suspended,
+ * array mode restored and interrupts unmasked.  Task scheduling might also
+ * happen at that point.  The CPU eventually returns from the interrupt or
+ * the call to schedule() and the suspended flash operation is resumed for
+ * the remaining of the delay period.
  *
- * Warning: this function _will_ fool पूर्णांकerrupt latency tracing tools.
+ * Warning: this function _will_ fool interrupt latency tracing tools.
  */
 
-अटल पूर्णांक __xipram xip_रुको_क्रम_operation(
-		काष्ठा map_info *map, काष्ठा flchip *chip,
-		अचिन्हित दीर्घ adr, अचिन्हित पूर्णांक chip_op_समय_max)
-अणु
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	काष्ठा cfi_pri_पूर्णांकelext *cfip = cfi->cmdset_priv;
+static int __xipram xip_wait_for_operation(
+		struct map_info *map, struct flchip *chip,
+		unsigned long adr, unsigned int chip_op_time_max)
+{
+	struct cfi_private *cfi = map->fldrv_priv;
+	struct cfi_pri_intelext *cfip = cfi->cmdset_priv;
 	map_word status, OK = CMD(0x80);
-	अचिन्हित दीर्घ usec, suspended, start, करोne;
+	unsigned long usec, suspended, start, done;
 	flstate_t oldstate, newstate;
 
-       	start = xip_currसमय();
-	usec = chip_op_समय_max;
-	अगर (usec == 0)
+       	start = xip_currtime();
+	usec = chip_op_time_max;
+	if (usec == 0)
 		usec = 500000;
-	करोne = 0;
+	done = 0;
 
-	करो अणु
+	do {
 		cpu_relax();
-		अगर (xip_irqpending() && cfip &&
+		if (xip_irqpending() && cfip &&
 		    ((chip->state == FL_ERASING && (cfip->FeatureSupport&2)) ||
 		     (chip->state == FL_WRITING && (cfip->FeatureSupport&4))) &&
-		    (cfi_पूर्णांकerleave_is_1(cfi) || chip->oldstate == FL_READY)) अणु
+		    (cfi_interleave_is_1(cfi) || chip->oldstate == FL_READY)) {
 			/*
-			 * Let's suspend the erase or ग_लिखो operation when
-			 * supported.  Note that we currently करोn't try to
-			 * suspend पूर्णांकerleaved chips अगर there is alपढ़ोy
+			 * Let's suspend the erase or write operation when
+			 * supported.  Note that we currently don't try to
+			 * suspend interleaved chips if there is already
 			 * another operation suspended (imagine what happens
-			 * when one chip was alपढ़ोy करोne with the current
-			 * operation जबतक another chip suspended it, then
+			 * when one chip was already done with the current
+			 * operation while another chip suspended it, then
 			 * we resume the whole thing at once).  Yes, it
 			 * can happen!
 			 */
-			usec -= करोne;
-			map_ग_लिखो(map, CMD(0xb0), adr);
-			map_ग_लिखो(map, CMD(0x70), adr);
-			suspended = xip_currसमय();
-			करो अणु
-				अगर (xip_elapsed_since(suspended) > 100000) अणु
+			usec -= done;
+			map_write(map, CMD(0xb0), adr);
+			map_write(map, CMD(0x70), adr);
+			suspended = xip_currtime();
+			do {
+				if (xip_elapsed_since(suspended) > 100000) {
 					/*
-					 * The chip करोesn't want to suspend
-					 * after रुकोing क्रम 100 msecs.
+					 * The chip doesn't want to suspend
+					 * after waiting for 100 msecs.
 					 * This is a critical error but there
-					 * is not much we can करो here.
+					 * is not much we can do here.
 					 */
-					वापस -EIO;
-				पूर्ण
-				status = map_पढ़ो(map, adr);
-			पूर्ण जबतक (!map_word_andequal(map, status, OK, OK));
+					return -EIO;
+				}
+				status = map_read(map, adr);
+			} while (!map_word_andequal(map, status, OK, OK));
 
 			/* Suspend succeeded */
 			oldstate = chip->state;
-			अगर (oldstate == FL_ERASING) अणु
-				अगर (!map_word_bitsset(map, status, CMD(0x40)))
-					अवरोध;
+			if (oldstate == FL_ERASING) {
+				if (!map_word_bitsset(map, status, CMD(0x40)))
+					break;
 				newstate = FL_XIP_WHILE_ERASING;
 				chip->erase_suspended = 1;
-			पूर्ण अन्यथा अणु
-				अगर (!map_word_bitsset(map, status, CMD(0x04)))
-					अवरोध;
+			} else {
+				if (!map_word_bitsset(map, status, CMD(0x04)))
+					break;
 				newstate = FL_XIP_WHILE_WRITING;
-				chip->ग_लिखो_suspended = 1;
-			पूर्ण
+				chip->write_suspended = 1;
+			}
 			chip->state = newstate;
-			map_ग_लिखो(map, CMD(0xff), adr);
-			(व्योम) map_पढ़ो(map, adr);
+			map_write(map, CMD(0xff), adr);
+			(void) map_read(map, adr);
 			xip_iprefetch();
 			local_irq_enable();
 			mutex_unlock(&chip->mutex);
@@ -1211,264 +1210,264 @@ EXPORT_SYMBOL_GPL(cfi_cmdset_0200);
 			cond_resched();
 
 			/*
-			 * We're back.  However someone अन्यथा might have
-			 * decided to go ग_लिखो to the chip अगर we are in
-			 * a suspended erase state.  If so let's रुको
-			 * until it's करोne.
+			 * We're back.  However someone else might have
+			 * decided to go write to the chip if we are in
+			 * a suspended erase state.  If so let's wait
+			 * until it's done.
 			 */
 			mutex_lock(&chip->mutex);
-			जबतक (chip->state != newstate) अणु
-				DECLARE_WAITQUEUE(रुको, current);
+			while (chip->state != newstate) {
+				DECLARE_WAITQUEUE(wait, current);
 				set_current_state(TASK_UNINTERRUPTIBLE);
-				add_रुको_queue(&chip->wq, &रुको);
+				add_wait_queue(&chip->wq, &wait);
 				mutex_unlock(&chip->mutex);
 				schedule();
-				हटाओ_रुको_queue(&chip->wq, &रुको);
+				remove_wait_queue(&chip->wq, &wait);
 				mutex_lock(&chip->mutex);
-			पूर्ण
+			}
 			/* Disallow XIP again */
 			local_irq_disable();
 
-			/* Resume the ग_लिखो or erase operation */
-			map_ग_लिखो(map, CMD(0xd0), adr);
-			map_ग_लिखो(map, CMD(0x70), adr);
+			/* Resume the write or erase operation */
+			map_write(map, CMD(0xd0), adr);
+			map_write(map, CMD(0x70), adr);
 			chip->state = oldstate;
-			start = xip_currसमय();
-		पूर्ण अन्यथा अगर (usec >= 1000000/HZ) अणु
+			start = xip_currtime();
+		} else if (usec >= 1000000/HZ) {
 			/*
-			 * Try to save on CPU घातer when रुकोing delay
-			 * is at least a प्रणाली समयr tick period.
+			 * Try to save on CPU power when waiting delay
+			 * is at least a system timer tick period.
 			 * No need to be extremely accurate here.
 			 */
 			xip_cpu_idle();
-		पूर्ण
-		status = map_पढ़ो(map, adr);
-		करोne = xip_elapsed_since(start);
-	पूर्ण जबतक (!map_word_andequal(map, status, OK, OK)
-		 && करोne < usec);
+		}
+		status = map_read(map, adr);
+		done = xip_elapsed_since(start);
+	} while (!map_word_andequal(map, status, OK, OK)
+		 && done < usec);
 
-	वापस (करोne >= usec) ? -ETIME : 0;
-पूर्ण
+	return (done >= usec) ? -ETIME : 0;
+}
 
 /*
- * The INVALIDATE_CACHED_RANGE() macro is normally used in parallel जबतक
- * the flash is actively programming or erasing since we have to poll क्रम
- * the operation to complete anyway.  We can't करो that in a generic way with
- * a XIP setup so करो it beक्रमe the actual flash operation in this हाल
+ * The INVALIDATE_CACHED_RANGE() macro is normally used in parallel while
+ * the flash is actively programming or erasing since we have to poll for
+ * the operation to complete anyway.  We can't do that in a generic way with
+ * a XIP setup so do it before the actual flash operation in this case
  * and stub it out from INVAL_CACHE_AND_WAIT.
  */
-#घोषणा XIP_INVAL_CACHED_RANGE(map, from, size)  \
+#define XIP_INVAL_CACHED_RANGE(map, from, size)  \
 	INVALIDATE_CACHED_RANGE(map, from, size)
 
-#घोषणा INVAL_CACHE_AND_WAIT(map, chip, cmd_adr, inval_adr, inval_len, usec, usec_max) \
-	xip_रुको_क्रम_operation(map, chip, cmd_adr, usec_max)
+#define INVAL_CACHE_AND_WAIT(map, chip, cmd_adr, inval_adr, inval_len, usec, usec_max) \
+	xip_wait_for_operation(map, chip, cmd_adr, usec_max)
 
-#अन्यथा
+#else
 
-#घोषणा xip_disable(map, chip, adr)
-#घोषणा xip_enable(map, chip, adr)
-#घोषणा XIP_INVAL_CACHED_RANGE(x...)
-#घोषणा INVAL_CACHE_AND_WAIT inval_cache_and_रुको_क्रम_operation
+#define xip_disable(map, chip, adr)
+#define xip_enable(map, chip, adr)
+#define XIP_INVAL_CACHED_RANGE(x...)
+#define INVAL_CACHE_AND_WAIT inval_cache_and_wait_for_operation
 
-अटल पूर्णांक inval_cache_and_रुको_क्रम_operation(
-		काष्ठा map_info *map, काष्ठा flchip *chip,
-		अचिन्हित दीर्घ cmd_adr, अचिन्हित दीर्घ inval_adr, पूर्णांक inval_len,
-		अचिन्हित पूर्णांक chip_op_समय, अचिन्हित पूर्णांक chip_op_समय_max)
-अणु
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
+static int inval_cache_and_wait_for_operation(
+		struct map_info *map, struct flchip *chip,
+		unsigned long cmd_adr, unsigned long inval_adr, int inval_len,
+		unsigned int chip_op_time, unsigned int chip_op_time_max)
+{
+	struct cfi_private *cfi = map->fldrv_priv;
 	map_word status, status_OK = CMD(0x80);
-	पूर्णांक chip_state = chip->state;
-	अचिन्हित पूर्णांक समयo, sleep_समय, reset_समयo;
+	int chip_state = chip->state;
+	unsigned int timeo, sleep_time, reset_timeo;
 
 	mutex_unlock(&chip->mutex);
-	अगर (inval_len)
+	if (inval_len)
 		INVALIDATE_CACHED_RANGE(map, inval_adr, inval_len);
 	mutex_lock(&chip->mutex);
 
-	समयo = chip_op_समय_max;
-	अगर (!समयo)
-		समयo = 500000;
-	reset_समयo = समयo;
-	sleep_समय = chip_op_समय / 2;
+	timeo = chip_op_time_max;
+	if (!timeo)
+		timeo = 500000;
+	reset_timeo = timeo;
+	sleep_time = chip_op_time / 2;
 
-	क्रम (;;) अणु
-		अगर (chip->state != chip_state) अणु
+	for (;;) {
+		if (chip->state != chip_state) {
 			/* Someone's suspended the operation: sleep */
-			DECLARE_WAITQUEUE(रुको, current);
+			DECLARE_WAITQUEUE(wait, current);
 			set_current_state(TASK_UNINTERRUPTIBLE);
-			add_रुको_queue(&chip->wq, &रुको);
+			add_wait_queue(&chip->wq, &wait);
 			mutex_unlock(&chip->mutex);
 			schedule();
-			हटाओ_रुको_queue(&chip->wq, &रुको);
+			remove_wait_queue(&chip->wq, &wait);
 			mutex_lock(&chip->mutex);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		status = map_पढ़ो(map, cmd_adr);
-		अगर (map_word_andequal(map, status, status_OK, status_OK))
-			अवरोध;
+		status = map_read(map, cmd_adr);
+		if (map_word_andequal(map, status, status_OK, status_OK))
+			break;
 
-		अगर (chip->erase_suspended && chip_state == FL_ERASING)  अणु
-			/* Erase suspend occurred जबतक sleep: reset समयout */
-			समयo = reset_समयo;
+		if (chip->erase_suspended && chip_state == FL_ERASING)  {
+			/* Erase suspend occurred while sleep: reset timeout */
+			timeo = reset_timeo;
 			chip->erase_suspended = 0;
-		पूर्ण
-		अगर (chip->ग_लिखो_suspended && chip_state == FL_WRITING)  अणु
-			/* Write suspend occurred जबतक sleep: reset समयout */
-			समयo = reset_समयo;
-			chip->ग_लिखो_suspended = 0;
-		पूर्ण
-		अगर (!समयo) अणु
-			map_ग_लिखो(map, CMD(0x70), cmd_adr);
+		}
+		if (chip->write_suspended && chip_state == FL_WRITING)  {
+			/* Write suspend occurred while sleep: reset timeout */
+			timeo = reset_timeo;
+			chip->write_suspended = 0;
+		}
+		if (!timeo) {
+			map_write(map, CMD(0x70), cmd_adr);
 			chip->state = FL_STATUS;
-			वापस -ETIME;
-		पूर्ण
+			return -ETIME;
+		}
 
-		/* OK Still रुकोing. Drop the lock, रुको a जबतक and retry. */
+		/* OK Still waiting. Drop the lock, wait a while and retry. */
 		mutex_unlock(&chip->mutex);
-		अगर (sleep_समय >= 1000000/HZ) अणु
+		if (sleep_time >= 1000000/HZ) {
 			/*
-			 * Half of the normal delay still reमुख्यing
-			 * can be perक्रमmed with a sleeping delay instead
-			 * of busy रुकोing.
+			 * Half of the normal delay still remaining
+			 * can be performed with a sleeping delay instead
+			 * of busy waiting.
 			 */
-			msleep(sleep_समय/1000);
-			समयo -= sleep_समय;
-			sleep_समय = 1000000/HZ;
-		पूर्ण अन्यथा अणु
+			msleep(sleep_time/1000);
+			timeo -= sleep_time;
+			sleep_time = 1000000/HZ;
+		} else {
 			udelay(1);
 			cond_resched();
-			समयo--;
-		पूर्ण
+			timeo--;
+		}
 		mutex_lock(&chip->mutex);
-	पूर्ण
+	}
 
 	/* Done and happy. */
  	chip->state = FL_STATUS;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#पूर्ण_अगर
+#endif
 
-#घोषणा WAIT_TIMEOUT(map, chip, adr, udelay, udelay_max) \
+#define WAIT_TIMEOUT(map, chip, adr, udelay, udelay_max) \
 	INVAL_CACHE_AND_WAIT(map, chip, adr, 0, 0, udelay, udelay_max);
 
 
-अटल पूर्णांक करो_poपूर्णांक_onechip (काष्ठा map_info *map, काष्ठा flchip *chip, loff_t adr, माप_प्रकार len)
-अणु
-	अचिन्हित दीर्घ cmd_addr;
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	पूर्णांक ret;
+static int do_point_onechip (struct map_info *map, struct flchip *chip, loff_t adr, size_t len)
+{
+	unsigned long cmd_addr;
+	struct cfi_private *cfi = map->fldrv_priv;
+	int ret;
 
 	adr += chip->start;
 
-	/* Ensure cmd पढ़ो/ग_लिखोs are aligned. */
+	/* Ensure cmd read/writes are aligned. */
 	cmd_addr = adr & ~(map_bankwidth(map)-1);
 
 	mutex_lock(&chip->mutex);
 
 	ret = get_chip(map, chip, cmd_addr, FL_POINT);
 
-	अगर (!ret) अणु
-		अगर (chip->state != FL_POINT && chip->state != FL_READY)
-			map_ग_लिखो(map, CMD(0xff), cmd_addr);
+	if (!ret) {
+		if (chip->state != FL_POINT && chip->state != FL_READY)
+			map_write(map, CMD(0xff), cmd_addr);
 
 		chip->state = FL_POINT;
-		chip->ref_poपूर्णांक_counter++;
-	पूर्ण
+		chip->ref_point_counter++;
+	}
 	mutex_unlock(&chip->mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cfi_पूर्णांकelext_poपूर्णांक(काष्ठा mtd_info *mtd, loff_t from, माप_प्रकार len,
-		माप_प्रकार *retlen, व्योम **virt, resource_माप_प्रकार *phys)
-अणु
-	काष्ठा map_info *map = mtd->priv;
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	अचिन्हित दीर्घ ofs, last_end = 0;
-	पूर्णांक chipnum;
-	पूर्णांक ret;
+static int cfi_intelext_point(struct mtd_info *mtd, loff_t from, size_t len,
+		size_t *retlen, void **virt, resource_size_t *phys)
+{
+	struct map_info *map = mtd->priv;
+	struct cfi_private *cfi = map->fldrv_priv;
+	unsigned long ofs, last_end = 0;
+	int chipnum;
+	int ret;
 
-	अगर (!map->virt)
-		वापस -EINVAL;
+	if (!map->virt)
+		return -EINVAL;
 
 	/* Now lock the chip(s) to POINT state */
 
-	/* ofs: offset within the first chip that the first पढ़ो should start */
-	chipnum = (from >> cfi->chipshअगरt);
-	ofs = from - (chipnum << cfi->chipshअगरt);
+	/* ofs: offset within the first chip that the first read should start */
+	chipnum = (from >> cfi->chipshift);
+	ofs = from - (chipnum << cfi->chipshift);
 
 	*virt = map->virt + cfi->chips[chipnum].start + ofs;
-	अगर (phys)
+	if (phys)
 		*phys = map->phys + cfi->chips[chipnum].start + ofs;
 
-	जबतक (len) अणु
-		अचिन्हित दीर्घ thislen;
+	while (len) {
+		unsigned long thislen;
 
-		अगर (chipnum >= cfi->numchips)
-			अवरोध;
+		if (chipnum >= cfi->numchips)
+			break;
 
-		/* We cannot poपूर्णांक across chips that are भवly disjoपूर्णांक */
-		अगर (!last_end)
+		/* We cannot point across chips that are virtually disjoint */
+		if (!last_end)
 			last_end = cfi->chips[chipnum].start;
-		अन्यथा अगर (cfi->chips[chipnum].start != last_end)
-			अवरोध;
+		else if (cfi->chips[chipnum].start != last_end)
+			break;
 
-		अगर ((len + ofs -1) >> cfi->chipshअगरt)
-			thislen = (1<<cfi->chipshअगरt) - ofs;
-		अन्यथा
+		if ((len + ofs -1) >> cfi->chipshift)
+			thislen = (1<<cfi->chipshift) - ofs;
+		else
 			thislen = len;
 
-		ret = करो_poपूर्णांक_onechip(map, &cfi->chips[chipnum], ofs, thislen);
-		अगर (ret)
-			अवरोध;
+		ret = do_point_onechip(map, &cfi->chips[chipnum], ofs, thislen);
+		if (ret)
+			break;
 
 		*retlen += thislen;
 		len -= thislen;
 
 		ofs = 0;
-		last_end += 1 << cfi->chipshअगरt;
+		last_end += 1 << cfi->chipshift;
 		chipnum++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक cfi_पूर्णांकelext_unpoपूर्णांक(काष्ठा mtd_info *mtd, loff_t from, माप_प्रकार len)
-अणु
-	काष्ठा map_info *map = mtd->priv;
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	अचिन्हित दीर्घ ofs;
-	पूर्णांक chipnum, err = 0;
+static int cfi_intelext_unpoint(struct mtd_info *mtd, loff_t from, size_t len)
+{
+	struct map_info *map = mtd->priv;
+	struct cfi_private *cfi = map->fldrv_priv;
+	unsigned long ofs;
+	int chipnum, err = 0;
 
 	/* Now unlock the chip(s) POINT state */
 
-	/* ofs: offset within the first chip that the first पढ़ो should start */
-	chipnum = (from >> cfi->chipshअगरt);
-	ofs = from - (chipnum <<  cfi->chipshअगरt);
+	/* ofs: offset within the first chip that the first read should start */
+	chipnum = (from >> cfi->chipshift);
+	ofs = from - (chipnum <<  cfi->chipshift);
 
-	जबतक (len && !err) अणु
-		अचिन्हित दीर्घ thislen;
-		काष्ठा flchip *chip;
+	while (len && !err) {
+		unsigned long thislen;
+		struct flchip *chip;
 
 		chip = &cfi->chips[chipnum];
-		अगर (chipnum >= cfi->numchips)
-			अवरोध;
+		if (chipnum >= cfi->numchips)
+			break;
 
-		अगर ((len + ofs -1) >> cfi->chipshअगरt)
-			thislen = (1<<cfi->chipshअगरt) - ofs;
-		अन्यथा
+		if ((len + ofs -1) >> cfi->chipshift)
+			thislen = (1<<cfi->chipshift) - ofs;
+		else
 			thislen = len;
 
 		mutex_lock(&chip->mutex);
-		अगर (chip->state == FL_POINT) अणु
-			chip->ref_poपूर्णांक_counter--;
-			अगर(chip->ref_poपूर्णांक_counter == 0)
+		if (chip->state == FL_POINT) {
+			chip->ref_point_counter--;
+			if(chip->ref_point_counter == 0)
 				chip->state = FL_READY;
-		पूर्ण अन्यथा अणु
-			prपूर्णांकk(KERN_ERR "%s: Error: unpoint called on non pointed region\n", map->name);
+		} else {
+			printk(KERN_ERR "%s: Error: unpoint called on non pointed region\n", map->name);
 			err = -EINVAL;
-		पूर्ण
+		}
 
 		put_chip(map, chip, chip->start);
 		mutex_unlock(&chip->mutex);
@@ -1476,69 +1475,69 @@ EXPORT_SYMBOL_GPL(cfi_cmdset_0200);
 		len -= thislen;
 		ofs = 0;
 		chipnum++;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अंतरभूत पूर्णांक करो_पढ़ो_onechip(काष्ठा map_info *map, काष्ठा flchip *chip, loff_t adr, माप_प्रकार len, u_अक्षर *buf)
-अणु
-	अचिन्हित दीर्घ cmd_addr;
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	पूर्णांक ret;
+static inline int do_read_onechip(struct map_info *map, struct flchip *chip, loff_t adr, size_t len, u_char *buf)
+{
+	unsigned long cmd_addr;
+	struct cfi_private *cfi = map->fldrv_priv;
+	int ret;
 
 	adr += chip->start;
 
-	/* Ensure cmd पढ़ो/ग_लिखोs are aligned. */
+	/* Ensure cmd read/writes are aligned. */
 	cmd_addr = adr & ~(map_bankwidth(map)-1);
 
 	mutex_lock(&chip->mutex);
 	ret = get_chip(map, chip, cmd_addr, FL_READY);
-	अगर (ret) अणु
+	if (ret) {
 		mutex_unlock(&chip->mutex);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (chip->state != FL_POINT && chip->state != FL_READY) अणु
-		map_ग_लिखो(map, CMD(0xff), cmd_addr);
+	if (chip->state != FL_POINT && chip->state != FL_READY) {
+		map_write(map, CMD(0xff), cmd_addr);
 
 		chip->state = FL_READY;
-	पूर्ण
+	}
 
 	map_copy_from(map, buf, adr, len);
 
 	put_chip(map, chip, cmd_addr);
 
 	mutex_unlock(&chip->mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cfi_पूर्णांकelext_पढ़ो (काष्ठा mtd_info *mtd, loff_t from, माप_प्रकार len, माप_प्रकार *retlen, u_अक्षर *buf)
-अणु
-	काष्ठा map_info *map = mtd->priv;
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	अचिन्हित दीर्घ ofs;
-	पूर्णांक chipnum;
-	पूर्णांक ret = 0;
+static int cfi_intelext_read (struct mtd_info *mtd, loff_t from, size_t len, size_t *retlen, u_char *buf)
+{
+	struct map_info *map = mtd->priv;
+	struct cfi_private *cfi = map->fldrv_priv;
+	unsigned long ofs;
+	int chipnum;
+	int ret = 0;
 
-	/* ofs: offset within the first chip that the first पढ़ो should start */
-	chipnum = (from >> cfi->chipshअगरt);
-	ofs = from - (chipnum <<  cfi->chipshअगरt);
+	/* ofs: offset within the first chip that the first read should start */
+	chipnum = (from >> cfi->chipshift);
+	ofs = from - (chipnum <<  cfi->chipshift);
 
-	जबतक (len) अणु
-		अचिन्हित दीर्घ thislen;
+	while (len) {
+		unsigned long thislen;
 
-		अगर (chipnum >= cfi->numchips)
-			अवरोध;
+		if (chipnum >= cfi->numchips)
+			break;
 
-		अगर ((len + ofs -1) >> cfi->chipshअगरt)
-			thislen = (1<<cfi->chipshअगरt) - ofs;
-		अन्यथा
+		if ((len + ofs -1) >> cfi->chipshift)
+			thislen = (1<<cfi->chipshift) - ofs;
+		else
 			thislen = len;
 
-		ret = करो_पढ़ो_onechip(map, &cfi->chips[chipnum], ofs, thislen, buf);
-		अगर (ret)
-			अवरोध;
+		ret = do_read_onechip(map, &cfi->chips[chipnum], ofs, thislen, buf);
+		if (ret)
+			break;
 
 		*retlen += thislen;
 		len -= thislen;
@@ -1546,261 +1545,261 @@ EXPORT_SYMBOL_GPL(cfi_cmdset_0200);
 
 		ofs = 0;
 		chipnum++;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल पूर्णांक __xipram करो_ग_लिखो_oneword(काष्ठा map_info *map, काष्ठा flchip *chip,
-				     अचिन्हित दीर्घ adr, map_word datum, पूर्णांक mode)
-अणु
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	map_word status, ग_लिखो_cmd;
-	पूर्णांक ret;
+static int __xipram do_write_oneword(struct map_info *map, struct flchip *chip,
+				     unsigned long adr, map_word datum, int mode)
+{
+	struct cfi_private *cfi = map->fldrv_priv;
+	map_word status, write_cmd;
+	int ret;
 
 	adr += chip->start;
 
-	चयन (mode) अणु
-	हाल FL_WRITING:
-		ग_लिखो_cmd = (cfi->cfiq->P_ID != P_ID_INTEL_PERFORMANCE) ? CMD(0x40) : CMD(0x41);
-		अवरोध;
-	हाल FL_OTP_WRITE:
-		ग_लिखो_cmd = CMD(0xc0);
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	switch (mode) {
+	case FL_WRITING:
+		write_cmd = (cfi->cfiq->P_ID != P_ID_INTEL_PERFORMANCE) ? CMD(0x40) : CMD(0x41);
+		break;
+	case FL_OTP_WRITE:
+		write_cmd = CMD(0xc0);
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	mutex_lock(&chip->mutex);
 	ret = get_chip(map, chip, adr, mode);
-	अगर (ret) अणु
+	if (ret) {
 		mutex_unlock(&chip->mutex);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	XIP_INVAL_CACHED_RANGE(map, adr, map_bankwidth(map));
 	ENABLE_VPP(map);
 	xip_disable(map, chip, adr);
-	map_ग_लिखो(map, ग_लिखो_cmd, adr);
-	map_ग_लिखो(map, datum, adr);
+	map_write(map, write_cmd, adr);
+	map_write(map, datum, adr);
 	chip->state = mode;
 
 	ret = INVAL_CACHE_AND_WAIT(map, chip, adr,
 				   adr, map_bankwidth(map),
-				   chip->word_ग_लिखो_समय,
-				   chip->word_ग_लिखो_समय_max);
-	अगर (ret) अणु
+				   chip->word_write_time,
+				   chip->word_write_time_max);
+	if (ret) {
 		xip_enable(map, chip, adr);
-		prपूर्णांकk(KERN_ERR "%s: word write error (status timeout)\n", map->name);
-		जाओ out;
-	पूर्ण
+		printk(KERN_ERR "%s: word write error (status timeout)\n", map->name);
+		goto out;
+	}
 
-	/* check क्रम errors */
-	status = map_पढ़ो(map, adr);
-	अगर (map_word_bitsset(map, status, CMD(0x1a))) अणु
-		अचिन्हित दीर्घ chipstatus = MERGESTATUS(status);
+	/* check for errors */
+	status = map_read(map, adr);
+	if (map_word_bitsset(map, status, CMD(0x1a))) {
+		unsigned long chipstatus = MERGESTATUS(status);
 
 		/* reset status */
-		map_ग_लिखो(map, CMD(0x50), adr);
-		map_ग_लिखो(map, CMD(0x70), adr);
+		map_write(map, CMD(0x50), adr);
+		map_write(map, CMD(0x70), adr);
 		xip_enable(map, chip, adr);
 
-		अगर (chipstatus & 0x02) अणु
+		if (chipstatus & 0x02) {
 			ret = -EROFS;
-		पूर्ण अन्यथा अगर (chipstatus & 0x08) अणु
-			prपूर्णांकk(KERN_ERR "%s: word write error (bad VPP)\n", map->name);
+		} else if (chipstatus & 0x08) {
+			printk(KERN_ERR "%s: word write error (bad VPP)\n", map->name);
 			ret = -EIO;
-		पूर्ण अन्यथा अणु
-			prपूर्णांकk(KERN_ERR "%s: word write error (status 0x%lx)\n", map->name, chipstatus);
+		} else {
+			printk(KERN_ERR "%s: word write error (status 0x%lx)\n", map->name, chipstatus);
 			ret = -EINVAL;
-		पूर्ण
+		}
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	xip_enable(map, chip, adr);
  out:	DISABLE_VPP(map);
 	put_chip(map, chip, adr);
 	mutex_unlock(&chip->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 
-अटल पूर्णांक cfi_पूर्णांकelext_ग_लिखो_words (काष्ठा mtd_info *mtd, loff_t to , माप_प्रकार len, माप_प्रकार *retlen, स्थिर u_अक्षर *buf)
-अणु
-	काष्ठा map_info *map = mtd->priv;
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	पूर्णांक ret;
-	पूर्णांक chipnum;
-	अचिन्हित दीर्घ ofs;
+static int cfi_intelext_write_words (struct mtd_info *mtd, loff_t to , size_t len, size_t *retlen, const u_char *buf)
+{
+	struct map_info *map = mtd->priv;
+	struct cfi_private *cfi = map->fldrv_priv;
+	int ret;
+	int chipnum;
+	unsigned long ofs;
 
-	chipnum = to >> cfi->chipshअगरt;
-	ofs = to  - (chipnum << cfi->chipshअगरt);
+	chipnum = to >> cfi->chipshift;
+	ofs = to  - (chipnum << cfi->chipshift);
 
-	/* If it's not bus-aligned, करो the first byte ग_लिखो */
-	अगर (ofs & (map_bankwidth(map)-1)) अणु
-		अचिन्हित दीर्घ bus_ofs = ofs & ~(map_bankwidth(map)-1);
-		पूर्णांक gap = ofs - bus_ofs;
-		पूर्णांक n;
+	/* If it's not bus-aligned, do the first byte write */
+	if (ofs & (map_bankwidth(map)-1)) {
+		unsigned long bus_ofs = ofs & ~(map_bankwidth(map)-1);
+		int gap = ofs - bus_ofs;
+		int n;
 		map_word datum;
 
-		n = min_t(पूर्णांक, len, map_bankwidth(map)-gap);
+		n = min_t(int, len, map_bankwidth(map)-gap);
 		datum = map_word_ff(map);
 		datum = map_word_load_partial(map, datum, buf, gap, n);
 
-		ret = करो_ग_लिखो_oneword(map, &cfi->chips[chipnum],
+		ret = do_write_oneword(map, &cfi->chips[chipnum],
 					       bus_ofs, datum, FL_WRITING);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		len -= n;
 		ofs += n;
 		buf += n;
 		(*retlen) += n;
 
-		अगर (ofs >> cfi->chipshअगरt) अणु
+		if (ofs >> cfi->chipshift) {
 			chipnum ++;
 			ofs = 0;
-			अगर (chipnum == cfi->numchips)
-				वापस 0;
-		पूर्ण
-	पूर्ण
+			if (chipnum == cfi->numchips)
+				return 0;
+		}
+	}
 
-	जबतक(len >= map_bankwidth(map)) अणु
+	while(len >= map_bankwidth(map)) {
 		map_word datum = map_word_load(map, buf);
 
-		ret = करो_ग_लिखो_oneword(map, &cfi->chips[chipnum],
+		ret = do_write_oneword(map, &cfi->chips[chipnum],
 				       ofs, datum, FL_WRITING);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		ofs += map_bankwidth(map);
 		buf += map_bankwidth(map);
 		(*retlen) += map_bankwidth(map);
 		len -= map_bankwidth(map);
 
-		अगर (ofs >> cfi->chipshअगरt) अणु
+		if (ofs >> cfi->chipshift) {
 			chipnum ++;
 			ofs = 0;
-			अगर (chipnum == cfi->numchips)
-				वापस 0;
-		पूर्ण
-	पूर्ण
+			if (chipnum == cfi->numchips)
+				return 0;
+		}
+	}
 
-	अगर (len & (map_bankwidth(map)-1)) अणु
+	if (len & (map_bankwidth(map)-1)) {
 		map_word datum;
 
 		datum = map_word_ff(map);
 		datum = map_word_load_partial(map, datum, buf, 0, len);
 
-		ret = करो_ग_लिखो_oneword(map, &cfi->chips[chipnum],
+		ret = do_write_oneword(map, &cfi->chips[chipnum],
 				       ofs, datum, FL_WRITING);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		(*retlen) += len;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक __xipram करो_ग_लिखो_buffer(काष्ठा map_info *map, काष्ठा flchip *chip,
-				    अचिन्हित दीर्घ adr, स्थिर काष्ठा kvec **pvec,
-				    अचिन्हित दीर्घ *pvec_seek, पूर्णांक len)
-अणु
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	map_word status, ग_लिखो_cmd, datum;
-	अचिन्हित दीर्घ cmd_adr;
-	पूर्णांक ret, wbufsize, word_gap, words;
-	स्थिर काष्ठा kvec *vec;
-	अचिन्हित दीर्घ vec_seek;
-	अचिन्हित दीर्घ initial_adr;
-	पूर्णांक initial_len = len;
+static int __xipram do_write_buffer(struct map_info *map, struct flchip *chip,
+				    unsigned long adr, const struct kvec **pvec,
+				    unsigned long *pvec_seek, int len)
+{
+	struct cfi_private *cfi = map->fldrv_priv;
+	map_word status, write_cmd, datum;
+	unsigned long cmd_adr;
+	int ret, wbufsize, word_gap, words;
+	const struct kvec *vec;
+	unsigned long vec_seek;
+	unsigned long initial_adr;
+	int initial_len = len;
 
-	wbufsize = cfi_पूर्णांकerleave(cfi) << cfi->cfiq->MaxBufWriteSize;
+	wbufsize = cfi_interleave(cfi) << cfi->cfiq->MaxBufWriteSize;
 	adr += chip->start;
 	initial_adr = adr;
 	cmd_adr = adr & ~(wbufsize-1);
 
-	/* Sharp LH28F640BF chips need the first address क्रम the
+	/* Sharp LH28F640BF chips need the first address for the
 	 * Page Buffer Program command. See Table 5 of
 	 * LH28F320BF, LH28F640BF, LH28F128BF Series (Appendix FUM00701) */
-	अगर (is_LH28F640BF(cfi))
+	if (is_LH28F640BF(cfi))
 		cmd_adr = adr;
 
-	/* Let's determine this according to the पूर्णांकerleave only once */
-	ग_लिखो_cmd = (cfi->cfiq->P_ID != P_ID_INTEL_PERFORMANCE) ? CMD(0xe8) : CMD(0xe9);
+	/* Let's determine this according to the interleave only once */
+	write_cmd = (cfi->cfiq->P_ID != P_ID_INTEL_PERFORMANCE) ? CMD(0xe8) : CMD(0xe9);
 
 	mutex_lock(&chip->mutex);
 	ret = get_chip(map, chip, cmd_adr, FL_WRITING);
-	अगर (ret) अणु
+	if (ret) {
 		mutex_unlock(&chip->mutex);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	XIP_INVAL_CACHED_RANGE(map, initial_adr, initial_len);
 	ENABLE_VPP(map);
 	xip_disable(map, chip, cmd_adr);
 
-	/* तई4.8 of the 28FxxxJ3A datasheet says "Any समय SR.4 and/or SR.5 is set
+	/* §4.8 of the 28FxxxJ3A datasheet says "Any time SR.4 and/or SR.5 is set
 	   [...], the device will not accept any more Write to Buffer commands".
-	   So we must check here and reset those bits अगर they're set. Otherwise
+	   So we must check here and reset those bits if they're set. Otherwise
 	   we're just pissing in the wind */
-	अगर (chip->state != FL_STATUS) अणु
-		map_ग_लिखो(map, CMD(0x70), cmd_adr);
+	if (chip->state != FL_STATUS) {
+		map_write(map, CMD(0x70), cmd_adr);
 		chip->state = FL_STATUS;
-	पूर्ण
-	status = map_पढ़ो(map, cmd_adr);
-	अगर (map_word_bitsset(map, status, CMD(0x30))) अणु
+	}
+	status = map_read(map, cmd_adr);
+	if (map_word_bitsset(map, status, CMD(0x30))) {
 		xip_enable(map, chip, cmd_adr);
-		prपूर्णांकk(KERN_WARNING "SR.4 or SR.5 bits set in buffer write (status %lx). Clearing.\n", status.x[0]);
+		printk(KERN_WARNING "SR.4 or SR.5 bits set in buffer write (status %lx). Clearing.\n", status.x[0]);
 		xip_disable(map, chip, cmd_adr);
-		map_ग_लिखो(map, CMD(0x50), cmd_adr);
-		map_ग_लिखो(map, CMD(0x70), cmd_adr);
-	पूर्ण
+		map_write(map, CMD(0x50), cmd_adr);
+		map_write(map, CMD(0x70), cmd_adr);
+	}
 
 	chip->state = FL_WRITING_TO_BUFFER;
-	map_ग_लिखो(map, ग_लिखो_cmd, cmd_adr);
+	map_write(map, write_cmd, cmd_adr);
 	ret = WAIT_TIMEOUT(map, chip, cmd_adr, 0, 0);
-	अगर (ret) अणु
-		/* Argh. Not पढ़ोy क्रम ग_लिखो to buffer */
-		map_word Xstatus = map_पढ़ो(map, cmd_adr);
-		map_ग_लिखो(map, CMD(0x70), cmd_adr);
+	if (ret) {
+		/* Argh. Not ready for write to buffer */
+		map_word Xstatus = map_read(map, cmd_adr);
+		map_write(map, CMD(0x70), cmd_adr);
 		chip->state = FL_STATUS;
-		status = map_पढ़ो(map, cmd_adr);
-		map_ग_लिखो(map, CMD(0x50), cmd_adr);
-		map_ग_लिखो(map, CMD(0x70), cmd_adr);
+		status = map_read(map, cmd_adr);
+		map_write(map, CMD(0x50), cmd_adr);
+		map_write(map, CMD(0x70), cmd_adr);
 		xip_enable(map, chip, cmd_adr);
-		prपूर्णांकk(KERN_ERR "%s: Chip not ready for buffer write. Xstatus = %lx, status = %lx\n",
+		printk(KERN_ERR "%s: Chip not ready for buffer write. Xstatus = %lx, status = %lx\n",
 				map->name, Xstatus.x[0], status.x[0]);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	/* Figure out the number of words to ग_लिखो */
+	/* Figure out the number of words to write */
 	word_gap = (-adr & (map_bankwidth(map)-1));
 	words = DIV_ROUND_UP(len - word_gap, map_bankwidth(map));
-	अगर (!word_gap) अणु
+	if (!word_gap) {
 		words--;
-	पूर्ण अन्यथा अणु
+	} else {
 		word_gap = map_bankwidth(map) - word_gap;
 		adr -= word_gap;
 		datum = map_word_ff(map);
-	पूर्ण
+	}
 
 	/* Write length of data to come */
-	map_ग_लिखो(map, CMD(words), cmd_adr );
+	map_write(map, CMD(words), cmd_adr );
 
 	/* Write data */
 	vec = *pvec;
 	vec_seek = *pvec_seek;
-	करो अणु
-		पूर्णांक n = map_bankwidth(map) - word_gap;
-		अगर (n > vec->iov_len - vec_seek)
+	do {
+		int n = map_bankwidth(map) - word_gap;
+		if (n > vec->iov_len - vec_seek)
 			n = vec->iov_len - vec_seek;
-		अगर (n > len)
+		if (n > len)
 			n = len;
 
-		अगर (!word_gap && len < map_bankwidth(map))
+		if (!word_gap && len < map_bankwidth(map))
 			datum = map_word_ff(map);
 
 		datum = map_word_load_partial(map, datum,
@@ -1809,158 +1808,158 @@ EXPORT_SYMBOL_GPL(cfi_cmdset_0200);
 
 		len -= n;
 		word_gap += n;
-		अगर (!len || word_gap == map_bankwidth(map)) अणु
-			map_ग_लिखो(map, datum, adr);
+		if (!len || word_gap == map_bankwidth(map)) {
+			map_write(map, datum, adr);
 			adr += map_bankwidth(map);
 			word_gap = 0;
-		पूर्ण
+		}
 
 		vec_seek += n;
-		अगर (vec_seek == vec->iov_len) अणु
+		if (vec_seek == vec->iov_len) {
 			vec++;
 			vec_seek = 0;
-		पूर्ण
-	पूर्ण जबतक (len);
+		}
+	} while (len);
 	*pvec = vec;
 	*pvec_seek = vec_seek;
 
 	/* GO GO GO */
-	map_ग_लिखो(map, CMD(0xd0), cmd_adr);
+	map_write(map, CMD(0xd0), cmd_adr);
 	chip->state = FL_WRITING;
 
 	ret = INVAL_CACHE_AND_WAIT(map, chip, cmd_adr,
 				   initial_adr, initial_len,
-				   chip->buffer_ग_लिखो_समय,
-				   chip->buffer_ग_लिखो_समय_max);
-	अगर (ret) अणु
-		map_ग_लिखो(map, CMD(0x70), cmd_adr);
+				   chip->buffer_write_time,
+				   chip->buffer_write_time_max);
+	if (ret) {
+		map_write(map, CMD(0x70), cmd_adr);
 		chip->state = FL_STATUS;
 		xip_enable(map, chip, cmd_adr);
-		prपूर्णांकk(KERN_ERR "%s: buffer write error (status timeout)\n", map->name);
-		जाओ out;
-	पूर्ण
+		printk(KERN_ERR "%s: buffer write error (status timeout)\n", map->name);
+		goto out;
+	}
 
-	/* check क्रम errors */
-	status = map_पढ़ो(map, cmd_adr);
-	अगर (map_word_bitsset(map, status, CMD(0x1a))) अणु
-		अचिन्हित दीर्घ chipstatus = MERGESTATUS(status);
+	/* check for errors */
+	status = map_read(map, cmd_adr);
+	if (map_word_bitsset(map, status, CMD(0x1a))) {
+		unsigned long chipstatus = MERGESTATUS(status);
 
 		/* reset status */
-		map_ग_लिखो(map, CMD(0x50), cmd_adr);
-		map_ग_लिखो(map, CMD(0x70), cmd_adr);
+		map_write(map, CMD(0x50), cmd_adr);
+		map_write(map, CMD(0x70), cmd_adr);
 		xip_enable(map, chip, cmd_adr);
 
-		अगर (chipstatus & 0x02) अणु
+		if (chipstatus & 0x02) {
 			ret = -EROFS;
-		पूर्ण अन्यथा अगर (chipstatus & 0x08) अणु
-			prपूर्णांकk(KERN_ERR "%s: buffer write error (bad VPP)\n", map->name);
+		} else if (chipstatus & 0x08) {
+			printk(KERN_ERR "%s: buffer write error (bad VPP)\n", map->name);
 			ret = -EIO;
-		पूर्ण अन्यथा अणु
-			prपूर्णांकk(KERN_ERR "%s: buffer write error (status 0x%lx)\n", map->name, chipstatus);
+		} else {
+			printk(KERN_ERR "%s: buffer write error (status 0x%lx)\n", map->name, chipstatus);
 			ret = -EINVAL;
-		पूर्ण
+		}
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	xip_enable(map, chip, cmd_adr);
  out:	DISABLE_VPP(map);
 	put_chip(map, chip, cmd_adr);
 	mutex_unlock(&chip->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cfi_पूर्णांकelext_ग_लिखोv (काष्ठा mtd_info *mtd, स्थिर काष्ठा kvec *vecs,
-				अचिन्हित दीर्घ count, loff_t to, माप_प्रकार *retlen)
-अणु
-	काष्ठा map_info *map = mtd->priv;
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	पूर्णांक wbufsize = cfi_पूर्णांकerleave(cfi) << cfi->cfiq->MaxBufWriteSize;
-	पूर्णांक ret;
-	पूर्णांक chipnum;
-	अचिन्हित दीर्घ ofs, vec_seek, i;
-	माप_प्रकार len = 0;
+static int cfi_intelext_writev (struct mtd_info *mtd, const struct kvec *vecs,
+				unsigned long count, loff_t to, size_t *retlen)
+{
+	struct map_info *map = mtd->priv;
+	struct cfi_private *cfi = map->fldrv_priv;
+	int wbufsize = cfi_interleave(cfi) << cfi->cfiq->MaxBufWriteSize;
+	int ret;
+	int chipnum;
+	unsigned long ofs, vec_seek, i;
+	size_t len = 0;
 
-	क्रम (i = 0; i < count; i++)
+	for (i = 0; i < count; i++)
 		len += vecs[i].iov_len;
 
-	अगर (!len)
-		वापस 0;
+	if (!len)
+		return 0;
 
-	chipnum = to >> cfi->chipshअगरt;
-	ofs = to - (chipnum << cfi->chipshअगरt);
+	chipnum = to >> cfi->chipshift;
+	ofs = to - (chipnum << cfi->chipshift);
 	vec_seek = 0;
 
-	करो अणु
-		/* We must not cross ग_लिखो block boundaries */
-		पूर्णांक size = wbufsize - (ofs & (wbufsize-1));
+	do {
+		/* We must not cross write block boundaries */
+		int size = wbufsize - (ofs & (wbufsize-1));
 
-		अगर (size > len)
+		if (size > len)
 			size = len;
-		ret = करो_ग_लिखो_buffer(map, &cfi->chips[chipnum],
+		ret = do_write_buffer(map, &cfi->chips[chipnum],
 				      ofs, &vecs, &vec_seek, size);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
 		ofs += size;
 		(*retlen) += size;
 		len -= size;
 
-		अगर (ofs >> cfi->chipshअगरt) अणु
+		if (ofs >> cfi->chipshift) {
 			chipnum ++;
 			ofs = 0;
-			अगर (chipnum == cfi->numchips)
-				वापस 0;
-		पूर्ण
+			if (chipnum == cfi->numchips)
+				return 0;
+		}
 
-		/* Be nice and reschedule with the chip in a usable state क्रम other
+		/* Be nice and reschedule with the chip in a usable state for other
 		   processes. */
 		cond_resched();
 
-	पूर्ण जबतक (len);
+	} while (len);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cfi_पूर्णांकelext_ग_लिखो_buffers (काष्ठा mtd_info *mtd, loff_t to,
-				       माप_प्रकार len, माप_प्रकार *retlen, स्थिर u_अक्षर *buf)
-अणु
-	काष्ठा kvec vec;
+static int cfi_intelext_write_buffers (struct mtd_info *mtd, loff_t to,
+				       size_t len, size_t *retlen, const u_char *buf)
+{
+	struct kvec vec;
 
-	vec.iov_base = (व्योम *) buf;
+	vec.iov_base = (void *) buf;
 	vec.iov_len = len;
 
-	वापस cfi_पूर्णांकelext_ग_लिखोv(mtd, &vec, 1, to, retlen);
-पूर्ण
+	return cfi_intelext_writev(mtd, &vec, 1, to, retlen);
+}
 
-अटल पूर्णांक __xipram करो_erase_oneblock(काष्ठा map_info *map, काष्ठा flchip *chip,
-				      अचिन्हित दीर्घ adr, पूर्णांक len, व्योम *thunk)
-अणु
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
+static int __xipram do_erase_oneblock(struct map_info *map, struct flchip *chip,
+				      unsigned long adr, int len, void *thunk)
+{
+	struct cfi_private *cfi = map->fldrv_priv;
 	map_word status;
-	पूर्णांक retries = 3;
-	पूर्णांक ret;
+	int retries = 3;
+	int ret;
 
 	adr += chip->start;
 
  retry:
 	mutex_lock(&chip->mutex);
 	ret = get_chip(map, chip, adr, FL_ERASING);
-	अगर (ret) अणु
+	if (ret) {
 		mutex_unlock(&chip->mutex);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	XIP_INVAL_CACHED_RANGE(map, adr, len);
 	ENABLE_VPP(map);
 	xip_disable(map, chip, adr);
 
-	/* Clear the status रेजिस्टर first */
-	map_ग_लिखो(map, CMD(0x50), adr);
+	/* Clear the status register first */
+	map_write(map, CMD(0x50), adr);
 
 	/* Now erase */
-	map_ग_लिखो(map, CMD(0x20), adr);
-	map_ग_लिखो(map, CMD(0xD0), adr);
+	map_write(map, CMD(0x20), adr);
+	map_write(map, CMD(0xD0), adr);
 	chip->state = FL_ERASING;
 	chip->erase_suspended = 0;
 	chip->in_progress_block_addr = adr;
@@ -1968,177 +1967,177 @@ EXPORT_SYMBOL_GPL(cfi_cmdset_0200);
 
 	ret = INVAL_CACHE_AND_WAIT(map, chip, adr,
 				   adr, len,
-				   chip->erase_समय,
-				   chip->erase_समय_max);
-	अगर (ret) अणु
-		map_ग_लिखो(map, CMD(0x70), adr);
+				   chip->erase_time,
+				   chip->erase_time_max);
+	if (ret) {
+		map_write(map, CMD(0x70), adr);
 		chip->state = FL_STATUS;
 		xip_enable(map, chip, adr);
-		prपूर्णांकk(KERN_ERR "%s: block erase error: (status timeout)\n", map->name);
-		जाओ out;
-	पूर्ण
+		printk(KERN_ERR "%s: block erase error: (status timeout)\n", map->name);
+		goto out;
+	}
 
 	/* We've broken this before. It doesn't hurt to be safe */
-	map_ग_लिखो(map, CMD(0x70), adr);
+	map_write(map, CMD(0x70), adr);
 	chip->state = FL_STATUS;
-	status = map_पढ़ो(map, adr);
+	status = map_read(map, adr);
 
-	/* check क्रम errors */
-	अगर (map_word_bitsset(map, status, CMD(0x3a))) अणु
-		अचिन्हित दीर्घ chipstatus = MERGESTATUS(status);
+	/* check for errors */
+	if (map_word_bitsset(map, status, CMD(0x3a))) {
+		unsigned long chipstatus = MERGESTATUS(status);
 
 		/* Reset the error bits */
-		map_ग_लिखो(map, CMD(0x50), adr);
-		map_ग_लिखो(map, CMD(0x70), adr);
+		map_write(map, CMD(0x50), adr);
+		map_write(map, CMD(0x70), adr);
 		xip_enable(map, chip, adr);
 
-		अगर ((chipstatus & 0x30) == 0x30) अणु
-			prपूर्णांकk(KERN_ERR "%s: block erase error: (bad command sequence, status 0x%lx)\n", map->name, chipstatus);
+		if ((chipstatus & 0x30) == 0x30) {
+			printk(KERN_ERR "%s: block erase error: (bad command sequence, status 0x%lx)\n", map->name, chipstatus);
 			ret = -EINVAL;
-		पूर्ण अन्यथा अगर (chipstatus & 0x02) अणु
+		} else if (chipstatus & 0x02) {
 			/* Protection bit set */
 			ret = -EROFS;
-		पूर्ण अन्यथा अगर (chipstatus & 0x8) अणु
+		} else if (chipstatus & 0x8) {
 			/* Voltage */
-			prपूर्णांकk(KERN_ERR "%s: block erase error: (bad VPP)\n", map->name);
+			printk(KERN_ERR "%s: block erase error: (bad VPP)\n", map->name);
 			ret = -EIO;
-		पूर्ण अन्यथा अगर (chipstatus & 0x20 && retries--) अणु
-			prपूर्णांकk(KERN_DEBUG "block erase failed at 0x%08lx: status 0x%lx. Retrying...\n", adr, chipstatus);
+		} else if (chipstatus & 0x20 && retries--) {
+			printk(KERN_DEBUG "block erase failed at 0x%08lx: status 0x%lx. Retrying...\n", adr, chipstatus);
 			DISABLE_VPP(map);
 			put_chip(map, chip, adr);
 			mutex_unlock(&chip->mutex);
-			जाओ retry;
-		पूर्ण अन्यथा अणु
-			prपूर्णांकk(KERN_ERR "%s: block erase failed at 0x%08lx (status 0x%lx)\n", map->name, adr, chipstatus);
+			goto retry;
+		} else {
+			printk(KERN_ERR "%s: block erase failed at 0x%08lx (status 0x%lx)\n", map->name, adr, chipstatus);
 			ret = -EIO;
-		पूर्ण
+		}
 
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	xip_enable(map, chip, adr);
  out:	DISABLE_VPP(map);
 	put_chip(map, chip, adr);
 	mutex_unlock(&chip->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cfi_पूर्णांकelext_erase_varsize(काष्ठा mtd_info *mtd, काष्ठा erase_info *instr)
-अणु
-	वापस cfi_varsize_frob(mtd, करो_erase_oneblock, instr->addr,
-				instr->len, शून्य);
-पूर्ण
+static int cfi_intelext_erase_varsize(struct mtd_info *mtd, struct erase_info *instr)
+{
+	return cfi_varsize_frob(mtd, do_erase_oneblock, instr->addr,
+				instr->len, NULL);
+}
 
-अटल व्योम cfi_पूर्णांकelext_sync (काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा map_info *map = mtd->priv;
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	पूर्णांक i;
-	काष्ठा flchip *chip;
-	पूर्णांक ret = 0;
+static void cfi_intelext_sync (struct mtd_info *mtd)
+{
+	struct map_info *map = mtd->priv;
+	struct cfi_private *cfi = map->fldrv_priv;
+	int i;
+	struct flchip *chip;
+	int ret = 0;
 
-	क्रम (i=0; !ret && i<cfi->numchips; i++) अणु
+	for (i=0; !ret && i<cfi->numchips; i++) {
 		chip = &cfi->chips[i];
 
 		mutex_lock(&chip->mutex);
 		ret = get_chip(map, chip, chip->start, FL_SYNCING);
 
-		अगर (!ret) अणु
+		if (!ret) {
 			chip->oldstate = chip->state;
 			chip->state = FL_SYNCING;
 			/* No need to wake_up() on this state change -
-			 * as the whole poपूर्णांक is that nobody can करो anything
+			 * as the whole point is that nobody can do anything
 			 * with the chip now anyway.
 			 */
-		पूर्ण
+		}
 		mutex_unlock(&chip->mutex);
-	पूर्ण
+	}
 
 	/* Unlock the chips again */
 
-	क्रम (i--; i >=0; i--) अणु
+	for (i--; i >=0; i--) {
 		chip = &cfi->chips[i];
 
 		mutex_lock(&chip->mutex);
 
-		अगर (chip->state == FL_SYNCING) अणु
+		if (chip->state == FL_SYNCING) {
 			chip->state = chip->oldstate;
 			chip->oldstate = FL_READY;
 			wake_up(&chip->wq);
-		पूर्ण
+		}
 		mutex_unlock(&chip->mutex);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक __xipram करो_getlockstatus_oneblock(काष्ठा map_info *map,
-						काष्ठा flchip *chip,
-						अचिन्हित दीर्घ adr,
-						पूर्णांक len, व्योम *thunk)
-अणु
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	पूर्णांक status, ofs_factor = cfi->पूर्णांकerleave * cfi->device_type;
+static int __xipram do_getlockstatus_oneblock(struct map_info *map,
+						struct flchip *chip,
+						unsigned long adr,
+						int len, void *thunk)
+{
+	struct cfi_private *cfi = map->fldrv_priv;
+	int status, ofs_factor = cfi->interleave * cfi->device_type;
 
 	adr += chip->start;
 	xip_disable(map, chip, adr+(2*ofs_factor));
-	map_ग_लिखो(map, CMD(0x90), adr+(2*ofs_factor));
+	map_write(map, CMD(0x90), adr+(2*ofs_factor));
 	chip->state = FL_JEDEC_QUERY;
-	status = cfi_पढ़ो_query(map, adr+(2*ofs_factor));
+	status = cfi_read_query(map, adr+(2*ofs_factor));
 	xip_enable(map, chip, 0);
-	वापस status;
-पूर्ण
+	return status;
+}
 
-#अगर_घोषित DEBUG_LOCK_BITS
-अटल पूर्णांक __xipram करो_prपूर्णांकlockstatus_oneblock(काष्ठा map_info *map,
-						काष्ठा flchip *chip,
-						अचिन्हित दीर्घ adr,
-						पूर्णांक len, व्योम *thunk)
-अणु
-	prपूर्णांकk(KERN_DEBUG "block status register for 0x%08lx is %x\n",
-	       adr, करो_getlockstatus_oneblock(map, chip, adr, len, thunk));
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+#ifdef DEBUG_LOCK_BITS
+static int __xipram do_printlockstatus_oneblock(struct map_info *map,
+						struct flchip *chip,
+						unsigned long adr,
+						int len, void *thunk)
+{
+	printk(KERN_DEBUG "block status register for 0x%08lx is %x\n",
+	       adr, do_getlockstatus_oneblock(map, chip, adr, len, thunk));
+	return 0;
+}
+#endif
 
-#घोषणा DO_XXLOCK_ONEBLOCK_LOCK		((व्योम *) 1)
-#घोषणा DO_XXLOCK_ONEBLOCK_UNLOCK	((व्योम *) 2)
+#define DO_XXLOCK_ONEBLOCK_LOCK		((void *) 1)
+#define DO_XXLOCK_ONEBLOCK_UNLOCK	((void *) 2)
 
-अटल पूर्णांक __xipram करो_xxlock_oneblock(काष्ठा map_info *map, काष्ठा flchip *chip,
-				       अचिन्हित दीर्घ adr, पूर्णांक len, व्योम *thunk)
-अणु
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	काष्ठा cfi_pri_पूर्णांकelext *extp = cfi->cmdset_priv;
-	पूर्णांक mdelay;
-	पूर्णांक ret;
+static int __xipram do_xxlock_oneblock(struct map_info *map, struct flchip *chip,
+				       unsigned long adr, int len, void *thunk)
+{
+	struct cfi_private *cfi = map->fldrv_priv;
+	struct cfi_pri_intelext *extp = cfi->cmdset_priv;
+	int mdelay;
+	int ret;
 
 	adr += chip->start;
 
 	mutex_lock(&chip->mutex);
 	ret = get_chip(map, chip, adr, FL_LOCKING);
-	अगर (ret) अणु
+	if (ret) {
 		mutex_unlock(&chip->mutex);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ENABLE_VPP(map);
 	xip_disable(map, chip, adr);
 
-	map_ग_लिखो(map, CMD(0x60), adr);
-	अगर (thunk == DO_XXLOCK_ONEBLOCK_LOCK) अणु
-		map_ग_लिखो(map, CMD(0x01), adr);
+	map_write(map, CMD(0x60), adr);
+	if (thunk == DO_XXLOCK_ONEBLOCK_LOCK) {
+		map_write(map, CMD(0x01), adr);
 		chip->state = FL_LOCKING;
-	पूर्ण अन्यथा अगर (thunk == DO_XXLOCK_ONEBLOCK_UNLOCK) अणु
-		map_ग_लिखो(map, CMD(0xD0), adr);
+	} else if (thunk == DO_XXLOCK_ONEBLOCK_UNLOCK) {
+		map_write(map, CMD(0xD0), adr);
 		chip->state = FL_UNLOCKING;
-	पूर्ण अन्यथा
+	} else
 		BUG();
 
 	/*
-	 * If Instant Inभागidual Block Locking supported then no need
+	 * If Instant Individual Block Locking supported then no need
 	 * to delay.
 	 */
 	/*
 	 * Unlocking may take up to 1.4 seconds on some Intel flashes. So
-	 * lets use a max of 1.5 seconds (1500ms) as समयout.
+	 * lets use a max of 1.5 seconds (1500ms) as timeout.
 	 *
 	 * See "Clear Block Lock-Bits Time" on page 40 in
 	 * "3 Volt Intel StrataFlash Memory" 28F128J3,28F640J3,28F320J3 manual
@@ -2147,195 +2146,195 @@ EXPORT_SYMBOL_GPL(cfi_cmdset_0200);
 	mdelay = (!extp || !(extp->FeatureSupport & (1 << 5))) ? 1500 : 0;
 
 	ret = WAIT_TIMEOUT(map, chip, adr, mdelay, mdelay * 1000);
-	अगर (ret) अणु
-		map_ग_लिखो(map, CMD(0x70), adr);
+	if (ret) {
+		map_write(map, CMD(0x70), adr);
 		chip->state = FL_STATUS;
 		xip_enable(map, chip, adr);
-		prपूर्णांकk(KERN_ERR "%s: block unlock error: (status timeout)\n", map->name);
-		जाओ out;
-	पूर्ण
+		printk(KERN_ERR "%s: block unlock error: (status timeout)\n", map->name);
+		goto out;
+	}
 
 	xip_enable(map, chip, adr);
  out:	DISABLE_VPP(map);
 	put_chip(map, chip, adr);
 	mutex_unlock(&chip->mutex);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cfi_पूर्णांकelext_lock(काष्ठा mtd_info *mtd, loff_t ofs, uपूर्णांक64_t len)
-अणु
-	पूर्णांक ret;
+static int cfi_intelext_lock(struct mtd_info *mtd, loff_t ofs, uint64_t len)
+{
+	int ret;
 
-#अगर_घोषित DEBUG_LOCK_BITS
-	prपूर्णांकk(KERN_DEBUG "%s: lock status before, ofs=0x%08llx, len=0x%08X\n",
+#ifdef DEBUG_LOCK_BITS
+	printk(KERN_DEBUG "%s: lock status before, ofs=0x%08llx, len=0x%08X\n",
 	       __func__, ofs, len);
-	cfi_varsize_frob(mtd, करो_prपूर्णांकlockstatus_oneblock,
-		ofs, len, शून्य);
-#पूर्ण_अगर
+	cfi_varsize_frob(mtd, do_printlockstatus_oneblock,
+		ofs, len, NULL);
+#endif
 
-	ret = cfi_varsize_frob(mtd, करो_xxlock_oneblock,
+	ret = cfi_varsize_frob(mtd, do_xxlock_oneblock,
 		ofs, len, DO_XXLOCK_ONEBLOCK_LOCK);
 
-#अगर_घोषित DEBUG_LOCK_BITS
-	prपूर्णांकk(KERN_DEBUG "%s: lock status after, ret=%d\n",
+#ifdef DEBUG_LOCK_BITS
+	printk(KERN_DEBUG "%s: lock status after, ret=%d\n",
 	       __func__, ret);
-	cfi_varsize_frob(mtd, करो_prपूर्णांकlockstatus_oneblock,
-		ofs, len, शून्य);
-#पूर्ण_अगर
+	cfi_varsize_frob(mtd, do_printlockstatus_oneblock,
+		ofs, len, NULL);
+#endif
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cfi_पूर्णांकelext_unlock(काष्ठा mtd_info *mtd, loff_t ofs, uपूर्णांक64_t len)
-अणु
-	पूर्णांक ret;
+static int cfi_intelext_unlock(struct mtd_info *mtd, loff_t ofs, uint64_t len)
+{
+	int ret;
 
-#अगर_घोषित DEBUG_LOCK_BITS
-	prपूर्णांकk(KERN_DEBUG "%s: lock status before, ofs=0x%08llx, len=0x%08X\n",
+#ifdef DEBUG_LOCK_BITS
+	printk(KERN_DEBUG "%s: lock status before, ofs=0x%08llx, len=0x%08X\n",
 	       __func__, ofs, len);
-	cfi_varsize_frob(mtd, करो_prपूर्णांकlockstatus_oneblock,
-		ofs, len, शून्य);
-#पूर्ण_अगर
+	cfi_varsize_frob(mtd, do_printlockstatus_oneblock,
+		ofs, len, NULL);
+#endif
 
-	ret = cfi_varsize_frob(mtd, करो_xxlock_oneblock,
+	ret = cfi_varsize_frob(mtd, do_xxlock_oneblock,
 					ofs, len, DO_XXLOCK_ONEBLOCK_UNLOCK);
 
-#अगर_घोषित DEBUG_LOCK_BITS
-	prपूर्णांकk(KERN_DEBUG "%s: lock status after, ret=%d\n",
+#ifdef DEBUG_LOCK_BITS
+	printk(KERN_DEBUG "%s: lock status after, ret=%d\n",
 	       __func__, ret);
-	cfi_varsize_frob(mtd, करो_prपूर्णांकlockstatus_oneblock,
-		ofs, len, शून्य);
-#पूर्ण_अगर
+	cfi_varsize_frob(mtd, do_printlockstatus_oneblock,
+		ofs, len, NULL);
+#endif
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cfi_पूर्णांकelext_is_locked(काष्ठा mtd_info *mtd, loff_t ofs,
-				  uपूर्णांक64_t len)
-अणु
-	वापस cfi_varsize_frob(mtd, करो_getlockstatus_oneblock,
-				ofs, len, शून्य) ? 1 : 0;
-पूर्ण
+static int cfi_intelext_is_locked(struct mtd_info *mtd, loff_t ofs,
+				  uint64_t len)
+{
+	return cfi_varsize_frob(mtd, do_getlockstatus_oneblock,
+				ofs, len, NULL) ? 1 : 0;
+}
 
-#अगर_घोषित CONFIG_MTD_OTP
+#ifdef CONFIG_MTD_OTP
 
-प्रकार पूर्णांक (*otp_op_t)(काष्ठा map_info *map, काष्ठा flchip *chip,
-			u_दीर्घ data_offset, u_अक्षर *buf, u_पूर्णांक size,
-			u_दीर्घ prot_offset, u_पूर्णांक groupno, u_पूर्णांक groupsize);
+typedef int (*otp_op_t)(struct map_info *map, struct flchip *chip,
+			u_long data_offset, u_char *buf, u_int size,
+			u_long prot_offset, u_int groupno, u_int groupsize);
 
-अटल पूर्णांक __xipram
-करो_otp_पढ़ो(काष्ठा map_info *map, काष्ठा flchip *chip, u_दीर्घ offset,
-	    u_अक्षर *buf, u_पूर्णांक size, u_दीर्घ prot, u_पूर्णांक grpno, u_पूर्णांक grpsz)
-अणु
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	पूर्णांक ret;
+static int __xipram
+do_otp_read(struct map_info *map, struct flchip *chip, u_long offset,
+	    u_char *buf, u_int size, u_long prot, u_int grpno, u_int grpsz)
+{
+	struct cfi_private *cfi = map->fldrv_priv;
+	int ret;
 
 	mutex_lock(&chip->mutex);
 	ret = get_chip(map, chip, chip->start, FL_JEDEC_QUERY);
-	अगर (ret) अणु
+	if (ret) {
 		mutex_unlock(&chip->mutex);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	/* let's ensure we're not पढ़ोing back cached data from array mode */
+	/* let's ensure we're not reading back cached data from array mode */
 	INVALIDATE_CACHED_RANGE(map, chip->start + offset, size);
 
 	xip_disable(map, chip, chip->start);
-	अगर (chip->state != FL_JEDEC_QUERY) अणु
-		map_ग_लिखो(map, CMD(0x90), chip->start);
+	if (chip->state != FL_JEDEC_QUERY) {
+		map_write(map, CMD(0x90), chip->start);
 		chip->state = FL_JEDEC_QUERY;
-	पूर्ण
+	}
 	map_copy_from(map, buf, chip->start + offset, size);
 	xip_enable(map, chip, chip->start);
 
-	/* then ensure we करोn't keep OTP data in the cache */
+	/* then ensure we don't keep OTP data in the cache */
 	INVALIDATE_CACHED_RANGE(map, chip->start + offset, size);
 
 	put_chip(map, chip, chip->start);
 	mutex_unlock(&chip->mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-करो_otp_ग_लिखो(काष्ठा map_info *map, काष्ठा flchip *chip, u_दीर्घ offset,
-	     u_अक्षर *buf, u_पूर्णांक size, u_दीर्घ prot, u_पूर्णांक grpno, u_पूर्णांक grpsz)
-अणु
-	पूर्णांक ret;
+static int
+do_otp_write(struct map_info *map, struct flchip *chip, u_long offset,
+	     u_char *buf, u_int size, u_long prot, u_int grpno, u_int grpsz)
+{
+	int ret;
 
-	जबतक (size) अणु
-		अचिन्हित दीर्घ bus_ofs = offset & ~(map_bankwidth(map)-1);
-		पूर्णांक gap = offset - bus_ofs;
-		पूर्णांक n = min_t(पूर्णांक, size, map_bankwidth(map)-gap);
+	while (size) {
+		unsigned long bus_ofs = offset & ~(map_bankwidth(map)-1);
+		int gap = offset - bus_ofs;
+		int n = min_t(int, size, map_bankwidth(map)-gap);
 		map_word datum = map_word_ff(map);
 
 		datum = map_word_load_partial(map, datum, buf, gap, n);
-		ret = करो_ग_लिखो_oneword(map, chip, bus_ofs, datum, FL_OTP_WRITE);
-		अगर (ret)
-			वापस ret;
+		ret = do_write_oneword(map, chip, bus_ofs, datum, FL_OTP_WRITE);
+		if (ret)
+			return ret;
 
 		offset += n;
 		buf += n;
 		size -= n;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-करो_otp_lock(काष्ठा map_info *map, काष्ठा flchip *chip, u_दीर्घ offset,
-	    u_अक्षर *buf, u_पूर्णांक size, u_दीर्घ prot, u_पूर्णांक grpno, u_पूर्णांक grpsz)
-अणु
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
+static int
+do_otp_lock(struct map_info *map, struct flchip *chip, u_long offset,
+	    u_char *buf, u_int size, u_long prot, u_int grpno, u_int grpsz)
+{
+	struct cfi_private *cfi = map->fldrv_priv;
 	map_word datum;
 
 	/* make sure area matches group boundaries */
-	अगर (size != grpsz)
-		वापस -EXDEV;
+	if (size != grpsz)
+		return -EXDEV;
 
 	datum = map_word_ff(map);
 	datum = map_word_clr(map, datum, CMD(1 << grpno));
-	वापस करो_ग_लिखो_oneword(map, chip, prot, datum, FL_OTP_WRITE);
-पूर्ण
+	return do_write_oneword(map, chip, prot, datum, FL_OTP_WRITE);
+}
 
-अटल पूर्णांक cfi_पूर्णांकelext_otp_walk(काष्ठा mtd_info *mtd, loff_t from, माप_प्रकार len,
-				 माप_प्रकार *retlen, u_अक्षर *buf,
-				 otp_op_t action, पूर्णांक user_regs)
-अणु
-	काष्ठा map_info *map = mtd->priv;
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	काष्ठा cfi_pri_पूर्णांकelext *extp = cfi->cmdset_priv;
-	काष्ठा flchip *chip;
-	काष्ठा cfi_पूर्णांकelext_otpinfo *otp;
-	u_दीर्घ devsize, reg_prot_offset, data_offset;
-	u_पूर्णांक chip_num, chip_step, field, reg_fact_size, reg_user_size;
-	u_पूर्णांक groups, groupno, groupsize, reg_fact_groups, reg_user_groups;
-	पूर्णांक ret;
+static int cfi_intelext_otp_walk(struct mtd_info *mtd, loff_t from, size_t len,
+				 size_t *retlen, u_char *buf,
+				 otp_op_t action, int user_regs)
+{
+	struct map_info *map = mtd->priv;
+	struct cfi_private *cfi = map->fldrv_priv;
+	struct cfi_pri_intelext *extp = cfi->cmdset_priv;
+	struct flchip *chip;
+	struct cfi_intelext_otpinfo *otp;
+	u_long devsize, reg_prot_offset, data_offset;
+	u_int chip_num, chip_step, field, reg_fact_size, reg_user_size;
+	u_int groups, groupno, groupsize, reg_fact_groups, reg_user_groups;
+	int ret;
 
 	*retlen = 0;
 
-	/* Check that we actually have some OTP रेजिस्टरs */
-	अगर (!extp || !(extp->FeatureSupport & 64) || !extp->NumProtectionFields)
-		वापस -ENODATA;
+	/* Check that we actually have some OTP registers */
+	if (!extp || !(extp->FeatureSupport & 64) || !extp->NumProtectionFields)
+		return -ENODATA;
 
-	/* we need real chips here not भव ones */
-	devsize = (1 << cfi->cfiq->DevSize) * cfi->पूर्णांकerleave;
-	chip_step = devsize >> cfi->chipshअगरt;
+	/* we need real chips here not virtual ones */
+	devsize = (1 << cfi->cfiq->DevSize) * cfi->interleave;
+	chip_step = devsize >> cfi->chipshift;
 	chip_num = 0;
 
 	/* Some chips have OTP located in the _top_ partition only.
 	   For example: Intel 28F256L18T (T means top-parameter device) */
-	अगर (cfi->mfr == CFI_MFR_INTEL) अणु
-		चयन (cfi->id) अणु
-		हाल 0x880b:
-		हाल 0x880c:
-		हाल 0x880d:
+	if (cfi->mfr == CFI_MFR_INTEL) {
+		switch (cfi->id) {
+		case 0x880b:
+		case 0x880c:
+		case 0x880d:
 			chip_num = chip_step - 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम ( ; chip_num < cfi->numchips; chip_num += chip_step) अणु
+	for ( ; chip_num < cfi->numchips; chip_num += chip_step) {
 		chip = &cfi->chips[chip_num];
-		otp = (काष्ठा cfi_पूर्णांकelext_otpinfo *)&extp->extra[0];
+		otp = (struct cfi_intelext_otpinfo *)&extp->extra[0];
 
 		/* first OTP region */
 		field = 0;
@@ -2345,346 +2344,346 @@ EXPORT_SYMBOL_GPL(cfi_cmdset_0200);
 		reg_user_groups = 1;
 		reg_user_size = 1 << extp->UserProtRegSize;
 
-		जबतक (len > 0) अणु
+		while (len > 0) {
 			/* flash geometry fixup */
 			data_offset = reg_prot_offset + 1;
-			data_offset *= cfi->पूर्णांकerleave * cfi->device_type;
-			reg_prot_offset *= cfi->पूर्णांकerleave * cfi->device_type;
-			reg_fact_size *= cfi->पूर्णांकerleave;
-			reg_user_size *= cfi->पूर्णांकerleave;
+			data_offset *= cfi->interleave * cfi->device_type;
+			reg_prot_offset *= cfi->interleave * cfi->device_type;
+			reg_fact_size *= cfi->interleave;
+			reg_user_size *= cfi->interleave;
 
-			अगर (user_regs) अणु
+			if (user_regs) {
 				groups = reg_user_groups;
 				groupsize = reg_user_size;
 				/* skip over factory reg area */
 				groupno = reg_fact_groups;
 				data_offset += reg_fact_groups * reg_fact_size;
-			पूर्ण अन्यथा अणु
+			} else {
 				groups = reg_fact_groups;
 				groupsize = reg_fact_size;
 				groupno = 0;
-			पूर्ण
+			}
 
-			जबतक (len > 0 && groups > 0) अणु
-				अगर (!action) अणु
+			while (len > 0 && groups > 0) {
+				if (!action) {
 					/*
-					 * Special हाल: अगर action is शून्य
+					 * Special case: if action is NULL
 					 * we fill buf with otp_info records.
 					 */
-					काष्ठा otp_info *otpinfo;
+					struct otp_info *otpinfo;
 					map_word lockword;
-					len -= माप(काष्ठा otp_info);
-					अगर (len <= 0)
-						वापस -ENOSPC;
-					ret = करो_otp_पढ़ो(map, chip,
+					len -= sizeof(struct otp_info);
+					if (len <= 0)
+						return -ENOSPC;
+					ret = do_otp_read(map, chip,
 							  reg_prot_offset,
-							  (u_अक्षर *)&lockword,
+							  (u_char *)&lockword,
 							  map_bankwidth(map),
 							  0, 0,  0);
-					अगर (ret)
-						वापस ret;
-					otpinfo = (काष्ठा otp_info *)buf;
+					if (ret)
+						return ret;
+					otpinfo = (struct otp_info *)buf;
 					otpinfo->start = from;
 					otpinfo->length = groupsize;
 					otpinfo->locked =
 					   !map_word_bitsset(map, lockword,
 							     CMD(1 << groupno));
 					from += groupsize;
-					buf += माप(*otpinfo);
-					*retlen += माप(*otpinfo);
-				पूर्ण अन्यथा अगर (from >= groupsize) अणु
+					buf += sizeof(*otpinfo);
+					*retlen += sizeof(*otpinfo);
+				} else if (from >= groupsize) {
 					from -= groupsize;
 					data_offset += groupsize;
-				पूर्ण अन्यथा अणु
-					पूर्णांक size = groupsize;
+				} else {
+					int size = groupsize;
 					data_offset += from;
 					size -= from;
 					from = 0;
-					अगर (size > len)
+					if (size > len)
 						size = len;
 					ret = action(map, chip, data_offset,
 						     buf, size, reg_prot_offset,
 						     groupno, groupsize);
-					अगर (ret < 0)
-						वापस ret;
+					if (ret < 0)
+						return ret;
 					buf += size;
 					len -= size;
 					*retlen += size;
 					data_offset += size;
-				पूर्ण
+				}
 				groupno++;
 				groups--;
-			पूर्ण
+			}
 
 			/* next OTP region */
-			अगर (++field == extp->NumProtectionFields)
-				अवरोध;
+			if (++field == extp->NumProtectionFields)
+				break;
 			reg_prot_offset = otp->ProtRegAddr;
 			reg_fact_groups = otp->FactGroups;
 			reg_fact_size = 1 << otp->FactProtRegSize;
 			reg_user_groups = otp->UserGroups;
 			reg_user_size = 1 << otp->UserProtRegSize;
 			otp++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cfi_पूर्णांकelext_पढ़ो_fact_prot_reg(काष्ठा mtd_info *mtd, loff_t from,
-					   माप_प्रकार len, माप_प्रकार *retlen,
-					    u_अक्षर *buf)
-अणु
-	वापस cfi_पूर्णांकelext_otp_walk(mtd, from, len, retlen,
-				     buf, करो_otp_पढ़ो, 0);
-पूर्ण
+static int cfi_intelext_read_fact_prot_reg(struct mtd_info *mtd, loff_t from,
+					   size_t len, size_t *retlen,
+					    u_char *buf)
+{
+	return cfi_intelext_otp_walk(mtd, from, len, retlen,
+				     buf, do_otp_read, 0);
+}
 
-अटल पूर्णांक cfi_पूर्णांकelext_पढ़ो_user_prot_reg(काष्ठा mtd_info *mtd, loff_t from,
-					   माप_प्रकार len, माप_प्रकार *retlen,
-					    u_अक्षर *buf)
-अणु
-	वापस cfi_पूर्णांकelext_otp_walk(mtd, from, len, retlen,
-				     buf, करो_otp_पढ़ो, 1);
-पूर्ण
+static int cfi_intelext_read_user_prot_reg(struct mtd_info *mtd, loff_t from,
+					   size_t len, size_t *retlen,
+					    u_char *buf)
+{
+	return cfi_intelext_otp_walk(mtd, from, len, retlen,
+				     buf, do_otp_read, 1);
+}
 
-अटल पूर्णांक cfi_पूर्णांकelext_ग_लिखो_user_prot_reg(काष्ठा mtd_info *mtd, loff_t from,
-					    माप_प्रकार len, माप_प्रकार *retlen,
-					    स्थिर u_अक्षर *buf)
-अणु
-	वापस cfi_पूर्णांकelext_otp_walk(mtd, from, len, retlen,
-				     (u_अक्षर *)buf, करो_otp_ग_लिखो, 1);
-पूर्ण
+static int cfi_intelext_write_user_prot_reg(struct mtd_info *mtd, loff_t from,
+					    size_t len, size_t *retlen,
+					    const u_char *buf)
+{
+	return cfi_intelext_otp_walk(mtd, from, len, retlen,
+				     (u_char *)buf, do_otp_write, 1);
+}
 
-अटल पूर्णांक cfi_पूर्णांकelext_lock_user_prot_reg(काष्ठा mtd_info *mtd,
-					   loff_t from, माप_प्रकार len)
-अणु
-	माप_प्रकार retlen;
-	वापस cfi_पूर्णांकelext_otp_walk(mtd, from, len, &retlen,
-				     शून्य, करो_otp_lock, 1);
-पूर्ण
+static int cfi_intelext_lock_user_prot_reg(struct mtd_info *mtd,
+					   loff_t from, size_t len)
+{
+	size_t retlen;
+	return cfi_intelext_otp_walk(mtd, from, len, &retlen,
+				     NULL, do_otp_lock, 1);
+}
 
-अटल पूर्णांक cfi_पूर्णांकelext_get_fact_prot_info(काष्ठा mtd_info *mtd, माप_प्रकार len,
-					   माप_प्रकार *retlen, काष्ठा otp_info *buf)
+static int cfi_intelext_get_fact_prot_info(struct mtd_info *mtd, size_t len,
+					   size_t *retlen, struct otp_info *buf)
 
-अणु
-	वापस cfi_पूर्णांकelext_otp_walk(mtd, 0, len, retlen, (u_अक्षर *)buf,
-				     शून्य, 0);
-पूर्ण
+{
+	return cfi_intelext_otp_walk(mtd, 0, len, retlen, (u_char *)buf,
+				     NULL, 0);
+}
 
-अटल पूर्णांक cfi_पूर्णांकelext_get_user_prot_info(काष्ठा mtd_info *mtd, माप_प्रकार len,
-					   माप_प्रकार *retlen, काष्ठा otp_info *buf)
-अणु
-	वापस cfi_पूर्णांकelext_otp_walk(mtd, 0, len, retlen, (u_अक्षर *)buf,
-				     शून्य, 1);
-पूर्ण
+static int cfi_intelext_get_user_prot_info(struct mtd_info *mtd, size_t len,
+					   size_t *retlen, struct otp_info *buf)
+{
+	return cfi_intelext_otp_walk(mtd, 0, len, retlen, (u_char *)buf,
+				     NULL, 1);
+}
 
-#पूर्ण_अगर
+#endif
 
-अटल व्योम cfi_पूर्णांकelext_save_locks(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा mtd_erase_region_info *region;
-	पूर्णांक block, status, i;
-	अचिन्हित दीर्घ adr;
-	माप_प्रकार len;
+static void cfi_intelext_save_locks(struct mtd_info *mtd)
+{
+	struct mtd_erase_region_info *region;
+	int block, status, i;
+	unsigned long adr;
+	size_t len;
 
-	क्रम (i = 0; i < mtd->numeraseregions; i++) अणु
+	for (i = 0; i < mtd->numeraseregions; i++) {
 		region = &mtd->eraseregions[i];
-		अगर (!region->lockmap)
-			जारी;
+		if (!region->lockmap)
+			continue;
 
-		क्रम (block = 0; block < region->numblocks; block++)अणु
+		for (block = 0; block < region->numblocks; block++){
 			len = region->erasesize;
 			adr = region->offset + block * len;
 
 			status = cfi_varsize_frob(mtd,
-					करो_getlockstatus_oneblock, adr, len, शून्य);
-			अगर (status)
+					do_getlockstatus_oneblock, adr, len, NULL);
+			if (status)
 				set_bit(block, region->lockmap);
-			अन्यथा
+			else
 				clear_bit(block, region->lockmap);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक cfi_पूर्णांकelext_suspend(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा map_info *map = mtd->priv;
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	काष्ठा cfi_pri_पूर्णांकelext *extp = cfi->cmdset_priv;
-	पूर्णांक i;
-	काष्ठा flchip *chip;
-	पूर्णांक ret = 0;
+static int cfi_intelext_suspend(struct mtd_info *mtd)
+{
+	struct map_info *map = mtd->priv;
+	struct cfi_private *cfi = map->fldrv_priv;
+	struct cfi_pri_intelext *extp = cfi->cmdset_priv;
+	int i;
+	struct flchip *chip;
+	int ret = 0;
 
-	अगर ((mtd->flags & MTD_POWERUP_LOCK)
+	if ((mtd->flags & MTD_POWERUP_LOCK)
 	    && extp && (extp->FeatureSupport & (1 << 5)))
-		cfi_पूर्णांकelext_save_locks(mtd);
+		cfi_intelext_save_locks(mtd);
 
-	क्रम (i=0; !ret && i<cfi->numchips; i++) अणु
+	for (i=0; !ret && i<cfi->numchips; i++) {
 		chip = &cfi->chips[i];
 
 		mutex_lock(&chip->mutex);
 
-		चयन (chip->state) अणु
-		हाल FL_READY:
-		हाल FL_STATUS:
-		हाल FL_CFI_QUERY:
-		हाल FL_JEDEC_QUERY:
-			अगर (chip->oldstate == FL_READY) अणु
-				/* place the chip in a known state beक्रमe suspend */
-				map_ग_लिखो(map, CMD(0xFF), cfi->chips[i].start);
+		switch (chip->state) {
+		case FL_READY:
+		case FL_STATUS:
+		case FL_CFI_QUERY:
+		case FL_JEDEC_QUERY:
+			if (chip->oldstate == FL_READY) {
+				/* place the chip in a known state before suspend */
+				map_write(map, CMD(0xFF), cfi->chips[i].start);
 				chip->oldstate = chip->state;
 				chip->state = FL_PM_SUSPENDED;
 				/* No need to wake_up() on this state change -
-				 * as the whole poपूर्णांक is that nobody can करो anything
+				 * as the whole point is that nobody can do anything
 				 * with the chip now anyway.
 				 */
-			पूर्ण अन्यथा अणु
-				/* There seems to be an operation pending. We must रुको क्रम it. */
-				prपूर्णांकk(KERN_NOTICE "Flash device refused suspend due to pending operation (oldstate %d)\n", chip->oldstate);
+			} else {
+				/* There seems to be an operation pending. We must wait for it. */
+				printk(KERN_NOTICE "Flash device refused suspend due to pending operation (oldstate %d)\n", chip->oldstate);
 				ret = -EAGAIN;
-			पूर्ण
-			अवरोध;
-		शेष:
-			/* Should we actually रुको? Once upon a समय these routines weren't
-			   allowed to. Or should we वापस -EAGAIN, because the upper layers
-			   ought to have alपढ़ोy shut करोwn anything which was using the device
-			   anyway? The latter क्रम now. */
-			prपूर्णांकk(KERN_NOTICE "Flash device refused suspend due to active operation (state %d)\n", chip->state);
+			}
+			break;
+		default:
+			/* Should we actually wait? Once upon a time these routines weren't
+			   allowed to. Or should we return -EAGAIN, because the upper layers
+			   ought to have already shut down anything which was using the device
+			   anyway? The latter for now. */
+			printk(KERN_NOTICE "Flash device refused suspend due to active operation (state %d)\n", chip->state);
 			ret = -EAGAIN;
-			अवरोध;
-		हाल FL_PM_SUSPENDED:
-			अवरोध;
-		पूर्ण
+			break;
+		case FL_PM_SUSPENDED:
+			break;
+		}
 		mutex_unlock(&chip->mutex);
-	पूर्ण
+	}
 
 	/* Unlock the chips again */
 
-	अगर (ret) अणु
-		क्रम (i--; i >=0; i--) अणु
+	if (ret) {
+		for (i--; i >=0; i--) {
 			chip = &cfi->chips[i];
 
 			mutex_lock(&chip->mutex);
 
-			अगर (chip->state == FL_PM_SUSPENDED) अणु
-				/* No need to क्रमce it पूर्णांकo a known state here,
+			if (chip->state == FL_PM_SUSPENDED) {
+				/* No need to force it into a known state here,
 				   because we're returning failure, and it didn't
-				   get घातer cycled */
+				   get power cycled */
 				chip->state = chip->oldstate;
 				chip->oldstate = FL_READY;
 				wake_up(&chip->wq);
-			पूर्ण
+			}
 			mutex_unlock(&chip->mutex);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम cfi_पूर्णांकelext_restore_locks(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा mtd_erase_region_info *region;
-	पूर्णांक block, i;
-	अचिन्हित दीर्घ adr;
-	माप_प्रकार len;
+static void cfi_intelext_restore_locks(struct mtd_info *mtd)
+{
+	struct mtd_erase_region_info *region;
+	int block, i;
+	unsigned long adr;
+	size_t len;
 
-	क्रम (i = 0; i < mtd->numeraseregions; i++) अणु
+	for (i = 0; i < mtd->numeraseregions; i++) {
 		region = &mtd->eraseregions[i];
-		अगर (!region->lockmap)
-			जारी;
+		if (!region->lockmap)
+			continue;
 
-		क्रम_each_clear_bit(block, region->lockmap, region->numblocks) अणु
+		for_each_clear_bit(block, region->lockmap, region->numblocks) {
 			len = region->erasesize;
 			adr = region->offset + block * len;
-			cfi_पूर्णांकelext_unlock(mtd, adr, len);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			cfi_intelext_unlock(mtd, adr, len);
+		}
+	}
+}
 
-अटल व्योम cfi_पूर्णांकelext_resume(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा map_info *map = mtd->priv;
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	काष्ठा cfi_pri_पूर्णांकelext *extp = cfi->cmdset_priv;
-	पूर्णांक i;
-	काष्ठा flchip *chip;
+static void cfi_intelext_resume(struct mtd_info *mtd)
+{
+	struct map_info *map = mtd->priv;
+	struct cfi_private *cfi = map->fldrv_priv;
+	struct cfi_pri_intelext *extp = cfi->cmdset_priv;
+	int i;
+	struct flchip *chip;
 
-	क्रम (i=0; i<cfi->numchips; i++) अणु
+	for (i=0; i<cfi->numchips; i++) {
 
 		chip = &cfi->chips[i];
 
 		mutex_lock(&chip->mutex);
 
-		/* Go to known state. Chip may have been घातer cycled */
-		अगर (chip->state == FL_PM_SUSPENDED) अणु
+		/* Go to known state. Chip may have been power cycled */
+		if (chip->state == FL_PM_SUSPENDED) {
 			/* Refresh LH28F640BF Partition Config. Register */
 			fixup_LH28F640BF(mtd);
-			map_ग_लिखो(map, CMD(0xFF), cfi->chips[i].start);
+			map_write(map, CMD(0xFF), cfi->chips[i].start);
 			chip->oldstate = chip->state = FL_READY;
 			wake_up(&chip->wq);
-		पूर्ण
+		}
 
 		mutex_unlock(&chip->mutex);
-	पूर्ण
+	}
 
-	अगर ((mtd->flags & MTD_POWERUP_LOCK)
+	if ((mtd->flags & MTD_POWERUP_LOCK)
 	    && extp && (extp->FeatureSupport & (1 << 5)))
-		cfi_पूर्णांकelext_restore_locks(mtd);
-पूर्ण
+		cfi_intelext_restore_locks(mtd);
+}
 
-अटल पूर्णांक cfi_पूर्णांकelext_reset(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा map_info *map = mtd->priv;
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	पूर्णांक i, ret;
+static int cfi_intelext_reset(struct mtd_info *mtd)
+{
+	struct map_info *map = mtd->priv;
+	struct cfi_private *cfi = map->fldrv_priv;
+	int i, ret;
 
-	क्रम (i=0; i < cfi->numchips; i++) अणु
-		काष्ठा flchip *chip = &cfi->chips[i];
+	for (i=0; i < cfi->numchips; i++) {
+		struct flchip *chip = &cfi->chips[i];
 
-		/* क्रमce the completion of any ongoing operation
-		   and चयन to array mode so any bootloader in
-		   flash is accessible क्रम soft reboot. */
+		/* force the completion of any ongoing operation
+		   and switch to array mode so any bootloader in
+		   flash is accessible for soft reboot. */
 		mutex_lock(&chip->mutex);
 		ret = get_chip(map, chip, chip->start, FL_SHUTDOWN);
-		अगर (!ret) अणु
-			map_ग_लिखो(map, CMD(0xff), chip->start);
+		if (!ret) {
+			map_write(map, CMD(0xff), chip->start);
 			chip->state = FL_SHUTDOWN;
 			put_chip(map, chip, chip->start);
-		पूर्ण
+		}
 		mutex_unlock(&chip->mutex);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cfi_पूर्णांकelext_reboot(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ val,
-			       व्योम *v)
-अणु
-	काष्ठा mtd_info *mtd;
+static int cfi_intelext_reboot(struct notifier_block *nb, unsigned long val,
+			       void *v)
+{
+	struct mtd_info *mtd;
 
-	mtd = container_of(nb, काष्ठा mtd_info, reboot_notअगरier);
-	cfi_पूर्णांकelext_reset(mtd);
-	वापस NOTIFY_DONE;
-पूर्ण
+	mtd = container_of(nb, struct mtd_info, reboot_notifier);
+	cfi_intelext_reset(mtd);
+	return NOTIFY_DONE;
+}
 
-अटल व्योम cfi_पूर्णांकelext_destroy(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा map_info *map = mtd->priv;
-	काष्ठा cfi_निजी *cfi = map->fldrv_priv;
-	काष्ठा mtd_erase_region_info *region;
-	पूर्णांक i;
-	cfi_पूर्णांकelext_reset(mtd);
-	unरेजिस्टर_reboot_notअगरier(&mtd->reboot_notअगरier);
-	kमुक्त(cfi->cmdset_priv);
-	kमुक्त(cfi->cfiq);
-	kमुक्त(cfi->chips[0].priv);
-	kमुक्त(cfi);
-	क्रम (i = 0; i < mtd->numeraseregions; i++) अणु
+static void cfi_intelext_destroy(struct mtd_info *mtd)
+{
+	struct map_info *map = mtd->priv;
+	struct cfi_private *cfi = map->fldrv_priv;
+	struct mtd_erase_region_info *region;
+	int i;
+	cfi_intelext_reset(mtd);
+	unregister_reboot_notifier(&mtd->reboot_notifier);
+	kfree(cfi->cmdset_priv);
+	kfree(cfi->cfiq);
+	kfree(cfi->chips[0].priv);
+	kfree(cfi);
+	for (i = 0; i < mtd->numeraseregions; i++) {
 		region = &mtd->eraseregions[i];
-		kमुक्त(region->lockmap);
-	पूर्ण
-	kमुक्त(mtd->eraseregions);
-पूर्ण
+		kfree(region->lockmap);
+	}
+	kfree(mtd->eraseregions);
+}
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("David Woodhouse <dwmw2@infradead.org> et al.");

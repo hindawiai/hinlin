@@ -1,23 +1,22 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * USB CDC Device Management subdriver
  *
- * Copyright (c) 2012  Bjथचrn Mork <bjorn@mork.no>
+ * Copyright (c) 2012  Bjørn Mork <bjorn@mork.no>
  *
- * This program is मुक्त software; you can redistribute it and/or
- * modअगरy it under the terms of the GNU General Public License
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
  * version 2 as published by the Free Software Foundation.
  */
 
-#अगर_अघोषित __LINUX_USB_CDC_WDM_H
-#घोषणा __LINUX_USB_CDC_WDM_H
+#ifndef __LINUX_USB_CDC_WDM_H
+#define __LINUX_USB_CDC_WDM_H
 
-#समावेश <uapi/linux/usb/cdc-wdm.h>
+#include <uapi/linux/usb/cdc-wdm.h>
 
-बाह्य काष्ठा usb_driver *usb_cdc_wdm_रेजिस्टर(काष्ठा usb_पूर्णांकerface *पूर्णांकf,
-					काष्ठा usb_endpoपूर्णांक_descriptor *ep,
-					पूर्णांक bufsize,
-					पूर्णांक (*manage_घातer)(काष्ठा usb_पूर्णांकerface *, पूर्णांक));
+extern struct usb_driver *usb_cdc_wdm_register(struct usb_interface *intf,
+					struct usb_endpoint_descriptor *ep,
+					int bufsize,
+					int (*manage_power)(struct usb_interface *, int));
 
-#पूर्ण_अगर /* __LINUX_USB_CDC_WDM_H */
+#endif /* __LINUX_USB_CDC_WDM_H */

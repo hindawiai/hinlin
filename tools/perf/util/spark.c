@@ -1,35 +1,34 @@
-<शैली गुरु>
-#समावेश <मानकपन.स>
-#समावेश <सीमा.स>
-#समावेश <माला.स>
-#समावेश <मानककोष.स>
-#समावेश "spark.h"
-#समावेश "stat.h"
+#include <stdio.h>
+#include <limits.h>
+#include <string.h>
+#include <stdlib.h>
+#include "spark.h"
+#include "stat.h"
 
-#घोषणा SPARK_SHIFT 8
+#define SPARK_SHIFT 8
 
-/* Prपूर्णांक spark lines on outf क्रम numval values in val. */
-पूर्णांक prपूर्णांक_spark(अक्षर *bf, पूर्णांक size, अचिन्हित दीर्घ *val, पूर्णांक numval)
-अणु
-	अटल स्थिर अक्षर *ticks[NUM_SPARKS] = अणु
-		"ै",  "ै", "ै", "ै", "ै", "ै", "ै", "ै"
-	पूर्ण;
-	पूर्णांक i, prपूर्णांकed = 0;
-	अचिन्हित दीर्घ min = अच_दीर्घ_उच्च, max = 0, f;
+/* Print spark lines on outf for numval values in val. */
+int print_spark(char *bf, int size, unsigned long *val, int numval)
+{
+	static const char *ticks[NUM_SPARKS] = {
+		"▁",  "▂", "▃", "▄", "▅", "▆", "▇", "█"
+	};
+	int i, printed = 0;
+	unsigned long min = ULONG_MAX, max = 0, f;
 
-	क्रम (i = 0; i < numval; i++) अणु
-		अगर (val[i] < min)
+	for (i = 0; i < numval; i++) {
+		if (val[i] < min)
 			min = val[i];
-		अगर (val[i] > max)
+		if (val[i] > max)
 			max = val[i];
-	पूर्ण
+	}
 	f = ((max - min) << SPARK_SHIFT) / (NUM_SPARKS - 1);
-	अगर (f < 1)
+	if (f < 1)
 		f = 1;
-	क्रम (i = 0; i < numval; i++) अणु
-		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "%s",
+	for (i = 0; i < numval; i++) {
+		printed += scnprintf(bf + printed, size - printed, "%s",
 				     ticks[((val[i] - min) << SPARK_SHIFT) / f]);
-	पूर्ण
+	}
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}

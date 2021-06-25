@@ -1,217 +1,216 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * BCM63XX CFE image tag parser
  *
- * Copyright तऊ 2006-2008  Florian Fainelli <florian@खोलोwrt.org>
- *			  Mike Albon <malbon@खोलोwrt.org>
- * Copyright तऊ 2009-2010  Daniel Dickinson <खोलोwrt@cshore.neomailbox.net>
- * Copyright तऊ 2011-2013  Jonas Gorski <jonas.gorski@gmail.com>
+ * Copyright © 2006-2008  Florian Fainelli <florian@openwrt.org>
+ *			  Mike Albon <malbon@openwrt.org>
+ * Copyright © 2009-2010  Daniel Dickinson <openwrt@cshore.neomailbox.net>
+ * Copyright © 2011-2013  Jonas Gorski <jonas.gorski@gmail.com>
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/bcm963xx_tag.h>
-#समावेश <linux/crc32.h>
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/sizes.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/partitions.h>
-#समावेश <linux/of.h>
+#include <linux/bcm963xx_tag.h>
+#include <linux/crc32.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/sizes.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/partitions.h>
+#include <linux/of.h>
 
-/* Ensure strings पढ़ो from flash काष्ठाs are null terminated */
-#घोषणा STR_शून्य_TERMINATE(x) \
-	करो अणु अक्षर *_str = (x); _str[माप(x) - 1] = 0; पूर्ण जबतक (0)
+/* Ensure strings read from flash structs are null terminated */
+#define STR_NULL_TERMINATE(x) \
+	do { char *_str = (x); _str[sizeof(x) - 1] = 0; } while (0)
 
-अटल पूर्णांक bcm963xx_पढ़ो_imagetag(काष्ठा mtd_info *master, स्थिर अक्षर *name,
-	loff_t tag_offset, काष्ठा bcm_tag *buf)
-अणु
-	पूर्णांक ret;
-	माप_प्रकार retlen;
+static int bcm963xx_read_imagetag(struct mtd_info *master, const char *name,
+	loff_t tag_offset, struct bcm_tag *buf)
+{
+	int ret;
+	size_t retlen;
 	u32 computed_crc;
 
-	ret = mtd_पढ़ो(master, tag_offset, माप(*buf), &retlen, (व्योम *)buf);
-	अगर (ret)
-		वापस ret;
+	ret = mtd_read(master, tag_offset, sizeof(*buf), &retlen, (void *)buf);
+	if (ret)
+		return ret;
 
-	अगर (retlen != माप(*buf))
-		वापस -EIO;
+	if (retlen != sizeof(*buf))
+		return -EIO;
 
 	computed_crc = crc32_le(IMAGETAG_CRC_START, (u8 *)buf,
-				दुरत्व(काष्ठा bcm_tag, header_crc));
-	अगर (computed_crc == buf->header_crc) अणु
-		STR_शून्य_TERMINATE(buf->board_id);
-		STR_शून्य_TERMINATE(buf->tag_version);
+				offsetof(struct bcm_tag, header_crc));
+	if (computed_crc == buf->header_crc) {
+		STR_NULL_TERMINATE(buf->board_id);
+		STR_NULL_TERMINATE(buf->tag_version);
 
 		pr_info("%s: CFE image tag found at 0x%llx with version %s, board type %s\n",
 			name, tag_offset, buf->tag_version, buf->board_id);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	pr_warn("%s: CFE image tag at 0x%llx CRC invalid (expected %08x, actual %08x)\n",
 		name, tag_offset, buf->header_crc, computed_crc);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल पूर्णांक bcm963xx_parse_imagetag_partitions(काष्ठा mtd_info *master,
-					स्थिर काष्ठा mtd_partition **pparts,
-					काष्ठा mtd_part_parser_data *data)
-अणु
+static int bcm963xx_parse_imagetag_partitions(struct mtd_info *master,
+					const struct mtd_partition **pparts,
+					struct mtd_part_parser_data *data)
+{
 	/* CFE, NVRAM and global Linux are always present */
-	पूर्णांक nrparts = 0, curpart = 0;
-	काष्ठा bcm_tag *buf = शून्य;
-	काष्ठा mtd_partition *parts;
-	पूर्णांक ret;
-	अचिन्हित पूर्णांक rootfsaddr, kerneladdr, spaपढ़ोdr, offset;
-	अचिन्हित पूर्णांक rootfslen, kernellen, sparelen, totallen;
-	पूर्णांक i;
+	int nrparts = 0, curpart = 0;
+	struct bcm_tag *buf = NULL;
+	struct mtd_partition *parts;
+	int ret;
+	unsigned int rootfsaddr, kerneladdr, spareaddr, offset;
+	unsigned int rootfslen, kernellen, sparelen, totallen;
+	int i;
 	bool rootfs_first = false;
 
-	buf = vदो_स्मृति(माप(काष्ठा bcm_tag));
-	अगर (!buf)
-		वापस -ENOMEM;
+	buf = vmalloc(sizeof(struct bcm_tag));
+	if (!buf)
+		return -ENOMEM;
 
 	/* Get the tag */
-	ret = bcm963xx_पढ़ो_imagetag(master, "rootfs", 0, buf);
-	अगर (!ret) अणु
-		STR_शून्य_TERMINATE(buf->flash_image_start);
-		अगर (kstrtouपूर्णांक(buf->flash_image_start, 10, &rootfsaddr) ||
-				rootfsaddr < BCM963XX_EXTENDED_SIZE) अणु
+	ret = bcm963xx_read_imagetag(master, "rootfs", 0, buf);
+	if (!ret) {
+		STR_NULL_TERMINATE(buf->flash_image_start);
+		if (kstrtouint(buf->flash_image_start, 10, &rootfsaddr) ||
+				rootfsaddr < BCM963XX_EXTENDED_SIZE) {
 			pr_err("invalid rootfs address: %*ph\n",
-				(पूर्णांक)माप(buf->flash_image_start),
+				(int)sizeof(buf->flash_image_start),
 				buf->flash_image_start);
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		STR_शून्य_TERMINATE(buf->kernel_address);
-		अगर (kstrtouपूर्णांक(buf->kernel_address, 10, &kerneladdr) ||
-				kerneladdr < BCM963XX_EXTENDED_SIZE) अणु
+		STR_NULL_TERMINATE(buf->kernel_address);
+		if (kstrtouint(buf->kernel_address, 10, &kerneladdr) ||
+				kerneladdr < BCM963XX_EXTENDED_SIZE) {
 			pr_err("invalid kernel address: %*ph\n",
-				(पूर्णांक)माप(buf->kernel_address),
+				(int)sizeof(buf->kernel_address),
 				buf->kernel_address);
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		STR_शून्य_TERMINATE(buf->kernel_length);
-		अगर (kstrtouपूर्णांक(buf->kernel_length, 10, &kernellen)) अणु
+		STR_NULL_TERMINATE(buf->kernel_length);
+		if (kstrtouint(buf->kernel_length, 10, &kernellen)) {
 			pr_err("invalid kernel length: %*ph\n",
-				(पूर्णांक)माप(buf->kernel_length),
+				(int)sizeof(buf->kernel_length),
 				buf->kernel_length);
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		STR_शून्य_TERMINATE(buf->total_length);
-		अगर (kstrtouपूर्णांक(buf->total_length, 10, &totallen)) अणु
+		STR_NULL_TERMINATE(buf->total_length);
+		if (kstrtouint(buf->total_length, 10, &totallen)) {
 			pr_err("invalid total length: %*ph\n",
-				(पूर्णांक)माप(buf->total_length),
+				(int)sizeof(buf->total_length),
 				buf->total_length);
 			ret = -EINVAL;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		/*
-		 * Addresses are flash असलolute, so convert to partition
+		 * Addresses are flash absolute, so convert to partition
 		 * relative addresses. Assume either kernel or rootfs will
 		 * directly follow the image tag.
 		 */
-		अगर (rootfsaddr < kerneladdr)
-			offset = rootfsaddr - माप(काष्ठा bcm_tag);
-		अन्यथा
-			offset = kerneladdr - माप(काष्ठा bcm_tag);
+		if (rootfsaddr < kerneladdr)
+			offset = rootfsaddr - sizeof(struct bcm_tag);
+		else
+			offset = kerneladdr - sizeof(struct bcm_tag);
 
 		kerneladdr = kerneladdr - offset;
 		rootfsaddr = rootfsaddr - offset;
-		spaपढ़ोdr = roundup(totallen, master->erasesize);
+		spareaddr = roundup(totallen, master->erasesize);
 
-		अगर (rootfsaddr < kerneladdr) अणु
-			/* शेष Broadcom layout */
+		if (rootfsaddr < kerneladdr) {
+			/* default Broadcom layout */
 			rootfslen = kerneladdr - rootfsaddr;
 			rootfs_first = true;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* OpenWrt layout */
 			rootfsaddr = kerneladdr + kernellen;
-			rootfslen = spaपढ़ोdr - rootfsaddr;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		जाओ out;
-	पूर्ण
-	sparelen = master->size - spaपढ़ोdr;
+			rootfslen = spareaddr - rootfsaddr;
+		}
+	} else {
+		goto out;
+	}
+	sparelen = master->size - spareaddr;
 
 	/* Determine number of partitions */
-	अगर (rootfslen > 0)
+	if (rootfslen > 0)
 		nrparts++;
 
-	अगर (kernellen > 0)
+	if (kernellen > 0)
 		nrparts++;
 
-	parts = kzalloc(माप(*parts) * nrparts + 10 * nrparts, GFP_KERNEL);
-	अगर (!parts) अणु
+	parts = kzalloc(sizeof(*parts) * nrparts + 10 * nrparts, GFP_KERNEL);
+	if (!parts) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/* Start building partition list */
-	अगर (kernellen > 0) अणु
-		पूर्णांक kernelpart = curpart;
+	if (kernellen > 0) {
+		int kernelpart = curpart;
 
-		अगर (rootfslen > 0 && rootfs_first)
+		if (rootfslen > 0 && rootfs_first)
 			kernelpart++;
 		parts[kernelpart].name = "kernel";
 		parts[kernelpart].offset = kerneladdr;
 		parts[kernelpart].size = kernellen;
 		curpart++;
-	पूर्ण
+	}
 
-	अगर (rootfslen > 0) अणु
-		पूर्णांक rootfspart = curpart;
+	if (rootfslen > 0) {
+		int rootfspart = curpart;
 
-		अगर (kernellen > 0 && rootfs_first)
+		if (kernellen > 0 && rootfs_first)
 			rootfspart--;
 		parts[rootfspart].name = "rootfs";
 		parts[rootfspart].offset = rootfsaddr;
 		parts[rootfspart].size = rootfslen;
-		अगर (sparelen > 0  && !rootfs_first)
+		if (sparelen > 0  && !rootfs_first)
 			parts[rootfspart].size += sparelen;
 		curpart++;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < nrparts; i++)
+	for (i = 0; i < nrparts; i++)
 		pr_info("Partition %d is %s offset %llx and length %llx\n", i,
 			parts[i].name, parts[i].offset,	parts[i].size);
 
-	pr_info("Spare partition is offset %x and length %x\n",	spaपढ़ोdr,
+	pr_info("Spare partition is offset %x and length %x\n",	spareaddr,
 		sparelen);
 
 	*pparts = parts;
 	ret = 0;
 
 out:
-	vमुक्त(buf);
+	vfree(buf);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस nrparts;
-पूर्ण
+	return nrparts;
+}
 
-अटल स्थिर काष्ठा of_device_id parse_bcm963xx_imagetag_match_table[] = अणु
-	अणु .compatible = "brcm,bcm963xx-imagetag" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id parse_bcm963xx_imagetag_match_table[] = {
+	{ .compatible = "brcm,bcm963xx-imagetag" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, parse_bcm963xx_imagetag_match_table);
 
-अटल काष्ठा mtd_part_parser bcm963xx_imagetag_parser = अणु
+static struct mtd_part_parser bcm963xx_imagetag_parser = {
 	.parse_fn = bcm963xx_parse_imagetag_partitions,
 	.name = "bcm963xx-imagetag",
 	.of_match_table = parse_bcm963xx_imagetag_match_table,
-पूर्ण;
+};
 module_mtd_part_parser(bcm963xx_imagetag_parser);
 
 MODULE_LICENSE("GPL");

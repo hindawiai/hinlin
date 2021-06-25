@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2021 Intel Corporation
+ * Copyright © 2021 Intel Corporation
  */
 
-#अगर_अघोषित __I915_MITIGATIONS_H__
-#घोषणा __I915_MITIGATIONS_H__
+#ifndef __I915_MITIGATIONS_H__
+#define __I915_MITIGATIONS_H__
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-bool i915_mitigate_clear_residuals(व्योम);
+bool i915_mitigate_clear_residuals(void);
 
-#पूर्ण_अगर /* __I915_MITIGATIONS_H__ */
+#endif /* __I915_MITIGATIONS_H__ */

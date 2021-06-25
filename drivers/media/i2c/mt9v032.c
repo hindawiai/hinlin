@@ -1,149 +1,148 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Driver क्रम MT9V022, MT9V024, MT9V032, and MT9V034 CMOS Image Sensors
+ * Driver for MT9V022, MT9V024, MT9V032, and MT9V034 CMOS Image Sensors
  *
- * Copyright (C) 2010, Laurent Pinअक्षरt <laurent.pinअक्षरt@ideasonboard.com>
+ * Copyright (C) 2010, Laurent Pinchart <laurent.pinchart@ideasonboard.com>
  *
  * Based on the MT9M001 driver,
  *
  * Copyright (C) 2008, Guennadi Liakhovetski <kernel@pengutronix.de>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/log2.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_graph.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/videodev2.h>
-#समावेश <linux/v4l2-mediabus.h>
-#समावेश <linux/module.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/gpio/consumer.h>
+#include <linux/i2c.h>
+#include <linux/log2.h>
+#include <linux/mutex.h>
+#include <linux/of.h>
+#include <linux/of_graph.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
+#include <linux/videodev2.h>
+#include <linux/v4l2-mediabus.h>
+#include <linux/module.h>
 
-#समावेश <media/i2c/mt9v032.h>
-#समावेश <media/v4l2-ctrls.h>
-#समावेश <media/v4l2-device.h>
-#समावेश <media/v4l2-fwnode.h>
-#समावेश <media/v4l2-subdev.h>
+#include <media/i2c/mt9v032.h>
+#include <media/v4l2-ctrls.h>
+#include <media/v4l2-device.h>
+#include <media/v4l2-fwnode.h>
+#include <media/v4l2-subdev.h>
 
 /* The first four rows are black rows. The active area spans 753x481 pixels. */
-#घोषणा MT9V032_PIXEL_ARRAY_HEIGHT			485
-#घोषणा MT9V032_PIXEL_ARRAY_WIDTH			753
+#define MT9V032_PIXEL_ARRAY_HEIGHT			485
+#define MT9V032_PIXEL_ARRAY_WIDTH			753
 
-#घोषणा MT9V032_SYSCLK_FREQ_DEF				26600000
+#define MT9V032_SYSCLK_FREQ_DEF				26600000
 
-#घोषणा MT9V032_CHIP_VERSION				0x00
-#घोषणा		MT9V032_CHIP_ID_REV1			0x1311
-#घोषणा		MT9V032_CHIP_ID_REV3			0x1313
-#घोषणा		MT9V034_CHIP_ID_REV1			0X1324
-#घोषणा MT9V032_COLUMN_START				0x01
-#घोषणा		MT9V032_COLUMN_START_MIN		1
-#घोषणा		MT9V032_COLUMN_START_DEF		1
-#घोषणा		MT9V032_COLUMN_START_MAX		752
-#घोषणा MT9V032_ROW_START				0x02
-#घोषणा		MT9V032_ROW_START_MIN			4
-#घोषणा		MT9V032_ROW_START_DEF			5
-#घोषणा		MT9V032_ROW_START_MAX			482
-#घोषणा MT9V032_WINDOW_HEIGHT				0x03
-#घोषणा		MT9V032_WINDOW_HEIGHT_MIN		1
-#घोषणा		MT9V032_WINDOW_HEIGHT_DEF		480
-#घोषणा		MT9V032_WINDOW_HEIGHT_MAX		480
-#घोषणा MT9V032_WINDOW_WIDTH				0x04
-#घोषणा		MT9V032_WINDOW_WIDTH_MIN		1
-#घोषणा		MT9V032_WINDOW_WIDTH_DEF		752
-#घोषणा		MT9V032_WINDOW_WIDTH_MAX		752
-#घोषणा MT9V032_HORIZONTAL_BLANKING			0x05
-#घोषणा		MT9V032_HORIZONTAL_BLANKING_MIN		43
-#घोषणा		MT9V034_HORIZONTAL_BLANKING_MIN		61
-#घोषणा		MT9V032_HORIZONTAL_BLANKING_DEF		94
-#घोषणा		MT9V032_HORIZONTAL_BLANKING_MAX		1023
-#घोषणा MT9V032_VERTICAL_BLANKING			0x06
-#घोषणा		MT9V032_VERTICAL_BLANKING_MIN		4
-#घोषणा		MT9V034_VERTICAL_BLANKING_MIN		2
-#घोषणा		MT9V032_VERTICAL_BLANKING_DEF		45
-#घोषणा		MT9V032_VERTICAL_BLANKING_MAX		3000
-#घोषणा		MT9V034_VERTICAL_BLANKING_MAX		32288
-#घोषणा MT9V032_CHIP_CONTROL				0x07
-#घोषणा		MT9V032_CHIP_CONTROL_MASTER_MODE	(1 << 3)
-#घोषणा		MT9V032_CHIP_CONTROL_DOUT_ENABLE	(1 << 7)
-#घोषणा		MT9V032_CHIP_CONTROL_SEQUENTIAL		(1 << 8)
-#घोषणा MT9V032_SHUTTER_WIDTH1				0x08
-#घोषणा MT9V032_SHUTTER_WIDTH2				0x09
-#घोषणा MT9V032_SHUTTER_WIDTH_CONTROL			0x0a
-#घोषणा MT9V032_TOTAL_SHUTTER_WIDTH			0x0b
-#घोषणा		MT9V032_TOTAL_SHUTTER_WIDTH_MIN		1
-#घोषणा		MT9V034_TOTAL_SHUTTER_WIDTH_MIN		0
-#घोषणा		MT9V032_TOTAL_SHUTTER_WIDTH_DEF		480
-#घोषणा		MT9V032_TOTAL_SHUTTER_WIDTH_MAX		32767
-#घोषणा		MT9V034_TOTAL_SHUTTER_WIDTH_MAX		32765
-#घोषणा MT9V032_RESET					0x0c
-#घोषणा MT9V032_READ_MODE				0x0d
-#घोषणा		MT9V032_READ_MODE_ROW_BIN_MASK		(3 << 0)
-#घोषणा		MT9V032_READ_MODE_ROW_BIN_SHIFT		0
-#घोषणा		MT9V032_READ_MODE_COLUMN_BIN_MASK	(3 << 2)
-#घोषणा		MT9V032_READ_MODE_COLUMN_BIN_SHIFT	2
-#घोषणा		MT9V032_READ_MODE_ROW_FLIP		(1 << 4)
-#घोषणा		MT9V032_READ_MODE_COLUMN_FLIP		(1 << 5)
-#घोषणा		MT9V032_READ_MODE_DARK_COLUMNS		(1 << 6)
-#घोषणा		MT9V032_READ_MODE_DARK_ROWS		(1 << 7)
-#घोषणा		MT9V032_READ_MODE_RESERVED		0x0300
-#घोषणा MT9V032_PIXEL_OPERATION_MODE			0x0f
-#घोषणा		MT9V034_PIXEL_OPERATION_MODE_HDR	(1 << 0)
-#घोषणा		MT9V034_PIXEL_OPERATION_MODE_COLOR	(1 << 1)
-#घोषणा		MT9V032_PIXEL_OPERATION_MODE_COLOR	(1 << 2)
-#घोषणा		MT9V032_PIXEL_OPERATION_MODE_HDR	(1 << 6)
-#घोषणा MT9V032_ANALOG_GAIN				0x35
-#घोषणा		MT9V032_ANALOG_GAIN_MIN			16
-#घोषणा		MT9V032_ANALOG_GAIN_DEF			16
-#घोषणा		MT9V032_ANALOG_GAIN_MAX			64
-#घोषणा MT9V032_MAX_ANALOG_GAIN				0x36
-#घोषणा		MT9V032_MAX_ANALOG_GAIN_MAX		127
-#घोषणा MT9V032_FRAME_DARK_AVERAGE			0x42
-#घोषणा MT9V032_DARK_AVG_THRESH				0x46
-#घोषणा		MT9V032_DARK_AVG_LOW_THRESH_MASK	(255 << 0)
-#घोषणा		MT9V032_DARK_AVG_LOW_THRESH_SHIFT	0
-#घोषणा		MT9V032_DARK_AVG_HIGH_THRESH_MASK	(255 << 8)
-#घोषणा		MT9V032_DARK_AVG_HIGH_THRESH_SHIFT	8
-#घोषणा MT9V032_ROW_NOISE_CORR_CONTROL			0x70
-#घोषणा		MT9V034_ROW_NOISE_CORR_ENABLE		(1 << 0)
-#घोषणा		MT9V034_ROW_NOISE_CORR_USE_BLK_AVG	(1 << 1)
-#घोषणा		MT9V032_ROW_NOISE_CORR_ENABLE		(1 << 5)
-#घोषणा		MT9V032_ROW_NOISE_CORR_USE_BLK_AVG	(1 << 7)
-#घोषणा MT9V032_PIXEL_CLOCK				0x74
-#घोषणा MT9V034_PIXEL_CLOCK				0x72
-#घोषणा		MT9V032_PIXEL_CLOCK_INV_LINE		(1 << 0)
-#घोषणा		MT9V032_PIXEL_CLOCK_INV_FRAME		(1 << 1)
-#घोषणा		MT9V032_PIXEL_CLOCK_XOR_LINE		(1 << 2)
-#घोषणा		MT9V032_PIXEL_CLOCK_CONT_LINE		(1 << 3)
-#घोषणा		MT9V032_PIXEL_CLOCK_INV_PXL_CLK		(1 << 4)
-#घोषणा MT9V032_TEST_PATTERN				0x7f
-#घोषणा		MT9V032_TEST_PATTERN_DATA_MASK		(1023 << 0)
-#घोषणा		MT9V032_TEST_PATTERN_DATA_SHIFT		0
-#घोषणा		MT9V032_TEST_PATTERN_USE_DATA		(1 << 10)
-#घोषणा		MT9V032_TEST_PATTERN_GRAY_MASK		(3 << 11)
-#घोषणा		MT9V032_TEST_PATTERN_GRAY_NONE		(0 << 11)
-#घोषणा		MT9V032_TEST_PATTERN_GRAY_VERTICAL	(1 << 11)
-#घोषणा		MT9V032_TEST_PATTERN_GRAY_HORIZONTAL	(2 << 11)
-#घोषणा		MT9V032_TEST_PATTERN_GRAY_DIAGONAL	(3 << 11)
-#घोषणा		MT9V032_TEST_PATTERN_ENABLE		(1 << 13)
-#घोषणा		MT9V032_TEST_PATTERN_FLIP		(1 << 14)
-#घोषणा MT9V032_AEGC_DESIRED_BIN			0xa5
-#घोषणा MT9V032_AEC_UPDATE_FREQUENCY			0xa6
-#घोषणा MT9V032_AEC_LPF					0xa8
-#घोषणा MT9V032_AGC_UPDATE_FREQUENCY			0xa9
-#घोषणा MT9V032_AGC_LPF					0xaa
-#घोषणा MT9V032_AEC_AGC_ENABLE				0xaf
-#घोषणा		MT9V032_AEC_ENABLE			(1 << 0)
-#घोषणा		MT9V032_AGC_ENABLE			(1 << 1)
-#घोषणा MT9V034_AEC_MAX_SHUTTER_WIDTH			0xad
-#घोषणा MT9V032_AEC_MAX_SHUTTER_WIDTH			0xbd
-#घोषणा MT9V032_THERMAL_INFO				0xc1
+#define MT9V032_CHIP_VERSION				0x00
+#define		MT9V032_CHIP_ID_REV1			0x1311
+#define		MT9V032_CHIP_ID_REV3			0x1313
+#define		MT9V034_CHIP_ID_REV1			0X1324
+#define MT9V032_COLUMN_START				0x01
+#define		MT9V032_COLUMN_START_MIN		1
+#define		MT9V032_COLUMN_START_DEF		1
+#define		MT9V032_COLUMN_START_MAX		752
+#define MT9V032_ROW_START				0x02
+#define		MT9V032_ROW_START_MIN			4
+#define		MT9V032_ROW_START_DEF			5
+#define		MT9V032_ROW_START_MAX			482
+#define MT9V032_WINDOW_HEIGHT				0x03
+#define		MT9V032_WINDOW_HEIGHT_MIN		1
+#define		MT9V032_WINDOW_HEIGHT_DEF		480
+#define		MT9V032_WINDOW_HEIGHT_MAX		480
+#define MT9V032_WINDOW_WIDTH				0x04
+#define		MT9V032_WINDOW_WIDTH_MIN		1
+#define		MT9V032_WINDOW_WIDTH_DEF		752
+#define		MT9V032_WINDOW_WIDTH_MAX		752
+#define MT9V032_HORIZONTAL_BLANKING			0x05
+#define		MT9V032_HORIZONTAL_BLANKING_MIN		43
+#define		MT9V034_HORIZONTAL_BLANKING_MIN		61
+#define		MT9V032_HORIZONTAL_BLANKING_DEF		94
+#define		MT9V032_HORIZONTAL_BLANKING_MAX		1023
+#define MT9V032_VERTICAL_BLANKING			0x06
+#define		MT9V032_VERTICAL_BLANKING_MIN		4
+#define		MT9V034_VERTICAL_BLANKING_MIN		2
+#define		MT9V032_VERTICAL_BLANKING_DEF		45
+#define		MT9V032_VERTICAL_BLANKING_MAX		3000
+#define		MT9V034_VERTICAL_BLANKING_MAX		32288
+#define MT9V032_CHIP_CONTROL				0x07
+#define		MT9V032_CHIP_CONTROL_MASTER_MODE	(1 << 3)
+#define		MT9V032_CHIP_CONTROL_DOUT_ENABLE	(1 << 7)
+#define		MT9V032_CHIP_CONTROL_SEQUENTIAL		(1 << 8)
+#define MT9V032_SHUTTER_WIDTH1				0x08
+#define MT9V032_SHUTTER_WIDTH2				0x09
+#define MT9V032_SHUTTER_WIDTH_CONTROL			0x0a
+#define MT9V032_TOTAL_SHUTTER_WIDTH			0x0b
+#define		MT9V032_TOTAL_SHUTTER_WIDTH_MIN		1
+#define		MT9V034_TOTAL_SHUTTER_WIDTH_MIN		0
+#define		MT9V032_TOTAL_SHUTTER_WIDTH_DEF		480
+#define		MT9V032_TOTAL_SHUTTER_WIDTH_MAX		32767
+#define		MT9V034_TOTAL_SHUTTER_WIDTH_MAX		32765
+#define MT9V032_RESET					0x0c
+#define MT9V032_READ_MODE				0x0d
+#define		MT9V032_READ_MODE_ROW_BIN_MASK		(3 << 0)
+#define		MT9V032_READ_MODE_ROW_BIN_SHIFT		0
+#define		MT9V032_READ_MODE_COLUMN_BIN_MASK	(3 << 2)
+#define		MT9V032_READ_MODE_COLUMN_BIN_SHIFT	2
+#define		MT9V032_READ_MODE_ROW_FLIP		(1 << 4)
+#define		MT9V032_READ_MODE_COLUMN_FLIP		(1 << 5)
+#define		MT9V032_READ_MODE_DARK_COLUMNS		(1 << 6)
+#define		MT9V032_READ_MODE_DARK_ROWS		(1 << 7)
+#define		MT9V032_READ_MODE_RESERVED		0x0300
+#define MT9V032_PIXEL_OPERATION_MODE			0x0f
+#define		MT9V034_PIXEL_OPERATION_MODE_HDR	(1 << 0)
+#define		MT9V034_PIXEL_OPERATION_MODE_COLOR	(1 << 1)
+#define		MT9V032_PIXEL_OPERATION_MODE_COLOR	(1 << 2)
+#define		MT9V032_PIXEL_OPERATION_MODE_HDR	(1 << 6)
+#define MT9V032_ANALOG_GAIN				0x35
+#define		MT9V032_ANALOG_GAIN_MIN			16
+#define		MT9V032_ANALOG_GAIN_DEF			16
+#define		MT9V032_ANALOG_GAIN_MAX			64
+#define MT9V032_MAX_ANALOG_GAIN				0x36
+#define		MT9V032_MAX_ANALOG_GAIN_MAX		127
+#define MT9V032_FRAME_DARK_AVERAGE			0x42
+#define MT9V032_DARK_AVG_THRESH				0x46
+#define		MT9V032_DARK_AVG_LOW_THRESH_MASK	(255 << 0)
+#define		MT9V032_DARK_AVG_LOW_THRESH_SHIFT	0
+#define		MT9V032_DARK_AVG_HIGH_THRESH_MASK	(255 << 8)
+#define		MT9V032_DARK_AVG_HIGH_THRESH_SHIFT	8
+#define MT9V032_ROW_NOISE_CORR_CONTROL			0x70
+#define		MT9V034_ROW_NOISE_CORR_ENABLE		(1 << 0)
+#define		MT9V034_ROW_NOISE_CORR_USE_BLK_AVG	(1 << 1)
+#define		MT9V032_ROW_NOISE_CORR_ENABLE		(1 << 5)
+#define		MT9V032_ROW_NOISE_CORR_USE_BLK_AVG	(1 << 7)
+#define MT9V032_PIXEL_CLOCK				0x74
+#define MT9V034_PIXEL_CLOCK				0x72
+#define		MT9V032_PIXEL_CLOCK_INV_LINE		(1 << 0)
+#define		MT9V032_PIXEL_CLOCK_INV_FRAME		(1 << 1)
+#define		MT9V032_PIXEL_CLOCK_XOR_LINE		(1 << 2)
+#define		MT9V032_PIXEL_CLOCK_CONT_LINE		(1 << 3)
+#define		MT9V032_PIXEL_CLOCK_INV_PXL_CLK		(1 << 4)
+#define MT9V032_TEST_PATTERN				0x7f
+#define		MT9V032_TEST_PATTERN_DATA_MASK		(1023 << 0)
+#define		MT9V032_TEST_PATTERN_DATA_SHIFT		0
+#define		MT9V032_TEST_PATTERN_USE_DATA		(1 << 10)
+#define		MT9V032_TEST_PATTERN_GRAY_MASK		(3 << 11)
+#define		MT9V032_TEST_PATTERN_GRAY_NONE		(0 << 11)
+#define		MT9V032_TEST_PATTERN_GRAY_VERTICAL	(1 << 11)
+#define		MT9V032_TEST_PATTERN_GRAY_HORIZONTAL	(2 << 11)
+#define		MT9V032_TEST_PATTERN_GRAY_DIAGONAL	(3 << 11)
+#define		MT9V032_TEST_PATTERN_ENABLE		(1 << 13)
+#define		MT9V032_TEST_PATTERN_FLIP		(1 << 14)
+#define MT9V032_AEGC_DESIRED_BIN			0xa5
+#define MT9V032_AEC_UPDATE_FREQUENCY			0xa6
+#define MT9V032_AEC_LPF					0xa8
+#define MT9V032_AGC_UPDATE_FREQUENCY			0xa9
+#define MT9V032_AGC_LPF					0xaa
+#define MT9V032_AEC_AGC_ENABLE				0xaf
+#define		MT9V032_AEC_ENABLE			(1 << 0)
+#define		MT9V032_AGC_ENABLE			(1 << 1)
+#define MT9V034_AEC_MAX_SHUTTER_WIDTH			0xad
+#define MT9V032_AEC_MAX_SHUTTER_WIDTH			0xbd
+#define MT9V032_THERMAL_INFO				0xc1
 
-क्रमागत mt9v032_model अणु
+enum mt9v032_model {
 	MT9V032_MODEL_V022_COLOR,	/* MT9V022IX7ATC */
 	MT9V032_MODEL_V022_MONO,	/* MT9V022IX7ATM */
 	MT9V032_MODEL_V024_COLOR,	/* MT9V024IA7XTC */
@@ -152,414 +151,414 @@
 	MT9V032_MODEL_V032_MONO,	/* MT9V032C12STC */
 	MT9V032_MODEL_V034_COLOR,
 	MT9V032_MODEL_V034_MONO,
-पूर्ण;
+};
 
-काष्ठा mt9v032_model_version अणु
-	अचिन्हित पूर्णांक version;
-	स्थिर अक्षर *name;
-पूर्ण;
+struct mt9v032_model_version {
+	unsigned int version;
+	const char *name;
+};
 
-काष्ठा mt9v032_model_data अणु
-	अचिन्हित पूर्णांक min_row_समय;
-	अचिन्हित पूर्णांक min_hblank;
-	अचिन्हित पूर्णांक min_vblank;
-	अचिन्हित पूर्णांक max_vblank;
-	अचिन्हित पूर्णांक min_shutter;
-	अचिन्हित पूर्णांक max_shutter;
-	अचिन्हित पूर्णांक pclk_reg;
-	अचिन्हित पूर्णांक aec_max_shutter_reg;
-	स्थिर काष्ठा v4l2_ctrl_config * स्थिर aec_max_shutter_v4l2_ctrl;
-पूर्ण;
+struct mt9v032_model_data {
+	unsigned int min_row_time;
+	unsigned int min_hblank;
+	unsigned int min_vblank;
+	unsigned int max_vblank;
+	unsigned int min_shutter;
+	unsigned int max_shutter;
+	unsigned int pclk_reg;
+	unsigned int aec_max_shutter_reg;
+	const struct v4l2_ctrl_config * const aec_max_shutter_v4l2_ctrl;
+};
 
-काष्ठा mt9v032_model_info अणु
-	स्थिर काष्ठा mt9v032_model_data *data;
+struct mt9v032_model_info {
+	const struct mt9v032_model_data *data;
 	bool color;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mt9v032_model_version mt9v032_versions[] = अणु
-	अणु MT9V032_CHIP_ID_REV1, "MT9V022/MT9V032 rev1/2" पूर्ण,
-	अणु MT9V032_CHIP_ID_REV3, "MT9V022/MT9V032 rev3" पूर्ण,
-	अणु MT9V034_CHIP_ID_REV1, "MT9V024/MT9V034 rev1" पूर्ण,
-पूर्ण;
+static const struct mt9v032_model_version mt9v032_versions[] = {
+	{ MT9V032_CHIP_ID_REV1, "MT9V022/MT9V032 rev1/2" },
+	{ MT9V032_CHIP_ID_REV3, "MT9V022/MT9V032 rev3" },
+	{ MT9V034_CHIP_ID_REV1, "MT9V024/MT9V034 rev1" },
+};
 
-काष्ठा mt9v032 अणु
-	काष्ठा v4l2_subdev subdev;
-	काष्ठा media_pad pad;
+struct mt9v032 {
+	struct v4l2_subdev subdev;
+	struct media_pad pad;
 
-	काष्ठा v4l2_mbus_framefmt क्रमmat;
-	काष्ठा v4l2_rect crop;
-	अचिन्हित पूर्णांक hratio;
-	अचिन्हित पूर्णांक vratio;
+	struct v4l2_mbus_framefmt format;
+	struct v4l2_rect crop;
+	unsigned int hratio;
+	unsigned int vratio;
 
-	काष्ठा v4l2_ctrl_handler ctrls;
-	काष्ठा अणु
-		काष्ठा v4l2_ctrl *link_freq;
-		काष्ठा v4l2_ctrl *pixel_rate;
-	पूर्ण;
+	struct v4l2_ctrl_handler ctrls;
+	struct {
+		struct v4l2_ctrl *link_freq;
+		struct v4l2_ctrl *pixel_rate;
+	};
 
-	काष्ठा mutex घातer_lock;
-	पूर्णांक घातer_count;
+	struct mutex power_lock;
+	int power_count;
 
-	काष्ठा regmap *regmap;
-	काष्ठा clk *clk;
-	काष्ठा gpio_desc *reset_gpio;
-	काष्ठा gpio_desc *standby_gpio;
+	struct regmap *regmap;
+	struct clk *clk;
+	struct gpio_desc *reset_gpio;
+	struct gpio_desc *standby_gpio;
 
-	काष्ठा mt9v032_platक्रमm_data *pdata;
-	स्थिर काष्ठा mt9v032_model_info *model;
-	स्थिर काष्ठा mt9v032_model_version *version;
+	struct mt9v032_platform_data *pdata;
+	const struct mt9v032_model_info *model;
+	const struct mt9v032_model_version *version;
 
 	u32 sysclk;
 	u16 aec_agc;
 	u16 hblank;
-	काष्ठा अणु
-		काष्ठा v4l2_ctrl *test_pattern;
-		काष्ठा v4l2_ctrl *test_pattern_color;
-	पूर्ण;
-पूर्ण;
+	struct {
+		struct v4l2_ctrl *test_pattern;
+		struct v4l2_ctrl *test_pattern_color;
+	};
+};
 
-अटल काष्ठा mt9v032 *to_mt9v032(काष्ठा v4l2_subdev *sd)
-अणु
-	वापस container_of(sd, काष्ठा mt9v032, subdev);
-पूर्ण
+static struct mt9v032 *to_mt9v032(struct v4l2_subdev *sd)
+{
+	return container_of(sd, struct mt9v032, subdev);
+}
 
-अटल पूर्णांक
-mt9v032_update_aec_agc(काष्ठा mt9v032 *mt9v032, u16 which, पूर्णांक enable)
-अणु
-	काष्ठा regmap *map = mt9v032->regmap;
+static int
+mt9v032_update_aec_agc(struct mt9v032 *mt9v032, u16 which, int enable)
+{
+	struct regmap *map = mt9v032->regmap;
 	u16 value = mt9v032->aec_agc;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (enable)
+	if (enable)
 		value |= which;
-	अन्यथा
+	else
 		value &= ~which;
 
-	ret = regmap_ग_लिखो(map, MT9V032_AEC_AGC_ENABLE, value);
-	अगर (ret < 0)
-		वापस ret;
+	ret = regmap_write(map, MT9V032_AEC_AGC_ENABLE, value);
+	if (ret < 0)
+		return ret;
 
 	mt9v032->aec_agc = value;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
-mt9v032_update_hblank(काष्ठा mt9v032 *mt9v032)
-अणु
-	काष्ठा v4l2_rect *crop = &mt9v032->crop;
-	अचिन्हित पूर्णांक min_hblank = mt9v032->model->data->min_hblank;
-	अचिन्हित पूर्णांक hblank;
+static int
+mt9v032_update_hblank(struct mt9v032 *mt9v032)
+{
+	struct v4l2_rect *crop = &mt9v032->crop;
+	unsigned int min_hblank = mt9v032->model->data->min_hblank;
+	unsigned int hblank;
 
-	अगर (mt9v032->version->version == MT9V034_CHIP_ID_REV1)
+	if (mt9v032->version->version == MT9V034_CHIP_ID_REV1)
 		min_hblank += (mt9v032->hratio - 1) * 10;
-	min_hblank = max_t(पूर्णांक, mt9v032->model->data->min_row_समय - crop->width,
+	min_hblank = max_t(int, mt9v032->model->data->min_row_time - crop->width,
 			   min_hblank);
-	hblank = max_t(अचिन्हित पूर्णांक, mt9v032->hblank, min_hblank);
+	hblank = max_t(unsigned int, mt9v032->hblank, min_hblank);
 
-	वापस regmap_ग_लिखो(mt9v032->regmap, MT9V032_HORIZONTAL_BLANKING,
+	return regmap_write(mt9v032->regmap, MT9V032_HORIZONTAL_BLANKING,
 			    hblank);
-पूर्ण
+}
 
-अटल पूर्णांक mt9v032_घातer_on(काष्ठा mt9v032 *mt9v032)
-अणु
-	काष्ठा regmap *map = mt9v032->regmap;
-	पूर्णांक ret;
+static int mt9v032_power_on(struct mt9v032 *mt9v032)
+{
+	struct regmap *map = mt9v032->regmap;
+	int ret;
 
 	gpiod_set_value_cansleep(mt9v032->reset_gpio, 1);
 
 	ret = clk_set_rate(mt9v032->clk, mt9v032->sysclk);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	/* System घड़ी has to be enabled beक्रमe releasing the reset */
+	/* System clock has to be enabled before releasing the reset */
 	ret = clk_prepare_enable(mt9v032->clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	udelay(1);
 
-	अगर (mt9v032->reset_gpio) अणु
+	if (mt9v032->reset_gpio) {
 		gpiod_set_value_cansleep(mt9v032->reset_gpio, 0);
 
-		/* After releasing reset we need to रुको 10 घड़ी cycles
-		 * beक्रमe accessing the sensor over I2C. As the minimum SYSCLK
-		 * frequency is 13MHz, रुकोing 1तगs will be enough in the worst
-		 * हाल.
+		/* After releasing reset we need to wait 10 clock cycles
+		 * before accessing the sensor over I2C. As the minimum SYSCLK
+		 * frequency is 13MHz, waiting 1µs will be enough in the worst
+		 * case.
 		 */
 		udelay(1);
-	पूर्ण
+	}
 
-	/* Reset the chip and stop data पढ़ो out */
-	ret = regmap_ग_लिखो(map, MT9V032_RESET, 1);
-	अगर (ret < 0)
-		जाओ err;
+	/* Reset the chip and stop data read out */
+	ret = regmap_write(map, MT9V032_RESET, 1);
+	if (ret < 0)
+		goto err;
 
-	ret = regmap_ग_लिखो(map, MT9V032_RESET, 0);
-	अगर (ret < 0)
-		जाओ err;
+	ret = regmap_write(map, MT9V032_RESET, 0);
+	if (ret < 0)
+		goto err;
 
-	ret = regmap_ग_लिखो(map, MT9V032_CHIP_CONTROL,
+	ret = regmap_write(map, MT9V032_CHIP_CONTROL,
 			   MT9V032_CHIP_CONTROL_MASTER_MODE);
-	अगर (ret < 0)
-		जाओ err;
+	if (ret < 0)
+		goto err;
 
-	वापस 0;
+	return 0;
 
 err:
 	clk_disable_unprepare(mt9v032->clk);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम mt9v032_घातer_off(काष्ठा mt9v032 *mt9v032)
-अणु
+static void mt9v032_power_off(struct mt9v032 *mt9v032)
+{
 	clk_disable_unprepare(mt9v032->clk);
-पूर्ण
+}
 
-अटल पूर्णांक __mt9v032_set_घातer(काष्ठा mt9v032 *mt9v032, bool on)
-अणु
-	काष्ठा regmap *map = mt9v032->regmap;
-	पूर्णांक ret;
+static int __mt9v032_set_power(struct mt9v032 *mt9v032, bool on)
+{
+	struct regmap *map = mt9v032->regmap;
+	int ret;
 
-	अगर (!on) अणु
-		mt9v032_घातer_off(mt9v032);
-		वापस 0;
-	पूर्ण
+	if (!on) {
+		mt9v032_power_off(mt9v032);
+		return 0;
+	}
 
-	ret = mt9v032_घातer_on(mt9v032);
-	अगर (ret < 0)
-		वापस ret;
+	ret = mt9v032_power_on(mt9v032);
+	if (ret < 0)
+		return ret;
 
-	/* Configure the pixel घड़ी polarity */
-	अगर (mt9v032->pdata && mt9v032->pdata->clk_pol) अणु
-		ret = regmap_ग_लिखो(map, mt9v032->model->data->pclk_reg,
+	/* Configure the pixel clock polarity */
+	if (mt9v032->pdata && mt9v032->pdata->clk_pol) {
+		ret = regmap_write(map, mt9v032->model->data->pclk_reg,
 				MT9V032_PIXEL_CLOCK_INV_PXL_CLK);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
 	/* Disable the noise correction algorithm and restore the controls. */
-	ret = regmap_ग_लिखो(map, MT9V032_ROW_NOISE_CORR_CONTROL, 0);
-	अगर (ret < 0)
-		वापस ret;
+	ret = regmap_write(map, MT9V032_ROW_NOISE_CORR_CONTROL, 0);
+	if (ret < 0)
+		return ret;
 
-	वापस v4l2_ctrl_handler_setup(&mt9v032->ctrls);
-पूर्ण
+	return v4l2_ctrl_handler_setup(&mt9v032->ctrls);
+}
 
 /* -----------------------------------------------------------------------------
  * V4L2 subdev video operations
  */
 
-अटल काष्ठा v4l2_mbus_framefmt *
-__mt9v032_get_pad_क्रमmat(काष्ठा mt9v032 *mt9v032, काष्ठा v4l2_subdev_pad_config *cfg,
-			 अचिन्हित पूर्णांक pad, क्रमागत v4l2_subdev_क्रमmat_whence which)
-अणु
-	चयन (which) अणु
-	हाल V4L2_SUBDEV_FORMAT_TRY:
-		वापस v4l2_subdev_get_try_क्रमmat(&mt9v032->subdev, cfg, pad);
-	हाल V4L2_SUBDEV_FORMAT_ACTIVE:
-		वापस &mt9v032->क्रमmat;
-	शेष:
-		वापस शून्य;
-	पूर्ण
-पूर्ण
+static struct v4l2_mbus_framefmt *
+__mt9v032_get_pad_format(struct mt9v032 *mt9v032, struct v4l2_subdev_pad_config *cfg,
+			 unsigned int pad, enum v4l2_subdev_format_whence which)
+{
+	switch (which) {
+	case V4L2_SUBDEV_FORMAT_TRY:
+		return v4l2_subdev_get_try_format(&mt9v032->subdev, cfg, pad);
+	case V4L2_SUBDEV_FORMAT_ACTIVE:
+		return &mt9v032->format;
+	default:
+		return NULL;
+	}
+}
 
-अटल काष्ठा v4l2_rect *
-__mt9v032_get_pad_crop(काष्ठा mt9v032 *mt9v032, काष्ठा v4l2_subdev_pad_config *cfg,
-		       अचिन्हित पूर्णांक pad, क्रमागत v4l2_subdev_क्रमmat_whence which)
-अणु
-	चयन (which) अणु
-	हाल V4L2_SUBDEV_FORMAT_TRY:
-		वापस v4l2_subdev_get_try_crop(&mt9v032->subdev, cfg, pad);
-	हाल V4L2_SUBDEV_FORMAT_ACTIVE:
-		वापस &mt9v032->crop;
-	शेष:
-		वापस शून्य;
-	पूर्ण
-पूर्ण
+static struct v4l2_rect *
+__mt9v032_get_pad_crop(struct mt9v032 *mt9v032, struct v4l2_subdev_pad_config *cfg,
+		       unsigned int pad, enum v4l2_subdev_format_whence which)
+{
+	switch (which) {
+	case V4L2_SUBDEV_FORMAT_TRY:
+		return v4l2_subdev_get_try_crop(&mt9v032->subdev, cfg, pad);
+	case V4L2_SUBDEV_FORMAT_ACTIVE:
+		return &mt9v032->crop;
+	default:
+		return NULL;
+	}
+}
 
-अटल पूर्णांक mt9v032_s_stream(काष्ठा v4l2_subdev *subdev, पूर्णांक enable)
-अणु
-	स्थिर u16 mode = MT9V032_CHIP_CONTROL_DOUT_ENABLE
+static int mt9v032_s_stream(struct v4l2_subdev *subdev, int enable)
+{
+	const u16 mode = MT9V032_CHIP_CONTROL_DOUT_ENABLE
 		       | MT9V032_CHIP_CONTROL_SEQUENTIAL;
-	काष्ठा mt9v032 *mt9v032 = to_mt9v032(subdev);
-	काष्ठा v4l2_rect *crop = &mt9v032->crop;
-	काष्ठा regmap *map = mt9v032->regmap;
-	अचिन्हित पूर्णांक hbin;
-	अचिन्हित पूर्णांक vbin;
-	पूर्णांक ret;
+	struct mt9v032 *mt9v032 = to_mt9v032(subdev);
+	struct v4l2_rect *crop = &mt9v032->crop;
+	struct regmap *map = mt9v032->regmap;
+	unsigned int hbin;
+	unsigned int vbin;
+	int ret;
 
-	अगर (!enable)
-		वापस regmap_update_bits(map, MT9V032_CHIP_CONTROL, mode, 0);
+	if (!enable)
+		return regmap_update_bits(map, MT9V032_CHIP_CONTROL, mode, 0);
 
-	/* Configure the winकरोw size and row/column bin */
+	/* Configure the window size and row/column bin */
 	hbin = fls(mt9v032->hratio) - 1;
 	vbin = fls(mt9v032->vratio) - 1;
 	ret = regmap_update_bits(map, MT9V032_READ_MODE,
 				 ~MT9V032_READ_MODE_RESERVED,
 				 hbin << MT9V032_READ_MODE_COLUMN_BIN_SHIFT |
 				 vbin << MT9V032_READ_MODE_ROW_BIN_SHIFT);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = regmap_ग_लिखो(map, MT9V032_COLUMN_START, crop->left);
-	अगर (ret < 0)
-		वापस ret;
+	ret = regmap_write(map, MT9V032_COLUMN_START, crop->left);
+	if (ret < 0)
+		return ret;
 
-	ret = regmap_ग_लिखो(map, MT9V032_ROW_START, crop->top);
-	अगर (ret < 0)
-		वापस ret;
+	ret = regmap_write(map, MT9V032_ROW_START, crop->top);
+	if (ret < 0)
+		return ret;
 
-	ret = regmap_ग_लिखो(map, MT9V032_WINDOW_WIDTH, crop->width);
-	अगर (ret < 0)
-		वापस ret;
+	ret = regmap_write(map, MT9V032_WINDOW_WIDTH, crop->width);
+	if (ret < 0)
+		return ret;
 
-	ret = regmap_ग_लिखो(map, MT9V032_WINDOW_HEIGHT, crop->height);
-	अगर (ret < 0)
-		वापस ret;
+	ret = regmap_write(map, MT9V032_WINDOW_HEIGHT, crop->height);
+	if (ret < 0)
+		return ret;
 
 	ret = mt9v032_update_hblank(mt9v032);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	/* Switch to master "normal" mode */
-	वापस regmap_update_bits(map, MT9V032_CHIP_CONTROL, mode, mode);
-पूर्ण
+	return regmap_update_bits(map, MT9V032_CHIP_CONTROL, mode, mode);
+}
 
-अटल पूर्णांक mt9v032_क्रमागत_mbus_code(काष्ठा v4l2_subdev *subdev,
-				  काष्ठा v4l2_subdev_pad_config *cfg,
-				  काष्ठा v4l2_subdev_mbus_code_क्रमागत *code)
-अणु
-	काष्ठा mt9v032 *mt9v032 = to_mt9v032(subdev);
+static int mt9v032_enum_mbus_code(struct v4l2_subdev *subdev,
+				  struct v4l2_subdev_pad_config *cfg,
+				  struct v4l2_subdev_mbus_code_enum *code)
+{
+	struct mt9v032 *mt9v032 = to_mt9v032(subdev);
 
-	अगर (code->index > 0)
-		वापस -EINVAL;
+	if (code->index > 0)
+		return -EINVAL;
 
-	code->code = mt9v032->क्रमmat.code;
-	वापस 0;
-पूर्ण
+	code->code = mt9v032->format.code;
+	return 0;
+}
 
-अटल पूर्णांक mt9v032_क्रमागत_frame_size(काष्ठा v4l2_subdev *subdev,
-				   काष्ठा v4l2_subdev_pad_config *cfg,
-				   काष्ठा v4l2_subdev_frame_size_क्रमागत *fse)
-अणु
-	काष्ठा mt9v032 *mt9v032 = to_mt9v032(subdev);
+static int mt9v032_enum_frame_size(struct v4l2_subdev *subdev,
+				   struct v4l2_subdev_pad_config *cfg,
+				   struct v4l2_subdev_frame_size_enum *fse)
+{
+	struct mt9v032 *mt9v032 = to_mt9v032(subdev);
 
-	अगर (fse->index >= 3)
-		वापस -EINVAL;
-	अगर (mt9v032->क्रमmat.code != fse->code)
-		वापस -EINVAL;
+	if (fse->index >= 3)
+		return -EINVAL;
+	if (mt9v032->format.code != fse->code)
+		return -EINVAL;
 
 	fse->min_width = MT9V032_WINDOW_WIDTH_DEF / (1 << fse->index);
 	fse->max_width = fse->min_width;
 	fse->min_height = MT9V032_WINDOW_HEIGHT_DEF / (1 << fse->index);
 	fse->max_height = fse->min_height;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt9v032_get_क्रमmat(काष्ठा v4l2_subdev *subdev,
-			      काष्ठा v4l2_subdev_pad_config *cfg,
-			      काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
-अणु
-	काष्ठा mt9v032 *mt9v032 = to_mt9v032(subdev);
+static int mt9v032_get_format(struct v4l2_subdev *subdev,
+			      struct v4l2_subdev_pad_config *cfg,
+			      struct v4l2_subdev_format *format)
+{
+	struct mt9v032 *mt9v032 = to_mt9v032(subdev);
 
-	क्रमmat->क्रमmat = *__mt9v032_get_pad_क्रमmat(mt9v032, cfg, क्रमmat->pad,
-						   क्रमmat->which);
-	वापस 0;
-पूर्ण
+	format->format = *__mt9v032_get_pad_format(mt9v032, cfg, format->pad,
+						   format->which);
+	return 0;
+}
 
-अटल व्योम mt9v032_configure_pixel_rate(काष्ठा mt9v032 *mt9v032)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(&mt9v032->subdev);
-	पूर्णांक ret;
+static void mt9v032_configure_pixel_rate(struct mt9v032 *mt9v032)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(&mt9v032->subdev);
+	int ret;
 
-	ret = v4l2_ctrl_s_ctrl_पूर्णांक64(mt9v032->pixel_rate,
+	ret = v4l2_ctrl_s_ctrl_int64(mt9v032->pixel_rate,
 				     mt9v032->sysclk / mt9v032->hratio);
-	अगर (ret < 0)
+	if (ret < 0)
 		dev_warn(&client->dev, "failed to set pixel rate (%d)\n", ret);
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक mt9v032_calc_ratio(अचिन्हित पूर्णांक input, अचिन्हित पूर्णांक output)
-अणु
-	/* Compute the घातer-of-two binning factor बंदst to the input size to
+static unsigned int mt9v032_calc_ratio(unsigned int input, unsigned int output)
+{
+	/* Compute the power-of-two binning factor closest to the input size to
 	 * output size ratio. Given that the output size is bounded by input/4
 	 * and input, a generic implementation would be an ineffective luxury.
 	 */
-	अगर (output * 3 > input * 2)
-		वापस 1;
-	अगर (output * 3 > input)
-		वापस 2;
-	वापस 4;
-पूर्ण
+	if (output * 3 > input * 2)
+		return 1;
+	if (output * 3 > input)
+		return 2;
+	return 4;
+}
 
-अटल पूर्णांक mt9v032_set_क्रमmat(काष्ठा v4l2_subdev *subdev,
-			      काष्ठा v4l2_subdev_pad_config *cfg,
-			      काष्ठा v4l2_subdev_क्रमmat *क्रमmat)
-अणु
-	काष्ठा mt9v032 *mt9v032 = to_mt9v032(subdev);
-	काष्ठा v4l2_mbus_framefmt *__क्रमmat;
-	काष्ठा v4l2_rect *__crop;
-	अचिन्हित पूर्णांक width;
-	अचिन्हित पूर्णांक height;
-	अचिन्हित पूर्णांक hratio;
-	अचिन्हित पूर्णांक vratio;
+static int mt9v032_set_format(struct v4l2_subdev *subdev,
+			      struct v4l2_subdev_pad_config *cfg,
+			      struct v4l2_subdev_format *format)
+{
+	struct mt9v032 *mt9v032 = to_mt9v032(subdev);
+	struct v4l2_mbus_framefmt *__format;
+	struct v4l2_rect *__crop;
+	unsigned int width;
+	unsigned int height;
+	unsigned int hratio;
+	unsigned int vratio;
 
-	__crop = __mt9v032_get_pad_crop(mt9v032, cfg, क्रमmat->pad,
-					क्रमmat->which);
+	__crop = __mt9v032_get_pad_crop(mt9v032, cfg, format->pad,
+					format->which);
 
-	/* Clamp the width and height to aव्योम भागiding by zero. */
-	width = clamp(ALIGN(क्रमmat->क्रमmat.width, 2),
-		      max_t(अचिन्हित पूर्णांक, __crop->width / 4,
+	/* Clamp the width and height to avoid dividing by zero. */
+	width = clamp(ALIGN(format->format.width, 2),
+		      max_t(unsigned int, __crop->width / 4,
 			    MT9V032_WINDOW_WIDTH_MIN),
 		      __crop->width);
-	height = clamp(ALIGN(क्रमmat->क्रमmat.height, 2),
-		       max_t(अचिन्हित पूर्णांक, __crop->height / 4,
+	height = clamp(ALIGN(format->format.height, 2),
+		       max_t(unsigned int, __crop->height / 4,
 			     MT9V032_WINDOW_HEIGHT_MIN),
 		       __crop->height);
 
 	hratio = mt9v032_calc_ratio(__crop->width, width);
 	vratio = mt9v032_calc_ratio(__crop->height, height);
 
-	__क्रमmat = __mt9v032_get_pad_क्रमmat(mt9v032, cfg, क्रमmat->pad,
-					    क्रमmat->which);
-	__क्रमmat->width = __crop->width / hratio;
-	__क्रमmat->height = __crop->height / vratio;
+	__format = __mt9v032_get_pad_format(mt9v032, cfg, format->pad,
+					    format->which);
+	__format->width = __crop->width / hratio;
+	__format->height = __crop->height / vratio;
 
-	अगर (क्रमmat->which == V4L2_SUBDEV_FORMAT_ACTIVE) अणु
+	if (format->which == V4L2_SUBDEV_FORMAT_ACTIVE) {
 		mt9v032->hratio = hratio;
 		mt9v032->vratio = vratio;
 		mt9v032_configure_pixel_rate(mt9v032);
-	पूर्ण
+	}
 
-	क्रमmat->क्रमmat = *__क्रमmat;
+	format->format = *__format;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt9v032_get_selection(काष्ठा v4l2_subdev *subdev,
-				 काष्ठा v4l2_subdev_pad_config *cfg,
-				 काष्ठा v4l2_subdev_selection *sel)
-अणु
-	काष्ठा mt9v032 *mt9v032 = to_mt9v032(subdev);
+static int mt9v032_get_selection(struct v4l2_subdev *subdev,
+				 struct v4l2_subdev_pad_config *cfg,
+				 struct v4l2_subdev_selection *sel)
+{
+	struct mt9v032 *mt9v032 = to_mt9v032(subdev);
 
-	अगर (sel->target != V4L2_SEL_TGT_CROP)
-		वापस -EINVAL;
+	if (sel->target != V4L2_SEL_TGT_CROP)
+		return -EINVAL;
 
 	sel->r = *__mt9v032_get_pad_crop(mt9v032, cfg, sel->pad, sel->which);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mt9v032_set_selection(काष्ठा v4l2_subdev *subdev,
-				 काष्ठा v4l2_subdev_pad_config *cfg,
-				 काष्ठा v4l2_subdev_selection *sel)
-अणु
-	काष्ठा mt9v032 *mt9v032 = to_mt9v032(subdev);
-	काष्ठा v4l2_mbus_framefmt *__क्रमmat;
-	काष्ठा v4l2_rect *__crop;
-	काष्ठा v4l2_rect rect;
+static int mt9v032_set_selection(struct v4l2_subdev *subdev,
+				 struct v4l2_subdev_pad_config *cfg,
+				 struct v4l2_subdev_selection *sel)
+{
+	struct mt9v032 *mt9v032 = to_mt9v032(subdev);
+	struct v4l2_mbus_framefmt *__format;
+	struct v4l2_rect *__crop;
+	struct v4l2_rect rect;
 
-	अगर (sel->target != V4L2_SEL_TGT_CROP)
-		वापस -EINVAL;
+	if (sel->target != V4L2_SEL_TGT_CROP)
+		return -EINVAL;
 
 	/* Clamp the crop rectangle boundaries and align them to a non multiple
 	 * of 2 pixels to ensure a GRBG Bayer pattern.
@@ -570,183 +569,183 @@ __mt9v032_get_pad_crop(काष्ठा mt9v032 *mt9v032, काष्ठा v
 	rect.top = clamp(ALIGN(sel->r.top + 1, 2) - 1,
 			 MT9V032_ROW_START_MIN,
 			 MT9V032_ROW_START_MAX);
-	rect.width = clamp_t(अचिन्हित पूर्णांक, ALIGN(sel->r.width, 2),
+	rect.width = clamp_t(unsigned int, ALIGN(sel->r.width, 2),
 			     MT9V032_WINDOW_WIDTH_MIN,
 			     MT9V032_WINDOW_WIDTH_MAX);
-	rect.height = clamp_t(अचिन्हित पूर्णांक, ALIGN(sel->r.height, 2),
+	rect.height = clamp_t(unsigned int, ALIGN(sel->r.height, 2),
 			      MT9V032_WINDOW_HEIGHT_MIN,
 			      MT9V032_WINDOW_HEIGHT_MAX);
 
-	rect.width = min_t(अचिन्हित पूर्णांक,
+	rect.width = min_t(unsigned int,
 			   rect.width, MT9V032_PIXEL_ARRAY_WIDTH - rect.left);
-	rect.height = min_t(अचिन्हित पूर्णांक,
+	rect.height = min_t(unsigned int,
 			    rect.height, MT9V032_PIXEL_ARRAY_HEIGHT - rect.top);
 
 	__crop = __mt9v032_get_pad_crop(mt9v032, cfg, sel->pad, sel->which);
 
-	अगर (rect.width != __crop->width || rect.height != __crop->height) अणु
-		/* Reset the output image size अगर the crop rectangle size has
-		 * been modअगरied.
+	if (rect.width != __crop->width || rect.height != __crop->height) {
+		/* Reset the output image size if the crop rectangle size has
+		 * been modified.
 		 */
-		__क्रमmat = __mt9v032_get_pad_क्रमmat(mt9v032, cfg, sel->pad,
+		__format = __mt9v032_get_pad_format(mt9v032, cfg, sel->pad,
 						    sel->which);
-		__क्रमmat->width = rect.width;
-		__क्रमmat->height = rect.height;
-		अगर (sel->which == V4L2_SUBDEV_FORMAT_ACTIVE) अणु
+		__format->width = rect.width;
+		__format->height = rect.height;
+		if (sel->which == V4L2_SUBDEV_FORMAT_ACTIVE) {
 			mt9v032->hratio = 1;
 			mt9v032->vratio = 1;
 			mt9v032_configure_pixel_rate(mt9v032);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	*__crop = rect;
 	sel->r = rect;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* -----------------------------------------------------------------------------
  * V4L2 subdev control operations
  */
 
-#घोषणा V4L2_CID_TEST_PATTERN_COLOR	(V4L2_CID_USER_BASE | 0x1001)
+#define V4L2_CID_TEST_PATTERN_COLOR	(V4L2_CID_USER_BASE | 0x1001)
 /*
  * Value between 1 and 64 to set the desired bin. This is effectively a measure
  * of how bright the image is supposed to be. Both AGC and AEC try to reach
  * this.
  */
-#घोषणा V4L2_CID_AEGC_DESIRED_BIN	(V4L2_CID_USER_BASE | 0x1002)
+#define V4L2_CID_AEGC_DESIRED_BIN	(V4L2_CID_USER_BASE | 0x1002)
 /*
  * LPF is the low pass filter capability of the chip. Both AEC and AGC have
  * this setting. This limits the speed in which AGC/AEC adjust their settings.
  * Possible values are 0-2. 0 means no LPF. For 1 and 2 this equation is used:
  *
- * अगर |(calculated new exp - current exp)| > (current exp / 4)
+ * if |(calculated new exp - current exp)| > (current exp / 4)
  *	next exp = calculated new exp
- * अन्यथा
+ * else
  *	next exp = current exp + ((calculated new exp - current exp) / 2^LPF)
  */
-#घोषणा V4L2_CID_AEC_LPF		(V4L2_CID_USER_BASE | 0x1003)
-#घोषणा V4L2_CID_AGC_LPF		(V4L2_CID_USER_BASE | 0x1004)
+#define V4L2_CID_AEC_LPF		(V4L2_CID_USER_BASE | 0x1003)
+#define V4L2_CID_AGC_LPF		(V4L2_CID_USER_BASE | 0x1004)
 /*
- * Value between 0 and 15. This is the number of frames being skipped beक्रमe
- * updating the स्वतः exposure/gain.
+ * Value between 0 and 15. This is the number of frames being skipped before
+ * updating the auto exposure/gain.
  */
-#घोषणा V4L2_CID_AEC_UPDATE_INTERVAL	(V4L2_CID_USER_BASE | 0x1005)
-#घोषणा V4L2_CID_AGC_UPDATE_INTERVAL	(V4L2_CID_USER_BASE | 0x1006)
+#define V4L2_CID_AEC_UPDATE_INTERVAL	(V4L2_CID_USER_BASE | 0x1005)
+#define V4L2_CID_AGC_UPDATE_INTERVAL	(V4L2_CID_USER_BASE | 0x1006)
 /*
- * Maximum shutter width used क्रम AEC.
+ * Maximum shutter width used for AEC.
  */
-#घोषणा V4L2_CID_AEC_MAX_SHUTTER_WIDTH	(V4L2_CID_USER_BASE | 0x1007)
+#define V4L2_CID_AEC_MAX_SHUTTER_WIDTH	(V4L2_CID_USER_BASE | 0x1007)
 
-अटल पूर्णांक mt9v032_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा mt9v032 *mt9v032 =
-			container_of(ctrl->handler, काष्ठा mt9v032, ctrls);
-	काष्ठा regmap *map = mt9v032->regmap;
+static int mt9v032_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct mt9v032 *mt9v032 =
+			container_of(ctrl->handler, struct mt9v032, ctrls);
+	struct regmap *map = mt9v032->regmap;
 	u32 freq;
 	u16 data;
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_AUTOGAIN:
-		वापस mt9v032_update_aec_agc(mt9v032, MT9V032_AGC_ENABLE,
+	switch (ctrl->id) {
+	case V4L2_CID_AUTOGAIN:
+		return mt9v032_update_aec_agc(mt9v032, MT9V032_AGC_ENABLE,
 					      ctrl->val);
 
-	हाल V4L2_CID_GAIN:
-		वापस regmap_ग_लिखो(map, MT9V032_ANALOG_GAIN, ctrl->val);
+	case V4L2_CID_GAIN:
+		return regmap_write(map, MT9V032_ANALOG_GAIN, ctrl->val);
 
-	हाल V4L2_CID_EXPOSURE_AUTO:
-		वापस mt9v032_update_aec_agc(mt9v032, MT9V032_AEC_ENABLE,
+	case V4L2_CID_EXPOSURE_AUTO:
+		return mt9v032_update_aec_agc(mt9v032, MT9V032_AEC_ENABLE,
 					      !ctrl->val);
 
-	हाल V4L2_CID_EXPOSURE:
-		वापस regmap_ग_लिखो(map, MT9V032_TOTAL_SHUTTER_WIDTH,
+	case V4L2_CID_EXPOSURE:
+		return regmap_write(map, MT9V032_TOTAL_SHUTTER_WIDTH,
 				    ctrl->val);
 
-	हाल V4L2_CID_HBLANK:
+	case V4L2_CID_HBLANK:
 		mt9v032->hblank = ctrl->val;
-		वापस mt9v032_update_hblank(mt9v032);
+		return mt9v032_update_hblank(mt9v032);
 
-	हाल V4L2_CID_VBLANK:
-		वापस regmap_ग_लिखो(map, MT9V032_VERTICAL_BLANKING,
+	case V4L2_CID_VBLANK:
+		return regmap_write(map, MT9V032_VERTICAL_BLANKING,
 				    ctrl->val);
 
-	हाल V4L2_CID_PIXEL_RATE:
-	हाल V4L2_CID_LINK_FREQ:
-		अगर (mt9v032->link_freq == शून्य)
-			अवरोध;
+	case V4L2_CID_PIXEL_RATE:
+	case V4L2_CID_LINK_FREQ:
+		if (mt9v032->link_freq == NULL)
+			break;
 
 		freq = mt9v032->pdata->link_freqs[mt9v032->link_freq->val];
 		*mt9v032->pixel_rate->p_new.p_s64 = freq;
 		mt9v032->sysclk = freq;
-		अवरोध;
+		break;
 
-	हाल V4L2_CID_TEST_PATTERN:
-		चयन (mt9v032->test_pattern->val) अणु
-		हाल 0:
+	case V4L2_CID_TEST_PATTERN:
+		switch (mt9v032->test_pattern->val) {
+		case 0:
 			data = 0;
-			अवरोध;
-		हाल 1:
+			break;
+		case 1:
 			data = MT9V032_TEST_PATTERN_GRAY_VERTICAL
 			     | MT9V032_TEST_PATTERN_ENABLE;
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			data = MT9V032_TEST_PATTERN_GRAY_HORIZONTAL
 			     | MT9V032_TEST_PATTERN_ENABLE;
-			अवरोध;
-		हाल 3:
+			break;
+		case 3:
 			data = MT9V032_TEST_PATTERN_GRAY_DIAGONAL
 			     | MT9V032_TEST_PATTERN_ENABLE;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			data = (mt9v032->test_pattern_color->val <<
 				MT9V032_TEST_PATTERN_DATA_SHIFT)
 			     | MT9V032_TEST_PATTERN_USE_DATA
 			     | MT9V032_TEST_PATTERN_ENABLE
 			     | MT9V032_TEST_PATTERN_FLIP;
-			अवरोध;
-		पूर्ण
-		वापस regmap_ग_लिखो(map, MT9V032_TEST_PATTERN, data);
+			break;
+		}
+		return regmap_write(map, MT9V032_TEST_PATTERN, data);
 
-	हाल V4L2_CID_AEGC_DESIRED_BIN:
-		वापस regmap_ग_लिखो(map, MT9V032_AEGC_DESIRED_BIN, ctrl->val);
+	case V4L2_CID_AEGC_DESIRED_BIN:
+		return regmap_write(map, MT9V032_AEGC_DESIRED_BIN, ctrl->val);
 
-	हाल V4L2_CID_AEC_LPF:
-		वापस regmap_ग_लिखो(map, MT9V032_AEC_LPF, ctrl->val);
+	case V4L2_CID_AEC_LPF:
+		return regmap_write(map, MT9V032_AEC_LPF, ctrl->val);
 
-	हाल V4L2_CID_AGC_LPF:
-		वापस regmap_ग_लिखो(map, MT9V032_AGC_LPF, ctrl->val);
+	case V4L2_CID_AGC_LPF:
+		return regmap_write(map, MT9V032_AGC_LPF, ctrl->val);
 
-	हाल V4L2_CID_AEC_UPDATE_INTERVAL:
-		वापस regmap_ग_लिखो(map, MT9V032_AEC_UPDATE_FREQUENCY,
+	case V4L2_CID_AEC_UPDATE_INTERVAL:
+		return regmap_write(map, MT9V032_AEC_UPDATE_FREQUENCY,
 				    ctrl->val);
 
-	हाल V4L2_CID_AGC_UPDATE_INTERVAL:
-		वापस regmap_ग_लिखो(map, MT9V032_AGC_UPDATE_FREQUENCY,
+	case V4L2_CID_AGC_UPDATE_INTERVAL:
+		return regmap_write(map, MT9V032_AGC_UPDATE_FREQUENCY,
 				    ctrl->val);
 
-	हाल V4L2_CID_AEC_MAX_SHUTTER_WIDTH:
-		वापस regmap_ग_लिखो(map,
+	case V4L2_CID_AEC_MAX_SHUTTER_WIDTH:
+		return regmap_write(map,
 				    mt9v032->model->data->aec_max_shutter_reg,
 				    ctrl->val);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops mt9v032_ctrl_ops = अणु
+static const struct v4l2_ctrl_ops mt9v032_ctrl_ops = {
 	.s_ctrl = mt9v032_s_ctrl,
-पूर्ण;
+};
 
-अटल स्थिर अक्षर * स्थिर mt9v032_test_pattern_menu[] = अणु
+static const char * const mt9v032_test_pattern_menu[] = {
 	"Disabled",
 	"Gray Vertical Shade",
 	"Gray Horizontal Shade",
 	"Gray Diagonal Shade",
 	"Plain",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_ctrl_config mt9v032_test_pattern_color = अणु
+static const struct v4l2_ctrl_config mt9v032_test_pattern_color = {
 	.ops		= &mt9v032_ctrl_ops,
 	.id		= V4L2_CID_TEST_PATTERN_COLOR,
 	.type		= V4L2_CTRL_TYPE_INTEGER,
@@ -756,10 +755,10 @@ __mt9v032_get_pad_crop(काष्ठा mt9v032 *mt9v032, काष्ठा v
 	.step		= 1,
 	.def		= 0,
 	.flags		= 0,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_ctrl_config mt9v032_aegc_controls[] = अणु
-	अणु
+static const struct v4l2_ctrl_config mt9v032_aegc_controls[] = {
+	{
 		.ops		= &mt9v032_ctrl_ops,
 		.id		= V4L2_CID_AEGC_DESIRED_BIN,
 		.type		= V4L2_CTRL_TYPE_INTEGER,
@@ -769,7 +768,7 @@ __mt9v032_get_pad_crop(काष्ठा mt9v032 *mt9v032, काष्ठा v
 		.step		= 1,
 		.def		= 58,
 		.flags		= 0,
-	पूर्ण, अणु
+	}, {
 		.ops		= &mt9v032_ctrl_ops,
 		.id		= V4L2_CID_AEC_LPF,
 		.type		= V4L2_CTRL_TYPE_INTEGER,
@@ -779,7 +778,7 @@ __mt9v032_get_pad_crop(काष्ठा mt9v032 *mt9v032, काष्ठा v
 		.step		= 1,
 		.def		= 0,
 		.flags		= 0,
-	पूर्ण, अणु
+	}, {
 		.ops		= &mt9v032_ctrl_ops,
 		.id		= V4L2_CID_AGC_LPF,
 		.type		= V4L2_CTRL_TYPE_INTEGER,
@@ -789,7 +788,7 @@ __mt9v032_get_pad_crop(काष्ठा mt9v032 *mt9v032, काष्ठा v
 		.step		= 1,
 		.def		= 2,
 		.flags		= 0,
-	पूर्ण, अणु
+	}, {
 		.ops		= &mt9v032_ctrl_ops,
 		.id		= V4L2_CID_AEC_UPDATE_INTERVAL,
 		.type		= V4L2_CTRL_TYPE_INTEGER,
@@ -799,7 +798,7 @@ __mt9v032_get_pad_crop(काष्ठा mt9v032 *mt9v032, काष्ठा v
 		.step		= 1,
 		.def		= 2,
 		.flags		= 0,
-	पूर्ण, अणु
+	}, {
 		.ops		= &mt9v032_ctrl_ops,
 		.id		= V4L2_CID_AGC_UPDATE_INTERVAL,
 		.type		= V4L2_CTRL_TYPE_INTEGER,
@@ -809,10 +808,10 @@ __mt9v032_get_pad_crop(काष्ठा mt9v032 *mt9v032, काष्ठा v
 		.step		= 1,
 		.def		= 2,
 		.flags		= 0,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल स्थिर काष्ठा v4l2_ctrl_config mt9v032_aec_max_shutter_width = अणु
+static const struct v4l2_ctrl_config mt9v032_aec_max_shutter_width = {
 	.ops		= &mt9v032_ctrl_ops,
 	.id		= V4L2_CID_AEC_MAX_SHUTTER_WIDTH,
 	.type		= V4L2_CTRL_TYPE_INTEGER,
@@ -822,9 +821,9 @@ __mt9v032_get_pad_crop(काष्ठा mt9v032 *mt9v032, काष्ठा v
 	.step		= 1,
 	.def		= 480,
 	.flags		= 0,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_ctrl_config mt9v034_aec_max_shutter_width = अणु
+static const struct v4l2_ctrl_config mt9v034_aec_max_shutter_width = {
 	.ops		= &mt9v032_ctrl_ops,
 	.id		= V4L2_CID_AEC_MAX_SHUTTER_WIDTH,
 	.type		= V4L2_CTRL_TYPE_INTEGER,
@@ -834,94 +833,94 @@ __mt9v032_get_pad_crop(काष्ठा mt9v032 *mt9v032, काष्ठा v
 	.step		= 1,
 	.def		= 480,
 	.flags		= 0,
-पूर्ण;
+};
 
 /* -----------------------------------------------------------------------------
  * V4L2 subdev core operations
  */
 
-अटल पूर्णांक mt9v032_set_घातer(काष्ठा v4l2_subdev *subdev, पूर्णांक on)
-अणु
-	काष्ठा mt9v032 *mt9v032 = to_mt9v032(subdev);
-	पूर्णांक ret = 0;
+static int mt9v032_set_power(struct v4l2_subdev *subdev, int on)
+{
+	struct mt9v032 *mt9v032 = to_mt9v032(subdev);
+	int ret = 0;
 
-	mutex_lock(&mt9v032->घातer_lock);
+	mutex_lock(&mt9v032->power_lock);
 
-	/* If the घातer count is modअगरied from 0 to != 0 or from != 0 to 0,
-	 * update the घातer state.
+	/* If the power count is modified from 0 to != 0 or from != 0 to 0,
+	 * update the power state.
 	 */
-	अगर (mt9v032->घातer_count == !on) अणु
-		ret = __mt9v032_set_घातer(mt9v032, !!on);
-		अगर (ret < 0)
-			जाओ करोne;
-	पूर्ण
+	if (mt9v032->power_count == !on) {
+		ret = __mt9v032_set_power(mt9v032, !!on);
+		if (ret < 0)
+			goto done;
+	}
 
-	/* Update the घातer count. */
-	mt9v032->घातer_count += on ? 1 : -1;
-	WARN_ON(mt9v032->घातer_count < 0);
+	/* Update the power count. */
+	mt9v032->power_count += on ? 1 : -1;
+	WARN_ON(mt9v032->power_count < 0);
 
-करोne:
-	mutex_unlock(&mt9v032->घातer_lock);
-	वापस ret;
-पूर्ण
+done:
+	mutex_unlock(&mt9v032->power_lock);
+	return ret;
+}
 
 /* -----------------------------------------------------------------------------
- * V4L2 subdev पूर्णांकernal operations
+ * V4L2 subdev internal operations
  */
 
-अटल पूर्णांक mt9v032_रेजिस्टरed(काष्ठा v4l2_subdev *subdev)
-अणु
-	काष्ठा i2c_client *client = v4l2_get_subdevdata(subdev);
-	काष्ठा mt9v032 *mt9v032 = to_mt9v032(subdev);
-	अचिन्हित पूर्णांक i;
+static int mt9v032_registered(struct v4l2_subdev *subdev)
+{
+	struct i2c_client *client = v4l2_get_subdevdata(subdev);
+	struct mt9v032 *mt9v032 = to_mt9v032(subdev);
+	unsigned int i;
 	u32 version;
-	पूर्णांक ret;
+	int ret;
 
 	dev_info(&client->dev, "Probing MT9V032 at address 0x%02x\n",
 			client->addr);
 
-	ret = mt9v032_घातer_on(mt9v032);
-	अगर (ret < 0) अणु
+	ret = mt9v032_power_on(mt9v032);
+	if (ret < 0) {
 		dev_err(&client->dev, "MT9V032 power up failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Read and check the sensor version */
-	ret = regmap_पढ़ो(mt9v032->regmap, MT9V032_CHIP_VERSION, &version);
+	ret = regmap_read(mt9v032->regmap, MT9V032_CHIP_VERSION, &version);
 
-	mt9v032_घातer_off(mt9v032);
+	mt9v032_power_off(mt9v032);
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&client->dev, "Failed reading chip version\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(mt9v032_versions); ++i) अणु
-		अगर (mt9v032_versions[i].version == version) अणु
+	for (i = 0; i < ARRAY_SIZE(mt9v032_versions); ++i) {
+		if (mt9v032_versions[i].version == version) {
 			mt9v032->version = &mt9v032_versions[i];
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (mt9v032->version == शून्य) अणु
+	if (mt9v032->version == NULL) {
 		dev_err(&client->dev, "Unsupported chip version 0x%04x\n",
 			version);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
 	dev_info(&client->dev, "%s detected at address 0x%02x\n",
 		 mt9v032->version->name, client->addr);
 
 	mt9v032_configure_pixel_rate(mt9v032);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mt9v032_खोलो(काष्ठा v4l2_subdev *subdev, काष्ठा v4l2_subdev_fh *fh)
-अणु
-	काष्ठा mt9v032 *mt9v032 = to_mt9v032(subdev);
-	काष्ठा v4l2_mbus_framefmt *क्रमmat;
-	काष्ठा v4l2_rect *crop;
+static int mt9v032_open(struct v4l2_subdev *subdev, struct v4l2_subdev_fh *fh)
+{
+	struct mt9v032 *mt9v032 = to_mt9v032(subdev);
+	struct v4l2_mbus_framefmt *format;
+	struct v4l2_rect *crop;
 
 	crop = v4l2_subdev_get_try_crop(subdev, fh->pad, 0);
 	crop->left = MT9V032_COLUMN_START_DEF;
@@ -929,147 +928,147 @@ __mt9v032_get_pad_crop(काष्ठा mt9v032 *mt9v032, काष्ठा v
 	crop->width = MT9V032_WINDOW_WIDTH_DEF;
 	crop->height = MT9V032_WINDOW_HEIGHT_DEF;
 
-	क्रमmat = v4l2_subdev_get_try_क्रमmat(subdev, fh->pad, 0);
+	format = v4l2_subdev_get_try_format(subdev, fh->pad, 0);
 
-	अगर (mt9v032->model->color)
-		क्रमmat->code = MEDIA_BUS_FMT_SGRBG10_1X10;
-	अन्यथा
-		क्रमmat->code = MEDIA_BUS_FMT_Y10_1X10;
+	if (mt9v032->model->color)
+		format->code = MEDIA_BUS_FMT_SGRBG10_1X10;
+	else
+		format->code = MEDIA_BUS_FMT_Y10_1X10;
 
-	क्रमmat->width = MT9V032_WINDOW_WIDTH_DEF;
-	क्रमmat->height = MT9V032_WINDOW_HEIGHT_DEF;
-	क्रमmat->field = V4L2_FIELD_NONE;
-	क्रमmat->colorspace = V4L2_COLORSPACE_SRGB;
+	format->width = MT9V032_WINDOW_WIDTH_DEF;
+	format->height = MT9V032_WINDOW_HEIGHT_DEF;
+	format->field = V4L2_FIELD_NONE;
+	format->colorspace = V4L2_COLORSPACE_SRGB;
 
-	वापस mt9v032_set_घातer(subdev, 1);
-पूर्ण
+	return mt9v032_set_power(subdev, 1);
+}
 
-अटल पूर्णांक mt9v032_बंद(काष्ठा v4l2_subdev *subdev, काष्ठा v4l2_subdev_fh *fh)
-अणु
-	वापस mt9v032_set_घातer(subdev, 0);
-पूर्ण
+static int mt9v032_close(struct v4l2_subdev *subdev, struct v4l2_subdev_fh *fh)
+{
+	return mt9v032_set_power(subdev, 0);
+}
 
-अटल स्थिर काष्ठा v4l2_subdev_core_ops mt9v032_subdev_core_ops = अणु
-	.s_घातer	= mt9v032_set_घातer,
-पूर्ण;
+static const struct v4l2_subdev_core_ops mt9v032_subdev_core_ops = {
+	.s_power	= mt9v032_set_power,
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_video_ops mt9v032_subdev_video_ops = अणु
+static const struct v4l2_subdev_video_ops mt9v032_subdev_video_ops = {
 	.s_stream	= mt9v032_s_stream,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_pad_ops mt9v032_subdev_pad_ops = अणु
-	.क्रमागत_mbus_code = mt9v032_क्रमागत_mbus_code,
-	.क्रमागत_frame_size = mt9v032_क्रमागत_frame_size,
-	.get_fmt = mt9v032_get_क्रमmat,
-	.set_fmt = mt9v032_set_क्रमmat,
+static const struct v4l2_subdev_pad_ops mt9v032_subdev_pad_ops = {
+	.enum_mbus_code = mt9v032_enum_mbus_code,
+	.enum_frame_size = mt9v032_enum_frame_size,
+	.get_fmt = mt9v032_get_format,
+	.set_fmt = mt9v032_set_format,
 	.get_selection = mt9v032_get_selection,
 	.set_selection = mt9v032_set_selection,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_ops mt9v032_subdev_ops = अणु
+static const struct v4l2_subdev_ops mt9v032_subdev_ops = {
 	.core	= &mt9v032_subdev_core_ops,
 	.video	= &mt9v032_subdev_video_ops,
 	.pad	= &mt9v032_subdev_pad_ops,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_subdev_पूर्णांकernal_ops mt9v032_subdev_पूर्णांकernal_ops = अणु
-	.रेजिस्टरed = mt9v032_रेजिस्टरed,
-	.खोलो = mt9v032_खोलो,
-	.बंद = mt9v032_बंद,
-पूर्ण;
+static const struct v4l2_subdev_internal_ops mt9v032_subdev_internal_ops = {
+	.registered = mt9v032_registered,
+	.open = mt9v032_open,
+	.close = mt9v032_close,
+};
 
-अटल स्थिर काष्ठा regmap_config mt9v032_regmap_config = अणु
+static const struct regmap_config mt9v032_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 16,
-	.max_रेजिस्टर = 0xff,
+	.max_register = 0xff,
 	.cache_type = REGCACHE_RBTREE,
-पूर्ण;
+};
 
 /* -----------------------------------------------------------------------------
  * Driver initialization and probing
  */
 
-अटल काष्ठा mt9v032_platक्रमm_data *
-mt9v032_get_pdata(काष्ठा i2c_client *client)
-अणु
-	काष्ठा mt9v032_platक्रमm_data *pdata = शून्य;
-	काष्ठा v4l2_fwnode_endpoपूर्णांक endpoपूर्णांक = अणु .bus_type = 0 पूर्ण;
-	काष्ठा device_node *np;
-	काष्ठा property *prop;
+static struct mt9v032_platform_data *
+mt9v032_get_pdata(struct i2c_client *client)
+{
+	struct mt9v032_platform_data *pdata = NULL;
+	struct v4l2_fwnode_endpoint endpoint = { .bus_type = 0 };
+	struct device_node *np;
+	struct property *prop;
 
-	अगर (!IS_ENABLED(CONFIG_OF) || !client->dev.of_node)
-		वापस client->dev.platक्रमm_data;
+	if (!IS_ENABLED(CONFIG_OF) || !client->dev.of_node)
+		return client->dev.platform_data;
 
-	np = of_graph_get_next_endpoपूर्णांक(client->dev.of_node, शून्य);
-	अगर (!np)
-		वापस शून्य;
+	np = of_graph_get_next_endpoint(client->dev.of_node, NULL);
+	if (!np)
+		return NULL;
 
-	अगर (v4l2_fwnode_endpoपूर्णांक_parse(of_fwnode_handle(np), &endpoपूर्णांक) < 0)
-		जाओ करोne;
+	if (v4l2_fwnode_endpoint_parse(of_fwnode_handle(np), &endpoint) < 0)
+		goto done;
 
-	pdata = devm_kzalloc(&client->dev, माप(*pdata), GFP_KERNEL);
-	अगर (!pdata)
-		जाओ करोne;
+	pdata = devm_kzalloc(&client->dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata)
+		goto done;
 
-	prop = of_find_property(np, "link-frequencies", शून्य);
-	अगर (prop) अणु
+	prop = of_find_property(np, "link-frequencies", NULL);
+	if (prop) {
 		u64 *link_freqs;
-		माप_प्रकार size = prop->length / माप(*link_freqs);
+		size_t size = prop->length / sizeof(*link_freqs);
 
-		link_freqs = devm_kसुस्मृति(&client->dev, size,
-					  माप(*link_freqs), GFP_KERNEL);
-		अगर (!link_freqs)
-			जाओ करोne;
+		link_freqs = devm_kcalloc(&client->dev, size,
+					  sizeof(*link_freqs), GFP_KERNEL);
+		if (!link_freqs)
+			goto done;
 
-		अगर (of_property_पढ़ो_u64_array(np, "link-frequencies",
+		if (of_property_read_u64_array(np, "link-frequencies",
 					       link_freqs, size) < 0)
-			जाओ करोne;
+			goto done;
 
 		pdata->link_freqs = link_freqs;
 		pdata->link_def_freq = link_freqs[0];
-	पूर्ण
+	}
 
-	pdata->clk_pol = !!(endpoपूर्णांक.bus.parallel.flags &
+	pdata->clk_pol = !!(endpoint.bus.parallel.flags &
 			    V4L2_MBUS_PCLK_SAMPLE_RISING);
 
-करोne:
+done:
 	of_node_put(np);
-	वापस pdata;
-पूर्ण
+	return pdata;
+}
 
-अटल पूर्णांक mt9v032_probe(काष्ठा i2c_client *client,
-		स्थिर काष्ठा i2c_device_id *did)
-अणु
-	काष्ठा mt9v032_platक्रमm_data *pdata = mt9v032_get_pdata(client);
-	काष्ठा mt9v032 *mt9v032;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक ret;
+static int mt9v032_probe(struct i2c_client *client,
+		const struct i2c_device_id *did)
+{
+	struct mt9v032_platform_data *pdata = mt9v032_get_pdata(client);
+	struct mt9v032 *mt9v032;
+	unsigned int i;
+	int ret;
 
-	mt9v032 = devm_kzalloc(&client->dev, माप(*mt9v032), GFP_KERNEL);
-	अगर (!mt9v032)
-		वापस -ENOMEM;
+	mt9v032 = devm_kzalloc(&client->dev, sizeof(*mt9v032), GFP_KERNEL);
+	if (!mt9v032)
+		return -ENOMEM;
 
 	mt9v032->regmap = devm_regmap_init_i2c(client, &mt9v032_regmap_config);
-	अगर (IS_ERR(mt9v032->regmap))
-		वापस PTR_ERR(mt9v032->regmap);
+	if (IS_ERR(mt9v032->regmap))
+		return PTR_ERR(mt9v032->regmap);
 
-	mt9v032->clk = devm_clk_get(&client->dev, शून्य);
-	अगर (IS_ERR(mt9v032->clk))
-		वापस PTR_ERR(mt9v032->clk);
+	mt9v032->clk = devm_clk_get(&client->dev, NULL);
+	if (IS_ERR(mt9v032->clk))
+		return PTR_ERR(mt9v032->clk);
 
 	mt9v032->reset_gpio = devm_gpiod_get_optional(&client->dev, "reset",
 						      GPIOD_OUT_HIGH);
-	अगर (IS_ERR(mt9v032->reset_gpio))
-		वापस PTR_ERR(mt9v032->reset_gpio);
+	if (IS_ERR(mt9v032->reset_gpio))
+		return PTR_ERR(mt9v032->reset_gpio);
 
 	mt9v032->standby_gpio = devm_gpiod_get_optional(&client->dev, "standby",
 							GPIOD_OUT_LOW);
-	अगर (IS_ERR(mt9v032->standby_gpio))
-		वापस PTR_ERR(mt9v032->standby_gpio);
+	if (IS_ERR(mt9v032->standby_gpio))
+		return PTR_ERR(mt9v032->standby_gpio);
 
-	mutex_init(&mt9v032->घातer_lock);
+	mutex_init(&mt9v032->power_lock);
 	mt9v032->pdata = pdata;
-	mt9v032->model = (स्थिर व्योम *)did->driver_data;
+	mt9v032->model = (const void *)did->driver_data;
 
 	v4l2_ctrl_handler_init(&mt9v032->ctrls, 11 +
 			       ARRAY_SIZE(mt9v032_aegc_controls));
@@ -1099,61 +1098,61 @@ mt9v032_get_pdata(काष्ठा i2c_client *client)
 				ARRAY_SIZE(mt9v032_test_pattern_menu) - 1, 0, 0,
 				mt9v032_test_pattern_menu);
 	mt9v032->test_pattern_color = v4l2_ctrl_new_custom(&mt9v032->ctrls,
-				      &mt9v032_test_pattern_color, शून्य);
+				      &mt9v032_test_pattern_color, NULL);
 
 	v4l2_ctrl_new_custom(&mt9v032->ctrls,
 			     mt9v032->model->data->aec_max_shutter_v4l2_ctrl,
-			     शून्य);
-	क्रम (i = 0; i < ARRAY_SIZE(mt9v032_aegc_controls); ++i)
+			     NULL);
+	for (i = 0; i < ARRAY_SIZE(mt9v032_aegc_controls); ++i)
 		v4l2_ctrl_new_custom(&mt9v032->ctrls, &mt9v032_aegc_controls[i],
-				     शून्य);
+				     NULL);
 
 	v4l2_ctrl_cluster(2, &mt9v032->test_pattern);
 
 	mt9v032->pixel_rate =
 		v4l2_ctrl_new_std(&mt9v032->ctrls, &mt9v032_ctrl_ops,
-				  V4L2_CID_PIXEL_RATE, 1, पूर्णांक_उच्च, 1, 1);
+				  V4L2_CID_PIXEL_RATE, 1, INT_MAX, 1, 1);
 
-	अगर (pdata && pdata->link_freqs) अणु
-		अचिन्हित पूर्णांक def = 0;
+	if (pdata && pdata->link_freqs) {
+		unsigned int def = 0;
 
-		क्रम (i = 0; pdata->link_freqs[i]; ++i) अणु
-			अगर (pdata->link_freqs[i] == pdata->link_def_freq)
+		for (i = 0; pdata->link_freqs[i]; ++i) {
+			if (pdata->link_freqs[i] == pdata->link_def_freq)
 				def = i;
-		पूर्ण
+		}
 
 		mt9v032->link_freq =
-			v4l2_ctrl_new_पूर्णांक_menu(&mt9v032->ctrls,
+			v4l2_ctrl_new_int_menu(&mt9v032->ctrls,
 					       &mt9v032_ctrl_ops,
 					       V4L2_CID_LINK_FREQ, i - 1, def,
 					       pdata->link_freqs);
 		v4l2_ctrl_cluster(2, &mt9v032->link_freq);
-	पूर्ण
+	}
 
 
 	mt9v032->subdev.ctrl_handler = &mt9v032->ctrls;
 
-	अगर (mt9v032->ctrls.error) अणु
+	if (mt9v032->ctrls.error) {
 		dev_err(&client->dev, "control initialization error %d\n",
 			mt9v032->ctrls.error);
 		ret = mt9v032->ctrls.error;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	mt9v032->crop.left = MT9V032_COLUMN_START_DEF;
 	mt9v032->crop.top = MT9V032_ROW_START_DEF;
 	mt9v032->crop.width = MT9V032_WINDOW_WIDTH_DEF;
 	mt9v032->crop.height = MT9V032_WINDOW_HEIGHT_DEF;
 
-	अगर (mt9v032->model->color)
-		mt9v032->क्रमmat.code = MEDIA_BUS_FMT_SGRBG10_1X10;
-	अन्यथा
-		mt9v032->क्रमmat.code = MEDIA_BUS_FMT_Y10_1X10;
+	if (mt9v032->model->color)
+		mt9v032->format.code = MEDIA_BUS_FMT_SGRBG10_1X10;
+	else
+		mt9v032->format.code = MEDIA_BUS_FMT_Y10_1X10;
 
-	mt9v032->क्रमmat.width = MT9V032_WINDOW_WIDTH_DEF;
-	mt9v032->क्रमmat.height = MT9V032_WINDOW_HEIGHT_DEF;
-	mt9v032->क्रमmat.field = V4L2_FIELD_NONE;
-	mt9v032->क्रमmat.colorspace = V4L2_COLORSPACE_SRGB;
+	mt9v032->format.width = MT9V032_WINDOW_WIDTH_DEF;
+	mt9v032->format.height = MT9V032_WINDOW_HEIGHT_DEF;
+	mt9v032->format.field = V4L2_FIELD_NONE;
+	mt9v032->format.colorspace = V4L2_COLORSPACE_SRGB;
 
 	mt9v032->hratio = 1;
 	mt9v032->vratio = 1;
@@ -1163,44 +1162,44 @@ mt9v032_get_pdata(काष्ठा i2c_client *client)
 	mt9v032->sysclk = MT9V032_SYSCLK_FREQ_DEF;
 
 	v4l2_i2c_subdev_init(&mt9v032->subdev, client, &mt9v032_subdev_ops);
-	mt9v032->subdev.पूर्णांकernal_ops = &mt9v032_subdev_पूर्णांकernal_ops;
+	mt9v032->subdev.internal_ops = &mt9v032_subdev_internal_ops;
 	mt9v032->subdev.flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;
 
 	mt9v032->subdev.entity.function = MEDIA_ENT_F_CAM_SENSOR;
 	mt9v032->pad.flags = MEDIA_PAD_FL_SOURCE;
 	ret = media_entity_pads_init(&mt9v032->subdev.entity, 1, &mt9v032->pad);
-	अगर (ret < 0)
-		जाओ err;
+	if (ret < 0)
+		goto err;
 
 	mt9v032->subdev.dev = &client->dev;
-	ret = v4l2_async_रेजिस्टर_subdev(&mt9v032->subdev);
-	अगर (ret < 0)
-		जाओ err;
+	ret = v4l2_async_register_subdev(&mt9v032->subdev);
+	if (ret < 0)
+		goto err;
 
-	वापस 0;
+	return 0;
 
 err:
 	media_entity_cleanup(&mt9v032->subdev.entity);
-	v4l2_ctrl_handler_मुक्त(&mt9v032->ctrls);
-	वापस ret;
-पूर्ण
+	v4l2_ctrl_handler_free(&mt9v032->ctrls);
+	return ret;
+}
 
-अटल पूर्णांक mt9v032_हटाओ(काष्ठा i2c_client *client)
-अणु
-	काष्ठा v4l2_subdev *subdev = i2c_get_clientdata(client);
-	काष्ठा mt9v032 *mt9v032 = to_mt9v032(subdev);
+static int mt9v032_remove(struct i2c_client *client)
+{
+	struct v4l2_subdev *subdev = i2c_get_clientdata(client);
+	struct mt9v032 *mt9v032 = to_mt9v032(subdev);
 
-	v4l2_async_unरेजिस्टर_subdev(subdev);
-	v4l2_ctrl_handler_मुक्त(&mt9v032->ctrls);
+	v4l2_async_unregister_subdev(subdev);
+	v4l2_ctrl_handler_free(&mt9v032->ctrls);
 	media_entity_cleanup(&subdev->entity);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा mt9v032_model_data mt9v032_model_data[] = अणु
-	अणु
+static const struct mt9v032_model_data mt9v032_model_data[] = {
+	{
 		/* MT9V022, MT9V032 revisions 1/2/3 */
-		.min_row_समय = 660,
+		.min_row_time = 660,
 		.min_hblank = MT9V032_HORIZONTAL_BLANKING_MIN,
 		.min_vblank = MT9V032_VERTICAL_BLANKING_MIN,
 		.max_vblank = MT9V032_VERTICAL_BLANKING_MAX,
@@ -1209,9 +1208,9 @@ err:
 		.pclk_reg = MT9V032_PIXEL_CLOCK,
 		.aec_max_shutter_reg = MT9V032_AEC_MAX_SHUTTER_WIDTH,
 		.aec_max_shutter_v4l2_ctrl = &mt9v032_aec_max_shutter_width,
-	पूर्ण, अणु
+	}, {
 		/* MT9V024, MT9V034 */
-		.min_row_समय = 690,
+		.min_row_time = 690,
 		.min_hblank = MT9V034_HORIZONTAL_BLANKING_MIN,
 		.min_vblank = MT9V034_VERTICAL_BLANKING_MIN,
 		.max_vblank = MT9V034_VERTICAL_BLANKING_MAX,
@@ -1220,81 +1219,81 @@ err:
 		.pclk_reg = MT9V034_PIXEL_CLOCK,
 		.aec_max_shutter_reg = MT9V034_AEC_MAX_SHUTTER_WIDTH,
 		.aec_max_shutter_v4l2_ctrl = &mt9v034_aec_max_shutter_width,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा mt9v032_model_info mt9v032_models[] = अणु
-	[MT9V032_MODEL_V022_COLOR] = अणु
+static const struct mt9v032_model_info mt9v032_models[] = {
+	[MT9V032_MODEL_V022_COLOR] = {
 		.data = &mt9v032_model_data[0],
 		.color = true,
-	पूर्ण,
-	[MT9V032_MODEL_V022_MONO] = अणु
+	},
+	[MT9V032_MODEL_V022_MONO] = {
 		.data = &mt9v032_model_data[0],
 		.color = false,
-	पूर्ण,
-	[MT9V032_MODEL_V024_COLOR] = अणु
+	},
+	[MT9V032_MODEL_V024_COLOR] = {
 		.data = &mt9v032_model_data[1],
 		.color = true,
-	पूर्ण,
-	[MT9V032_MODEL_V024_MONO] = अणु
+	},
+	[MT9V032_MODEL_V024_MONO] = {
 		.data = &mt9v032_model_data[1],
 		.color = false,
-	पूर्ण,
-	[MT9V032_MODEL_V032_COLOR] = अणु
+	},
+	[MT9V032_MODEL_V032_COLOR] = {
 		.data = &mt9v032_model_data[0],
 		.color = true,
-	पूर्ण,
-	[MT9V032_MODEL_V032_MONO] = अणु
+	},
+	[MT9V032_MODEL_V032_MONO] = {
 		.data = &mt9v032_model_data[0],
 		.color = false,
-	पूर्ण,
-	[MT9V032_MODEL_V034_COLOR] = अणु
+	},
+	[MT9V032_MODEL_V034_COLOR] = {
 		.data = &mt9v032_model_data[1],
 		.color = true,
-	पूर्ण,
-	[MT9V032_MODEL_V034_MONO] = अणु
+	},
+	[MT9V032_MODEL_V034_MONO] = {
 		.data = &mt9v032_model_data[1],
 		.color = false,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा i2c_device_id mt9v032_id[] = अणु
-	अणु "mt9v022", (kernel_uदीर्घ_t)&mt9v032_models[MT9V032_MODEL_V022_COLOR] पूर्ण,
-	अणु "mt9v022m", (kernel_uदीर्घ_t)&mt9v032_models[MT9V032_MODEL_V022_MONO] पूर्ण,
-	अणु "mt9v024", (kernel_uदीर्घ_t)&mt9v032_models[MT9V032_MODEL_V024_COLOR] पूर्ण,
-	अणु "mt9v024m", (kernel_uदीर्घ_t)&mt9v032_models[MT9V032_MODEL_V024_MONO] पूर्ण,
-	अणु "mt9v032", (kernel_uदीर्घ_t)&mt9v032_models[MT9V032_MODEL_V032_COLOR] पूर्ण,
-	अणु "mt9v032m", (kernel_uदीर्घ_t)&mt9v032_models[MT9V032_MODEL_V032_MONO] पूर्ण,
-	अणु "mt9v034", (kernel_uदीर्घ_t)&mt9v032_models[MT9V032_MODEL_V034_COLOR] पूर्ण,
-	अणु "mt9v034m", (kernel_uदीर्घ_t)&mt9v032_models[MT9V032_MODEL_V034_MONO] पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id mt9v032_id[] = {
+	{ "mt9v022", (kernel_ulong_t)&mt9v032_models[MT9V032_MODEL_V022_COLOR] },
+	{ "mt9v022m", (kernel_ulong_t)&mt9v032_models[MT9V032_MODEL_V022_MONO] },
+	{ "mt9v024", (kernel_ulong_t)&mt9v032_models[MT9V032_MODEL_V024_COLOR] },
+	{ "mt9v024m", (kernel_ulong_t)&mt9v032_models[MT9V032_MODEL_V024_MONO] },
+	{ "mt9v032", (kernel_ulong_t)&mt9v032_models[MT9V032_MODEL_V032_COLOR] },
+	{ "mt9v032m", (kernel_ulong_t)&mt9v032_models[MT9V032_MODEL_V032_MONO] },
+	{ "mt9v034", (kernel_ulong_t)&mt9v032_models[MT9V032_MODEL_V034_COLOR] },
+	{ "mt9v034m", (kernel_ulong_t)&mt9v032_models[MT9V032_MODEL_V034_MONO] },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, mt9v032_id);
 
-#अगर IS_ENABLED(CONFIG_OF)
-अटल स्थिर काष्ठा of_device_id mt9v032_of_match[] = अणु
-	अणु .compatible = "aptina,mt9v022" पूर्ण,
-	अणु .compatible = "aptina,mt9v022m" पूर्ण,
-	अणु .compatible = "aptina,mt9v024" पूर्ण,
-	अणु .compatible = "aptina,mt9v024m" पूर्ण,
-	अणु .compatible = "aptina,mt9v032" पूर्ण,
-	अणु .compatible = "aptina,mt9v032m" पूर्ण,
-	अणु .compatible = "aptina,mt9v034" पूर्ण,
-	अणु .compatible = "aptina,mt9v034m" पूर्ण,
-	अणु /* Sentinel */ पूर्ण
-पूर्ण;
+#if IS_ENABLED(CONFIG_OF)
+static const struct of_device_id mt9v032_of_match[] = {
+	{ .compatible = "aptina,mt9v022" },
+	{ .compatible = "aptina,mt9v022m" },
+	{ .compatible = "aptina,mt9v024" },
+	{ .compatible = "aptina,mt9v024m" },
+	{ .compatible = "aptina,mt9v032" },
+	{ .compatible = "aptina,mt9v032m" },
+	{ .compatible = "aptina,mt9v034" },
+	{ .compatible = "aptina,mt9v034m" },
+	{ /* Sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, mt9v032_of_match);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा i2c_driver mt9v032_driver = अणु
-	.driver = अणु
+static struct i2c_driver mt9v032_driver = {
+	.driver = {
 		.name = "mt9v032",
 		.of_match_table = of_match_ptr(mt9v032_of_match),
-	पूर्ण,
+	},
 	.probe		= mt9v032_probe,
-	.हटाओ		= mt9v032_हटाओ,
+	.remove		= mt9v032_remove,
 	.id_table	= mt9v032_id,
-पूर्ण;
+};
 
 module_i2c_driver(mt9v032_driver);
 

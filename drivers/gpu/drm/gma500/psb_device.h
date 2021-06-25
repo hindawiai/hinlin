@@ -1,13 +1,12 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright तऊ 2013 Patrik Jakobsson
- * Copyright तऊ 2011 Intel Corporation
+ * Copyright © 2013 Patrik Jakobsson
+ * Copyright © 2011 Intel Corporation
  */
 
-#अगर_अघोषित _PSB_DEVICE_H_
-#घोषणा _PSB_DEVICE_H_
+#ifndef _PSB_DEVICE_H_
+#define _PSB_DEVICE_H_
 
-बाह्य स्थिर काष्ठा gma_घड़ी_funcs psb_घड़ी_funcs;
+extern const struct gma_clock_funcs psb_clock_funcs;
 
-#पूर्ण_अगर
+#endif

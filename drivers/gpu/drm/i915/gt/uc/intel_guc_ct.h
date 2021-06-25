@@ -1,25 +1,24 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2016-2019 Intel Corporation
+ * Copyright © 2016-2019 Intel Corporation
  */
 
-#अगर_अघोषित _INTEL_GUC_CT_H_
-#घोषणा _INTEL_GUC_CT_H_
+#ifndef _INTEL_GUC_CT_H_
+#define _INTEL_GUC_CT_H_
 
-#समावेश <linux/spinlock.h>
-#समावेश <linux/workqueue.h>
+#include <linux/spinlock.h>
+#include <linux/workqueue.h>
 
-#समावेश "intel_guc_fwif.h"
+#include "intel_guc_fwif.h"
 
-काष्ठा i915_vma;
-काष्ठा पूर्णांकel_guc;
+struct i915_vma;
+struct intel_guc;
 
 /**
  * DOC: Command Transport (CT).
  *
- * Buffer based command transport is a replacement क्रम MMIO based mechanism.
- * It can be used to perक्रमm both host-2-guc and guc-to-host communication.
+ * Buffer based command transport is a replacement for MMIO based mechanism.
+ * It can be used to perform both host-2-guc and guc-to-host communication.
  */
 
 /** Represents single command transport buffer.
@@ -28,56 +27,56 @@
  * record (command transport buffer descriptor) and the actual buffer which
  * holds the commands.
  *
- * @desc: poपूर्णांकer to the buffer descriptor
- * @cmds: poपूर्णांकer to the commands buffer
+ * @desc: pointer to the buffer descriptor
+ * @cmds: pointer to the commands buffer
  */
-काष्ठा पूर्णांकel_guc_ct_buffer अणु
-	काष्ठा guc_ct_buffer_desc *desc;
+struct intel_guc_ct_buffer {
+	struct guc_ct_buffer_desc *desc;
 	u32 *cmds;
-पूर्ण;
+};
 
 
-/** Top-level काष्ठाure क्रम Command Transport related data
+/** Top-level structure for Command Transport related data
  *
- * Includes a pair of CT buffers क्रम bi-directional communication and tracking
- * क्रम the H2G and G2H requests sent and received through the buffers.
+ * Includes a pair of CT buffers for bi-directional communication and tracking
+ * for the H2G and G2H requests sent and received through the buffers.
  */
-काष्ठा पूर्णांकel_guc_ct अणु
-	काष्ठा i915_vma *vma;
+struct intel_guc_ct {
+	struct i915_vma *vma;
 	bool enabled;
 
-	/* buffers क्रम sending(0) and receiving(1) commands */
-	काष्ठा पूर्णांकel_guc_ct_buffer ctbs[2];
+	/* buffers for sending(0) and receiving(1) commands */
+	struct intel_guc_ct_buffer ctbs[2];
 
-	काष्ठा अणु
+	struct {
 		u32 last_fence; /* last fence used to send request */
 
 		spinlock_t lock; /* protects pending requests list */
-		काष्ठा list_head pending; /* requests रुकोing क्रम response */
+		struct list_head pending; /* requests waiting for response */
 
-		काष्ठा list_head incoming; /* incoming requests */
-		काष्ठा work_काष्ठा worker; /* handler क्रम incoming requests */
-	पूर्ण requests;
-पूर्ण;
+		struct list_head incoming; /* incoming requests */
+		struct work_struct worker; /* handler for incoming requests */
+	} requests;
+};
 
-व्योम पूर्णांकel_guc_ct_init_early(काष्ठा पूर्णांकel_guc_ct *ct);
-पूर्णांक पूर्णांकel_guc_ct_init(काष्ठा पूर्णांकel_guc_ct *ct);
-व्योम पूर्णांकel_guc_ct_fini(काष्ठा पूर्णांकel_guc_ct *ct);
-पूर्णांक पूर्णांकel_guc_ct_enable(काष्ठा पूर्णांकel_guc_ct *ct);
-व्योम पूर्णांकel_guc_ct_disable(काष्ठा पूर्णांकel_guc_ct *ct);
+void intel_guc_ct_init_early(struct intel_guc_ct *ct);
+int intel_guc_ct_init(struct intel_guc_ct *ct);
+void intel_guc_ct_fini(struct intel_guc_ct *ct);
+int intel_guc_ct_enable(struct intel_guc_ct *ct);
+void intel_guc_ct_disable(struct intel_guc_ct *ct);
 
-अटल अंतरभूत व्योम पूर्णांकel_guc_ct_sanitize(काष्ठा पूर्णांकel_guc_ct *ct)
-अणु
+static inline void intel_guc_ct_sanitize(struct intel_guc_ct *ct)
+{
 	ct->enabled = false;
-पूर्ण
+}
 
-अटल अंतरभूत bool पूर्णांकel_guc_ct_enabled(काष्ठा पूर्णांकel_guc_ct *ct)
-अणु
-	वापस ct->enabled;
-पूर्ण
+static inline bool intel_guc_ct_enabled(struct intel_guc_ct *ct)
+{
+	return ct->enabled;
+}
 
-पूर्णांक पूर्णांकel_guc_ct_send(काष्ठा पूर्णांकel_guc_ct *ct, स्थिर u32 *action, u32 len,
+int intel_guc_ct_send(struct intel_guc_ct *ct, const u32 *action, u32 len,
 		      u32 *response_buf, u32 response_buf_size);
-व्योम पूर्णांकel_guc_ct_event_handler(काष्ठा पूर्णांकel_guc_ct *ct);
+void intel_guc_ct_event_handler(struct intel_guc_ct *ct);
 
-#पूर्ण_अगर /* _INTEL_GUC_CT_H_ */
+#endif /* _INTEL_GUC_CT_H_ */

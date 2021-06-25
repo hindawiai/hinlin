@@ -1,308 +1,307 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
- * Copyright तऊ 2020 Intel Corporation
+ * Copyright © 2020 Intel Corporation
  */
 
-#समावेश <linux/slab.h>
+#include <linux/slab.h>
 
-#समावेश "gem/i915_gem_lmem.h"
+#include "gem/i915_gem_lmem.h"
 
-#समावेश "i915_trace.h"
-#समावेश "intel_gtt.h"
-#समावेश "gen6_ppgtt.h"
-#समावेश "gen8_ppgtt.h"
+#include "i915_trace.h"
+#include "intel_gtt.h"
+#include "gen6_ppgtt.h"
+#include "gen8_ppgtt.h"
 
-काष्ठा i915_page_table *alloc_pt(काष्ठा i915_address_space *vm)
-अणु
-	काष्ठा i915_page_table *pt;
+struct i915_page_table *alloc_pt(struct i915_address_space *vm)
+{
+	struct i915_page_table *pt;
 
-	pt = kदो_स्मृति(माप(*pt), I915_GFP_ALLOW_FAIL);
-	अगर (unlikely(!pt))
-		वापस ERR_PTR(-ENOMEM);
+	pt = kmalloc(sizeof(*pt), I915_GFP_ALLOW_FAIL);
+	if (unlikely(!pt))
+		return ERR_PTR(-ENOMEM);
 
 	pt->base = vm->alloc_pt_dma(vm, I915_GTT_PAGE_SIZE_4K);
-	अगर (IS_ERR(pt->base)) अणु
-		kमुक्त(pt);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	if (IS_ERR(pt->base)) {
+		kfree(pt);
+		return ERR_PTR(-ENOMEM);
+	}
 
 	atomic_set(&pt->used, 0);
-	वापस pt;
-पूर्ण
+	return pt;
+}
 
-काष्ठा i915_page_directory *__alloc_pd(पूर्णांक count)
-अणु
-	काष्ठा i915_page_directory *pd;
+struct i915_page_directory *__alloc_pd(int count)
+{
+	struct i915_page_directory *pd;
 
-	pd = kzalloc(माप(*pd), I915_GFP_ALLOW_FAIL);
-	अगर (unlikely(!pd))
-		वापस शून्य;
+	pd = kzalloc(sizeof(*pd), I915_GFP_ALLOW_FAIL);
+	if (unlikely(!pd))
+		return NULL;
 
-	pd->entry = kसुस्मृति(count, माप(*pd->entry), I915_GFP_ALLOW_FAIL);
-	अगर (unlikely(!pd->entry)) अणु
-		kमुक्त(pd);
-		वापस शून्य;
-	पूर्ण
+	pd->entry = kcalloc(count, sizeof(*pd->entry), I915_GFP_ALLOW_FAIL);
+	if (unlikely(!pd->entry)) {
+		kfree(pd);
+		return NULL;
+	}
 
 	spin_lock_init(&pd->lock);
-	वापस pd;
-पूर्ण
+	return pd;
+}
 
-काष्ठा i915_page_directory *alloc_pd(काष्ठा i915_address_space *vm)
-अणु
-	काष्ठा i915_page_directory *pd;
+struct i915_page_directory *alloc_pd(struct i915_address_space *vm)
+{
+	struct i915_page_directory *pd;
 
 	pd = __alloc_pd(I915_PDES);
-	अगर (unlikely(!pd))
-		वापस ERR_PTR(-ENOMEM);
+	if (unlikely(!pd))
+		return ERR_PTR(-ENOMEM);
 
 	pd->pt.base = vm->alloc_pt_dma(vm, I915_GTT_PAGE_SIZE_4K);
-	अगर (IS_ERR(pd->pt.base)) अणु
-		kमुक्त(pd->entry);
-		kमुक्त(pd);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
+	if (IS_ERR(pd->pt.base)) {
+		kfree(pd->entry);
+		kfree(pd);
+		return ERR_PTR(-ENOMEM);
+	}
 
-	वापस pd;
-पूर्ण
+	return pd;
+}
 
-व्योम मुक्त_px(काष्ठा i915_address_space *vm, काष्ठा i915_page_table *pt, पूर्णांक lvl)
-अणु
-	BUILD_BUG_ON(दुरत्व(काष्ठा i915_page_directory, pt));
+void free_px(struct i915_address_space *vm, struct i915_page_table *pt, int lvl)
+{
+	BUILD_BUG_ON(offsetof(struct i915_page_directory, pt));
 
-	अगर (lvl) अणु
-		काष्ठा i915_page_directory *pd =
+	if (lvl) {
+		struct i915_page_directory *pd =
 			container_of(pt, typeof(*pd), pt);
-		kमुक्त(pd->entry);
-	पूर्ण
+		kfree(pd->entry);
+	}
 
-	अगर (pt->base)
+	if (pt->base)
 		i915_gem_object_put(pt->base);
 
-	kमुक्त(pt);
-पूर्ण
+	kfree(pt);
+}
 
-अटल व्योम
-ग_लिखो_dma_entry(काष्ठा drm_i915_gem_object * स्थिर pdma,
-		स्थिर अचिन्हित लघु idx,
-		स्थिर u64 encoded_entry)
-अणु
-	u64 * स्थिर vaddr = kmap_atomic(__px_page(pdma));
+static void
+write_dma_entry(struct drm_i915_gem_object * const pdma,
+		const unsigned short idx,
+		const u64 encoded_entry)
+{
+	u64 * const vaddr = kmap_atomic(__px_page(pdma));
 
 	vaddr[idx] = encoded_entry;
-	clflush_cache_range(&vaddr[idx], माप(u64));
+	clflush_cache_range(&vaddr[idx], sizeof(u64));
 	kunmap_atomic(vaddr);
-पूर्ण
+}
 
-व्योम
-__set_pd_entry(काष्ठा i915_page_directory * स्थिर pd,
-	       स्थिर अचिन्हित लघु idx,
-	       काष्ठा i915_page_table * स्थिर to,
-	       u64 (*encode)(स्थिर dma_addr_t, स्थिर क्रमागत i915_cache_level))
-अणु
-	/* Each thपढ़ो pre-pins the pd, and we may have a thपढ़ो per pde. */
-	GEM_BUG_ON(atomic_पढ़ो(px_used(pd)) > NALLOC * I915_PDES);
+void
+__set_pd_entry(struct i915_page_directory * const pd,
+	       const unsigned short idx,
+	       struct i915_page_table * const to,
+	       u64 (*encode)(const dma_addr_t, const enum i915_cache_level))
+{
+	/* Each thread pre-pins the pd, and we may have a thread per pde. */
+	GEM_BUG_ON(atomic_read(px_used(pd)) > NALLOC * I915_PDES);
 
 	atomic_inc(px_used(pd));
 	pd->entry[idx] = to;
-	ग_लिखो_dma_entry(px_base(pd), idx, encode(px_dma(to), I915_CACHE_LLC));
-पूर्ण
+	write_dma_entry(px_base(pd), idx, encode(px_dma(to), I915_CACHE_LLC));
+}
 
-व्योम
-clear_pd_entry(काष्ठा i915_page_directory * स्थिर pd,
-	       स्थिर अचिन्हित लघु idx,
-	       स्थिर काष्ठा drm_i915_gem_object * स्थिर scratch)
-अणु
-	GEM_BUG_ON(atomic_पढ़ो(px_used(pd)) == 0);
+void
+clear_pd_entry(struct i915_page_directory * const pd,
+	       const unsigned short idx,
+	       const struct drm_i915_gem_object * const scratch)
+{
+	GEM_BUG_ON(atomic_read(px_used(pd)) == 0);
 
-	ग_लिखो_dma_entry(px_base(pd), idx, scratch->encode);
-	pd->entry[idx] = शून्य;
+	write_dma_entry(px_base(pd), idx, scratch->encode);
+	pd->entry[idx] = NULL;
 	atomic_dec(px_used(pd));
-पूर्ण
+}
 
 bool
-release_pd_entry(काष्ठा i915_page_directory * स्थिर pd,
-		 स्थिर अचिन्हित लघु idx,
-		 काष्ठा i915_page_table * स्थिर pt,
-		 स्थिर काष्ठा drm_i915_gem_object * स्थिर scratch)
-अणु
-	bool मुक्त = false;
+release_pd_entry(struct i915_page_directory * const pd,
+		 const unsigned short idx,
+		 struct i915_page_table * const pt,
+		 const struct drm_i915_gem_object * const scratch)
+{
+	bool free = false;
 
-	अगर (atomic_add_unless(&pt->used, -1, 1))
-		वापस false;
+	if (atomic_add_unless(&pt->used, -1, 1))
+		return false;
 
 	spin_lock(&pd->lock);
-	अगर (atomic_dec_and_test(&pt->used)) अणु
+	if (atomic_dec_and_test(&pt->used)) {
 		clear_pd_entry(pd, idx, scratch);
-		मुक्त = true;
-	पूर्ण
+		free = true;
+	}
 	spin_unlock(&pd->lock);
 
-	वापस मुक्त;
-पूर्ण
+	return free;
+}
 
-पूर्णांक i915_ppgtt_init_hw(काष्ठा पूर्णांकel_gt *gt)
-अणु
-	काष्ठा drm_i915_निजी *i915 = gt->i915;
+int i915_ppgtt_init_hw(struct intel_gt *gt)
+{
+	struct drm_i915_private *i915 = gt->i915;
 
-	gtt_ग_लिखो_workarounds(gt);
+	gtt_write_workarounds(gt);
 
-	अगर (IS_GEN(i915, 6))
+	if (IS_GEN(i915, 6))
 		gen6_ppgtt_enable(gt);
-	अन्यथा अगर (IS_GEN(i915, 7))
+	else if (IS_GEN(i915, 7))
 		gen7_ppgtt_enable(gt);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा i915_ppgtt *
-__ppgtt_create(काष्ठा पूर्णांकel_gt *gt)
-अणु
-	अगर (INTEL_GEN(gt->i915) < 8)
-		वापस gen6_ppgtt_create(gt);
-	अन्यथा
-		वापस gen8_ppgtt_create(gt);
-पूर्ण
+static struct i915_ppgtt *
+__ppgtt_create(struct intel_gt *gt)
+{
+	if (INTEL_GEN(gt->i915) < 8)
+		return gen6_ppgtt_create(gt);
+	else
+		return gen8_ppgtt_create(gt);
+}
 
-काष्ठा i915_ppgtt *i915_ppgtt_create(काष्ठा पूर्णांकel_gt *gt)
-अणु
-	काष्ठा i915_ppgtt *ppgtt;
+struct i915_ppgtt *i915_ppgtt_create(struct intel_gt *gt)
+{
+	struct i915_ppgtt *ppgtt;
 
 	ppgtt = __ppgtt_create(gt);
-	अगर (IS_ERR(ppgtt))
-		वापस ppgtt;
+	if (IS_ERR(ppgtt))
+		return ppgtt;
 
 	trace_i915_ppgtt_create(&ppgtt->vm);
 
-	वापस ppgtt;
-पूर्ण
+	return ppgtt;
+}
 
-व्योम ppgtt_bind_vma(काष्ठा i915_address_space *vm,
-		    काष्ठा i915_vm_pt_stash *stash,
-		    काष्ठा i915_vma *vma,
-		    क्रमागत i915_cache_level cache_level,
+void ppgtt_bind_vma(struct i915_address_space *vm,
+		    struct i915_vm_pt_stash *stash,
+		    struct i915_vma *vma,
+		    enum i915_cache_level cache_level,
 		    u32 flags)
-अणु
+{
 	u32 pte_flags;
 
-	अगर (!test_bit(I915_VMA_ALLOC_BIT, __i915_vma_flags(vma))) अणु
+	if (!test_bit(I915_VMA_ALLOC_BIT, __i915_vma_flags(vma))) {
 		vm->allocate_va_range(vm, stash, vma->node.start, vma->size);
 		set_bit(I915_VMA_ALLOC_BIT, __i915_vma_flags(vma));
-	पूर्ण
+	}
 
 	/* Applicable to VLV, and gen8+ */
 	pte_flags = 0;
-	अगर (i915_gem_object_is_पढ़ोonly(vma->obj))
+	if (i915_gem_object_is_readonly(vma->obj))
 		pte_flags |= PTE_READ_ONLY;
-	अगर (i915_gem_object_is_lmem(vma->obj))
+	if (i915_gem_object_is_lmem(vma->obj))
 		pte_flags |= PTE_LM;
 
 	vm->insert_entries(vm, vma, cache_level, pte_flags);
 	wmb();
-पूर्ण
+}
 
-व्योम ppgtt_unbind_vma(काष्ठा i915_address_space *vm, काष्ठा i915_vma *vma)
-अणु
-	अगर (test_and_clear_bit(I915_VMA_ALLOC_BIT, __i915_vma_flags(vma)))
+void ppgtt_unbind_vma(struct i915_address_space *vm, struct i915_vma *vma)
+{
+	if (test_and_clear_bit(I915_VMA_ALLOC_BIT, __i915_vma_flags(vma)))
 		vm->clear_range(vm, vma->node.start, vma->size);
-पूर्ण
+}
 
-अटल अचिन्हित दीर्घ pd_count(u64 size, पूर्णांक shअगरt)
-अणु
+static unsigned long pd_count(u64 size, int shift)
+{
 	/* Beware later misalignment */
-	वापस (size + 2 * (BIT_ULL(shअगरt) - 1)) >> shअगरt;
-पूर्ण
+	return (size + 2 * (BIT_ULL(shift) - 1)) >> shift;
+}
 
-पूर्णांक i915_vm_alloc_pt_stash(काष्ठा i915_address_space *vm,
-			   काष्ठा i915_vm_pt_stash *stash,
+int i915_vm_alloc_pt_stash(struct i915_address_space *vm,
+			   struct i915_vm_pt_stash *stash,
 			   u64 size)
-अणु
-	अचिन्हित दीर्घ count;
-	पूर्णांक shअगरt, n;
+{
+	unsigned long count;
+	int shift, n;
 
-	shअगरt = vm->pd_shअगरt;
-	अगर (!shअगरt)
-		वापस 0;
+	shift = vm->pd_shift;
+	if (!shift)
+		return 0;
 
-	count = pd_count(size, shअगरt);
-	जबतक (count--) अणु
-		काष्ठा i915_page_table *pt;
+	count = pd_count(size, shift);
+	while (count--) {
+		struct i915_page_table *pt;
 
 		pt = alloc_pt(vm);
-		अगर (IS_ERR(pt)) अणु
-			i915_vm_मुक्त_pt_stash(vm, stash);
-			वापस PTR_ERR(pt);
-		पूर्ण
+		if (IS_ERR(pt)) {
+			i915_vm_free_pt_stash(vm, stash);
+			return PTR_ERR(pt);
+		}
 
 		pt->stash = stash->pt[0];
 		stash->pt[0] = pt;
-	पूर्ण
+	}
 
-	क्रम (n = 1; n < vm->top; n++) अणु
-		shअगरt += ilog2(I915_PDES); /* Each PD holds 512 entries */
-		count = pd_count(size, shअगरt);
-		जबतक (count--) अणु
-			काष्ठा i915_page_directory *pd;
+	for (n = 1; n < vm->top; n++) {
+		shift += ilog2(I915_PDES); /* Each PD holds 512 entries */
+		count = pd_count(size, shift);
+		while (count--) {
+			struct i915_page_directory *pd;
 
 			pd = alloc_pd(vm);
-			अगर (IS_ERR(pd)) अणु
-				i915_vm_मुक्त_pt_stash(vm, stash);
-				वापस PTR_ERR(pd);
-			पूर्ण
+			if (IS_ERR(pd)) {
+				i915_vm_free_pt_stash(vm, stash);
+				return PTR_ERR(pd);
+			}
 
 			pd->pt.stash = stash->pt[1];
 			stash->pt[1] = &pd->pt;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक i915_vm_pin_pt_stash(काष्ठा i915_address_space *vm,
-			 काष्ठा i915_vm_pt_stash *stash)
-अणु
-	काष्ठा i915_page_table *pt;
-	पूर्णांक n, err;
+int i915_vm_pin_pt_stash(struct i915_address_space *vm,
+			 struct i915_vm_pt_stash *stash)
+{
+	struct i915_page_table *pt;
+	int n, err;
 
-	क्रम (n = 0; n < ARRAY_SIZE(stash->pt); n++) अणु
-		क्रम (pt = stash->pt[n]; pt; pt = pt->stash) अणु
+	for (n = 0; n < ARRAY_SIZE(stash->pt); n++) {
+		for (pt = stash->pt[n]; pt; pt = pt->stash) {
 			err = pin_pt_dma_locked(vm, pt->base);
-			अगर (err)
-				वापस err;
-		पूर्ण
-	पूर्ण
+			if (err)
+				return err;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम i915_vm_मुक्त_pt_stash(काष्ठा i915_address_space *vm,
-			   काष्ठा i915_vm_pt_stash *stash)
-अणु
-	काष्ठा i915_page_table *pt;
-	पूर्णांक n;
+void i915_vm_free_pt_stash(struct i915_address_space *vm,
+			   struct i915_vm_pt_stash *stash)
+{
+	struct i915_page_table *pt;
+	int n;
 
-	क्रम (n = 0; n < ARRAY_SIZE(stash->pt); n++) अणु
-		जबतक ((pt = stash->pt[n])) अणु
+	for (n = 0; n < ARRAY_SIZE(stash->pt); n++) {
+		while ((pt = stash->pt[n])) {
 			stash->pt[n] = pt->stash;
-			मुक्त_px(vm, pt, n);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			free_px(vm, pt, n);
+		}
+	}
+}
 
-पूर्णांक ppgtt_set_pages(काष्ठा i915_vma *vma)
-अणु
+int ppgtt_set_pages(struct i915_vma *vma)
+{
 	GEM_BUG_ON(vma->pages);
 
 	vma->pages = vma->obj->mm.pages;
 	vma->page_sizes = vma->obj->mm.page_sizes;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम ppgtt_init(काष्ठा i915_ppgtt *ppgtt, काष्ठा पूर्णांकel_gt *gt)
-अणु
-	काष्ठा drm_i915_निजी *i915 = gt->i915;
+void ppgtt_init(struct i915_ppgtt *ppgtt, struct intel_gt *gt)
+{
+	struct drm_i915_private *i915 = gt->i915;
 
 	ppgtt->vm.gt = gt;
 	ppgtt->vm.i915 = i915;
@@ -316,4 +315,4 @@ __ppgtt_create(काष्ठा पूर्णांकel_gt *gt)
 	ppgtt->vm.vma_ops.unbind_vma  = ppgtt_unbind_vma;
 	ppgtt->vm.vma_ops.set_pages   = ppgtt_set_pages;
 	ppgtt->vm.vma_ops.clear_pages = clear_pages;
-पूर्ण
+}

@@ -1,16 +1,15 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2006 Keith Packard
- * Copyright तऊ 2007-2008 Dave Airlie
- * Copyright तऊ 2007-2008 Intel Corporation
- *   Jesse Barnes <jesse.barnes@पूर्णांकel.com>
+ * Copyright © 2006 Keith Packard
+ * Copyright © 2007-2008 Dave Airlie
+ * Copyright © 2007-2008 Intel Corporation
+ *   Jesse Barnes <jesse.barnes@intel.com>
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -25,38 +24,38 @@
  */
 
 /*
- * The DRM mode setting helper functions are common code क्रम drivers to use अगर
- * they wish.  Drivers are not क्रमced to use this code in their
- * implementations but it would be useful अगर they code they करो use at least
- * provides a consistent पूर्णांकerface and operation to userspace
+ * The DRM mode setting helper functions are common code for drivers to use if
+ * they wish.  Drivers are not forced to use this code in their
+ * implementations but it would be useful if they code they do use at least
+ * provides a consistent interface and operation to userspace
  */
 
-#अगर_अघोषित __DRM_CRTC_HELPER_H__
-#घोषणा __DRM_CRTC_HELPER_H__
+#ifndef __DRM_CRTC_HELPER_H__
+#define __DRM_CRTC_HELPER_H__
 
-#समावेश <linux/spinlock.h>
-#समावेश <linux/types.h>
-#समावेश <linux/idr.h>
+#include <linux/spinlock.h>
+#include <linux/types.h>
+#include <linux/idr.h>
 
-#समावेश <linux/fb.h>
+#include <linux/fb.h>
 
-#समावेश <drm/drm_crtc.h>
-#समावेश <drm/drm_modeset_helper_vtables.h>
-#समावेश <drm/drm_modeset_helper.h>
+#include <drm/drm_crtc.h>
+#include <drm/drm_modeset_helper_vtables.h>
+#include <drm/drm_modeset_helper.h>
 
-व्योम drm_helper_disable_unused_functions(काष्ठा drm_device *dev);
-पूर्णांक drm_crtc_helper_set_config(काष्ठा drm_mode_set *set,
-			       काष्ठा drm_modeset_acquire_ctx *ctx);
-bool drm_crtc_helper_set_mode(काष्ठा drm_crtc *crtc,
-			      काष्ठा drm_display_mode *mode,
-			      पूर्णांक x, पूर्णांक y,
-			      काष्ठा drm_framebuffer *old_fb);
-bool drm_helper_crtc_in_use(काष्ठा drm_crtc *crtc);
-bool drm_helper_encoder_in_use(काष्ठा drm_encoder *encoder);
+void drm_helper_disable_unused_functions(struct drm_device *dev);
+int drm_crtc_helper_set_config(struct drm_mode_set *set,
+			       struct drm_modeset_acquire_ctx *ctx);
+bool drm_crtc_helper_set_mode(struct drm_crtc *crtc,
+			      struct drm_display_mode *mode,
+			      int x, int y,
+			      struct drm_framebuffer *old_fb);
+bool drm_helper_crtc_in_use(struct drm_crtc *crtc);
+bool drm_helper_encoder_in_use(struct drm_encoder *encoder);
 
-पूर्णांक drm_helper_connector_dpms(काष्ठा drm_connector *connector, पूर्णांक mode);
+int drm_helper_connector_dpms(struct drm_connector *connector, int mode);
 
-व्योम drm_helper_resume_क्रमce_mode(काष्ठा drm_device *dev);
-पूर्णांक drm_helper_क्रमce_disable_all(काष्ठा drm_device *dev);
+void drm_helper_resume_force_mode(struct drm_device *dev);
+int drm_helper_force_disable_all(struct drm_device *dev);
 
-#पूर्ण_अगर
+#endif

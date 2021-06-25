@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,28 +19,28 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  *
- * Authors: Christian Kथघnig
+ * Authors: Christian König
  */
-#अगर_अघोषित __AMDGPU_MN_H__
-#घोषणा __AMDGPU_MN_H__
+#ifndef __AMDGPU_MN_H__
+#define __AMDGPU_MN_H__
 
-#समावेश <linux/types.h>
-#समावेश <linux/hmm.h>
-#समावेश <linux/rwsem.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/पूर्णांकerval_tree.h>
+#include <linux/types.h>
+#include <linux/hmm.h>
+#include <linux/rwsem.h>
+#include <linux/workqueue.h>
+#include <linux/interval_tree.h>
 
-#अगर defined(CONFIG_HMM_MIRROR)
-पूर्णांक amdgpu_mn_रेजिस्टर(काष्ठा amdgpu_bo *bo, अचिन्हित दीर्घ addr);
-व्योम amdgpu_mn_unरेजिस्टर(काष्ठा amdgpu_bo *bo);
-#अन्यथा
-अटल अंतरभूत पूर्णांक amdgpu_mn_रेजिस्टर(काष्ठा amdgpu_bo *bo, अचिन्हित दीर्घ addr)
-अणु
+#if defined(CONFIG_HMM_MIRROR)
+int amdgpu_mn_register(struct amdgpu_bo *bo, unsigned long addr);
+void amdgpu_mn_unregister(struct amdgpu_bo *bo);
+#else
+static inline int amdgpu_mn_register(struct amdgpu_bo *bo, unsigned long addr)
+{
 	DRM_WARN_ONCE("HMM_MIRROR kernel config option is not enabled, "
 		      "add CONFIG_ZONE_DEVICE=y in config file to fix this\n");
-	वापस -ENODEV;
-पूर्ण
-अटल अंतरभूत व्योम amdgpu_mn_unरेजिस्टर(काष्ठा amdgpu_bo *bo) अणुपूर्ण
-#पूर्ण_अगर
+	return -ENODEV;
+}
+static inline void amdgpu_mn_unregister(struct amdgpu_bo *bo) {}
+#endif
 
-#पूर्ण_अगर
+#endif

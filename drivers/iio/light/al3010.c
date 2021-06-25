@@ -1,180 +1,179 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * AL3010 - Dyna Image Ambient Light Sensor
  *
  * Copyright (c) 2014, Intel Corporation.
  * Copyright (c) 2016, Dyna-Image Corp.
- * Copyright (c) 2020, David Heidelberg, Michaध Mirosधaw, Dmitry Osipenko
+ * Copyright (c) 2020, David Heidelberg, Michał Mirosław, Dmitry Osipenko
  *
- * IIO driver क्रम AL3010 (7-bit I2C slave address 0x1C).
+ * IIO driver for AL3010 (7-bit I2C slave address 0x1C).
  *
- * TODO: पूर्णांकerrupt support, thresholds
- * When the driver will get support क्रम पूर्णांकerrupt handling, then पूर्णांकerrupt
- * will need to be disabled beक्रमe turning sensor OFF in order to aव्योम
- * potential races with the पूर्णांकerrupt handling.
+ * TODO: interrupt support, thresholds
+ * When the driver will get support for interrupt handling, then interrupt
+ * will need to be disabled before turning sensor OFF in order to avoid
+ * potential races with the interrupt handling.
  */
 
-#समावेश <linux/bitfield.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of.h>
+#include <linux/bitfield.h>
+#include <linux/i2c.h>
+#include <linux/module.h>
+#include <linux/of.h>
 
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
 
-#घोषणा AL3010_DRV_NAME "al3010"
+#define AL3010_DRV_NAME "al3010"
 
-#घोषणा AL3010_REG_SYSTEM		0x00
-#घोषणा AL3010_REG_DATA_LOW		0x0c
-#घोषणा AL3010_REG_CONFIG		0x10
+#define AL3010_REG_SYSTEM		0x00
+#define AL3010_REG_DATA_LOW		0x0c
+#define AL3010_REG_CONFIG		0x10
 
-#घोषणा AL3010_CONFIG_DISABLE		0x00
-#घोषणा AL3010_CONFIG_ENABLE		0x01
+#define AL3010_CONFIG_DISABLE		0x00
+#define AL3010_CONFIG_ENABLE		0x01
 
-#घोषणा AL3010_GAIN_MASK		GENMASK(6,4)
+#define AL3010_GAIN_MASK		GENMASK(6,4)
 
-#घोषणा AL3010_SCALE_AVAILABLE "1.1872 0.2968 0.0742 0.018"
+#define AL3010_SCALE_AVAILABLE "1.1872 0.2968 0.0742 0.018"
 
-क्रमागत al3xxxx_range अणु
+enum al3xxxx_range {
 	AL3XXX_RANGE_1, /* 77806 lx */
 	AL3XXX_RANGE_2, /* 19542 lx */
 	AL3XXX_RANGE_3, /*  4863 lx */
 	AL3XXX_RANGE_4  /*  1216 lx */
-पूर्ण;
+};
 
-अटल स्थिर पूर्णांक al3010_scales[][2] = अणु
-	अणु0, 1187200पूर्ण, अणु0, 296800पूर्ण, अणु0, 74200पूर्ण, अणु0, 18600पूर्ण
-पूर्ण;
+static const int al3010_scales[][2] = {
+	{0, 1187200}, {0, 296800}, {0, 74200}, {0, 18600}
+};
 
-काष्ठा al3010_data अणु
-	काष्ठा i2c_client *client;
-पूर्ण;
+struct al3010_data {
+	struct i2c_client *client;
+};
 
-अटल स्थिर काष्ठा iio_chan_spec al3010_channels[] = अणु
-	अणु
+static const struct iio_chan_spec al3010_channels[] = {
+	{
 		.type	= IIO_LIGHT,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_RAW) |
 				      BIT(IIO_CHAN_INFO_SCALE),
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल IIO_CONST_ATTR(in_illuminance_scale_available, AL3010_SCALE_AVAILABLE);
+static IIO_CONST_ATTR(in_illuminance_scale_available, AL3010_SCALE_AVAILABLE);
 
-अटल काष्ठा attribute *al3010_attributes[] = अणु
-	&iio_स्थिर_attr_in_illuminance_scale_available.dev_attr.attr,
-	शून्य,
-पूर्ण;
+static struct attribute *al3010_attributes[] = {
+	&iio_const_attr_in_illuminance_scale_available.dev_attr.attr,
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute_group al3010_attribute_group = अणु
+static const struct attribute_group al3010_attribute_group = {
 	.attrs = al3010_attributes,
-पूर्ण;
+};
 
-अटल पूर्णांक al3010_set_pwr(काष्ठा i2c_client *client, bool pwr)
-अणु
+static int al3010_set_pwr(struct i2c_client *client, bool pwr)
+{
 	u8 val = pwr ? AL3010_CONFIG_ENABLE : AL3010_CONFIG_DISABLE;
-	वापस i2c_smbus_ग_लिखो_byte_data(client, AL3010_REG_SYSTEM, val);
-पूर्ण
+	return i2c_smbus_write_byte_data(client, AL3010_REG_SYSTEM, val);
+}
 
-अटल व्योम al3010_set_pwr_off(व्योम *_data)
-अणु
-	काष्ठा al3010_data *data = _data;
+static void al3010_set_pwr_off(void *_data)
+{
+	struct al3010_data *data = _data;
 
 	al3010_set_pwr(data->client, false);
-पूर्ण
+}
 
-अटल पूर्णांक al3010_init(काष्ठा al3010_data *data)
-अणु
-	पूर्णांक ret;
+static int al3010_init(struct al3010_data *data)
+{
+	int ret;
 
 	ret = al3010_set_pwr(data->client, true);
 
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = i2c_smbus_ग_लिखो_byte_data(data->client, AL3010_REG_CONFIG,
+	ret = i2c_smbus_write_byte_data(data->client, AL3010_REG_CONFIG,
 					FIELD_PREP(AL3010_GAIN_MASK,
 						   AL3XXX_RANGE_3));
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक al3010_पढ़ो_raw(काष्ठा iio_dev *indio_dev,
-			   काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक *val,
-			   पूर्णांक *val2, दीर्घ mask)
-अणु
-	काष्ठा al3010_data *data = iio_priv(indio_dev);
-	पूर्णांक ret;
+static int al3010_read_raw(struct iio_dev *indio_dev,
+			   struct iio_chan_spec const *chan, int *val,
+			   int *val2, long mask)
+{
+	struct al3010_data *data = iio_priv(indio_dev);
+	int ret;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_RAW:
+	switch (mask) {
+	case IIO_CHAN_INFO_RAW:
 		/*
-		 * ALS ADC value is stored in two adjacent रेजिस्टरs:
+		 * ALS ADC value is stored in two adjacent registers:
 		 * - low byte of output is stored at AL3010_REG_DATA_LOW
 		 * - high byte of output is stored at AL3010_REG_DATA_LOW + 1
 		 */
-		ret = i2c_smbus_पढ़ो_word_data(data->client,
+		ret = i2c_smbus_read_word_data(data->client,
 					       AL3010_REG_DATA_LOW);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		*val = ret;
-		वापस IIO_VAL_INT;
-	हाल IIO_CHAN_INFO_SCALE:
-		ret = i2c_smbus_पढ़ो_byte_data(data->client,
+		return IIO_VAL_INT;
+	case IIO_CHAN_INFO_SCALE:
+		ret = i2c_smbus_read_byte_data(data->client,
 					       AL3010_REG_CONFIG);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
 		ret = FIELD_GET(AL3010_GAIN_MASK, ret);
 		*val = al3010_scales[ret][0];
 		*val2 = al3010_scales[ret][1];
 
-		वापस IIO_VAL_INT_PLUS_MICRO;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+		return IIO_VAL_INT_PLUS_MICRO;
+	}
+	return -EINVAL;
+}
 
-अटल पूर्णांक al3010_ग_लिखो_raw(काष्ठा iio_dev *indio_dev,
-			    काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक val,
-			    पूर्णांक val2, दीर्घ mask)
-अणु
-	काष्ठा al3010_data *data = iio_priv(indio_dev);
-	पूर्णांक i;
+static int al3010_write_raw(struct iio_dev *indio_dev,
+			    struct iio_chan_spec const *chan, int val,
+			    int val2, long mask)
+{
+	struct al3010_data *data = iio_priv(indio_dev);
+	int i;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_SCALE:
-		क्रम (i = 0; i < ARRAY_SIZE(al3010_scales); i++) अणु
-			अगर (val != al3010_scales[i][0] ||
+	switch (mask) {
+	case IIO_CHAN_INFO_SCALE:
+		for (i = 0; i < ARRAY_SIZE(al3010_scales); i++) {
+			if (val != al3010_scales[i][0] ||
 			    val2 != al3010_scales[i][1])
-				जारी;
+				continue;
 
-			वापस i2c_smbus_ग_लिखो_byte_data(data->client,
+			return i2c_smbus_write_byte_data(data->client,
 					AL3010_REG_CONFIG,
 					FIELD_PREP(AL3010_GAIN_MASK, i));
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+		}
+		break;
+	}
+	return -EINVAL;
+}
 
-अटल स्थिर काष्ठा iio_info al3010_info = अणु
-	.पढ़ो_raw	= al3010_पढ़ो_raw,
-	.ग_लिखो_raw	= al3010_ग_लिखो_raw,
+static const struct iio_info al3010_info = {
+	.read_raw	= al3010_read_raw,
+	.write_raw	= al3010_write_raw,
 	.attrs		= &al3010_attribute_group,
-पूर्ण;
+};
 
-अटल पूर्णांक al3010_probe(काष्ठा i2c_client *client,
-			स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा al3010_data *data;
-	काष्ठा iio_dev *indio_dev;
-	पूर्णांक ret;
+static int al3010_probe(struct i2c_client *client,
+			const struct i2c_device_id *id)
+{
+	struct al3010_data *data;
+	struct iio_dev *indio_dev;
+	int ret;
 
-	indio_dev = devm_iio_device_alloc(&client->dev, माप(*data));
-	अगर (!indio_dev)
-		वापस -ENOMEM;
+	indio_dev = devm_iio_device_alloc(&client->dev, sizeof(*data));
+	if (!indio_dev)
+		return -ENOMEM;
 
 	data = iio_priv(indio_dev);
 	i2c_set_clientdata(client, indio_dev);
@@ -184,56 +183,56 @@
 	indio_dev->name = AL3010_DRV_NAME;
 	indio_dev->channels = al3010_channels;
 	indio_dev->num_channels = ARRAY_SIZE(al3010_channels);
-	indio_dev->modes = INDIO_सूचीECT_MODE;
+	indio_dev->modes = INDIO_DIRECT_MODE;
 
 	ret = al3010_init(data);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		dev_err(&client->dev, "al3010 chip init failed\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = devm_add_action_or_reset(&client->dev,
 					al3010_set_pwr_off,
 					data);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस devm_iio_device_रेजिस्टर(&client->dev, indio_dev);
-पूर्ण
+	return devm_iio_device_register(&client->dev, indio_dev);
+}
 
-अटल पूर्णांक __maybe_unused al3010_suspend(काष्ठा device *dev)
-अणु
-	वापस al3010_set_pwr(to_i2c_client(dev), false);
-पूर्ण
+static int __maybe_unused al3010_suspend(struct device *dev)
+{
+	return al3010_set_pwr(to_i2c_client(dev), false);
+}
 
-अटल पूर्णांक __maybe_unused al3010_resume(काष्ठा device *dev)
-अणु
-	वापस al3010_set_pwr(to_i2c_client(dev), true);
-पूर्ण
+static int __maybe_unused al3010_resume(struct device *dev)
+{
+	return al3010_set_pwr(to_i2c_client(dev), true);
+}
 
-अटल SIMPLE_DEV_PM_OPS(al3010_pm_ops, al3010_suspend, al3010_resume);
+static SIMPLE_DEV_PM_OPS(al3010_pm_ops, al3010_suspend, al3010_resume);
 
-अटल स्थिर काष्ठा i2c_device_id al3010_id[] = अणु
-	अणु"al3010", पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct i2c_device_id al3010_id[] = {
+	{"al3010", },
+	{}
+};
 MODULE_DEVICE_TABLE(i2c, al3010_id);
 
-अटल स्थिर काष्ठा of_device_id al3010_of_match[] = अणु
-	अणु .compatible = "dynaimage,al3010", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id al3010_of_match[] = {
+	{ .compatible = "dynaimage,al3010", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, al3010_of_match);
 
-अटल काष्ठा i2c_driver al3010_driver = अणु
-	.driver = अणु
+static struct i2c_driver al3010_driver = {
+	.driver = {
 		.name = AL3010_DRV_NAME,
 		.of_match_table = al3010_of_match,
 		.pm = &al3010_pm_ops,
-	पूर्ण,
+	},
 	.probe		= al3010_probe,
 	.id_table	= al3010_id,
-पूर्ण;
+};
 module_i2c_driver(al3010_driver);
 
 MODULE_AUTHOR("Daniel Baluta <daniel.baluta@nxp.com>");

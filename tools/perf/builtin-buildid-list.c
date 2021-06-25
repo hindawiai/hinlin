@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * builtin-buildid-list.c
  *
@@ -6,120 +5,120 @@
  * kernel and in ELF files.
  *
  * Copyright (C) 2009, Red Hat Inc.
- * Copyright (C) 2009, Arnalकरो Carvalho de Melo <acme@redhat.com>
+ * Copyright (C) 2009, Arnaldo Carvalho de Melo <acme@redhat.com>
  */
-#समावेश "builtin.h"
-#समावेश "perf.h"
-#समावेश "util/build-id.h"
-#समावेश "util/debug.h"
-#समावेश "util/dso.h"
-#समावेश <subcmd/pager.h>
-#समावेश <subcmd/parse-options.h>
-#समावेश "util/session.h"
-#समावेश "util/symbol.h"
-#समावेश "util/data.h"
-#समावेश <त्रुटिसं.स>
-#समावेश <linux/err.h>
+#include "builtin.h"
+#include "perf.h"
+#include "util/build-id.h"
+#include "util/debug.h"
+#include "util/dso.h"
+#include <subcmd/pager.h>
+#include <subcmd/parse-options.h>
+#include "util/session.h"
+#include "util/symbol.h"
+#include "util/data.h"
+#include <errno.h>
+#include <linux/err.h>
 
-अटल पूर्णांक sysfs__ख_लिखो_build_id(खाता *fp)
-अणु
-	अक्षर sbuild_id[SBUILD_ID_SIZE];
-	पूर्णांक ret;
+static int sysfs__fprintf_build_id(FILE *fp)
+{
+	char sbuild_id[SBUILD_ID_SIZE];
+	int ret;
 
-	ret = sysfs__प्र_लिखो_build_id("/", sbuild_id);
-	अगर (ret != माप(sbuild_id))
-		वापस ret < 0 ? ret : -EINVAL;
+	ret = sysfs__sprintf_build_id("/", sbuild_id);
+	if (ret != sizeof(sbuild_id))
+		return ret < 0 ? ret : -EINVAL;
 
-	वापस ख_लिखो(fp, "%s\n", sbuild_id);
-पूर्ण
+	return fprintf(fp, "%s\n", sbuild_id);
+}
 
-अटल पूर्णांक filename__ख_लिखो_build_id(स्थिर अक्षर *name, खाता *fp)
-अणु
-	अक्षर sbuild_id[SBUILD_ID_SIZE];
-	पूर्णांक ret;
+static int filename__fprintf_build_id(const char *name, FILE *fp)
+{
+	char sbuild_id[SBUILD_ID_SIZE];
+	int ret;
 
-	ret = filename__प्र_लिखो_build_id(name, sbuild_id);
-	अगर (ret != माप(sbuild_id))
-		वापस ret < 0 ? ret : -EINVAL;
+	ret = filename__sprintf_build_id(name, sbuild_id);
+	if (ret != sizeof(sbuild_id))
+		return ret < 0 ? ret : -EINVAL;
 
-	वापस ख_लिखो(fp, "%s\n", sbuild_id);
-पूर्ण
+	return fprintf(fp, "%s\n", sbuild_id);
+}
 
-अटल bool dso__skip_buildid(काष्ठा dso *dso, पूर्णांक with_hits)
-अणु
-	वापस with_hits && !dso->hit;
-पूर्ण
+static bool dso__skip_buildid(struct dso *dso, int with_hits)
+{
+	return with_hits && !dso->hit;
+}
 
-अटल पूर्णांक perf_session__list_build_ids(bool क्रमce, bool with_hits)
-अणु
-	काष्ठा perf_session *session;
-	काष्ठा perf_data data = अणु
+static int perf_session__list_build_ids(bool force, bool with_hits)
+{
+	struct perf_session *session;
+	struct perf_data data = {
 		.path  = input_name,
 		.mode  = PERF_DATA_MODE_READ,
-		.क्रमce = क्रमce,
-	पूर्ण;
+		.force = force,
+	};
 
 	symbol__elf_init();
 	/*
-	 * See अगर this is an ELF file first:
+	 * See if this is an ELF file first:
 	 */
-	अगर (filename__ख_लिखो_build_id(input_name, मानक_निकास) > 0)
-		जाओ out;
+	if (filename__fprintf_build_id(input_name, stdout) > 0)
+		goto out;
 
 	session = perf_session__new(&data, false, &build_id__mark_dso_hit_ops);
-	अगर (IS_ERR(session))
-		वापस PTR_ERR(session);
+	if (IS_ERR(session))
+		return PTR_ERR(session);
 
 	/*
 	 * We take all buildids when the file contains AUX area tracing data
-	 * because we करो not decode the trace because it would take too दीर्घ.
+	 * because we do not decode the trace because it would take too long.
 	 */
-	अगर (!perf_data__is_pipe(&data) &&
+	if (!perf_data__is_pipe(&data) &&
 	    perf_header__has_feat(&session->header, HEADER_AUXTRACE))
 		with_hits = false;
 
-	अगर (!perf_header__has_feat(&session->header, HEADER_BUILD_ID))
+	if (!perf_header__has_feat(&session->header, HEADER_BUILD_ID))
 		with_hits = true;
 
-	अगर (zstd_init(&(session->zstd_data), 0) < 0)
+	if (zstd_init(&(session->zstd_data), 0) < 0)
 		pr_warning("Decompression initialization failed. Reported data may be incomplete.\n");
 
 	/*
 	 * in pipe-mode, the only way to get the buildids is to parse
 	 * the record stream. Buildids are stored as RECORD_HEADER_BUILD_ID
 	 */
-	अगर (with_hits || perf_data__is_pipe(&data))
+	if (with_hits || perf_data__is_pipe(&data))
 		perf_session__process_events(session);
 
-	perf_session__ख_लिखो_dsos_buildid(session, मानक_निकास, dso__skip_buildid, with_hits);
+	perf_session__fprintf_dsos_buildid(session, stdout, dso__skip_buildid, with_hits);
 	perf_session__delete(session);
 out:
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक cmd_buildid_list(पूर्णांक argc, स्थिर अक्षर **argv)
-अणु
+int cmd_buildid_list(int argc, const char **argv)
+{
 	bool show_kernel = false;
 	bool with_hits = false;
-	bool क्रमce = false;
-	स्थिर काष्ठा option options[] = अणु
+	bool force = false;
+	const struct option options[] = {
 	OPT_BOOLEAN('H', "with-hits", &with_hits, "Show only DSOs with hits"),
 	OPT_STRING('i', "input", &input_name, "file", "input file name"),
-	OPT_BOOLEAN('f', "force", &force, "don't complain, करो it"),
+	OPT_BOOLEAN('f', "force", &force, "don't complain, do it"),
 	OPT_BOOLEAN('k', "kernel", &show_kernel, "Show current kernel build id"),
 	OPT_INCR('v', "verbose", &verbose, "be more verbose"),
 	OPT_END()
-	पूर्ण;
-	स्थिर अक्षर * स्थिर buildid_list_usage[] = अणु
+	};
+	const char * const buildid_list_usage[] = {
 		"perf buildid-list [<options>]",
-		शून्य
-	पूर्ण;
+		NULL
+	};
 
 	argc = parse_options(argc, argv, options, buildid_list_usage, 0);
 	setup_pager();
 
-	अगर (show_kernel)
-		वापस !(sysfs__ख_लिखो_build_id(मानक_निकास) > 0);
+	if (show_kernel)
+		return !(sysfs__fprintf_build_id(stdout) > 0);
 
-	वापस perf_session__list_build_ids(क्रमce, with_hits);
-पूर्ण
+	return perf_session__list_build_ids(force, with_hits);
+}

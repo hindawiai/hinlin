@@ -1,15 +1,14 @@
-<शैली गुरु>
 /*
- * SPDX-License-Identअगरier: MIT
+ * SPDX-License-Identifier: MIT
  *
- * Copyright तऊ 2018 Intel Corporation
+ * Copyright © 2018 Intel Corporation
  */
 
-#अगर_अघोषित IGT_FLUSH_TEST_H
-#घोषणा IGT_FLUSH_TEST_H
+#ifndef IGT_FLUSH_TEST_H
+#define IGT_FLUSH_TEST_H
 
-काष्ठा drm_i915_निजी;
+struct drm_i915_private;
 
-पूर्णांक igt_flush_test(काष्ठा drm_i915_निजी *i915);
+int igt_flush_test(struct drm_i915_private *i915);
 
-#पूर्ण_अगर /* IGT_FLUSH_TEST_H */
+#endif /* IGT_FLUSH_TEST_H */

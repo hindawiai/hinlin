@@ -1,128 +1,127 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Copyright (C) 2014 Marvell Technology Group Ltd.
  *
- * Antoine Tथऊnart <antoine.tenart@मुक्त-electrons.com>
+ * Antoine Ténart <antoine.tenart@free-electrons.com>
  */
 
-#समावेश <linux/पन.स>
-#समावेश <linux/delay.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_address.h>
+#include <linux/io.h>
+#include <linux/delay.h>
+#include <linux/of.h>
+#include <linux/of_address.h>
 
-#समावेश <यंत्र/cacheflush.h>
-#समावेश <यंत्र/cp15.h>
-#समावेश <यंत्र/memory.h>
-#समावेश <यंत्र/smp_plat.h>
-#समावेश <यंत्र/smp_scu.h>
+#include <asm/cacheflush.h>
+#include <asm/cp15.h>
+#include <asm/memory.h>
+#include <asm/smp_plat.h>
+#include <asm/smp_scu.h>
 
 /*
- * There are two reset रेजिस्टरs, one with self-clearing (SC)
+ * There are two reset registers, one with self-clearing (SC)
  * reset and one with non-self-clearing reset (NON_SC).
  */
-#घोषणा CPU_RESET_SC		0x00
-#घोषणा CPU_RESET_NON_SC	0x20
+#define CPU_RESET_SC		0x00
+#define CPU_RESET_NON_SC	0x20
 
-#घोषणा RESET_VECT		0x00
-#घोषणा SW_RESET_ADDR		0x94
+#define RESET_VECT		0x00
+#define SW_RESET_ADDR		0x94
 
-बाह्य u32 boot_inst;
+extern u32 boot_inst;
 
-अटल व्योम __iomem *cpu_ctrl;
+static void __iomem *cpu_ctrl;
 
-अटल अंतरभूत व्योम berlin_perक्रमm_reset_cpu(अचिन्हित पूर्णांक cpu)
-अणु
+static inline void berlin_perform_reset_cpu(unsigned int cpu)
+{
 	u32 val;
 
-	val = पढ़ोl(cpu_ctrl + CPU_RESET_NON_SC);
+	val = readl(cpu_ctrl + CPU_RESET_NON_SC);
 	val &= ~BIT(cpu_logical_map(cpu));
-	ग_लिखोl(val, cpu_ctrl + CPU_RESET_NON_SC);
+	writel(val, cpu_ctrl + CPU_RESET_NON_SC);
 	val |= BIT(cpu_logical_map(cpu));
-	ग_लिखोl(val, cpu_ctrl + CPU_RESET_NON_SC);
-पूर्ण
+	writel(val, cpu_ctrl + CPU_RESET_NON_SC);
+}
 
-अटल पूर्णांक berlin_boot_secondary(अचिन्हित पूर्णांक cpu, काष्ठा task_काष्ठा *idle)
-अणु
-	अगर (!cpu_ctrl)
-		वापस -EFAULT;
+static int berlin_boot_secondary(unsigned int cpu, struct task_struct *idle)
+{
+	if (!cpu_ctrl)
+		return -EFAULT;
 
 	/*
-	 * Reset the CPU, making it to execute the inकाष्ठाion in the reset
+	 * Reset the CPU, making it to execute the instruction in the reset
 	 * exception vector.
 	 */
-	berlin_perक्रमm_reset_cpu(cpu);
+	berlin_perform_reset_cpu(cpu);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __init berlin_smp_prepare_cpus(अचिन्हित पूर्णांक max_cpus)
-अणु
-	काष्ठा device_node *np;
-	व्योम __iomem *scu_base;
-	व्योम __iomem *vectors_base;
+static void __init berlin_smp_prepare_cpus(unsigned int max_cpus)
+{
+	struct device_node *np;
+	void __iomem *scu_base;
+	void __iomem *vectors_base;
 
-	np = of_find_compatible_node(शून्य, शून्य, "arm,cortex-a9-scu");
+	np = of_find_compatible_node(NULL, NULL, "arm,cortex-a9-scu");
 	scu_base = of_iomap(np, 0);
 	of_node_put(np);
-	अगर (!scu_base)
-		वापस;
+	if (!scu_base)
+		return;
 
-	np = of_find_compatible_node(शून्य, शून्य, "marvell,berlin-cpu-ctrl");
+	np = of_find_compatible_node(NULL, NULL, "marvell,berlin-cpu-ctrl");
 	cpu_ctrl = of_iomap(np, 0);
 	of_node_put(np);
-	अगर (!cpu_ctrl)
-		जाओ unmap_scu;
+	if (!cpu_ctrl)
+		goto unmap_scu;
 
 	vectors_base = ioremap(VECTORS_BASE, SZ_32K);
-	अगर (!vectors_base)
-		जाओ unmap_scu;
+	if (!vectors_base)
+		goto unmap_scu;
 
 	scu_enable(scu_base);
 
 	/*
-	 * Write the first inकाष्ठाion the CPU will execute after being reset
+	 * Write the first instruction the CPU will execute after being reset
 	 * in the reset exception vector.
 	 */
-	ग_लिखोl(boot_inst, vectors_base + RESET_VECT);
+	writel(boot_inst, vectors_base + RESET_VECT);
 
 	/*
-	 * Write the secondary startup address पूर्णांकo the SW reset address
+	 * Write the secondary startup address into the SW reset address
 	 * vector. This is used by boot_inst.
 	 */
-	ग_लिखोl(__pa_symbol(secondary_startup), vectors_base + SW_RESET_ADDR);
+	writel(__pa_symbol(secondary_startup), vectors_base + SW_RESET_ADDR);
 
 	iounmap(vectors_base);
 unmap_scu:
 	iounmap(scu_base);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_HOTPLUG_CPU
-अटल व्योम berlin_cpu_die(अचिन्हित पूर्णांक cpu)
-अणु
-	v7_निकास_coherency_flush(louis);
-	जबतक (1)
-		cpu_करो_idle();
-पूर्ण
+#ifdef CONFIG_HOTPLUG_CPU
+static void berlin_cpu_die(unsigned int cpu)
+{
+	v7_exit_coherency_flush(louis);
+	while (1)
+		cpu_do_idle();
+}
 
-अटल पूर्णांक berlin_cpu_समाप्त(अचिन्हित पूर्णांक cpu)
-अणु
+static int berlin_cpu_kill(unsigned int cpu)
+{
 	u32 val;
 
-	val = पढ़ोl(cpu_ctrl + CPU_RESET_NON_SC);
+	val = readl(cpu_ctrl + CPU_RESET_NON_SC);
 	val &= ~BIT(cpu_logical_map(cpu));
-	ग_लिखोl(val, cpu_ctrl + CPU_RESET_NON_SC);
+	writel(val, cpu_ctrl + CPU_RESET_NON_SC);
 
-	वापस 1;
-पूर्ण
-#पूर्ण_अगर
+	return 1;
+}
+#endif
 
-अटल स्थिर काष्ठा smp_operations berlin_smp_ops __initस्थिर = अणु
+static const struct smp_operations berlin_smp_ops __initconst = {
 	.smp_prepare_cpus	= berlin_smp_prepare_cpus,
 	.smp_boot_secondary	= berlin_boot_secondary,
-#अगर_घोषित CONFIG_HOTPLUG_CPU
+#ifdef CONFIG_HOTPLUG_CPU
 	.cpu_die		= berlin_cpu_die,
-	.cpu_समाप्त		= berlin_cpu_समाप्त,
-#पूर्ण_अगर
-पूर्ण;
+	.cpu_kill		= berlin_cpu_kill,
+#endif
+};
 CPU_METHOD_OF_DECLARE(berlin_smp, "marvell,berlin-smp", &berlin_smp_ops);

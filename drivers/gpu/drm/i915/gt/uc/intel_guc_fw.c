@@ -1,21 +1,20 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
- * Copyright तऊ 2014-2019 Intel Corporation
+ * Copyright © 2014-2019 Intel Corporation
  *
  * Authors:
- *    Vinit Azad <vinit.azad@पूर्णांकel.com>
+ *    Vinit Azad <vinit.azad@intel.com>
  *    Ben Widawsky <ben@bwidawsk.net>
- *    Dave Gorकरोn <david.s.gorकरोn@पूर्णांकel.com>
- *    Alex Dai <yu.dai@पूर्णांकel.com>
+ *    Dave Gordon <david.s.gordon@intel.com>
+ *    Alex Dai <yu.dai@intel.com>
  */
 
-#समावेश "gt/intel_gt.h"
-#समावेश "intel_guc_fw.h"
-#समावेश "i915_drv.h"
+#include "gt/intel_gt.h"
+#include "intel_guc_fw.h"
+#include "i915_drv.h"
 
-अटल व्योम guc_prepare_xfer(काष्ठा पूर्णांकel_uncore *uncore)
-अणु
+static void guc_prepare_xfer(struct intel_uncore *uncore)
+{
 	u32 shim_flags = GUC_DISABLE_SRAM_INIT_TO_ZEROES |
 			 GUC_ENABLE_READ_CACHE_LOGIC |
 			 GUC_ENABLE_MIA_CACHING |
@@ -23,74 +22,74 @@
 			 GUC_ENABLE_READ_CACHE_FOR_WOPCM_DATA |
 			 GUC_ENABLE_MIA_CLOCK_GATING;
 
-	/* Must program this रेजिस्टर beक्रमe loading the ucode with DMA */
-	पूर्णांकel_uncore_ग_लिखो(uncore, GUC_SHIM_CONTROL, shim_flags);
+	/* Must program this register before loading the ucode with DMA */
+	intel_uncore_write(uncore, GUC_SHIM_CONTROL, shim_flags);
 
-	अगर (IS_GEN9_LP(uncore->i915))
-		पूर्णांकel_uncore_ग_लिखो(uncore, GEN9LP_GT_PM_CONFIG, GT_DOORBELL_ENABLE);
-	अन्यथा
-		पूर्णांकel_uncore_ग_लिखो(uncore, GEN9_GT_PM_CONFIG, GT_DOORBELL_ENABLE);
+	if (IS_GEN9_LP(uncore->i915))
+		intel_uncore_write(uncore, GEN9LP_GT_PM_CONFIG, GT_DOORBELL_ENABLE);
+	else
+		intel_uncore_write(uncore, GEN9_GT_PM_CONFIG, GT_DOORBELL_ENABLE);
 
-	अगर (IS_GEN(uncore->i915, 9)) अणु
-		/* DOP Clock Gating Enable क्रम GuC घड़ीs */
-		पूर्णांकel_uncore_rmw(uncore, GEN7_MISCCPCTL,
+	if (IS_GEN(uncore->i915, 9)) {
+		/* DOP Clock Gating Enable for GuC clocks */
+		intel_uncore_rmw(uncore, GEN7_MISCCPCTL,
 				 0, GEN8_DOP_CLOCK_GATE_GUC_ENABLE);
 
-		/* allows क्रम 5us (in 10ns units) beक्रमe GT can go to RC6 */
-		पूर्णांकel_uncore_ग_लिखो(uncore, GUC_ARAT_C6DIS, 0x1FF);
-	पूर्ण
-पूर्ण
+		/* allows for 5us (in 10ns units) before GT can go to RC6 */
+		intel_uncore_write(uncore, GUC_ARAT_C6DIS, 0x1FF);
+	}
+}
 
-/* Copy RSA signature from the fw image to HW क्रम verअगरication */
-अटल व्योम guc_xfer_rsa(काष्ठा पूर्णांकel_uc_fw *guc_fw,
-			 काष्ठा पूर्णांकel_uncore *uncore)
-अणु
+/* Copy RSA signature from the fw image to HW for verification */
+static void guc_xfer_rsa(struct intel_uc_fw *guc_fw,
+			 struct intel_uncore *uncore)
+{
 	u32 rsa[UOS_RSA_SCRATCH_COUNT];
-	माप_प्रकार copied;
-	पूर्णांक i;
+	size_t copied;
+	int i;
 
-	copied = पूर्णांकel_uc_fw_copy_rsa(guc_fw, rsa, माप(rsa));
-	GEM_BUG_ON(copied < माप(rsa));
+	copied = intel_uc_fw_copy_rsa(guc_fw, rsa, sizeof(rsa));
+	GEM_BUG_ON(copied < sizeof(rsa));
 
-	क्रम (i = 0; i < UOS_RSA_SCRATCH_COUNT; i++)
-		पूर्णांकel_uncore_ग_लिखो(uncore, UOS_RSA_SCRATCH(i), rsa[i]);
-पूर्ण
+	for (i = 0; i < UOS_RSA_SCRATCH_COUNT; i++)
+		intel_uncore_write(uncore, UOS_RSA_SCRATCH(i), rsa[i]);
+}
 
 /*
- * Read the GuC status रेजिस्टर (GUC_STATUS) and store it in the
- * specअगरied location; then वापस a boolean indicating whether
+ * Read the GuC status register (GUC_STATUS) and store it in the
+ * specified location; then return a boolean indicating whether
  * the value matches either of two values representing completion
  * of the GuC boot process.
  *
- * This is used क्रम polling the GuC status in a रुको_क्रम()
+ * This is used for polling the GuC status in a wait_for()
  * loop below.
  */
-अटल अंतरभूत bool guc_पढ़ोy(काष्ठा पूर्णांकel_uncore *uncore, u32 *status)
-अणु
-	u32 val = पूर्णांकel_uncore_पढ़ो(uncore, GUC_STATUS);
+static inline bool guc_ready(struct intel_uncore *uncore, u32 *status)
+{
+	u32 val = intel_uncore_read(uncore, GUC_STATUS);
 	u32 uk_val = val & GS_UKERNEL_MASK;
 
 	*status = val;
-	वापस (uk_val == GS_UKERNEL_READY) ||
+	return (uk_val == GS_UKERNEL_READY) ||
 		((val & GS_MIA_CORE_STATE) && (uk_val == GS_UKERNEL_LAPIC_DONE));
-पूर्ण
+}
 
-अटल पूर्णांक guc_रुको_ucode(काष्ठा पूर्णांकel_uncore *uncore)
-अणु
+static int guc_wait_ucode(struct intel_uncore *uncore)
+{
 	u32 status;
-	पूर्णांक ret;
+	int ret;
 
 	/*
-	 * Wait क्रम the GuC to start up.
-	 * NB: Docs recommend not using the पूर्णांकerrupt क्रम completion.
+	 * Wait for the GuC to start up.
+	 * NB: Docs recommend not using the interrupt for completion.
 	 * Measurements indicate this should take no more than 20ms, so a
-	 * समयout here indicates that the GuC has failed and is unusable.
+	 * timeout here indicates that the GuC has failed and is unusable.
 	 * (Higher levels of the driver may decide to reset the GuC and
-	 * attempt the ucode load again अगर this happens.)
+	 * attempt the ucode load again if this happens.)
 	 */
-	ret = रुको_क्रम(guc_पढ़ोy(uncore, &status), 100);
-	अगर (ret) अणु
-		काष्ठा drm_device *drm = &uncore->i915->drm;
+	ret = wait_for(guc_ready(uncore, &status), 100);
+	if (ret) {
+		struct drm_device *drm = &uncore->i915->drm;
 
 		drm_dbg(drm, "GuC load failed: status = 0x%08X\n", status);
 		drm_dbg(drm, "GuC load failed: status: Reset = %d, "
@@ -102,38 +101,38 @@
 			REG_FIELD_GET(GS_MIA_MASK, status),
 			REG_FIELD_GET(GS_AUTH_STATUS_MASK, status));
 
-		अगर ((status & GS_BOOTROM_MASK) == GS_BOOTROM_RSA_FAILED) अणु
+		if ((status & GS_BOOTROM_MASK) == GS_BOOTROM_RSA_FAILED) {
 			drm_dbg(drm, "GuC firmware signature verification failed\n");
 			ret = -ENOEXEC;
-		पूर्ण
+		}
 
-		अगर ((status & GS_UKERNEL_MASK) == GS_UKERNEL_EXCEPTION) अणु
+		if ((status & GS_UKERNEL_MASK) == GS_UKERNEL_EXCEPTION) {
 			drm_dbg(drm, "GuC firmware exception. EIP: %#x\n",
-				पूर्णांकel_uncore_पढ़ो(uncore, SOFT_SCRATCH(13)));
+				intel_uncore_read(uncore, SOFT_SCRATCH(13)));
 			ret = -ENXIO;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * पूर्णांकel_guc_fw_upload() - load GuC uCode to device
- * @guc: पूर्णांकel_guc काष्ठाure
+ * intel_guc_fw_upload() - load GuC uCode to device
+ * @guc: intel_guc structure
  *
- * Called from पूर्णांकel_uc_init_hw() during driver load, resume from sleep and
+ * Called from intel_uc_init_hw() during driver load, resume from sleep and
  * after a GPU reset.
  *
- * The firmware image should have alपढ़ोy been fetched पूर्णांकo memory, so only
+ * The firmware image should have already been fetched into memory, so only
  * check that fetch succeeded, and then transfer the image to the h/w.
  *
  * Return:	non-zero code on error
  */
-पूर्णांक पूर्णांकel_guc_fw_upload(काष्ठा पूर्णांकel_guc *guc)
-अणु
-	काष्ठा पूर्णांकel_gt *gt = guc_to_gt(guc);
-	काष्ठा पूर्णांकel_uncore *uncore = gt->uncore;
-	पूर्णांक ret;
+int intel_guc_fw_upload(struct intel_guc *guc)
+{
+	struct intel_gt *gt = guc_to_gt(guc);
+	struct intel_uncore *uncore = gt->uncore;
+	int ret;
 
 	guc_prepare_xfer(uncore);
 
@@ -146,20 +145,20 @@
 
 	/*
 	 * Current uCode expects the code to be loaded at 8k; locations below
-	 * this are used क्रम the stack.
+	 * this are used for the stack.
 	 */
-	ret = पूर्णांकel_uc_fw_upload(&guc->fw, 0x2000, UOS_MOVE);
-	अगर (ret)
-		जाओ out;
+	ret = intel_uc_fw_upload(&guc->fw, 0x2000, UOS_MOVE);
+	if (ret)
+		goto out;
 
-	ret = guc_रुको_ucode(uncore);
-	अगर (ret)
-		जाओ out;
+	ret = guc_wait_ucode(uncore);
+	if (ret)
+		goto out;
 
-	पूर्णांकel_uc_fw_change_status(&guc->fw, INTEL_UC_FIRMWARE_RUNNING);
-	वापस 0;
+	intel_uc_fw_change_status(&guc->fw, INTEL_UC_FIRMWARE_RUNNING);
+	return 0;
 
 out:
-	पूर्णांकel_uc_fw_change_status(&guc->fw, INTEL_UC_FIRMWARE_FAIL);
-	वापस ret;
-पूर्ण
+	intel_uc_fw_change_status(&guc->fw, INTEL_UC_FIRMWARE_FAIL);
+	return ret;
+}

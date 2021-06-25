@@ -1,145 +1,144 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  *  cb710/sgbuf2.c
  *
- *  Copyright by Michaध Mirosधaw, 2008-2009
+ *  Copyright by Michał Mirosław, 2008-2009
  */
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/cb710.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/cb710.h>
 
-अटल bool sg_dwiter_next(काष्ठा sg_mapping_iter *miter)
-अणु
-	अगर (sg_miter_next(miter)) अणु
+static bool sg_dwiter_next(struct sg_mapping_iter *miter)
+{
+	if (sg_miter_next(miter)) {
 		miter->consumed = 0;
-		वापस true;
-	पूर्ण अन्यथा
-		वापस false;
-पूर्ण
+		return true;
+	} else
+		return false;
+}
 
-अटल bool sg_dwiter_is_at_end(काष्ठा sg_mapping_iter *miter)
-अणु
-	वापस miter->length == miter->consumed && !sg_dwiter_next(miter);
-पूर्ण
+static bool sg_dwiter_is_at_end(struct sg_mapping_iter *miter)
+{
+	return miter->length == miter->consumed && !sg_dwiter_next(miter);
+}
 
-अटल uपूर्णांक32_t sg_dwiter_पढ़ो_buffer(काष्ठा sg_mapping_iter *miter)
-अणु
-	माप_प्रकार len, left = 4;
-	uपूर्णांक32_t data;
-	व्योम *addr = &data;
+static uint32_t sg_dwiter_read_buffer(struct sg_mapping_iter *miter)
+{
+	size_t len, left = 4;
+	uint32_t data;
+	void *addr = &data;
 
-	करो अणु
+	do {
 		len = min(miter->length - miter->consumed, left);
-		स_नकल(addr, miter->addr + miter->consumed, len);
+		memcpy(addr, miter->addr + miter->consumed, len);
 		miter->consumed += len;
 		left -= len;
-		अगर (!left)
-			वापस data;
+		if (!left)
+			return data;
 		addr += len;
-	पूर्ण जबतक (sg_dwiter_next(miter));
+	} while (sg_dwiter_next(miter));
 
-	स_रखो(addr, 0, left);
-	वापस data;
-पूर्ण
+	memset(addr, 0, left);
+	return data;
+}
 
-अटल अंतरभूत bool needs_unaligned_copy(स्थिर व्योम *ptr)
-अणु
-#अगर_घोषित CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
-	वापस false;
-#अन्यथा
-	वापस ((ptr - शून्य) & 3) != 0;
-#पूर्ण_अगर
-पूर्ण
+static inline bool needs_unaligned_copy(const void *ptr)
+{
+#ifdef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
+	return false;
+#else
+	return ((ptr - NULL) & 3) != 0;
+#endif
+}
 
-अटल bool sg_dwiter_get_next_block(काष्ठा sg_mapping_iter *miter, uपूर्णांक32_t **ptr)
-अणु
-	माप_प्रकार len;
+static bool sg_dwiter_get_next_block(struct sg_mapping_iter *miter, uint32_t **ptr)
+{
+	size_t len;
 
-	अगर (sg_dwiter_is_at_end(miter))
-		वापस true;
+	if (sg_dwiter_is_at_end(miter))
+		return true;
 
 	len = miter->length - miter->consumed;
 
-	अगर (likely(len >= 4 && !needs_unaligned_copy(
-			miter->addr + miter->consumed))) अणु
+	if (likely(len >= 4 && !needs_unaligned_copy(
+			miter->addr + miter->consumed))) {
 		*ptr = miter->addr + miter->consumed;
 		miter->consumed += 4;
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /**
- * cb710_sg_dwiter_पढ़ो_next_block() - get next 32-bit word from sg buffer
- * @miter: sg mapping iterator used क्रम पढ़ोing
+ * cb710_sg_dwiter_read_next_block() - get next 32-bit word from sg buffer
+ * @miter: sg mapping iterator used for reading
  *
  * Description:
- *   Returns 32-bit word starting at byte poपूर्णांकed to by @miter@
+ *   Returns 32-bit word starting at byte pointed to by @miter@
  *   handling any alignment issues.  Bytes past the buffer's end
- *   are not accessed (पढ़ो) but are वापसed as zeroes.  @miter@
+ *   are not accessed (read) but are returned as zeroes.  @miter@
  *   is advanced by 4 bytes or to the end of buffer whichever is
- *   बंदr.
+ *   closer.
  *
  * Context:
  *   Same requirements as in sg_miter_next().
  *
  * Returns:
- *   32-bit word just पढ़ो.
+ *   32-bit word just read.
  */
-uपूर्णांक32_t cb710_sg_dwiter_पढ़ो_next_block(काष्ठा sg_mapping_iter *miter)
-अणु
-	uपूर्णांक32_t *ptr = शून्य;
+uint32_t cb710_sg_dwiter_read_next_block(struct sg_mapping_iter *miter)
+{
+	uint32_t *ptr = NULL;
 
-	अगर (likely(sg_dwiter_get_next_block(miter, &ptr)))
-		वापस ptr ? *ptr : 0;
+	if (likely(sg_dwiter_get_next_block(miter, &ptr)))
+		return ptr ? *ptr : 0;
 
-	वापस sg_dwiter_पढ़ो_buffer(miter);
-पूर्ण
-EXPORT_SYMBOL_GPL(cb710_sg_dwiter_पढ़ो_next_block);
+	return sg_dwiter_read_buffer(miter);
+}
+EXPORT_SYMBOL_GPL(cb710_sg_dwiter_read_next_block);
 
-अटल व्योम sg_dwiter_ग_लिखो_slow(काष्ठा sg_mapping_iter *miter, uपूर्णांक32_t data)
-अणु
-	माप_प्रकार len, left = 4;
-	व्योम *addr = &data;
+static void sg_dwiter_write_slow(struct sg_mapping_iter *miter, uint32_t data)
+{
+	size_t len, left = 4;
+	void *addr = &data;
 
-	करो अणु
+	do {
 		len = min(miter->length - miter->consumed, left);
-		स_नकल(miter->addr, addr, len);
+		memcpy(miter->addr, addr, len);
 		miter->consumed += len;
 		left -= len;
-		अगर (!left)
-			वापस;
+		if (!left)
+			return;
 		addr += len;
-	पूर्ण जबतक (sg_dwiter_next(miter));
-पूर्ण
+	} while (sg_dwiter_next(miter));
+}
 
 /**
- * cb710_sg_dwiter_ग_लिखो_next_block() - ग_लिखो next 32-bit word to sg buffer
- * @miter: sg mapping iterator used क्रम writing
- * @data: data to ग_लिखो to sg buffer
+ * cb710_sg_dwiter_write_next_block() - write next 32-bit word to sg buffer
+ * @miter: sg mapping iterator used for writing
+ * @data: data to write to sg buffer
  *
  * Description:
- *   Writes 32-bit word starting at byte poपूर्णांकed to by @miter@
+ *   Writes 32-bit word starting at byte pointed to by @miter@
  *   handling any alignment issues.  Bytes which would be written
  *   past the buffer's end are silently discarded. @miter@ is
- *   advanced by 4 bytes or to the end of buffer whichever is बंदr.
+ *   advanced by 4 bytes or to the end of buffer whichever is closer.
  *
  * Context:
  *   Same requirements as in sg_miter_next().
  */
-व्योम cb710_sg_dwiter_ग_लिखो_next_block(काष्ठा sg_mapping_iter *miter, uपूर्णांक32_t data)
-अणु
-	uपूर्णांक32_t *ptr = शून्य;
+void cb710_sg_dwiter_write_next_block(struct sg_mapping_iter *miter, uint32_t data)
+{
+	uint32_t *ptr = NULL;
 
-	अगर (likely(sg_dwiter_get_next_block(miter, &ptr))) अणु
-		अगर (ptr)
+	if (likely(sg_dwiter_get_next_block(miter, &ptr))) {
+		if (ptr)
 			*ptr = data;
-		अन्यथा
-			वापस;
-	पूर्ण अन्यथा
-		sg_dwiter_ग_लिखो_slow(miter, data);
-पूर्ण
-EXPORT_SYMBOL_GPL(cb710_sg_dwiter_ग_लिखो_next_block);
+		else
+			return;
+	} else
+		sg_dwiter_write_slow(miter, data);
+}
+EXPORT_SYMBOL_GPL(cb710_sg_dwiter_write_next_block);
 

@@ -1,79 +1,78 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#समावेश "i915_drv.h"
-#समावेश "gt/intel_context.h"
-#समावेश "gt/intel_engine_pm.h"
-#समावेश "gt/intel_gpu_commands.h"
-#समावेश "gt/intel_gt.h"
-#समावेश "gt/intel_gt_buffer_pool.h"
-#समावेश "gt/intel_ring.h"
-#समावेश "i915_gem_clflush.h"
-#समावेश "i915_gem_object_blt.h"
+#include "i915_drv.h"
+#include "gt/intel_context.h"
+#include "gt/intel_engine_pm.h"
+#include "gt/intel_gpu_commands.h"
+#include "gt/intel_gt.h"
+#include "gt/intel_gt_buffer_pool.h"
+#include "gt/intel_ring.h"
+#include "i915_gem_clflush.h"
+#include "i915_gem_object_blt.h"
 
-काष्ठा i915_vma *पूर्णांकel_emit_vma_fill_blt(काष्ठा पूर्णांकel_context *ce,
-					 काष्ठा i915_vma *vma,
-					 काष्ठा i915_gem_ww_ctx *ww,
+struct i915_vma *intel_emit_vma_fill_blt(struct intel_context *ce,
+					 struct i915_vma *vma,
+					 struct i915_gem_ww_ctx *ww,
 					 u32 value)
-अणु
-	काष्ठा drm_i915_निजी *i915 = ce->vm->i915;
-	स्थिर u32 block_size = SZ_8M; /* ~1ms at 8GiB/s preemption delay */
-	काष्ठा पूर्णांकel_gt_buffer_pool_node *pool;
-	काष्ठा i915_vma *batch;
+{
+	struct drm_i915_private *i915 = ce->vm->i915;
+	const u32 block_size = SZ_8M; /* ~1ms at 8GiB/s preemption delay */
+	struct intel_gt_buffer_pool_node *pool;
+	struct i915_vma *batch;
 	u64 offset;
 	u64 count;
 	u64 rem;
 	u32 size;
 	u32 *cmd;
-	पूर्णांक err;
+	int err;
 
-	GEM_BUG_ON(पूर्णांकel_engine_is_भव(ce->engine));
-	पूर्णांकel_engine_pm_get(ce->engine);
+	GEM_BUG_ON(intel_engine_is_virtual(ce->engine));
+	intel_engine_pm_get(ce->engine);
 
-	count = भाग_u64(round_up(vma->size, block_size), block_size);
-	size = (1 + 8 * count) * माप(u32);
+	count = div_u64(round_up(vma->size, block_size), block_size);
+	size = (1 + 8 * count) * sizeof(u32);
 	size = round_up(size, PAGE_SIZE);
-	pool = पूर्णांकel_gt_get_buffer_pool(ce->engine->gt, size, I915_MAP_WC);
-	अगर (IS_ERR(pool)) अणु
+	pool = intel_gt_get_buffer_pool(ce->engine->gt, size, I915_MAP_WC);
+	if (IS_ERR(pool)) {
 		err = PTR_ERR(pool);
-		जाओ out_pm;
-	पूर्ण
+		goto out_pm;
+	}
 
 	err = i915_gem_object_lock(pool->obj, ww);
-	अगर (err)
-		जाओ out_put;
+	if (err)
+		goto out_put;
 
-	batch = i915_vma_instance(pool->obj, ce->vm, शून्य);
-	अगर (IS_ERR(batch)) अणु
+	batch = i915_vma_instance(pool->obj, ce->vm, NULL);
+	if (IS_ERR(batch)) {
 		err = PTR_ERR(batch);
-		जाओ out_put;
-	पूर्ण
+		goto out_put;
+	}
 
 	err = i915_vma_pin_ww(batch, ww, 0, 0, PIN_USER);
-	अगर (unlikely(err))
-		जाओ out_put;
+	if (unlikely(err))
+		goto out_put;
 
 	/* we pinned the pool, mark it as such */
-	पूर्णांकel_gt_buffer_pool_mark_used(pool);
+	intel_gt_buffer_pool_mark_used(pool);
 
 	cmd = i915_gem_object_pin_map(pool->obj, pool->type);
-	अगर (IS_ERR(cmd)) अणु
+	if (IS_ERR(cmd)) {
 		err = PTR_ERR(cmd);
-		जाओ out_unpin;
-	पूर्ण
+		goto out_unpin;
+	}
 
 	rem = vma->size;
 	offset = vma->node.start;
 
-	करो अणु
+	do {
 		u32 size = min_t(u64, rem, block_size);
 
 		GEM_BUG_ON(size >> PAGE_SHIFT > S16_MAX);
 
-		अगर (INTEL_GEN(i915) >= 8) अणु
+		if (INTEL_GEN(i915) >= 8) {
 			*cmd++ = XY_COLOR_BLT_CMD | BLT_WRITE_RGBA | (7 - 2);
 			*cmd++ = BLT_DEPTH_32 | BLT_ROP_COLOR_COPY | PAGE_SIZE;
 			*cmd++ = 0;
@@ -81,225 +80,225 @@
 			*cmd++ = lower_32_bits(offset);
 			*cmd++ = upper_32_bits(offset);
 			*cmd++ = value;
-		पूर्ण अन्यथा अणु
+		} else {
 			*cmd++ = XY_COLOR_BLT_CMD | BLT_WRITE_RGBA | (6 - 2);
 			*cmd++ = BLT_DEPTH_32 | BLT_ROP_COLOR_COPY | PAGE_SIZE;
 			*cmd++ = 0;
 			*cmd++ = size >> PAGE_SHIFT << 16 | PAGE_SIZE / 4;
 			*cmd++ = offset;
 			*cmd++ = value;
-		पूर्ण
+		}
 
 		/* Allow ourselves to be preempted in between blocks. */
 		*cmd++ = MI_ARB_CHECK;
 
 		offset += size;
 		rem -= size;
-	पूर्ण जबतक (rem);
+	} while (rem);
 
 	*cmd = MI_BATCH_BUFFER_END;
 
 	i915_gem_object_flush_map(pool->obj);
 	i915_gem_object_unpin_map(pool->obj);
 
-	पूर्णांकel_gt_chipset_flush(ce->vm->gt);
+	intel_gt_chipset_flush(ce->vm->gt);
 
-	batch->निजी = pool;
-	वापस batch;
+	batch->private = pool;
+	return batch;
 
 out_unpin:
 	i915_vma_unpin(batch);
 out_put:
-	पूर्णांकel_gt_buffer_pool_put(pool);
+	intel_gt_buffer_pool_put(pool);
 out_pm:
-	पूर्णांकel_engine_pm_put(ce->engine);
-	वापस ERR_PTR(err);
-पूर्ण
+	intel_engine_pm_put(ce->engine);
+	return ERR_PTR(err);
+}
 
-पूर्णांक पूर्णांकel_emit_vma_mark_active(काष्ठा i915_vma *vma, काष्ठा i915_request *rq)
-अणु
-	पूर्णांक err;
+int intel_emit_vma_mark_active(struct i915_vma *vma, struct i915_request *rq)
+{
+	int err;
 
-	err = i915_request_aरुको_object(rq, vma->obj, false);
-	अगर (err == 0)
+	err = i915_request_await_object(rq, vma->obj, false);
+	if (err == 0)
 		err = i915_vma_move_to_active(vma, rq, 0);
-	अगर (unlikely(err))
-		वापस err;
+	if (unlikely(err))
+		return err;
 
-	वापस पूर्णांकel_gt_buffer_pool_mark_active(vma->निजी, rq);
-पूर्ण
+	return intel_gt_buffer_pool_mark_active(vma->private, rq);
+}
 
-व्योम पूर्णांकel_emit_vma_release(काष्ठा पूर्णांकel_context *ce, काष्ठा i915_vma *vma)
-अणु
+void intel_emit_vma_release(struct intel_context *ce, struct i915_vma *vma)
+{
 	i915_vma_unpin(vma);
-	पूर्णांकel_gt_buffer_pool_put(vma->निजी);
-	पूर्णांकel_engine_pm_put(ce->engine);
-पूर्ण
+	intel_gt_buffer_pool_put(vma->private);
+	intel_engine_pm_put(ce->engine);
+}
 
-अटल पूर्णांक
-move_obj_to_gpu(काष्ठा drm_i915_gem_object *obj,
-		काष्ठा i915_request *rq,
-		bool ग_लिखो)
-अणु
-	अगर (obj->cache_dirty & ~obj->cache_coherent)
+static int
+move_obj_to_gpu(struct drm_i915_gem_object *obj,
+		struct i915_request *rq,
+		bool write)
+{
+	if (obj->cache_dirty & ~obj->cache_coherent)
 		i915_gem_clflush_object(obj, 0);
 
-	वापस i915_request_aरुको_object(rq, obj, ग_लिखो);
-पूर्ण
+	return i915_request_await_object(rq, obj, write);
+}
 
-पूर्णांक i915_gem_object_fill_blt(काष्ठा drm_i915_gem_object *obj,
-			     काष्ठा पूर्णांकel_context *ce,
+int i915_gem_object_fill_blt(struct drm_i915_gem_object *obj,
+			     struct intel_context *ce,
 			     u32 value)
-अणु
-	काष्ठा i915_gem_ww_ctx ww;
-	काष्ठा i915_request *rq;
-	काष्ठा i915_vma *batch;
-	काष्ठा i915_vma *vma;
-	पूर्णांक err;
+{
+	struct i915_gem_ww_ctx ww;
+	struct i915_request *rq;
+	struct i915_vma *batch;
+	struct i915_vma *vma;
+	int err;
 
-	vma = i915_vma_instance(obj, ce->vm, शून्य);
-	अगर (IS_ERR(vma))
-		वापस PTR_ERR(vma);
+	vma = i915_vma_instance(obj, ce->vm, NULL);
+	if (IS_ERR(vma))
+		return PTR_ERR(vma);
 
 	i915_gem_ww_ctx_init(&ww, true);
-	पूर्णांकel_engine_pm_get(ce->engine);
+	intel_engine_pm_get(ce->engine);
 retry:
 	err = i915_gem_object_lock(obj, &ww);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
-	err = पूर्णांकel_context_pin_ww(ce, &ww);
-	अगर (err)
-		जाओ out;
+	err = intel_context_pin_ww(ce, &ww);
+	if (err)
+		goto out;
 
 	err = i915_vma_pin_ww(vma, &ww, 0, 0, PIN_USER);
-	अगर (err)
-		जाओ out_ctx;
+	if (err)
+		goto out_ctx;
 
-	batch = पूर्णांकel_emit_vma_fill_blt(ce, vma, &ww, value);
-	अगर (IS_ERR(batch)) अणु
+	batch = intel_emit_vma_fill_blt(ce, vma, &ww, value);
+	if (IS_ERR(batch)) {
 		err = PTR_ERR(batch);
-		जाओ out_vma;
-	पूर्ण
+		goto out_vma;
+	}
 
 	rq = i915_request_create(ce);
-	अगर (IS_ERR(rq)) अणु
+	if (IS_ERR(rq)) {
 		err = PTR_ERR(rq);
-		जाओ out_batch;
-	पूर्ण
+		goto out_batch;
+	}
 
-	err = पूर्णांकel_emit_vma_mark_active(batch, rq);
-	अगर (unlikely(err))
-		जाओ out_request;
+	err = intel_emit_vma_mark_active(batch, rq);
+	if (unlikely(err))
+		goto out_request;
 
 	err = move_obj_to_gpu(vma->obj, rq, true);
-	अगर (err == 0)
+	if (err == 0)
 		err = i915_vma_move_to_active(vma, rq, EXEC_OBJECT_WRITE);
-	अगर (unlikely(err))
-		जाओ out_request;
+	if (unlikely(err))
+		goto out_request;
 
-	अगर (ce->engine->emit_init_bपढ़ोcrumb)
-		err = ce->engine->emit_init_bपढ़ोcrumb(rq);
+	if (ce->engine->emit_init_breadcrumb)
+		err = ce->engine->emit_init_breadcrumb(rq);
 
-	अगर (likely(!err))
+	if (likely(!err))
 		err = ce->engine->emit_bb_start(rq,
 						batch->node.start,
 						batch->node.size,
 						0);
 out_request:
-	अगर (unlikely(err))
+	if (unlikely(err))
 		i915_request_set_error_once(rq, err);
 
 	i915_request_add(rq);
 out_batch:
-	पूर्णांकel_emit_vma_release(ce, batch);
+	intel_emit_vma_release(ce, batch);
 out_vma:
 	i915_vma_unpin(vma);
 out_ctx:
-	पूर्णांकel_context_unpin(ce);
+	intel_context_unpin(ce);
 out:
-	अगर (err == -EDEADLK) अणु
+	if (err == -EDEADLK) {
 		err = i915_gem_ww_ctx_backoff(&ww);
-		अगर (!err)
-			जाओ retry;
-	पूर्ण
+		if (!err)
+			goto retry;
+	}
 	i915_gem_ww_ctx_fini(&ww);
-	पूर्णांकel_engine_pm_put(ce->engine);
-	वापस err;
-पूर्ण
+	intel_engine_pm_put(ce->engine);
+	return err;
+}
 
 /* Wa_1209644611:icl,ehl */
-अटल bool wa_1209644611_applies(काष्ठा drm_i915_निजी *i915, u32 size)
-अणु
+static bool wa_1209644611_applies(struct drm_i915_private *i915, u32 size)
+{
 	u32 height = size >> PAGE_SHIFT;
 
-	अगर (!IS_GEN(i915, 11))
-		वापस false;
+	if (!IS_GEN(i915, 11))
+		return false;
 
-	वापस height % 4 == 3 && height <= 8;
-पूर्ण
+	return height % 4 == 3 && height <= 8;
+}
 
-काष्ठा i915_vma *पूर्णांकel_emit_vma_copy_blt(काष्ठा पूर्णांकel_context *ce,
-					 काष्ठा i915_gem_ww_ctx *ww,
-					 काष्ठा i915_vma *src,
-					 काष्ठा i915_vma *dst)
-अणु
-	काष्ठा drm_i915_निजी *i915 = ce->vm->i915;
-	स्थिर u32 block_size = SZ_8M; /* ~1ms at 8GiB/s preemption delay */
-	काष्ठा पूर्णांकel_gt_buffer_pool_node *pool;
-	काष्ठा i915_vma *batch;
+struct i915_vma *intel_emit_vma_copy_blt(struct intel_context *ce,
+					 struct i915_gem_ww_ctx *ww,
+					 struct i915_vma *src,
+					 struct i915_vma *dst)
+{
+	struct drm_i915_private *i915 = ce->vm->i915;
+	const u32 block_size = SZ_8M; /* ~1ms at 8GiB/s preemption delay */
+	struct intel_gt_buffer_pool_node *pool;
+	struct i915_vma *batch;
 	u64 src_offset, dst_offset;
 	u64 count, rem;
 	u32 size, *cmd;
-	पूर्णांक err;
+	int err;
 
 	GEM_BUG_ON(src->size != dst->size);
 
-	GEM_BUG_ON(पूर्णांकel_engine_is_भव(ce->engine));
-	पूर्णांकel_engine_pm_get(ce->engine);
+	GEM_BUG_ON(intel_engine_is_virtual(ce->engine));
+	intel_engine_pm_get(ce->engine);
 
-	count = भाग_u64(round_up(dst->size, block_size), block_size);
-	size = (1 + 11 * count) * माप(u32);
+	count = div_u64(round_up(dst->size, block_size), block_size);
+	size = (1 + 11 * count) * sizeof(u32);
 	size = round_up(size, PAGE_SIZE);
-	pool = पूर्णांकel_gt_get_buffer_pool(ce->engine->gt, size, I915_MAP_WC);
-	अगर (IS_ERR(pool)) अणु
+	pool = intel_gt_get_buffer_pool(ce->engine->gt, size, I915_MAP_WC);
+	if (IS_ERR(pool)) {
 		err = PTR_ERR(pool);
-		जाओ out_pm;
-	पूर्ण
+		goto out_pm;
+	}
 
 	err = i915_gem_object_lock(pool->obj, ww);
-	अगर (err)
-		जाओ out_put;
+	if (err)
+		goto out_put;
 
-	batch = i915_vma_instance(pool->obj, ce->vm, शून्य);
-	अगर (IS_ERR(batch)) अणु
+	batch = i915_vma_instance(pool->obj, ce->vm, NULL);
+	if (IS_ERR(batch)) {
 		err = PTR_ERR(batch);
-		जाओ out_put;
-	पूर्ण
+		goto out_put;
+	}
 
 	err = i915_vma_pin_ww(batch, ww, 0, 0, PIN_USER);
-	अगर (unlikely(err))
-		जाओ out_put;
+	if (unlikely(err))
+		goto out_put;
 
 	/* we pinned the pool, mark it as such */
-	पूर्णांकel_gt_buffer_pool_mark_used(pool);
+	intel_gt_buffer_pool_mark_used(pool);
 
 	cmd = i915_gem_object_pin_map(pool->obj, pool->type);
-	अगर (IS_ERR(cmd)) अणु
+	if (IS_ERR(cmd)) {
 		err = PTR_ERR(cmd);
-		जाओ out_unpin;
-	पूर्ण
+		goto out_unpin;
+	}
 
 	rem = src->size;
 	src_offset = src->node.start;
 	dst_offset = dst->node.start;
 
-	करो अणु
+	do {
 		size = min_t(u64, rem, block_size);
 		GEM_BUG_ON(size >> PAGE_SHIFT > S16_MAX);
 
-		अगर (INTEL_GEN(i915) >= 9 &&
-		    !wa_1209644611_applies(i915, size)) अणु
+		if (INTEL_GEN(i915) >= 9 &&
+		    !wa_1209644611_applies(i915, size)) {
 			*cmd++ = GEN9_XY_FAST_COPY_BLT_CMD | (10 - 2);
 			*cmd++ = BLT_DEPTH_32 | PAGE_SIZE;
 			*cmd++ = 0;
@@ -310,7 +309,7 @@ out:
 			*cmd++ = PAGE_SIZE;
 			*cmd++ = lower_32_bits(src_offset);
 			*cmd++ = upper_32_bits(src_offset);
-		पूर्ण अन्यथा अगर (INTEL_GEN(i915) >= 8) अणु
+		} else if (INTEL_GEN(i915) >= 8) {
 			*cmd++ = XY_SRC_COPY_BLT_CMD | BLT_WRITE_RGBA | (10 - 2);
 			*cmd++ = BLT_DEPTH_32 | BLT_ROP_SRC_COPY | PAGE_SIZE;
 			*cmd++ = 0;
@@ -321,14 +320,14 @@ out:
 			*cmd++ = PAGE_SIZE;
 			*cmd++ = lower_32_bits(src_offset);
 			*cmd++ = upper_32_bits(src_offset);
-		पूर्ण अन्यथा अणु
+		} else {
 			*cmd++ = SRC_COPY_BLT_CMD | BLT_WRITE_RGBA | (6 - 2);
 			*cmd++ = BLT_DEPTH_32 | BLT_ROP_SRC_COPY | PAGE_SIZE;
 			*cmd++ = size >> PAGE_SHIFT << 16 | PAGE_SIZE;
 			*cmd++ = dst_offset;
 			*cmd++ = PAGE_SIZE;
 			*cmd++ = src_offset;
-		पूर्ण
+		}
 
 		/* Allow ourselves to be preempted in between blocks. */
 		*cmd++ = MI_ARB_CHECK;
@@ -336,127 +335,127 @@ out:
 		src_offset += size;
 		dst_offset += size;
 		rem -= size;
-	पूर्ण जबतक (rem);
+	} while (rem);
 
 	*cmd = MI_BATCH_BUFFER_END;
 
 	i915_gem_object_flush_map(pool->obj);
 	i915_gem_object_unpin_map(pool->obj);
 
-	पूर्णांकel_gt_chipset_flush(ce->vm->gt);
-	batch->निजी = pool;
-	वापस batch;
+	intel_gt_chipset_flush(ce->vm->gt);
+	batch->private = pool;
+	return batch;
 
 out_unpin:
 	i915_vma_unpin(batch);
 out_put:
-	पूर्णांकel_gt_buffer_pool_put(pool);
+	intel_gt_buffer_pool_put(pool);
 out_pm:
-	पूर्णांकel_engine_pm_put(ce->engine);
-	वापस ERR_PTR(err);
-पूर्ण
+	intel_engine_pm_put(ce->engine);
+	return ERR_PTR(err);
+}
 
-पूर्णांक i915_gem_object_copy_blt(काष्ठा drm_i915_gem_object *src,
-			     काष्ठा drm_i915_gem_object *dst,
-			     काष्ठा पूर्णांकel_context *ce)
-अणु
-	काष्ठा i915_address_space *vm = ce->vm;
-	काष्ठा i915_vma *vma[2], *batch;
-	काष्ठा i915_gem_ww_ctx ww;
-	काष्ठा i915_request *rq;
-	पूर्णांक err, i;
+int i915_gem_object_copy_blt(struct drm_i915_gem_object *src,
+			     struct drm_i915_gem_object *dst,
+			     struct intel_context *ce)
+{
+	struct i915_address_space *vm = ce->vm;
+	struct i915_vma *vma[2], *batch;
+	struct i915_gem_ww_ctx ww;
+	struct i915_request *rq;
+	int err, i;
 
-	vma[0] = i915_vma_instance(src, vm, शून्य);
-	अगर (IS_ERR(vma[0]))
-		वापस PTR_ERR(vma[0]);
+	vma[0] = i915_vma_instance(src, vm, NULL);
+	if (IS_ERR(vma[0]))
+		return PTR_ERR(vma[0]);
 
-	vma[1] = i915_vma_instance(dst, vm, शून्य);
-	अगर (IS_ERR(vma[1]))
-		वापस PTR_ERR(vma[1]);
+	vma[1] = i915_vma_instance(dst, vm, NULL);
+	if (IS_ERR(vma[1]))
+		return PTR_ERR(vma[1]);
 
 	i915_gem_ww_ctx_init(&ww, true);
-	पूर्णांकel_engine_pm_get(ce->engine);
+	intel_engine_pm_get(ce->engine);
 retry:
 	err = i915_gem_object_lock(src, &ww);
-	अगर (!err)
+	if (!err)
 		err = i915_gem_object_lock(dst, &ww);
-	अगर (!err)
-		err = पूर्णांकel_context_pin_ww(ce, &ww);
-	अगर (err)
-		जाओ out;
+	if (!err)
+		err = intel_context_pin_ww(ce, &ww);
+	if (err)
+		goto out;
 
 	err = i915_vma_pin_ww(vma[0], &ww, 0, 0, PIN_USER);
-	अगर (err)
-		जाओ out_ctx;
+	if (err)
+		goto out_ctx;
 
 	err = i915_vma_pin_ww(vma[1], &ww, 0, 0, PIN_USER);
-	अगर (unlikely(err))
-		जाओ out_unpin_src;
+	if (unlikely(err))
+		goto out_unpin_src;
 
-	batch = पूर्णांकel_emit_vma_copy_blt(ce, &ww, vma[0], vma[1]);
-	अगर (IS_ERR(batch)) अणु
+	batch = intel_emit_vma_copy_blt(ce, &ww, vma[0], vma[1]);
+	if (IS_ERR(batch)) {
 		err = PTR_ERR(batch);
-		जाओ out_unpin_dst;
-	पूर्ण
+		goto out_unpin_dst;
+	}
 
 	rq = i915_request_create(ce);
-	अगर (IS_ERR(rq)) अणु
+	if (IS_ERR(rq)) {
 		err = PTR_ERR(rq);
-		जाओ out_batch;
-	पूर्ण
+		goto out_batch;
+	}
 
-	err = पूर्णांकel_emit_vma_mark_active(batch, rq);
-	अगर (unlikely(err))
-		जाओ out_request;
+	err = intel_emit_vma_mark_active(batch, rq);
+	if (unlikely(err))
+		goto out_request;
 
-	क्रम (i = 0; i < ARRAY_SIZE(vma); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(vma); i++) {
 		err = move_obj_to_gpu(vma[i]->obj, rq, i);
-		अगर (unlikely(err))
-			जाओ out_request;
-	पूर्ण
+		if (unlikely(err))
+			goto out_request;
+	}
 
-	क्रम (i = 0; i < ARRAY_SIZE(vma); i++) अणु
-		अचिन्हित पूर्णांक flags = i ? EXEC_OBJECT_WRITE : 0;
+	for (i = 0; i < ARRAY_SIZE(vma); i++) {
+		unsigned int flags = i ? EXEC_OBJECT_WRITE : 0;
 
 		err = i915_vma_move_to_active(vma[i], rq, flags);
-		अगर (unlikely(err))
-			जाओ out_request;
-	पूर्ण
+		if (unlikely(err))
+			goto out_request;
+	}
 
-	अगर (rq->engine->emit_init_bपढ़ोcrumb) अणु
-		err = rq->engine->emit_init_bपढ़ोcrumb(rq);
-		अगर (unlikely(err))
-			जाओ out_request;
-	पूर्ण
+	if (rq->engine->emit_init_breadcrumb) {
+		err = rq->engine->emit_init_breadcrumb(rq);
+		if (unlikely(err))
+			goto out_request;
+	}
 
 	err = rq->engine->emit_bb_start(rq,
 					batch->node.start, batch->node.size,
 					0);
 
 out_request:
-	अगर (unlikely(err))
+	if (unlikely(err))
 		i915_request_set_error_once(rq, err);
 
 	i915_request_add(rq);
 out_batch:
-	पूर्णांकel_emit_vma_release(ce, batch);
+	intel_emit_vma_release(ce, batch);
 out_unpin_dst:
 	i915_vma_unpin(vma[1]);
 out_unpin_src:
 	i915_vma_unpin(vma[0]);
 out_ctx:
-	पूर्णांकel_context_unpin(ce);
+	intel_context_unpin(ce);
 out:
-	अगर (err == -EDEADLK) अणु
+	if (err == -EDEADLK) {
 		err = i915_gem_ww_ctx_backoff(&ww);
-		अगर (!err)
-			जाओ retry;
-	पूर्ण
+		if (!err)
+			goto retry;
+	}
 	i915_gem_ww_ctx_fini(&ww);
-	पूर्णांकel_engine_pm_put(ce->engine);
-	वापस err;
-पूर्ण
+	intel_engine_pm_put(ce->engine);
+	return err;
+}
 
-#अगर IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
-#समावेश "selftests/i915_gem_object_blt.c"
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
+#include "selftests/i915_gem_object_blt.c"
+#endif

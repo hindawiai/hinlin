@@ -1,14 +1,13 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2008 Intel Corporation
- * Copyright तऊ 2016 Collabora Ltd
+ * Copyright © 2008 Intel Corporation
+ * Copyright © 2016 Collabora Ltd
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -23,355 +22,355 @@
  * IN THE SOFTWARE.
  *
  * Based on code from the i915 driver.
- * Original author: Damien Lespiau <damien.lespiau@पूर्णांकel.com>
+ * Original author: Damien Lespiau <damien.lespiau@intel.com>
  *
  */
 
-#समावेश <linux/circ_buf.h>
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/poll.h>
-#समावेश <linux/uaccess.h>
+#include <linux/circ_buf.h>
+#include <linux/ctype.h>
+#include <linux/debugfs.h>
+#include <linux/poll.h>
+#include <linux/uaccess.h>
 
-#समावेश <drm/drm_crtc.h>
-#समावेश <drm/drm_debugfs_crc.h>
-#समावेश <drm/drm_drv.h>
-#समावेश <drm/drm_prपूर्णांक.h>
+#include <drm/drm_crtc.h>
+#include <drm/drm_debugfs_crc.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_print.h>
 
-#समावेश "drm_internal.h"
+#include "drm_internal.h"
 
 /**
  * DOC: CRC ABI
  *
- * DRM device drivers can provide to userspace CRC inक्रमmation of each frame as
+ * DRM device drivers can provide to userspace CRC information of each frame as
  * it reached a given hardware component (a CRC sampling "source").
  *
  * Userspace can control generation of CRCs in a given CRTC by writing to the
  * file dri/0/crtc-N/crc/control in debugfs, with N being the index of the CRTC.
- * Accepted values are source names (which are driver-specअगरic) and the "auto"
- * keyword, which will let the driver select a शेष source of frame CRCs
- * क्रम this CRTC.
+ * Accepted values are source names (which are driver-specific) and the "auto"
+ * keyword, which will let the driver select a default source of frame CRCs
+ * for this CRTC.
  *
- * Once frame CRC generation is enabled, userspace can capture them by पढ़ोing
+ * Once frame CRC generation is enabled, userspace can capture them by reading
  * the dri/0/crtc-N/crc/data file. Each line in that file contains the frame
- * number in the first field and then a number of अचिन्हित पूर्णांकeger fields
+ * number in the first field and then a number of unsigned integer fields
  * containing the CRC data. Fields are separated by a single space and the number
- * of CRC fields is source-specअगरic.
+ * of CRC fields is source-specific.
  *
- * Note that though in some हालs the CRC is computed in a specअगरied way and on
+ * Note that though in some cases the CRC is computed in a specified way and on
  * the frame contents as supplied by userspace (eDP 1.3), in general the CRC
- * computation is perक्रमmed in an unspecअगरied way and on frame contents that have
- * been alपढ़ोy processed in also an unspecअगरied way and thus userspace cannot
- * rely on being able to generate matching CRC values क्रम the frame contents that
- * it submits. In this general हाल, the maximum userspace can करो is to compare
+ * computation is performed in an unspecified way and on frame contents that have
+ * been already processed in also an unspecified way and thus userspace cannot
+ * rely on being able to generate matching CRC values for the frame contents that
+ * it submits. In this general case, the maximum userspace can do is to compare
  * the reported CRCs of frames that should have the same contents.
  *
- * On the driver side the implementation efक्रमt is minimal, drivers only need to
- * implement &drm_crtc_funcs.set_crc_source and &drm_crtc_funcs.verअगरy_crc_source.
- * The debugfs files are स्वतःmatically set up अगर those vfuncs are set. CRC samples
+ * On the driver side the implementation effort is minimal, drivers only need to
+ * implement &drm_crtc_funcs.set_crc_source and &drm_crtc_funcs.verify_crc_source.
+ * The debugfs files are automatically set up if those vfuncs are set. CRC samples
  * need to be captured in the driver by calling drm_crtc_add_crc_entry().
  * Depending on the driver and HW requirements, &drm_crtc_funcs.set_crc_source
  * may result in a commit (even a full modeset).
  *
- * CRC results must be reliable across non-full-modeset atomic commits, so अगर a
- * commit via DRM_IOCTL_MODE_ATOMIC would disable or otherwise पूर्णांकerfere with
+ * CRC results must be reliable across non-full-modeset atomic commits, so if a
+ * commit via DRM_IOCTL_MODE_ATOMIC would disable or otherwise interfere with
  * CRC generation, then the driver must mark that commit as a full modeset
- * (drm_atomic_crtc_needs_modeset() should वापस true). As a result, to ensure
+ * (drm_atomic_crtc_needs_modeset() should return true). As a result, to ensure
  * consistent results, generic userspace must re-setup CRC generation after a
  * legacy SETCRTC or an atomic commit with DRM_MODE_ATOMIC_ALLOW_MODESET.
  */
 
-अटल पूर्णांक crc_control_show(काष्ठा seq_file *m, व्योम *data)
-अणु
-	काष्ठा drm_crtc *crtc = m->निजी;
+static int crc_control_show(struct seq_file *m, void *data)
+{
+	struct drm_crtc *crtc = m->private;
 
-	अगर (crtc->funcs->get_crc_sources) अणु
-		माप_प्रकार count;
-		स्थिर अक्षर *स्थिर *sources = crtc->funcs->get_crc_sources(crtc,
+	if (crtc->funcs->get_crc_sources) {
+		size_t count;
+		const char *const *sources = crtc->funcs->get_crc_sources(crtc,
 									&count);
-		माप_प्रकार values_cnt;
-		पूर्णांक i;
+		size_t values_cnt;
+		int i;
 
-		अगर (count == 0 || !sources)
-			जाओ out;
+		if (count == 0 || !sources)
+			goto out;
 
-		क्रम (i = 0; i < count; i++)
-			अगर (!crtc->funcs->verअगरy_crc_source(crtc, sources[i],
-							    &values_cnt)) अणु
-				अगर (म_भेद(sources[i], crtc->crc.source))
-					seq_म_लिखो(m, "%s\n", sources[i]);
-				अन्यथा
-					seq_म_लिखो(m, "%s*\n", sources[i]);
-			पूर्ण
-	पूर्ण
-	वापस 0;
+		for (i = 0; i < count; i++)
+			if (!crtc->funcs->verify_crc_source(crtc, sources[i],
+							    &values_cnt)) {
+				if (strcmp(sources[i], crtc->crc.source))
+					seq_printf(m, "%s\n", sources[i]);
+				else
+					seq_printf(m, "%s*\n", sources[i]);
+			}
+	}
+	return 0;
 
 out:
-	seq_म_लिखो(m, "%s*\n", crtc->crc.source);
-	वापस 0;
-पूर्ण
+	seq_printf(m, "%s*\n", crtc->crc.source);
+	return 0;
+}
 
-अटल पूर्णांक crc_control_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा drm_crtc *crtc = inode->i_निजी;
+static int crc_control_open(struct inode *inode, struct file *file)
+{
+	struct drm_crtc *crtc = inode->i_private;
 
-	वापस single_खोलो(file, crc_control_show, crtc);
-पूर्ण
+	return single_open(file, crc_control_show, crtc);
+}
 
-अटल sमाप_प्रकार crc_control_ग_लिखो(काष्ठा file *file, स्थिर अक्षर __user *ubuf,
-				 माप_प्रकार len, loff_t *offp)
-अणु
-	काष्ठा seq_file *m = file->निजी_data;
-	काष्ठा drm_crtc *crtc = m->निजी;
-	काष्ठा drm_crtc_crc *crc = &crtc->crc;
-	अक्षर *source;
-	माप_प्रकार values_cnt;
-	पूर्णांक ret;
+static ssize_t crc_control_write(struct file *file, const char __user *ubuf,
+				 size_t len, loff_t *offp)
+{
+	struct seq_file *m = file->private_data;
+	struct drm_crtc *crtc = m->private;
+	struct drm_crtc_crc *crc = &crtc->crc;
+	char *source;
+	size_t values_cnt;
+	int ret;
 
-	अगर (len == 0)
-		वापस 0;
+	if (len == 0)
+		return 0;
 
-	अगर (len > PAGE_SIZE - 1) अणु
+	if (len > PAGE_SIZE - 1) {
 		DRM_DEBUG_KMS("Expected < %lu bytes into crtc crc control\n",
 			      PAGE_SIZE);
-		वापस -E2BIG;
-	पूर्ण
+		return -E2BIG;
+	}
 
 	source = memdup_user_nul(ubuf, len);
-	अगर (IS_ERR(source))
-		वापस PTR_ERR(source);
+	if (IS_ERR(source))
+		return PTR_ERR(source);
 
-	अगर (source[len - 1] == '\n')
+	if (source[len - 1] == '\n')
 		source[len - 1] = '\0';
 
-	ret = crtc->funcs->verअगरy_crc_source(crtc, source, &values_cnt);
-	अगर (ret) अणु
-		kमुक्त(source);
-		वापस ret;
-	पूर्ण
+	ret = crtc->funcs->verify_crc_source(crtc, source, &values_cnt);
+	if (ret) {
+		kfree(source);
+		return ret;
+	}
 
 	spin_lock_irq(&crc->lock);
 
-	अगर (crc->खोलोed) अणु
+	if (crc->opened) {
 		spin_unlock_irq(&crc->lock);
-		kमुक्त(source);
-		वापस -EBUSY;
-	पूर्ण
+		kfree(source);
+		return -EBUSY;
+	}
 
-	kमुक्त(crc->source);
+	kfree(crc->source);
 	crc->source = source;
 
 	spin_unlock_irq(&crc->lock);
 
 	*offp += len;
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल स्थिर काष्ठा file_operations drm_crtc_crc_control_fops = अणु
+static const struct file_operations drm_crtc_crc_control_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = crc_control_खोलो,
-	.पढ़ो = seq_पढ़ो,
+	.open = crc_control_open,
+	.read = seq_read,
 	.llseek = seq_lseek,
 	.release = single_release,
-	.ग_लिखो = crc_control_ग_लिखो
-पूर्ण;
+	.write = crc_control_write
+};
 
-अटल पूर्णांक crtc_crc_data_count(काष्ठा drm_crtc_crc *crc)
-अणु
-	निश्चित_spin_locked(&crc->lock);
-	वापस CIRC_CNT(crc->head, crc->tail, DRM_CRC_ENTRIES_NR);
-पूर्ण
+static int crtc_crc_data_count(struct drm_crtc_crc *crc)
+{
+	assert_spin_locked(&crc->lock);
+	return CIRC_CNT(crc->head, crc->tail, DRM_CRC_ENTRIES_NR);
+}
 
-अटल व्योम crtc_crc_cleanup(काष्ठा drm_crtc_crc *crc)
-अणु
-	kमुक्त(crc->entries);
+static void crtc_crc_cleanup(struct drm_crtc_crc *crc)
+{
+	kfree(crc->entries);
 	crc->overflow = false;
-	crc->entries = शून्य;
+	crc->entries = NULL;
 	crc->head = 0;
 	crc->tail = 0;
 	crc->values_cnt = 0;
-	crc->खोलोed = false;
-पूर्ण
+	crc->opened = false;
+}
 
-अटल पूर्णांक crtc_crc_खोलो(काष्ठा inode *inode, काष्ठा file *filep)
-अणु
-	काष्ठा drm_crtc *crtc = inode->i_निजी;
-	काष्ठा drm_crtc_crc *crc = &crtc->crc;
-	काष्ठा drm_crtc_crc_entry *entries = शून्य;
-	माप_प्रकार values_cnt;
-	पूर्णांक ret = 0;
+static int crtc_crc_open(struct inode *inode, struct file *filep)
+{
+	struct drm_crtc *crtc = inode->i_private;
+	struct drm_crtc_crc *crc = &crtc->crc;
+	struct drm_crtc_crc_entry *entries = NULL;
+	size_t values_cnt;
+	int ret = 0;
 
-	अगर (drm_drv_uses_atomic_modeset(crtc->dev)) अणु
-		ret = drm_modeset_lock_single_पूर्णांकerruptible(&crtc->mutex);
-		अगर (ret)
-			वापस ret;
+	if (drm_drv_uses_atomic_modeset(crtc->dev)) {
+		ret = drm_modeset_lock_single_interruptible(&crtc->mutex);
+		if (ret)
+			return ret;
 
-		अगर (!crtc->state->active)
+		if (!crtc->state->active)
 			ret = -EIO;
 		drm_modeset_unlock(&crtc->mutex);
 
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	ret = crtc->funcs->verअगरy_crc_source(crtc, crc->source, &values_cnt);
-	अगर (ret)
-		वापस ret;
+	ret = crtc->funcs->verify_crc_source(crtc, crc->source, &values_cnt);
+	if (ret)
+		return ret;
 
-	अगर (WARN_ON(values_cnt > DRM_MAX_CRC_NR))
-		वापस -EINVAL;
+	if (WARN_ON(values_cnt > DRM_MAX_CRC_NR))
+		return -EINVAL;
 
-	अगर (WARN_ON(values_cnt == 0))
-		वापस -EINVAL;
+	if (WARN_ON(values_cnt == 0))
+		return -EINVAL;
 
-	entries = kसुस्मृति(DRM_CRC_ENTRIES_NR, माप(*entries), GFP_KERNEL);
-	अगर (!entries)
-		वापस -ENOMEM;
+	entries = kcalloc(DRM_CRC_ENTRIES_NR, sizeof(*entries), GFP_KERNEL);
+	if (!entries)
+		return -ENOMEM;
 
 	spin_lock_irq(&crc->lock);
-	अगर (!crc->खोलोed) अणु
-		crc->खोलोed = true;
+	if (!crc->opened) {
+		crc->opened = true;
 		crc->entries = entries;
 		crc->values_cnt = values_cnt;
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = -EBUSY;
-	पूर्ण
+	}
 	spin_unlock_irq(&crc->lock);
 
-	अगर (ret) अणु
-		kमुक्त(entries);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		kfree(entries);
+		return ret;
+	}
 
 	ret = crtc->funcs->set_crc_source(crtc, crc->source);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	वापस 0;
+	return 0;
 
 err:
 	spin_lock_irq(&crc->lock);
 	crtc_crc_cleanup(crc);
 	spin_unlock_irq(&crc->lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक crtc_crc_release(काष्ठा inode *inode, काष्ठा file *filep)
-अणु
-	काष्ठा drm_crtc *crtc = filep->f_inode->i_निजी;
-	काष्ठा drm_crtc_crc *crc = &crtc->crc;
+static int crtc_crc_release(struct inode *inode, struct file *filep)
+{
+	struct drm_crtc *crtc = filep->f_inode->i_private;
+	struct drm_crtc_crc *crc = &crtc->crc;
 
-	/* terminate the infinite जबतक loop अगर 'drm_dp_aux_crc_work' running */
+	/* terminate the infinite while loop if 'drm_dp_aux_crc_work' running */
 	spin_lock_irq(&crc->lock);
-	crc->खोलोed = false;
+	crc->opened = false;
 	spin_unlock_irq(&crc->lock);
 
-	crtc->funcs->set_crc_source(crtc, शून्य);
+	crtc->funcs->set_crc_source(crtc, NULL);
 
 	spin_lock_irq(&crc->lock);
 	crtc_crc_cleanup(crc);
 	spin_unlock_irq(&crc->lock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * 1 frame field of 10 अक्षरs plus a number of CRC fields of 10 अक्षरs each, space
+ * 1 frame field of 10 chars plus a number of CRC fields of 10 chars each, space
  * separated, with a newline at the end and null-terminated.
  */
-#घोषणा LINE_LEN(values_cnt)	(10 + 11 * values_cnt + 1 + 1)
-#घोषणा MAX_LINE_LEN		(LINE_LEN(DRM_MAX_CRC_NR))
+#define LINE_LEN(values_cnt)	(10 + 11 * values_cnt + 1 + 1)
+#define MAX_LINE_LEN		(LINE_LEN(DRM_MAX_CRC_NR))
 
-अटल sमाप_प्रकार crtc_crc_पढ़ो(काष्ठा file *filep, अक्षर __user *user_buf,
-			     माप_प्रकार count, loff_t *pos)
-अणु
-	काष्ठा drm_crtc *crtc = filep->f_inode->i_निजी;
-	काष्ठा drm_crtc_crc *crc = &crtc->crc;
-	काष्ठा drm_crtc_crc_entry *entry;
-	अक्षर buf[MAX_LINE_LEN];
-	पूर्णांक ret, i;
+static ssize_t crtc_crc_read(struct file *filep, char __user *user_buf,
+			     size_t count, loff_t *pos)
+{
+	struct drm_crtc *crtc = filep->f_inode->i_private;
+	struct drm_crtc_crc *crc = &crtc->crc;
+	struct drm_crtc_crc_entry *entry;
+	char buf[MAX_LINE_LEN];
+	int ret, i;
 
 	spin_lock_irq(&crc->lock);
 
-	अगर (!crc->source) अणु
+	if (!crc->source) {
 		spin_unlock_irq(&crc->lock);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Nothing to पढ़ो? */
-	जबतक (crtc_crc_data_count(crc) == 0) अणु
-		अगर (filep->f_flags & O_NONBLOCK) अणु
+	/* Nothing to read? */
+	while (crtc_crc_data_count(crc) == 0) {
+		if (filep->f_flags & O_NONBLOCK) {
 			spin_unlock_irq(&crc->lock);
-			वापस -EAGAIN;
-		पूर्ण
+			return -EAGAIN;
+		}
 
-		ret = रुको_event_पूर्णांकerruptible_lock_irq(crc->wq,
+		ret = wait_event_interruptible_lock_irq(crc->wq,
 							crtc_crc_data_count(crc),
 							crc->lock);
-		अगर (ret) अणु
+		if (ret) {
 			spin_unlock_irq(&crc->lock);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	/* We know we have an entry to be पढ़ो */
+	/* We know we have an entry to be read */
 	entry = &crc->entries[crc->tail];
 
-	अगर (count < LINE_LEN(crc->values_cnt)) अणु
+	if (count < LINE_LEN(crc->values_cnt)) {
 		spin_unlock_irq(&crc->lock);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	BUILD_BUG_ON_NOT_POWER_OF_2(DRM_CRC_ENTRIES_NR);
 	crc->tail = (crc->tail + 1) & (DRM_CRC_ENTRIES_NR - 1);
 
 	spin_unlock_irq(&crc->lock);
 
-	अगर (entry->has_frame_counter)
-		प्र_लिखो(buf, "0x%08x", entry->frame);
-	अन्यथा
-		प्र_लिखो(buf, "XXXXXXXXXX");
+	if (entry->has_frame_counter)
+		sprintf(buf, "0x%08x", entry->frame);
+	else
+		sprintf(buf, "XXXXXXXXXX");
 
-	क्रम (i = 0; i < crc->values_cnt; i++)
-		प्र_लिखो(buf + 10 + i * 11, " 0x%08x", entry->crcs[i]);
-	प्र_लिखो(buf + 10 + crc->values_cnt * 11, "\n");
+	for (i = 0; i < crc->values_cnt; i++)
+		sprintf(buf + 10 + i * 11, " 0x%08x", entry->crcs[i]);
+	sprintf(buf + 10 + crc->values_cnt * 11, "\n");
 
-	अगर (copy_to_user(user_buf, buf, LINE_LEN(crc->values_cnt)))
-		वापस -EFAULT;
+	if (copy_to_user(user_buf, buf, LINE_LEN(crc->values_cnt)))
+		return -EFAULT;
 
-	वापस LINE_LEN(crc->values_cnt);
-पूर्ण
+	return LINE_LEN(crc->values_cnt);
+}
 
-अटल __poll_t crtc_crc_poll(काष्ठा file *file, poll_table *रुको)
-अणु
-	काष्ठा drm_crtc *crtc = file->f_inode->i_निजी;
-	काष्ठा drm_crtc_crc *crc = &crtc->crc;
+static __poll_t crtc_crc_poll(struct file *file, poll_table *wait)
+{
+	struct drm_crtc *crtc = file->f_inode->i_private;
+	struct drm_crtc_crc *crc = &crtc->crc;
 	__poll_t ret = 0;
 
-	poll_रुको(file, &crc->wq, रुको);
+	poll_wait(file, &crc->wq, wait);
 
 	spin_lock_irq(&crc->lock);
-	अगर (crc->source && crtc_crc_data_count(crc))
+	if (crc->source && crtc_crc_data_count(crc))
 		ret |= EPOLLIN | EPOLLRDNORM;
 	spin_unlock_irq(&crc->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा file_operations drm_crtc_crc_data_fops = अणु
+static const struct file_operations drm_crtc_crc_data_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = crtc_crc_खोलो,
-	.पढ़ो = crtc_crc_पढ़ो,
+	.open = crtc_crc_open,
+	.read = crtc_crc_read,
 	.poll = crtc_crc_poll,
 	.release = crtc_crc_release,
-पूर्ण;
+};
 
-व्योम drm_debugfs_crtc_crc_add(काष्ठा drm_crtc *crtc)
-अणु
-	काष्ठा dentry *crc_ent;
+void drm_debugfs_crtc_crc_add(struct drm_crtc *crtc)
+{
+	struct dentry *crc_ent;
 
-	अगर (!crtc->funcs->set_crc_source || !crtc->funcs->verअगरy_crc_source)
-		वापस;
+	if (!crtc->funcs->set_crc_source || !crtc->funcs->verify_crc_source)
+		return;
 
 	crc_ent = debugfs_create_dir("crc", crtc->debugfs_entry);
 
@@ -379,61 +378,61 @@ err:
 			    &drm_crtc_crc_control_fops);
 	debugfs_create_file("data", S_IRUGO, crc_ent, crtc,
 			    &drm_crtc_crc_data_fops);
-पूर्ण
+}
 
 /**
- * drm_crtc_add_crc_entry - Add entry with CRC inक्रमmation क्रम a frame
- * @crtc: CRTC to which the frame beदीर्घs
+ * drm_crtc_add_crc_entry - Add entry with CRC information for a frame
+ * @crtc: CRTC to which the frame belongs
  * @has_frame: whether this entry has a frame number to go with
  * @frame: number of the frame these CRCs are about
  * @crcs: array of CRC values, with length matching #drm_crtc_crc.values_cnt
  *
- * For each frame, the driver polls the source of CRCs क्रम new data and calls
- * this function to add them to the buffer from where userspace पढ़ोs.
+ * For each frame, the driver polls the source of CRCs for new data and calls
+ * this function to add them to the buffer from where userspace reads.
  */
-पूर्णांक drm_crtc_add_crc_entry(काष्ठा drm_crtc *crtc, bool has_frame,
-			   uपूर्णांक32_t frame, uपूर्णांक32_t *crcs)
-अणु
-	काष्ठा drm_crtc_crc *crc = &crtc->crc;
-	काष्ठा drm_crtc_crc_entry *entry;
-	पूर्णांक head, tail;
-	अचिन्हित दीर्घ flags;
+int drm_crtc_add_crc_entry(struct drm_crtc *crtc, bool has_frame,
+			   uint32_t frame, uint32_t *crcs)
+{
+	struct drm_crtc_crc *crc = &crtc->crc;
+	struct drm_crtc_crc_entry *entry;
+	int head, tail;
+	unsigned long flags;
 
 	spin_lock_irqsave(&crc->lock, flags);
 
-	/* Caller may not have noticed yet that userspace has stopped पढ़ोing */
-	अगर (!crc->entries) अणु
+	/* Caller may not have noticed yet that userspace has stopped reading */
+	if (!crc->entries) {
 		spin_unlock_irqrestore(&crc->lock, flags);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	head = crc->head;
 	tail = crc->tail;
 
-	अगर (CIRC_SPACE(head, tail, DRM_CRC_ENTRIES_NR) < 1) अणु
+	if (CIRC_SPACE(head, tail, DRM_CRC_ENTRIES_NR) < 1) {
 		bool was_overflow = crc->overflow;
 
 		crc->overflow = true;
 		spin_unlock_irqrestore(&crc->lock, flags);
 
-		अगर (!was_overflow)
+		if (!was_overflow)
 			DRM_ERROR("Overflow of CRC buffer, userspace reads too slow.\n");
 
-		वापस -ENOBUFS;
-	पूर्ण
+		return -ENOBUFS;
+	}
 
 	entry = &crc->entries[head];
 	entry->frame = frame;
 	entry->has_frame_counter = has_frame;
-	स_नकल(&entry->crcs, crcs, माप(*crcs) * crc->values_cnt);
+	memcpy(&entry->crcs, crcs, sizeof(*crcs) * crc->values_cnt);
 
 	head = (head + 1) & (DRM_CRC_ENTRIES_NR - 1);
 	crc->head = head;
 
 	spin_unlock_irqrestore(&crc->lock, flags);
 
-	wake_up_पूर्णांकerruptible(&crc->wq);
+	wake_up_interruptible(&crc->wq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(drm_crtc_add_crc_entry);

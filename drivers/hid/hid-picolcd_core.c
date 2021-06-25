@@ -1,35 +1,34 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /***************************************************************************
- *   Copyright (C) 2010-2012 by Bruno Prथऊmont <bonbons@linux-vserver.org>  *
+ *   Copyright (C) 2010-2012 by Bruno Prémont <bonbons@linux-vserver.org>  *
  *                                                                         *
  *   Based on Logitech G13 driver (v0.4)                                   *
  *     Copyright (C) 2009 by Rick L. Vinyard, Jr. <rvinyard@cs.nmsu.edu>   *
  *                                                                         *
  ***************************************************************************/
 
-#समावेश <linux/hid.h>
-#समावेश <linux/hid-debug.h>
-#समावेश <linux/input.h>
-#समावेश "hid-ids.h"
+#include <linux/hid.h>
+#include <linux/hid-debug.h>
+#include <linux/input.h>
+#include "hid-ids.h"
 
-#समावेश <linux/fb.h>
-#समावेश <linux/vदो_स्मृति.h>
+#include <linux/fb.h>
+#include <linux/vmalloc.h>
 
-#समावेश <linux/completion.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/module.h>
-#समावेश <linux/माला.स>
+#include <linux/completion.h>
+#include <linux/uaccess.h>
+#include <linux/module.h>
+#include <linux/string.h>
 
-#समावेश "hid-picolcd.h"
+#include "hid-picolcd.h"
 
 
 /* Input device
  *
  * The PicoLCD has an IR receiver header, a built-in keypad with 5 keys
- * and header क्रम 4x4 key matrix. The built-in keys are part of the matrix.
+ * and header for 4x4 key matrix. The built-in keys are part of the matrix.
  */
-अटल स्थिर अचिन्हित लघु def_keymap[PICOLCD_KEYS] = अणु
+static const unsigned short def_keymap[PICOLCD_KEYS] = {
 	KEY_RESERVED,	/* none */
 	KEY_BACK,	/* col 4 + row 1 */
 	KEY_HOMEPAGE,	/* col 3 + row 1 */
@@ -47,614 +46,614 @@
 	KEY_RESERVED,	/* col 3 + row 4 */
 	KEY_RESERVED,	/* col 2 + row 4 */
 	KEY_RESERVED,	/* col 1 + row 4 */
-पूर्ण;
+};
 
 
 /* Find a given report */
-काष्ठा hid_report *picolcd_report(पूर्णांक id, काष्ठा hid_device *hdev, पूर्णांक dir)
-अणु
-	काष्ठा list_head *feature_report_list = &hdev->report_क्रमागत[dir].report_list;
-	काष्ठा hid_report *report = शून्य;
+struct hid_report *picolcd_report(int id, struct hid_device *hdev, int dir)
+{
+	struct list_head *feature_report_list = &hdev->report_enum[dir].report_list;
+	struct hid_report *report = NULL;
 
-	list_क्रम_each_entry(report, feature_report_list, list) अणु
-		अगर (report->id == id)
-			वापस report;
-	पूर्ण
+	list_for_each_entry(report, feature_report_list, list) {
+		if (report->id == id)
+			return report;
+	}
 	hid_warn(hdev, "No report with id 0x%x found\n", id);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-/* Submit a report and रुको क्रम a reply from device - अगर device fades away
- * or करोes not respond in समय, वापस शून्य */
-काष्ठा picolcd_pending *picolcd_send_and_रुको(काष्ठा hid_device *hdev,
-		पूर्णांक report_id, स्थिर u8 *raw_data, पूर्णांक size)
-अणु
-	काष्ठा picolcd_data *data = hid_get_drvdata(hdev);
-	काष्ठा picolcd_pending *work;
-	काष्ठा hid_report *report = picolcd_out_report(report_id, hdev);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक i, j, k;
+/* Submit a report and wait for a reply from device - if device fades away
+ * or does not respond in time, return NULL */
+struct picolcd_pending *picolcd_send_and_wait(struct hid_device *hdev,
+		int report_id, const u8 *raw_data, int size)
+{
+	struct picolcd_data *data = hid_get_drvdata(hdev);
+	struct picolcd_pending *work;
+	struct hid_report *report = picolcd_out_report(report_id, hdev);
+	unsigned long flags;
+	int i, j, k;
 
-	अगर (!report || !data)
-		वापस शून्य;
-	अगर (data->status & PICOLCD_FAILED)
-		वापस शून्य;
-	work = kzalloc(माप(*work), GFP_KERNEL);
-	अगर (!work)
-		वापस शून्य;
+	if (!report || !data)
+		return NULL;
+	if (data->status & PICOLCD_FAILED)
+		return NULL;
+	work = kzalloc(sizeof(*work), GFP_KERNEL);
+	if (!work)
+		return NULL;
 
-	init_completion(&work->पढ़ोy);
+	init_completion(&work->ready);
 	work->out_report = report;
-	work->in_report  = शून्य;
+	work->in_report  = NULL;
 	work->raw_size   = 0;
 
 	mutex_lock(&data->mutex);
 	spin_lock_irqsave(&data->lock, flags);
-	क्रम (i = k = 0; i < report->maxfield; i++)
-		क्रम (j = 0; j < report->field[i]->report_count; j++) अणु
+	for (i = k = 0; i < report->maxfield; i++)
+		for (j = 0; j < report->field[i]->report_count; j++) {
 			hid_set_field(report->field[i], j, k < size ? raw_data[k] : 0);
 			k++;
-		पूर्ण
-	अगर (data->status & PICOLCD_FAILED) अणु
-		kमुक्त(work);
-		work = शून्य;
-	पूर्ण अन्यथा अणु
+		}
+	if (data->status & PICOLCD_FAILED) {
+		kfree(work);
+		work = NULL;
+	} else {
 		data->pending = work;
 		hid_hw_request(data->hdev, report, HID_REQ_SET_REPORT);
 		spin_unlock_irqrestore(&data->lock, flags);
-		रुको_क्रम_completion_पूर्णांकerruptible_समयout(&work->पढ़ोy, HZ*2);
+		wait_for_completion_interruptible_timeout(&work->ready, HZ*2);
 		spin_lock_irqsave(&data->lock, flags);
-		data->pending = शून्य;
-	पूर्ण
+		data->pending = NULL;
+	}
 	spin_unlock_irqrestore(&data->lock, flags);
 	mutex_unlock(&data->mutex);
-	वापस work;
-पूर्ण
+	return work;
+}
 
 /*
  * input class device
  */
-अटल पूर्णांक picolcd_raw_keypad(काष्ठा picolcd_data *data,
-		काष्ठा hid_report *report, u8 *raw_data, पूर्णांक size)
-अणु
+static int picolcd_raw_keypad(struct picolcd_data *data,
+		struct hid_report *report, u8 *raw_data, int size)
+{
 	/*
 	 * Keypad event
 	 * First and second data bytes list currently pressed keys,
-	 * 0x00 means no key and at most 2 keys may be pressed at same समय
+	 * 0x00 means no key and at most 2 keys may be pressed at same time
 	 */
-	पूर्णांक i, j;
+	int i, j;
 
 	/* determine newly pressed keys */
-	क्रम (i = 0; i < size; i++) अणु
-		अचिन्हित पूर्णांक key_code;
-		अगर (raw_data[i] == 0)
-			जारी;
-		क्रम (j = 0; j < माप(data->pressed_keys); j++)
-			अगर (data->pressed_keys[j] == raw_data[i])
-				जाओ key_alपढ़ोy_करोwn;
-		क्रम (j = 0; j < माप(data->pressed_keys); j++)
-			अगर (data->pressed_keys[j] == 0) अणु
+	for (i = 0; i < size; i++) {
+		unsigned int key_code;
+		if (raw_data[i] == 0)
+			continue;
+		for (j = 0; j < sizeof(data->pressed_keys); j++)
+			if (data->pressed_keys[j] == raw_data[i])
+				goto key_already_down;
+		for (j = 0; j < sizeof(data->pressed_keys); j++)
+			if (data->pressed_keys[j] == 0) {
 				data->pressed_keys[j] = raw_data[i];
-				अवरोध;
-			पूर्ण
+				break;
+			}
 		input_event(data->input_keys, EV_MSC, MSC_SCAN, raw_data[i]);
-		अगर (raw_data[i] < PICOLCD_KEYS)
+		if (raw_data[i] < PICOLCD_KEYS)
 			key_code = data->keycode[raw_data[i]];
-		अन्यथा
+		else
 			key_code = KEY_UNKNOWN;
-		अगर (key_code != KEY_UNKNOWN) अणु
+		if (key_code != KEY_UNKNOWN) {
 			dbg_hid(PICOLCD_NAME " got key press for %u:%d",
 					raw_data[i], key_code);
 			input_report_key(data->input_keys, key_code, 1);
-		पूर्ण
+		}
 		input_sync(data->input_keys);
-key_alपढ़ोy_करोwn:
-		जारी;
-	पूर्ण
+key_already_down:
+		continue;
+	}
 
 	/* determine newly released keys */
-	क्रम (j = 0; j < माप(data->pressed_keys); j++) अणु
-		अचिन्हित पूर्णांक key_code;
-		अगर (data->pressed_keys[j] == 0)
-			जारी;
-		क्रम (i = 0; i < size; i++)
-			अगर (data->pressed_keys[j] == raw_data[i])
-				जाओ key_still_करोwn;
+	for (j = 0; j < sizeof(data->pressed_keys); j++) {
+		unsigned int key_code;
+		if (data->pressed_keys[j] == 0)
+			continue;
+		for (i = 0; i < size; i++)
+			if (data->pressed_keys[j] == raw_data[i])
+				goto key_still_down;
 		input_event(data->input_keys, EV_MSC, MSC_SCAN, data->pressed_keys[j]);
-		अगर (data->pressed_keys[j] < PICOLCD_KEYS)
+		if (data->pressed_keys[j] < PICOLCD_KEYS)
 			key_code = data->keycode[data->pressed_keys[j]];
-		अन्यथा
+		else
 			key_code = KEY_UNKNOWN;
-		अगर (key_code != KEY_UNKNOWN) अणु
+		if (key_code != KEY_UNKNOWN) {
 			dbg_hid(PICOLCD_NAME " got key release for %u:%d",
 					data->pressed_keys[j], key_code);
 			input_report_key(data->input_keys, key_code, 0);
-		पूर्ण
+		}
 		input_sync(data->input_keys);
 		data->pressed_keys[j] = 0;
-key_still_करोwn:
-		जारी;
-	पूर्ण
-	वापस 1;
-पूर्ण
+key_still_down:
+		continue;
+	}
+	return 1;
+}
 
-अटल पूर्णांक picolcd_check_version(काष्ठा hid_device *hdev)
-अणु
-	काष्ठा picolcd_data *data = hid_get_drvdata(hdev);
-	काष्ठा picolcd_pending *verinfo;
-	पूर्णांक ret = 0;
+static int picolcd_check_version(struct hid_device *hdev)
+{
+	struct picolcd_data *data = hid_get_drvdata(hdev);
+	struct picolcd_pending *verinfo;
+	int ret = 0;
 
-	अगर (!data)
-		वापस -ENODEV;
+	if (!data)
+		return -ENODEV;
 
-	verinfo = picolcd_send_and_रुको(hdev, REPORT_VERSION, शून्य, 0);
-	अगर (!verinfo) अणु
+	verinfo = picolcd_send_and_wait(hdev, REPORT_VERSION, NULL, 0);
+	if (!verinfo) {
 		hid_err(hdev, "no version response from PicoLCD\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	अगर (verinfo->raw_size == 2) अणु
+	if (verinfo->raw_size == 2) {
 		data->version[0] = verinfo->raw_data[1];
 		data->version[1] = verinfo->raw_data[0];
-		अगर (data->status & PICOLCD_BOOTLOADER) अणु
+		if (data->status & PICOLCD_BOOTLOADER) {
 			hid_info(hdev, "PicoLCD, bootloader version %d.%d\n",
 				 verinfo->raw_data[1], verinfo->raw_data[0]);
-		पूर्ण अन्यथा अणु
+		} else {
 			hid_info(hdev, "PicoLCD, firmware version %d.%d\n",
 				 verinfo->raw_data[1], verinfo->raw_data[0]);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		hid_err(hdev, "confused, got unexpected version response from PicoLCD\n");
 		ret = -EINVAL;
-	पूर्ण
-	kमुक्त(verinfo);
-	वापस ret;
-पूर्ण
+	}
+	kfree(verinfo);
+	return ret;
+}
 
 /*
- * Reset our device and रुको क्रम answer to VERSION request
+ * Reset our device and wait for answer to VERSION request
  */
-पूर्णांक picolcd_reset(काष्ठा hid_device *hdev)
-अणु
-	काष्ठा picolcd_data *data = hid_get_drvdata(hdev);
-	काष्ठा hid_report *report = picolcd_out_report(REPORT_RESET, hdev);
-	अचिन्हित दीर्घ flags;
-	पूर्णांक error;
+int picolcd_reset(struct hid_device *hdev)
+{
+	struct picolcd_data *data = hid_get_drvdata(hdev);
+	struct hid_report *report = picolcd_out_report(REPORT_RESET, hdev);
+	unsigned long flags;
+	int error;
 
-	अगर (!data || !report || report->maxfield != 1)
-		वापस -ENODEV;
+	if (!data || !report || report->maxfield != 1)
+		return -ENODEV;
 
 	spin_lock_irqsave(&data->lock, flags);
-	अगर (hdev->product == USB_DEVICE_ID_PICOLCD_BOOTLOADER)
+	if (hdev->product == USB_DEVICE_ID_PICOLCD_BOOTLOADER)
 		data->status |= PICOLCD_BOOTLOADER;
 
-	/* perक्रमm the reset */
+	/* perform the reset */
 	hid_set_field(report->field[0], 0, 1);
-	अगर (data->status & PICOLCD_FAILED) अणु
+	if (data->status & PICOLCD_FAILED) {
 		spin_unlock_irqrestore(&data->lock, flags);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	hid_hw_request(hdev, report, HID_REQ_SET_REPORT);
 	spin_unlock_irqrestore(&data->lock, flags);
 
 	error = picolcd_check_version(hdev);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
 	picolcd_resume_lcd(data);
 	picolcd_resume_backlight(data);
 	picolcd_fb_refresh(data);
 	picolcd_leds_set(data);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * The "operation_mode" sysfs attribute
  */
-अटल sमाप_प्रकार picolcd_operation_mode_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा picolcd_data *data = dev_get_drvdata(dev);
+static ssize_t picolcd_operation_mode_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct picolcd_data *data = dev_get_drvdata(dev);
 
-	अगर (data->status & PICOLCD_BOOTLOADER)
-		वापस snम_लिखो(buf, PAGE_SIZE, "[bootloader] lcd\n");
-	अन्यथा
-		वापस snम_लिखो(buf, PAGE_SIZE, "bootloader [lcd]\n");
-पूर्ण
+	if (data->status & PICOLCD_BOOTLOADER)
+		return snprintf(buf, PAGE_SIZE, "[bootloader] lcd\n");
+	else
+		return snprintf(buf, PAGE_SIZE, "bootloader [lcd]\n");
+}
 
-अटल sमाप_प्रकार picolcd_operation_mode_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा picolcd_data *data = dev_get_drvdata(dev);
-	काष्ठा hid_report *report = शून्य;
-	पूर्णांक समयout = data->opmode_delay;
-	अचिन्हित दीर्घ flags;
+static ssize_t picolcd_operation_mode_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct picolcd_data *data = dev_get_drvdata(dev);
+	struct hid_report *report = NULL;
+	int timeout = data->opmode_delay;
+	unsigned long flags;
 
-	अगर (sysfs_streq(buf, "lcd")) अणु
-		अगर (data->status & PICOLCD_BOOTLOADER)
+	if (sysfs_streq(buf, "lcd")) {
+		if (data->status & PICOLCD_BOOTLOADER)
 			report = picolcd_out_report(REPORT_EXIT_FLASHER, data->hdev);
-	पूर्ण अन्यथा अगर (sysfs_streq(buf, "bootloader")) अणु
-		अगर (!(data->status & PICOLCD_BOOTLOADER))
+	} else if (sysfs_streq(buf, "bootloader")) {
+		if (!(data->status & PICOLCD_BOOTLOADER))
 			report = picolcd_out_report(REPORT_EXIT_KEYBOARD, data->hdev);
-	पूर्ण अन्यथा अणु
-		वापस -EINVAL;
-	पूर्ण
+	} else {
+		return -EINVAL;
+	}
 
-	अगर (!report || report->maxfield != 1)
-		वापस -EINVAL;
+	if (!report || report->maxfield != 1)
+		return -EINVAL;
 
 	spin_lock_irqsave(&data->lock, flags);
-	hid_set_field(report->field[0], 0, समयout & 0xff);
-	hid_set_field(report->field[0], 1, (समयout >> 8) & 0xff);
+	hid_set_field(report->field[0], 0, timeout & 0xff);
+	hid_set_field(report->field[0], 1, (timeout >> 8) & 0xff);
 	hid_hw_request(data->hdev, report, HID_REQ_SET_REPORT);
 	spin_unlock_irqrestore(&data->lock, flags);
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(operation_mode, 0644, picolcd_operation_mode_show,
+static DEVICE_ATTR(operation_mode, 0644, picolcd_operation_mode_show,
 		picolcd_operation_mode_store);
 
 /*
  * The "operation_mode_delay" sysfs attribute
  */
-अटल sमाप_प्रकार picolcd_operation_mode_delay_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा picolcd_data *data = dev_get_drvdata(dev);
+static ssize_t picolcd_operation_mode_delay_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct picolcd_data *data = dev_get_drvdata(dev);
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%hu\n", data->opmode_delay);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%hu\n", data->opmode_delay);
+}
 
-अटल sमाप_प्रकार picolcd_operation_mode_delay_store(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा picolcd_data *data = dev_get_drvdata(dev);
-	अचिन्हित u;
-	अगर (माला_पूछो(buf, "%u", &u) != 1)
-		वापस -EINVAL;
-	अगर (u > 30000)
-		वापस -EINVAL;
-	अन्यथा
+static ssize_t picolcd_operation_mode_delay_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	struct picolcd_data *data = dev_get_drvdata(dev);
+	unsigned u;
+	if (sscanf(buf, "%u", &u) != 1)
+		return -EINVAL;
+	if (u > 30000)
+		return -EINVAL;
+	else
 		data->opmode_delay = u;
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल DEVICE_ATTR(operation_mode_delay, 0644, picolcd_operation_mode_delay_show,
+static DEVICE_ATTR(operation_mode_delay, 0644, picolcd_operation_mode_delay_show,
 		picolcd_operation_mode_delay_store);
 
 /*
  * Handle raw report as sent by device
  */
-अटल पूर्णांक picolcd_raw_event(काष्ठा hid_device *hdev,
-		काष्ठा hid_report *report, u8 *raw_data, पूर्णांक size)
-अणु
-	काष्ठा picolcd_data *data = hid_get_drvdata(hdev);
-	अचिन्हित दीर्घ flags;
+static int picolcd_raw_event(struct hid_device *hdev,
+		struct hid_report *report, u8 *raw_data, int size)
+{
+	struct picolcd_data *data = hid_get_drvdata(hdev);
+	unsigned long flags;
 
-	अगर (!data)
-		वापस 1;
+	if (!data)
+		return 1;
 
-	अगर (size > 64) अणु
+	if (size > 64) {
 		hid_warn(hdev, "invalid size value (%d) for picolcd raw event (%d)\n",
 				size, report->id);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (report->id == REPORT_KEY_STATE) अणु
-		अगर (data->input_keys)
+	if (report->id == REPORT_KEY_STATE) {
+		if (data->input_keys)
 			picolcd_raw_keypad(data, report, raw_data+1, size-1);
-	पूर्ण अन्यथा अगर (report->id == REPORT_IR_DATA) अणु
+	} else if (report->id == REPORT_IR_DATA) {
 		picolcd_raw_cir(data, report, raw_data+1, size-1);
-	पूर्ण अन्यथा अणु
+	} else {
 		spin_lock_irqsave(&data->lock, flags);
 		/*
-		 * We let the caller of picolcd_send_and_रुको() check अगर the
+		 * We let the caller of picolcd_send_and_wait() check if the
 		 * report we got is one of the expected ones or not.
 		 */
-		अगर (data->pending) अणु
-			स_नकल(data->pending->raw_data, raw_data+1, size-1);
+		if (data->pending) {
+			memcpy(data->pending->raw_data, raw_data+1, size-1);
 			data->pending->raw_size  = size-1;
 			data->pending->in_report = report;
-			complete(&data->pending->पढ़ोy);
-		पूर्ण
+			complete(&data->pending->ready);
+		}
 		spin_unlock_irqrestore(&data->lock, flags);
-	पूर्ण
+	}
 
 	picolcd_debug_raw_event(data, hdev, report, raw_data, size);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक picolcd_suspend(काष्ठा hid_device *hdev, pm_message_t message)
-अणु
-	अगर (PMSG_IS_AUTO(message))
-		वापस 0;
+#ifdef CONFIG_PM
+static int picolcd_suspend(struct hid_device *hdev, pm_message_t message)
+{
+	if (PMSG_IS_AUTO(message))
+		return 0;
 
 	picolcd_suspend_backlight(hid_get_drvdata(hdev));
 	dbg_hid(PICOLCD_NAME " device ready for suspend\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक picolcd_resume(काष्ठा hid_device *hdev)
-अणु
-	पूर्णांक ret;
+static int picolcd_resume(struct hid_device *hdev)
+{
+	int ret;
 	ret = picolcd_resume_backlight(hid_get_drvdata(hdev));
-	अगर (ret)
+	if (ret)
 		dbg_hid(PICOLCD_NAME " restoring backlight failed: %d\n", ret);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक picolcd_reset_resume(काष्ठा hid_device *hdev)
-अणु
-	पूर्णांक ret;
+static int picolcd_reset_resume(struct hid_device *hdev)
+{
+	int ret;
 	ret = picolcd_reset(hdev);
-	अगर (ret)
+	if (ret)
 		dbg_hid(PICOLCD_NAME " resetting our device failed: %d\n", ret);
 	ret = picolcd_fb_reset(hid_get_drvdata(hdev), 0);
-	अगर (ret)
+	if (ret)
 		dbg_hid(PICOLCD_NAME " restoring framebuffer content failed: %d\n", ret);
 	ret = picolcd_resume_lcd(hid_get_drvdata(hdev));
-	अगर (ret)
+	if (ret)
 		dbg_hid(PICOLCD_NAME " restoring lcd failed: %d\n", ret);
 	ret = picolcd_resume_backlight(hid_get_drvdata(hdev));
-	अगर (ret)
+	if (ret)
 		dbg_hid(PICOLCD_NAME " restoring backlight failed: %d\n", ret);
 	picolcd_leds_set(hid_get_drvdata(hdev));
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
 /* initialize keypad input device */
-अटल पूर्णांक picolcd_init_keys(काष्ठा picolcd_data *data,
-		काष्ठा hid_report *report)
-अणु
-	काष्ठा hid_device *hdev = data->hdev;
-	काष्ठा input_dev *idev;
-	पूर्णांक error, i;
+static int picolcd_init_keys(struct picolcd_data *data,
+		struct hid_report *report)
+{
+	struct hid_device *hdev = data->hdev;
+	struct input_dev *idev;
+	int error, i;
 
-	अगर (!report)
-		वापस -ENODEV;
-	अगर (report->maxfield != 1 || report->field[0]->report_count != 2 ||
-			report->field[0]->report_size != 8) अणु
+	if (!report)
+		return -ENODEV;
+	if (report->maxfield != 1 || report->field[0]->report_count != 2 ||
+			report->field[0]->report_size != 8) {
 		hid_err(hdev, "unsupported KEY_STATE report\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	idev = input_allocate_device();
-	अगर (idev == शून्य) अणु
+	if (idev == NULL) {
 		hid_err(hdev, "failed to allocate input device\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	input_set_drvdata(idev, hdev);
-	स_नकल(data->keycode, def_keymap, माप(def_keymap));
+	memcpy(data->keycode, def_keymap, sizeof(def_keymap));
 	idev->name = hdev->name;
 	idev->phys = hdev->phys;
 	idev->uniq = hdev->uniq;
 	idev->id.bustype = hdev->bus;
-	idev->id.venकरोr  = hdev->venकरोr;
+	idev->id.vendor  = hdev->vendor;
 	idev->id.product = hdev->product;
 	idev->id.version = hdev->version;
 	idev->dev.parent = &hdev->dev;
 	idev->keycode     = &data->keycode;
 	idev->keycodemax  = PICOLCD_KEYS;
-	idev->keycodesize = माप(data->keycode[0]);
+	idev->keycodesize = sizeof(data->keycode[0]);
 	input_set_capability(idev, EV_MSC, MSC_SCAN);
 	set_bit(EV_REP, idev->evbit);
-	क्रम (i = 0; i < PICOLCD_KEYS; i++)
+	for (i = 0; i < PICOLCD_KEYS; i++)
 		input_set_capability(idev, EV_KEY, data->keycode[i]);
-	error = input_रेजिस्टर_device(idev);
-	अगर (error) अणु
+	error = input_register_device(idev);
+	if (error) {
 		hid_err(hdev, "error registering the input device\n");
-		input_मुक्त_device(idev);
-		वापस error;
-	पूर्ण
+		input_free_device(idev);
+		return error;
+	}
 	data->input_keys = idev;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम picolcd_निकास_keys(काष्ठा picolcd_data *data)
-अणु
-	काष्ठा input_dev *idev = data->input_keys;
+static void picolcd_exit_keys(struct picolcd_data *data)
+{
+	struct input_dev *idev = data->input_keys;
 
-	data->input_keys = शून्य;
-	अगर (idev)
-		input_unरेजिस्टर_device(idev);
-पूर्ण
+	data->input_keys = NULL;
+	if (idev)
+		input_unregister_device(idev);
+}
 
-अटल पूर्णांक picolcd_probe_lcd(काष्ठा hid_device *hdev, काष्ठा picolcd_data *data)
-अणु
-	पूर्णांक error;
+static int picolcd_probe_lcd(struct hid_device *hdev, struct picolcd_data *data)
+{
+	int error;
 
 	/* Setup keypad input device */
 	error = picolcd_init_keys(data, picolcd_in_report(REPORT_KEY_STATE, hdev));
-	अगर (error)
-		जाओ err;
+	if (error)
+		goto err;
 
 	/* Setup CIR input device */
 	error = picolcd_init_cir(data, picolcd_in_report(REPORT_IR_DATA, hdev));
-	अगर (error)
-		जाओ err;
+	if (error)
+		goto err;
 
 	/* Set up the framebuffer device */
 	error = picolcd_init_framebuffer(data);
-	अगर (error)
-		जाओ err;
+	if (error)
+		goto err;
 
 	/* Setup lcd class device */
 	error = picolcd_init_lcd(data, picolcd_out_report(REPORT_CONTRAST, hdev));
-	अगर (error)
-		जाओ err;
+	if (error)
+		goto err;
 
 	/* Setup backlight class device */
 	error = picolcd_init_backlight(data, picolcd_out_report(REPORT_BRIGHTNESS, hdev));
-	अगर (error)
-		जाओ err;
+	if (error)
+		goto err;
 
 	/* Setup the LED class devices */
 	error = picolcd_init_leds(data, picolcd_out_report(REPORT_LED_STATE, hdev));
-	अगर (error)
-		जाओ err;
+	if (error)
+		goto err;
 
 	picolcd_init_devfs(data, picolcd_out_report(REPORT_EE_READ, hdev),
 			picolcd_out_report(REPORT_EE_WRITE, hdev),
 			picolcd_out_report(REPORT_READ_MEMORY, hdev),
 			picolcd_out_report(REPORT_WRITE_MEMORY, hdev),
 			picolcd_out_report(REPORT_RESET, hdev));
-	वापस 0;
+	return 0;
 err:
-	picolcd_निकास_leds(data);
-	picolcd_निकास_backlight(data);
-	picolcd_निकास_lcd(data);
-	picolcd_निकास_framebuffer(data);
-	picolcd_निकास_cir(data);
-	picolcd_निकास_keys(data);
-	वापस error;
-पूर्ण
+	picolcd_exit_leds(data);
+	picolcd_exit_backlight(data);
+	picolcd_exit_lcd(data);
+	picolcd_exit_framebuffer(data);
+	picolcd_exit_cir(data);
+	picolcd_exit_keys(data);
+	return error;
+}
 
-अटल पूर्णांक picolcd_probe_bootloader(काष्ठा hid_device *hdev, काष्ठा picolcd_data *data)
-अणु
-	picolcd_init_devfs(data, शून्य, शून्य,
+static int picolcd_probe_bootloader(struct hid_device *hdev, struct picolcd_data *data)
+{
+	picolcd_init_devfs(data, NULL, NULL,
 			picolcd_out_report(REPORT_BL_READ_MEMORY, hdev),
-			picolcd_out_report(REPORT_BL_WRITE_MEMORY, hdev), शून्य);
-	वापस 0;
-पूर्ण
+			picolcd_out_report(REPORT_BL_WRITE_MEMORY, hdev), NULL);
+	return 0;
+}
 
-अटल पूर्णांक picolcd_probe(काष्ठा hid_device *hdev,
-		     स्थिर काष्ठा hid_device_id *id)
-अणु
-	काष्ठा picolcd_data *data;
-	पूर्णांक error = -ENOMEM;
+static int picolcd_probe(struct hid_device *hdev,
+		     const struct hid_device_id *id)
+{
+	struct picolcd_data *data;
+	int error = -ENOMEM;
 
 	dbg_hid(PICOLCD_NAME " hardware probe...\n");
 
 	/*
-	 * Let's allocate the picolcd data काष्ठाure, set some reasonable
-	 * शेषs, and associate it with the device
+	 * Let's allocate the picolcd data structure, set some reasonable
+	 * defaults, and associate it with the device
 	 */
-	data = kzalloc(माप(काष्ठा picolcd_data), GFP_KERNEL);
-	अगर (data == शून्य) अणु
+	data = kzalloc(sizeof(struct picolcd_data), GFP_KERNEL);
+	if (data == NULL) {
 		hid_err(hdev, "can't allocate space for Minibox PicoLCD device data\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	spin_lock_init(&data->lock);
 	mutex_init(&data->mutex);
 	data->hdev = hdev;
 	data->opmode_delay = 5000;
-	अगर (hdev->product == USB_DEVICE_ID_PICOLCD_BOOTLOADER)
+	if (hdev->product == USB_DEVICE_ID_PICOLCD_BOOTLOADER)
 		data->status |= PICOLCD_BOOTLOADER;
 	hid_set_drvdata(hdev, data);
 
 	/* Parse the device reports and start it up */
 	error = hid_parse(hdev);
-	अगर (error) अणु
+	if (error) {
 		hid_err(hdev, "device report parse failed\n");
-		जाओ err_cleanup_data;
-	पूर्ण
+		goto err_cleanup_data;
+	}
 
 	error = hid_hw_start(hdev, 0);
-	अगर (error) अणु
+	if (error) {
 		hid_err(hdev, "hardware start failed\n");
-		जाओ err_cleanup_data;
-	पूर्ण
+		goto err_cleanup_data;
+	}
 
-	error = hid_hw_खोलो(hdev);
-	अगर (error) अणु
+	error = hid_hw_open(hdev);
+	if (error) {
 		hid_err(hdev, "failed to open input interrupt pipe for key and IR events\n");
-		जाओ err_cleanup_hid_hw;
-	पूर्ण
+		goto err_cleanup_hid_hw;
+	}
 
 	error = device_create_file(&hdev->dev, &dev_attr_operation_mode_delay);
-	अगर (error) अणु
+	if (error) {
 		hid_err(hdev, "failed to create sysfs attributes\n");
-		जाओ err_cleanup_hid_ll;
-	पूर्ण
+		goto err_cleanup_hid_ll;
+	}
 
 	error = device_create_file(&hdev->dev, &dev_attr_operation_mode);
-	अगर (error) अणु
+	if (error) {
 		hid_err(hdev, "failed to create sysfs attributes\n");
-		जाओ err_cleanup_sysfs1;
-	पूर्ण
+		goto err_cleanup_sysfs1;
+	}
 
-	अगर (data->status & PICOLCD_BOOTLOADER)
+	if (data->status & PICOLCD_BOOTLOADER)
 		error = picolcd_probe_bootloader(hdev, data);
-	अन्यथा
+	else
 		error = picolcd_probe_lcd(hdev, data);
-	अगर (error)
-		जाओ err_cleanup_sysfs2;
+	if (error)
+		goto err_cleanup_sysfs2;
 
 	dbg_hid(PICOLCD_NAME " activated and initialized\n");
-	वापस 0;
+	return 0;
 
 err_cleanup_sysfs2:
-	device_हटाओ_file(&hdev->dev, &dev_attr_operation_mode);
+	device_remove_file(&hdev->dev, &dev_attr_operation_mode);
 err_cleanup_sysfs1:
-	device_हटाओ_file(&hdev->dev, &dev_attr_operation_mode_delay);
+	device_remove_file(&hdev->dev, &dev_attr_operation_mode_delay);
 err_cleanup_hid_ll:
-	hid_hw_बंद(hdev);
+	hid_hw_close(hdev);
 err_cleanup_hid_hw:
 	hid_hw_stop(hdev);
 err_cleanup_data:
-	kमुक्त(data);
-	वापस error;
-पूर्ण
+	kfree(data);
+	return error;
+}
 
-अटल व्योम picolcd_हटाओ(काष्ठा hid_device *hdev)
-अणु
-	काष्ठा picolcd_data *data = hid_get_drvdata(hdev);
-	अचिन्हित दीर्घ flags;
+static void picolcd_remove(struct hid_device *hdev)
+{
+	struct picolcd_data *data = hid_get_drvdata(hdev);
+	unsigned long flags;
 
 	dbg_hid(PICOLCD_NAME " hardware remove...\n");
 	spin_lock_irqsave(&data->lock, flags);
 	data->status |= PICOLCD_FAILED;
 	spin_unlock_irqrestore(&data->lock, flags);
 
-	picolcd_निकास_devfs(data);
-	device_हटाओ_file(&hdev->dev, &dev_attr_operation_mode);
-	device_हटाओ_file(&hdev->dev, &dev_attr_operation_mode_delay);
-	hid_hw_बंद(hdev);
+	picolcd_exit_devfs(data);
+	device_remove_file(&hdev->dev, &dev_attr_operation_mode);
+	device_remove_file(&hdev->dev, &dev_attr_operation_mode_delay);
+	hid_hw_close(hdev);
 	hid_hw_stop(hdev);
 
 	/* Shortcut potential pending reply that will never arrive */
 	spin_lock_irqsave(&data->lock, flags);
-	अगर (data->pending)
-		complete(&data->pending->पढ़ोy);
+	if (data->pending)
+		complete(&data->pending->ready);
 	spin_unlock_irqrestore(&data->lock, flags);
 
 	/* Cleanup LED */
-	picolcd_निकास_leds(data);
+	picolcd_exit_leds(data);
 	/* Clean up the framebuffer */
-	picolcd_निकास_backlight(data);
-	picolcd_निकास_lcd(data);
-	picolcd_निकास_framebuffer(data);
+	picolcd_exit_backlight(data);
+	picolcd_exit_lcd(data);
+	picolcd_exit_framebuffer(data);
 	/* Cleanup input */
-	picolcd_निकास_cir(data);
-	picolcd_निकास_keys(data);
+	picolcd_exit_cir(data);
+	picolcd_exit_keys(data);
 
 	mutex_destroy(&data->mutex);
 	/* Finally, clean up the picolcd data itself */
-	kमुक्त(data);
-पूर्ण
+	kfree(data);
+}
 
-अटल स्थिर काष्ठा hid_device_id picolcd_devices[] = अणु
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_MICROCHIP, USB_DEVICE_ID_PICOLCD) पूर्ण,
-	अणु HID_USB_DEVICE(USB_VENDOR_ID_MICROCHIP, USB_DEVICE_ID_PICOLCD_BOOTLOADER) पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct hid_device_id picolcd_devices[] = {
+	{ HID_USB_DEVICE(USB_VENDOR_ID_MICROCHIP, USB_DEVICE_ID_PICOLCD) },
+	{ HID_USB_DEVICE(USB_VENDOR_ID_MICROCHIP, USB_DEVICE_ID_PICOLCD_BOOTLOADER) },
+	{ }
+};
 MODULE_DEVICE_TABLE(hid, picolcd_devices);
 
-अटल काष्ठा hid_driver picolcd_driver = अणु
+static struct hid_driver picolcd_driver = {
 	.name =          "hid-picolcd",
 	.id_table =      picolcd_devices,
 	.probe =         picolcd_probe,
-	.हटाओ =        picolcd_हटाओ,
+	.remove =        picolcd_remove,
 	.raw_event =     picolcd_raw_event,
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 	.suspend =       picolcd_suspend,
 	.resume =        picolcd_resume,
 	.reset_resume =  picolcd_reset_resume,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 module_hid_driver(picolcd_driver);
 
 MODULE_DESCRIPTION("Minibox graphics PicoLCD Driver");

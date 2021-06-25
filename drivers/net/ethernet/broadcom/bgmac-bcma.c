@@ -1,127 +1,126 @@
-<शैली गुरु>
 /*
- * Driver क्रम (BCM4706)? GBit MAC core on BCMA bus.
+ * Driver for (BCM4706)? GBit MAC core on BCMA bus.
  *
- * Copyright (C) 2012 Rafaध Miधecki <zajec5@gmail.com>
+ * Copyright (C) 2012 Rafał Miłecki <zajec5@gmail.com>
  *
- * Licensed under the GNU/GPL. See COPYING क्रम details.
+ * Licensed under the GNU/GPL. See COPYING for details.
  */
 
-#घोषणा pr_fmt(fmt)		KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt)		KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/bcma/bcma.h>
-#समावेश <linux/brcmphy.h>
-#समावेश <linux/etherdevice.h>
-#समावेश <linux/of_net.h>
-#समावेश "bgmac.h"
+#include <linux/bcma/bcma.h>
+#include <linux/brcmphy.h>
+#include <linux/etherdevice.h>
+#include <linux/of_net.h>
+#include "bgmac.h"
 
-अटल अंतरभूत bool bgmac_is_bcm4707_family(काष्ठा bcma_device *core)
-अणु
-	चयन (core->bus->chipinfo.id) अणु
-	हाल BCMA_CHIP_ID_BCM4707:
-	हाल BCMA_CHIP_ID_BCM47094:
-	हाल BCMA_CHIP_ID_BCM53018:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static inline bool bgmac_is_bcm4707_family(struct bcma_device *core)
+{
+	switch (core->bus->chipinfo.id) {
+	case BCMA_CHIP_ID_BCM4707:
+	case BCMA_CHIP_ID_BCM47094:
+	case BCMA_CHIP_ID_BCM53018:
+		return true;
+	default:
+		return false;
+	}
+}
 
 /**************************************************
  * BCMA bus ops
  **************************************************/
 
-अटल u32 bcma_bgmac_पढ़ो(काष्ठा bgmac *bgmac, u16 offset)
-अणु
-	वापस bcma_पढ़ो32(bgmac->bcma.core, offset);
-पूर्ण
+static u32 bcma_bgmac_read(struct bgmac *bgmac, u16 offset)
+{
+	return bcma_read32(bgmac->bcma.core, offset);
+}
 
-अटल व्योम bcma_bgmac_ग_लिखो(काष्ठा bgmac *bgmac, u16 offset, u32 value)
-अणु
-	bcma_ग_लिखो32(bgmac->bcma.core, offset, value);
-पूर्ण
+static void bcma_bgmac_write(struct bgmac *bgmac, u16 offset, u32 value)
+{
+	bcma_write32(bgmac->bcma.core, offset, value);
+}
 
-अटल u32 bcma_bgmac_idm_पढ़ो(काष्ठा bgmac *bgmac, u16 offset)
-अणु
-	वापस bcma_aपढ़ो32(bgmac->bcma.core, offset);
-पूर्ण
+static u32 bcma_bgmac_idm_read(struct bgmac *bgmac, u16 offset)
+{
+	return bcma_aread32(bgmac->bcma.core, offset);
+}
 
-अटल व्योम bcma_bgmac_idm_ग_लिखो(काष्ठा bgmac *bgmac, u16 offset, u32 value)
-अणु
-	वापस bcma_aग_लिखो32(bgmac->bcma.core, offset, value);
-पूर्ण
+static void bcma_bgmac_idm_write(struct bgmac *bgmac, u16 offset, u32 value)
+{
+	return bcma_awrite32(bgmac->bcma.core, offset, value);
+}
 
-अटल bool bcma_bgmac_clk_enabled(काष्ठा bgmac *bgmac)
-अणु
-	वापस bcma_core_is_enabled(bgmac->bcma.core);
-पूर्ण
+static bool bcma_bgmac_clk_enabled(struct bgmac *bgmac)
+{
+	return bcma_core_is_enabled(bgmac->bcma.core);
+}
 
-अटल व्योम bcma_bgmac_clk_enable(काष्ठा bgmac *bgmac, u32 flags)
-अणु
+static void bcma_bgmac_clk_enable(struct bgmac *bgmac, u32 flags)
+{
 	bcma_core_enable(bgmac->bcma.core, flags);
-पूर्ण
+}
 
-अटल व्योम bcma_bgmac_cco_ctl_maskset(काष्ठा bgmac *bgmac, u32 offset,
+static void bcma_bgmac_cco_ctl_maskset(struct bgmac *bgmac, u32 offset,
 				       u32 mask, u32 set)
-अणु
-	काष्ठा bcma_drv_cc *cc = &bgmac->bcma.core->bus->drv_cc;
+{
+	struct bcma_drv_cc *cc = &bgmac->bcma.core->bus->drv_cc;
 
 	bcma_chipco_chipctl_maskset(cc, offset, mask, set);
-पूर्ण
+}
 
-अटल u32 bcma_bgmac_get_bus_घड़ी(काष्ठा bgmac *bgmac)
-अणु
-	काष्ठा bcma_drv_cc *cc = &bgmac->bcma.core->bus->drv_cc;
+static u32 bcma_bgmac_get_bus_clock(struct bgmac *bgmac)
+{
+	struct bcma_drv_cc *cc = &bgmac->bcma.core->bus->drv_cc;
 
-	वापस bcma_pmu_get_bus_घड़ी(cc);
-पूर्ण
+	return bcma_pmu_get_bus_clock(cc);
+}
 
-अटल व्योम bcma_bgmac_cmn_maskset32(काष्ठा bgmac *bgmac, u16 offset, u32 mask,
+static void bcma_bgmac_cmn_maskset32(struct bgmac *bgmac, u16 offset, u32 mask,
 				     u32 set)
-अणु
+{
 	bcma_maskset32(bgmac->bcma.cmn, offset, mask, set);
-पूर्ण
+}
 
-अटल पूर्णांक bcma_phy_connect(काष्ठा bgmac *bgmac)
-अणु
-	काष्ठा phy_device *phy_dev;
-	अक्षर bus_id[MII_BUS_ID_SIZE + 3];
+static int bcma_phy_connect(struct bgmac *bgmac)
+{
+	struct phy_device *phy_dev;
+	char bus_id[MII_BUS_ID_SIZE + 3];
 
 	/* Connect to the PHY */
-	snम_लिखो(bus_id, माप(bus_id), PHY_ID_FMT, bgmac->mii_bus->id,
+	snprintf(bus_id, sizeof(bus_id), PHY_ID_FMT, bgmac->mii_bus->id,
 		 bgmac->phyaddr);
 	phy_dev = phy_connect(bgmac->net_dev, bus_id, bgmac_adjust_link,
 			      PHY_INTERFACE_MODE_MII);
-	अगर (IS_ERR(phy_dev)) अणु
+	if (IS_ERR(phy_dev)) {
 		dev_err(bgmac->dev, "PHY connection failed\n");
-		वापस PTR_ERR(phy_dev);
-	पूर्ण
+		return PTR_ERR(phy_dev);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा bcma_device_id bgmac_bcma_tbl[] = अणु
+static const struct bcma_device_id bgmac_bcma_tbl[] = {
 	BCMA_CORE(BCMA_MANUF_BCM, BCMA_CORE_4706_MAC_GBIT,
 		  BCMA_ANY_REV, BCMA_ANY_CLASS),
 	BCMA_CORE(BCMA_MANUF_BCM, BCMA_CORE_MAC_GBIT, BCMA_ANY_REV,
 		  BCMA_ANY_CLASS),
-	अणुपूर्ण,
-पूर्ण;
+	{},
+};
 MODULE_DEVICE_TABLE(bcma, bgmac_bcma_tbl);
 
 /* http://bcm-v4.sipsolutions.net/mac-gbit/gmac/chipattach */
-अटल पूर्णांक bgmac_probe(काष्ठा bcma_device *core)
-अणु
-	काष्ठा bcma_chipinfo *ci = &core->bus->chipinfo;
-	काष्ठा ssb_sprom *sprom = &core->bus->sprom;
-	काष्ठा mii_bus *mii_bus;
-	काष्ठा bgmac *bgmac;
-	स्थिर u8 *mac;
-	पूर्णांक err;
+static int bgmac_probe(struct bcma_device *core)
+{
+	struct bcma_chipinfo *ci = &core->bus->chipinfo;
+	struct ssb_sprom *sprom = &core->bus->sprom;
+	struct mii_bus *mii_bus;
+	struct bgmac *bgmac;
+	const u8 *mac;
+	int err;
 
 	bgmac = bgmac_alloc(&core->dev);
-	अगर (!bgmac)
-		वापस -ENOMEM;
+	if (!bgmac)
+		return -ENOMEM;
 
 	bgmac->bcma.core = core;
 	bgmac->dma_dev = core->dma_dev;
@@ -131,226 +130,226 @@ MODULE_DEVICE_TABLE(bcma, bgmac_bcma_tbl);
 
 	err = of_get_mac_address(bgmac->dev->of_node, bgmac->net_dev->dev_addr);
 
-	/* If no MAC address asचिन्हित via device tree, check SPROM */
-	अगर (err) अणु
-		चयन (core->core_unit) अणु
-		हाल 0:
+	/* If no MAC address assigned via device tree, check SPROM */
+	if (err) {
+		switch (core->core_unit) {
+		case 0:
 			mac = sprom->et0mac;
-			अवरोध;
-		हाल 1:
+			break;
+		case 1:
 			mac = sprom->et1mac;
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			mac = sprom->et2mac;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_err(bgmac->dev, "Unsupported core_unit %d\n",
 				core->core_unit);
 			err = -ENOTSUPP;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 		ether_addr_copy(bgmac->net_dev->dev_addr, mac);
-	पूर्ण
+	}
 
 	/* On BCM4706 we need common core to access PHY */
-	अगर (core->id.id == BCMA_CORE_4706_MAC_GBIT &&
-	    !core->bus->drv_gmac_cmn.core) अणु
+	if (core->id.id == BCMA_CORE_4706_MAC_GBIT &&
+	    !core->bus->drv_gmac_cmn.core) {
 		dev_err(bgmac->dev, "GMAC CMN core not found (required for BCM4706)\n");
 		err = -ENODEV;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	bgmac->bcma.cmn = core->bus->drv_gmac_cmn.core;
 
-	चयन (core->core_unit) अणु
-	हाल 0:
+	switch (core->core_unit) {
+	case 0:
 		bgmac->phyaddr = sprom->et0phyaddr;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		bgmac->phyaddr = sprom->et1phyaddr;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		bgmac->phyaddr = sprom->et2phyaddr;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	bgmac->phyaddr &= BGMAC_PHY_MASK;
-	अगर (bgmac->phyaddr == BGMAC_PHY_MASK) अणु
+	if (bgmac->phyaddr == BGMAC_PHY_MASK) {
 		dev_err(bgmac->dev, "No PHY found\n");
 		err = -ENODEV;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 	dev_info(bgmac->dev, "Found PHY addr: %d%s\n", bgmac->phyaddr,
 		 bgmac->phyaddr == BGMAC_PHY_NOREGS ? " (NOREGS)" : "");
 
-	अगर (!bgmac_is_bcm4707_family(core) &&
-	    !(ci->id == BCMA_CHIP_ID_BCM53573 && core->core_unit == 1)) अणु
-		काष्ठा phy_device *phydev;
+	if (!bgmac_is_bcm4707_family(core) &&
+	    !(ci->id == BCMA_CHIP_ID_BCM53573 && core->core_unit == 1)) {
+		struct phy_device *phydev;
 
-		mii_bus = bcma_mdio_mii_रेजिस्टर(bgmac);
-		अगर (IS_ERR(mii_bus)) अणु
+		mii_bus = bcma_mdio_mii_register(bgmac);
+		if (IS_ERR(mii_bus)) {
 			err = PTR_ERR(mii_bus);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 		bgmac->mii_bus = mii_bus;
 
 		phydev = mdiobus_get_phy(bgmac->mii_bus, bgmac->phyaddr);
-		अगर (ci->id == BCMA_CHIP_ID_BCM53573 && phydev &&
+		if (ci->id == BCMA_CHIP_ID_BCM53573 && phydev &&
 		    (phydev->drv->phy_id & phydev->drv->phy_id_mask) == PHY_ID_BCM54210E)
 			phydev->dev_flags |= PHY_BRCM_EN_MASTER_MODE;
-	पूर्ण
+	}
 
-	अगर (core->bus->hosttype == BCMA_HOSTTYPE_PCI) अणु
+	if (core->bus->hosttype == BCMA_HOSTTYPE_PCI) {
 		dev_err(bgmac->dev, "PCI setup not implemented\n");
 		err = -ENOTSUPP;
-		जाओ err1;
-	पूर्ण
+		goto err1;
+	}
 
 	bgmac->has_robosw = !!(sprom->boardflags_lo & BGMAC_BFL_ENETROBO);
-	अगर (bgmac->has_robosw)
+	if (bgmac->has_robosw)
 		dev_warn(bgmac->dev, "Support for Roboswitch not implemented\n");
 
-	अगर (sprom->boardflags_lo & BGMAC_BFL_ENETADM)
+	if (sprom->boardflags_lo & BGMAC_BFL_ENETADM)
 		dev_warn(bgmac->dev, "Support for ADMtek ethernet switch not implemented\n");
 
 	/* Feature Flags */
-	चयन (ci->id) अणु
+	switch (ci->id) {
 	/* BCM 471X/535X family */
-	हाल BCMA_CHIP_ID_BCM4716:
+	case BCMA_CHIP_ID_BCM4716:
 		bgmac->feature_flags |= BGMAC_FEAT_CLKCTLST;
 		fallthrough;
-	हाल BCMA_CHIP_ID_BCM47162:
+	case BCMA_CHIP_ID_BCM47162:
 		bgmac->feature_flags |= BGMAC_FEAT_FLW_CTRL2;
 		bgmac->feature_flags |= BGMAC_FEAT_SET_RXQ_CLK;
-		अवरोध;
-	हाल BCMA_CHIP_ID_BCM5357:
-	हाल BCMA_CHIP_ID_BCM53572:
+		break;
+	case BCMA_CHIP_ID_BCM5357:
+	case BCMA_CHIP_ID_BCM53572:
 		bgmac->feature_flags |= BGMAC_FEAT_SET_RXQ_CLK;
 		bgmac->feature_flags |= BGMAC_FEAT_CLKCTLST;
 		bgmac->feature_flags |= BGMAC_FEAT_FLW_CTRL1;
 		bgmac->feature_flags |= BGMAC_FEAT_SW_TYPE_PHY;
-		अगर (ci->pkg == BCMA_PKG_ID_BCM47188 ||
-		    ci->pkg == BCMA_PKG_ID_BCM47186) अणु
+		if (ci->pkg == BCMA_PKG_ID_BCM47188 ||
+		    ci->pkg == BCMA_PKG_ID_BCM47186) {
 			bgmac->feature_flags |= BGMAC_FEAT_SW_TYPE_RGMII;
 			bgmac->feature_flags |= BGMAC_FEAT_IOST_ATTACHED;
-		पूर्ण
-		अगर (ci->pkg == BCMA_PKG_ID_BCM5358)
+		}
+		if (ci->pkg == BCMA_PKG_ID_BCM5358)
 			bgmac->feature_flags |= BGMAC_FEAT_SW_TYPE_EPHYRMII;
-		अवरोध;
-	हाल BCMA_CHIP_ID_BCM53573:
+		break;
+	case BCMA_CHIP_ID_BCM53573:
 		bgmac->feature_flags |= BGMAC_FEAT_CLKCTLST;
 		bgmac->feature_flags |= BGMAC_FEAT_SET_RXQ_CLK;
-		अगर (ci->pkg == BCMA_PKG_ID_BCM47189)
+		if (ci->pkg == BCMA_PKG_ID_BCM47189)
 			bgmac->feature_flags |= BGMAC_FEAT_IOST_ATTACHED;
-		अगर (core->core_unit == 0) अणु
+		if (core->core_unit == 0) {
 			bgmac->feature_flags |= BGMAC_FEAT_CC4_IF_SW_TYPE;
-			अगर (ci->pkg == BCMA_PKG_ID_BCM47189)
+			if (ci->pkg == BCMA_PKG_ID_BCM47189)
 				bgmac->feature_flags |=
 					BGMAC_FEAT_CC4_IF_SW_TYPE_RGMII;
-		पूर्ण अन्यथा अगर (core->core_unit == 1) अणु
+		} else if (core->core_unit == 1) {
 			bgmac->feature_flags |= BGMAC_FEAT_IRQ_ID_OOB_6;
 			bgmac->feature_flags |= BGMAC_FEAT_CC7_IF_TYPE_RGMII;
-		पूर्ण
-		अवरोध;
-	हाल BCMA_CHIP_ID_BCM4749:
+		}
+		break;
+	case BCMA_CHIP_ID_BCM4749:
 		bgmac->feature_flags |= BGMAC_FEAT_SET_RXQ_CLK;
 		bgmac->feature_flags |= BGMAC_FEAT_CLKCTLST;
 		bgmac->feature_flags |= BGMAC_FEAT_FLW_CTRL1;
 		bgmac->feature_flags |= BGMAC_FEAT_SW_TYPE_PHY;
-		अगर (ci->pkg == 10) अणु
+		if (ci->pkg == 10) {
 			bgmac->feature_flags |= BGMAC_FEAT_SW_TYPE_RGMII;
 			bgmac->feature_flags |= BGMAC_FEAT_IOST_ATTACHED;
-		पूर्ण
-		अवरोध;
+		}
+		break;
 	/* bcm4707_family */
-	हाल BCMA_CHIP_ID_BCM4707:
-	हाल BCMA_CHIP_ID_BCM47094:
-	हाल BCMA_CHIP_ID_BCM53018:
+	case BCMA_CHIP_ID_BCM4707:
+	case BCMA_CHIP_ID_BCM47094:
+	case BCMA_CHIP_ID_BCM53018:
 		bgmac->feature_flags |= BGMAC_FEAT_CLKCTLST;
 		bgmac->feature_flags |= BGMAC_FEAT_NO_RESET;
 		bgmac->feature_flags |= BGMAC_FEAT_FORCE_SPEED_2500;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		bgmac->feature_flags |= BGMAC_FEAT_CLKCTLST;
 		bgmac->feature_flags |= BGMAC_FEAT_SET_RXQ_CLK;
-	पूर्ण
+	}
 
-	अगर (!bgmac_is_bcm4707_family(core) && core->id.rev > 2)
+	if (!bgmac_is_bcm4707_family(core) && core->id.rev > 2)
 		bgmac->feature_flags |= BGMAC_FEAT_MISC_PLL_REQ;
 
-	अगर (core->id.id == BCMA_CORE_4706_MAC_GBIT) अणु
+	if (core->id.id == BCMA_CORE_4706_MAC_GBIT) {
 		bgmac->feature_flags |= BGMAC_FEAT_CMN_PHY_CTL;
 		bgmac->feature_flags |= BGMAC_FEAT_NO_CLR_MIB;
-	पूर्ण
+	}
 
-	अगर (core->id.rev >= 4) अणु
+	if (core->id.rev >= 4) {
 		bgmac->feature_flags |= BGMAC_FEAT_CMDCFG_SR_REV4;
 		bgmac->feature_flags |= BGMAC_FEAT_TX_MASK_SETUP;
 		bgmac->feature_flags |= BGMAC_FEAT_RX_MASK_SETUP;
-	पूर्ण
+	}
 
-	bgmac->पढ़ो = bcma_bgmac_पढ़ो;
-	bgmac->ग_लिखो = bcma_bgmac_ग_लिखो;
-	bgmac->idm_पढ़ो = bcma_bgmac_idm_पढ़ो;
-	bgmac->idm_ग_लिखो = bcma_bgmac_idm_ग_लिखो;
+	bgmac->read = bcma_bgmac_read;
+	bgmac->write = bcma_bgmac_write;
+	bgmac->idm_read = bcma_bgmac_idm_read;
+	bgmac->idm_write = bcma_bgmac_idm_write;
 	bgmac->clk_enabled = bcma_bgmac_clk_enabled;
 	bgmac->clk_enable = bcma_bgmac_clk_enable;
 	bgmac->cco_ctl_maskset = bcma_bgmac_cco_ctl_maskset;
-	bgmac->get_bus_घड़ी = bcma_bgmac_get_bus_घड़ी;
+	bgmac->get_bus_clock = bcma_bgmac_get_bus_clock;
 	bgmac->cmn_maskset32 = bcma_bgmac_cmn_maskset32;
-	अगर (bgmac->mii_bus)
+	if (bgmac->mii_bus)
 		bgmac->phy_connect = bcma_phy_connect;
-	अन्यथा
+	else
 		bgmac->phy_connect = bgmac_phy_connect_direct;
 
 	err = bgmac_enet_probe(bgmac);
-	अगर (err)
-		जाओ err1;
+	if (err)
+		goto err1;
 
-	वापस 0;
+	return 0;
 
 err1:
-	bcma_mdio_mii_unरेजिस्टर(bgmac->mii_bus);
+	bcma_mdio_mii_unregister(bgmac->mii_bus);
 err:
-	bcma_set_drvdata(core, शून्य);
+	bcma_set_drvdata(core, NULL);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम bgmac_हटाओ(काष्ठा bcma_device *core)
-अणु
-	काष्ठा bgmac *bgmac = bcma_get_drvdata(core);
+static void bgmac_remove(struct bcma_device *core)
+{
+	struct bgmac *bgmac = bcma_get_drvdata(core);
 
-	bcma_mdio_mii_unरेजिस्टर(bgmac->mii_bus);
-	bgmac_enet_हटाओ(bgmac);
-	bcma_set_drvdata(core, शून्य);
-	kमुक्त(bgmac);
-पूर्ण
+	bcma_mdio_mii_unregister(bgmac->mii_bus);
+	bgmac_enet_remove(bgmac);
+	bcma_set_drvdata(core, NULL);
+	kfree(bgmac);
+}
 
-अटल काष्ठा bcma_driver bgmac_bcma_driver = अणु
+static struct bcma_driver bgmac_bcma_driver = {
 	.name		= KBUILD_MODNAME,
 	.id_table	= bgmac_bcma_tbl,
 	.probe		= bgmac_probe,
-	.हटाओ		= bgmac_हटाओ,
-पूर्ण;
+	.remove		= bgmac_remove,
+};
 
-अटल पूर्णांक __init bgmac_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init bgmac_init(void)
+{
+	int err;
 
-	err = bcma_driver_रेजिस्टर(&bgmac_bcma_driver);
-	अगर (err)
-		वापस err;
+	err = bcma_driver_register(&bgmac_bcma_driver);
+	if (err)
+		return err;
 	pr_info("Broadcom 47xx GBit MAC driver loaded\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __निकास bgmac_निकास(व्योम)
-अणु
-	bcma_driver_unरेजिस्टर(&bgmac_bcma_driver);
-पूर्ण
+static void __exit bgmac_exit(void)
+{
+	bcma_driver_unregister(&bgmac_bcma_driver);
+}
 
 module_init(bgmac_init)
-module_निकास(bgmac_निकास)
+module_exit(bgmac_exit)
 
-MODULE_AUTHOR("Rafaध Miधecki");
+MODULE_AUTHOR("Rafał Miłecki");
 MODULE_LICENSE("GPL");

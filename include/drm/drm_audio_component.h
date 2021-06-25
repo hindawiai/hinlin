@@ -1,127 +1,126 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
-// Copyright तऊ 2014 Intel Corporation
+// SPDX-License-Identifier: MIT
+// Copyright © 2014 Intel Corporation
 
-#अगर_अघोषित _DRM_AUDIO_COMPONENT_H_
-#घोषणा _DRM_AUDIO_COMPONENT_H_
+#ifndef _DRM_AUDIO_COMPONENT_H_
+#define _DRM_AUDIO_COMPONENT_H_
 
-काष्ठा drm_audio_component;
-काष्ठा device;
+struct drm_audio_component;
+struct device;
 
 /**
- * काष्ठा drm_audio_component_ops - Ops implemented by DRM driver, called by hda driver
+ * struct drm_audio_component_ops - Ops implemented by DRM driver, called by hda driver
  */
-काष्ठा drm_audio_component_ops अणु
+struct drm_audio_component_ops {
 	/**
-	 * @owner: drm module to pin करोwn
+	 * @owner: drm module to pin down
 	 */
-	काष्ठा module *owner;
+	struct module *owner;
 	/**
-	 * @get_घातer: get the POWER_DOMAIN_AUDIO घातer well
+	 * @get_power: get the POWER_DOMAIN_AUDIO power well
 	 *
-	 * Request the घातer well to be turned on.
+	 * Request the power well to be turned on.
 	 *
 	 * Returns a wakeref cookie to be passed back to the corresponding
-	 * call to @put_घातer.
+	 * call to @put_power.
 	 */
-	अचिन्हित दीर्घ (*get_घातer)(काष्ठा device *);
+	unsigned long (*get_power)(struct device *);
 	/**
-	 * @put_घातer: put the POWER_DOMAIN_AUDIO घातer well
+	 * @put_power: put the POWER_DOMAIN_AUDIO power well
 	 *
-	 * Allow the घातer well to be turned off.
+	 * Allow the power well to be turned off.
 	 */
-	व्योम (*put_घातer)(काष्ठा device *, अचिन्हित दीर्घ);
+	void (*put_power)(struct device *, unsigned long);
 	/**
-	 * @codec_wake_override: Enable/disable codec wake संकेत
+	 * @codec_wake_override: Enable/disable codec wake signal
 	 */
-	व्योम (*codec_wake_override)(काष्ठा device *, bool enable);
+	void (*codec_wake_override)(struct device *, bool enable);
 	/**
 	 * @get_cdclk_freq: Get the Core Display Clock in kHz
 	 */
-	पूर्णांक (*get_cdclk_freq)(काष्ठा device *);
+	int (*get_cdclk_freq)(struct device *);
 	/**
 	 * @sync_audio_rate: set n/cts based on the sample rate
 	 *
 	 * Called from audio driver. After audio driver sets the
 	 * sample rate, it will call this function to set n/cts
 	 */
-	पूर्णांक (*sync_audio_rate)(काष्ठा device *, पूर्णांक port, पूर्णांक pipe, पूर्णांक rate);
+	int (*sync_audio_rate)(struct device *, int port, int pipe, int rate);
 	/**
-	 * @get_eld: fill the audio state and ELD bytes क्रम the given port
+	 * @get_eld: fill the audio state and ELD bytes for the given port
 	 *
 	 * Called from audio driver to get the HDMI/DP audio state of the given
-	 * digital port, and also fetch ELD bytes to the given poपूर्णांकer.
+	 * digital port, and also fetch ELD bytes to the given pointer.
 	 *
-	 * It वापसs the byte size of the original ELD (not the actually
-	 * copied size), zero क्रम an invalid ELD, or a negative error code.
+	 * It returns the byte size of the original ELD (not the actually
+	 * copied size), zero for an invalid ELD, or a negative error code.
 	 *
-	 * Note that the वापसed size may be over @max_bytes.  Then it
+	 * Note that the returned size may be over @max_bytes.  Then it
 	 * implies that only a part of ELD has been copied to the buffer.
 	 */
-	पूर्णांक (*get_eld)(काष्ठा device *, पूर्णांक port, पूर्णांक pipe, bool *enabled,
-		       अचिन्हित अक्षर *buf, पूर्णांक max_bytes);
-पूर्ण;
+	int (*get_eld)(struct device *, int port, int pipe, bool *enabled,
+		       unsigned char *buf, int max_bytes);
+};
 
 /**
- * काष्ठा drm_audio_component_audio_ops - Ops implemented by hda driver, called by DRM driver
+ * struct drm_audio_component_audio_ops - Ops implemented by hda driver, called by DRM driver
  */
-काष्ठा drm_audio_component_audio_ops अणु
+struct drm_audio_component_audio_ops {
 	/**
-	 * @audio_ptr: Poपूर्णांकer to be used in call to pin_eld_notअगरy
+	 * @audio_ptr: Pointer to be used in call to pin_eld_notify
 	 */
-	व्योम *audio_ptr;
+	void *audio_ptr;
 	/**
-	 * @pin_eld_notअगरy: Notअगरy the HDA driver that pin sense and/or ELD inक्रमmation has changed
+	 * @pin_eld_notify: Notify the HDA driver that pin sense and/or ELD information has changed
 	 *
 	 * Called when the DRM driver has set up audio pipeline or has just
-	 * begun to tear it करोwn. This allows the HDA driver to update its
-	 * status accordingly (even when the HDA controller is in घातer save
+	 * begun to tear it down. This allows the HDA driver to update its
+	 * status accordingly (even when the HDA controller is in power save
 	 * mode).
 	 */
-	व्योम (*pin_eld_notअगरy)(व्योम *audio_ptr, पूर्णांक port, पूर्णांक pipe);
+	void (*pin_eld_notify)(void *audio_ptr, int port, int pipe);
 	/**
 	 * @pin2port: Check and convert from pin node to port number
 	 *
 	 * Called by HDA driver to check and convert from the pin widget node
 	 * number to a port number in the graphics side.
 	 */
-	पूर्णांक (*pin2port)(व्योम *audio_ptr, पूर्णांक pin);
+	int (*pin2port)(void *audio_ptr, int pin);
 	/**
 	 * @master_bind: (Optional) component master bind callback
 	 *
-	 * Called at binding master component, क्रम HDA codec-specअगरic
+	 * Called at binding master component, for HDA codec-specific
 	 * handling of dynamic binding.
 	 */
-	पूर्णांक (*master_bind)(काष्ठा device *dev, काष्ठा drm_audio_component *);
+	int (*master_bind)(struct device *dev, struct drm_audio_component *);
 	/**
 	 * @master_unbind: (Optional) component master unbind callback
 	 *
-	 * Called at unbinding master component, क्रम HDA codec-specअगरic
+	 * Called at unbinding master component, for HDA codec-specific
 	 * handling of dynamic unbinding.
 	 */
-	व्योम (*master_unbind)(काष्ठा device *dev, काष्ठा drm_audio_component *);
-पूर्ण;
+	void (*master_unbind)(struct device *dev, struct drm_audio_component *);
+};
 
 /**
- * काष्ठा drm_audio_component - Used क्रम direct communication between DRM and hda drivers
+ * struct drm_audio_component - Used for direct communication between DRM and hda drivers
  */
-काष्ठा drm_audio_component अणु
+struct drm_audio_component {
 	/**
-	 * @dev: DRM device, used as parameter क्रम ops
+	 * @dev: DRM device, used as parameter for ops
 	 */
-	काष्ठा device *dev;
+	struct device *dev;
 	/**
 	 * @ops: Ops implemented by DRM driver, called by hda driver
 	 */
-	स्थिर काष्ठा drm_audio_component_ops *ops;
+	const struct drm_audio_component_ops *ops;
 	/**
 	 * @audio_ops: Ops implemented by hda driver, called by DRM driver
 	 */
-	स्थिर काष्ठा drm_audio_component_audio_ops *audio_ops;
+	const struct drm_audio_component_audio_ops *audio_ops;
 	/**
 	 * @master_bind_complete: completion held during component master binding
 	 */
-	काष्ठा completion master_bind_complete;
-पूर्ण;
+	struct completion master_bind_complete;
+};
 
-#पूर्ण_अगर /* _DRM_AUDIO_COMPONENT_H_ */
+#endif /* _DRM_AUDIO_COMPONENT_H_ */

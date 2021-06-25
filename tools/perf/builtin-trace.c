@@ -1,188 +1,187 @@
-<शैली गुरु>
 /*
  * builtin-trace.c
  *
  * Builtin 'trace' command:
  *
- * Display a continuously updated trace of any workload, CPU, specअगरic PID,
- * प्रणाली wide, etc.  Default क्रमmat is loosely strace like, but any other
- * event may be specअगरied using --event.
+ * Display a continuously updated trace of any workload, CPU, specific PID,
+ * system wide, etc.  Default format is loosely strace like, but any other
+ * event may be specified using --event.
  *
- * Copyright (C) 2012, 2013, 2014, 2015 Red Hat Inc, Arnalकरो Carvalho de Melo <acme@redhat.com>
+ * Copyright (C) 2012, 2013, 2014, 2015 Red Hat Inc, Arnaldo Carvalho de Melo <acme@redhat.com>
  *
  * Initially based on the 'trace' prototype by Thomas Gleixner:
  *
  * http://lwn.net/Articles/415728/ ("Announcing a new utility: 'trace'")
  */
 
-#समावेश "util/record.h"
-#समावेश <traceevent/event-parse.h>
-#समावेश <api/fs/tracing_path.h>
-#समावेश <bpf/bpf.h>
-#समावेश "util/bpf_map.h"
-#समावेश "util/rlimit.h"
-#समावेश "builtin.h"
-#समावेश "util/cgroup.h"
-#समावेश "util/color.h"
-#समावेश "util/config.h"
-#समावेश "util/debug.h"
-#समावेश "util/dso.h"
-#समावेश "util/env.h"
-#समावेश "util/event.h"
-#समावेश "util/evsel.h"
-#समावेश "util/evsel_fprintf.h"
-#समावेश "util/synthetic-events.h"
-#समावेश "util/evlist.h"
-#समावेश "util/evswitch.h"
-#समावेश "util/mmap.h"
-#समावेश <subcmd/pager.h>
-#समावेश <subcmd/exec-cmd.h>
-#समावेश "util/machine.h"
-#समावेश "util/map.h"
-#समावेश "util/symbol.h"
-#समावेश "util/path.h"
-#समावेश "util/session.h"
-#समावेश "util/thread.h"
-#समावेश <subcmd/parse-options.h>
-#समावेश "util/strlist.h"
-#समावेश "util/intlist.h"
-#समावेश "util/thread_map.h"
-#समावेश "util/stat.h"
-#समावेश "util/tool.h"
-#समावेश "util/util.h"
-#समावेश "trace/beauty/beauty.h"
-#समावेश "trace-event.h"
-#समावेश "util/parse-events.h"
-#समावेश "util/bpf-loader.h"
-#समावेश "callchain.h"
-#समावेश "print_binary.h"
-#समावेश "string2.h"
-#समावेश "syscalltbl.h"
-#समावेश "rb_resort.h"
-#समावेश "../perf.h"
+#include "util/record.h"
+#include <traceevent/event-parse.h>
+#include <api/fs/tracing_path.h>
+#include <bpf/bpf.h>
+#include "util/bpf_map.h"
+#include "util/rlimit.h"
+#include "builtin.h"
+#include "util/cgroup.h"
+#include "util/color.h"
+#include "util/config.h"
+#include "util/debug.h"
+#include "util/dso.h"
+#include "util/env.h"
+#include "util/event.h"
+#include "util/evsel.h"
+#include "util/evsel_fprintf.h"
+#include "util/synthetic-events.h"
+#include "util/evlist.h"
+#include "util/evswitch.h"
+#include "util/mmap.h"
+#include <subcmd/pager.h>
+#include <subcmd/exec-cmd.h>
+#include "util/machine.h"
+#include "util/map.h"
+#include "util/symbol.h"
+#include "util/path.h"
+#include "util/session.h"
+#include "util/thread.h"
+#include <subcmd/parse-options.h>
+#include "util/strlist.h"
+#include "util/intlist.h"
+#include "util/thread_map.h"
+#include "util/stat.h"
+#include "util/tool.h"
+#include "util/util.h"
+#include "trace/beauty/beauty.h"
+#include "trace-event.h"
+#include "util/parse-events.h"
+#include "util/bpf-loader.h"
+#include "callchain.h"
+#include "print_binary.h"
+#include "string2.h"
+#include "syscalltbl.h"
+#include "rb_resort.h"
+#include "../perf.h"
 
-#समावेश <त्रुटिसं.स>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <poll.h>
-#समावेश <संकेत.स>
-#समावेश <मानककोष.स>
-#समावेश <माला.स>
-#समावेश <linux/err.h>
-#समावेश <linux/filter.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/stringअगरy.h>
-#समावेश <linux/समय64.h>
-#समावेश <linux/zभाग.स>
-#समावेश <fcntl.h>
-#समावेश <sys/sysmacros.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <poll.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <linux/err.h>
+#include <linux/filter.h>
+#include <linux/kernel.h>
+#include <linux/random.h>
+#include <linux/stringify.h>
+#include <linux/time64.h>
+#include <linux/zalloc.h>
+#include <fcntl.h>
+#include <sys/sysmacros.h>
 
-#समावेश <linux/प्रकार.स>
-#समावेश <perf/mmap.h>
+#include <linux/ctype.h>
+#include <perf/mmap.h>
 
-#अगर_अघोषित O_CLOEXEC
+#ifndef O_CLOEXEC
 # define O_CLOEXEC		02000000
-#पूर्ण_अगर
+#endif
 
-#अगर_अघोषित F_LINUX_SPECIFIC_BASE
+#ifndef F_LINUX_SPECIFIC_BASE
 # define F_LINUX_SPECIFIC_BASE	1024
-#पूर्ण_अगर
+#endif
 
 /*
- * म_से_अदीर्घ: Go from a string to a value, i.e. क्रम msr: MSR_FS_BASE to 0xc0000100
+ * strtoul: Go from a string to a value, i.e. for msr: MSR_FS_BASE to 0xc0000100
  */
-काष्ठा syscall_arg_fmt अणु
-	माप_प्रकार	   (*scnम_लिखो)(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg);
-	bool	   (*म_से_अदीर्घ)(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg, u64 *val);
-	अचिन्हित दीर्घ (*mask_val)(काष्ठा syscall_arg *arg, अचिन्हित दीर्घ val);
-	व्योम	   *parm;
-	स्थिर अक्षर *name;
-	u16	   nr_entries; // क्रम arrays
+struct syscall_arg_fmt {
+	size_t	   (*scnprintf)(char *bf, size_t size, struct syscall_arg *arg);
+	bool	   (*strtoul)(char *bf, size_t size, struct syscall_arg *arg, u64 *val);
+	unsigned long (*mask_val)(struct syscall_arg *arg, unsigned long val);
+	void	   *parm;
+	const char *name;
+	u16	   nr_entries; // for arrays
 	bool	   show_zero;
-पूर्ण;
+};
 
-काष्ठा syscall_fmt अणु
-	स्थिर अक्षर *name;
-	स्थिर अक्षर *alias;
-	काष्ठा अणु
-		स्थिर अक्षर *sys_enter,
-			   *sys_निकास;
-	पूर्ण	   bpf_prog_name;
-	काष्ठा syscall_arg_fmt arg[6];
+struct syscall_fmt {
+	const char *name;
+	const char *alias;
+	struct {
+		const char *sys_enter,
+			   *sys_exit;
+	}	   bpf_prog_name;
+	struct syscall_arg_fmt arg[6];
 	u8	   nr_args;
 	bool	   errpid;
-	bool	   समयout;
+	bool	   timeout;
 	bool	   hexret;
-पूर्ण;
+};
 
-काष्ठा trace अणु
-	काष्ठा perf_tool	tool;
-	काष्ठा syscalltbl	*sctbl;
-	काष्ठा अणु
-		काष्ठा syscall  *table;
-		काष्ठा bpf_map  *map;
-		काष्ठा अणु // per syscall BPF_MAP_TYPE_PROG_ARRAY
-			काष्ठा bpf_map  *sys_enter,
-					*sys_निकास;
-		पूर्ण		prog_array;
-		काष्ठा अणु
-			काष्ठा evsel *sys_enter,
-					  *sys_निकास,
+struct trace {
+	struct perf_tool	tool;
+	struct syscalltbl	*sctbl;
+	struct {
+		struct syscall  *table;
+		struct bpf_map  *map;
+		struct { // per syscall BPF_MAP_TYPE_PROG_ARRAY
+			struct bpf_map  *sys_enter,
+					*sys_exit;
+		}		prog_array;
+		struct {
+			struct evsel *sys_enter,
+					  *sys_exit,
 					  *augmented;
-		पूर्ण		events;
-		काष्ठा bpf_program *unaugmented_prog;
-	पूर्ण syscalls;
-	काष्ठा अणु
-		काष्ठा bpf_map *map;
-	पूर्ण dump;
-	काष्ठा record_opts	opts;
-	काष्ठा evlist	*evlist;
-	काष्ठा machine		*host;
-	काष्ठा thपढ़ो		*current;
-	काष्ठा bpf_object	*bpf_obj;
-	काष्ठा cgroup		*cgroup;
-	u64			base_समय;
-	खाता			*output;
-	अचिन्हित दीर्घ		nr_events;
-	अचिन्हित दीर्घ		nr_events_prपूर्णांकed;
-	अचिन्हित दीर्घ		max_events;
-	काष्ठा evचयन		evचयन;
-	काष्ठा strlist		*ev_qualअगरier;
-	काष्ठा अणु
-		माप_प्रकार		nr;
-		पूर्णांक		*entries;
-	पूर्ण			ev_qualअगरier_ids;
-	काष्ठा अणु
-		माप_प्रकार		nr;
+		}		events;
+		struct bpf_program *unaugmented_prog;
+	} syscalls;
+	struct {
+		struct bpf_map *map;
+	} dump;
+	struct record_opts	opts;
+	struct evlist	*evlist;
+	struct machine		*host;
+	struct thread		*current;
+	struct bpf_object	*bpf_obj;
+	struct cgroup		*cgroup;
+	u64			base_time;
+	FILE			*output;
+	unsigned long		nr_events;
+	unsigned long		nr_events_printed;
+	unsigned long		max_events;
+	struct evswitch		evswitch;
+	struct strlist		*ev_qualifier;
+	struct {
+		size_t		nr;
+		int		*entries;
+	}			ev_qualifier_ids;
+	struct {
+		size_t		nr;
 		pid_t		*entries;
-		काष्ठा bpf_map  *map;
-	पूर्ण			filter_pids;
-	द्विगुन			duration_filter;
-	द्विगुन			runसमय_ms;
-	काष्ठा अणु
+		struct bpf_map  *map;
+	}			filter_pids;
+	double			duration_filter;
+	double			runtime_ms;
+	struct {
 		u64		vfs_getname,
 				proc_getname;
-	पूर्ण stats;
-	अचिन्हित पूर्णांक		max_stack;
-	अचिन्हित पूर्णांक		min_stack;
-	पूर्णांक			raw_augmented_syscalls_args_size;
+	} stats;
+	unsigned int		max_stack;
+	unsigned int		min_stack;
+	int			raw_augmented_syscalls_args_size;
 	bool			raw_augmented_syscalls;
 	bool			fd_path_disabled;
 	bool			sort_events;
-	bool			not_ev_qualअगरier;
+	bool			not_ev_qualifier;
 	bool			live;
-	bool			full_समय;
+	bool			full_time;
 	bool			sched;
-	bool			multiple_thपढ़ोs;
+	bool			multiple_threads;
 	bool			summary;
 	bool			summary_only;
-	bool			त्रुटि_सं_summary;
+	bool			errno_summary;
 	bool			failure_only;
 	bool			show_comm;
-	bool			prपूर्णांक_sample;
+	bool			print_sample;
 	bool			show_tool_stats;
 	bool			trace_syscalls;
-	bool			libtraceevent_prपूर्णांक;
+	bool			libtraceevent_print;
 	bool			kernel_syscallchains;
 	s16			args_alignment;
 	bool			show_tstamp;
@@ -190,2899 +189,2899 @@
 	bool			show_zeros;
 	bool			show_arg_names;
 	bool			show_string_prefix;
-	bool			क्रमce;
+	bool			force;
 	bool			vfs_getname;
-	पूर्णांक			trace_pgfaults;
-	अक्षर			*perfconfig_events;
-	काष्ठा अणु
-		काष्ठा ordered_events	data;
+	int			trace_pgfaults;
+	char			*perfconfig_events;
+	struct {
+		struct ordered_events	data;
 		u64			last;
-	पूर्ण oe;
-पूर्ण;
+	} oe;
+};
 
-काष्ठा tp_field अणु
-	पूर्णांक offset;
-	जोड़ अणु
-		u64 (*पूर्णांकeger)(काष्ठा tp_field *field, काष्ठा perf_sample *sample);
-		व्योम *(*poपूर्णांकer)(काष्ठा tp_field *field, काष्ठा perf_sample *sample);
-	पूर्ण;
-पूर्ण;
+struct tp_field {
+	int offset;
+	union {
+		u64 (*integer)(struct tp_field *field, struct perf_sample *sample);
+		void *(*pointer)(struct tp_field *field, struct perf_sample *sample);
+	};
+};
 
-#घोषणा TP_UINT_FIELD(bits) \
-अटल u64 tp_field__u##bits(काष्ठा tp_field *field, काष्ठा perf_sample *sample) \
-अणु \
+#define TP_UINT_FIELD(bits) \
+static u64 tp_field__u##bits(struct tp_field *field, struct perf_sample *sample) \
+{ \
 	u##bits value; \
-	स_नकल(&value, sample->raw_data + field->offset, माप(value)); \
-	वापस value;  \
-पूर्ण
+	memcpy(&value, sample->raw_data + field->offset, sizeof(value)); \
+	return value;  \
+}
 
 TP_UINT_FIELD(8);
 TP_UINT_FIELD(16);
 TP_UINT_FIELD(32);
 TP_UINT_FIELD(64);
 
-#घोषणा TP_UINT_FIELD__SWAPPED(bits) \
-अटल u64 tp_field__swapped_u##bits(काष्ठा tp_field *field, काष्ठा perf_sample *sample) \
-अणु \
+#define TP_UINT_FIELD__SWAPPED(bits) \
+static u64 tp_field__swapped_u##bits(struct tp_field *field, struct perf_sample *sample) \
+{ \
 	u##bits value; \
-	स_नकल(&value, sample->raw_data + field->offset, माप(value)); \
-	वापस bswap_##bits(value);\
-पूर्ण
+	memcpy(&value, sample->raw_data + field->offset, sizeof(value)); \
+	return bswap_##bits(value);\
+}
 
 TP_UINT_FIELD__SWAPPED(16);
 TP_UINT_FIELD__SWAPPED(32);
 TP_UINT_FIELD__SWAPPED(64);
 
-अटल पूर्णांक __tp_field__init_uपूर्णांक(काष्ठा tp_field *field, पूर्णांक size, पूर्णांक offset, bool needs_swap)
-अणु
+static int __tp_field__init_uint(struct tp_field *field, int size, int offset, bool needs_swap)
+{
 	field->offset = offset;
 
-	चयन (size) अणु
-	हाल 1:
-		field->पूर्णांकeger = tp_field__u8;
-		अवरोध;
-	हाल 2:
-		field->पूर्णांकeger = needs_swap ? tp_field__swapped_u16 : tp_field__u16;
-		अवरोध;
-	हाल 4:
-		field->पूर्णांकeger = needs_swap ? tp_field__swapped_u32 : tp_field__u32;
-		अवरोध;
-	हाल 8:
-		field->पूर्णांकeger = needs_swap ? tp_field__swapped_u64 : tp_field__u64;
-		अवरोध;
-	शेष:
-		वापस -1;
-	पूर्ण
+	switch (size) {
+	case 1:
+		field->integer = tp_field__u8;
+		break;
+	case 2:
+		field->integer = needs_swap ? tp_field__swapped_u16 : tp_field__u16;
+		break;
+	case 4:
+		field->integer = needs_swap ? tp_field__swapped_u32 : tp_field__u32;
+		break;
+	case 8:
+		field->integer = needs_swap ? tp_field__swapped_u64 : tp_field__u64;
+		break;
+	default:
+		return -1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tp_field__init_uपूर्णांक(काष्ठा tp_field *field, काष्ठा tep_क्रमmat_field *क्रमmat_field, bool needs_swap)
-अणु
-	वापस __tp_field__init_uपूर्णांक(field, क्रमmat_field->size, क्रमmat_field->offset, needs_swap);
-पूर्ण
+static int tp_field__init_uint(struct tp_field *field, struct tep_format_field *format_field, bool needs_swap)
+{
+	return __tp_field__init_uint(field, format_field->size, format_field->offset, needs_swap);
+}
 
-अटल व्योम *tp_field__ptr(काष्ठा tp_field *field, काष्ठा perf_sample *sample)
-अणु
-	वापस sample->raw_data + field->offset;
-पूर्ण
+static void *tp_field__ptr(struct tp_field *field, struct perf_sample *sample)
+{
+	return sample->raw_data + field->offset;
+}
 
-अटल पूर्णांक __tp_field__init_ptr(काष्ठा tp_field *field, पूर्णांक offset)
-अणु
+static int __tp_field__init_ptr(struct tp_field *field, int offset)
+{
 	field->offset = offset;
-	field->poपूर्णांकer = tp_field__ptr;
-	वापस 0;
-पूर्ण
+	field->pointer = tp_field__ptr;
+	return 0;
+}
 
-अटल पूर्णांक tp_field__init_ptr(काष्ठा tp_field *field, काष्ठा tep_क्रमmat_field *क्रमmat_field)
-अणु
-	वापस __tp_field__init_ptr(field, क्रमmat_field->offset);
-पूर्ण
+static int tp_field__init_ptr(struct tp_field *field, struct tep_format_field *format_field)
+{
+	return __tp_field__init_ptr(field, format_field->offset);
+}
 
-काष्ठा syscall_tp अणु
-	काष्ठा tp_field id;
-	जोड़ अणु
-		काष्ठा tp_field args, ret;
-	पूर्ण;
-पूर्ण;
+struct syscall_tp {
+	struct tp_field id;
+	union {
+		struct tp_field args, ret;
+	};
+};
 
 /*
  * The evsel->priv as used by 'perf trace'
- * sc:	क्रम raw_syscalls:sys_अणुenter,निकासपूर्ण and syscalls:sys_अणुenter,निकासपूर्ण_SYSCALLNAME
- * fmt: क्रम all the other tracepoपूर्णांकs
+ * sc:	for raw_syscalls:sys_{enter,exit} and syscalls:sys_{enter,exit}_SYSCALLNAME
+ * fmt: for all the other tracepoints
  */
-काष्ठा evsel_trace अणु
-	काष्ठा syscall_tp	sc;
-	काष्ठा syscall_arg_fmt  *fmt;
-पूर्ण;
+struct evsel_trace {
+	struct syscall_tp	sc;
+	struct syscall_arg_fmt  *fmt;
+};
 
-अटल काष्ठा evsel_trace *evsel_trace__new(व्योम)
-अणु
-	वापस zalloc(माप(काष्ठा evsel_trace));
-पूर्ण
+static struct evsel_trace *evsel_trace__new(void)
+{
+	return zalloc(sizeof(struct evsel_trace));
+}
 
-अटल व्योम evsel_trace__delete(काष्ठा evsel_trace *et)
-अणु
-	अगर (et == शून्य)
-		वापस;
+static void evsel_trace__delete(struct evsel_trace *et)
+{
+	if (et == NULL)
+		return;
 
-	zमुक्त(&et->fmt);
-	मुक्त(et);
-पूर्ण
+	zfree(&et->fmt);
+	free(et);
+}
 
 /*
- * Used with raw_syscalls:sys_अणुenter,निकासपूर्ण and with the
- * syscalls:sys_अणुenter,निकासपूर्ण_SYSCALL tracepoपूर्णांकs
+ * Used with raw_syscalls:sys_{enter,exit} and with the
+ * syscalls:sys_{enter,exit}_SYSCALL tracepoints
  */
-अटल अंतरभूत काष्ठा syscall_tp *__evsel__syscall_tp(काष्ठा evsel *evsel)
-अणु
-	काष्ठा evsel_trace *et = evsel->priv;
+static inline struct syscall_tp *__evsel__syscall_tp(struct evsel *evsel)
+{
+	struct evsel_trace *et = evsel->priv;
 
-	वापस &et->sc;
-पूर्ण
+	return &et->sc;
+}
 
-अटल काष्ठा syscall_tp *evsel__syscall_tp(काष्ठा evsel *evsel)
-अणु
-	अगर (evsel->priv == शून्य) अणु
+static struct syscall_tp *evsel__syscall_tp(struct evsel *evsel)
+{
+	if (evsel->priv == NULL) {
 		evsel->priv = evsel_trace__new();
-		अगर (evsel->priv == शून्य)
-			वापस शून्य;
-	पूर्ण
+		if (evsel->priv == NULL)
+			return NULL;
+	}
 
-	वापस __evsel__syscall_tp(evsel);
-पूर्ण
+	return __evsel__syscall_tp(evsel);
+}
 
 /*
- * Used with all the other tracepoपूर्णांकs.
+ * Used with all the other tracepoints.
  */
-अटल अंतरभूत काष्ठा syscall_arg_fmt *__evsel__syscall_arg_fmt(काष्ठा evsel *evsel)
-अणु
-	काष्ठा evsel_trace *et = evsel->priv;
+static inline struct syscall_arg_fmt *__evsel__syscall_arg_fmt(struct evsel *evsel)
+{
+	struct evsel_trace *et = evsel->priv;
 
-	वापस et->fmt;
-पूर्ण
+	return et->fmt;
+}
 
-अटल काष्ठा syscall_arg_fmt *evsel__syscall_arg_fmt(काष्ठा evsel *evsel)
-अणु
-	काष्ठा evsel_trace *et = evsel->priv;
+static struct syscall_arg_fmt *evsel__syscall_arg_fmt(struct evsel *evsel)
+{
+	struct evsel_trace *et = evsel->priv;
 
-	अगर (evsel->priv == शून्य) अणु
+	if (evsel->priv == NULL) {
 		et = evsel->priv = evsel_trace__new();
 
-		अगर (et == शून्य)
-			वापस शून्य;
-	पूर्ण
+		if (et == NULL)
+			return NULL;
+	}
 
-	अगर (et->fmt == शून्य) अणु
-		et->fmt = सुस्मृति(evsel->tp_क्रमmat->क्रमmat.nr_fields, माप(काष्ठा syscall_arg_fmt));
-		अगर (et->fmt == शून्य)
-			जाओ out_delete;
-	पूर्ण
+	if (et->fmt == NULL) {
+		et->fmt = calloc(evsel->tp_format->format.nr_fields, sizeof(struct syscall_arg_fmt));
+		if (et->fmt == NULL)
+			goto out_delete;
+	}
 
-	वापस __evsel__syscall_arg_fmt(evsel);
+	return __evsel__syscall_arg_fmt(evsel);
 
 out_delete:
 	evsel_trace__delete(evsel->priv);
-	evsel->priv = शून्य;
-	वापस शून्य;
-पूर्ण
+	evsel->priv = NULL;
+	return NULL;
+}
 
-अटल पूर्णांक evsel__init_tp_uपूर्णांक_field(काष्ठा evsel *evsel, काष्ठा tp_field *field, स्थिर अक्षर *name)
-अणु
-	काष्ठा tep_क्रमmat_field *क्रमmat_field = evsel__field(evsel, name);
+static int evsel__init_tp_uint_field(struct evsel *evsel, struct tp_field *field, const char *name)
+{
+	struct tep_format_field *format_field = evsel__field(evsel, name);
 
-	अगर (क्रमmat_field == शून्य)
-		वापस -1;
+	if (format_field == NULL)
+		return -1;
 
-	वापस tp_field__init_uपूर्णांक(field, क्रमmat_field, evsel->needs_swap);
-पूर्ण
+	return tp_field__init_uint(field, format_field, evsel->needs_swap);
+}
 
-#घोषणा perf_evsel__init_sc_tp_uपूर्णांक_field(evsel, name) \
-	(अणु काष्ठा syscall_tp *sc = __evsel__syscall_tp(evsel);\
-	   evsel__init_tp_uपूर्णांक_field(evsel, &sc->name, #name); पूर्ण)
+#define perf_evsel__init_sc_tp_uint_field(evsel, name) \
+	({ struct syscall_tp *sc = __evsel__syscall_tp(evsel);\
+	   evsel__init_tp_uint_field(evsel, &sc->name, #name); })
 
-अटल पूर्णांक evsel__init_tp_ptr_field(काष्ठा evsel *evsel, काष्ठा tp_field *field, स्थिर अक्षर *name)
-अणु
-	काष्ठा tep_क्रमmat_field *क्रमmat_field = evsel__field(evsel, name);
+static int evsel__init_tp_ptr_field(struct evsel *evsel, struct tp_field *field, const char *name)
+{
+	struct tep_format_field *format_field = evsel__field(evsel, name);
 
-	अगर (क्रमmat_field == शून्य)
-		वापस -1;
+	if (format_field == NULL)
+		return -1;
 
-	वापस tp_field__init_ptr(field, क्रमmat_field);
-पूर्ण
+	return tp_field__init_ptr(field, format_field);
+}
 
-#घोषणा perf_evsel__init_sc_tp_ptr_field(evsel, name) \
-	(अणु काष्ठा syscall_tp *sc = __evsel__syscall_tp(evsel);\
-	   evsel__init_tp_ptr_field(evsel, &sc->name, #name); पूर्ण)
+#define perf_evsel__init_sc_tp_ptr_field(evsel, name) \
+	({ struct syscall_tp *sc = __evsel__syscall_tp(evsel);\
+	   evsel__init_tp_ptr_field(evsel, &sc->name, #name); })
 
-अटल व्योम evsel__delete_priv(काष्ठा evsel *evsel)
-अणु
-	zमुक्त(&evsel->priv);
+static void evsel__delete_priv(struct evsel *evsel)
+{
+	zfree(&evsel->priv);
 	evsel__delete(evsel);
-पूर्ण
+}
 
-अटल पूर्णांक evsel__init_syscall_tp(काष्ठा evsel *evsel)
-अणु
-	काष्ठा syscall_tp *sc = evsel__syscall_tp(evsel);
+static int evsel__init_syscall_tp(struct evsel *evsel)
+{
+	struct syscall_tp *sc = evsel__syscall_tp(evsel);
 
-	अगर (sc != शून्य) अणु
-		अगर (evsel__init_tp_uपूर्णांक_field(evsel, &sc->id, "__syscall_nr") &&
-		    evsel__init_tp_uपूर्णांक_field(evsel, &sc->id, "nr"))
-			वापस -ENOENT;
-		वापस 0;
-	पूर्ण
+	if (sc != NULL) {
+		if (evsel__init_tp_uint_field(evsel, &sc->id, "__syscall_nr") &&
+		    evsel__init_tp_uint_field(evsel, &sc->id, "nr"))
+			return -ENOENT;
+		return 0;
+	}
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल पूर्णांक evsel__init_augmented_syscall_tp(काष्ठा evsel *evsel, काष्ठा evsel *tp)
-अणु
-	काष्ठा syscall_tp *sc = evsel__syscall_tp(evsel);
+static int evsel__init_augmented_syscall_tp(struct evsel *evsel, struct evsel *tp)
+{
+	struct syscall_tp *sc = evsel__syscall_tp(evsel);
 
-	अगर (sc != शून्य) अणु
-		काष्ठा tep_क्रमmat_field *syscall_id = evsel__field(tp, "id");
-		अगर (syscall_id == शून्य)
+	if (sc != NULL) {
+		struct tep_format_field *syscall_id = evsel__field(tp, "id");
+		if (syscall_id == NULL)
 			syscall_id = evsel__field(tp, "__syscall_nr");
-		अगर (syscall_id == शून्य ||
-		    __tp_field__init_uपूर्णांक(&sc->id, syscall_id->size, syscall_id->offset, evsel->needs_swap))
-			वापस -EINVAL;
+		if (syscall_id == NULL ||
+		    __tp_field__init_uint(&sc->id, syscall_id->size, syscall_id->offset, evsel->needs_swap))
+			return -EINVAL;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल पूर्णांक evsel__init_augmented_syscall_tp_args(काष्ठा evsel *evsel)
-अणु
-	काष्ठा syscall_tp *sc = __evsel__syscall_tp(evsel);
+static int evsel__init_augmented_syscall_tp_args(struct evsel *evsel)
+{
+	struct syscall_tp *sc = __evsel__syscall_tp(evsel);
 
-	वापस __tp_field__init_ptr(&sc->args, sc->id.offset + माप(u64));
-पूर्ण
+	return __tp_field__init_ptr(&sc->args, sc->id.offset + sizeof(u64));
+}
 
-अटल पूर्णांक evsel__init_augmented_syscall_tp_ret(काष्ठा evsel *evsel)
-अणु
-	काष्ठा syscall_tp *sc = __evsel__syscall_tp(evsel);
+static int evsel__init_augmented_syscall_tp_ret(struct evsel *evsel)
+{
+	struct syscall_tp *sc = __evsel__syscall_tp(evsel);
 
-	वापस __tp_field__init_uपूर्णांक(&sc->ret, माप(u64), sc->id.offset + माप(u64), evsel->needs_swap);
-पूर्ण
+	return __tp_field__init_uint(&sc->ret, sizeof(u64), sc->id.offset + sizeof(u64), evsel->needs_swap);
+}
 
-अटल पूर्णांक evsel__init_raw_syscall_tp(काष्ठा evsel *evsel, व्योम *handler)
-अणु
-	अगर (evsel__syscall_tp(evsel) != शून्य) अणु
-		अगर (perf_evsel__init_sc_tp_uपूर्णांक_field(evsel, id))
-			वापस -ENOENT;
+static int evsel__init_raw_syscall_tp(struct evsel *evsel, void *handler)
+{
+	if (evsel__syscall_tp(evsel) != NULL) {
+		if (perf_evsel__init_sc_tp_uint_field(evsel, id))
+			return -ENOENT;
 
 		evsel->handler = handler;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल काष्ठा evsel *perf_evsel__raw_syscall_newtp(स्थिर अक्षर *direction, व्योम *handler)
-अणु
-	काष्ठा evsel *evsel = evsel__newtp("raw_syscalls", direction);
+static struct evsel *perf_evsel__raw_syscall_newtp(const char *direction, void *handler)
+{
+	struct evsel *evsel = evsel__newtp("raw_syscalls", direction);
 
-	/* older kernel (e.g., RHEL6) use syscalls:अणुenter,निकासपूर्ण */
-	अगर (IS_ERR(evsel))
+	/* older kernel (e.g., RHEL6) use syscalls:{enter,exit} */
+	if (IS_ERR(evsel))
 		evsel = evsel__newtp("syscalls", direction);
 
-	अगर (IS_ERR(evsel))
-		वापस शून्य;
+	if (IS_ERR(evsel))
+		return NULL;
 
-	अगर (evsel__init_raw_syscall_tp(evsel, handler))
-		जाओ out_delete;
+	if (evsel__init_raw_syscall_tp(evsel, handler))
+		goto out_delete;
 
-	वापस evsel;
+	return evsel;
 
 out_delete:
 	evsel__delete_priv(evsel);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-#घोषणा perf_evsel__sc_tp_uपूर्णांक(evsel, name, sample) \
-	(अणु काष्ठा syscall_tp *fields = __evsel__syscall_tp(evsel); \
-	   fields->name.पूर्णांकeger(&fields->name, sample); पूर्ण)
+#define perf_evsel__sc_tp_uint(evsel, name, sample) \
+	({ struct syscall_tp *fields = __evsel__syscall_tp(evsel); \
+	   fields->name.integer(&fields->name, sample); })
 
-#घोषणा perf_evsel__sc_tp_ptr(evsel, name, sample) \
-	(अणु काष्ठा syscall_tp *fields = __evsel__syscall_tp(evsel); \
-	   fields->name.poपूर्णांकer(&fields->name, sample); पूर्ण)
+#define perf_evsel__sc_tp_ptr(evsel, name, sample) \
+	({ struct syscall_tp *fields = __evsel__syscall_tp(evsel); \
+	   fields->name.pointer(&fields->name, sample); })
 
-माप_प्रकार strarray__scnम_लिखो_suffix(काष्ठा strarray *sa, अक्षर *bf, माप_प्रकार size, स्थिर अक्षर *पूर्णांकfmt, bool show_suffix, पूर्णांक val)
-अणु
-	पूर्णांक idx = val - sa->offset;
+size_t strarray__scnprintf_suffix(struct strarray *sa, char *bf, size_t size, const char *intfmt, bool show_suffix, int val)
+{
+	int idx = val - sa->offset;
 
-	अगर (idx < 0 || idx >= sa->nr_entries || sa->entries[idx] == शून्य) अणु
-		माप_प्रकार prपूर्णांकed = scnम_लिखो(bf, size, पूर्णांकfmt, val);
-		अगर (show_suffix)
-			prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, " /* %s??? */", sa->prefix);
-		वापस prपूर्णांकed;
-	पूर्ण
+	if (idx < 0 || idx >= sa->nr_entries || sa->entries[idx] == NULL) {
+		size_t printed = scnprintf(bf, size, intfmt, val);
+		if (show_suffix)
+			printed += scnprintf(bf + printed, size - printed, " /* %s??? */", sa->prefix);
+		return printed;
+	}
 
-	वापस scnम_लिखो(bf, size, "%s%s", sa->entries[idx], show_suffix ? sa->prefix : "");
-पूर्ण
+	return scnprintf(bf, size, "%s%s", sa->entries[idx], show_suffix ? sa->prefix : "");
+}
 
-माप_प्रकार strarray__scnम_लिखो(काष्ठा strarray *sa, अक्षर *bf, माप_प्रकार size, स्थिर अक्षर *पूर्णांकfmt, bool show_prefix, पूर्णांक val)
-अणु
-	पूर्णांक idx = val - sa->offset;
+size_t strarray__scnprintf(struct strarray *sa, char *bf, size_t size, const char *intfmt, bool show_prefix, int val)
+{
+	int idx = val - sa->offset;
 
-	अगर (idx < 0 || idx >= sa->nr_entries || sa->entries[idx] == शून्य) अणु
-		माप_प्रकार prपूर्णांकed = scnम_लिखो(bf, size, पूर्णांकfmt, val);
-		अगर (show_prefix)
-			prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, " /* %s??? */", sa->prefix);
-		वापस prपूर्णांकed;
-	पूर्ण
+	if (idx < 0 || idx >= sa->nr_entries || sa->entries[idx] == NULL) {
+		size_t printed = scnprintf(bf, size, intfmt, val);
+		if (show_prefix)
+			printed += scnprintf(bf + printed, size - printed, " /* %s??? */", sa->prefix);
+		return printed;
+	}
 
-	वापस scnम_लिखो(bf, size, "%s%s", show_prefix ? sa->prefix : "", sa->entries[idx]);
-पूर्ण
+	return scnprintf(bf, size, "%s%s", show_prefix ? sa->prefix : "", sa->entries[idx]);
+}
 
-अटल माप_प्रकार __syscall_arg__scnम_लिखो_strarray(अक्षर *bf, माप_प्रकार size,
-						स्थिर अक्षर *पूर्णांकfmt,
-					        काष्ठा syscall_arg *arg)
-अणु
-	वापस strarray__scnम_लिखो(arg->parm, bf, size, पूर्णांकfmt, arg->show_string_prefix, arg->val);
-पूर्ण
+static size_t __syscall_arg__scnprintf_strarray(char *bf, size_t size,
+						const char *intfmt,
+					        struct syscall_arg *arg)
+{
+	return strarray__scnprintf(arg->parm, bf, size, intfmt, arg->show_string_prefix, arg->val);
+}
 
-अटल माप_प्रकार syscall_arg__scnम_लिखो_strarray(अक्षर *bf, माप_प्रकार size,
-					      काष्ठा syscall_arg *arg)
-अणु
-	वापस __syscall_arg__scnम_लिखो_strarray(bf, size, "%d", arg);
-पूर्ण
+static size_t syscall_arg__scnprintf_strarray(char *bf, size_t size,
+					      struct syscall_arg *arg)
+{
+	return __syscall_arg__scnprintf_strarray(bf, size, "%d", arg);
+}
 
-#घोषणा SCA_STRARRAY syscall_arg__scnम_लिखो_strarray
+#define SCA_STRARRAY syscall_arg__scnprintf_strarray
 
-bool syscall_arg__म_से_अदीर्घ_strarray(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg, u64 *ret)
-अणु
-	वापस strarray__म_से_अदीर्घ(arg->parm, bf, size, ret);
-पूर्ण
+bool syscall_arg__strtoul_strarray(char *bf, size_t size, struct syscall_arg *arg, u64 *ret)
+{
+	return strarray__strtoul(arg->parm, bf, size, ret);
+}
 
-bool syscall_arg__म_से_अदीर्घ_strarray_flags(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg, u64 *ret)
-अणु
-	वापस strarray__म_से_अदीर्घ_flags(arg->parm, bf, size, ret);
-पूर्ण
+bool syscall_arg__strtoul_strarray_flags(char *bf, size_t size, struct syscall_arg *arg, u64 *ret)
+{
+	return strarray__strtoul_flags(arg->parm, bf, size, ret);
+}
 
-bool syscall_arg__म_से_अदीर्घ_strarrays(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg, u64 *ret)
-अणु
-	वापस strarrays__म_से_अदीर्घ(arg->parm, bf, size, ret);
-पूर्ण
+bool syscall_arg__strtoul_strarrays(char *bf, size_t size, struct syscall_arg *arg, u64 *ret)
+{
+	return strarrays__strtoul(arg->parm, bf, size, ret);
+}
 
-माप_प्रकार syscall_arg__scnम_लिखो_strarray_flags(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg)
-अणु
-	वापस strarray__scnम_लिखो_flags(arg->parm, bf, size, arg->show_string_prefix, arg->val);
-पूर्ण
+size_t syscall_arg__scnprintf_strarray_flags(char *bf, size_t size, struct syscall_arg *arg)
+{
+	return strarray__scnprintf_flags(arg->parm, bf, size, arg->show_string_prefix, arg->val);
+}
 
-माप_प्रकार strarrays__scnम_लिखो(काष्ठा strarrays *sas, अक्षर *bf, माप_प्रकार size, स्थिर अक्षर *पूर्णांकfmt, bool show_prefix, पूर्णांक val)
-अणु
-	माप_प्रकार prपूर्णांकed;
-	पूर्णांक i;
+size_t strarrays__scnprintf(struct strarrays *sas, char *bf, size_t size, const char *intfmt, bool show_prefix, int val)
+{
+	size_t printed;
+	int i;
 
-	क्रम (i = 0; i < sas->nr_entries; ++i) अणु
-		काष्ठा strarray *sa = sas->entries[i];
-		पूर्णांक idx = val - sa->offset;
+	for (i = 0; i < sas->nr_entries; ++i) {
+		struct strarray *sa = sas->entries[i];
+		int idx = val - sa->offset;
 
-		अगर (idx >= 0 && idx < sa->nr_entries) अणु
-			अगर (sa->entries[idx] == शून्य)
-				अवरोध;
-			वापस scnम_लिखो(bf, size, "%s%s", show_prefix ? sa->prefix : "", sa->entries[idx]);
-		पूर्ण
-	पूर्ण
+		if (idx >= 0 && idx < sa->nr_entries) {
+			if (sa->entries[idx] == NULL)
+				break;
+			return scnprintf(bf, size, "%s%s", show_prefix ? sa->prefix : "", sa->entries[idx]);
+		}
+	}
 
-	prपूर्णांकed = scnम_लिखो(bf, size, पूर्णांकfmt, val);
-	अगर (show_prefix)
-		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, " /* %s??? */", sas->entries[0]->prefix);
-	वापस prपूर्णांकed;
-पूर्ण
+	printed = scnprintf(bf, size, intfmt, val);
+	if (show_prefix)
+		printed += scnprintf(bf + printed, size - printed, " /* %s??? */", sas->entries[0]->prefix);
+	return printed;
+}
 
-bool strarray__म_से_अदीर्घ(काष्ठा strarray *sa, अक्षर *bf, माप_प्रकार size, u64 *ret)
-अणु
-	पूर्णांक i;
+bool strarray__strtoul(struct strarray *sa, char *bf, size_t size, u64 *ret)
+{
+	int i;
 
-	क्रम (i = 0; i < sa->nr_entries; ++i) अणु
-		अगर (sa->entries[i] && म_भेदन(sa->entries[i], bf, size) == 0 && sa->entries[i][size] == '\0') अणु
+	for (i = 0; i < sa->nr_entries; ++i) {
+		if (sa->entries[i] && strncmp(sa->entries[i], bf, size) == 0 && sa->entries[i][size] == '\0') {
 			*ret = sa->offset + i;
-			वापस true;
-		पूर्ण
-	पूर्ण
+			return true;
+		}
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-bool strarray__म_से_अदीर्घ_flags(काष्ठा strarray *sa, अक्षर *bf, माप_प्रकार size, u64 *ret)
-अणु
+bool strarray__strtoul_flags(struct strarray *sa, char *bf, size_t size, u64 *ret)
+{
 	u64 val = 0;
-	अक्षर *tok = bf, *sep, *end;
+	char *tok = bf, *sep, *end;
 
 	*ret = 0;
 
-	जबतक (size != 0) अणु
-		पूर्णांक toklen = size;
+	while (size != 0) {
+		int toklen = size;
 
-		sep = स_प्रथम(tok, '|', size);
-		अगर (sep != शून्य) अणु
+		sep = memchr(tok, '|', size);
+		if (sep != NULL) {
 			size -= sep - tok + 1;
 
 			end = sep - 1;
-			जबतक (end > tok && है_खाली(*end))
+			while (end > tok && isspace(*end))
 				--end;
 
 			toklen = end - tok + 1;
-		पूर्ण
+		}
 
-		जबतक (है_खाली(*tok))
+		while (isspace(*tok))
 			++tok;
 
-		अगर (है_अक्षर(*tok) || *tok == '_') अणु
-			अगर (!strarray__म_से_अदीर्घ(sa, tok, toklen, &val))
-				वापस false;
-		पूर्ण अन्यथा अणु
+		if (isalpha(*tok) || *tok == '_') {
+			if (!strarray__strtoul(sa, tok, toklen, &val))
+				return false;
+		} else {
 			bool is_hexa = tok[0] == 0 && (tok[1] = 'x' || tok[1] == 'X');
 
-			val = म_से_अदीर्घ(tok, शून्य, is_hexa ? 16 : 0);
-		पूर्ण
+			val = strtoul(tok, NULL, is_hexa ? 16 : 0);
+		}
 
 		*ret |= (1 << (val - 1));
 
-		अगर (sep == शून्य)
-			अवरोध;
+		if (sep == NULL)
+			break;
 		tok = sep + 1;
-	पूर्ण
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-bool strarrays__म_से_अदीर्घ(काष्ठा strarrays *sas, अक्षर *bf, माप_प्रकार size, u64 *ret)
-अणु
-	पूर्णांक i;
+bool strarrays__strtoul(struct strarrays *sas, char *bf, size_t size, u64 *ret)
+{
+	int i;
 
-	क्रम (i = 0; i < sas->nr_entries; ++i) अणु
-		काष्ठा strarray *sa = sas->entries[i];
+	for (i = 0; i < sas->nr_entries; ++i) {
+		struct strarray *sa = sas->entries[i];
 
-		अगर (strarray__म_से_अदीर्घ(sa, bf, size, ret))
-			वापस true;
-	पूर्ण
+		if (strarray__strtoul(sa, bf, size, ret))
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-माप_प्रकार syscall_arg__scnम_लिखो_strarrays(अक्षर *bf, माप_प्रकार size,
-					काष्ठा syscall_arg *arg)
-अणु
-	वापस strarrays__scnम_लिखो(arg->parm, bf, size, "%d", arg->show_string_prefix, arg->val);
-पूर्ण
+size_t syscall_arg__scnprintf_strarrays(char *bf, size_t size,
+					struct syscall_arg *arg)
+{
+	return strarrays__scnprintf(arg->parm, bf, size, "%d", arg->show_string_prefix, arg->val);
+}
 
-#अगर_अघोषित AT_FDCWD
-#घोषणा AT_FDCWD	-100
-#पूर्ण_अगर
+#ifndef AT_FDCWD
+#define AT_FDCWD	-100
+#endif
 
-अटल माप_प्रकार syscall_arg__scnम_लिखो_fd_at(अक्षर *bf, माप_प्रकार size,
-					   काष्ठा syscall_arg *arg)
-अणु
-	पूर्णांक fd = arg->val;
-	स्थिर अक्षर *prefix = "AT_FD";
+static size_t syscall_arg__scnprintf_fd_at(char *bf, size_t size,
+					   struct syscall_arg *arg)
+{
+	int fd = arg->val;
+	const char *prefix = "AT_FD";
 
-	अगर (fd == AT_FDCWD)
-		वापस scnम_लिखो(bf, size, "%s%s", arg->show_string_prefix ? prefix : "", "CWD");
+	if (fd == AT_FDCWD)
+		return scnprintf(bf, size, "%s%s", arg->show_string_prefix ? prefix : "", "CWD");
 
-	वापस syscall_arg__scnम_लिखो_fd(bf, size, arg);
-पूर्ण
+	return syscall_arg__scnprintf_fd(bf, size, arg);
+}
 
-#घोषणा SCA_FDAT syscall_arg__scnम_लिखो_fd_at
+#define SCA_FDAT syscall_arg__scnprintf_fd_at
 
-अटल माप_प्रकार syscall_arg__scnम_लिखो_बंद_fd(अक्षर *bf, माप_प्रकार size,
-					      काष्ठा syscall_arg *arg);
+static size_t syscall_arg__scnprintf_close_fd(char *bf, size_t size,
+					      struct syscall_arg *arg);
 
-#घोषणा SCA_CLOSE_FD syscall_arg__scnम_लिखो_बंद_fd
+#define SCA_CLOSE_FD syscall_arg__scnprintf_close_fd
 
-माप_प्रकार syscall_arg__scnम_लिखो_hex(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg)
-अणु
-	वापस scnम_लिखो(bf, size, "%#lx", arg->val);
-पूर्ण
+size_t syscall_arg__scnprintf_hex(char *bf, size_t size, struct syscall_arg *arg)
+{
+	return scnprintf(bf, size, "%#lx", arg->val);
+}
 
-माप_प्रकार syscall_arg__scnम_लिखो_ptr(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg)
-अणु
-	अगर (arg->val == 0)
-		वापस scnम_लिखो(bf, size, "NULL");
-	वापस syscall_arg__scnम_लिखो_hex(bf, size, arg);
-पूर्ण
+size_t syscall_arg__scnprintf_ptr(char *bf, size_t size, struct syscall_arg *arg)
+{
+	if (arg->val == 0)
+		return scnprintf(bf, size, "NULL");
+	return syscall_arg__scnprintf_hex(bf, size, arg);
+}
 
-माप_प्रकार syscall_arg__scnम_लिखो_पूर्णांक(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg)
-अणु
-	वापस scnम_लिखो(bf, size, "%d", arg->val);
-पूर्ण
+size_t syscall_arg__scnprintf_int(char *bf, size_t size, struct syscall_arg *arg)
+{
+	return scnprintf(bf, size, "%d", arg->val);
+}
 
-माप_प्रकार syscall_arg__scnम_लिखो_दीर्घ(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg)
-अणु
-	वापस scnम_लिखो(bf, size, "%ld", arg->val);
-पूर्ण
+size_t syscall_arg__scnprintf_long(char *bf, size_t size, struct syscall_arg *arg)
+{
+	return scnprintf(bf, size, "%ld", arg->val);
+}
 
-अटल माप_प्रकार syscall_arg__scnम_लिखो_अक्षर_array(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg)
-अणु
-	// XXX Hey, maybe क्रम sched:sched_चयन prev/next comm fields we can
-	//     fill missing comms using thपढ़ो__set_comm()...
-	//     here or in a special syscall_arg__scnम_लिखो_pid_sched_tp...
-	वापस scnम_लिखो(bf, size, "\"%-.*s\"", arg->fmt->nr_entries ?: arg->len, arg->val);
-पूर्ण
+static size_t syscall_arg__scnprintf_char_array(char *bf, size_t size, struct syscall_arg *arg)
+{
+	// XXX Hey, maybe for sched:sched_switch prev/next comm fields we can
+	//     fill missing comms using thread__set_comm()...
+	//     here or in a special syscall_arg__scnprintf_pid_sched_tp...
+	return scnprintf(bf, size, "\"%-.*s\"", arg->fmt->nr_entries ?: arg->len, arg->val);
+}
 
-#घोषणा SCA_CHAR_ARRAY syscall_arg__scnम_लिखो_अक्षर_array
+#define SCA_CHAR_ARRAY syscall_arg__scnprintf_char_array
 
-अटल स्थिर अक्षर *bpf_cmd[] = अणु
+static const char *bpf_cmd[] = {
 	"MAP_CREATE", "MAP_LOOKUP_ELEM", "MAP_UPDATE_ELEM", "MAP_DELETE_ELEM",
 	"MAP_GET_NEXT_KEY", "PROG_LOAD",
-पूर्ण;
-अटल DEFINE_STRARRAY(bpf_cmd, "BPF_");
+};
+static DEFINE_STRARRAY(bpf_cmd, "BPF_");
 
-अटल स्थिर अक्षर *fsmount_flags[] = अणु
+static const char *fsmount_flags[] = {
 	[1] = "CLOEXEC",
-पूर्ण;
-अटल DEFINE_STRARRAY(fsmount_flags, "FSMOUNT_");
+};
+static DEFINE_STRARRAY(fsmount_flags, "FSMOUNT_");
 
-#समावेश "trace/beauty/generated/fsconfig_arrays.c"
+#include "trace/beauty/generated/fsconfig_arrays.c"
 
-अटल DEFINE_STRARRAY(fsconfig_cmds, "FSCONFIG_");
+static DEFINE_STRARRAY(fsconfig_cmds, "FSCONFIG_");
 
-अटल स्थिर अक्षर *epoll_ctl_ops[] = अणु "ADD", "DEL", "MOD", पूर्ण;
-अटल DEFINE_STRARRAY_OFFSET(epoll_ctl_ops, "EPOLL_CTL_", 1);
+static const char *epoll_ctl_ops[] = { "ADD", "DEL", "MOD", };
+static DEFINE_STRARRAY_OFFSET(epoll_ctl_ops, "EPOLL_CTL_", 1);
 
-अटल स्थिर अक्षर *iसमयrs[] = अणु "REAL", "VIRTUAL", "PROF", पूर्ण;
-अटल DEFINE_STRARRAY(iसमयrs, "ITIMER_");
+static const char *itimers[] = { "REAL", "VIRTUAL", "PROF", };
+static DEFINE_STRARRAY(itimers, "ITIMER_");
 
-अटल स्थिर अक्षर *keyctl_options[] = अणु
+static const char *keyctl_options[] = {
 	"GET_KEYRING_ID", "JOIN_SESSION_KEYRING", "UPDATE", "REVOKE", "CHOWN",
 	"SETPERM", "DESCRIBE", "CLEAR", "LINK", "UNLINK", "SEARCH", "READ",
 	"INSTANTIATE", "NEGATE", "SET_REQKEY_KEYRING", "SET_TIMEOUT",
 	"ASSUME_AUTHORITY", "GET_SECURITY", "SESSION_TO_PARENT", "REJECT",
 	"INSTANTIATE_IOV", "INVALIDATE", "GET_PERSISTENT",
-पूर्ण;
-अटल DEFINE_STRARRAY(keyctl_options, "KEYCTL_");
+};
+static DEFINE_STRARRAY(keyctl_options, "KEYCTL_");
 
-अटल स्थिर अक्षर *whences[] = अणु "SET", "CUR", "END",
-#अगर_घोषित SEEK_DATA
+static const char *whences[] = { "SET", "CUR", "END",
+#ifdef SEEK_DATA
 "DATA",
-#पूर्ण_अगर
-#अगर_घोषित SEEK_HOLE
+#endif
+#ifdef SEEK_HOLE
 "HOLE",
-#पूर्ण_अगर
-पूर्ण;
-अटल DEFINE_STRARRAY(whences, "SEEK_");
+#endif
+};
+static DEFINE_STRARRAY(whences, "SEEK_");
 
-अटल स्थिर अक्षर *fcntl_cmds[] = अणु
+static const char *fcntl_cmds[] = {
 	"DUPFD", "GETFD", "SETFD", "GETFL", "SETFL", "GETLK", "SETLK",
 	"SETLKW", "SETOWN", "GETOWN", "SETSIG", "GETSIG", "GETLK64",
 	"SETLK64", "SETLKW64", "SETOWN_EX", "GETOWN_EX",
 	"GETOWNER_UIDS",
-पूर्ण;
-अटल DEFINE_STRARRAY(fcntl_cmds, "F_");
+};
+static DEFINE_STRARRAY(fcntl_cmds, "F_");
 
-अटल स्थिर अक्षर *fcntl_linux_specअगरic_cmds[] = अणु
+static const char *fcntl_linux_specific_cmds[] = {
 	"SETLEASE", "GETLEASE", "NOTIFY", [5] =	"CANCELLK", "DUPFD_CLOEXEC",
 	"SETPIPE_SZ", "GETPIPE_SZ", "ADD_SEALS", "GET_SEALS",
 	"GET_RW_HINT", "SET_RW_HINT", "GET_FILE_RW_HINT", "SET_FILE_RW_HINT",
-पूर्ण;
+};
 
-अटल DEFINE_STRARRAY_OFFSET(fcntl_linux_specअगरic_cmds, "F_", F_LINUX_SPECIFIC_BASE);
+static DEFINE_STRARRAY_OFFSET(fcntl_linux_specific_cmds, "F_", F_LINUX_SPECIFIC_BASE);
 
-अटल काष्ठा strarray *fcntl_cmds_arrays[] = अणु
+static struct strarray *fcntl_cmds_arrays[] = {
 	&strarray__fcntl_cmds,
-	&strarray__fcntl_linux_specअगरic_cmds,
-पूर्ण;
+	&strarray__fcntl_linux_specific_cmds,
+};
 
-अटल DEFINE_STRARRAYS(fcntl_cmds_arrays);
+static DEFINE_STRARRAYS(fcntl_cmds_arrays);
 
-अटल स्थिर अक्षर *rlimit_resources[] = अणु
+static const char *rlimit_resources[] = {
 	"CPU", "FSIZE", "DATA", "STACK", "CORE", "RSS", "NPROC", "NOFILE",
 	"MEMLOCK", "AS", "LOCKS", "SIGPENDING", "MSGQUEUE", "NICE", "RTPRIO",
 	"RTTIME",
-पूर्ण;
-अटल DEFINE_STRARRAY(rlimit_resources, "RLIMIT_");
+};
+static DEFINE_STRARRAY(rlimit_resources, "RLIMIT_");
 
-अटल स्थिर अक्षर *sighow[] = अणु "BLOCK", "UNBLOCK", "SETMASK", पूर्ण;
-अटल DEFINE_STRARRAY(sighow, "SIG_");
+static const char *sighow[] = { "BLOCK", "UNBLOCK", "SETMASK", };
+static DEFINE_STRARRAY(sighow, "SIG_");
 
-अटल स्थिर अक्षर *घड़ीid[] = अणु
+static const char *clockid[] = {
 	"REALTIME", "MONOTONIC", "PROCESS_CPUTIME_ID", "THREAD_CPUTIME_ID",
 	"MONOTONIC_RAW", "REALTIME_COARSE", "MONOTONIC_COARSE", "BOOTTIME",
 	"REALTIME_ALARM", "BOOTTIME_ALARM", "SGI_CYCLE", "TAI"
-पूर्ण;
-अटल DEFINE_STRARRAY(घड़ीid, "CLOCK_");
+};
+static DEFINE_STRARRAY(clockid, "CLOCK_");
 
-अटल माप_प्रकार syscall_arg__scnम_लिखो_access_mode(अक्षर *bf, माप_प्रकार size,
-						 काष्ठा syscall_arg *arg)
-अणु
+static size_t syscall_arg__scnprintf_access_mode(char *bf, size_t size,
+						 struct syscall_arg *arg)
+{
 	bool show_prefix = arg->show_string_prefix;
-	स्थिर अक्षर *suffix = "_OK";
-	माप_प्रकार prपूर्णांकed = 0;
-	पूर्णांक mode = arg->val;
+	const char *suffix = "_OK";
+	size_t printed = 0;
+	int mode = arg->val;
 
-	अगर (mode == F_OK) /* 0 */
-		वापस scnम_लिखो(bf, size, "F%s", show_prefix ? suffix : "");
-#घोषणा	P_MODE(n) \
-	अगर (mode & n##_OK) अणु \
-		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "%s%s", #n, show_prefix ? suffix : ""); \
+	if (mode == F_OK) /* 0 */
+		return scnprintf(bf, size, "F%s", show_prefix ? suffix : "");
+#define	P_MODE(n) \
+	if (mode & n##_OK) { \
+		printed += scnprintf(bf + printed, size - printed, "%s%s", #n, show_prefix ? suffix : ""); \
 		mode &= ~n##_OK; \
-	पूर्ण
+	}
 
 	P_MODE(R);
 	P_MODE(W);
 	P_MODE(X);
-#अघोषित P_MODE
+#undef P_MODE
 
-	अगर (mode)
-		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "|%#x", mode);
+	if (mode)
+		printed += scnprintf(bf + printed, size - printed, "|%#x", mode);
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}
 
-#घोषणा SCA_ACCMODE syscall_arg__scnम_लिखो_access_mode
+#define SCA_ACCMODE syscall_arg__scnprintf_access_mode
 
-अटल माप_प्रकार syscall_arg__scnम_लिखो_filename(अक्षर *bf, माप_प्रकार size,
-					      काष्ठा syscall_arg *arg);
+static size_t syscall_arg__scnprintf_filename(char *bf, size_t size,
+					      struct syscall_arg *arg);
 
-#घोषणा SCA_खाताNAME syscall_arg__scnम_लिखो_filename
+#define SCA_FILENAME syscall_arg__scnprintf_filename
 
-अटल माप_प्रकार syscall_arg__scnम_लिखो_pipe_flags(अक्षर *bf, माप_प्रकार size,
-						काष्ठा syscall_arg *arg)
-अणु
+static size_t syscall_arg__scnprintf_pipe_flags(char *bf, size_t size,
+						struct syscall_arg *arg)
+{
 	bool show_prefix = arg->show_string_prefix;
-	स्थिर अक्षर *prefix = "O_";
-	पूर्णांक prपूर्णांकed = 0, flags = arg->val;
+	const char *prefix = "O_";
+	int printed = 0, flags = arg->val;
 
-#घोषणा	P_FLAG(n) \
-	अगर (flags & O_##n) अणु \
-		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "%s%s%s", prपूर्णांकed ? "|" : "", show_prefix ? prefix : "", #n); \
+#define	P_FLAG(n) \
+	if (flags & O_##n) { \
+		printed += scnprintf(bf + printed, size - printed, "%s%s%s", printed ? "|" : "", show_prefix ? prefix : "", #n); \
 		flags &= ~O_##n; \
-	पूर्ण
+	}
 
 	P_FLAG(CLOEXEC);
 	P_FLAG(NONBLOCK);
-#अघोषित P_FLAG
+#undef P_FLAG
 
-	अगर (flags)
-		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "%s%#x", prपूर्णांकed ? "|" : "", flags);
+	if (flags)
+		printed += scnprintf(bf + printed, size - printed, "%s%#x", printed ? "|" : "", flags);
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}
 
-#घोषणा SCA_PIPE_FLAGS syscall_arg__scnम_लिखो_pipe_flags
+#define SCA_PIPE_FLAGS syscall_arg__scnprintf_pipe_flags
 
-#अगर_अघोषित GRND_NONBLOCK
-#घोषणा GRND_NONBLOCK	0x0001
-#पूर्ण_अगर
-#अगर_अघोषित GRND_RANDOM
-#घोषणा GRND_RANDOM	0x0002
-#पूर्ण_अगर
+#ifndef GRND_NONBLOCK
+#define GRND_NONBLOCK	0x0001
+#endif
+#ifndef GRND_RANDOM
+#define GRND_RANDOM	0x0002
+#endif
 
-अटल माप_प्रकार syscall_arg__scnम_लिखो_getअक्रमom_flags(अक्षर *bf, माप_प्रकार size,
-						   काष्ठा syscall_arg *arg)
-अणु
+static size_t syscall_arg__scnprintf_getrandom_flags(char *bf, size_t size,
+						   struct syscall_arg *arg)
+{
 	bool show_prefix = arg->show_string_prefix;
-	स्थिर अक्षर *prefix = "GRND_";
-	पूर्णांक prपूर्णांकed = 0, flags = arg->val;
+	const char *prefix = "GRND_";
+	int printed = 0, flags = arg->val;
 
-#घोषणा	P_FLAG(n) \
-	अगर (flags & GRND_##n) अणु \
-		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "%s%s%s", prपूर्णांकed ? "|" : "", show_prefix ? prefix : "", #n); \
+#define	P_FLAG(n) \
+	if (flags & GRND_##n) { \
+		printed += scnprintf(bf + printed, size - printed, "%s%s%s", printed ? "|" : "", show_prefix ? prefix : "", #n); \
 		flags &= ~GRND_##n; \
-	पूर्ण
+	}
 
 	P_FLAG(RANDOM);
 	P_FLAG(NONBLOCK);
-#अघोषित P_FLAG
+#undef P_FLAG
 
-	अगर (flags)
-		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "%s%#x", prपूर्णांकed ? "|" : "", flags);
+	if (flags)
+		printed += scnprintf(bf + printed, size - printed, "%s%#x", printed ? "|" : "", flags);
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}
 
-#घोषणा SCA_GETRANDOM_FLAGS syscall_arg__scnम_लिखो_getअक्रमom_flags
+#define SCA_GETRANDOM_FLAGS syscall_arg__scnprintf_getrandom_flags
 
-#घोषणा STRARRAY(name, array) \
-	  अणु .scnम_लिखो	= SCA_STRARRAY, \
-	    .म_से_अदीर्घ	= STUL_STRARRAY, \
-	    .parm	= &strarray__##array, पूर्ण
+#define STRARRAY(name, array) \
+	  { .scnprintf	= SCA_STRARRAY, \
+	    .strtoul	= STUL_STRARRAY, \
+	    .parm	= &strarray__##array, }
 
-#घोषणा STRARRAY_FLAGS(name, array) \
-	  अणु .scnम_लिखो	= SCA_STRARRAY_FLAGS, \
-	    .म_से_अदीर्घ	= STUL_STRARRAY_FLAGS, \
-	    .parm	= &strarray__##array, पूर्ण
+#define STRARRAY_FLAGS(name, array) \
+	  { .scnprintf	= SCA_STRARRAY_FLAGS, \
+	    .strtoul	= STUL_STRARRAY_FLAGS, \
+	    .parm	= &strarray__##array, }
 
-#समावेश "trace/beauty/arch_errno_names.c"
-#समावेश "trace/beauty/eventfd.c"
-#समावेश "trace/beauty/futex_op.c"
-#समावेश "trace/beauty/futex_val3.c"
-#समावेश "trace/beauty/mmap.c"
-#समावेश "trace/beauty/mode_t.c"
-#समावेश "trace/beauty/msg_flags.c"
-#समावेश "trace/beauty/open_flags.c"
-#समावेश "trace/beauty/perf_event_open.c"
-#समावेश "trace/beauty/pid.c"
-#समावेश "trace/beauty/sched_policy.c"
-#समावेश "trace/beauty/seccomp.c"
-#समावेश "trace/beauty/signum.c"
-#समावेश "trace/beauty/socket_type.c"
-#समावेश "trace/beauty/waitid_options.c"
+#include "trace/beauty/arch_errno_names.c"
+#include "trace/beauty/eventfd.c"
+#include "trace/beauty/futex_op.c"
+#include "trace/beauty/futex_val3.c"
+#include "trace/beauty/mmap.c"
+#include "trace/beauty/mode_t.c"
+#include "trace/beauty/msg_flags.c"
+#include "trace/beauty/open_flags.c"
+#include "trace/beauty/perf_event_open.c"
+#include "trace/beauty/pid.c"
+#include "trace/beauty/sched_policy.c"
+#include "trace/beauty/seccomp.c"
+#include "trace/beauty/signum.c"
+#include "trace/beauty/socket_type.c"
+#include "trace/beauty/waitid_options.c"
 
-अटल काष्ठा syscall_fmt syscall_fmts[] = अणु
-	अणु .name	    = "access",
-	  .arg = अणु [1] = अणु .scnम_लिखो = SCA_ACCMODE,  /* mode */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "arch_prctl",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_X86_ARCH_PRCTL_CODE, /* code */ पूर्ण,
-		   [1] = अणु .scnम_लिखो = SCA_PTR, /* arg2 */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "bind",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_INT, /* fd */ पूर्ण,
-		   [1] = अणु .scnम_लिखो = SCA_SOCKADDR, /* umyaddr */ पूर्ण,
-		   [2] = अणु .scnम_लिखो = SCA_INT, /* addrlen */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "bpf",
-	  .arg = अणु [0] = STRARRAY(cmd, bpf_cmd), पूर्ण, पूर्ण,
-	अणु .name	    = "brk",	    .hexret = true,
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_PTR, /* brk */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name     = "clock_gettime",
-	  .arg = अणु [0] = STRARRAY(clk_id, घड़ीid), पूर्ण, पूर्ण,
-	अणु .name	    = "clone",	    .errpid = true, .nr_args = 5,
-	  .arg = अणु [0] = अणु .name = "flags",	    .scnम_लिखो = SCA_CLONE_FLAGS, पूर्ण,
-		   [1] = अणु .name = "child_stack",   .scnम_लिखो = SCA_HEX, पूर्ण,
-		   [2] = अणु .name = "parent_tidptr", .scnम_लिखो = SCA_HEX, पूर्ण,
-		   [3] = अणु .name = "child_tidptr",  .scnम_लिखो = SCA_HEX, पूर्ण,
-		   [4] = अणु .name = "tls",	    .scnम_लिखो = SCA_HEX, पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "close",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_CLOSE_FD, /* fd */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "connect",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_INT, /* fd */ पूर्ण,
-		   [1] = अणु .scnम_लिखो = SCA_SOCKADDR, /* servaddr */ पूर्ण,
-		   [2] = अणु .scnम_लिखो = SCA_INT, /* addrlen */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "epoll_ctl",
-	  .arg = अणु [1] = STRARRAY(op, epoll_ctl_ops), पूर्ण, पूर्ण,
-	अणु .name	    = "eventfd2",
-	  .arg = अणु [1] = अणु .scnम_लिखो = SCA_EFD_FLAGS, /* flags */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "fchmodat",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_FDAT, /* fd */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "fchownat",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_FDAT, /* fd */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "fcntl",
-	  .arg = अणु [1] = अणु .scnम_लिखो = SCA_FCNTL_CMD,  /* cmd */
-			   .म_से_अदीर्घ   = STUL_STRARRAYS,
+static struct syscall_fmt syscall_fmts[] = {
+	{ .name	    = "access",
+	  .arg = { [1] = { .scnprintf = SCA_ACCMODE,  /* mode */ }, }, },
+	{ .name	    = "arch_prctl",
+	  .arg = { [0] = { .scnprintf = SCA_X86_ARCH_PRCTL_CODE, /* code */ },
+		   [1] = { .scnprintf = SCA_PTR, /* arg2 */ }, }, },
+	{ .name	    = "bind",
+	  .arg = { [0] = { .scnprintf = SCA_INT, /* fd */ },
+		   [1] = { .scnprintf = SCA_SOCKADDR, /* umyaddr */ },
+		   [2] = { .scnprintf = SCA_INT, /* addrlen */ }, }, },
+	{ .name	    = "bpf",
+	  .arg = { [0] = STRARRAY(cmd, bpf_cmd), }, },
+	{ .name	    = "brk",	    .hexret = true,
+	  .arg = { [0] = { .scnprintf = SCA_PTR, /* brk */ }, }, },
+	{ .name     = "clock_gettime",
+	  .arg = { [0] = STRARRAY(clk_id, clockid), }, },
+	{ .name	    = "clone",	    .errpid = true, .nr_args = 5,
+	  .arg = { [0] = { .name = "flags",	    .scnprintf = SCA_CLONE_FLAGS, },
+		   [1] = { .name = "child_stack",   .scnprintf = SCA_HEX, },
+		   [2] = { .name = "parent_tidptr", .scnprintf = SCA_HEX, },
+		   [3] = { .name = "child_tidptr",  .scnprintf = SCA_HEX, },
+		   [4] = { .name = "tls",	    .scnprintf = SCA_HEX, }, }, },
+	{ .name	    = "close",
+	  .arg = { [0] = { .scnprintf = SCA_CLOSE_FD, /* fd */ }, }, },
+	{ .name	    = "connect",
+	  .arg = { [0] = { .scnprintf = SCA_INT, /* fd */ },
+		   [1] = { .scnprintf = SCA_SOCKADDR, /* servaddr */ },
+		   [2] = { .scnprintf = SCA_INT, /* addrlen */ }, }, },
+	{ .name	    = "epoll_ctl",
+	  .arg = { [1] = STRARRAY(op, epoll_ctl_ops), }, },
+	{ .name	    = "eventfd2",
+	  .arg = { [1] = { .scnprintf = SCA_EFD_FLAGS, /* flags */ }, }, },
+	{ .name	    = "fchmodat",
+	  .arg = { [0] = { .scnprintf = SCA_FDAT, /* fd */ }, }, },
+	{ .name	    = "fchownat",
+	  .arg = { [0] = { .scnprintf = SCA_FDAT, /* fd */ }, }, },
+	{ .name	    = "fcntl",
+	  .arg = { [1] = { .scnprintf = SCA_FCNTL_CMD,  /* cmd */
+			   .strtoul   = STUL_STRARRAYS,
 			   .parm      = &strarrays__fcntl_cmds_arrays,
-			   .show_zero = true, पूर्ण,
-		   [2] = अणु .scnम_लिखो =  SCA_FCNTL_ARG, /* arg */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "flock",
-	  .arg = अणु [1] = अणु .scnम_लिखो = SCA_FLOCK, /* cmd */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name     = "fsconfig",
-	  .arg = अणु [1] = STRARRAY(cmd, fsconfig_cmds), पूर्ण, पूर्ण,
-	अणु .name     = "fsmount",
-	  .arg = अणु [1] = STRARRAY_FLAGS(flags, fsmount_flags),
-		   [2] = अणु .scnम_लिखो = SCA_FSMOUNT_ATTR_FLAGS, /* attr_flags */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name     = "fspick",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_FDAT,	  /* dfd */ पूर्ण,
-		   [1] = अणु .scnम_लिखो = SCA_खाताNAME,	  /* path */ पूर्ण,
-		   [2] = अणु .scnम_लिखो = SCA_FSPICK_FLAGS, /* flags */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "fstat", .alias = "newfstat", पूर्ण,
-	अणु .name	    = "fstatat", .alias = "newfstatat", पूर्ण,
-	अणु .name	    = "futex",
-	  .arg = अणु [1] = अणु .scnम_लिखो = SCA_FUTEX_OP, /* op */ पूर्ण,
-		   [5] = अणु .scnम_लिखो = SCA_FUTEX_VAL3, /* val3 */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "futimesat",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_FDAT, /* fd */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "getitimer",
-	  .arg = अणु [0] = STRARRAY(which, iसमयrs), पूर्ण, पूर्ण,
-	अणु .name	    = "getpid",	    .errpid = true, पूर्ण,
-	अणु .name	    = "getpgid",    .errpid = true, पूर्ण,
-	अणु .name	    = "getppid",    .errpid = true, पूर्ण,
-	अणु .name	    = "getrandom",
-	  .arg = अणु [2] = अणु .scnम_लिखो = SCA_GETRANDOM_FLAGS, /* flags */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "getrlimit",
-	  .arg = अणु [0] = STRARRAY(resource, rlimit_resources), पूर्ण, पूर्ण,
-	अणु .name	    = "gettid",	    .errpid = true, पूर्ण,
-	अणु .name	    = "ioctl",
-	  .arg = अणु
-#अगर defined(__i386__) || defined(__x86_64__)
+			   .show_zero = true, },
+		   [2] = { .scnprintf =  SCA_FCNTL_ARG, /* arg */ }, }, },
+	{ .name	    = "flock",
+	  .arg = { [1] = { .scnprintf = SCA_FLOCK, /* cmd */ }, }, },
+	{ .name     = "fsconfig",
+	  .arg = { [1] = STRARRAY(cmd, fsconfig_cmds), }, },
+	{ .name     = "fsmount",
+	  .arg = { [1] = STRARRAY_FLAGS(flags, fsmount_flags),
+		   [2] = { .scnprintf = SCA_FSMOUNT_ATTR_FLAGS, /* attr_flags */ }, }, },
+	{ .name     = "fspick",
+	  .arg = { [0] = { .scnprintf = SCA_FDAT,	  /* dfd */ },
+		   [1] = { .scnprintf = SCA_FILENAME,	  /* path */ },
+		   [2] = { .scnprintf = SCA_FSPICK_FLAGS, /* flags */ }, }, },
+	{ .name	    = "fstat", .alias = "newfstat", },
+	{ .name	    = "fstatat", .alias = "newfstatat", },
+	{ .name	    = "futex",
+	  .arg = { [1] = { .scnprintf = SCA_FUTEX_OP, /* op */ },
+		   [5] = { .scnprintf = SCA_FUTEX_VAL3, /* val3 */ }, }, },
+	{ .name	    = "futimesat",
+	  .arg = { [0] = { .scnprintf = SCA_FDAT, /* fd */ }, }, },
+	{ .name	    = "getitimer",
+	  .arg = { [0] = STRARRAY(which, itimers), }, },
+	{ .name	    = "getpid",	    .errpid = true, },
+	{ .name	    = "getpgid",    .errpid = true, },
+	{ .name	    = "getppid",    .errpid = true, },
+	{ .name	    = "getrandom",
+	  .arg = { [2] = { .scnprintf = SCA_GETRANDOM_FLAGS, /* flags */ }, }, },
+	{ .name	    = "getrlimit",
+	  .arg = { [0] = STRARRAY(resource, rlimit_resources), }, },
+	{ .name	    = "gettid",	    .errpid = true, },
+	{ .name	    = "ioctl",
+	  .arg = {
+#if defined(__i386__) || defined(__x86_64__)
 /*
  * FIXME: Make this available to all arches.
  */
-		   [1] = अणु .scnम_लिखो = SCA_IOCTL_CMD, /* cmd */ पूर्ण,
-		   [2] = अणु .scnम_लिखो = SCA_HEX, /* arg */ पूर्ण, पूर्ण, पूर्ण,
-#अन्यथा
-		   [2] = अणु .scnम_लिखो = SCA_HEX, /* arg */ पूर्ण, पूर्ण, पूर्ण,
-#पूर्ण_अगर
-	अणु .name	    = "kcmp",	    .nr_args = 5,
-	  .arg = अणु [0] = अणु .name = "pid1",	.scnम_लिखो = SCA_PID, पूर्ण,
-		   [1] = अणु .name = "pid2",	.scnम_लिखो = SCA_PID, पूर्ण,
-		   [2] = अणु .name = "type",	.scnम_लिखो = SCA_KCMP_TYPE, पूर्ण,
-		   [3] = अणु .name = "idx1",	.scnम_लिखो = SCA_KCMP_IDX, पूर्ण,
-		   [4] = अणु .name = "idx2",	.scnम_लिखो = SCA_KCMP_IDX, पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "keyctl",
-	  .arg = अणु [0] = STRARRAY(option, keyctl_options), पूर्ण, पूर्ण,
-	अणु .name	    = "kill",
-	  .arg = अणु [1] = अणु .scnम_लिखो = SCA_SIGNUM, /* sig */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "linkat",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_FDAT, /* fd */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "lseek",
-	  .arg = अणु [2] = STRARRAY(whence, whences), पूर्ण, पूर्ण,
-	अणु .name	    = "lstat", .alias = "newlstat", पूर्ण,
-	अणु .name     = "madvise",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_HEX,      /* start */ पूर्ण,
-		   [2] = अणु .scnम_लिखो = SCA_MADV_BHV, /* behavior */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "mkdirat",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_FDAT, /* fd */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "mknodat",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_FDAT, /* fd */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "mmap",	    .hexret = true,
+		   [1] = { .scnprintf = SCA_IOCTL_CMD, /* cmd */ },
+		   [2] = { .scnprintf = SCA_HEX, /* arg */ }, }, },
+#else
+		   [2] = { .scnprintf = SCA_HEX, /* arg */ }, }, },
+#endif
+	{ .name	    = "kcmp",	    .nr_args = 5,
+	  .arg = { [0] = { .name = "pid1",	.scnprintf = SCA_PID, },
+		   [1] = { .name = "pid2",	.scnprintf = SCA_PID, },
+		   [2] = { .name = "type",	.scnprintf = SCA_KCMP_TYPE, },
+		   [3] = { .name = "idx1",	.scnprintf = SCA_KCMP_IDX, },
+		   [4] = { .name = "idx2",	.scnprintf = SCA_KCMP_IDX, }, }, },
+	{ .name	    = "keyctl",
+	  .arg = { [0] = STRARRAY(option, keyctl_options), }, },
+	{ .name	    = "kill",
+	  .arg = { [1] = { .scnprintf = SCA_SIGNUM, /* sig */ }, }, },
+	{ .name	    = "linkat",
+	  .arg = { [0] = { .scnprintf = SCA_FDAT, /* fd */ }, }, },
+	{ .name	    = "lseek",
+	  .arg = { [2] = STRARRAY(whence, whences), }, },
+	{ .name	    = "lstat", .alias = "newlstat", },
+	{ .name     = "madvise",
+	  .arg = { [0] = { .scnprintf = SCA_HEX,      /* start */ },
+		   [2] = { .scnprintf = SCA_MADV_BHV, /* behavior */ }, }, },
+	{ .name	    = "mkdirat",
+	  .arg = { [0] = { .scnprintf = SCA_FDAT, /* fd */ }, }, },
+	{ .name	    = "mknodat",
+	  .arg = { [0] = { .scnprintf = SCA_FDAT, /* fd */ }, }, },
+	{ .name	    = "mmap",	    .hexret = true,
 /* The standard mmap maps to old_mmap on s390x */
-#अगर defined(__s390x__)
+#if defined(__s390x__)
 	.alias = "old_mmap",
-#पूर्ण_अगर
-	  .arg = अणु [2] = अणु .scnम_लिखो = SCA_MMAP_PROT,	/* prot */ पूर्ण,
-		   [3] = अणु .scnम_लिखो = SCA_MMAP_FLAGS,	/* flags */
-			   .म_से_अदीर्घ   = STUL_STRARRAY_FLAGS,
-			   .parm      = &strarray__mmap_flags, पूर्ण,
-		   [5] = अणु .scnम_लिखो = SCA_HEX,	/* offset */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "mount",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_खाताNAME, /* dev_name */ पूर्ण,
-		   [3] = अणु .scnम_लिखो = SCA_MOUNT_FLAGS, /* flags */
-			   .mask_val  = SCAMV_MOUNT_FLAGS, /* flags */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "move_mount",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_FDAT,	/* from_dfd */ पूर्ण,
-		   [1] = अणु .scnम_लिखो = SCA_खाताNAME, /* from_pathname */ पूर्ण,
-		   [2] = अणु .scnम_लिखो = SCA_FDAT,	/* to_dfd */ पूर्ण,
-		   [3] = अणु .scnम_लिखो = SCA_खाताNAME, /* to_pathname */ पूर्ण,
-		   [4] = अणु .scnम_लिखो = SCA_MOVE_MOUNT_FLAGS, /* flags */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "mprotect",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_HEX,	/* start */ पूर्ण,
-		   [2] = अणु .scnम_लिखो = SCA_MMAP_PROT,	/* prot */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "mq_unlink",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_खाताNAME, /* u_name */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "mremap",	    .hexret = true,
-	  .arg = अणु [3] = अणु .scnम_लिखो = SCA_MREMAP_FLAGS, /* flags */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "name_to_handle_at",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_FDAT, /* dfd */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "newfstatat",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_FDAT, /* dfd */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "open",
-	  .arg = अणु [1] = अणु .scnम_लिखो = SCA_OPEN_FLAGS, /* flags */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "open_by_handle_at",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_FDAT,	/* dfd */ पूर्ण,
-		   [2] = अणु .scnम_लिखो = SCA_OPEN_FLAGS, /* flags */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "openat",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_FDAT,	/* dfd */ पूर्ण,
-		   [2] = अणु .scnम_लिखो = SCA_OPEN_FLAGS, /* flags */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "perf_event_open",
-	  .arg = अणु [2] = अणु .scnम_लिखो = SCA_INT,	/* cpu */ पूर्ण,
-		   [3] = अणु .scnम_लिखो = SCA_FD,		/* group_fd */ पूर्ण,
-		   [4] = अणु .scnम_लिखो = SCA_PERF_FLAGS, /* flags */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "pipe2",
-	  .arg = अणु [1] = अणु .scnम_लिखो = SCA_PIPE_FLAGS, /* flags */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "pkey_alloc",
-	  .arg = अणु [1] = अणु .scnम_लिखो = SCA_PKEY_ALLOC_ACCESS_RIGHTS,	/* access_rights */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "pkey_free",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_INT,	/* key */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "pkey_mprotect",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_HEX,	/* start */ पूर्ण,
-		   [2] = अणु .scnम_लिखो = SCA_MMAP_PROT,	/* prot */ पूर्ण,
-		   [3] = अणु .scnम_लिखो = SCA_INT,	/* pkey */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "poll", .समयout = true, पूर्ण,
-	अणु .name	    = "ppoll", .समयout = true, पूर्ण,
-	अणु .name	    = "prctl",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_PRCTL_OPTION, /* option */
-			   .म_से_अदीर्घ   = STUL_STRARRAY,
-			   .parm      = &strarray__prctl_options, पूर्ण,
-		   [1] = अणु .scnम_लिखो = SCA_PRCTL_ARG2, /* arg2 */ पूर्ण,
-		   [2] = अणु .scnम_लिखो = SCA_PRCTL_ARG3, /* arg3 */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "pread", .alias = "pread64", पूर्ण,
-	अणु .name	    = "preadv", .alias = "pread", पूर्ण,
-	अणु .name	    = "prlimit64",
-	  .arg = अणु [1] = STRARRAY(resource, rlimit_resources), पूर्ण, पूर्ण,
-	अणु .name	    = "pwrite", .alias = "pwrite64", पूर्ण,
-	अणु .name	    = "readlinkat",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_FDAT, /* dfd */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "recvfrom",
-	  .arg = अणु [3] = अणु .scnम_लिखो = SCA_MSG_FLAGS, /* flags */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "recvmmsg",
-	  .arg = अणु [3] = अणु .scnम_लिखो = SCA_MSG_FLAGS, /* flags */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "recvmsg",
-	  .arg = अणु [2] = अणु .scnम_लिखो = SCA_MSG_FLAGS, /* flags */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "renameat",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_FDAT, /* olddirfd */ पूर्ण,
-		   [2] = अणु .scnम_लिखो = SCA_FDAT, /* newdirfd */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "renameat2",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_FDAT, /* olddirfd */ पूर्ण,
-		   [2] = अणु .scnम_लिखो = SCA_FDAT, /* newdirfd */ पूर्ण,
-		   [4] = अणु .scnम_लिखो = SCA_RENAMEAT2_FLAGS, /* flags */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "rt_sigaction",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_SIGNUM, /* sig */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "rt_sigprocmask",
-	  .arg = अणु [0] = STRARRAY(how, sighow), पूर्ण, पूर्ण,
-	अणु .name	    = "rt_sigqueueinfo",
-	  .arg = अणु [1] = अणु .scnम_लिखो = SCA_SIGNUM, /* sig */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "rt_tgsigqueueinfo",
-	  .arg = अणु [2] = अणु .scnम_लिखो = SCA_SIGNUM, /* sig */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "sched_setscheduler",
-	  .arg = अणु [1] = अणु .scnम_लिखो = SCA_SCHED_POLICY, /* policy */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "seccomp",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_SECCOMP_OP,	   /* op */ पूर्ण,
-		   [1] = अणु .scnम_लिखो = SCA_SECCOMP_FLAGS, /* flags */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "select", .समयout = true, पूर्ण,
-	अणु .name	    = "sendfile", .alias = "sendfile64", पूर्ण,
-	अणु .name	    = "sendmmsg",
-	  .arg = अणु [3] = अणु .scnम_लिखो = SCA_MSG_FLAGS, /* flags */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "sendmsg",
-	  .arg = अणु [2] = अणु .scnम_लिखो = SCA_MSG_FLAGS, /* flags */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "sendto",
-	  .arg = अणु [3] = अणु .scnम_लिखो = SCA_MSG_FLAGS, /* flags */ पूर्ण,
-		   [4] = अणु .scnम_लिखो = SCA_SOCKADDR, /* addr */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "set_tid_address", .errpid = true, पूर्ण,
-	अणु .name	    = "setitimer",
-	  .arg = अणु [0] = STRARRAY(which, iसमयrs), पूर्ण, पूर्ण,
-	अणु .name	    = "setrlimit",
-	  .arg = अणु [0] = STRARRAY(resource, rlimit_resources), पूर्ण, पूर्ण,
-	अणु .name	    = "socket",
-	  .arg = अणु [0] = STRARRAY(family, socket_families),
-		   [1] = अणु .scnम_लिखो = SCA_SK_TYPE, /* type */ पूर्ण,
-		   [2] = अणु .scnम_लिखो = SCA_SK_PROTO, /* protocol */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "socketpair",
-	  .arg = अणु [0] = STRARRAY(family, socket_families),
-		   [1] = अणु .scnम_लिखो = SCA_SK_TYPE, /* type */ पूर्ण,
-		   [2] = अणु .scnम_लिखो = SCA_SK_PROTO, /* protocol */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "stat", .alias = "newstat", पूर्ण,
-	अणु .name	    = "statx",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_FDAT,	 /* fdat */ पूर्ण,
-		   [2] = अणु .scnम_लिखो = SCA_STATX_FLAGS, /* flags */ पूर्ण ,
-		   [3] = अणु .scnम_लिखो = SCA_STATX_MASK,	 /* mask */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "swapoff",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_खाताNAME, /* specialfile */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "swapon",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_खाताNAME, /* specialfile */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "symlinkat",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_FDAT, /* dfd */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "sync_file_range",
-	  .arg = अणु [3] = अणु .scnम_लिखो = SCA_SYNC_खाता_RANGE_FLAGS, /* flags */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "tgkill",
-	  .arg = अणु [2] = अणु .scnम_लिखो = SCA_SIGNUM, /* sig */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "tkill",
-	  .arg = अणु [1] = अणु .scnम_लिखो = SCA_SIGNUM, /* sig */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name     = "umount2", .alias = "umount",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_खाताNAME, /* name */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "uname", .alias = "newuname", पूर्ण,
-	अणु .name	    = "unlinkat",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_FDAT, /* dfd */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "utimensat",
-	  .arg = अणु [0] = अणु .scnम_लिखो = SCA_FDAT, /* dirfd */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "wait4",	    .errpid = true,
-	  .arg = अणु [2] = अणु .scnम_लिखो = SCA_WAITID_OPTIONS, /* options */ पूर्ण, पूर्ण, पूर्ण,
-	अणु .name	    = "waitid",	    .errpid = true,
-	  .arg = अणु [3] = अणु .scnम_लिखो = SCA_WAITID_OPTIONS, /* options */ पूर्ण, पूर्ण, पूर्ण,
-पूर्ण;
+#endif
+	  .arg = { [2] = { .scnprintf = SCA_MMAP_PROT,	/* prot */ },
+		   [3] = { .scnprintf = SCA_MMAP_FLAGS,	/* flags */
+			   .strtoul   = STUL_STRARRAY_FLAGS,
+			   .parm      = &strarray__mmap_flags, },
+		   [5] = { .scnprintf = SCA_HEX,	/* offset */ }, }, },
+	{ .name	    = "mount",
+	  .arg = { [0] = { .scnprintf = SCA_FILENAME, /* dev_name */ },
+		   [3] = { .scnprintf = SCA_MOUNT_FLAGS, /* flags */
+			   .mask_val  = SCAMV_MOUNT_FLAGS, /* flags */ }, }, },
+	{ .name	    = "move_mount",
+	  .arg = { [0] = { .scnprintf = SCA_FDAT,	/* from_dfd */ },
+		   [1] = { .scnprintf = SCA_FILENAME, /* from_pathname */ },
+		   [2] = { .scnprintf = SCA_FDAT,	/* to_dfd */ },
+		   [3] = { .scnprintf = SCA_FILENAME, /* to_pathname */ },
+		   [4] = { .scnprintf = SCA_MOVE_MOUNT_FLAGS, /* flags */ }, }, },
+	{ .name	    = "mprotect",
+	  .arg = { [0] = { .scnprintf = SCA_HEX,	/* start */ },
+		   [2] = { .scnprintf = SCA_MMAP_PROT,	/* prot */ }, }, },
+	{ .name	    = "mq_unlink",
+	  .arg = { [0] = { .scnprintf = SCA_FILENAME, /* u_name */ }, }, },
+	{ .name	    = "mremap",	    .hexret = true,
+	  .arg = { [3] = { .scnprintf = SCA_MREMAP_FLAGS, /* flags */ }, }, },
+	{ .name	    = "name_to_handle_at",
+	  .arg = { [0] = { .scnprintf = SCA_FDAT, /* dfd */ }, }, },
+	{ .name	    = "newfstatat",
+	  .arg = { [0] = { .scnprintf = SCA_FDAT, /* dfd */ }, }, },
+	{ .name	    = "open",
+	  .arg = { [1] = { .scnprintf = SCA_OPEN_FLAGS, /* flags */ }, }, },
+	{ .name	    = "open_by_handle_at",
+	  .arg = { [0] = { .scnprintf = SCA_FDAT,	/* dfd */ },
+		   [2] = { .scnprintf = SCA_OPEN_FLAGS, /* flags */ }, }, },
+	{ .name	    = "openat",
+	  .arg = { [0] = { .scnprintf = SCA_FDAT,	/* dfd */ },
+		   [2] = { .scnprintf = SCA_OPEN_FLAGS, /* flags */ }, }, },
+	{ .name	    = "perf_event_open",
+	  .arg = { [2] = { .scnprintf = SCA_INT,	/* cpu */ },
+		   [3] = { .scnprintf = SCA_FD,		/* group_fd */ },
+		   [4] = { .scnprintf = SCA_PERF_FLAGS, /* flags */ }, }, },
+	{ .name	    = "pipe2",
+	  .arg = { [1] = { .scnprintf = SCA_PIPE_FLAGS, /* flags */ }, }, },
+	{ .name	    = "pkey_alloc",
+	  .arg = { [1] = { .scnprintf = SCA_PKEY_ALLOC_ACCESS_RIGHTS,	/* access_rights */ }, }, },
+	{ .name	    = "pkey_free",
+	  .arg = { [0] = { .scnprintf = SCA_INT,	/* key */ }, }, },
+	{ .name	    = "pkey_mprotect",
+	  .arg = { [0] = { .scnprintf = SCA_HEX,	/* start */ },
+		   [2] = { .scnprintf = SCA_MMAP_PROT,	/* prot */ },
+		   [3] = { .scnprintf = SCA_INT,	/* pkey */ }, }, },
+	{ .name	    = "poll", .timeout = true, },
+	{ .name	    = "ppoll", .timeout = true, },
+	{ .name	    = "prctl",
+	  .arg = { [0] = { .scnprintf = SCA_PRCTL_OPTION, /* option */
+			   .strtoul   = STUL_STRARRAY,
+			   .parm      = &strarray__prctl_options, },
+		   [1] = { .scnprintf = SCA_PRCTL_ARG2, /* arg2 */ },
+		   [2] = { .scnprintf = SCA_PRCTL_ARG3, /* arg3 */ }, }, },
+	{ .name	    = "pread", .alias = "pread64", },
+	{ .name	    = "preadv", .alias = "pread", },
+	{ .name	    = "prlimit64",
+	  .arg = { [1] = STRARRAY(resource, rlimit_resources), }, },
+	{ .name	    = "pwrite", .alias = "pwrite64", },
+	{ .name	    = "readlinkat",
+	  .arg = { [0] = { .scnprintf = SCA_FDAT, /* dfd */ }, }, },
+	{ .name	    = "recvfrom",
+	  .arg = { [3] = { .scnprintf = SCA_MSG_FLAGS, /* flags */ }, }, },
+	{ .name	    = "recvmmsg",
+	  .arg = { [3] = { .scnprintf = SCA_MSG_FLAGS, /* flags */ }, }, },
+	{ .name	    = "recvmsg",
+	  .arg = { [2] = { .scnprintf = SCA_MSG_FLAGS, /* flags */ }, }, },
+	{ .name	    = "renameat",
+	  .arg = { [0] = { .scnprintf = SCA_FDAT, /* olddirfd */ },
+		   [2] = { .scnprintf = SCA_FDAT, /* newdirfd */ }, }, },
+	{ .name	    = "renameat2",
+	  .arg = { [0] = { .scnprintf = SCA_FDAT, /* olddirfd */ },
+		   [2] = { .scnprintf = SCA_FDAT, /* newdirfd */ },
+		   [4] = { .scnprintf = SCA_RENAMEAT2_FLAGS, /* flags */ }, }, },
+	{ .name	    = "rt_sigaction",
+	  .arg = { [0] = { .scnprintf = SCA_SIGNUM, /* sig */ }, }, },
+	{ .name	    = "rt_sigprocmask",
+	  .arg = { [0] = STRARRAY(how, sighow), }, },
+	{ .name	    = "rt_sigqueueinfo",
+	  .arg = { [1] = { .scnprintf = SCA_SIGNUM, /* sig */ }, }, },
+	{ .name	    = "rt_tgsigqueueinfo",
+	  .arg = { [2] = { .scnprintf = SCA_SIGNUM, /* sig */ }, }, },
+	{ .name	    = "sched_setscheduler",
+	  .arg = { [1] = { .scnprintf = SCA_SCHED_POLICY, /* policy */ }, }, },
+	{ .name	    = "seccomp",
+	  .arg = { [0] = { .scnprintf = SCA_SECCOMP_OP,	   /* op */ },
+		   [1] = { .scnprintf = SCA_SECCOMP_FLAGS, /* flags */ }, }, },
+	{ .name	    = "select", .timeout = true, },
+	{ .name	    = "sendfile", .alias = "sendfile64", },
+	{ .name	    = "sendmmsg",
+	  .arg = { [3] = { .scnprintf = SCA_MSG_FLAGS, /* flags */ }, }, },
+	{ .name	    = "sendmsg",
+	  .arg = { [2] = { .scnprintf = SCA_MSG_FLAGS, /* flags */ }, }, },
+	{ .name	    = "sendto",
+	  .arg = { [3] = { .scnprintf = SCA_MSG_FLAGS, /* flags */ },
+		   [4] = { .scnprintf = SCA_SOCKADDR, /* addr */ }, }, },
+	{ .name	    = "set_tid_address", .errpid = true, },
+	{ .name	    = "setitimer",
+	  .arg = { [0] = STRARRAY(which, itimers), }, },
+	{ .name	    = "setrlimit",
+	  .arg = { [0] = STRARRAY(resource, rlimit_resources), }, },
+	{ .name	    = "socket",
+	  .arg = { [0] = STRARRAY(family, socket_families),
+		   [1] = { .scnprintf = SCA_SK_TYPE, /* type */ },
+		   [2] = { .scnprintf = SCA_SK_PROTO, /* protocol */ }, }, },
+	{ .name	    = "socketpair",
+	  .arg = { [0] = STRARRAY(family, socket_families),
+		   [1] = { .scnprintf = SCA_SK_TYPE, /* type */ },
+		   [2] = { .scnprintf = SCA_SK_PROTO, /* protocol */ }, }, },
+	{ .name	    = "stat", .alias = "newstat", },
+	{ .name	    = "statx",
+	  .arg = { [0] = { .scnprintf = SCA_FDAT,	 /* fdat */ },
+		   [2] = { .scnprintf = SCA_STATX_FLAGS, /* flags */ } ,
+		   [3] = { .scnprintf = SCA_STATX_MASK,	 /* mask */ }, }, },
+	{ .name	    = "swapoff",
+	  .arg = { [0] = { .scnprintf = SCA_FILENAME, /* specialfile */ }, }, },
+	{ .name	    = "swapon",
+	  .arg = { [0] = { .scnprintf = SCA_FILENAME, /* specialfile */ }, }, },
+	{ .name	    = "symlinkat",
+	  .arg = { [0] = { .scnprintf = SCA_FDAT, /* dfd */ }, }, },
+	{ .name	    = "sync_file_range",
+	  .arg = { [3] = { .scnprintf = SCA_SYNC_FILE_RANGE_FLAGS, /* flags */ }, }, },
+	{ .name	    = "tgkill",
+	  .arg = { [2] = { .scnprintf = SCA_SIGNUM, /* sig */ }, }, },
+	{ .name	    = "tkill",
+	  .arg = { [1] = { .scnprintf = SCA_SIGNUM, /* sig */ }, }, },
+	{ .name     = "umount2", .alias = "umount",
+	  .arg = { [0] = { .scnprintf = SCA_FILENAME, /* name */ }, }, },
+	{ .name	    = "uname", .alias = "newuname", },
+	{ .name	    = "unlinkat",
+	  .arg = { [0] = { .scnprintf = SCA_FDAT, /* dfd */ }, }, },
+	{ .name	    = "utimensat",
+	  .arg = { [0] = { .scnprintf = SCA_FDAT, /* dirfd */ }, }, },
+	{ .name	    = "wait4",	    .errpid = true,
+	  .arg = { [2] = { .scnprintf = SCA_WAITID_OPTIONS, /* options */ }, }, },
+	{ .name	    = "waitid",	    .errpid = true,
+	  .arg = { [3] = { .scnprintf = SCA_WAITID_OPTIONS, /* options */ }, }, },
+};
 
-अटल पूर्णांक syscall_fmt__cmp(स्थिर व्योम *name, स्थिर व्योम *fmtp)
-अणु
-	स्थिर काष्ठा syscall_fmt *fmt = fmtp;
-	वापस म_भेद(name, fmt->name);
-पूर्ण
+static int syscall_fmt__cmp(const void *name, const void *fmtp)
+{
+	const struct syscall_fmt *fmt = fmtp;
+	return strcmp(name, fmt->name);
+}
 
-अटल काष्ठा syscall_fmt *__syscall_fmt__find(काष्ठा syscall_fmt *fmts, स्थिर पूर्णांक nmemb, स्थिर अक्षर *name)
-अणु
-	वापस द्वा_खोज(name, fmts, nmemb, माप(काष्ठा syscall_fmt), syscall_fmt__cmp);
-पूर्ण
+static struct syscall_fmt *__syscall_fmt__find(struct syscall_fmt *fmts, const int nmemb, const char *name)
+{
+	return bsearch(name, fmts, nmemb, sizeof(struct syscall_fmt), syscall_fmt__cmp);
+}
 
-अटल काष्ठा syscall_fmt *syscall_fmt__find(स्थिर अक्षर *name)
-अणु
-	स्थिर पूर्णांक nmemb = ARRAY_SIZE(syscall_fmts);
-	वापस __syscall_fmt__find(syscall_fmts, nmemb, name);
-पूर्ण
+static struct syscall_fmt *syscall_fmt__find(const char *name)
+{
+	const int nmemb = ARRAY_SIZE(syscall_fmts);
+	return __syscall_fmt__find(syscall_fmts, nmemb, name);
+}
 
-अटल काष्ठा syscall_fmt *__syscall_fmt__find_by_alias(काष्ठा syscall_fmt *fmts, स्थिर पूर्णांक nmemb, स्थिर अक्षर *alias)
-अणु
-	पूर्णांक i;
+static struct syscall_fmt *__syscall_fmt__find_by_alias(struct syscall_fmt *fmts, const int nmemb, const char *alias)
+{
+	int i;
 
-	क्रम (i = 0; i < nmemb; ++i) अणु
-		अगर (fmts[i].alias && म_भेद(fmts[i].alias, alias) == 0)
-			वापस &fmts[i];
-	पूर्ण
+	for (i = 0; i < nmemb; ++i) {
+		if (fmts[i].alias && strcmp(fmts[i].alias, alias) == 0)
+			return &fmts[i];
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा syscall_fmt *syscall_fmt__find_by_alias(स्थिर अक्षर *alias)
-अणु
-	स्थिर पूर्णांक nmemb = ARRAY_SIZE(syscall_fmts);
-	वापस __syscall_fmt__find_by_alias(syscall_fmts, nmemb, alias);
-पूर्ण
+static struct syscall_fmt *syscall_fmt__find_by_alias(const char *alias)
+{
+	const int nmemb = ARRAY_SIZE(syscall_fmts);
+	return __syscall_fmt__find_by_alias(syscall_fmts, nmemb, alias);
+}
 
 /*
- * is_निकास: is this "exit" or "exit_group"?
- * is_खोलो: is this "open" or "openat"? To associate the fd वापसed in sys_निकास with the pathname in sys_enter.
- * args_size: sum of the sizes of the syscall arguments, anything after that is augmented stuff: pathname क्रम खोलोat, etc.
+ * is_exit: is this "exit" or "exit_group"?
+ * is_open: is this "open" or "openat"? To associate the fd returned in sys_exit with the pathname in sys_enter.
+ * args_size: sum of the sizes of the syscall arguments, anything after that is augmented stuff: pathname for openat, etc.
  * nonexistent: Just a hole in the syscall table, syscall id not allocated
  */
-काष्ठा syscall अणु
-	काष्ठा tep_event    *tp_क्रमmat;
-	पूर्णांक		    nr_args;
-	पूर्णांक		    args_size;
-	काष्ठा अणु
-		काष्ठा bpf_program *sys_enter,
-				   *sys_निकास;
-	पूर्ण		    bpf_prog;
-	bool		    is_निकास;
-	bool		    is_खोलो;
+struct syscall {
+	struct tep_event    *tp_format;
+	int		    nr_args;
+	int		    args_size;
+	struct {
+		struct bpf_program *sys_enter,
+				   *sys_exit;
+	}		    bpf_prog;
+	bool		    is_exit;
+	bool		    is_open;
 	bool		    nonexistent;
-	काष्ठा tep_क्रमmat_field *args;
-	स्थिर अक्षर	    *name;
-	काष्ठा syscall_fmt  *fmt;
-	काष्ठा syscall_arg_fmt *arg_fmt;
-पूर्ण;
+	struct tep_format_field *args;
+	const char	    *name;
+	struct syscall_fmt  *fmt;
+	struct syscall_arg_fmt *arg_fmt;
+};
 
 /*
  * Must match what is in the BPF program:
  *
  * tools/perf/examples/bpf/augmented_raw_syscalls.c
  */
-काष्ठा bpf_map_syscall_entry अणु
+struct bpf_map_syscall_entry {
 	bool	enabled;
 	u16	string_args_len[6];
-पूर्ण;
+};
 
 /*
- * We need to have this 'calculated' boolean because in some हालs we really
- * करोn't know what is the duration of a syscall, क्रम instance, when we start
- * a session and some thपढ़ोs are रुकोing क्रम a syscall to finish, say 'poll',
- * in which हाल all we can करो is to prपूर्णांक "( ? ) क्रम duration and क्रम the
- * start बारtamp.
+ * We need to have this 'calculated' boolean because in some cases we really
+ * don't know what is the duration of a syscall, for instance, when we start
+ * a session and some threads are waiting for a syscall to finish, say 'poll',
+ * in which case all we can do is to print "( ? ) for duration and for the
+ * start timestamp.
  */
-अटल माप_प्रकार ख_लिखो_duration(अचिन्हित दीर्घ t, bool calculated, खाता *fp)
-अणु
-	द्विगुन duration = (द्विगुन)t / NSEC_PER_MSEC;
-	माप_प्रकार prपूर्णांकed = ख_लिखो(fp, "(");
+static size_t fprintf_duration(unsigned long t, bool calculated, FILE *fp)
+{
+	double duration = (double)t / NSEC_PER_MSEC;
+	size_t printed = fprintf(fp, "(");
 
-	अगर (!calculated)
-		prपूर्णांकed += ख_लिखो(fp, "         ");
-	अन्यथा अगर (duration >= 1.0)
-		prपूर्णांकed += color_ख_लिखो(fp, PERF_COLOR_RED, "%6.3f ms", duration);
-	अन्यथा अगर (duration >= 0.01)
-		prपूर्णांकed += color_ख_लिखो(fp, PERF_COLOR_YELLOW, "%6.3f ms", duration);
-	अन्यथा
-		prपूर्णांकed += color_ख_लिखो(fp, PERF_COLOR_NORMAL, "%6.3f ms", duration);
-	वापस prपूर्णांकed + ख_लिखो(fp, "): ");
-पूर्ण
+	if (!calculated)
+		printed += fprintf(fp, "         ");
+	else if (duration >= 1.0)
+		printed += color_fprintf(fp, PERF_COLOR_RED, "%6.3f ms", duration);
+	else if (duration >= 0.01)
+		printed += color_fprintf(fp, PERF_COLOR_YELLOW, "%6.3f ms", duration);
+	else
+		printed += color_fprintf(fp, PERF_COLOR_NORMAL, "%6.3f ms", duration);
+	return printed + fprintf(fp, "): ");
+}
 
 /**
- * filename.ptr: The filename अक्षर poपूर्णांकer that will be vfs_getname'd
+ * filename.ptr: The filename char pointer that will be vfs_getname'd
  * filename.entry_str_pos: Where to insert the string translated from
- *                         filename.ptr by the vfs_getname tracepoपूर्णांक/kprobe.
- * ret_scnम_लिखो: syscall args may set this to a dअगरferent syscall वापस
- *                क्रमmatter, क्रम instance, fcntl may वापस fds, file flags, etc.
+ *                         filename.ptr by the vfs_getname tracepoint/kprobe.
+ * ret_scnprintf: syscall args may set this to a different syscall return
+ *                formatter, for instance, fcntl may return fds, file flags, etc.
  */
-काष्ठा thपढ़ो_trace अणु
-	u64		  entry_समय;
+struct thread_trace {
+	u64		  entry_time;
 	bool		  entry_pending;
-	अचिन्हित दीर्घ	  nr_events;
-	अचिन्हित दीर्घ	  pfmaj, pfmin;
-	अक्षर		  *entry_str;
-	द्विगुन		  runसमय_ms;
-	माप_प्रकार		  (*ret_scnम_लिखो)(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg);
-        काष्ठा अणु
-		अचिन्हित दीर्घ ptr;
-		लघु पूर्णांक     entry_str_pos;
-		bool	      pending_खोलो;
-		अचिन्हित पूर्णांक  namelen;
-		अक्षर	      *name;
-	पूर्ण filename;
-	काष्ठा अणु
-		पूर्णांक	      max;
-		काष्ठा file   *table;
-	पूर्ण files;
+	unsigned long	  nr_events;
+	unsigned long	  pfmaj, pfmin;
+	char		  *entry_str;
+	double		  runtime_ms;
+	size_t		  (*ret_scnprintf)(char *bf, size_t size, struct syscall_arg *arg);
+        struct {
+		unsigned long ptr;
+		short int     entry_str_pos;
+		bool	      pending_open;
+		unsigned int  namelen;
+		char	      *name;
+	} filename;
+	struct {
+		int	      max;
+		struct file   *table;
+	} files;
 
-	काष्ठा पूर्णांकlist *syscall_stats;
-पूर्ण;
+	struct intlist *syscall_stats;
+};
 
-अटल काष्ठा thपढ़ो_trace *thपढ़ो_trace__new(व्योम)
-अणु
-	काष्ठा thपढ़ो_trace *ttrace =  zalloc(माप(काष्ठा thपढ़ो_trace));
+static struct thread_trace *thread_trace__new(void)
+{
+	struct thread_trace *ttrace =  zalloc(sizeof(struct thread_trace));
 
-	अगर (ttrace) अणु
+	if (ttrace) {
 		ttrace->files.max = -1;
-		ttrace->syscall_stats = पूर्णांकlist__new(शून्य);
-	पूर्ण
+		ttrace->syscall_stats = intlist__new(NULL);
+	}
 
-	वापस ttrace;
-पूर्ण
+	return ttrace;
+}
 
-अटल काष्ठा thपढ़ो_trace *thपढ़ो__trace(काष्ठा thपढ़ो *thपढ़ो, खाता *fp)
-अणु
-	काष्ठा thपढ़ो_trace *ttrace;
+static struct thread_trace *thread__trace(struct thread *thread, FILE *fp)
+{
+	struct thread_trace *ttrace;
 
-	अगर (thपढ़ो == शून्य)
-		जाओ fail;
+	if (thread == NULL)
+		goto fail;
 
-	अगर (thपढ़ो__priv(thपढ़ो) == शून्य)
-		thपढ़ो__set_priv(thपढ़ो, thपढ़ो_trace__new());
+	if (thread__priv(thread) == NULL)
+		thread__set_priv(thread, thread_trace__new());
 
-	अगर (thपढ़ो__priv(thपढ़ो) == शून्य)
-		जाओ fail;
+	if (thread__priv(thread) == NULL)
+		goto fail;
 
-	ttrace = thपढ़ो__priv(thपढ़ो);
+	ttrace = thread__priv(thread);
 	++ttrace->nr_events;
 
-	वापस ttrace;
+	return ttrace;
 fail:
-	color_ख_लिखो(fp, PERF_COLOR_RED,
+	color_fprintf(fp, PERF_COLOR_RED,
 		      "WARNING: not enough memory, dropping samples!\n");
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 
-व्योम syscall_arg__set_ret_scnम_लिखो(काष्ठा syscall_arg *arg,
-				    माप_प्रकार (*ret_scnम_लिखो)(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg))
-अणु
-	काष्ठा thपढ़ो_trace *ttrace = thपढ़ो__priv(arg->thपढ़ो);
+void syscall_arg__set_ret_scnprintf(struct syscall_arg *arg,
+				    size_t (*ret_scnprintf)(char *bf, size_t size, struct syscall_arg *arg))
+{
+	struct thread_trace *ttrace = thread__priv(arg->thread);
 
-	ttrace->ret_scnम_लिखो = ret_scnम_लिखो;
-पूर्ण
+	ttrace->ret_scnprintf = ret_scnprintf;
+}
 
-#घोषणा TRACE_PFMAJ		(1 << 0)
-#घोषणा TRACE_PFMIN		(1 << 1)
+#define TRACE_PFMAJ		(1 << 0)
+#define TRACE_PFMIN		(1 << 1)
 
-अटल स्थिर माप_प्रकार trace__entry_str_size = 2048;
+static const size_t trace__entry_str_size = 2048;
 
-अटल काष्ठा file *thपढ़ो_trace__files_entry(काष्ठा thपढ़ो_trace *ttrace, पूर्णांक fd)
-अणु
-	अगर (fd < 0)
-		वापस शून्य;
+static struct file *thread_trace__files_entry(struct thread_trace *ttrace, int fd)
+{
+	if (fd < 0)
+		return NULL;
 
-	अगर (fd > ttrace->files.max) अणु
-		काष्ठा file *nfiles = पुनः_स्मृति(ttrace->files.table, (fd + 1) * माप(काष्ठा file));
+	if (fd > ttrace->files.max) {
+		struct file *nfiles = realloc(ttrace->files.table, (fd + 1) * sizeof(struct file));
 
-		अगर (nfiles == शून्य)
-			वापस शून्य;
+		if (nfiles == NULL)
+			return NULL;
 
-		अगर (ttrace->files.max != -1) अणु
-			स_रखो(nfiles + ttrace->files.max + 1, 0,
-			       (fd - ttrace->files.max) * माप(काष्ठा file));
-		पूर्ण अन्यथा अणु
-			स_रखो(nfiles, 0, (fd + 1) * माप(काष्ठा file));
-		पूर्ण
+		if (ttrace->files.max != -1) {
+			memset(nfiles + ttrace->files.max + 1, 0,
+			       (fd - ttrace->files.max) * sizeof(struct file));
+		} else {
+			memset(nfiles, 0, (fd + 1) * sizeof(struct file));
+		}
 
 		ttrace->files.table = nfiles;
 		ttrace->files.max   = fd;
-	पूर्ण
+	}
 
-	वापस ttrace->files.table + fd;
-पूर्ण
+	return ttrace->files.table + fd;
+}
 
-काष्ठा file *thपढ़ो__files_entry(काष्ठा thपढ़ो *thपढ़ो, पूर्णांक fd)
-अणु
-	वापस thपढ़ो_trace__files_entry(thपढ़ो__priv(thपढ़ो), fd);
-पूर्ण
+struct file *thread__files_entry(struct thread *thread, int fd)
+{
+	return thread_trace__files_entry(thread__priv(thread), fd);
+}
 
-अटल पूर्णांक trace__set_fd_pathname(काष्ठा thपढ़ो *thपढ़ो, पूर्णांक fd, स्थिर अक्षर *pathname)
-अणु
-	काष्ठा thपढ़ो_trace *ttrace = thपढ़ो__priv(thपढ़ो);
-	काष्ठा file *file = thपढ़ो_trace__files_entry(ttrace, fd);
+static int trace__set_fd_pathname(struct thread *thread, int fd, const char *pathname)
+{
+	struct thread_trace *ttrace = thread__priv(thread);
+	struct file *file = thread_trace__files_entry(ttrace, fd);
 
-	अगर (file != शून्य) अणु
-		काष्ठा stat st;
-		अगर (stat(pathname, &st) == 0)
+	if (file != NULL) {
+		struct stat st;
+		if (stat(pathname, &st) == 0)
 			file->dev_maj = major(st.st_rdev);
 		file->pathname = strdup(pathname);
-		अगर (file->pathname)
-			वापस 0;
-	पूर्ण
+		if (file->pathname)
+			return 0;
+	}
 
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक thपढ़ो__पढ़ो_fd_path(काष्ठा thपढ़ो *thपढ़ो, पूर्णांक fd)
-अणु
-	अक्षर linkname[PATH_MAX], pathname[PATH_MAX];
-	काष्ठा stat st;
-	पूर्णांक ret;
+static int thread__read_fd_path(struct thread *thread, int fd)
+{
+	char linkname[PATH_MAX], pathname[PATH_MAX];
+	struct stat st;
+	int ret;
 
-	अगर (thपढ़ो->pid_ == thपढ़ो->tid) अणु
-		scnम_लिखो(linkname, माप(linkname),
-			  "/proc/%d/fd/%d", thपढ़ो->pid_, fd);
-	पूर्ण अन्यथा अणु
-		scnम_लिखो(linkname, माप(linkname),
-			  "/proc/%d/task/%d/fd/%d", thपढ़ो->pid_, thपढ़ो->tid, fd);
-	पूर्ण
+	if (thread->pid_ == thread->tid) {
+		scnprintf(linkname, sizeof(linkname),
+			  "/proc/%d/fd/%d", thread->pid_, fd);
+	} else {
+		scnprintf(linkname, sizeof(linkname),
+			  "/proc/%d/task/%d/fd/%d", thread->pid_, thread->tid, fd);
+	}
 
-	अगर (lstat(linkname, &st) < 0 || st.st_size + 1 > (off_t)माप(pathname))
-		वापस -1;
+	if (lstat(linkname, &st) < 0 || st.st_size + 1 > (off_t)sizeof(pathname))
+		return -1;
 
-	ret = पढ़ोlink(linkname, pathname, माप(pathname));
+	ret = readlink(linkname, pathname, sizeof(pathname));
 
-	अगर (ret < 0 || ret > st.st_size)
-		वापस -1;
+	if (ret < 0 || ret > st.st_size)
+		return -1;
 
 	pathname[ret] = '\0';
-	वापस trace__set_fd_pathname(thपढ़ो, fd, pathname);
-पूर्ण
+	return trace__set_fd_pathname(thread, fd, pathname);
+}
 
-अटल स्थिर अक्षर *thपढ़ो__fd_path(काष्ठा thपढ़ो *thपढ़ो, पूर्णांक fd,
-				   काष्ठा trace *trace)
-अणु
-	काष्ठा thपढ़ो_trace *ttrace = thपढ़ो__priv(thपढ़ो);
+static const char *thread__fd_path(struct thread *thread, int fd,
+				   struct trace *trace)
+{
+	struct thread_trace *ttrace = thread__priv(thread);
 
-	अगर (ttrace == शून्य || trace->fd_path_disabled)
-		वापस शून्य;
+	if (ttrace == NULL || trace->fd_path_disabled)
+		return NULL;
 
-	अगर (fd < 0)
-		वापस शून्य;
+	if (fd < 0)
+		return NULL;
 
-	अगर ((fd > ttrace->files.max || ttrace->files.table[fd].pathname == शून्य)) अणु
-		अगर (!trace->live)
-			वापस शून्य;
+	if ((fd > ttrace->files.max || ttrace->files.table[fd].pathname == NULL)) {
+		if (!trace->live)
+			return NULL;
 		++trace->stats.proc_getname;
-		अगर (thपढ़ो__पढ़ो_fd_path(thपढ़ो, fd))
-			वापस शून्य;
-	पूर्ण
+		if (thread__read_fd_path(thread, fd))
+			return NULL;
+	}
 
-	वापस ttrace->files.table[fd].pathname;
-पूर्ण
+	return ttrace->files.table[fd].pathname;
+}
 
-माप_प्रकार syscall_arg__scnम_लिखो_fd(अक्षर *bf, माप_प्रकार size, काष्ठा syscall_arg *arg)
-अणु
-	पूर्णांक fd = arg->val;
-	माप_प्रकार prपूर्णांकed = scnम_लिखो(bf, size, "%d", fd);
-	स्थिर अक्षर *path = thपढ़ो__fd_path(arg->thपढ़ो, fd, arg->trace);
+size_t syscall_arg__scnprintf_fd(char *bf, size_t size, struct syscall_arg *arg)
+{
+	int fd = arg->val;
+	size_t printed = scnprintf(bf, size, "%d", fd);
+	const char *path = thread__fd_path(arg->thread, fd, arg->trace);
 
-	अगर (path)
-		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "<%s>", path);
+	if (path)
+		printed += scnprintf(bf + printed, size - printed, "<%s>", path);
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}
 
-माप_प्रकार pid__scnम_लिखो_fd(काष्ठा trace *trace, pid_t pid, पूर्णांक fd, अक्षर *bf, माप_प्रकार size)
-अणु
-        माप_प्रकार prपूर्णांकed = scnम_लिखो(bf, size, "%d", fd);
-	काष्ठा thपढ़ो *thपढ़ो = machine__find_thपढ़ो(trace->host, pid, pid);
+size_t pid__scnprintf_fd(struct trace *trace, pid_t pid, int fd, char *bf, size_t size)
+{
+        size_t printed = scnprintf(bf, size, "%d", fd);
+	struct thread *thread = machine__find_thread(trace->host, pid, pid);
 
-	अगर (thपढ़ो) अणु
-		स्थिर अक्षर *path = thपढ़ो__fd_path(thपढ़ो, fd, trace);
+	if (thread) {
+		const char *path = thread__fd_path(thread, fd, trace);
 
-		अगर (path)
-			prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "<%s>", path);
+		if (path)
+			printed += scnprintf(bf + printed, size - printed, "<%s>", path);
 
-		thपढ़ो__put(thपढ़ो);
-	पूर्ण
+		thread__put(thread);
+	}
 
-        वापस prपूर्णांकed;
-पूर्ण
+        return printed;
+}
 
-अटल माप_प्रकार syscall_arg__scnम_लिखो_बंद_fd(अक्षर *bf, माप_प्रकार size,
-					      काष्ठा syscall_arg *arg)
-अणु
-	पूर्णांक fd = arg->val;
-	माप_प्रकार prपूर्णांकed = syscall_arg__scnम_लिखो_fd(bf, size, arg);
-	काष्ठा thपढ़ो_trace *ttrace = thपढ़ो__priv(arg->thपढ़ो);
+static size_t syscall_arg__scnprintf_close_fd(char *bf, size_t size,
+					      struct syscall_arg *arg)
+{
+	int fd = arg->val;
+	size_t printed = syscall_arg__scnprintf_fd(bf, size, arg);
+	struct thread_trace *ttrace = thread__priv(arg->thread);
 
-	अगर (ttrace && fd >= 0 && fd <= ttrace->files.max)
-		zमुक्त(&ttrace->files.table[fd].pathname);
+	if (ttrace && fd >= 0 && fd <= ttrace->files.max)
+		zfree(&ttrace->files.table[fd].pathname);
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}
 
-अटल व्योम thपढ़ो__set_filename_pos(काष्ठा thपढ़ो *thपढ़ो, स्थिर अक्षर *bf,
-				     अचिन्हित दीर्घ ptr)
-अणु
-	काष्ठा thपढ़ो_trace *ttrace = thपढ़ो__priv(thपढ़ो);
+static void thread__set_filename_pos(struct thread *thread, const char *bf,
+				     unsigned long ptr)
+{
+	struct thread_trace *ttrace = thread__priv(thread);
 
 	ttrace->filename.ptr = ptr;
 	ttrace->filename.entry_str_pos = bf - ttrace->entry_str;
-पूर्ण
+}
 
-अटल माप_प्रकार syscall_arg__scnम_लिखो_augmented_string(काष्ठा syscall_arg *arg, अक्षर *bf, माप_प्रकार size)
-अणु
-	काष्ठा augmented_arg *augmented_arg = arg->augmented.args;
-	माप_प्रकार prपूर्णांकed = scnम_लिखो(bf, size, "\"%.*s\"", augmented_arg->size, augmented_arg->value);
+static size_t syscall_arg__scnprintf_augmented_string(struct syscall_arg *arg, char *bf, size_t size)
+{
+	struct augmented_arg *augmented_arg = arg->augmented.args;
+	size_t printed = scnprintf(bf, size, "\"%.*s\"", augmented_arg->size, augmented_arg->value);
 	/*
-	 * So that the next arg with a payload can consume its augmented arg, i.e. क्रम नाम* syscalls
+	 * So that the next arg with a payload can consume its augmented arg, i.e. for rename* syscalls
 	 * we would have two strings, each prefixed by its size.
 	 */
-	पूर्णांक consumed = माप(*augmented_arg) + augmented_arg->size;
+	int consumed = sizeof(*augmented_arg) + augmented_arg->size;
 
-	arg->augmented.args = ((व्योम *)arg->augmented.args) + consumed;
+	arg->augmented.args = ((void *)arg->augmented.args) + consumed;
 	arg->augmented.size -= consumed;
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}
 
-अटल माप_प्रकार syscall_arg__scnम_लिखो_filename(अक्षर *bf, माप_प्रकार size,
-					      काष्ठा syscall_arg *arg)
-अणु
-	अचिन्हित दीर्घ ptr = arg->val;
+static size_t syscall_arg__scnprintf_filename(char *bf, size_t size,
+					      struct syscall_arg *arg)
+{
+	unsigned long ptr = arg->val;
 
-	अगर (arg->augmented.args)
-		वापस syscall_arg__scnम_लिखो_augmented_string(arg, bf, size);
+	if (arg->augmented.args)
+		return syscall_arg__scnprintf_augmented_string(arg, bf, size);
 
-	अगर (!arg->trace->vfs_getname)
-		वापस scnम_लिखो(bf, size, "%#x", ptr);
+	if (!arg->trace->vfs_getname)
+		return scnprintf(bf, size, "%#x", ptr);
 
-	thपढ़ो__set_filename_pos(arg->thपढ़ो, bf, ptr);
-	वापस 0;
-पूर्ण
+	thread__set_filename_pos(arg->thread, bf, ptr);
+	return 0;
+}
 
-अटल bool trace__filter_duration(काष्ठा trace *trace, द्विगुन t)
-अणु
-	वापस t < (trace->duration_filter * NSEC_PER_MSEC);
-पूर्ण
+static bool trace__filter_duration(struct trace *trace, double t)
+{
+	return t < (trace->duration_filter * NSEC_PER_MSEC);
+}
 
-अटल माप_प्रकार __trace__ख_लिखो_tstamp(काष्ठा trace *trace, u64 tstamp, खाता *fp)
-अणु
-	द्विगुन ts = (द्विगुन)(tstamp - trace->base_समय) / NSEC_PER_MSEC;
+static size_t __trace__fprintf_tstamp(struct trace *trace, u64 tstamp, FILE *fp)
+{
+	double ts = (double)(tstamp - trace->base_time) / NSEC_PER_MSEC;
 
-	वापस ख_लिखो(fp, "%10.3f ", ts);
-पूर्ण
+	return fprintf(fp, "%10.3f ", ts);
+}
 
 /*
  * We're handling tstamp=0 as an undefined tstamp, i.e. like when we are
- * using ttrace->entry_समय क्रम a thपढ़ो that receives a sys_निकास without
- * first having received a sys_enter ("poll" issued beक्रमe tracing session
- * starts, lost sys_enter निकास due to ring buffer overflow).
+ * using ttrace->entry_time for a thread that receives a sys_exit without
+ * first having received a sys_enter ("poll" issued before tracing session
+ * starts, lost sys_enter exit due to ring buffer overflow).
  */
-अटल माप_प्रकार trace__ख_लिखो_tstamp(काष्ठा trace *trace, u64 tstamp, खाता *fp)
-अणु
-	अगर (tstamp > 0)
-		वापस __trace__ख_लिखो_tstamp(trace, tstamp, fp);
+static size_t trace__fprintf_tstamp(struct trace *trace, u64 tstamp, FILE *fp)
+{
+	if (tstamp > 0)
+		return __trace__fprintf_tstamp(trace, tstamp, fp);
 
-	वापस ख_लिखो(fp, "         ? ");
-पूर्ण
+	return fprintf(fp, "         ? ");
+}
 
-अटल bool करोne = false;
-अटल bool पूर्णांकerrupted = false;
+static bool done = false;
+static bool interrupted = false;
 
-अटल व्योम sig_handler(पूर्णांक sig)
-अणु
-	करोne = true;
-	पूर्णांकerrupted = sig == संक_विघ्न;
-पूर्ण
+static void sig_handler(int sig)
+{
+	done = true;
+	interrupted = sig == SIGINT;
+}
 
-अटल माप_प्रकार trace__ख_लिखो_comm_tid(काष्ठा trace *trace, काष्ठा thपढ़ो *thपढ़ो, खाता *fp)
-अणु
-	माप_प्रकार prपूर्णांकed = 0;
+static size_t trace__fprintf_comm_tid(struct trace *trace, struct thread *thread, FILE *fp)
+{
+	size_t printed = 0;
 
-	अगर (trace->multiple_thपढ़ोs) अणु
-		अगर (trace->show_comm)
-			prपूर्णांकed += ख_लिखो(fp, "%.14s/", thपढ़ो__comm_str(thपढ़ो));
-		prपूर्णांकed += ख_लिखो(fp, "%d ", thपढ़ो->tid);
-	पूर्ण
+	if (trace->multiple_threads) {
+		if (trace->show_comm)
+			printed += fprintf(fp, "%.14s/", thread__comm_str(thread));
+		printed += fprintf(fp, "%d ", thread->tid);
+	}
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}
 
-अटल माप_प्रकार trace__ख_लिखो_entry_head(काष्ठा trace *trace, काष्ठा thपढ़ो *thपढ़ो,
-					u64 duration, bool duration_calculated, u64 tstamp, खाता *fp)
-अणु
-	माप_प्रकार prपूर्णांकed = 0;
+static size_t trace__fprintf_entry_head(struct trace *trace, struct thread *thread,
+					u64 duration, bool duration_calculated, u64 tstamp, FILE *fp)
+{
+	size_t printed = 0;
 
-	अगर (trace->show_tstamp)
-		prपूर्णांकed = trace__ख_लिखो_tstamp(trace, tstamp, fp);
-	अगर (trace->show_duration)
-		prपूर्णांकed += ख_लिखो_duration(duration, duration_calculated, fp);
-	वापस prपूर्णांकed + trace__ख_लिखो_comm_tid(trace, thपढ़ो, fp);
-पूर्ण
+	if (trace->show_tstamp)
+		printed = trace__fprintf_tstamp(trace, tstamp, fp);
+	if (trace->show_duration)
+		printed += fprintf_duration(duration, duration_calculated, fp);
+	return printed + trace__fprintf_comm_tid(trace, thread, fp);
+}
 
-अटल पूर्णांक trace__process_event(काष्ठा trace *trace, काष्ठा machine *machine,
-				जोड़ perf_event *event, काष्ठा perf_sample *sample)
-अणु
-	पूर्णांक ret = 0;
+static int trace__process_event(struct trace *trace, struct machine *machine,
+				union perf_event *event, struct perf_sample *sample)
+{
+	int ret = 0;
 
-	चयन (event->header.type) अणु
-	हाल PERF_RECORD_LOST:
-		color_ख_लिखो(trace->output, PERF_COLOR_RED,
+	switch (event->header.type) {
+	case PERF_RECORD_LOST:
+		color_fprintf(trace->output, PERF_COLOR_RED,
 			      "LOST %" PRIu64 " events!\n", event->lost.lost);
 		ret = machine__process_lost_event(machine, event, sample);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = machine__process_event(machine, event, sample);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक trace__tool_process(काष्ठा perf_tool *tool,
-			       जोड़ perf_event *event,
-			       काष्ठा perf_sample *sample,
-			       काष्ठा machine *machine)
-अणु
-	काष्ठा trace *trace = container_of(tool, काष्ठा trace, tool);
-	वापस trace__process_event(trace, machine, event, sample);
-पूर्ण
+static int trace__tool_process(struct perf_tool *tool,
+			       union perf_event *event,
+			       struct perf_sample *sample,
+			       struct machine *machine)
+{
+	struct trace *trace = container_of(tool, struct trace, tool);
+	return trace__process_event(trace, machine, event, sample);
+}
 
-अटल अक्षर *trace__machine__resolve_kernel_addr(व्योम *vmachine, अचिन्हित दीर्घ दीर्घ *addrp, अक्षर **modp)
-अणु
-	काष्ठा machine *machine = vmachine;
+static char *trace__machine__resolve_kernel_addr(void *vmachine, unsigned long long *addrp, char **modp)
+{
+	struct machine *machine = vmachine;
 
-	अगर (machine->kptr_restrict_warned)
-		वापस शून्य;
+	if (machine->kptr_restrict_warned)
+		return NULL;
 
-	अगर (symbol_conf.kptr_restrict) अणु
+	if (symbol_conf.kptr_restrict) {
 		pr_warning("Kernel address maps (/proc/{kallsyms,modules}) are restricted.\n\n"
 			   "Check /proc/sys/kernel/kptr_restrict and /proc/sys/kernel/perf_event_paranoid.\n\n"
 			   "Kernel samples will not be resolved.\n");
 		machine->kptr_restrict_warned = true;
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस machine__resolve_kernel_addr(vmachine, addrp, modp);
-पूर्ण
+	return machine__resolve_kernel_addr(vmachine, addrp, modp);
+}
 
-अटल पूर्णांक trace__symbols_init(काष्ठा trace *trace, काष्ठा evlist *evlist)
-अणु
-	पूर्णांक err = symbol__init(शून्य);
+static int trace__symbols_init(struct trace *trace, struct evlist *evlist)
+{
+	int err = symbol__init(NULL);
 
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	trace->host = machine__new_host();
-	अगर (trace->host == शून्य)
-		वापस -ENOMEM;
+	if (trace->host == NULL)
+		return -ENOMEM;
 
-	err = trace_event__रेजिस्टर_resolver(trace->host, trace__machine__resolve_kernel_addr);
-	अगर (err < 0)
-		जाओ out;
+	err = trace_event__register_resolver(trace->host, trace__machine__resolve_kernel_addr);
+	if (err < 0)
+		goto out;
 
-	err = __machine__syntheमाप_प्रकारhपढ़ोs(trace->host, &trace->tool, &trace->opts.target,
-					    evlist->core.thपढ़ोs, trace__tool_process, false,
+	err = __machine__synthesize_threads(trace->host, &trace->tool, &trace->opts.target,
+					    evlist->core.threads, trace__tool_process, false,
 					    1);
 out:
-	अगर (err)
-		symbol__निकास();
+	if (err)
+		symbol__exit();
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम trace__symbols__निकास(काष्ठा trace *trace)
-अणु
-	machine__निकास(trace->host);
-	trace->host = शून्य;
+static void trace__symbols__exit(struct trace *trace)
+{
+	machine__exit(trace->host);
+	trace->host = NULL;
 
-	symbol__निकास();
-पूर्ण
+	symbol__exit();
+}
 
-अटल पूर्णांक syscall__alloc_arg_fmts(काष्ठा syscall *sc, पूर्णांक nr_args)
-अणु
-	पूर्णांक idx;
+static int syscall__alloc_arg_fmts(struct syscall *sc, int nr_args)
+{
+	int idx;
 
-	अगर (nr_args == 6 && sc->fmt && sc->fmt->nr_args != 0)
+	if (nr_args == 6 && sc->fmt && sc->fmt->nr_args != 0)
 		nr_args = sc->fmt->nr_args;
 
-	sc->arg_fmt = सुस्मृति(nr_args, माप(*sc->arg_fmt));
-	अगर (sc->arg_fmt == शून्य)
-		वापस -1;
+	sc->arg_fmt = calloc(nr_args, sizeof(*sc->arg_fmt));
+	if (sc->arg_fmt == NULL)
+		return -1;
 
-	क्रम (idx = 0; idx < nr_args; ++idx) अणु
-		अगर (sc->fmt)
+	for (idx = 0; idx < nr_args; ++idx) {
+		if (sc->fmt)
 			sc->arg_fmt[idx] = sc->fmt->arg[idx];
-	पूर्ण
+	}
 
 	sc->nr_args = nr_args;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा syscall_arg_fmt syscall_arg_fmts__by_name[] = अणु
-	अणु .name = "msr",	.scnम_लिखो = SCA_X86_MSR,	  .म_से_अदीर्घ = STUL_X86_MSR,	   पूर्ण,
-	अणु .name = "vector",	.scnम_लिखो = SCA_X86_IRQ_VECTORS, .म_से_अदीर्घ = STUL_X86_IRQ_VECTORS, पूर्ण,
-पूर्ण;
+static struct syscall_arg_fmt syscall_arg_fmts__by_name[] = {
+	{ .name = "msr",	.scnprintf = SCA_X86_MSR,	  .strtoul = STUL_X86_MSR,	   },
+	{ .name = "vector",	.scnprintf = SCA_X86_IRQ_VECTORS, .strtoul = STUL_X86_IRQ_VECTORS, },
+};
 
-अटल पूर्णांक syscall_arg_fmt__cmp(स्थिर व्योम *name, स्थिर व्योम *fmtp)
-अणु
-       स्थिर काष्ठा syscall_arg_fmt *fmt = fmtp;
-       वापस म_भेद(name, fmt->name);
-पूर्ण
+static int syscall_arg_fmt__cmp(const void *name, const void *fmtp)
+{
+       const struct syscall_arg_fmt *fmt = fmtp;
+       return strcmp(name, fmt->name);
+}
 
-अटल काष्ठा syscall_arg_fmt *
-__syscall_arg_fmt__find_by_name(काष्ठा syscall_arg_fmt *fmts, स्थिर पूर्णांक nmemb, स्थिर अक्षर *name)
-अणु
-       वापस द्वा_खोज(name, fmts, nmemb, माप(काष्ठा syscall_arg_fmt), syscall_arg_fmt__cmp);
-पूर्ण
+static struct syscall_arg_fmt *
+__syscall_arg_fmt__find_by_name(struct syscall_arg_fmt *fmts, const int nmemb, const char *name)
+{
+       return bsearch(name, fmts, nmemb, sizeof(struct syscall_arg_fmt), syscall_arg_fmt__cmp);
+}
 
-अटल काष्ठा syscall_arg_fmt *syscall_arg_fmt__find_by_name(स्थिर अक्षर *name)
-अणु
-       स्थिर पूर्णांक nmemb = ARRAY_SIZE(syscall_arg_fmts__by_name);
-       वापस __syscall_arg_fmt__find_by_name(syscall_arg_fmts__by_name, nmemb, name);
-पूर्ण
+static struct syscall_arg_fmt *syscall_arg_fmt__find_by_name(const char *name)
+{
+       const int nmemb = ARRAY_SIZE(syscall_arg_fmts__by_name);
+       return __syscall_arg_fmt__find_by_name(syscall_arg_fmts__by_name, nmemb, name);
+}
 
-अटल काष्ठा tep_क्रमmat_field *
-syscall_arg_fmt__init_array(काष्ठा syscall_arg_fmt *arg, काष्ठा tep_क्रमmat_field *field)
-अणु
-	काष्ठा tep_क्रमmat_field *last_field = शून्य;
-	पूर्णांक len;
+static struct tep_format_field *
+syscall_arg_fmt__init_array(struct syscall_arg_fmt *arg, struct tep_format_field *field)
+{
+	struct tep_format_field *last_field = NULL;
+	int len;
 
-	क्रम (; field; field = field->next, ++arg) अणु
+	for (; field; field = field->next, ++arg) {
 		last_field = field;
 
-		अगर (arg->scnम_लिखो)
-			जारी;
+		if (arg->scnprintf)
+			continue;
 
-		len = म_माप(field->name);
+		len = strlen(field->name);
 
-		अगर (म_भेद(field->type, "const char *") == 0 &&
-		    ((len >= 4 && म_भेद(field->name + len - 4, "name") == 0) ||
-		     म_माला(field->name, "path") != शून्य))
-			arg->scnम_लिखो = SCA_खाताNAME;
-		अन्यथा अगर ((field->flags & TEP_FIELD_IS_POINTER) || म_माला(field->name, "addr"))
-			arg->scnम_लिखो = SCA_PTR;
-		अन्यथा अगर (म_भेद(field->type, "pid_t") == 0)
-			arg->scnम_लिखो = SCA_PID;
-		अन्यथा अगर (म_भेद(field->type, "umode_t") == 0)
-			arg->scnम_लिखो = SCA_MODE_T;
-		अन्यथा अगर ((field->flags & TEP_FIELD_IS_ARRAY) && म_माला(field->type, "char")) अणु
-			arg->scnम_लिखो = SCA_CHAR_ARRAY;
+		if (strcmp(field->type, "const char *") == 0 &&
+		    ((len >= 4 && strcmp(field->name + len - 4, "name") == 0) ||
+		     strstr(field->name, "path") != NULL))
+			arg->scnprintf = SCA_FILENAME;
+		else if ((field->flags & TEP_FIELD_IS_POINTER) || strstr(field->name, "addr"))
+			arg->scnprintf = SCA_PTR;
+		else if (strcmp(field->type, "pid_t") == 0)
+			arg->scnprintf = SCA_PID;
+		else if (strcmp(field->type, "umode_t") == 0)
+			arg->scnprintf = SCA_MODE_T;
+		else if ((field->flags & TEP_FIELD_IS_ARRAY) && strstr(field->type, "char")) {
+			arg->scnprintf = SCA_CHAR_ARRAY;
 			arg->nr_entries = field->arraylen;
-		पूर्ण अन्यथा अगर ((म_भेद(field->type, "int") == 0 ||
-			  म_भेद(field->type, "unsigned int") == 0 ||
-			  म_भेद(field->type, "long") == 0) &&
-			 len >= 2 && म_भेद(field->name + len - 2, "fd") == 0) अणु
+		} else if ((strcmp(field->type, "int") == 0 ||
+			  strcmp(field->type, "unsigned int") == 0 ||
+			  strcmp(field->type, "long") == 0) &&
+			 len >= 2 && strcmp(field->name + len - 2, "fd") == 0) {
 			/*
 			 * /sys/kernel/tracing/events/syscalls/sys_enter*
 			 * egrep 'field:.*fd;' .../format|sed -r 's/.*field:([a-z ]+) [a-z_]*fd.+/\1/g'|sort|uniq -c
-			 * 65 पूर्णांक
-			 * 23 अचिन्हित पूर्णांक
-			 * 7 अचिन्हित दीर्घ
+			 * 65 int
+			 * 23 unsigned int
+			 * 7 unsigned long
 			 */
-			arg->scnम_लिखो = SCA_FD;
-               पूर्ण अन्यथा अणु
-			काष्ठा syscall_arg_fmt *fmt = syscall_arg_fmt__find_by_name(field->name);
+			arg->scnprintf = SCA_FD;
+               } else {
+			struct syscall_arg_fmt *fmt = syscall_arg_fmt__find_by_name(field->name);
 
-			अगर (fmt) अणु
-				arg->scnम_लिखो = fmt->scnम_लिखो;
-				arg->म_से_अदीर्घ   = fmt->म_से_अदीर्घ;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			if (fmt) {
+				arg->scnprintf = fmt->scnprintf;
+				arg->strtoul   = fmt->strtoul;
+			}
+		}
+	}
 
-	वापस last_field;
-पूर्ण
+	return last_field;
+}
 
-अटल पूर्णांक syscall__set_arg_fmts(काष्ठा syscall *sc)
-अणु
-	काष्ठा tep_क्रमmat_field *last_field = syscall_arg_fmt__init_array(sc->arg_fmt, sc->args);
+static int syscall__set_arg_fmts(struct syscall *sc)
+{
+	struct tep_format_field *last_field = syscall_arg_fmt__init_array(sc->arg_fmt, sc->args);
 
-	अगर (last_field)
+	if (last_field)
 		sc->args_size = last_field->offset + last_field->size;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक trace__पढ़ो_syscall_info(काष्ठा trace *trace, पूर्णांक id)
-अणु
-	अक्षर tp_name[128];
-	काष्ठा syscall *sc;
-	स्थिर अक्षर *name = syscalltbl__name(trace->sctbl, id);
+static int trace__read_syscall_info(struct trace *trace, int id)
+{
+	char tp_name[128];
+	struct syscall *sc;
+	const char *name = syscalltbl__name(trace->sctbl, id);
 
-#अगर_घोषित HAVE_SYSCALL_TABLE_SUPPORT
-	अगर (trace->syscalls.table == शून्य) अणु
-		trace->syscalls.table = सुस्मृति(trace->sctbl->syscalls.max_id + 1, माप(*sc));
-		अगर (trace->syscalls.table == शून्य)
-			वापस -ENOMEM;
-	पूर्ण
-#अन्यथा
-	अगर (id > trace->sctbl->syscalls.max_id || (id == 0 && trace->syscalls.table == शून्य)) अणु
-		// When using libaudit we करोn't know beक्रमehand what is the max syscall id
-		काष्ठा syscall *table = पुनः_स्मृति(trace->syscalls.table, (id + 1) * माप(*sc));
+#ifdef HAVE_SYSCALL_TABLE_SUPPORT
+	if (trace->syscalls.table == NULL) {
+		trace->syscalls.table = calloc(trace->sctbl->syscalls.max_id + 1, sizeof(*sc));
+		if (trace->syscalls.table == NULL)
+			return -ENOMEM;
+	}
+#else
+	if (id > trace->sctbl->syscalls.max_id || (id == 0 && trace->syscalls.table == NULL)) {
+		// When using libaudit we don't know beforehand what is the max syscall id
+		struct syscall *table = realloc(trace->syscalls.table, (id + 1) * sizeof(*sc));
 
-		अगर (table == शून्य)
-			वापस -ENOMEM;
+		if (table == NULL)
+			return -ENOMEM;
 
-		// Need to स_रखो from offset 0 and +1 members अगर bअक्रम new
-		अगर (trace->syscalls.table == शून्य)
-			स_रखो(table, 0, (id + 1) * माप(*sc));
-		अन्यथा
-			स_रखो(table + trace->sctbl->syscalls.max_id + 1, 0, (id - trace->sctbl->syscalls.max_id) * माप(*sc));
+		// Need to memset from offset 0 and +1 members if brand new
+		if (trace->syscalls.table == NULL)
+			memset(table, 0, (id + 1) * sizeof(*sc));
+		else
+			memset(table + trace->sctbl->syscalls.max_id + 1, 0, (id - trace->sctbl->syscalls.max_id) * sizeof(*sc));
 
 		trace->syscalls.table	      = table;
 		trace->sctbl->syscalls.max_id = id;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 	sc = trace->syscalls.table + id;
-	अगर (sc->nonexistent)
-		वापस 0;
+	if (sc->nonexistent)
+		return 0;
 
-	अगर (name == शून्य) अणु
+	if (name == NULL) {
 		sc->nonexistent = true;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	sc->name = name;
 	sc->fmt  = syscall_fmt__find(sc->name);
 
-	snम_लिखो(tp_name, माप(tp_name), "sys_enter_%s", sc->name);
-	sc->tp_क्रमmat = trace_event__tp_क्रमmat("syscalls", tp_name);
+	snprintf(tp_name, sizeof(tp_name), "sys_enter_%s", sc->name);
+	sc->tp_format = trace_event__tp_format("syscalls", tp_name);
 
-	अगर (IS_ERR(sc->tp_क्रमmat) && sc->fmt && sc->fmt->alias) अणु
-		snम_लिखो(tp_name, माप(tp_name), "sys_enter_%s", sc->fmt->alias);
-		sc->tp_क्रमmat = trace_event__tp_क्रमmat("syscalls", tp_name);
-	पूर्ण
+	if (IS_ERR(sc->tp_format) && sc->fmt && sc->fmt->alias) {
+		snprintf(tp_name, sizeof(tp_name), "sys_enter_%s", sc->fmt->alias);
+		sc->tp_format = trace_event__tp_format("syscalls", tp_name);
+	}
 
-	अगर (syscall__alloc_arg_fmts(sc, IS_ERR(sc->tp_क्रमmat) ? 6 : sc->tp_क्रमmat->क्रमmat.nr_fields))
-		वापस -ENOMEM;
+	if (syscall__alloc_arg_fmts(sc, IS_ERR(sc->tp_format) ? 6 : sc->tp_format->format.nr_fields))
+		return -ENOMEM;
 
-	अगर (IS_ERR(sc->tp_क्रमmat))
-		वापस PTR_ERR(sc->tp_क्रमmat);
+	if (IS_ERR(sc->tp_format))
+		return PTR_ERR(sc->tp_format);
 
-	sc->args = sc->tp_क्रमmat->क्रमmat.fields;
+	sc->args = sc->tp_format->format.fields;
 	/*
 	 * We need to check and discard the first variable '__syscall_nr'
 	 * or 'nr' that mean the syscall number. It is needless here.
-	 * So drop '__syscall_nr' or 'nr' field but करोes not exist on older kernels.
+	 * So drop '__syscall_nr' or 'nr' field but does not exist on older kernels.
 	 */
-	अगर (sc->args && (!म_भेद(sc->args->name, "__syscall_nr") || !म_भेद(sc->args->name, "nr"))) अणु
+	if (sc->args && (!strcmp(sc->args->name, "__syscall_nr") || !strcmp(sc->args->name, "nr"))) {
 		sc->args = sc->args->next;
 		--sc->nr_args;
-	पूर्ण
+	}
 
-	sc->is_निकास = !म_भेद(name, "exit_group") || !म_भेद(name, "exit");
-	sc->is_खोलो = !म_भेद(name, "open") || !म_भेद(name, "openat");
+	sc->is_exit = !strcmp(name, "exit_group") || !strcmp(name, "exit");
+	sc->is_open = !strcmp(name, "open") || !strcmp(name, "openat");
 
-	वापस syscall__set_arg_fmts(sc);
-पूर्ण
+	return syscall__set_arg_fmts(sc);
+}
 
-अटल पूर्णांक evsel__init_tp_arg_scnम_लिखो(काष्ठा evsel *evsel)
-अणु
-	काष्ठा syscall_arg_fmt *fmt = evsel__syscall_arg_fmt(evsel);
+static int evsel__init_tp_arg_scnprintf(struct evsel *evsel)
+{
+	struct syscall_arg_fmt *fmt = evsel__syscall_arg_fmt(evsel);
 
-	अगर (fmt != शून्य) अणु
-		syscall_arg_fmt__init_array(fmt, evsel->tp_क्रमmat->क्रमmat.fields);
-		वापस 0;
-	पूर्ण
+	if (fmt != NULL) {
+		syscall_arg_fmt__init_array(fmt, evsel->tp_format->format.fields);
+		return 0;
+	}
 
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल पूर्णांक पूर्णांकcmp(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	स्थिर पूर्णांक *one = a, *another = b;
+static int intcmp(const void *a, const void *b)
+{
+	const int *one = a, *another = b;
 
-	वापस *one - *another;
-पूर्ण
+	return *one - *another;
+}
 
-अटल पूर्णांक trace__validate_ev_qualअगरier(काष्ठा trace *trace)
-अणु
-	पूर्णांक err = 0;
-	bool prपूर्णांकed_invalid_prefix = false;
-	काष्ठा str_node *pos;
-	माप_प्रकार nr_used = 0, nr_allocated = strlist__nr_entries(trace->ev_qualअगरier);
+static int trace__validate_ev_qualifier(struct trace *trace)
+{
+	int err = 0;
+	bool printed_invalid_prefix = false;
+	struct str_node *pos;
+	size_t nr_used = 0, nr_allocated = strlist__nr_entries(trace->ev_qualifier);
 
-	trace->ev_qualअगरier_ids.entries = दो_स्मृति(nr_allocated *
-						 माप(trace->ev_qualअगरier_ids.entries[0]));
+	trace->ev_qualifier_ids.entries = malloc(nr_allocated *
+						 sizeof(trace->ev_qualifier_ids.entries[0]));
 
-	अगर (trace->ev_qualअगरier_ids.entries == शून्य) अणु
-		ख_माला_दो("Error:\tNot enough memory for allocating events qualifier ids\n",
+	if (trace->ev_qualifier_ids.entries == NULL) {
+		fputs("Error:\tNot enough memory for allocating events qualifier ids\n",
 		       trace->output);
 		err = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	strlist__क्रम_each_entry(pos, trace->ev_qualअगरier) अणु
-		स्थिर अक्षर *sc = pos->s;
-		पूर्णांक id = syscalltbl__id(trace->sctbl, sc), match_next = -1;
+	strlist__for_each_entry(pos, trace->ev_qualifier) {
+		const char *sc = pos->s;
+		int id = syscalltbl__id(trace->sctbl, sc), match_next = -1;
 
-		अगर (id < 0) अणु
+		if (id < 0) {
 			id = syscalltbl__strglobmatch_first(trace->sctbl, sc, &match_next);
-			अगर (id >= 0)
-				जाओ matches;
+			if (id >= 0)
+				goto matches;
 
-			अगर (!prपूर्णांकed_invalid_prefix) अणु
+			if (!printed_invalid_prefix) {
 				pr_debug("Skipping unknown syscalls: ");
-				prपूर्णांकed_invalid_prefix = true;
-			पूर्ण अन्यथा अणु
+				printed_invalid_prefix = true;
+			} else {
 				pr_debug(", ");
-			पूर्ण
+			}
 
 			pr_debug("%s", sc);
-			जारी;
-		पूर्ण
+			continue;
+		}
 matches:
-		trace->ev_qualअगरier_ids.entries[nr_used++] = id;
-		अगर (match_next == -1)
-			जारी;
+		trace->ev_qualifier_ids.entries[nr_used++] = id;
+		if (match_next == -1)
+			continue;
 
-		जबतक (1) अणु
+		while (1) {
 			id = syscalltbl__strglobmatch_next(trace->sctbl, sc, &match_next);
-			अगर (id < 0)
-				अवरोध;
-			अगर (nr_allocated == nr_used) अणु
-				व्योम *entries;
+			if (id < 0)
+				break;
+			if (nr_allocated == nr_used) {
+				void *entries;
 
 				nr_allocated += 8;
-				entries = पुनः_स्मृति(trace->ev_qualअगरier_ids.entries,
-						  nr_allocated * माप(trace->ev_qualअगरier_ids.entries[0]));
-				अगर (entries == शून्य) अणु
+				entries = realloc(trace->ev_qualifier_ids.entries,
+						  nr_allocated * sizeof(trace->ev_qualifier_ids.entries[0]));
+				if (entries == NULL) {
 					err = -ENOMEM;
-					ख_माला_दो("\nError:\t Not enough memory for parsing\n", trace->output);
-					जाओ out_मुक्त;
-				पूर्ण
-				trace->ev_qualअगरier_ids.entries = entries;
-			पूर्ण
-			trace->ev_qualअगरier_ids.entries[nr_used++] = id;
-		पूर्ण
-	पूर्ण
+					fputs("\nError:\t Not enough memory for parsing\n", trace->output);
+					goto out_free;
+				}
+				trace->ev_qualifier_ids.entries = entries;
+			}
+			trace->ev_qualifier_ids.entries[nr_used++] = id;
+		}
+	}
 
-	trace->ev_qualअगरier_ids.nr = nr_used;
-	क्विक(trace->ev_qualअगरier_ids.entries, nr_used, माप(पूर्णांक), पूर्णांकcmp);
+	trace->ev_qualifier_ids.nr = nr_used;
+	qsort(trace->ev_qualifier_ids.entries, nr_used, sizeof(int), intcmp);
 out:
-	अगर (prपूर्णांकed_invalid_prefix)
+	if (printed_invalid_prefix)
 		pr_debug("\n");
-	वापस err;
-out_मुक्त:
-	zमुक्त(&trace->ev_qualअगरier_ids.entries);
-	trace->ev_qualअगरier_ids.nr = 0;
-	जाओ out;
-पूर्ण
+	return err;
+out_free:
+	zfree(&trace->ev_qualifier_ids.entries);
+	trace->ev_qualifier_ids.nr = 0;
+	goto out;
+}
 
-अटल __maybe_unused bool trace__syscall_enabled(काष्ठा trace *trace, पूर्णांक id)
-अणु
-	bool in_ev_qualअगरier;
+static __maybe_unused bool trace__syscall_enabled(struct trace *trace, int id)
+{
+	bool in_ev_qualifier;
 
-	अगर (trace->ev_qualअगरier_ids.nr == 0)
-		वापस true;
+	if (trace->ev_qualifier_ids.nr == 0)
+		return true;
 
-	in_ev_qualअगरier = द्वा_खोज(&id, trace->ev_qualअगरier_ids.entries,
-				  trace->ev_qualअगरier_ids.nr, माप(पूर्णांक), पूर्णांकcmp) != शून्य;
+	in_ev_qualifier = bsearch(&id, trace->ev_qualifier_ids.entries,
+				  trace->ev_qualifier_ids.nr, sizeof(int), intcmp) != NULL;
 
-	अगर (in_ev_qualअगरier)
-	       वापस !trace->not_ev_qualअगरier;
+	if (in_ev_qualifier)
+	       return !trace->not_ev_qualifier;
 
-	वापस trace->not_ev_qualअगरier;
-पूर्ण
+	return trace->not_ev_qualifier;
+}
 
 /*
- * args is to be पूर्णांकerpreted as a series of दीर्घs but we need to handle
- * 8-byte unaligned accesses. args poपूर्णांकs to raw_data within the event
+ * args is to be interpreted as a series of longs but we need to handle
+ * 8-byte unaligned accesses. args points to raw_data within the event
  * and raw_data is guaranteed to be 8-byte unaligned because it is
  * preceded by raw_size which is a u32. So we need to copy args to a temp
- * variable to पढ़ो it. Most notably this aव्योमs extended load inकाष्ठाions
+ * variable to read it. Most notably this avoids extended load instructions
  * on unaligned addresses
  */
-अचिन्हित दीर्घ syscall_arg__val(काष्ठा syscall_arg *arg, u8 idx)
-अणु
-	अचिन्हित दीर्घ val;
-	अचिन्हित अक्षर *p = arg->args + माप(अचिन्हित दीर्घ) * idx;
+unsigned long syscall_arg__val(struct syscall_arg *arg, u8 idx)
+{
+	unsigned long val;
+	unsigned char *p = arg->args + sizeof(unsigned long) * idx;
 
-	स_नकल(&val, p, माप(val));
-	वापस val;
-पूर्ण
+	memcpy(&val, p, sizeof(val));
+	return val;
+}
 
-अटल माप_प्रकार syscall__scnम_लिखो_name(काष्ठा syscall *sc, अक्षर *bf, माप_प्रकार size,
-				      काष्ठा syscall_arg *arg)
-अणु
-	अगर (sc->arg_fmt && sc->arg_fmt[arg->idx].name)
-		वापस scnम_लिखो(bf, size, "%s: ", sc->arg_fmt[arg->idx].name);
+static size_t syscall__scnprintf_name(struct syscall *sc, char *bf, size_t size,
+				      struct syscall_arg *arg)
+{
+	if (sc->arg_fmt && sc->arg_fmt[arg->idx].name)
+		return scnprintf(bf, size, "%s: ", sc->arg_fmt[arg->idx].name);
 
-	वापस scnम_लिखो(bf, size, "arg%d: ", arg->idx);
-पूर्ण
+	return scnprintf(bf, size, "arg%d: ", arg->idx);
+}
 
 /*
- * Check अगर the value is in fact zero, i.e. mask whatever needs masking, such
+ * Check if the value is in fact zero, i.e. mask whatever needs masking, such
  * as mount 'flags' argument that needs ignoring some magic flag, see comment
  * in tools/perf/trace/beauty/mount_flags.c
  */
-अटल अचिन्हित दीर्घ syscall_arg_fmt__mask_val(काष्ठा syscall_arg_fmt *fmt, काष्ठा syscall_arg *arg, अचिन्हित दीर्घ val)
-अणु
-	अगर (fmt && fmt->mask_val)
-		वापस fmt->mask_val(arg, val);
+static unsigned long syscall_arg_fmt__mask_val(struct syscall_arg_fmt *fmt, struct syscall_arg *arg, unsigned long val)
+{
+	if (fmt && fmt->mask_val)
+		return fmt->mask_val(arg, val);
 
-	वापस val;
-पूर्ण
+	return val;
+}
 
-अटल माप_प्रकार syscall_arg_fmt__scnम_लिखो_val(काष्ठा syscall_arg_fmt *fmt, अक्षर *bf, माप_प्रकार size,
-					     काष्ठा syscall_arg *arg, अचिन्हित दीर्घ val)
-अणु
-	अगर (fmt && fmt->scnम_लिखो) अणु
+static size_t syscall_arg_fmt__scnprintf_val(struct syscall_arg_fmt *fmt, char *bf, size_t size,
+					     struct syscall_arg *arg, unsigned long val)
+{
+	if (fmt && fmt->scnprintf) {
 		arg->val = val;
-		अगर (fmt->parm)
+		if (fmt->parm)
 			arg->parm = fmt->parm;
-		वापस fmt->scnम_लिखो(bf, size, arg);
-	पूर्ण
-	वापस scnम_लिखो(bf, size, "%ld", val);
-पूर्ण
+		return fmt->scnprintf(bf, size, arg);
+	}
+	return scnprintf(bf, size, "%ld", val);
+}
 
-अटल माप_प्रकार syscall__scnम_लिखो_args(काष्ठा syscall *sc, अक्षर *bf, माप_प्रकार size,
-				      अचिन्हित अक्षर *args, व्योम *augmented_args, पूर्णांक augmented_args_size,
-				      काष्ठा trace *trace, काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	माप_प्रकार prपूर्णांकed = 0;
-	अचिन्हित दीर्घ val;
+static size_t syscall__scnprintf_args(struct syscall *sc, char *bf, size_t size,
+				      unsigned char *args, void *augmented_args, int augmented_args_size,
+				      struct trace *trace, struct thread *thread)
+{
+	size_t printed = 0;
+	unsigned long val;
 	u8 bit = 1;
-	काष्ठा syscall_arg arg = अणु
+	struct syscall_arg arg = {
 		.args	= args,
-		.augmented = अणु
+		.augmented = {
 			.size = augmented_args_size,
 			.args = augmented_args,
-		पूर्ण,
+		},
 		.idx	= 0,
 		.mask	= 0,
 		.trace  = trace,
-		.thपढ़ो = thपढ़ो,
+		.thread = thread,
 		.show_string_prefix = trace->show_string_prefix,
-	पूर्ण;
-	काष्ठा thपढ़ो_trace *ttrace = thपढ़ो__priv(thपढ़ो);
+	};
+	struct thread_trace *ttrace = thread__priv(thread);
 
 	/*
-	 * Things like fcntl will set this in its 'cmd' क्रमmatter to pick the
-	 * right क्रमmatter क्रम the वापस value (an fd? file flags?), which is
-	 * not needed क्रम syscalls that always वापस a given type, say an fd.
+	 * Things like fcntl will set this in its 'cmd' formatter to pick the
+	 * right formatter for the return value (an fd? file flags?), which is
+	 * not needed for syscalls that always return a given type, say an fd.
 	 */
-	ttrace->ret_scnम_लिखो = शून्य;
+	ttrace->ret_scnprintf = NULL;
 
-	अगर (sc->args != शून्य) अणु
-		काष्ठा tep_क्रमmat_field *field;
+	if (sc->args != NULL) {
+		struct tep_format_field *field;
 
-		क्रम (field = sc->args; field;
-		     field = field->next, ++arg.idx, bit <<= 1) अणु
-			अगर (arg.mask & bit)
-				जारी;
+		for (field = sc->args; field;
+		     field = field->next, ++arg.idx, bit <<= 1) {
+			if (arg.mask & bit)
+				continue;
 
 			arg.fmt = &sc->arg_fmt[arg.idx];
 			val = syscall_arg__val(&arg, arg.idx);
 			/*
-			 * Some syscall args need some mask, most करोn't and
-			 * वापस val untouched.
+			 * Some syscall args need some mask, most don't and
+			 * return val untouched.
 			 */
 			val = syscall_arg_fmt__mask_val(&sc->arg_fmt[arg.idx], &arg, val);
 
 			/*
- 			 * Suppress this argument अगर its value is zero and
- 			 * and we करोn't have a string associated in an
- 			 * strarray क्रम it.
+ 			 * Suppress this argument if its value is zero and
+ 			 * and we don't have a string associated in an
+ 			 * strarray for it.
  			 */
-			अगर (val == 0 &&
+			if (val == 0 &&
 			    !trace->show_zeros &&
 			    !(sc->arg_fmt &&
 			      (sc->arg_fmt[arg.idx].show_zero ||
-			       sc->arg_fmt[arg.idx].scnम_लिखो == SCA_STRARRAY ||
-			       sc->arg_fmt[arg.idx].scnम_लिखो == SCA_STRARRAYS) &&
+			       sc->arg_fmt[arg.idx].scnprintf == SCA_STRARRAY ||
+			       sc->arg_fmt[arg.idx].scnprintf == SCA_STRARRAYS) &&
 			      sc->arg_fmt[arg.idx].parm))
-				जारी;
+				continue;
 
-			prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "%s", prपूर्णांकed ? ", " : "");
+			printed += scnprintf(bf + printed, size - printed, "%s", printed ? ", " : "");
 
-			अगर (trace->show_arg_names)
-				prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "%s: ", field->name);
+			if (trace->show_arg_names)
+				printed += scnprintf(bf + printed, size - printed, "%s: ", field->name);
 
-			prपूर्णांकed += syscall_arg_fmt__scnम_लिखो_val(&sc->arg_fmt[arg.idx],
-								  bf + prपूर्णांकed, size - prपूर्णांकed, &arg, val);
-		पूर्ण
-	पूर्ण अन्यथा अगर (IS_ERR(sc->tp_क्रमmat)) अणु
+			printed += syscall_arg_fmt__scnprintf_val(&sc->arg_fmt[arg.idx],
+								  bf + printed, size - printed, &arg, val);
+		}
+	} else if (IS_ERR(sc->tp_format)) {
 		/*
-		 * If we managed to पढ़ो the tracepoपूर्णांक /क्रमmat file, then we
+		 * If we managed to read the tracepoint /format file, then we
 		 * may end up not having any args, like with gettid(), so only
-		 * prपूर्णांक the raw args when we didn't manage to पढ़ो it.
+		 * print the raw args when we didn't manage to read it.
 		 */
-		जबतक (arg.idx < sc->nr_args) अणु
-			अगर (arg.mask & bit)
-				जाओ next_arg;
+		while (arg.idx < sc->nr_args) {
+			if (arg.mask & bit)
+				goto next_arg;
 			val = syscall_arg__val(&arg, arg.idx);
-			अगर (prपूर्णांकed)
-				prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, ", ");
-			prपूर्णांकed += syscall__scnम_लिखो_name(sc, bf + prपूर्णांकed, size - prपूर्णांकed, &arg);
-			prपूर्णांकed += syscall_arg_fmt__scnम_लिखो_val(&sc->arg_fmt[arg.idx], bf + prपूर्णांकed, size - prपूर्णांकed, &arg, val);
+			if (printed)
+				printed += scnprintf(bf + printed, size - printed, ", ");
+			printed += syscall__scnprintf_name(sc, bf + printed, size - printed, &arg);
+			printed += syscall_arg_fmt__scnprintf_val(&sc->arg_fmt[arg.idx], bf + printed, size - printed, &arg, val);
 next_arg:
 			++arg.idx;
 			bit <<= 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}
 
-प्रकार पूर्णांक (*tracepoपूर्णांक_handler)(काष्ठा trace *trace, काष्ठा evsel *evsel,
-				  जोड़ perf_event *event,
-				  काष्ठा perf_sample *sample);
+typedef int (*tracepoint_handler)(struct trace *trace, struct evsel *evsel,
+				  union perf_event *event,
+				  struct perf_sample *sample);
 
-अटल काष्ठा syscall *trace__syscall_info(काष्ठा trace *trace,
-					   काष्ठा evsel *evsel, पूर्णांक id)
-अणु
-	पूर्णांक err = 0;
+static struct syscall *trace__syscall_info(struct trace *trace,
+					   struct evsel *evsel, int id)
+{
+	int err = 0;
 
-	अगर (id < 0) अणु
+	if (id < 0) {
 
 		/*
 		 * XXX: Noticed on x86_64, reproduced as far back as 3.0.36, haven't tried
-		 * beक्रमe that, leaving at a higher verbosity level till that is
+		 * before that, leaving at a higher verbosity level till that is
 		 * explained. Reproduced with plain ftrace with:
 		 *
-		 * echo 1 > /t/events/raw_syscalls/sys_निकास/enable
+		 * echo 1 > /t/events/raw_syscalls/sys_exit/enable
 		 * grep "NR -1 " /t/trace_pipe
 		 *
 		 * After generating some load on the machine.
  		 */
-		अगर (verbose > 1) अणु
-			अटल u64 n;
-			ख_लिखो(trace->output, "Invalid syscall %d id, skipping (%s, %" PRIu64 ") ...\n",
+		if (verbose > 1) {
+			static u64 n;
+			fprintf(trace->output, "Invalid syscall %d id, skipping (%s, %" PRIu64 ") ...\n",
 				id, evsel__name(evsel), ++n);
-		पूर्ण
-		वापस शून्य;
-	पूर्ण
+		}
+		return NULL;
+	}
 
 	err = -EINVAL;
 
-#अगर_घोषित HAVE_SYSCALL_TABLE_SUPPORT
-	अगर (id > trace->sctbl->syscalls.max_id) अणु
-#अन्यथा
-	अगर (id >= trace->sctbl->syscalls.max_id) अणु
+#ifdef HAVE_SYSCALL_TABLE_SUPPORT
+	if (id > trace->sctbl->syscalls.max_id) {
+#else
+	if (id >= trace->sctbl->syscalls.max_id) {
 		/*
-		 * With libaudit we करोn't know beक्रमehand what is the max_id,
-		 * so we let trace__पढ़ो_syscall_info() figure that out as we
-		 * go on पढ़ोing syscalls.
+		 * With libaudit we don't know beforehand what is the max_id,
+		 * so we let trace__read_syscall_info() figure that out as we
+		 * go on reading syscalls.
 		 */
-		err = trace__पढ़ो_syscall_info(trace, id);
-		अगर (err)
-#पूर्ण_अगर
-		जाओ out_cant_पढ़ो;
-	पूर्ण
+		err = trace__read_syscall_info(trace, id);
+		if (err)
+#endif
+		goto out_cant_read;
+	}
 
-	अगर ((trace->syscalls.table == शून्य || trace->syscalls.table[id].name == शून्य) &&
-	    (err = trace__पढ़ो_syscall_info(trace, id)) != 0)
-		जाओ out_cant_पढ़ो;
+	if ((trace->syscalls.table == NULL || trace->syscalls.table[id].name == NULL) &&
+	    (err = trace__read_syscall_info(trace, id)) != 0)
+		goto out_cant_read;
 
-	अगर (trace->syscalls.table[id].name == शून्य) अणु
-		अगर (trace->syscalls.table[id].nonexistent)
-			वापस शून्य;
-		जाओ out_cant_पढ़ो;
-	पूर्ण
+	if (trace->syscalls.table[id].name == NULL) {
+		if (trace->syscalls.table[id].nonexistent)
+			return NULL;
+		goto out_cant_read;
+	}
 
-	वापस &trace->syscalls.table[id];
+	return &trace->syscalls.table[id];
 
-out_cant_पढ़ो:
-	अगर (verbose > 0) अणु
-		अक्षर sbuf[STRERR_बफ_मानE];
-		ख_लिखो(trace->output, "Problems reading syscall %d: %d (%s)", id, -err, str_error_r(-err, sbuf, माप(sbuf)));
-		अगर (id <= trace->sctbl->syscalls.max_id && trace->syscalls.table[id].name != शून्य)
-			ख_लिखो(trace->output, "(%s)", trace->syscalls.table[id].name);
-		ख_माला_दो(" information\n", trace->output);
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+out_cant_read:
+	if (verbose > 0) {
+		char sbuf[STRERR_BUFSIZE];
+		fprintf(trace->output, "Problems reading syscall %d: %d (%s)", id, -err, str_error_r(-err, sbuf, sizeof(sbuf)));
+		if (id <= trace->sctbl->syscalls.max_id && trace->syscalls.table[id].name != NULL)
+			fprintf(trace->output, "(%s)", trace->syscalls.table[id].name);
+		fputs(" information\n", trace->output);
+	}
+	return NULL;
+}
 
-काष्ठा syscall_stats अणु
-	काष्ठा stats stats;
+struct syscall_stats {
+	struct stats stats;
 	u64	     nr_failures;
-	पूर्णांक	     max_त्रुटि_सं;
-	u32	     *त्रुटि_संs;
-पूर्ण;
+	int	     max_errno;
+	u32	     *errnos;
+};
 
-अटल व्योम thपढ़ो__update_stats(काष्ठा thपढ़ो *thपढ़ो, काष्ठा thपढ़ो_trace *ttrace,
-				 पूर्णांक id, काष्ठा perf_sample *sample, दीर्घ err, bool त्रुटि_सं_summary)
-अणु
-	काष्ठा पूर्णांक_node *inode;
-	काष्ठा syscall_stats *stats;
+static void thread__update_stats(struct thread *thread, struct thread_trace *ttrace,
+				 int id, struct perf_sample *sample, long err, bool errno_summary)
+{
+	struct int_node *inode;
+	struct syscall_stats *stats;
 	u64 duration = 0;
 
-	inode = पूर्णांकlist__findnew(ttrace->syscall_stats, id);
-	अगर (inode == शून्य)
-		वापस;
+	inode = intlist__findnew(ttrace->syscall_stats, id);
+	if (inode == NULL)
+		return;
 
 	stats = inode->priv;
-	अगर (stats == शून्य) अणु
-		stats = दो_स्मृति(माप(*stats));
-		अगर (stats == शून्य)
-			वापस;
+	if (stats == NULL) {
+		stats = malloc(sizeof(*stats));
+		if (stats == NULL)
+			return;
 
 		stats->nr_failures = 0;
-		stats->max_त्रुटि_सं   = 0;
-		stats->त्रुटि_संs	   = शून्य;
+		stats->max_errno   = 0;
+		stats->errnos	   = NULL;
 		init_stats(&stats->stats);
 		inode->priv = stats;
-	पूर्ण
+	}
 
-	अगर (ttrace->entry_समय && sample->समय > ttrace->entry_समय)
-		duration = sample->समय - ttrace->entry_समय;
+	if (ttrace->entry_time && sample->time > ttrace->entry_time)
+		duration = sample->time - ttrace->entry_time;
 
 	update_stats(&stats->stats, duration);
 
-	अगर (err < 0) अणु
+	if (err < 0) {
 		++stats->nr_failures;
 
-		अगर (!त्रुटि_सं_summary)
-			वापस;
+		if (!errno_summary)
+			return;
 
 		err = -err;
-		अगर (err > stats->max_त्रुटि_सं) अणु
-			u32 *new_त्रुटि_संs = पुनः_स्मृति(stats->त्रुटि_संs, err * माप(u32));
+		if (err > stats->max_errno) {
+			u32 *new_errnos = realloc(stats->errnos, err * sizeof(u32));
 
-			अगर (new_त्रुटि_संs) अणु
-				स_रखो(new_त्रुटि_संs + stats->max_त्रुटि_सं, 0, (err - stats->max_त्रुटि_सं) * माप(u32));
-			पूर्ण अन्यथा अणु
+			if (new_errnos) {
+				memset(new_errnos + stats->max_errno, 0, (err - stats->max_errno) * sizeof(u32));
+			} else {
 				pr_debug("Not enough memory for errno stats for thread \"%s\"(%d/%d), results will be incomplete\n",
-					 thपढ़ो__comm_str(thपढ़ो), thपढ़ो->pid_, thपढ़ो->tid);
-				वापस;
-			पूर्ण
+					 thread__comm_str(thread), thread->pid_, thread->tid);
+				return;
+			}
 
-			stats->त्रुटि_संs = new_त्रुटि_संs;
-			stats->max_त्रुटि_सं = err;
-		पूर्ण
+			stats->errnos = new_errnos;
+			stats->max_errno = err;
+		}
 
-		++stats->त्रुटि_संs[err - 1];
-	पूर्ण
-पूर्ण
+		++stats->errnos[err - 1];
+	}
+}
 
-अटल पूर्णांक trace__म_लिखो_पूर्णांकerrupted_entry(काष्ठा trace *trace)
-अणु
-	काष्ठा thपढ़ो_trace *ttrace;
-	माप_प्रकार prपूर्णांकed;
-	पूर्णांक len;
+static int trace__printf_interrupted_entry(struct trace *trace)
+{
+	struct thread_trace *ttrace;
+	size_t printed;
+	int len;
 
-	अगर (trace->failure_only || trace->current == शून्य)
-		वापस 0;
+	if (trace->failure_only || trace->current == NULL)
+		return 0;
 
-	ttrace = thपढ़ो__priv(trace->current);
+	ttrace = thread__priv(trace->current);
 
-	अगर (!ttrace->entry_pending)
-		वापस 0;
+	if (!ttrace->entry_pending)
+		return 0;
 
-	prपूर्णांकed  = trace__ख_लिखो_entry_head(trace, trace->current, 0, false, ttrace->entry_समय, trace->output);
-	prपूर्णांकed += len = ख_लिखो(trace->output, "%s)", ttrace->entry_str);
+	printed  = trace__fprintf_entry_head(trace, trace->current, 0, false, ttrace->entry_time, trace->output);
+	printed += len = fprintf(trace->output, "%s)", ttrace->entry_str);
 
-	अगर (len < trace->args_alignment - 4)
-		prपूर्णांकed += ख_लिखो(trace->output, "%-*s", trace->args_alignment - 4 - len, " ");
+	if (len < trace->args_alignment - 4)
+		printed += fprintf(trace->output, "%-*s", trace->args_alignment - 4 - len, " ");
 
-	prपूर्णांकed += ख_लिखो(trace->output, " ...\n");
+	printed += fprintf(trace->output, " ...\n");
 
 	ttrace->entry_pending = false;
-	++trace->nr_events_prपूर्णांकed;
+	++trace->nr_events_printed;
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}
 
-अटल पूर्णांक trace__ख_लिखो_sample(काष्ठा trace *trace, काष्ठा evsel *evsel,
-				 काष्ठा perf_sample *sample, काष्ठा thपढ़ो *thपढ़ो)
-अणु
-	पूर्णांक prपूर्णांकed = 0;
+static int trace__fprintf_sample(struct trace *trace, struct evsel *evsel,
+				 struct perf_sample *sample, struct thread *thread)
+{
+	int printed = 0;
 
-	अगर (trace->prपूर्णांक_sample) अणु
-		द्विगुन ts = (द्विगुन)sample->समय / NSEC_PER_MSEC;
+	if (trace->print_sample) {
+		double ts = (double)sample->time / NSEC_PER_MSEC;
 
-		prपूर्णांकed += ख_लिखो(trace->output, "%22s %10.3f %s %d/%d [%d]\n",
+		printed += fprintf(trace->output, "%22s %10.3f %s %d/%d [%d]\n",
 				   evsel__name(evsel), ts,
-				   thपढ़ो__comm_str(thपढ़ो),
+				   thread__comm_str(thread),
 				   sample->pid, sample->tid, sample->cpu);
-	पूर्ण
+	}
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}
 
-अटल व्योम *syscall__augmented_args(काष्ठा syscall *sc, काष्ठा perf_sample *sample, पूर्णांक *augmented_args_size, पूर्णांक raw_augmented_args_size)
-अणु
-	व्योम *augmented_args = शून्य;
+static void *syscall__augmented_args(struct syscall *sc, struct perf_sample *sample, int *augmented_args_size, int raw_augmented_args_size)
+{
+	void *augmented_args = NULL;
 	/*
-	 * For now with BPF raw_augmented we hook पूर्णांकo raw_syscalls:sys_enter
-	 * and there we get all 6 syscall args plus the tracepoपूर्णांक common fields
-	 * that माला_लो calculated at the start and the syscall_nr (another दीर्घ).
-	 * So we check अगर that is the हाल and अगर so करोn't look after the
+	 * For now with BPF raw_augmented we hook into raw_syscalls:sys_enter
+	 * and there we get all 6 syscall args plus the tracepoint common fields
+	 * that gets calculated at the start and the syscall_nr (another long).
+	 * So we check if that is the case and if so don't look after the
 	 * sc->args_size but always after the full raw_syscalls:sys_enter payload,
 	 * which is fixed.
 	 *
 	 * We'll revisit this later to pass s->args_size to the BPF augmenter
 	 * (now tools/perf/examples/bpf/augmented_raw_syscalls.c, so that it
-	 * copies only what we need क्रम each syscall, like what happens when we
+	 * copies only what we need for each syscall, like what happens when we
 	 * use syscalls:sys_enter_NAME, so that we reduce the kernel/userspace
-	 * traffic to just what is needed क्रम each syscall.
+	 * traffic to just what is needed for each syscall.
 	 */
-	पूर्णांक args_size = raw_augmented_args_size ?: sc->args_size;
+	int args_size = raw_augmented_args_size ?: sc->args_size;
 
 	*augmented_args_size = sample->raw_size - args_size;
-	अगर (*augmented_args_size > 0)
+	if (*augmented_args_size > 0)
 		augmented_args = sample->raw_data + args_size;
 
-	वापस augmented_args;
-पूर्ण
+	return augmented_args;
+}
 
-अटल पूर्णांक trace__sys_enter(काष्ठा trace *trace, काष्ठा evsel *evsel,
-			    जोड़ perf_event *event __maybe_unused,
-			    काष्ठा perf_sample *sample)
-अणु
-	अक्षर *msg;
-	व्योम *args;
-	पूर्णांक prपूर्णांकed = 0;
-	काष्ठा thपढ़ो *thपढ़ो;
-	पूर्णांक id = perf_evsel__sc_tp_uपूर्णांक(evsel, id, sample), err = -1;
-	पूर्णांक augmented_args_size = 0;
-	व्योम *augmented_args = शून्य;
-	काष्ठा syscall *sc = trace__syscall_info(trace, evsel, id);
-	काष्ठा thपढ़ो_trace *ttrace;
+static int trace__sys_enter(struct trace *trace, struct evsel *evsel,
+			    union perf_event *event __maybe_unused,
+			    struct perf_sample *sample)
+{
+	char *msg;
+	void *args;
+	int printed = 0;
+	struct thread *thread;
+	int id = perf_evsel__sc_tp_uint(evsel, id, sample), err = -1;
+	int augmented_args_size = 0;
+	void *augmented_args = NULL;
+	struct syscall *sc = trace__syscall_info(trace, evsel, id);
+	struct thread_trace *ttrace;
 
-	अगर (sc == शून्य)
-		वापस -1;
+	if (sc == NULL)
+		return -1;
 
-	thपढ़ो = machine__findnew_thपढ़ो(trace->host, sample->pid, sample->tid);
-	ttrace = thपढ़ो__trace(thपढ़ो, trace->output);
-	अगर (ttrace == शून्य)
-		जाओ out_put;
+	thread = machine__findnew_thread(trace->host, sample->pid, sample->tid);
+	ttrace = thread__trace(thread, trace->output);
+	if (ttrace == NULL)
+		goto out_put;
 
-	trace__ख_लिखो_sample(trace, evsel, sample, thपढ़ो);
+	trace__fprintf_sample(trace, evsel, sample, thread);
 
 	args = perf_evsel__sc_tp_ptr(evsel, args, sample);
 
-	अगर (ttrace->entry_str == शून्य) अणु
-		ttrace->entry_str = दो_स्मृति(trace__entry_str_size);
-		अगर (!ttrace->entry_str)
-			जाओ out_put;
-	पूर्ण
+	if (ttrace->entry_str == NULL) {
+		ttrace->entry_str = malloc(trace__entry_str_size);
+		if (!ttrace->entry_str)
+			goto out_put;
+	}
 
-	अगर (!(trace->duration_filter || trace->summary_only || trace->min_stack))
-		trace__म_लिखो_पूर्णांकerrupted_entry(trace);
+	if (!(trace->duration_filter || trace->summary_only || trace->min_stack))
+		trace__printf_interrupted_entry(trace);
 	/*
 	 * If this is raw_syscalls.sys_enter, then it always comes with the 6 possible
-	 * arguments, even अगर the syscall being handled, say "openat", uses only 4 arguments
-	 * this अवरोधs syscall__augmented_args() check क्रम augmented args, as we calculate
-	 * syscall->args_size using each syscalls:sys_enter_NAME tracefs क्रमmat file,
-	 * so when handling, say the खोलोat syscall, we end up getting 6 args क्रम the
+	 * arguments, even if the syscall being handled, say "openat", uses only 4 arguments
+	 * this breaks syscall__augmented_args() check for augmented args, as we calculate
+	 * syscall->args_size using each syscalls:sys_enter_NAME tracefs format file,
+	 * so when handling, say the openat syscall, we end up getting 6 args for the
 	 * raw_syscalls:sys_enter event, when we expected just 4, we end up mistakenly
 	 * thinking that the extra 2 u64 args are the augmented filename, so just check
-	 * here and aव्योम using augmented syscalls when the evsel is the raw_syscalls one.
+	 * here and avoid using augmented syscalls when the evsel is the raw_syscalls one.
 	 */
-	अगर (evsel != trace->syscalls.events.sys_enter)
+	if (evsel != trace->syscalls.events.sys_enter)
 		augmented_args = syscall__augmented_args(sc, sample, &augmented_args_size, trace->raw_augmented_syscalls_args_size);
-	ttrace->entry_समय = sample->समय;
+	ttrace->entry_time = sample->time;
 	msg = ttrace->entry_str;
-	prपूर्णांकed += scnम_लिखो(msg + prपूर्णांकed, trace__entry_str_size - prपूर्णांकed, "%s(", sc->name);
+	printed += scnprintf(msg + printed, trace__entry_str_size - printed, "%s(", sc->name);
 
-	prपूर्णांकed += syscall__scnम_लिखो_args(sc, msg + prपूर्णांकed, trace__entry_str_size - prपूर्णांकed,
-					   args, augmented_args, augmented_args_size, trace, thपढ़ो);
+	printed += syscall__scnprintf_args(sc, msg + printed, trace__entry_str_size - printed,
+					   args, augmented_args, augmented_args_size, trace, thread);
 
-	अगर (sc->is_निकास) अणु
-		अगर (!(trace->duration_filter || trace->summary_only || trace->failure_only || trace->min_stack)) अणु
-			पूर्णांक alignment = 0;
+	if (sc->is_exit) {
+		if (!(trace->duration_filter || trace->summary_only || trace->failure_only || trace->min_stack)) {
+			int alignment = 0;
 
-			trace__ख_लिखो_entry_head(trace, thपढ़ो, 0, false, ttrace->entry_समय, trace->output);
-			prपूर्णांकed = ख_लिखो(trace->output, "%s)", ttrace->entry_str);
-			अगर (trace->args_alignment > prपूर्णांकed)
-				alignment = trace->args_alignment - prपूर्णांकed;
-			ख_लिखो(trace->output, "%*s= ?\n", alignment, " ");
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			trace__fprintf_entry_head(trace, thread, 0, false, ttrace->entry_time, trace->output);
+			printed = fprintf(trace->output, "%s)", ttrace->entry_str);
+			if (trace->args_alignment > printed)
+				alignment = trace->args_alignment - printed;
+			fprintf(trace->output, "%*s= ?\n", alignment, " ");
+		}
+	} else {
 		ttrace->entry_pending = true;
-		/* See trace__vfs_getname & trace__sys_निकास */
-		ttrace->filename.pending_खोलो = false;
-	पूर्ण
+		/* See trace__vfs_getname & trace__sys_exit */
+		ttrace->filename.pending_open = false;
+	}
 
-	अगर (trace->current != thपढ़ो) अणु
-		thपढ़ो__put(trace->current);
-		trace->current = thपढ़ो__get(thपढ़ो);
-	पूर्ण
+	if (trace->current != thread) {
+		thread__put(trace->current);
+		trace->current = thread__get(thread);
+	}
 	err = 0;
 out_put:
-	thपढ़ो__put(thपढ़ो);
-	वापस err;
-पूर्ण
+	thread__put(thread);
+	return err;
+}
 
-अटल पूर्णांक trace__ख_लिखो_sys_enter(काष्ठा trace *trace, काष्ठा evsel *evsel,
-				    काष्ठा perf_sample *sample)
-अणु
-	काष्ठा thपढ़ो_trace *ttrace;
-	काष्ठा thपढ़ो *thपढ़ो;
-	पूर्णांक id = perf_evsel__sc_tp_uपूर्णांक(evsel, id, sample), err = -1;
-	काष्ठा syscall *sc = trace__syscall_info(trace, evsel, id);
-	अक्षर msg[1024];
-	व्योम *args, *augmented_args = शून्य;
-	पूर्णांक augmented_args_size;
+static int trace__fprintf_sys_enter(struct trace *trace, struct evsel *evsel,
+				    struct perf_sample *sample)
+{
+	struct thread_trace *ttrace;
+	struct thread *thread;
+	int id = perf_evsel__sc_tp_uint(evsel, id, sample), err = -1;
+	struct syscall *sc = trace__syscall_info(trace, evsel, id);
+	char msg[1024];
+	void *args, *augmented_args = NULL;
+	int augmented_args_size;
 
-	अगर (sc == शून्य)
-		वापस -1;
+	if (sc == NULL)
+		return -1;
 
-	thपढ़ो = machine__findnew_thपढ़ो(trace->host, sample->pid, sample->tid);
-	ttrace = thपढ़ो__trace(thपढ़ो, trace->output);
+	thread = machine__findnew_thread(trace->host, sample->pid, sample->tid);
+	ttrace = thread__trace(thread, trace->output);
 	/*
-	 * We need to get ttrace just to make sure it is there when syscall__scnम_लिखो_args()
-	 * and the rest of the beautअगरiers accessing it via काष्ठा syscall_arg touches it.
+	 * We need to get ttrace just to make sure it is there when syscall__scnprintf_args()
+	 * and the rest of the beautifiers accessing it via struct syscall_arg touches it.
 	 */
-	अगर (ttrace == शून्य)
-		जाओ out_put;
+	if (ttrace == NULL)
+		goto out_put;
 
 	args = perf_evsel__sc_tp_ptr(evsel, args, sample);
 	augmented_args = syscall__augmented_args(sc, sample, &augmented_args_size, trace->raw_augmented_syscalls_args_size);
-	syscall__scnम_लिखो_args(sc, msg, माप(msg), args, augmented_args, augmented_args_size, trace, thपढ़ो);
-	ख_लिखो(trace->output, "%s", msg);
+	syscall__scnprintf_args(sc, msg, sizeof(msg), args, augmented_args, augmented_args_size, trace, thread);
+	fprintf(trace->output, "%s", msg);
 	err = 0;
 out_put:
-	thपढ़ो__put(thपढ़ो);
-	वापस err;
-पूर्ण
+	thread__put(thread);
+	return err;
+}
 
-अटल पूर्णांक trace__resolve_callchain(काष्ठा trace *trace, काष्ठा evsel *evsel,
-				    काष्ठा perf_sample *sample,
-				    काष्ठा callchain_cursor *cursor)
-अणु
-	काष्ठा addr_location al;
-	पूर्णांक max_stack = evsel->core.attr.sample_max_stack ?
+static int trace__resolve_callchain(struct trace *trace, struct evsel *evsel,
+				    struct perf_sample *sample,
+				    struct callchain_cursor *cursor)
+{
+	struct addr_location al;
+	int max_stack = evsel->core.attr.sample_max_stack ?
 			evsel->core.attr.sample_max_stack :
 			trace->max_stack;
-	पूर्णांक err;
+	int err;
 
-	अगर (machine__resolve(trace->host, &al, sample) < 0)
-		वापस -1;
+	if (machine__resolve(trace->host, &al, sample) < 0)
+		return -1;
 
-	err = thपढ़ो__resolve_callchain(al.thपढ़ो, cursor, evsel, sample, शून्य, शून्य, max_stack);
+	err = thread__resolve_callchain(al.thread, cursor, evsel, sample, NULL, NULL, max_stack);
 	addr_location__put(&al);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक trace__ख_लिखो_callchain(काष्ठा trace *trace, काष्ठा perf_sample *sample)
-अणु
-	/* TODO: user-configurable prपूर्णांक_opts */
-	स्थिर अचिन्हित पूर्णांक prपूर्णांक_opts = EVSEL__PRINT_SYM |
+static int trace__fprintf_callchain(struct trace *trace, struct perf_sample *sample)
+{
+	/* TODO: user-configurable print_opts */
+	const unsigned int print_opts = EVSEL__PRINT_SYM |
 				        EVSEL__PRINT_DSO |
 				        EVSEL__PRINT_UNKNOWN_AS_ADDR;
 
-	वापस sample__ख_लिखो_callchain(sample, 38, prपूर्णांक_opts, &callchain_cursor, symbol_conf.bt_stop_list, trace->output);
-पूर्ण
+	return sample__fprintf_callchain(sample, 38, print_opts, &callchain_cursor, symbol_conf.bt_stop_list, trace->output);
+}
 
-अटल स्थिर अक्षर *त्रुटि_सं_to_name(काष्ठा evsel *evsel, पूर्णांक err)
-अणु
-	काष्ठा perf_env *env = evsel__env(evsel);
-	स्थिर अक्षर *arch_name = perf_env__arch(env);
+static const char *errno_to_name(struct evsel *evsel, int err)
+{
+	struct perf_env *env = evsel__env(evsel);
+	const char *arch_name = perf_env__arch(env);
 
-	वापस arch_syscalls__strत्रुटि_सं(arch_name, err);
-पूर्ण
+	return arch_syscalls__strerrno(arch_name, err);
+}
 
-अटल पूर्णांक trace__sys_निकास(काष्ठा trace *trace, काष्ठा evsel *evsel,
-			   जोड़ perf_event *event __maybe_unused,
-			   काष्ठा perf_sample *sample)
-अणु
-	दीर्घ ret;
+static int trace__sys_exit(struct trace *trace, struct evsel *evsel,
+			   union perf_event *event __maybe_unused,
+			   struct perf_sample *sample)
+{
+	long ret;
 	u64 duration = 0;
 	bool duration_calculated = false;
-	काष्ठा thपढ़ो *thपढ़ो;
-	पूर्णांक id = perf_evsel__sc_tp_uपूर्णांक(evsel, id, sample), err = -1, callchain_ret = 0, prपूर्णांकed = 0;
-	पूर्णांक alignment = trace->args_alignment;
-	काष्ठा syscall *sc = trace__syscall_info(trace, evsel, id);
-	काष्ठा thपढ़ो_trace *ttrace;
+	struct thread *thread;
+	int id = perf_evsel__sc_tp_uint(evsel, id, sample), err = -1, callchain_ret = 0, printed = 0;
+	int alignment = trace->args_alignment;
+	struct syscall *sc = trace__syscall_info(trace, evsel, id);
+	struct thread_trace *ttrace;
 
-	अगर (sc == शून्य)
-		वापस -1;
+	if (sc == NULL)
+		return -1;
 
-	thपढ़ो = machine__findnew_thपढ़ो(trace->host, sample->pid, sample->tid);
-	ttrace = thपढ़ो__trace(thपढ़ो, trace->output);
-	अगर (ttrace == शून्य)
-		जाओ out_put;
+	thread = machine__findnew_thread(trace->host, sample->pid, sample->tid);
+	ttrace = thread__trace(thread, trace->output);
+	if (ttrace == NULL)
+		goto out_put;
 
-	trace__ख_लिखो_sample(trace, evsel, sample, thपढ़ो);
+	trace__fprintf_sample(trace, evsel, sample, thread);
 
-	ret = perf_evsel__sc_tp_uपूर्णांक(evsel, ret, sample);
+	ret = perf_evsel__sc_tp_uint(evsel, ret, sample);
 
-	अगर (trace->summary)
-		thपढ़ो__update_stats(thपढ़ो, ttrace, id, sample, ret, trace->त्रुटि_सं_summary);
+	if (trace->summary)
+		thread__update_stats(thread, ttrace, id, sample, ret, trace->errno_summary);
 
-	अगर (!trace->fd_path_disabled && sc->is_खोलो && ret >= 0 && ttrace->filename.pending_खोलो) अणु
-		trace__set_fd_pathname(thपढ़ो, ret, ttrace->filename.name);
-		ttrace->filename.pending_खोलो = false;
+	if (!trace->fd_path_disabled && sc->is_open && ret >= 0 && ttrace->filename.pending_open) {
+		trace__set_fd_pathname(thread, ret, ttrace->filename.name);
+		ttrace->filename.pending_open = false;
 		++trace->stats.vfs_getname;
-	पूर्ण
+	}
 
-	अगर (ttrace->entry_समय) अणु
-		duration = sample->समय - ttrace->entry_समय;
-		अगर (trace__filter_duration(trace, duration))
-			जाओ out;
+	if (ttrace->entry_time) {
+		duration = sample->time - ttrace->entry_time;
+		if (trace__filter_duration(trace, duration))
+			goto out;
 		duration_calculated = true;
-	पूर्ण अन्यथा अगर (trace->duration_filter)
-		जाओ out;
+	} else if (trace->duration_filter)
+		goto out;
 
-	अगर (sample->callchain) अणु
+	if (sample->callchain) {
 		callchain_ret = trace__resolve_callchain(trace, evsel, sample, &callchain_cursor);
-		अगर (callchain_ret == 0) अणु
-			अगर (callchain_cursor.nr < trace->min_stack)
-				जाओ out;
+		if (callchain_ret == 0) {
+			if (callchain_cursor.nr < trace->min_stack)
+				goto out;
 			callchain_ret = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (trace->summary_only || (ret >= 0 && trace->failure_only))
-		जाओ out;
+	if (trace->summary_only || (ret >= 0 && trace->failure_only))
+		goto out;
 
-	trace__ख_लिखो_entry_head(trace, thपढ़ो, duration, duration_calculated, ttrace->entry_समय, trace->output);
+	trace__fprintf_entry_head(trace, thread, duration, duration_calculated, ttrace->entry_time, trace->output);
 
-	अगर (ttrace->entry_pending) अणु
-		prपूर्णांकed = ख_लिखो(trace->output, "%s", ttrace->entry_str);
-	पूर्ण अन्यथा अणु
-		prपूर्णांकed += ख_लिखो(trace->output, " ... [");
-		color_ख_लिखो(trace->output, PERF_COLOR_YELLOW, "continued");
-		prपूर्णांकed += 9;
-		prपूर्णांकed += ख_लिखो(trace->output, "]: %s()", sc->name);
-	पूर्ण
+	if (ttrace->entry_pending) {
+		printed = fprintf(trace->output, "%s", ttrace->entry_str);
+	} else {
+		printed += fprintf(trace->output, " ... [");
+		color_fprintf(trace->output, PERF_COLOR_YELLOW, "continued");
+		printed += 9;
+		printed += fprintf(trace->output, "]: %s()", sc->name);
+	}
 
-	prपूर्णांकed++; /* the closing ')' */
+	printed++; /* the closing ')' */
 
-	अगर (alignment > prपूर्णांकed)
-		alignment -= prपूर्णांकed;
-	अन्यथा
+	if (alignment > printed)
+		alignment -= printed;
+	else
 		alignment = 0;
 
-	ख_लिखो(trace->output, ")%*s= ", alignment, " ");
+	fprintf(trace->output, ")%*s= ", alignment, " ");
 
-	अगर (sc->fmt == शून्य) अणु
-		अगर (ret < 0)
-			जाओ त्रुटि_सं_prपूर्णांक;
-चिन्हित_prपूर्णांक:
-		ख_लिखो(trace->output, "%ld", ret);
-	पूर्ण अन्यथा अगर (ret < 0) अणु
-त्रुटि_सं_prपूर्णांक: अणु
-		अक्षर bf[STRERR_बफ_मानE];
-		स्थिर अक्षर *emsg = str_error_r(-ret, bf, माप(bf)),
-			   *e = त्रुटि_सं_to_name(evsel, -ret);
+	if (sc->fmt == NULL) {
+		if (ret < 0)
+			goto errno_print;
+signed_print:
+		fprintf(trace->output, "%ld", ret);
+	} else if (ret < 0) {
+errno_print: {
+		char bf[STRERR_BUFSIZE];
+		const char *emsg = str_error_r(-ret, bf, sizeof(bf)),
+			   *e = errno_to_name(evsel, -ret);
 
-		ख_लिखो(trace->output, "-1 %s (%s)", e, emsg);
-	पूर्ण
-	पूर्ण अन्यथा अगर (ret == 0 && sc->fmt->समयout)
-		ख_लिखो(trace->output, "0 (Timeout)");
-	अन्यथा अगर (ttrace->ret_scnम_लिखो) अणु
-		अक्षर bf[1024];
-		काष्ठा syscall_arg arg = अणु
+		fprintf(trace->output, "-1 %s (%s)", e, emsg);
+	}
+	} else if (ret == 0 && sc->fmt->timeout)
+		fprintf(trace->output, "0 (Timeout)");
+	else if (ttrace->ret_scnprintf) {
+		char bf[1024];
+		struct syscall_arg arg = {
 			.val	= ret,
-			.thपढ़ो	= thपढ़ो,
+			.thread	= thread,
 			.trace	= trace,
-		पूर्ण;
-		ttrace->ret_scnम_लिखो(bf, माप(bf), &arg);
-		ttrace->ret_scnम_लिखो = शून्य;
-		ख_लिखो(trace->output, "%s", bf);
-	पूर्ण अन्यथा अगर (sc->fmt->hexret)
-		ख_लिखो(trace->output, "%#lx", ret);
-	अन्यथा अगर (sc->fmt->errpid) अणु
-		काष्ठा thपढ़ो *child = machine__find_thपढ़ो(trace->host, ret, ret);
+		};
+		ttrace->ret_scnprintf(bf, sizeof(bf), &arg);
+		ttrace->ret_scnprintf = NULL;
+		fprintf(trace->output, "%s", bf);
+	} else if (sc->fmt->hexret)
+		fprintf(trace->output, "%#lx", ret);
+	else if (sc->fmt->errpid) {
+		struct thread *child = machine__find_thread(trace->host, ret, ret);
 
-		अगर (child != शून्य) अणु
-			ख_लिखो(trace->output, "%ld", ret);
-			अगर (child->comm_set)
-				ख_लिखो(trace->output, " (%s)", thपढ़ो__comm_str(child));
-			thपढ़ो__put(child);
-		पूर्ण
-	पूर्ण अन्यथा
-		जाओ चिन्हित_prपूर्णांक;
+		if (child != NULL) {
+			fprintf(trace->output, "%ld", ret);
+			if (child->comm_set)
+				fprintf(trace->output, " (%s)", thread__comm_str(child));
+			thread__put(child);
+		}
+	} else
+		goto signed_print;
 
-	ख_अक्षर_दो('\n', trace->output);
+	fputc('\n', trace->output);
 
 	/*
-	 * We only consider an 'event' क्रम the sake of --max-events a non-filtered
-	 * sys_enter + sys_निकास and other tracepoपूर्णांक events.
+	 * We only consider an 'event' for the sake of --max-events a non-filtered
+	 * sys_enter + sys_exit and other tracepoint events.
 	 */
-	अगर (++trace->nr_events_prपूर्णांकed == trace->max_events && trace->max_events != अच_दीर्घ_उच्च)
-		पूर्णांकerrupted = true;
+	if (++trace->nr_events_printed == trace->max_events && trace->max_events != ULONG_MAX)
+		interrupted = true;
 
-	अगर (callchain_ret > 0)
-		trace__ख_लिखो_callchain(trace, sample);
-	अन्यथा अगर (callchain_ret < 0)
+	if (callchain_ret > 0)
+		trace__fprintf_callchain(trace, sample);
+	else if (callchain_ret < 0)
 		pr_err("Problem processing %s callchain, skipping...\n", evsel__name(evsel));
 out:
 	ttrace->entry_pending = false;
 	err = 0;
 out_put:
-	thपढ़ो__put(thपढ़ो);
-	वापस err;
-पूर्ण
+	thread__put(thread);
+	return err;
+}
 
-अटल पूर्णांक trace__vfs_getname(काष्ठा trace *trace, काष्ठा evsel *evsel,
-			      जोड़ perf_event *event __maybe_unused,
-			      काष्ठा perf_sample *sample)
-अणु
-	काष्ठा thपढ़ो *thपढ़ो = machine__findnew_thपढ़ो(trace->host, sample->pid, sample->tid);
-	काष्ठा thपढ़ो_trace *ttrace;
-	माप_प्रकार filename_len, entry_str_len, to_move;
-	sमाप_प्रकार reमुख्यing_space;
-	अक्षर *pos;
-	स्थिर अक्षर *filename = evsel__rawptr(evsel, sample, "pathname");
+static int trace__vfs_getname(struct trace *trace, struct evsel *evsel,
+			      union perf_event *event __maybe_unused,
+			      struct perf_sample *sample)
+{
+	struct thread *thread = machine__findnew_thread(trace->host, sample->pid, sample->tid);
+	struct thread_trace *ttrace;
+	size_t filename_len, entry_str_len, to_move;
+	ssize_t remaining_space;
+	char *pos;
+	const char *filename = evsel__rawptr(evsel, sample, "pathname");
 
-	अगर (!thपढ़ो)
-		जाओ out;
+	if (!thread)
+		goto out;
 
-	ttrace = thपढ़ो__priv(thपढ़ो);
-	अगर (!ttrace)
-		जाओ out_put;
+	ttrace = thread__priv(thread);
+	if (!ttrace)
+		goto out_put;
 
-	filename_len = म_माप(filename);
-	अगर (filename_len == 0)
-		जाओ out_put;
+	filename_len = strlen(filename);
+	if (filename_len == 0)
+		goto out_put;
 
-	अगर (ttrace->filename.namelen < filename_len) अणु
-		अक्षर *f = पुनः_स्मृति(ttrace->filename.name, filename_len + 1);
+	if (ttrace->filename.namelen < filename_len) {
+		char *f = realloc(ttrace->filename.name, filename_len + 1);
 
-		अगर (f == शून्य)
-			जाओ out_put;
+		if (f == NULL)
+			goto out_put;
 
 		ttrace->filename.namelen = filename_len;
 		ttrace->filename.name = f;
-	पूर्ण
+	}
 
-	म_नकल(ttrace->filename.name, filename);
-	ttrace->filename.pending_खोलो = true;
+	strcpy(ttrace->filename.name, filename);
+	ttrace->filename.pending_open = true;
 
-	अगर (!ttrace->filename.ptr)
-		जाओ out_put;
+	if (!ttrace->filename.ptr)
+		goto out_put;
 
-	entry_str_len = म_माप(ttrace->entry_str);
-	reमुख्यing_space = trace__entry_str_size - entry_str_len - 1; /* \0 */
-	अगर (reमुख्यing_space <= 0)
-		जाओ out_put;
+	entry_str_len = strlen(ttrace->entry_str);
+	remaining_space = trace__entry_str_size - entry_str_len - 1; /* \0 */
+	if (remaining_space <= 0)
+		goto out_put;
 
-	अगर (filename_len > (माप_प्रकार)reमुख्यing_space) अणु
-		filename += filename_len - reमुख्यing_space;
-		filename_len = reमुख्यing_space;
-	पूर्ण
+	if (filename_len > (size_t)remaining_space) {
+		filename += filename_len - remaining_space;
+		filename_len = remaining_space;
+	}
 
 	to_move = entry_str_len - ttrace->filename.entry_str_pos + 1; /* \0 */
 	pos = ttrace->entry_str + ttrace->filename.entry_str_pos;
-	स_हटाओ(pos + filename_len, pos, to_move);
-	स_नकल(pos, filename, filename_len);
+	memmove(pos + filename_len, pos, to_move);
+	memcpy(pos, filename, filename_len);
 
 	ttrace->filename.ptr = 0;
 	ttrace->filename.entry_str_pos = 0;
 out_put:
-	thपढ़ो__put(thपढ़ो);
+	thread__put(thread);
 out:
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक trace__sched_stat_runसमय(काष्ठा trace *trace, काष्ठा evsel *evsel,
-				     जोड़ perf_event *event __maybe_unused,
-				     काष्ठा perf_sample *sample)
-अणु
-        u64 runसमय = evsel__पूर्णांकval(evsel, sample, "runtime");
-	द्विगुन runसमय_ms = (द्विगुन)runसमय / NSEC_PER_MSEC;
-	काष्ठा thपढ़ो *thपढ़ो = machine__findnew_thपढ़ो(trace->host,
+static int trace__sched_stat_runtime(struct trace *trace, struct evsel *evsel,
+				     union perf_event *event __maybe_unused,
+				     struct perf_sample *sample)
+{
+        u64 runtime = evsel__intval(evsel, sample, "runtime");
+	double runtime_ms = (double)runtime / NSEC_PER_MSEC;
+	struct thread *thread = machine__findnew_thread(trace->host,
 							sample->pid,
 							sample->tid);
-	काष्ठा thपढ़ो_trace *ttrace = thपढ़ो__trace(thपढ़ो, trace->output);
+	struct thread_trace *ttrace = thread__trace(thread, trace->output);
 
-	अगर (ttrace == शून्य)
-		जाओ out_dump;
+	if (ttrace == NULL)
+		goto out_dump;
 
-	ttrace->runसमय_ms += runसमय_ms;
-	trace->runसमय_ms += runसमय_ms;
+	ttrace->runtime_ms += runtime_ms;
+	trace->runtime_ms += runtime_ms;
 out_put:
-	thपढ़ो__put(thपढ़ो);
-	वापस 0;
+	thread__put(thread);
+	return 0;
 
 out_dump:
-	ख_लिखो(trace->output, "%s: comm=%s,pid=%u,runtime=%" PRIu64 ",vruntime=%" PRIu64 ")\n",
+	fprintf(trace->output, "%s: comm=%s,pid=%u,runtime=%" PRIu64 ",vruntime=%" PRIu64 ")\n",
 	       evsel->name,
 	       evsel__strval(evsel, sample, "comm"),
-	       (pid_t)evsel__पूर्णांकval(evsel, sample, "pid"),
-	       runसमय,
-	       evsel__पूर्णांकval(evsel, sample, "vruntime"));
-	जाओ out_put;
-पूर्ण
+	       (pid_t)evsel__intval(evsel, sample, "pid"),
+	       runtime,
+	       evsel__intval(evsel, sample, "vruntime"));
+	goto out_put;
+}
 
-अटल पूर्णांक bpf_output__prपूर्णांकer(क्रमागत binary_prपूर्णांकer_ops op,
-			       अचिन्हित पूर्णांक val, व्योम *extra __maybe_unused, खाता *fp)
-अणु
-	अचिन्हित अक्षर ch = (अचिन्हित अक्षर)val;
+static int bpf_output__printer(enum binary_printer_ops op,
+			       unsigned int val, void *extra __maybe_unused, FILE *fp)
+{
+	unsigned char ch = (unsigned char)val;
 
-	चयन (op) अणु
-	हाल BINARY_PRINT_CHAR_DATA:
-		वापस ख_लिखो(fp, "%c", है_छाप(ch) ? ch : '.');
-	हाल BINARY_PRINT_DATA_BEGIN:
-	हाल BINARY_PRINT_LINE_BEGIN:
-	हाल BINARY_PRINT_ADDR:
-	हाल BINARY_PRINT_NUM_DATA:
-	हाल BINARY_PRINT_NUM_PAD:
-	हाल BINARY_PRINT_SEP:
-	हाल BINARY_PRINT_CHAR_PAD:
-	हाल BINARY_PRINT_LINE_END:
-	हाल BINARY_PRINT_DATA_END:
-	शेष:
-		अवरोध;
-	पूर्ण
+	switch (op) {
+	case BINARY_PRINT_CHAR_DATA:
+		return fprintf(fp, "%c", isprint(ch) ? ch : '.');
+	case BINARY_PRINT_DATA_BEGIN:
+	case BINARY_PRINT_LINE_BEGIN:
+	case BINARY_PRINT_ADDR:
+	case BINARY_PRINT_NUM_DATA:
+	case BINARY_PRINT_NUM_PAD:
+	case BINARY_PRINT_SEP:
+	case BINARY_PRINT_CHAR_PAD:
+	case BINARY_PRINT_LINE_END:
+	case BINARY_PRINT_DATA_END:
+	default:
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम bpf_output__ख_लिखो(काष्ठा trace *trace,
-				काष्ठा perf_sample *sample)
-अणु
-	binary__ख_लिखो(sample->raw_data, sample->raw_size, 8,
-			bpf_output__prपूर्णांकer, शून्य, trace->output);
-	++trace->nr_events_prपूर्णांकed;
-पूर्ण
+static void bpf_output__fprintf(struct trace *trace,
+				struct perf_sample *sample)
+{
+	binary__fprintf(sample->raw_data, sample->raw_size, 8,
+			bpf_output__printer, NULL, trace->output);
+	++trace->nr_events_printed;
+}
 
-अटल माप_प्रकार trace__ख_लिखो_tp_fields(काष्ठा trace *trace, काष्ठा evsel *evsel, काष्ठा perf_sample *sample,
-				       काष्ठा thपढ़ो *thपढ़ो, व्योम *augmented_args, पूर्णांक augmented_args_size)
-अणु
-	अक्षर bf[2048];
-	माप_प्रकार size = माप(bf);
-	काष्ठा tep_क्रमmat_field *field = evsel->tp_क्रमmat->क्रमmat.fields;
-	काष्ठा syscall_arg_fmt *arg = __evsel__syscall_arg_fmt(evsel);
-	माप_प्रकार prपूर्णांकed = 0;
-	अचिन्हित दीर्घ val;
+static size_t trace__fprintf_tp_fields(struct trace *trace, struct evsel *evsel, struct perf_sample *sample,
+				       struct thread *thread, void *augmented_args, int augmented_args_size)
+{
+	char bf[2048];
+	size_t size = sizeof(bf);
+	struct tep_format_field *field = evsel->tp_format->format.fields;
+	struct syscall_arg_fmt *arg = __evsel__syscall_arg_fmt(evsel);
+	size_t printed = 0;
+	unsigned long val;
 	u8 bit = 1;
-	काष्ठा syscall_arg syscall_arg = अणु
-		.augmented = अणु
+	struct syscall_arg syscall_arg = {
+		.augmented = {
 			.size = augmented_args_size,
 			.args = augmented_args,
-		पूर्ण,
+		},
 		.idx	= 0,
 		.mask	= 0,
 		.trace  = trace,
-		.thपढ़ो = thपढ़ो,
+		.thread = thread,
 		.show_string_prefix = trace->show_string_prefix,
-	पूर्ण;
+	};
 
-	क्रम (; field && arg; field = field->next, ++syscall_arg.idx, bit <<= 1, ++arg) अणु
-		अगर (syscall_arg.mask & bit)
-			जारी;
+	for (; field && arg; field = field->next, ++syscall_arg.idx, bit <<= 1, ++arg) {
+		if (syscall_arg.mask & bit)
+			continue;
 
 		syscall_arg.len = 0;
 		syscall_arg.fmt = arg;
-		अगर (field->flags & TEP_FIELD_IS_ARRAY) अणु
-			पूर्णांक offset = field->offset;
+		if (field->flags & TEP_FIELD_IS_ARRAY) {
+			int offset = field->offset;
 
-			अगर (field->flags & TEP_FIELD_IS_DYNAMIC) अणु
-				offset = क्रमmat_field__पूर्णांकval(field, sample, evsel->needs_swap);
+			if (field->flags & TEP_FIELD_IS_DYNAMIC) {
+				offset = format_field__intval(field, sample, evsel->needs_swap);
 				syscall_arg.len = offset >> 16;
 				offset &= 0xffff;
-			पूर्ण
+			}
 
-			val = (uपूर्णांकptr_t)(sample->raw_data + offset);
-		पूर्ण अन्यथा
-			val = क्रमmat_field__पूर्णांकval(field, sample, evsel->needs_swap);
+			val = (uintptr_t)(sample->raw_data + offset);
+		} else
+			val = format_field__intval(field, sample, evsel->needs_swap);
 		/*
-		 * Some syscall args need some mask, most करोn't and
-		 * वापस val untouched.
+		 * Some syscall args need some mask, most don't and
+		 * return val untouched.
 		 */
 		val = syscall_arg_fmt__mask_val(arg, &syscall_arg, val);
 
 		/*
-		 * Suppress this argument अगर its value is zero and
-		 * and we करोn't have a string associated in an
-		 * strarray क्रम it.
+		 * Suppress this argument if its value is zero and
+		 * and we don't have a string associated in an
+		 * strarray for it.
 		 */
-		अगर (val == 0 &&
+		if (val == 0 &&
 		    !trace->show_zeros &&
 		    !((arg->show_zero ||
-		       arg->scnम_लिखो == SCA_STRARRAY ||
-		       arg->scnम_लिखो == SCA_STRARRAYS) &&
+		       arg->scnprintf == SCA_STRARRAY ||
+		       arg->scnprintf == SCA_STRARRAYS) &&
 		      arg->parm))
-			जारी;
+			continue;
 
-		prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "%s", prपूर्णांकed ? ", " : "");
+		printed += scnprintf(bf + printed, size - printed, "%s", printed ? ", " : "");
 
 		/*
 		 * XXX Perhaps we should have a show_tp_arg_names,
-		 * leaving show_arg_names just क्रम syscalls?
+		 * leaving show_arg_names just for syscalls?
 		 */
-		अगर (1 || trace->show_arg_names)
-			prपूर्णांकed += scnम_लिखो(bf + prपूर्णांकed, size - prपूर्णांकed, "%s: ", field->name);
+		if (1 || trace->show_arg_names)
+			printed += scnprintf(bf + printed, size - printed, "%s: ", field->name);
 
-		prपूर्णांकed += syscall_arg_fmt__scnम_लिखो_val(arg, bf + prपूर्णांकed, size - prपूर्णांकed, &syscall_arg, val);
-	पूर्ण
+		printed += syscall_arg_fmt__scnprintf_val(arg, bf + printed, size - printed, &syscall_arg, val);
+	}
 
-	वापस prपूर्णांकed + ख_लिखो(trace->output, "%s", bf);
-पूर्ण
+	return printed + fprintf(trace->output, "%s", bf);
+}
 
-अटल पूर्णांक trace__event_handler(काष्ठा trace *trace, काष्ठा evsel *evsel,
-				जोड़ perf_event *event __maybe_unused,
-				काष्ठा perf_sample *sample)
-अणु
-	काष्ठा thपढ़ो *thपढ़ो;
-	पूर्णांक callchain_ret = 0;
+static int trace__event_handler(struct trace *trace, struct evsel *evsel,
+				union perf_event *event __maybe_unused,
+				struct perf_sample *sample)
+{
+	struct thread *thread;
+	int callchain_ret = 0;
 	/*
-	 * Check अगर we called perf_evsel__disable(evsel) due to, क्रम instance,
+	 * Check if we called perf_evsel__disable(evsel) due to, for instance,
 	 * this event's max_events having been hit and this is an entry coming
 	 * from the ring buffer that we should discard, since the max events
-	 * have alपढ़ोy been considered/prपूर्णांकed.
+	 * have already been considered/printed.
 	 */
-	अगर (evsel->disabled)
-		वापस 0;
+	if (evsel->disabled)
+		return 0;
 
-	thपढ़ो = machine__findnew_thपढ़ो(trace->host, sample->pid, sample->tid);
+	thread = machine__findnew_thread(trace->host, sample->pid, sample->tid);
 
-	अगर (sample->callchain) अणु
+	if (sample->callchain) {
 		callchain_ret = trace__resolve_callchain(trace, evsel, sample, &callchain_cursor);
-		अगर (callchain_ret == 0) अणु
-			अगर (callchain_cursor.nr < trace->min_stack)
-				जाओ out;
+		if (callchain_ret == 0) {
+			if (callchain_cursor.nr < trace->min_stack)
+				goto out;
 			callchain_ret = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	trace__म_लिखो_पूर्णांकerrupted_entry(trace);
-	trace__ख_लिखो_tstamp(trace, sample->समय, trace->output);
+	trace__printf_interrupted_entry(trace);
+	trace__fprintf_tstamp(trace, sample->time, trace->output);
 
-	अगर (trace->trace_syscalls && trace->show_duration)
-		ख_लिखो(trace->output, "(         ): ");
+	if (trace->trace_syscalls && trace->show_duration)
+		fprintf(trace->output, "(         ): ");
 
-	अगर (thपढ़ो)
-		trace__ख_लिखो_comm_tid(trace, thपढ़ो, trace->output);
+	if (thread)
+		trace__fprintf_comm_tid(trace, thread, trace->output);
 
-	अगर (evsel == trace->syscalls.events.augmented) अणु
-		पूर्णांक id = perf_evsel__sc_tp_uपूर्णांक(evsel, id, sample);
-		काष्ठा syscall *sc = trace__syscall_info(trace, evsel, id);
+	if (evsel == trace->syscalls.events.augmented) {
+		int id = perf_evsel__sc_tp_uint(evsel, id, sample);
+		struct syscall *sc = trace__syscall_info(trace, evsel, id);
 
-		अगर (sc) अणु
-			ख_लिखो(trace->output, "%s(", sc->name);
-			trace__ख_लिखो_sys_enter(trace, evsel, sample);
-			ख_अक्षर_दो(')', trace->output);
-			जाओ newline;
-		पूर्ण
+		if (sc) {
+			fprintf(trace->output, "%s(", sc->name);
+			trace__fprintf_sys_enter(trace, evsel, sample);
+			fputc(')', trace->output);
+			goto newline;
+		}
 
 		/*
 		 * XXX: Not having the associated syscall info or not finding/adding
-		 * 	the thपढ़ो should never happen, but अगर it करोes...
-		 * 	fall thru and prपूर्णांक it as a bpf_output event.
+		 * 	the thread should never happen, but if it does...
+		 * 	fall thru and print it as a bpf_output event.
 		 */
-	पूर्ण
+	}
 
-	ख_लिखो(trace->output, "%s(", evsel->name);
+	fprintf(trace->output, "%s(", evsel->name);
 
-	अगर (evsel__is_bpf_output(evsel)) अणु
-		bpf_output__ख_लिखो(trace, sample);
-	पूर्ण अन्यथा अगर (evsel->tp_क्रमmat) अणु
-		अगर (म_भेदन(evsel->tp_क्रमmat->name, "sys_enter_", 10) ||
-		    trace__ख_लिखो_sys_enter(trace, evsel, sample)) अणु
-			अगर (trace->libtraceevent_prपूर्णांक) अणु
-				event_क्रमmat__ख_लिखो(evsel->tp_क्रमmat, sample->cpu,
+	if (evsel__is_bpf_output(evsel)) {
+		bpf_output__fprintf(trace, sample);
+	} else if (evsel->tp_format) {
+		if (strncmp(evsel->tp_format->name, "sys_enter_", 10) ||
+		    trace__fprintf_sys_enter(trace, evsel, sample)) {
+			if (trace->libtraceevent_print) {
+				event_format__fprintf(evsel->tp_format, sample->cpu,
 						      sample->raw_data, sample->raw_size,
 						      trace->output);
-			पूर्ण अन्यथा अणु
-				trace__ख_लिखो_tp_fields(trace, evsel, sample, thपढ़ो, शून्य, 0);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			} else {
+				trace__fprintf_tp_fields(trace, evsel, sample, thread, NULL, 0);
+			}
+		}
+	}
 
 newline:
-	ख_लिखो(trace->output, ")\n");
+	fprintf(trace->output, ")\n");
 
-	अगर (callchain_ret > 0)
-		trace__ख_लिखो_callchain(trace, sample);
-	अन्यथा अगर (callchain_ret < 0)
+	if (callchain_ret > 0)
+		trace__fprintf_callchain(trace, sample);
+	else if (callchain_ret < 0)
 		pr_err("Problem processing %s callchain, skipping...\n", evsel__name(evsel));
 
-	++trace->nr_events_prपूर्णांकed;
+	++trace->nr_events_printed;
 
-	अगर (evsel->max_events != अच_दीर्घ_उच्च && ++evsel->nr_events_prपूर्णांकed == evsel->max_events) अणु
+	if (evsel->max_events != ULONG_MAX && ++evsel->nr_events_printed == evsel->max_events) {
 		evsel__disable(evsel);
-		evsel__बंद(evsel);
-	पूर्ण
+		evsel__close(evsel);
+	}
 out:
-	thपढ़ो__put(thपढ़ो);
-	वापस 0;
-पूर्ण
+	thread__put(thread);
+	return 0;
+}
 
-अटल व्योम prपूर्णांक_location(खाता *f, काष्ठा perf_sample *sample,
-			   काष्ठा addr_location *al,
-			   bool prपूर्णांक_dso, bool prपूर्णांक_sym)
-अणु
+static void print_location(FILE *f, struct perf_sample *sample,
+			   struct addr_location *al,
+			   bool print_dso, bool print_sym)
+{
 
-	अगर ((verbose > 0 || prपूर्णांक_dso) && al->map)
-		ख_लिखो(f, "%s@", al->map->dso->दीर्घ_name);
+	if ((verbose > 0 || print_dso) && al->map)
+		fprintf(f, "%s@", al->map->dso->long_name);
 
-	अगर ((verbose > 0 || prपूर्णांक_sym) && al->sym)
-		ख_लिखो(f, "%s+0x%" PRIx64, al->sym->name,
+	if ((verbose > 0 || print_sym) && al->sym)
+		fprintf(f, "%s+0x%" PRIx64, al->sym->name,
 			al->addr - al->sym->start);
-	अन्यथा अगर (al->map)
-		ख_लिखो(f, "0x%" PRIx64, al->addr);
-	अन्यथा
-		ख_लिखो(f, "0x%" PRIx64, sample->addr);
-पूर्ण
+	else if (al->map)
+		fprintf(f, "0x%" PRIx64, al->addr);
+	else
+		fprintf(f, "0x%" PRIx64, sample->addr);
+}
 
-अटल पूर्णांक trace__pgfault(काष्ठा trace *trace,
-			  काष्ठा evsel *evsel,
-			  जोड़ perf_event *event __maybe_unused,
-			  काष्ठा perf_sample *sample)
-अणु
-	काष्ठा thपढ़ो *thपढ़ो;
-	काष्ठा addr_location al;
-	अक्षर map_type = 'd';
-	काष्ठा thपढ़ो_trace *ttrace;
-	पूर्णांक err = -1;
-	पूर्णांक callchain_ret = 0;
+static int trace__pgfault(struct trace *trace,
+			  struct evsel *evsel,
+			  union perf_event *event __maybe_unused,
+			  struct perf_sample *sample)
+{
+	struct thread *thread;
+	struct addr_location al;
+	char map_type = 'd';
+	struct thread_trace *ttrace;
+	int err = -1;
+	int callchain_ret = 0;
 
-	thपढ़ो = machine__findnew_thपढ़ो(trace->host, sample->pid, sample->tid);
+	thread = machine__findnew_thread(trace->host, sample->pid, sample->tid);
 
-	अगर (sample->callchain) अणु
+	if (sample->callchain) {
 		callchain_ret = trace__resolve_callchain(trace, evsel, sample, &callchain_cursor);
-		अगर (callchain_ret == 0) अणु
-			अगर (callchain_cursor.nr < trace->min_stack)
-				जाओ out_put;
+		if (callchain_ret == 0) {
+			if (callchain_cursor.nr < trace->min_stack)
+				goto out_put;
 			callchain_ret = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	ttrace = thपढ़ो__trace(thपढ़ो, trace->output);
-	अगर (ttrace == शून्य)
-		जाओ out_put;
+	ttrace = thread__trace(thread, trace->output);
+	if (ttrace == NULL)
+		goto out_put;
 
-	अगर (evsel->core.attr.config == PERF_COUNT_SW_PAGE_FAULTS_MAJ)
+	if (evsel->core.attr.config == PERF_COUNT_SW_PAGE_FAULTS_MAJ)
 		ttrace->pfmaj++;
-	अन्यथा
+	else
 		ttrace->pfmin++;
 
-	अगर (trace->summary_only)
-		जाओ out;
+	if (trace->summary_only)
+		goto out;
 
-	thपढ़ो__find_symbol(thपढ़ो, sample->cpumode, sample->ip, &al);
+	thread__find_symbol(thread, sample->cpumode, sample->ip, &al);
 
-	trace__ख_लिखो_entry_head(trace, thपढ़ो, 0, true, sample->समय, trace->output);
+	trace__fprintf_entry_head(trace, thread, 0, true, sample->time, trace->output);
 
-	ख_लिखो(trace->output, "%sfault [",
+	fprintf(trace->output, "%sfault [",
 		evsel->core.attr.config == PERF_COUNT_SW_PAGE_FAULTS_MAJ ?
 		"maj" : "min");
 
-	prपूर्णांक_location(trace->output, sample, &al, false, true);
+	print_location(trace->output, sample, &al, false, true);
 
-	ख_लिखो(trace->output, "] => ");
+	fprintf(trace->output, "] => ");
 
-	thपढ़ो__find_symbol(thपढ़ो, sample->cpumode, sample->addr, &al);
+	thread__find_symbol(thread, sample->cpumode, sample->addr, &al);
 
-	अगर (!al.map) अणु
-		thपढ़ो__find_symbol(thपढ़ो, sample->cpumode, sample->addr, &al);
+	if (!al.map) {
+		thread__find_symbol(thread, sample->cpumode, sample->addr, &al);
 
-		अगर (al.map)
+		if (al.map)
 			map_type = 'x';
-		अन्यथा
+		else
 			map_type = '?';
-	पूर्ण
+	}
 
-	prपूर्णांक_location(trace->output, sample, &al, true, false);
+	print_location(trace->output, sample, &al, true, false);
 
-	ख_लिखो(trace->output, " (%c%c)\n", map_type, al.level);
+	fprintf(trace->output, " (%c%c)\n", map_type, al.level);
 
-	अगर (callchain_ret > 0)
-		trace__ख_लिखो_callchain(trace, sample);
-	अन्यथा अगर (callchain_ret < 0)
+	if (callchain_ret > 0)
+		trace__fprintf_callchain(trace, sample);
+	else if (callchain_ret < 0)
 		pr_err("Problem processing %s callchain, skipping...\n", evsel__name(evsel));
 
-	++trace->nr_events_prपूर्णांकed;
+	++trace->nr_events_printed;
 out:
 	err = 0;
 out_put:
-	thपढ़ो__put(thपढ़ो);
-	वापस err;
-पूर्ण
+	thread__put(thread);
+	return err;
+}
 
-अटल व्योम trace__set_base_समय(काष्ठा trace *trace,
-				 काष्ठा evsel *evsel,
-				 काष्ठा perf_sample *sample)
-अणु
+static void trace__set_base_time(struct trace *trace,
+				 struct evsel *evsel,
+				 struct perf_sample *sample)
+{
 	/*
 	 * BPF events were not setting PERF_SAMPLE_TIME, so be more robust
-	 * and करोn't use sample->समय unconditionally, we may end up having
-	 * some other event in the future without PERF_SAMPLE_TIME क्रम good
-	 * reason, i.e. we may not be पूर्णांकerested in its बारtamps, just in
-	 * it taking place, picking some piece of inक्रमmation when it
+	 * and don't use sample->time unconditionally, we may end up having
+	 * some other event in the future without PERF_SAMPLE_TIME for good
+	 * reason, i.e. we may not be interested in its timestamps, just in
+	 * it taking place, picking some piece of information when it
 	 * appears in our event stream (vfs_getname comes to mind).
 	 */
-	अगर (trace->base_समय == 0 && !trace->full_समय &&
+	if (trace->base_time == 0 && !trace->full_time &&
 	    (evsel->core.attr.sample_type & PERF_SAMPLE_TIME))
-		trace->base_समय = sample->समय;
-पूर्ण
+		trace->base_time = sample->time;
+}
 
-अटल पूर्णांक trace__process_sample(काष्ठा perf_tool *tool,
-				 जोड़ perf_event *event,
-				 काष्ठा perf_sample *sample,
-				 काष्ठा evsel *evsel,
-				 काष्ठा machine *machine __maybe_unused)
-अणु
-	काष्ठा trace *trace = container_of(tool, काष्ठा trace, tool);
-	काष्ठा thपढ़ो *thपढ़ो;
-	पूर्णांक err = 0;
+static int trace__process_sample(struct perf_tool *tool,
+				 union perf_event *event,
+				 struct perf_sample *sample,
+				 struct evsel *evsel,
+				 struct machine *machine __maybe_unused)
+{
+	struct trace *trace = container_of(tool, struct trace, tool);
+	struct thread *thread;
+	int err = 0;
 
-	tracepoपूर्णांक_handler handler = evsel->handler;
+	tracepoint_handler handler = evsel->handler;
 
-	thपढ़ो = machine__findnew_thपढ़ो(trace->host, sample->pid, sample->tid);
-	अगर (thपढ़ो && thपढ़ो__is_filtered(thपढ़ो))
-		जाओ out;
+	thread = machine__findnew_thread(trace->host, sample->pid, sample->tid);
+	if (thread && thread__is_filtered(thread))
+		goto out;
 
-	trace__set_base_समय(trace, evsel, sample);
+	trace__set_base_time(trace, evsel, sample);
 
-	अगर (handler) अणु
+	if (handler) {
 		++trace->nr_events;
 		handler(trace, evsel, event, sample);
-	पूर्ण
+	}
 out:
-	thपढ़ो__put(thपढ़ो);
-	वापस err;
-पूर्ण
+	thread__put(thread);
+	return err;
+}
 
-अटल पूर्णांक trace__record(काष्ठा trace *trace, पूर्णांक argc, स्थिर अक्षर **argv)
-अणु
-	अचिन्हित पूर्णांक rec_argc, i, j;
-	स्थिर अक्षर **rec_argv;
-	स्थिर अक्षर * स्थिर record_args[] = अणु
+static int trace__record(struct trace *trace, int argc, const char **argv)
+{
+	unsigned int rec_argc, i, j;
+	const char **rec_argv;
+	const char * const record_args[] = {
 		"record",
 		"-R",
 		"-m", "1024",
 		"-c", "1",
-	पूर्ण;
+	};
 	pid_t pid = getpid();
-	अक्षर *filter = aप्र_लिखो__tp_filter_pids(1, &pid);
-	स्थिर अक्षर * स्थिर sc_args[] = अणु "-e", पूर्ण;
-	अचिन्हित पूर्णांक sc_args_nr = ARRAY_SIZE(sc_args);
-	स्थिर अक्षर * स्थिर majpf_args[] = अणु "-e", "major-faults" पूर्ण;
-	अचिन्हित पूर्णांक majpf_args_nr = ARRAY_SIZE(majpf_args);
-	स्थिर अक्षर * स्थिर minpf_args[] = अणु "-e", "minor-faults" पूर्ण;
-	अचिन्हित पूर्णांक minpf_args_nr = ARRAY_SIZE(minpf_args);
-	पूर्णांक err = -1;
+	char *filter = asprintf__tp_filter_pids(1, &pid);
+	const char * const sc_args[] = { "-e", };
+	unsigned int sc_args_nr = ARRAY_SIZE(sc_args);
+	const char * const majpf_args[] = { "-e", "major-faults" };
+	unsigned int majpf_args_nr = ARRAY_SIZE(majpf_args);
+	const char * const minpf_args[] = { "-e", "minor-faults" };
+	unsigned int minpf_args_nr = ARRAY_SIZE(minpf_args);
+	int err = -1;
 
-	/* +3 is क्रम the event string below and the pid filter */
+	/* +3 is for the event string below and the pid filter */
 	rec_argc = ARRAY_SIZE(record_args) + sc_args_nr + 3 +
 		majpf_args_nr + minpf_args_nr + argc;
-	rec_argv = सुस्मृति(rec_argc + 1, माप(अक्षर *));
+	rec_argv = calloc(rec_argc + 1, sizeof(char *));
 
-	अगर (rec_argv == शून्य || filter == शून्य)
-		जाओ out_मुक्त;
+	if (rec_argv == NULL || filter == NULL)
+		goto out_free;
 
 	j = 0;
-	क्रम (i = 0; i < ARRAY_SIZE(record_args); i++)
+	for (i = 0; i < ARRAY_SIZE(record_args); i++)
 		rec_argv[j++] = record_args[i];
 
-	अगर (trace->trace_syscalls) अणु
-		क्रम (i = 0; i < sc_args_nr; i++)
+	if (trace->trace_syscalls) {
+		for (i = 0; i < sc_args_nr; i++)
 			rec_argv[j++] = sc_args[i];
 
-		/* event string may be dअगरferent क्रम older kernels - e.g., RHEL6 */
-		अगर (is_valid_tracepoपूर्णांक("raw_syscalls:sys_enter"))
+		/* event string may be different for older kernels - e.g., RHEL6 */
+		if (is_valid_tracepoint("raw_syscalls:sys_enter"))
 			rec_argv[j++] = "raw_syscalls:sys_enter,raw_syscalls:sys_exit";
-		अन्यथा अगर (is_valid_tracepoपूर्णांक("syscalls:sys_enter"))
+		else if (is_valid_tracepoint("syscalls:sys_enter"))
 			rec_argv[j++] = "syscalls:sys_enter,syscalls:sys_exit";
-		अन्यथा अणु
+		else {
 			pr_err("Neither raw_syscalls nor syscalls events exist.\n");
-			जाओ out_मुक्त;
-		पूर्ण
-	पूर्ण
+			goto out_free;
+		}
+	}
 
 	rec_argv[j++] = "--filter";
 	rec_argv[j++] = filter;
 
-	अगर (trace->trace_pgfaults & TRACE_PFMAJ)
-		क्रम (i = 0; i < majpf_args_nr; i++)
+	if (trace->trace_pgfaults & TRACE_PFMAJ)
+		for (i = 0; i < majpf_args_nr; i++)
 			rec_argv[j++] = majpf_args[i];
 
-	अगर (trace->trace_pgfaults & TRACE_PFMIN)
-		क्रम (i = 0; i < minpf_args_nr; i++)
+	if (trace->trace_pgfaults & TRACE_PFMIN)
+		for (i = 0; i < minpf_args_nr; i++)
 			rec_argv[j++] = minpf_args[i];
 
-	क्रम (i = 0; i < (अचिन्हित पूर्णांक)argc; i++)
+	for (i = 0; i < (unsigned int)argc; i++)
 		rec_argv[j++] = argv[i];
 
 	err = cmd_record(j, rec_argv);
-out_मुक्त:
-	मुक्त(filter);
-	मुक्त(rec_argv);
-	वापस err;
-पूर्ण
+out_free:
+	free(filter);
+	free(rec_argv);
+	return err;
+}
 
-अटल माप_प्रकार trace__ख_लिखो_thपढ़ो_summary(काष्ठा trace *trace, खाता *fp);
+static size_t trace__fprintf_thread_summary(struct trace *trace, FILE *fp);
 
-अटल bool evlist__add_vfs_getname(काष्ठा evlist *evlist)
-अणु
+static bool evlist__add_vfs_getname(struct evlist *evlist)
+{
 	bool found = false;
-	काष्ठा evsel *evsel, *पंचांगp;
-	काष्ठा parse_events_error err;
-	पूर्णांक ret;
+	struct evsel *evsel, *tmp;
+	struct parse_events_error err;
+	int ret;
 
-	bzero(&err, माप(err));
+	bzero(&err, sizeof(err));
 	ret = parse_events(evlist, "probe:vfs_getname*", &err);
-	अगर (ret) अणु
-		मुक्त(err.str);
-		मुक्त(err.help);
-		मुक्त(err.first_str);
-		मुक्त(err.first_help);
-		वापस false;
-	पूर्ण
+	if (ret) {
+		free(err.str);
+		free(err.help);
+		free(err.first_str);
+		free(err.first_help);
+		return false;
+	}
 
-	evlist__क्रम_each_entry_safe(evlist, evsel, पंचांगp) अणु
-		अगर (!strstarts(evsel__name(evsel), "probe:vfs_getname"))
-			जारी;
+	evlist__for_each_entry_safe(evlist, evsel, tmp) {
+		if (!strstarts(evsel__name(evsel), "probe:vfs_getname"))
+			continue;
 
-		अगर (evsel__field(evsel, "pathname")) अणु
+		if (evsel__field(evsel, "pathname")) {
 			evsel->handler = trace__vfs_getname;
 			found = true;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		list_del_init(&evsel->core.node);
-		evsel->evlist = शून्य;
+		evsel->evlist = NULL;
 		evsel__delete(evsel);
-	पूर्ण
+	}
 
-	वापस found;
-पूर्ण
+	return found;
+}
 
-अटल काष्ठा evsel *evsel__new_pgfault(u64 config)
-अणु
-	काष्ठा evsel *evsel;
-	काष्ठा perf_event_attr attr = अणु
+static struct evsel *evsel__new_pgfault(u64 config)
+{
+	struct evsel *evsel;
+	struct perf_event_attr attr = {
 		.type = PERF_TYPE_SOFTWARE,
 		.mmap_data = 1,
-	पूर्ण;
+	};
 
 	attr.config = config;
 	attr.sample_period = 1;
@@ -3090,1639 +3089,1639 @@ out_मुक्त:
 	event_attr_init(&attr);
 
 	evsel = evsel__new(&attr);
-	अगर (evsel)
+	if (evsel)
 		evsel->handler = trace__pgfault;
 
-	वापस evsel;
-पूर्ण
+	return evsel;
+}
 
-अटल व्योम trace__handle_event(काष्ठा trace *trace, जोड़ perf_event *event, काष्ठा perf_sample *sample)
-अणु
-	स्थिर u32 type = event->header.type;
-	काष्ठा evsel *evsel;
+static void trace__handle_event(struct trace *trace, union perf_event *event, struct perf_sample *sample)
+{
+	const u32 type = event->header.type;
+	struct evsel *evsel;
 
-	अगर (type != PERF_RECORD_SAMPLE) अणु
+	if (type != PERF_RECORD_SAMPLE) {
 		trace__process_event(trace, trace->host, event, sample);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	evsel = evlist__id2evsel(trace->evlist, sample->id);
-	अगर (evsel == शून्य) अणु
-		ख_लिखो(trace->output, "Unknown tp ID %" PRIu64 ", skipping...\n", sample->id);
-		वापस;
-	पूर्ण
+	if (evsel == NULL) {
+		fprintf(trace->output, "Unknown tp ID %" PRIu64 ", skipping...\n", sample->id);
+		return;
+	}
 
-	अगर (evचयन__discard(&trace->evचयन, evsel))
-		वापस;
+	if (evswitch__discard(&trace->evswitch, evsel))
+		return;
 
-	trace__set_base_समय(trace, evsel, sample);
+	trace__set_base_time(trace, evsel, sample);
 
-	अगर (evsel->core.attr.type == PERF_TYPE_TRACEPOINT &&
-	    sample->raw_data == शून्य) अणु
-		ख_लिखो(trace->output, "%s sample with no payload for tid: %d, cpu %d, raw_size=%d, skipping...\n",
+	if (evsel->core.attr.type == PERF_TYPE_TRACEPOINT &&
+	    sample->raw_data == NULL) {
+		fprintf(trace->output, "%s sample with no payload for tid: %d, cpu %d, raw_size=%d, skipping...\n",
 		       evsel__name(evsel), sample->tid,
 		       sample->cpu, sample->raw_size);
-	पूर्ण अन्यथा अणु
-		tracepoपूर्णांक_handler handler = evsel->handler;
+	} else {
+		tracepoint_handler handler = evsel->handler;
 		handler(trace, evsel, event, sample);
-	पूर्ण
+	}
 
-	अगर (trace->nr_events_prपूर्णांकed >= trace->max_events && trace->max_events != अच_दीर्घ_उच्च)
-		पूर्णांकerrupted = true;
-पूर्ण
+	if (trace->nr_events_printed >= trace->max_events && trace->max_events != ULONG_MAX)
+		interrupted = true;
+}
 
-अटल पूर्णांक trace__add_syscall_newtp(काष्ठा trace *trace)
-अणु
-	पूर्णांक ret = -1;
-	काष्ठा evlist *evlist = trace->evlist;
-	काष्ठा evsel *sys_enter, *sys_निकास;
+static int trace__add_syscall_newtp(struct trace *trace)
+{
+	int ret = -1;
+	struct evlist *evlist = trace->evlist;
+	struct evsel *sys_enter, *sys_exit;
 
 	sys_enter = perf_evsel__raw_syscall_newtp("sys_enter", trace__sys_enter);
-	अगर (sys_enter == शून्य)
-		जाओ out;
+	if (sys_enter == NULL)
+		goto out;
 
-	अगर (perf_evsel__init_sc_tp_ptr_field(sys_enter, args))
-		जाओ out_delete_sys_enter;
+	if (perf_evsel__init_sc_tp_ptr_field(sys_enter, args))
+		goto out_delete_sys_enter;
 
-	sys_निकास = perf_evsel__raw_syscall_newtp("sys_exit", trace__sys_निकास);
-	अगर (sys_निकास == शून्य)
-		जाओ out_delete_sys_enter;
+	sys_exit = perf_evsel__raw_syscall_newtp("sys_exit", trace__sys_exit);
+	if (sys_exit == NULL)
+		goto out_delete_sys_enter;
 
-	अगर (perf_evsel__init_sc_tp_uपूर्णांक_field(sys_निकास, ret))
-		जाओ out_delete_sys_निकास;
+	if (perf_evsel__init_sc_tp_uint_field(sys_exit, ret))
+		goto out_delete_sys_exit;
 
 	evsel__config_callchain(sys_enter, &trace->opts, &callchain_param);
-	evsel__config_callchain(sys_निकास, &trace->opts, &callchain_param);
+	evsel__config_callchain(sys_exit, &trace->opts, &callchain_param);
 
 	evlist__add(evlist, sys_enter);
-	evlist__add(evlist, sys_निकास);
+	evlist__add(evlist, sys_exit);
 
-	अगर (callchain_param.enabled && !trace->kernel_syscallchains) अणु
+	if (callchain_param.enabled && !trace->kernel_syscallchains) {
 		/*
-		 * We're पूर्णांकerested only in the user space callchain
-		 * leading to the syscall, allow overriding that क्रम
+		 * We're interested only in the user space callchain
+		 * leading to the syscall, allow overriding that for
 		 * debugging reasons using --kernel_syscall_callchains
 		 */
-		sys_निकास->core.attr.exclude_callchain_kernel = 1;
-	पूर्ण
+		sys_exit->core.attr.exclude_callchain_kernel = 1;
+	}
 
 	trace->syscalls.events.sys_enter = sys_enter;
-	trace->syscalls.events.sys_निकास  = sys_निकास;
+	trace->syscalls.events.sys_exit  = sys_exit;
 
 	ret = 0;
 out:
-	वापस ret;
+	return ret;
 
-out_delete_sys_निकास:
-	evsel__delete_priv(sys_निकास);
+out_delete_sys_exit:
+	evsel__delete_priv(sys_exit);
 out_delete_sys_enter:
 	evsel__delete_priv(sys_enter);
-	जाओ out;
-पूर्ण
+	goto out;
+}
 
-अटल पूर्णांक trace__set_ev_qualअगरier_tp_filter(काष्ठा trace *trace)
-अणु
-	पूर्णांक err = -1;
-	काष्ठा evsel *sys_निकास;
-	अक्षर *filter = aप्र_लिखो_expr_inout_पूर्णांकs("id", !trace->not_ev_qualअगरier,
-						trace->ev_qualअगरier_ids.nr,
-						trace->ev_qualअगरier_ids.entries);
+static int trace__set_ev_qualifier_tp_filter(struct trace *trace)
+{
+	int err = -1;
+	struct evsel *sys_exit;
+	char *filter = asprintf_expr_inout_ints("id", !trace->not_ev_qualifier,
+						trace->ev_qualifier_ids.nr,
+						trace->ev_qualifier_ids.entries);
 
-	अगर (filter == शून्य)
-		जाओ out_enomem;
+	if (filter == NULL)
+		goto out_enomem;
 
-	अगर (!evsel__append_tp_filter(trace->syscalls.events.sys_enter, filter)) अणु
-		sys_निकास = trace->syscalls.events.sys_निकास;
-		err = evsel__append_tp_filter(sys_निकास, filter);
-	पूर्ण
+	if (!evsel__append_tp_filter(trace->syscalls.events.sys_enter, filter)) {
+		sys_exit = trace->syscalls.events.sys_exit;
+		err = evsel__append_tp_filter(sys_exit, filter);
+	}
 
-	मुक्त(filter);
+	free(filter);
 out:
-	वापस err;
+	return err;
 out_enomem:
-	त्रुटि_सं = ENOMEM;
-	जाओ out;
-पूर्ण
+	errno = ENOMEM;
+	goto out;
+}
 
-#अगर_घोषित HAVE_LIBBPF_SUPPORT
-अटल काष्ठा bpf_map *trace__find_bpf_map_by_name(काष्ठा trace *trace, स्थिर अक्षर *name)
-अणु
-	अगर (trace->bpf_obj == शून्य)
-		वापस शून्य;
+#ifdef HAVE_LIBBPF_SUPPORT
+static struct bpf_map *trace__find_bpf_map_by_name(struct trace *trace, const char *name)
+{
+	if (trace->bpf_obj == NULL)
+		return NULL;
 
-	वापस bpf_object__find_map_by_name(trace->bpf_obj, name);
-पूर्ण
+	return bpf_object__find_map_by_name(trace->bpf_obj, name);
+}
 
-अटल व्योम trace__set_bpf_map_filtered_pids(काष्ठा trace *trace)
-अणु
+static void trace__set_bpf_map_filtered_pids(struct trace *trace)
+{
 	trace->filter_pids.map = trace__find_bpf_map_by_name(trace, "pids_filtered");
-पूर्ण
+}
 
-अटल व्योम trace__set_bpf_map_syscalls(काष्ठा trace *trace)
-अणु
+static void trace__set_bpf_map_syscalls(struct trace *trace)
+{
 	trace->syscalls.map = trace__find_bpf_map_by_name(trace, "syscalls");
 	trace->syscalls.prog_array.sys_enter = trace__find_bpf_map_by_name(trace, "syscalls_sys_enter");
-	trace->syscalls.prog_array.sys_निकास  = trace__find_bpf_map_by_name(trace, "syscalls_sys_exit");
-पूर्ण
+	trace->syscalls.prog_array.sys_exit  = trace__find_bpf_map_by_name(trace, "syscalls_sys_exit");
+}
 
-अटल काष्ठा bpf_program *trace__find_bpf_program_by_title(काष्ठा trace *trace, स्थिर अक्षर *name)
-अणु
-	अगर (trace->bpf_obj == शून्य)
-		वापस शून्य;
+static struct bpf_program *trace__find_bpf_program_by_title(struct trace *trace, const char *name)
+{
+	if (trace->bpf_obj == NULL)
+		return NULL;
 
-	वापस bpf_object__find_program_by_title(trace->bpf_obj, name);
-पूर्ण
+	return bpf_object__find_program_by_title(trace->bpf_obj, name);
+}
 
-अटल काष्ठा bpf_program *trace__find_syscall_bpf_prog(काष्ठा trace *trace, काष्ठा syscall *sc,
-							स्थिर अक्षर *prog_name, स्थिर अक्षर *type)
-अणु
-	काष्ठा bpf_program *prog;
+static struct bpf_program *trace__find_syscall_bpf_prog(struct trace *trace, struct syscall *sc,
+							const char *prog_name, const char *type)
+{
+	struct bpf_program *prog;
 
-	अगर (prog_name == शून्य) अणु
-		अक्षर शेष_prog_name[256];
-		scnम_लिखो(शेष_prog_name, माप(शेष_prog_name), "!syscalls:sys_%s_%s", type, sc->name);
-		prog = trace__find_bpf_program_by_title(trace, शेष_prog_name);
-		अगर (prog != शून्य)
-			जाओ out_found;
-		अगर (sc->fmt && sc->fmt->alias) अणु
-			scnम_लिखो(शेष_prog_name, माप(शेष_prog_name), "!syscalls:sys_%s_%s", type, sc->fmt->alias);
-			prog = trace__find_bpf_program_by_title(trace, शेष_prog_name);
-			अगर (prog != शून्य)
-				जाओ out_found;
-		पूर्ण
-		जाओ out_unaugmented;
-	पूर्ण
+	if (prog_name == NULL) {
+		char default_prog_name[256];
+		scnprintf(default_prog_name, sizeof(default_prog_name), "!syscalls:sys_%s_%s", type, sc->name);
+		prog = trace__find_bpf_program_by_title(trace, default_prog_name);
+		if (prog != NULL)
+			goto out_found;
+		if (sc->fmt && sc->fmt->alias) {
+			scnprintf(default_prog_name, sizeof(default_prog_name), "!syscalls:sys_%s_%s", type, sc->fmt->alias);
+			prog = trace__find_bpf_program_by_title(trace, default_prog_name);
+			if (prog != NULL)
+				goto out_found;
+		}
+		goto out_unaugmented;
+	}
 
 	prog = trace__find_bpf_program_by_title(trace, prog_name);
 
-	अगर (prog != शून्य) अणु
+	if (prog != NULL) {
 out_found:
-		वापस prog;
-	पूर्ण
+		return prog;
+	}
 
 	pr_debug("Couldn't find BPF prog \"%s\" to associate with syscalls:sys_%s_%s, not augmenting it\n",
 		 prog_name, type, sc->name);
 out_unaugmented:
-	वापस trace->syscalls.unaugmented_prog;
-पूर्ण
+	return trace->syscalls.unaugmented_prog;
+}
 
-अटल व्योम trace__init_syscall_bpf_progs(काष्ठा trace *trace, पूर्णांक id)
-अणु
-	काष्ठा syscall *sc = trace__syscall_info(trace, शून्य, id);
+static void trace__init_syscall_bpf_progs(struct trace *trace, int id)
+{
+	struct syscall *sc = trace__syscall_info(trace, NULL, id);
 
-	अगर (sc == शून्य)
-		वापस;
+	if (sc == NULL)
+		return;
 
-	sc->bpf_prog.sys_enter = trace__find_syscall_bpf_prog(trace, sc, sc->fmt ? sc->fmt->bpf_prog_name.sys_enter : शून्य, "enter");
-	sc->bpf_prog.sys_निकास  = trace__find_syscall_bpf_prog(trace, sc, sc->fmt ? sc->fmt->bpf_prog_name.sys_निकास  : शून्य,  "exit");
-पूर्ण
+	sc->bpf_prog.sys_enter = trace__find_syscall_bpf_prog(trace, sc, sc->fmt ? sc->fmt->bpf_prog_name.sys_enter : NULL, "enter");
+	sc->bpf_prog.sys_exit  = trace__find_syscall_bpf_prog(trace, sc, sc->fmt ? sc->fmt->bpf_prog_name.sys_exit  : NULL,  "exit");
+}
 
-अटल पूर्णांक trace__bpf_prog_sys_enter_fd(काष्ठा trace *trace, पूर्णांक id)
-अणु
-	काष्ठा syscall *sc = trace__syscall_info(trace, शून्य, id);
-	वापस sc ? bpf_program__fd(sc->bpf_prog.sys_enter) : bpf_program__fd(trace->syscalls.unaugmented_prog);
-पूर्ण
+static int trace__bpf_prog_sys_enter_fd(struct trace *trace, int id)
+{
+	struct syscall *sc = trace__syscall_info(trace, NULL, id);
+	return sc ? bpf_program__fd(sc->bpf_prog.sys_enter) : bpf_program__fd(trace->syscalls.unaugmented_prog);
+}
 
-अटल पूर्णांक trace__bpf_prog_sys_निकास_fd(काष्ठा trace *trace, पूर्णांक id)
-अणु
-	काष्ठा syscall *sc = trace__syscall_info(trace, शून्य, id);
-	वापस sc ? bpf_program__fd(sc->bpf_prog.sys_निकास) : bpf_program__fd(trace->syscalls.unaugmented_prog);
-पूर्ण
+static int trace__bpf_prog_sys_exit_fd(struct trace *trace, int id)
+{
+	struct syscall *sc = trace__syscall_info(trace, NULL, id);
+	return sc ? bpf_program__fd(sc->bpf_prog.sys_exit) : bpf_program__fd(trace->syscalls.unaugmented_prog);
+}
 
-अटल व्योम trace__init_bpf_map_syscall_args(काष्ठा trace *trace, पूर्णांक id, काष्ठा bpf_map_syscall_entry *entry)
-अणु
-	काष्ठा syscall *sc = trace__syscall_info(trace, शून्य, id);
-	पूर्णांक arg = 0;
+static void trace__init_bpf_map_syscall_args(struct trace *trace, int id, struct bpf_map_syscall_entry *entry)
+{
+	struct syscall *sc = trace__syscall_info(trace, NULL, id);
+	int arg = 0;
 
-	अगर (sc == शून्य)
-		जाओ out;
+	if (sc == NULL)
+		goto out;
 
-	क्रम (; arg < sc->nr_args; ++arg) अणु
+	for (; arg < sc->nr_args; ++arg) {
 		entry->string_args_len[arg] = 0;
-		अगर (sc->arg_fmt[arg].scnम_लिखो == SCA_खाताNAME) अणु
+		if (sc->arg_fmt[arg].scnprintf == SCA_FILENAME) {
 			/* Should be set like strace -s strsize */
 			entry->string_args_len[arg] = PATH_MAX;
-		पूर्ण
-	पूर्ण
+		}
+	}
 out:
-	क्रम (; arg < 6; ++arg)
+	for (; arg < 6; ++arg)
 		entry->string_args_len[arg] = 0;
-पूर्ण
-अटल पूर्णांक trace__set_ev_qualअगरier_bpf_filter(काष्ठा trace *trace)
-अणु
-	पूर्णांक fd = bpf_map__fd(trace->syscalls.map);
-	काष्ठा bpf_map_syscall_entry value = अणु
-		.enabled = !trace->not_ev_qualअगरier,
-	पूर्ण;
-	पूर्णांक err = 0;
-	माप_प्रकार i;
+}
+static int trace__set_ev_qualifier_bpf_filter(struct trace *trace)
+{
+	int fd = bpf_map__fd(trace->syscalls.map);
+	struct bpf_map_syscall_entry value = {
+		.enabled = !trace->not_ev_qualifier,
+	};
+	int err = 0;
+	size_t i;
 
-	क्रम (i = 0; i < trace->ev_qualअगरier_ids.nr; ++i) अणु
-		पूर्णांक key = trace->ev_qualअगरier_ids.entries[i];
+	for (i = 0; i < trace->ev_qualifier_ids.nr; ++i) {
+		int key = trace->ev_qualifier_ids.entries[i];
 
-		अगर (value.enabled) अणु
+		if (value.enabled) {
 			trace__init_bpf_map_syscall_args(trace, key, &value);
 			trace__init_syscall_bpf_progs(trace, key);
-		पूर्ण
+		}
 
 		err = bpf_map_update_elem(fd, &key, &value, BPF_EXIST);
-		अगर (err)
-			अवरोध;
-	पूर्ण
+		if (err)
+			break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __trace__init_syscalls_bpf_map(काष्ठा trace *trace, bool enabled)
-अणु
-	पूर्णांक fd = bpf_map__fd(trace->syscalls.map);
-	काष्ठा bpf_map_syscall_entry value = अणु
+static int __trace__init_syscalls_bpf_map(struct trace *trace, bool enabled)
+{
+	int fd = bpf_map__fd(trace->syscalls.map);
+	struct bpf_map_syscall_entry value = {
 		.enabled = enabled,
-	पूर्ण;
-	पूर्णांक err = 0, key;
+	};
+	int err = 0, key;
 
-	क्रम (key = 0; key < trace->sctbl->syscalls.nr_entries; ++key) अणु
-		अगर (enabled)
+	for (key = 0; key < trace->sctbl->syscalls.nr_entries; ++key) {
+		if (enabled)
 			trace__init_bpf_map_syscall_args(trace, key, &value);
 
 		err = bpf_map_update_elem(fd, &key, &value, BPF_ANY);
-		अगर (err)
-			अवरोध;
-	पूर्ण
+		if (err)
+			break;
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक trace__init_syscalls_bpf_map(काष्ठा trace *trace)
-अणु
+static int trace__init_syscalls_bpf_map(struct trace *trace)
+{
 	bool enabled = true;
 
-	अगर (trace->ev_qualअगरier_ids.nr)
-		enabled = trace->not_ev_qualअगरier;
+	if (trace->ev_qualifier_ids.nr)
+		enabled = trace->not_ev_qualifier;
 
-	वापस __trace__init_syscalls_bpf_map(trace, enabled);
-पूर्ण
+	return __trace__init_syscalls_bpf_map(trace, enabled);
+}
 
-अटल काष्ठा bpf_program *trace__find_usable_bpf_prog_entry(काष्ठा trace *trace, काष्ठा syscall *sc)
-अणु
-	काष्ठा tep_क्रमmat_field *field, *candidate_field;
-	पूर्णांक id;
+static struct bpf_program *trace__find_usable_bpf_prog_entry(struct trace *trace, struct syscall *sc)
+{
+	struct tep_format_field *field, *candidate_field;
+	int id;
 
 	/*
-	 * We're only पूर्णांकerested in syscalls that have a poपूर्णांकer:
+	 * We're only interested in syscalls that have a pointer:
 	 */
-	क्रम (field = sc->args; field; field = field->next) अणु
-		अगर (field->flags & TEP_FIELD_IS_POINTER)
-			जाओ try_to_find_pair;
-	पूर्ण
+	for (field = sc->args; field; field = field->next) {
+		if (field->flags & TEP_FIELD_IS_POINTER)
+			goto try_to_find_pair;
+	}
 
-	वापस शून्य;
+	return NULL;
 
 try_to_find_pair:
-	क्रम (id = 0; id < trace->sctbl->syscalls.nr_entries; ++id) अणु
-		काष्ठा syscall *pair = trace__syscall_info(trace, शून्य, id);
-		काष्ठा bpf_program *pair_prog;
+	for (id = 0; id < trace->sctbl->syscalls.nr_entries; ++id) {
+		struct syscall *pair = trace__syscall_info(trace, NULL, id);
+		struct bpf_program *pair_prog;
 		bool is_candidate = false;
 
-		अगर (pair == शून्य || pair == sc ||
+		if (pair == NULL || pair == sc ||
 		    pair->bpf_prog.sys_enter == trace->syscalls.unaugmented_prog)
-			जारी;
+			continue;
 
-		क्रम (field = sc->args, candidate_field = pair->args;
-		     field && candidate_field; field = field->next, candidate_field = candidate_field->next) अणु
-			bool is_poपूर्णांकer = field->flags & TEP_FIELD_IS_POINTER,
-			     candidate_is_poपूर्णांकer = candidate_field->flags & TEP_FIELD_IS_POINTER;
+		for (field = sc->args, candidate_field = pair->args;
+		     field && candidate_field; field = field->next, candidate_field = candidate_field->next) {
+			bool is_pointer = field->flags & TEP_FIELD_IS_POINTER,
+			     candidate_is_pointer = candidate_field->flags & TEP_FIELD_IS_POINTER;
 
-			अगर (is_poपूर्णांकer) अणु
-			       अगर (!candidate_is_poपूर्णांकer) अणु
-					// The candidate just करोesn't copies our poपूर्णांकer arg, might copy other poपूर्णांकers we want.
-					जारी;
-			       पूर्ण
-			पूर्ण अन्यथा अणु
-				अगर (candidate_is_poपूर्णांकer) अणु
-					// The candidate might copy a poपूर्णांकer we करोn't have, skip it.
-					जाओ next_candidate;
-				पूर्ण
-				जारी;
-			पूर्ण
+			if (is_pointer) {
+			       if (!candidate_is_pointer) {
+					// The candidate just doesn't copies our pointer arg, might copy other pointers we want.
+					continue;
+			       }
+			} else {
+				if (candidate_is_pointer) {
+					// The candidate might copy a pointer we don't have, skip it.
+					goto next_candidate;
+				}
+				continue;
+			}
 
-			अगर (म_भेद(field->type, candidate_field->type))
-				जाओ next_candidate;
+			if (strcmp(field->type, candidate_field->type))
+				goto next_candidate;
 
 			is_candidate = true;
-		पूर्ण
+		}
 
-		अगर (!is_candidate)
-			जाओ next_candidate;
+		if (!is_candidate)
+			goto next_candidate;
 
 		/*
-		 * Check अगर the tentative pair syscall augmenter has more poपूर्णांकers, अगर it has,
+		 * Check if the tentative pair syscall augmenter has more pointers, if it has,
 		 * then it may be collecting that and we then can't use it, as it would collect
 		 * more than what is common to the two syscalls.
 		 */
-		अगर (candidate_field) अणु
-			क्रम (candidate_field = candidate_field->next; candidate_field; candidate_field = candidate_field->next)
-				अगर (candidate_field->flags & TEP_FIELD_IS_POINTER)
-					जाओ next_candidate;
-		पूर्ण
+		if (candidate_field) {
+			for (candidate_field = candidate_field->next; candidate_field; candidate_field = candidate_field->next)
+				if (candidate_field->flags & TEP_FIELD_IS_POINTER)
+					goto next_candidate;
+		}
 
 		pair_prog = pair->bpf_prog.sys_enter;
 		/*
 		 * If the pair isn't enabled, then its bpf_prog.sys_enter will not
-		 * have been searched क्रम, so search it here and अगर it वापसs the
+		 * have been searched for, so search it here and if it returns the
 		 * unaugmented one, then ignore it, otherwise we'll reuse that BPF
-		 * program क्रम a filtered syscall on a non-filtered one.
+		 * program for a filtered syscall on a non-filtered one.
 		 *
 		 * For instance, we have "!syscalls:sys_enter_renameat" and that is
-		 * useful क्रम "renameat2".
+		 * useful for "renameat2".
 		 */
-		अगर (pair_prog == शून्य) अणु
-			pair_prog = trace__find_syscall_bpf_prog(trace, pair, pair->fmt ? pair->fmt->bpf_prog_name.sys_enter : शून्य, "enter");
-			अगर (pair_prog == trace->syscalls.unaugmented_prog)
-				जाओ next_candidate;
-		पूर्ण
+		if (pair_prog == NULL) {
+			pair_prog = trace__find_syscall_bpf_prog(trace, pair, pair->fmt ? pair->fmt->bpf_prog_name.sys_enter : NULL, "enter");
+			if (pair_prog == trace->syscalls.unaugmented_prog)
+				goto next_candidate;
+		}
 
 		pr_debug("Reusing \"%s\" BPF sys_enter augmenter for \"%s\"\n", pair->name, sc->name);
-		वापस pair_prog;
+		return pair_prog;
 	next_candidate:
-		जारी;
-	पूर्ण
+		continue;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक trace__init_syscalls_bpf_prog_array_maps(काष्ठा trace *trace)
-अणु
-	पूर्णांक map_enter_fd = bpf_map__fd(trace->syscalls.prog_array.sys_enter),
-	    map_निकास_fd  = bpf_map__fd(trace->syscalls.prog_array.sys_निकास);
-	पूर्णांक err = 0, key;
+static int trace__init_syscalls_bpf_prog_array_maps(struct trace *trace)
+{
+	int map_enter_fd = bpf_map__fd(trace->syscalls.prog_array.sys_enter),
+	    map_exit_fd  = bpf_map__fd(trace->syscalls.prog_array.sys_exit);
+	int err = 0, key;
 
-	क्रम (key = 0; key < trace->sctbl->syscalls.nr_entries; ++key) अणु
-		पूर्णांक prog_fd;
+	for (key = 0; key < trace->sctbl->syscalls.nr_entries; ++key) {
+		int prog_fd;
 
-		अगर (!trace__syscall_enabled(trace, key))
-			जारी;
+		if (!trace__syscall_enabled(trace, key))
+			continue;
 
 		trace__init_syscall_bpf_progs(trace, key);
 
 		// It'll get at least the "!raw_syscalls:unaugmented"
 		prog_fd = trace__bpf_prog_sys_enter_fd(trace, key);
 		err = bpf_map_update_elem(map_enter_fd, &key, &prog_fd, BPF_ANY);
-		अगर (err)
-			अवरोध;
-		prog_fd = trace__bpf_prog_sys_निकास_fd(trace, key);
-		err = bpf_map_update_elem(map_निकास_fd, &key, &prog_fd, BPF_ANY);
-		अगर (err)
-			अवरोध;
-	पूर्ण
+		if (err)
+			break;
+		prog_fd = trace__bpf_prog_sys_exit_fd(trace, key);
+		err = bpf_map_update_elem(map_exit_fd, &key, &prog_fd, BPF_ANY);
+		if (err)
+			break;
+	}
 
 	/*
-	 * Now lets करो a second pass looking क्रम enabled syscalls without
+	 * Now lets do a second pass looking for enabled syscalls without
 	 * an augmenter that have a signature that is a superset of another
-	 * syscall with an augmenter so that we can स्वतः-reuse it.
+	 * syscall with an augmenter so that we can auto-reuse it.
 	 *
-	 * I.e. अगर we have an augmenter क्रम the "open" syscall that has
+	 * I.e. if we have an augmenter for the "open" syscall that has
 	 * this signature:
 	 *
-	 *   पूर्णांक खोलो(स्थिर अक्षर *pathname, पूर्णांक flags, mode_t mode);
+	 *   int open(const char *pathname, int flags, mode_t mode);
 	 *
 	 * I.e. that will collect just the first string argument, then we
-	 * can reuse it क्रम the 'creat' syscall, that has this signature:
+	 * can reuse it for the 'creat' syscall, that has this signature:
 	 *
-	 *   पूर्णांक creat(स्थिर अक्षर *pathname, mode_t mode);
+	 *   int creat(const char *pathname, mode_t mode);
 	 *
-	 * and क्रम:
+	 * and for:
 	 *
-	 *   पूर्णांक stat(स्थिर अक्षर *pathname, काष्ठा stat *statbuf);
-	 *   पूर्णांक lstat(स्थिर अक्षर *pathname, काष्ठा stat *statbuf);
+	 *   int stat(const char *pathname, struct stat *statbuf);
+	 *   int lstat(const char *pathname, struct stat *statbuf);
 	 *
 	 * Because the 'open' augmenter will collect the first arg as a string,
-	 * and leave alone all the other args, which alपढ़ोy helps with
-	 * beautअगरying 'stat' and 'lstat''s pathname arg.
+	 * and leave alone all the other args, which already helps with
+	 * beautifying 'stat' and 'lstat''s pathname arg.
 	 *
-	 * Then, in समय, when 'stat' माला_लो an augmenter that collects both
-	 * first and second arg (this one on the raw_syscalls:sys_निकास prog
+	 * Then, in time, when 'stat' gets an augmenter that collects both
+	 * first and second arg (this one on the raw_syscalls:sys_exit prog
 	 * array tail call, then that one will be used.
 	 */
-	क्रम (key = 0; key < trace->sctbl->syscalls.nr_entries; ++key) अणु
-		काष्ठा syscall *sc = trace__syscall_info(trace, शून्य, key);
-		काष्ठा bpf_program *pair_prog;
-		पूर्णांक prog_fd;
+	for (key = 0; key < trace->sctbl->syscalls.nr_entries; ++key) {
+		struct syscall *sc = trace__syscall_info(trace, NULL, key);
+		struct bpf_program *pair_prog;
+		int prog_fd;
 
-		अगर (sc == शून्य || sc->bpf_prog.sys_enter == शून्य)
-			जारी;
+		if (sc == NULL || sc->bpf_prog.sys_enter == NULL)
+			continue;
 
 		/*
-		 * For now we're just reusing the sys_enter prog, and अगर it
-		 * alपढ़ोy has an augmenter, we करोn't need to find one.
+		 * For now we're just reusing the sys_enter prog, and if it
+		 * already has an augmenter, we don't need to find one.
 		 */
-		अगर (sc->bpf_prog.sys_enter != trace->syscalls.unaugmented_prog)
-			जारी;
+		if (sc->bpf_prog.sys_enter != trace->syscalls.unaugmented_prog)
+			continue;
 
 		/*
-		 * Look at all the other syscalls क्रम one that has a signature
-		 * that is बंद enough that we can share:
+		 * Look at all the other syscalls for one that has a signature
+		 * that is close enough that we can share:
 		 */
 		pair_prog = trace__find_usable_bpf_prog_entry(trace, sc);
-		अगर (pair_prog == शून्य)
-			जारी;
+		if (pair_prog == NULL)
+			continue;
 
 		sc->bpf_prog.sys_enter = pair_prog;
 
 		/*
-		 * Update the BPF_MAP_TYPE_PROG_SHARED क्रम raw_syscalls:sys_enter
-		 * with the fd क्रम the program we're reusing:
+		 * Update the BPF_MAP_TYPE_PROG_SHARED for raw_syscalls:sys_enter
+		 * with the fd for the program we're reusing:
 		 */
 		prog_fd = bpf_program__fd(sc->bpf_prog.sys_enter);
 		err = bpf_map_update_elem(map_enter_fd, &key, &prog_fd, BPF_ANY);
-		अगर (err)
-			अवरोध;
-	पूर्ण
+		if (err)
+			break;
+	}
 
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम trace__delete_augmented_syscalls(काष्ठा trace *trace)
-अणु
-	काष्ठा evsel *evsel, *पंचांगp;
+static void trace__delete_augmented_syscalls(struct trace *trace)
+{
+	struct evsel *evsel, *tmp;
 
-	evlist__हटाओ(trace->evlist, trace->syscalls.events.augmented);
+	evlist__remove(trace->evlist, trace->syscalls.events.augmented);
 	evsel__delete(trace->syscalls.events.augmented);
-	trace->syscalls.events.augmented = शून्य;
+	trace->syscalls.events.augmented = NULL;
 
-	evlist__क्रम_each_entry_safe(trace->evlist, पंचांगp, evsel) अणु
-		अगर (evsel->bpf_obj == trace->bpf_obj) अणु
-			evlist__हटाओ(trace->evlist, evsel);
+	evlist__for_each_entry_safe(trace->evlist, tmp, evsel) {
+		if (evsel->bpf_obj == trace->bpf_obj) {
+			evlist__remove(trace->evlist, evsel);
 			evsel__delete(evsel);
-		पूर्ण
+		}
 
-	पूर्ण
+	}
 
-	bpf_object__बंद(trace->bpf_obj);
-	trace->bpf_obj = शून्य;
-पूर्ण
-#अन्यथा // HAVE_LIBBPF_SUPPORT
-अटल काष्ठा bpf_map *trace__find_bpf_map_by_name(काष्ठा trace *trace __maybe_unused,
-						   स्थिर अक्षर *name __maybe_unused)
-अणु
-	वापस शून्य;
-पूर्ण
+	bpf_object__close(trace->bpf_obj);
+	trace->bpf_obj = NULL;
+}
+#else // HAVE_LIBBPF_SUPPORT
+static struct bpf_map *trace__find_bpf_map_by_name(struct trace *trace __maybe_unused,
+						   const char *name __maybe_unused)
+{
+	return NULL;
+}
 
-अटल व्योम trace__set_bpf_map_filtered_pids(काष्ठा trace *trace __maybe_unused)
-अणु
-पूर्ण
+static void trace__set_bpf_map_filtered_pids(struct trace *trace __maybe_unused)
+{
+}
 
-अटल व्योम trace__set_bpf_map_syscalls(काष्ठा trace *trace __maybe_unused)
-अणु
-पूर्ण
+static void trace__set_bpf_map_syscalls(struct trace *trace __maybe_unused)
+{
+}
 
-अटल पूर्णांक trace__set_ev_qualअगरier_bpf_filter(काष्ठा trace *trace __maybe_unused)
-अणु
-	वापस 0;
-पूर्ण
+static int trace__set_ev_qualifier_bpf_filter(struct trace *trace __maybe_unused)
+{
+	return 0;
+}
 
-अटल पूर्णांक trace__init_syscalls_bpf_map(काष्ठा trace *trace __maybe_unused)
-अणु
-	वापस 0;
-पूर्ण
+static int trace__init_syscalls_bpf_map(struct trace *trace __maybe_unused)
+{
+	return 0;
+}
 
-अटल काष्ठा bpf_program *trace__find_bpf_program_by_title(काष्ठा trace *trace __maybe_unused,
-							    स्थिर अक्षर *name __maybe_unused)
-अणु
-	वापस शून्य;
-पूर्ण
+static struct bpf_program *trace__find_bpf_program_by_title(struct trace *trace __maybe_unused,
+							    const char *name __maybe_unused)
+{
+	return NULL;
+}
 
-अटल पूर्णांक trace__init_syscalls_bpf_prog_array_maps(काष्ठा trace *trace __maybe_unused)
-अणु
-	वापस 0;
-पूर्ण
+static int trace__init_syscalls_bpf_prog_array_maps(struct trace *trace __maybe_unused)
+{
+	return 0;
+}
 
-अटल व्योम trace__delete_augmented_syscalls(काष्ठा trace *trace __maybe_unused)
-अणु
-पूर्ण
-#पूर्ण_अगर // HAVE_LIBBPF_SUPPORT
+static void trace__delete_augmented_syscalls(struct trace *trace __maybe_unused)
+{
+}
+#endif // HAVE_LIBBPF_SUPPORT
 
-अटल bool trace__only_augmented_syscalls_evsels(काष्ठा trace *trace)
-अणु
-	काष्ठा evsel *evsel;
+static bool trace__only_augmented_syscalls_evsels(struct trace *trace)
+{
+	struct evsel *evsel;
 
-	evlist__क्रम_each_entry(trace->evlist, evsel) अणु
-		अगर (evsel == trace->syscalls.events.augmented ||
+	evlist__for_each_entry(trace->evlist, evsel) {
+		if (evsel == trace->syscalls.events.augmented ||
 		    evsel->bpf_obj == trace->bpf_obj)
-			जारी;
+			continue;
 
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक trace__set_ev_qualअगरier_filter(काष्ठा trace *trace)
-अणु
-	अगर (trace->syscalls.map)
-		वापस trace__set_ev_qualअगरier_bpf_filter(trace);
-	अगर (trace->syscalls.events.sys_enter)
-		वापस trace__set_ev_qualअगरier_tp_filter(trace);
-	वापस 0;
-पूर्ण
+static int trace__set_ev_qualifier_filter(struct trace *trace)
+{
+	if (trace->syscalls.map)
+		return trace__set_ev_qualifier_bpf_filter(trace);
+	if (trace->syscalls.events.sys_enter)
+		return trace__set_ev_qualifier_tp_filter(trace);
+	return 0;
+}
 
-अटल पूर्णांक bpf_map__set_filter_pids(काष्ठा bpf_map *map __maybe_unused,
-				    माप_प्रकार npids __maybe_unused, pid_t *pids __maybe_unused)
-अणु
-	पूर्णांक err = 0;
-#अगर_घोषित HAVE_LIBBPF_SUPPORT
+static int bpf_map__set_filter_pids(struct bpf_map *map __maybe_unused,
+				    size_t npids __maybe_unused, pid_t *pids __maybe_unused)
+{
+	int err = 0;
+#ifdef HAVE_LIBBPF_SUPPORT
 	bool value = true;
-	पूर्णांक map_fd = bpf_map__fd(map);
-	माप_प्रकार i;
+	int map_fd = bpf_map__fd(map);
+	size_t i;
 
-	क्रम (i = 0; i < npids; ++i) अणु
+	for (i = 0; i < npids; ++i) {
 		err = bpf_map_update_elem(map_fd, &pids[i], &value, BPF_ANY);
-		अगर (err)
-			अवरोध;
-	पूर्ण
-#पूर्ण_अगर
-	वापस err;
-पूर्ण
+		if (err)
+			break;
+	}
+#endif
+	return err;
+}
 
-अटल पूर्णांक trace__set_filter_loop_pids(काष्ठा trace *trace)
-अणु
-	अचिन्हित पूर्णांक nr = 1, err;
-	pid_t pids[32] = अणु
+static int trace__set_filter_loop_pids(struct trace *trace)
+{
+	unsigned int nr = 1, err;
+	pid_t pids[32] = {
 		getpid(),
-	पूर्ण;
-	काष्ठा thपढ़ो *thपढ़ो = machine__find_thपढ़ो(trace->host, pids[0], pids[0]);
+	};
+	struct thread *thread = machine__find_thread(trace->host, pids[0], pids[0]);
 
-	जबतक (thपढ़ो && nr < ARRAY_SIZE(pids)) अणु
-		काष्ठा thपढ़ो *parent = machine__find_thपढ़ो(trace->host, thपढ़ो->ppid, thपढ़ो->ppid);
+	while (thread && nr < ARRAY_SIZE(pids)) {
+		struct thread *parent = machine__find_thread(trace->host, thread->ppid, thread->ppid);
 
-		अगर (parent == शून्य)
-			अवरोध;
+		if (parent == NULL)
+			break;
 
-		अगर (!म_भेद(thपढ़ो__comm_str(parent), "sshd") ||
-		    strstarts(thपढ़ो__comm_str(parent), "gnome-terminal")) अणु
+		if (!strcmp(thread__comm_str(parent), "sshd") ||
+		    strstarts(thread__comm_str(parent), "gnome-terminal")) {
 			pids[nr++] = parent->tid;
-			अवरोध;
-		पूर्ण
-		thपढ़ो = parent;
-	पूर्ण
+			break;
+		}
+		thread = parent;
+	}
 
 	err = evlist__append_tp_filter_pids(trace->evlist, nr, pids);
-	अगर (!err && trace->filter_pids.map)
+	if (!err && trace->filter_pids.map)
 		err = bpf_map__set_filter_pids(trace->filter_pids.map, nr, pids);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक trace__set_filter_pids(काष्ठा trace *trace)
-अणु
-	पूर्णांक err = 0;
+static int trace__set_filter_pids(struct trace *trace)
+{
+	int err = 0;
 	/*
 	 * Better not use !target__has_task() here because we need to cover the
-	 * हाल where no thपढ़ोs were specअगरied in the command line, but a
-	 * workload was, and in that हाल we will fill in the thपढ़ो_map when
-	 * we विभाजन the workload in evlist__prepare_workload.
+	 * case where no threads were specified in the command line, but a
+	 * workload was, and in that case we will fill in the thread_map when
+	 * we fork the workload in evlist__prepare_workload.
 	 */
-	अगर (trace->filter_pids.nr > 0) अणु
+	if (trace->filter_pids.nr > 0) {
 		err = evlist__append_tp_filter_pids(trace->evlist, trace->filter_pids.nr,
 						    trace->filter_pids.entries);
-		अगर (!err && trace->filter_pids.map) अणु
+		if (!err && trace->filter_pids.map) {
 			err = bpf_map__set_filter_pids(trace->filter_pids.map, trace->filter_pids.nr,
 						       trace->filter_pids.entries);
-		पूर्ण
-	पूर्ण अन्यथा अगर (perf_thपढ़ो_map__pid(trace->evlist->core.thपढ़ोs, 0) == -1) अणु
+		}
+	} else if (perf_thread_map__pid(trace->evlist->core.threads, 0) == -1) {
 		err = trace__set_filter_loop_pids(trace);
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __trace__deliver_event(काष्ठा trace *trace, जोड़ perf_event *event)
-अणु
-	काष्ठा evlist *evlist = trace->evlist;
-	काष्ठा perf_sample sample;
-	पूर्णांक err = evlist__parse_sample(evlist, event, &sample);
+static int __trace__deliver_event(struct trace *trace, union perf_event *event)
+{
+	struct evlist *evlist = trace->evlist;
+	struct perf_sample sample;
+	int err = evlist__parse_sample(evlist, event, &sample);
 
-	अगर (err)
-		ख_लिखो(trace->output, "Can't parse sample, err = %d, skipping...\n", err);
-	अन्यथा
+	if (err)
+		fprintf(trace->output, "Can't parse sample, err = %d, skipping...\n", err);
+	else
 		trace__handle_event(trace, event, &sample);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __trace__flush_events(काष्ठा trace *trace)
-अणु
-	u64 first = ordered_events__first_समय(&trace->oe.data);
+static int __trace__flush_events(struct trace *trace)
+{
+	u64 first = ordered_events__first_time(&trace->oe.data);
 	u64 flush = trace->oe.last - NSEC_PER_SEC;
 
 	/* Is there some thing to flush.. */
-	अगर (first && first < flush)
-		वापस ordered_events__flush_समय(&trace->oe.data, flush);
+	if (first && first < flush)
+		return ordered_events__flush_time(&trace->oe.data, flush);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक trace__flush_events(काष्ठा trace *trace)
-अणु
-	वापस !trace->sort_events ? 0 : __trace__flush_events(trace);
-पूर्ण
+static int trace__flush_events(struct trace *trace)
+{
+	return !trace->sort_events ? 0 : __trace__flush_events(trace);
+}
 
-अटल पूर्णांक trace__deliver_event(काष्ठा trace *trace, जोड़ perf_event *event)
-अणु
-	पूर्णांक err;
+static int trace__deliver_event(struct trace *trace, union perf_event *event)
+{
+	int err;
 
-	अगर (!trace->sort_events)
-		वापस __trace__deliver_event(trace, event);
+	if (!trace->sort_events)
+		return __trace__deliver_event(trace, event);
 
-	err = evlist__parse_sample_बारtamp(trace->evlist, event, &trace->oe.last);
-	अगर (err && err != -1)
-		वापस err;
+	err = evlist__parse_sample_timestamp(trace->evlist, event, &trace->oe.last);
+	if (err && err != -1)
+		return err;
 
 	err = ordered_events__queue(&trace->oe.data, event, trace->oe.last, 0);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	वापस trace__flush_events(trace);
-पूर्ण
+	return trace__flush_events(trace);
+}
 
-अटल पूर्णांक ordered_events__deliver_event(काष्ठा ordered_events *oe,
-					 काष्ठा ordered_event *event)
-अणु
-	काष्ठा trace *trace = container_of(oe, काष्ठा trace, oe.data);
+static int ordered_events__deliver_event(struct ordered_events *oe,
+					 struct ordered_event *event)
+{
+	struct trace *trace = container_of(oe, struct trace, oe.data);
 
-	वापस __trace__deliver_event(trace, event->event);
-पूर्ण
+	return __trace__deliver_event(trace, event->event);
+}
 
-अटल काष्ठा syscall_arg_fmt *evsel__find_syscall_arg_fmt_by_name(काष्ठा evsel *evsel, अक्षर *arg)
-अणु
-	काष्ठा tep_क्रमmat_field *field;
-	काष्ठा syscall_arg_fmt *fmt = __evsel__syscall_arg_fmt(evsel);
+static struct syscall_arg_fmt *evsel__find_syscall_arg_fmt_by_name(struct evsel *evsel, char *arg)
+{
+	struct tep_format_field *field;
+	struct syscall_arg_fmt *fmt = __evsel__syscall_arg_fmt(evsel);
 
-	अगर (evsel->tp_क्रमmat == शून्य || fmt == शून्य)
-		वापस शून्य;
+	if (evsel->tp_format == NULL || fmt == NULL)
+		return NULL;
 
-	क्रम (field = evsel->tp_क्रमmat->क्रमmat.fields; field; field = field->next, ++fmt)
-		अगर (म_भेद(field->name, arg) == 0)
-			वापस fmt;
+	for (field = evsel->tp_format->format.fields; field; field = field->next, ++fmt)
+		if (strcmp(field->name, arg) == 0)
+			return fmt;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक trace__expand_filter(काष्ठा trace *trace __maybe_unused, काष्ठा evsel *evsel)
-अणु
-	अक्षर *tok, *left = evsel->filter, *new_filter = evsel->filter;
+static int trace__expand_filter(struct trace *trace __maybe_unused, struct evsel *evsel)
+{
+	char *tok, *left = evsel->filter, *new_filter = evsel->filter;
 
-	जबतक ((tok = strpbrk(left, "=<>!")) != शून्य) अणु
-		अक्षर *right = tok + 1, *right_end;
+	while ((tok = strpbrk(left, "=<>!")) != NULL) {
+		char *right = tok + 1, *right_end;
 
-		अगर (*right == '=')
+		if (*right == '=')
 			++right;
 
-		जबतक (है_खाली(*right))
+		while (isspace(*right))
 			++right;
 
-		अगर (*right == '\0')
-			अवरोध;
+		if (*right == '\0')
+			break;
 
-		जबतक (!है_अक्षर(*left))
-			अगर (++left == tok) अणु
+		while (!isalpha(*left))
+			if (++left == tok) {
 				/*
 				 * Bail out, can't find the name of the argument that is being
 				 * used in the filter, let it try to set this filter, will fail later.
 				 */
-				वापस 0;
-			पूर्ण
+				return 0;
+			}
 
 		right_end = right + 1;
-		जबतक (है_अक्षर_अंक(*right_end) || *right_end == '_' || *right_end == '|')
+		while (isalnum(*right_end) || *right_end == '_' || *right_end == '|')
 			++right_end;
 
-		अगर (है_अक्षर(*right)) अणु
-			काष्ठा syscall_arg_fmt *fmt;
-			पूर्णांक left_size = tok - left,
+		if (isalpha(*right)) {
+			struct syscall_arg_fmt *fmt;
+			int left_size = tok - left,
 			    right_size = right_end - right;
-			अक्षर arg[128];
+			char arg[128];
 
-			जबतक (है_खाली(left[left_size - 1]))
+			while (isspace(left[left_size - 1]))
 				--left_size;
 
-			scnम_लिखो(arg, माप(arg), "%.*s", left_size, left);
+			scnprintf(arg, sizeof(arg), "%.*s", left_size, left);
 
 			fmt = evsel__find_syscall_arg_fmt_by_name(evsel, arg);
-			अगर (fmt == शून्य) अणु
+			if (fmt == NULL) {
 				pr_err("\"%s\" not found in \"%s\", can't set filter \"%s\"\n",
 				       arg, evsel->name, evsel->filter);
-				वापस -1;
-			पूर्ण
+				return -1;
+			}
 
 			pr_debug2("trying to expand \"%s\" \"%.*s\" \"%.*s\" -> ",
-				 arg, (पूर्णांक)(right - tok), tok, right_size, right);
+				 arg, (int)(right - tok), tok, right_size, right);
 
-			अगर (fmt->म_से_अदीर्घ) अणु
+			if (fmt->strtoul) {
 				u64 val;
-				काष्ठा syscall_arg syscall_arg = अणु
+				struct syscall_arg syscall_arg = {
 					.parm = fmt->parm,
-				पूर्ण;
+				};
 
-				अगर (fmt->म_से_अदीर्घ(right, right_size, &syscall_arg, &val)) अणु
-					अक्षर *n, expansion[19];
-					पूर्णांक expansion_lenght = scnम_लिखो(expansion, माप(expansion), "%#" PRIx64, val);
-					पूर्णांक expansion_offset = right - new_filter;
+				if (fmt->strtoul(right, right_size, &syscall_arg, &val)) {
+					char *n, expansion[19];
+					int expansion_lenght = scnprintf(expansion, sizeof(expansion), "%#" PRIx64, val);
+					int expansion_offset = right - new_filter;
 
 					pr_debug("%s", expansion);
 
-					अगर (aप्र_लिखो(&n, "%.*s%s%s", expansion_offset, new_filter, expansion, right_end) < 0) अणु
+					if (asprintf(&n, "%.*s%s%s", expansion_offset, new_filter, expansion, right_end) < 0) {
 						pr_debug(" out of memory!\n");
-						मुक्त(new_filter);
-						वापस -1;
-					पूर्ण
-					अगर (new_filter != evsel->filter)
-						मुक्त(new_filter);
+						free(new_filter);
+						return -1;
+					}
+					if (new_filter != evsel->filter)
+						free(new_filter);
 					left = n + expansion_offset + expansion_lenght;
 					new_filter = n;
-				पूर्ण अन्यथा अणु
+				} else {
 					pr_err("\"%.*s\" not found for \"%s\" in \"%s\", can't set filter \"%s\"\n",
 					       right_size, right, arg, evsel->name, evsel->filter);
-					वापस -1;
-				पूर्ण
-			पूर्ण अन्यथा अणु
+					return -1;
+				}
+			} else {
 				pr_err("No resolver (strtoul) for \"%s\" in \"%s\", can't set filter \"%s\"\n",
 				       arg, evsel->name, evsel->filter);
-				वापस -1;
-			पूर्ण
+				return -1;
+			}
 
 			pr_debug("\n");
-		पूर्ण अन्यथा अणु
+		} else {
 			left = right_end;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (new_filter != evsel->filter) अणु
+	if (new_filter != evsel->filter) {
 		pr_debug("New filter for %s: %s\n", evsel->name, new_filter);
 		evsel__set_filter(evsel, new_filter);
-		मुक्त(new_filter);
-	पूर्ण
+		free(new_filter);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक trace__expand_filters(काष्ठा trace *trace, काष्ठा evsel **err_evsel)
-अणु
-	काष्ठा evlist *evlist = trace->evlist;
-	काष्ठा evsel *evsel;
+static int trace__expand_filters(struct trace *trace, struct evsel **err_evsel)
+{
+	struct evlist *evlist = trace->evlist;
+	struct evsel *evsel;
 
-	evlist__क्रम_each_entry(evlist, evsel) अणु
-		अगर (evsel->filter == शून्य)
-			जारी;
+	evlist__for_each_entry(evlist, evsel) {
+		if (evsel->filter == NULL)
+			continue;
 
-		अगर (trace__expand_filter(trace, evsel)) अणु
+		if (trace__expand_filter(trace, evsel)) {
 			*err_evsel = evsel;
-			वापस -1;
-		पूर्ण
-	पूर्ण
+			return -1;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक trace__run(काष्ठा trace *trace, पूर्णांक argc, स्थिर अक्षर **argv)
-अणु
-	काष्ठा evlist *evlist = trace->evlist;
-	काष्ठा evsel *evsel, *pgfault_maj = शून्य, *pgfault_min = शून्य;
-	पूर्णांक err = -1, i;
-	अचिन्हित दीर्घ beक्रमe;
-	स्थिर bool विभाजनs = argc > 0;
+static int trace__run(struct trace *trace, int argc, const char **argv)
+{
+	struct evlist *evlist = trace->evlist;
+	struct evsel *evsel, *pgfault_maj = NULL, *pgfault_min = NULL;
+	int err = -1, i;
+	unsigned long before;
+	const bool forks = argc > 0;
 	bool draining = false;
 
 	trace->live = true;
 
-	अगर (!trace->raw_augmented_syscalls) अणु
-		अगर (trace->trace_syscalls && trace__add_syscall_newtp(trace))
-			जाओ out_error_raw_syscalls;
+	if (!trace->raw_augmented_syscalls) {
+		if (trace->trace_syscalls && trace__add_syscall_newtp(trace))
+			goto out_error_raw_syscalls;
 
-		अगर (trace->trace_syscalls)
+		if (trace->trace_syscalls)
 			trace->vfs_getname = evlist__add_vfs_getname(evlist);
-	पूर्ण
+	}
 
-	अगर ((trace->trace_pgfaults & TRACE_PFMAJ)) अणु
+	if ((trace->trace_pgfaults & TRACE_PFMAJ)) {
 		pgfault_maj = evsel__new_pgfault(PERF_COUNT_SW_PAGE_FAULTS_MAJ);
-		अगर (pgfault_maj == शून्य)
-			जाओ out_error_mem;
+		if (pgfault_maj == NULL)
+			goto out_error_mem;
 		evsel__config_callchain(pgfault_maj, &trace->opts, &callchain_param);
 		evlist__add(evlist, pgfault_maj);
-	पूर्ण
+	}
 
-	अगर ((trace->trace_pgfaults & TRACE_PFMIN)) अणु
+	if ((trace->trace_pgfaults & TRACE_PFMIN)) {
 		pgfault_min = evsel__new_pgfault(PERF_COUNT_SW_PAGE_FAULTS_MIN);
-		अगर (pgfault_min == शून्य)
-			जाओ out_error_mem;
+		if (pgfault_min == NULL)
+			goto out_error_mem;
 		evsel__config_callchain(pgfault_min, &trace->opts, &callchain_param);
 		evlist__add(evlist, pgfault_min);
-	पूर्ण
+	}
 
-	अगर (trace->sched &&
-	    evlist__add_newtp(evlist, "sched", "sched_stat_runtime", trace__sched_stat_runसमय))
-		जाओ out_error_sched_stat_runसमय;
+	if (trace->sched &&
+	    evlist__add_newtp(evlist, "sched", "sched_stat_runtime", trace__sched_stat_runtime))
+		goto out_error_sched_stat_runtime;
 	/*
 	 * If a global cgroup was set, apply it to all the events without an
 	 * explicit cgroup. I.e.:
 	 *
-	 * 	trace -G A -e sched:*चयन
+	 * 	trace -G A -e sched:*switch
 	 *
-	 * Will set all raw_syscalls:sys_अणुenter,निकासपूर्ण, pgfault, vfs_getname, etc
-	 * _and_ sched:sched_चयन to the 'A' cgroup, जबतक:
+	 * Will set all raw_syscalls:sys_{enter,exit}, pgfault, vfs_getname, etc
+	 * _and_ sched:sched_switch to the 'A' cgroup, while:
 	 *
-	 * trace -e sched:*चयन -G A
+	 * trace -e sched:*switch -G A
 	 *
-	 * will only set the sched:sched_चयन event to the 'A' cgroup, all the
-	 * other events (raw_syscalls:sys_अणुenter,निकासपूर्ण, etc are left "without"
+	 * will only set the sched:sched_switch event to the 'A' cgroup, all the
+	 * other events (raw_syscalls:sys_{enter,exit}, etc are left "without"
 	 * a cgroup (on the root cgroup, sys wide, etc).
 	 *
 	 * Multiple cgroups:
 	 *
-	 * trace -G A -e sched:*चयन -G B
+	 * trace -G A -e sched:*switch -G B
 	 *
-	 * the syscall ones go to the 'A' cgroup, the sched:sched_चयन goes
+	 * the syscall ones go to the 'A' cgroup, the sched:sched_switch goes
 	 * to the 'B' cgroup.
 	 *
-	 * evlist__set_शेष_cgroup() grअसल a reference of the passed cgroup
-	 * only क्रम the evsels still without a cgroup, i.e. evsel->cgroup == शून्य.
+	 * evlist__set_default_cgroup() grabs a reference of the passed cgroup
+	 * only for the evsels still without a cgroup, i.e. evsel->cgroup == NULL.
 	 */
-	अगर (trace->cgroup)
-		evlist__set_शेष_cgroup(trace->evlist, trace->cgroup);
+	if (trace->cgroup)
+		evlist__set_default_cgroup(trace->evlist, trace->cgroup);
 
 	err = evlist__create_maps(evlist, &trace->opts.target);
-	अगर (err < 0) अणु
-		ख_लिखो(trace->output, "Problems parsing the target to trace, check your options!\n");
-		जाओ out_delete_evlist;
-	पूर्ण
+	if (err < 0) {
+		fprintf(trace->output, "Problems parsing the target to trace, check your options!\n");
+		goto out_delete_evlist;
+	}
 
 	err = trace__symbols_init(trace, evlist);
-	अगर (err < 0) अणु
-		ख_लिखो(trace->output, "Problems initializing symbol libraries!\n");
-		जाओ out_delete_evlist;
-	पूर्ण
+	if (err < 0) {
+		fprintf(trace->output, "Problems initializing symbol libraries!\n");
+		goto out_delete_evlist;
+	}
 
 	evlist__config(evlist, &trace->opts, &callchain_param);
 
-	अगर (विभाजनs) अणु
-		err = evlist__prepare_workload(evlist, &trace->opts.target, argv, false, शून्य);
-		अगर (err < 0) अणु
-			ख_लिखो(trace->output, "Couldn't run the workload!\n");
-			जाओ out_delete_evlist;
-		पूर्ण
-	पूर्ण
+	if (forks) {
+		err = evlist__prepare_workload(evlist, &trace->opts.target, argv, false, NULL);
+		if (err < 0) {
+			fprintf(trace->output, "Couldn't run the workload!\n");
+			goto out_delete_evlist;
+		}
+	}
 
-	err = evlist__खोलो(evlist);
-	अगर (err < 0)
-		जाओ out_error_खोलो;
+	err = evlist__open(evlist);
+	if (err < 0)
+		goto out_error_open;
 
 	err = bpf__apply_obj_config();
-	अगर (err) अणु
-		अक्षर errbuf[बफ_मान];
+	if (err) {
+		char errbuf[BUFSIZ];
 
-		bpf__म_त्रुटि_apply_obj_config(err, errbuf, माप(errbuf));
+		bpf__strerror_apply_obj_config(err, errbuf, sizeof(errbuf));
 		pr_err("ERROR: Apply config to BPF failed: %s\n",
 			 errbuf);
-		जाओ out_error_खोलो;
-	पूर्ण
+		goto out_error_open;
+	}
 
 	err = trace__set_filter_pids(trace);
-	अगर (err < 0)
-		जाओ out_error_mem;
+	if (err < 0)
+		goto out_error_mem;
 
-	अगर (trace->syscalls.map)
+	if (trace->syscalls.map)
 		trace__init_syscalls_bpf_map(trace);
 
-	अगर (trace->syscalls.prog_array.sys_enter)
+	if (trace->syscalls.prog_array.sys_enter)
 		trace__init_syscalls_bpf_prog_array_maps(trace);
 
-	अगर (trace->ev_qualअगरier_ids.nr > 0) अणु
-		err = trace__set_ev_qualअगरier_filter(trace);
-		अगर (err < 0)
-			जाओ out_त्रुटि_सं;
+	if (trace->ev_qualifier_ids.nr > 0) {
+		err = trace__set_ev_qualifier_filter(trace);
+		if (err < 0)
+			goto out_errno;
 
-		अगर (trace->syscalls.events.sys_निकास) अणु
+		if (trace->syscalls.events.sys_exit) {
 			pr_debug("event qualifier tracepoint filter: %s\n",
-				 trace->syscalls.events.sys_निकास->filter);
-		पूर्ण
-	पूर्ण
+				 trace->syscalls.events.sys_exit->filter);
+		}
+	}
 
 	/*
 	 * If the "close" syscall is not traced, then we will not have the
-	 * opportunity to, in syscall_arg__scnम_लिखो_बंद_fd() invalidate the
+	 * opportunity to, in syscall_arg__scnprintf_close_fd() invalidate the
 	 * fd->pathname table and were ending up showing the last value set by
-	 * syscalls खोलोing a pathname and associating it with a descriptor or
-	 * पढ़ोing it from /proc/pid/fd/ in हालs where that करोesn't make
+	 * syscalls opening a pathname and associating it with a descriptor or
+	 * reading it from /proc/pid/fd/ in cases where that doesn't make
 	 * sense.
 	 *
-	 *  So just disable this beautअगरier (SCA_FD, SCA_FDAT) when 'close' is
+	 *  So just disable this beautifier (SCA_FD, SCA_FDAT) when 'close' is
 	 *  not in use.
 	 */
 	trace->fd_path_disabled = !trace__syscall_enabled(trace, syscalltbl__id(trace->sctbl, "close"));
 
 	err = trace__expand_filters(trace, &evsel);
-	अगर (err)
-		जाओ out_delete_evlist;
+	if (err)
+		goto out_delete_evlist;
 	err = evlist__apply_filters(evlist, &evsel);
-	अगर (err < 0)
-		जाओ out_error_apply_filters;
+	if (err < 0)
+		goto out_error_apply_filters;
 
-	अगर (trace->dump.map)
-		bpf_map__ख_लिखो(trace->dump.map, trace->output);
+	if (trace->dump.map)
+		bpf_map__fprintf(trace->dump.map, trace->output);
 
 	err = evlist__mmap(evlist, trace->opts.mmap_pages);
-	अगर (err < 0)
-		जाओ out_error_mmap;
+	if (err < 0)
+		goto out_error_mmap;
 
-	अगर (!target__none(&trace->opts.target) && !trace->opts.initial_delay)
+	if (!target__none(&trace->opts.target) && !trace->opts.initial_delay)
 		evlist__enable(evlist);
 
-	अगर (विभाजनs)
+	if (forks)
 		evlist__start_workload(evlist);
 
-	अगर (trace->opts.initial_delay) अणु
+	if (trace->opts.initial_delay) {
 		usleep(trace->opts.initial_delay * 1000);
 		evlist__enable(evlist);
-	पूर्ण
+	}
 
-	trace->multiple_thपढ़ोs = perf_thपढ़ो_map__pid(evlist->core.thपढ़ोs, 0) == -1 ||
-				  evlist->core.thपढ़ोs->nr > 1 ||
+	trace->multiple_threads = perf_thread_map__pid(evlist->core.threads, 0) == -1 ||
+				  evlist->core.threads->nr > 1 ||
 				  evlist__first(evlist)->core.attr.inherit;
 
 	/*
-	 * Now that we alपढ़ोy used evsel->core.attr to ask the kernel to setup the
+	 * Now that we already used evsel->core.attr to ask the kernel to setup the
 	 * events, lets reuse evsel->core.attr.sample_max_stack as the limit in
 	 * trace__resolve_callchain(), allowing per-event max-stack settings
 	 * to override an explicitly set --max-stack global setting.
 	 */
-	evlist__क्रम_each_entry(evlist, evsel) अणु
-		अगर (evsel__has_callchain(evsel) &&
+	evlist__for_each_entry(evlist, evsel) {
+		if (evsel__has_callchain(evsel) &&
 		    evsel->core.attr.sample_max_stack == 0)
 			evsel->core.attr.sample_max_stack = trace->max_stack;
-	पूर्ण
+	}
 again:
-	beक्रमe = trace->nr_events;
+	before = trace->nr_events;
 
-	क्रम (i = 0; i < evlist->core.nr_mmaps; i++) अणु
-		जोड़ perf_event *event;
-		काष्ठा mmap *md;
+	for (i = 0; i < evlist->core.nr_mmaps; i++) {
+		union perf_event *event;
+		struct mmap *md;
 
 		md = &evlist->mmap[i];
-		अगर (perf_mmap__पढ़ो_init(&md->core) < 0)
-			जारी;
+		if (perf_mmap__read_init(&md->core) < 0)
+			continue;
 
-		जबतक ((event = perf_mmap__पढ़ो_event(&md->core)) != शून्य) अणु
+		while ((event = perf_mmap__read_event(&md->core)) != NULL) {
 			++trace->nr_events;
 
 			err = trace__deliver_event(trace, event);
-			अगर (err)
-				जाओ out_disable;
+			if (err)
+				goto out_disable;
 
 			perf_mmap__consume(&md->core);
 
-			अगर (पूर्णांकerrupted)
-				जाओ out_disable;
+			if (interrupted)
+				goto out_disable;
 
-			अगर (करोne && !draining) अणु
+			if (done && !draining) {
 				evlist__disable(evlist);
 				draining = true;
-			पूर्ण
-		पूर्ण
-		perf_mmap__पढ़ो_करोne(&md->core);
-	पूर्ण
+			}
+		}
+		perf_mmap__read_done(&md->core);
+	}
 
-	अगर (trace->nr_events == beक्रमe) अणु
-		पूर्णांक समयout = करोne ? 100 : -1;
+	if (trace->nr_events == before) {
+		int timeout = done ? 100 : -1;
 
-		अगर (!draining && evlist__poll(evlist, समयout) > 0) अणु
-			अगर (evlist__filter_pollfd(evlist, POLLERR | POLLHUP | POLLNVAL) == 0)
+		if (!draining && evlist__poll(evlist, timeout) > 0) {
+			if (evlist__filter_pollfd(evlist, POLLERR | POLLHUP | POLLNVAL) == 0)
 				draining = true;
 
-			जाओ again;
-		पूर्ण अन्यथा अणु
-			अगर (trace__flush_events(trace))
-				जाओ out_disable;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		जाओ again;
-	पूर्ण
+			goto again;
+		} else {
+			if (trace__flush_events(trace))
+				goto out_disable;
+		}
+	} else {
+		goto again;
+	}
 
 out_disable:
-	thपढ़ो__zput(trace->current);
+	thread__zput(trace->current);
 
 	evlist__disable(evlist);
 
-	अगर (trace->sort_events)
+	if (trace->sort_events)
 		ordered_events__flush(&trace->oe.data, OE_FLUSH__FINAL);
 
-	अगर (!err) अणु
-		अगर (trace->summary)
-			trace__ख_लिखो_thपढ़ो_summary(trace, trace->output);
+	if (!err) {
+		if (trace->summary)
+			trace__fprintf_thread_summary(trace, trace->output);
 
-		अगर (trace->show_tool_stats) अणु
-			ख_लिखो(trace->output, "Stats:\n "
+		if (trace->show_tool_stats) {
+			fprintf(trace->output, "Stats:\n "
 					       " vfs_getname : %" PRIu64 "\n"
 					       " proc_getname: %" PRIu64 "\n",
 				trace->stats.vfs_getname,
 				trace->stats.proc_getname);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 out_delete_evlist:
-	trace__symbols__निकास(trace);
+	trace__symbols__exit(trace);
 
 	evlist__delete(evlist);
 	cgroup__put(trace->cgroup);
-	trace->evlist = शून्य;
+	trace->evlist = NULL;
 	trace->live = false;
-	वापस err;
-अणु
-	अक्षर errbuf[बफ_मान];
+	return err;
+{
+	char errbuf[BUFSIZ];
 
-out_error_sched_stat_runसमय:
-	tracing_path__म_त्रुटि_खोलो_tp(त्रुटि_सं, errbuf, माप(errbuf), "sched", "sched_stat_runtime");
-	जाओ out_error;
+out_error_sched_stat_runtime:
+	tracing_path__strerror_open_tp(errno, errbuf, sizeof(errbuf), "sched", "sched_stat_runtime");
+	goto out_error;
 
 out_error_raw_syscalls:
-	tracing_path__म_त्रुटि_खोलो_tp(त्रुटि_सं, errbuf, माप(errbuf), "raw_syscalls", "sys_(enter|exit)");
-	जाओ out_error;
+	tracing_path__strerror_open_tp(errno, errbuf, sizeof(errbuf), "raw_syscalls", "sys_(enter|exit)");
+	goto out_error;
 
 out_error_mmap:
-	evlist__म_त्रुटि_mmap(evlist, त्रुटि_सं, errbuf, माप(errbuf));
-	जाओ out_error;
+	evlist__strerror_mmap(evlist, errno, errbuf, sizeof(errbuf));
+	goto out_error;
 
-out_error_खोलो:
-	evlist__म_त्रुटि_खोलो(evlist, त्रुटि_सं, errbuf, माप(errbuf));
+out_error_open:
+	evlist__strerror_open(evlist, errno, errbuf, sizeof(errbuf));
 
 out_error:
-	ख_लिखो(trace->output, "%s\n", errbuf);
-	जाओ out_delete_evlist;
+	fprintf(trace->output, "%s\n", errbuf);
+	goto out_delete_evlist;
 
 out_error_apply_filters:
-	ख_लिखो(trace->output,
+	fprintf(trace->output,
 		"Failed to set filter \"%s\" on event %s with %d (%s)\n",
-		evsel->filter, evsel__name(evsel), त्रुटि_सं,
-		str_error_r(त्रुटि_सं, errbuf, माप(errbuf)));
-	जाओ out_delete_evlist;
-पूर्ण
+		evsel->filter, evsel__name(evsel), errno,
+		str_error_r(errno, errbuf, sizeof(errbuf)));
+	goto out_delete_evlist;
+}
 out_error_mem:
-	ख_लिखो(trace->output, "Not enough memory to run!\n");
-	जाओ out_delete_evlist;
+	fprintf(trace->output, "Not enough memory to run!\n");
+	goto out_delete_evlist;
 
-out_त्रुटि_सं:
-	ख_लिखो(trace->output, "errno=%d,%s\n", त्रुटि_सं, म_त्रुटि(त्रुटि_सं));
-	जाओ out_delete_evlist;
-पूर्ण
+out_errno:
+	fprintf(trace->output, "errno=%d,%s\n", errno, strerror(errno));
+	goto out_delete_evlist;
+}
 
-अटल पूर्णांक trace__replay(काष्ठा trace *trace)
-अणु
-	स्थिर काष्ठा evsel_str_handler handlers[] = अणु
-		अणु "probe:vfs_getname",	     trace__vfs_getname, पूर्ण,
-	पूर्ण;
-	काष्ठा perf_data data = अणु
+static int trace__replay(struct trace *trace)
+{
+	const struct evsel_str_handler handlers[] = {
+		{ "probe:vfs_getname",	     trace__vfs_getname, },
+	};
+	struct perf_data data = {
 		.path  = input_name,
 		.mode  = PERF_DATA_MODE_READ,
-		.क्रमce = trace->क्रमce,
-	पूर्ण;
-	काष्ठा perf_session *session;
-	काष्ठा evsel *evsel;
-	पूर्णांक err = -1;
+		.force = trace->force,
+	};
+	struct perf_session *session;
+	struct evsel *evsel;
+	int err = -1;
 
 	trace->tool.sample	  = trace__process_sample;
 	trace->tool.mmap	  = perf_event__process_mmap;
 	trace->tool.mmap2	  = perf_event__process_mmap2;
 	trace->tool.comm	  = perf_event__process_comm;
-	trace->tool.निकास	  = perf_event__process_निकास;
-	trace->tool.विभाजन	  = perf_event__process_विभाजन;
+	trace->tool.exit	  = perf_event__process_exit;
+	trace->tool.fork	  = perf_event__process_fork;
 	trace->tool.attr	  = perf_event__process_attr;
 	trace->tool.tracing_data  = perf_event__process_tracing_data;
 	trace->tool.build_id	  = perf_event__process_build_id;
 	trace->tool.namespaces	  = perf_event__process_namespaces;
 
 	trace->tool.ordered_events = true;
-	trace->tool.ordering_requires_बारtamps = true;
+	trace->tool.ordering_requires_timestamps = true;
 
 	/* add tid to output */
-	trace->multiple_thपढ़ोs = true;
+	trace->multiple_threads = true;
 
 	session = perf_session__new(&data, false, &trace->tool);
-	अगर (IS_ERR(session))
-		वापस PTR_ERR(session);
+	if (IS_ERR(session))
+		return PTR_ERR(session);
 
-	अगर (trace->opts.target.pid)
+	if (trace->opts.target.pid)
 		symbol_conf.pid_list_str = strdup(trace->opts.target.pid);
 
-	अगर (trace->opts.target.tid)
+	if (trace->opts.target.tid)
 		symbol_conf.tid_list_str = strdup(trace->opts.target.tid);
 
-	अगर (symbol__init(&session->header.env) < 0)
-		जाओ out;
+	if (symbol__init(&session->header.env) < 0)
+		goto out;
 
 	trace->host = &session->machines.host;
 
-	err = perf_session__set_tracepoपूर्णांकs_handlers(session, handlers);
-	अगर (err)
-		जाओ out;
+	err = perf_session__set_tracepoints_handlers(session, handlers);
+	if (err)
+		goto out;
 
-	evsel = evlist__find_tracepoपूर्णांक_by_name(session->evlist, "raw_syscalls:sys_enter");
+	evsel = evlist__find_tracepoint_by_name(session->evlist, "raw_syscalls:sys_enter");
 	/* older kernels have syscalls tp versus raw_syscalls */
-	अगर (evsel == शून्य)
-		evsel = evlist__find_tracepoपूर्णांक_by_name(session->evlist, "syscalls:sys_enter");
+	if (evsel == NULL)
+		evsel = evlist__find_tracepoint_by_name(session->evlist, "syscalls:sys_enter");
 
-	अगर (evsel &&
+	if (evsel &&
 	    (evsel__init_raw_syscall_tp(evsel, trace__sys_enter) < 0 ||
-	    perf_evsel__init_sc_tp_ptr_field(evsel, args))) अणु
+	    perf_evsel__init_sc_tp_ptr_field(evsel, args))) {
 		pr_err("Error during initialize raw_syscalls:sys_enter event\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	evsel = evlist__find_tracepoपूर्णांक_by_name(session->evlist, "raw_syscalls:sys_exit");
-	अगर (evsel == शून्य)
-		evsel = evlist__find_tracepoपूर्णांक_by_name(session->evlist, "syscalls:sys_exit");
-	अगर (evsel &&
-	    (evsel__init_raw_syscall_tp(evsel, trace__sys_निकास) < 0 ||
-	    perf_evsel__init_sc_tp_uपूर्णांक_field(evsel, ret))) अणु
+	evsel = evlist__find_tracepoint_by_name(session->evlist, "raw_syscalls:sys_exit");
+	if (evsel == NULL)
+		evsel = evlist__find_tracepoint_by_name(session->evlist, "syscalls:sys_exit");
+	if (evsel &&
+	    (evsel__init_raw_syscall_tp(evsel, trace__sys_exit) < 0 ||
+	    perf_evsel__init_sc_tp_uint_field(evsel, ret))) {
 		pr_err("Error during initialize raw_syscalls:sys_exit event\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	evlist__क्रम_each_entry(session->evlist, evsel) अणु
-		अगर (evsel->core.attr.type == PERF_TYPE_SOFTWARE &&
+	evlist__for_each_entry(session->evlist, evsel) {
+		if (evsel->core.attr.type == PERF_TYPE_SOFTWARE &&
 		    (evsel->core.attr.config == PERF_COUNT_SW_PAGE_FAULTS_MAJ ||
 		     evsel->core.attr.config == PERF_COUNT_SW_PAGE_FAULTS_MIN ||
 		     evsel->core.attr.config == PERF_COUNT_SW_PAGE_FAULTS))
 			evsel->handler = trace__pgfault;
-	पूर्ण
+	}
 
 	setup_pager();
 
 	err = perf_session__process_events(session);
-	अगर (err)
+	if (err)
 		pr_err("Failed to process events, error %d", err);
 
-	अन्यथा अगर (trace->summary)
-		trace__ख_लिखो_thपढ़ो_summary(trace, trace->output);
+	else if (trace->summary)
+		trace__fprintf_thread_summary(trace, trace->output);
 
 out:
 	perf_session__delete(session);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल माप_प्रकार trace__ख_लिखो_thपढ़ोs_header(खाता *fp)
-अणु
-	माप_प्रकार prपूर्णांकed;
+static size_t trace__fprintf_threads_header(FILE *fp)
+{
+	size_t printed;
 
-	prपूर्णांकed  = ख_लिखो(fp, "\n Summary of events:\n\n");
+	printed  = fprintf(fp, "\n Summary of events:\n\n");
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}
 
 DEFINE_RESORT_RB(syscall_stats, a->msecs > b->msecs,
-	काष्ठा syscall_stats *stats;
-	द्विगुन		     msecs;
-	पूर्णांक		     syscall;
+	struct syscall_stats *stats;
+	double		     msecs;
+	int		     syscall;
 )
-अणु
-	काष्ठा पूर्णांक_node *source = rb_entry(nd, काष्ठा पूर्णांक_node, rb_node);
-	काष्ठा syscall_stats *stats = source->priv;
+{
+	struct int_node *source = rb_entry(nd, struct int_node, rb_node);
+	struct syscall_stats *stats = source->priv;
 
 	entry->syscall = source->i;
 	entry->stats   = stats;
 	entry->msecs   = stats ? (u64)stats->stats.n * (avg_stats(&stats->stats) / NSEC_PER_MSEC) : 0;
-पूर्ण
+}
 
-अटल माप_प्रकार thपढ़ो__dump_stats(काष्ठा thपढ़ो_trace *ttrace,
-				 काष्ठा trace *trace, खाता *fp)
-अणु
-	माप_प्रकार prपूर्णांकed = 0;
-	काष्ठा syscall *sc;
-	काष्ठा rb_node *nd;
+static size_t thread__dump_stats(struct thread_trace *ttrace,
+				 struct trace *trace, FILE *fp)
+{
+	size_t printed = 0;
+	struct syscall *sc;
+	struct rb_node *nd;
 	DECLARE_RESORT_RB_INTLIST(syscall_stats, ttrace->syscall_stats);
 
-	अगर (syscall_stats == शून्य)
-		वापस 0;
+	if (syscall_stats == NULL)
+		return 0;
 
-	prपूर्णांकed += ख_लिखो(fp, "\n");
+	printed += fprintf(fp, "\n");
 
-	prपूर्णांकed += ख_लिखो(fp, "   syscall            calls  errors  total       min       avg       max       stddev\n");
-	prपूर्णांकed += ख_लिखो(fp, "                                     (msec)    (msec)    (msec)    (msec)        (%%)\n");
-	prपूर्णांकed += ख_लिखो(fp, "   --------------- --------  ------ -------- --------- --------- ---------     ------\n");
+	printed += fprintf(fp, "   syscall            calls  errors  total       min       avg       max       stddev\n");
+	printed += fprintf(fp, "                                     (msec)    (msec)    (msec)    (msec)        (%%)\n");
+	printed += fprintf(fp, "   --------------- --------  ------ -------- --------- --------- ---------     ------\n");
 
-	resort_rb__क्रम_each_entry(nd, syscall_stats) अणु
-		काष्ठा syscall_stats *stats = syscall_stats_entry->stats;
-		अगर (stats) अणु
-			द्विगुन min = (द्विगुन)(stats->stats.min) / NSEC_PER_MSEC;
-			द्विगुन max = (द्विगुन)(stats->stats.max) / NSEC_PER_MSEC;
-			द्विगुन avg = avg_stats(&stats->stats);
-			द्विगुन pct;
+	resort_rb__for_each_entry(nd, syscall_stats) {
+		struct syscall_stats *stats = syscall_stats_entry->stats;
+		if (stats) {
+			double min = (double)(stats->stats.min) / NSEC_PER_MSEC;
+			double max = (double)(stats->stats.max) / NSEC_PER_MSEC;
+			double avg = avg_stats(&stats->stats);
+			double pct;
 			u64 n = (u64)stats->stats.n;
 
 			pct = avg ? 100.0 * stddev_stats(&stats->stats) / avg : 0.0;
 			avg /= NSEC_PER_MSEC;
 
 			sc = &trace->syscalls.table[syscall_stats_entry->syscall];
-			prपूर्णांकed += ख_लिखो(fp, "   %-15s", sc->name);
-			prपूर्णांकed += ख_लिखो(fp, " %8" PRIu64 " %6" PRIu64 " %9.3f %9.3f %9.3f",
+			printed += fprintf(fp, "   %-15s", sc->name);
+			printed += fprintf(fp, " %8" PRIu64 " %6" PRIu64 " %9.3f %9.3f %9.3f",
 					   n, stats->nr_failures, syscall_stats_entry->msecs, min, avg);
-			prपूर्णांकed += ख_लिखो(fp, " %9.3f %9.2f%%\n", max, pct);
+			printed += fprintf(fp, " %9.3f %9.2f%%\n", max, pct);
 
-			अगर (trace->त्रुटि_सं_summary && stats->nr_failures) अणु
-				स्थिर अक्षर *arch_name = perf_env__arch(trace->host->env);
-				पूर्णांक e;
+			if (trace->errno_summary && stats->nr_failures) {
+				const char *arch_name = perf_env__arch(trace->host->env);
+				int e;
 
-				क्रम (e = 0; e < stats->max_त्रुटि_सं; ++e) अणु
-					अगर (stats->त्रुटि_संs[e] != 0)
-						ख_लिखो(fp, "\t\t\t\t%s: %d\n", arch_syscalls__strत्रुटि_सं(arch_name, e + 1), stats->त्रुटि_संs[e]);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				for (e = 0; e < stats->max_errno; ++e) {
+					if (stats->errnos[e] != 0)
+						fprintf(fp, "\t\t\t\t%s: %d\n", arch_syscalls__strerrno(arch_name, e + 1), stats->errnos[e]);
+				}
+			}
+		}
+	}
 
 	resort_rb__delete(syscall_stats);
-	prपूर्णांकed += ख_लिखो(fp, "\n\n");
+	printed += fprintf(fp, "\n\n");
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}
 
-अटल माप_प्रकार trace__ख_लिखो_thपढ़ो(खाता *fp, काष्ठा thपढ़ो *thपढ़ो, काष्ठा trace *trace)
-अणु
-	माप_प्रकार prपूर्णांकed = 0;
-	काष्ठा thपढ़ो_trace *ttrace = thपढ़ो__priv(thपढ़ो);
-	द्विगुन ratio;
+static size_t trace__fprintf_thread(FILE *fp, struct thread *thread, struct trace *trace)
+{
+	size_t printed = 0;
+	struct thread_trace *ttrace = thread__priv(thread);
+	double ratio;
 
-	अगर (ttrace == शून्य)
-		वापस 0;
+	if (ttrace == NULL)
+		return 0;
 
-	ratio = (द्विगुन)ttrace->nr_events / trace->nr_events * 100.0;
+	ratio = (double)ttrace->nr_events / trace->nr_events * 100.0;
 
-	prपूर्णांकed += ख_लिखो(fp, " %s (%d), ", thपढ़ो__comm_str(thपढ़ो), thपढ़ो->tid);
-	prपूर्णांकed += ख_लिखो(fp, "%lu events, ", ttrace->nr_events);
-	prपूर्णांकed += ख_लिखो(fp, "%.1f%%", ratio);
-	अगर (ttrace->pfmaj)
-		prपूर्णांकed += ख_लिखो(fp, ", %lu majfaults", ttrace->pfmaj);
-	अगर (ttrace->pfmin)
-		prपूर्णांकed += ख_लिखो(fp, ", %lu minfaults", ttrace->pfmin);
-	अगर (trace->sched)
-		prपूर्णांकed += ख_लिखो(fp, ", %.3f msec\n", ttrace->runसमय_ms);
-	अन्यथा अगर (ख_अक्षर_दो('\n', fp) != खातापूर्ण)
-		++prपूर्णांकed;
+	printed += fprintf(fp, " %s (%d), ", thread__comm_str(thread), thread->tid);
+	printed += fprintf(fp, "%lu events, ", ttrace->nr_events);
+	printed += fprintf(fp, "%.1f%%", ratio);
+	if (ttrace->pfmaj)
+		printed += fprintf(fp, ", %lu majfaults", ttrace->pfmaj);
+	if (ttrace->pfmin)
+		printed += fprintf(fp, ", %lu minfaults", ttrace->pfmin);
+	if (trace->sched)
+		printed += fprintf(fp, ", %.3f msec\n", ttrace->runtime_ms);
+	else if (fputc('\n', fp) != EOF)
+		++printed;
 
-	prपूर्णांकed += thपढ़ो__dump_stats(ttrace, trace, fp);
+	printed += thread__dump_stats(ttrace, trace, fp);
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}
 
-अटल अचिन्हित दीर्घ thपढ़ो__nr_events(काष्ठा thपढ़ो_trace *ttrace)
-अणु
-	वापस ttrace ? ttrace->nr_events : 0;
-पूर्ण
+static unsigned long thread__nr_events(struct thread_trace *ttrace)
+{
+	return ttrace ? ttrace->nr_events : 0;
+}
 
-DEFINE_RESORT_RB(thपढ़ोs, (thपढ़ो__nr_events(a->thपढ़ो->priv) < thपढ़ो__nr_events(b->thपढ़ो->priv)),
-	काष्ठा thपढ़ो *thपढ़ो;
+DEFINE_RESORT_RB(threads, (thread__nr_events(a->thread->priv) < thread__nr_events(b->thread->priv)),
+	struct thread *thread;
 )
-अणु
-	entry->thपढ़ो = rb_entry(nd, काष्ठा thपढ़ो, rb_node);
-पूर्ण
+{
+	entry->thread = rb_entry(nd, struct thread, rb_node);
+}
 
-अटल माप_प्रकार trace__ख_लिखो_thपढ़ो_summary(काष्ठा trace *trace, खाता *fp)
-अणु
-	माप_प्रकार prपूर्णांकed = trace__ख_लिखो_thपढ़ोs_header(fp);
-	काष्ठा rb_node *nd;
-	पूर्णांक i;
+static size_t trace__fprintf_thread_summary(struct trace *trace, FILE *fp)
+{
+	size_t printed = trace__fprintf_threads_header(fp);
+	struct rb_node *nd;
+	int i;
 
-	क्रम (i = 0; i < THREADS__TABLE_SIZE; i++) अणु
-		DECLARE_RESORT_RB_MACHINE_THREADS(thपढ़ोs, trace->host, i);
+	for (i = 0; i < THREADS__TABLE_SIZE; i++) {
+		DECLARE_RESORT_RB_MACHINE_THREADS(threads, trace->host, i);
 
-		अगर (thपढ़ोs == शून्य) अणु
-			ख_लिखो(fp, "%s", "Error sorting output by nr_events!\n");
-			वापस 0;
-		पूर्ण
+		if (threads == NULL) {
+			fprintf(fp, "%s", "Error sorting output by nr_events!\n");
+			return 0;
+		}
 
-		resort_rb__क्रम_each_entry(nd, thपढ़ोs)
-			prपूर्णांकed += trace__ख_लिखो_thपढ़ो(fp, thपढ़ोs_entry->thपढ़ो, trace);
+		resort_rb__for_each_entry(nd, threads)
+			printed += trace__fprintf_thread(fp, threads_entry->thread, trace);
 
-		resort_rb__delete(thपढ़ोs);
-	पूर्ण
-	वापस prपूर्णांकed;
-पूर्ण
+		resort_rb__delete(threads);
+	}
+	return printed;
+}
 
-अटल पूर्णांक trace__set_duration(स्थिर काष्ठा option *opt, स्थिर अक्षर *str,
-			       पूर्णांक unset __maybe_unused)
-अणु
-	काष्ठा trace *trace = opt->value;
+static int trace__set_duration(const struct option *opt, const char *str,
+			       int unset __maybe_unused)
+{
+	struct trace *trace = opt->value;
 
-	trace->duration_filter = म_से_भ(str);
-	वापस 0;
-पूर्ण
+	trace->duration_filter = atof(str);
+	return 0;
+}
 
-अटल पूर्णांक trace__set_filter_pids_from_option(स्थिर काष्ठा option *opt, स्थिर अक्षर *str,
-					      पूर्णांक unset __maybe_unused)
-अणु
-	पूर्णांक ret = -1;
-	माप_प्रकार i;
-	काष्ठा trace *trace = opt->value;
+static int trace__set_filter_pids_from_option(const struct option *opt, const char *str,
+					      int unset __maybe_unused)
+{
+	int ret = -1;
+	size_t i;
+	struct trace *trace = opt->value;
 	/*
-	 * FIXME: पूर्णांकroduce a पूर्णांकarray class, plain parse csv and create a
-	 * अणु पूर्णांक nr, पूर्णांक entries[] पूर्ण काष्ठा...
+	 * FIXME: introduce a intarray class, plain parse csv and create a
+	 * { int nr, int entries[] } struct...
 	 */
-	काष्ठा पूर्णांकlist *list = पूर्णांकlist__new(str);
+	struct intlist *list = intlist__new(str);
 
-	अगर (list == शून्य)
-		वापस -1;
+	if (list == NULL)
+		return -1;
 
-	i = trace->filter_pids.nr = पूर्णांकlist__nr_entries(list) + 1;
-	trace->filter_pids.entries = सुस्मृति(i, माप(pid_t));
+	i = trace->filter_pids.nr = intlist__nr_entries(list) + 1;
+	trace->filter_pids.entries = calloc(i, sizeof(pid_t));
 
-	अगर (trace->filter_pids.entries == शून्य)
-		जाओ out;
+	if (trace->filter_pids.entries == NULL)
+		goto out;
 
 	trace->filter_pids.entries[0] = getpid();
 
-	क्रम (i = 1; i < trace->filter_pids.nr; ++i)
-		trace->filter_pids.entries[i] = पूर्णांकlist__entry(list, i - 1)->i;
+	for (i = 1; i < trace->filter_pids.nr; ++i)
+		trace->filter_pids.entries[i] = intlist__entry(list, i - 1)->i;
 
-	पूर्णांकlist__delete(list);
+	intlist__delete(list);
 	ret = 0;
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक trace__खोलो_output(काष्ठा trace *trace, स्थिर अक्षर *filename)
-अणु
-	काष्ठा stat st;
+static int trace__open_output(struct trace *trace, const char *filename)
+{
+	struct stat st;
 
-	अगर (!stat(filename, &st) && st.st_size) अणु
-		अक्षर oldname[PATH_MAX];
+	if (!stat(filename, &st) && st.st_size) {
+		char oldname[PATH_MAX];
 
-		scnम_लिखो(oldname, माप(oldname), "%s.old", filename);
+		scnprintf(oldname, sizeof(oldname), "%s.old", filename);
 		unlink(oldname);
-		नाम(filename, oldname);
-	पूर्ण
+		rename(filename, oldname);
+	}
 
-	trace->output = ख_खोलो(filename, "w");
+	trace->output = fopen(filename, "w");
 
-	वापस trace->output == शून्य ? -त्रुटि_सं : 0;
-पूर्ण
+	return trace->output == NULL ? -errno : 0;
+}
 
-अटल पूर्णांक parse_pagefaults(स्थिर काष्ठा option *opt, स्थिर अक्षर *str,
-			    पूर्णांक unset __maybe_unused)
-अणु
-	पूर्णांक *trace_pgfaults = opt->value;
+static int parse_pagefaults(const struct option *opt, const char *str,
+			    int unset __maybe_unused)
+{
+	int *trace_pgfaults = opt->value;
 
-	अगर (म_भेद(str, "all") == 0)
+	if (strcmp(str, "all") == 0)
 		*trace_pgfaults |= TRACE_PFMAJ | TRACE_PFMIN;
-	अन्यथा अगर (म_भेद(str, "maj") == 0)
+	else if (strcmp(str, "maj") == 0)
 		*trace_pgfaults |= TRACE_PFMAJ;
-	अन्यथा अगर (म_भेद(str, "min") == 0)
+	else if (strcmp(str, "min") == 0)
 		*trace_pgfaults |= TRACE_PFMIN;
-	अन्यथा
-		वापस -1;
+	else
+		return -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम evlist__set_शेष_evsel_handler(काष्ठा evlist *evlist, व्योम *handler)
-अणु
-	काष्ठा evsel *evsel;
+static void evlist__set_default_evsel_handler(struct evlist *evlist, void *handler)
+{
+	struct evsel *evsel;
 
-	evlist__क्रम_each_entry(evlist, evsel) अणु
-		अगर (evsel->handler == शून्य)
+	evlist__for_each_entry(evlist, evsel) {
+		if (evsel->handler == NULL)
 			evsel->handler = handler;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम evsel__set_syscall_arg_fmt(काष्ठा evsel *evsel, स्थिर अक्षर *name)
-अणु
-	काष्ठा syscall_arg_fmt *fmt = evsel__syscall_arg_fmt(evsel);
+static void evsel__set_syscall_arg_fmt(struct evsel *evsel, const char *name)
+{
+	struct syscall_arg_fmt *fmt = evsel__syscall_arg_fmt(evsel);
 
-	अगर (fmt) अणु
-		काष्ठा syscall_fmt *scfmt = syscall_fmt__find(name);
+	if (fmt) {
+		struct syscall_fmt *scfmt = syscall_fmt__find(name);
 
-		अगर (scfmt) अणु
-			पूर्णांक skip = 0;
+		if (scfmt) {
+			int skip = 0;
 
-			अगर (म_भेद(evsel->tp_क्रमmat->क्रमmat.fields->name, "__syscall_nr") == 0 ||
-			    म_भेद(evsel->tp_क्रमmat->क्रमmat.fields->name, "nr") == 0)
+			if (strcmp(evsel->tp_format->format.fields->name, "__syscall_nr") == 0 ||
+			    strcmp(evsel->tp_format->format.fields->name, "nr") == 0)
 				++skip;
 
-			स_नकल(fmt + skip, scfmt->arg, (evsel->tp_क्रमmat->क्रमmat.nr_fields - skip) * माप(*fmt));
-		पूर्ण
-	पूर्ण
-पूर्ण
+			memcpy(fmt + skip, scfmt->arg, (evsel->tp_format->format.nr_fields - skip) * sizeof(*fmt));
+		}
+	}
+}
 
-अटल पूर्णांक evlist__set_syscall_tp_fields(काष्ठा evlist *evlist)
-अणु
-	काष्ठा evsel *evsel;
+static int evlist__set_syscall_tp_fields(struct evlist *evlist)
+{
+	struct evsel *evsel;
 
-	evlist__क्रम_each_entry(evlist, evsel) अणु
-		अगर (evsel->priv || !evsel->tp_क्रमmat)
-			जारी;
+	evlist__for_each_entry(evlist, evsel) {
+		if (evsel->priv || !evsel->tp_format)
+			continue;
 
-		अगर (म_भेद(evsel->tp_क्रमmat->प्रणाली, "syscalls")) अणु
-			evsel__init_tp_arg_scnम_लिखो(evsel);
-			जारी;
-		पूर्ण
+		if (strcmp(evsel->tp_format->system, "syscalls")) {
+			evsel__init_tp_arg_scnprintf(evsel);
+			continue;
+		}
 
-		अगर (evsel__init_syscall_tp(evsel))
-			वापस -1;
+		if (evsel__init_syscall_tp(evsel))
+			return -1;
 
-		अगर (!म_भेदन(evsel->tp_क्रमmat->name, "sys_enter_", 10)) अणु
-			काष्ठा syscall_tp *sc = __evsel__syscall_tp(evsel);
+		if (!strncmp(evsel->tp_format->name, "sys_enter_", 10)) {
+			struct syscall_tp *sc = __evsel__syscall_tp(evsel);
 
-			अगर (__tp_field__init_ptr(&sc->args, sc->id.offset + माप(u64)))
-				वापस -1;
+			if (__tp_field__init_ptr(&sc->args, sc->id.offset + sizeof(u64)))
+				return -1;
 
-			evsel__set_syscall_arg_fmt(evsel, evsel->tp_क्रमmat->name + माप("sys_enter_") - 1);
-		पूर्ण अन्यथा अगर (!म_भेदन(evsel->tp_क्रमmat->name, "sys_exit_", 9)) अणु
-			काष्ठा syscall_tp *sc = __evsel__syscall_tp(evsel);
+			evsel__set_syscall_arg_fmt(evsel, evsel->tp_format->name + sizeof("sys_enter_") - 1);
+		} else if (!strncmp(evsel->tp_format->name, "sys_exit_", 9)) {
+			struct syscall_tp *sc = __evsel__syscall_tp(evsel);
 
-			अगर (__tp_field__init_uपूर्णांक(&sc->ret, माप(u64), sc->id.offset + माप(u64), evsel->needs_swap))
-				वापस -1;
+			if (__tp_field__init_uint(&sc->ret, sizeof(u64), sc->id.offset + sizeof(u64), evsel->needs_swap))
+				return -1;
 
-			evsel__set_syscall_arg_fmt(evsel, evsel->tp_क्रमmat->name + माप("sys_exit_") - 1);
-		पूर्ण
-	पूर्ण
+			evsel__set_syscall_arg_fmt(evsel, evsel->tp_format->name + sizeof("sys_exit_") - 1);
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * XXX: Hackish, just splitting the combined -e+--event (syscalls
- * (raw_syscalls:अणुsys_अणुenter,निकासपूर्णपूर्ण + events (tracepoपूर्णांकs, HW, SW, etc) to use
- * existing facilities unchanged (trace->ev_qualअगरier + parse_options()).
+ * (raw_syscalls:{sys_{enter,exit}} + events (tracepoints, HW, SW, etc) to use
+ * existing facilities unchanged (trace->ev_qualifier + parse_options()).
  *
- * It'd be better to पूर्णांकroduce a parse_options() variant that would वापस a
+ * It'd be better to introduce a parse_options() variant that would return a
  * list with the terms it didn't match to an event...
  */
-अटल पूर्णांक trace__parse_events_option(स्थिर काष्ठा option *opt, स्थिर अक्षर *str,
-				      पूर्णांक unset __maybe_unused)
-अणु
-	काष्ठा trace *trace = (काष्ठा trace *)opt->value;
-	स्थिर अक्षर *s = str;
-	अक्षर *sep = शून्य, *lists[2] = अणु शून्य, शून्य, पूर्ण;
-	पूर्णांक len = म_माप(str) + 1, err = -1, list, idx;
-	अक्षर *strace_groups_dir = प्रणाली_path(STRACE_GROUPS_सूची);
-	अक्षर group_name[PATH_MAX];
-	काष्ठा syscall_fmt *fmt;
+static int trace__parse_events_option(const struct option *opt, const char *str,
+				      int unset __maybe_unused)
+{
+	struct trace *trace = (struct trace *)opt->value;
+	const char *s = str;
+	char *sep = NULL, *lists[2] = { NULL, NULL, };
+	int len = strlen(str) + 1, err = -1, list, idx;
+	char *strace_groups_dir = system_path(STRACE_GROUPS_DIR);
+	char group_name[PATH_MAX];
+	struct syscall_fmt *fmt;
 
-	अगर (strace_groups_dir == शून्य)
-		वापस -1;
+	if (strace_groups_dir == NULL)
+		return -1;
 
-	अगर (*s == '!') अणु
+	if (*s == '!') {
 		++s;
-		trace->not_ev_qualअगरier = true;
-	पूर्ण
+		trace->not_ev_qualifier = true;
+	}
 
-	जबतक (1) अणु
-		अगर ((sep = म_अक्षर(s, ',')) != शून्य)
+	while (1) {
+		if ((sep = strchr(s, ',')) != NULL)
 			*sep = '\0';
 
 		list = 0;
-		अगर (syscalltbl__id(trace->sctbl, s) >= 0 ||
-		    syscalltbl__strglobmatch_first(trace->sctbl, s, &idx) >= 0) अणु
+		if (syscalltbl__id(trace->sctbl, s) >= 0 ||
+		    syscalltbl__strglobmatch_first(trace->sctbl, s, &idx) >= 0) {
 			list = 1;
-			जाओ करो_concat;
-		पूर्ण
+			goto do_concat;
+		}
 
 		fmt = syscall_fmt__find_by_alias(s);
-		अगर (fmt != शून्य) अणु
+		if (fmt != NULL) {
 			list = 1;
 			s = fmt->name;
-		पूर्ण अन्यथा अणु
-			path__join(group_name, माप(group_name), strace_groups_dir, s);
-			अगर (access(group_name, R_OK) == 0)
+		} else {
+			path__join(group_name, sizeof(group_name), strace_groups_dir, s);
+			if (access(group_name, R_OK) == 0)
 				list = 1;
-		पूर्ण
-करो_concat:
-		अगर (lists[list]) अणु
-			प्र_लिखो(lists[list] + म_माप(lists[list]), ",%s", s);
-		पूर्ण अन्यथा अणु
-			lists[list] = दो_स्मृति(len);
-			अगर (lists[list] == शून्य)
-				जाओ out;
-			म_नकल(lists[list], s);
-		पूर्ण
+		}
+do_concat:
+		if (lists[list]) {
+			sprintf(lists[list] + strlen(lists[list]), ",%s", s);
+		} else {
+			lists[list] = malloc(len);
+			if (lists[list] == NULL)
+				goto out;
+			strcpy(lists[list], s);
+		}
 
-		अगर (!sep)
-			अवरोध;
+		if (!sep)
+			break;
 
 		*sep = ',';
 		s = sep + 1;
-	पूर्ण
+	}
 
-	अगर (lists[1] != शून्य) अणु
-		काष्ठा strlist_config slist_config = अणु
-			.स_नाम = strace_groups_dir,
-		पूर्ण;
+	if (lists[1] != NULL) {
+		struct strlist_config slist_config = {
+			.dirname = strace_groups_dir,
+		};
 
-		trace->ev_qualअगरier = strlist__new(lists[1], &slist_config);
-		अगर (trace->ev_qualअगरier == शून्य) अणु
-			ख_माला_दो("Not enough memory to parse event qualifier", trace->output);
-			जाओ out;
-		पूर्ण
+		trace->ev_qualifier = strlist__new(lists[1], &slist_config);
+		if (trace->ev_qualifier == NULL) {
+			fputs("Not enough memory to parse event qualifier", trace->output);
+			goto out;
+		}
 
-		अगर (trace__validate_ev_qualअगरier(trace))
-			जाओ out;
+		if (trace__validate_ev_qualifier(trace))
+			goto out;
 		trace->trace_syscalls = true;
-	पूर्ण
+	}
 
 	err = 0;
 
-	अगर (lists[0]) अणु
-		काष्ठा option o = अणु
+	if (lists[0]) {
+		struct option o = {
 			.value = &trace->evlist,
-		पूर्ण;
+		};
 		err = parse_events_option(&o, lists[0], 0);
-	पूर्ण
+	}
 out:
-	अगर (sep)
+	if (sep)
 		*sep = ',';
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक trace__parse_cgroups(स्थिर काष्ठा option *opt, स्थिर अक्षर *str, पूर्णांक unset)
-अणु
-	काष्ठा trace *trace = opt->value;
+static int trace__parse_cgroups(const struct option *opt, const char *str, int unset)
+{
+	struct trace *trace = opt->value;
 
-	अगर (!list_empty(&trace->evlist->core.entries)) अणु
-		काष्ठा option o = अणु
+	if (!list_empty(&trace->evlist->core.entries)) {
+		struct option o = {
 			.value = &trace->evlist,
-		पूर्ण;
-		वापस parse_cgroups(&o, str, unset);
-	पूर्ण
+		};
+		return parse_cgroups(&o, str, unset);
+	}
 	trace->cgroup = evlist__findnew_cgroup(trace->evlist, str);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक trace__config(स्थिर अक्षर *var, स्थिर अक्षर *value, व्योम *arg)
-अणु
-	काष्ठा trace *trace = arg;
-	पूर्णांक err = 0;
+static int trace__config(const char *var, const char *value, void *arg)
+{
+	struct trace *trace = arg;
+	int err = 0;
 
-	अगर (!म_भेद(var, "trace.add_events")) अणु
+	if (!strcmp(var, "trace.add_events")) {
 		trace->perfconfig_events = strdup(value);
-		अगर (trace->perfconfig_events == शून्य) अणु
+		if (trace->perfconfig_events == NULL) {
 			pr_err("Not enough memory for %s\n", "trace.add_events");
-			वापस -1;
-		पूर्ण
-	पूर्ण अन्यथा अगर (!म_भेद(var, "trace.show_timestamp")) अणु
+			return -1;
+		}
+	} else if (!strcmp(var, "trace.show_timestamp")) {
 		trace->show_tstamp = perf_config_bool(var, value);
-	पूर्ण अन्यथा अगर (!म_भेद(var, "trace.show_duration")) अणु
+	} else if (!strcmp(var, "trace.show_duration")) {
 		trace->show_duration = perf_config_bool(var, value);
-	पूर्ण अन्यथा अगर (!म_भेद(var, "trace.show_arg_names")) अणु
+	} else if (!strcmp(var, "trace.show_arg_names")) {
 		trace->show_arg_names = perf_config_bool(var, value);
-		अगर (!trace->show_arg_names)
+		if (!trace->show_arg_names)
 			trace->show_zeros = true;
-	पूर्ण अन्यथा अगर (!म_भेद(var, "trace.show_zeros")) अणु
+	} else if (!strcmp(var, "trace.show_zeros")) {
 		bool new_show_zeros = perf_config_bool(var, value);
-		अगर (!trace->show_arg_names && !new_show_zeros) अणु
+		if (!trace->show_arg_names && !new_show_zeros) {
 			pr_warning("trace.show_zeros has to be set when trace.show_arg_names=no\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		trace->show_zeros = new_show_zeros;
-	पूर्ण अन्यथा अगर (!म_भेद(var, "trace.show_prefix")) अणु
+	} else if (!strcmp(var, "trace.show_prefix")) {
 		trace->show_string_prefix = perf_config_bool(var, value);
-	पूर्ण अन्यथा अगर (!म_भेद(var, "trace.no_inherit")) अणु
+	} else if (!strcmp(var, "trace.no_inherit")) {
 		trace->opts.no_inherit = perf_config_bool(var, value);
-	पूर्ण अन्यथा अगर (!म_भेद(var, "trace.args_alignment")) अणु
-		पूर्णांक args_alignment = 0;
-		अगर (perf_config_पूर्णांक(&args_alignment, var, value) == 0)
+	} else if (!strcmp(var, "trace.args_alignment")) {
+		int args_alignment = 0;
+		if (perf_config_int(&args_alignment, var, value) == 0)
 			trace->args_alignment = args_alignment;
-	पूर्ण अन्यथा अगर (!म_भेद(var, "trace.tracepoint_beautifiers")) अणु
-		अगर (strहालcmp(value, "libtraceevent") == 0)
-			trace->libtraceevent_prपूर्णांक = true;
-		अन्यथा अगर (strहालcmp(value, "libbeauty") == 0)
-			trace->libtraceevent_prपूर्णांक = false;
-	पूर्ण
+	} else if (!strcmp(var, "trace.tracepoint_beautifiers")) {
+		if (strcasecmp(value, "libtraceevent") == 0)
+			trace->libtraceevent_print = true;
+		else if (strcasecmp(value, "libbeauty") == 0)
+			trace->libtraceevent_print = false;
+	}
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक cmd_trace(पूर्णांक argc, स्थिर अक्षर **argv)
-अणु
-	स्थिर अक्षर *trace_usage[] = अणु
+int cmd_trace(int argc, const char **argv)
+{
+	const char *trace_usage[] = {
 		"perf trace [<options>] [<command>]",
 		"perf trace [<options>] -- <command> [<options>]",
 		"perf trace record [<options>] [<command>]",
 		"perf trace record [<options>] -- <command> [<options>]",
-		शून्य
-	पूर्ण;
-	काष्ठा trace trace = अणु
-		.opts = अणु
-			.target = अणु
-				.uid	   = अच_पूर्णांक_उच्च,
+		NULL
+	};
+	struct trace trace = {
+		.opts = {
+			.target = {
+				.uid	   = UINT_MAX,
 				.uses_mmap = true,
-			पूर्ण,
-			.user_freq     = अच_पूर्णांक_उच्च,
-			.user_पूर्णांकerval = ULदीर्घ_उच्च,
+			},
+			.user_freq     = UINT_MAX,
+			.user_interval = ULLONG_MAX,
 			.no_buffering  = true,
-			.mmap_pages    = अच_पूर्णांक_उच्च,
-		पूर्ण,
-		.output = मानक_त्रुटि,
+			.mmap_pages    = UINT_MAX,
+		},
+		.output = stderr,
 		.show_comm = true,
 		.show_tstamp = true,
 		.show_duration = true,
@@ -4730,12 +4729,12 @@ out:
 		.args_alignment = 70,
 		.trace_syscalls = false,
 		.kernel_syscallchains = false,
-		.max_stack = अच_पूर्णांक_उच्च,
-		.max_events = अच_दीर्घ_उच्च,
-	पूर्ण;
-	स्थिर अक्षर *map_dump_str = शून्य;
-	स्थिर अक्षर *output_name = शून्य;
-	स्थिर काष्ठा option trace_options[] = अणु
+		.max_stack = UINT_MAX,
+		.max_events = ULONG_MAX,
+	};
+	const char *map_dump_str = NULL;
+	const char *output_name = NULL;
+	const struct option trace_options[] = {
 	OPT_CALLBACK('e', "event", &trace, "event",
 		     "event/syscall selector. use 'perf list' to list available events",
 		     trace__parse_events_option),
@@ -4754,7 +4753,7 @@ out:
 		    "trace events on existing thread id"),
 	OPT_CALLBACK(0, "filter-pids", &trace, "CSV list of pids",
 		     "pids to filter (by the kernel)", trace__set_filter_pids_from_option),
-	OPT_BOOLEAN('a', "all-cpus", &trace.opts.target.प्रणाली_wide,
+	OPT_BOOLEAN('a', "all-cpus", &trace.opts.target.system_wide,
 		    "system-wide collection from all CPUs"),
 	OPT_STRING('C', "cpu", &trace.opts.target.cpu_list, "cpu",
 		    "list of cpus to monitor"),
@@ -4767,12 +4766,12 @@ out:
 	OPT_CALLBACK(0, "duration", &trace, "float",
 		     "show only events with duration > N.M ms",
 		     trace__set_duration),
-#अगर_घोषित HAVE_LIBBPF_SUPPORT
+#ifdef HAVE_LIBBPF_SUPPORT
 	OPT_STRING(0, "map-dump", &map_dump_str, "BPF map", "BPF map to periodically dump"),
-#पूर्ण_अगर
+#endif
 	OPT_BOOLEAN(0, "sched", &trace.sched, "show blocking scheduler events"),
 	OPT_INCR('v', "verbose", &verbose, "be more verbose"),
-	OPT_BOOLEAN('T', "time", &trace.full_समय,
+	OPT_BOOLEAN('T', "time", &trace.full_time,
 		    "Show full timestamp, not time relative to first start"),
 	OPT_BOOLEAN(0, "failure", &trace.failure_only,
 		    "Show only syscalls that failed"),
@@ -4780,16 +4779,16 @@ out:
 		    "Show only syscall summary with statistics"),
 	OPT_BOOLEAN('S', "with-summary", &trace.summary,
 		    "Show all syscalls and summary with statistics"),
-	OPT_BOOLEAN(0, "errno-summary", &trace.त्रुटि_सं_summary,
+	OPT_BOOLEAN(0, "errno-summary", &trace.errno_summary,
 		    "Show errno stats per syscall, use with -s or -S"),
 	OPT_CALLBACK_DEFAULT('F', "pf", &trace.trace_pgfaults, "all|maj|min",
 		     "Trace pagefaults", parse_pagefaults, "maj"),
 	OPT_BOOLEAN(0, "syscalls", &trace.trace_syscalls, "Trace syscalls"),
-	OPT_BOOLEAN('f', "force", &trace.force, "don't complain, करो it"),
+	OPT_BOOLEAN('f', "force", &trace.force, "don't complain, do it"),
 	OPT_CALLBACK(0, "call-graph", &trace.opts,
 		     "record_mode[,record_size]", record_callchain_help,
 		     &record_parse_callchain_opt),
-	OPT_BOOLEAN(0, "libtraceevent_print", &trace.libtraceevent_prपूर्णांक,
+	OPT_BOOLEAN(0, "libtraceevent_print", &trace.libtraceevent_print,
 		    "Use libtraceevent to print the tracepoint arguments."),
 	OPT_BOOLEAN(0, "kernel-syscall-graph", &trace.kernel_syscallchains,
 		    "Show the kernel callchains on the syscall exit path"),
@@ -4801,45 +4800,45 @@ out:
 	OPT_UINTEGER(0, "max-stack", &trace.max_stack,
 		     "Set the maximum stack depth when parsing the callchain, "
 		     "anything beyond the specified depth will be ignored. "
-		     "Default: kernel.perf_event_max_stack or " __stringअगरy(PERF_MAX_STACK_DEPTH)),
+		     "Default: kernel.perf_event_max_stack or " __stringify(PERF_MAX_STACK_DEPTH)),
 	OPT_BOOLEAN(0, "sort-events", &trace.sort_events,
 			"Sort batch of events before processing, use if getting out of order events"),
-	OPT_BOOLEAN(0, "print-sample", &trace.prपूर्णांक_sample,
+	OPT_BOOLEAN(0, "print-sample", &trace.print_sample,
 			"print the PERF_RECORD_SAMPLE PERF_SAMPLE_ info, for debugging"),
-	OPT_UINTEGER(0, "proc-map-timeout", &proc_map_समयout,
+	OPT_UINTEGER(0, "proc-map-timeout", &proc_map_timeout,
 			"per thread proc mmap processing timeout in ms"),
 	OPT_CALLBACK('G', "cgroup", &trace, "name", "monitor event in cgroup name only",
 		     trace__parse_cgroups),
 	OPT_INTEGER('D', "delay", &trace.opts.initial_delay,
 		     "ms to wait before starting measurement after program "
 		     "start"),
-	OPTS_EVSWITCH(&trace.evचयन),
+	OPTS_EVSWITCH(&trace.evswitch),
 	OPT_END()
-	पूर्ण;
+	};
 	bool __maybe_unused max_stack_user_set = true;
 	bool mmap_pages_user_set = true;
-	काष्ठा evsel *evsel;
-	स्थिर अक्षर * स्थिर trace_subcommands[] = अणु "record", शून्य पूर्ण;
-	पूर्णांक err = -1;
-	अक्षर bf[बफ_मान];
+	struct evsel *evsel;
+	const char * const trace_subcommands[] = { "record", NULL };
+	int err = -1;
+	char bf[BUFSIZ];
 
-	संकेत(संक_अंश, sighandler_dump_stack);
-	संकेत(संक_भ_त्रुटि, sighandler_dump_stack);
-	संकेत(SIGCHLD, sig_handler);
-	संकेत(संक_विघ्न, sig_handler);
+	signal(SIGSEGV, sighandler_dump_stack);
+	signal(SIGFPE, sighandler_dump_stack);
+	signal(SIGCHLD, sig_handler);
+	signal(SIGINT, sig_handler);
 
 	trace.evlist = evlist__new();
 	trace.sctbl = syscalltbl__new();
 
-	अगर (trace.evlist == शून्य || trace.sctbl == शून्य) अणु
+	if (trace.evlist == NULL || trace.sctbl == NULL) {
 		pr_err("Not enough memory to run!\n");
 		err = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	/*
 	 * Parsing .perfconfig may entail creating a BPF event, that may need
-	 * to create BPF maps, so bump RLIM_MEMLOCK as the शेष 64K setting
+	 * to create BPF maps, so bump RLIM_MEMLOCK as the default 64K setting
 	 * is too small. This affects just this process, not touching the
 	 * global setting. If it fails we'll get something in 'perf trace -v'
 	 * to help diagnose the problem.
@@ -4847,295 +4846,295 @@ out:
 	rlimit__bump_memlock();
 
 	err = perf_config(trace__config, &trace);
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	argc = parse_options_subcommand(argc, argv, trace_options, trace_subcommands,
 				 trace_usage, PARSE_OPT_STOP_AT_NON_OPTION);
 
 	/*
-	 * Here we alपढ़ोy passed thru trace__parse_events_option() and it has
-	 * alपढ़ोy figured out अगर -e syscall_name, अगर not but अगर --event
-	 * foo:bar was used, the user is पूर्णांकerested _just_ in those, say,
-	 * tracepoपूर्णांक events, not in the strace-like syscall-name-based mode.
+	 * Here we already passed thru trace__parse_events_option() and it has
+	 * already figured out if -e syscall_name, if not but if --event
+	 * foo:bar was used, the user is interested _just_ in those, say,
+	 * tracepoint events, not in the strace-like syscall-name-based mode.
 	 *
-	 * This is important because we need to check अगर strace-like mode is
-	 * needed to decided अगर we should filter out the eBPF
-	 * __augmented_syscalls__ code, अगर it is in the mix, say, via
+	 * This is important because we need to check if strace-like mode is
+	 * needed to decided if we should filter out the eBPF
+	 * __augmented_syscalls__ code, if it is in the mix, say, via
 	 * .perfconfig trace.add_events, and filter those out.
 	 */
-	अगर (!trace.trace_syscalls && !trace.trace_pgfaults &&
-	    trace.evlist->core.nr_entries == 0 /* Was --events used? */) अणु
+	if (!trace.trace_syscalls && !trace.trace_pgfaults &&
+	    trace.evlist->core.nr_entries == 0 /* Was --events used? */) {
 		trace.trace_syscalls = true;
-	पूर्ण
+	}
 	/*
-	 * Now that we have --verbose figured out, lets see अगर we need to parse
-	 * events from .perfconfig, so that अगर those events fail parsing, say some
+	 * Now that we have --verbose figured out, lets see if we need to parse
+	 * events from .perfconfig, so that if those events fail parsing, say some
 	 * BPF program fails, then we'll be able to use --verbose to see what went
 	 * wrong in more detail.
 	 */
-	अगर (trace.perfconfig_events != शून्य) अणु
-		काष्ठा parse_events_error parse_err;
+	if (trace.perfconfig_events != NULL) {
+		struct parse_events_error parse_err;
 
-		bzero(&parse_err, माप(parse_err));
+		bzero(&parse_err, sizeof(parse_err));
 		err = parse_events(trace.evlist, trace.perfconfig_events, &parse_err);
-		अगर (err) अणु
-			parse_events_prपूर्णांक_error(&parse_err, trace.perfconfig_events);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+		if (err) {
+			parse_events_print_error(&parse_err, trace.perfconfig_events);
+			goto out;
+		}
+	}
 
-	अगर ((nr_cgroups || trace.cgroup) && !trace.opts.target.प्रणाली_wide) अणु
+	if ((nr_cgroups || trace.cgroup) && !trace.opts.target.system_wide) {
 		usage_with_options_msg(trace_usage, trace_options,
 				       "cgroup monitoring only available in system-wide mode");
-	पूर्ण
+	}
 
 	evsel = bpf__setup_output_event(trace.evlist, "__augmented_syscalls__");
-	अगर (IS_ERR(evsel)) अणु
-		bpf__म_त्रुटि_setup_output_event(trace.evlist, PTR_ERR(evsel), bf, माप(bf));
+	if (IS_ERR(evsel)) {
+		bpf__strerror_setup_output_event(trace.evlist, PTR_ERR(evsel), bf, sizeof(bf));
 		pr_err("ERROR: Setup trace syscalls enter failed: %s\n", bf);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (evsel) अणु
+	if (evsel) {
 		trace.syscalls.events.augmented = evsel;
 
-		evsel = evlist__find_tracepoपूर्णांक_by_name(trace.evlist, "raw_syscalls:sys_enter");
-		अगर (evsel == शून्य) अणु
+		evsel = evlist__find_tracepoint_by_name(trace.evlist, "raw_syscalls:sys_enter");
+		if (evsel == NULL) {
 			pr_err("ERROR: raw_syscalls:sys_enter not found in the augmented BPF object\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		अगर (evsel->bpf_obj == शून्य) अणु
+		if (evsel->bpf_obj == NULL) {
 			pr_err("ERROR: raw_syscalls:sys_enter not associated to a BPF object\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		trace.bpf_obj = evsel->bpf_obj;
 
 		/*
-		 * If we have _just_ the augmenter event but करोn't have a
+		 * If we have _just_ the augmenter event but don't have a
 		 * explicit --syscalls, then assume we want all strace-like
 		 * syscalls:
 		 */
-		अगर (!trace.trace_syscalls && trace__only_augmented_syscalls_evsels(&trace))
+		if (!trace.trace_syscalls && trace__only_augmented_syscalls_evsels(&trace))
 			trace.trace_syscalls = true;
 		/*
-		 * So, अगर we have a syscall augmenter, but trace_syscalls, aka
+		 * So, if we have a syscall augmenter, but trace_syscalls, aka
 		 * strace-like syscall tracing is not set, then we need to trow
 		 * away the augmenter, i.e. all the events that were created
 		 * from that BPF object file.
 		 *
 		 * This is more to fix the current .perfconfig trace.add_events
-		 * style of setting up the strace-like eBPF based syscall poपूर्णांक
+		 * style of setting up the strace-like eBPF based syscall point
 		 * payload augmenter.
 		 *
-		 * All this complनिकासy will be aव्योमed by adding an alternative
-		 * to trace.add_events in the क्रमm of
-		 * trace.bpf_augmented_syscalls, that will be only parsed अगर we
+		 * All this complexity will be avoided by adding an alternative
+		 * to trace.add_events in the form of
+		 * trace.bpf_augmented_syscalls, that will be only parsed if we
 		 * need it.
 		 *
-		 * .perfconfig trace.add_events is still useful अगर we want, क्रम
-		 * instance, have msr_ग_लिखो.msr in some .perfconfig profile based
-		 * 'perf trace --config determinism.profile' mode, where क्रम some
+		 * .perfconfig trace.add_events is still useful if we want, for
+		 * instance, have msr_write.msr in some .perfconfig profile based
+		 * 'perf trace --config determinism.profile' mode, where for some
 		 * particular goal/workload type we want a set of events and
 		 * output mode (with timings, etc) instead of having to add
 		 * all via the command line.
 		 *
-		 * Also --config to specअगरy an alternate .perfconfig file needs
+		 * Also --config to specify an alternate .perfconfig file needs
 		 * to be implemented.
 		 */
-		अगर (!trace.trace_syscalls) अणु
+		if (!trace.trace_syscalls) {
 			trace__delete_augmented_syscalls(&trace);
-		पूर्ण अन्यथा अणु
+		} else {
 			trace__set_bpf_map_filtered_pids(&trace);
 			trace__set_bpf_map_syscalls(&trace);
 			trace.syscalls.unaugmented_prog = trace__find_bpf_program_by_title(&trace, "!raw_syscalls:unaugmented");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	err = bpf__setup_मानक_निकास(trace.evlist);
-	अगर (err) अणु
-		bpf__म_त्रुटि_setup_मानक_निकास(trace.evlist, err, bf, माप(bf));
+	err = bpf__setup_stdout(trace.evlist);
+	if (err) {
+		bpf__strerror_setup_stdout(trace.evlist, err, bf, sizeof(bf));
 		pr_err("ERROR: Setup BPF stdout failed: %s\n", bf);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = -1;
 
-	अगर (map_dump_str) अणु
+	if (map_dump_str) {
 		trace.dump.map = trace__find_bpf_map_by_name(&trace, map_dump_str);
-		अगर (trace.dump.map == शून्य) अणु
+		if (trace.dump.map == NULL) {
 			pr_err("ERROR: BPF map \"%s\" not found\n", map_dump_str);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर (trace.trace_pgfaults) अणु
+	if (trace.trace_pgfaults) {
 		trace.opts.sample_address = true;
-		trace.opts.sample_समय = true;
-	पूर्ण
+		trace.opts.sample_time = true;
+	}
 
-	अगर (trace.opts.mmap_pages == अच_पूर्णांक_उच्च)
+	if (trace.opts.mmap_pages == UINT_MAX)
 		mmap_pages_user_set = false;
 
-	अगर (trace.max_stack == अच_पूर्णांक_उच्च) अणु
+	if (trace.max_stack == UINT_MAX) {
 		trace.max_stack = input_name ? PERF_MAX_STACK_DEPTH : sysctl__max_stack();
 		max_stack_user_set = false;
-	पूर्ण
+	}
 
-#अगर_घोषित HAVE_DWARF_UNWIND_SUPPORT
-	अगर ((trace.min_stack || max_stack_user_set) && !callchain_param.enabled) अणु
+#ifdef HAVE_DWARF_UNWIND_SUPPORT
+	if ((trace.min_stack || max_stack_user_set) && !callchain_param.enabled) {
 		record_opts__parse_callchain(&trace.opts, &callchain_param, "dwarf", false);
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	अगर (callchain_param.enabled) अणु
-		अगर (!mmap_pages_user_set && geteuid() == 0)
+	if (callchain_param.enabled) {
+		if (!mmap_pages_user_set && geteuid() == 0)
 			trace.opts.mmap_pages = perf_event_mlock_kb_in_pages() * 4;
 
 		symbol_conf.use_callchain = true;
-	पूर्ण
+	}
 
-	अगर (trace.evlist->core.nr_entries > 0) अणु
-		evlist__set_शेष_evsel_handler(trace.evlist, trace__event_handler);
-		अगर (evlist__set_syscall_tp_fields(trace.evlist)) अणु
-			लिखो_त्रुटि("failed to set syscalls:* tracepoint fields");
-			जाओ out;
-		पूर्ण
-	पूर्ण
+	if (trace.evlist->core.nr_entries > 0) {
+		evlist__set_default_evsel_handler(trace.evlist, trace__event_handler);
+		if (evlist__set_syscall_tp_fields(trace.evlist)) {
+			perror("failed to set syscalls:* tracepoint fields");
+			goto out;
+		}
+	}
 
-	अगर (trace.sort_events) अणु
+	if (trace.sort_events) {
 		ordered_events__init(&trace.oe.data, ordered_events__deliver_event, &trace);
 		ordered_events__set_copy_on_queue(&trace.oe.data, true);
-	पूर्ण
+	}
 
 	/*
 	 * If we are augmenting syscalls, then combine what we put in the
 	 * __augmented_syscalls__ BPF map with what is in the
-	 * syscalls:sys_निकास_FOO tracepoपूर्णांकs, i.e. just like we करो without BPF,
-	 * combining raw_syscalls:sys_enter with raw_syscalls:sys_निकास.
+	 * syscalls:sys_exit_FOO tracepoints, i.e. just like we do without BPF,
+	 * combining raw_syscalls:sys_enter with raw_syscalls:sys_exit.
 	 *
-	 * We'll चयन to look at two BPF maps, one क्रम sys_enter and the
-	 * other क्रम sys_निकास when we start augmenting the sys_निकास paths with
+	 * We'll switch to look at two BPF maps, one for sys_enter and the
+	 * other for sys_exit when we start augmenting the sys_exit paths with
 	 * buffers that are being copied from kernel to userspace, think 'read'
 	 * syscall.
 	 */
-	अगर (trace.syscalls.events.augmented) अणु
-		evlist__क्रम_each_entry(trace.evlist, evsel) अणु
-			bool raw_syscalls_sys_निकास = म_भेद(evsel__name(evsel), "raw_syscalls:sys_exit") == 0;
+	if (trace.syscalls.events.augmented) {
+		evlist__for_each_entry(trace.evlist, evsel) {
+			bool raw_syscalls_sys_exit = strcmp(evsel__name(evsel), "raw_syscalls:sys_exit") == 0;
 
-			अगर (raw_syscalls_sys_निकास) अणु
+			if (raw_syscalls_sys_exit) {
 				trace.raw_augmented_syscalls = true;
-				जाओ init_augmented_syscall_tp;
-			पूर्ण
+				goto init_augmented_syscall_tp;
+			}
 
-			अगर (trace.syscalls.events.augmented->priv == शून्य &&
-			    म_माला(evsel__name(evsel), "syscalls:sys_enter")) अणु
-				काष्ठा evsel *augmented = trace.syscalls.events.augmented;
-				अगर (evsel__init_augmented_syscall_tp(augmented, evsel) ||
+			if (trace.syscalls.events.augmented->priv == NULL &&
+			    strstr(evsel__name(evsel), "syscalls:sys_enter")) {
+				struct evsel *augmented = trace.syscalls.events.augmented;
+				if (evsel__init_augmented_syscall_tp(augmented, evsel) ||
 				    evsel__init_augmented_syscall_tp_args(augmented))
-					जाओ out;
+					goto out;
 				/*
 				 * Augmented is __augmented_syscalls__ BPF_OUTPUT event
 				 * Above we made sure we can get from the payload the tp fields
-				 * that we get from syscalls:sys_enter tracefs क्रमmat file.
+				 * that we get from syscalls:sys_enter tracefs format file.
 				 */
 				augmented->handler = trace__sys_enter;
 				/*
-				 * Now we करो the same क्रम the *syscalls:sys_enter event so that
-				 * अगर we handle it directly, i.e. अगर the BPF prog वापसs 0 so
+				 * Now we do the same for the *syscalls:sys_enter event so that
+				 * if we handle it directly, i.e. if the BPF prog returns 0 so
 				 * as not to filter it, then we'll handle it just like we would
-				 * क्रम the BPF_OUTPUT one:
+				 * for the BPF_OUTPUT one:
 				 */
-				अगर (evsel__init_augmented_syscall_tp(evsel, evsel) ||
+				if (evsel__init_augmented_syscall_tp(evsel, evsel) ||
 				    evsel__init_augmented_syscall_tp_args(evsel))
-					जाओ out;
+					goto out;
 				evsel->handler = trace__sys_enter;
-			पूर्ण
+			}
 
-			अगर (strstarts(evsel__name(evsel), "syscalls:sys_exit_")) अणु
-				काष्ठा syscall_tp *sc;
+			if (strstarts(evsel__name(evsel), "syscalls:sys_exit_")) {
+				struct syscall_tp *sc;
 init_augmented_syscall_tp:
-				अगर (evsel__init_augmented_syscall_tp(evsel, evsel))
-					जाओ out;
+				if (evsel__init_augmented_syscall_tp(evsel, evsel))
+					goto out;
 				sc = __evsel__syscall_tp(evsel);
 				/*
-				 * For now with BPF raw_augmented we hook पूर्णांकo
+				 * For now with BPF raw_augmented we hook into
 				 * raw_syscalls:sys_enter and there we get all
-				 * 6 syscall args plus the tracepoपूर्णांक common
-				 * fields and the syscall_nr (another दीर्घ).
-				 * So we check अगर that is the हाल and अगर so
-				 * करोn't look after the sc->args_size but
+				 * 6 syscall args plus the tracepoint common
+				 * fields and the syscall_nr (another long).
+				 * So we check if that is the case and if so
+				 * don't look after the sc->args_size but
 				 * always after the full raw_syscalls:sys_enter
 				 * payload, which is fixed.
 				 *
 				 * We'll revisit this later to pass
 				 * s->args_size to the BPF augmenter (now
 				 * tools/perf/examples/bpf/augmented_raw_syscalls.c,
-				 * so that it copies only what we need क्रम each
+				 * so that it copies only what we need for each
 				 * syscall, like what happens when we use
 				 * syscalls:sys_enter_NAME, so that we reduce
 				 * the kernel/userspace traffic to just what is
-				 * needed क्रम each syscall.
+				 * needed for each syscall.
 				 */
-				अगर (trace.raw_augmented_syscalls)
-					trace.raw_augmented_syscalls_args_size = (6 + 1) * माप(दीर्घ) + sc->id.offset;
+				if (trace.raw_augmented_syscalls)
+					trace.raw_augmented_syscalls_args_size = (6 + 1) * sizeof(long) + sc->id.offset;
 				evsel__init_augmented_syscall_tp_ret(evsel);
-				evsel->handler = trace__sys_निकास;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				evsel->handler = trace__sys_exit;
+			}
+		}
+	}
 
-	अगर ((argc >= 1) && (म_भेद(argv[0], "record") == 0))
-		वापस trace__record(&trace, argc-1, &argv[1]);
+	if ((argc >= 1) && (strcmp(argv[0], "record") == 0))
+		return trace__record(&trace, argc-1, &argv[1]);
 
-	/* Using just --त्रुटि_सं-summary will trigger --summary */
-	अगर (trace.त्रुटि_सं_summary && !trace.summary && !trace.summary_only)
+	/* Using just --errno-summary will trigger --summary */
+	if (trace.errno_summary && !trace.summary && !trace.summary_only)
 		trace.summary_only = true;
 
-	/* summary_only implies summary option, but करोn't overग_लिखो summary अगर set */
-	अगर (trace.summary_only)
+	/* summary_only implies summary option, but don't overwrite summary if set */
+	if (trace.summary_only)
 		trace.summary = trace.summary_only;
 
-	अगर (output_name != शून्य) अणु
-		err = trace__खोलो_output(&trace, output_name);
-		अगर (err < 0) अणु
-			लिखो_त्रुटि("failed to create output file");
-			जाओ out;
-		पूर्ण
-	पूर्ण
+	if (output_name != NULL) {
+		err = trace__open_output(&trace, output_name);
+		if (err < 0) {
+			perror("failed to create output file");
+			goto out;
+		}
+	}
 
-	err = evचयन__init(&trace.evचयन, trace.evlist, मानक_त्रुटि);
-	अगर (err)
-		जाओ out_बंद;
+	err = evswitch__init(&trace.evswitch, trace.evlist, stderr);
+	if (err)
+		goto out_close;
 
 	err = target__validate(&trace.opts.target);
-	अगर (err) अणु
-		target__म_त्रुटि(&trace.opts.target, err, bf, माप(bf));
-		ख_लिखो(trace.output, "%s", bf);
-		जाओ out_बंद;
-	पूर्ण
+	if (err) {
+		target__strerror(&trace.opts.target, err, bf, sizeof(bf));
+		fprintf(trace.output, "%s", bf);
+		goto out_close;
+	}
 
 	err = target__parse_uid(&trace.opts.target);
-	अगर (err) अणु
-		target__म_त्रुटि(&trace.opts.target, err, bf, माप(bf));
-		ख_लिखो(trace.output, "%s", bf);
-		जाओ out_बंद;
-	पूर्ण
+	if (err) {
+		target__strerror(&trace.opts.target, err, bf, sizeof(bf));
+		fprintf(trace.output, "%s", bf);
+		goto out_close;
+	}
 
-	अगर (!argc && target__none(&trace.opts.target))
-		trace.opts.target.प्रणाली_wide = true;
+	if (!argc && target__none(&trace.opts.target))
+		trace.opts.target.system_wide = true;
 
-	अगर (input_name)
+	if (input_name)
 		err = trace__replay(&trace);
-	अन्यथा
+	else
 		err = trace__run(&trace, argc, argv);
 
-out_बंद:
-	अगर (output_name != शून्य)
-		ख_बंद(trace.output);
+out_close:
+	if (output_name != NULL)
+		fclose(trace.output);
 out:
-	zमुक्त(&trace.perfconfig_events);
-	वापस err;
-पूर्ण
+	zfree(&trace.perfconfig_events);
+	return err;
+}

@@ -1,95 +1,94 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Glue code क्रम the SHA256 Secure Hash Algorithm assembly implementation
- * using NEON inकाष्ठाions.
+ * Glue code for the SHA256 Secure Hash Algorithm assembly implementation
+ * using NEON instructions.
  *
- * Copyright तऊ 2015 Google Inc.
+ * Copyright © 2015 Google Inc.
  *
  * This file is based on sha512_neon_glue.c:
- *   Copyright तऊ 2014 Jussi Kivilinna <jussi.kivilinna@iki.fi>
+ *   Copyright © 2014 Jussi Kivilinna <jussi.kivilinna@iki.fi>
  */
 
-#समावेश <crypto/पूर्णांकernal/hash.h>
-#समावेश <crypto/पूर्णांकernal/simd.h>
-#समावेश <linux/types.h>
-#समावेश <linux/माला.स>
-#समावेश <crypto/sha2.h>
-#समावेश <crypto/sha256_base.h>
-#समावेश <यंत्र/byteorder.h>
-#समावेश <यंत्र/simd.h>
-#समावेश <यंत्र/neon.h>
+#include <crypto/internal/hash.h>
+#include <crypto/internal/simd.h>
+#include <linux/types.h>
+#include <linux/string.h>
+#include <crypto/sha2.h>
+#include <crypto/sha256_base.h>
+#include <asm/byteorder.h>
+#include <asm/simd.h>
+#include <asm/neon.h>
 
-#समावेश "sha256_glue.h"
+#include "sha256_glue.h"
 
-यंत्रlinkage व्योम sha256_block_data_order_neon(u32 *digest, स्थिर व्योम *data,
-					     अचिन्हित पूर्णांक num_blks);
+asmlinkage void sha256_block_data_order_neon(u32 *digest, const void *data,
+					     unsigned int num_blks);
 
-अटल पूर्णांक crypto_sha256_neon_update(काष्ठा shash_desc *desc, स्थिर u8 *data,
-				     अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा sha256_state *sctx = shash_desc_ctx(desc);
+static int crypto_sha256_neon_update(struct shash_desc *desc, const u8 *data,
+				     unsigned int len)
+{
+	struct sha256_state *sctx = shash_desc_ctx(desc);
 
-	अगर (!crypto_simd_usable() ||
+	if (!crypto_simd_usable() ||
 	    (sctx->count % SHA256_BLOCK_SIZE) + len < SHA256_BLOCK_SIZE)
-		वापस crypto_sha256_arm_update(desc, data, len);
+		return crypto_sha256_arm_update(desc, data, len);
 
 	kernel_neon_begin();
-	sha256_base_करो_update(desc, data, len,
+	sha256_base_do_update(desc, data, len,
 			(sha256_block_fn *)sha256_block_data_order_neon);
 	kernel_neon_end();
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक crypto_sha256_neon_finup(काष्ठा shash_desc *desc, स्थिर u8 *data,
-				    अचिन्हित पूर्णांक len, u8 *out)
-अणु
-	अगर (!crypto_simd_usable())
-		वापस crypto_sha256_arm_finup(desc, data, len, out);
+static int crypto_sha256_neon_finup(struct shash_desc *desc, const u8 *data,
+				    unsigned int len, u8 *out)
+{
+	if (!crypto_simd_usable())
+		return crypto_sha256_arm_finup(desc, data, len, out);
 
 	kernel_neon_begin();
-	अगर (len)
-		sha256_base_करो_update(desc, data, len,
+	if (len)
+		sha256_base_do_update(desc, data, len,
 			(sha256_block_fn *)sha256_block_data_order_neon);
-	sha256_base_करो_finalize(desc,
+	sha256_base_do_finalize(desc,
 			(sha256_block_fn *)sha256_block_data_order_neon);
 	kernel_neon_end();
 
-	वापस sha256_base_finish(desc, out);
-पूर्ण
+	return sha256_base_finish(desc, out);
+}
 
-अटल पूर्णांक crypto_sha256_neon_final(काष्ठा shash_desc *desc, u8 *out)
-अणु
-	वापस crypto_sha256_neon_finup(desc, शून्य, 0, out);
-पूर्ण
+static int crypto_sha256_neon_final(struct shash_desc *desc, u8 *out)
+{
+	return crypto_sha256_neon_finup(desc, NULL, 0, out);
+}
 
-काष्ठा shash_alg sha256_neon_algs[] = अणु अणु
+struct shash_alg sha256_neon_algs[] = { {
 	.digestsize	=	SHA256_DIGEST_SIZE,
 	.init		=	sha256_base_init,
 	.update		=	crypto_sha256_neon_update,
 	.final		=	crypto_sha256_neon_final,
 	.finup		=	crypto_sha256_neon_finup,
-	.descsize	=	माप(काष्ठा sha256_state),
-	.base		=	अणु
+	.descsize	=	sizeof(struct sha256_state),
+	.base		=	{
 		.cra_name	=	"sha256",
 		.cra_driver_name =	"sha256-neon",
 		.cra_priority	=	250,
 		.cra_blocksize	=	SHA256_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	पूर्ण
-पूर्ण, अणु
+	}
+}, {
 	.digestsize	=	SHA224_DIGEST_SIZE,
 	.init		=	sha224_base_init,
 	.update		=	crypto_sha256_neon_update,
 	.final		=	crypto_sha256_neon_final,
 	.finup		=	crypto_sha256_neon_finup,
-	.descsize	=	माप(काष्ठा sha256_state),
-	.base		=	अणु
+	.descsize	=	sizeof(struct sha256_state),
+	.base		=	{
 		.cra_name	=	"sha224",
 		.cra_driver_name =	"sha224-neon",
 		.cra_priority	=	250,
 		.cra_blocksize	=	SHA224_BLOCK_SIZE,
 		.cra_module	=	THIS_MODULE,
-	पूर्ण
-पूर्ण पूर्ण;
+	}
+} };

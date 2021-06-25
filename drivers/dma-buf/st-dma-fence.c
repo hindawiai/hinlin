@@ -1,578 +1,577 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/dma-fence.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
+#include <linux/delay.h>
+#include <linux/dma-fence.h>
+#include <linux/kernel.h>
+#include <linux/kthread.h>
+#include <linux/sched/signal.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
 
-#समावेश "selftest.h"
+#include "selftest.h"
 
-अटल काष्ठा kmem_cache *slab_fences;
+static struct kmem_cache *slab_fences;
 
-अटल काष्ठा mock_fence अणु
-	काष्ठा dma_fence base;
-	काष्ठा spinlock lock;
-पूर्ण *to_mock_fence(काष्ठा dma_fence *f) अणु
-	वापस container_of(f, काष्ठा mock_fence, base);
-पूर्ण
+static struct mock_fence {
+	struct dma_fence base;
+	struct spinlock lock;
+} *to_mock_fence(struct dma_fence *f) {
+	return container_of(f, struct mock_fence, base);
+}
 
-अटल स्थिर अक्षर *mock_name(काष्ठा dma_fence *f)
-अणु
-	वापस "mock";
-पूर्ण
+static const char *mock_name(struct dma_fence *f)
+{
+	return "mock";
+}
 
-अटल व्योम mock_fence_release(काष्ठा dma_fence *f)
-अणु
-	kmem_cache_मुक्त(slab_fences, to_mock_fence(f));
-पूर्ण
+static void mock_fence_release(struct dma_fence *f)
+{
+	kmem_cache_free(slab_fences, to_mock_fence(f));
+}
 
-काष्ठा रुको_cb अणु
-	काष्ठा dma_fence_cb cb;
-	काष्ठा task_काष्ठा *task;
-पूर्ण;
+struct wait_cb {
+	struct dma_fence_cb cb;
+	struct task_struct *task;
+};
 
-अटल व्योम mock_wakeup(काष्ठा dma_fence *f, काष्ठा dma_fence_cb *cb)
-अणु
-	wake_up_process(container_of(cb, काष्ठा रुको_cb, cb)->task);
-पूर्ण
+static void mock_wakeup(struct dma_fence *f, struct dma_fence_cb *cb)
+{
+	wake_up_process(container_of(cb, struct wait_cb, cb)->task);
+}
 
-अटल दीर्घ mock_रुको(काष्ठा dma_fence *f, bool पूर्णांकr, दीर्घ समयout)
-अणु
-	स्थिर पूर्णांक state = पूर्णांकr ? TASK_INTERRUPTIBLE : TASK_UNINTERRUPTIBLE;
-	काष्ठा रुको_cb cb = अणु .task = current पूर्ण;
+static long mock_wait(struct dma_fence *f, bool intr, long timeout)
+{
+	const int state = intr ? TASK_INTERRUPTIBLE : TASK_UNINTERRUPTIBLE;
+	struct wait_cb cb = { .task = current };
 
-	अगर (dma_fence_add_callback(f, &cb.cb, mock_wakeup))
-		वापस समयout;
+	if (dma_fence_add_callback(f, &cb.cb, mock_wakeup))
+		return timeout;
 
-	जबतक (समयout) अणु
+	while (timeout) {
 		set_current_state(state);
 
-		अगर (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &f->flags))
-			अवरोध;
+		if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &f->flags))
+			break;
 
-		अगर (संकेत_pending_state(state, current))
-			अवरोध;
+		if (signal_pending_state(state, current))
+			break;
 
-		समयout = schedule_समयout(समयout);
-	पूर्ण
+		timeout = schedule_timeout(timeout);
+	}
 	__set_current_state(TASK_RUNNING);
 
-	अगर (!dma_fence_हटाओ_callback(f, &cb.cb))
-		वापस समयout;
+	if (!dma_fence_remove_callback(f, &cb.cb))
+		return timeout;
 
-	अगर (संकेत_pending_state(state, current))
-		वापस -ERESTARTSYS;
+	if (signal_pending_state(state, current))
+		return -ERESTARTSYS;
 
-	वापस -ETIME;
-पूर्ण
+	return -ETIME;
+}
 
-अटल स्थिर काष्ठा dma_fence_ops mock_ops = अणु
+static const struct dma_fence_ops mock_ops = {
 	.get_driver_name = mock_name,
-	.get_समयline_name = mock_name,
-	.रुको = mock_रुको,
+	.get_timeline_name = mock_name,
+	.wait = mock_wait,
 	.release = mock_fence_release,
-पूर्ण;
+};
 
-अटल काष्ठा dma_fence *mock_fence(व्योम)
-अणु
-	काष्ठा mock_fence *f;
+static struct dma_fence *mock_fence(void)
+{
+	struct mock_fence *f;
 
 	f = kmem_cache_alloc(slab_fences, GFP_KERNEL);
-	अगर (!f)
-		वापस शून्य;
+	if (!f)
+		return NULL;
 
 	spin_lock_init(&f->lock);
 	dma_fence_init(&f->base, &mock_ops, &f->lock, 0, 0);
 
-	वापस &f->base;
-पूर्ण
+	return &f->base;
+}
 
-अटल पूर्णांक sanitycheck(व्योम *arg)
-अणु
-	काष्ठा dma_fence *f;
+static int sanitycheck(void *arg)
+{
+	struct dma_fence *f;
 
 	f = mock_fence();
-	अगर (!f)
-		वापस -ENOMEM;
+	if (!f)
+		return -ENOMEM;
 
-	dma_fence_संकेत(f);
+	dma_fence_signal(f);
 	dma_fence_put(f);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक test_संकेतing(व्योम *arg)
-अणु
-	काष्ठा dma_fence *f;
-	पूर्णांक err = -EINVAL;
+static int test_signaling(void *arg)
+{
+	struct dma_fence *f;
+	int err = -EINVAL;
 
 	f = mock_fence();
-	अगर (!f)
-		वापस -ENOMEM;
+	if (!f)
+		return -ENOMEM;
 
-	अगर (dma_fence_is_संकेतed(f)) अणु
+	if (dma_fence_is_signaled(f)) {
 		pr_err("Fence unexpectedly signaled on creation\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
-	अगर (dma_fence_संकेत(f)) अणु
+	if (dma_fence_signal(f)) {
 		pr_err("Fence reported being already signaled\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
-	अगर (!dma_fence_is_संकेतed(f)) अणु
+	if (!dma_fence_is_signaled(f)) {
 		pr_err("Fence not reporting signaled\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
-	अगर (!dma_fence_संकेत(f)) अणु
+	if (!dma_fence_signal(f)) {
 		pr_err("Fence reported not being already signaled\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	err = 0;
-err_मुक्त:
+err_free:
 	dma_fence_put(f);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-काष्ठा simple_cb अणु
-	काष्ठा dma_fence_cb cb;
+struct simple_cb {
+	struct dma_fence_cb cb;
 	bool seen;
-पूर्ण;
+};
 
-अटल व्योम simple_callback(काष्ठा dma_fence *f, काष्ठा dma_fence_cb *cb)
-अणु
-	smp_store_mb(container_of(cb, काष्ठा simple_cb, cb)->seen, true);
-पूर्ण
+static void simple_callback(struct dma_fence *f, struct dma_fence_cb *cb)
+{
+	smp_store_mb(container_of(cb, struct simple_cb, cb)->seen, true);
+}
 
-अटल पूर्णांक test_add_callback(व्योम *arg)
-अणु
-	काष्ठा simple_cb cb = अणुपूर्ण;
-	काष्ठा dma_fence *f;
-	पूर्णांक err = -EINVAL;
+static int test_add_callback(void *arg)
+{
+	struct simple_cb cb = {};
+	struct dma_fence *f;
+	int err = -EINVAL;
 
 	f = mock_fence();
-	अगर (!f)
-		वापस -ENOMEM;
+	if (!f)
+		return -ENOMEM;
 
-	अगर (dma_fence_add_callback(f, &cb.cb, simple_callback)) अणु
+	if (dma_fence_add_callback(f, &cb.cb, simple_callback)) {
 		pr_err("Failed to add callback, fence already signaled!\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
-	dma_fence_संकेत(f);
-	अगर (!cb.seen) अणु
+	dma_fence_signal(f);
+	if (!cb.seen) {
 		pr_err("Callback failed!\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	err = 0;
-err_मुक्त:
+err_free:
 	dma_fence_put(f);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक test_late_add_callback(व्योम *arg)
-अणु
-	काष्ठा simple_cb cb = अणुपूर्ण;
-	काष्ठा dma_fence *f;
-	पूर्णांक err = -EINVAL;
+static int test_late_add_callback(void *arg)
+{
+	struct simple_cb cb = {};
+	struct dma_fence *f;
+	int err = -EINVAL;
 
 	f = mock_fence();
-	अगर (!f)
-		वापस -ENOMEM;
+	if (!f)
+		return -ENOMEM;
 
-	dma_fence_संकेत(f);
+	dma_fence_signal(f);
 
-	अगर (!dma_fence_add_callback(f, &cb.cb, simple_callback)) अणु
+	if (!dma_fence_add_callback(f, &cb.cb, simple_callback)) {
 		pr_err("Added callback, but fence was already signaled!\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
-	dma_fence_संकेत(f);
-	अगर (cb.seen) अणु
+	dma_fence_signal(f);
+	if (cb.seen) {
 		pr_err("Callback called after failed attachment !\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	err = 0;
-err_मुक्त:
+err_free:
 	dma_fence_put(f);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक test_rm_callback(व्योम *arg)
-अणु
-	काष्ठा simple_cb cb = अणुपूर्ण;
-	काष्ठा dma_fence *f;
-	पूर्णांक err = -EINVAL;
+static int test_rm_callback(void *arg)
+{
+	struct simple_cb cb = {};
+	struct dma_fence *f;
+	int err = -EINVAL;
 
 	f = mock_fence();
-	अगर (!f)
-		वापस -ENOMEM;
+	if (!f)
+		return -ENOMEM;
 
-	अगर (dma_fence_add_callback(f, &cb.cb, simple_callback)) अणु
+	if (dma_fence_add_callback(f, &cb.cb, simple_callback)) {
 		pr_err("Failed to add callback, fence already signaled!\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
-	अगर (!dma_fence_हटाओ_callback(f, &cb.cb)) अणु
+	if (!dma_fence_remove_callback(f, &cb.cb)) {
 		pr_err("Failed to remove callback!\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
-	dma_fence_संकेत(f);
-	अगर (cb.seen) अणु
+	dma_fence_signal(f);
+	if (cb.seen) {
 		pr_err("Callback still signaled after removal!\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	err = 0;
-err_मुक्त:
+err_free:
 	dma_fence_put(f);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक test_late_rm_callback(व्योम *arg)
-अणु
-	काष्ठा simple_cb cb = अणुपूर्ण;
-	काष्ठा dma_fence *f;
-	पूर्णांक err = -EINVAL;
+static int test_late_rm_callback(void *arg)
+{
+	struct simple_cb cb = {};
+	struct dma_fence *f;
+	int err = -EINVAL;
 
 	f = mock_fence();
-	अगर (!f)
-		वापस -ENOMEM;
+	if (!f)
+		return -ENOMEM;
 
-	अगर (dma_fence_add_callback(f, &cb.cb, simple_callback)) अणु
+	if (dma_fence_add_callback(f, &cb.cb, simple_callback)) {
 		pr_err("Failed to add callback, fence already signaled!\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
-	dma_fence_संकेत(f);
-	अगर (!cb.seen) अणु
+	dma_fence_signal(f);
+	if (!cb.seen) {
 		pr_err("Callback failed!\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
-	अगर (dma_fence_हटाओ_callback(f, &cb.cb)) अणु
+	if (dma_fence_remove_callback(f, &cb.cb)) {
 		pr_err("Callback removal succeed after being executed!\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	err = 0;
-err_मुक्त:
+err_free:
 	dma_fence_put(f);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक test_status(व्योम *arg)
-अणु
-	काष्ठा dma_fence *f;
-	पूर्णांक err = -EINVAL;
+static int test_status(void *arg)
+{
+	struct dma_fence *f;
+	int err = -EINVAL;
 
 	f = mock_fence();
-	अगर (!f)
-		वापस -ENOMEM;
+	if (!f)
+		return -ENOMEM;
 
-	अगर (dma_fence_get_status(f)) अणु
+	if (dma_fence_get_status(f)) {
 		pr_err("Fence unexpectedly has signaled status on creation\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
-	dma_fence_संकेत(f);
-	अगर (!dma_fence_get_status(f)) अणु
+	dma_fence_signal(f);
+	if (!dma_fence_get_status(f)) {
 		pr_err("Fence not reporting signaled status\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	err = 0;
-err_मुक्त:
+err_free:
 	dma_fence_put(f);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक test_error(व्योम *arg)
-अणु
-	काष्ठा dma_fence *f;
-	पूर्णांक err = -EINVAL;
+static int test_error(void *arg)
+{
+	struct dma_fence *f;
+	int err = -EINVAL;
 
 	f = mock_fence();
-	अगर (!f)
-		वापस -ENOMEM;
+	if (!f)
+		return -ENOMEM;
 
 	dma_fence_set_error(f, -EIO);
 
-	अगर (dma_fence_get_status(f)) अणु
+	if (dma_fence_get_status(f)) {
 		pr_err("Fence unexpectedly has error status before signal\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
-	dma_fence_संकेत(f);
-	अगर (dma_fence_get_status(f) != -EIO) अणु
+	dma_fence_signal(f);
+	if (dma_fence_get_status(f) != -EIO) {
 		pr_err("Fence not reporting error status, got %d\n",
 		       dma_fence_get_status(f));
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	err = 0;
-err_मुक्त:
+err_free:
 	dma_fence_put(f);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक test_रुको(व्योम *arg)
-अणु
-	काष्ठा dma_fence *f;
-	पूर्णांक err = -EINVAL;
+static int test_wait(void *arg)
+{
+	struct dma_fence *f;
+	int err = -EINVAL;
 
 	f = mock_fence();
-	अगर (!f)
-		वापस -ENOMEM;
+	if (!f)
+		return -ENOMEM;
 
-	अगर (dma_fence_रुको_समयout(f, false, 0) != -ETIME) अणु
+	if (dma_fence_wait_timeout(f, false, 0) != -ETIME) {
 		pr_err("Wait reported complete before being signaled\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
-	dma_fence_संकेत(f);
+	dma_fence_signal(f);
 
-	अगर (dma_fence_रुको_समयout(f, false, 0) != 0) अणु
+	if (dma_fence_wait_timeout(f, false, 0) != 0) {
 		pr_err("Wait reported incomplete after being signaled\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
 	err = 0;
-err_मुक्त:
-	dma_fence_संकेत(f);
+err_free:
+	dma_fence_signal(f);
 	dma_fence_put(f);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-काष्ठा रुको_समयr अणु
-	काष्ठा समयr_list समयr;
-	काष्ठा dma_fence *f;
-पूर्ण;
+struct wait_timer {
+	struct timer_list timer;
+	struct dma_fence *f;
+};
 
-अटल व्योम रुको_समयr(काष्ठा समयr_list *समयr)
-अणु
-	काष्ठा रुको_समयr *wt = from_समयr(wt, समयr, समयr);
+static void wait_timer(struct timer_list *timer)
+{
+	struct wait_timer *wt = from_timer(wt, timer, timer);
 
-	dma_fence_संकेत(wt->f);
-पूर्ण
+	dma_fence_signal(wt->f);
+}
 
-अटल पूर्णांक test_रुको_समयout(व्योम *arg)
-अणु
-	काष्ठा रुको_समयr wt;
-	पूर्णांक err = -EINVAL;
+static int test_wait_timeout(void *arg)
+{
+	struct wait_timer wt;
+	int err = -EINVAL;
 
-	समयr_setup_on_stack(&wt.समयr, रुको_समयr, 0);
+	timer_setup_on_stack(&wt.timer, wait_timer, 0);
 
 	wt.f = mock_fence();
-	अगर (!wt.f)
-		वापस -ENOMEM;
+	if (!wt.f)
+		return -ENOMEM;
 
-	अगर (dma_fence_रुको_समयout(wt.f, false, 1) != -ETIME) अणु
+	if (dma_fence_wait_timeout(wt.f, false, 1) != -ETIME) {
 		pr_err("Wait reported complete before being signaled\n");
-		जाओ err_मुक्त;
-	पूर्ण
+		goto err_free;
+	}
 
-	mod_समयr(&wt.समयr, jअगरfies + 1);
+	mod_timer(&wt.timer, jiffies + 1);
 
-	अगर (dma_fence_रुको_समयout(wt.f, false, 2) == -ETIME) अणु
-		अगर (समयr_pending(&wt.समयr)) अणु
+	if (dma_fence_wait_timeout(wt.f, false, 2) == -ETIME) {
+		if (timer_pending(&wt.timer)) {
 			pr_notice("Timer did not fire within the jiffie!\n");
 			err = 0; /* not our fault! */
-		पूर्ण अन्यथा अणु
+		} else {
 			pr_err("Wait reported incomplete after timeout\n");
-		पूर्ण
-		जाओ err_मुक्त;
-	पूर्ण
+		}
+		goto err_free;
+	}
 
 	err = 0;
-err_मुक्त:
-	del_समयr_sync(&wt.समयr);
-	destroy_समयr_on_stack(&wt.समयr);
-	dma_fence_संकेत(wt.f);
+err_free:
+	del_timer_sync(&wt.timer);
+	destroy_timer_on_stack(&wt.timer);
+	dma_fence_signal(wt.f);
 	dma_fence_put(wt.f);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक test_stub(व्योम *arg)
-अणु
-	काष्ठा dma_fence *f[64];
-	पूर्णांक err = -EINVAL;
-	पूर्णांक i;
+static int test_stub(void *arg)
+{
+	struct dma_fence *f[64];
+	int err = -EINVAL;
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(f); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(f); i++) {
 		f[i] = dma_fence_get_stub();
-		अगर (!dma_fence_is_संकेतed(f[i])) अणु
+		if (!dma_fence_is_signaled(f[i])) {
 			pr_err("Obtained unsignaled stub fence!\n");
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
 	err = 0;
 err:
-	जबतक (i--)
+	while (i--)
 		dma_fence_put(f[i]);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /* Now off to the races! */
 
-काष्ठा race_thपढ़ो अणु
-	काष्ठा dma_fence __rcu **fences;
-	काष्ठा task_काष्ठा *task;
-	bool beक्रमe;
-	पूर्णांक id;
-पूर्ण;
+struct race_thread {
+	struct dma_fence __rcu **fences;
+	struct task_struct *task;
+	bool before;
+	int id;
+};
 
-अटल व्योम __रुको_क्रम_callbacks(काष्ठा dma_fence *f)
-अणु
+static void __wait_for_callbacks(struct dma_fence *f)
+{
 	spin_lock_irq(f->lock);
 	spin_unlock_irq(f->lock);
-पूर्ण
+}
 
-अटल पूर्णांक thपढ़ो_संकेत_callback(व्योम *arg)
-अणु
-	स्थिर काष्ठा race_thपढ़ो *t = arg;
-	अचिन्हित दीर्घ pass = 0;
-	अचिन्हित दीर्घ miss = 0;
-	पूर्णांक err = 0;
+static int thread_signal_callback(void *arg)
+{
+	const struct race_thread *t = arg;
+	unsigned long pass = 0;
+	unsigned long miss = 0;
+	int err = 0;
 
-	जबतक (!err && !kthपढ़ो_should_stop()) अणु
-		काष्ठा dma_fence *f1, *f2;
-		काष्ठा simple_cb cb;
+	while (!err && !kthread_should_stop()) {
+		struct dma_fence *f1, *f2;
+		struct simple_cb cb;
 
 		f1 = mock_fence();
-		अगर (!f1) अणु
+		if (!f1) {
 			err = -ENOMEM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		rcu_assign_poपूर्णांकer(t->fences[t->id], f1);
+		rcu_assign_pointer(t->fences[t->id], f1);
 		smp_wmb();
 
-		rcu_पढ़ो_lock();
-		करो अणु
+		rcu_read_lock();
+		do {
 			f2 = dma_fence_get_rcu_safe(&t->fences[!t->id]);
-		पूर्ण जबतक (!f2 && !kthपढ़ो_should_stop());
-		rcu_पढ़ो_unlock();
+		} while (!f2 && !kthread_should_stop());
+		rcu_read_unlock();
 
-		अगर (t->beक्रमe)
-			dma_fence_संकेत(f1);
+		if (t->before)
+			dma_fence_signal(f1);
 
 		smp_store_mb(cb.seen, false);
-		अगर (!f2 ||
-		    dma_fence_add_callback(f2, &cb.cb, simple_callback)) अणु
+		if (!f2 ||
+		    dma_fence_add_callback(f2, &cb.cb, simple_callback)) {
 			miss++;
 			cb.seen = true;
-		पूर्ण
+		}
 
-		अगर (!t->beक्रमe)
-			dma_fence_संकेत(f1);
+		if (!t->before)
+			dma_fence_signal(f1);
 
-		अगर (!cb.seen) अणु
-			dma_fence_रुको(f2, false);
-			__रुको_क्रम_callbacks(f2);
-		पूर्ण
+		if (!cb.seen) {
+			dma_fence_wait(f2, false);
+			__wait_for_callbacks(f2);
+		}
 
-		अगर (!READ_ONCE(cb.seen)) अणु
+		if (!READ_ONCE(cb.seen)) {
 			pr_err("Callback not seen on thread %d, pass %lu (%lu misses), signaling %s add_callback; fence signaled? %s\n",
 			       t->id, pass, miss,
-			       t->beक्रमe ? "before" : "after",
-			       dma_fence_is_संकेतed(f2) ? "yes" : "no");
+			       t->before ? "before" : "after",
+			       dma_fence_is_signaled(f2) ? "yes" : "no");
 			err = -EINVAL;
-		पूर्ण
+		}
 
 		dma_fence_put(f2);
 
-		rcu_assign_poपूर्णांकer(t->fences[t->id], शून्य);
+		rcu_assign_pointer(t->fences[t->id], NULL);
 		smp_wmb();
 
 		dma_fence_put(f1);
 
 		pass++;
-	पूर्ण
+	}
 
 	pr_info("%s[%d] completed %lu passes, %lu misses\n",
 		__func__, t->id, pass, miss);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक race_संकेत_callback(व्योम *arg)
-अणु
-	काष्ठा dma_fence __rcu *f[2] = अणुपूर्ण;
-	पूर्णांक ret = 0;
-	पूर्णांक pass;
+static int race_signal_callback(void *arg)
+{
+	struct dma_fence __rcu *f[2] = {};
+	int ret = 0;
+	int pass;
 
-	क्रम (pass = 0; !ret && pass <= 1; pass++) अणु
-		काष्ठा race_thपढ़ो t[2];
-		पूर्णांक i;
+	for (pass = 0; !ret && pass <= 1; pass++) {
+		struct race_thread t[2];
+		int i;
 
-		क्रम (i = 0; i < ARRAY_SIZE(t); i++) अणु
+		for (i = 0; i < ARRAY_SIZE(t); i++) {
 			t[i].fences = f;
 			t[i].id = i;
-			t[i].beक्रमe = pass;
-			t[i].task = kthपढ़ो_run(thपढ़ो_संकेत_callback, &t[i],
+			t[i].before = pass;
+			t[i].task = kthread_run(thread_signal_callback, &t[i],
 						"dma-fence:%d", i);
-			get_task_काष्ठा(t[i].task);
-		पूर्ण
+			get_task_struct(t[i].task);
+		}
 
 		msleep(50);
 
-		क्रम (i = 0; i < ARRAY_SIZE(t); i++) अणु
-			पूर्णांक err;
+		for (i = 0; i < ARRAY_SIZE(t); i++) {
+			int err;
 
-			err = kthपढ़ो_stop(t[i].task);
-			अगर (err && !ret)
+			err = kthread_stop(t[i].task);
+			if (err && !ret)
 				ret = err;
 
-			put_task_काष्ठा(t[i].task);
-		पूर्ण
-	पूर्ण
+			put_task_struct(t[i].task);
+		}
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक dma_fence(व्योम)
-अणु
-	अटल स्थिर काष्ठा subtest tests[] = अणु
+int dma_fence(void)
+{
+	static const struct subtest tests[] = {
 		SUBTEST(sanitycheck),
-		SUBTEST(test_संकेतing),
+		SUBTEST(test_signaling),
 		SUBTEST(test_add_callback),
 		SUBTEST(test_late_add_callback),
 		SUBTEST(test_rm_callback),
 		SUBTEST(test_late_rm_callback),
 		SUBTEST(test_status),
 		SUBTEST(test_error),
-		SUBTEST(test_रुको),
-		SUBTEST(test_रुको_समयout),
+		SUBTEST(test_wait),
+		SUBTEST(test_wait_timeout),
 		SUBTEST(test_stub),
-		SUBTEST(race_संकेत_callback),
-	पूर्ण;
-	पूर्णांक ret;
+		SUBTEST(race_signal_callback),
+	};
+	int ret;
 
-	pr_info("sizeof(dma_fence)=%zu\n", माप(काष्ठा dma_fence));
+	pr_info("sizeof(dma_fence)=%zu\n", sizeof(struct dma_fence));
 
 	slab_fences = KMEM_CACHE(mock_fence,
 				 SLAB_TYPESAFE_BY_RCU |
 				 SLAB_HWCACHE_ALIGN);
-	अगर (!slab_fences)
-		वापस -ENOMEM;
+	if (!slab_fences)
+		return -ENOMEM;
 
-	ret = subtests(tests, शून्य);
+	ret = subtests(tests, NULL);
 
 	kmem_cache_destroy(slab_fences);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

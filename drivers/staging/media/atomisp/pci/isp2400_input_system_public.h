@@ -1,286 +1,285 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Support क्रम Intel Camera Imaging ISP subप्रणाली.
+ * Support for Intel Camera Imaging ISP subsystem.
  * Copyright (c) 2015, Intel Corporation.
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy it
+ * This program is free software; you can redistribute it and/or modify it
  * under the terms and conditions of the GNU General Public License,
  * version 2, as published by the Free Software Foundation.
  *
  * This program is distributed in the hope it will be useful, but WITHOUT
  * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License क्रम
+ * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for
  * more details.
  */
 
-#अगर_अघोषित __INPUT_SYSTEM_PUBLIC_H_INCLUDED__
-#घोषणा __INPUT_SYSTEM_PUBLIC_H_INCLUDED__
+#ifndef __INPUT_SYSTEM_PUBLIC_H_INCLUDED__
+#define __INPUT_SYSTEM_PUBLIC_H_INCLUDED__
 
-#समावेश <type_support.h>
-#अगर_घोषित ISP2401
-#समावेश "isys_public.h"
-#अन्यथा
+#include <type_support.h>
+#ifdef ISP2401
+#include "isys_public.h"
+#else
 
-प्रकार काष्ठा input_प्रणाली_state_s		input_प्रणाली_state_t;
-प्रकार काष्ठा receiver_state_s			receiver_state_t;
+typedef struct input_system_state_s		input_system_state_t;
+typedef struct receiver_state_s			receiver_state_t;
 
 /*! Read the state of INPUT_SYSTEM[ID]
 
- \param	ID[in]				INPUT_SYSTEM identअगरier
- \param	state[out]			input प्रणाली state काष्ठाure
+ \param	ID[in]				INPUT_SYSTEM identifier
+ \param	state[out]			input system state structure
 
- \लeturn none, state = INPUT_SYSTEM[ID].state
+ \return none, state = INPUT_SYSTEM[ID].state
  */
-व्योम input_प्रणाली_get_state(
-    स्थिर input_प्रणाली_ID_t		ID,
-    input_प्रणाली_state_t		*state);
+void input_system_get_state(
+    const input_system_ID_t		ID,
+    input_system_state_t		*state);
 
 /*! Read the state of RECEIVER[ID]
 
- \param	ID[in]				RECEIVER identअगरier
- \param	state[out]			receiver state काष्ठाure
+ \param	ID[in]				RECEIVER identifier
+ \param	state[out]			receiver state structure
 
- \लeturn none, state = RECEIVER[ID].state
+ \return none, state = RECEIVER[ID].state
  */
-व्योम receiver_get_state(
-    स्थिर rx_ID_t				ID,
+void receiver_get_state(
+    const rx_ID_t				ID,
     receiver_state_t			*state);
 
-/*! Flag whether a MIPI क्रमmat is YUV420
+/*! Flag whether a MIPI format is YUV420
 
- \param	mipi_क्रमmat[in]		MIPI क्रमmat
+ \param	mipi_format[in]		MIPI format
 
- \लeturn mipi_क्रमmat == YUV420
+ \return mipi_format == YUV420
  */
-bool is_mipi_क्रमmat_yuv420(
-    स्थिर mipi_क्रमmat_t			mipi_क्रमmat);
+bool is_mipi_format_yuv420(
+    const mipi_format_t			mipi_format);
 
-/*! Set compression parameters क्रम cfg[cfg_ID] of RECEIVER[ID]
+/*! Set compression parameters for cfg[cfg_ID] of RECEIVER[ID]
 
- \param	ID[in]				RECEIVER identअगरier
- \param	cfg_ID[in]			Configuration identअगरier
+ \param	ID[in]				RECEIVER identifier
+ \param	cfg_ID[in]			Configuration identifier
  \param	comp[in]			Compression method
  \param	pred[in]			Predictor method
 
  \NOTE: the storage of compression configuration is
-	implementation specअगरic. The config can be
+	implementation specific. The config can be
 	carried either on MIPI ports or on MIPI channels
 
- \लeturn none, RECEIVER[ID].cfg[cfg_ID] = अणुcomp, predपूर्ण
+ \return none, RECEIVER[ID].cfg[cfg_ID] = {comp, pred}
  */
-व्योम receiver_set_compression(
-    स्थिर rx_ID_t				ID,
-    स्थिर अचिन्हित पूर्णांक			cfg_ID,
-    स्थिर mipi_compressor_t		comp,
-    स्थिर mipi_predictor_t		pred);
+void receiver_set_compression(
+    const rx_ID_t				ID,
+    const unsigned int			cfg_ID,
+    const mipi_compressor_t		comp,
+    const mipi_predictor_t		pred);
 
 /*! Enable PORT[port_ID] of RECEIVER[ID]
 
- \param	ID[in]				RECEIVER identअगरier
- \param	port_ID[in]			mipi PORT identअगरier
+ \param	ID[in]				RECEIVER identifier
+ \param	port_ID[in]			mipi PORT identifier
  \param	cnd[in]				irq predicate
 
- \लeturn None, enable(RECEIVER[ID].PORT[port_ID])
+ \return None, enable(RECEIVER[ID].PORT[port_ID])
  */
-व्योम receiver_port_enable(
-    स्थिर rx_ID_t				ID,
-    स्थिर क्रमागत mipi_port_id		port_ID,
-    स्थिर bool					cnd);
+void receiver_port_enable(
+    const rx_ID_t				ID,
+    const enum mipi_port_id		port_ID,
+    const bool					cnd);
 
-/*! Flag अगर PORT[port_ID] of RECEIVER[ID] is enabled
+/*! Flag if PORT[port_ID] of RECEIVER[ID] is enabled
 
- \param	ID[in]				RECEIVER identअगरier
- \param	port_ID[in]			mipi PORT identअगरier
+ \param	ID[in]				RECEIVER identifier
+ \param	port_ID[in]			mipi PORT identifier
 
- \लeturn enable(RECEIVER[ID].PORT[port_ID]) == true
+ \return enable(RECEIVER[ID].PORT[port_ID]) == true
  */
 bool is_receiver_port_enabled(
-    स्थिर rx_ID_t				ID,
-    स्थिर क्रमागत mipi_port_id		port_ID);
+    const rx_ID_t				ID,
+    const enum mipi_port_id		port_ID);
 
 /*! Enable the IRQ channels of PORT[port_ID] of RECEIVER[ID]
 
- \param	ID[in]				RECEIVER identअगरier
- \param	port_ID[in]			mipi PORT identअगरier
+ \param	ID[in]				RECEIVER identifier
+ \param	port_ID[in]			mipi PORT identifier
  \param	irq_info[in]		irq channels
 
- \लeturn None, enable(RECEIVER[ID].PORT[port_ID].irq_info)
+ \return None, enable(RECEIVER[ID].PORT[port_ID].irq_info)
  */
-व्योम receiver_irq_enable(
-    स्थिर rx_ID_t				ID,
-    स्थिर क्रमागत mipi_port_id		port_ID,
-    स्थिर rx_irq_info_t			irq_info);
+void receiver_irq_enable(
+    const rx_ID_t				ID,
+    const enum mipi_port_id		port_ID,
+    const rx_irq_info_t			irq_info);
 
 /*! Return the IRQ status of PORT[port_ID] of RECEIVER[ID]
 
- \param	ID[in]				RECEIVER identअगरier
- \param	port_ID[in]			mipi PORT identअगरier
+ \param	ID[in]				RECEIVER identifier
+ \param	port_ID[in]			mipi PORT identifier
 
- \लeturn RECEIVER[ID].PORT[port_ID].irq_info
+ \return RECEIVER[ID].PORT[port_ID].irq_info
  */
 rx_irq_info_t receiver_get_irq_info(
-    स्थिर rx_ID_t				ID,
-    स्थिर क्रमागत mipi_port_id		port_ID);
+    const rx_ID_t				ID,
+    const enum mipi_port_id		port_ID);
 
 /*! Clear the IRQ status of PORT[port_ID] of RECEIVER[ID]
 
- \param	ID[in]				RECEIVER identअगरier
- \param	port_ID[in]			mipi PORT identअगरier
+ \param	ID[in]				RECEIVER identifier
+ \param	port_ID[in]			mipi PORT identifier
  \param	irq_info[in]		irq status
 
- \लeturn None, clear(RECEIVER[ID].PORT[port_ID].irq_info)
+ \return None, clear(RECEIVER[ID].PORT[port_ID].irq_info)
  */
-व्योम receiver_irq_clear(
-    स्थिर rx_ID_t				ID,
-    स्थिर क्रमागत mipi_port_id			port_ID,
-    स्थिर rx_irq_info_t			irq_info);
+void receiver_irq_clear(
+    const rx_ID_t				ID,
+    const enum mipi_port_id			port_ID,
+    const rx_irq_info_t			irq_info);
 
-/*! Write to a control रेजिस्टर of INPUT_SYSTEM[ID]
+/*! Write to a control register of INPUT_SYSTEM[ID]
 
- \param	ID[in]				INPUT_SYSTEM identअगरier
- \param	reg[in]				रेजिस्टर index
+ \param	ID[in]				INPUT_SYSTEM identifier
+ \param	reg[in]				register index
  \param value[in]			The data to be written
 
- \लeturn none, INPUT_SYSTEM[ID].ctrl[reg] = value
+ \return none, INPUT_SYSTEM[ID].ctrl[reg] = value
  */
-STORAGE_CLASS_INPUT_SYSTEM_H व्योम input_प्रणाली_reg_store(
-    स्थिर input_प्रणाली_ID_t			ID,
-    स्थिर hrt_address			reg,
-    स्थिर hrt_data				value);
+STORAGE_CLASS_INPUT_SYSTEM_H void input_system_reg_store(
+    const input_system_ID_t			ID,
+    const hrt_address			reg,
+    const hrt_data				value);
 
-/*! Read from a control रेजिस्टर of INPUT_SYSTEM[ID]
+/*! Read from a control register of INPUT_SYSTEM[ID]
 
- \param	ID[in]				INPUT_SYSTEM identअगरier
- \param	reg[in]				रेजिस्टर index
+ \param	ID[in]				INPUT_SYSTEM identifier
+ \param	reg[in]				register index
  \param value[in]			The data to be written
 
- \लeturn INPUT_SYSTEM[ID].ctrl[reg]
+ \return INPUT_SYSTEM[ID].ctrl[reg]
  */
-STORAGE_CLASS_INPUT_SYSTEM_H hrt_data input_प्रणाली_reg_load(
-    स्थिर input_प्रणाली_ID_t			ID,
-    स्थिर hrt_address			reg);
+STORAGE_CLASS_INPUT_SYSTEM_H hrt_data input_system_reg_load(
+    const input_system_ID_t			ID,
+    const hrt_address			reg);
 
-/*! Write to a control रेजिस्टर of RECEIVER[ID]
+/*! Write to a control register of RECEIVER[ID]
 
- \param	ID[in]				RECEIVER identअगरier
- \param	reg[in]				रेजिस्टर index
+ \param	ID[in]				RECEIVER identifier
+ \param	reg[in]				register index
  \param value[in]			The data to be written
 
- \लeturn none, RECEIVER[ID].ctrl[reg] = value
+ \return none, RECEIVER[ID].ctrl[reg] = value
  */
-STORAGE_CLASS_INPUT_SYSTEM_H व्योम receiver_reg_store(
-    स्थिर rx_ID_t				ID,
-    स्थिर hrt_address			reg,
-    स्थिर hrt_data				value);
+STORAGE_CLASS_INPUT_SYSTEM_H void receiver_reg_store(
+    const rx_ID_t				ID,
+    const hrt_address			reg,
+    const hrt_data				value);
 
-/*! Read from a control रेजिस्टर of RECEIVER[ID]
+/*! Read from a control register of RECEIVER[ID]
 
- \param	ID[in]				RECEIVER identअगरier
- \param	reg[in]				रेजिस्टर index
+ \param	ID[in]				RECEIVER identifier
+ \param	reg[in]				register index
  \param value[in]			The data to be written
 
- \लeturn RECEIVER[ID].ctrl[reg]
+ \return RECEIVER[ID].ctrl[reg]
  */
 STORAGE_CLASS_INPUT_SYSTEM_H hrt_data receiver_reg_load(
-    स्थिर rx_ID_t				ID,
-    स्थिर hrt_address			reg);
+    const rx_ID_t				ID,
+    const hrt_address			reg);
 
-/*! Write to a control रेजिस्टर of PORT[port_ID] of RECEIVER[ID]
+/*! Write to a control register of PORT[port_ID] of RECEIVER[ID]
 
- \param	ID[in]				RECEIVER identअगरier
- \param	port_ID[in]			mipi PORT identअगरier
- \param	reg[in]				रेजिस्टर index
+ \param	ID[in]				RECEIVER identifier
+ \param	port_ID[in]			mipi PORT identifier
+ \param	reg[in]				register index
  \param value[in]			The data to be written
 
- \लeturn none, RECEIVER[ID].PORT[port_ID].ctrl[reg] = value
+ \return none, RECEIVER[ID].PORT[port_ID].ctrl[reg] = value
  */
-STORAGE_CLASS_INPUT_SYSTEM_H व्योम receiver_port_reg_store(
-    स्थिर rx_ID_t				ID,
-    स्थिर क्रमागत mipi_port_id			port_ID,
-    स्थिर hrt_address			reg,
-    स्थिर hrt_data				value);
+STORAGE_CLASS_INPUT_SYSTEM_H void receiver_port_reg_store(
+    const rx_ID_t				ID,
+    const enum mipi_port_id			port_ID,
+    const hrt_address			reg,
+    const hrt_data				value);
 
-/*! Read from a control रेजिस्टर PORT[port_ID] of of RECEIVER[ID]
+/*! Read from a control register PORT[port_ID] of of RECEIVER[ID]
 
- \param	ID[in]				RECEIVER identअगरier
- \param	port_ID[in]			mipi PORT identअगरier
- \param	reg[in]				रेजिस्टर index
+ \param	ID[in]				RECEIVER identifier
+ \param	port_ID[in]			mipi PORT identifier
+ \param	reg[in]				register index
  \param value[in]			The data to be written
 
- \लeturn RECEIVER[ID].PORT[port_ID].ctrl[reg]
+ \return RECEIVER[ID].PORT[port_ID].ctrl[reg]
  */
 STORAGE_CLASS_INPUT_SYSTEM_H hrt_data receiver_port_reg_load(
-    स्थिर rx_ID_t				ID,
-    स्थिर क्रमागत mipi_port_id		port_ID,
-    स्थिर hrt_address			reg);
+    const rx_ID_t				ID,
+    const enum mipi_port_id		port_ID,
+    const hrt_address			reg);
 
-/*! Write to a control रेजिस्टर of SUB_SYSTEM[sub_ID] of INPUT_SYSTEM[ID]
+/*! Write to a control register of SUB_SYSTEM[sub_ID] of INPUT_SYSTEM[ID]
 
- \param	ID[in]				INPUT_SYSTEM identअगरier
- \param	port_ID[in]			sub प्रणाली identअगरier
- \param	reg[in]				रेजिस्टर index
+ \param	ID[in]				INPUT_SYSTEM identifier
+ \param	port_ID[in]			sub system identifier
+ \param	reg[in]				register index
  \param value[in]			The data to be written
 
- \लeturn none, INPUT_SYSTEM[ID].SUB_SYSTEM[sub_ID].ctrl[reg] = value
+ \return none, INPUT_SYSTEM[ID].SUB_SYSTEM[sub_ID].ctrl[reg] = value
  */
-STORAGE_CLASS_INPUT_SYSTEM_H व्योम input_प्रणाली_sub_प्रणाली_reg_store(
-    स्थिर input_प्रणाली_ID_t			ID,
-    स्थिर sub_प्रणाली_ID_t			sub_ID,
-    स्थिर hrt_address			reg,
-    स्थिर hrt_data				value);
+STORAGE_CLASS_INPUT_SYSTEM_H void input_system_sub_system_reg_store(
+    const input_system_ID_t			ID,
+    const sub_system_ID_t			sub_ID,
+    const hrt_address			reg,
+    const hrt_data				value);
 
-/*! Read from a control रेजिस्टर SUB_SYSTEM[sub_ID] of INPUT_SYSTEM[ID]
+/*! Read from a control register SUB_SYSTEM[sub_ID] of INPUT_SYSTEM[ID]
 
- \param	ID[in]				INPUT_SYSTEM identअगरier
- \param	port_ID[in]			sub प्रणाली identअगरier
- \param	reg[in]				रेजिस्टर index
+ \param	ID[in]				INPUT_SYSTEM identifier
+ \param	port_ID[in]			sub system identifier
+ \param	reg[in]				register index
  \param value[in]			The data to be written
 
- \लeturn INPUT_SYSTEM[ID].SUB_SYSTEM[sub_ID].ctrl[reg]
+ \return INPUT_SYSTEM[ID].SUB_SYSTEM[sub_ID].ctrl[reg]
  */
-STORAGE_CLASS_INPUT_SYSTEM_H hrt_data input_प्रणाली_sub_प्रणाली_reg_load(
-    स्थिर input_प्रणाली_ID_t		ID,
-    स्थिर sub_प्रणाली_ID_t		sub_ID,
-    स्थिर hrt_address			reg);
+STORAGE_CLASS_INPUT_SYSTEM_H hrt_data input_system_sub_system_reg_load(
+    const input_system_ID_t		ID,
+    const sub_system_ID_t		sub_ID,
+    const hrt_address			reg);
 
 ///////////////////////////////////////////////////////////////////////////
 //
-//    Functions क्रम configuration phase on input प्रणाली.
+//    Functions for configuration phase on input system.
 //
 ///////////////////////////////////////////////////////////////////////////
 
 // Function that resets current configuration.
-// हटाओ the argument since it should be निजी.
-input_प्रणाली_err_t input_प्रणाली_configuration_reset(व्योम);
+// remove the argument since it should be private.
+input_system_err_t input_system_configuration_reset(void);
 
 // Function that commits current configuration.
-// हटाओ the argument since it should be निजी.
-input_प्रणाली_err_t input_प्रणाली_configuration_commit(व्योम);
+// remove the argument since it should be private.
+input_system_err_t input_system_configuration_commit(void);
 
 ///////////////////////////////////////////////////////////////////////////
 //
 // User functions:
 //		(encoded generic function)
 //    - no checking
-//    - decoding name and agruments पूर्णांकo the generic (channel) configuration
+//    - decoding name and agruments into the generic (channel) configuration
 //    function.
 //
 ///////////////////////////////////////////////////////////////////////////
 
 // FIFO channel config function user
 
-input_प्रणाली_err_t	input_प्रणाली_csi_fअगरo_channel_cfg(
+input_system_err_t	input_system_csi_fifo_channel_cfg(
     u32				ch_id,
-    input_प्रणाली_csi_port_t	port,
+    input_system_csi_port_t	port,
     backend_channel_cfg_t	backend_ch,
     target_cfg2400_t			target
 );
 
-input_प्रणाली_err_t	input_प्रणाली_csi_fअगरo_channel_with_counting_cfg(
+input_system_err_t	input_system_csi_fifo_channel_with_counting_cfg(
     u32				ch_id,
     u32				nof_frame,
-    input_प्रणाली_csi_port_t	port,
+    input_system_csi_port_t	port,
     backend_channel_cfg_t	backend_ch,
     u32				mem_region_size,
     u32				nof_mem_regions,
@@ -289,9 +288,9 @@ input_प्रणाली_err_t	input_प्रणाली_csi_fअगरo_ch
 
 // SRAM channel config function user
 
-input_प्रणाली_err_t	input_प्रणाली_csi_sram_channel_cfg(
+input_system_err_t	input_system_csi_sram_channel_cfg(
     u32				ch_id,
-    input_प्रणाली_csi_port_t	port,
+    input_system_csi_port_t	port,
     backend_channel_cfg_t	backend_ch,
     u32				csi_mem_region_size,
     u32				csi_nof_mem_regions,
@@ -300,22 +299,22 @@ input_प्रणाली_err_t	input_प्रणाली_csi_sram_channel_c
 
 //XMEM channel config function user
 
-input_प्रणाली_err_t	input_प्रणाली_csi_xmem_channel_cfg(
+input_system_err_t	input_system_csi_xmem_channel_cfg(
     u32				ch_id,
-    input_प्रणाली_csi_port_t port,
+    input_system_csi_port_t port,
     backend_channel_cfg_t	backend_ch,
     u32				mem_region_size,
     u32				nof_mem_regions,
     u32				acq_mem_region_size,
     u32				acq_nof_mem_regions,
     target_cfg2400_t			target,
-    uपूर्णांक32_t				nof_xmem_buffers
+    uint32_t				nof_xmem_buffers
 );
 
-input_प्रणाली_err_t	input_प्रणाली_csi_xmem_capture_only_channel_cfg(
+input_system_err_t	input_system_csi_xmem_capture_only_channel_cfg(
     u32				ch_id,
     u32				nof_frames,
-    input_प्रणाली_csi_port_t port,
+    input_system_csi_port_t port,
     u32				csi_mem_region_size,
     u32				csi_nof_mem_regions,
     u32				acq_mem_region_size,
@@ -323,10 +322,10 @@ input_प्रणाली_err_t	input_प्रणाली_csi_xmem_capture_o
     target_cfg2400_t			target
 );
 
-input_प्रणाली_err_t	input_प्रणाली_csi_xmem_acquire_only_channel_cfg(
+input_system_err_t	input_system_csi_xmem_acquire_only_channel_cfg(
     u32				ch_id,
     u32				nof_frames,
-    input_प्रणाली_csi_port_t port,
+    input_system_csi_port_t port,
     backend_channel_cfg_t	backend_ch,
     u32				acq_mem_region_size,
     u32				acq_nof_mem_regions,
@@ -335,7 +334,7 @@ input_प्रणाली_err_t	input_प्रणाली_csi_xmem_acquire_o
 
 // Non - CSI channel config function user
 
-input_प्रणाली_err_t	input_प्रणाली_prbs_channel_cfg(
+input_system_err_t	input_system_prbs_channel_cfg(
     u32		ch_id,
     u32		nof_frames,
     u32		seed,
@@ -346,7 +345,7 @@ input_प्रणाली_err_t	input_प्रणाली_prbs_channel_cfg(
     target_cfg2400_t	target
 );
 
-input_प्रणाली_err_t	input_प्रणाली_tpg_channel_cfg(
+input_system_err_t	input_system_tpg_channel_cfg(
     u32		ch_id,
     u32		nof_frames,//not used yet
     u32		x_mask,
@@ -361,11 +360,11 @@ input_प्रणाली_err_t	input_प्रणाली_tpg_channel_cfg(
     target_cfg2400_t	target
 );
 
-input_प्रणाली_err_t	input_प्रणाली_gpfअगरo_channel_cfg(
+input_system_err_t	input_system_gpfifo_channel_cfg(
     u32		ch_id,
     u32		nof_frames,
     target_cfg2400_t	target
 );
-#पूर्ण_अगर /* #अगर_घोषित ISP2401 */
+#endif /* #ifdef ISP2401 */
 
-#पूर्ण_अगर /* __INPUT_SYSTEM_PUBLIC_H_INCLUDED__ */
+#endif /* __INPUT_SYSTEM_PUBLIC_H_INCLUDED__ */

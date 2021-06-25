@@ -1,52 +1,51 @@
-<शैली गुरु>
 /*
- * SPDX-License-Identअगरier: MIT
+ * SPDX-License-Identifier: MIT
  *
- * Copyright तऊ 2018 Intel Corporation
+ * Copyright © 2018 Intel Corporation
  */
 
-#समावेश "igt_reset.h"
+#include "igt_reset.h"
 
-#समावेश "gt/intel_engine.h"
-#समावेश "gt/intel_gt.h"
+#include "gt/intel_engine.h"
+#include "gt/intel_gt.h"
 
-#समावेश "../i915_drv.h"
+#include "../i915_drv.h"
 
-व्योम igt_global_reset_lock(काष्ठा पूर्णांकel_gt *gt)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	क्रमागत पूर्णांकel_engine_id id;
+void igt_global_reset_lock(struct intel_gt *gt)
+{
+	struct intel_engine_cs *engine;
+	enum intel_engine_id id;
 
 	pr_debug("%s: current gpu_error=%08lx\n", __func__, gt->reset.flags);
 
-	जबतक (test_and_set_bit(I915_RESET_BACKOFF, &gt->reset.flags))
-		रुको_event(gt->reset.queue,
+	while (test_and_set_bit(I915_RESET_BACKOFF, &gt->reset.flags))
+		wait_event(gt->reset.queue,
 			   !test_bit(I915_RESET_BACKOFF, &gt->reset.flags));
 
-	क्रम_each_engine(engine, gt, id) अणु
-		जबतक (test_and_set_bit(I915_RESET_ENGINE + id,
+	for_each_engine(engine, gt, id) {
+		while (test_and_set_bit(I915_RESET_ENGINE + id,
 					&gt->reset.flags))
-			रुको_on_bit(&gt->reset.flags, I915_RESET_ENGINE + id,
+			wait_on_bit(&gt->reset.flags, I915_RESET_ENGINE + id,
 				    TASK_UNINTERRUPTIBLE);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम igt_global_reset_unlock(काष्ठा पूर्णांकel_gt *gt)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	क्रमागत पूर्णांकel_engine_id id;
+void igt_global_reset_unlock(struct intel_gt *gt)
+{
+	struct intel_engine_cs *engine;
+	enum intel_engine_id id;
 
-	क्रम_each_engine(engine, gt, id)
+	for_each_engine(engine, gt, id)
 		clear_bit(I915_RESET_ENGINE + id, &gt->reset.flags);
 
 	clear_bit(I915_RESET_BACKOFF, &gt->reset.flags);
 	wake_up_all(&gt->reset.queue);
-पूर्ण
+}
 
-bool igt_क्रमce_reset(काष्ठा पूर्णांकel_gt *gt)
-अणु
-	पूर्णांकel_gt_set_wedged(gt);
-	पूर्णांकel_gt_reset(gt, 0, शून्य);
+bool igt_force_reset(struct intel_gt *gt)
+{
+	intel_gt_set_wedged(gt);
+	intel_gt_reset(gt, 0, NULL);
 
-	वापस !पूर्णांकel_gt_is_wedged(gt);
-पूर्ण
+	return !intel_gt_is_wedged(gt);
+}

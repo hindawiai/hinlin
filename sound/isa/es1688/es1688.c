@@ -1,346 +1,345 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Driver क्रम generic ESS AudioDrive ESx688 soundcards
+ *  Driver for generic ESS AudioDrive ESx688 soundcards
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/err.h>
-#समावेश <linux/isa.h>
-#समावेश <linux/isapnp.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/रुको.h>
-#समावेश <linux/module.h>
-#समावेश <यंत्र/dma.h>
-#समावेश <sound/core.h>
-#समावेश <sound/es1688.h>
-#समावेश <sound/mpu401.h>
-#समावेश <sound/opl3.h>
-#घोषणा SNDRV_LEGACY_FIND_FREE_IRQ
-#घोषणा SNDRV_LEGACY_FIND_FREE_DMA
-#समावेश <sound/initval.h>
+#include <linux/init.h>
+#include <linux/err.h>
+#include <linux/isa.h>
+#include <linux/isapnp.h>
+#include <linux/time.h>
+#include <linux/wait.h>
+#include <linux/module.h>
+#include <asm/dma.h>
+#include <sound/core.h>
+#include <sound/es1688.h>
+#include <sound/mpu401.h>
+#include <sound/opl3.h>
+#define SNDRV_LEGACY_FIND_FREE_IRQ
+#define SNDRV_LEGACY_FIND_FREE_DMA
+#include <sound/initval.h>
 
-#घोषणा CRD_NAME "Generic ESS ES1688/ES688 AudioDrive"
-#घोषणा DEV_NAME "es1688"
+#define CRD_NAME "Generic ESS ES1688/ES688 AudioDrive"
+#define DEV_NAME "es1688"
 
 MODULE_DESCRIPTION(CRD_NAME);
 MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("snd_es968");
 
-अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
-अटल अक्षर *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID क्रम this card */
-#अगर_घोषित CONFIG_PNP
-अटल bool isapnp[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_ISAPNP;
-#पूर्ण_अगर
-अटल bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE;	/* Enable this card */
-अटल दीर्घ port[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;	/* 0x220,0x240,0x260 */
-अटल दीर्घ fm_port[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;	/* Usually 0x388 */
-अटल दीर्घ mpu_port[SNDRV_CARDS] = अणु[0 ... (SNDRV_CARDS - 1)] = -1पूर्ण;
-अटल पूर्णांक irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;	/* 5,7,9,10 */
-अटल पूर्णांक mpu_irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;	/* 5,7,9,10 */
-अटल पूर्णांक dma8[SNDRV_CARDS] = SNDRV_DEFAULT_DMA;	/* 0,1,3 */
+static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;	/* Index 0-MAX */
+static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;	/* ID for this card */
+#ifdef CONFIG_PNP
+static bool isapnp[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_ISAPNP;
+#endif
+static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE;	/* Enable this card */
+static long port[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;	/* 0x220,0x240,0x260 */
+static long fm_port[SNDRV_CARDS] = SNDRV_DEFAULT_PORT;	/* Usually 0x388 */
+static long mpu_port[SNDRV_CARDS] = {[0 ... (SNDRV_CARDS - 1)] = -1};
+static int irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;	/* 5,7,9,10 */
+static int mpu_irq[SNDRV_CARDS] = SNDRV_DEFAULT_IRQ;	/* 5,7,9,10 */
+static int dma8[SNDRV_CARDS] = SNDRV_DEFAULT_DMA;	/* 0,1,3 */
 
-module_param_array(index, पूर्णांक, शून्य, 0444);
+module_param_array(index, int, NULL, 0444);
 MODULE_PARM_DESC(index, "Index value for " CRD_NAME " soundcard.");
-module_param_array(id, अक्षरp, शून्य, 0444);
+module_param_array(id, charp, NULL, 0444);
 MODULE_PARM_DESC(id, "ID string for " CRD_NAME " soundcard.");
-module_param_array(enable, bool, शून्य, 0444);
-#अगर_घोषित CONFIG_PNP
-module_param_array(isapnp, bool, शून्य, 0444);
+module_param_array(enable, bool, NULL, 0444);
+#ifdef CONFIG_PNP
+module_param_array(isapnp, bool, NULL, 0444);
 MODULE_PARM_DESC(isapnp, "PnP detection for specified soundcard.");
-#पूर्ण_अगर
+#endif
 MODULE_PARM_DESC(enable, "Enable " CRD_NAME " soundcard.");
-module_param_hw_array(port, दीर्घ, ioport, शून्य, 0444);
+module_param_hw_array(port, long, ioport, NULL, 0444);
 MODULE_PARM_DESC(port, "Port # for " CRD_NAME " driver.");
-module_param_hw_array(mpu_port, दीर्घ, ioport, शून्य, 0444);
+module_param_hw_array(mpu_port, long, ioport, NULL, 0444);
 MODULE_PARM_DESC(mpu_port, "MPU-401 port # for " CRD_NAME " driver.");
-module_param_hw_array(irq, पूर्णांक, irq, शून्य, 0444);
-module_param_hw_array(fm_port, दीर्घ, ioport, शून्य, 0444);
+module_param_hw_array(irq, int, irq, NULL, 0444);
+module_param_hw_array(fm_port, long, ioport, NULL, 0444);
 MODULE_PARM_DESC(fm_port, "FM port # for ES1688 driver.");
 MODULE_PARM_DESC(irq, "IRQ # for " CRD_NAME " driver.");
-module_param_hw_array(mpu_irq, पूर्णांक, irq, शून्य, 0444);
+module_param_hw_array(mpu_irq, int, irq, NULL, 0444);
 MODULE_PARM_DESC(mpu_irq, "MPU-401 IRQ # for " CRD_NAME " driver.");
-module_param_hw_array(dma8, पूर्णांक, dma, शून्य, 0444);
+module_param_hw_array(dma8, int, dma, NULL, 0444);
 MODULE_PARM_DESC(dma8, "8-bit DMA # for " CRD_NAME " driver.");
 
-#अगर_घोषित CONFIG_PNP
-#घोषणा is_isapnp_selected(dev)		isapnp[dev]
-#अन्यथा
-#घोषणा is_isapnp_selected(dev)		0
-#पूर्ण_अगर
+#ifdef CONFIG_PNP
+#define is_isapnp_selected(dev)		isapnp[dev]
+#else
+#define is_isapnp_selected(dev)		0
+#endif
 
-अटल पूर्णांक snd_es1688_match(काष्ठा device *dev, अचिन्हित पूर्णांक n)
-अणु
-	वापस enable[n] && !is_isapnp_selected(n);
-पूर्ण
+static int snd_es1688_match(struct device *dev, unsigned int n)
+{
+	return enable[n] && !is_isapnp_selected(n);
+}
 
-अटल पूर्णांक snd_es1688_legacy_create(काष्ठा snd_card *card,
-				    काष्ठा device *dev, अचिन्हित पूर्णांक n)
-अणु
-	काष्ठा snd_es1688 *chip = card->निजी_data;
-	अटल स्थिर दीर्घ possible_ports[] = अणु0x220, 0x240, 0x260पूर्ण;
-	अटल स्थिर पूर्णांक possible_irqs[] = अणु5, 9, 10, 7, -1पूर्ण;
-	अटल स्थिर पूर्णांक possible_dmas[] = अणु1, 3, 0, -1पूर्ण;
+static int snd_es1688_legacy_create(struct snd_card *card,
+				    struct device *dev, unsigned int n)
+{
+	struct snd_es1688 *chip = card->private_data;
+	static const long possible_ports[] = {0x220, 0x240, 0x260};
+	static const int possible_irqs[] = {5, 9, 10, 7, -1};
+	static const int possible_dmas[] = {1, 3, 0, -1};
 
-	पूर्णांक i, error;
+	int i, error;
 
-	अगर (irq[n] == SNDRV_AUTO_IRQ) अणु
-		irq[n] = snd_legacy_find_मुक्त_irq(possible_irqs);
-		अगर (irq[n] < 0) अणु
+	if (irq[n] == SNDRV_AUTO_IRQ) {
+		irq[n] = snd_legacy_find_free_irq(possible_irqs);
+		if (irq[n] < 0) {
 			dev_err(dev, "unable to find a free IRQ\n");
-			वापस -EBUSY;
-		पूर्ण
-	पूर्ण
-	अगर (dma8[n] == SNDRV_AUTO_DMA) अणु
-		dma8[n] = snd_legacy_find_मुक्त_dma(possible_dmas);
-		अगर (dma8[n] < 0) अणु
+			return -EBUSY;
+		}
+	}
+	if (dma8[n] == SNDRV_AUTO_DMA) {
+		dma8[n] = snd_legacy_find_free_dma(possible_dmas);
+		if (dma8[n] < 0) {
 			dev_err(dev, "unable to find a free DMA\n");
-			वापस -EBUSY;
-		पूर्ण
-	पूर्ण
+			return -EBUSY;
+		}
+	}
 
-	अगर (port[n] != SNDRV_AUTO_PORT)
-		वापस snd_es1688_create(card, chip, port[n], mpu_port[n],
+	if (port[n] != SNDRV_AUTO_PORT)
+		return snd_es1688_create(card, chip, port[n], mpu_port[n],
 				irq[n], mpu_irq[n], dma8[n], ES1688_HW_AUTO);
 
 	i = 0;
-	करो अणु
+	do {
 		port[n] = possible_ports[i];
 		error = snd_es1688_create(card, chip, port[n], mpu_port[n],
 				irq[n], mpu_irq[n], dma8[n], ES1688_HW_AUTO);
-	पूर्ण जबतक (error < 0 && ++i < ARRAY_SIZE(possible_ports));
+	} while (error < 0 && ++i < ARRAY_SIZE(possible_ports));
 
-	वापस error;
-पूर्ण
+	return error;
+}
 
-अटल पूर्णांक snd_es1688_probe(काष्ठा snd_card *card, अचिन्हित पूर्णांक n)
-अणु
-	काष्ठा snd_es1688 *chip = card->निजी_data;
-	काष्ठा snd_opl3 *opl3;
-	पूर्णांक error;
+static int snd_es1688_probe(struct snd_card *card, unsigned int n)
+{
+	struct snd_es1688 *chip = card->private_data;
+	struct snd_opl3 *opl3;
+	int error;
 
 	error = snd_es1688_pcm(card, chip, 0);
-	अगर (error < 0)
-		वापस error;
+	if (error < 0)
+		return error;
 
 	error = snd_es1688_mixer(card, chip);
-	अगर (error < 0)
-		वापस error;
+	if (error < 0)
+		return error;
 
-	strscpy(card->driver, "ES1688", माप(card->driver));
-	strscpy(card->लघुname, chip->pcm->name, माप(card->लघुname));
-	snम_लिखो(card->दीर्घname, माप(card->दीर्घname),
+	strscpy(card->driver, "ES1688", sizeof(card->driver));
+	strscpy(card->shortname, chip->pcm->name, sizeof(card->shortname));
+	snprintf(card->longname, sizeof(card->longname),
 		"%s at 0x%lx, irq %i, dma %i", chip->pcm->name, chip->port,
 		 chip->irq, chip->dma8);
 
-	अगर (fm_port[n] == SNDRV_AUTO_PORT)
+	if (fm_port[n] == SNDRV_AUTO_PORT)
 		fm_port[n] = port[n];	/* share the same port */
 
-	अगर (fm_port[n] > 0) अणु
-		अगर (snd_opl3_create(card, fm_port[n], fm_port[n] + 2,
+	if (fm_port[n] > 0) {
+		if (snd_opl3_create(card, fm_port[n], fm_port[n] + 2,
 				OPL3_HW_OPL3, 0, &opl3) < 0)
 			dev_warn(card->dev,
 				 "opl3 not detected at 0x%lx\n", fm_port[n]);
-		अन्यथा अणु
-			error =	snd_opl3_hwdep_new(opl3, 0, 1, शून्य);
-			अगर (error < 0)
-				वापस error;
-		पूर्ण
-	पूर्ण
+		else {
+			error =	snd_opl3_hwdep_new(opl3, 0, 1, NULL);
+			if (error < 0)
+				return error;
+		}
+	}
 
-	अगर (mpu_irq[n] >= 0 && mpu_irq[n] != SNDRV_AUTO_IRQ &&
-			chip->mpu_port > 0) अणु
+	if (mpu_irq[n] >= 0 && mpu_irq[n] != SNDRV_AUTO_IRQ &&
+			chip->mpu_port > 0) {
 		error = snd_mpu401_uart_new(card, 0, MPU401_HW_ES1688,
 				chip->mpu_port, 0,
-				mpu_irq[n], शून्य);
-		अगर (error < 0)
-			वापस error;
-	पूर्ण
+				mpu_irq[n], NULL);
+		if (error < 0)
+			return error;
+	}
 
-	वापस snd_card_रेजिस्टर(card);
-पूर्ण
+	return snd_card_register(card);
+}
 
-अटल पूर्णांक snd_es1688_isa_probe(काष्ठा device *dev, अचिन्हित पूर्णांक n)
-अणु
-	काष्ठा snd_card *card;
-	पूर्णांक error;
+static int snd_es1688_isa_probe(struct device *dev, unsigned int n)
+{
+	struct snd_card *card;
+	int error;
 
 	error = snd_card_new(dev, index[n], id[n], THIS_MODULE,
-			     माप(काष्ठा snd_es1688), &card);
-	अगर (error < 0)
-		वापस error;
+			     sizeof(struct snd_es1688), &card);
+	if (error < 0)
+		return error;
 
 	error = snd_es1688_legacy_create(card, dev, n);
-	अगर (error < 0)
-		जाओ out;
+	if (error < 0)
+		goto out;
 
 	error = snd_es1688_probe(card, n);
-	अगर (error < 0)
-		जाओ out;
+	if (error < 0)
+		goto out;
 
 	dev_set_drvdata(dev, card);
 
-	वापस 0;
+	return 0;
 out:
-	snd_card_मुक्त(card);
-	वापस error;
-पूर्ण
+	snd_card_free(card);
+	return error;
+}
 
-अटल व्योम snd_es1688_isa_हटाओ(काष्ठा device *dev, अचिन्हित पूर्णांक n)
-अणु
-	snd_card_मुक्त(dev_get_drvdata(dev));
-पूर्ण
+static void snd_es1688_isa_remove(struct device *dev, unsigned int n)
+{
+	snd_card_free(dev_get_drvdata(dev));
+}
 
-अटल काष्ठा isa_driver snd_es1688_driver = अणु
+static struct isa_driver snd_es1688_driver = {
 	.match		= snd_es1688_match,
 	.probe		= snd_es1688_isa_probe,
-	.हटाओ		= snd_es1688_isa_हटाओ,
-#अगर 0	/* FIXME */
+	.remove		= snd_es1688_isa_remove,
+#if 0	/* FIXME */
 	.suspend	= snd_es1688_suspend,
 	.resume		= snd_es1688_resume,
-#पूर्ण_अगर
-	.driver		= अणु
+#endif
+	.driver		= {
 		.name	= DEV_NAME
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल पूर्णांक snd_es968_pnp_is_probed;
+static int snd_es968_pnp_is_probed;
 
-#अगर_घोषित CONFIG_PNP
-अटल पूर्णांक snd_card_es968_pnp(काष्ठा snd_card *card, अचिन्हित पूर्णांक n,
-			      काष्ठा pnp_card_link *pcard,
-			      स्थिर काष्ठा pnp_card_device_id *pid)
-अणु
-	काष्ठा snd_es1688 *chip = card->निजी_data;
-	काष्ठा pnp_dev *pdev;
-	पूर्णांक error;
+#ifdef CONFIG_PNP
+static int snd_card_es968_pnp(struct snd_card *card, unsigned int n,
+			      struct pnp_card_link *pcard,
+			      const struct pnp_card_device_id *pid)
+{
+	struct snd_es1688 *chip = card->private_data;
+	struct pnp_dev *pdev;
+	int error;
 
-	pdev = pnp_request_card_device(pcard, pid->devs[0].id, शून्य);
-	अगर (pdev == शून्य)
-		वापस -ENODEV;
+	pdev = pnp_request_card_device(pcard, pid->devs[0].id, NULL);
+	if (pdev == NULL)
+		return -ENODEV;
 
 	error = pnp_activate_dev(pdev);
-	अगर (error < 0) अणु
-		snd_prपूर्णांकk(KERN_ERR "ES968 pnp configure failure\n");
-		वापस error;
-	पूर्ण
+	if (error < 0) {
+		snd_printk(KERN_ERR "ES968 pnp configure failure\n");
+		return error;
+	}
 	port[n] = pnp_port_start(pdev, 0);
 	dma8[n] = pnp_dma(pdev, 0);
 	irq[n] = pnp_irq(pdev, 0);
 
-	वापस snd_es1688_create(card, chip, port[n], mpu_port[n], irq[n],
+	return snd_es1688_create(card, chip, port[n], mpu_port[n], irq[n],
 				 mpu_irq[n], dma8[n], ES1688_HW_AUTO);
-पूर्ण
+}
 
-अटल पूर्णांक snd_es968_pnp_detect(काष्ठा pnp_card_link *pcard,
-				स्थिर काष्ठा pnp_card_device_id *pid)
-अणु
-	काष्ठा snd_card *card;
-	अटल अचिन्हित पूर्णांक dev;
-	पूर्णांक error;
+static int snd_es968_pnp_detect(struct pnp_card_link *pcard,
+				const struct pnp_card_device_id *pid)
+{
+	struct snd_card *card;
+	static unsigned int dev;
+	int error;
 
-	अगर (snd_es968_pnp_is_probed)
-		वापस -EBUSY;
-	क्रम ( ; dev < SNDRV_CARDS; dev++) अणु
-		अगर (enable[dev] && isapnp[dev])
-			अवरोध;
-	पूर्ण
-	अगर (dev == SNDRV_CARDS)
-		वापस -ENODEV;
+	if (snd_es968_pnp_is_probed)
+		return -EBUSY;
+	for ( ; dev < SNDRV_CARDS; dev++) {
+		if (enable[dev] && isapnp[dev])
+			break;
+	}
+	if (dev == SNDRV_CARDS)
+		return -ENODEV;
 
 	error = snd_card_new(&pcard->card->dev,
 			     index[dev], id[dev], THIS_MODULE,
-			     माप(काष्ठा snd_es1688), &card);
-	अगर (error < 0)
-		वापस error;
+			     sizeof(struct snd_es1688), &card);
+	if (error < 0)
+		return error;
 
 	error = snd_card_es968_pnp(card, dev, pcard, pid);
-	अगर (error < 0) अणु
-		snd_card_मुक्त(card);
-		वापस error;
-	पूर्ण
+	if (error < 0) {
+		snd_card_free(card);
+		return error;
+	}
 	error = snd_es1688_probe(card, dev);
-	अगर (error < 0) अणु
-		snd_card_मुक्त(card);
-		वापस error;
-	पूर्ण
+	if (error < 0) {
+		snd_card_free(card);
+		return error;
+	}
 	pnp_set_card_drvdata(pcard, card);
 	snd_es968_pnp_is_probed = 1;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम snd_es968_pnp_हटाओ(काष्ठा pnp_card_link *pcard)
-अणु
-	snd_card_मुक्त(pnp_get_card_drvdata(pcard));
-	pnp_set_card_drvdata(pcard, शून्य);
+static void snd_es968_pnp_remove(struct pnp_card_link *pcard)
+{
+	snd_card_free(pnp_get_card_drvdata(pcard));
+	pnp_set_card_drvdata(pcard, NULL);
 	snd_es968_pnp_is_probed = 0;
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक snd_es968_pnp_suspend(काष्ठा pnp_card_link *pcard,
+#ifdef CONFIG_PM
+static int snd_es968_pnp_suspend(struct pnp_card_link *pcard,
 				 pm_message_t state)
-अणु
-	काष्ठा snd_card *card = pnp_get_card_drvdata(pcard);
+{
+	struct snd_card *card = pnp_get_card_drvdata(pcard);
 
-	snd_घातer_change_state(card, SNDRV_CTL_POWER_D3hot);
-	वापस 0;
-पूर्ण
+	snd_power_change_state(card, SNDRV_CTL_POWER_D3hot);
+	return 0;
+}
 
-अटल पूर्णांक snd_es968_pnp_resume(काष्ठा pnp_card_link *pcard)
-अणु
-	काष्ठा snd_card *card = pnp_get_card_drvdata(pcard);
-	काष्ठा snd_es1688 *chip = card->निजी_data;
+static int snd_es968_pnp_resume(struct pnp_card_link *pcard)
+{
+	struct snd_card *card = pnp_get_card_drvdata(pcard);
+	struct snd_es1688 *chip = card->private_data;
 
 	snd_es1688_reset(chip);
-	snd_घातer_change_state(card, SNDRV_CTL_POWER_D0);
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	snd_power_change_state(card, SNDRV_CTL_POWER_D0);
+	return 0;
+}
+#endif
 
-अटल स्थिर काष्ठा pnp_card_device_id snd_es968_pnpids[] = अणु
-	अणु .id = "ESS0968", .devs = अणु अणु "@@@0968" पूर्ण, पूर्ण पूर्ण,
-	अणु .id = "ESS0968", .devs = अणु अणु "ESS0968" पूर्ण, पूर्ण पूर्ण,
-	अणु .id = "", पूर्ण /* end */
-पूर्ण;
+static const struct pnp_card_device_id snd_es968_pnpids[] = {
+	{ .id = "ESS0968", .devs = { { "@@@0968" }, } },
+	{ .id = "ESS0968", .devs = { { "ESS0968" }, } },
+	{ .id = "", } /* end */
+};
 
 MODULE_DEVICE_TABLE(pnp_card, snd_es968_pnpids);
 
-अटल काष्ठा pnp_card_driver es968_pnpc_driver = अणु
+static struct pnp_card_driver es968_pnpc_driver = {
 	.flags		= PNP_DRIVER_RES_DISABLE,
 	.name		= DEV_NAME " PnP",
 	.id_table	= snd_es968_pnpids,
 	.probe		= snd_es968_pnp_detect,
-	.हटाओ		= snd_es968_pnp_हटाओ,
-#अगर_घोषित CONFIG_PM
+	.remove		= snd_es968_pnp_remove,
+#ifdef CONFIG_PM
 	.suspend	= snd_es968_pnp_suspend,
 	.resume		= snd_es968_pnp_resume,
-#पूर्ण_अगर
-पूर्ण;
-#पूर्ण_अगर
+#endif
+};
+#endif
 
-अटल पूर्णांक __init alsa_card_es1688_init(व्योम)
-अणु
-#अगर_घोषित CONFIG_PNP
-	pnp_रेजिस्टर_card_driver(&es968_pnpc_driver);
-	अगर (snd_es968_pnp_is_probed)
-		वापस 0;
-	pnp_unरेजिस्टर_card_driver(&es968_pnpc_driver);
-#पूर्ण_अगर
-	वापस isa_रेजिस्टर_driver(&snd_es1688_driver, SNDRV_CARDS);
-पूर्ण
+static int __init alsa_card_es1688_init(void)
+{
+#ifdef CONFIG_PNP
+	pnp_register_card_driver(&es968_pnpc_driver);
+	if (snd_es968_pnp_is_probed)
+		return 0;
+	pnp_unregister_card_driver(&es968_pnpc_driver);
+#endif
+	return isa_register_driver(&snd_es1688_driver, SNDRV_CARDS);
+}
 
-अटल व्योम __निकास alsa_card_es1688_निकास(व्योम)
-अणु
-	अगर (!snd_es968_pnp_is_probed) अणु
-		isa_unरेजिस्टर_driver(&snd_es1688_driver);
-		वापस;
-	पूर्ण
-#अगर_घोषित CONFIG_PNP
-	pnp_unरेजिस्टर_card_driver(&es968_pnpc_driver);
-#पूर्ण_अगर
-पूर्ण
+static void __exit alsa_card_es1688_exit(void)
+{
+	if (!snd_es968_pnp_is_probed) {
+		isa_unregister_driver(&snd_es1688_driver);
+		return;
+	}
+#ifdef CONFIG_PNP
+	pnp_unregister_card_driver(&es968_pnpc_driver);
+#endif
+}
 
 module_init(alsa_card_es1688_init);
-module_निकास(alsa_card_es1688_निकास);
+module_exit(alsa_card_es1688_exit);

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2016 Intel Corporation
+ * Copyright © 2016 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,89 +21,89 @@
  * IN THE SOFTWARE.
  */
 
-#समावेश <linux/compiler.h>
+#include <linux/compiler.h>
 
-#घोषणा selftest(name, func) __idx_##name,
-क्रमागत अणु
-#समावेश TESTS
-पूर्ण;
-#अघोषित selftest
+#define selftest(name, func) __idx_##name,
+enum {
+#include TESTS
+};
+#undef selftest
 
-#घोषणा selftest(n, f) [__idx_##n] = अणु .name = #n, .func = f पूर्ण,
-अटल काष्ठा drm_selftest अणु
+#define selftest(n, f) [__idx_##n] = { .name = #n, .func = f },
+static struct drm_selftest {
 	bool enabled;
-	स्थिर अक्षर *name;
-	पूर्णांक (*func)(व्योम *);
-पूर्ण selftests[] = अणु
-#समावेश TESTS
-पूर्ण;
-#अघोषित selftest
+	const char *name;
+	int (*func)(void *);
+} selftests[] = {
+#include TESTS
+};
+#undef selftest
 
-/* Embed the line number पूर्णांकo the parameter name so that we can order tests */
-#घोषणा param(n) __PASTE(igt__, __PASTE(__PASTE(__LINE__, __), n))
-#घोषणा selftest_0(n, func, id) \
+/* Embed the line number into the parameter name so that we can order tests */
+#define param(n) __PASTE(igt__, __PASTE(__PASTE(__LINE__, __), n))
+#define selftest_0(n, func, id) \
 module_param_named(id, selftests[__idx_##n].enabled, bool, 0400);
-#घोषणा selftest(n, func) selftest_0(n, func, param(n))
-#समावेश TESTS
-#अघोषित selftest
+#define selftest(n, func) selftest_0(n, func, param(n))
+#include TESTS
+#undef selftest
 
-अटल व्योम set_शेष_test_all(काष्ठा drm_selftest *st, अचिन्हित दीर्घ count)
-अणु
-	अचिन्हित दीर्घ i;
+static void set_default_test_all(struct drm_selftest *st, unsigned long count)
+{
+	unsigned long i;
 
-	क्रम (i = 0; i < count; i++)
-		अगर (st[i].enabled)
-			वापस;
+	for (i = 0; i < count; i++)
+		if (st[i].enabled)
+			return;
 
-	क्रम (i = 0; i < count; i++)
+	for (i = 0; i < count; i++)
 		st[i].enabled = true;
-पूर्ण
+}
 
-अटल पूर्णांक run_selftests(काष्ठा drm_selftest *st,
-			 अचिन्हित दीर्घ count,
-			 व्योम *data)
-अणु
-	पूर्णांक err = 0;
+static int run_selftests(struct drm_selftest *st,
+			 unsigned long count,
+			 void *data)
+{
+	int err = 0;
 
-	set_शेष_test_all(st, count);
+	set_default_test_all(st, count);
 
 	/* Tests are listed in natural order in drm_*_selftests.h */
-	क्रम (; count--; st++) अणु
-		अगर (!st->enabled)
-			जारी;
+	for (; count--; st++) {
+		if (!st->enabled)
+			continue;
 
 		pr_debug("drm: Running %s\n", st->name);
 		err = st->func(data);
-		अगर (err)
-			अवरोध;
-	पूर्ण
+		if (err)
+			break;
+	}
 
-	अगर (WARN(err > 0 || err == -ENOTTY,
+	if (WARN(err > 0 || err == -ENOTTY,
 		 "%s returned %d, conflicting with selftest's magic values!\n",
 		 st->name, err))
 		err = -1;
 
 	rcu_barrier();
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __maybe_unused
-__drm_subtests(स्थिर अक्षर *caller,
-	       स्थिर काष्ठा drm_subtest *st,
-	       पूर्णांक count,
-	       व्योम *data)
-अणु
-	पूर्णांक err;
+static int __maybe_unused
+__drm_subtests(const char *caller,
+	       const struct drm_subtest *st,
+	       int count,
+	       void *data)
+{
+	int err;
 
-	क्रम (; count--; st++) अणु
+	for (; count--; st++) {
 		pr_debug("Running %s/%s\n", caller, st->name);
 		err = st->func(data);
-		अगर (err) अणु
+		if (err) {
 			pr_err("%s: %s failed with error %d\n",
 			       caller, st->name, err);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

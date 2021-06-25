@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2010 Intel Corporation
+ * Copyright © 2010 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,79 +21,79 @@
  * DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *	Li Peng <peng.li@पूर्णांकel.com>
+ *	Li Peng <peng.li@intel.com>
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/delay.h>
-#समावेश "psb_drv.h"
+#include <linux/export.h>
+#include <linux/mutex.h>
+#include <linux/pci.h>
+#include <linux/i2c.h>
+#include <linux/interrupt.h>
+#include <linux/delay.h>
+#include "psb_drv.h"
 
-#घोषणा HDMI_READ(reg)		पढ़ोl(hdmi_dev->regs + (reg))
-#घोषणा HDMI_WRITE(reg, val)	ग_लिखोl(val, hdmi_dev->regs + (reg))
+#define HDMI_READ(reg)		readl(hdmi_dev->regs + (reg))
+#define HDMI_WRITE(reg, val)	writel(val, hdmi_dev->regs + (reg))
 
-#घोषणा HDMI_HCR	0x1000
-#घोषणा HCR_DETECT_HDP		(1 << 6)
-#घोषणा HCR_ENABLE_HDCP		(1 << 5)
-#घोषणा HCR_ENABLE_AUDIO	(1 << 2)
-#घोषणा HCR_ENABLE_PIXEL	(1 << 1)
-#घोषणा HCR_ENABLE_TMDS		(1 << 0)
-#घोषणा HDMI_HICR	0x1004
-#घोषणा HDMI_INTR_I2C_ERROR	(1 << 4)
-#घोषणा HDMI_INTR_I2C_FULL	(1 << 3)
-#घोषणा HDMI_INTR_I2C_DONE	(1 << 2)
-#घोषणा HDMI_INTR_HPD		(1 << 0)
-#घोषणा HDMI_HSR	0x1008
-#घोषणा HDMI_HISR	0x100C
-#घोषणा HDMI_HI2CRDB0	0x1200
-#घोषणा HDMI_HI2CHCR	0x1240
-#घोषणा HI2C_HDCP_WRITE		(0 << 2)
-#घोषणा HI2C_HDCP_RI_READ	(1 << 2)
-#घोषणा HI2C_HDCP_READ		(2 << 2)
-#घोषणा HI2C_EDID_READ		(3 << 2)
-#घोषणा HI2C_READ_CONTINUE	(1 << 1)
-#घोषणा HI2C_ENABLE_TRANSACTION	(1 << 0)
+#define HDMI_HCR	0x1000
+#define HCR_DETECT_HDP		(1 << 6)
+#define HCR_ENABLE_HDCP		(1 << 5)
+#define HCR_ENABLE_AUDIO	(1 << 2)
+#define HCR_ENABLE_PIXEL	(1 << 1)
+#define HCR_ENABLE_TMDS		(1 << 0)
+#define HDMI_HICR	0x1004
+#define HDMI_INTR_I2C_ERROR	(1 << 4)
+#define HDMI_INTR_I2C_FULL	(1 << 3)
+#define HDMI_INTR_I2C_DONE	(1 << 2)
+#define HDMI_INTR_HPD		(1 << 0)
+#define HDMI_HSR	0x1008
+#define HDMI_HISR	0x100C
+#define HDMI_HI2CRDB0	0x1200
+#define HDMI_HI2CHCR	0x1240
+#define HI2C_HDCP_WRITE		(0 << 2)
+#define HI2C_HDCP_RI_READ	(1 << 2)
+#define HI2C_HDCP_READ		(2 << 2)
+#define HI2C_EDID_READ		(3 << 2)
+#define HI2C_READ_CONTINUE	(1 << 1)
+#define HI2C_ENABLE_TRANSACTION	(1 << 0)
 
-#घोषणा HDMI_ICRH	0x1100
-#घोषणा HDMI_HI2CTDR0	0x1244
-#घोषणा HDMI_HI2CTDR1	0x1248
+#define HDMI_ICRH	0x1100
+#define HDMI_HI2CTDR0	0x1244
+#define HDMI_HI2CTDR1	0x1248
 
-#घोषणा I2C_STAT_INIT		0
-#घोषणा I2C_READ_DONE		1
-#घोषणा I2C_TRANSACTION_DONE	2
+#define I2C_STAT_INIT		0
+#define I2C_READ_DONE		1
+#define I2C_TRANSACTION_DONE	2
 
-काष्ठा hdmi_i2c_dev अणु
-	काष्ठा i2c_adapter *adap;
-	काष्ठा mutex i2c_lock;
-	काष्ठा completion complete;
-	पूर्णांक status;
-	काष्ठा i2c_msg *msg;
-	पूर्णांक buf_offset;
-पूर्ण;
+struct hdmi_i2c_dev {
+	struct i2c_adapter *adap;
+	struct mutex i2c_lock;
+	struct completion complete;
+	int status;
+	struct i2c_msg *msg;
+	int buf_offset;
+};
 
-अटल व्योम hdmi_i2c_irq_enable(काष्ठा oaktrail_hdmi_dev *hdmi_dev)
-अणु
+static void hdmi_i2c_irq_enable(struct oaktrail_hdmi_dev *hdmi_dev)
+{
 	u32 temp;
 
 	temp = HDMI_READ(HDMI_HICR);
 	temp |= (HDMI_INTR_I2C_ERROR | HDMI_INTR_I2C_FULL | HDMI_INTR_I2C_DONE);
 	HDMI_WRITE(HDMI_HICR, temp);
 	HDMI_READ(HDMI_HICR);
-पूर्ण
+}
 
-अटल व्योम hdmi_i2c_irq_disable(काष्ठा oaktrail_hdmi_dev *hdmi_dev)
-अणु
+static void hdmi_i2c_irq_disable(struct oaktrail_hdmi_dev *hdmi_dev)
+{
 	HDMI_WRITE(HDMI_HICR, 0x0);
 	HDMI_READ(HDMI_HICR);
-पूर्ण
+}
 
-अटल पूर्णांक xfer_पढ़ो(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg *pmsg)
-अणु
-	काष्ठा oaktrail_hdmi_dev *hdmi_dev = i2c_get_adapdata(adap);
-	काष्ठा hdmi_i2c_dev *i2c_dev = hdmi_dev->i2c_dev;
+static int xfer_read(struct i2c_adapter *adap, struct i2c_msg *pmsg)
+{
+	struct oaktrail_hdmi_dev *hdmi_dev = i2c_get_adapdata(adap);
+	struct hdmi_i2c_dev *i2c_dev = hdmi_dev->i2c_dev;
 	u32 temp;
 
 	i2c_dev->status = I2C_STAT_INIT;
@@ -107,28 +106,28 @@
 	HDMI_WRITE(HDMI_HI2CHCR, temp);
 	HDMI_READ(HDMI_HI2CHCR);
 
-	जबतक (i2c_dev->status != I2C_TRANSACTION_DONE)
-		रुको_क्रम_completion_पूर्णांकerruptible_समयout(&i2c_dev->complete,
+	while (i2c_dev->status != I2C_TRANSACTION_DONE)
+		wait_for_completion_interruptible_timeout(&i2c_dev->complete,
 								10 * HZ);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xfer_ग_लिखो(काष्ठा i2c_adapter *adap, काष्ठा i2c_msg *pmsg)
-अणु
+static int xfer_write(struct i2c_adapter *adap, struct i2c_msg *pmsg)
+{
 	/*
-	 * XXX: i2c ग_लिखो seems isn't useful for EDID probe, don't करो anything
+	 * XXX: i2c write seems isn't useful for EDID probe, don't do anything
 	 */
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक oaktrail_hdmi_i2c_access(काष्ठा i2c_adapter *adap,
-				काष्ठा i2c_msg *pmsg,
-				पूर्णांक num)
-अणु
-	काष्ठा oaktrail_hdmi_dev *hdmi_dev = i2c_get_adapdata(adap);
-	काष्ठा hdmi_i2c_dev *i2c_dev = hdmi_dev->i2c_dev;
-	पूर्णांक i;
+static int oaktrail_hdmi_i2c_access(struct i2c_adapter *adap,
+				struct i2c_msg *pmsg,
+				int num)
+{
+	struct oaktrail_hdmi_dev *hdmi_dev = i2c_get_adapdata(adap);
+	struct hdmi_i2c_dev *i2c_dev = hdmi_dev->i2c_dev;
+	int i;
 
 	mutex_lock(&i2c_dev->i2c_lock);
 
@@ -137,77 +136,77 @@
 
 	/* Enable irq */
 	hdmi_i2c_irq_enable(hdmi_dev);
-	क्रम (i = 0; i < num; i++) अणु
-		अगर (pmsg->len && pmsg->buf) अणु
-			अगर (pmsg->flags & I2C_M_RD)
-				xfer_पढ़ो(adap, pmsg);
-			अन्यथा
-				xfer_ग_लिखो(adap, pmsg);
-		पूर्ण
+	for (i = 0; i < num; i++) {
+		if (pmsg->len && pmsg->buf) {
+			if (pmsg->flags & I2C_M_RD)
+				xfer_read(adap, pmsg);
+			else
+				xfer_write(adap, pmsg);
+		}
 		pmsg++;         /* next message */
-	पूर्ण
+	}
 
 	/* Disable irq */
 	hdmi_i2c_irq_disable(hdmi_dev);
 
 	mutex_unlock(&i2c_dev->i2c_lock);
 
-	वापस i;
-पूर्ण
+	return i;
+}
 
-अटल u32 oaktrail_hdmi_i2c_func(काष्ठा i2c_adapter *adapter)
-अणु
-	वापस I2C_FUNC_I2C | I2C_FUNC_10BIT_ADDR;
-पूर्ण
+static u32 oaktrail_hdmi_i2c_func(struct i2c_adapter *adapter)
+{
+	return I2C_FUNC_I2C | I2C_FUNC_10BIT_ADDR;
+}
 
-अटल स्थिर काष्ठा i2c_algorithm oaktrail_hdmi_i2c_algorithm = अणु
+static const struct i2c_algorithm oaktrail_hdmi_i2c_algorithm = {
 	.master_xfer	= oaktrail_hdmi_i2c_access,
 	.functionality  = oaktrail_hdmi_i2c_func,
-पूर्ण;
+};
 
-अटल काष्ठा i2c_adapter oaktrail_hdmi_i2c_adapter = अणु
+static struct i2c_adapter oaktrail_hdmi_i2c_adapter = {
 	.name		= "oaktrail_hdmi_i2c",
 	.nr		= 3,
 	.owner		= THIS_MODULE,
 	.class		= I2C_CLASS_DDC,
 	.algo		= &oaktrail_hdmi_i2c_algorithm,
-पूर्ण;
+};
 
-अटल व्योम hdmi_i2c_पढ़ो(काष्ठा oaktrail_hdmi_dev *hdmi_dev)
-अणु
-	काष्ठा hdmi_i2c_dev *i2c_dev = hdmi_dev->i2c_dev;
-	काष्ठा i2c_msg *msg = i2c_dev->msg;
+static void hdmi_i2c_read(struct oaktrail_hdmi_dev *hdmi_dev)
+{
+	struct hdmi_i2c_dev *i2c_dev = hdmi_dev->i2c_dev;
+	struct i2c_msg *msg = i2c_dev->msg;
 	u8 *buf = msg->buf;
 	u32 temp;
-	पूर्णांक i, offset;
+	int i, offset;
 
 	offset = i2c_dev->buf_offset;
-	क्रम (i = 0; i < 0x10; i++) अणु
+	for (i = 0; i < 0x10; i++) {
 		temp = HDMI_READ(HDMI_HI2CRDB0 + (i * 4));
-		स_नकल(buf + (offset + i * 4), &temp, 4);
-	पूर्ण
+		memcpy(buf + (offset + i * 4), &temp, 4);
+	}
 	i2c_dev->buf_offset += (0x10 * 4);
 
-	/* clearing पढ़ो buffer full पूर्णांकr */
+	/* clearing read buffer full intr */
 	temp = HDMI_READ(HDMI_HISR);
 	HDMI_WRITE(HDMI_HISR, temp | HDMI_INTR_I2C_FULL);
 	HDMI_READ(HDMI_HISR);
 
-	/* जारी पढ़ो transaction */
+	/* continue read transaction */
 	temp = HDMI_READ(HDMI_HI2CHCR);
 	HDMI_WRITE(HDMI_HI2CHCR, temp | HI2C_READ_CONTINUE);
 	HDMI_READ(HDMI_HI2CHCR);
 
 	i2c_dev->status = I2C_READ_DONE;
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल व्योम hdmi_i2c_transaction_करोne(काष्ठा oaktrail_hdmi_dev *hdmi_dev)
-अणु
-	काष्ठा hdmi_i2c_dev *i2c_dev = hdmi_dev->i2c_dev;
+static void hdmi_i2c_transaction_done(struct oaktrail_hdmi_dev *hdmi_dev)
+{
+	struct hdmi_i2c_dev *i2c_dev = hdmi_dev->i2c_dev;
 	u32 temp;
 
-	/* clear transaction करोne पूर्णांकr */
+	/* clear transaction done intr */
 	temp = HDMI_READ(HDMI_HISR);
 	HDMI_WRITE(HDMI_HISR, temp | HDMI_INTR_I2C_DONE);
 	HDMI_READ(HDMI_HISR);
@@ -218,70 +217,70 @@
 	HDMI_READ(HDMI_HI2CHCR);
 
 	i2c_dev->status = I2C_TRANSACTION_DONE;
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल irqवापस_t oaktrail_hdmi_i2c_handler(पूर्णांक this_irq, व्योम *dev)
-अणु
-	काष्ठा oaktrail_hdmi_dev *hdmi_dev = dev;
-	काष्ठा hdmi_i2c_dev *i2c_dev = hdmi_dev->i2c_dev;
+static irqreturn_t oaktrail_hdmi_i2c_handler(int this_irq, void *dev)
+{
+	struct oaktrail_hdmi_dev *hdmi_dev = dev;
+	struct hdmi_i2c_dev *i2c_dev = hdmi_dev->i2c_dev;
 	u32 stat;
 
 	stat = HDMI_READ(HDMI_HISR);
 
-	अगर (stat & HDMI_INTR_HPD) अणु
+	if (stat & HDMI_INTR_HPD) {
 		HDMI_WRITE(HDMI_HISR, stat | HDMI_INTR_HPD);
 		HDMI_READ(HDMI_HISR);
-	पूर्ण
+	}
 
-	अगर (stat & HDMI_INTR_I2C_FULL)
-		hdmi_i2c_पढ़ो(hdmi_dev);
+	if (stat & HDMI_INTR_I2C_FULL)
+		hdmi_i2c_read(hdmi_dev);
 
-	अगर (stat & HDMI_INTR_I2C_DONE)
-		hdmi_i2c_transaction_करोne(hdmi_dev);
+	if (stat & HDMI_INTR_I2C_DONE)
+		hdmi_i2c_transaction_done(hdmi_dev);
 
 	complete(&i2c_dev->complete);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
 /*
  * choose alternate function 2 of GPIO pin 52, 53,
  * which is used by HDMI I2C logic
  */
-अटल व्योम oaktrail_hdmi_i2c_gpio_fix(व्योम)
-अणु
-	व्योम __iomem *base;
-	अचिन्हित पूर्णांक gpio_base = 0xff12c000;
-	पूर्णांक gpio_len = 0x1000;
+static void oaktrail_hdmi_i2c_gpio_fix(void)
+{
+	void __iomem *base;
+	unsigned int gpio_base = 0xff12c000;
+	int gpio_len = 0x1000;
 	u32 temp;
 
-	base = ioremap((resource_माप_प्रकार)gpio_base, gpio_len);
-	अगर (base == शून्य) अणु
+	base = ioremap((resource_size_t)gpio_base, gpio_len);
+	if (base == NULL) {
 		DRM_ERROR("gpio ioremap fail\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	temp = पढ़ोl(base + 0x44);
+	temp = readl(base + 0x44);
 	DRM_DEBUG_DRIVER("old gpio val %x\n", temp);
-	ग_लिखोl((temp | 0x00000a00), (base +  0x44));
-	temp = पढ़ोl(base + 0x44);
+	writel((temp | 0x00000a00), (base +  0x44));
+	temp = readl(base + 0x44);
 	DRM_DEBUG_DRIVER("new gpio val %x\n", temp);
 
 	iounmap(base);
-पूर्ण
+}
 
-पूर्णांक oaktrail_hdmi_i2c_init(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा oaktrail_hdmi_dev *hdmi_dev;
-	काष्ठा hdmi_i2c_dev *i2c_dev;
-	पूर्णांक ret;
+int oaktrail_hdmi_i2c_init(struct pci_dev *dev)
+{
+	struct oaktrail_hdmi_dev *hdmi_dev;
+	struct hdmi_i2c_dev *i2c_dev;
+	int ret;
 
 	hdmi_dev = pci_get_drvdata(dev);
 
-	i2c_dev = kzalloc(माप(काष्ठा hdmi_i2c_dev), GFP_KERNEL);
-	अगर (!i2c_dev)
-		वापस -ENOMEM;
+	i2c_dev = kzalloc(sizeof(struct hdmi_i2c_dev), GFP_KERNEL);
+	if (!i2c_dev)
+		return -ENOMEM;
 
 	i2c_dev->adap = &oaktrail_hdmi_i2c_adapter;
 	i2c_dev->status = I2C_STAT_INIT;
@@ -296,37 +295,37 @@
 	/* request irq */
 	ret = request_irq(dev->irq, oaktrail_hdmi_i2c_handler, IRQF_SHARED,
 			  oaktrail_hdmi_i2c_adapter.name, hdmi_dev);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("Failed to request IRQ for I2C controller\n");
-		जाओ मुक्त_dev;
-	पूर्ण
+		goto free_dev;
+	}
 
 	/* Adapter registration */
 	ret = i2c_add_numbered_adapter(&oaktrail_hdmi_i2c_adapter);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("Failed to add I2C adapter\n");
-		जाओ मुक्त_irq;
-	पूर्ण
+		goto free_irq;
+	}
 
-	वापस 0;
+	return 0;
 
-मुक्त_irq:
-	मुक्त_irq(dev->irq, hdmi_dev);
-मुक्त_dev:
-	kमुक्त(i2c_dev);
+free_irq:
+	free_irq(dev->irq, hdmi_dev);
+free_dev:
+	kfree(i2c_dev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम oaktrail_hdmi_i2c_निकास(काष्ठा pci_dev *dev)
-अणु
-	काष्ठा oaktrail_hdmi_dev *hdmi_dev;
-	काष्ठा hdmi_i2c_dev *i2c_dev;
+void oaktrail_hdmi_i2c_exit(struct pci_dev *dev)
+{
+	struct oaktrail_hdmi_dev *hdmi_dev;
+	struct hdmi_i2c_dev *i2c_dev;
 
 	hdmi_dev = pci_get_drvdata(dev);
 	i2c_del_adapter(&oaktrail_hdmi_i2c_adapter);
 
 	i2c_dev = hdmi_dev->i2c_dev;
-	kमुक्त(i2c_dev);
-	मुक्त_irq(dev->irq, hdmi_dev);
-पूर्ण
+	kfree(i2c_dev);
+	free_irq(dev->irq, hdmi_dev);
+}

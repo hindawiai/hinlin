@@ -1,31 +1,30 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#अगर_अघोषित __SELFTEST_H__
-#घोषणा __SELFTEST_H__
+#ifndef __SELFTEST_H__
+#define __SELFTEST_H__
 
-#समावेश <linux/compiler.h>
+#include <linux/compiler.h>
 
-#घोषणा selftest(name, func) पूर्णांक func(व्योम);
-#समावेश "selftests.h"
-#अघोषित selftest
+#define selftest(name, func) int func(void);
+#include "selftests.h"
+#undef selftest
 
-काष्ठा subtest अणु
-	पूर्णांक (*func)(व्योम *data);
-	स्थिर अक्षर *name;
-पूर्ण;
+struct subtest {
+	int (*func)(void *data);
+	const char *name;
+};
 
-पूर्णांक __subtests(स्थिर अक्षर *caller,
-	       स्थिर काष्ठा subtest *st,
-	       पूर्णांक count,
-	       व्योम *data);
-#घोषणा subtests(T, data) \
+int __subtests(const char *caller,
+	       const struct subtest *st,
+	       int count,
+	       void *data);
+#define subtests(T, data) \
 	__subtests(__func__, T, ARRAY_SIZE(T), data)
 
-#घोषणा SUBTEST(x) अणु x, #x पूर्ण
+#define SUBTEST(x) { x, #x }
 
-#पूर्ण_अगर /* __SELFTEST_H__ */
+#endif /* __SELFTEST_H__ */

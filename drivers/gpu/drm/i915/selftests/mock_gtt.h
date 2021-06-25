@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2016 Intel Corporation
+ * Copyright © 2016 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -23,15 +22,15 @@
  *
  */
 
-#अगर_अघोषित __MOCK_GTT_H
-#घोषणा __MOCK_GTT_H
+#ifndef __MOCK_GTT_H
+#define __MOCK_GTT_H
 
-काष्ठा drm_i915_निजी;
-काष्ठा i915_ggtt;
+struct drm_i915_private;
+struct i915_ggtt;
 
-व्योम mock_init_ggtt(काष्ठा drm_i915_निजी *i915, काष्ठा i915_ggtt *ggtt);
-व्योम mock_fini_ggtt(काष्ठा i915_ggtt *ggtt);
+void mock_init_ggtt(struct drm_i915_private *i915, struct i915_ggtt *ggtt);
+void mock_fini_ggtt(struct i915_ggtt *ggtt);
 
-काष्ठा i915_ppgtt *mock_ppgtt(काष्ठा drm_i915_निजी *i915, स्थिर अक्षर *name);
+struct i915_ppgtt *mock_ppgtt(struct drm_i915_private *i915, const char *name);
 
-#पूर्ण_अगर /* !__MOCK_GTT_H */
+#endif /* !__MOCK_GTT_H */

@@ -1,146 +1,145 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * DRM driver क्रम Ilitek ILI9225 panels
+ * DRM driver for Ilitek ILI9225 panels
  *
  * Copyright 2017 David Lechner <david@lechnology.com>
  *
  * Some code copied from mipi-dbi.c
- * Copyright 2016 Noralf Trथचnnes
+ * Copyright 2016 Noralf Trønnes
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/dma-buf.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/module.h>
-#समावेश <linux/property.h>
-#समावेश <linux/spi/spi.h>
-#समावेश <video/mipi_display.h>
+#include <linux/delay.h>
+#include <linux/dma-buf.h>
+#include <linux/gpio/consumer.h>
+#include <linux/module.h>
+#include <linux/property.h>
+#include <linux/spi/spi.h>
+#include <video/mipi_display.h>
 
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_damage_helper.h>
-#समावेश <drm/drm_drv.h>
-#समावेश <drm/drm_fb_cma_helper.h>
-#समावेश <drm/drm_fb_helper.h>
-#समावेश <drm/drm_fourcc.h>
-#समावेश <drm/drm_gem_atomic_helper.h>
-#समावेश <drm/drm_gem_cma_helper.h>
-#समावेश <drm/drm_managed.h>
-#समावेश <drm/drm_mipi_dbi.h>
-#समावेश <drm/drm_rect.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_damage_helper.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_fb_cma_helper.h>
+#include <drm/drm_fb_helper.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_gem_atomic_helper.h>
+#include <drm/drm_gem_cma_helper.h>
+#include <drm/drm_managed.h>
+#include <drm/drm_mipi_dbi.h>
+#include <drm/drm_rect.h>
 
-#घोषणा ILI9225_DRIVER_READ_CODE	0x00
-#घोषणा ILI9225_DRIVER_OUTPUT_CONTROL	0x01
-#घोषणा ILI9225_LCD_AC_DRIVING_CONTROL	0x02
-#घोषणा ILI9225_ENTRY_MODE		0x03
-#घोषणा ILI9225_DISPLAY_CONTROL_1	0x07
-#घोषणा ILI9225_BLANK_PERIOD_CONTROL_1	0x08
-#घोषणा ILI9225_FRAME_CYCLE_CONTROL	0x0b
-#घोषणा ILI9225_INTERFACE_CONTROL	0x0c
-#घोषणा ILI9225_OSCILLATION_CONTROL	0x0f
-#घोषणा ILI9225_POWER_CONTROL_1		0x10
-#घोषणा ILI9225_POWER_CONTROL_2		0x11
-#घोषणा ILI9225_POWER_CONTROL_3		0x12
-#घोषणा ILI9225_POWER_CONTROL_4		0x13
-#घोषणा ILI9225_POWER_CONTROL_5		0x14
-#घोषणा ILI9225_VCI_RECYCLING		0x15
-#घोषणा ILI9225_RAM_ADDRESS_SET_1	0x20
-#घोषणा ILI9225_RAM_ADDRESS_SET_2	0x21
-#घोषणा ILI9225_WRITE_DATA_TO_GRAM	0x22
-#घोषणा ILI9225_SOFTWARE_RESET		0x28
-#घोषणा ILI9225_GATE_SCAN_CONTROL	0x30
-#घोषणा ILI9225_VERTICAL_SCROLL_1	0x31
-#घोषणा ILI9225_VERTICAL_SCROLL_2	0x32
-#घोषणा ILI9225_VERTICAL_SCROLL_3	0x33
-#घोषणा ILI9225_PARTIAL_DRIVING_POS_1	0x34
-#घोषणा ILI9225_PARTIAL_DRIVING_POS_2	0x35
-#घोषणा ILI9225_HORIZ_WINDOW_ADDR_1	0x36
-#घोषणा ILI9225_HORIZ_WINDOW_ADDR_2	0x37
-#घोषणा ILI9225_VERT_WINDOW_ADDR_1	0x38
-#घोषणा ILI9225_VERT_WINDOW_ADDR_2	0x39
-#घोषणा ILI9225_GAMMA_CONTROL_1		0x50
-#घोषणा ILI9225_GAMMA_CONTROL_2		0x51
-#घोषणा ILI9225_GAMMA_CONTROL_3		0x52
-#घोषणा ILI9225_GAMMA_CONTROL_4		0x53
-#घोषणा ILI9225_GAMMA_CONTROL_5		0x54
-#घोषणा ILI9225_GAMMA_CONTROL_6		0x55
-#घोषणा ILI9225_GAMMA_CONTROL_7		0x56
-#घोषणा ILI9225_GAMMA_CONTROL_8		0x57
-#घोषणा ILI9225_GAMMA_CONTROL_9		0x58
-#घोषणा ILI9225_GAMMA_CONTROL_10	0x59
+#define ILI9225_DRIVER_READ_CODE	0x00
+#define ILI9225_DRIVER_OUTPUT_CONTROL	0x01
+#define ILI9225_LCD_AC_DRIVING_CONTROL	0x02
+#define ILI9225_ENTRY_MODE		0x03
+#define ILI9225_DISPLAY_CONTROL_1	0x07
+#define ILI9225_BLANK_PERIOD_CONTROL_1	0x08
+#define ILI9225_FRAME_CYCLE_CONTROL	0x0b
+#define ILI9225_INTERFACE_CONTROL	0x0c
+#define ILI9225_OSCILLATION_CONTROL	0x0f
+#define ILI9225_POWER_CONTROL_1		0x10
+#define ILI9225_POWER_CONTROL_2		0x11
+#define ILI9225_POWER_CONTROL_3		0x12
+#define ILI9225_POWER_CONTROL_4		0x13
+#define ILI9225_POWER_CONTROL_5		0x14
+#define ILI9225_VCI_RECYCLING		0x15
+#define ILI9225_RAM_ADDRESS_SET_1	0x20
+#define ILI9225_RAM_ADDRESS_SET_2	0x21
+#define ILI9225_WRITE_DATA_TO_GRAM	0x22
+#define ILI9225_SOFTWARE_RESET		0x28
+#define ILI9225_GATE_SCAN_CONTROL	0x30
+#define ILI9225_VERTICAL_SCROLL_1	0x31
+#define ILI9225_VERTICAL_SCROLL_2	0x32
+#define ILI9225_VERTICAL_SCROLL_3	0x33
+#define ILI9225_PARTIAL_DRIVING_POS_1	0x34
+#define ILI9225_PARTIAL_DRIVING_POS_2	0x35
+#define ILI9225_HORIZ_WINDOW_ADDR_1	0x36
+#define ILI9225_HORIZ_WINDOW_ADDR_2	0x37
+#define ILI9225_VERT_WINDOW_ADDR_1	0x38
+#define ILI9225_VERT_WINDOW_ADDR_2	0x39
+#define ILI9225_GAMMA_CONTROL_1		0x50
+#define ILI9225_GAMMA_CONTROL_2		0x51
+#define ILI9225_GAMMA_CONTROL_3		0x52
+#define ILI9225_GAMMA_CONTROL_4		0x53
+#define ILI9225_GAMMA_CONTROL_5		0x54
+#define ILI9225_GAMMA_CONTROL_6		0x55
+#define ILI9225_GAMMA_CONTROL_7		0x56
+#define ILI9225_GAMMA_CONTROL_8		0x57
+#define ILI9225_GAMMA_CONTROL_9		0x58
+#define ILI9225_GAMMA_CONTROL_10	0x59
 
-अटल अंतरभूत पूर्णांक ili9225_command(काष्ठा mipi_dbi *dbi, u8 cmd, u16 data)
-अणु
-	u8 par[2] = अणु data >> 8, data & 0xff पूर्ण;
+static inline int ili9225_command(struct mipi_dbi *dbi, u8 cmd, u16 data)
+{
+	u8 par[2] = { data >> 8, data & 0xff };
 
-	वापस mipi_dbi_command_buf(dbi, cmd, par, 2);
-पूर्ण
+	return mipi_dbi_command_buf(dbi, cmd, par, 2);
+}
 
-अटल व्योम ili9225_fb_dirty(काष्ठा drm_framebuffer *fb, काष्ठा drm_rect *rect)
-अणु
-	काष्ठा drm_gem_cma_object *cma_obj = drm_fb_cma_get_gem_obj(fb, 0);
-	काष्ठा mipi_dbi_dev *dbidev = drm_to_mipi_dbi_dev(fb->dev);
-	अचिन्हित पूर्णांक height = rect->y2 - rect->y1;
-	अचिन्हित पूर्णांक width = rect->x2 - rect->x1;
-	काष्ठा mipi_dbi *dbi = &dbidev->dbi;
+static void ili9225_fb_dirty(struct drm_framebuffer *fb, struct drm_rect *rect)
+{
+	struct drm_gem_cma_object *cma_obj = drm_fb_cma_get_gem_obj(fb, 0);
+	struct mipi_dbi_dev *dbidev = drm_to_mipi_dbi_dev(fb->dev);
+	unsigned int height = rect->y2 - rect->y1;
+	unsigned int width = rect->x2 - rect->x1;
+	struct mipi_dbi *dbi = &dbidev->dbi;
 	bool swap = dbi->swap_bytes;
 	u16 x_start, y_start;
 	u16 x1, x2, y1, y2;
-	पूर्णांक idx, ret = 0;
+	int idx, ret = 0;
 	bool full;
-	व्योम *tr;
+	void *tr;
 
-	अगर (!drm_dev_enter(fb->dev, &idx))
-		वापस;
+	if (!drm_dev_enter(fb->dev, &idx))
+		return;
 
 	full = width == fb->width && height == fb->height;
 
 	DRM_DEBUG_KMS("Flushing [FB:%d] " DRM_RECT_FMT "\n", fb->base.id, DRM_RECT_ARG(rect));
 
-	अगर (!dbi->dc || !full || swap ||
-	    fb->क्रमmat->क्रमmat == DRM_FORMAT_XRGB8888) अणु
+	if (!dbi->dc || !full || swap ||
+	    fb->format->format == DRM_FORMAT_XRGB8888) {
 		tr = dbidev->tx_buf;
 		ret = mipi_dbi_buf_copy(dbidev->tx_buf, fb, rect, swap);
-		अगर (ret)
-			जाओ err_msg;
-	पूर्ण अन्यथा अणु
+		if (ret)
+			goto err_msg;
+	} else {
 		tr = cma_obj->vaddr;
-	पूर्ण
+	}
 
-	चयन (dbidev->rotation) अणु
-	शेष:
+	switch (dbidev->rotation) {
+	default:
 		x1 = rect->x1;
 		x2 = rect->x2 - 1;
 		y1 = rect->y1;
 		y2 = rect->y2 - 1;
 		x_start = x1;
 		y_start = y1;
-		अवरोध;
-	हाल 90:
+		break;
+	case 90:
 		x1 = rect->y1;
 		x2 = rect->y2 - 1;
 		y1 = fb->width - rect->x2;
 		y2 = fb->width - rect->x1 - 1;
 		x_start = x1;
 		y_start = y2;
-		अवरोध;
-	हाल 180:
+		break;
+	case 180:
 		x1 = fb->width - rect->x2;
 		x2 = fb->width - rect->x1 - 1;
 		y1 = fb->height - rect->y2;
 		y2 = fb->height - rect->y1 - 1;
 		x_start = x2;
 		y_start = y2;
-		अवरोध;
-	हाल 270:
+		break;
+	case 270:
 		x1 = fb->height - rect->y2;
 		x2 = fb->height - rect->y1 - 1;
 		y1 = rect->x1;
 		y2 = rect->x2 - 1;
 		x_start = x2;
 		y_start = y1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	ili9225_command(dbi, ILI9225_HORIZ_WINDOW_ADDR_1, x2);
 	ili9225_command(dbi, ILI9225_HORIZ_WINDOW_ADDR_2, x1);
@@ -153,60 +152,60 @@
 	ret = mipi_dbi_command_buf(dbi, ILI9225_WRITE_DATA_TO_GRAM, tr,
 				   width * height * 2);
 err_msg:
-	अगर (ret)
+	if (ret)
 		dev_err_once(fb->dev->dev, "Failed to update display %d\n", ret);
 
-	drm_dev_निकास(idx);
-पूर्ण
+	drm_dev_exit(idx);
+}
 
-अटल व्योम ili9225_pipe_update(काष्ठा drm_simple_display_pipe *pipe,
-				काष्ठा drm_plane_state *old_state)
-अणु
-	काष्ठा drm_plane_state *state = pipe->plane.state;
-	काष्ठा drm_rect rect;
+static void ili9225_pipe_update(struct drm_simple_display_pipe *pipe,
+				struct drm_plane_state *old_state)
+{
+	struct drm_plane_state *state = pipe->plane.state;
+	struct drm_rect rect;
 
-	अगर (!pipe->crtc.state->active)
-		वापस;
+	if (!pipe->crtc.state->active)
+		return;
 
-	अगर (drm_atomic_helper_damage_merged(old_state, state, &rect))
+	if (drm_atomic_helper_damage_merged(old_state, state, &rect))
 		ili9225_fb_dirty(state->fb, &rect);
-पूर्ण
+}
 
-अटल व्योम ili9225_pipe_enable(काष्ठा drm_simple_display_pipe *pipe,
-				काष्ठा drm_crtc_state *crtc_state,
-				काष्ठा drm_plane_state *plane_state)
-अणु
-	काष्ठा mipi_dbi_dev *dbidev = drm_to_mipi_dbi_dev(pipe->crtc.dev);
-	काष्ठा drm_framebuffer *fb = plane_state->fb;
-	काष्ठा device *dev = pipe->crtc.dev->dev;
-	काष्ठा mipi_dbi *dbi = &dbidev->dbi;
-	काष्ठा drm_rect rect = अणु
+static void ili9225_pipe_enable(struct drm_simple_display_pipe *pipe,
+				struct drm_crtc_state *crtc_state,
+				struct drm_plane_state *plane_state)
+{
+	struct mipi_dbi_dev *dbidev = drm_to_mipi_dbi_dev(pipe->crtc.dev);
+	struct drm_framebuffer *fb = plane_state->fb;
+	struct device *dev = pipe->crtc.dev->dev;
+	struct mipi_dbi *dbi = &dbidev->dbi;
+	struct drm_rect rect = {
 		.x1 = 0,
 		.x2 = fb->width,
 		.y1 = 0,
 		.y2 = fb->height,
-	पूर्ण;
-	पूर्णांक ret, idx;
+	};
+	int ret, idx;
 	u8 am_id;
 
-	अगर (!drm_dev_enter(pipe->crtc.dev, &idx))
-		वापस;
+	if (!drm_dev_enter(pipe->crtc.dev, &idx))
+		return;
 
 	DRM_DEBUG_KMS("\n");
 
 	mipi_dbi_hw_reset(dbi);
 
 	/*
-	 * There करोn't seem to be two example init sequences that match, so
-	 * using the one from the popular Arduino library क्रम this display.
+	 * There don't seem to be two example init sequences that match, so
+	 * using the one from the popular Arduino library for this display.
 	 * https://github.com/Nkawu/TFT_22_ILI9225/blob/master/src/TFT_22_ILI9225.cpp
 	 */
 
 	ret = ili9225_command(dbi, ILI9225_POWER_CONTROL_1, 0x0000);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_DEV_ERROR(dev, "Error sending command %d\n", ret);
-		जाओ out_निकास;
-	पूर्ण
+		goto out_exit;
+	}
 	ili9225_command(dbi, ILI9225_POWER_CONTROL_2, 0x0000);
 	ili9225_command(dbi, ILI9225_POWER_CONTROL_3, 0x0000);
 	ili9225_command(dbi, ILI9225_POWER_CONTROL_4, 0x0000);
@@ -226,20 +225,20 @@ err_msg:
 
 	msleep(50);
 
-	चयन (dbidev->rotation) अणु
-	शेष:
+	switch (dbidev->rotation) {
+	default:
 		am_id = 0x30;
-		अवरोध;
-	हाल 90:
+		break;
+	case 90:
 		am_id = 0x18;
-		अवरोध;
-	हाल 180:
+		break;
+	case 180:
 		am_id = 0x00;
-		अवरोध;
-	हाल 270:
+		break;
+	case 270:
 		am_id = 0x28;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 	ili9225_command(dbi, ILI9225_DRIVER_OUTPUT_CONTROL, 0x011c);
 	ili9225_command(dbi, ILI9225_LCD_AC_DRIVING_CONTROL, 0x0100);
 	ili9225_command(dbi, ILI9225_ENTRY_MODE, 0x1000 | am_id);
@@ -277,19 +276,19 @@ err_msg:
 	ili9225_command(dbi, ILI9225_DISPLAY_CONTROL_1, 0x1017);
 
 	ili9225_fb_dirty(fb, &rect);
-out_निकास:
-	drm_dev_निकास(idx);
-पूर्ण
+out_exit:
+	drm_dev_exit(idx);
+}
 
-अटल व्योम ili9225_pipe_disable(काष्ठा drm_simple_display_pipe *pipe)
-अणु
-	काष्ठा mipi_dbi_dev *dbidev = drm_to_mipi_dbi_dev(pipe->crtc.dev);
-	काष्ठा mipi_dbi *dbi = &dbidev->dbi;
+static void ili9225_pipe_disable(struct drm_simple_display_pipe *pipe)
+{
+	struct mipi_dbi_dev *dbidev = drm_to_mipi_dbi_dev(pipe->crtc.dev);
+	struct mipi_dbi *dbi = &dbidev->dbi;
 
 	DRM_DEBUG_KMS("\n");
 
 	/*
-	 * This callback is not रक्षित by drm_dev_enter/निकास since we want to
+	 * This callback is not protected by drm_dev_enter/exit since we want to
 	 * turn off the display on regular driver unload. It's highly unlikely
 	 * that the underlying SPI controller is gone should this be called after
 	 * unplug.
@@ -300,45 +299,45 @@ out_निकास:
 	ili9225_command(dbi, ILI9225_POWER_CONTROL_2, 0x0007);
 	msleep(50);
 	ili9225_command(dbi, ILI9225_POWER_CONTROL_1, 0x0a02);
-पूर्ण
+}
 
-अटल पूर्णांक ili9225_dbi_command(काष्ठा mipi_dbi *dbi, u8 *cmd, u8 *par,
-			       माप_प्रकार num)
-अणु
-	काष्ठा spi_device *spi = dbi->spi;
-	अचिन्हित पूर्णांक bpw = 8;
+static int ili9225_dbi_command(struct mipi_dbi *dbi, u8 *cmd, u8 *par,
+			       size_t num)
+{
+	struct spi_device *spi = dbi->spi;
+	unsigned int bpw = 8;
 	u32 speed_hz;
-	पूर्णांक ret;
+	int ret;
 
 	gpiod_set_value_cansleep(dbi->dc, 0);
 	speed_hz = mipi_dbi_spi_cmd_max_speed(spi, 1);
 	ret = mipi_dbi_spi_transfer(spi, speed_hz, 8, cmd, 1);
-	अगर (ret || !num)
-		वापस ret;
+	if (ret || !num)
+		return ret;
 
-	अगर (*cmd == ILI9225_WRITE_DATA_TO_GRAM && !dbi->swap_bytes)
+	if (*cmd == ILI9225_WRITE_DATA_TO_GRAM && !dbi->swap_bytes)
 		bpw = 16;
 
 	gpiod_set_value_cansleep(dbi->dc, 1);
 	speed_hz = mipi_dbi_spi_cmd_max_speed(spi, num);
 
-	वापस mipi_dbi_spi_transfer(spi, speed_hz, bpw, par, num);
-पूर्ण
+	return mipi_dbi_spi_transfer(spi, speed_hz, bpw, par, num);
+}
 
-अटल स्थिर काष्ठा drm_simple_display_pipe_funcs ili9225_pipe_funcs = अणु
+static const struct drm_simple_display_pipe_funcs ili9225_pipe_funcs = {
 	.enable		= ili9225_pipe_enable,
 	.disable	= ili9225_pipe_disable,
 	.update		= ili9225_pipe_update,
 	.prepare_fb	= drm_gem_simple_display_pipe_prepare_fb,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा drm_display_mode ili9225_mode = अणु
+static const struct drm_display_mode ili9225_mode = {
 	DRM_SIMPLE_MODE(176, 220, 35, 44),
-पूर्ण;
+};
 
 DEFINE_DRM_GEM_CMA_FOPS(ili9225_fops);
 
-अटल स्थिर काष्ठा drm_driver ili9225_driver = अणु
+static const struct drm_driver ili9225_driver = {
 	.driver_features	= DRIVER_GEM | DRIVER_MODESET | DRIVER_ATOMIC,
 	.fops			= &ili9225_fops,
 	DRM_GEM_CMA_DRIVER_OPS_VMAP,
@@ -347,102 +346,102 @@ DEFINE_DRM_GEM_CMA_FOPS(ili9225_fops);
 	.date			= "20171106",
 	.major			= 1,
 	.minor			= 0,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id ili9225_of_match[] = अणु
-	अणु .compatible = "vot,v220hf01a-t" पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id ili9225_of_match[] = {
+	{ .compatible = "vot,v220hf01a-t" },
+	{},
+};
 MODULE_DEVICE_TABLE(of, ili9225_of_match);
 
-अटल स्थिर काष्ठा spi_device_id ili9225_id[] = अणु
-	अणु "v220hf01a-t", 0 पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct spi_device_id ili9225_id[] = {
+	{ "v220hf01a-t", 0 },
+	{ },
+};
 MODULE_DEVICE_TABLE(spi, ili9225_id);
 
-अटल पूर्णांक ili9225_probe(काष्ठा spi_device *spi)
-अणु
-	काष्ठा device *dev = &spi->dev;
-	काष्ठा mipi_dbi_dev *dbidev;
-	काष्ठा drm_device *drm;
-	काष्ठा mipi_dbi *dbi;
-	काष्ठा gpio_desc *rs;
+static int ili9225_probe(struct spi_device *spi)
+{
+	struct device *dev = &spi->dev;
+	struct mipi_dbi_dev *dbidev;
+	struct drm_device *drm;
+	struct mipi_dbi *dbi;
+	struct gpio_desc *rs;
 	u32 rotation = 0;
-	पूर्णांक ret;
+	int ret;
 
 	dbidev = devm_drm_dev_alloc(dev, &ili9225_driver,
-				    काष्ठा mipi_dbi_dev, drm);
-	अगर (IS_ERR(dbidev))
-		वापस PTR_ERR(dbidev);
+				    struct mipi_dbi_dev, drm);
+	if (IS_ERR(dbidev))
+		return PTR_ERR(dbidev);
 
 	dbi = &dbidev->dbi;
 	drm = &dbidev->drm;
 
 	dbi->reset = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
-	अगर (IS_ERR(dbi->reset)) अणु
+	if (IS_ERR(dbi->reset)) {
 		DRM_DEV_ERROR(dev, "Failed to get gpio 'reset'\n");
-		वापस PTR_ERR(dbi->reset);
-	पूर्ण
+		return PTR_ERR(dbi->reset);
+	}
 
 	rs = devm_gpiod_get(dev, "rs", GPIOD_OUT_LOW);
-	अगर (IS_ERR(rs)) अणु
+	if (IS_ERR(rs)) {
 		DRM_DEV_ERROR(dev, "Failed to get gpio 'rs'\n");
-		वापस PTR_ERR(rs);
-	पूर्ण
+		return PTR_ERR(rs);
+	}
 
-	device_property_पढ़ो_u32(dev, "rotation", &rotation);
+	device_property_read_u32(dev, "rotation", &rotation);
 
 	ret = mipi_dbi_spi_init(spi, dbi, rs);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* override the command function set in  mipi_dbi_spi_init() */
 	dbi->command = ili9225_dbi_command;
 
 	ret = mipi_dbi_dev_init(dbidev, &ili9225_pipe_funcs, &ili9225_mode, rotation);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	drm_mode_config_reset(drm);
 
-	ret = drm_dev_रेजिस्टर(drm, 0);
-	अगर (ret)
-		वापस ret;
+	ret = drm_dev_register(drm, 0);
+	if (ret)
+		return ret;
 
 	spi_set_drvdata(spi, drm);
 
 	drm_fbdev_generic_setup(drm, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ili9225_हटाओ(काष्ठा spi_device *spi)
-अणु
-	काष्ठा drm_device *drm = spi_get_drvdata(spi);
+static int ili9225_remove(struct spi_device *spi)
+{
+	struct drm_device *drm = spi_get_drvdata(spi);
 
 	drm_dev_unplug(drm);
-	drm_atomic_helper_shutकरोwn(drm);
+	drm_atomic_helper_shutdown(drm);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ili9225_shutकरोwn(काष्ठा spi_device *spi)
-अणु
-	drm_atomic_helper_shutकरोwn(spi_get_drvdata(spi));
-पूर्ण
+static void ili9225_shutdown(struct spi_device *spi)
+{
+	drm_atomic_helper_shutdown(spi_get_drvdata(spi));
+}
 
-अटल काष्ठा spi_driver ili9225_spi_driver = अणु
-	.driver = अणु
+static struct spi_driver ili9225_spi_driver = {
+	.driver = {
 		.name = "ili9225",
 		.owner = THIS_MODULE,
 		.of_match_table = ili9225_of_match,
-	पूर्ण,
+	},
 	.id_table = ili9225_id,
 	.probe = ili9225_probe,
-	.हटाओ = ili9225_हटाओ,
-	.shutकरोwn = ili9225_shutकरोwn,
-पूर्ण;
+	.remove = ili9225_remove,
+	.shutdown = ili9225_shutdown,
+};
 module_spi_driver(ili9225_spi_driver);
 
 MODULE_DESCRIPTION("Ilitek ILI9225 DRM driver");

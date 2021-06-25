@@ -1,67 +1,66 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2018 Alexey Dobriyan <aकरोbriyan@gmail.com>
+ * Copyright © 2018 Alexey Dobriyan <adobriyan@gmail.com>
  *
- * Permission to use, copy, modअगरy, and distribute this software क्रम any
+ * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
  * copyright notice and this permission notice appear in all copies.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
- * ANY SPECIAL, सूचीECT, INसूचीECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-/* Test पढ़ोlink /proc/self/map_files/... */
-#समावेश <त्रुटिसं.स>
-#समावेश <sys/types.h>
-#समावेश <sys/स्थिति.स>
-#समावेश <fcntl.h>
-#समावेश <मानकपन.स>
-#समावेश <unistd.h>
-#समावेश <sys/mman.h>
-#समावेश <मानककोष.स>
+/* Test readlink /proc/self/map_files/... */
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/mman.h>
+#include <stdlib.h>
 
-अटल व्योम pass(स्थिर अक्षर *fmt, अचिन्हित दीर्घ a, अचिन्हित दीर्घ b)
-अणु
-	अक्षर name[64];
-	अक्षर buf[64];
+static void pass(const char *fmt, unsigned long a, unsigned long b)
+{
+	char name[64];
+	char buf[64];
 
-	snम_लिखो(name, माप(name), fmt, a, b);
-	अगर (पढ़ोlink(name, buf, माप(buf)) == -1)
-		निकास(1);
-पूर्ण
+	snprintf(name, sizeof(name), fmt, a, b);
+	if (readlink(name, buf, sizeof(buf)) == -1)
+		exit(1);
+}
 
-अटल व्योम fail(स्थिर अक्षर *fmt, अचिन्हित दीर्घ a, अचिन्हित दीर्घ b)
-अणु
-	अक्षर name[64];
-	अक्षर buf[64];
+static void fail(const char *fmt, unsigned long a, unsigned long b)
+{
+	char name[64];
+	char buf[64];
 
-	snम_लिखो(name, माप(name), fmt, a, b);
-	अगर (पढ़ोlink(name, buf, माप(buf)) == -1 && त्रुटि_सं == ENOENT)
-		वापस;
-	निकास(1);
-पूर्ण
+	snprintf(name, sizeof(name), fmt, a, b);
+	if (readlink(name, buf, sizeof(buf)) == -1 && errno == ENOENT)
+		return;
+	exit(1);
+}
 
-पूर्णांक मुख्य(व्योम)
-अणु
-	स्थिर अचिन्हित पूर्णांक PAGE_SIZE = sysconf(_SC_PAGESIZE);
-	व्योम *p;
-	पूर्णांक fd;
-	अचिन्हित दीर्घ a, b;
+int main(void)
+{
+	const unsigned int PAGE_SIZE = sysconf(_SC_PAGESIZE);
+	void *p;
+	int fd;
+	unsigned long a, b;
 
-	fd = खोलो("/dev/zero", O_RDONLY);
-	अगर (fd == -1)
-		वापस 1;
+	fd = open("/dev/zero", O_RDONLY);
+	if (fd == -1)
+		return 1;
 
-	p = mmap(शून्य, PAGE_SIZE, PROT_NONE, MAP_PRIVATE|MAP_खाता, fd, 0);
-	अगर (p == MAP_FAILED)
-		वापस 1;
+	p = mmap(NULL, PAGE_SIZE, PROT_NONE, MAP_PRIVATE|MAP_FILE, fd, 0);
+	if (p == MAP_FAILED)
+		return 1;
 
-	a = (अचिन्हित दीर्घ)p;
-	b = (अचिन्हित दीर्घ)p + PAGE_SIZE;
+	a = (unsigned long)p;
+	b = (unsigned long)p + PAGE_SIZE;
 
 	pass("/proc/self/map_files/%lx-%lx", a, b);
 	fail("/proc/self/map_files/ %lx-%lx", a, b);
@@ -70,14 +69,14 @@
 	fail("/proc/self/map_files/%lx-%lx ", a, b);
 	fail("/proc/self/map_files/0%lx-%lx", a, b);
 	fail("/proc/self/map_files/%lx-0%lx", a, b);
-	अगर (माप(दीर्घ) == 4) अणु
+	if (sizeof(long) == 4) {
 		fail("/proc/self/map_files/100000000%lx-%lx", a, b);
 		fail("/proc/self/map_files/%lx-100000000%lx", a, b);
-	पूर्ण अन्यथा अगर (माप(दीर्घ) == 8) अणु
+	} else if (sizeof(long) == 8) {
 		fail("/proc/self/map_files/10000000000000000%lx-%lx", a, b);
 		fail("/proc/self/map_files/%lx-10000000000000000%lx", a, b);
-	पूर्ण अन्यथा
-		वापस 1;
+	} else
+		return 1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

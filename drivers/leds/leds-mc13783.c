@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * LEDs driver क्रम Freescale MC13783/MC13892/MC34708
+ * LEDs driver for Freescale MC13783/MC13892/MC34708
  *
- * Copyright (C) 2010 Philippe Rथऊtornaz
+ * Copyright (C) 2010 Philippe Rétornaz
  *
  * Based on leds-da903x:
  * Copyright (C) 2008 Compulab, Ltd.
@@ -13,150 +12,150 @@
  *      Eric Miao <eric.miao@marvell.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/leds.h>
-#समावेश <linux/of.h>
-#समावेश <linux/mfd/mc13xxx.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/platform_device.h>
+#include <linux/leds.h>
+#include <linux/of.h>
+#include <linux/mfd/mc13xxx.h>
 
-काष्ठा mc13xxx_led_devtype अणु
-	पूर्णांक	led_min;
-	पूर्णांक	led_max;
-	पूर्णांक	num_regs;
+struct mc13xxx_led_devtype {
+	int	led_min;
+	int	led_max;
+	int	num_regs;
 	u32	ledctrl_base;
-पूर्ण;
+};
 
-काष्ठा mc13xxx_led अणु
-	काष्ठा led_classdev	cdev;
-	पूर्णांक			id;
-	काष्ठा mc13xxx_leds	*leds;
-पूर्ण;
+struct mc13xxx_led {
+	struct led_classdev	cdev;
+	int			id;
+	struct mc13xxx_leds	*leds;
+};
 
-काष्ठा mc13xxx_leds अणु
-	काष्ठा mc13xxx			*master;
-	काष्ठा mc13xxx_led_devtype	*devtype;
-	पूर्णांक				num_leds;
-	काष्ठा mc13xxx_led		*led;
-पूर्ण;
+struct mc13xxx_leds {
+	struct mc13xxx			*master;
+	struct mc13xxx_led_devtype	*devtype;
+	int				num_leds;
+	struct mc13xxx_led		*led;
+};
 
-अटल अचिन्हित पूर्णांक mc13xxx_max_brightness(पूर्णांक id)
-अणु
-	अगर (id >= MC13783_LED_MD && id <= MC13783_LED_KP)
-		वापस 0x0f;
-	अन्यथा अगर (id >= MC13783_LED_R1 && id <= MC13783_LED_B3)
-		वापस 0x1f;
+static unsigned int mc13xxx_max_brightness(int id)
+{
+	if (id >= MC13783_LED_MD && id <= MC13783_LED_KP)
+		return 0x0f;
+	else if (id >= MC13783_LED_R1 && id <= MC13783_LED_B3)
+		return 0x1f;
 
-	वापस 0x3f;
-पूर्ण
+	return 0x3f;
+}
 
-अटल पूर्णांक mc13xxx_led_set(काष्ठा led_classdev *led_cdev,
-			    क्रमागत led_brightness value)
-अणु
-	काष्ठा mc13xxx_led *led =
-		container_of(led_cdev, काष्ठा mc13xxx_led, cdev);
-	काष्ठा mc13xxx_leds *leds = led->leds;
-	अचिन्हित पूर्णांक reg, bank, off, shअगरt;
+static int mc13xxx_led_set(struct led_classdev *led_cdev,
+			    enum led_brightness value)
+{
+	struct mc13xxx_led *led =
+		container_of(led_cdev, struct mc13xxx_led, cdev);
+	struct mc13xxx_leds *leds = led->leds;
+	unsigned int reg, bank, off, shift;
 
-	चयन (led->id) अणु
-	हाल MC13783_LED_MD:
-	हाल MC13783_LED_AD:
-	हाल MC13783_LED_KP:
+	switch (led->id) {
+	case MC13783_LED_MD:
+	case MC13783_LED_AD:
+	case MC13783_LED_KP:
 		reg = 2;
-		shअगरt = 9 + (led->id - MC13783_LED_MD) * 4;
-		अवरोध;
-	हाल MC13783_LED_R1:
-	हाल MC13783_LED_G1:
-	हाल MC13783_LED_B1:
-	हाल MC13783_LED_R2:
-	हाल MC13783_LED_G2:
-	हाल MC13783_LED_B2:
-	हाल MC13783_LED_R3:
-	हाल MC13783_LED_G3:
-	हाल MC13783_LED_B3:
+		shift = 9 + (led->id - MC13783_LED_MD) * 4;
+		break;
+	case MC13783_LED_R1:
+	case MC13783_LED_G1:
+	case MC13783_LED_B1:
+	case MC13783_LED_R2:
+	case MC13783_LED_G2:
+	case MC13783_LED_B2:
+	case MC13783_LED_R3:
+	case MC13783_LED_G3:
+	case MC13783_LED_B3:
 		off = led->id - MC13783_LED_R1;
 		bank = off / 3;
 		reg = 3 + bank;
-		shअगरt = (off - bank * 3) * 5 + 6;
-		अवरोध;
-	हाल MC13892_LED_MD:
-	हाल MC13892_LED_AD:
-	हाल MC13892_LED_KP:
+		shift = (off - bank * 3) * 5 + 6;
+		break;
+	case MC13892_LED_MD:
+	case MC13892_LED_AD:
+	case MC13892_LED_KP:
 		off = led->id - MC13892_LED_MD;
 		reg = off / 2;
-		shअगरt = 3 + (off - reg * 2) * 12;
-		अवरोध;
-	हाल MC13892_LED_R:
-	हाल MC13892_LED_G:
-	हाल MC13892_LED_B:
+		shift = 3 + (off - reg * 2) * 12;
+		break;
+	case MC13892_LED_R:
+	case MC13892_LED_G:
+	case MC13892_LED_B:
 		off = led->id - MC13892_LED_R;
 		bank = off / 2;
 		reg = 2 + bank;
-		shअगरt = (off - bank * 2) * 12 + 3;
-		अवरोध;
-	हाल MC34708_LED_R:
-	हाल MC34708_LED_G:
+		shift = (off - bank * 2) * 12 + 3;
+		break;
+	case MC34708_LED_R:
+	case MC34708_LED_G:
 		reg = 0;
-		shअगरt = 3 + (led->id - MC34708_LED_R) * 12;
-		अवरोध;
-	शेष:
+		shift = 3 + (led->id - MC34708_LED_R) * 12;
+		break;
+	default:
 		BUG();
-	पूर्ण
+	}
 
-	वापस mc13xxx_reg_rmw(leds->master, leds->devtype->ledctrl_base + reg,
-			mc13xxx_max_brightness(led->id) << shअगरt,
-			value << shअगरt);
-पूर्ण
+	return mc13xxx_reg_rmw(leds->master, leds->devtype->ledctrl_base + reg,
+			mc13xxx_max_brightness(led->id) << shift,
+			value << shift);
+}
 
-#अगर_घोषित CONFIG_OF
-अटल काष्ठा mc13xxx_leds_platक्रमm_data __init *mc13xxx_led_probe_dt(
-	काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा mc13xxx_leds *leds = platक्रमm_get_drvdata(pdev);
-	काष्ठा mc13xxx_leds_platक्रमm_data *pdata;
-	काष्ठा device_node *parent, *child;
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक i = 0, ret = -ENODATA;
+#ifdef CONFIG_OF
+static struct mc13xxx_leds_platform_data __init *mc13xxx_led_probe_dt(
+	struct platform_device *pdev)
+{
+	struct mc13xxx_leds *leds = platform_get_drvdata(pdev);
+	struct mc13xxx_leds_platform_data *pdata;
+	struct device_node *parent, *child;
+	struct device *dev = &pdev->dev;
+	int i = 0, ret = -ENODATA;
 
-	pdata = devm_kzalloc(dev, माप(*pdata), GFP_KERNEL);
-	अगर (!pdata)
-		वापस ERR_PTR(-ENOMEM);
+	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
+	if (!pdata)
+		return ERR_PTR(-ENOMEM);
 
 	parent = of_get_child_by_name(dev_of_node(dev->parent), "leds");
-	अगर (!parent)
-		जाओ out_node_put;
+	if (!parent)
+		goto out_node_put;
 
-	ret = of_property_पढ़ो_u32_array(parent, "led-control",
+	ret = of_property_read_u32_array(parent, "led-control",
 					 pdata->led_control,
 					 leds->devtype->num_regs);
-	अगर (ret)
-		जाओ out_node_put;
+	if (ret)
+		goto out_node_put;
 
 	pdata->num_leds = of_get_available_child_count(parent);
 
-	pdata->led = devm_kसुस्मृति(dev, pdata->num_leds, माप(*pdata->led),
+	pdata->led = devm_kcalloc(dev, pdata->num_leds, sizeof(*pdata->led),
 				  GFP_KERNEL);
-	अगर (!pdata->led) अणु
+	if (!pdata->led) {
 		ret = -ENOMEM;
-		जाओ out_node_put;
-	पूर्ण
+		goto out_node_put;
+	}
 
-	क्रम_each_available_child_of_node(parent, child) अणु
-		स्थिर अक्षर *str;
-		u32 पंचांगp;
+	for_each_available_child_of_node(parent, child) {
+		const char *str;
+		u32 tmp;
 
-		अगर (of_property_पढ़ो_u32(child, "reg", &पंचांगp))
-			जारी;
-		pdata->led[i].id = leds->devtype->led_min + पंचांगp;
+		if (of_property_read_u32(child, "reg", &tmp))
+			continue;
+		pdata->led[i].id = leds->devtype->led_min + tmp;
 
-		अगर (!of_property_पढ़ो_string(child, "label", &str))
+		if (!of_property_read_string(child, "label", &str))
 			pdata->led[i].name = str;
-		अगर (!of_property_पढ़ो_string(child, "linux,default-trigger",
+		if (!of_property_read_string(child, "linux,default-trigger",
 					     &str))
-			pdata->led[i].शेष_trigger = str;
+			pdata->led[i].default_trigger = str;
 
 		i++;
-	पूर्ण
+	}
 
 	pdata->num_leds = i;
 	ret = i > 0 ? 0 : -ENODATA;
@@ -164,152 +163,152 @@
 out_node_put:
 	of_node_put(parent);
 
-	वापस ret ? ERR_PTR(ret) : pdata;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत काष्ठा mc13xxx_leds_platक्रमm_data __init *mc13xxx_led_probe_dt(
-	काष्ठा platक्रमm_device *pdev)
-अणु
-	वापस ERR_PTR(-ENOSYS);
-पूर्ण
-#पूर्ण_अगर
+	return ret ? ERR_PTR(ret) : pdata;
+}
+#else
+static inline struct mc13xxx_leds_platform_data __init *mc13xxx_led_probe_dt(
+	struct platform_device *pdev)
+{
+	return ERR_PTR(-ENOSYS);
+}
+#endif
 
-अटल पूर्णांक __init mc13xxx_led_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा mc13xxx_leds_platक्रमm_data *pdata = dev_get_platdata(dev);
-	काष्ठा mc13xxx *mcdev = dev_get_drvdata(dev->parent);
-	काष्ठा mc13xxx_led_devtype *devtype =
-		(काष्ठा mc13xxx_led_devtype *)pdev->id_entry->driver_data;
-	काष्ठा mc13xxx_leds *leds;
-	पूर्णांक i, id, ret = -ENODATA;
+static int __init mc13xxx_led_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct mc13xxx_leds_platform_data *pdata = dev_get_platdata(dev);
+	struct mc13xxx *mcdev = dev_get_drvdata(dev->parent);
+	struct mc13xxx_led_devtype *devtype =
+		(struct mc13xxx_led_devtype *)pdev->id_entry->driver_data;
+	struct mc13xxx_leds *leds;
+	int i, id, ret = -ENODATA;
 	u32 init_led = 0;
 
-	leds = devm_kzalloc(dev, माप(*leds), GFP_KERNEL);
-	अगर (!leds)
-		वापस -ENOMEM;
+	leds = devm_kzalloc(dev, sizeof(*leds), GFP_KERNEL);
+	if (!leds)
+		return -ENOMEM;
 
 	leds->devtype = devtype;
 	leds->master = mcdev;
-	platक्रमm_set_drvdata(pdev, leds);
+	platform_set_drvdata(pdev, leds);
 
-	अगर (dev_of_node(dev->parent)) अणु
+	if (dev_of_node(dev->parent)) {
 		pdata = mc13xxx_led_probe_dt(pdev);
-		अगर (IS_ERR(pdata))
-			वापस PTR_ERR(pdata);
-	पूर्ण अन्यथा अगर (!pdata)
-		वापस -ENODATA;
+		if (IS_ERR(pdata))
+			return PTR_ERR(pdata);
+	} else if (!pdata)
+		return -ENODATA;
 
 	leds->num_leds = pdata->num_leds;
 
-	अगर ((leds->num_leds < 1) ||
-	    (leds->num_leds > (devtype->led_max - devtype->led_min + 1))) अणु
+	if ((leds->num_leds < 1) ||
+	    (leds->num_leds > (devtype->led_max - devtype->led_min + 1))) {
 		dev_err(dev, "Invalid LED count %d\n", leds->num_leds);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	leds->led = devm_kसुस्मृति(dev, leds->num_leds, माप(*leds->led),
+	leds->led = devm_kcalloc(dev, leds->num_leds, sizeof(*leds->led),
 				 GFP_KERNEL);
-	अगर (!leds->led)
-		वापस -ENOMEM;
+	if (!leds->led)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < devtype->num_regs; i++) अणु
-		ret = mc13xxx_reg_ग_लिखो(mcdev, leds->devtype->ledctrl_base + i,
+	for (i = 0; i < devtype->num_regs; i++) {
+		ret = mc13xxx_reg_write(mcdev, leds->devtype->ledctrl_base + i,
 					pdata->led_control[i]);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	क्रम (i = 0; i < leds->num_leds; i++) अणु
-		स्थिर अक्षर *name, *trig;
+	for (i = 0; i < leds->num_leds; i++) {
+		const char *name, *trig;
 
 		ret = -EINVAL;
 
 		id = pdata->led[i].id;
 		name = pdata->led[i].name;
-		trig = pdata->led[i].शेष_trigger;
+		trig = pdata->led[i].default_trigger;
 
-		अगर ((id > devtype->led_max) || (id < devtype->led_min)) अणु
+		if ((id > devtype->led_max) || (id < devtype->led_min)) {
 			dev_err(dev, "Invalid ID %i\n", id);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अगर (init_led & (1 << id)) अणु
+		if (init_led & (1 << id)) {
 			dev_warn(dev, "LED %i already initialized\n", id);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		init_led |= 1 << id;
 		leds->led[i].id = id;
 		leds->led[i].leds = leds;
 		leds->led[i].cdev.name = name;
-		leds->led[i].cdev.शेष_trigger = trig;
+		leds->led[i].cdev.default_trigger = trig;
 		leds->led[i].cdev.flags = LED_CORE_SUSPENDRESUME;
 		leds->led[i].cdev.brightness_set_blocking = mc13xxx_led_set;
 		leds->led[i].cdev.max_brightness = mc13xxx_max_brightness(id);
 
-		ret = led_classdev_रेजिस्टर(dev->parent, &leds->led[i].cdev);
-		अगर (ret) अणु
+		ret = led_classdev_register(dev->parent, &leds->led[i].cdev);
+		if (ret) {
 			dev_err(dev, "Failed to register LED %i\n", id);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (ret)
-		जबतक (--i >= 0)
-			led_classdev_unरेजिस्टर(&leds->led[i].cdev);
+	if (ret)
+		while (--i >= 0)
+			led_classdev_unregister(&leds->led[i].cdev);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक mc13xxx_led_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा mc13xxx_leds *leds = platक्रमm_get_drvdata(pdev);
-	पूर्णांक i;
+static int mc13xxx_led_remove(struct platform_device *pdev)
+{
+	struct mc13xxx_leds *leds = platform_get_drvdata(pdev);
+	int i;
 
-	क्रम (i = 0; i < leds->num_leds; i++)
-		led_classdev_unरेजिस्टर(&leds->led[i].cdev);
+	for (i = 0; i < leds->num_leds; i++)
+		led_classdev_unregister(&leds->led[i].cdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा mc13xxx_led_devtype mc13783_led_devtype = अणु
+static const struct mc13xxx_led_devtype mc13783_led_devtype = {
 	.led_min	= MC13783_LED_MD,
 	.led_max	= MC13783_LED_B3,
 	.num_regs	= 6,
 	.ledctrl_base	= 51,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mc13xxx_led_devtype mc13892_led_devtype = अणु
+static const struct mc13xxx_led_devtype mc13892_led_devtype = {
 	.led_min	= MC13892_LED_MD,
 	.led_max	= MC13892_LED_B,
 	.num_regs	= 4,
 	.ledctrl_base	= 51,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा mc13xxx_led_devtype mc34708_led_devtype = अणु
+static const struct mc13xxx_led_devtype mc34708_led_devtype = {
 	.led_min	= MC34708_LED_R,
 	.led_max	= MC34708_LED_G,
 	.num_regs	= 1,
 	.ledctrl_base	= 54,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा platक्रमm_device_id mc13xxx_led_id_table[] = अणु
-	अणु "mc13783-led", (kernel_uदीर्घ_t)&mc13783_led_devtype, पूर्ण,
-	अणु "mc13892-led", (kernel_uदीर्घ_t)&mc13892_led_devtype, पूर्ण,
-	अणु "mc34708-led", (kernel_uदीर्घ_t)&mc34708_led_devtype, पूर्ण,
-	अणु पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(platक्रमm, mc13xxx_led_id_table);
+static const struct platform_device_id mc13xxx_led_id_table[] = {
+	{ "mc13783-led", (kernel_ulong_t)&mc13783_led_devtype, },
+	{ "mc13892-led", (kernel_ulong_t)&mc13892_led_devtype, },
+	{ "mc34708-led", (kernel_ulong_t)&mc34708_led_devtype, },
+	{ }
+};
+MODULE_DEVICE_TABLE(platform, mc13xxx_led_id_table);
 
-अटल काष्ठा platक्रमm_driver mc13xxx_led_driver = अणु
-	.driver	= अणु
+static struct platform_driver mc13xxx_led_driver = {
+	.driver	= {
 		.name	= "mc13xxx-led",
-	पूर्ण,
-	.हटाओ		= mc13xxx_led_हटाओ,
+	},
+	.remove		= mc13xxx_led_remove,
 	.id_table	= mc13xxx_led_id_table,
-पूर्ण;
-module_platक्रमm_driver_probe(mc13xxx_led_driver, mc13xxx_led_probe);
+};
+module_platform_driver_probe(mc13xxx_led_driver, mc13xxx_led_probe);
 
 MODULE_DESCRIPTION("LEDs driver for Freescale MC13XXX PMIC");
 MODULE_AUTHOR("Philippe Retornaz <philippe.retornaz@epfl.ch>");

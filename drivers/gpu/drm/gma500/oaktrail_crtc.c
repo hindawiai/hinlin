@@ -1,329 +1,328 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright तऊ 2009 Intel Corporation
+ * Copyright © 2009 Intel Corporation
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/pm_runसमय.स>
+#include <linux/delay.h>
+#include <linux/i2c.h>
+#include <linux/pm_runtime.h>
 
-#समावेश <drm/drm_fourcc.h>
+#include <drm/drm_fourcc.h>
 
-#समावेश "framebuffer.h"
-#समावेश "gma_display.h"
-#समावेश "power.h"
-#समावेश "psb_drv.h"
-#समावेश "psb_intel_drv.h"
-#समावेश "psb_intel_reg.h"
+#include "framebuffer.h"
+#include "gma_display.h"
+#include "power.h"
+#include "psb_drv.h"
+#include "psb_intel_drv.h"
+#include "psb_intel_reg.h"
 
-#घोषणा MRST_LIMIT_LVDS_100L	0
-#घोषणा MRST_LIMIT_LVDS_83	1
-#घोषणा MRST_LIMIT_LVDS_100	2
-#घोषणा MRST_LIMIT_SDVO		3
+#define MRST_LIMIT_LVDS_100L	0
+#define MRST_LIMIT_LVDS_83	1
+#define MRST_LIMIT_LVDS_100	2
+#define MRST_LIMIT_SDVO		3
 
-#घोषणा MRST_DOT_MIN		  19750
-#घोषणा MRST_DOT_MAX		  120000
-#घोषणा MRST_M_MIN_100L		    20
-#घोषणा MRST_M_MIN_100		    10
-#घोषणा MRST_M_MIN_83		    12
-#घोषणा MRST_M_MAX_100L		    34
-#घोषणा MRST_M_MAX_100		    17
-#घोषणा MRST_M_MAX_83		    20
-#घोषणा MRST_P1_MIN		    2
-#घोषणा MRST_P1_MAX_0		    7
-#घोषणा MRST_P1_MAX_1		    8
+#define MRST_DOT_MIN		  19750
+#define MRST_DOT_MAX		  120000
+#define MRST_M_MIN_100L		    20
+#define MRST_M_MIN_100		    10
+#define MRST_M_MIN_83		    12
+#define MRST_M_MAX_100L		    34
+#define MRST_M_MAX_100		    17
+#define MRST_M_MAX_83		    20
+#define MRST_P1_MIN		    2
+#define MRST_P1_MAX_0		    7
+#define MRST_P1_MAX_1		    8
 
-अटल bool mrst_lvds_find_best_pll(स्थिर काष्ठा gma_limit_t *limit,
-				    काष्ठा drm_crtc *crtc, पूर्णांक target,
-				    पूर्णांक refclk, काष्ठा gma_घड़ी_प्रकार *best_घड़ी);
+static bool mrst_lvds_find_best_pll(const struct gma_limit_t *limit,
+				    struct drm_crtc *crtc, int target,
+				    int refclk, struct gma_clock_t *best_clock);
 
-अटल bool mrst_sdvo_find_best_pll(स्थिर काष्ठा gma_limit_t *limit,
-				    काष्ठा drm_crtc *crtc, पूर्णांक target,
-				    पूर्णांक refclk, काष्ठा gma_घड़ी_प्रकार *best_घड़ी);
+static bool mrst_sdvo_find_best_pll(const struct gma_limit_t *limit,
+				    struct drm_crtc *crtc, int target,
+				    int refclk, struct gma_clock_t *best_clock);
 
-अटल स्थिर काष्ठा gma_limit_t mrst_limits[] = अणु
-	अणु			/* MRST_LIMIT_LVDS_100L */
-	 .करोt = अणु.min = MRST_DOT_MIN, .max = MRST_DOT_MAXपूर्ण,
-	 .m = अणु.min = MRST_M_MIN_100L, .max = MRST_M_MAX_100Lपूर्ण,
-	 .p1 = अणु.min = MRST_P1_MIN, .max = MRST_P1_MAX_1पूर्ण,
+static const struct gma_limit_t mrst_limits[] = {
+	{			/* MRST_LIMIT_LVDS_100L */
+	 .dot = {.min = MRST_DOT_MIN, .max = MRST_DOT_MAX},
+	 .m = {.min = MRST_M_MIN_100L, .max = MRST_M_MAX_100L},
+	 .p1 = {.min = MRST_P1_MIN, .max = MRST_P1_MAX_1},
 	 .find_pll = mrst_lvds_find_best_pll,
-	 पूर्ण,
-	अणु			/* MRST_LIMIT_LVDS_83L */
-	 .करोt = अणु.min = MRST_DOT_MIN, .max = MRST_DOT_MAXपूर्ण,
-	 .m = अणु.min = MRST_M_MIN_83, .max = MRST_M_MAX_83पूर्ण,
-	 .p1 = अणु.min = MRST_P1_MIN, .max = MRST_P1_MAX_0पूर्ण,
+	 },
+	{			/* MRST_LIMIT_LVDS_83L */
+	 .dot = {.min = MRST_DOT_MIN, .max = MRST_DOT_MAX},
+	 .m = {.min = MRST_M_MIN_83, .max = MRST_M_MAX_83},
+	 .p1 = {.min = MRST_P1_MIN, .max = MRST_P1_MAX_0},
 	 .find_pll = mrst_lvds_find_best_pll,
-	 पूर्ण,
-	अणु			/* MRST_LIMIT_LVDS_100 */
-	 .करोt = अणु.min = MRST_DOT_MIN, .max = MRST_DOT_MAXपूर्ण,
-	 .m = अणु.min = MRST_M_MIN_100, .max = MRST_M_MAX_100पूर्ण,
-	 .p1 = अणु.min = MRST_P1_MIN, .max = MRST_P1_MAX_1पूर्ण,
+	 },
+	{			/* MRST_LIMIT_LVDS_100 */
+	 .dot = {.min = MRST_DOT_MIN, .max = MRST_DOT_MAX},
+	 .m = {.min = MRST_M_MIN_100, .max = MRST_M_MAX_100},
+	 .p1 = {.min = MRST_P1_MIN, .max = MRST_P1_MAX_1},
 	 .find_pll = mrst_lvds_find_best_pll,
-	 पूर्ण,
-	अणु			/* MRST_LIMIT_SDVO */
-	 .vco = अणु.min = 1400000, .max = 2800000पूर्ण,
-	 .n = अणु.min = 3, .max = 7पूर्ण,
-	 .m = अणु.min = 80, .max = 137पूर्ण,
-	 .p1 = अणु.min = 1, .max = 2पूर्ण,
-	 .p2 = अणु.करोt_limit = 200000, .p2_slow = 10, .p2_fast = 10पूर्ण,
+	 },
+	{			/* MRST_LIMIT_SDVO */
+	 .vco = {.min = 1400000, .max = 2800000},
+	 .n = {.min = 3, .max = 7},
+	 .m = {.min = 80, .max = 137},
+	 .p1 = {.min = 1, .max = 2},
+	 .p2 = {.dot_limit = 200000, .p2_slow = 10, .p2_fast = 10},
 	 .find_pll = mrst_sdvo_find_best_pll,
-	 पूर्ण,
-पूर्ण;
+	 },
+};
 
-#घोषणा MRST_M_MIN	    10
-अटल स्थिर u32 oaktrail_m_converts[] = अणु
+#define MRST_M_MIN	    10
+static const u32 oaktrail_m_converts[] = {
 	0x2B, 0x15, 0x2A, 0x35, 0x1A, 0x0D, 0x26, 0x33, 0x19, 0x2C,
 	0x36, 0x3B, 0x1D, 0x2E, 0x37, 0x1B, 0x2D, 0x16, 0x0B, 0x25,
 	0x12, 0x09, 0x24, 0x32, 0x39, 0x1c,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा gma_limit_t *mrst_limit(काष्ठा drm_crtc *crtc,
-					    पूर्णांक refclk)
-अणु
-	स्थिर काष्ठा gma_limit_t *limit = शून्य;
-	काष्ठा drm_device *dev = crtc->dev;
-	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
+static const struct gma_limit_t *mrst_limit(struct drm_crtc *crtc,
+					    int refclk)
+{
+	const struct gma_limit_t *limit = NULL;
+	struct drm_device *dev = crtc->dev;
+	struct drm_psb_private *dev_priv = dev->dev_private;
 
-	अगर (gma_pipe_has_type(crtc, INTEL_OUTPUT_LVDS)
-	    || gma_pipe_has_type(crtc, INTEL_OUTPUT_MIPI)) अणु
-		चयन (dev_priv->core_freq) अणु
-		हाल 100:
+	if (gma_pipe_has_type(crtc, INTEL_OUTPUT_LVDS)
+	    || gma_pipe_has_type(crtc, INTEL_OUTPUT_MIPI)) {
+		switch (dev_priv->core_freq) {
+		case 100:
 			limit = &mrst_limits[MRST_LIMIT_LVDS_100L];
-			अवरोध;
-		हाल 166:
+			break;
+		case 166:
 			limit = &mrst_limits[MRST_LIMIT_LVDS_83];
-			अवरोध;
-		हाल 200:
+			break;
+		case 200:
 			limit = &mrst_limits[MRST_LIMIT_LVDS_100];
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अगर (gma_pipe_has_type(crtc, INTEL_OUTPUT_SDVO)) अणु
+			break;
+		}
+	} else if (gma_pipe_has_type(crtc, INTEL_OUTPUT_SDVO)) {
 		limit = &mrst_limits[MRST_LIMIT_SDVO];
-	पूर्ण अन्यथा अणु
-		limit = शून्य;
+	} else {
+		limit = NULL;
 		dev_err(dev->dev, "mrst_limit Wrong display type.\n");
-	पूर्ण
+	}
 
-	वापस limit;
-पूर्ण
+	return limit;
+}
 
-/** Derive the pixel घड़ी क्रम the given refclk and भागisors क्रम 8xx chips. */
-अटल व्योम mrst_lvds_घड़ी(पूर्णांक refclk, काष्ठा gma_घड़ी_प्रकार *घड़ी)
-अणु
-	घड़ी->करोt = (refclk * घड़ी->m) / (14 * घड़ी->p1);
-पूर्ण
+/** Derive the pixel clock for the given refclk and divisors for 8xx chips. */
+static void mrst_lvds_clock(int refclk, struct gma_clock_t *clock)
+{
+	clock->dot = (refclk * clock->m) / (14 * clock->p1);
+}
 
-अटल व्योम mrst_prपूर्णांक_pll(काष्ठा gma_घड़ी_प्रकार *घड़ी)
-अणु
+static void mrst_print_pll(struct gma_clock_t *clock)
+{
 	DRM_DEBUG_DRIVER("dotclock=%d,  m=%d, m1=%d, m2=%d, n=%d, p1=%d, p2=%d\n",
-			 घड़ी->करोt, घड़ी->m, घड़ी->m1, घड़ी->m2, घड़ी->n,
-			 घड़ी->p1, घड़ी->p2);
-पूर्ण
+			 clock->dot, clock->m, clock->m1, clock->m2, clock->n,
+			 clock->p1, clock->p2);
+}
 
-अटल bool mrst_sdvo_find_best_pll(स्थिर काष्ठा gma_limit_t *limit,
-				    काष्ठा drm_crtc *crtc, पूर्णांक target,
-				    पूर्णांक refclk, काष्ठा gma_घड़ी_प्रकार *best_घड़ी)
-अणु
-	काष्ठा gma_घड़ी_प्रकार घड़ी;
+static bool mrst_sdvo_find_best_pll(const struct gma_limit_t *limit,
+				    struct drm_crtc *crtc, int target,
+				    int refclk, struct gma_clock_t *best_clock)
+{
+	struct gma_clock_t clock;
 	u32 target_vco, actual_freq;
 	s32 freq_error, min_error = 100000;
 
-	स_रखो(best_घड़ी, 0, माप(*best_घड़ी));
-	स_रखो(&घड़ी, 0, माप(घड़ी));
+	memset(best_clock, 0, sizeof(*best_clock));
+	memset(&clock, 0, sizeof(clock));
 
-	क्रम (घड़ी.m = limit->m.min; घड़ी.m <= limit->m.max; घड़ी.m++) अणु
-		क्रम (घड़ी.n = limit->n.min; घड़ी.n <= limit->n.max;
-		     घड़ी.n++) अणु
-			क्रम (घड़ी.p1 = limit->p1.min;
-			     घड़ी.p1 <= limit->p1.max; घड़ी.p1++) अणु
+	for (clock.m = limit->m.min; clock.m <= limit->m.max; clock.m++) {
+		for (clock.n = limit->n.min; clock.n <= limit->n.max;
+		     clock.n++) {
+			for (clock.p1 = limit->p1.min;
+			     clock.p1 <= limit->p1.max; clock.p1++) {
 				/* p2 value always stored in p2_slow on SDVO */
-				घड़ी.p = घड़ी.p1 * limit->p2.p2_slow;
-				target_vco = target * घड़ी.p;
+				clock.p = clock.p1 * limit->p2.p2_slow;
+				target_vco = target * clock.p;
 
-				/* VCO will increase at this poपूर्णांक so अवरोध */
-				अगर (target_vco > limit->vco.max)
-					अवरोध;
+				/* VCO will increase at this point so break */
+				if (target_vco > limit->vco.max)
+					break;
 
-				अगर (target_vco < limit->vco.min)
-					जारी;
+				if (target_vco < limit->vco.min)
+					continue;
 
-				actual_freq = (refclk * घड़ी.m) /
-					      (घड़ी.n * घड़ी.p);
+				actual_freq = (refclk * clock.m) /
+					      (clock.n * clock.p);
 				freq_error = 10000 -
 					     ((target * 10000) / actual_freq);
 
-				अगर (freq_error < -min_error) अणु
+				if (freq_error < -min_error) {
 					/* freq_error will start to decrease at
-					   this poपूर्णांक so अवरोध */
-					अवरोध;
-				पूर्ण
+					   this point so break */
+					break;
+				}
 
-				अगर (freq_error < 0)
+				if (freq_error < 0)
 					freq_error = -freq_error;
 
-				अगर (freq_error < min_error) अणु
+				if (freq_error < min_error) {
 					min_error = freq_error;
-					*best_घड़ी = घड़ी;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-		अगर (min_error == 0)
-			अवरोध;
-	पूर्ण
+					*best_clock = clock;
+				}
+			}
+		}
+		if (min_error == 0)
+			break;
+	}
 
-	वापस min_error == 0;
-पूर्ण
+	return min_error == 0;
+}
 
 /*
- * Returns a set of भागisors क्रम the desired target घड़ी with the given refclk,
- * or FALSE.  Divisor values are the actual भागisors क्रम
+ * Returns a set of divisors for the desired target clock with the given refclk,
+ * or FALSE.  Divisor values are the actual divisors for
  */
-अटल bool mrst_lvds_find_best_pll(स्थिर काष्ठा gma_limit_t *limit,
-				    काष्ठा drm_crtc *crtc, पूर्णांक target,
-				    पूर्णांक refclk, काष्ठा gma_घड़ी_प्रकार *best_घड़ी)
-अणु
-	काष्ठा gma_घड़ी_प्रकार घड़ी;
-	पूर्णांक err = target;
+static bool mrst_lvds_find_best_pll(const struct gma_limit_t *limit,
+				    struct drm_crtc *crtc, int target,
+				    int refclk, struct gma_clock_t *best_clock)
+{
+	struct gma_clock_t clock;
+	int err = target;
 
-	स_रखो(best_घड़ी, 0, माप(*best_घड़ी));
-	स_रखो(&घड़ी, 0, माप(घड़ी));
+	memset(best_clock, 0, sizeof(*best_clock));
+	memset(&clock, 0, sizeof(clock));
 
-	क्रम (घड़ी.m = limit->m.min; घड़ी.m <= limit->m.max; घड़ी.m++) अणु
-		क्रम (घड़ी.p1 = limit->p1.min; घड़ी.p1 <= limit->p1.max;
-		     घड़ी.p1++) अणु
-			पूर्णांक this_err;
+	for (clock.m = limit->m.min; clock.m <= limit->m.max; clock.m++) {
+		for (clock.p1 = limit->p1.min; clock.p1 <= limit->p1.max;
+		     clock.p1++) {
+			int this_err;
 
-			mrst_lvds_घड़ी(refclk, &घड़ी);
+			mrst_lvds_clock(refclk, &clock);
 
-			this_err = असल(घड़ी.करोt - target);
-			अगर (this_err < err) अणु
-				*best_घड़ी = घड़ी;
+			this_err = abs(clock.dot - target);
+			if (this_err < err) {
+				*best_clock = clock;
 				err = this_err;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस err != target;
-पूर्ण
+			}
+		}
+	}
+	return err != target;
+}
 
 /*
- * Sets the घातer management mode of the pipe and plane.
+ * Sets the power management mode of the pipe and plane.
  *
- * This code should probably grow support क्रम turning the cursor off and back
- * on appropriately at the same समय as we're turning the pipe off/on.
+ * This code should probably grow support for turning the cursor off and back
+ * on appropriately at the same time as we're turning the pipe off/on.
  */
-अटल व्योम oaktrail_crtc_dpms(काष्ठा drm_crtc *crtc, पूर्णांक mode)
-अणु
-	काष्ठा drm_device *dev = crtc->dev;
-	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
-	काष्ठा gma_crtc *gma_crtc = to_gma_crtc(crtc);
-	पूर्णांक pipe = gma_crtc->pipe;
-	स्थिर काष्ठा psb_offset *map = &dev_priv->regmap[pipe];
+static void oaktrail_crtc_dpms(struct drm_crtc *crtc, int mode)
+{
+	struct drm_device *dev = crtc->dev;
+	struct drm_psb_private *dev_priv = dev->dev_private;
+	struct gma_crtc *gma_crtc = to_gma_crtc(crtc);
+	int pipe = gma_crtc->pipe;
+	const struct psb_offset *map = &dev_priv->regmap[pipe];
 	u32 temp;
-	पूर्णांक i;
-	पूर्णांक need_aux = gma_pipe_has_type(crtc, INTEL_OUTPUT_SDVO) ? 1 : 0;
+	int i;
+	int need_aux = gma_pipe_has_type(crtc, INTEL_OUTPUT_SDVO) ? 1 : 0;
 
-	अगर (gma_pipe_has_type(crtc, INTEL_OUTPUT_HDMI)) अणु
+	if (gma_pipe_has_type(crtc, INTEL_OUTPUT_HDMI)) {
 		oaktrail_crtc_hdmi_dpms(crtc, mode);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (!gma_घातer_begin(dev, true))
-		वापस;
+	if (!gma_power_begin(dev, true))
+		return;
 
-	/* XXX: When our outमाला_दो are all unaware of DPMS modes other than off
+	/* XXX: When our outputs are all unaware of DPMS modes other than off
 	 * and on, we should map those modes to DRM_MODE_DPMS_OFF in the CRTC.
 	 */
-	चयन (mode) अणु
-	हाल DRM_MODE_DPMS_ON:
-	हाल DRM_MODE_DPMS_STANDBY:
-	हाल DRM_MODE_DPMS_SUSPEND:
-		क्रम (i = 0; i <= need_aux; i++) अणु
+	switch (mode) {
+	case DRM_MODE_DPMS_ON:
+	case DRM_MODE_DPMS_STANDBY:
+	case DRM_MODE_DPMS_SUSPEND:
+		for (i = 0; i <= need_aux; i++) {
 			/* Enable the DPLL */
 			temp = REG_READ_WITH_AUX(map->dpll, i);
-			अगर ((temp & DPLL_VCO_ENABLE) == 0) अणु
+			if ((temp & DPLL_VCO_ENABLE) == 0) {
 				REG_WRITE_WITH_AUX(map->dpll, temp, i);
 				REG_READ_WITH_AUX(map->dpll, i);
-				/* Wait क्रम the घड़ीs to stabilize. */
+				/* Wait for the clocks to stabilize. */
 				udelay(150);
 				REG_WRITE_WITH_AUX(map->dpll,
 						   temp | DPLL_VCO_ENABLE, i);
 				REG_READ_WITH_AUX(map->dpll, i);
-				/* Wait क्रम the घड़ीs to stabilize. */
+				/* Wait for the clocks to stabilize. */
 				udelay(150);
 				REG_WRITE_WITH_AUX(map->dpll,
 						   temp | DPLL_VCO_ENABLE, i);
 				REG_READ_WITH_AUX(map->dpll, i);
-				/* Wait क्रम the घड़ीs to stabilize. */
+				/* Wait for the clocks to stabilize. */
 				udelay(150);
-			पूर्ण
+			}
 
 			/* Enable the pipe */
 			temp = REG_READ_WITH_AUX(map->conf, i);
-			अगर ((temp & PIPEACONF_ENABLE) == 0) अणु
+			if ((temp & PIPEACONF_ENABLE) == 0) {
 				REG_WRITE_WITH_AUX(map->conf,
 						   temp | PIPEACONF_ENABLE, i);
-			पूर्ण
+			}
 
 			/* Enable the plane */
 			temp = REG_READ_WITH_AUX(map->cntr, i);
-			अगर ((temp & DISPLAY_PLANE_ENABLE) == 0) अणु
+			if ((temp & DISPLAY_PLANE_ENABLE) == 0) {
 				REG_WRITE_WITH_AUX(map->cntr,
 						   temp | DISPLAY_PLANE_ENABLE,
 						   i);
 				/* Flush the plane changes */
 				REG_WRITE_WITH_AUX(map->base,
 					REG_READ_WITH_AUX(map->base, i), i);
-			पूर्ण
+			}
 
-		पूर्ण
+		}
 		gma_crtc_load_lut(crtc);
 
 		/* Give the overlay scaler a chance to enable
-		   अगर it's on this pipe */
-		/* psb_पूर्णांकel_crtc_dpms_video(crtc, true); TODO */
-		अवरोध;
-	हाल DRM_MODE_DPMS_OFF:
+		   if it's on this pipe */
+		/* psb_intel_crtc_dpms_video(crtc, true); TODO */
+		break;
+	case DRM_MODE_DPMS_OFF:
 		/* Give the overlay scaler a chance to disable
-		 * अगर it's on this pipe */
-		/* psb_पूर्णांकel_crtc_dpms_video(crtc, FALSE); TODO */
+		 * if it's on this pipe */
+		/* psb_intel_crtc_dpms_video(crtc, FALSE); TODO */
 
-		क्रम (i = 0; i <= need_aux; i++) अणु
+		for (i = 0; i <= need_aux; i++) {
 			/* Disable the VGA plane that we never use */
 			REG_WRITE_WITH_AUX(VGACNTRL, VGA_DISP_DISABLE, i);
 			/* Disable display plane */
 			temp = REG_READ_WITH_AUX(map->cntr, i);
-			अगर ((temp & DISPLAY_PLANE_ENABLE) != 0) अणु
+			if ((temp & DISPLAY_PLANE_ENABLE) != 0) {
 				REG_WRITE_WITH_AUX(map->cntr,
 					temp & ~DISPLAY_PLANE_ENABLE, i);
 				/* Flush the plane changes */
 				REG_WRITE_WITH_AUX(map->base,
 						   REG_READ(map->base), i);
 				REG_READ_WITH_AUX(map->base, i);
-			पूर्ण
+			}
 
 			/* Next, disable display pipes */
 			temp = REG_READ_WITH_AUX(map->conf, i);
-			अगर ((temp & PIPEACONF_ENABLE) != 0) अणु
+			if ((temp & PIPEACONF_ENABLE) != 0) {
 				REG_WRITE_WITH_AUX(map->conf,
 						   temp & ~PIPEACONF_ENABLE, i);
 				REG_READ_WITH_AUX(map->conf, i);
-			पूर्ण
-			/* Wait क्रम क्रम the pipe disable to take effect. */
-			gma_रुको_क्रम_vblank(dev);
+			}
+			/* Wait for for the pipe disable to take effect. */
+			gma_wait_for_vblank(dev);
 
 			temp = REG_READ_WITH_AUX(map->dpll, i);
-			अगर ((temp & DPLL_VCO_ENABLE) != 0) अणु
+			if ((temp & DPLL_VCO_ENABLE) != 0) {
 				REG_WRITE_WITH_AUX(map->dpll,
 						   temp & ~DPLL_VCO_ENABLE, i);
 				REG_READ_WITH_AUX(map->dpll, i);
-			पूर्ण
+			}
 
-			/* Wait क्रम the घड़ीs to turn off. */
+			/* Wait for the clocks to turn off. */
 			udelay(150);
-		पूर्ण
-		अवरोध;
-	पूर्ण
+		}
+		break;
+	}
 
 	/* Set FIFO Watermarks (values taken from EMGD) */
 	REG_WRITE(DSPARB, 0x3f80);
@@ -335,111 +334,111 @@
 	REG_WRITE(DSPFW6, 0x78);
 	REG_WRITE(DSPCHICKENBIT, REG_READ(DSPCHICKENBIT) | 0xc040);
 
-	gma_घातer_end(dev);
-पूर्ण
+	gma_power_end(dev);
+}
 
 /*
  * Return the pipe currently connected to the panel fitter,
- * or -1 अगर the panel fitter is not present or not in use
+ * or -1 if the panel fitter is not present or not in use
  */
-अटल पूर्णांक oaktrail_panel_fitter_pipe(काष्ठा drm_device *dev)
-अणु
+static int oaktrail_panel_fitter_pipe(struct drm_device *dev)
+{
 	u32 pfit_control;
 
 	pfit_control = REG_READ(PFIT_CONTROL);
 
-	/* See अगर the panel fitter is in use */
-	अगर ((pfit_control & PFIT_ENABLE) == 0)
-		वापस -1;
-	वापस (pfit_control >> 29) & 3;
-पूर्ण
+	/* See if the panel fitter is in use */
+	if ((pfit_control & PFIT_ENABLE) == 0)
+		return -1;
+	return (pfit_control >> 29) & 3;
+}
 
-अटल पूर्णांक oaktrail_crtc_mode_set(काष्ठा drm_crtc *crtc,
-			      काष्ठा drm_display_mode *mode,
-			      काष्ठा drm_display_mode *adjusted_mode,
-			      पूर्णांक x, पूर्णांक y,
-			      काष्ठा drm_framebuffer *old_fb)
-अणु
-	काष्ठा drm_device *dev = crtc->dev;
-	काष्ठा gma_crtc *gma_crtc = to_gma_crtc(crtc);
-	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
-	पूर्णांक pipe = gma_crtc->pipe;
-	स्थिर काष्ठा psb_offset *map = &dev_priv->regmap[pipe];
-	पूर्णांक refclk = 0;
-	काष्ठा gma_घड़ी_प्रकार घड़ी;
-	स्थिर काष्ठा gma_limit_t *limit;
+static int oaktrail_crtc_mode_set(struct drm_crtc *crtc,
+			      struct drm_display_mode *mode,
+			      struct drm_display_mode *adjusted_mode,
+			      int x, int y,
+			      struct drm_framebuffer *old_fb)
+{
+	struct drm_device *dev = crtc->dev;
+	struct gma_crtc *gma_crtc = to_gma_crtc(crtc);
+	struct drm_psb_private *dev_priv = dev->dev_private;
+	int pipe = gma_crtc->pipe;
+	const struct psb_offset *map = &dev_priv->regmap[pipe];
+	int refclk = 0;
+	struct gma_clock_t clock;
+	const struct gma_limit_t *limit;
 	u32 dpll = 0, fp = 0, dspcntr, pipeconf;
 	bool ok, is_sdvo = false;
 	bool is_lvds = false;
 	bool is_mipi = false;
-	काष्ठा drm_mode_config *mode_config = &dev->mode_config;
-	काष्ठा gma_encoder *gma_encoder = शून्य;
-	uपूर्णांक64_t scalingType = DRM_MODE_SCALE_FULLSCREEN;
-	काष्ठा drm_connector *connector;
-	पूर्णांक i;
-	पूर्णांक need_aux = gma_pipe_has_type(crtc, INTEL_OUTPUT_SDVO) ? 1 : 0;
+	struct drm_mode_config *mode_config = &dev->mode_config;
+	struct gma_encoder *gma_encoder = NULL;
+	uint64_t scalingType = DRM_MODE_SCALE_FULLSCREEN;
+	struct drm_connector *connector;
+	int i;
+	int need_aux = gma_pipe_has_type(crtc, INTEL_OUTPUT_SDVO) ? 1 : 0;
 
-	अगर (gma_pipe_has_type(crtc, INTEL_OUTPUT_HDMI))
-		वापस oaktrail_crtc_hdmi_mode_set(crtc, mode, adjusted_mode, x, y, old_fb);
+	if (gma_pipe_has_type(crtc, INTEL_OUTPUT_HDMI))
+		return oaktrail_crtc_hdmi_mode_set(crtc, mode, adjusted_mode, x, y, old_fb);
 
-	अगर (!gma_घातer_begin(dev, true))
-		वापस 0;
+	if (!gma_power_begin(dev, true))
+		return 0;
 
-	स_नकल(&gma_crtc->saved_mode,
+	memcpy(&gma_crtc->saved_mode,
 		mode,
-		माप(काष्ठा drm_display_mode));
-	स_नकल(&gma_crtc->saved_adjusted_mode,
+		sizeof(struct drm_display_mode));
+	memcpy(&gma_crtc->saved_adjusted_mode,
 		adjusted_mode,
-		माप(काष्ठा drm_display_mode));
+		sizeof(struct drm_display_mode));
 
-	list_क्रम_each_entry(connector, &mode_config->connector_list, head) अणु
-		अगर (!connector->encoder || connector->encoder->crtc != crtc)
-			जारी;
+	list_for_each_entry(connector, &mode_config->connector_list, head) {
+		if (!connector->encoder || connector->encoder->crtc != crtc)
+			continue;
 
 		gma_encoder = gma_attached_encoder(connector);
 
-		चयन (gma_encoder->type) अणु
-		हाल INTEL_OUTPUT_LVDS:
+		switch (gma_encoder->type) {
+		case INTEL_OUTPUT_LVDS:
 			is_lvds = true;
-			अवरोध;
-		हाल INTEL_OUTPUT_SDVO:
+			break;
+		case INTEL_OUTPUT_SDVO:
 			is_sdvo = true;
-			अवरोध;
-		हाल INTEL_OUTPUT_MIPI:
+			break;
+		case INTEL_OUTPUT_MIPI:
 			is_mipi = true;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	/* Disable the VGA plane that we never use */
-	क्रम (i = 0; i <= need_aux; i++)
+	for (i = 0; i <= need_aux; i++)
 		REG_WRITE_WITH_AUX(VGACNTRL, VGA_DISP_DISABLE, i);
 
-	/* Disable the panel fitter अगर it was on our pipe */
-	अगर (oaktrail_panel_fitter_pipe(dev) == pipe)
+	/* Disable the panel fitter if it was on our pipe */
+	if (oaktrail_panel_fitter_pipe(dev) == pipe)
 		REG_WRITE(PFIT_CONTROL, 0);
 
-	क्रम (i = 0; i <= need_aux; i++) अणु
+	for (i = 0; i <= need_aux; i++) {
 		REG_WRITE_WITH_AUX(map->src, ((mode->crtc_hdisplay - 1) << 16) |
 					     (mode->crtc_vdisplay - 1), i);
-	पूर्ण
+	}
 
-	अगर (gma_encoder)
+	if (gma_encoder)
 		drm_object_property_get_value(&connector->base,
 			dev->mode_config.scaling_mode_property, &scalingType);
 
-	अगर (scalingType == DRM_MODE_SCALE_NO_SCALE) अणु
-		/* Moorestown करोesn't have रेजिस्टर support क्रम centering so
+	if (scalingType == DRM_MODE_SCALE_NO_SCALE) {
+		/* Moorestown doesn't have register support for centering so
 		 * we need to mess with the h/vblank and h/vsync start and
 		 * ends to get centering */
-		पूर्णांक offsetX = 0, offsetY = 0;
+		int offsetX = 0, offsetY = 0;
 
 		offsetX = (adjusted_mode->crtc_hdisplay -
 			   mode->crtc_hdisplay) / 2;
 		offsetY = (adjusted_mode->crtc_vdisplay -
 			   mode->crtc_vdisplay) / 2;
 
-		क्रम (i = 0; i <= need_aux; i++) अणु
+		for (i = 0; i <= need_aux; i++) {
 			REG_WRITE_WITH_AUX(map->htotal, (mode->crtc_hdisplay - 1) |
 				((adjusted_mode->crtc_htotal - 1) << 16), i);
 			REG_WRITE_WITH_AUX(map->vtotal, (mode->crtc_vdisplay - 1) |
@@ -456,9 +455,9 @@
 			REG_WRITE_WITH_AUX(map->vsync,
 				(adjusted_mode->crtc_vsync_start - offsetY - 1) |
 				((adjusted_mode->crtc_vsync_end - offsetY - 1) << 16), i);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i <= need_aux; i++) अणु
+		}
+	} else {
+		for (i = 0; i <= need_aux; i++) {
 			REG_WRITE_WITH_AUX(map->htotal, (adjusted_mode->crtc_hdisplay - 1) |
 				((adjusted_mode->crtc_htotal - 1) << 16), i);
 			REG_WRITE_WITH_AUX(map->vtotal, (adjusted_mode->crtc_vdisplay - 1) |
@@ -471,171 +470,171 @@
 				((adjusted_mode->crtc_vblank_end - 1) << 16), i);
 			REG_WRITE_WITH_AUX(map->vsync, (adjusted_mode->crtc_vsync_start - 1) |
 				((adjusted_mode->crtc_vsync_end - 1) << 16), i);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Flush the plane changes */
-	अणु
-		स्थिर काष्ठा drm_crtc_helper_funcs *crtc_funcs =
-		    crtc->helper_निजी;
+	{
+		const struct drm_crtc_helper_funcs *crtc_funcs =
+		    crtc->helper_private;
 		crtc_funcs->mode_set_base(crtc, x, y, old_fb);
-	पूर्ण
+	}
 
 	/* setup pipeconf */
 	pipeconf = REG_READ(map->conf);
 
-	/* Set up the display plane रेजिस्टर */
+	/* Set up the display plane register */
 	dspcntr = REG_READ(map->cntr);
 	dspcntr |= DISPPLANE_GAMMA_ENABLE;
 
-	अगर (pipe == 0)
+	if (pipe == 0)
 		dspcntr |= DISPPLANE_SEL_PIPE_A;
-	अन्यथा
+	else
 		dspcntr |= DISPPLANE_SEL_PIPE_B;
 
-	अगर (is_mipi)
-		जाओ oaktrail_crtc_mode_set_निकास;
+	if (is_mipi)
+		goto oaktrail_crtc_mode_set_exit;
 
 
-	dpll = 0;		/*BIT16 = 0 क्रम 100MHz reference */
+	dpll = 0;		/*BIT16 = 0 for 100MHz reference */
 
 	refclk = is_sdvo ? 96000 : dev_priv->core_freq * 1000;
 	limit = mrst_limit(crtc, refclk);
-	ok = limit->find_pll(limit, crtc, adjusted_mode->घड़ी,
-			     refclk, &घड़ी);
+	ok = limit->find_pll(limit, crtc, adjusted_mode->clock,
+			     refclk, &clock);
 
-	अगर (is_sdvo) अणु
-		/* Convert calculated values to रेजिस्टर values */
-		घड़ी.p1 = (1L << (घड़ी.p1 - 1));
-		घड़ी.m -= 2;
-		घड़ी.n = (1L << (घड़ी.n - 1));
-	पूर्ण
+	if (is_sdvo) {
+		/* Convert calculated values to register values */
+		clock.p1 = (1L << (clock.p1 - 1));
+		clock.m -= 2;
+		clock.n = (1L << (clock.n - 1));
+	}
 
-	अगर (!ok)
+	if (!ok)
 		DRM_ERROR("Failed to find proper PLL settings");
 
-	mrst_prपूर्णांक_pll(&घड़ी);
+	mrst_print_pll(&clock);
 
-	अगर (is_sdvo)
-		fp = घड़ी.n << 16 | घड़ी.m;
-	अन्यथा
-		fp = oaktrail_m_converts[(घड़ी.m - MRST_M_MIN)] << 8;
+	if (is_sdvo)
+		fp = clock.n << 16 | clock.m;
+	else
+		fp = oaktrail_m_converts[(clock.m - MRST_M_MIN)] << 8;
 
 	dpll |= DPLL_VGA_MODE_DIS;
 
 
 	dpll |= DPLL_VCO_ENABLE;
 
-	अगर (is_lvds)
+	if (is_lvds)
 		dpll |= DPLLA_MODE_LVDS;
-	अन्यथा
+	else
 		dpll |= DPLLB_MODE_DAC_SERIAL;
 
-	अगर (is_sdvo) अणु
-		पूर्णांक sdvo_pixel_multiply =
-		    adjusted_mode->घड़ी / mode->घड़ी;
+	if (is_sdvo) {
+		int sdvo_pixel_multiply =
+		    adjusted_mode->clock / mode->clock;
 
 		dpll |= DPLL_DVO_HIGH_SPEED;
 		dpll |=
 		    (sdvo_pixel_multiply -
 		     1) << SDVO_MULTIPLIER_SHIFT_HIRES;
-	पूर्ण
+	}
 
 
-	/* compute biपंचांगask from p1 value */
-	अगर (is_sdvo)
-		dpll |= घड़ी.p1 << 16; // dpll |= (1 << (घड़ी.p1 - 1)) << 16;
-	अन्यथा
-		dpll |= (1 << (घड़ी.p1 - 2)) << 17;
+	/* compute bitmask from p1 value */
+	if (is_sdvo)
+		dpll |= clock.p1 << 16; // dpll |= (1 << (clock.p1 - 1)) << 16;
+	else
+		dpll |= (1 << (clock.p1 - 2)) << 17;
 
 	dpll |= DPLL_VCO_ENABLE;
 
-	अगर (dpll & DPLL_VCO_ENABLE) अणु
-		क्रम (i = 0; i <= need_aux; i++) अणु
+	if (dpll & DPLL_VCO_ENABLE) {
+		for (i = 0; i <= need_aux; i++) {
 			REG_WRITE_WITH_AUX(map->fp0, fp, i);
 			REG_WRITE_WITH_AUX(map->dpll, dpll & ~DPLL_VCO_ENABLE, i);
 			REG_READ_WITH_AUX(map->dpll, i);
 			/* Check the DPLLA lock bit PIPEACONF[29] */
 			udelay(150);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	क्रम (i = 0; i <= need_aux; i++) अणु
+	for (i = 0; i <= need_aux; i++) {
 		REG_WRITE_WITH_AUX(map->fp0, fp, i);
 		REG_WRITE_WITH_AUX(map->dpll, dpll, i);
 		REG_READ_WITH_AUX(map->dpll, i);
-		/* Wait क्रम the घड़ीs to stabilize. */
+		/* Wait for the clocks to stabilize. */
 		udelay(150);
 
-		/* ग_लिखो it again -- the BIOS करोes, after all */
+		/* write it again -- the BIOS does, after all */
 		REG_WRITE_WITH_AUX(map->dpll, dpll, i);
 		REG_READ_WITH_AUX(map->dpll, i);
-		/* Wait क्रम the घड़ीs to stabilize. */
+		/* Wait for the clocks to stabilize. */
 		udelay(150);
 
 		REG_WRITE_WITH_AUX(map->conf, pipeconf, i);
 		REG_READ_WITH_AUX(map->conf, i);
-		gma_रुको_क्रम_vblank(dev);
+		gma_wait_for_vblank(dev);
 
 		REG_WRITE_WITH_AUX(map->cntr, dspcntr, i);
-		gma_रुको_क्रम_vblank(dev);
-	पूर्ण
+		gma_wait_for_vblank(dev);
+	}
 
-oaktrail_crtc_mode_set_निकास:
-	gma_घातer_end(dev);
-	वापस 0;
-पूर्ण
+oaktrail_crtc_mode_set_exit:
+	gma_power_end(dev);
+	return 0;
+}
 
-अटल पूर्णांक oaktrail_pipe_set_base(काष्ठा drm_crtc *crtc,
-			    पूर्णांक x, पूर्णांक y, काष्ठा drm_framebuffer *old_fb)
-अणु
-	काष्ठा drm_device *dev = crtc->dev;
-	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
-	काष्ठा gma_crtc *gma_crtc = to_gma_crtc(crtc);
-	काष्ठा drm_framebuffer *fb = crtc->primary->fb;
-	पूर्णांक pipe = gma_crtc->pipe;
-	स्थिर काष्ठा psb_offset *map = &dev_priv->regmap[pipe];
-	अचिन्हित दीर्घ start, offset;
+static int oaktrail_pipe_set_base(struct drm_crtc *crtc,
+			    int x, int y, struct drm_framebuffer *old_fb)
+{
+	struct drm_device *dev = crtc->dev;
+	struct drm_psb_private *dev_priv = dev->dev_private;
+	struct gma_crtc *gma_crtc = to_gma_crtc(crtc);
+	struct drm_framebuffer *fb = crtc->primary->fb;
+	int pipe = gma_crtc->pipe;
+	const struct psb_offset *map = &dev_priv->regmap[pipe];
+	unsigned long start, offset;
 
 	u32 dspcntr;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
 	/* no fb bound */
-	अगर (!fb) अणु
+	if (!fb) {
 		dev_dbg(dev->dev, "No FB bound\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!gma_घातer_begin(dev, true))
-		वापस 0;
+	if (!gma_power_begin(dev, true))
+		return 0;
 
 	start = to_gtt_range(fb->obj[0])->offset;
-	offset = y * fb->pitches[0] + x * fb->क्रमmat->cpp[0];
+	offset = y * fb->pitches[0] + x * fb->format->cpp[0];
 
 	REG_WRITE(map->stride, fb->pitches[0]);
 
 	dspcntr = REG_READ(map->cntr);
 	dspcntr &= ~DISPPLANE_PIXFORMAT_MASK;
 
-	चयन (fb->क्रमmat->cpp[0] * 8) अणु
-	हाल 8:
+	switch (fb->format->cpp[0] * 8) {
+	case 8:
 		dspcntr |= DISPPLANE_8BPP;
-		अवरोध;
-	हाल 16:
-		अगर (fb->क्रमmat->depth == 15)
+		break;
+	case 16:
+		if (fb->format->depth == 15)
 			dspcntr |= DISPPLANE_15_16BPP;
-		अन्यथा
+		else
 			dspcntr |= DISPPLANE_16BPP;
-		अवरोध;
-	हाल 24:
-	हाल 32:
+		break;
+	case 24:
+	case 32:
 		dspcntr |= DISPPLANE_32BPP_NO_ALPHA;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(dev->dev, "Unknown color depth\n");
 		ret = -EINVAL;
-		जाओ pipe_set_base_निकास;
-	पूर्ण
+		goto pipe_set_base_exit;
+	}
 	REG_WRITE(map->cntr, dspcntr);
 
 	REG_WRITE(map->base, offset);
@@ -643,22 +642,22 @@ oaktrail_crtc_mode_set_निकास:
 	REG_WRITE(map->surf, start);
 	REG_READ(map->surf);
 
-pipe_set_base_निकास:
-	gma_घातer_end(dev);
-	वापस ret;
-पूर्ण
+pipe_set_base_exit:
+	gma_power_end(dev);
+	return ret;
+}
 
-स्थिर काष्ठा drm_crtc_helper_funcs oaktrail_helper_funcs = अणु
+const struct drm_crtc_helper_funcs oaktrail_helper_funcs = {
 	.dpms = oaktrail_crtc_dpms,
 	.mode_set = oaktrail_crtc_mode_set,
 	.mode_set_base = oaktrail_pipe_set_base,
 	.prepare = gma_crtc_prepare,
 	.commit = gma_crtc_commit,
-पूर्ण;
+};
 
 /* Not used yet */
-स्थिर काष्ठा gma_घड़ी_funcs mrst_घड़ी_funcs = अणु
-	.घड़ी = mrst_lvds_घड़ी,
+const struct gma_clock_funcs mrst_clock_funcs = {
+	.clock = mrst_lvds_clock,
 	.limit = mrst_limit,
 	.pll_is_valid = gma_pll_is_valid,
-पूर्ण;
+};

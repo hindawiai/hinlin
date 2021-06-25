@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * BCM6328 USBH PHY Controller Driver
  *
- * Copyright (C) 2020 थlvaro Fernथँndez Rojas <noltari@gmail.com>
+ * Copyright (C) 2020 Álvaro Fernández Rojas <noltari@gmail.com>
  * Copyright (C) 2015 Simon Arlott
  *
  * Derived from bcm963xx_4.12L.06B_consumer/kernel/linux/arch/mips/bcm963xx/setup.c:
@@ -12,99 +11,99 @@
  * Derived from OpenWrt patches:
  * Copyright (C) 2013 Jonas Gorski <jonas.gorski@gmail.com>
  * Copyright (C) 2013 Florian Fainelli <f.fainelli@gmail.com>
- * Copyright (C) 2008 Maxime Bizon <mbizon@मुक्तbox.fr>
+ * Copyright (C) 2008 Maxime Bizon <mbizon@freebox.fr>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/phy/phy.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/reset.h>
+#include <linux/clk.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/phy/phy.h>
+#include <linux/platform_device.h>
+#include <linux/reset.h>
 
-/* USBH control रेजिस्टर offsets */
-क्रमागत usbh_regs अणु
+/* USBH control register offsets */
+enum usbh_regs {
 	USBH_BRT_CONTROL1 = 0,
 	USBH_BRT_CONTROL2,
 	USBH_BRT_STATUS1,
 	USBH_BRT_STATUS2,
 	USBH_UTMI_CONTROL1,
-#घोषणा   USBH_UC1_DEV_MODE_SEL		BIT(0)
+#define   USBH_UC1_DEV_MODE_SEL		BIT(0)
 	USBH_TEST_PORT_CONTROL,
 	USBH_PLL_CONTROL1,
-#घोषणा   USBH_PLLC_REFCLKSEL_SHIFT	0
-#घोषणा   USBH_PLLC_REFCLKSEL_MASK	(0x3 << USBH_PLLC_REFCLKSEL_SHIFT)
-#घोषणा   USBH_PLLC_CLKSEL_SHIFT	2
-#घोषणा   USBH_PLLC_CLKSEL_MASK		(0x3 << USBH_PLLC_CLKSEL_MASK)
-#घोषणा   USBH_PLLC_XTAL_PWRDWNB	BIT(4)
-#घोषणा   USBH_PLLC_PLL_PWRDWNB		BIT(5)
-#घोषणा   USBH_PLLC_PLL_CALEN		BIT(6)
-#घोषणा   USBH_PLLC_PHYPLL_BYP		BIT(7)
-#घोषणा   USBH_PLLC_PLL_RESET		BIT(8)
-#घोषणा   USBH_PLLC_PLL_IDDQ_PWRDN	BIT(9)
-#घोषणा   USBH_PLLC_PLL_PWRDN_DELAY	BIT(10)
-#घोषणा   USBH_6318_PLLC_PLL_SUSPEND_EN	BIT(27)
-#घोषणा   USBH_6318_PLLC_PHYPLL_BYP	BIT(29)
-#घोषणा   USBH_6318_PLLC_PLL_RESET	BIT(30)
-#घोषणा   USBH_6318_PLLC_PLL_IDDQ_PWRDN	BIT(31)
+#define   USBH_PLLC_REFCLKSEL_SHIFT	0
+#define   USBH_PLLC_REFCLKSEL_MASK	(0x3 << USBH_PLLC_REFCLKSEL_SHIFT)
+#define   USBH_PLLC_CLKSEL_SHIFT	2
+#define   USBH_PLLC_CLKSEL_MASK		(0x3 << USBH_PLLC_CLKSEL_MASK)
+#define   USBH_PLLC_XTAL_PWRDWNB	BIT(4)
+#define   USBH_PLLC_PLL_PWRDWNB		BIT(5)
+#define   USBH_PLLC_PLL_CALEN		BIT(6)
+#define   USBH_PLLC_PHYPLL_BYP		BIT(7)
+#define   USBH_PLLC_PLL_RESET		BIT(8)
+#define   USBH_PLLC_PLL_IDDQ_PWRDN	BIT(9)
+#define   USBH_PLLC_PLL_PWRDN_DELAY	BIT(10)
+#define   USBH_6318_PLLC_PLL_SUSPEND_EN	BIT(27)
+#define   USBH_6318_PLLC_PHYPLL_BYP	BIT(29)
+#define   USBH_6318_PLLC_PLL_RESET	BIT(30)
+#define   USBH_6318_PLLC_PLL_IDDQ_PWRDN	BIT(31)
 	USBH_SWAP_CONTROL,
-#घोषणा   USBH_SC_OHCI_DATA_SWAP	BIT(0)
-#घोषणा   USBH_SC_OHCI_ENDIAN_SWAP	BIT(1)
-#घोषणा   USBH_SC_OHCI_LOGICAL_ADDR_EN	BIT(2)
-#घोषणा   USBH_SC_EHCI_DATA_SWAP	BIT(3)
-#घोषणा   USBH_SC_EHCI_ENDIAN_SWAP	BIT(4)
-#घोषणा   USBH_SC_EHCI_LOGICAL_ADDR_EN	BIT(5)
-#घोषणा   USBH_SC_USB_DEVICE_SEL	BIT(6)
+#define   USBH_SC_OHCI_DATA_SWAP	BIT(0)
+#define   USBH_SC_OHCI_ENDIAN_SWAP	BIT(1)
+#define   USBH_SC_OHCI_LOGICAL_ADDR_EN	BIT(2)
+#define   USBH_SC_EHCI_DATA_SWAP	BIT(3)
+#define   USBH_SC_EHCI_ENDIAN_SWAP	BIT(4)
+#define   USBH_SC_EHCI_LOGICAL_ADDR_EN	BIT(5)
+#define   USBH_SC_USB_DEVICE_SEL	BIT(6)
 	USBH_GENERIC_CONTROL,
-#घोषणा   USBH_GC_PLL_SUSPEND_EN	BIT(1)
+#define   USBH_GC_PLL_SUSPEND_EN	BIT(1)
 	USBH_FRAME_ADJUST_VALUE,
 	USBH_SETUP,
-#घोषणा   USBH_S_IOC			BIT(4)
-#घोषणा   USBH_S_IPP			BIT(5)
+#define   USBH_S_IOC			BIT(4)
+#define   USBH_S_IPP			BIT(5)
 	USBH_MDIO,
 	USBH_MDIO32,
 	USBH_USB_SIM_CONTROL,
-#घोषणा   USBH_USC_LADDR_SEL		BIT(5)
+#define   USBH_USC_LADDR_SEL		BIT(5)
 
 	__USBH_ENUM_SIZE
-पूर्ण;
+};
 
-काष्ठा bcm63xx_usbh_phy_variant अणु
+struct bcm63xx_usbh_phy_variant {
 	/* Registers */
-	दीर्घ regs[__USBH_ENUM_SIZE];
+	long regs[__USBH_ENUM_SIZE];
 
-	/* PLLC bits to set/clear क्रम घातer on */
-	u32 घातer_pllc_clr;
-	u32 घातer_pllc_set;
+	/* PLLC bits to set/clear for power on */
+	u32 power_pllc_clr;
+	u32 power_pllc_set;
 
-	/* Setup bits to set/clear क्रम घातer on */
+	/* Setup bits to set/clear for power on */
 	u32 setup_clr;
 	u32 setup_set;
 
 	/* Swap Control bits to set */
 	u32 swapctl_dev_set;
 
-	/* Test Port Control value to set अगर non-zero */
+	/* Test Port Control value to set if non-zero */
 	u32 tpc_val;
 
 	/* USB Sim Control bits to set */
 	u32 usc_set;
 
 	/* UTMI Control 1 bits to set */
-	u32 uपंचांगictl1_dev_set;
-पूर्ण;
+	u32 utmictl1_dev_set;
+};
 
-काष्ठा bcm63xx_usbh_phy अणु
-	व्योम __iomem *base;
-	काष्ठा clk *usbh_clk;
-	काष्ठा clk *usb_ref_clk;
-	काष्ठा reset_control *reset;
-	स्थिर काष्ठा bcm63xx_usbh_phy_variant *variant;
+struct bcm63xx_usbh_phy {
+	void __iomem *base;
+	struct clk *usbh_clk;
+	struct clk *usb_ref_clk;
+	struct reset_control *reset;
+	const struct bcm63xx_usbh_phy_variant *variant;
 	bool device_mode;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा bcm63xx_usbh_phy_variant usbh_bcm6318 = अणु
-	.regs = अणु
+static const struct bcm63xx_usbh_phy_variant usbh_bcm6318 = {
+	.regs = {
 		[USBH_BRT_CONTROL1] = -1,
 		[USBH_BRT_CONTROL2] = -1,
 		[USBH_BRT_STATUS1] = -1,
@@ -119,17 +118,17 @@
 		[USBH_MDIO] = 0x14,
 		[USBH_MDIO32] = 0x18,
 		[USBH_USB_SIM_CONTROL] = 0x20,
-	पूर्ण,
-	.घातer_pllc_clr = USBH_6318_PLLC_PLL_IDDQ_PWRDN,
-	.घातer_pllc_set = USBH_6318_PLLC_PLL_SUSPEND_EN,
+	},
+	.power_pllc_clr = USBH_6318_PLLC_PLL_IDDQ_PWRDN,
+	.power_pllc_set = USBH_6318_PLLC_PLL_SUSPEND_EN,
 	.setup_set = USBH_S_IOC,
 	.swapctl_dev_set = USBH_SC_USB_DEVICE_SEL,
 	.usc_set = USBH_USC_LADDR_SEL,
-	.uपंचांगictl1_dev_set = USBH_UC1_DEV_MODE_SEL,
-पूर्ण;
+	.utmictl1_dev_set = USBH_UC1_DEV_MODE_SEL,
+};
 
-अटल स्थिर काष्ठा bcm63xx_usbh_phy_variant usbh_bcm6328 = अणु
-	.regs = अणु
+static const struct bcm63xx_usbh_phy_variant usbh_bcm6328 = {
+	.regs = {
 		[USBH_BRT_CONTROL1] = 0x00,
 		[USBH_BRT_CONTROL2] = 0x04,
 		[USBH_BRT_STATUS1] = 0x08,
@@ -144,14 +143,14 @@
 		[USBH_MDIO] = 0x2c,
 		[USBH_MDIO32] = 0x30,
 		[USBH_USB_SIM_CONTROL] = 0x34,
-	पूर्ण,
+	},
 	.setup_set = USBH_S_IOC,
 	.swapctl_dev_set = USBH_SC_USB_DEVICE_SEL,
-	.uपंचांगictl1_dev_set = USBH_UC1_DEV_MODE_SEL,
-पूर्ण;
+	.utmictl1_dev_set = USBH_UC1_DEV_MODE_SEL,
+};
 
-अटल स्थिर काष्ठा bcm63xx_usbh_phy_variant usbh_bcm6358 = अणु
-	.regs = अणु
+static const struct bcm63xx_usbh_phy_variant usbh_bcm6358 = {
+	.regs = {
 		[USBH_BRT_CONTROL1] = -1,
 		[USBH_BRT_CONTROL2] = -1,
 		[USBH_BRT_STATUS1] = -1,
@@ -166,17 +165,17 @@
 		[USBH_MDIO] = -1,
 		[USBH_MDIO32] = -1,
 		[USBH_USB_SIM_CONTROL] = -1,
-	पूर्ण,
+	},
 	/*
-	 * The magic value comes क्रम the original venकरोr BSP
-	 * and is needed क्रम USB to work. Datasheet करोes not
+	 * The magic value comes for the original vendor BSP
+	 * and is needed for USB to work. Datasheet does not
 	 * help, so the magic value is used as-is.
 	 */
 	.tpc_val = 0x1c0020,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा bcm63xx_usbh_phy_variant usbh_bcm6368 = अणु
-	.regs = अणु
+static const struct bcm63xx_usbh_phy_variant usbh_bcm6368 = {
+	.regs = {
 		[USBH_BRT_CONTROL1] = 0x00,
 		[USBH_BRT_CONTROL2] = 0x04,
 		[USBH_BRT_STATUS1] = 0x08,
@@ -191,15 +190,15 @@
 		[USBH_MDIO] = 0x2c,
 		[USBH_MDIO32] = 0x30,
 		[USBH_USB_SIM_CONTROL] = 0x34,
-	पूर्ण,
-	.घातer_pllc_clr = USBH_PLLC_PLL_IDDQ_PWRDN | USBH_PLLC_PLL_PWRDN_DELAY,
+	},
+	.power_pllc_clr = USBH_PLLC_PLL_IDDQ_PWRDN | USBH_PLLC_PLL_PWRDN_DELAY,
 	.setup_set = USBH_S_IOC,
 	.swapctl_dev_set = USBH_SC_USB_DEVICE_SEL,
-	.uपंचांगictl1_dev_set = USBH_UC1_DEV_MODE_SEL,
-पूर्ण;
+	.utmictl1_dev_set = USBH_UC1_DEV_MODE_SEL,
+};
 
-अटल स्थिर काष्ठा bcm63xx_usbh_phy_variant usbh_bcm63268 = अणु
-	.regs = अणु
+static const struct bcm63xx_usbh_phy_variant usbh_bcm63268 = {
+	.regs = {
 		[USBH_BRT_CONTROL1] = 0x00,
 		[USBH_BRT_CONTROL2] = 0x04,
 		[USBH_BRT_STATUS1] = 0x08,
@@ -214,59 +213,59 @@
 		[USBH_MDIO] = 0x2c,
 		[USBH_MDIO32] = 0x30,
 		[USBH_USB_SIM_CONTROL] = 0x34,
-	पूर्ण,
-	.घातer_pllc_clr = USBH_PLLC_PLL_IDDQ_PWRDN | USBH_PLLC_PLL_PWRDN_DELAY,
+	},
+	.power_pllc_clr = USBH_PLLC_PLL_IDDQ_PWRDN | USBH_PLLC_PLL_PWRDN_DELAY,
 	.setup_clr = USBH_S_IPP,
 	.setup_set = USBH_S_IOC,
 	.swapctl_dev_set = USBH_SC_USB_DEVICE_SEL,
-	.uपंचांगictl1_dev_set = USBH_UC1_DEV_MODE_SEL,
-पूर्ण;
+	.utmictl1_dev_set = USBH_UC1_DEV_MODE_SEL,
+};
 
-अटल अंतरभूत bool usbh_has_reg(काष्ठा bcm63xx_usbh_phy *usbh, पूर्णांक reg)
-अणु
-	वापस (usbh->variant->regs[reg] >= 0);
-पूर्ण
+static inline bool usbh_has_reg(struct bcm63xx_usbh_phy *usbh, int reg)
+{
+	return (usbh->variant->regs[reg] >= 0);
+}
 
-अटल अंतरभूत u32 usbh_पढ़ोl(काष्ठा bcm63xx_usbh_phy *usbh, पूर्णांक reg)
-अणु
-	वापस __raw_पढ़ोl(usbh->base + usbh->variant->regs[reg]);
-पूर्ण
+static inline u32 usbh_readl(struct bcm63xx_usbh_phy *usbh, int reg)
+{
+	return __raw_readl(usbh->base + usbh->variant->regs[reg]);
+}
 
-अटल अंतरभूत व्योम usbh_ग_लिखोl(काष्ठा bcm63xx_usbh_phy *usbh, पूर्णांक reg,
+static inline void usbh_writel(struct bcm63xx_usbh_phy *usbh, int reg,
 			       u32 value)
-अणु
-	__raw_ग_लिखोl(value, usbh->base + usbh->variant->regs[reg]);
-पूर्ण
+{
+	__raw_writel(value, usbh->base + usbh->variant->regs[reg]);
+}
 
-अटल पूर्णांक bcm63xx_usbh_phy_init(काष्ठा phy *phy)
-अणु
-	काष्ठा bcm63xx_usbh_phy *usbh = phy_get_drvdata(phy);
-	पूर्णांक ret;
+static int bcm63xx_usbh_phy_init(struct phy *phy)
+{
+	struct bcm63xx_usbh_phy *usbh = phy_get_drvdata(phy);
+	int ret;
 
 	ret = clk_prepare_enable(usbh->usbh_clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&phy->dev, "unable to enable usbh clock: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = clk_prepare_enable(usbh->usb_ref_clk);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&phy->dev, "unable to enable usb_ref clock: %d\n", ret);
 		clk_disable_unprepare(usbh->usbh_clk);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	ret = reset_control_reset(usbh->reset);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(&phy->dev, "unable to reset device: %d\n", ret);
 		clk_disable_unprepare(usbh->usb_ref_clk);
 		clk_disable_unprepare(usbh->usbh_clk);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* Configure to work in native CPU endian */
-	अगर (usbh_has_reg(usbh, USBH_SWAP_CONTROL)) अणु
-		u32 val = usbh_पढ़ोl(usbh, USBH_SWAP_CONTROL);
+	if (usbh_has_reg(usbh, USBH_SWAP_CONTROL)) {
+		u32 val = usbh_readl(usbh, USBH_SWAP_CONTROL);
 
 		val |= USBH_SC_EHCI_DATA_SWAP;
 		val &= ~USBH_SC_EHCI_ENDIAN_SWAP;
@@ -274,185 +273,185 @@
 		val |= USBH_SC_OHCI_DATA_SWAP;
 		val &= ~USBH_SC_OHCI_ENDIAN_SWAP;
 
-		अगर (usbh->device_mode && usbh->variant->swapctl_dev_set)
+		if (usbh->device_mode && usbh->variant->swapctl_dev_set)
 			val |= usbh->variant->swapctl_dev_set;
 
-		usbh_ग_लिखोl(usbh, USBH_SWAP_CONTROL, val);
-	पूर्ण
+		usbh_writel(usbh, USBH_SWAP_CONTROL, val);
+	}
 
-	अगर (usbh_has_reg(usbh, USBH_SETUP)) अणु
-		u32 val = usbh_पढ़ोl(usbh, USBH_SETUP);
+	if (usbh_has_reg(usbh, USBH_SETUP)) {
+		u32 val = usbh_readl(usbh, USBH_SETUP);
 
 		val |= usbh->variant->setup_set;
 		val &= ~usbh->variant->setup_clr;
 
-		usbh_ग_लिखोl(usbh, USBH_SETUP, val);
-	पूर्ण
+		usbh_writel(usbh, USBH_SETUP, val);
+	}
 
-	अगर (usbh_has_reg(usbh, USBH_USB_SIM_CONTROL)) अणु
-		u32 val = usbh_पढ़ोl(usbh, USBH_USB_SIM_CONTROL);
+	if (usbh_has_reg(usbh, USBH_USB_SIM_CONTROL)) {
+		u32 val = usbh_readl(usbh, USBH_USB_SIM_CONTROL);
 
 		val |= usbh->variant->usc_set;
 
-		usbh_ग_लिखोl(usbh, USBH_USB_SIM_CONTROL, val);
-	पूर्ण
+		usbh_writel(usbh, USBH_USB_SIM_CONTROL, val);
+	}
 
-	अगर (usbh->variant->tpc_val &&
+	if (usbh->variant->tpc_val &&
 	    usbh_has_reg(usbh, USBH_TEST_PORT_CONTROL))
-		usbh_ग_लिखोl(usbh, USBH_TEST_PORT_CONTROL,
+		usbh_writel(usbh, USBH_TEST_PORT_CONTROL,
 			    usbh->variant->tpc_val);
 
-	अगर (usbh->device_mode &&
+	if (usbh->device_mode &&
 	    usbh_has_reg(usbh, USBH_UTMI_CONTROL1) &&
-	    usbh->variant->uपंचांगictl1_dev_set) अणु
-		u32 val = usbh_पढ़ोl(usbh, USBH_UTMI_CONTROL1);
+	    usbh->variant->utmictl1_dev_set) {
+		u32 val = usbh_readl(usbh, USBH_UTMI_CONTROL1);
 
-		val |= usbh->variant->uपंचांगictl1_dev_set;
+		val |= usbh->variant->utmictl1_dev_set;
 
-		usbh_ग_लिखोl(usbh, USBH_UTMI_CONTROL1, val);
-	पूर्ण
+		usbh_writel(usbh, USBH_UTMI_CONTROL1, val);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bcm63xx_usbh_phy_घातer_on(काष्ठा phy *phy)
-अणु
-	काष्ठा bcm63xx_usbh_phy *usbh = phy_get_drvdata(phy);
+static int bcm63xx_usbh_phy_power_on(struct phy *phy)
+{
+	struct bcm63xx_usbh_phy *usbh = phy_get_drvdata(phy);
 
-	अगर (usbh_has_reg(usbh, USBH_PLL_CONTROL1)) अणु
-		u32 val = usbh_पढ़ोl(usbh, USBH_PLL_CONTROL1);
+	if (usbh_has_reg(usbh, USBH_PLL_CONTROL1)) {
+		u32 val = usbh_readl(usbh, USBH_PLL_CONTROL1);
 
-		val |= usbh->variant->घातer_pllc_set;
-		val &= ~usbh->variant->घातer_pllc_clr;
+		val |= usbh->variant->power_pllc_set;
+		val &= ~usbh->variant->power_pllc_clr;
 
-		usbh_ग_लिखोl(usbh, USBH_PLL_CONTROL1, val);
-	पूर्ण
+		usbh_writel(usbh, USBH_PLL_CONTROL1, val);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bcm63xx_usbh_phy_घातer_off(काष्ठा phy *phy)
-अणु
-	काष्ठा bcm63xx_usbh_phy *usbh = phy_get_drvdata(phy);
+static int bcm63xx_usbh_phy_power_off(struct phy *phy)
+{
+	struct bcm63xx_usbh_phy *usbh = phy_get_drvdata(phy);
 
-	अगर (usbh_has_reg(usbh, USBH_PLL_CONTROL1)) अणु
-		u32 val = usbh_पढ़ोl(usbh, USBH_PLL_CONTROL1);
+	if (usbh_has_reg(usbh, USBH_PLL_CONTROL1)) {
+		u32 val = usbh_readl(usbh, USBH_PLL_CONTROL1);
 
-		val &= ~usbh->variant->घातer_pllc_set;
-		val |= usbh->variant->घातer_pllc_clr;
+		val &= ~usbh->variant->power_pllc_set;
+		val |= usbh->variant->power_pllc_clr;
 
-		usbh_ग_लिखोl(usbh, USBH_PLL_CONTROL1, val);
-	पूर्ण
+		usbh_writel(usbh, USBH_PLL_CONTROL1, val);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bcm63xx_usbh_phy_निकास(काष्ठा phy *phy)
-अणु
-	काष्ठा bcm63xx_usbh_phy *usbh = phy_get_drvdata(phy);
+static int bcm63xx_usbh_phy_exit(struct phy *phy)
+{
+	struct bcm63xx_usbh_phy *usbh = phy_get_drvdata(phy);
 
 	clk_disable_unprepare(usbh->usbh_clk);
 	clk_disable_unprepare(usbh->usb_ref_clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा phy_ops bcm63xx_usbh_phy_ops = अणु
-	.निकास = bcm63xx_usbh_phy_निकास,
+static const struct phy_ops bcm63xx_usbh_phy_ops = {
+	.exit = bcm63xx_usbh_phy_exit,
 	.init = bcm63xx_usbh_phy_init,
-	.घातer_off = bcm63xx_usbh_phy_घातer_off,
-	.घातer_on = bcm63xx_usbh_phy_घातer_on,
+	.power_off = bcm63xx_usbh_phy_power_off,
+	.power_on = bcm63xx_usbh_phy_power_on,
 	.owner = THIS_MODULE,
-पूर्ण;
+};
 
-अटल काष्ठा phy *bcm63xx_usbh_phy_xlate(काष्ठा device *dev,
-					  काष्ठा of_phandle_args *args)
-अणु
-	काष्ठा bcm63xx_usbh_phy *usbh = dev_get_drvdata(dev);
+static struct phy *bcm63xx_usbh_phy_xlate(struct device *dev,
+					  struct of_phandle_args *args)
+{
+	struct bcm63xx_usbh_phy *usbh = dev_get_drvdata(dev);
 
 	usbh->device_mode = !!args->args[0];
 
-	वापस of_phy_simple_xlate(dev, args);
-पूर्ण
+	return of_phy_simple_xlate(dev, args);
+}
 
-अटल पूर्णांक __init bcm63xx_usbh_phy_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा bcm63xx_usbh_phy	*usbh;
-	स्थिर काष्ठा bcm63xx_usbh_phy_variant *variant;
-	काष्ठा phy *phy;
-	काष्ठा phy_provider *phy_provider;
+static int __init bcm63xx_usbh_phy_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct bcm63xx_usbh_phy	*usbh;
+	const struct bcm63xx_usbh_phy_variant *variant;
+	struct phy *phy;
+	struct phy_provider *phy_provider;
 
-	usbh = devm_kzalloc(dev, माप(*usbh), GFP_KERNEL);
-	अगर (!usbh)
-		वापस -ENOMEM;
+	usbh = devm_kzalloc(dev, sizeof(*usbh), GFP_KERNEL);
+	if (!usbh)
+		return -ENOMEM;
 
 	variant = device_get_match_data(dev);
-	अगर (!variant)
-		वापस -EINVAL;
+	if (!variant)
+		return -EINVAL;
 	usbh->variant = variant;
 
-	usbh->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(usbh->base))
-		वापस PTR_ERR(usbh->base);
+	usbh->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(usbh->base))
+		return PTR_ERR(usbh->base);
 
-	usbh->reset = devm_reset_control_get_exclusive(dev, शून्य);
-	अगर (IS_ERR(usbh->reset)) अणु
-		अगर (PTR_ERR(usbh->reset) != -EPROBE_DEFER)
+	usbh->reset = devm_reset_control_get_exclusive(dev, NULL);
+	if (IS_ERR(usbh->reset)) {
+		if (PTR_ERR(usbh->reset) != -EPROBE_DEFER)
 			dev_err(dev, "failed to get reset\n");
-		वापस PTR_ERR(usbh->reset);
-	पूर्ण
+		return PTR_ERR(usbh->reset);
+	}
 
 	usbh->usbh_clk = devm_clk_get_optional(dev, "usbh");
-	अगर (IS_ERR(usbh->usbh_clk))
-		वापस PTR_ERR(usbh->usbh_clk);
+	if (IS_ERR(usbh->usbh_clk))
+		return PTR_ERR(usbh->usbh_clk);
 
 	usbh->usb_ref_clk = devm_clk_get_optional(dev, "usb_ref");
-	अगर (IS_ERR(usbh->usb_ref_clk))
-		वापस PTR_ERR(usbh->usb_ref_clk);
+	if (IS_ERR(usbh->usb_ref_clk))
+		return PTR_ERR(usbh->usb_ref_clk);
 
-	phy = devm_phy_create(dev, शून्य, &bcm63xx_usbh_phy_ops);
-	अगर (IS_ERR(phy)) अणु
+	phy = devm_phy_create(dev, NULL, &bcm63xx_usbh_phy_ops);
+	if (IS_ERR(phy)) {
 		dev_err(dev, "failed to create PHY\n");
-		वापस PTR_ERR(phy);
-	पूर्ण
+		return PTR_ERR(phy);
+	}
 
-	platक्रमm_set_drvdata(pdev, usbh);
+	platform_set_drvdata(pdev, usbh);
 	phy_set_drvdata(phy, usbh);
 
-	phy_provider = devm_of_phy_provider_रेजिस्टर(dev,
+	phy_provider = devm_of_phy_provider_register(dev,
 						     bcm63xx_usbh_phy_xlate);
-	अगर (IS_ERR(phy_provider)) अणु
+	if (IS_ERR(phy_provider)) {
 		dev_err(dev, "failed to register PHY provider\n");
-		वापस PTR_ERR(phy_provider);
-	पूर्ण
+		return PTR_ERR(phy_provider);
+	}
 
 	dev_dbg(dev, "Registered BCM63xx USB PHY driver\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा of_device_id bcm63xx_usbh_phy_ids[] __initस्थिर = अणु
-	अणु .compatible = "brcm,bcm6318-usbh-phy", .data = &usbh_bcm6318 पूर्ण,
-	अणु .compatible = "brcm,bcm6328-usbh-phy", .data = &usbh_bcm6328 पूर्ण,
-	अणु .compatible = "brcm,bcm6358-usbh-phy", .data = &usbh_bcm6358 पूर्ण,
-	अणु .compatible = "brcm,bcm6362-usbh-phy", .data = &usbh_bcm6368 पूर्ण,
-	अणु .compatible = "brcm,bcm6368-usbh-phy", .data = &usbh_bcm6368 पूर्ण,
-	अणु .compatible = "brcm,bcm63268-usbh-phy", .data = &usbh_bcm63268 पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+static const struct of_device_id bcm63xx_usbh_phy_ids[] __initconst = {
+	{ .compatible = "brcm,bcm6318-usbh-phy", .data = &usbh_bcm6318 },
+	{ .compatible = "brcm,bcm6328-usbh-phy", .data = &usbh_bcm6328 },
+	{ .compatible = "brcm,bcm6358-usbh-phy", .data = &usbh_bcm6358 },
+	{ .compatible = "brcm,bcm6362-usbh-phy", .data = &usbh_bcm6368 },
+	{ .compatible = "brcm,bcm6368-usbh-phy", .data = &usbh_bcm6368 },
+	{ .compatible = "brcm,bcm63268-usbh-phy", .data = &usbh_bcm63268 },
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, bcm63xx_usbh_phy_ids);
 
-अटल काष्ठा platक्रमm_driver bcm63xx_usbh_phy_driver __refdata = अणु
-	.driver	= अणु
+static struct platform_driver bcm63xx_usbh_phy_driver __refdata = {
+	.driver	= {
 		.name = "bcm63xx-usbh-phy",
 		.of_match_table = bcm63xx_usbh_phy_ids,
-	पूर्ण,
+	},
 	.probe	= bcm63xx_usbh_phy_probe,
-पूर्ण;
-module_platक्रमm_driver(bcm63xx_usbh_phy_driver);
+};
+module_platform_driver(bcm63xx_usbh_phy_driver);
 
 MODULE_DESCRIPTION("BCM63xx USBH PHY driver");
-MODULE_AUTHOR("थlvaro Fernथँndez Rojas <noltari@gmail.com>");
+MODULE_AUTHOR("Álvaro Fernández Rojas <noltari@gmail.com>");
 MODULE_AUTHOR("Simon Arlott");
 MODULE_LICENSE("GPL");

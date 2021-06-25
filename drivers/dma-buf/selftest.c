@@ -1,168 +1,167 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#समावेश <linux/compiler.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <linux/slab.h>
+#include <linux/compiler.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/sched/signal.h>
+#include <linux/slab.h>
 
-#समावेश "selftest.h"
+#include "selftest.h"
 
-क्रमागत अणु
-#घोषणा selftest(n, func) __idx_##n,
-#समावेश "selftests.h"
-#अघोषित selftest
-पूर्ण;
+enum {
+#define selftest(n, func) __idx_##n,
+#include "selftests.h"
+#undef selftest
+};
 
-#घोषणा selftest(n, f) [__idx_##n] = अणु .name = #n, .func = f पूर्ण,
-अटल काष्ठा selftest अणु
+#define selftest(n, f) [__idx_##n] = { .name = #n, .func = f },
+static struct selftest {
 	bool enabled;
-	स्थिर अक्षर *name;
-	पूर्णांक (*func)(व्योम);
-पूर्ण selftests[] = अणु
-#समावेश "selftests.h"
-पूर्ण;
-#अघोषित selftest
+	const char *name;
+	int (*func)(void);
+} selftests[] = {
+#include "selftests.h"
+};
+#undef selftest
 
-/* Embed the line number पूर्णांकo the parameter name so that we can order tests */
-#घोषणा param(n) __PASTE(igt__, __PASTE(__PASTE(__LINE__, __), n))
-#घोषणा selftest_0(n, func, id) \
+/* Embed the line number into the parameter name so that we can order tests */
+#define param(n) __PASTE(igt__, __PASTE(__PASTE(__LINE__, __), n))
+#define selftest_0(n, func, id) \
 module_param_named(id, selftests[__idx_##n].enabled, bool, 0400);
-#घोषणा selftest(n, func) selftest_0(n, func, param(n))
-#समावेश "selftests.h"
-#अघोषित selftest
+#define selftest(n, func) selftest_0(n, func, param(n))
+#include "selftests.h"
+#undef selftest
 
-पूर्णांक __sanitycheck__(व्योम)
-अणु
+int __sanitycheck__(void)
+{
 	pr_debug("Hello World!\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अक्षर *__st_filter;
+static char *__st_filter;
 
-अटल bool apply_subtest_filter(स्थिर अक्षर *caller, स्थिर अक्षर *name)
-अणु
-	अक्षर *filter, *sep, *tok;
+static bool apply_subtest_filter(const char *caller, const char *name)
+{
+	char *filter, *sep, *tok;
 	bool result = true;
 
 	filter = kstrdup(__st_filter, GFP_KERNEL);
-	क्रम (sep = filter; (tok = strsep(&sep, ","));) अणु
+	for (sep = filter; (tok = strsep(&sep, ","));) {
 		bool allow = true;
-		अक्षर *sl;
+		char *sl;
 
-		अगर (*tok == '!') अणु
+		if (*tok == '!') {
 			allow = false;
 			tok++;
-		पूर्ण
+		}
 
-		अगर (*tok == '\0')
-			जारी;
+		if (*tok == '\0')
+			continue;
 
-		sl = म_अक्षर(tok, '/');
-		अगर (sl) अणु
+		sl = strchr(tok, '/');
+		if (sl) {
 			*sl++ = '\0';
-			अगर (म_भेद(tok, caller)) अणु
-				अगर (allow)
+			if (strcmp(tok, caller)) {
+				if (allow)
 					result = false;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			tok = sl;
-		पूर्ण
+		}
 
-		अगर (म_भेद(tok, name)) अणु
-			अगर (allow)
+		if (strcmp(tok, name)) {
+			if (allow)
 				result = false;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		result = allow;
-		अवरोध;
-	पूर्ण
-	kमुक्त(filter);
+		break;
+	}
+	kfree(filter);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-पूर्णांक
-__subtests(स्थिर अक्षर *caller, स्थिर काष्ठा subtest *st, पूर्णांक count, व्योम *data)
-अणु
-	पूर्णांक err;
+int
+__subtests(const char *caller, const struct subtest *st, int count, void *data)
+{
+	int err;
 
-	क्रम (; count--; st++) अणु
+	for (; count--; st++) {
 		cond_resched();
-		अगर (संकेत_pending(current))
-			वापस -EINTR;
+		if (signal_pending(current))
+			return -EINTR;
 
-		अगर (!apply_subtest_filter(caller, st->name))
-			जारी;
+		if (!apply_subtest_filter(caller, st->name))
+			continue;
 
 		pr_info("dma-buf: Running %s/%s\n", caller, st->name);
 
 		err = st->func(data);
-		अगर (err && err != -EINTR) अणु
+		if (err && err != -EINTR) {
 			pr_err("dma-buf/%s: %s failed with error %d\n",
 			       caller, st->name, err);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम set_शेष_test_all(काष्ठा selftest *st, अचिन्हित दीर्घ count)
-अणु
-	अचिन्हित दीर्घ i;
+static void set_default_test_all(struct selftest *st, unsigned long count)
+{
+	unsigned long i;
 
-	क्रम (i = 0; i < count; i++)
-		अगर (st[i].enabled)
-			वापस;
+	for (i = 0; i < count; i++)
+		if (st[i].enabled)
+			return;
 
-	क्रम (i = 0; i < count; i++)
+	for (i = 0; i < count; i++)
 		st[i].enabled = true;
-पूर्ण
+}
 
-अटल पूर्णांक run_selftests(काष्ठा selftest *st, अचिन्हित दीर्घ count)
-अणु
-	पूर्णांक err = 0;
+static int run_selftests(struct selftest *st, unsigned long count)
+{
+	int err = 0;
 
-	set_शेष_test_all(st, count);
+	set_default_test_all(st, count);
 
 	/* Tests are listed in natural order in selftests.h */
-	क्रम (; count--; st++) अणु
-		अगर (!st->enabled)
-			जारी;
+	for (; count--; st++) {
+		if (!st->enabled)
+			continue;
 
 		pr_info("dma-buf: Running %s\n", st->name);
 		err = st->func();
-		अगर (err)
-			अवरोध;
-	पूर्ण
+		if (err)
+			break;
+	}
 
-	अगर (WARN(err > 0 || err == -ENOTTY,
+	if (WARN(err > 0 || err == -ENOTTY,
 		 "%s returned %d, conflicting with selftest's magic values!\n",
 		 st->name, err))
 		err = -1;
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __init st_init(व्योम)
-अणु
-	वापस run_selftests(selftests, ARRAY_SIZE(selftests));
-पूर्ण
+static int __init st_init(void)
+{
+	return run_selftests(selftests, ARRAY_SIZE(selftests));
+}
 
-अटल व्योम __निकास st_निकास(व्योम)
-अणु
-पूर्ण
+static void __exit st_exit(void)
+{
+}
 
-module_param_named(st_filter, __st_filter, अक्षरp, 0400);
+module_param_named(st_filter, __st_filter, charp, 0400);
 module_init(st_init);
-module_निकास(st_निकास);
+module_exit(st_exit);
 
 MODULE_DESCRIPTION("Self-test harness for dma-buf");
 MODULE_LICENSE("GPL and additional rights");

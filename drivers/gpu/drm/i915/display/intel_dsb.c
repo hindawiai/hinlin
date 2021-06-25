@@ -1,117 +1,116 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  *
  */
 
-#समावेश "i915_drv.h"
-#समावेश "intel_display_types.h"
+#include "i915_drv.h"
+#include "intel_display_types.h"
 
-#घोषणा DSB_BUF_SIZE    (2 * PAGE_SIZE)
+#define DSB_BUF_SIZE    (2 * PAGE_SIZE)
 
 /**
  * DOC: DSB
  *
- * A DSB (Display State Buffer) is a queue of MMIO inकाष्ठाions in the memory
+ * A DSB (Display State Buffer) is a queue of MMIO instructions in the memory
  * which can be offloaded to DSB HW in Display Controller. DSB HW is a DMA
- * engine that can be programmed to करोwnload the DSB from memory.
+ * engine that can be programmed to download the DSB from memory.
  * It allows driver to batch submit display HW programming. This helps to
- * reduce loading समय and CPU activity, thereby making the context चयन
- * faster. DSB Support added from Gen12 Intel graphics based platक्रमm.
+ * reduce loading time and CPU activity, thereby making the context switch
+ * faster. DSB Support added from Gen12 Intel graphics based platform.
  *
  * DSB's can access only the pipe, plane, and transcoder Data Island Packet
- * रेजिस्टरs.
+ * registers.
  *
- * DSB HW can support only रेजिस्टर ग_लिखोs (both indexed and direct MMIO
- * ग_लिखोs). There are no रेजिस्टरs पढ़ोs possible with DSB HW engine.
+ * DSB HW can support only register writes (both indexed and direct MMIO
+ * writes). There are no registers reads possible with DSB HW engine.
  */
 
 /* DSB opcodes. */
-#घोषणा DSB_OPCODE_SHIFT		24
-#घोषणा DSB_OPCODE_MMIO_WRITE		0x1
-#घोषणा DSB_OPCODE_INDEXED_WRITE	0x9
-#घोषणा DSB_BYTE_EN			0xF
-#घोषणा DSB_BYTE_EN_SHIFT		20
-#घोषणा DSB_REG_VALUE_MASK		0xfffff
+#define DSB_OPCODE_SHIFT		24
+#define DSB_OPCODE_MMIO_WRITE		0x1
+#define DSB_OPCODE_INDEXED_WRITE	0x9
+#define DSB_BYTE_EN			0xF
+#define DSB_BYTE_EN_SHIFT		20
+#define DSB_REG_VALUE_MASK		0xfffff
 
-अटल bool is_dsb_busy(काष्ठा drm_i915_निजी *i915, क्रमागत pipe pipe,
-			क्रमागत dsb_id id)
-अणु
-	वापस DSB_STATUS & पूर्णांकel_de_पढ़ो(i915, DSB_CTRL(pipe, id));
-पूर्ण
+static bool is_dsb_busy(struct drm_i915_private *i915, enum pipe pipe,
+			enum dsb_id id)
+{
+	return DSB_STATUS & intel_de_read(i915, DSB_CTRL(pipe, id));
+}
 
-अटल bool पूर्णांकel_dsb_enable_engine(काष्ठा drm_i915_निजी *i915,
-				    क्रमागत pipe pipe, क्रमागत dsb_id id)
-अणु
+static bool intel_dsb_enable_engine(struct drm_i915_private *i915,
+				    enum pipe pipe, enum dsb_id id)
+{
 	u32 dsb_ctrl;
 
-	dsb_ctrl = पूर्णांकel_de_पढ़ो(i915, DSB_CTRL(pipe, id));
-	अगर (DSB_STATUS & dsb_ctrl) अणु
+	dsb_ctrl = intel_de_read(i915, DSB_CTRL(pipe, id));
+	if (DSB_STATUS & dsb_ctrl) {
 		drm_dbg_kms(&i915->drm, "DSB engine is busy.\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	dsb_ctrl |= DSB_ENABLE;
-	पूर्णांकel_de_ग_लिखो(i915, DSB_CTRL(pipe, id), dsb_ctrl);
+	intel_de_write(i915, DSB_CTRL(pipe, id), dsb_ctrl);
 
-	पूर्णांकel_de_posting_पढ़ो(i915, DSB_CTRL(pipe, id));
-	वापस true;
-पूर्ण
+	intel_de_posting_read(i915, DSB_CTRL(pipe, id));
+	return true;
+}
 
-अटल bool पूर्णांकel_dsb_disable_engine(काष्ठा drm_i915_निजी *i915,
-				     क्रमागत pipe pipe, क्रमागत dsb_id id)
-अणु
+static bool intel_dsb_disable_engine(struct drm_i915_private *i915,
+				     enum pipe pipe, enum dsb_id id)
+{
 	u32 dsb_ctrl;
 
-	dsb_ctrl = पूर्णांकel_de_पढ़ो(i915, DSB_CTRL(pipe, id));
-	अगर (DSB_STATUS & dsb_ctrl) अणु
+	dsb_ctrl = intel_de_read(i915, DSB_CTRL(pipe, id));
+	if (DSB_STATUS & dsb_ctrl) {
 		drm_dbg_kms(&i915->drm, "DSB engine is busy.\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	dsb_ctrl &= ~DSB_ENABLE;
-	पूर्णांकel_de_ग_लिखो(i915, DSB_CTRL(pipe, id), dsb_ctrl);
+	intel_de_write(i915, DSB_CTRL(pipe, id), dsb_ctrl);
 
-	पूर्णांकel_de_posting_पढ़ो(i915, DSB_CTRL(pipe, id));
-	वापस true;
-पूर्ण
+	intel_de_posting_read(i915, DSB_CTRL(pipe, id));
+	return true;
+}
 
 /**
- * पूर्णांकel_dsb_indexed_reg_ग_लिखो() -Write to the DSB context क्रम स्वतः
- * increment रेजिस्टर.
- * @crtc_state: पूर्णांकel_crtc_state काष्ठाure
- * @reg: रेजिस्टर address.
+ * intel_dsb_indexed_reg_write() -Write to the DSB context for auto
+ * increment register.
+ * @crtc_state: intel_crtc_state structure
+ * @reg: register address.
  * @val: value.
  *
- * This function is used क्रम writing रेजिस्टर-value pair in command
- * buffer of DSB क्रम स्वतः-increment रेजिस्टर. During command buffer overflow,
- * a warning is thrown and rest all erroneous condition रेजिस्टर programming
- * is करोne through mmio ग_लिखो.
+ * This function is used for writing register-value pair in command
+ * buffer of DSB for auto-increment register. During command buffer overflow,
+ * a warning is thrown and rest all erroneous condition register programming
+ * is done through mmio write.
  */
 
-व्योम पूर्णांकel_dsb_indexed_reg_ग_लिखो(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
+void intel_dsb_indexed_reg_write(const struct intel_crtc_state *crtc_state,
 				 i915_reg_t reg, u32 val)
-अणु
-	काष्ठा पूर्णांकel_dsb *dsb = crtc_state->dsb;
-	काष्ठा पूर्णांकel_crtc *crtc = to_पूर्णांकel_crtc(crtc_state->uapi.crtc);
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
+{
+	struct intel_dsb *dsb = crtc_state->dsb;
+	struct intel_crtc *crtc = to_intel_crtc(crtc_state->uapi.crtc);
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
 	u32 *buf;
 	u32 reg_val;
 
-	अगर (!dsb) अणु
-		पूर्णांकel_de_ग_लिखो(dev_priv, reg, val);
-		वापस;
-	पूर्ण
+	if (!dsb) {
+		intel_de_write(dev_priv, reg, val);
+		return;
+	}
 	buf = dsb->cmd_buf;
-	अगर (drm_WARN_ON(&dev_priv->drm, dsb->मुक्त_pos >= DSB_BUF_SIZE)) अणु
+	if (drm_WARN_ON(&dev_priv->drm, dsb->free_pos >= DSB_BUF_SIZE)) {
 		drm_dbg_kms(&dev_priv->drm, "DSB buffer overflow\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * For example the buffer will look like below क्रम 3 dwords क्रम स्वतः
-	 * increment रेजिस्टर:
+	 * For example the buffer will look like below for 3 dwords for auto
+	 * increment register:
 	 * +--------------------------------------------------------+
 	 * | size = 3 | offset &| value1 | value2 | value3 | zero   |
 	 * |          | opcode  |        |        |        |        |
@@ -120,211 +119,211 @@
 	 * 0          4         8        12       16       20       24
 	 * Byte
 	 *
-	 * As every inकाष्ठाion is 8 byte aligned the index of dsb inकाष्ठाion
-	 * will start always from even number जबतक dealing with u32 array. If
-	 * we are writing odd no of dwords, Zeros will be added in the end क्रम
+	 * As every instruction is 8 byte aligned the index of dsb instruction
+	 * will start always from even number while dealing with u32 array. If
+	 * we are writing odd no of dwords, Zeros will be added in the end for
 	 * padding.
 	 */
 	reg_val = buf[dsb->ins_start_offset + 1] & DSB_REG_VALUE_MASK;
-	अगर (reg_val != i915_mmio_reg_offset(reg)) अणु
-		/* Every inकाष्ठाion should be 8 byte aligned. */
-		dsb->मुक्त_pos = ALIGN(dsb->मुक्त_pos, 2);
+	if (reg_val != i915_mmio_reg_offset(reg)) {
+		/* Every instruction should be 8 byte aligned. */
+		dsb->free_pos = ALIGN(dsb->free_pos, 2);
 
-		dsb->ins_start_offset = dsb->मुक्त_pos;
+		dsb->ins_start_offset = dsb->free_pos;
 
 		/* Update the size. */
-		buf[dsb->मुक्त_pos++] = 1;
+		buf[dsb->free_pos++] = 1;
 
 		/* Update the opcode and reg. */
-		buf[dsb->मुक्त_pos++] = (DSB_OPCODE_INDEXED_WRITE  <<
+		buf[dsb->free_pos++] = (DSB_OPCODE_INDEXED_WRITE  <<
 					DSB_OPCODE_SHIFT) |
 					i915_mmio_reg_offset(reg);
 
 		/* Update the value. */
-		buf[dsb->मुक्त_pos++] = val;
-	पूर्ण अन्यथा अणु
+		buf[dsb->free_pos++] = val;
+	} else {
 		/* Update the new value. */
-		buf[dsb->मुक्त_pos++] = val;
+		buf[dsb->free_pos++] = val;
 
 		/* Update the size. */
 		buf[dsb->ins_start_offset]++;
-	पूर्ण
+	}
 
-	/* अगर number of data words is odd, then the last dword should be 0.*/
-	अगर (dsb->मुक्त_pos & 0x1)
-		buf[dsb->मुक्त_pos] = 0;
-पूर्ण
+	/* if number of data words is odd, then the last dword should be 0.*/
+	if (dsb->free_pos & 0x1)
+		buf[dsb->free_pos] = 0;
+}
 
 /**
- * पूर्णांकel_dsb_reg_ग_लिखो() -Write to the DSB context क्रम normal
- * रेजिस्टर.
- * @crtc_state: पूर्णांकel_crtc_state काष्ठाure
- * @reg: रेजिस्टर address.
+ * intel_dsb_reg_write() -Write to the DSB context for normal
+ * register.
+ * @crtc_state: intel_crtc_state structure
+ * @reg: register address.
  * @val: value.
  *
- * This function is used क्रम writing रेजिस्टर-value pair in command
+ * This function is used for writing register-value pair in command
  * buffer of DSB. During command buffer overflow, a warning  is thrown
- * and rest all erroneous condition रेजिस्टर programming is करोne
- * through mmio ग_लिखो.
+ * and rest all erroneous condition register programming is done
+ * through mmio write.
  */
-व्योम पूर्णांकel_dsb_reg_ग_लिखो(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
+void intel_dsb_reg_write(const struct intel_crtc_state *crtc_state,
 			 i915_reg_t reg, u32 val)
-अणु
-	काष्ठा पूर्णांकel_crtc *crtc = to_पूर्णांकel_crtc(crtc_state->uapi.crtc);
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
-	काष्ठा पूर्णांकel_dsb *dsb;
+{
+	struct intel_crtc *crtc = to_intel_crtc(crtc_state->uapi.crtc);
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	struct intel_dsb *dsb;
 	u32 *buf;
 
 	dsb = crtc_state->dsb;
-	अगर (!dsb) अणु
-		पूर्णांकel_de_ग_लिखो(dev_priv, reg, val);
-		वापस;
-	पूर्ण
+	if (!dsb) {
+		intel_de_write(dev_priv, reg, val);
+		return;
+	}
 
 	buf = dsb->cmd_buf;
-	अगर (drm_WARN_ON(&dev_priv->drm, dsb->मुक्त_pos >= DSB_BUF_SIZE)) अणु
+	if (drm_WARN_ON(&dev_priv->drm, dsb->free_pos >= DSB_BUF_SIZE)) {
 		drm_dbg_kms(&dev_priv->drm, "DSB buffer overflow\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	dsb->ins_start_offset = dsb->मुक्त_pos;
-	buf[dsb->मुक्त_pos++] = val;
-	buf[dsb->मुक्त_pos++] = (DSB_OPCODE_MMIO_WRITE  << DSB_OPCODE_SHIFT) |
+	dsb->ins_start_offset = dsb->free_pos;
+	buf[dsb->free_pos++] = val;
+	buf[dsb->free_pos++] = (DSB_OPCODE_MMIO_WRITE  << DSB_OPCODE_SHIFT) |
 			       (DSB_BYTE_EN << DSB_BYTE_EN_SHIFT) |
 			       i915_mmio_reg_offset(reg);
-पूर्ण
+}
 
 /**
- * पूर्णांकel_dsb_commit() - Trigger workload execution of DSB.
- * @crtc_state: पूर्णांकel_crtc_state काष्ठाure
+ * intel_dsb_commit() - Trigger workload execution of DSB.
+ * @crtc_state: intel_crtc_state structure
  *
- * This function is used to करो actual ग_लिखो to hardware using DSB.
+ * This function is used to do actual write to hardware using DSB.
  * On errors, fall back to MMIO. Also this function help to reset the context.
  */
-व्योम पूर्णांकel_dsb_commit(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
-	काष्ठा पूर्णांकel_dsb *dsb = crtc_state->dsb;
-	काष्ठा पूर्णांकel_crtc *crtc = to_पूर्णांकel_crtc(crtc_state->uapi.crtc);
-	काष्ठा drm_device *dev = crtc->base.dev;
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(dev);
-	क्रमागत pipe pipe = crtc->pipe;
+void intel_dsb_commit(const struct intel_crtc_state *crtc_state)
+{
+	struct intel_dsb *dsb = crtc_state->dsb;
+	struct intel_crtc *crtc = to_intel_crtc(crtc_state->uapi.crtc);
+	struct drm_device *dev = crtc->base.dev;
+	struct drm_i915_private *dev_priv = to_i915(dev);
+	enum pipe pipe = crtc->pipe;
 	u32 tail;
 
-	अगर (!(dsb && dsb->मुक्त_pos))
-		वापस;
+	if (!(dsb && dsb->free_pos))
+		return;
 
-	अगर (!पूर्णांकel_dsb_enable_engine(dev_priv, pipe, dsb->id))
-		जाओ reset;
+	if (!intel_dsb_enable_engine(dev_priv, pipe, dsb->id))
+		goto reset;
 
-	अगर (is_dsb_busy(dev_priv, pipe, dsb->id)) अणु
+	if (is_dsb_busy(dev_priv, pipe, dsb->id)) {
 		drm_err(&dev_priv->drm,
 			"HEAD_PTR write failed - dsb engine is busy.\n");
-		जाओ reset;
-	पूर्ण
-	पूर्णांकel_de_ग_लिखो(dev_priv, DSB_HEAD(pipe, dsb->id),
+		goto reset;
+	}
+	intel_de_write(dev_priv, DSB_HEAD(pipe, dsb->id),
 		       i915_ggtt_offset(dsb->vma));
 
-	tail = ALIGN(dsb->मुक्त_pos * 4, CACHELINE_BYTES);
-	अगर (tail > dsb->मुक्त_pos * 4)
-		स_रखो(&dsb->cmd_buf[dsb->मुक्त_pos], 0,
-		       (tail - dsb->मुक्त_pos * 4));
+	tail = ALIGN(dsb->free_pos * 4, CACHELINE_BYTES);
+	if (tail > dsb->free_pos * 4)
+		memset(&dsb->cmd_buf[dsb->free_pos], 0,
+		       (tail - dsb->free_pos * 4));
 
-	अगर (is_dsb_busy(dev_priv, pipe, dsb->id)) अणु
+	if (is_dsb_busy(dev_priv, pipe, dsb->id)) {
 		drm_err(&dev_priv->drm,
 			"TAIL_PTR write failed - dsb engine is busy.\n");
-		जाओ reset;
-	पूर्ण
+		goto reset;
+	}
 	drm_dbg_kms(&dev_priv->drm,
 		    "DSB execution started - head 0x%x, tail 0x%x\n",
 		    i915_ggtt_offset(dsb->vma), tail);
-	पूर्णांकel_de_ग_लिखो(dev_priv, DSB_TAIL(pipe, dsb->id),
+	intel_de_write(dev_priv, DSB_TAIL(pipe, dsb->id),
 		       i915_ggtt_offset(dsb->vma) + tail);
-	अगर (रुको_क्रम(!is_dsb_busy(dev_priv, pipe, dsb->id), 1)) अणु
+	if (wait_for(!is_dsb_busy(dev_priv, pipe, dsb->id), 1)) {
 		drm_err(&dev_priv->drm,
 			"Timed out waiting for DSB workload completion.\n");
-		जाओ reset;
-	पूर्ण
+		goto reset;
+	}
 
 reset:
-	dsb->मुक्त_pos = 0;
+	dsb->free_pos = 0;
 	dsb->ins_start_offset = 0;
-	पूर्णांकel_dsb_disable_engine(dev_priv, pipe, dsb->id);
-पूर्ण
+	intel_dsb_disable_engine(dev_priv, pipe, dsb->id);
+}
 
 /**
- * पूर्णांकel_dsb_prepare() - Allocate, pin and map the DSB command buffer.
- * @crtc_state: पूर्णांकel_crtc_state काष्ठाure to prepare associated dsb instance.
+ * intel_dsb_prepare() - Allocate, pin and map the DSB command buffer.
+ * @crtc_state: intel_crtc_state structure to prepare associated dsb instance.
  *
  * This function prepare the command buffer which is used to store dsb
- * inकाष्ठाions with data.
+ * instructions with data.
  */
-व्योम पूर्णांकel_dsb_prepare(काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
-	काष्ठा पूर्णांकel_crtc *crtc = to_पूर्णांकel_crtc(crtc_state->uapi.crtc);
-	काष्ठा drm_i915_निजी *i915 = to_i915(crtc->base.dev);
-	काष्ठा पूर्णांकel_dsb *dsb;
-	काष्ठा drm_i915_gem_object *obj;
-	काष्ठा i915_vma *vma;
+void intel_dsb_prepare(struct intel_crtc_state *crtc_state)
+{
+	struct intel_crtc *crtc = to_intel_crtc(crtc_state->uapi.crtc);
+	struct drm_i915_private *i915 = to_i915(crtc->base.dev);
+	struct intel_dsb *dsb;
+	struct drm_i915_gem_object *obj;
+	struct i915_vma *vma;
 	u32 *buf;
-	पूर्णांकel_wakeref_t wakeref;
+	intel_wakeref_t wakeref;
 
-	अगर (!HAS_DSB(i915))
-		वापस;
+	if (!HAS_DSB(i915))
+		return;
 
-	dsb = kदो_स्मृति(माप(*dsb), GFP_KERNEL);
-	अगर (!dsb) अणु
+	dsb = kmalloc(sizeof(*dsb), GFP_KERNEL);
+	if (!dsb) {
 		drm_err(&i915->drm, "DSB object creation failed\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	wakeref = पूर्णांकel_runसमय_pm_get(&i915->runसमय_pm);
+	wakeref = intel_runtime_pm_get(&i915->runtime_pm);
 
-	obj = i915_gem_object_create_पूर्णांकernal(i915, DSB_BUF_SIZE);
-	अगर (IS_ERR(obj)) अणु
+	obj = i915_gem_object_create_internal(i915, DSB_BUF_SIZE);
+	if (IS_ERR(obj)) {
 		drm_err(&i915->drm, "Gem object creation failed\n");
-		kमुक्त(dsb);
-		जाओ out;
-	पूर्ण
+		kfree(dsb);
+		goto out;
+	}
 
-	vma = i915_gem_object_ggtt_pin(obj, शून्य, 0, 0, 0);
-	अगर (IS_ERR(vma)) अणु
+	vma = i915_gem_object_ggtt_pin(obj, NULL, 0, 0, 0);
+	if (IS_ERR(vma)) {
 		drm_err(&i915->drm, "Vma creation failed\n");
 		i915_gem_object_put(obj);
-		kमुक्त(dsb);
-		जाओ out;
-	पूर्ण
+		kfree(dsb);
+		goto out;
+	}
 
 	buf = i915_gem_object_pin_map_unlocked(vma->obj, I915_MAP_WC);
-	अगर (IS_ERR(buf)) अणु
+	if (IS_ERR(buf)) {
 		drm_err(&i915->drm, "Command buffer creation failed\n");
 		i915_vma_unpin_and_release(&vma, I915_VMA_RELEASE_MAP);
-		kमुक्त(dsb);
-		जाओ out;
-	पूर्ण
+		kfree(dsb);
+		goto out;
+	}
 
 	dsb->id = DSB1;
 	dsb->vma = vma;
 	dsb->cmd_buf = buf;
-	dsb->मुक्त_pos = 0;
+	dsb->free_pos = 0;
 	dsb->ins_start_offset = 0;
 	crtc_state->dsb = dsb;
 out:
-	पूर्णांकel_runसमय_pm_put(&i915->runसमय_pm, wakeref);
-पूर्ण
+	intel_runtime_pm_put(&i915->runtime_pm, wakeref);
+}
 
 /**
- * पूर्णांकel_dsb_cleanup() - To cleanup DSB context.
- * @crtc_state: पूर्णांकel_crtc_state काष्ठाure to cleanup associated dsb instance.
+ * intel_dsb_cleanup() - To cleanup DSB context.
+ * @crtc_state: intel_crtc_state structure to cleanup associated dsb instance.
  *
  * This function cleanup the DSB context by unpinning and releasing
  * the VMA object associated with it.
  */
-व्योम पूर्णांकel_dsb_cleanup(काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
-	अगर (!crtc_state->dsb)
-		वापस;
+void intel_dsb_cleanup(struct intel_crtc_state *crtc_state)
+{
+	if (!crtc_state->dsb)
+		return;
 
 	i915_vma_unpin_and_release(&crtc_state->dsb->vma, I915_VMA_RELEASE_MAP);
-	kमुक्त(crtc_state->dsb);
-	crtc_state->dsb = शून्य;
-पूर्ण
+	kfree(crtc_state->dsb);
+	crtc_state->dsb = NULL;
+}

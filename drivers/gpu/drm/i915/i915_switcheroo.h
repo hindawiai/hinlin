@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#अगर_अघोषित __I915_SWITCHEROO__
-#घोषणा __I915_SWITCHEROO__
+#ifndef __I915_SWITCHEROO__
+#define __I915_SWITCHEROO__
 
-काष्ठा drm_i915_निजी;
+struct drm_i915_private;
 
-पूर्णांक i915_चयनeroo_रेजिस्टर(काष्ठा drm_i915_निजी *i915);
-व्योम i915_चयनeroo_unरेजिस्टर(काष्ठा drm_i915_निजी *i915);
+int i915_switcheroo_register(struct drm_i915_private *i915);
+void i915_switcheroo_unregister(struct drm_i915_private *i915);
 
-#पूर्ण_अगर /* __I915_SWITCHEROO__ */
+#endif /* __I915_SWITCHEROO__ */

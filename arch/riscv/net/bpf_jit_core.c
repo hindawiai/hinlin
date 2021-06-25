@@ -1,181 +1,180 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Common functionality क्रम RV32 and RV64 BPF JIT compilers
+ * Common functionality for RV32 and RV64 BPF JIT compilers
  *
- * Copyright (c) 2019 Bjथघrn Tथघpel <bjorn.topel@gmail.com>
+ * Copyright (c) 2019 Björn Töpel <bjorn.topel@gmail.com>
  *
  */
 
-#समावेश <linux/bpf.h>
-#समावेश <linux/filter.h>
-#समावेश "bpf_jit.h"
+#include <linux/bpf.h>
+#include <linux/filter.h>
+#include "bpf_jit.h"
 
 /* Number of iterations to try until offsets converge. */
-#घोषणा NR_JIT_ITERATIONS	16
+#define NR_JIT_ITERATIONS	16
 
-अटल पूर्णांक build_body(काष्ठा rv_jit_context *ctx, bool extra_pass, पूर्णांक *offset)
-अणु
-	स्थिर काष्ठा bpf_prog *prog = ctx->prog;
-	पूर्णांक i;
+static int build_body(struct rv_jit_context *ctx, bool extra_pass, int *offset)
+{
+	const struct bpf_prog *prog = ctx->prog;
+	int i;
 
-	क्रम (i = 0; i < prog->len; i++) अणु
-		स्थिर काष्ठा bpf_insn *insn = &prog->insnsi[i];
-		पूर्णांक ret;
+	for (i = 0; i < prog->len; i++) {
+		const struct bpf_insn *insn = &prog->insnsi[i];
+		int ret;
 
 		ret = bpf_jit_emit_insn(insn, ctx, extra_pass);
-		/* BPF_LD | BPF_IMM | BPF_DW: skip the next inकाष्ठाion. */
-		अगर (ret > 0)
+		/* BPF_LD | BPF_IMM | BPF_DW: skip the next instruction. */
+		if (ret > 0)
 			i++;
-		अगर (offset)
+		if (offset)
 			offset[i] = ctx->ninsns;
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		if (ret < 0)
+			return ret;
+	}
+	return 0;
+}
 
-bool bpf_jit_needs_zext(व्योम)
-अणु
-	वापस true;
-पूर्ण
+bool bpf_jit_needs_zext(void)
+{
+	return true;
+}
 
-काष्ठा bpf_prog *bpf_पूर्णांक_jit_compile(काष्ठा bpf_prog *prog)
-अणु
-	bool पंचांगp_blinded = false, extra_pass = false;
-	काष्ठा bpf_prog *पंचांगp, *orig_prog = prog;
-	पूर्णांक pass = 0, prev_ninsns = 0, i;
-	काष्ठा rv_jit_data *jit_data;
-	काष्ठा rv_jit_context *ctx;
-	अचिन्हित पूर्णांक image_size = 0;
+struct bpf_prog *bpf_int_jit_compile(struct bpf_prog *prog)
+{
+	bool tmp_blinded = false, extra_pass = false;
+	struct bpf_prog *tmp, *orig_prog = prog;
+	int pass = 0, prev_ninsns = 0, i;
+	struct rv_jit_data *jit_data;
+	struct rv_jit_context *ctx;
+	unsigned int image_size = 0;
 
-	अगर (!prog->jit_requested)
-		वापस orig_prog;
+	if (!prog->jit_requested)
+		return orig_prog;
 
-	पंचांगp = bpf_jit_blind_स्थिरants(prog);
-	अगर (IS_ERR(पंचांगp))
-		वापस orig_prog;
-	अगर (पंचांगp != prog) अणु
-		पंचांगp_blinded = true;
-		prog = पंचांगp;
-	पूर्ण
+	tmp = bpf_jit_blind_constants(prog);
+	if (IS_ERR(tmp))
+		return orig_prog;
+	if (tmp != prog) {
+		tmp_blinded = true;
+		prog = tmp;
+	}
 
 	jit_data = prog->aux->jit_data;
-	अगर (!jit_data) अणु
-		jit_data = kzalloc(माप(*jit_data), GFP_KERNEL);
-		अगर (!jit_data) अणु
+	if (!jit_data) {
+		jit_data = kzalloc(sizeof(*jit_data), GFP_KERNEL);
+		if (!jit_data) {
 			prog = orig_prog;
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		prog->aux->jit_data = jit_data;
-	पूर्ण
+	}
 
 	ctx = &jit_data->ctx;
 
-	अगर (ctx->offset) अणु
+	if (ctx->offset) {
 		extra_pass = true;
-		image_size = माप(*ctx->insns) * ctx->ninsns;
-		जाओ skip_init_ctx;
-	पूर्ण
+		image_size = sizeof(*ctx->insns) * ctx->ninsns;
+		goto skip_init_ctx;
+	}
 
 	ctx->prog = prog;
-	ctx->offset = kसुस्मृति(prog->len, माप(पूर्णांक), GFP_KERNEL);
-	अगर (!ctx->offset) अणु
+	ctx->offset = kcalloc(prog->len, sizeof(int), GFP_KERNEL);
+	if (!ctx->offset) {
 		prog = orig_prog;
-		जाओ out_offset;
-	पूर्ण
-	क्रम (i = 0; i < prog->len; i++) अणु
+		goto out_offset;
+	}
+	for (i = 0; i < prog->len; i++) {
 		prev_ninsns += 32;
 		ctx->offset[i] = prev_ninsns;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < NR_JIT_ITERATIONS; i++) अणु
+	for (i = 0; i < NR_JIT_ITERATIONS; i++) {
 		pass++;
 		ctx->ninsns = 0;
-		अगर (build_body(ctx, extra_pass, ctx->offset)) अणु
+		if (build_body(ctx, extra_pass, ctx->offset)) {
 			prog = orig_prog;
-			जाओ out_offset;
-		पूर्ण
+			goto out_offset;
+		}
 		bpf_jit_build_prologue(ctx);
 		ctx->epilogue_offset = ctx->ninsns;
 		bpf_jit_build_epilogue(ctx);
 
-		अगर (ctx->ninsns == prev_ninsns) अणु
-			अगर (jit_data->header)
-				अवरोध;
+		if (ctx->ninsns == prev_ninsns) {
+			if (jit_data->header)
+				break;
 
-			image_size = माप(*ctx->insns) * ctx->ninsns;
+			image_size = sizeof(*ctx->insns) * ctx->ninsns;
 			jit_data->header =
 				bpf_jit_binary_alloc(image_size,
 						     &jit_data->image,
-						     माप(u32),
+						     sizeof(u32),
 						     bpf_fill_ill_insns);
-			अगर (!jit_data->header) अणु
+			if (!jit_data->header) {
 				prog = orig_prog;
-				जाओ out_offset;
-			पूर्ण
+				goto out_offset;
+			}
 
 			ctx->insns = (u16 *)jit_data->image;
 			/*
 			 * Now, when the image is allocated, the image can
 			 * potentially shrink more (auipc/jalr -> jal).
 			 */
-		पूर्ण
+		}
 		prev_ninsns = ctx->ninsns;
-	पूर्ण
+	}
 
-	अगर (i == NR_JIT_ITERATIONS) अणु
+	if (i == NR_JIT_ITERATIONS) {
 		pr_err("bpf-jit: image did not converge in <%d passes!\n", i);
-		bpf_jit_binary_मुक्त(jit_data->header);
+		bpf_jit_binary_free(jit_data->header);
 		prog = orig_prog;
-		जाओ out_offset;
-	पूर्ण
+		goto out_offset;
+	}
 
 skip_init_ctx:
 	pass++;
 	ctx->ninsns = 0;
 
 	bpf_jit_build_prologue(ctx);
-	अगर (build_body(ctx, extra_pass, शून्य)) अणु
-		bpf_jit_binary_मुक्त(jit_data->header);
+	if (build_body(ctx, extra_pass, NULL)) {
+		bpf_jit_binary_free(jit_data->header);
 		prog = orig_prog;
-		जाओ out_offset;
-	पूर्ण
+		goto out_offset;
+	}
 	bpf_jit_build_epilogue(ctx);
 
-	अगर (bpf_jit_enable > 1)
+	if (bpf_jit_enable > 1)
 		bpf_jit_dump(prog->len, image_size, pass, ctx->insns);
 
-	prog->bpf_func = (व्योम *)ctx->insns;
+	prog->bpf_func = (void *)ctx->insns;
 	prog->jited = 1;
 	prog->jited_len = image_size;
 
 	bpf_flush_icache(jit_data->header, ctx->insns + ctx->ninsns);
 
-	अगर (!prog->is_func || extra_pass) अणु
+	if (!prog->is_func || extra_pass) {
 		bpf_jit_binary_lock_ro(jit_data->header);
 out_offset:
-		kमुक्त(ctx->offset);
-		kमुक्त(jit_data);
-		prog->aux->jit_data = शून्य;
-	पूर्ण
+		kfree(ctx->offset);
+		kfree(jit_data);
+		prog->aux->jit_data = NULL;
+	}
 out:
 
-	अगर (पंचांगp_blinded)
+	if (tmp_blinded)
 		bpf_jit_prog_release_other(prog, prog == orig_prog ?
-					   पंचांगp : orig_prog);
-	वापस prog;
-पूर्ण
+					   tmp : orig_prog);
+	return prog;
+}
 
-व्योम *bpf_jit_alloc_exec(अचिन्हित दीर्घ size)
-अणु
-	वापस __vदो_स्मृति_node_range(size, PAGE_SIZE, BPF_JIT_REGION_START,
+void *bpf_jit_alloc_exec(unsigned long size)
+{
+	return __vmalloc_node_range(size, PAGE_SIZE, BPF_JIT_REGION_START,
 				    BPF_JIT_REGION_END, GFP_KERNEL,
 				    PAGE_KERNEL, 0, NUMA_NO_NODE,
-				    __builtin_वापस_address(0));
-पूर्ण
+				    __builtin_return_address(0));
+}
 
-व्योम bpf_jit_मुक्त_exec(व्योम *addr)
-अणु
-	वापस vमुक्त(addr);
-पूर्ण
+void bpf_jit_free_exec(void *addr)
+{
+	return vfree(addr);
+}

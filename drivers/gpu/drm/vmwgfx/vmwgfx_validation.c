@@ -1,16 +1,15 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR MIT
+// SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
  *
- * Copyright तऊ 2018 VMware, Inc., Palo Alto, CA., USA
+ * Copyright © 2018 VMware, Inc., Palo Alto, CA., USA
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -26,65 +25,65 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
-#समावेश <linux/slab.h>
-#समावेश "vmwgfx_validation.h"
-#समावेश "vmwgfx_drv.h"
+#include <linux/slab.h>
+#include "vmwgfx_validation.h"
+#include "vmwgfx_drv.h"
 
 /**
- * काष्ठा vmw_validation_bo_node - Buffer object validation metadata.
- * @base: Metadata used क्रम TTM reservation- and validation.
- * @hash: A hash entry used क्रम the duplicate detection hash table.
- * @coherent_count: If चयनing backup buffers, number of new coherent
+ * struct vmw_validation_bo_node - Buffer object validation metadata.
+ * @base: Metadata used for TTM reservation- and validation.
+ * @hash: A hash entry used for the duplicate detection hash table.
+ * @coherent_count: If switching backup buffers, number of new coherent
  * resources that will have this buffer as a backup buffer.
  * @as_mob: Validate as mob.
- * @cpu_blit: Validate क्रम cpu blit access.
+ * @cpu_blit: Validate for cpu blit access.
  *
- * Bit fields are used since these काष्ठाures are allocated and मुक्तd in
+ * Bit fields are used since these structures are allocated and freed in
  * large numbers and space conservation is desired.
  */
-काष्ठा vmw_validation_bo_node अणु
-	काष्ठा tपंचांग_validate_buffer base;
-	काष्ठा drm_hash_item hash;
-	अचिन्हित पूर्णांक coherent_count;
+struct vmw_validation_bo_node {
+	struct ttm_validate_buffer base;
+	struct drm_hash_item hash;
+	unsigned int coherent_count;
 	u32 as_mob : 1;
 	u32 cpu_blit : 1;
-पूर्ण;
+};
 /**
- * काष्ठा vmw_validation_res_node - Resource validation metadata.
- * @head: List head क्रम the resource validation list.
- * @hash: A hash entry used क्रम the duplicate detection hash table.
- * @res: Reference counted resource poपूर्णांकer.
- * @new_backup: Non ref-counted poपूर्णांकer to new backup buffer to be asचिन्हित
+ * struct vmw_validation_res_node - Resource validation metadata.
+ * @head: List head for the resource validation list.
+ * @hash: A hash entry used for the duplicate detection hash table.
+ * @res: Reference counted resource pointer.
+ * @new_backup: Non ref-counted pointer to new backup buffer to be assigned
  * to a resource.
- * @new_backup_offset: Offset पूर्णांकo the new backup mob क्रम resources that can
+ * @new_backup_offset: Offset into the new backup mob for resources that can
  * share MOBs.
- * @no_buffer_needed: Kernel करोes not need to allocate a MOB during validation,
+ * @no_buffer_needed: Kernel does not need to allocate a MOB during validation,
  * the command stream provides a mob bind operation.
- * @चयनing_backup: The validation process is चयनing backup MOB.
- * @first_usage: True अगरf the resource has been seen only once in the current
+ * @switching_backup: The validation process is switching backup MOB.
+ * @first_usage: True iff the resource has been seen only once in the current
  * validation batch.
  * @reserved: Whether the resource is currently reserved by this process.
  * @dirty_set: Change dirty status of the resource.
- * @dirty: Dirty inक्रमmation VMW_RES_सूचीTY_XX.
- * @निजी: Optionally additional memory क्रम caller-निजी data.
+ * @dirty: Dirty information VMW_RES_DIRTY_XX.
+ * @private: Optionally additional memory for caller-private data.
  *
- * Bit fields are used since these काष्ठाures are allocated and मुक्तd in
+ * Bit fields are used since these structures are allocated and freed in
  * large numbers and space conservation is desired.
  */
-काष्ठा vmw_validation_res_node अणु
-	काष्ठा list_head head;
-	काष्ठा drm_hash_item hash;
-	काष्ठा vmw_resource *res;
-	काष्ठा vmw_buffer_object *new_backup;
-	अचिन्हित दीर्घ new_backup_offset;
+struct vmw_validation_res_node {
+	struct list_head head;
+	struct drm_hash_item hash;
+	struct vmw_resource *res;
+	struct vmw_buffer_object *new_backup;
+	unsigned long new_backup_offset;
 	u32 no_buffer_needed : 1;
-	u32 चयनing_backup : 1;
+	u32 switching_backup : 1;
 	u32 first_usage : 1;
 	u32 reserved : 1;
 	u32 dirty : 1;
 	u32 dirty_set : 1;
-	अचिन्हित दीर्घ निजी[0];
-पूर्ण;
+	unsigned long private[0];
+};
 
 /**
  * vmw_validation_mem_alloc - Allocate kernel memory from the validation
@@ -92,722 +91,722 @@
  * @ctx: The validation context
  * @size: The number of bytes to allocated.
  *
- * The memory allocated may not exceed PAGE_SIZE, and the वापसed
- * address is aligned to माप(दीर्घ). All memory allocated this way is
+ * The memory allocated may not exceed PAGE_SIZE, and the returned
+ * address is aligned to sizeof(long). All memory allocated this way is
  * reclaimed after validation when calling any of the exported functions:
  * vmw_validation_unref_lists()
  * vmw_validation_revert()
- * vmw_validation_करोne()
+ * vmw_validation_done()
  *
- * Return: Poपूर्णांकer to the allocated memory on success. शून्य on failure.
+ * Return: Pointer to the allocated memory on success. NULL on failure.
  */
-व्योम *vmw_validation_mem_alloc(काष्ठा vmw_validation_context *ctx,
-			       अचिन्हित पूर्णांक size)
-अणु
-	व्योम *addr;
+void *vmw_validation_mem_alloc(struct vmw_validation_context *ctx,
+			       unsigned int size)
+{
+	void *addr;
 
 	size = vmw_validation_align(size);
-	अगर (size > PAGE_SIZE)
-		वापस शून्य;
+	if (size > PAGE_SIZE)
+		return NULL;
 
-	अगर (ctx->mem_size_left < size) अणु
-		काष्ठा page *page;
+	if (ctx->mem_size_left < size) {
+		struct page *page;
 
-		अगर (ctx->vm && ctx->vm_size_left < PAGE_SIZE) अणु
-			पूर्णांक ret = ctx->vm->reserve_mem(ctx->vm, ctx->vm->gran);
+		if (ctx->vm && ctx->vm_size_left < PAGE_SIZE) {
+			int ret = ctx->vm->reserve_mem(ctx->vm, ctx->vm->gran);
 
-			अगर (ret)
-				वापस शून्य;
+			if (ret)
+				return NULL;
 
 			ctx->vm_size_left += ctx->vm->gran;
 			ctx->total_mem += ctx->vm->gran;
-		पूर्ण
+		}
 
 		page = alloc_page(GFP_KERNEL | __GFP_ZERO);
-		अगर (!page)
-			वापस शून्य;
+		if (!page)
+			return NULL;
 
-		अगर (ctx->vm)
+		if (ctx->vm)
 			ctx->vm_size_left -= PAGE_SIZE;
 
 		list_add_tail(&page->lru, &ctx->page_list);
 		ctx->page_address = page_address(page);
 		ctx->mem_size_left = PAGE_SIZE;
-	पूर्ण
+	}
 
-	addr = (व्योम *) (ctx->page_address + (PAGE_SIZE - ctx->mem_size_left));
+	addr = (void *) (ctx->page_address + (PAGE_SIZE - ctx->mem_size_left));
 	ctx->mem_size_left -= size;
 
-	वापस addr;
-पूर्ण
+	return addr;
+}
 
 /**
- * vmw_validation_mem_मुक्त - Free all memory allocated using
+ * vmw_validation_mem_free - Free all memory allocated using
  * vmw_validation_mem_alloc()
  * @ctx: The validation context
  *
- * All memory previously allocated क्रम this context using
- * vmw_validation_mem_alloc() is मुक्तd.
+ * All memory previously allocated for this context using
+ * vmw_validation_mem_alloc() is freed.
  */
-अटल व्योम vmw_validation_mem_मुक्त(काष्ठा vmw_validation_context *ctx)
-अणु
-	काष्ठा page *entry, *next;
+static void vmw_validation_mem_free(struct vmw_validation_context *ctx)
+{
+	struct page *entry, *next;
 
-	list_क्रम_each_entry_safe(entry, next, &ctx->page_list, lru) अणु
+	list_for_each_entry_safe(entry, next, &ctx->page_list, lru) {
 		list_del_init(&entry->lru);
-		__मुक्त_page(entry);
-	पूर्ण
+		__free_page(entry);
+	}
 
 	ctx->mem_size_left = 0;
-	अगर (ctx->vm && ctx->total_mem) अणु
+	if (ctx->vm && ctx->total_mem) {
 		ctx->vm->unreserve_mem(ctx->vm, ctx->total_mem);
 		ctx->total_mem = 0;
 		ctx->vm_size_left = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * vmw_validation_find_bo_dup - Find a duplicate buffer object entry in the
  * validation context's lists.
  * @ctx: The validation context to search.
- * @vbo: The buffer object to search क्रम.
+ * @vbo: The buffer object to search for.
  *
- * Return: Poपूर्णांकer to the काष्ठा vmw_validation_bo_node referencing the
- * duplicate, or शून्य अगर none found.
+ * Return: Pointer to the struct vmw_validation_bo_node referencing the
+ * duplicate, or NULL if none found.
  */
-अटल काष्ठा vmw_validation_bo_node *
-vmw_validation_find_bo_dup(काष्ठा vmw_validation_context *ctx,
-			   काष्ठा vmw_buffer_object *vbo)
-अणु
-	काष्ठा  vmw_validation_bo_node *bo_node = शून्य;
+static struct vmw_validation_bo_node *
+vmw_validation_find_bo_dup(struct vmw_validation_context *ctx,
+			   struct vmw_buffer_object *vbo)
+{
+	struct  vmw_validation_bo_node *bo_node = NULL;
 
-	अगर (!ctx->merge_dups)
-		वापस शून्य;
+	if (!ctx->merge_dups)
+		return NULL;
 
-	अगर (ctx->ht) अणु
-		काष्ठा drm_hash_item *hash;
+	if (ctx->ht) {
+		struct drm_hash_item *hash;
 
-		अगर (!drm_ht_find_item(ctx->ht, (अचिन्हित दीर्घ) vbo, &hash))
+		if (!drm_ht_find_item(ctx->ht, (unsigned long) vbo, &hash))
 			bo_node = container_of(hash, typeof(*bo_node), hash);
-	पूर्ण अन्यथा अणु
-		काष्ठा  vmw_validation_bo_node *entry;
+	} else {
+		struct  vmw_validation_bo_node *entry;
 
-		list_क्रम_each_entry(entry, &ctx->bo_list, base.head) अणु
-			अगर (entry->base.bo == &vbo->base) अणु
+		list_for_each_entry(entry, &ctx->bo_list, base.head) {
+			if (entry->base.bo == &vbo->base) {
 				bo_node = entry;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				break;
+			}
+		}
+	}
 
-	वापस bo_node;
-पूर्ण
+	return bo_node;
+}
 
 /**
  * vmw_validation_find_res_dup - Find a duplicate resource entry in the
  * validation context's lists.
  * @ctx: The validation context to search.
- * @res: Reference counted resource poपूर्णांकer.
+ * @res: Reference counted resource pointer.
  *
- * Return: Poपूर्णांकer to the काष्ठा vmw_validation_bo_node referencing the
- * duplicate, or शून्य अगर none found.
+ * Return: Pointer to the struct vmw_validation_bo_node referencing the
+ * duplicate, or NULL if none found.
  */
-अटल काष्ठा vmw_validation_res_node *
-vmw_validation_find_res_dup(काष्ठा vmw_validation_context *ctx,
-			    काष्ठा vmw_resource *res)
-अणु
-	काष्ठा  vmw_validation_res_node *res_node = शून्य;
+static struct vmw_validation_res_node *
+vmw_validation_find_res_dup(struct vmw_validation_context *ctx,
+			    struct vmw_resource *res)
+{
+	struct  vmw_validation_res_node *res_node = NULL;
 
-	अगर (!ctx->merge_dups)
-		वापस शून्य;
+	if (!ctx->merge_dups)
+		return NULL;
 
-	अगर (ctx->ht) अणु
-		काष्ठा drm_hash_item *hash;
+	if (ctx->ht) {
+		struct drm_hash_item *hash;
 
-		अगर (!drm_ht_find_item(ctx->ht, (अचिन्हित दीर्घ) res, &hash))
+		if (!drm_ht_find_item(ctx->ht, (unsigned long) res, &hash))
 			res_node = container_of(hash, typeof(*res_node), hash);
-	पूर्ण अन्यथा अणु
-		काष्ठा  vmw_validation_res_node *entry;
+	} else {
+		struct  vmw_validation_res_node *entry;
 
-		list_क्रम_each_entry(entry, &ctx->resource_ctx_list, head) अणु
-			अगर (entry->res == res) अणु
+		list_for_each_entry(entry, &ctx->resource_ctx_list, head) {
+			if (entry->res == res) {
 				res_node = entry;
-				जाओ out;
-			पूर्ण
-		पूर्ण
+				goto out;
+			}
+		}
 
-		list_क्रम_each_entry(entry, &ctx->resource_list, head) अणु
-			अगर (entry->res == res) अणु
+		list_for_each_entry(entry, &ctx->resource_list, head) {
+			if (entry->res == res) {
 				res_node = entry;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
-	पूर्ण
+	}
 out:
-	वापस res_node;
-पूर्ण
+	return res_node;
+}
 
 /**
  * vmw_validation_add_bo - Add a buffer object to the validation context.
  * @ctx: The validation context.
  * @vbo: The buffer object.
- * @as_mob: Validate as mob, otherwise suitable क्रम GMR operations.
+ * @as_mob: Validate as mob, otherwise suitable for GMR operations.
  * @cpu_blit: Validate in a page-mappable location.
  *
  * Return: Zero on success, negative error code otherwise.
  */
-पूर्णांक vmw_validation_add_bo(काष्ठा vmw_validation_context *ctx,
-			  काष्ठा vmw_buffer_object *vbo,
+int vmw_validation_add_bo(struct vmw_validation_context *ctx,
+			  struct vmw_buffer_object *vbo,
 			  bool as_mob,
 			  bool cpu_blit)
-अणु
-	काष्ठा vmw_validation_bo_node *bo_node;
+{
+	struct vmw_validation_bo_node *bo_node;
 
 	bo_node = vmw_validation_find_bo_dup(ctx, vbo);
-	अगर (bo_node) अणु
-		अगर (bo_node->as_mob != as_mob ||
-		    bo_node->cpu_blit != cpu_blit) अणु
+	if (bo_node) {
+		if (bo_node->as_mob != as_mob ||
+		    bo_node->cpu_blit != cpu_blit) {
 			DRM_ERROR("Inconsistent buffer usage.\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		काष्ठा tपंचांग_validate_buffer *val_buf;
-		पूर्णांक ret;
+			return -EINVAL;
+		}
+	} else {
+		struct ttm_validate_buffer *val_buf;
+		int ret;
 
-		bo_node = vmw_validation_mem_alloc(ctx, माप(*bo_node));
-		अगर (!bo_node)
-			वापस -ENOMEM;
+		bo_node = vmw_validation_mem_alloc(ctx, sizeof(*bo_node));
+		if (!bo_node)
+			return -ENOMEM;
 
-		अगर (ctx->ht) अणु
-			bo_node->hash.key = (अचिन्हित दीर्घ) vbo;
+		if (ctx->ht) {
+			bo_node->hash.key = (unsigned long) vbo;
 			ret = drm_ht_insert_item(ctx->ht, &bo_node->hash);
-			अगर (ret) अणु
+			if (ret) {
 				DRM_ERROR("Failed to initialize a buffer "
 					  "validation entry.\n");
-				वापस ret;
-			पूर्ण
-		पूर्ण
+				return ret;
+			}
+		}
 		val_buf = &bo_node->base;
-		val_buf->bo = tपंचांग_bo_get_unless_zero(&vbo->base);
-		अगर (!val_buf->bo)
-			वापस -ESRCH;
+		val_buf->bo = ttm_bo_get_unless_zero(&vbo->base);
+		if (!val_buf->bo)
+			return -ESRCH;
 		val_buf->num_shared = 0;
 		list_add_tail(&val_buf->head, &ctx->bo_list);
 		bo_node->as_mob = as_mob;
 		bo_node->cpu_blit = cpu_blit;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * vmw_validation_add_resource - Add a resource to the validation context.
  * @ctx: The validation context.
  * @res: The resource.
- * @priv_size: Size of निजी, additional metadata.
+ * @priv_size: Size of private, additional metadata.
  * @dirty: Whether to change dirty status.
- * @p_node: Output poपूर्णांकer of additional metadata address.
- * @first_usage: Whether this was the first समय this resource was seen.
+ * @p_node: Output pointer of additional metadata address.
+ * @first_usage: Whether this was the first time this resource was seen.
  *
  * Return: Zero on success, negative error code otherwise.
  */
-पूर्णांक vmw_validation_add_resource(काष्ठा vmw_validation_context *ctx,
-				काष्ठा vmw_resource *res,
-				माप_प्रकार priv_size,
+int vmw_validation_add_resource(struct vmw_validation_context *ctx,
+				struct vmw_resource *res,
+				size_t priv_size,
 				u32 dirty,
-				व्योम **p_node,
+				void **p_node,
 				bool *first_usage)
-अणु
-	काष्ठा vmw_validation_res_node *node;
-	पूर्णांक ret;
+{
+	struct vmw_validation_res_node *node;
+	int ret;
 
 	node = vmw_validation_find_res_dup(ctx, res);
-	अगर (node) अणु
+	if (node) {
 		node->first_usage = 0;
-		जाओ out_fill;
-	पूर्ण
+		goto out_fill;
+	}
 
-	node = vmw_validation_mem_alloc(ctx, माप(*node) + priv_size);
-	अगर (!node) अणु
+	node = vmw_validation_mem_alloc(ctx, sizeof(*node) + priv_size);
+	if (!node) {
 		VMW_DEBUG_USER("Failed to allocate a resource validation entry.\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	अगर (ctx->ht) अणु
-		node->hash.key = (अचिन्हित दीर्घ) res;
+	if (ctx->ht) {
+		node->hash.key = (unsigned long) res;
 		ret = drm_ht_insert_item(ctx->ht, &node->hash);
-		अगर (ret) अणु
+		if (ret) {
 			DRM_ERROR("Failed to initialize a resource validation "
 				  "entry.\n");
-			वापस ret;
-		पूर्ण
-	पूर्ण
-	node->res = vmw_resource_reference_unless_करोomed(res);
-	अगर (!node->res)
-		वापस -ESRCH;
+			return ret;
+		}
+	}
+	node->res = vmw_resource_reference_unless_doomed(res);
+	if (!node->res)
+		return -ESRCH;
 
 	node->first_usage = 1;
-	अगर (!res->dev_priv->has_mob) अणु
+	if (!res->dev_priv->has_mob) {
 		list_add_tail(&node->head, &ctx->resource_list);
-	पूर्ण अन्यथा अणु
-		चयन (vmw_res_type(res)) अणु
-		हाल vmw_res_context:
-		हाल vmw_res_dx_context:
+	} else {
+		switch (vmw_res_type(res)) {
+		case vmw_res_context:
+		case vmw_res_dx_context:
 			list_add(&node->head, &ctx->resource_ctx_list);
-			अवरोध;
-		हाल vmw_res_cotable:
+			break;
+		case vmw_res_cotable:
 			list_add_tail(&node->head, &ctx->resource_ctx_list);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			list_add_tail(&node->head, &ctx->resource_list);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 out_fill:
-	अगर (dirty) अणु
+	if (dirty) {
 		node->dirty_set = 1;
-		/* Overwriting previous inक्रमmation here is पूर्णांकentional! */
-		node->dirty = (dirty & VMW_RES_सूचीTY_SET) ? 1 : 0;
-	पूर्ण
-	अगर (first_usage)
+		/* Overwriting previous information here is intentional! */
+		node->dirty = (dirty & VMW_RES_DIRTY_SET) ? 1 : 0;
+	}
+	if (first_usage)
 		*first_usage = node->first_usage;
-	अगर (p_node)
-		*p_node = &node->निजी;
+	if (p_node)
+		*p_node = &node->private;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * vmw_validation_res_set_dirty - Register a resource dirty set or clear during
  * validation.
  * @ctx: The validation context.
- * @val_निजी: The additional meta-data poपूर्णांकer वापसed when the
- * resource was रेजिस्टरed with the validation context. Used to identअगरy
+ * @val_private: The additional meta-data pointer returned when the
+ * resource was registered with the validation context. Used to identify
  * the resource.
- * @dirty: Dirty inक्रमmation VMW_RES_सूचीTY_XX
+ * @dirty: Dirty information VMW_RES_DIRTY_XX
  */
-व्योम vmw_validation_res_set_dirty(काष्ठा vmw_validation_context *ctx,
-				  व्योम *val_निजी, u32 dirty)
-अणु
-	काष्ठा vmw_validation_res_node *val;
+void vmw_validation_res_set_dirty(struct vmw_validation_context *ctx,
+				  void *val_private, u32 dirty)
+{
+	struct vmw_validation_res_node *val;
 
-	अगर (!dirty)
-		वापस;
+	if (!dirty)
+		return;
 
-	val = container_of(val_निजी, typeof(*val), निजी);
+	val = container_of(val_private, typeof(*val), private);
 	val->dirty_set = 1;
-	/* Overwriting previous inक्रमmation here is पूर्णांकentional! */
-	val->dirty = (dirty & VMW_RES_सूचीTY_SET) ? 1 : 0;
-पूर्ण
+	/* Overwriting previous information here is intentional! */
+	val->dirty = (dirty & VMW_RES_DIRTY_SET) ? 1 : 0;
+}
 
 /**
- * vmw_validation_res_चयन_backup - Register a backup MOB चयन during
+ * vmw_validation_res_switch_backup - Register a backup MOB switch during
  * validation.
  * @ctx: The validation context.
- * @val_निजी: The additional meta-data poपूर्णांकer वापसed when the
- * resource was रेजिस्टरed with the validation context. Used to identअगरy
+ * @val_private: The additional meta-data pointer returned when the
+ * resource was registered with the validation context. Used to identify
  * the resource.
  * @vbo: The new backup buffer object MOB. This buffer object needs to have
- * alपढ़ोy been रेजिस्टरed with the validation context.
- * @backup_offset: Offset पूर्णांकo the new backup MOB.
+ * already been registered with the validation context.
+ * @backup_offset: Offset into the new backup MOB.
  */
-व्योम vmw_validation_res_चयन_backup(काष्ठा vmw_validation_context *ctx,
-				      व्योम *val_निजी,
-				      काष्ठा vmw_buffer_object *vbo,
-				      अचिन्हित दीर्घ backup_offset)
-अणु
-	काष्ठा vmw_validation_res_node *val;
+void vmw_validation_res_switch_backup(struct vmw_validation_context *ctx,
+				      void *val_private,
+				      struct vmw_buffer_object *vbo,
+				      unsigned long backup_offset)
+{
+	struct vmw_validation_res_node *val;
 
-	val = container_of(val_निजी, typeof(*val), निजी);
+	val = container_of(val_private, typeof(*val), private);
 
-	val->चयनing_backup = 1;
-	अगर (val->first_usage)
+	val->switching_backup = 1;
+	if (val->first_usage)
 		val->no_buffer_needed = 1;
 
 	val->new_backup = vbo;
 	val->new_backup_offset = backup_offset;
-पूर्ण
+}
 
 /**
- * vmw_validation_res_reserve - Reserve all resources रेजिस्टरed with this
+ * vmw_validation_res_reserve - Reserve all resources registered with this
  * validation context.
  * @ctx: The validation context.
- * @पूर्णांकr: Use पूर्णांकerruptible रुकोs when possible.
+ * @intr: Use interruptible waits when possible.
  *
- * Return: Zero on success, -ERESTARTSYS अगर पूर्णांकerrupted. Negative error
+ * Return: Zero on success, -ERESTARTSYS if interrupted. Negative error
  * code on failure.
  */
-पूर्णांक vmw_validation_res_reserve(काष्ठा vmw_validation_context *ctx,
-			       bool पूर्णांकr)
-अणु
-	काष्ठा vmw_validation_res_node *val;
-	पूर्णांक ret = 0;
+int vmw_validation_res_reserve(struct vmw_validation_context *ctx,
+			       bool intr)
+{
+	struct vmw_validation_res_node *val;
+	int ret = 0;
 
 	list_splice_init(&ctx->resource_ctx_list, &ctx->resource_list);
 
-	list_क्रम_each_entry(val, &ctx->resource_list, head) अणु
-		काष्ठा vmw_resource *res = val->res;
+	list_for_each_entry(val, &ctx->resource_list, head) {
+		struct vmw_resource *res = val->res;
 
-		ret = vmw_resource_reserve(res, पूर्णांकr, val->no_buffer_needed);
-		अगर (ret)
-			जाओ out_unreserve;
+		ret = vmw_resource_reserve(res, intr, val->no_buffer_needed);
+		if (ret)
+			goto out_unreserve;
 
 		val->reserved = 1;
-		अगर (res->backup) अणु
-			काष्ठा vmw_buffer_object *vbo = res->backup;
+		if (res->backup) {
+			struct vmw_buffer_object *vbo = res->backup;
 
 			ret = vmw_validation_add_bo
 				(ctx, vbo, vmw_resource_needs_backup(res),
 				 false);
-			अगर (ret)
-				जाओ out_unreserve;
-		पूर्ण
+			if (ret)
+				goto out_unreserve;
+		}
 
-		अगर (val->चयनing_backup && val->new_backup &&
-		    res->coherent) अणु
-			काष्ठा vmw_validation_bo_node *bo_node =
+		if (val->switching_backup && val->new_backup &&
+		    res->coherent) {
+			struct vmw_validation_bo_node *bo_node =
 				vmw_validation_find_bo_dup(ctx,
 							   val->new_backup);
 
-			अगर (WARN_ON(!bo_node)) अणु
+			if (WARN_ON(!bo_node)) {
 				ret = -EINVAL;
-				जाओ out_unreserve;
-			पूर्ण
+				goto out_unreserve;
+			}
 			bo_node->coherent_count++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 out_unreserve:
 	vmw_validation_res_unreserve(ctx, true);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * vmw_validation_res_unreserve - Unreserve all reserved resources
- * रेजिस्टरed with this validation context.
+ * registered with this validation context.
  * @ctx: The validation context.
  * @backoff: Whether this is a backoff- of a commit-type operation. This
- * is used to determine whether to चयन backup MOBs or not.
+ * is used to determine whether to switch backup MOBs or not.
  */
-व्योम vmw_validation_res_unreserve(काष्ठा vmw_validation_context *ctx,
+void vmw_validation_res_unreserve(struct vmw_validation_context *ctx,
 				 bool backoff)
-अणु
-	काष्ठा vmw_validation_res_node *val;
+{
+	struct vmw_validation_res_node *val;
 
 	list_splice_init(&ctx->resource_ctx_list, &ctx->resource_list);
-	अगर (backoff)
-		list_क्रम_each_entry(val, &ctx->resource_list, head) अणु
-			अगर (val->reserved)
+	if (backoff)
+		list_for_each_entry(val, &ctx->resource_list, head) {
+			if (val->reserved)
 				vmw_resource_unreserve(val->res,
 						       false, false, false,
-						       शून्य, 0);
-		पूर्ण
-	अन्यथा
-		list_क्रम_each_entry(val, &ctx->resource_list, head) अणु
-			अगर (val->reserved)
+						       NULL, 0);
+		}
+	else
+		list_for_each_entry(val, &ctx->resource_list, head) {
+			if (val->reserved)
 				vmw_resource_unreserve(val->res,
 						       val->dirty_set,
 						       val->dirty,
-						       val->चयनing_backup,
+						       val->switching_backup,
 						       val->new_backup,
 						       val->new_backup_offset);
-		पूर्ण
-पूर्ण
+		}
+}
 
 /**
  * vmw_validation_bo_validate_single - Validate a single buffer object.
  * @bo: The TTM buffer object base.
- * @पूर्णांकerruptible: Whether to perक्रमm रुकोs पूर्णांकerruptible अगर possible.
+ * @interruptible: Whether to perform waits interruptible if possible.
  * @validate_as_mob: Whether to validate in MOB memory.
  *
- * Return: Zero on success, -ERESTARTSYS अगर पूर्णांकerrupted. Negative error
+ * Return: Zero on success, -ERESTARTSYS if interrupted. Negative error
  * code on failure.
  */
-पूर्णांक vmw_validation_bo_validate_single(काष्ठा tपंचांग_buffer_object *bo,
-				      bool पूर्णांकerruptible,
+int vmw_validation_bo_validate_single(struct ttm_buffer_object *bo,
+				      bool interruptible,
 				      bool validate_as_mob)
-अणु
-	काष्ठा vmw_buffer_object *vbo =
-		container_of(bo, काष्ठा vmw_buffer_object, base);
-	काष्ठा tपंचांग_operation_ctx ctx = अणु
-		.पूर्णांकerruptible = पूर्णांकerruptible,
-		.no_रुको_gpu = false
-	पूर्ण;
-	पूर्णांक ret;
+{
+	struct vmw_buffer_object *vbo =
+		container_of(bo, struct vmw_buffer_object, base);
+	struct ttm_operation_ctx ctx = {
+		.interruptible = interruptible,
+		.no_wait_gpu = false
+	};
+	int ret;
 
-	अगर (atomic_पढ़ो(&vbo->cpu_ग_लिखोrs))
-		वापस -EBUSY;
+	if (atomic_read(&vbo->cpu_writers))
+		return -EBUSY;
 
-	अगर (vbo->base.pin_count > 0)
-		वापस 0;
+	if (vbo->base.pin_count > 0)
+		return 0;
 
-	अगर (validate_as_mob)
-		वापस tपंचांग_bo_validate(bo, &vmw_mob_placement, &ctx);
+	if (validate_as_mob)
+		return ttm_bo_validate(bo, &vmw_mob_placement, &ctx);
 
 	/**
-	 * Put BO in VRAM अगर there is space, otherwise as a GMR.
+	 * Put BO in VRAM if there is space, otherwise as a GMR.
 	 * If there is no space in VRAM and GMR ids are all used up,
 	 * start evicting GMRs to make room. If the DMA buffer can't be
-	 * used as a GMR, this will वापस -ENOMEM.
+	 * used as a GMR, this will return -ENOMEM.
 	 */
 
-	ret = tपंचांग_bo_validate(bo, &vmw_vram_gmr_placement, &ctx);
-	अगर (ret == 0 || ret == -ERESTARTSYS)
-		वापस ret;
+	ret = ttm_bo_validate(bo, &vmw_vram_gmr_placement, &ctx);
+	if (ret == 0 || ret == -ERESTARTSYS)
+		return ret;
 
 	/**
-	 * If that failed, try VRAM again, this समय evicting
+	 * If that failed, try VRAM again, this time evicting
 	 * previous contents.
 	 */
 
-	ret = tपंचांग_bo_validate(bo, &vmw_vram_placement, &ctx);
-	वापस ret;
-पूर्ण
+	ret = ttm_bo_validate(bo, &vmw_vram_placement, &ctx);
+	return ret;
+}
 
 /**
- * vmw_validation_bo_validate - Validate all buffer objects रेजिस्टरed with
+ * vmw_validation_bo_validate - Validate all buffer objects registered with
  * the validation context.
  * @ctx: The validation context.
- * @पूर्णांकr: Whether to perक्रमm रुकोs पूर्णांकerruptible अगर possible.
+ * @intr: Whether to perform waits interruptible if possible.
  *
- * Return: Zero on success, -ERESTARTSYS अगर पूर्णांकerrupted,
+ * Return: Zero on success, -ERESTARTSYS if interrupted,
  * negative error code on failure.
  */
-पूर्णांक vmw_validation_bo_validate(काष्ठा vmw_validation_context *ctx, bool पूर्णांकr)
-अणु
-	काष्ठा vmw_validation_bo_node *entry;
-	पूर्णांक ret;
+int vmw_validation_bo_validate(struct vmw_validation_context *ctx, bool intr)
+{
+	struct vmw_validation_bo_node *entry;
+	int ret;
 
-	list_क्रम_each_entry(entry, &ctx->bo_list, base.head) अणु
-		काष्ठा vmw_buffer_object *vbo =
+	list_for_each_entry(entry, &ctx->bo_list, base.head) {
+		struct vmw_buffer_object *vbo =
 			container_of(entry->base.bo, typeof(*vbo), base);
 
-		अगर (entry->cpu_blit) अणु
-			काष्ठा tपंचांग_operation_ctx ctx = अणु
-				.पूर्णांकerruptible = पूर्णांकr,
-				.no_रुको_gpu = false
-			पूर्ण;
+		if (entry->cpu_blit) {
+			struct ttm_operation_ctx ctx = {
+				.interruptible = intr,
+				.no_wait_gpu = false
+			};
 
-			ret = tपंचांग_bo_validate(entry->base.bo,
+			ret = ttm_bo_validate(entry->base.bo,
 					      &vmw_nonfixed_placement, &ctx);
-		पूर्ण अन्यथा अणु
+		} else {
 			ret = vmw_validation_bo_validate_single
-			(entry->base.bo, पूर्णांकr, entry->as_mob);
-		पूर्ण
-		अगर (ret)
-			वापस ret;
+			(entry->base.bo, intr, entry->as_mob);
+		}
+		if (ret)
+			return ret;
 
 		/*
 		 * Rather than having the resource code allocating the bo
 		 * dirty tracker in resource_unreserve() where we can't fail,
 		 * Do it here when validating the buffer object.
 		 */
-		अगर (entry->coherent_count) अणु
-			अचिन्हित पूर्णांक coherent_count = entry->coherent_count;
+		if (entry->coherent_count) {
+			unsigned int coherent_count = entry->coherent_count;
 
-			जबतक (coherent_count) अणु
+			while (coherent_count) {
 				ret = vmw_bo_dirty_add(vbo);
-				अगर (ret)
-					वापस ret;
+				if (ret)
+					return ret;
 
 				coherent_count--;
-			पूर्ण
+			}
 			entry->coherent_count -= coherent_count;
-		पूर्ण
+		}
 
-		अगर (vbo->dirty)
+		if (vbo->dirty)
 			vmw_bo_dirty_scan(vbo);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /**
- * vmw_validation_res_validate - Validate all resources रेजिस्टरed with the
+ * vmw_validation_res_validate - Validate all resources registered with the
  * validation context.
  * @ctx: The validation context.
- * @पूर्णांकr: Whether to perक्रमm रुकोs पूर्णांकerruptible अगर possible.
+ * @intr: Whether to perform waits interruptible if possible.
  *
- * Beक्रमe this function is called, all resource backup buffers must have
+ * Before this function is called, all resource backup buffers must have
  * been validated.
  *
- * Return: Zero on success, -ERESTARTSYS अगर पूर्णांकerrupted,
+ * Return: Zero on success, -ERESTARTSYS if interrupted,
  * negative error code on failure.
  */
-पूर्णांक vmw_validation_res_validate(काष्ठा vmw_validation_context *ctx, bool पूर्णांकr)
-अणु
-	काष्ठा vmw_validation_res_node *val;
-	पूर्णांक ret;
+int vmw_validation_res_validate(struct vmw_validation_context *ctx, bool intr)
+{
+	struct vmw_validation_res_node *val;
+	int ret;
 
-	list_क्रम_each_entry(val, &ctx->resource_list, head) अणु
-		काष्ठा vmw_resource *res = val->res;
-		काष्ठा vmw_buffer_object *backup = res->backup;
+	list_for_each_entry(val, &ctx->resource_list, head) {
+		struct vmw_resource *res = val->res;
+		struct vmw_buffer_object *backup = res->backup;
 
-		ret = vmw_resource_validate(res, पूर्णांकr, val->dirty_set &&
+		ret = vmw_resource_validate(res, intr, val->dirty_set &&
 					    val->dirty);
-		अगर (ret) अणु
-			अगर (ret != -ERESTARTSYS)
+		if (ret) {
+			if (ret != -ERESTARTSYS)
 				DRM_ERROR("Failed to validate resource.\n");
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		/* Check अगर the resource चयनed backup buffer */
-		अगर (backup && res->backup && (backup != res->backup)) अणु
-			काष्ठा vmw_buffer_object *vbo = res->backup;
+		/* Check if the resource switched backup buffer */
+		if (backup && res->backup && (backup != res->backup)) {
+			struct vmw_buffer_object *vbo = res->backup;
 
 			ret = vmw_validation_add_bo
 				(ctx, vbo, vmw_resource_needs_backup(res),
 				 false);
-			अगर (ret)
-				वापस ret;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			if (ret)
+				return ret;
+		}
+	}
+	return 0;
+}
 
 /**
- * vmw_validation_drop_ht - Reset the hash table used क्रम duplicate finding
- * and unरेजिस्टर it from this validation context.
+ * vmw_validation_drop_ht - Reset the hash table used for duplicate finding
+ * and unregister it from this validation context.
  * @ctx: The validation context.
  *
- * The hash table used क्रम duplicate finding is an expensive resource and
- * may be रक्षित by mutexes that may cause deadlocks during resource
- * unreferencing अगर held. After resource- and buffer object रेजिस्टरing,
- * there is no दीर्घer any use क्रम this hash table, so allow मुक्तing it
- * either to लघुen any mutex locking समय, or beक्रमe resources- and
- * buffer objects are मुक्तd during validation context cleanup.
+ * The hash table used for duplicate finding is an expensive resource and
+ * may be protected by mutexes that may cause deadlocks during resource
+ * unreferencing if held. After resource- and buffer object registering,
+ * there is no longer any use for this hash table, so allow freeing it
+ * either to shorten any mutex locking time, or before resources- and
+ * buffer objects are freed during validation context cleanup.
  */
-व्योम vmw_validation_drop_ht(काष्ठा vmw_validation_context *ctx)
-अणु
-	काष्ठा vmw_validation_bo_node *entry;
-	काष्ठा vmw_validation_res_node *val;
+void vmw_validation_drop_ht(struct vmw_validation_context *ctx)
+{
+	struct vmw_validation_bo_node *entry;
+	struct vmw_validation_res_node *val;
 
-	अगर (!ctx->ht)
-		वापस;
+	if (!ctx->ht)
+		return;
 
-	list_क्रम_each_entry(entry, &ctx->bo_list, base.head)
-		(व्योम) drm_ht_हटाओ_item(ctx->ht, &entry->hash);
+	list_for_each_entry(entry, &ctx->bo_list, base.head)
+		(void) drm_ht_remove_item(ctx->ht, &entry->hash);
 
-	list_क्रम_each_entry(val, &ctx->resource_list, head)
-		(व्योम) drm_ht_हटाओ_item(ctx->ht, &val->hash);
+	list_for_each_entry(val, &ctx->resource_list, head)
+		(void) drm_ht_remove_item(ctx->ht, &val->hash);
 
-	list_क्रम_each_entry(val, &ctx->resource_ctx_list, head)
-		(व्योम) drm_ht_हटाओ_item(ctx->ht, &val->hash);
+	list_for_each_entry(val, &ctx->resource_ctx_list, head)
+		(void) drm_ht_remove_item(ctx->ht, &val->hash);
 
-	ctx->ht = शून्य;
-पूर्ण
+	ctx->ht = NULL;
+}
 
 /**
- * vmw_validation_unref_lists - Unरेजिस्टर previously रेजिस्टरed buffer
+ * vmw_validation_unref_lists - Unregister previously registered buffer
  * object and resources.
  * @ctx: The validation context.
  *
- * Note that this function may cause buffer object- and resource deकाष्ठाors
+ * Note that this function may cause buffer object- and resource destructors
  * to be invoked.
  */
-व्योम vmw_validation_unref_lists(काष्ठा vmw_validation_context *ctx)
-अणु
-	काष्ठा vmw_validation_bo_node *entry;
-	काष्ठा vmw_validation_res_node *val;
+void vmw_validation_unref_lists(struct vmw_validation_context *ctx)
+{
+	struct vmw_validation_bo_node *entry;
+	struct vmw_validation_res_node *val;
 
-	list_क्रम_each_entry(entry, &ctx->bo_list, base.head) अणु
-		tपंचांग_bo_put(entry->base.bo);
-		entry->base.bo = शून्य;
-	पूर्ण
+	list_for_each_entry(entry, &ctx->bo_list, base.head) {
+		ttm_bo_put(entry->base.bo);
+		entry->base.bo = NULL;
+	}
 
 	list_splice_init(&ctx->resource_ctx_list, &ctx->resource_list);
-	list_क्रम_each_entry(val, &ctx->resource_list, head)
+	list_for_each_entry(val, &ctx->resource_list, head)
 		vmw_resource_unreference(&val->res);
 
 	/*
-	 * No need to detach each list entry since they are all मुक्तd with
-	 * vmw_validation_मुक्त_mem. Just make the inaccessible.
+	 * No need to detach each list entry since they are all freed with
+	 * vmw_validation_free_mem. Just make the inaccessible.
 	 */
 	INIT_LIST_HEAD(&ctx->bo_list);
 	INIT_LIST_HEAD(&ctx->resource_list);
 
-	vmw_validation_mem_मुक्त(ctx);
-पूर्ण
+	vmw_validation_mem_free(ctx);
+}
 
 /**
- * vmw_validation_prepare - Prepare a validation context क्रम command
+ * vmw_validation_prepare - Prepare a validation context for command
  * submission.
  * @ctx: The validation context.
  * @mutex: The mutex used to protect resource reservation.
- * @पूर्णांकr: Whether to perक्रमm रुकोs पूर्णांकerruptible अगर possible.
+ * @intr: Whether to perform waits interruptible if possible.
  *
- * Note that the single reservation mutex @mutex is an unक्रमtunate
- * स्थिरruct. Ideally resource reservation should be moved to per-resource
+ * Note that the single reservation mutex @mutex is an unfortunate
+ * construct. Ideally resource reservation should be moved to per-resource
  * ww_mutexes.
- * If this functions करोesn't वापस Zero to indicate success, all resources
+ * If this functions doesn't return Zero to indicate success, all resources
  * are left unreserved but still referenced.
- * Return: Zero on success, -ERESTARTSYS अगर पूर्णांकerrupted, negative error code
+ * Return: Zero on success, -ERESTARTSYS if interrupted, negative error code
  * on error.
  */
-पूर्णांक vmw_validation_prepare(काष्ठा vmw_validation_context *ctx,
-			   काष्ठा mutex *mutex,
-			   bool पूर्णांकr)
-अणु
-	पूर्णांक ret = 0;
+int vmw_validation_prepare(struct vmw_validation_context *ctx,
+			   struct mutex *mutex,
+			   bool intr)
+{
+	int ret = 0;
 
-	अगर (mutex) अणु
-		अगर (पूर्णांकr)
-			ret = mutex_lock_पूर्णांकerruptible(mutex);
-		अन्यथा
+	if (mutex) {
+		if (intr)
+			ret = mutex_lock_interruptible(mutex);
+		else
 			mutex_lock(mutex);
-		अगर (ret)
-			वापस -ERESTARTSYS;
-	पूर्ण
+		if (ret)
+			return -ERESTARTSYS;
+	}
 
 	ctx->res_mutex = mutex;
-	ret = vmw_validation_res_reserve(ctx, पूर्णांकr);
-	अगर (ret)
-		जाओ out_no_res_reserve;
+	ret = vmw_validation_res_reserve(ctx, intr);
+	if (ret)
+		goto out_no_res_reserve;
 
-	ret = vmw_validation_bo_reserve(ctx, पूर्णांकr);
-	अगर (ret)
-		जाओ out_no_bo_reserve;
+	ret = vmw_validation_bo_reserve(ctx, intr);
+	if (ret)
+		goto out_no_bo_reserve;
 
-	ret = vmw_validation_bo_validate(ctx, पूर्णांकr);
-	अगर (ret)
-		जाओ out_no_validate;
+	ret = vmw_validation_bo_validate(ctx, intr);
+	if (ret)
+		goto out_no_validate;
 
-	ret = vmw_validation_res_validate(ctx, पूर्णांकr);
-	अगर (ret)
-		जाओ out_no_validate;
+	ret = vmw_validation_res_validate(ctx, intr);
+	if (ret)
+		goto out_no_validate;
 
-	वापस 0;
+	return 0;
 
 out_no_validate:
 	vmw_validation_bo_backoff(ctx);
 out_no_bo_reserve:
 	vmw_validation_res_unreserve(ctx, true);
 out_no_res_reserve:
-	अगर (mutex)
+	if (mutex)
 		mutex_unlock(mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * vmw_validation_revert - Revert validation actions अगर command submission
+ * vmw_validation_revert - Revert validation actions if command submission
  * failed.
  *
  * @ctx: The validation context.
  *
  * The caller still needs to unref resources after a call to this function.
  */
-व्योम vmw_validation_revert(काष्ठा vmw_validation_context *ctx)
-अणु
+void vmw_validation_revert(struct vmw_validation_context *ctx)
+{
 	vmw_validation_bo_backoff(ctx);
 	vmw_validation_res_unreserve(ctx, true);
-	अगर (ctx->res_mutex)
+	if (ctx->res_mutex)
 		mutex_unlock(ctx->res_mutex);
 	vmw_validation_unref_lists(ctx);
-पूर्ण
+}
 
 /**
  * vmw_validation_cone - Commit validation actions after command submission
@@ -816,92 +815,92 @@ out_no_res_reserve:
  * @fence: Fence with which to fence all buffer objects taking part in the
  * command submission.
  *
- * The caller करोes NOT need to unref resources after a call to this function.
+ * The caller does NOT need to unref resources after a call to this function.
  */
-व्योम vmw_validation_करोne(काष्ठा vmw_validation_context *ctx,
-			 काष्ठा vmw_fence_obj *fence)
-अणु
+void vmw_validation_done(struct vmw_validation_context *ctx,
+			 struct vmw_fence_obj *fence)
+{
 	vmw_validation_bo_fence(ctx, fence);
 	vmw_validation_res_unreserve(ctx, false);
-	अगर (ctx->res_mutex)
+	if (ctx->res_mutex)
 		mutex_unlock(ctx->res_mutex);
 	vmw_validation_unref_lists(ctx);
-पूर्ण
+}
 
 /**
- * vmw_validation_preload_bo - Preload the validation memory allocator क्रम a
+ * vmw_validation_preload_bo - Preload the validation memory allocator for a
  * call to vmw_validation_add_bo().
- * @ctx: Poपूर्णांकer to the validation context.
+ * @ctx: Pointer to the validation context.
  *
- * Iff this function वापसs successfully, the next call to
+ * Iff this function returns successfully, the next call to
  * vmw_validation_add_bo() is guaranteed not to sleep. An error is not fatal
- * but व्योमs the guarantee.
+ * but voids the guarantee.
  *
- * Returns: Zero अगर successful, %-EINVAL otherwise.
+ * Returns: Zero if successful, %-EINVAL otherwise.
  */
-पूर्णांक vmw_validation_preload_bo(काष्ठा vmw_validation_context *ctx)
-अणु
-	अचिन्हित पूर्णांक size = माप(काष्ठा vmw_validation_bo_node);
+int vmw_validation_preload_bo(struct vmw_validation_context *ctx)
+{
+	unsigned int size = sizeof(struct vmw_validation_bo_node);
 
-	अगर (!vmw_validation_mem_alloc(ctx, size))
-		वापस -ENOMEM;
+	if (!vmw_validation_mem_alloc(ctx, size))
+		return -ENOMEM;
 
 	ctx->mem_size_left += size;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * vmw_validation_preload_res - Preload the validation memory allocator क्रम a
+ * vmw_validation_preload_res - Preload the validation memory allocator for a
  * call to vmw_validation_add_res().
- * @ctx: Poपूर्णांकer to the validation context.
+ * @ctx: Pointer to the validation context.
  * @size: Size of the validation node extra data. See below.
  *
- * Iff this function वापसs successfully, the next call to
+ * Iff this function returns successfully, the next call to
  * vmw_validation_add_res() with the same or smaller @size is guaranteed not to
- * sleep. An error is not fatal but व्योमs the guarantee.
+ * sleep. An error is not fatal but voids the guarantee.
  *
- * Returns: Zero अगर successful, %-EINVAL otherwise.
+ * Returns: Zero if successful, %-EINVAL otherwise.
  */
-पूर्णांक vmw_validation_preload_res(काष्ठा vmw_validation_context *ctx,
-			       अचिन्हित पूर्णांक size)
-अणु
-	size = vmw_validation_align(माप(काष्ठा vmw_validation_res_node) +
+int vmw_validation_preload_res(struct vmw_validation_context *ctx,
+			       unsigned int size)
+{
+	size = vmw_validation_align(sizeof(struct vmw_validation_res_node) +
 				    size) +
-		vmw_validation_align(माप(काष्ठा vmw_validation_bo_node));
-	अगर (!vmw_validation_mem_alloc(ctx, size))
-		वापस -ENOMEM;
+		vmw_validation_align(sizeof(struct vmw_validation_bo_node));
+	if (!vmw_validation_mem_alloc(ctx, size))
+		return -ENOMEM;
 
 	ctx->mem_size_left += size;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * vmw_validation_bo_backoff - Unreserve buffer objects रेजिस्टरed with a
+ * vmw_validation_bo_backoff - Unreserve buffer objects registered with a
  * validation context
  * @ctx: The validation context
  *
  * This function unreserves the buffer objects previously reserved using
  * vmw_validation_bo_reserve. It's typically used as part of an error path
  */
-व्योम vmw_validation_bo_backoff(काष्ठा vmw_validation_context *ctx)
-अणु
-	काष्ठा vmw_validation_bo_node *entry;
+void vmw_validation_bo_backoff(struct vmw_validation_context *ctx)
+{
+	struct vmw_validation_bo_node *entry;
 
 	/*
 	 * Switching coherent resource backup buffers failed.
 	 * Release corresponding buffer object dirty trackers.
 	 */
-	list_क्रम_each_entry(entry, &ctx->bo_list, base.head) अणु
-		अगर (entry->coherent_count) अणु
-			अचिन्हित पूर्णांक coherent_count = entry->coherent_count;
-			काष्ठा vmw_buffer_object *vbo =
+	list_for_each_entry(entry, &ctx->bo_list, base.head) {
+		if (entry->coherent_count) {
+			unsigned int coherent_count = entry->coherent_count;
+			struct vmw_buffer_object *vbo =
 				container_of(entry->base.bo, typeof(*vbo),
 					     base);
 
-			जबतक (coherent_count--)
+			while (coherent_count--)
 				vmw_bo_dirty_release(vbo);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	tपंचांग_eu_backoff_reservation(&ctx->ticket, &ctx->bo_list);
-पूर्ण
+	ttm_eu_backoff_reservation(&ctx->ticket, &ctx->bo_list);
+}

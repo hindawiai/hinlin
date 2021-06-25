@@ -1,9 +1,8 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Broadcom BM2835 V4L2 driver
  *
- * Copyright तऊ 2013 Raspberry Pi (Trading) Ltd.
+ * Copyright © 2013 Raspberry Pi (Trading) Ltd.
  *
  * Authors: Vincent Sanders @ Collabora
  *          Dave Stevenson @ Broadcom
@@ -11,42 +10,42 @@
  *          Simon Mellor @ Broadcom
  *          Luke Diamand @ Broadcom
  *
- * V4L2 driver MMAL vchiq पूर्णांकerface code
+ * V4L2 driver MMAL vchiq interface code
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/completion.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/raspberrypi/vchiq.h>
-#समावेश <media/videobuf2-vदो_स्मृति.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/mm.h>
+#include <linux/slab.h>
+#include <linux/completion.h>
+#include <linux/vmalloc.h>
+#include <linux/raspberrypi/vchiq.h>
+#include <media/videobuf2-vmalloc.h>
 
-#समावेश "mmal-common.h"
-#समावेश "mmal-vchiq.h"
-#समावेश "mmal-msg.h"
+#include "mmal-common.h"
+#include "mmal-vchiq.h"
+#include "mmal-msg.h"
 
 /*
  * maximum number of components supported.
- * This matches the maximum permitted by शेष on the VPU
+ * This matches the maximum permitted by default on the VPU
  */
-#घोषणा VCHIQ_MMAL_MAX_COMPONENTS 64
+#define VCHIQ_MMAL_MAX_COMPONENTS 64
 
 /*
- * Timeout क्रम synchronous msg responses in seconds.
- * Helpful to increase this अगर stopping in the VPU debugger.
+ * Timeout for synchronous msg responses in seconds.
+ * Helpful to increase this if stopping in the VPU debugger.
  */
-#घोषणा SYNC_MSG_TIMEOUT       3
+#define SYNC_MSG_TIMEOUT       3
 
-/*#घोषणा FULL_MSG_DUMP 1*/
+/*#define FULL_MSG_DUMP 1*/
 
-#अगर_घोषित DEBUG
-अटल स्थिर अक्षर *स्थिर msg_type_names[] = अणु
+#ifdef DEBUG
+static const char *const msg_type_names[] = {
 	"UNKNOWN",
 	"QUIT",
 	"SERVICE_CLOSED",
@@ -74,10 +73,10 @@
 	"BUFFER_FROM_HOST_ZEROLEN",
 	"PORT_FLUSH",
 	"HOST_LOG",
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल स्थिर अक्षर *स्थिर port_action_type_names[] = अणु
+static const char *const port_action_type_names[] = {
 	"UNKNOWN",
 	"ENABLE",
 	"DISABLE",
@@ -85,119 +84,119 @@
 	"CONNECT",
 	"DISCONNECT",
 	"SET_REQUIREMENTS",
-पूर्ण;
+};
 
-#अगर defined(DEBUG)
-#अगर defined(FULL_MSG_DUMP)
-#घोषणा DBG_DUMP_MSG(MSG, MSG_LEN, TITLE)				\
-	करो अणु								\
+#if defined(DEBUG)
+#if defined(FULL_MSG_DUMP)
+#define DBG_DUMP_MSG(MSG, MSG_LEN, TITLE)				\
+	do {								\
 		pr_debug(TITLE" type:%s(%d) length:%d\n",		\
 			 msg_type_names[(MSG)->h.type],			\
 			 (MSG)->h.type, (MSG_LEN));			\
-		prपूर्णांक_hex_dump(KERN_DEBUG, "<<h: ", DUMP_PREFIX_OFFSET,	\
+		print_hex_dump(KERN_DEBUG, "<<h: ", DUMP_PREFIX_OFFSET,	\
 			       16, 4, (MSG),				\
-			       माप(काष्ठा mmal_msg_header), 1);	\
-		prपूर्णांक_hex_dump(KERN_DEBUG, "<<p: ", DUMP_PREFIX_OFFSET,	\
+			       sizeof(struct mmal_msg_header), 1);	\
+		print_hex_dump(KERN_DEBUG, "<<p: ", DUMP_PREFIX_OFFSET,	\
 			       16, 4,					\
-			       ((u8 *)(MSG)) + माप(काष्ठा mmal_msg_header),\
-			       (MSG_LEN) - माप(काष्ठा mmal_msg_header), 1); \
-	पूर्ण जबतक (0)
-#अन्यथा
-#घोषणा DBG_DUMP_MSG(MSG, MSG_LEN, TITLE)				\
-	अणु								\
+			       ((u8 *)(MSG)) + sizeof(struct mmal_msg_header),\
+			       (MSG_LEN) - sizeof(struct mmal_msg_header), 1); \
+	} while (0)
+#else
+#define DBG_DUMP_MSG(MSG, MSG_LEN, TITLE)				\
+	{								\
 		pr_debug(TITLE" type:%s(%d) length:%d\n",		\
 			 msg_type_names[(MSG)->h.type],			\
 			 (MSG)->h.type, (MSG_LEN));			\
-	पूर्ण
-#पूर्ण_अगर
-#अन्यथा
-#घोषणा DBG_DUMP_MSG(MSG, MSG_LEN, TITLE)
-#पूर्ण_अगर
+	}
+#endif
+#else
+#define DBG_DUMP_MSG(MSG, MSG_LEN, TITLE)
+#endif
 
-काष्ठा vchiq_mmal_instance;
+struct vchiq_mmal_instance;
 
 /* normal message context */
-काष्ठा mmal_msg_context अणु
-	काष्ठा vchiq_mmal_instance *instance;
+struct mmal_msg_context {
+	struct vchiq_mmal_instance *instance;
 
 	/* Index in the context_map idr so that we can find the
 	 * mmal_msg_context again when servicing the VCHI reply.
 	 */
-	पूर्णांक handle;
+	int handle;
 
-	जोड़ अणु
-		काष्ठा अणु
-			/* work काष्ठा क्रम buffer_cb callback */
-			काष्ठा work_काष्ठा work;
-			/* work काष्ठा क्रम deferred callback */
-			काष्ठा work_काष्ठा buffer_to_host_work;
+	union {
+		struct {
+			/* work struct for buffer_cb callback */
+			struct work_struct work;
+			/* work struct for deferred callback */
+			struct work_struct buffer_to_host_work;
 			/* mmal instance */
-			काष्ठा vchiq_mmal_instance *instance;
+			struct vchiq_mmal_instance *instance;
 			/* mmal port */
-			काष्ठा vchiq_mmal_port *port;
+			struct vchiq_mmal_port *port;
 			/* actual buffer used to store bulk reply */
-			काष्ठा mmal_buffer *buffer;
+			struct mmal_buffer *buffer;
 			/* amount of buffer used */
-			अचिन्हित दीर्घ buffer_used;
+			unsigned long buffer_used;
 			/* MMAL buffer flags */
 			u32 mmal_flags;
-			/* Presentation and Decode बारtamps */
+			/* Presentation and Decode timestamps */
 			s64 pts;
 			s64 dts;
 
-			पूर्णांक status;	/* context status */
+			int status;	/* context status */
 
-		पूर्ण bulk;		/* bulk data */
+		} bulk;		/* bulk data */
 
-		काष्ठा अणु
+		struct {
 			/* message handle to release */
-			काष्ठा vchiq_header *msg_handle;
-			/* poपूर्णांकer to received message */
-			काष्ठा mmal_msg *msg;
+			struct vchiq_header *msg_handle;
+			/* pointer to received message */
+			struct mmal_msg *msg;
 			/* received message length */
 			u32 msg_len;
 			/* completion upon reply */
-			काष्ठा completion cmplt;
-		पूर्ण sync;		/* synchronous response */
-	पूर्ण u;
+			struct completion cmplt;
+		} sync;		/* synchronous response */
+	} u;
 
-पूर्ण;
+};
 
-काष्ठा vchiq_mmal_instance अणु
-	अचिन्हित पूर्णांक service_handle;
+struct vchiq_mmal_instance {
+	unsigned int service_handle;
 
 	/* ensure serialised access to service */
-	काष्ठा mutex vchiq_mutex;
+	struct mutex vchiq_mutex;
 
-	/* vदो_स्मृति page to receive scratch bulk xfers पूर्णांकo */
-	व्योम *bulk_scratch;
+	/* vmalloc page to receive scratch bulk xfers into */
+	void *bulk_scratch;
 
-	काष्ठा idr context_map;
+	struct idr context_map;
 	/* protect accesses to context_map */
-	काष्ठा mutex context_map_lock;
+	struct mutex context_map_lock;
 
-	काष्ठा vchiq_mmal_component component[VCHIQ_MMAL_MAX_COMPONENTS];
+	struct vchiq_mmal_component component[VCHIQ_MMAL_MAX_COMPONENTS];
 
 	/* ordered workqueue to process all bulk operations */
-	काष्ठा workqueue_काष्ठा *bulk_wq;
+	struct workqueue_struct *bulk_wq;
 
-	/* handle क्रम a vchiq instance */
-	काष्ठा vchiq_instance *vchiq_instance;
-पूर्ण;
+	/* handle for a vchiq instance */
+	struct vchiq_instance *vchiq_instance;
+};
 
-अटल काष्ठा mmal_msg_context *
-get_msg_context(काष्ठा vchiq_mmal_instance *instance)
-अणु
-	काष्ठा mmal_msg_context *msg_context;
-	पूर्णांक handle;
+static struct mmal_msg_context *
+get_msg_context(struct vchiq_mmal_instance *instance)
+{
+	struct mmal_msg_context *msg_context;
+	int handle;
 
-	/* toकरो: should this be allocated from a pool to aव्योम kzalloc */
-	msg_context = kzalloc(माप(*msg_context), GFP_KERNEL);
+	/* todo: should this be allocated from a pool to avoid kzalloc */
+	msg_context = kzalloc(sizeof(*msg_context), GFP_KERNEL);
 
-	अगर (!msg_context)
-		वापस ERR_PTR(-ENOMEM);
+	if (!msg_context)
+		return ERR_PTR(-ENOMEM);
 
-	/* Create an ID that will be passed aदीर्घ with our message so
+	/* Create an ID that will be passed along with our message so
 	 * that when we service the VCHI reply, we can look up what
 	 * message is being replied to.
 	 */
@@ -206,62 +205,62 @@ get_msg_context(काष्ठा vchiq_mmal_instance *instance)
 			   0, 0, GFP_KERNEL);
 	mutex_unlock(&instance->context_map_lock);
 
-	अगर (handle < 0) अणु
-		kमुक्त(msg_context);
-		वापस ERR_PTR(handle);
-	पूर्ण
+	if (handle < 0) {
+		kfree(msg_context);
+		return ERR_PTR(handle);
+	}
 
 	msg_context->instance = instance;
 	msg_context->handle = handle;
 
-	वापस msg_context;
-पूर्ण
+	return msg_context;
+}
 
-अटल काष्ठा mmal_msg_context *
-lookup_msg_context(काष्ठा vchiq_mmal_instance *instance, पूर्णांक handle)
-अणु
-	वापस idr_find(&instance->context_map, handle);
-पूर्ण
+static struct mmal_msg_context *
+lookup_msg_context(struct vchiq_mmal_instance *instance, int handle)
+{
+	return idr_find(&instance->context_map, handle);
+}
 
-अटल व्योम
-release_msg_context(काष्ठा mmal_msg_context *msg_context)
-अणु
-	काष्ठा vchiq_mmal_instance *instance = msg_context->instance;
+static void
+release_msg_context(struct mmal_msg_context *msg_context)
+{
+	struct vchiq_mmal_instance *instance = msg_context->instance;
 
 	mutex_lock(&instance->context_map_lock);
-	idr_हटाओ(&instance->context_map, msg_context->handle);
+	idr_remove(&instance->context_map, msg_context->handle);
 	mutex_unlock(&instance->context_map_lock);
-	kमुक्त(msg_context);
-पूर्ण
+	kfree(msg_context);
+}
 
 /* deals with receipt of event to host message */
-अटल व्योम event_to_host_cb(काष्ठा vchiq_mmal_instance *instance,
-			     काष्ठा mmal_msg *msg, u32 msg_len)
-अणु
+static void event_to_host_cb(struct vchiq_mmal_instance *instance,
+			     struct mmal_msg *msg, u32 msg_len)
+{
 	pr_debug("unhandled event\n");
 	pr_debug("component:%u port type:%d num:%d cmd:0x%x length:%d\n",
 		 msg->u.event_to_host.client_component,
 		 msg->u.event_to_host.port_type,
 		 msg->u.event_to_host.port_num,
 		 msg->u.event_to_host.cmd, msg->u.event_to_host.length);
-पूर्ण
+}
 
 /* workqueue scheduled callback
  *
- * we करो this because it is important we करो not call any other vchiq
- * sync calls from witin the message delivery thपढ़ो
+ * we do this because it is important we do not call any other vchiq
+ * sync calls from witin the message delivery thread
  */
-अटल व्योम buffer_work_cb(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा mmal_msg_context *msg_context =
-		container_of(work, काष्ठा mmal_msg_context, u.bulk.work);
-	काष्ठा mmal_buffer *buffer = msg_context->u.bulk.buffer;
+static void buffer_work_cb(struct work_struct *work)
+{
+	struct mmal_msg_context *msg_context =
+		container_of(work, struct mmal_msg_context, u.bulk.work);
+	struct mmal_buffer *buffer = msg_context->u.bulk.buffer;
 
-	अगर (!buffer) अणु
+	if (!buffer) {
 		pr_err("%s: ctx: %p, No mmal buffer to pass details\n",
 		       __func__, msg_context);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	buffer->length = msg_context->u.bulk.buffer_used;
 	buffer->mmal_flags = msg_context->u.bulk.mmal_flags;
@@ -274,26 +273,26 @@ release_msg_context(काष्ठा mmal_msg_context *msg_context)
 					    msg_context->u.bulk.port,
 					    msg_context->u.bulk.status,
 					    msg_context->u.bulk.buffer);
-पूर्ण
+}
 
 /* workqueue scheduled callback to handle receiving buffers
  *
- * VCHI will allow up to 4 bulk receives to be scheduled beक्रमe blocking.
+ * VCHI will allow up to 4 bulk receives to be scheduled before blocking.
  * If we block in the service_callback context then we can't process the
  * VCHI_CALLBACK_BULK_RECEIVED message that would otherwise allow the blocked
  * vchiq_bulk_receive() call to complete.
  */
-अटल व्योम buffer_to_host_work_cb(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा mmal_msg_context *msg_context =
-		container_of(work, काष्ठा mmal_msg_context,
+static void buffer_to_host_work_cb(struct work_struct *work)
+{
+	struct mmal_msg_context *msg_context =
+		container_of(work, struct mmal_msg_context,
 			     u.bulk.buffer_to_host_work);
-	काष्ठा vchiq_mmal_instance *instance = msg_context->instance;
-	अचिन्हित दीर्घ len = msg_context->u.bulk.buffer_used;
-	पूर्णांक ret;
+	struct vchiq_mmal_instance *instance = msg_context->instance;
+	unsigned long len = msg_context->u.bulk.buffer_used;
+	int ret;
 
-	अगर (!len)
-		/* Dummy receive to ensure the buffers reमुख्य in order */
+	if (!len)
+		/* Dummy receive to ensure the buffers remain in order */
 		len = 8;
 	/* queue the bulk submission */
 	vchiq_use_service(instance->service_handle);
@@ -308,44 +307,44 @@ release_msg_context(काष्ठा mmal_msg_context *msg_context)
 
 	vchiq_release_service(instance->service_handle);
 
-	अगर (ret != 0)
+	if (ret != 0)
 		pr_err("%s: ctx: %p, vchiq_bulk_receive failed %d\n",
 		       __func__, msg_context, ret);
-पूर्ण
+}
 
-/* enqueue a bulk receive क्रम a given message context */
-अटल पूर्णांक bulk_receive(काष्ठा vchiq_mmal_instance *instance,
-			काष्ठा mmal_msg *msg,
-			काष्ठा mmal_msg_context *msg_context)
-अणु
-	अचिन्हित दीर्घ rd_len;
+/* enqueue a bulk receive for a given message context */
+static int bulk_receive(struct vchiq_mmal_instance *instance,
+			struct mmal_msg *msg,
+			struct mmal_msg_context *msg_context)
+{
+	unsigned long rd_len;
 
 	rd_len = msg->u.buffer_from_host.buffer_header.length;
 
-	अगर (!msg_context->u.bulk.buffer) अणु
+	if (!msg_context->u.bulk.buffer) {
 		pr_err("bulk.buffer not configured - error in buffer_from_host\n");
 
-		/* toकरो: this is a serious error, we should never have
+		/* todo: this is a serious error, we should never have
 		 * committed a buffer_to_host operation to the mmal
 		 * port without the buffer to back it up (underflow
 		 * handling) and there is no obvious way to deal with
 		 * this - how is the mmal servie going to react when
-		 * we fail to करो the xfer and reschedule a buffer when
+		 * we fail to do the xfer and reschedule a buffer when
 		 * it arrives? perhaps a starved flag to indicate a
-		 * रुकोing bulk receive?
+		 * waiting bulk receive?
 		 */
 
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	/* ensure we करो not overrun the available buffer */
-	अगर (rd_len > msg_context->u.bulk.buffer->buffer_size) अणु
+	/* ensure we do not overrun the available buffer */
+	if (rd_len > msg_context->u.bulk.buffer->buffer_size) {
 		rd_len = msg_context->u.bulk.buffer->buffer_size;
 		pr_warn("short read as not enough receive buffer space\n");
-		/* toकरो: is this the correct response, what happens to
+		/* todo: is this the correct response, what happens to
 		 * the rest of the message data?
 		 */
-	पूर्ण
+	}
 
 	/* store length */
 	msg_context->u.bulk.buffer_used = rd_len;
@@ -355,53 +354,53 @@ release_msg_context(काष्ठा mmal_msg_context *msg_context)
 	queue_work(msg_context->instance->bulk_wq,
 		   &msg_context->u.bulk.buffer_to_host_work);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* data in message, स_नकल from packet पूर्णांकo output buffer */
-अटल पूर्णांक अंतरभूत_receive(काष्ठा vchiq_mmal_instance *instance,
-			  काष्ठा mmal_msg *msg,
-			  काष्ठा mmal_msg_context *msg_context)
-अणु
-	स_नकल(msg_context->u.bulk.buffer->buffer,
-	       msg->u.buffer_from_host.लघु_data,
+/* data in message, memcpy from packet into output buffer */
+static int inline_receive(struct vchiq_mmal_instance *instance,
+			  struct mmal_msg *msg,
+			  struct mmal_msg_context *msg_context)
+{
+	memcpy(msg_context->u.bulk.buffer->buffer,
+	       msg->u.buffer_from_host.short_data,
 	       msg->u.buffer_from_host.payload_in_message);
 
 	msg_context->u.bulk.buffer_used =
 	    msg->u.buffer_from_host.payload_in_message;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* queue the buffer availability with MMAL_MSG_TYPE_BUFFER_FROM_HOST */
-अटल पूर्णांक
-buffer_from_host(काष्ठा vchiq_mmal_instance *instance,
-		 काष्ठा vchiq_mmal_port *port, काष्ठा mmal_buffer *buf)
-अणु
-	काष्ठा mmal_msg_context *msg_context;
-	काष्ठा mmal_msg m;
-	पूर्णांक ret;
+static int
+buffer_from_host(struct vchiq_mmal_instance *instance,
+		 struct vchiq_mmal_port *port, struct mmal_buffer *buf)
+{
+	struct mmal_msg_context *msg_context;
+	struct mmal_msg m;
+	int ret;
 
-	अगर (!port->enabled)
-		वापस -EINVAL;
+	if (!port->enabled)
+		return -EINVAL;
 
 	pr_debug("instance:%u buffer:%p\n", instance->service_handle, buf);
 
 	/* get context */
-	अगर (!buf->msg_context) अणु
+	if (!buf->msg_context) {
 		pr_err("%s: msg_context not allocated, buf %p\n", __func__,
 		       buf);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	msg_context = buf->msg_context;
 
-	/* store bulk message context क्रम when data arrives */
+	/* store bulk message context for when data arrives */
 	msg_context->u.bulk.instance = instance;
 	msg_context->u.bulk.port = port;
 	msg_context->u.bulk.buffer = buf;
 	msg_context->u.bulk.buffer_used = 0;
 
-	/* initialise work काष्ठाure पढ़ोy to schedule callback */
+	/* initialise work structure ready to schedule callback */
 	INIT_WORK(&msg_context->u.bulk.work, buffer_work_cb);
 	INIT_WORK(&msg_context->u.bulk.buffer_to_host_work,
 		  buffer_to_host_work_cb);
@@ -409,14 +408,14 @@ buffer_from_host(काष्ठा vchiq_mmal_instance *instance,
 	atomic_inc(&port->buffers_with_vpu);
 
 	/* prep the buffer from host message */
-	स_रखो(&m, 0xbc, माप(m));	/* just to make debug clearer */
+	memset(&m, 0xbc, sizeof(m));	/* just to make debug clearer */
 
 	m.h.type = MMAL_MSG_TYPE_BUFFER_FROM_HOST;
 	m.h.magic = MMAL_MAGIC;
 	m.h.context = msg_context->handle;
 	m.h.status = 0;
 
-	/* drvbuf is our निजी data passed back */
+	/* drvbuf is our private data passed back */
 	m.u.buffer_from_host.drvbuf.magic = MMAL_MAGIC;
 	m.u.buffer_from_host.drvbuf.component_handle = port->component->handle;
 	m.u.buffer_from_host.drvbuf.port_handle = port->handle;
@@ -425,7 +424,7 @@ buffer_from_host(काष्ठा vchiq_mmal_instance *instance,
 	/* buffer header */
 	m.u.buffer_from_host.buffer_header.cmd = 0;
 	m.u.buffer_from_host.buffer_header.data =
-		(u32)(अचिन्हित दीर्घ)buf->buffer;
+		(u32)(unsigned long)buf->buffer;
 	m.u.buffer_from_host.buffer_header.alloc_size = buf->buffer_size;
 	m.u.buffer_from_host.buffer_header.length = 0;	/* nothing used yet */
 	m.u.buffer_from_host.buffer_header.offset = 0;	/* no offset */
@@ -433,9 +432,9 @@ buffer_from_host(काष्ठा vchiq_mmal_instance *instance,
 	m.u.buffer_from_host.buffer_header.pts = MMAL_TIME_UNKNOWN;
 	m.u.buffer_from_host.buffer_header.dts = MMAL_TIME_UNKNOWN;
 
-	/* clear buffer type specअगरic data */
-	स_रखो(&m.u.buffer_from_host.buffer_header_type_specअगरic, 0,
-	       माप(m.u.buffer_from_host.buffer_header_type_specअगरic));
+	/* clear buffer type specific data */
+	memset(&m.u.buffer_from_host.buffer_header_type_specific, 0,
+	       sizeof(m.u.buffer_from_host.buffer_header_type_specific));
 
 	/* no payload in message */
 	m.u.buffer_from_host.payload_in_message = 0;
@@ -443,70 +442,70 @@ buffer_from_host(काष्ठा vchiq_mmal_instance *instance,
 	vchiq_use_service(instance->service_handle);
 
 	ret = vchiq_queue_kernel_message(instance->service_handle, &m,
-					 माप(काष्ठा mmal_msg_header) +
-					 माप(m.u.buffer_from_host));
-	अगर (ret)
+					 sizeof(struct mmal_msg_header) +
+					 sizeof(m.u.buffer_from_host));
+	if (ret)
 		atomic_dec(&port->buffers_with_vpu);
 
 	vchiq_release_service(instance->service_handle);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* deals with receipt of buffer to host message */
-अटल व्योम buffer_to_host_cb(काष्ठा vchiq_mmal_instance *instance,
-			      काष्ठा mmal_msg *msg, u32 msg_len)
-अणु
-	काष्ठा mmal_msg_context *msg_context;
+static void buffer_to_host_cb(struct vchiq_mmal_instance *instance,
+			      struct mmal_msg *msg, u32 msg_len)
+{
+	struct mmal_msg_context *msg_context;
 	u32 handle;
 
 	pr_debug("%s: instance:%p msg:%p msg_len:%d\n",
 		 __func__, instance, msg, msg_len);
 
-	अगर (msg->u.buffer_from_host.drvbuf.magic == MMAL_MAGIC) अणु
+	if (msg->u.buffer_from_host.drvbuf.magic == MMAL_MAGIC) {
 		handle = msg->u.buffer_from_host.drvbuf.client_context;
 		msg_context = lookup_msg_context(instance, handle);
 
-		अगर (!msg_context) अणु
+		if (!msg_context) {
 			pr_err("drvbuf.client_context(%u) is invalid\n",
 			       handle);
-			वापस;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return;
+		}
+	} else {
 		pr_err("MMAL_MSG_TYPE_BUFFER_TO_HOST with bad magic\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	msg_context->u.bulk.mmal_flags =
 				msg->u.buffer_from_host.buffer_header.flags;
 
-	अगर (msg->h.status != MMAL_MSG_STATUS_SUCCESS) अणु
+	if (msg->h.status != MMAL_MSG_STATUS_SUCCESS) {
 		/* message reception had an error */
 		pr_warn("error %d in reply\n", msg->h.status);
 
 		msg_context->u.bulk.status = msg->h.status;
 
-	पूर्ण अन्यथा अगर (msg->u.buffer_from_host.buffer_header.length == 0) अणु
+	} else if (msg->u.buffer_from_host.buffer_header.length == 0) {
 		/* empty buffer */
-		अगर (msg->u.buffer_from_host.buffer_header.flags &
-		    MMAL_BUFFER_HEADER_FLAG_EOS) अणु
+		if (msg->u.buffer_from_host.buffer_header.flags &
+		    MMAL_BUFFER_HEADER_FLAG_EOS) {
 			msg_context->u.bulk.status =
 			    bulk_receive(instance, msg, msg_context);
-			अगर (msg_context->u.bulk.status == 0)
-				वापस;	/* successful bulk submission, bulk
+			if (msg_context->u.bulk.status == 0)
+				return;	/* successful bulk submission, bulk
 					 * completion will trigger callback
 					 */
-		पूर्ण अन्यथा अणु
-			/* करो callback with empty buffer - not EOS though */
+		} else {
+			/* do callback with empty buffer - not EOS though */
 			msg_context->u.bulk.status = 0;
 			msg_context->u.bulk.buffer_used = 0;
-		पूर्ण
-	पूर्ण अन्यथा अगर (msg->u.buffer_from_host.payload_in_message == 0) अणु
+		}
+	} else if (msg->u.buffer_from_host.payload_in_message == 0) {
 		/* data is not in message, queue a bulk receive */
 		msg_context->u.bulk.status =
 		    bulk_receive(instance, msg, msg_context);
-		अगर (msg_context->u.bulk.status == 0)
-			वापस;	/* successful bulk submission, bulk
+		if (msg_context->u.bulk.status == 0)
+			return;	/* successful bulk submission, bulk
 				 * completion will trigger callback
 				 */
 
@@ -514,164 +513,164 @@ buffer_from_host(काष्ठा vchiq_mmal_instance *instance,
 		pr_err("error %d on bulk submission\n",
 		       msg_context->u.bulk.status);
 
-	पूर्ण अन्यथा अगर (msg->u.buffer_from_host.payload_in_message <=
-		   MMAL_VC_SHORT_DATA) अणु
+	} else if (msg->u.buffer_from_host.payload_in_message <=
+		   MMAL_VC_SHORT_DATA) {
 		/* data payload within message */
-		msg_context->u.bulk.status = अंतरभूत_receive(instance, msg,
+		msg_context->u.bulk.status = inline_receive(instance, msg,
 							    msg_context);
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_err("message with invalid short payload\n");
 
-		/* संकेत error */
+		/* signal error */
 		msg_context->u.bulk.status = -EINVAL;
 		msg_context->u.bulk.buffer_used =
 		    msg->u.buffer_from_host.payload_in_message;
-	पूर्ण
+	}
 
 	/* schedule the port callback */
 	schedule_work(&msg_context->u.bulk.work);
-पूर्ण
+}
 
-अटल व्योम bulk_receive_cb(काष्ठा vchiq_mmal_instance *instance,
-			    काष्ठा mmal_msg_context *msg_context)
-अणु
+static void bulk_receive_cb(struct vchiq_mmal_instance *instance,
+			    struct mmal_msg_context *msg_context)
+{
 	msg_context->u.bulk.status = 0;
 
 	/* schedule the port callback */
 	schedule_work(&msg_context->u.bulk.work);
-पूर्ण
+}
 
-अटल व्योम bulk_पात_cb(काष्ठा vchiq_mmal_instance *instance,
-			  काष्ठा mmal_msg_context *msg_context)
-अणु
+static void bulk_abort_cb(struct vchiq_mmal_instance *instance,
+			  struct mmal_msg_context *msg_context)
+{
 	pr_err("%s: bulk ABORTED msg_context:%p\n", __func__, msg_context);
 
 	msg_context->u.bulk.status = -EINTR;
 
 	schedule_work(&msg_context->u.bulk.work);
-पूर्ण
+}
 
 /* incoming event service callback */
-अटल क्रमागत vchiq_status service_callback(क्रमागत vchiq_reason reason,
-					  काष्ठा vchiq_header *header,
-					  अचिन्हित पूर्णांक handle, व्योम *bulk_ctx)
-अणु
-	काष्ठा vchiq_mmal_instance *instance = vchiq_get_service_userdata(handle);
+static enum vchiq_status service_callback(enum vchiq_reason reason,
+					  struct vchiq_header *header,
+					  unsigned int handle, void *bulk_ctx)
+{
+	struct vchiq_mmal_instance *instance = vchiq_get_service_userdata(handle);
 	u32 msg_len;
-	काष्ठा mmal_msg *msg;
-	काष्ठा mmal_msg_context *msg_context;
+	struct mmal_msg *msg;
+	struct mmal_msg_context *msg_context;
 
-	अगर (!instance) अणु
+	if (!instance) {
 		pr_err("Message callback passed NULL instance\n");
-		वापस VCHIQ_SUCCESS;
-	पूर्ण
+		return VCHIQ_SUCCESS;
+	}
 
-	चयन (reason) अणु
-	हाल VCHIQ_MESSAGE_AVAILABLE:
-		msg = (व्योम *)header->data;
+	switch (reason) {
+	case VCHIQ_MESSAGE_AVAILABLE:
+		msg = (void *)header->data;
 		msg_len = header->size;
 
 		DBG_DUMP_MSG(msg, msg_len, "<<< reply message");
 
-		/* handling is dअगरferent क्रम buffer messages */
-		चयन (msg->h.type) अणु
-		हाल MMAL_MSG_TYPE_BUFFER_FROM_HOST:
+		/* handling is different for buffer messages */
+		switch (msg->h.type) {
+		case MMAL_MSG_TYPE_BUFFER_FROM_HOST:
 			vchiq_release_message(handle, header);
-			अवरोध;
+			break;
 
-		हाल MMAL_MSG_TYPE_EVENT_TO_HOST:
+		case MMAL_MSG_TYPE_EVENT_TO_HOST:
 			event_to_host_cb(instance, msg, msg_len);
 			vchiq_release_message(handle, header);
 
-			अवरोध;
+			break;
 
-		हाल MMAL_MSG_TYPE_BUFFER_TO_HOST:
+		case MMAL_MSG_TYPE_BUFFER_TO_HOST:
 			buffer_to_host_cb(instance, msg, msg_len);
 			vchiq_release_message(handle, header);
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			/* messages dependent on header context to complete */
-			अगर (!msg->h.context) अणु
+			if (!msg->h.context) {
 				pr_err("received message context was null!\n");
 				vchiq_release_message(handle, header);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			msg_context = lookup_msg_context(instance,
 							 msg->h.context);
-			अगर (!msg_context) अणु
+			if (!msg_context) {
 				pr_err("received invalid message context %u!\n",
 				       msg->h.context);
 				vchiq_release_message(handle, header);
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
 			/* fill in context values */
 			msg_context->u.sync.msg_handle = header;
 			msg_context->u.sync.msg = msg;
 			msg_context->u.sync.msg_len = msg_len;
 
-			/* toकरो: should this check (completion_करोne()
-			 * == 1) क्रम no one रुकोing? or करो we need a
+			/* todo: should this check (completion_done()
+			 * == 1) for no one waiting? or do we need a
 			 * flag to tell us the completion has been
-			 * पूर्णांकerrupted so we can मुक्त the message and
+			 * interrupted so we can free the message and
 			 * its context. This probably also solves the
-			 * message arriving after पूर्णांकerruption toकरो
+			 * message arriving after interruption todo
 			 * below
 			 */
 
 			/* complete message so caller knows it happened */
 			complete(&msg_context->u.sync.cmplt);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		अवरोध;
+		break;
 
-	हाल VCHIQ_BULK_RECEIVE_DONE:
+	case VCHIQ_BULK_RECEIVE_DONE:
 		bulk_receive_cb(instance, bulk_ctx);
-		अवरोध;
+		break;
 
-	हाल VCHIQ_BULK_RECEIVE_ABORTED:
-		bulk_पात_cb(instance, bulk_ctx);
-		अवरोध;
+	case VCHIQ_BULK_RECEIVE_ABORTED:
+		bulk_abort_cb(instance, bulk_ctx);
+		break;
 
-	हाल VCHIQ_SERVICE_CLOSED:
-		/* TODO: consider अगर this requires action अगर received when
+	case VCHIQ_SERVICE_CLOSED:
+		/* TODO: consider if this requires action if received when
 		 * driver is not explicitly closing the service
 		 */
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		pr_err("Received unhandled message reason %d\n", reason);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस VCHIQ_SUCCESS;
-पूर्ण
+	return VCHIQ_SUCCESS;
+}
 
-अटल पूर्णांक send_synchronous_mmal_msg(काष्ठा vchiq_mmal_instance *instance,
-				     काष्ठा mmal_msg *msg,
-				     अचिन्हित पूर्णांक payload_len,
-				     काष्ठा mmal_msg **msg_out,
-				     काष्ठा vchiq_header **msg_handle)
-अणु
-	काष्ठा mmal_msg_context *msg_context;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ समयout;
+static int send_synchronous_mmal_msg(struct vchiq_mmal_instance *instance,
+				     struct mmal_msg *msg,
+				     unsigned int payload_len,
+				     struct mmal_msg **msg_out,
+				     struct vchiq_header **msg_handle)
+{
+	struct mmal_msg_context *msg_context;
+	int ret;
+	unsigned long timeout;
 
 	/* payload size must not cause message to exceed max size */
-	अगर (payload_len >
-	    (MMAL_MSG_MAX_SIZE - माप(काष्ठा mmal_msg_header))) अणु
+	if (payload_len >
+	    (MMAL_MSG_MAX_SIZE - sizeof(struct mmal_msg_header))) {
 		pr_err("payload length %d exceeds max:%d\n", payload_len,
-		       (पूर्णांक)(MMAL_MSG_MAX_SIZE -
-			    माप(काष्ठा mmal_msg_header)));
-		वापस -EINVAL;
-	पूर्ण
+		       (int)(MMAL_MSG_MAX_SIZE -
+			    sizeof(struct mmal_msg_header)));
+		return -EINVAL;
+	}
 
 	msg_context = get_msg_context(instance);
-	अगर (IS_ERR(msg_context))
-		वापस PTR_ERR(msg_context);
+	if (IS_ERR(msg_context))
+		return PTR_ERR(msg_context);
 
 	init_completion(&msg_context->u.sync.cmplt);
 
@@ -679,42 +678,42 @@ buffer_from_host(काष्ठा vchiq_mmal_instance *instance,
 	msg->h.context = msg_context->handle;
 	msg->h.status = 0;
 
-	DBG_DUMP_MSG(msg, (माप(काष्ठा mmal_msg_header) + payload_len),
+	DBG_DUMP_MSG(msg, (sizeof(struct mmal_msg_header) + payload_len),
 		     ">>> sync message");
 
 	vchiq_use_service(instance->service_handle);
 
 	ret = vchiq_queue_kernel_message(instance->service_handle, msg,
-					 माप(काष्ठा mmal_msg_header) +
+					 sizeof(struct mmal_msg_header) +
 					 payload_len);
 
 	vchiq_release_service(instance->service_handle);
 
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("error %d queuing message\n", ret);
 		release_msg_context(msg_context);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	समयout = रुको_क्रम_completion_समयout(&msg_context->u.sync.cmplt,
+	timeout = wait_for_completion_timeout(&msg_context->u.sync.cmplt,
 					      SYNC_MSG_TIMEOUT * HZ);
-	अगर (समयout == 0) अणु
+	if (timeout == 0) {
 		pr_err("timed out waiting for sync completion\n");
 		ret = -ETIME;
-		/* toकरो: what happens अगर the message arrives after पातing */
+		/* todo: what happens if the message arrives after aborting */
 		release_msg_context(msg_context);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	*msg_out = msg_context->u.sync.msg;
 	*msg_handle = msg_context->u.sync.msg_handle;
 	release_msg_context(msg_context);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम dump_port_info(काष्ठा vchiq_mmal_port *port)
-अणु
+static void dump_port_info(struct vchiq_mmal_port *port)
+{
 	pr_debug("port handle:0x%x enabled:%d\n", port->handle, port->enabled);
 
 	pr_debug("buffer minimum num:%d size:%d align:%d\n",
@@ -731,13 +730,13 @@ buffer_from_host(काष्ठा vchiq_mmal_instance *instance,
 		 port->current_buffer.size, port->current_buffer.alignment);
 
 	pr_debug("elementary stream: type:%d encoding:0x%x variant:0x%x\n",
-		 port->क्रमmat.type,
-		 port->क्रमmat.encoding, port->क्रमmat.encoding_variant);
+		 port->format.type,
+		 port->format.encoding, port->format.encoding_variant);
 
 	pr_debug("		    bitrate:%d flags:0x%x\n",
-		 port->क्रमmat.bitrate, port->क्रमmat.flags);
+		 port->format.bitrate, port->format.flags);
 
-	अगर (port->क्रमmat.type == MMAL_ES_TYPE_VIDEO) अणु
+	if (port->format.type == MMAL_ES_TYPE_VIDEO) {
 		pr_debug
 		    ("es video format: width:%d height:%d colourspace:0x%x\n",
 		     port->es.video.width, port->es.video.height,
@@ -751,12 +750,12 @@ buffer_from_host(काष्ठा vchiq_mmal_instance *instance,
 			 port->es.video.frame_rate.num,
 			 port->es.video.frame_rate.den,
 			 port->es.video.par.num, port->es.video.par.den);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम port_to_mmal_msg(काष्ठा vchiq_mmal_port *port, काष्ठा mmal_port *p)
-अणु
-	/* toकरो करो पढ़ोonly fields need setting at all? */
+static void port_to_mmal_msg(struct vchiq_mmal_port *port, struct mmal_port *p)
+{
+	/* todo do readonly fields need setting at all? */
 	p->type = port->type;
 	p->index = port->index;
 	p->index_all = 0;
@@ -770,20 +769,20 @@ buffer_from_host(काष्ठा vchiq_mmal_instance *instance,
 	/* only three writable fields in a port */
 	p->buffer_num = port->current_buffer.num;
 	p->buffer_size = port->current_buffer.size;
-	p->userdata = (u32)(अचिन्हित दीर्घ)port;
-पूर्ण
+	p->userdata = (u32)(unsigned long)port;
+}
 
-अटल पूर्णांक port_info_set(काष्ठा vchiq_mmal_instance *instance,
-			 काष्ठा vchiq_mmal_port *port)
-अणु
-	पूर्णांक ret;
-	काष्ठा mmal_msg m;
-	काष्ठा mmal_msg *rmsg;
-	काष्ठा vchiq_header *rmsg_handle;
+static int port_info_set(struct vchiq_mmal_instance *instance,
+			 struct vchiq_mmal_port *port)
+{
+	int ret;
+	struct mmal_msg m;
+	struct mmal_msg *rmsg;
+	struct vchiq_header *rmsg_handle;
 
 	pr_debug("setting port info port %p\n", port);
-	अगर (!port)
-		वापस -1;
+	if (!port)
+		return -1;
 	dump_port_info(port);
 
 	m.h.type = MMAL_MSG_TYPE_PORT_INFO_SET;
@@ -794,34 +793,34 @@ buffer_from_host(काष्ठा vchiq_mmal_instance *instance,
 
 	port_to_mmal_msg(port, &m.u.port_info_set.port);
 
-	/* elementary stream क्रमmat setup */
-	m.u.port_info_set.क्रमmat.type = port->क्रमmat.type;
-	m.u.port_info_set.क्रमmat.encoding = port->क्रमmat.encoding;
-	m.u.port_info_set.क्रमmat.encoding_variant =
-	    port->क्रमmat.encoding_variant;
-	m.u.port_info_set.क्रमmat.bitrate = port->क्रमmat.bitrate;
-	m.u.port_info_set.क्रमmat.flags = port->क्रमmat.flags;
+	/* elementary stream format setup */
+	m.u.port_info_set.format.type = port->format.type;
+	m.u.port_info_set.format.encoding = port->format.encoding;
+	m.u.port_info_set.format.encoding_variant =
+	    port->format.encoding_variant;
+	m.u.port_info_set.format.bitrate = port->format.bitrate;
+	m.u.port_info_set.format.flags = port->format.flags;
 
-	स_नकल(&m.u.port_info_set.es, &port->es,
-	       माप(जोड़ mmal_es_specअगरic_क्रमmat));
+	memcpy(&m.u.port_info_set.es, &port->es,
+	       sizeof(union mmal_es_specific_format));
 
-	m.u.port_info_set.क्रमmat.extradata_size = port->क्रमmat.extradata_size;
-	स_नकल(&m.u.port_info_set.extradata, port->क्रमmat.extradata,
-	       port->क्रमmat.extradata_size);
+	m.u.port_info_set.format.extradata_size = port->format.extradata_size;
+	memcpy(&m.u.port_info_set.extradata, port->format.extradata,
+	       port->format.extradata_size);
 
 	ret = send_synchronous_mmal_msg(instance, &m,
-					माप(m.u.port_info_set),
+					sizeof(m.u.port_info_set),
 					&rmsg, &rmsg_handle);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (rmsg->h.type != MMAL_MSG_TYPE_PORT_INFO_SET) अणु
+	if (rmsg->h.type != MMAL_MSG_TYPE_PORT_INFO_SET) {
 		/* got an unexpected message type in reply */
 		ret = -EINVAL;
-		जाओ release_msg;
-	पूर्ण
+		goto release_msg;
+	}
 
-	/* वापस operation status */
+	/* return operation status */
 	ret = -rmsg->u.port_info_get_reply.status;
 
 	pr_debug("%s:result:%d component:0x%x port:%d\n", __func__, ret,
@@ -830,51 +829,51 @@ buffer_from_host(काष्ठा vchiq_mmal_instance *instance,
 release_msg:
 	vchiq_release_message(instance->service_handle, rmsg_handle);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* use port info get message to retrieve port inक्रमmation */
-अटल पूर्णांक port_info_get(काष्ठा vchiq_mmal_instance *instance,
-			 काष्ठा vchiq_mmal_port *port)
-अणु
-	पूर्णांक ret;
-	काष्ठा mmal_msg m;
-	काष्ठा mmal_msg *rmsg;
-	काष्ठा vchiq_header *rmsg_handle;
+/* use port info get message to retrieve port information */
+static int port_info_get(struct vchiq_mmal_instance *instance,
+			 struct vchiq_mmal_port *port)
+{
+	int ret;
+	struct mmal_msg m;
+	struct mmal_msg *rmsg;
+	struct vchiq_header *rmsg_handle;
 
-	/* port info समय */
+	/* port info time */
 	m.h.type = MMAL_MSG_TYPE_PORT_INFO_GET;
 	m.u.port_info_get.component_handle = port->component->handle;
 	m.u.port_info_get.port_type = port->type;
 	m.u.port_info_get.index = port->index;
 
 	ret = send_synchronous_mmal_msg(instance, &m,
-					माप(m.u.port_info_get),
+					sizeof(m.u.port_info_get),
 					&rmsg, &rmsg_handle);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (rmsg->h.type != MMAL_MSG_TYPE_PORT_INFO_GET) अणु
+	if (rmsg->h.type != MMAL_MSG_TYPE_PORT_INFO_GET) {
 		/* got an unexpected message type in reply */
 		ret = -EINVAL;
-		जाओ release_msg;
-	पूर्ण
+		goto release_msg;
+	}
 
-	/* वापस operation status */
+	/* return operation status */
 	ret = -rmsg->u.port_info_get_reply.status;
-	अगर (ret != MMAL_MSG_STATUS_SUCCESS)
-		जाओ release_msg;
+	if (ret != MMAL_MSG_STATUS_SUCCESS)
+		goto release_msg;
 
-	अगर (rmsg->u.port_info_get_reply.port.is_enabled == 0)
+	if (rmsg->u.port_info_get_reply.port.is_enabled == 0)
 		port->enabled = 0;
-	अन्यथा
+	else
 		port->enabled = 1;
 
 	/* copy the values out of the message */
 	port->handle = rmsg->u.port_info_get_reply.port_handle;
 
 	/* port type and index cached to use on port info set because
-	 * it करोes not use a port handle
+	 * it does not use a port handle
 	 */
 	port->type = rmsg->u.port_info_get_reply.port_type;
 	port->index = rmsg->u.port_info_get_reply.port_index;
@@ -895,25 +894,25 @@ release_msg:
 	port->current_buffer.size =
 	    rmsg->u.port_info_get_reply.port.buffer_size;
 
-	/* stream क्रमmat */
-	port->क्रमmat.type = rmsg->u.port_info_get_reply.क्रमmat.type;
-	port->क्रमmat.encoding = rmsg->u.port_info_get_reply.क्रमmat.encoding;
-	port->क्रमmat.encoding_variant =
-	    rmsg->u.port_info_get_reply.क्रमmat.encoding_variant;
-	port->क्रमmat.bitrate = rmsg->u.port_info_get_reply.क्रमmat.bitrate;
-	port->क्रमmat.flags = rmsg->u.port_info_get_reply.क्रमmat.flags;
+	/* stream format */
+	port->format.type = rmsg->u.port_info_get_reply.format.type;
+	port->format.encoding = rmsg->u.port_info_get_reply.format.encoding;
+	port->format.encoding_variant =
+	    rmsg->u.port_info_get_reply.format.encoding_variant;
+	port->format.bitrate = rmsg->u.port_info_get_reply.format.bitrate;
+	port->format.flags = rmsg->u.port_info_get_reply.format.flags;
 
-	/* elementary stream क्रमmat */
-	स_नकल(&port->es,
+	/* elementary stream format */
+	memcpy(&port->es,
 	       &rmsg->u.port_info_get_reply.es,
-	       माप(जोड़ mmal_es_specअगरic_क्रमmat));
-	port->क्रमmat.es = &port->es;
+	       sizeof(union mmal_es_specific_format));
+	port->format.es = &port->es;
 
-	port->क्रमmat.extradata_size =
-	    rmsg->u.port_info_get_reply.क्रमmat.extradata_size;
-	स_नकल(port->क्रमmat.extradata,
+	port->format.extradata_size =
+	    rmsg->u.port_info_get_reply.format.extradata_size;
+	memcpy(port->format.extradata,
 	       rmsg->u.port_info_get_reply.extradata,
-	       port->क्रमmat.extradata_size);
+	       port->format.extradata_size);
 
 	pr_debug("received port info\n");
 	dump_port_info(port);
@@ -925,80 +924,80 @@ release_msg:
 
 	vchiq_release_message(instance->service_handle, rmsg_handle);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* create component on vc */
-अटल पूर्णांक create_component(काष्ठा vchiq_mmal_instance *instance,
-			    काष्ठा vchiq_mmal_component *component,
-			    स्थिर अक्षर *name)
-अणु
-	पूर्णांक ret;
-	काष्ठा mmal_msg m;
-	काष्ठा mmal_msg *rmsg;
-	काष्ठा vchiq_header *rmsg_handle;
+static int create_component(struct vchiq_mmal_instance *instance,
+			    struct vchiq_mmal_component *component,
+			    const char *name)
+{
+	int ret;
+	struct mmal_msg m;
+	struct mmal_msg *rmsg;
+	struct vchiq_header *rmsg_handle;
 
 	/* build component create message */
 	m.h.type = MMAL_MSG_TYPE_COMPONENT_CREATE;
 	m.u.component_create.client_component = component->client_component;
-	म_नकलन(m.u.component_create.name, name,
-		माप(m.u.component_create.name));
+	strncpy(m.u.component_create.name, name,
+		sizeof(m.u.component_create.name));
 
 	ret = send_synchronous_mmal_msg(instance, &m,
-					माप(m.u.component_create),
+					sizeof(m.u.component_create),
 					&rmsg, &rmsg_handle);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (rmsg->h.type != m.h.type) अणु
+	if (rmsg->h.type != m.h.type) {
 		/* got an unexpected message type in reply */
 		ret = -EINVAL;
-		जाओ release_msg;
-	पूर्ण
+		goto release_msg;
+	}
 
 	ret = -rmsg->u.component_create_reply.status;
-	अगर (ret != MMAL_MSG_STATUS_SUCCESS)
-		जाओ release_msg;
+	if (ret != MMAL_MSG_STATUS_SUCCESS)
+		goto release_msg;
 
 	/* a valid component response received */
 	component->handle = rmsg->u.component_create_reply.component_handle;
-	component->inमाला_दो = rmsg->u.component_create_reply.input_num;
-	component->outमाला_दो = rmsg->u.component_create_reply.output_num;
-	component->घड़ीs = rmsg->u.component_create_reply.घड़ी_num;
+	component->inputs = rmsg->u.component_create_reply.input_num;
+	component->outputs = rmsg->u.component_create_reply.output_num;
+	component->clocks = rmsg->u.component_create_reply.clock_num;
 
 	pr_debug("Component handle:0x%x in:%d out:%d clock:%d\n",
 		 component->handle,
-		 component->inमाला_दो, component->outमाला_दो, component->घड़ीs);
+		 component->inputs, component->outputs, component->clocks);
 
 release_msg:
 	vchiq_release_message(instance->service_handle, rmsg_handle);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* destroys a component on vc */
-अटल पूर्णांक destroy_component(काष्ठा vchiq_mmal_instance *instance,
-			     काष्ठा vchiq_mmal_component *component)
-अणु
-	पूर्णांक ret;
-	काष्ठा mmal_msg m;
-	काष्ठा mmal_msg *rmsg;
-	काष्ठा vchiq_header *rmsg_handle;
+static int destroy_component(struct vchiq_mmal_instance *instance,
+			     struct vchiq_mmal_component *component)
+{
+	int ret;
+	struct mmal_msg m;
+	struct mmal_msg *rmsg;
+	struct vchiq_header *rmsg_handle;
 
 	m.h.type = MMAL_MSG_TYPE_COMPONENT_DESTROY;
 	m.u.component_destroy.component_handle = component->handle;
 
 	ret = send_synchronous_mmal_msg(instance, &m,
-					माप(m.u.component_destroy),
+					sizeof(m.u.component_destroy),
 					&rmsg, &rmsg_handle);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (rmsg->h.type != m.h.type) अणु
+	if (rmsg->h.type != m.h.type) {
 		/* got an unexpected message type in reply */
 		ret = -EINVAL;
-		जाओ release_msg;
-	पूर्ण
+		goto release_msg;
+	}
 
 	ret = -rmsg->u.component_destroy_reply.status;
 
@@ -1006,64 +1005,64 @@ release_msg:
 
 	vchiq_release_message(instance->service_handle, rmsg_handle);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* enable a component on vc */
-अटल पूर्णांक enable_component(काष्ठा vchiq_mmal_instance *instance,
-			    काष्ठा vchiq_mmal_component *component)
-अणु
-	पूर्णांक ret;
-	काष्ठा mmal_msg m;
-	काष्ठा mmal_msg *rmsg;
-	काष्ठा vchiq_header *rmsg_handle;
+static int enable_component(struct vchiq_mmal_instance *instance,
+			    struct vchiq_mmal_component *component)
+{
+	int ret;
+	struct mmal_msg m;
+	struct mmal_msg *rmsg;
+	struct vchiq_header *rmsg_handle;
 
 	m.h.type = MMAL_MSG_TYPE_COMPONENT_ENABLE;
 	m.u.component_enable.component_handle = component->handle;
 
 	ret = send_synchronous_mmal_msg(instance, &m,
-					माप(m.u.component_enable),
+					sizeof(m.u.component_enable),
 					&rmsg, &rmsg_handle);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (rmsg->h.type != m.h.type) अणु
+	if (rmsg->h.type != m.h.type) {
 		/* got an unexpected message type in reply */
 		ret = -EINVAL;
-		जाओ release_msg;
-	पूर्ण
+		goto release_msg;
+	}
 
 	ret = -rmsg->u.component_enable_reply.status;
 
 release_msg:
 	vchiq_release_message(instance->service_handle, rmsg_handle);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* disable a component on vc */
-अटल पूर्णांक disable_component(काष्ठा vchiq_mmal_instance *instance,
-			     काष्ठा vchiq_mmal_component *component)
-अणु
-	पूर्णांक ret;
-	काष्ठा mmal_msg m;
-	काष्ठा mmal_msg *rmsg;
-	काष्ठा vchiq_header *rmsg_handle;
+static int disable_component(struct vchiq_mmal_instance *instance,
+			     struct vchiq_mmal_component *component)
+{
+	int ret;
+	struct mmal_msg m;
+	struct mmal_msg *rmsg;
+	struct vchiq_header *rmsg_handle;
 
 	m.h.type = MMAL_MSG_TYPE_COMPONENT_DISABLE;
 	m.u.component_disable.component_handle = component->handle;
 
 	ret = send_synchronous_mmal_msg(instance, &m,
-					माप(m.u.component_disable),
+					sizeof(m.u.component_disable),
 					&rmsg, &rmsg_handle);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (rmsg->h.type != m.h.type) अणु
+	if (rmsg->h.type != m.h.type) {
 		/* got an unexpected message type in reply */
 		ret = -EINVAL;
-		जाओ release_msg;
-	पूर्ण
+		goto release_msg;
+	}
 
 	ret = -rmsg->u.component_disable_reply.status;
 
@@ -1071,31 +1070,31 @@ release_msg:
 
 	vchiq_release_message(instance->service_handle, rmsg_handle);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* get version of mmal implementation */
-अटल पूर्णांक get_version(काष्ठा vchiq_mmal_instance *instance,
+static int get_version(struct vchiq_mmal_instance *instance,
 		       u32 *major_out, u32 *minor_out)
-अणु
-	पूर्णांक ret;
-	काष्ठा mmal_msg m;
-	काष्ठा mmal_msg *rmsg;
-	काष्ठा vchiq_header *rmsg_handle;
+{
+	int ret;
+	struct mmal_msg m;
+	struct mmal_msg *rmsg;
+	struct vchiq_header *rmsg_handle;
 
 	m.h.type = MMAL_MSG_TYPE_GET_VERSION;
 
 	ret = send_synchronous_mmal_msg(instance, &m,
-					माप(m.u.version),
+					sizeof(m.u.version),
 					&rmsg, &rmsg_handle);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (rmsg->h.type != m.h.type) अणु
+	if (rmsg->h.type != m.h.type) {
 		/* got an unexpected message type in reply */
 		ret = -EINVAL;
-		जाओ release_msg;
-	पूर्ण
+		goto release_msg;
+	}
 
 	*major_out = rmsg->u.version.major;
 	*minor_out = rmsg->u.version.minor;
@@ -1103,18 +1102,18 @@ release_msg:
 release_msg:
 	vchiq_release_message(instance->service_handle, rmsg_handle);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* करो a port action with a port as a parameter */
-अटल पूर्णांक port_action_port(काष्ठा vchiq_mmal_instance *instance,
-			    काष्ठा vchiq_mmal_port *port,
-			    क्रमागत mmal_msg_port_action_type action_type)
-अणु
-	पूर्णांक ret;
-	काष्ठा mmal_msg m;
-	काष्ठा mmal_msg *rmsg;
-	काष्ठा vchiq_header *rmsg_handle;
+/* do a port action with a port as a parameter */
+static int port_action_port(struct vchiq_mmal_instance *instance,
+			    struct vchiq_mmal_port *port,
+			    enum mmal_msg_port_action_type action_type)
+{
+	int ret;
+	struct mmal_msg m;
+	struct mmal_msg *rmsg;
+	struct vchiq_header *rmsg_handle;
 
 	m.h.type = MMAL_MSG_TYPE_PORT_ACTION;
 	m.u.port_action_port.component_handle = port->component->handle;
@@ -1124,16 +1123,16 @@ release_msg:
 	port_to_mmal_msg(port, &m.u.port_action_port.port);
 
 	ret = send_synchronous_mmal_msg(instance, &m,
-					माप(m.u.port_action_port),
+					sizeof(m.u.port_action_port),
 					&rmsg, &rmsg_handle);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (rmsg->h.type != MMAL_MSG_TYPE_PORT_ACTION) अणु
+	if (rmsg->h.type != MMAL_MSG_TYPE_PORT_ACTION) {
 		/* got an unexpected message type in reply */
 		ret = -EINVAL;
-		जाओ release_msg;
-	पूर्ण
+		goto release_msg;
+	}
 
 	ret = -rmsg->u.port_action_reply.status;
 
@@ -1145,20 +1144,20 @@ release_msg:
 release_msg:
 	vchiq_release_message(instance->service_handle, rmsg_handle);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* करो a port action with handles as parameters */
-अटल पूर्णांक port_action_handle(काष्ठा vchiq_mmal_instance *instance,
-			      काष्ठा vchiq_mmal_port *port,
-			      क्रमागत mmal_msg_port_action_type action_type,
+/* do a port action with handles as parameters */
+static int port_action_handle(struct vchiq_mmal_instance *instance,
+			      struct vchiq_mmal_port *port,
+			      enum mmal_msg_port_action_type action_type,
 			      u32 connect_component_handle,
 			      u32 connect_port_handle)
-अणु
-	पूर्णांक ret;
-	काष्ठा mmal_msg m;
-	काष्ठा mmal_msg *rmsg;
-	काष्ठा vchiq_header *rmsg_handle;
+{
+	int ret;
+	struct mmal_msg m;
+	struct mmal_msg *rmsg;
+	struct vchiq_header *rmsg_handle;
 
 	m.h.type = MMAL_MSG_TYPE_PORT_ACTION;
 
@@ -1171,16 +1170,16 @@ release_msg:
 	m.u.port_action_handle.connect_port_handle = connect_port_handle;
 
 	ret = send_synchronous_mmal_msg(instance, &m,
-					माप(m.u.port_action_handle),
+					sizeof(m.u.port_action_handle),
 					&rmsg, &rmsg_handle);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (rmsg->h.type != MMAL_MSG_TYPE_PORT_ACTION) अणु
+	if (rmsg->h.type != MMAL_MSG_TYPE_PORT_ACTION) {
 		/* got an unexpected message type in reply */
 		ret = -EINVAL;
-		जाओ release_msg;
-	पूर्ण
+		goto release_msg;
+	}
 
 	ret = -rmsg->u.port_action_reply.status;
 
@@ -1193,37 +1192,37 @@ release_msg:
 release_msg:
 	vchiq_release_message(instance->service_handle, rmsg_handle);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक port_parameter_set(काष्ठा vchiq_mmal_instance *instance,
-			      काष्ठा vchiq_mmal_port *port,
-			      u32 parameter_id, व्योम *value, u32 value_size)
-अणु
-	पूर्णांक ret;
-	काष्ठा mmal_msg m;
-	काष्ठा mmal_msg *rmsg;
-	काष्ठा vchiq_header *rmsg_handle;
+static int port_parameter_set(struct vchiq_mmal_instance *instance,
+			      struct vchiq_mmal_port *port,
+			      u32 parameter_id, void *value, u32 value_size)
+{
+	int ret;
+	struct mmal_msg m;
+	struct mmal_msg *rmsg;
+	struct vchiq_header *rmsg_handle;
 
 	m.h.type = MMAL_MSG_TYPE_PORT_PARAMETER_SET;
 
 	m.u.port_parameter_set.component_handle = port->component->handle;
 	m.u.port_parameter_set.port_handle = port->handle;
 	m.u.port_parameter_set.id = parameter_id;
-	m.u.port_parameter_set.size = (2 * माप(u32)) + value_size;
-	स_नकल(&m.u.port_parameter_set.value, value, value_size);
+	m.u.port_parameter_set.size = (2 * sizeof(u32)) + value_size;
+	memcpy(&m.u.port_parameter_set.value, value, value_size);
 
 	ret = send_synchronous_mmal_msg(instance, &m,
-					(4 * माप(u32)) + value_size,
+					(4 * sizeof(u32)) + value_size,
 					&rmsg, &rmsg_handle);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (rmsg->h.type != MMAL_MSG_TYPE_PORT_PARAMETER_SET) अणु
+	if (rmsg->h.type != MMAL_MSG_TYPE_PORT_PARAMETER_SET) {
 		/* got an unexpected message type in reply */
 		ret = -EINVAL;
-		जाओ release_msg;
-	पूर्ण
+		goto release_msg;
+	}
 
 	ret = -rmsg->u.port_parameter_set_reply.status;
 
@@ -1234,57 +1233,57 @@ release_msg:
 release_msg:
 	vchiq_release_message(instance->service_handle, rmsg_handle);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक port_parameter_get(काष्ठा vchiq_mmal_instance *instance,
-			      काष्ठा vchiq_mmal_port *port,
-			      u32 parameter_id, व्योम *value, u32 *value_size)
-अणु
-	पूर्णांक ret;
-	काष्ठा mmal_msg m;
-	काष्ठा mmal_msg *rmsg;
-	काष्ठा vchiq_header *rmsg_handle;
+static int port_parameter_get(struct vchiq_mmal_instance *instance,
+			      struct vchiq_mmal_port *port,
+			      u32 parameter_id, void *value, u32 *value_size)
+{
+	int ret;
+	struct mmal_msg m;
+	struct mmal_msg *rmsg;
+	struct vchiq_header *rmsg_handle;
 
 	m.h.type = MMAL_MSG_TYPE_PORT_PARAMETER_GET;
 
 	m.u.port_parameter_get.component_handle = port->component->handle;
 	m.u.port_parameter_get.port_handle = port->handle;
 	m.u.port_parameter_get.id = parameter_id;
-	m.u.port_parameter_get.size = (2 * माप(u32)) + *value_size;
+	m.u.port_parameter_get.size = (2 * sizeof(u32)) + *value_size;
 
 	ret = send_synchronous_mmal_msg(instance, &m,
-					माप(काष्ठा
+					sizeof(struct
 					       mmal_msg_port_parameter_get),
 					&rmsg, &rmsg_handle);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (rmsg->h.type != MMAL_MSG_TYPE_PORT_PARAMETER_GET) अणु
+	if (rmsg->h.type != MMAL_MSG_TYPE_PORT_PARAMETER_GET) {
 		/* got an unexpected message type in reply */
 		pr_err("Incorrect reply type %d\n", rmsg->h.type);
 		ret = -EINVAL;
-		जाओ release_msg;
-	पूर्ण
+		goto release_msg;
+	}
 
 	ret = rmsg->u.port_parameter_get_reply.status;
 
 	/* port_parameter_get_reply.size includes the header,
-	 * whilst *value_size करोesn't.
+	 * whilst *value_size doesn't.
 	 */
-	rmsg->u.port_parameter_get_reply.size -= (2 * माप(u32));
+	rmsg->u.port_parameter_get_reply.size -= (2 * sizeof(u32));
 
-	अगर (ret || rmsg->u.port_parameter_get_reply.size > *value_size) अणु
-		/* Copy only as much as we have space क्रम
+	if (ret || rmsg->u.port_parameter_get_reply.size > *value_size) {
+		/* Copy only as much as we have space for
 		 * but report true size of parameter
 		 */
-		स_नकल(value, &rmsg->u.port_parameter_get_reply.value,
+		memcpy(value, &rmsg->u.port_parameter_get_reply.value,
 		       *value_size);
-	पूर्ण अन्यथा अणु
-		स_नकल(value, &rmsg->u.port_parameter_get_reply.value,
+	} else {
+		memcpy(value, &rmsg->u.port_parameter_get_reply.value,
 		       rmsg->u.port_parameter_get_reply.size);
-	पूर्ण
-	/* Always report the size of the वापसed parameter to the caller */
+	}
+	/* Always report the size of the returned parameter to the caller */
 	*value_size = rmsg->u.port_parameter_get_reply.size;
 
 	pr_debug("%s:result:%d component:0x%x port:%d parameter:%d\n", __func__,
@@ -1293,182 +1292,182 @@ release_msg:
 release_msg:
 	vchiq_release_message(instance->service_handle, rmsg_handle);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* disables a port and drains buffers from it */
-अटल पूर्णांक port_disable(काष्ठा vchiq_mmal_instance *instance,
-			काष्ठा vchiq_mmal_port *port)
-अणु
-	पूर्णांक ret;
-	काष्ठा list_head *q, *buf_head;
-	अचिन्हित दीर्घ flags = 0;
+static int port_disable(struct vchiq_mmal_instance *instance,
+			struct vchiq_mmal_port *port)
+{
+	int ret;
+	struct list_head *q, *buf_head;
+	unsigned long flags = 0;
 
-	अगर (!port->enabled)
-		वापस 0;
+	if (!port->enabled)
+		return 0;
 
 	port->enabled = 0;
 
 	ret = port_action_port(instance, port,
 			       MMAL_MSG_PORT_ACTION_TYPE_DISABLE);
-	अगर (ret == 0) अणु
+	if (ret == 0) {
 		/*
 		 * Drain all queued buffers on port. This should only
-		 * apply to buffers that have been queued beक्रमe the port
+		 * apply to buffers that have been queued before the port
 		 * has been enabled. If the port has been enabled and buffers
-		 * passed, then the buffers should have been हटाओd from this
+		 * passed, then the buffers should have been removed from this
 		 * list, and we should get the relevant callbacks via VCHIQ
 		 * to release the buffers.
 		 */
 		spin_lock_irqsave(&port->slock, flags);
 
-		list_क्रम_each_safe(buf_head, q, &port->buffers) अणु
-			काष्ठा mmal_buffer *mmalbuf;
+		list_for_each_safe(buf_head, q, &port->buffers) {
+			struct mmal_buffer *mmalbuf;
 
-			mmalbuf = list_entry(buf_head, काष्ठा mmal_buffer,
+			mmalbuf = list_entry(buf_head, struct mmal_buffer,
 					     list);
 			list_del(buf_head);
-			अगर (port->buffer_cb) अणु
+			if (port->buffer_cb) {
 				mmalbuf->length = 0;
 				mmalbuf->mmal_flags = 0;
 				mmalbuf->dts = MMAL_TIME_UNKNOWN;
 				mmalbuf->pts = MMAL_TIME_UNKNOWN;
 				port->buffer_cb(instance,
 						port, 0, mmalbuf);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		spin_unlock_irqrestore(&port->slock, flags);
 
 		ret = port_info_get(instance, port);
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /* enable a port */
-अटल पूर्णांक port_enable(काष्ठा vchiq_mmal_instance *instance,
-		       काष्ठा vchiq_mmal_port *port)
-अणु
-	अचिन्हित पूर्णांक hdr_count;
-	काष्ठा list_head *q, *buf_head;
-	पूर्णांक ret;
+static int port_enable(struct vchiq_mmal_instance *instance,
+		       struct vchiq_mmal_port *port)
+{
+	unsigned int hdr_count;
+	struct list_head *q, *buf_head;
+	int ret;
 
-	अगर (port->enabled)
-		वापस 0;
+	if (port->enabled)
+		return 0;
 
 	ret = port_action_port(instance, port,
 			       MMAL_MSG_PORT_ACTION_TYPE_ENABLE);
-	अगर (ret)
-		जाओ करोne;
+	if (ret)
+		goto done;
 
 	port->enabled = 1;
 
-	अगर (port->buffer_cb) अणु
+	if (port->buffer_cb) {
 		/* send buffer headers to videocore */
 		hdr_count = 1;
-		list_क्रम_each_safe(buf_head, q, &port->buffers) अणु
-			काष्ठा mmal_buffer *mmalbuf;
+		list_for_each_safe(buf_head, q, &port->buffers) {
+			struct mmal_buffer *mmalbuf;
 
-			mmalbuf = list_entry(buf_head, काष्ठा mmal_buffer,
+			mmalbuf = list_entry(buf_head, struct mmal_buffer,
 					     list);
 			ret = buffer_from_host(instance, port, mmalbuf);
-			अगर (ret)
-				जाओ करोne;
+			if (ret)
+				goto done;
 
 			list_del(buf_head);
 			hdr_count++;
-			अगर (hdr_count > port->current_buffer.num)
-				अवरोध;
-		पूर्ण
-	पूर्ण
+			if (hdr_count > port->current_buffer.num)
+				break;
+		}
+	}
 
 	ret = port_info_get(instance, port);
 
-करोne:
-	वापस ret;
-पूर्ण
+done:
+	return ret;
+}
 
 /* ------------------------------------------------------------------
  * Exported API
  *------------------------------------------------------------------
  */
 
-पूर्णांक vchiq_mmal_port_set_क्रमmat(काष्ठा vchiq_mmal_instance *instance,
-			       काष्ठा vchiq_mmal_port *port)
-अणु
-	पूर्णांक ret;
+int vchiq_mmal_port_set_format(struct vchiq_mmal_instance *instance,
+			       struct vchiq_mmal_port *port)
+{
+	int ret;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&instance->vchiq_mutex))
-		वापस -EINTR;
+	if (mutex_lock_interruptible(&instance->vchiq_mutex))
+		return -EINTR;
 
 	ret = port_info_set(instance, port);
-	अगर (ret)
-		जाओ release_unlock;
+	if (ret)
+		goto release_unlock;
 
-	/* पढ़ो what has actually been set */
+	/* read what has actually been set */
 	ret = port_info_get(instance, port);
 
 release_unlock:
 	mutex_unlock(&instance->vchiq_mutex);
 
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL_GPL(vchiq_mmal_port_set_क्रमmat);
+	return ret;
+}
+EXPORT_SYMBOL_GPL(vchiq_mmal_port_set_format);
 
-पूर्णांक vchiq_mmal_port_parameter_set(काष्ठा vchiq_mmal_instance *instance,
-				  काष्ठा vchiq_mmal_port *port,
-				  u32 parameter, व्योम *value, u32 value_size)
-अणु
-	पूर्णांक ret;
+int vchiq_mmal_port_parameter_set(struct vchiq_mmal_instance *instance,
+				  struct vchiq_mmal_port *port,
+				  u32 parameter, void *value, u32 value_size)
+{
+	int ret;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&instance->vchiq_mutex))
-		वापस -EINTR;
+	if (mutex_lock_interruptible(&instance->vchiq_mutex))
+		return -EINTR;
 
 	ret = port_parameter_set(instance, port, parameter, value, value_size);
 
 	mutex_unlock(&instance->vchiq_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(vchiq_mmal_port_parameter_set);
 
-पूर्णांक vchiq_mmal_port_parameter_get(काष्ठा vchiq_mmal_instance *instance,
-				  काष्ठा vchiq_mmal_port *port,
-				  u32 parameter, व्योम *value, u32 *value_size)
-अणु
-	पूर्णांक ret;
+int vchiq_mmal_port_parameter_get(struct vchiq_mmal_instance *instance,
+				  struct vchiq_mmal_port *port,
+				  u32 parameter, void *value, u32 *value_size)
+{
+	int ret;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&instance->vchiq_mutex))
-		वापस -EINTR;
+	if (mutex_lock_interruptible(&instance->vchiq_mutex))
+		return -EINTR;
 
 	ret = port_parameter_get(instance, port, parameter, value, value_size);
 
 	mutex_unlock(&instance->vchiq_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(vchiq_mmal_port_parameter_get);
 
 /* enable a port
  *
- * enables a port and queues buffers क्रम satisfying callbacks अगर we
+ * enables a port and queues buffers for satisfying callbacks if we
  * provide a callback handler
  */
-पूर्णांक vchiq_mmal_port_enable(काष्ठा vchiq_mmal_instance *instance,
-			   काष्ठा vchiq_mmal_port *port,
+int vchiq_mmal_port_enable(struct vchiq_mmal_instance *instance,
+			   struct vchiq_mmal_port *port,
 			   vchiq_mmal_buffer_cb buffer_cb)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&instance->vchiq_mutex))
-		वापस -EINTR;
+	if (mutex_lock_interruptible(&instance->vchiq_mutex))
+		return -EINTR;
 
-	/* alपढ़ोy enabled - noop */
-	अगर (port->enabled) अणु
+	/* already enabled - noop */
+	if (port->enabled) {
 		ret = 0;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	port->buffer_cb = buffer_cb;
 
@@ -1477,76 +1476,76 @@ EXPORT_SYMBOL_GPL(vchiq_mmal_port_parameter_get);
 unlock:
 	mutex_unlock(&instance->vchiq_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(vchiq_mmal_port_enable);
 
-पूर्णांक vchiq_mmal_port_disable(काष्ठा vchiq_mmal_instance *instance,
-			    काष्ठा vchiq_mmal_port *port)
-अणु
-	पूर्णांक ret;
+int vchiq_mmal_port_disable(struct vchiq_mmal_instance *instance,
+			    struct vchiq_mmal_port *port)
+{
+	int ret;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&instance->vchiq_mutex))
-		वापस -EINTR;
+	if (mutex_lock_interruptible(&instance->vchiq_mutex))
+		return -EINTR;
 
-	अगर (!port->enabled) अणु
+	if (!port->enabled) {
 		mutex_unlock(&instance->vchiq_mutex);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	ret = port_disable(instance, port);
 
 	mutex_unlock(&instance->vchiq_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(vchiq_mmal_port_disable);
 
 /* ports will be connected in a tunneled manner so data buffers
  * are not handled by client.
  */
-पूर्णांक vchiq_mmal_port_connect_tunnel(काष्ठा vchiq_mmal_instance *instance,
-				   काष्ठा vchiq_mmal_port *src,
-				   काष्ठा vchiq_mmal_port *dst)
-अणु
-	पूर्णांक ret;
+int vchiq_mmal_port_connect_tunnel(struct vchiq_mmal_instance *instance,
+				   struct vchiq_mmal_port *src,
+				   struct vchiq_mmal_port *dst)
+{
+	int ret;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&instance->vchiq_mutex))
-		वापस -EINTR;
+	if (mutex_lock_interruptible(&instance->vchiq_mutex))
+		return -EINTR;
 
-	/* disconnect ports अगर connected */
-	अगर (src->connected) अणु
+	/* disconnect ports if connected */
+	if (src->connected) {
 		ret = port_disable(instance, src);
-		अगर (ret) अणु
+		if (ret) {
 			pr_err("failed disabling src port(%d)\n", ret);
-			जाओ release_unlock;
-		पूर्ण
+			goto release_unlock;
+		}
 
-		/* करो not need to disable the destination port as they
-		 * are connected and it is करोne स्वतःmatically
+		/* do not need to disable the destination port as they
+		 * are connected and it is done automatically
 		 */
 
 		ret = port_action_handle(instance, src,
 					 MMAL_MSG_PORT_ACTION_TYPE_DISCONNECT,
 					 src->connected->component->handle,
 					 src->connected->handle);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			pr_err("failed disconnecting src port\n");
-			जाओ release_unlock;
-		पूर्ण
+			goto release_unlock;
+		}
 		src->connected->enabled = 0;
-		src->connected = शून्य;
-	पूर्ण
+		src->connected = NULL;
+	}
 
-	अगर (!dst) अणु
-		/* करो not make new connection */
+	if (!dst) {
+		/* do not make new connection */
 		ret = 0;
 		pr_debug("not making new connection\n");
-		जाओ release_unlock;
-	पूर्ण
+		goto release_unlock;
+	}
 
-	/* copy src port क्रमmat to dst */
-	dst->क्रमmat.encoding = src->क्रमmat.encoding;
+	/* copy src port format to dst */
+	dst->format.encoding = src->format.encoding;
 	dst->es.video.width = src->es.video.width;
 	dst->es.video.height = src->es.video.height;
 	dst->es.video.crop.x = src->es.video.crop.x;
@@ -1556,123 +1555,123 @@ EXPORT_SYMBOL_GPL(vchiq_mmal_port_disable);
 	dst->es.video.frame_rate.num = src->es.video.frame_rate.num;
 	dst->es.video.frame_rate.den = src->es.video.frame_rate.den;
 
-	/* set new क्रमmat */
+	/* set new format */
 	ret = port_info_set(instance, dst);
-	अगर (ret) अणु
+	if (ret) {
 		pr_debug("setting port info failed\n");
-		जाओ release_unlock;
-	पूर्ण
+		goto release_unlock;
+	}
 
-	/* पढ़ो what has actually been set */
+	/* read what has actually been set */
 	ret = port_info_get(instance, dst);
-	अगर (ret) अणु
+	if (ret) {
 		pr_debug("read back port info failed\n");
-		जाओ release_unlock;
-	पूर्ण
+		goto release_unlock;
+	}
 
 	/* connect two ports together */
 	ret = port_action_handle(instance, src,
 				 MMAL_MSG_PORT_ACTION_TYPE_CONNECT,
 				 dst->component->handle, dst->handle);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_debug("connecting port %d:%d to %d:%d failed\n",
 			 src->component->handle, src->handle,
 			 dst->component->handle, dst->handle);
-		जाओ release_unlock;
-	पूर्ण
+		goto release_unlock;
+	}
 	src->connected = dst;
 
 release_unlock:
 
 	mutex_unlock(&instance->vchiq_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(vchiq_mmal_port_connect_tunnel);
 
-पूर्णांक vchiq_mmal_submit_buffer(काष्ठा vchiq_mmal_instance *instance,
-			     काष्ठा vchiq_mmal_port *port,
-			     काष्ठा mmal_buffer *buffer)
-अणु
-	अचिन्हित दीर्घ flags = 0;
-	पूर्णांक ret;
+int vchiq_mmal_submit_buffer(struct vchiq_mmal_instance *instance,
+			     struct vchiq_mmal_port *port,
+			     struct mmal_buffer *buffer)
+{
+	unsigned long flags = 0;
+	int ret;
 
 	ret = buffer_from_host(instance, port, buffer);
-	अगर (ret == -EINVAL) अणु
-		/* Port is disabled. Queue क्रम when it is enabled. */
+	if (ret == -EINVAL) {
+		/* Port is disabled. Queue for when it is enabled. */
 		spin_lock_irqsave(&port->slock, flags);
 		list_add_tail(&buffer->list, &port->buffers);
 		spin_unlock_irqrestore(&port->slock, flags);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(vchiq_mmal_submit_buffer);
 
-पूर्णांक mmal_vchi_buffer_init(काष्ठा vchiq_mmal_instance *instance,
-			  काष्ठा mmal_buffer *buf)
-अणु
-	काष्ठा mmal_msg_context *msg_context = get_msg_context(instance);
+int mmal_vchi_buffer_init(struct vchiq_mmal_instance *instance,
+			  struct mmal_buffer *buf)
+{
+	struct mmal_msg_context *msg_context = get_msg_context(instance);
 
-	अगर (IS_ERR(msg_context))
-		वापस (PTR_ERR(msg_context));
+	if (IS_ERR(msg_context))
+		return (PTR_ERR(msg_context));
 
 	buf->msg_context = msg_context;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(mmal_vchi_buffer_init);
 
-पूर्णांक mmal_vchi_buffer_cleanup(काष्ठा mmal_buffer *buf)
-अणु
-	काष्ठा mmal_msg_context *msg_context = buf->msg_context;
+int mmal_vchi_buffer_cleanup(struct mmal_buffer *buf)
+{
+	struct mmal_msg_context *msg_context = buf->msg_context;
 
-	अगर (msg_context)
+	if (msg_context)
 		release_msg_context(msg_context);
-	buf->msg_context = शून्य;
+	buf->msg_context = NULL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL_GPL(mmal_vchi_buffer_cleanup);
 
 /* Initialise a mmal component and its ports
  *
  */
-पूर्णांक vchiq_mmal_component_init(काष्ठा vchiq_mmal_instance *instance,
-			      स्थिर अक्षर *name,
-			      काष्ठा vchiq_mmal_component **component_out)
-अणु
-	पूर्णांक ret;
-	पूर्णांक idx;		/* port index */
-	काष्ठा vchiq_mmal_component *component = शून्य;
+int vchiq_mmal_component_init(struct vchiq_mmal_instance *instance,
+			      const char *name,
+			      struct vchiq_mmal_component **component_out)
+{
+	int ret;
+	int idx;		/* port index */
+	struct vchiq_mmal_component *component = NULL;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&instance->vchiq_mutex))
-		वापस -EINTR;
+	if (mutex_lock_interruptible(&instance->vchiq_mutex))
+		return -EINTR;
 
-	क्रम (idx = 0; idx < VCHIQ_MMAL_MAX_COMPONENTS; idx++) अणु
-		अगर (!instance->component[idx].in_use) अणु
+	for (idx = 0; idx < VCHIQ_MMAL_MAX_COMPONENTS; idx++) {
+		if (!instance->component[idx].in_use) {
 			component = &instance->component[idx];
 			component->in_use = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!component) अणु
-		ret = -EINVAL;	/* toकरो is this correct error? */
-		जाओ unlock;
-	पूर्ण
+	if (!component) {
+		ret = -EINVAL;	/* todo is this correct error? */
+		goto unlock;
+	}
 
-	/* We need a handle to reference back to our component काष्ठाure.
+	/* We need a handle to reference back to our component structure.
 	 * Use the array index in instance->component rather than rolling
 	 * another IDR.
 	 */
 	component->client_component = idx;
 
 	ret = create_component(instance, component, name);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_err("%s: failed to create component %d (Not enough GPU mem?)\n",
 		       __func__, ret);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	/* ports info needs gathering */
 	component->control.type = MMAL_PORT_TYPE_CONTROL;
@@ -1681,71 +1680,71 @@ EXPORT_SYMBOL_GPL(mmal_vchi_buffer_cleanup);
 	spin_lock_init(&component->control.slock);
 	INIT_LIST_HEAD(&component->control.buffers);
 	ret = port_info_get(instance, &component->control);
-	अगर (ret < 0)
-		जाओ release_component;
+	if (ret < 0)
+		goto release_component;
 
-	क्रम (idx = 0; idx < component->inमाला_दो; idx++) अणु
+	for (idx = 0; idx < component->inputs; idx++) {
 		component->input[idx].type = MMAL_PORT_TYPE_INPUT;
 		component->input[idx].index = idx;
 		component->input[idx].component = component;
 		spin_lock_init(&component->input[idx].slock);
 		INIT_LIST_HEAD(&component->input[idx].buffers);
 		ret = port_info_get(instance, &component->input[idx]);
-		अगर (ret < 0)
-			जाओ release_component;
-	पूर्ण
+		if (ret < 0)
+			goto release_component;
+	}
 
-	क्रम (idx = 0; idx < component->outमाला_दो; idx++) अणु
+	for (idx = 0; idx < component->outputs; idx++) {
 		component->output[idx].type = MMAL_PORT_TYPE_OUTPUT;
 		component->output[idx].index = idx;
 		component->output[idx].component = component;
 		spin_lock_init(&component->output[idx].slock);
 		INIT_LIST_HEAD(&component->output[idx].buffers);
 		ret = port_info_get(instance, &component->output[idx]);
-		अगर (ret < 0)
-			जाओ release_component;
-	पूर्ण
+		if (ret < 0)
+			goto release_component;
+	}
 
-	क्रम (idx = 0; idx < component->घड़ीs; idx++) अणु
-		component->घड़ी[idx].type = MMAL_PORT_TYPE_CLOCK;
-		component->घड़ी[idx].index = idx;
-		component->घड़ी[idx].component = component;
-		spin_lock_init(&component->घड़ी[idx].slock);
-		INIT_LIST_HEAD(&component->घड़ी[idx].buffers);
-		ret = port_info_get(instance, &component->घड़ी[idx]);
-		अगर (ret < 0)
-			जाओ release_component;
-	पूर्ण
+	for (idx = 0; idx < component->clocks; idx++) {
+		component->clock[idx].type = MMAL_PORT_TYPE_CLOCK;
+		component->clock[idx].index = idx;
+		component->clock[idx].component = component;
+		spin_lock_init(&component->clock[idx].slock);
+		INIT_LIST_HEAD(&component->clock[idx].buffers);
+		ret = port_info_get(instance, &component->clock[idx]);
+		if (ret < 0)
+			goto release_component;
+	}
 
 	*component_out = component;
 
 	mutex_unlock(&instance->vchiq_mutex);
 
-	वापस 0;
+	return 0;
 
 release_component:
 	destroy_component(instance, component);
 unlock:
-	अगर (component)
+	if (component)
 		component->in_use = 0;
 	mutex_unlock(&instance->vchiq_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(vchiq_mmal_component_init);
 
 /*
  * cause a mmal component to be destroyed
  */
-पूर्णांक vchiq_mmal_component_finalise(काष्ठा vchiq_mmal_instance *instance,
-				  काष्ठा vchiq_mmal_component *component)
-अणु
-	पूर्णांक ret;
+int vchiq_mmal_component_finalise(struct vchiq_mmal_instance *instance,
+				  struct vchiq_mmal_component *component)
+{
+	int ret;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&instance->vchiq_mutex))
-		वापस -EINTR;
+	if (mutex_lock_interruptible(&instance->vchiq_mutex))
+		return -EINTR;
 
-	अगर (component->enabled)
+	if (component->enabled)
 		ret = disable_component(instance, component);
 
 	ret = destroy_component(instance, component);
@@ -1754,162 +1753,162 @@ EXPORT_SYMBOL_GPL(vchiq_mmal_component_init);
 
 	mutex_unlock(&instance->vchiq_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(vchiq_mmal_component_finalise);
 
 /*
  * cause a mmal component to be enabled
  */
-पूर्णांक vchiq_mmal_component_enable(काष्ठा vchiq_mmal_instance *instance,
-				काष्ठा vchiq_mmal_component *component)
-अणु
-	पूर्णांक ret;
+int vchiq_mmal_component_enable(struct vchiq_mmal_instance *instance,
+				struct vchiq_mmal_component *component)
+{
+	int ret;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&instance->vchiq_mutex))
-		वापस -EINTR;
+	if (mutex_lock_interruptible(&instance->vchiq_mutex))
+		return -EINTR;
 
-	अगर (component->enabled) अणु
+	if (component->enabled) {
 		mutex_unlock(&instance->vchiq_mutex);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	ret = enable_component(instance, component);
-	अगर (ret == 0)
+	if (ret == 0)
 		component->enabled = true;
 
 	mutex_unlock(&instance->vchiq_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(vchiq_mmal_component_enable);
 
 /*
  * cause a mmal component to be enabled
  */
-पूर्णांक vchiq_mmal_component_disable(काष्ठा vchiq_mmal_instance *instance,
-				 काष्ठा vchiq_mmal_component *component)
-अणु
-	पूर्णांक ret;
+int vchiq_mmal_component_disable(struct vchiq_mmal_instance *instance,
+				 struct vchiq_mmal_component *component)
+{
+	int ret;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&instance->vchiq_mutex))
-		वापस -EINTR;
+	if (mutex_lock_interruptible(&instance->vchiq_mutex))
+		return -EINTR;
 
-	अगर (!component->enabled) अणु
+	if (!component->enabled) {
 		mutex_unlock(&instance->vchiq_mutex);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	ret = disable_component(instance, component);
-	अगर (ret == 0)
+	if (ret == 0)
 		component->enabled = 0;
 
 	mutex_unlock(&instance->vchiq_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(vchiq_mmal_component_disable);
 
-पूर्णांक vchiq_mmal_version(काष्ठा vchiq_mmal_instance *instance,
+int vchiq_mmal_version(struct vchiq_mmal_instance *instance,
 		       u32 *major_out, u32 *minor_out)
-अणु
-	पूर्णांक ret;
+{
+	int ret;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&instance->vchiq_mutex))
-		वापस -EINTR;
+	if (mutex_lock_interruptible(&instance->vchiq_mutex))
+		return -EINTR;
 
 	ret = get_version(instance, major_out, minor_out);
 
 	mutex_unlock(&instance->vchiq_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 EXPORT_SYMBOL_GPL(vchiq_mmal_version);
 
-पूर्णांक vchiq_mmal_finalise(काष्ठा vchiq_mmal_instance *instance)
-अणु
-	पूर्णांक status = 0;
+int vchiq_mmal_finalise(struct vchiq_mmal_instance *instance)
+{
+	int status = 0;
 
-	अगर (!instance)
-		वापस -EINVAL;
+	if (!instance)
+		return -EINVAL;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&instance->vchiq_mutex))
-		वापस -EINTR;
+	if (mutex_lock_interruptible(&instance->vchiq_mutex))
+		return -EINTR;
 
 	vchiq_use_service(instance->service_handle);
 
-	status = vchiq_बंद_service(instance->service_handle);
-	अगर (status != 0)
+	status = vchiq_close_service(instance->service_handle);
+	if (status != 0)
 		pr_err("mmal-vchiq: VCHIQ close failed\n");
 
 	mutex_unlock(&instance->vchiq_mutex);
 
-	vchiq_shutकरोwn(instance->vchiq_instance);
+	vchiq_shutdown(instance->vchiq_instance);
 	flush_workqueue(instance->bulk_wq);
 	destroy_workqueue(instance->bulk_wq);
 
-	vमुक्त(instance->bulk_scratch);
+	vfree(instance->bulk_scratch);
 
 	idr_destroy(&instance->context_map);
 
-	kमुक्त(instance);
+	kfree(instance);
 
-	वापस status;
-पूर्ण
+	return status;
+}
 EXPORT_SYMBOL_GPL(vchiq_mmal_finalise);
 
-पूर्णांक vchiq_mmal_init(काष्ठा vchiq_mmal_instance **out_instance)
-अणु
-	पूर्णांक status;
-	पूर्णांक err = -ENODEV;
-	काष्ठा vchiq_mmal_instance *instance;
-	अटल काष्ठा vchiq_instance *vchiq_instance;
-	काष्ठा vchiq_service_params_kernel params = अणु
+int vchiq_mmal_init(struct vchiq_mmal_instance **out_instance)
+{
+	int status;
+	int err = -ENODEV;
+	struct vchiq_mmal_instance *instance;
+	static struct vchiq_instance *vchiq_instance;
+	struct vchiq_service_params_kernel params = {
 		.version		= VC_MMAL_VER,
 		.version_min		= VC_MMAL_MIN_VER,
 		.fourcc			= VCHIQ_MAKE_FOURCC('m', 'm', 'a', 'l'),
 		.callback		= service_callback,
-		.userdata		= शून्य,
-	पूर्ण;
+		.userdata		= NULL,
+	};
 
-	/* compile समय checks to ensure काष्ठाure size as they are
+	/* compile time checks to ensure structure size as they are
 	 * directly (de)serialised from memory.
 	 */
 
-	/* ensure the header काष्ठाure has packed to the correct size */
-	BUILD_BUG_ON(माप(काष्ठा mmal_msg_header) != 24);
+	/* ensure the header structure has packed to the correct size */
+	BUILD_BUG_ON(sizeof(struct mmal_msg_header) != 24);
 
-	/* ensure message काष्ठाure करोes not exceed maximum length */
-	BUILD_BUG_ON(माप(काष्ठा mmal_msg) > MMAL_MSG_MAX_SIZE);
+	/* ensure message structure does not exceed maximum length */
+	BUILD_BUG_ON(sizeof(struct mmal_msg) > MMAL_MSG_MAX_SIZE);
 
-	/* mmal port काष्ठा is correct size */
-	BUILD_BUG_ON(माप(काष्ठा mmal_port) != 64);
+	/* mmal port struct is correct size */
+	BUILD_BUG_ON(sizeof(struct mmal_port) != 64);
 
 	/* create a vchi instance */
 	status = vchiq_initialise(&vchiq_instance);
-	अगर (status) अणु
+	if (status) {
 		pr_err("Failed to initialise VCHI instance (status=%d)\n",
 		       status);
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 	status = vchiq_connect(vchiq_instance);
-	अगर (status) अणु
+	if (status) {
 		pr_err("Failed to connect VCHI instance (status=%d)\n", status);
 		err = -EIO;
-		जाओ err_shutकरोwn_vchiq;
-	पूर्ण
+		goto err_shutdown_vchiq;
+	}
 
-	instance = kzalloc(माप(*instance), GFP_KERNEL);
+	instance = kzalloc(sizeof(*instance), GFP_KERNEL);
 
-	अगर (!instance) अणु
+	if (!instance) {
 		err = -ENOMEM;
-		जाओ err_shutकरोwn_vchiq;
-	पूर्ण
+		goto err_shutdown_vchiq;
+	}
 
 	mutex_init(&instance->vchiq_mutex);
 
-	instance->bulk_scratch = vदो_स्मृति(PAGE_SIZE);
+	instance->bulk_scratch = vmalloc(PAGE_SIZE);
 	instance->vchiq_instance = vchiq_instance;
 
 	mutex_init(&instance->context_map_lock);
@@ -1919,33 +1918,33 @@ EXPORT_SYMBOL_GPL(vchiq_mmal_finalise);
 
 	instance->bulk_wq = alloc_ordered_workqueue("mmal-vchiq",
 						    WQ_MEM_RECLAIM);
-	अगर (!instance->bulk_wq)
-		जाओ err_मुक्त;
+	if (!instance->bulk_wq)
+		goto err_free;
 
-	status = vchiq_खोलो_service(vchiq_instance, &params,
+	status = vchiq_open_service(vchiq_instance, &params,
 				    &instance->service_handle);
-	अगर (status) अणु
+	if (status) {
 		pr_err("Failed to open VCHI service connection (status=%d)\n",
 		       status);
-		जाओ err_बंद_services;
-	पूर्ण
+		goto err_close_services;
+	}
 
 	vchiq_release_service(instance->service_handle);
 
 	*out_instance = instance;
 
-	वापस 0;
+	return 0;
 
-err_बंद_services:
-	vchiq_बंद_service(instance->service_handle);
+err_close_services:
+	vchiq_close_service(instance->service_handle);
 	destroy_workqueue(instance->bulk_wq);
-err_मुक्त:
-	vमुक्त(instance->bulk_scratch);
-	kमुक्त(instance);
-err_shutकरोwn_vchiq:
-	vchiq_shutकरोwn(vchiq_instance);
-	वापस err;
-पूर्ण
+err_free:
+	vfree(instance->bulk_scratch);
+	kfree(instance);
+err_shutdown_vchiq:
+	vchiq_shutdown(vchiq_instance);
+	return err;
+}
 EXPORT_SYMBOL_GPL(vchiq_mmal_init);
 
 MODULE_DESCRIPTION("BCM2835 MMAL VCHIQ interface");

@@ -1,53 +1,52 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2020 Intel Corporation
+ * Copyright © 2020 Intel Corporation
  */
 
-#अगर_अघोषित __INTEL_PPS_H__
-#घोषणा __INTEL_PPS_H__
+#ifndef __INTEL_PPS_H__
+#define __INTEL_PPS_H__
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#समावेश "intel_wakeref.h"
+#include "intel_wakeref.h"
 
-काष्ठा drm_i915_निजी;
-काष्ठा पूर्णांकel_connector;
-काष्ठा पूर्णांकel_crtc_state;
-काष्ठा पूर्णांकel_dp;
-काष्ठा पूर्णांकel_encoder;
+struct drm_i915_private;
+struct intel_connector;
+struct intel_crtc_state;
+struct intel_dp;
+struct intel_encoder;
 
-पूर्णांकel_wakeref_t पूर्णांकel_pps_lock(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp);
-पूर्णांकel_wakeref_t पूर्णांकel_pps_unlock(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp, पूर्णांकel_wakeref_t wakeref);
+intel_wakeref_t intel_pps_lock(struct intel_dp *intel_dp);
+intel_wakeref_t intel_pps_unlock(struct intel_dp *intel_dp, intel_wakeref_t wakeref);
 
-#घोषणा with_पूर्णांकel_pps_lock(dp, wf)						\
-	क्रम ((wf) = पूर्णांकel_pps_lock(dp); (wf); (wf) = पूर्णांकel_pps_unlock((dp), (wf)))
+#define with_intel_pps_lock(dp, wf)						\
+	for ((wf) = intel_pps_lock(dp); (wf); (wf) = intel_pps_unlock((dp), (wf)))
 
-व्योम पूर्णांकel_pps_backlight_on(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp);
-व्योम पूर्णांकel_pps_backlight_off(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp);
-व्योम पूर्णांकel_pps_backlight_घातer(काष्ठा पूर्णांकel_connector *connector, bool enable);
+void intel_pps_backlight_on(struct intel_dp *intel_dp);
+void intel_pps_backlight_off(struct intel_dp *intel_dp);
+void intel_pps_backlight_power(struct intel_connector *connector, bool enable);
 
-bool पूर्णांकel_pps_vdd_on_unlocked(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp);
-व्योम पूर्णांकel_pps_vdd_off_unlocked(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp, bool sync);
-व्योम पूर्णांकel_pps_on_unlocked(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp);
-व्योम पूर्णांकel_pps_off_unlocked(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp);
-व्योम पूर्णांकel_pps_check_घातer_unlocked(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp);
+bool intel_pps_vdd_on_unlocked(struct intel_dp *intel_dp);
+void intel_pps_vdd_off_unlocked(struct intel_dp *intel_dp, bool sync);
+void intel_pps_on_unlocked(struct intel_dp *intel_dp);
+void intel_pps_off_unlocked(struct intel_dp *intel_dp);
+void intel_pps_check_power_unlocked(struct intel_dp *intel_dp);
 
-व्योम पूर्णांकel_pps_vdd_on(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp);
-व्योम पूर्णांकel_pps_on(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp);
-व्योम पूर्णांकel_pps_off(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp);
-व्योम पूर्णांकel_pps_vdd_off_sync(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp);
-bool पूर्णांकel_pps_have_घातer(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp);
-व्योम पूर्णांकel_pps_रुको_घातer_cycle(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp);
+void intel_pps_vdd_on(struct intel_dp *intel_dp);
+void intel_pps_on(struct intel_dp *intel_dp);
+void intel_pps_off(struct intel_dp *intel_dp);
+void intel_pps_vdd_off_sync(struct intel_dp *intel_dp);
+bool intel_pps_have_power(struct intel_dp *intel_dp);
+void intel_pps_wait_power_cycle(struct intel_dp *intel_dp);
 
-व्योम पूर्णांकel_pps_init(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp);
-व्योम पूर्णांकel_pps_encoder_reset(काष्ठा पूर्णांकel_dp *पूर्णांकel_dp);
-व्योम पूर्णांकel_pps_reset_all(काष्ठा drm_i915_निजी *i915);
+void intel_pps_init(struct intel_dp *intel_dp);
+void intel_pps_encoder_reset(struct intel_dp *intel_dp);
+void intel_pps_reset_all(struct drm_i915_private *i915);
 
-व्योम vlv_pps_init(काष्ठा पूर्णांकel_encoder *encoder,
-		  स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
+void vlv_pps_init(struct intel_encoder *encoder,
+		  const struct intel_crtc_state *crtc_state);
 
-व्योम पूर्णांकel_pps_unlock_regs_wa(काष्ठा drm_i915_निजी *i915);
-व्योम पूर्णांकel_pps_setup(काष्ठा drm_i915_निजी *i915);
+void intel_pps_unlock_regs_wa(struct drm_i915_private *i915);
+void intel_pps_setup(struct drm_i915_private *i915);
 
-#पूर्ण_अगर /* __INTEL_PPS_H__ */
+#endif /* __INTEL_PPS_H__ */

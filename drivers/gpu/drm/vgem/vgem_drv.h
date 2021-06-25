@@ -1,14 +1,13 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2012 Intel Corporation
- * Copyright तऊ 2014 The Chromium OS Authors
+ * Copyright © 2012 Intel Corporation
+ * Copyright © 2014 The Chromium OS Authors
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -27,37 +26,37 @@
  *
  */
 
-#अगर_अघोषित _VGEM_DRV_H_
-#घोषणा _VGEM_DRV_H_
+#ifndef _VGEM_DRV_H_
+#define _VGEM_DRV_H_
 
-#समावेश <drm/drm_gem.h>
-#समावेश <drm/drm_cache.h>
+#include <drm/drm_gem.h>
+#include <drm/drm_cache.h>
 
-#समावेश <uapi/drm/vgem_drm.h>
+#include <uapi/drm/vgem_drm.h>
 
-काष्ठा vgem_file अणु
-	काष्ठा idr fence_idr;
-	काष्ठा mutex fence_mutex;
-पूर्ण;
+struct vgem_file {
+	struct idr fence_idr;
+	struct mutex fence_mutex;
+};
 
-#घोषणा to_vgem_bo(x) container_of(x, काष्ठा drm_vgem_gem_object, base)
-काष्ठा drm_vgem_gem_object अणु
-	काष्ठा drm_gem_object base;
+#define to_vgem_bo(x) container_of(x, struct drm_vgem_gem_object, base)
+struct drm_vgem_gem_object {
+	struct drm_gem_object base;
 
-	काष्ठा page **pages;
-	अचिन्हित पूर्णांक pages_pin_count;
-	काष्ठा mutex pages_lock;
+	struct page **pages;
+	unsigned int pages_pin_count;
+	struct mutex pages_lock;
 
-	काष्ठा sg_table *table;
-पूर्ण;
+	struct sg_table *table;
+};
 
-पूर्णांक vgem_fence_खोलो(काष्ठा vgem_file *file);
-पूर्णांक vgem_fence_attach_ioctl(काष्ठा drm_device *dev,
-			    व्योम *data,
-			    काष्ठा drm_file *file);
-पूर्णांक vgem_fence_संकेत_ioctl(काष्ठा drm_device *dev,
-			    व्योम *data,
-			    काष्ठा drm_file *file);
-व्योम vgem_fence_बंद(काष्ठा vgem_file *file);
+int vgem_fence_open(struct vgem_file *file);
+int vgem_fence_attach_ioctl(struct drm_device *dev,
+			    void *data,
+			    struct drm_file *file);
+int vgem_fence_signal_ioctl(struct drm_device *dev,
+			    void *data,
+			    struct drm_file *file);
+void vgem_fence_close(struct vgem_file *file);
 
-#पूर्ण_अगर
+#endif

@@ -1,72 +1,71 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright तऊ 2016 Intel Corporation
+ * Copyright © 2016 Intel Corporation
  *
  * Authors:
- *    Rafael Antognolli <rafael.antognolli@पूर्णांकel.com>
- *    Scott  Bauer      <scott.bauer@पूर्णांकel.com>
+ *    Rafael Antognolli <rafael.antognolli@intel.com>
+ *    Scott  Bauer      <scott.bauer@intel.com>
  */
 
-#अगर_अघोषित LINUX_OPAL_H
-#घोषणा LINUX_OPAL_H
+#ifndef LINUX_OPAL_H
+#define LINUX_OPAL_H
 
-#समावेश <uapi/linux/sed-opal.h>
-#समावेश <linux/kernel.h>
+#include <uapi/linux/sed-opal.h>
+#include <linux/kernel.h>
 
-काष्ठा opal_dev;
+struct opal_dev;
 
-प्रकार पूर्णांक (sec_send_recv)(व्योम *data, u16 spsp, u8 secp, व्योम *buffer,
-		माप_प्रकार len, bool send);
+typedef int (sec_send_recv)(void *data, u16 spsp, u8 secp, void *buffer,
+		size_t len, bool send);
 
-#अगर_घोषित CONFIG_BLK_SED_OPAL
-व्योम मुक्त_opal_dev(काष्ठा opal_dev *dev);
-bool opal_unlock_from_suspend(काष्ठा opal_dev *dev);
-काष्ठा opal_dev *init_opal_dev(व्योम *data, sec_send_recv *send_recv);
-पूर्णांक sed_ioctl(काष्ठा opal_dev *dev, अचिन्हित पूर्णांक cmd, व्योम __user *ioctl_ptr);
+#ifdef CONFIG_BLK_SED_OPAL
+void free_opal_dev(struct opal_dev *dev);
+bool opal_unlock_from_suspend(struct opal_dev *dev);
+struct opal_dev *init_opal_dev(void *data, sec_send_recv *send_recv);
+int sed_ioctl(struct opal_dev *dev, unsigned int cmd, void __user *ioctl_ptr);
 
-अटल अंतरभूत bool is_sed_ioctl(अचिन्हित पूर्णांक cmd)
-अणु
-	चयन (cmd) अणु
-	हाल IOC_OPAL_SAVE:
-	हाल IOC_OPAL_LOCK_UNLOCK:
-	हाल IOC_OPAL_TAKE_OWNERSHIP:
-	हाल IOC_OPAL_ACTIVATE_LSP:
-	हाल IOC_OPAL_SET_PW:
-	हाल IOC_OPAL_ACTIVATE_USR:
-	हाल IOC_OPAL_REVERT_TPR:
-	हाल IOC_OPAL_LR_SETUP:
-	हाल IOC_OPAL_ADD_USR_TO_LR:
-	हाल IOC_OPAL_ENABLE_DISABLE_MBR:
-	हाल IOC_OPAL_ERASE_LR:
-	हाल IOC_OPAL_SECURE_ERASE_LR:
-	हाल IOC_OPAL_PSID_REVERT_TPR:
-	हाल IOC_OPAL_MBR_DONE:
-	हाल IOC_OPAL_WRITE_SHADOW_MBR:
-	हाल IOC_OPAL_GENERIC_TABLE_RW:
-		वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
-#अन्यथा
-अटल अंतरभूत व्योम मुक्त_opal_dev(काष्ठा opal_dev *dev)
-अणु
-पूर्ण
+static inline bool is_sed_ioctl(unsigned int cmd)
+{
+	switch (cmd) {
+	case IOC_OPAL_SAVE:
+	case IOC_OPAL_LOCK_UNLOCK:
+	case IOC_OPAL_TAKE_OWNERSHIP:
+	case IOC_OPAL_ACTIVATE_LSP:
+	case IOC_OPAL_SET_PW:
+	case IOC_OPAL_ACTIVATE_USR:
+	case IOC_OPAL_REVERT_TPR:
+	case IOC_OPAL_LR_SETUP:
+	case IOC_OPAL_ADD_USR_TO_LR:
+	case IOC_OPAL_ENABLE_DISABLE_MBR:
+	case IOC_OPAL_ERASE_LR:
+	case IOC_OPAL_SECURE_ERASE_LR:
+	case IOC_OPAL_PSID_REVERT_TPR:
+	case IOC_OPAL_MBR_DONE:
+	case IOC_OPAL_WRITE_SHADOW_MBR:
+	case IOC_OPAL_GENERIC_TABLE_RW:
+		return true;
+	}
+	return false;
+}
+#else
+static inline void free_opal_dev(struct opal_dev *dev)
+{
+}
 
-अटल अंतरभूत bool is_sed_ioctl(अचिन्हित पूर्णांक cmd)
-अणु
-	वापस false;
-पूर्ण
+static inline bool is_sed_ioctl(unsigned int cmd)
+{
+	return false;
+}
 
-अटल अंतरभूत पूर्णांक sed_ioctl(काष्ठा opal_dev *dev, अचिन्हित पूर्णांक cmd,
-			    व्योम __user *ioctl_ptr)
-अणु
-	वापस 0;
-पूर्ण
-अटल अंतरभूत bool opal_unlock_from_suspend(काष्ठा opal_dev *dev)
-अणु
-	वापस false;
-पूर्ण
-#घोषणा init_opal_dev(data, send_recv)		शून्य
-#पूर्ण_अगर /* CONFIG_BLK_SED_OPAL */
-#पूर्ण_अगर /* LINUX_OPAL_H */
+static inline int sed_ioctl(struct opal_dev *dev, unsigned int cmd,
+			    void __user *ioctl_ptr)
+{
+	return 0;
+}
+static inline bool opal_unlock_from_suspend(struct opal_dev *dev)
+{
+	return false;
+}
+#define init_opal_dev(data, send_recv)		NULL
+#endif /* CONFIG_BLK_SED_OPAL */
+#endif /* LINUX_OPAL_H */

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2015 Intel Corporation
+ * Copyright © 2015 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -26,117 +25,117 @@
  * DOC: atomic modeset support
  *
  * The functions here implement the state management and hardware programming
- * dispatch required by the atomic modeset infraकाष्ठाure.
- * See पूर्णांकel_atomic_plane.c क्रम the plane-specअगरic atomic functionality.
+ * dispatch required by the atomic modeset infrastructure.
+ * See intel_atomic_plane.c for the plane-specific atomic functionality.
  */
 
-#समावेश <drm/drm_atomic.h>
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_fourcc.h>
-#समावेश <drm/drm_plane_helper.h>
+#include <drm/drm_atomic.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_plane_helper.h>
 
-#समावेश "intel_atomic.h"
-#समावेश "intel_cdclk.h"
-#समावेश "intel_display_types.h"
-#समावेश "intel_global_state.h"
-#समावेश "intel_hdcp.h"
-#समावेश "intel_psr.h"
-#समावेश "skl_universal_plane.h"
+#include "intel_atomic.h"
+#include "intel_cdclk.h"
+#include "intel_display_types.h"
+#include "intel_global_state.h"
+#include "intel_hdcp.h"
+#include "intel_psr.h"
+#include "skl_universal_plane.h"
 
 /**
- * पूर्णांकel_digital_connector_atomic_get_property - hook क्रम connector->atomic_get_property.
- * @connector: Connector to get the property क्रम.
+ * intel_digital_connector_atomic_get_property - hook for connector->atomic_get_property.
+ * @connector: Connector to get the property for.
  * @state: Connector state to retrieve the property from.
  * @property: Property to retrieve.
- * @val: Return value क्रम the property.
+ * @val: Return value for the property.
  *
- * Returns the atomic property value क्रम a digital connector.
+ * Returns the atomic property value for a digital connector.
  */
-पूर्णांक पूर्णांकel_digital_connector_atomic_get_property(काष्ठा drm_connector *connector,
-						स्थिर काष्ठा drm_connector_state *state,
-						काष्ठा drm_property *property,
+int intel_digital_connector_atomic_get_property(struct drm_connector *connector,
+						const struct drm_connector_state *state,
+						struct drm_property *property,
 						u64 *val)
-अणु
-	काष्ठा drm_device *dev = connector->dev;
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(dev);
-	काष्ठा पूर्णांकel_digital_connector_state *पूर्णांकel_conn_state =
-		to_पूर्णांकel_digital_connector_state(state);
+{
+	struct drm_device *dev = connector->dev;
+	struct drm_i915_private *dev_priv = to_i915(dev);
+	struct intel_digital_connector_state *intel_conn_state =
+		to_intel_digital_connector_state(state);
 
-	अगर (property == dev_priv->क्रमce_audio_property)
-		*val = पूर्णांकel_conn_state->क्रमce_audio;
-	अन्यथा अगर (property == dev_priv->broadcast_rgb_property)
-		*val = पूर्णांकel_conn_state->broadcast_rgb;
-	अन्यथा अणु
+	if (property == dev_priv->force_audio_property)
+		*val = intel_conn_state->force_audio;
+	else if (property == dev_priv->broadcast_rgb_property)
+		*val = intel_conn_state->broadcast_rgb;
+	else {
 		drm_dbg_atomic(&dev_priv->drm,
 			       "Unknown property [PROP:%d:%s]\n",
 			       property->base.id, property->name);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * पूर्णांकel_digital_connector_atomic_set_property - hook क्रम connector->atomic_set_property.
- * @connector: Connector to set the property क्रम.
+ * intel_digital_connector_atomic_set_property - hook for connector->atomic_set_property.
+ * @connector: Connector to set the property for.
  * @state: Connector state to set the property on.
  * @property: Property to set.
- * @val: New value क्रम the property.
+ * @val: New value for the property.
  *
- * Sets the atomic property value क्रम a digital connector.
+ * Sets the atomic property value for a digital connector.
  */
-पूर्णांक पूर्णांकel_digital_connector_atomic_set_property(काष्ठा drm_connector *connector,
-						काष्ठा drm_connector_state *state,
-						काष्ठा drm_property *property,
+int intel_digital_connector_atomic_set_property(struct drm_connector *connector,
+						struct drm_connector_state *state,
+						struct drm_property *property,
 						u64 val)
-अणु
-	काष्ठा drm_device *dev = connector->dev;
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(dev);
-	काष्ठा पूर्णांकel_digital_connector_state *पूर्णांकel_conn_state =
-		to_पूर्णांकel_digital_connector_state(state);
+{
+	struct drm_device *dev = connector->dev;
+	struct drm_i915_private *dev_priv = to_i915(dev);
+	struct intel_digital_connector_state *intel_conn_state =
+		to_intel_digital_connector_state(state);
 
-	अगर (property == dev_priv->क्रमce_audio_property) अणु
-		पूर्णांकel_conn_state->क्रमce_audio = val;
-		वापस 0;
-	पूर्ण
+	if (property == dev_priv->force_audio_property) {
+		intel_conn_state->force_audio = val;
+		return 0;
+	}
 
-	अगर (property == dev_priv->broadcast_rgb_property) अणु
-		पूर्णांकel_conn_state->broadcast_rgb = val;
-		वापस 0;
-	पूर्ण
+	if (property == dev_priv->broadcast_rgb_property) {
+		intel_conn_state->broadcast_rgb = val;
+		return 0;
+	}
 
 	drm_dbg_atomic(&dev_priv->drm, "Unknown property [PROP:%d:%s]\n",
 		       property->base.id, property->name);
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-अटल bool blob_equal(स्थिर काष्ठा drm_property_blob *a,
-		       स्थिर काष्ठा drm_property_blob *b)
-अणु
-	अगर (a && b)
-		वापस a->length == b->length &&
-			!स_भेद(a->data, b->data, a->length);
+static bool blob_equal(const struct drm_property_blob *a,
+		       const struct drm_property_blob *b)
+{
+	if (a && b)
+		return a->length == b->length &&
+			!memcmp(a->data, b->data, a->length);
 
-	वापस !a == !b;
-पूर्ण
+	return !a == !b;
+}
 
-पूर्णांक पूर्णांकel_digital_connector_atomic_check(काष्ठा drm_connector *conn,
-					 काष्ठा drm_atomic_state *state)
-अणु
-	काष्ठा drm_connector_state *new_state =
+int intel_digital_connector_atomic_check(struct drm_connector *conn,
+					 struct drm_atomic_state *state)
+{
+	struct drm_connector_state *new_state =
 		drm_atomic_get_new_connector_state(state, conn);
-	काष्ठा पूर्णांकel_digital_connector_state *new_conn_state =
-		to_पूर्णांकel_digital_connector_state(new_state);
-	काष्ठा drm_connector_state *old_state =
+	struct intel_digital_connector_state *new_conn_state =
+		to_intel_digital_connector_state(new_state);
+	struct drm_connector_state *old_state =
 		drm_atomic_get_old_connector_state(state, conn);
-	काष्ठा पूर्णांकel_digital_connector_state *old_conn_state =
-		to_पूर्णांकel_digital_connector_state(old_state);
-	काष्ठा drm_crtc_state *crtc_state;
+	struct intel_digital_connector_state *old_conn_state =
+		to_intel_digital_connector_state(old_state);
+	struct drm_crtc_state *crtc_state;
 
-	पूर्णांकel_hdcp_atomic_check(conn, old_state, new_state);
+	intel_hdcp_atomic_check(conn, old_state, new_state);
 
-	अगर (!new_state->crtc)
-		वापस 0;
+	if (!new_state->crtc)
+		return 0;
 
 	crtc_state = drm_atomic_get_new_crtc_state(state, new_state->crtc);
 
@@ -144,7 +143,7 @@
 	 * These properties are handled by fastset, and might not end
 	 * up in a modeset.
 	 */
-	अगर (new_conn_state->क्रमce_audio != old_conn_state->क्रमce_audio ||
+	if (new_conn_state->force_audio != old_conn_state->force_audio ||
 	    new_conn_state->broadcast_rgb != old_conn_state->broadcast_rgb ||
 	    new_conn_state->base.colorspace != old_conn_state->base.colorspace ||
 	    new_conn_state->base.picture_aspect_ratio != old_conn_state->base.picture_aspect_ratio ||
@@ -154,92 +153,92 @@
 			old_conn_state->base.hdr_output_metadata))
 		crtc_state->mode_changed = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * पूर्णांकel_digital_connector_duplicate_state - duplicate connector state
+ * intel_digital_connector_duplicate_state - duplicate connector state
  * @connector: digital connector
  *
- * Allocates and वापसs a copy of the connector state (both common and
- * digital connector specअगरic) क्रम the specअगरied connector.
+ * Allocates and returns a copy of the connector state (both common and
+ * digital connector specific) for the specified connector.
  *
- * Returns: The newly allocated connector state, or शून्य on failure.
+ * Returns: The newly allocated connector state, or NULL on failure.
  */
-काष्ठा drm_connector_state *
-पूर्णांकel_digital_connector_duplicate_state(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा पूर्णांकel_digital_connector_state *state;
+struct drm_connector_state *
+intel_digital_connector_duplicate_state(struct drm_connector *connector)
+{
+	struct intel_digital_connector_state *state;
 
-	state = kmemdup(connector->state, माप(*state), GFP_KERNEL);
-	अगर (!state)
-		वापस शून्य;
+	state = kmemdup(connector->state, sizeof(*state), GFP_KERNEL);
+	if (!state)
+		return NULL;
 
 	__drm_atomic_helper_connector_duplicate_state(connector, &state->base);
-	वापस &state->base;
-पूर्ण
+	return &state->base;
+}
 
 /**
- * पूर्णांकel_connector_needs_modeset - check अगर connector needs a modeset
+ * intel_connector_needs_modeset - check if connector needs a modeset
  * @state: the atomic state corresponding to this modeset
  * @connector: the connector
  */
 bool
-पूर्णांकel_connector_needs_modeset(काष्ठा पूर्णांकel_atomic_state *state,
-			      काष्ठा drm_connector *connector)
-अणु
-	स्थिर काष्ठा drm_connector_state *old_conn_state, *new_conn_state;
+intel_connector_needs_modeset(struct intel_atomic_state *state,
+			      struct drm_connector *connector)
+{
+	const struct drm_connector_state *old_conn_state, *new_conn_state;
 
 	old_conn_state = drm_atomic_get_old_connector_state(&state->base, connector);
 	new_conn_state = drm_atomic_get_new_connector_state(&state->base, connector);
 
-	वापस old_conn_state->crtc != new_conn_state->crtc ||
+	return old_conn_state->crtc != new_conn_state->crtc ||
 	       (new_conn_state->crtc &&
 		drm_atomic_crtc_needs_modeset(drm_atomic_get_new_crtc_state(&state->base,
 									    new_conn_state->crtc)));
-पूर्ण
+}
 
-काष्ठा पूर्णांकel_digital_connector_state *
-पूर्णांकel_atomic_get_digital_connector_state(काष्ठा पूर्णांकel_atomic_state *state,
-					 काष्ठा पूर्णांकel_connector *connector)
-अणु
-	काष्ठा drm_connector_state *conn_state;
+struct intel_digital_connector_state *
+intel_atomic_get_digital_connector_state(struct intel_atomic_state *state,
+					 struct intel_connector *connector)
+{
+	struct drm_connector_state *conn_state;
 
 	conn_state = drm_atomic_get_connector_state(&state->base,
 						    &connector->base);
-	अगर (IS_ERR(conn_state))
-		वापस ERR_CAST(conn_state);
+	if (IS_ERR(conn_state))
+		return ERR_CAST(conn_state);
 
-	वापस to_पूर्णांकel_digital_connector_state(conn_state);
-पूर्ण
+	return to_intel_digital_connector_state(conn_state);
+}
 
 /**
- * पूर्णांकel_crtc_duplicate_state - duplicate crtc state
+ * intel_crtc_duplicate_state - duplicate crtc state
  * @crtc: drm crtc
  *
- * Allocates and वापसs a copy of the crtc state (both common and
- * Intel-specअगरic) क्रम the specअगरied crtc.
+ * Allocates and returns a copy of the crtc state (both common and
+ * Intel-specific) for the specified crtc.
  *
- * Returns: The newly allocated crtc state, or शून्य on failure.
+ * Returns: The newly allocated crtc state, or NULL on failure.
  */
-काष्ठा drm_crtc_state *
-पूर्णांकel_crtc_duplicate_state(काष्ठा drm_crtc *crtc)
-अणु
-	स्थिर काष्ठा पूर्णांकel_crtc_state *old_crtc_state = to_पूर्णांकel_crtc_state(crtc->state);
-	काष्ठा पूर्णांकel_crtc_state *crtc_state;
+struct drm_crtc_state *
+intel_crtc_duplicate_state(struct drm_crtc *crtc)
+{
+	const struct intel_crtc_state *old_crtc_state = to_intel_crtc_state(crtc->state);
+	struct intel_crtc_state *crtc_state;
 
-	crtc_state = kmemdup(old_crtc_state, माप(*crtc_state), GFP_KERNEL);
-	अगर (!crtc_state)
-		वापस शून्य;
+	crtc_state = kmemdup(old_crtc_state, sizeof(*crtc_state), GFP_KERNEL);
+	if (!crtc_state)
+		return NULL;
 
 	__drm_atomic_helper_crtc_duplicate_state(crtc, &crtc_state->uapi);
 
 	/* copy color blobs */
-	अगर (crtc_state->hw.degamma_lut)
+	if (crtc_state->hw.degamma_lut)
 		drm_property_blob_get(crtc_state->hw.degamma_lut);
-	अगर (crtc_state->hw.cपंचांग)
-		drm_property_blob_get(crtc_state->hw.cपंचांग);
-	अगर (crtc_state->hw.gamma_lut)
+	if (crtc_state->hw.ctm)
+		drm_property_blob_get(crtc_state->hw.ctm);
+	if (crtc_state->hw.gamma_lut)
 		drm_property_blob_get(crtc_state->hw.gamma_lut);
 
 	crtc_state->update_pipe = false;
@@ -247,167 +246,167 @@ bool
 	crtc_state->disable_cxsr = false;
 	crtc_state->update_wm_pre = false;
 	crtc_state->update_wm_post = false;
-	crtc_state->fअगरo_changed = false;
+	crtc_state->fifo_changed = false;
 	crtc_state->preload_luts = false;
 	crtc_state->inherited = false;
 	crtc_state->wm.need_postvbl_update = false;
 	crtc_state->fb_bits = 0;
 	crtc_state->update_planes = 0;
-	crtc_state->dsb = शून्य;
+	crtc_state->dsb = NULL;
 
-	वापस &crtc_state->uapi;
-पूर्ण
+	return &crtc_state->uapi;
+}
 
-अटल व्योम पूर्णांकel_crtc_put_color_blobs(काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
+static void intel_crtc_put_color_blobs(struct intel_crtc_state *crtc_state)
+{
 	drm_property_blob_put(crtc_state->hw.degamma_lut);
 	drm_property_blob_put(crtc_state->hw.gamma_lut);
-	drm_property_blob_put(crtc_state->hw.cपंचांग);
-पूर्ण
+	drm_property_blob_put(crtc_state->hw.ctm);
+}
 
-व्योम पूर्णांकel_crtc_मुक्त_hw_state(काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
-	पूर्णांकel_crtc_put_color_blobs(crtc_state);
-पूर्ण
+void intel_crtc_free_hw_state(struct intel_crtc_state *crtc_state)
+{
+	intel_crtc_put_color_blobs(crtc_state);
+}
 
-व्योम पूर्णांकel_crtc_copy_color_blobs(काष्ठा पूर्णांकel_crtc_state *crtc_state,
-				 स्थिर काष्ठा पूर्णांकel_crtc_state *from_crtc_state)
-अणु
+void intel_crtc_copy_color_blobs(struct intel_crtc_state *crtc_state,
+				 const struct intel_crtc_state *from_crtc_state)
+{
 	drm_property_replace_blob(&crtc_state->hw.degamma_lut,
 				  from_crtc_state->uapi.degamma_lut);
 	drm_property_replace_blob(&crtc_state->hw.gamma_lut,
 				  from_crtc_state->uapi.gamma_lut);
-	drm_property_replace_blob(&crtc_state->hw.cपंचांग,
-				  from_crtc_state->uapi.cपंचांग);
-पूर्ण
+	drm_property_replace_blob(&crtc_state->hw.ctm,
+				  from_crtc_state->uapi.ctm);
+}
 
 /**
- * पूर्णांकel_crtc_destroy_state - destroy crtc state
+ * intel_crtc_destroy_state - destroy crtc state
  * @crtc: drm crtc
  * @state: the state to destroy
  *
- * Destroys the crtc state (both common and Intel-specअगरic) क्रम the
- * specअगरied crtc.
+ * Destroys the crtc state (both common and Intel-specific) for the
+ * specified crtc.
  */
-व्योम
-पूर्णांकel_crtc_destroy_state(काष्ठा drm_crtc *crtc,
-			 काष्ठा drm_crtc_state *state)
-अणु
-	काष्ठा पूर्णांकel_crtc_state *crtc_state = to_पूर्णांकel_crtc_state(state);
+void
+intel_crtc_destroy_state(struct drm_crtc *crtc,
+			 struct drm_crtc_state *state)
+{
+	struct intel_crtc_state *crtc_state = to_intel_crtc_state(state);
 
 	drm_WARN_ON(crtc->dev, crtc_state->dsb);
 
 	__drm_atomic_helper_crtc_destroy_state(&crtc_state->uapi);
-	पूर्णांकel_crtc_मुक्त_hw_state(crtc_state);
-	kमुक्त(crtc_state);
-पूर्ण
+	intel_crtc_free_hw_state(crtc_state);
+	kfree(crtc_state);
+}
 
-अटल व्योम पूर्णांकel_atomic_setup_scaler(काष्ठा पूर्णांकel_crtc_scaler_state *scaler_state,
-				      पूर्णांक num_scalers_need, काष्ठा पूर्णांकel_crtc *पूर्णांकel_crtc,
-				      स्थिर अक्षर *name, पूर्णांक idx,
-				      काष्ठा पूर्णांकel_plane_state *plane_state,
-				      पूर्णांक *scaler_id)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(पूर्णांकel_crtc->base.dev);
-	पूर्णांक j;
+static void intel_atomic_setup_scaler(struct intel_crtc_scaler_state *scaler_state,
+				      int num_scalers_need, struct intel_crtc *intel_crtc,
+				      const char *name, int idx,
+				      struct intel_plane_state *plane_state,
+				      int *scaler_id)
+{
+	struct drm_i915_private *dev_priv = to_i915(intel_crtc->base.dev);
+	int j;
 	u32 mode;
 
-	अगर (*scaler_id < 0) अणु
-		/* find a मुक्त scaler */
-		क्रम (j = 0; j < पूर्णांकel_crtc->num_scalers; j++) अणु
-			अगर (scaler_state->scalers[j].in_use)
-				जारी;
+	if (*scaler_id < 0) {
+		/* find a free scaler */
+		for (j = 0; j < intel_crtc->num_scalers; j++) {
+			if (scaler_state->scalers[j].in_use)
+				continue;
 
 			*scaler_id = j;
 			scaler_state->scalers[*scaler_id].in_use = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (drm_WARN(&dev_priv->drm, *scaler_id < 0,
+	if (drm_WARN(&dev_priv->drm, *scaler_id < 0,
 		     "Cannot find scaler for %s:%d\n", name, idx))
-		वापस;
+		return;
 
 	/* set scaler mode */
-	अगर (plane_state && plane_state->hw.fb &&
-	    plane_state->hw.fb->क्रमmat->is_yuv &&
-	    plane_state->hw.fb->क्रमmat->num_planes > 1) अणु
-		काष्ठा पूर्णांकel_plane *plane = to_पूर्णांकel_plane(plane_state->uapi.plane);
-		अगर (IS_DISPLAY_VER(dev_priv, 9)) अणु
+	if (plane_state && plane_state->hw.fb &&
+	    plane_state->hw.fb->format->is_yuv &&
+	    plane_state->hw.fb->format->num_planes > 1) {
+		struct intel_plane *plane = to_intel_plane(plane_state->uapi.plane);
+		if (IS_DISPLAY_VER(dev_priv, 9)) {
 			mode = SKL_PS_SCALER_MODE_NV12;
-		पूर्ण अन्यथा अगर (icl_is_hdr_plane(dev_priv, plane->id)) अणु
+		} else if (icl_is_hdr_plane(dev_priv, plane->id)) {
 			/*
-			 * On gen11+'s HDR planes we only use the scaler क्रम
+			 * On gen11+'s HDR planes we only use the scaler for
 			 * scaling. They have a dedicated chroma upsampler, so
-			 * we करोn't need the scaler to upsample the UV plane.
+			 * we don't need the scaler to upsample the UV plane.
 			 */
 			mode = PS_SCALER_MODE_NORMAL;
-		पूर्ण अन्यथा अणु
-			काष्ठा पूर्णांकel_plane *linked =
+		} else {
+			struct intel_plane *linked =
 				plane_state->planar_linked_plane;
 
 			mode = PS_SCALER_MODE_PLANAR;
 
-			अगर (linked)
+			if (linked)
 				mode |= PS_PLANE_Y_SEL(linked->id);
-		पूर्ण
-	पूर्ण अन्यथा अगर (DISPLAY_VER(dev_priv) >= 10) अणु
+		}
+	} else if (DISPLAY_VER(dev_priv) >= 10) {
 		mode = PS_SCALER_MODE_NORMAL;
-	पूर्ण अन्यथा अगर (num_scalers_need == 1 && पूर्णांकel_crtc->num_scalers > 1) अणु
+	} else if (num_scalers_need == 1 && intel_crtc->num_scalers > 1) {
 		/*
 		 * when only 1 scaler is in use on a pipe with 2 scalers
 		 * scaler 0 operates in high quality (HQ) mode.
-		 * In this हाल use scaler 0 to take advantage of HQ mode
+		 * In this case use scaler 0 to take advantage of HQ mode
 		 */
 		scaler_state->scalers[*scaler_id].in_use = 0;
 		*scaler_id = 0;
 		scaler_state->scalers[0].in_use = 1;
 		mode = SKL_PS_SCALER_MODE_HQ;
-	पूर्ण अन्यथा अणु
+	} else {
 		mode = SKL_PS_SCALER_MODE_DYN;
-	पूर्ण
+	}
 
 	drm_dbg_kms(&dev_priv->drm, "Attached scaler id %u.%u to %s:%d\n",
-		    पूर्णांकel_crtc->pipe, *scaler_id, name, idx);
+		    intel_crtc->pipe, *scaler_id, name, idx);
 	scaler_state->scalers[*scaler_id].mode = mode;
-पूर्ण
+}
 
 /**
- * पूर्णांकel_atomic_setup_scalers() - setup scalers क्रम crtc per staged requests
+ * intel_atomic_setup_scalers() - setup scalers for crtc per staged requests
  * @dev_priv: i915 device
- * @पूर्णांकel_crtc: पूर्णांकel crtc
+ * @intel_crtc: intel crtc
  * @crtc_state: incoming crtc_state to validate and setup scalers
  *
- * This function sets up scalers based on staged scaling requests क्रम
+ * This function sets up scalers based on staged scaling requests for
  * a @crtc and its planes. It is called from crtc level check path. If request
  * is a supportable request, it attaches scalers to requested planes and crtc.
  *
- * This function takes पूर्णांकo account the current scaler(s) in use by any planes
+ * This function takes into account the current scaler(s) in use by any planes
  * not being part of this atomic state
  *
  *  Returns:
  *         0 - scalers were setup succesfully
  *         error code - otherwise
  */
-पूर्णांक पूर्णांकel_atomic_setup_scalers(काष्ठा drm_i915_निजी *dev_priv,
-			       काष्ठा पूर्णांकel_crtc *पूर्णांकel_crtc,
-			       काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
-	काष्ठा drm_plane *plane = शून्य;
-	काष्ठा पूर्णांकel_plane *पूर्णांकel_plane;
-	काष्ठा पूर्णांकel_plane_state *plane_state = शून्य;
-	काष्ठा पूर्णांकel_crtc_scaler_state *scaler_state =
+int intel_atomic_setup_scalers(struct drm_i915_private *dev_priv,
+			       struct intel_crtc *intel_crtc,
+			       struct intel_crtc_state *crtc_state)
+{
+	struct drm_plane *plane = NULL;
+	struct intel_plane *intel_plane;
+	struct intel_plane_state *plane_state = NULL;
+	struct intel_crtc_scaler_state *scaler_state =
 		&crtc_state->scaler_state;
-	काष्ठा drm_atomic_state *drm_state = crtc_state->uapi.state;
-	काष्ठा पूर्णांकel_atomic_state *पूर्णांकel_state = to_पूर्णांकel_atomic_state(drm_state);
-	पूर्णांक num_scalers_need;
-	पूर्णांक i;
+	struct drm_atomic_state *drm_state = crtc_state->uapi.state;
+	struct intel_atomic_state *intel_state = to_intel_atomic_state(drm_state);
+	int num_scalers_need;
+	int i;
 
 	num_scalers_need = hweight32(scaler_state->scaler_users);
 
 	/*
 	 * High level flow:
-	 * - staged scaler requests are alपढ़ोy in scaler_state->scaler_users
+	 * - staged scaler requests are already in scaler_state->scaler_users
 	 * - check whether staged scaling requests can be supported
 	 * - add planes using scalers that aren't in current transaction
 	 * - assign scalers to requested users
@@ -417,126 +416,126 @@ bool
 	 *   to crtc in hw
 	 */
 
-	/* fail अगर required scalers > available scalers */
-	अगर (num_scalers_need > पूर्णांकel_crtc->num_scalers)अणु
+	/* fail if required scalers > available scalers */
+	if (num_scalers_need > intel_crtc->num_scalers){
 		drm_dbg_kms(&dev_priv->drm,
 			    "Too many scaling requests %d > %d\n",
-			    num_scalers_need, पूर्णांकel_crtc->num_scalers);
-		वापस -EINVAL;
-	पूर्ण
+			    num_scalers_need, intel_crtc->num_scalers);
+		return -EINVAL;
+	}
 
 	/* walkthrough scaler_users bits and start assigning scalers */
-	क्रम (i = 0; i < माप(scaler_state->scaler_users) * 8; i++) अणु
-		पूर्णांक *scaler_id;
-		स्थिर अक्षर *name;
-		पूर्णांक idx;
+	for (i = 0; i < sizeof(scaler_state->scaler_users) * 8; i++) {
+		int *scaler_id;
+		const char *name;
+		int idx;
 
-		/* skip अगर scaler not required */
-		अगर (!(scaler_state->scaler_users & (1 << i)))
-			जारी;
+		/* skip if scaler not required */
+		if (!(scaler_state->scaler_users & (1 << i)))
+			continue;
 
-		अगर (i == SKL_CRTC_INDEX) अणु
+		if (i == SKL_CRTC_INDEX) {
 			name = "CRTC";
-			idx = पूर्णांकel_crtc->base.base.id;
+			idx = intel_crtc->base.base.id;
 
-			/* panel fitter हाल: assign as a crtc scaler */
+			/* panel fitter case: assign as a crtc scaler */
 			scaler_id = &scaler_state->scaler_id;
-		पूर्ण अन्यथा अणु
+		} else {
 			name = "PLANE";
 
-			/* plane scaler हाल: assign as a plane scaler */
+			/* plane scaler case: assign as a plane scaler */
 			/* find the plane that set the bit as scaler_user */
 			plane = drm_state->planes[i].ptr;
 
 			/*
 			 * to enable/disable hq mode, add planes that are using scaler
-			 * पूर्णांकo this transaction
+			 * into this transaction
 			 */
-			अगर (!plane) अणु
-				काष्ठा drm_plane_state *state;
+			if (!plane) {
+				struct drm_plane_state *state;
 
 				/*
-				 * GLK+ scalers करोn't have a HQ mode so it
+				 * GLK+ scalers don't have a HQ mode so it
 				 * isn't necessary to change between HQ and dyn mode
-				 * on those platक्रमms.
+				 * on those platforms.
 				 */
-				अगर (DISPLAY_VER(dev_priv) >= 10)
-					जारी;
+				if (DISPLAY_VER(dev_priv) >= 10)
+					continue;
 
 				plane = drm_plane_from_index(&dev_priv->drm, i);
 				state = drm_atomic_get_plane_state(drm_state, plane);
-				अगर (IS_ERR(state)) अणु
+				if (IS_ERR(state)) {
 					drm_dbg_kms(&dev_priv->drm,
 						    "Failed to add [PLANE:%d] to drm_state\n",
 						    plane->base.id);
-					वापस PTR_ERR(state);
-				पूर्ण
-			पूर्ण
+					return PTR_ERR(state);
+				}
+			}
 
-			पूर्णांकel_plane = to_पूर्णांकel_plane(plane);
+			intel_plane = to_intel_plane(plane);
 			idx = plane->base.id;
 
-			/* plane on dअगरferent crtc cannot be a scaler user of this crtc */
-			अगर (drm_WARN_ON(&dev_priv->drm,
-					पूर्णांकel_plane->pipe != पूर्णांकel_crtc->pipe))
-				जारी;
+			/* plane on different crtc cannot be a scaler user of this crtc */
+			if (drm_WARN_ON(&dev_priv->drm,
+					intel_plane->pipe != intel_crtc->pipe))
+				continue;
 
-			plane_state = पूर्णांकel_atomic_get_new_plane_state(पूर्णांकel_state,
-								       पूर्णांकel_plane);
+			plane_state = intel_atomic_get_new_plane_state(intel_state,
+								       intel_plane);
 			scaler_id = &plane_state->scaler_id;
-		पूर्ण
+		}
 
-		पूर्णांकel_atomic_setup_scaler(scaler_state, num_scalers_need,
-					  पूर्णांकel_crtc, name, idx,
+		intel_atomic_setup_scaler(scaler_state, num_scalers_need,
+					  intel_crtc, name, idx,
 					  plane_state, scaler_id);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा drm_atomic_state *
-पूर्णांकel_atomic_state_alloc(काष्ठा drm_device *dev)
-अणु
-	काष्ठा पूर्णांकel_atomic_state *state = kzalloc(माप(*state), GFP_KERNEL);
+struct drm_atomic_state *
+intel_atomic_state_alloc(struct drm_device *dev)
+{
+	struct intel_atomic_state *state = kzalloc(sizeof(*state), GFP_KERNEL);
 
-	अगर (!state || drm_atomic_state_init(dev, &state->base) < 0) अणु
-		kमुक्त(state);
-		वापस शून्य;
-	पूर्ण
+	if (!state || drm_atomic_state_init(dev, &state->base) < 0) {
+		kfree(state);
+		return NULL;
+	}
 
-	वापस &state->base;
-पूर्ण
+	return &state->base;
+}
 
-व्योम पूर्णांकel_atomic_state_मुक्त(काष्ठा drm_atomic_state *_state)
-अणु
-	काष्ठा पूर्णांकel_atomic_state *state = to_पूर्णांकel_atomic_state(_state);
+void intel_atomic_state_free(struct drm_atomic_state *_state)
+{
+	struct intel_atomic_state *state = to_intel_atomic_state(_state);
 
-	drm_atomic_state_शेष_release(&state->base);
-	kमुक्त(state->global_objs);
+	drm_atomic_state_default_release(&state->base);
+	kfree(state->global_objs);
 
-	i915_sw_fence_fini(&state->commit_पढ़ोy);
+	i915_sw_fence_fini(&state->commit_ready);
 
-	kमुक्त(state);
-पूर्ण
+	kfree(state);
+}
 
-व्योम पूर्णांकel_atomic_state_clear(काष्ठा drm_atomic_state *s)
-अणु
-	काष्ठा पूर्णांकel_atomic_state *state = to_पूर्णांकel_atomic_state(s);
+void intel_atomic_state_clear(struct drm_atomic_state *s)
+{
+	struct intel_atomic_state *state = to_intel_atomic_state(s);
 
-	drm_atomic_state_शेष_clear(&state->base);
-	पूर्णांकel_atomic_clear_global_state(state);
+	drm_atomic_state_default_clear(&state->base);
+	intel_atomic_clear_global_state(state);
 
 	state->dpll_set = state->modeset = false;
-पूर्ण
+}
 
-काष्ठा पूर्णांकel_crtc_state *
-पूर्णांकel_atomic_get_crtc_state(काष्ठा drm_atomic_state *state,
-			    काष्ठा पूर्णांकel_crtc *crtc)
-अणु
-	काष्ठा drm_crtc_state *crtc_state;
+struct intel_crtc_state *
+intel_atomic_get_crtc_state(struct drm_atomic_state *state,
+			    struct intel_crtc *crtc)
+{
+	struct drm_crtc_state *crtc_state;
 	crtc_state = drm_atomic_get_crtc_state(state, &crtc->base);
-	अगर (IS_ERR(crtc_state))
-		वापस ERR_CAST(crtc_state);
+	if (IS_ERR(crtc_state))
+		return ERR_CAST(crtc_state);
 
-	वापस to_पूर्णांकel_crtc_state(crtc_state);
-पूर्ण
+	return to_intel_crtc_state(crtc_state);
+}

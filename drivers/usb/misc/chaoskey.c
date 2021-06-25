@@ -1,497 +1,496 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * chaoskey - driver क्रम ChaosKey device from Altus Metrum.
+ * chaoskey - driver for ChaosKey device from Altus Metrum.
  *
- * This device provides true अक्रमom numbers using a noise source based
- * on a reverse-biased p-n junction in avalanche अवरोधकरोwn. More
+ * This device provides true random numbers using a noise source based
+ * on a reverse-biased p-n junction in avalanche breakdown. More
  * details can be found at http://chaoskey.org
  *
- * The driver connects to the kernel hardware RNG पूर्णांकerface to provide
- * entropy क्रम /dev/अक्रमom and other kernel activities. It also offers
- * a separate /dev/ entry to allow क्रम direct access to the अक्रमom
+ * The driver connects to the kernel hardware RNG interface to provide
+ * entropy for /dev/random and other kernel activities. It also offers
+ * a separate /dev/ entry to allow for direct access to the random
  * bit stream.
  *
- * Copyright तऊ 2015 Keith Packard <keithp@keithp.com>
+ * Copyright © 2015 Keith Packard <keithp@keithp.com>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/hw_अक्रमom.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/uaccess.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/usb.h>
+#include <linux/wait.h>
+#include <linux/hw_random.h>
+#include <linux/mutex.h>
+#include <linux/uaccess.h>
 
-अटल काष्ठा usb_driver chaoskey_driver;
-अटल काष्ठा usb_class_driver chaoskey_class;
-अटल पूर्णांक chaoskey_rng_पढ़ो(काष्ठा hwrng *rng, व्योम *data,
-			     माप_प्रकार max, bool रुको);
+static struct usb_driver chaoskey_driver;
+static struct usb_class_driver chaoskey_class;
+static int chaoskey_rng_read(struct hwrng *rng, void *data,
+			     size_t max, bool wait);
 
-#घोषणा usb_dbg(usb_अगर, क्रमmat, arg...) \
-	dev_dbg(&(usb_अगर)->dev, क्रमmat, ## arg)
+#define usb_dbg(usb_if, format, arg...) \
+	dev_dbg(&(usb_if)->dev, format, ## arg)
 
-#घोषणा usb_err(usb_अगर, क्रमmat, arg...) \
-	dev_err(&(usb_अगर)->dev, क्रमmat, ## arg)
+#define usb_err(usb_if, format, arg...) \
+	dev_err(&(usb_if)->dev, format, ## arg)
 
-/* Version Inक्रमmation */
-#घोषणा DRIVER_AUTHOR	"Keith Packard, keithp@keithp.com"
-#घोषणा DRIVER_DESC	"Altus Metrum ChaosKey driver"
-#घोषणा DRIVER_SHORT	"chaoskey"
+/* Version Information */
+#define DRIVER_AUTHOR	"Keith Packard, keithp@keithp.com"
+#define DRIVER_DESC	"Altus Metrum ChaosKey driver"
+#define DRIVER_SHORT	"chaoskey"
 
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);
 MODULE_LICENSE("GPL");
 
-#घोषणा CHAOSKEY_VENDOR_ID	0x1d50	/* OpenMoko */
-#घोषणा CHAOSKEY_PRODUCT_ID	0x60c6	/* ChaosKey */
+#define CHAOSKEY_VENDOR_ID	0x1d50	/* OpenMoko */
+#define CHAOSKEY_PRODUCT_ID	0x60c6	/* ChaosKey */
 
-#घोषणा ALEA_VENDOR_ID		0x12d8	/* Araneus */
-#घोषणा ALEA_PRODUCT_ID		0x0001	/* Alea I */
+#define ALEA_VENDOR_ID		0x12d8	/* Araneus */
+#define ALEA_PRODUCT_ID		0x0001	/* Alea I */
 
-#घोषणा CHAOSKEY_BUF_LEN	64	/* max size of USB full speed packet */
+#define CHAOSKEY_BUF_LEN	64	/* max size of USB full speed packet */
 
-#घोषणा NAK_TIMEOUT (HZ)		/* normal stall/रुको समयout */
-#घोषणा ALEA_FIRST_TIMEOUT (HZ*3)	/* first stall/रुको समयout क्रम Alea */
+#define NAK_TIMEOUT (HZ)		/* normal stall/wait timeout */
+#define ALEA_FIRST_TIMEOUT (HZ*3)	/* first stall/wait timeout for Alea */
 
-#अगर_घोषित CONFIG_USB_DYNAMIC_MINORS
-#घोषणा USB_CHAOSKEY_MINOR_BASE 0
-#अन्यथा
+#ifdef CONFIG_USB_DYNAMIC_MINORS
+#define USB_CHAOSKEY_MINOR_BASE 0
+#else
 
 /* IOWARRIOR_MINOR_BASE + 16, not official yet */
-#घोषणा USB_CHAOSKEY_MINOR_BASE 224
-#पूर्ण_अगर
+#define USB_CHAOSKEY_MINOR_BASE 224
+#endif
 
-अटल स्थिर काष्ठा usb_device_id chaoskey_table[] = अणु
-	अणु USB_DEVICE(CHAOSKEY_VENDOR_ID, CHAOSKEY_PRODUCT_ID) पूर्ण,
-	अणु USB_DEVICE(ALEA_VENDOR_ID, ALEA_PRODUCT_ID) पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct usb_device_id chaoskey_table[] = {
+	{ USB_DEVICE(CHAOSKEY_VENDOR_ID, CHAOSKEY_PRODUCT_ID) },
+	{ USB_DEVICE(ALEA_VENDOR_ID, ALEA_PRODUCT_ID) },
+	{ },
+};
 MODULE_DEVICE_TABLE(usb, chaoskey_table);
 
-अटल व्योम chaos_पढ़ो_callback(काष्ठा urb *urb);
+static void chaos_read_callback(struct urb *urb);
 
-/* Driver-local specअगरic stuff */
-काष्ठा chaoskey अणु
-	काष्ठा usb_पूर्णांकerface *पूर्णांकerface;
-	अक्षर in_ep;
-	काष्ठा mutex lock;
-	काष्ठा mutex rng_lock;
-	पूर्णांक खोलो;			/* खोलो count */
+/* Driver-local specific stuff */
+struct chaoskey {
+	struct usb_interface *interface;
+	char in_ep;
+	struct mutex lock;
+	struct mutex rng_lock;
+	int open;			/* open count */
 	bool present;			/* device not disconnected */
-	bool पढ़ोing;			/* ongoing IO */
-	bool पढ़ोs_started;		/* track first पढ़ो क्रम Alea */
-	पूर्णांक size;			/* size of buf */
-	पूर्णांक valid;			/* bytes of buf पढ़ो */
-	पूर्णांक used;			/* bytes of buf consumed */
-	अक्षर *name;			/* product + serial */
-	काष्ठा hwrng hwrng;		/* Embedded काष्ठा क्रम hwrng */
-	पूर्णांक hwrng_रेजिस्टरed;		/* रेजिस्टरed with hwrng API */
-	रुको_queue_head_t रुको_q;	/* क्रम समयouts */
-	काष्ठा urb *urb;		/* क्रम perक्रमming IO */
-	अक्षर *buf;
-पूर्ण;
+	bool reading;			/* ongoing IO */
+	bool reads_started;		/* track first read for Alea */
+	int size;			/* size of buf */
+	int valid;			/* bytes of buf read */
+	int used;			/* bytes of buf consumed */
+	char *name;			/* product + serial */
+	struct hwrng hwrng;		/* Embedded struct for hwrng */
+	int hwrng_registered;		/* registered with hwrng API */
+	wait_queue_head_t wait_q;	/* for timeouts */
+	struct urb *urb;		/* for performing IO */
+	char *buf;
+};
 
-अटल व्योम chaoskey_मुक्त(काष्ठा chaoskey *dev)
-अणु
-	अगर (dev) अणु
-		usb_dbg(dev->पूर्णांकerface, "free");
-		usb_मुक्त_urb(dev->urb);
-		kमुक्त(dev->name);
-		kमुक्त(dev->buf);
-		usb_put_पूर्णांकf(dev->पूर्णांकerface);
-		kमुक्त(dev);
-	पूर्ण
-पूर्ण
+static void chaoskey_free(struct chaoskey *dev)
+{
+	if (dev) {
+		usb_dbg(dev->interface, "free");
+		usb_free_urb(dev->urb);
+		kfree(dev->name);
+		kfree(dev->buf);
+		usb_put_intf(dev->interface);
+		kfree(dev);
+	}
+}
 
-अटल पूर्णांक chaoskey_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
-			  स्थिर काष्ठा usb_device_id *id)
-अणु
-	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकerface);
-	काष्ठा usb_host_पूर्णांकerface *altsetting = पूर्णांकerface->cur_altsetting;
-	काष्ठा usb_endpoपूर्णांक_descriptor *epd;
-	पूर्णांक in_ep;
-	काष्ठा chaoskey *dev;
-	पूर्णांक result = -ENOMEM;
-	पूर्णांक size;
-	पूर्णांक res;
+static int chaoskey_probe(struct usb_interface *interface,
+			  const struct usb_device_id *id)
+{
+	struct usb_device *udev = interface_to_usbdev(interface);
+	struct usb_host_interface *altsetting = interface->cur_altsetting;
+	struct usb_endpoint_descriptor *epd;
+	int in_ep;
+	struct chaoskey *dev;
+	int result = -ENOMEM;
+	int size;
+	int res;
 
-	usb_dbg(पूर्णांकerface, "probe %s-%s", udev->product, udev->serial);
+	usb_dbg(interface, "probe %s-%s", udev->product, udev->serial);
 
-	/* Find the first bulk IN endpoपूर्णांक and its packet size */
-	res = usb_find_bulk_in_endpoपूर्णांक(altsetting, &epd);
-	अगर (res) अणु
-		usb_dbg(पूर्णांकerface, "no IN endpoint found");
-		वापस res;
-	पूर्ण
+	/* Find the first bulk IN endpoint and its packet size */
+	res = usb_find_bulk_in_endpoint(altsetting, &epd);
+	if (res) {
+		usb_dbg(interface, "no IN endpoint found");
+		return res;
+	}
 
-	in_ep = usb_endpoपूर्णांक_num(epd);
-	size = usb_endpoपूर्णांक_maxp(epd);
+	in_ep = usb_endpoint_num(epd);
+	size = usb_endpoint_maxp(epd);
 
-	/* Validate endpoपूर्णांक and size */
-	अगर (size <= 0) अणु
-		usb_dbg(पूर्णांकerface, "invalid size (%d)", size);
-		वापस -ENODEV;
-	पूर्ण
+	/* Validate endpoint and size */
+	if (size <= 0) {
+		usb_dbg(interface, "invalid size (%d)", size);
+		return -ENODEV;
+	}
 
-	अगर (size > CHAOSKEY_BUF_LEN) अणु
-		usb_dbg(पूर्णांकerface, "size reduced from %d to %d\n",
+	if (size > CHAOSKEY_BUF_LEN) {
+		usb_dbg(interface, "size reduced from %d to %d\n",
 			size, CHAOSKEY_BUF_LEN);
 		size = CHAOSKEY_BUF_LEN;
-	पूर्ण
+	}
 
 	/* Looks good, allocate and initialize */
 
-	dev = kzalloc(माप(काष्ठा chaoskey), GFP_KERNEL);
+	dev = kzalloc(sizeof(struct chaoskey), GFP_KERNEL);
 
-	अगर (dev == शून्य)
-		जाओ out;
+	if (dev == NULL)
+		goto out;
 
-	dev->पूर्णांकerface = usb_get_पूर्णांकf(पूर्णांकerface);
+	dev->interface = usb_get_intf(interface);
 
-	dev->buf = kदो_स्मृति(size, GFP_KERNEL);
+	dev->buf = kmalloc(size, GFP_KERNEL);
 
-	अगर (dev->buf == शून्य)
-		जाओ out;
+	if (dev->buf == NULL)
+		goto out;
 
 	dev->urb = usb_alloc_urb(0, GFP_KERNEL);
 
-	अगर (!dev->urb)
-		जाओ out;
+	if (!dev->urb)
+		goto out;
 
 	usb_fill_bulk_urb(dev->urb,
 		udev,
 		usb_rcvbulkpipe(udev, in_ep),
 		dev->buf,
 		size,
-		chaos_पढ़ो_callback,
+		chaos_read_callback,
 		dev);
 
-	/* Conकाष्ठा a name using the product and serial values. Each
-	 * device needs a unique name क्रम the hwrng code
+	/* Construct a name using the product and serial values. Each
+	 * device needs a unique name for the hwrng code
 	 */
 
-	अगर (udev->product && udev->serial) अणु
-		dev->name = kaप्र_लिखो(GFP_KERNEL, "%s-%s", udev->product,
+	if (udev->product && udev->serial) {
+		dev->name = kasprintf(GFP_KERNEL, "%s-%s", udev->product,
 				      udev->serial);
-		अगर (dev->name == शून्य)
-			जाओ out;
-	पूर्ण
+		if (dev->name == NULL)
+			goto out;
+	}
 
 	dev->in_ep = in_ep;
 
-	अगर (le16_to_cpu(udev->descriptor.idVenकरोr) != ALEA_VENDOR_ID)
-		dev->पढ़ोs_started = true;
+	if (le16_to_cpu(udev->descriptor.idVendor) != ALEA_VENDOR_ID)
+		dev->reads_started = true;
 
 	dev->size = size;
 	dev->present = true;
 
-	init_रुकोqueue_head(&dev->रुको_q);
+	init_waitqueue_head(&dev->wait_q);
 
 	mutex_init(&dev->lock);
 	mutex_init(&dev->rng_lock);
 
-	usb_set_पूर्णांकfdata(पूर्णांकerface, dev);
+	usb_set_intfdata(interface, dev);
 
-	result = usb_रेजिस्टर_dev(पूर्णांकerface, &chaoskey_class);
-	अगर (result) अणु
-		usb_err(पूर्णांकerface, "Unable to allocate minor number.");
-		जाओ out;
-	पूर्ण
+	result = usb_register_dev(interface, &chaoskey_class);
+	if (result) {
+		usb_err(interface, "Unable to allocate minor number.");
+		goto out;
+	}
 
 	dev->hwrng.name = dev->name ? dev->name : chaoskey_driver.name;
-	dev->hwrng.पढ़ो = chaoskey_rng_पढ़ो;
+	dev->hwrng.read = chaoskey_rng_read;
 	dev->hwrng.quality = 1024;
 
-	dev->hwrng_रेजिस्टरed = (hwrng_रेजिस्टर(&dev->hwrng) == 0);
-	अगर (!dev->hwrng_रेजिस्टरed)
-		usb_err(पूर्णांकerface, "Unable to register with hwrng");
+	dev->hwrng_registered = (hwrng_register(&dev->hwrng) == 0);
+	if (!dev->hwrng_registered)
+		usb_err(interface, "Unable to register with hwrng");
 
-	usb_enable_स्वतःsuspend(udev);
+	usb_enable_autosuspend(udev);
 
-	usb_dbg(पूर्णांकerface, "chaoskey probe success, size %d", dev->size);
-	वापस 0;
+	usb_dbg(interface, "chaoskey probe success, size %d", dev->size);
+	return 0;
 
 out:
-	usb_set_पूर्णांकfdata(पूर्णांकerface, शून्य);
-	chaoskey_मुक्त(dev);
-	वापस result;
-पूर्ण
+	usb_set_intfdata(interface, NULL);
+	chaoskey_free(dev);
+	return result;
+}
 
-अटल व्योम chaoskey_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
-अणु
-	काष्ठा chaoskey	*dev;
+static void chaoskey_disconnect(struct usb_interface *interface)
+{
+	struct chaoskey	*dev;
 
-	usb_dbg(पूर्णांकerface, "disconnect");
-	dev = usb_get_पूर्णांकfdata(पूर्णांकerface);
-	अगर (!dev) अणु
-		usb_dbg(पूर्णांकerface, "disconnect failed - no dev");
-		वापस;
-	पूर्ण
+	usb_dbg(interface, "disconnect");
+	dev = usb_get_intfdata(interface);
+	if (!dev) {
+		usb_dbg(interface, "disconnect failed - no dev");
+		return;
+	}
 
-	अगर (dev->hwrng_रेजिस्टरed)
-		hwrng_unरेजिस्टर(&dev->hwrng);
+	if (dev->hwrng_registered)
+		hwrng_unregister(&dev->hwrng);
 
-	usb_deरेजिस्टर_dev(पूर्णांकerface, &chaoskey_class);
+	usb_deregister_dev(interface, &chaoskey_class);
 
-	usb_set_पूर्णांकfdata(पूर्णांकerface, शून्य);
+	usb_set_intfdata(interface, NULL);
 	mutex_lock(&dev->lock);
 
 	dev->present = false;
 	usb_poison_urb(dev->urb);
 
-	अगर (!dev->खोलो) अणु
+	if (!dev->open) {
 		mutex_unlock(&dev->lock);
-		chaoskey_मुक्त(dev);
-	पूर्ण अन्यथा
+		chaoskey_free(dev);
+	} else
 		mutex_unlock(&dev->lock);
 
-	usb_dbg(पूर्णांकerface, "disconnect done");
-पूर्ण
+	usb_dbg(interface, "disconnect done");
+}
 
-अटल पूर्णांक chaoskey_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा chaoskey *dev;
-	काष्ठा usb_पूर्णांकerface *पूर्णांकerface;
+static int chaoskey_open(struct inode *inode, struct file *file)
+{
+	struct chaoskey *dev;
+	struct usb_interface *interface;
 
-	/* get the पूर्णांकerface from minor number and driver inक्रमmation */
-	पूर्णांकerface = usb_find_पूर्णांकerface(&chaoskey_driver, iminor(inode));
-	अगर (!पूर्णांकerface)
-		वापस -ENODEV;
+	/* get the interface from minor number and driver information */
+	interface = usb_find_interface(&chaoskey_driver, iminor(inode));
+	if (!interface)
+		return -ENODEV;
 
-	usb_dbg(पूर्णांकerface, "open");
+	usb_dbg(interface, "open");
 
-	dev = usb_get_पूर्णांकfdata(पूर्णांकerface);
-	अगर (!dev) अणु
-		usb_dbg(पूर्णांकerface, "open (dev)");
-		वापस -ENODEV;
-	पूर्ण
+	dev = usb_get_intfdata(interface);
+	if (!dev) {
+		usb_dbg(interface, "open (dev)");
+		return -ENODEV;
+	}
 
-	file->निजी_data = dev;
+	file->private_data = dev;
 	mutex_lock(&dev->lock);
-	++dev->खोलो;
+	++dev->open;
 	mutex_unlock(&dev->lock);
 
-	usb_dbg(पूर्णांकerface, "open success");
-	वापस 0;
-पूर्ण
+	usb_dbg(interface, "open success");
+	return 0;
+}
 
-अटल पूर्णांक chaoskey_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा chaoskey *dev = file->निजी_data;
-	काष्ठा usb_पूर्णांकerface *पूर्णांकerface;
+static int chaoskey_release(struct inode *inode, struct file *file)
+{
+	struct chaoskey *dev = file->private_data;
+	struct usb_interface *interface;
 
-	अगर (dev == शून्य)
-		वापस -ENODEV;
+	if (dev == NULL)
+		return -ENODEV;
 
-	पूर्णांकerface = dev->पूर्णांकerface;
+	interface = dev->interface;
 
-	usb_dbg(पूर्णांकerface, "release");
+	usb_dbg(interface, "release");
 
 	mutex_lock(&dev->lock);
 
-	usb_dbg(पूर्णांकerface, "open count at release is %d", dev->खोलो);
+	usb_dbg(interface, "open count at release is %d", dev->open);
 
-	अगर (dev->खोलो <= 0) अणु
-		usb_dbg(पूर्णांकerface, "invalid open count (%d)", dev->खोलो);
+	if (dev->open <= 0) {
+		usb_dbg(interface, "invalid open count (%d)", dev->open);
 		mutex_unlock(&dev->lock);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	--dev->खोलो;
+	--dev->open;
 
-	अगर (!dev->present) अणु
-		अगर (dev->खोलो == 0) अणु
+	if (!dev->present) {
+		if (dev->open == 0) {
 			mutex_unlock(&dev->lock);
-			chaoskey_मुक्त(dev);
-		पूर्ण अन्यथा
+			chaoskey_free(dev);
+		} else
 			mutex_unlock(&dev->lock);
-	पूर्ण अन्यथा
+	} else
 		mutex_unlock(&dev->lock);
 
-	usb_dbg(पूर्णांकerface, "release success");
-	वापस 0;
-पूर्ण
+	usb_dbg(interface, "release success");
+	return 0;
+}
 
-अटल व्योम chaos_पढ़ो_callback(काष्ठा urb *urb)
-अणु
-	काष्ठा chaoskey *dev = urb->context;
-	पूर्णांक status = urb->status;
+static void chaos_read_callback(struct urb *urb)
+{
+	struct chaoskey *dev = urb->context;
+	int status = urb->status;
 
-	usb_dbg(dev->पूर्णांकerface, "callback status (%d)", status);
+	usb_dbg(dev->interface, "callback status (%d)", status);
 
-	अगर (status == 0)
+	if (status == 0)
 		dev->valid = urb->actual_length;
-	अन्यथा
+	else
 		dev->valid = 0;
 
 	dev->used = 0;
 
-	/* must be seen first beक्रमe validity is announced */
+	/* must be seen first before validity is announced */
 	smp_wmb();
 
-	dev->पढ़ोing = false;
-	wake_up(&dev->रुको_q);
-पूर्ण
+	dev->reading = false;
+	wake_up(&dev->wait_q);
+}
 
 /* Fill the buffer. Called with dev->lock held
  */
-अटल पूर्णांक _chaoskey_fill(काष्ठा chaoskey *dev)
-अणु
-	DEFINE_WAIT(रुको);
-	पूर्णांक result;
+static int _chaoskey_fill(struct chaoskey *dev)
+{
+	DEFINE_WAIT(wait);
+	int result;
 	bool started;
 
-	usb_dbg(dev->पूर्णांकerface, "fill");
+	usb_dbg(dev->interface, "fill");
 
-	/* Return immediately अगर someone called beक्रमe the buffer was
+	/* Return immediately if someone called before the buffer was
 	 * empty */
-	अगर (dev->valid != dev->used) अणु
-		usb_dbg(dev->पूर्णांकerface, "not empty yet (valid %d used %d)",
+	if (dev->valid != dev->used) {
+		usb_dbg(dev->interface, "not empty yet (valid %d used %d)",
 			dev->valid, dev->used);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* Bail अगर the device has been हटाओd */
-	अगर (!dev->present) अणु
-		usb_dbg(dev->पूर्णांकerface, "device not present");
-		वापस -ENODEV;
-	पूर्ण
+	/* Bail if the device has been removed */
+	if (!dev->present) {
+		usb_dbg(dev->interface, "device not present");
+		return -ENODEV;
+	}
 
 	/* Make sure the device is awake */
-	result = usb_स्वतःpm_get_पूर्णांकerface(dev->पूर्णांकerface);
-	अगर (result) अणु
-		usb_dbg(dev->पूर्णांकerface, "wakeup failed (result %d)", result);
-		वापस result;
-	पूर्ण
+	result = usb_autopm_get_interface(dev->interface);
+	if (result) {
+		usb_dbg(dev->interface, "wakeup failed (result %d)", result);
+		return result;
+	}
 
-	dev->पढ़ोing = true;
+	dev->reading = true;
 	result = usb_submit_urb(dev->urb, GFP_KERNEL);
-	अगर (result < 0) अणु
+	if (result < 0) {
 		result = usb_translate_errors(result);
-		dev->पढ़ोing = false;
-		जाओ out;
-	पूर्ण
+		dev->reading = false;
+		goto out;
+	}
 
-	/* The first पढ़ो on the Alea takes a little under 2 seconds.
-	 * Reads after the first पढ़ो take only a few microseconds
+	/* The first read on the Alea takes a little under 2 seconds.
+	 * Reads after the first read take only a few microseconds
 	 * though.  Presumably the entropy-generating circuit needs
-	 * समय to ramp up.  So, we रुको दीर्घer on the first पढ़ो.
+	 * time to ramp up.  So, we wait longer on the first read.
 	 */
-	started = dev->पढ़ोs_started;
-	dev->पढ़ोs_started = true;
-	result = रुको_event_पूर्णांकerruptible_समयout(
-		dev->रुको_q,
-		!dev->पढ़ोing,
+	started = dev->reads_started;
+	dev->reads_started = true;
+	result = wait_event_interruptible_timeout(
+		dev->wait_q,
+		!dev->reading,
 		(started ? NAK_TIMEOUT : ALEA_FIRST_TIMEOUT) );
 
-	अगर (result < 0) अणु
-		usb_समाप्त_urb(dev->urb);
-		जाओ out;
-	पूर्ण
+	if (result < 0) {
+		usb_kill_urb(dev->urb);
+		goto out;
+	}
 
-	अगर (result == 0) अणु
+	if (result == 0) {
 		result = -ETIMEDOUT;
-		usb_समाप्त_urb(dev->urb);
-	पूर्ण अन्यथा अणु
+		usb_kill_urb(dev->urb);
+	} else {
 		result = dev->valid;
-	पूर्ण
+	}
 out:
 	/* Let the device go back to sleep eventually */
-	usb_स्वतःpm_put_पूर्णांकerface(dev->पूर्णांकerface);
+	usb_autopm_put_interface(dev->interface);
 
-	usb_dbg(dev->पूर्णांकerface, "read %d bytes", dev->valid);
+	usb_dbg(dev->interface, "read %d bytes", dev->valid);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल sमाप_प्रकार chaoskey_पढ़ो(काष्ठा file *file,
-			     अक्षर __user *buffer,
-			     माप_प्रकार count,
+static ssize_t chaoskey_read(struct file *file,
+			     char __user *buffer,
+			     size_t count,
 			     loff_t *ppos)
-अणु
-	काष्ठा chaoskey *dev;
-	sमाप_प्रकार पढ़ो_count = 0;
-	पूर्णांक this_समय;
-	पूर्णांक result = 0;
-	अचिन्हित दीर्घ reमुख्य;
+{
+	struct chaoskey *dev;
+	ssize_t read_count = 0;
+	int this_time;
+	int result = 0;
+	unsigned long remain;
 
-	dev = file->निजी_data;
+	dev = file->private_data;
 
-	अगर (dev == शून्य || !dev->present)
-		वापस -ENODEV;
+	if (dev == NULL || !dev->present)
+		return -ENODEV;
 
-	usb_dbg(dev->पूर्णांकerface, "read %zu", count);
+	usb_dbg(dev->interface, "read %zu", count);
 
-	जबतक (count > 0) अणु
+	while (count > 0) {
 
-		/* Grab the rng_lock briefly to ensure that the hwrng पूर्णांकerface
-		 * माला_लो priority over other user access
+		/* Grab the rng_lock briefly to ensure that the hwrng interface
+		 * gets priority over other user access
 		 */
-		result = mutex_lock_पूर्णांकerruptible(&dev->rng_lock);
-		अगर (result)
-			जाओ bail;
+		result = mutex_lock_interruptible(&dev->rng_lock);
+		if (result)
+			goto bail;
 		mutex_unlock(&dev->rng_lock);
 
-		result = mutex_lock_पूर्णांकerruptible(&dev->lock);
-		अगर (result)
-			जाओ bail;
-		अगर (dev->valid == dev->used) अणु
+		result = mutex_lock_interruptible(&dev->lock);
+		if (result)
+			goto bail;
+		if (dev->valid == dev->used) {
 			result = _chaoskey_fill(dev);
-			अगर (result < 0) अणु
+			if (result < 0) {
 				mutex_unlock(&dev->lock);
-				जाओ bail;
-			पूर्ण
-		पूर्ण
+				goto bail;
+			}
+		}
 
-		this_समय = dev->valid - dev->used;
-		अगर (this_समय > count)
-			this_समय = count;
+		this_time = dev->valid - dev->used;
+		if (this_time > count)
+			this_time = count;
 
-		reमुख्य = copy_to_user(buffer, dev->buf + dev->used, this_समय);
-		अगर (reमुख्य) अणु
+		remain = copy_to_user(buffer, dev->buf + dev->used, this_time);
+		if (remain) {
 			result = -EFAULT;
 
-			/* Consume the bytes that were copied so we करोn't leak
+			/* Consume the bytes that were copied so we don't leak
 			 * data to user space
 			 */
-			dev->used += this_समय - reमुख्य;
+			dev->used += this_time - remain;
 			mutex_unlock(&dev->lock);
-			जाओ bail;
-		पूर्ण
+			goto bail;
+		}
 
-		count -= this_समय;
-		पढ़ो_count += this_समय;
-		buffer += this_समय;
-		dev->used += this_समय;
+		count -= this_time;
+		read_count += this_time;
+		buffer += this_time;
+		dev->used += this_time;
 		mutex_unlock(&dev->lock);
-	पूर्ण
+	}
 bail:
-	अगर (पढ़ो_count) अणु
-		usb_dbg(dev->पूर्णांकerface, "read %zu bytes", पढ़ो_count);
-		वापस पढ़ो_count;
-	पूर्ण
-	usb_dbg(dev->पूर्णांकerface, "empty read, result %d", result);
-	अगर (result == -ETIMEDOUT)
+	if (read_count) {
+		usb_dbg(dev->interface, "read %zu bytes", read_count);
+		return read_count;
+	}
+	usb_dbg(dev->interface, "empty read, result %d", result);
+	if (result == -ETIMEDOUT)
 		result = -EAGAIN;
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल पूर्णांक chaoskey_rng_पढ़ो(काष्ठा hwrng *rng, व्योम *data,
-			     माप_प्रकार max, bool रुको)
-अणु
-	काष्ठा chaoskey *dev = container_of(rng, काष्ठा chaoskey, hwrng);
-	पूर्णांक this_समय;
+static int chaoskey_rng_read(struct hwrng *rng, void *data,
+			     size_t max, bool wait)
+{
+	struct chaoskey *dev = container_of(rng, struct chaoskey, hwrng);
+	int this_time;
 
-	usb_dbg(dev->पूर्णांकerface, "rng_read max %zu wait %d", max, रुको);
+	usb_dbg(dev->interface, "rng_read max %zu wait %d", max, wait);
 
-	अगर (!dev->present) अणु
-		usb_dbg(dev->पूर्णांकerface, "device not present");
-		वापस 0;
-	पूर्ण
+	if (!dev->present) {
+		usb_dbg(dev->interface, "device not present");
+		return 0;
+	}
 
 	/* Hold the rng_lock until we acquire the device lock so that
-	 * this operation माला_लो priority over other user access to the
+	 * this operation gets priority over other user access to the
 	 * device
 	 */
 	mutex_lock(&dev->rng_lock);
@@ -500,77 +499,77 @@ bail:
 
 	mutex_unlock(&dev->rng_lock);
 
-	/* Try to fill the buffer अगर empty. It करोesn't actually matter
-	 * अगर _chaoskey_fill works; we'll just वापस zero bytes as
+	/* Try to fill the buffer if empty. It doesn't actually matter
+	 * if _chaoskey_fill works; we'll just return zero bytes as
 	 * the buffer will still be empty
 	 */
-	अगर (dev->valid == dev->used)
-		(व्योम) _chaoskey_fill(dev);
+	if (dev->valid == dev->used)
+		(void) _chaoskey_fill(dev);
 
-	this_समय = dev->valid - dev->used;
-	अगर (this_समय > max)
-		this_समय = max;
+	this_time = dev->valid - dev->used;
+	if (this_time > max)
+		this_time = max;
 
-	स_नकल(data, dev->buf + dev->used, this_समय);
+	memcpy(data, dev->buf + dev->used, this_time);
 
-	dev->used += this_समय;
+	dev->used += this_time;
 
 	mutex_unlock(&dev->lock);
 
-	usb_dbg(dev->पूर्णांकerface, "rng_read this_time %d\n", this_समय);
-	वापस this_समय;
-पूर्ण
+	usb_dbg(dev->interface, "rng_read this_time %d\n", this_time);
+	return this_time;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक chaoskey_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
+#ifdef CONFIG_PM
+static int chaoskey_suspend(struct usb_interface *interface,
 			    pm_message_t message)
-अणु
-	usb_dbg(पूर्णांकerface, "suspend");
-	वापस 0;
-पूर्ण
+{
+	usb_dbg(interface, "suspend");
+	return 0;
+}
 
-अटल पूर्णांक chaoskey_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकerface)
-अणु
-	काष्ठा chaoskey *dev;
-	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकerface);
+static int chaoskey_resume(struct usb_interface *interface)
+{
+	struct chaoskey *dev;
+	struct usb_device *udev = interface_to_usbdev(interface);
 
-	usb_dbg(पूर्णांकerface, "resume");
-	dev = usb_get_पूर्णांकfdata(पूर्णांकerface);
+	usb_dbg(interface, "resume");
+	dev = usb_get_intfdata(interface);
 
 	/*
-	 * We may have lost घातer.
-	 * In that हाल the device that needs a दीर्घ समय
-	 * क्रम the first requests needs an extended समयout
+	 * We may have lost power.
+	 * In that case the device that needs a long time
+	 * for the first requests needs an extended timeout
 	 * again
 	 */
-	अगर (le16_to_cpu(udev->descriptor.idVenकरोr) == ALEA_VENDOR_ID)
-		dev->पढ़ोs_started = false;
+	if (le16_to_cpu(udev->descriptor.idVendor) == ALEA_VENDOR_ID)
+		dev->reads_started = false;
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा chaoskey_suspend शून्य
-#घोषणा chaoskey_resume शून्य
-#पूर्ण_अगर
+	return 0;
+}
+#else
+#define chaoskey_suspend NULL
+#define chaoskey_resume NULL
+#endif
 
-/* file operation poपूर्णांकers */
-अटल स्थिर काष्ठा file_operations chaoskey_fops = अणु
+/* file operation pointers */
+static const struct file_operations chaoskey_fops = {
 	.owner = THIS_MODULE,
-	.पढ़ो = chaoskey_पढ़ो,
-	.खोलो = chaoskey_खोलो,
+	.read = chaoskey_read,
+	.open = chaoskey_open,
 	.release = chaoskey_release,
-	.llseek = शेष_llseek,
-पूर्ण;
+	.llseek = default_llseek,
+};
 
-/* class driver inक्रमmation */
-अटल काष्ठा usb_class_driver chaoskey_class = अणु
+/* class driver information */
+static struct usb_class_driver chaoskey_class = {
 	.name = "chaoskey%d",
 	.fops = &chaoskey_fops,
 	.minor_base = USB_CHAOSKEY_MINOR_BASE,
-पूर्ण;
+};
 
-/* usb specअगरic object needed to रेजिस्टर this driver with the usb subप्रणाली */
-अटल काष्ठा usb_driver chaoskey_driver = अणु
+/* usb specific object needed to register this driver with the usb subsystem */
+static struct usb_driver chaoskey_driver = {
 	.name = DRIVER_SHORT,
 	.probe = chaoskey_probe,
 	.disconnect = chaoskey_disconnect,
@@ -578,8 +577,8 @@ bail:
 	.resume = chaoskey_resume,
 	.reset_resume = chaoskey_resume,
 	.id_table = chaoskey_table,
-	.supports_स्वतःsuspend = 1,
-पूर्ण;
+	.supports_autosuspend = 1,
+};
 
 module_usb_driver(chaoskey_driver);
 

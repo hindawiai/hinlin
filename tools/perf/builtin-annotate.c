@@ -1,60 +1,59 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * builtin-annotate.c
  *
  * Builtin annotate command: Analyze the perf.data input file,
- * look up and पढ़ो DSOs and symbol inक्रमmation and display
- * a histogram of results, aदीर्घ various sorting keys.
+ * look up and read DSOs and symbol information and display
+ * a histogram of results, along various sorting keys.
  */
-#समावेश "builtin.h"
+#include "builtin.h"
 
-#समावेश "util/color.h"
-#समावेश <linux/list.h>
-#समावेश "util/cache.h"
-#समावेश <linux/rbtree.h>
-#समावेश <linux/zभाग.स>
-#समावेश "util/symbol.h"
+#include "util/color.h"
+#include <linux/list.h>
+#include "util/cache.h"
+#include <linux/rbtree.h>
+#include <linux/zalloc.h>
+#include "util/symbol.h"
 
-#समावेश "perf.h"
-#समावेश "util/debug.h"
+#include "perf.h"
+#include "util/debug.h"
 
-#समावेश "util/evlist.h"
-#समावेश "util/evsel.h"
-#समावेश "util/annotate.h"
-#समावेश "util/event.h"
-#समावेश <subcmd/parse-options.h>
-#समावेश "util/parse-events.h"
-#समावेश "util/sort.h"
-#समावेश "util/hist.h"
-#समावेश "util/dso.h"
-#समावेश "util/machine.h"
-#समावेश "util/map.h"
-#समावेश "util/session.h"
-#समावेश "util/tool.h"
-#समावेश "util/data.h"
-#समावेश "arch/common.h"
-#समावेश "util/block-range.h"
-#समावेश "util/map_symbol.h"
-#समावेश "util/branch.h"
+#include "util/evlist.h"
+#include "util/evsel.h"
+#include "util/annotate.h"
+#include "util/event.h"
+#include <subcmd/parse-options.h>
+#include "util/parse-events.h"
+#include "util/sort.h"
+#include "util/hist.h"
+#include "util/dso.h"
+#include "util/machine.h"
+#include "util/map.h"
+#include "util/session.h"
+#include "util/tool.h"
+#include "util/data.h"
+#include "arch/common.h"
+#include "util/block-range.h"
+#include "util/map_symbol.h"
+#include "util/branch.h"
 
-#समावेश <dlfcn.h>
-#समावेश <त्रुटिसं.स>
-#समावेश <linux/biपंचांगap.h>
-#समावेश <linux/err.h>
+#include <dlfcn.h>
+#include <errno.h>
+#include <linux/bitmap.h>
+#include <linux/err.h>
 
-काष्ठा perf_annotate अणु
-	काष्ठा perf_tool tool;
-	काष्ठा perf_session *session;
-	काष्ठा annotation_options opts;
+struct perf_annotate {
+	struct perf_tool tool;
+	struct perf_session *session;
+	struct annotation_options opts;
 	bool	   use_tui, use_stdio, use_stdio2, use_gtk;
 	bool	   skip_missing;
 	bool	   has_br_stack;
 	bool	   group_set;
-	स्थिर अक्षर *sym_hist_filter;
-	स्थिर अक्षर *cpu_list;
-	DECLARE_BITMAP(cpu_biपंचांगap, MAX_NR_CPUS);
-पूर्ण;
+	const char *sym_hist_filter;
+	const char *cpu_list;
+	DECLARE_BITMAP(cpu_bitmap, MAX_NR_CPUS);
+};
 
 /*
  * Given one basic block:
@@ -68,430 +67,430 @@
  *		from	to	branch_i+1
  *
  * where the horizontal are the branches and the vertical is the executed
- * block of inकाष्ठाions.
+ * block of instructions.
  *
- * We count, क्रम each 'instruction', the number of blocks that covered it as
+ * We count, for each 'instruction', the number of blocks that covered it as
  * well as count the ratio each branch is taken.
  *
- * We can करो this without knowing the actual inकाष्ठाion stream by keeping
- * track of the address ranges. We अवरोध करोwn ranges such that there is no
+ * We can do this without knowing the actual instruction stream by keeping
+ * track of the address ranges. We break down ranges such that there is no
  * overlap and iterate from the start until the end.
  *
- * @acme: once we parse the objdump output _beक्रमe_ processing the samples,
+ * @acme: once we parse the objdump output _before_ processing the samples,
  * we can easily fold the branch.cycles IPC bits in.
  */
-अटल व्योम process_basic_block(काष्ठा addr_map_symbol *start,
-				काष्ठा addr_map_symbol *end,
-				काष्ठा branch_flags *flags)
-अणु
-	काष्ठा symbol *sym = start->ms.sym;
-	काष्ठा annotation *notes = sym ? symbol__annotation(sym) : शून्य;
-	काष्ठा block_range_iter iter;
-	काष्ठा block_range *entry;
+static void process_basic_block(struct addr_map_symbol *start,
+				struct addr_map_symbol *end,
+				struct branch_flags *flags)
+{
+	struct symbol *sym = start->ms.sym;
+	struct annotation *notes = sym ? symbol__annotation(sym) : NULL;
+	struct block_range_iter iter;
+	struct block_range *entry;
 
 	/*
-	 * Sanity; शून्य isn't executable and the CPU cannot execute backwards
+	 * Sanity; NULL isn't executable and the CPU cannot execute backwards
 	 */
-	अगर (!start->addr || start->addr > end->addr)
-		वापस;
+	if (!start->addr || start->addr > end->addr)
+		return;
 
 	iter = block_range__create(start->addr, end->addr);
-	अगर (!block_range_iter__valid(&iter))
-		वापस;
+	if (!block_range_iter__valid(&iter))
+		return;
 
 	/*
 	 * First block in range is a branch target.
 	 */
 	entry = block_range_iter(&iter);
-	निश्चित(entry->is_target);
+	assert(entry->is_target);
 	entry->entry++;
 
-	करो अणु
+	do {
 		entry = block_range_iter(&iter);
 
 		entry->coverage++;
 		entry->sym = sym;
 
-		अगर (notes)
+		if (notes)
 			notes->max_coverage = max(notes->max_coverage, entry->coverage);
 
-	पूर्ण जबतक (block_range_iter__next(&iter));
+	} while (block_range_iter__next(&iter));
 
 	/*
 	 * Last block in rage is a branch.
 	 */
 	entry = block_range_iter(&iter);
-	निश्चित(entry->is_branch);
+	assert(entry->is_branch);
 	entry->taken++;
-	अगर (flags->predicted)
+	if (flags->predicted)
 		entry->pred++;
-पूर्ण
+}
 
-अटल व्योम process_branch_stack(काष्ठा branch_stack *bs, काष्ठा addr_location *al,
-				 काष्ठा perf_sample *sample)
-अणु
-	काष्ठा addr_map_symbol *prev = शून्य;
-	काष्ठा branch_info *bi;
-	पूर्णांक i;
+static void process_branch_stack(struct branch_stack *bs, struct addr_location *al,
+				 struct perf_sample *sample)
+{
+	struct addr_map_symbol *prev = NULL;
+	struct branch_info *bi;
+	int i;
 
-	अगर (!bs || !bs->nr)
-		वापस;
+	if (!bs || !bs->nr)
+		return;
 
 	bi = sample__resolve_bstack(sample, al);
-	अगर (!bi)
-		वापस;
+	if (!bi)
+		return;
 
-	क्रम (i = bs->nr - 1; i >= 0; i--) अणु
+	for (i = bs->nr - 1; i >= 0; i--) {
 		/*
 		 * XXX filter against symbol
 		 */
-		अगर (prev)
+		if (prev)
 			process_basic_block(prev, &bi[i].from, &bi[i].flags);
 		prev = &bi[i].to;
-	पूर्ण
+	}
 
-	मुक्त(bi);
-पूर्ण
+	free(bi);
+}
 
-अटल पूर्णांक hist_iter__branch_callback(काष्ठा hist_entry_iter *iter,
-				      काष्ठा addr_location *al __maybe_unused,
+static int hist_iter__branch_callback(struct hist_entry_iter *iter,
+				      struct addr_location *al __maybe_unused,
 				      bool single __maybe_unused,
-				      व्योम *arg __maybe_unused)
-अणु
-	काष्ठा hist_entry *he = iter->he;
-	काष्ठा branch_info *bi;
-	काष्ठा perf_sample *sample = iter->sample;
-	काष्ठा evsel *evsel = iter->evsel;
-	पूर्णांक err;
+				      void *arg __maybe_unused)
+{
+	struct hist_entry *he = iter->he;
+	struct branch_info *bi;
+	struct perf_sample *sample = iter->sample;
+	struct evsel *evsel = iter->evsel;
+	int err;
 
 	bi = he->branch_info;
 	err = addr_map_symbol__inc_samples(&bi->from, sample, evsel);
 
-	अगर (err)
-		जाओ out;
+	if (err)
+		goto out;
 
 	err = addr_map_symbol__inc_samples(&bi->to, sample, evsel);
 
 out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक process_branch_callback(काष्ठा evsel *evsel,
-				   काष्ठा perf_sample *sample,
-				   काष्ठा addr_location *al __maybe_unused,
-				   काष्ठा perf_annotate *ann,
-				   काष्ठा machine *machine)
-अणु
-	काष्ठा hist_entry_iter iter = अणु
+static int process_branch_callback(struct evsel *evsel,
+				   struct perf_sample *sample,
+				   struct addr_location *al __maybe_unused,
+				   struct perf_annotate *ann,
+				   struct machine *machine)
+{
+	struct hist_entry_iter iter = {
 		.evsel		= evsel,
 		.sample		= sample,
 		.add_entry_cb	= hist_iter__branch_callback,
 		.hide_unresolved	= symbol_conf.hide_unresolved,
 		.ops		= &hist_iter_branch,
-	पूर्ण;
+	};
 
-	काष्ठा addr_location a;
-	पूर्णांक ret;
+	struct addr_location a;
+	int ret;
 
-	अगर (machine__resolve(machine, &a, sample) < 0)
-		वापस -1;
+	if (machine__resolve(machine, &a, sample) < 0)
+		return -1;
 
-	अगर (a.sym == शून्य)
-		वापस 0;
+	if (a.sym == NULL)
+		return 0;
 
-	अगर (a.map != शून्य)
+	if (a.map != NULL)
 		a.map->dso->hit = 1;
 
-	hist__account_cycles(sample->branch_stack, al, sample, false, शून्य);
+	hist__account_cycles(sample->branch_stack, al, sample, false, NULL);
 
 	ret = hist_entry_iter__add(&iter, &a, PERF_MAX_STACK_DEPTH, ann);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल bool has_annotation(काष्ठा perf_annotate *ann)
-अणु
-	वापस ui__has_annotation() || ann->use_stdio2;
-पूर्ण
+static bool has_annotation(struct perf_annotate *ann)
+{
+	return ui__has_annotation() || ann->use_stdio2;
+}
 
-अटल पूर्णांक evsel__add_sample(काष्ठा evsel *evsel, काष्ठा perf_sample *sample,
-			     काष्ठा addr_location *al, काष्ठा perf_annotate *ann,
-			     काष्ठा machine *machine)
-अणु
-	काष्ठा hists *hists = evsel__hists(evsel);
-	काष्ठा hist_entry *he;
-	पूर्णांक ret;
+static int evsel__add_sample(struct evsel *evsel, struct perf_sample *sample,
+			     struct addr_location *al, struct perf_annotate *ann,
+			     struct machine *machine)
+{
+	struct hists *hists = evsel__hists(evsel);
+	struct hist_entry *he;
+	int ret;
 
-	अगर ((!ann->has_br_stack || !has_annotation(ann)) &&
-	    ann->sym_hist_filter != शून्य &&
-	    (al->sym == शून्य ||
-	     म_भेद(ann->sym_hist_filter, al->sym->name) != 0)) अणु
-		/* We're only पूर्णांकerested in a symbol named sym_hist_filter */
+	if ((!ann->has_br_stack || !has_annotation(ann)) &&
+	    ann->sym_hist_filter != NULL &&
+	    (al->sym == NULL ||
+	     strcmp(ann->sym_hist_filter, al->sym->name) != 0)) {
+		/* We're only interested in a symbol named sym_hist_filter */
 		/*
-		 * FIXME: why isn't this करोne in the symbol_filter when loading
+		 * FIXME: why isn't this done in the symbol_filter when loading
 		 * the DSO?
 		 */
-		अगर (al->sym != शून्य) अणु
+		if (al->sym != NULL) {
 			rb_erase_cached(&al->sym->rb_node,
 				 &al->map->dso->symbols);
 			symbol__delete(al->sym);
 			dso__reset_find_symbol_cache(al->map->dso);
-		पूर्ण
-		वापस 0;
-	पूर्ण
+		}
+		return 0;
+	}
 
 	/*
-	 * XXX filtered samples can still have branch entries poपूर्णांकing पूर्णांकo our
+	 * XXX filtered samples can still have branch entries pointing into our
 	 * symbol and are missed.
 	 */
 	process_branch_stack(sample->branch_stack, al, sample);
 
-	अगर (ann->has_br_stack && has_annotation(ann))
-		वापस process_branch_callback(evsel, sample, al, ann, machine);
+	if (ann->has_br_stack && has_annotation(ann))
+		return process_branch_callback(evsel, sample, al, ann, machine);
 
-	he = hists__add_entry(hists, al, शून्य, शून्य, शून्य, sample, true);
-	अगर (he == शून्य)
-		वापस -ENOMEM;
+	he = hists__add_entry(hists, al, NULL, NULL, NULL, sample, true);
+	if (he == NULL)
+		return -ENOMEM;
 
 	ret = hist_entry__inc_addr_samples(he, sample, evsel, al->addr);
 	hists__inc_nr_samples(hists, true);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक process_sample_event(काष्ठा perf_tool *tool,
-				जोड़ perf_event *event,
-				काष्ठा perf_sample *sample,
-				काष्ठा evsel *evsel,
-				काष्ठा machine *machine)
-अणु
-	काष्ठा perf_annotate *ann = container_of(tool, काष्ठा perf_annotate, tool);
-	काष्ठा addr_location al;
-	पूर्णांक ret = 0;
+static int process_sample_event(struct perf_tool *tool,
+				union perf_event *event,
+				struct perf_sample *sample,
+				struct evsel *evsel,
+				struct machine *machine)
+{
+	struct perf_annotate *ann = container_of(tool, struct perf_annotate, tool);
+	struct addr_location al;
+	int ret = 0;
 
-	अगर (machine__resolve(machine, &al, sample) < 0) अणु
+	if (machine__resolve(machine, &al, sample) < 0) {
 		pr_warning("problem processing %d event, skipping it.\n",
 			   event->header.type);
-		वापस -1;
-	पूर्ण
+		return -1;
+	}
 
-	अगर (ann->cpu_list && !test_bit(sample->cpu, ann->cpu_biपंचांगap))
-		जाओ out_put;
+	if (ann->cpu_list && !test_bit(sample->cpu, ann->cpu_bitmap))
+		goto out_put;
 
-	अगर (!al.filtered &&
-	    evsel__add_sample(evsel, sample, &al, ann, machine)) अणु
+	if (!al.filtered &&
+	    evsel__add_sample(evsel, sample, &al, ann, machine)) {
 		pr_warning("problem incrementing symbol count, "
 			   "skipping event\n");
 		ret = -1;
-	पूर्ण
+	}
 out_put:
 	addr_location__put(&al);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक process_feature_event(काष्ठा perf_session *session,
-				 जोड़ perf_event *event)
-अणु
-	अगर (event->feat.feat_id < HEADER_LAST_FEATURE)
-		वापस perf_event__process_feature(session, event);
-	वापस 0;
-पूर्ण
+static int process_feature_event(struct perf_session *session,
+				 union perf_event *event)
+{
+	if (event->feat.feat_id < HEADER_LAST_FEATURE)
+		return perf_event__process_feature(session, event);
+	return 0;
+}
 
-अटल पूर्णांक hist_entry__tty_annotate(काष्ठा hist_entry *he,
-				    काष्ठा evsel *evsel,
-				    काष्ठा perf_annotate *ann)
-अणु
-	अगर (!ann->use_stdio2)
-		वापस symbol__tty_annotate(&he->ms, evsel, &ann->opts);
+static int hist_entry__tty_annotate(struct hist_entry *he,
+				    struct evsel *evsel,
+				    struct perf_annotate *ann)
+{
+	if (!ann->use_stdio2)
+		return symbol__tty_annotate(&he->ms, evsel, &ann->opts);
 
-	वापस symbol__tty_annotate2(&he->ms, evsel, &ann->opts);
-पूर्ण
+	return symbol__tty_annotate2(&he->ms, evsel, &ann->opts);
+}
 
-अटल व्योम hists__find_annotations(काष्ठा hists *hists,
-				    काष्ठा evsel *evsel,
-				    काष्ठा perf_annotate *ann)
-अणु
-	काष्ठा rb_node *nd = rb_first_cached(&hists->entries), *next;
-	पूर्णांक key = K_RIGHT;
+static void hists__find_annotations(struct hists *hists,
+				    struct evsel *evsel,
+				    struct perf_annotate *ann)
+{
+	struct rb_node *nd = rb_first_cached(&hists->entries), *next;
+	int key = K_RIGHT;
 
-	जबतक (nd) अणु
-		काष्ठा hist_entry *he = rb_entry(nd, काष्ठा hist_entry, rb_node);
-		काष्ठा annotation *notes;
+	while (nd) {
+		struct hist_entry *he = rb_entry(nd, struct hist_entry, rb_node);
+		struct annotation *notes;
 
-		अगर (he->ms.sym == शून्य || he->ms.map->dso->annotate_warned)
-			जाओ find_next;
+		if (he->ms.sym == NULL || he->ms.map->dso->annotate_warned)
+			goto find_next;
 
-		अगर (ann->sym_hist_filter &&
-		    (म_भेद(he->ms.sym->name, ann->sym_hist_filter) != 0))
-			जाओ find_next;
+		if (ann->sym_hist_filter &&
+		    (strcmp(he->ms.sym->name, ann->sym_hist_filter) != 0))
+			goto find_next;
 
 		notes = symbol__annotation(he->ms.sym);
-		अगर (notes->src == शून्य) अणु
+		if (notes->src == NULL) {
 find_next:
-			अगर (key == K_LEFT)
+			if (key == K_LEFT)
 				nd = rb_prev(nd);
-			अन्यथा
+			else
 				nd = rb_next(nd);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (use_browser == 2) अणु
-			पूर्णांक ret;
-			पूर्णांक (*annotate)(काष्ठा hist_entry *he,
-					काष्ठा evsel *evsel,
-					काष्ठा hist_browser_समयr *hbt);
+		if (use_browser == 2) {
+			int ret;
+			int (*annotate)(struct hist_entry *he,
+					struct evsel *evsel,
+					struct hist_browser_timer *hbt);
 
 			annotate = dlsym(perf_gtk_handle,
 					 "hist_entry__gtk_annotate");
-			अगर (annotate == शून्य) अणु
+			if (annotate == NULL) {
 				ui__error("GTK browser not found!\n");
-				वापस;
-			पूर्ण
+				return;
+			}
 
-			ret = annotate(he, evsel, शून्य);
-			अगर (!ret || !ann->skip_missing)
-				वापस;
+			ret = annotate(he, evsel, NULL);
+			if (!ret || !ann->skip_missing)
+				return;
 
 			/* skip missing symbols */
 			nd = rb_next(nd);
-		पूर्ण अन्यथा अगर (use_browser == 1) अणु
-			key = hist_entry__tui_annotate(he, evsel, शून्य, &ann->opts);
+		} else if (use_browser == 1) {
+			key = hist_entry__tui_annotate(he, evsel, NULL, &ann->opts);
 
-			चयन (key) अणु
-			हाल -1:
-				अगर (!ann->skip_missing)
-					वापस;
+			switch (key) {
+			case -1:
+				if (!ann->skip_missing)
+					return;
 				/* fall through */
-			हाल K_RIGHT:
+			case K_RIGHT:
 				next = rb_next(nd);
-				अवरोध;
-			हाल K_LEFT:
+				break;
+			case K_LEFT:
 				next = rb_prev(nd);
-				अवरोध;
-			शेष:
-				वापस;
-			पूर्ण
+				break;
+			default:
+				return;
+			}
 
-			अगर (next != शून्य)
+			if (next != NULL)
 				nd = next;
-		पूर्ण अन्यथा अणु
+		} else {
 			hist_entry__tty_annotate(he, evsel, ann);
 			nd = rb_next(nd);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल पूर्णांक __cmd_annotate(काष्ठा perf_annotate *ann)
-अणु
-	पूर्णांक ret;
-	काष्ठा perf_session *session = ann->session;
-	काष्ठा evsel *pos;
+static int __cmd_annotate(struct perf_annotate *ann)
+{
+	int ret;
+	struct perf_session *session = ann->session;
+	struct evsel *pos;
 	u64 total_nr_samples;
 
-	अगर (ann->cpu_list) अणु
-		ret = perf_session__cpu_biपंचांगap(session, ann->cpu_list,
-					       ann->cpu_biपंचांगap);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+	if (ann->cpu_list) {
+		ret = perf_session__cpu_bitmap(session, ann->cpu_list,
+					       ann->cpu_bitmap);
+		if (ret)
+			goto out;
+	}
 
-	अगर (!ann->opts.objdump_path) अणु
+	if (!ann->opts.objdump_path) {
 		ret = perf_env__lookup_objdump(&session->header.env,
 					       &ann->opts.objdump_path);
-		अगर (ret)
-			जाओ out;
-	पूर्ण
+		if (ret)
+			goto out;
+	}
 
 	ret = perf_session__process_events(session);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
-	अगर (dump_trace) अणु
-		perf_session__ख_लिखो_nr_events(session, मानक_निकास, false);
-		evlist__ख_लिखो_nr_events(session->evlist, मानक_निकास, false);
-		जाओ out;
-	पूर्ण
+	if (dump_trace) {
+		perf_session__fprintf_nr_events(session, stdout, false);
+		evlist__fprintf_nr_events(session->evlist, stdout, false);
+		goto out;
+	}
 
-	अगर (verbose > 3)
-		perf_session__ख_लिखो(session, मानक_निकास);
+	if (verbose > 3)
+		perf_session__fprintf(session, stdout);
 
-	अगर (verbose > 2)
-		perf_session__ख_लिखो_dsos(session, मानक_निकास);
+	if (verbose > 2)
+		perf_session__fprintf_dsos(session, stdout);
 
 	total_nr_samples = 0;
-	evlist__क्रम_each_entry(session->evlist, pos) अणु
-		काष्ठा hists *hists = evsel__hists(pos);
+	evlist__for_each_entry(session->evlist, pos) {
+		struct hists *hists = evsel__hists(pos);
 		u32 nr_samples = hists->stats.nr_samples;
 
-		अगर (nr_samples > 0) अणु
+		if (nr_samples > 0) {
 			total_nr_samples += nr_samples;
-			hists__collapse_resort(hists, शून्य);
+			hists__collapse_resort(hists, NULL);
 			/* Don't sort callchain */
 			evsel__reset_sample_bit(pos, CALLCHAIN);
-			evsel__output_resort(pos, शून्य);
+			evsel__output_resort(pos, NULL);
 
-			अगर (symbol_conf.event_group && !evsel__is_group_leader(pos))
-				जारी;
+			if (symbol_conf.event_group && !evsel__is_group_leader(pos))
+				continue;
 
 			hists__find_annotations(hists, pos, ann);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (total_nr_samples == 0) अणु
+	if (total_nr_samples == 0) {
 		ui__error("The %s data has no samples!\n", session->data->path);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (use_browser == 2) अणु
-		व्योम (*show_annotations)(व्योम);
+	if (use_browser == 2) {
+		void (*show_annotations)(void);
 
 		show_annotations = dlsym(perf_gtk_handle,
 					 "perf_gtk__show_annotations");
-		अगर (show_annotations == शून्य) अणु
+		if (show_annotations == NULL) {
 			ui__error("GTK browser not found!\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		show_annotations();
-	पूर्ण
+	}
 
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर अक्षर * स्थिर annotate_usage[] = अणु
+static const char * const annotate_usage[] = {
 	"perf annotate [<options>]",
-	शून्य
-पूर्ण;
+	NULL
+};
 
-पूर्णांक cmd_annotate(पूर्णांक argc, स्थिर अक्षर **argv)
-अणु
-	काष्ठा perf_annotate annotate = अणु
-		.tool = अणु
+int cmd_annotate(int argc, const char **argv)
+{
+	struct perf_annotate annotate = {
+		.tool = {
 			.sample	= process_sample_event,
 			.mmap	= perf_event__process_mmap,
 			.mmap2	= perf_event__process_mmap2,
 			.comm	= perf_event__process_comm,
-			.निकास	= perf_event__process_निकास,
-			.विभाजन	= perf_event__process_विभाजन,
+			.exit	= perf_event__process_exit,
+			.fork	= perf_event__process_fork,
 			.namespaces = perf_event__process_namespaces,
 			.attr	= perf_event__process_attr,
 			.build_id = perf_event__process_build_id,
 			.tracing_data   = perf_event__process_tracing_data,
 			.feature	= process_feature_event,
 			.ordered_events = true,
-			.ordering_requires_बारtamps = true,
-		पूर्ण,
-		.opts = annotation__शेष_options,
-	पूर्ण;
-	काष्ठा perf_data data = अणु
+			.ordering_requires_timestamps = true,
+		},
+		.opts = annotation__default_options,
+	};
+	struct perf_data data = {
 		.mode  = PERF_DATA_MODE_READ,
-	पूर्ण;
-	काष्ठा option options[] = अणु
+	};
+	struct option options[] = {
 	OPT_STRING('i', "input", &input_name, "file",
 		    "input file name"),
 	OPT_STRING('d', "dsos", &symbol_conf.dso_list_str, "dso[,dso...]",
 		   "only consider symbols in these dsos"),
 	OPT_STRING('s', "symbol", &annotate.sym_hist_filter, "symbol",
 		    "symbol to annotate"),
-	OPT_BOOLEAN('f', "force", &data.force, "don't complain, करो it"),
+	OPT_BOOLEAN('f', "force", &data.force, "don't complain, do it"),
 	OPT_INCR('v', "verbose", &verbose,
 		    "be more verbose (show symbol address, etc)"),
 	OPT_BOOLEAN('q', "quiet", &quiet, "do now show any message"),
@@ -507,7 +506,7 @@ out:
 		   "file", "vmlinux pathname"),
 	OPT_BOOLEAN('m', "modules", &symbol_conf.use_modules,
 		    "load module symbols - WARNING: use only with -k and LIVE kernel"),
-	OPT_BOOLEAN('l', "print-line", &annotate.opts.prपूर्णांक_lines,
+	OPT_BOOLEAN('l', "print-line", &annotate.opts.print_lines,
 		    "print matching source lines (may be slow)"),
 	OPT_BOOLEAN('P', "full-paths", &annotate.opts.full_path,
 		    "Don't shorten the displayed pathnames"),
@@ -517,12 +516,12 @@ out:
 			&annotate.group_set,
 			"Show event group information together"),
 	OPT_STRING('C', "cpu", &annotate.cpu_list, "cpu", "list of cpus to profile"),
-	OPT_CALLBACK(0, "symfs", शून्य, "directory",
+	OPT_CALLBACK(0, "symfs", NULL, "directory",
 		     "Look for files with symbols relative to this directory",
 		     symbol__config_symfs),
 	OPT_BOOLEAN(0, "source", &annotate.opts.annotate_src,
 		    "Interleave source code with assembly code (default)"),
-	OPT_BOOLEAN(0, "asm-raw", &annotate.opts.show_यंत्र_raw,
+	OPT_BOOLEAN(0, "asm-raw", &annotate.opts.show_asm_raw,
 		    "Display raw encoding of assembly instructions (default)"),
 	OPT_STRING('M', "disassembler-style", &annotate.opts.disassembler_style, "disassembler style",
 		   "Specify disassembler style (e.g. -M intel for intel syntax)"),
@@ -542,7 +541,7 @@ out:
 		    "Show a column with the sum of periods"),
 	OPT_BOOLEAN('n', "show-nr-samples", &symbol_conf.show_nr_samples,
 		    "Show a column with the number of samples"),
-	OPT_CALLBACK_DEFAULT(0, "stdio-color", शून्य, "mode",
+	OPT_CALLBACK_DEFAULT(0, "stdio-color", NULL, "mode",
 			     "'always' (default), 'never' or 'auto' only applicable to --stdio mode",
 			     stdio__config_color, "always"),
 	OPT_CALLBACK(0, "percent-type", &annotate.opts, "local-period",
@@ -550,98 +549,98 @@ out:
 		     annotate_parse_percent_type),
 
 	OPT_END()
-	पूर्ण;
-	पूर्णांक ret;
+	};
+	int ret;
 
 	set_option_flag(options, 0, "show-total-period", PARSE_OPT_EXCLUSIVE);
 	set_option_flag(options, 0, "show-nr-samples", PARSE_OPT_EXCLUSIVE);
 
 
 	ret = hists__init();
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
 	annotation_config__init(&annotate.opts);
 
 	argc = parse_options(argc, argv, options, annotate_usage, 0);
-	अगर (argc) अणु
+	if (argc) {
 		/*
-		 * Special हाल: अगर there's an argument left then assume that
+		 * Special case: if there's an argument left then assume that
 		 * it's a symbol filter:
 		 */
-		अगर (argc > 1)
+		if (argc > 1)
 			usage_with_options(annotate_usage, options);
 
 		annotate.sym_hist_filter = argv[0];
-	पूर्ण
+	}
 
-	अगर (annotate_check_args(&annotate.opts) < 0)
-		वापस -EINVAL;
+	if (annotate_check_args(&annotate.opts) < 0)
+		return -EINVAL;
 
-	अगर (symbol_conf.show_nr_samples && annotate.use_gtk) अणु
+	if (symbol_conf.show_nr_samples && annotate.use_gtk) {
 		pr_err("--show-nr-samples is not available in --gtk mode at this time\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	अगर (quiet)
+	if (quiet)
 		perf_quiet_option();
 
 	data.path = input_name;
 
 	annotate.session = perf_session__new(&data, false, &annotate.tool);
-	अगर (IS_ERR(annotate.session))
-		वापस PTR_ERR(annotate.session);
+	if (IS_ERR(annotate.session))
+		return PTR_ERR(annotate.session);
 
 	annotate.has_br_stack = perf_header__has_feat(&annotate.session->header,
 						      HEADER_BRANCH_STACK);
 
-	अगर (annotate.group_set)
-		evlist__क्रमce_leader(annotate.session->evlist);
+	if (annotate.group_set)
+		evlist__force_leader(annotate.session->evlist);
 
 	ret = symbol__annotation_init();
-	अगर (ret < 0)
-		जाओ out_delete;
+	if (ret < 0)
+		goto out_delete;
 
 	symbol_conf.try_vmlinux_path = true;
 
 	ret = symbol__init(&annotate.session->header.env);
-	अगर (ret < 0)
-		जाओ out_delete;
+	if (ret < 0)
+		goto out_delete;
 
-	अगर (annotate.use_stdio || annotate.use_stdio2)
+	if (annotate.use_stdio || annotate.use_stdio2)
 		use_browser = 0;
-	अन्यथा अगर (annotate.use_tui)
+	else if (annotate.use_tui)
 		use_browser = 1;
-	अन्यथा अगर (annotate.use_gtk)
+	else if (annotate.use_gtk)
 		use_browser = 2;
 
 	setup_browser(true);
 
 	/*
-	 * Events of dअगरferent processes may correspond to the same
-	 * symbol, we करो not care about the processes in annotate,
-	 * set sort order to aव्योम repeated output.
+	 * Events of different processes may correspond to the same
+	 * symbol, we do not care about the processes in annotate,
+	 * set sort order to avoid repeated output.
 	 */
 	sort_order = "dso,symbol";
 
 	/*
 	 * Set SORT_MODE__BRANCH so that annotate display IPC/Cycle
-	 * अगर branch info is in perf data in TUI mode.
+	 * if branch info is in perf data in TUI mode.
 	 */
-	अगर ((use_browser == 1 || annotate.use_stdio2) && annotate.has_br_stack)
+	if ((use_browser == 1 || annotate.use_stdio2) && annotate.has_br_stack)
 		sort__mode = SORT_MODE__BRANCH;
 
-	अगर (setup_sorting(शून्य) < 0)
+	if (setup_sorting(NULL) < 0)
 		usage_with_options(annotate_usage, options);
 
 	ret = __cmd_annotate(&annotate);
 
 out_delete:
 	/*
-	 * Speed up the निकास process, क्रम large files this can
-	 * take quite a जबतक.
+	 * Speed up the exit process, for large files this can
+	 * take quite a while.
 	 *
-	 * XXX Enable this when using valgrind or अगर we ever
+	 * XXX Enable this when using valgrind or if we ever
 	 * librarize this command.
 	 *
 	 * Also experiment with obstacks to see how much speed
@@ -649,5 +648,5 @@ out_delete:
 	 *
 	 * perf_session__delete(session);
 	 */
-	वापस ret;
-पूर्ण
+	return ret;
+}

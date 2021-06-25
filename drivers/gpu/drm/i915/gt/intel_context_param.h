@@ -1,24 +1,23 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#अगर_अघोषित INTEL_CONTEXT_PARAM_H
-#घोषणा INTEL_CONTEXT_PARAM_H
+#ifndef INTEL_CONTEXT_PARAM_H
+#define INTEL_CONTEXT_PARAM_H
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#समावेश "intel_context.h"
+#include "intel_context.h"
 
-पूर्णांक पूर्णांकel_context_set_ring_size(काष्ठा पूर्णांकel_context *ce, दीर्घ sz);
-दीर्घ पूर्णांकel_context_get_ring_size(काष्ठा पूर्णांकel_context *ce);
+int intel_context_set_ring_size(struct intel_context *ce, long sz);
+long intel_context_get_ring_size(struct intel_context *ce);
 
-अटल अंतरभूत पूर्णांक
-पूर्णांकel_context_set_watchकरोg_us(काष्ठा पूर्णांकel_context *ce, u64 समयout_us)
-अणु
-	ce->watchकरोg.समयout_us = समयout_us;
-	वापस 0;
-पूर्ण
+static inline int
+intel_context_set_watchdog_us(struct intel_context *ce, u64 timeout_us)
+{
+	ce->watchdog.timeout_us = timeout_us;
+	return 0;
+}
 
-#पूर्ण_अगर /* INTEL_CONTEXT_PARAM_H */
+#endif /* INTEL_CONTEXT_PARAM_H */

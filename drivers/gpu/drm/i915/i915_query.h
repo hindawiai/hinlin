@@ -1,16 +1,15 @@
-<शैली गुरु>
 /*
- * SPDX-License-Identअगरier: MIT
+ * SPDX-License-Identifier: MIT
  *
- * Copyright तऊ 2018 Intel Corporation
+ * Copyright © 2018 Intel Corporation
  */
 
-#अगर_अघोषित _I915_QUERY_H_
-#घोषणा _I915_QUERY_H_
+#ifndef _I915_QUERY_H_
+#define _I915_QUERY_H_
 
-काष्ठा drm_device;
-काष्ठा drm_file;
+struct drm_device;
+struct drm_file;
 
-पूर्णांक i915_query_ioctl(काष्ठा drm_device *dev, व्योम *data, काष्ठा drm_file *file);
+int i915_query_ioctl(struct drm_device *dev, void *data, struct drm_file *file);
 
-#पूर्ण_अगर
+#endif

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2006 Intel Corporation
+ * Copyright © 2006 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -26,102 +25,102 @@
  *
  */
 
-#समावेश <drm/drm_dp_helper.h>
+#include <drm/drm_dp_helper.h>
 
-#समावेश "display/intel_display.h"
-#समावेश "display/intel_display_types.h"
-#समावेश "display/intel_gmbus.h"
+#include "display/intel_display.h"
+#include "display/intel_display_types.h"
+#include "display/intel_gmbus.h"
 
-#समावेश "i915_drv.h"
+#include "i915_drv.h"
 
-#घोषणा _INTEL_BIOS_PRIVATE
-#समावेश "intel_vbt_defs.h"
+#define _INTEL_BIOS_PRIVATE
+#include "intel_vbt_defs.h"
 
 /**
  * DOC: Video BIOS Table (VBT)
  *
- * The Video BIOS Table, or VBT, provides platक्रमm and board specअगरic
- * configuration inक्रमmation to the driver that is not discoverable or available
+ * The Video BIOS Table, or VBT, provides platform and board specific
+ * configuration information to the driver that is not discoverable or available
  * through other means. The configuration is mostly related to display
- * hardware. The VBT is available via the ACPI OpRegion or, on older प्रणालीs, in
+ * hardware. The VBT is available via the ACPI OpRegion or, on older systems, in
  * the PCI ROM.
  *
- * The VBT consists of a VBT Header (defined as &काष्ठा vbt_header), a BDB
- * Header (&काष्ठा bdb_header), and a number of BIOS Data Blocks (BDB) that
- * contain the actual configuration inक्रमmation. The VBT Header, and thus the
+ * The VBT consists of a VBT Header (defined as &struct vbt_header), a BDB
+ * Header (&struct bdb_header), and a number of BIOS Data Blocks (BDB) that
+ * contain the actual configuration information. The VBT Header, and thus the
  * VBT, begins with "$VBT" signature. The VBT Header contains the offset of the
  * BDB Header. The data blocks are concatenated after the BDB Header. The data
  * blocks have a 1-byte Block ID, 2-byte Block Size, and Block Size bytes of
  * data. (Block 53, the MIPI Sequence Block is an exception.)
  *
- * The driver parses the VBT during load. The relevant inक्रमmation is stored in
- * driver निजी data क्रम ease of use, and the actual VBT is not पढ़ो after
+ * The driver parses the VBT during load. The relevant information is stored in
+ * driver private data for ease of use, and the actual VBT is not read after
  * that.
  */
 
-/* Wrapper क्रम VBT child device config */
-काष्ठा पूर्णांकel_bios_encoder_data अणु
-	काष्ठा drm_i915_निजी *i915;
+/* Wrapper for VBT child device config */
+struct intel_bios_encoder_data {
+	struct drm_i915_private *i915;
 
-	काष्ठा child_device_config child;
-	काष्ठा dsc_compression_parameters_entry *dsc;
-	काष्ठा list_head node;
-पूर्ण;
+	struct child_device_config child;
+	struct dsc_compression_parameters_entry *dsc;
+	struct list_head node;
+};
 
-#घोषणा	SLAVE_ADDR1	0x70
-#घोषणा	SLAVE_ADDR2	0x72
+#define	SLAVE_ADDR1	0x70
+#define	SLAVE_ADDR2	0x72
 
-/* Get BDB block size given a poपूर्णांकer to Block ID. */
-अटल u32 _get_blocksize(स्थिर u8 *block_base)
-अणु
+/* Get BDB block size given a pointer to Block ID. */
+static u32 _get_blocksize(const u8 *block_base)
+{
 	/* The MIPI Sequence Block v3+ has a separate size field. */
-	अगर (*block_base == BDB_MIPI_SEQUENCE && *(block_base + 3) >= 3)
-		वापस *((स्थिर u32 *)(block_base + 4));
-	अन्यथा
-		वापस *((स्थिर u16 *)(block_base + 1));
-पूर्ण
+	if (*block_base == BDB_MIPI_SEQUENCE && *(block_base + 3) >= 3)
+		return *((const u32 *)(block_base + 4));
+	else
+		return *((const u16 *)(block_base + 1));
+}
 
-/* Get BDB block size give a poपूर्णांकer to data after Block ID and Block Size. */
-अटल u32 get_blocksize(स्थिर व्योम *block_data)
-अणु
-	वापस _get_blocksize(block_data - 3);
-पूर्ण
+/* Get BDB block size give a pointer to data after Block ID and Block Size. */
+static u32 get_blocksize(const void *block_data)
+{
+	return _get_blocksize(block_data - 3);
+}
 
-अटल स्थिर व्योम *
-find_section(स्थिर व्योम *_bdb, क्रमागत bdb_block_id section_id)
-अणु
-	स्थिर काष्ठा bdb_header *bdb = _bdb;
-	स्थिर u8 *base = _bdb;
-	पूर्णांक index = 0;
+static const void *
+find_section(const void *_bdb, enum bdb_block_id section_id)
+{
+	const struct bdb_header *bdb = _bdb;
+	const u8 *base = _bdb;
+	int index = 0;
 	u32 total, current_size;
-	क्रमागत bdb_block_id current_id;
+	enum bdb_block_id current_id;
 
 	/* skip to first section */
 	index += bdb->header_size;
 	total = bdb->bdb_size;
 
-	/* walk the sections looking क्रम section_id */
-	जबतक (index + 3 < total) अणु
+	/* walk the sections looking for section_id */
+	while (index + 3 < total) {
 		current_id = *(base + index);
 		current_size = _get_blocksize(base + index);
 		index += 3;
 
-		अगर (index + current_size > total)
-			वापस शून्य;
+		if (index + current_size > total)
+			return NULL;
 
-		अगर (current_id == section_id)
-			वापस base + index;
+		if (current_id == section_id)
+			return base + index;
 
 		index += current_size;
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम
-fill_detail_timing_data(काष्ठा drm_display_mode *panel_fixed_mode,
-			स्थिर काष्ठा lvds_dvo_timing *dvo_timing)
-अणु
+static void
+fill_detail_timing_data(struct drm_display_mode *panel_fixed_mode,
+			const struct lvds_dvo_timing *dvo_timing)
+{
 	panel_fixed_mode->hdisplay = (dvo_timing->hactive_hi << 8) |
 		dvo_timing->hactive_lo;
 	panel_fixed_mode->hsync_start = panel_fixed_mode->hdisplay +
@@ -141,17 +140,17 @@ fill_detail_timing_data(काष्ठा drm_display_mode *panel_fixed_mode,
 			dvo_timing->vsync_pulse_width_lo);
 	panel_fixed_mode->vtotal = panel_fixed_mode->vdisplay +
 		((dvo_timing->vblank_hi << 8) | dvo_timing->vblank_lo);
-	panel_fixed_mode->घड़ी = dvo_timing->घड़ी * 10;
+	panel_fixed_mode->clock = dvo_timing->clock * 10;
 	panel_fixed_mode->type = DRM_MODE_TYPE_PREFERRED;
 
-	अगर (dvo_timing->hsync_positive)
+	if (dvo_timing->hsync_positive)
 		panel_fixed_mode->flags |= DRM_MODE_FLAG_PHSYNC;
-	अन्यथा
+	else
 		panel_fixed_mode->flags |= DRM_MODE_FLAG_NHSYNC;
 
-	अगर (dvo_timing->vsync_positive)
+	if (dvo_timing->vsync_positive)
 		panel_fixed_mode->flags |= DRM_MODE_FLAG_PVSYNC;
-	अन्यथा
+	else
 		panel_fixed_mode->flags |= DRM_MODE_FLAG_NVSYNC;
 
 	panel_fixed_mode->width_mm = (dvo_timing->himage_hi << 8) |
@@ -160,146 +159,146 @@ fill_detail_timing_data(काष्ठा drm_display_mode *panel_fixed_mode,
 		dvo_timing->vimage_lo;
 
 	/* Some VBTs have bogus h/vtotal values */
-	अगर (panel_fixed_mode->hsync_end > panel_fixed_mode->htotal)
+	if (panel_fixed_mode->hsync_end > panel_fixed_mode->htotal)
 		panel_fixed_mode->htotal = panel_fixed_mode->hsync_end + 1;
-	अगर (panel_fixed_mode->vsync_end > panel_fixed_mode->vtotal)
+	if (panel_fixed_mode->vsync_end > panel_fixed_mode->vtotal)
 		panel_fixed_mode->vtotal = panel_fixed_mode->vsync_end + 1;
 
 	drm_mode_set_name(panel_fixed_mode);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा lvds_dvo_timing *
-get_lvds_dvo_timing(स्थिर काष्ठा bdb_lvds_lfp_data *lvds_lfp_data,
-		    स्थिर काष्ठा bdb_lvds_lfp_data_ptrs *lvds_lfp_data_ptrs,
-		    पूर्णांक index)
-अणु
+static const struct lvds_dvo_timing *
+get_lvds_dvo_timing(const struct bdb_lvds_lfp_data *lvds_lfp_data,
+		    const struct bdb_lvds_lfp_data_ptrs *lvds_lfp_data_ptrs,
+		    int index)
+{
 	/*
-	 * the size of fp_timing varies on the dअगरferent platक्रमm.
+	 * the size of fp_timing varies on the different platform.
 	 * So calculate the DVO timing relative offset in LVDS data
 	 * entry to get the DVO timing entry
 	 */
 
-	पूर्णांक lfp_data_size =
+	int lfp_data_size =
 		lvds_lfp_data_ptrs->ptr[1].dvo_timing_offset -
 		lvds_lfp_data_ptrs->ptr[0].dvo_timing_offset;
-	पूर्णांक dvo_timing_offset =
+	int dvo_timing_offset =
 		lvds_lfp_data_ptrs->ptr[0].dvo_timing_offset -
 		lvds_lfp_data_ptrs->ptr[0].fp_timing_offset;
-	अक्षर *entry = (अक्षर *)lvds_lfp_data->data + lfp_data_size * index;
+	char *entry = (char *)lvds_lfp_data->data + lfp_data_size * index;
 
-	वापस (काष्ठा lvds_dvo_timing *)(entry + dvo_timing_offset);
-पूर्ण
+	return (struct lvds_dvo_timing *)(entry + dvo_timing_offset);
+}
 
 /* get lvds_fp_timing entry
- * this function may वापस शून्य अगर the corresponding entry is invalid
+ * this function may return NULL if the corresponding entry is invalid
  */
-अटल स्थिर काष्ठा lvds_fp_timing *
-get_lvds_fp_timing(स्थिर काष्ठा bdb_header *bdb,
-		   स्थिर काष्ठा bdb_lvds_lfp_data *data,
-		   स्थिर काष्ठा bdb_lvds_lfp_data_ptrs *ptrs,
-		   पूर्णांक index)
-अणु
-	माप_प्रकार data_ofs = (स्थिर u8 *)data - (स्थिर u8 *)bdb;
-	u16 data_size = ((स्थिर u16 *)data)[-1]; /* stored in header */
-	माप_प्रकार ofs;
+static const struct lvds_fp_timing *
+get_lvds_fp_timing(const struct bdb_header *bdb,
+		   const struct bdb_lvds_lfp_data *data,
+		   const struct bdb_lvds_lfp_data_ptrs *ptrs,
+		   int index)
+{
+	size_t data_ofs = (const u8 *)data - (const u8 *)bdb;
+	u16 data_size = ((const u16 *)data)[-1]; /* stored in header */
+	size_t ofs;
 
-	अगर (index >= ARRAY_SIZE(ptrs->ptr))
-		वापस शून्य;
+	if (index >= ARRAY_SIZE(ptrs->ptr))
+		return NULL;
 	ofs = ptrs->ptr[index].fp_timing_offset;
-	अगर (ofs < data_ofs ||
-	    ofs + माप(काष्ठा lvds_fp_timing) > data_ofs + data_size)
-		वापस शून्य;
-	वापस (स्थिर काष्ठा lvds_fp_timing *)((स्थिर u8 *)bdb + ofs);
-पूर्ण
+	if (ofs < data_ofs ||
+	    ofs + sizeof(struct lvds_fp_timing) > data_ofs + data_size)
+		return NULL;
+	return (const struct lvds_fp_timing *)((const u8 *)bdb + ofs);
+}
 
 /* Parse general panel options */
-अटल व्योम
-parse_panel_options(काष्ठा drm_i915_निजी *i915,
-		    स्थिर काष्ठा bdb_header *bdb)
-अणु
-	स्थिर काष्ठा bdb_lvds_options *lvds_options;
-	पूर्णांक panel_type;
-	पूर्णांक drrs_mode;
-	पूर्णांक ret;
+static void
+parse_panel_options(struct drm_i915_private *i915,
+		    const struct bdb_header *bdb)
+{
+	const struct bdb_lvds_options *lvds_options;
+	int panel_type;
+	int drrs_mode;
+	int ret;
 
 	lvds_options = find_section(bdb, BDB_LVDS_OPTIONS);
-	अगर (!lvds_options)
-		वापस;
+	if (!lvds_options)
+		return;
 
 	i915->vbt.lvds_dither = lvds_options->pixel_dither;
 
-	ret = पूर्णांकel_opregion_get_panel_type(i915);
-	अगर (ret >= 0) अणु
+	ret = intel_opregion_get_panel_type(i915);
+	if (ret >= 0) {
 		drm_WARN_ON(&i915->drm, ret > 0xf);
 		panel_type = ret;
 		drm_dbg_kms(&i915->drm, "Panel type: %d (OpRegion)\n",
 			    panel_type);
-	पूर्ण अन्यथा अणु
-		अगर (lvds_options->panel_type > 0xf) अणु
+	} else {
+		if (lvds_options->panel_type > 0xf) {
 			drm_dbg_kms(&i915->drm,
 				    "Invalid VBT panel type 0x%x\n",
 				    lvds_options->panel_type);
-			वापस;
-		पूर्ण
+			return;
+		}
 		panel_type = lvds_options->panel_type;
 		drm_dbg_kms(&i915->drm, "Panel type: %d (VBT)\n",
 			    panel_type);
-	पूर्ण
+	}
 
 	i915->vbt.panel_type = panel_type;
 
 	drrs_mode = (lvds_options->dps_panel_type_bits
 				>> (panel_type * 2)) & MODE_MASK;
 	/*
-	 * VBT has अटल DRRS = 0 and seamless DRRS = 2.
+	 * VBT has static DRRS = 0 and seamless DRRS = 2.
 	 * The below piece of code is required to adjust vbt.drrs_type
-	 * to match the क्रमागत drrs_support_type.
+	 * to match the enum drrs_support_type.
 	 */
-	चयन (drrs_mode) अणु
-	हाल 0:
+	switch (drrs_mode) {
+	case 0:
 		i915->vbt.drrs_type = STATIC_DRRS_SUPPORT;
 		drm_dbg_kms(&i915->drm, "DRRS supported mode is static\n");
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		i915->vbt.drrs_type = SEAMLESS_DRRS_SUPPORT;
 		drm_dbg_kms(&i915->drm,
 			    "DRRS supported mode is seamless\n");
-		अवरोध;
-	शेष:
+		break;
+	default:
 		i915->vbt.drrs_type = DRRS_NOT_SUPPORTED;
 		drm_dbg_kms(&i915->drm,
 			    "DRRS not supported (VBT input)\n");
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-/* Try to find पूर्णांकegrated panel timing data */
-अटल व्योम
-parse_lfp_panel_dtd(काष्ठा drm_i915_निजी *i915,
-		    स्थिर काष्ठा bdb_header *bdb)
-अणु
-	स्थिर काष्ठा bdb_lvds_lfp_data *lvds_lfp_data;
-	स्थिर काष्ठा bdb_lvds_lfp_data_ptrs *lvds_lfp_data_ptrs;
-	स्थिर काष्ठा lvds_dvo_timing *panel_dvo_timing;
-	स्थिर काष्ठा lvds_fp_timing *fp_timing;
-	काष्ठा drm_display_mode *panel_fixed_mode;
-	पूर्णांक panel_type = i915->vbt.panel_type;
+/* Try to find integrated panel timing data */
+static void
+parse_lfp_panel_dtd(struct drm_i915_private *i915,
+		    const struct bdb_header *bdb)
+{
+	const struct bdb_lvds_lfp_data *lvds_lfp_data;
+	const struct bdb_lvds_lfp_data_ptrs *lvds_lfp_data_ptrs;
+	const struct lvds_dvo_timing *panel_dvo_timing;
+	const struct lvds_fp_timing *fp_timing;
+	struct drm_display_mode *panel_fixed_mode;
+	int panel_type = i915->vbt.panel_type;
 
 	lvds_lfp_data = find_section(bdb, BDB_LVDS_LFP_DATA);
-	अगर (!lvds_lfp_data)
-		वापस;
+	if (!lvds_lfp_data)
+		return;
 
 	lvds_lfp_data_ptrs = find_section(bdb, BDB_LVDS_LFP_DATA_PTRS);
-	अगर (!lvds_lfp_data_ptrs)
-		वापस;
+	if (!lvds_lfp_data_ptrs)
+		return;
 
 	panel_dvo_timing = get_lvds_dvo_timing(lvds_lfp_data,
 					       lvds_lfp_data_ptrs,
 					       panel_type);
 
-	panel_fixed_mode = kzalloc(माप(*panel_fixed_mode), GFP_KERNEL);
-	अगर (!panel_fixed_mode)
-		वापस;
+	panel_fixed_mode = kzalloc(sizeof(*panel_fixed_mode), GFP_KERNEL);
+	if (!panel_fixed_mode)
+		return;
 
 	fill_detail_timing_data(panel_fixed_mode, panel_dvo_timing);
 
@@ -307,61 +306,61 @@ parse_lfp_panel_dtd(काष्ठा drm_i915_निजी *i915,
 
 	drm_dbg_kms(&i915->drm,
 		    "Found panel mode in BIOS VBT legacy lfp table:\n");
-	drm_mode_debug_prपूर्णांकmodeline(panel_fixed_mode);
+	drm_mode_debug_printmodeline(panel_fixed_mode);
 
 	fp_timing = get_lvds_fp_timing(bdb, lvds_lfp_data,
 				       lvds_lfp_data_ptrs,
 				       panel_type);
-	अगर (fp_timing) अणु
+	if (fp_timing) {
 		/* check the resolution, just to be sure */
-		अगर (fp_timing->x_res == panel_fixed_mode->hdisplay &&
-		    fp_timing->y_res == panel_fixed_mode->vdisplay) अणु
+		if (fp_timing->x_res == panel_fixed_mode->hdisplay &&
+		    fp_timing->y_res == panel_fixed_mode->vdisplay) {
 			i915->vbt.bios_lvds_val = fp_timing->lvds_reg_val;
 			drm_dbg_kms(&i915->drm,
 				    "VBT initial LVDS value %x\n",
 				    i915->vbt.bios_lvds_val);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम
-parse_generic_dtd(काष्ठा drm_i915_निजी *i915,
-		  स्थिर काष्ठा bdb_header *bdb)
-अणु
-	स्थिर काष्ठा bdb_generic_dtd *generic_dtd;
-	स्थिर काष्ठा generic_dtd_entry *dtd;
-	काष्ठा drm_display_mode *panel_fixed_mode;
-	पूर्णांक num_dtd;
+static void
+parse_generic_dtd(struct drm_i915_private *i915,
+		  const struct bdb_header *bdb)
+{
+	const struct bdb_generic_dtd *generic_dtd;
+	const struct generic_dtd_entry *dtd;
+	struct drm_display_mode *panel_fixed_mode;
+	int num_dtd;
 
 	generic_dtd = find_section(bdb, BDB_GENERIC_DTD);
-	अगर (!generic_dtd)
-		वापस;
+	if (!generic_dtd)
+		return;
 
-	अगर (generic_dtd->gdtd_size < माप(काष्ठा generic_dtd_entry)) अणु
+	if (generic_dtd->gdtd_size < sizeof(struct generic_dtd_entry)) {
 		drm_err(&i915->drm, "GDTD size %u is too small.\n",
 			generic_dtd->gdtd_size);
-		वापस;
-	पूर्ण अन्यथा अगर (generic_dtd->gdtd_size !=
-		   माप(काष्ठा generic_dtd_entry)) अणु
+		return;
+	} else if (generic_dtd->gdtd_size !=
+		   sizeof(struct generic_dtd_entry)) {
 		drm_err(&i915->drm, "Unexpected GDTD size %u\n",
 			generic_dtd->gdtd_size);
 		/* DTD has unknown fields, but keep going */
-	पूर्ण
+	}
 
 	num_dtd = (get_blocksize(generic_dtd) -
-		   माप(काष्ठा bdb_generic_dtd)) / generic_dtd->gdtd_size;
-	अगर (i915->vbt.panel_type >= num_dtd) अणु
+		   sizeof(struct bdb_generic_dtd)) / generic_dtd->gdtd_size;
+	if (i915->vbt.panel_type >= num_dtd) {
 		drm_err(&i915->drm,
 			"Panel type %d not found in table of %d DTD's\n",
 			i915->vbt.panel_type, num_dtd);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	dtd = &generic_dtd->dtd[i915->vbt.panel_type];
 
-	panel_fixed_mode = kzalloc(माप(*panel_fixed_mode), GFP_KERNEL);
-	अगर (!panel_fixed_mode)
-		वापस;
+	panel_fixed_mode = kzalloc(sizeof(*panel_fixed_mode), GFP_KERNEL);
+	if (!panel_fixed_mode)
+		return;
 
 	panel_fixed_mode->hdisplay = dtd->hactive;
 	panel_fixed_mode->hsync_start =
@@ -379,115 +378,115 @@ parse_generic_dtd(काष्ठा drm_i915_निजी *i915,
 	panel_fixed_mode->vtotal =
 		panel_fixed_mode->vdisplay + dtd->vblank;
 
-	panel_fixed_mode->घड़ी = dtd->pixel_घड़ी;
+	panel_fixed_mode->clock = dtd->pixel_clock;
 	panel_fixed_mode->width_mm = dtd->width_mm;
 	panel_fixed_mode->height_mm = dtd->height_mm;
 
 	panel_fixed_mode->type = DRM_MODE_TYPE_PREFERRED;
 	drm_mode_set_name(panel_fixed_mode);
 
-	अगर (dtd->hsync_positive_polarity)
+	if (dtd->hsync_positive_polarity)
 		panel_fixed_mode->flags |= DRM_MODE_FLAG_PHSYNC;
-	अन्यथा
+	else
 		panel_fixed_mode->flags |= DRM_MODE_FLAG_NHSYNC;
 
-	अगर (dtd->vsync_positive_polarity)
+	if (dtd->vsync_positive_polarity)
 		panel_fixed_mode->flags |= DRM_MODE_FLAG_PVSYNC;
-	अन्यथा
+	else
 		panel_fixed_mode->flags |= DRM_MODE_FLAG_NVSYNC;
 
 	drm_dbg_kms(&i915->drm,
 		    "Found panel mode in BIOS VBT generic dtd table:\n");
-	drm_mode_debug_prपूर्णांकmodeline(panel_fixed_mode);
+	drm_mode_debug_printmodeline(panel_fixed_mode);
 
 	i915->vbt.lfp_lvds_vbt_mode = panel_fixed_mode;
-पूर्ण
+}
 
-अटल व्योम
-parse_panel_dtd(काष्ठा drm_i915_निजी *i915,
-		स्थिर काष्ठा bdb_header *bdb)
-अणु
+static void
+parse_panel_dtd(struct drm_i915_private *i915,
+		const struct bdb_header *bdb)
+{
 	/*
-	 * Older VBTs provided provided DTD inक्रमmation क्रम पूर्णांकernal displays
+	 * Older VBTs provided provided DTD information for internal displays
 	 * through the "LFP panel DTD" block (42).  As of VBT revision 229,
-	 * that block is now deprecated and DTD inक्रमmation should be provided
+	 * that block is now deprecated and DTD information should be provided
 	 * via a newer "generic DTD" block (58).  Just to be safe, we'll
 	 * try the new generic DTD block first on VBT >= 229, but still fall
-	 * back to trying the old LFP block अगर that fails.
+	 * back to trying the old LFP block if that fails.
 	 */
-	अगर (bdb->version >= 229)
+	if (bdb->version >= 229)
 		parse_generic_dtd(i915, bdb);
-	अगर (!i915->vbt.lfp_lvds_vbt_mode)
+	if (!i915->vbt.lfp_lvds_vbt_mode)
 		parse_lfp_panel_dtd(i915, bdb);
-पूर्ण
+}
 
-अटल व्योम
-parse_lfp_backlight(काष्ठा drm_i915_निजी *i915,
-		    स्थिर काष्ठा bdb_header *bdb)
-अणु
-	स्थिर काष्ठा bdb_lfp_backlight_data *backlight_data;
-	स्थिर काष्ठा lfp_backlight_data_entry *entry;
-	पूर्णांक panel_type = i915->vbt.panel_type;
+static void
+parse_lfp_backlight(struct drm_i915_private *i915,
+		    const struct bdb_header *bdb)
+{
+	const struct bdb_lfp_backlight_data *backlight_data;
+	const struct lfp_backlight_data_entry *entry;
+	int panel_type = i915->vbt.panel_type;
 	u16 level;
 
 	backlight_data = find_section(bdb, BDB_LVDS_BACKLIGHT);
-	अगर (!backlight_data)
-		वापस;
+	if (!backlight_data)
+		return;
 
-	अगर (backlight_data->entry_size != माप(backlight_data->data[0])) अणु
+	if (backlight_data->entry_size != sizeof(backlight_data->data[0])) {
 		drm_dbg_kms(&i915->drm,
 			    "Unsupported backlight data entry size %u\n",
 			    backlight_data->entry_size);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	entry = &backlight_data->data[panel_type];
 
 	i915->vbt.backlight.present = entry->type == BDB_BACKLIGHT_TYPE_PWM;
-	अगर (!i915->vbt.backlight.present) अणु
+	if (!i915->vbt.backlight.present) {
 		drm_dbg_kms(&i915->drm,
 			    "PWM backlight not present in VBT (type %u)\n",
 			    entry->type);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	i915->vbt.backlight.type = INTEL_BACKLIGHT_DISPLAY_DDI;
-	अगर (bdb->version >= 191 &&
-	    get_blocksize(backlight_data) >= माप(*backlight_data)) अणु
-		स्थिर काष्ठा lfp_backlight_control_method *method;
+	if (bdb->version >= 191 &&
+	    get_blocksize(backlight_data) >= sizeof(*backlight_data)) {
+		const struct lfp_backlight_control_method *method;
 
 		method = &backlight_data->backlight_control[panel_type];
 		i915->vbt.backlight.type = method->type;
 		i915->vbt.backlight.controller = method->controller;
-	पूर्ण
+	}
 
 	i915->vbt.backlight.pwm_freq_hz = entry->pwm_freq_hz;
 	i915->vbt.backlight.active_low_pwm = entry->active_low_pwm;
 
-	अगर (bdb->version >= 234) अणु
+	if (bdb->version >= 234) {
 		u16 min_level;
 		bool scale;
 
 		level = backlight_data->brightness_level[panel_type].level;
 		min_level = backlight_data->brightness_min_level[panel_type].level;
 
-		अगर (bdb->version >= 236)
+		if (bdb->version >= 236)
 			scale = backlight_data->brightness_precision_bits[panel_type] == 16;
-		अन्यथा
+		else
 			scale = level > 255;
 
-		अगर (scale)
+		if (scale)
 			min_level = min_level / 255;
 
-		अगर (min_level > 255) अणु
+		if (min_level > 255) {
 			drm_warn(&i915->drm, "Brightness min level > 255\n");
 			level = 255;
-		पूर्ण
+		}
 		i915->vbt.backlight.min_brightness = min_level;
-	पूर्ण अन्यथा अणु
+	} else {
 		level = backlight_data->level[panel_type];
 		i915->vbt.backlight.min_brightness = entry->min_brightness;
-	पूर्ण
+	}
 
 	drm_dbg_kms(&i915->drm,
 		    "VBT backlight PWM modulation frequency %u Hz, "
@@ -497,41 +496,41 @@ parse_lfp_backlight(काष्ठा drm_i915_निजी *i915,
 		    i915->vbt.backlight.min_brightness,
 		    level,
 		    i915->vbt.backlight.controller);
-पूर्ण
+}
 
 /* Try to find sdvo panel data */
-अटल व्योम
-parse_sdvo_panel_data(काष्ठा drm_i915_निजी *i915,
-		      स्थिर काष्ठा bdb_header *bdb)
-अणु
-	स्थिर काष्ठा bdb_sdvo_panel_dtds *dtds;
-	काष्ठा drm_display_mode *panel_fixed_mode;
-	पूर्णांक index;
+static void
+parse_sdvo_panel_data(struct drm_i915_private *i915,
+		      const struct bdb_header *bdb)
+{
+	const struct bdb_sdvo_panel_dtds *dtds;
+	struct drm_display_mode *panel_fixed_mode;
+	int index;
 
 	index = i915->params.vbt_sdvo_panel_type;
-	अगर (index == -2) अणु
+	if (index == -2) {
 		drm_dbg_kms(&i915->drm,
 			    "Ignore SDVO panel mode from BIOS VBT tables.\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (index == -1) अणु
-		स्थिर काष्ठा bdb_sdvo_lvds_options *sdvo_lvds_options;
+	if (index == -1) {
+		const struct bdb_sdvo_lvds_options *sdvo_lvds_options;
 
 		sdvo_lvds_options = find_section(bdb, BDB_SDVO_LVDS_OPTIONS);
-		अगर (!sdvo_lvds_options)
-			वापस;
+		if (!sdvo_lvds_options)
+			return;
 
 		index = sdvo_lvds_options->panel_type;
-	पूर्ण
+	}
 
 	dtds = find_section(bdb, BDB_SDVO_PANEL_DTDS);
-	अगर (!dtds)
-		वापस;
+	if (!dtds)
+		return;
 
-	panel_fixed_mode = kzalloc(माप(*panel_fixed_mode), GFP_KERNEL);
-	अगर (!panel_fixed_mode)
-		वापस;
+	panel_fixed_mode = kzalloc(sizeof(*panel_fixed_mode), GFP_KERNEL);
+	if (!panel_fixed_mode)
+		return;
 
 	fill_detail_timing_data(panel_fixed_mode, &dtds->dtds[index]);
 
@@ -539,101 +538,101 @@ parse_sdvo_panel_data(काष्ठा drm_i915_निजी *i915,
 
 	drm_dbg_kms(&i915->drm,
 		    "Found SDVO panel mode in BIOS VBT tables:\n");
-	drm_mode_debug_prपूर्णांकmodeline(panel_fixed_mode);
-पूर्ण
+	drm_mode_debug_printmodeline(panel_fixed_mode);
+}
 
-अटल पूर्णांक पूर्णांकel_bios_ssc_frequency(काष्ठा drm_i915_निजी *i915,
+static int intel_bios_ssc_frequency(struct drm_i915_private *i915,
 				    bool alternate)
-अणु
-	चयन (DISPLAY_VER(i915)) अणु
-	हाल 2:
-		वापस alternate ? 66667 : 48000;
-	हाल 3:
-	हाल 4:
-		वापस alternate ? 100000 : 96000;
-	शेष:
-		वापस alternate ? 100000 : 120000;
-	पूर्ण
-पूर्ण
+{
+	switch (DISPLAY_VER(i915)) {
+	case 2:
+		return alternate ? 66667 : 48000;
+	case 3:
+	case 4:
+		return alternate ? 100000 : 96000;
+	default:
+		return alternate ? 100000 : 120000;
+	}
+}
 
-अटल व्योम
-parse_general_features(काष्ठा drm_i915_निजी *i915,
-		       स्थिर काष्ठा bdb_header *bdb)
-अणु
-	स्थिर काष्ठा bdb_general_features *general;
+static void
+parse_general_features(struct drm_i915_private *i915,
+		       const struct bdb_header *bdb)
+{
+	const struct bdb_general_features *general;
 
 	general = find_section(bdb, BDB_GENERAL_FEATURES);
-	अगर (!general)
-		वापस;
+	if (!general)
+		return;
 
-	i915->vbt.पूर्णांक_tv_support = general->पूर्णांक_tv_support;
-	/* पूर्णांक_crt_support can't be trusted on earlier platक्रमms */
-	अगर (bdb->version >= 155 &&
+	i915->vbt.int_tv_support = general->int_tv_support;
+	/* int_crt_support can't be trusted on earlier platforms */
+	if (bdb->version >= 155 &&
 	    (HAS_DDI(i915) || IS_VALLEYVIEW(i915)))
-		i915->vbt.पूर्णांक_crt_support = general->पूर्णांक_crt_support;
+		i915->vbt.int_crt_support = general->int_crt_support;
 	i915->vbt.lvds_use_ssc = general->enable_ssc;
 	i915->vbt.lvds_ssc_freq =
-		पूर्णांकel_bios_ssc_frequency(i915, general->ssc_freq);
-	i915->vbt.display_घड़ी_mode = general->display_घड़ी_mode;
+		intel_bios_ssc_frequency(i915, general->ssc_freq);
+	i915->vbt.display_clock_mode = general->display_clock_mode;
 	i915->vbt.fdi_rx_polarity_inverted = general->fdi_rx_polarity_inverted;
-	अगर (bdb->version >= 181) अणु
+	if (bdb->version >= 181) {
 		i915->vbt.orientation = general->rotate_180 ?
 			DRM_MODE_PANEL_ORIENTATION_BOTTOM_UP :
 			DRM_MODE_PANEL_ORIENTATION_NORMAL;
-	पूर्ण अन्यथा अणु
+	} else {
 		i915->vbt.orientation = DRM_MODE_PANEL_ORIENTATION_UNKNOWN;
-	पूर्ण
+	}
 	drm_dbg_kms(&i915->drm,
 		    "BDB_GENERAL_FEATURES int_tv_support %d int_crt_support %d lvds_use_ssc %d lvds_ssc_freq %d display_clock_mode %d fdi_rx_polarity_inverted %d\n",
-		    i915->vbt.पूर्णांक_tv_support,
-		    i915->vbt.पूर्णांक_crt_support,
+		    i915->vbt.int_tv_support,
+		    i915->vbt.int_crt_support,
 		    i915->vbt.lvds_use_ssc,
 		    i915->vbt.lvds_ssc_freq,
-		    i915->vbt.display_घड़ी_mode,
+		    i915->vbt.display_clock_mode,
 		    i915->vbt.fdi_rx_polarity_inverted);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा child_device_config *
-child_device_ptr(स्थिर काष्ठा bdb_general_definitions *defs, पूर्णांक i)
-अणु
-	वापस (स्थिर व्योम *) &defs->devices[i * defs->child_dev_size];
-पूर्ण
+static const struct child_device_config *
+child_device_ptr(const struct bdb_general_definitions *defs, int i)
+{
+	return (const void *) &defs->devices[i * defs->child_dev_size];
+}
 
-अटल व्योम
-parse_sdvo_device_mapping(काष्ठा drm_i915_निजी *i915)
-अणु
-	काष्ठा sdvo_device_mapping *mapping;
-	स्थिर काष्ठा पूर्णांकel_bios_encoder_data *devdata;
-	स्थिर काष्ठा child_device_config *child;
-	पूर्णांक count = 0;
+static void
+parse_sdvo_device_mapping(struct drm_i915_private *i915)
+{
+	struct sdvo_device_mapping *mapping;
+	const struct intel_bios_encoder_data *devdata;
+	const struct child_device_config *child;
+	int count = 0;
 
 	/*
 	 * Only parse SDVO mappings on gens that could have SDVO. This isn't
-	 * accurate and करोesn't have to be, as long as it's not too strict.
+	 * accurate and doesn't have to be, as long as it's not too strict.
 	 */
-	अगर (!IS_DISPLAY_RANGE(i915, 3, 7)) अणु
+	if (!IS_DISPLAY_RANGE(i915, 3, 7)) {
 		drm_dbg_kms(&i915->drm, "Skipping SDVO device mapping\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	list_क्रम_each_entry(devdata, &i915->vbt.display_devices, node) अणु
+	list_for_each_entry(devdata, &i915->vbt.display_devices, node) {
 		child = &devdata->child;
 
-		अगर (child->slave_addr != SLAVE_ADDR1 &&
-		    child->slave_addr != SLAVE_ADDR2) अणु
+		if (child->slave_addr != SLAVE_ADDR1 &&
+		    child->slave_addr != SLAVE_ADDR2) {
 			/*
 			 * If the slave address is neither 0x70 nor 0x72,
 			 * it is not a SDVO device. Skip it.
 			 */
-			जारी;
-		पूर्ण
-		अगर (child->dvo_port != DEVICE_PORT_DVOB &&
-		    child->dvo_port != DEVICE_PORT_DVOC) अणु
+			continue;
+		}
+		if (child->dvo_port != DEVICE_PORT_DVOB &&
+		    child->dvo_port != DEVICE_PORT_DVOC) {
 			/* skip the incorrect SDVO port */
 			drm_dbg_kms(&i915->drm,
 				    "Incorrect SDVO port. Skip it\n");
-			जारी;
-		पूर्ण
+			continue;
+		}
 		drm_dbg_kms(&i915->drm,
 			    "the SDVO device with slave addr %2x is found on"
 			    " %s port\n",
@@ -641,7 +640,7 @@ parse_sdvo_device_mapping(काष्ठा drm_i915_निजी *i915)
 			    (child->dvo_port == DEVICE_PORT_DVOB) ?
 			    "SDVOB" : "SDVOC");
 		mapping = &i915->vbt.sdvo_mappings[child->dvo_port - 1];
-		अगर (!mapping->initialized) अणु
+		if (!mapping->initialized) {
 			mapping->dvo_port = child->dvo_port;
 			mapping->slave_addr = child->slave_addr;
 			mapping->dvo_wiring = child->dvo_wiring;
@@ -653,236 +652,236 @@ parse_sdvo_device_mapping(काष्ठा drm_i915_निजी *i915)
 				    mapping->dvo_port, mapping->slave_addr,
 				    mapping->dvo_wiring, mapping->ddc_pin,
 				    mapping->i2c_pin);
-		पूर्ण अन्यथा अणु
+		} else {
 			drm_dbg_kms(&i915->drm,
 				    "Maybe one SDVO port is shared by "
 				    "two SDVO device.\n");
-		पूर्ण
-		अगर (child->slave2_addr) अणु
-			/* Maybe this is a SDVO device with multiple inमाला_दो */
+		}
+		if (child->slave2_addr) {
+			/* Maybe this is a SDVO device with multiple inputs */
 			/* And the mapping info is not added */
 			drm_dbg_kms(&i915->drm,
 				    "there exists the slave2_addr. Maybe this"
 				    " is a SDVO device with multiple inputs.\n");
-		पूर्ण
+		}
 		count++;
-	पूर्ण
+	}
 
-	अगर (!count) अणु
+	if (!count) {
 		/* No SDVO device info is found */
 		drm_dbg_kms(&i915->drm,
 			    "No SDVO device info is found in VBT\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-parse_driver_features(काष्ठा drm_i915_निजी *i915,
-		      स्थिर काष्ठा bdb_header *bdb)
-अणु
-	स्थिर काष्ठा bdb_driver_features *driver;
+static void
+parse_driver_features(struct drm_i915_private *i915,
+		      const struct bdb_header *bdb)
+{
+	const struct bdb_driver_features *driver;
 
 	driver = find_section(bdb, BDB_DRIVER_FEATURES);
-	अगर (!driver)
-		वापस;
+	if (!driver)
+		return;
 
-	अगर (DISPLAY_VER(i915) >= 5) अणु
+	if (DISPLAY_VER(i915) >= 5) {
 		/*
 		 * Note that we consider BDB_DRIVER_FEATURE_INT_SDVO_LVDS
-		 * to mean "eDP". The VBT spec करोesn't agree with that
-		 * पूर्णांकerpretation, but real world VBTs seem to.
+		 * to mean "eDP". The VBT spec doesn't agree with that
+		 * interpretation, but real world VBTs seem to.
 		 */
-		अगर (driver->lvds_config != BDB_DRIVER_FEATURE_INT_LVDS)
-			i915->vbt.पूर्णांक_lvds_support = 0;
-	पूर्ण अन्यथा अणु
+		if (driver->lvds_config != BDB_DRIVER_FEATURE_INT_LVDS)
+			i915->vbt.int_lvds_support = 0;
+	} else {
 		/*
 		 * FIXME it's not clear which BDB version has the LVDS config
 		 * bits defined. Revision history in the VBT spec says:
-		 * "0.92 | Add two definitions क्रम VBT value of LVDS Active
+		 * "0.92 | Add two definitions for VBT value of LVDS Active
 		 *  Config (00b and 11b values defined) | 06/13/2005"
-		 * but करोes not the specअगरy the BDB version.
+		 * but does not the specify the BDB version.
 		 *
 		 * So far version 134 (on i945gm) is the oldest VBT observed
 		 * in the wild with the bits correctly populated. Version
-		 * 108 (on i85x) करोes not have the bits correctly populated.
+		 * 108 (on i85x) does not have the bits correctly populated.
 		 */
-		अगर (bdb->version >= 134 &&
+		if (bdb->version >= 134 &&
 		    driver->lvds_config != BDB_DRIVER_FEATURE_INT_LVDS &&
 		    driver->lvds_config != BDB_DRIVER_FEATURE_INT_SDVO_LVDS)
-			i915->vbt.पूर्णांक_lvds_support = 0;
-	पूर्ण
+			i915->vbt.int_lvds_support = 0;
+	}
 
-	अगर (bdb->version < 228) अणु
+	if (bdb->version < 228) {
 		drm_dbg_kms(&i915->drm, "DRRS State Enabled:%d\n",
 			    driver->drrs_enabled);
 		/*
 		 * If DRRS is not supported, drrs_type has to be set to 0.
 		 * This is because, VBT is configured in such a way that
-		 * अटल DRRS is 0 and DRRS not supported is represented by
+		 * static DRRS is 0 and DRRS not supported is represented by
 		 * driver->drrs_enabled=false
 		 */
-		अगर (!driver->drrs_enabled)
+		if (!driver->drrs_enabled)
 			i915->vbt.drrs_type = DRRS_NOT_SUPPORTED;
 
 		i915->vbt.psr.enable = driver->psr_enabled;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-parse_घातer_conservation_features(काष्ठा drm_i915_निजी *i915,
-				  स्थिर काष्ठा bdb_header *bdb)
-अणु
-	स्थिर काष्ठा bdb_lfp_घातer *घातer;
+static void
+parse_power_conservation_features(struct drm_i915_private *i915,
+				  const struct bdb_header *bdb)
+{
+	const struct bdb_lfp_power *power;
 	u8 panel_type = i915->vbt.panel_type;
 
-	अगर (bdb->version < 228)
-		वापस;
+	if (bdb->version < 228)
+		return;
 
-	घातer = find_section(bdb, BDB_LFP_POWER);
-	अगर (!घातer)
-		वापस;
+	power = find_section(bdb, BDB_LFP_POWER);
+	if (!power)
+		return;
 
-	i915->vbt.psr.enable = घातer->psr & BIT(panel_type);
+	i915->vbt.psr.enable = power->psr & BIT(panel_type);
 
 	/*
 	 * If DRRS is not supported, drrs_type has to be set to 0.
 	 * This is because, VBT is configured in such a way that
-	 * अटल DRRS is 0 and DRRS not supported is represented by
-	 * घातer->drrs & BIT(panel_type)=false
+	 * static DRRS is 0 and DRRS not supported is represented by
+	 * power->drrs & BIT(panel_type)=false
 	 */
-	अगर (!(घातer->drrs & BIT(panel_type)))
+	if (!(power->drrs & BIT(panel_type)))
 		i915->vbt.drrs_type = DRRS_NOT_SUPPORTED;
 
-	अगर (bdb->version >= 232)
-		i915->vbt.edp.hobl = घातer->hobl & BIT(panel_type);
-पूर्ण
+	if (bdb->version >= 232)
+		i915->vbt.edp.hobl = power->hobl & BIT(panel_type);
+}
 
-अटल व्योम
-parse_edp(काष्ठा drm_i915_निजी *i915, स्थिर काष्ठा bdb_header *bdb)
-अणु
-	स्थिर काष्ठा bdb_edp *edp;
-	स्थिर काष्ठा edp_घातer_seq *edp_pps;
-	स्थिर काष्ठा edp_fast_link_params *edp_link_params;
-	पूर्णांक panel_type = i915->vbt.panel_type;
+static void
+parse_edp(struct drm_i915_private *i915, const struct bdb_header *bdb)
+{
+	const struct bdb_edp *edp;
+	const struct edp_power_seq *edp_pps;
+	const struct edp_fast_link_params *edp_link_params;
+	int panel_type = i915->vbt.panel_type;
 
 	edp = find_section(bdb, BDB_EDP);
-	अगर (!edp)
-		वापस;
+	if (!edp)
+		return;
 
-	चयन ((edp->color_depth >> (panel_type * 2)) & 3) अणु
-	हाल EDP_18BPP:
+	switch ((edp->color_depth >> (panel_type * 2)) & 3) {
+	case EDP_18BPP:
 		i915->vbt.edp.bpp = 18;
-		अवरोध;
-	हाल EDP_24BPP:
+		break;
+	case EDP_24BPP:
 		i915->vbt.edp.bpp = 24;
-		अवरोध;
-	हाल EDP_30BPP:
+		break;
+	case EDP_30BPP:
 		i915->vbt.edp.bpp = 30;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/* Get the eDP sequencing and link info */
-	edp_pps = &edp->घातer_seqs[panel_type];
+	edp_pps = &edp->power_seqs[panel_type];
 	edp_link_params = &edp->fast_link_params[panel_type];
 
 	i915->vbt.edp.pps = *edp_pps;
 
-	चयन (edp_link_params->rate) अणु
-	हाल EDP_RATE_1_62:
+	switch (edp_link_params->rate) {
+	case EDP_RATE_1_62:
 		i915->vbt.edp.rate = DP_LINK_BW_1_62;
-		अवरोध;
-	हाल EDP_RATE_2_7:
+		break;
+	case EDP_RATE_2_7:
 		i915->vbt.edp.rate = DP_LINK_BW_2_7;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		drm_dbg_kms(&i915->drm,
 			    "VBT has unknown eDP link rate value %u\n",
 			     edp_link_params->rate);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	चयन (edp_link_params->lanes) अणु
-	हाल EDP_LANE_1:
+	switch (edp_link_params->lanes) {
+	case EDP_LANE_1:
 		i915->vbt.edp.lanes = 1;
-		अवरोध;
-	हाल EDP_LANE_2:
+		break;
+	case EDP_LANE_2:
 		i915->vbt.edp.lanes = 2;
-		अवरोध;
-	हाल EDP_LANE_4:
+		break;
+	case EDP_LANE_4:
 		i915->vbt.edp.lanes = 4;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		drm_dbg_kms(&i915->drm,
 			    "VBT has unknown eDP lane count value %u\n",
 			    edp_link_params->lanes);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	चयन (edp_link_params->preemphasis) अणु
-	हाल EDP_PREEMPHASIS_NONE:
+	switch (edp_link_params->preemphasis) {
+	case EDP_PREEMPHASIS_NONE:
 		i915->vbt.edp.preemphasis = DP_TRAIN_PRE_EMPH_LEVEL_0;
-		अवरोध;
-	हाल EDP_PREEMPHASIS_3_5dB:
+		break;
+	case EDP_PREEMPHASIS_3_5dB:
 		i915->vbt.edp.preemphasis = DP_TRAIN_PRE_EMPH_LEVEL_1;
-		अवरोध;
-	हाल EDP_PREEMPHASIS_6dB:
+		break;
+	case EDP_PREEMPHASIS_6dB:
 		i915->vbt.edp.preemphasis = DP_TRAIN_PRE_EMPH_LEVEL_2;
-		अवरोध;
-	हाल EDP_PREEMPHASIS_9_5dB:
+		break;
+	case EDP_PREEMPHASIS_9_5dB:
 		i915->vbt.edp.preemphasis = DP_TRAIN_PRE_EMPH_LEVEL_3;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		drm_dbg_kms(&i915->drm,
 			    "VBT has unknown eDP pre-emphasis value %u\n",
 			    edp_link_params->preemphasis);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	चयन (edp_link_params->vswing) अणु
-	हाल EDP_VSWING_0_4V:
+	switch (edp_link_params->vswing) {
+	case EDP_VSWING_0_4V:
 		i915->vbt.edp.vswing = DP_TRAIN_VOLTAGE_SWING_LEVEL_0;
-		अवरोध;
-	हाल EDP_VSWING_0_6V:
+		break;
+	case EDP_VSWING_0_6V:
 		i915->vbt.edp.vswing = DP_TRAIN_VOLTAGE_SWING_LEVEL_1;
-		अवरोध;
-	हाल EDP_VSWING_0_8V:
+		break;
+	case EDP_VSWING_0_8V:
 		i915->vbt.edp.vswing = DP_TRAIN_VOLTAGE_SWING_LEVEL_2;
-		अवरोध;
-	हाल EDP_VSWING_1_2V:
+		break;
+	case EDP_VSWING_1_2V:
 		i915->vbt.edp.vswing = DP_TRAIN_VOLTAGE_SWING_LEVEL_3;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		drm_dbg_kms(&i915->drm,
 			    "VBT has unknown eDP voltage swing value %u\n",
 			    edp_link_params->vswing);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (bdb->version >= 173) अणु
+	if (bdb->version >= 173) {
 		u8 vswing;
 
-		/* Don't पढ़ो from VBT अगर module parameter has valid value*/
-		अगर (i915->params.edp_vswing) अणु
+		/* Don't read from VBT if module parameter has valid value*/
+		if (i915->params.edp_vswing) {
 			i915->vbt.edp.low_vswing =
 				i915->params.edp_vswing == 1;
-		पूर्ण अन्यथा अणु
+		} else {
 			vswing = (edp->edp_vswing_preemph >> (panel_type * 4)) & 0xF;
 			i915->vbt.edp.low_vswing = vswing == 0;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम
-parse_psr(काष्ठा drm_i915_निजी *i915, स्थिर काष्ठा bdb_header *bdb)
-अणु
-	स्थिर काष्ठा bdb_psr *psr;
-	स्थिर काष्ठा psr_table *psr_table;
-	पूर्णांक panel_type = i915->vbt.panel_type;
+static void
+parse_psr(struct drm_i915_private *i915, const struct bdb_header *bdb)
+{
+	const struct bdb_psr *psr;
+	const struct psr_table *psr_table;
+	int panel_type = i915->vbt.panel_type;
 
 	psr = find_section(bdb, BDB_PSR);
-	अगर (!psr) अणु
+	if (!psr) {
 		drm_dbg_kms(&i915->drm, "No PSR BDB found.\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	psr_table = &psr->psr_table[panel_type];
 
@@ -893,174 +892,174 @@ parse_psr(काष्ठा drm_i915_निजी *i915, स्थिर का
 	i915->vbt.psr.idle_frames = psr_table->idle_frames < 0 ? 0 :
 		psr_table->idle_frames > 15 ? 15 : psr_table->idle_frames;
 
-	चयन (psr_table->lines_to_रुको) अणु
-	हाल 0:
-		i915->vbt.psr.lines_to_रुको = PSR_0_LINES_TO_WAIT;
-		अवरोध;
-	हाल 1:
-		i915->vbt.psr.lines_to_रुको = PSR_1_LINE_TO_WAIT;
-		अवरोध;
-	हाल 2:
-		i915->vbt.psr.lines_to_रुको = PSR_4_LINES_TO_WAIT;
-		अवरोध;
-	हाल 3:
-		i915->vbt.psr.lines_to_रुको = PSR_8_LINES_TO_WAIT;
-		अवरोध;
-	शेष:
+	switch (psr_table->lines_to_wait) {
+	case 0:
+		i915->vbt.psr.lines_to_wait = PSR_0_LINES_TO_WAIT;
+		break;
+	case 1:
+		i915->vbt.psr.lines_to_wait = PSR_1_LINE_TO_WAIT;
+		break;
+	case 2:
+		i915->vbt.psr.lines_to_wait = PSR_4_LINES_TO_WAIT;
+		break;
+	case 3:
+		i915->vbt.psr.lines_to_wait = PSR_8_LINES_TO_WAIT;
+		break;
+	default:
 		drm_dbg_kms(&i915->drm,
 			    "VBT has unknown PSR lines to wait %u\n",
-			    psr_table->lines_to_रुको);
-		अवरोध;
-	पूर्ण
+			    psr_table->lines_to_wait);
+		break;
+	}
 
 	/*
 	 * New psr options 0=500us, 1=100us, 2=2500us, 3=0us
-	 * Old decimal value is wake up समय in multiples of 100 us.
+	 * Old decimal value is wake up time in multiples of 100 us.
 	 */
-	अगर (bdb->version >= 205 &&
-	    (IS_GEN9_BC(i915) || DISPLAY_VER(i915) >= 10)) अणु
-		चयन (psr_table->tp1_wakeup_समय) अणु
-		हाल 0:
-			i915->vbt.psr.tp1_wakeup_समय_us = 500;
-			अवरोध;
-		हाल 1:
-			i915->vbt.psr.tp1_wakeup_समय_us = 100;
-			अवरोध;
-		हाल 3:
-			i915->vbt.psr.tp1_wakeup_समय_us = 0;
-			अवरोध;
-		शेष:
+	if (bdb->version >= 205 &&
+	    (IS_GEN9_BC(i915) || DISPLAY_VER(i915) >= 10)) {
+		switch (psr_table->tp1_wakeup_time) {
+		case 0:
+			i915->vbt.psr.tp1_wakeup_time_us = 500;
+			break;
+		case 1:
+			i915->vbt.psr.tp1_wakeup_time_us = 100;
+			break;
+		case 3:
+			i915->vbt.psr.tp1_wakeup_time_us = 0;
+			break;
+		default:
 			drm_dbg_kms(&i915->drm,
 				    "VBT tp1 wakeup time value %d is outside range[0-3], defaulting to max value 2500us\n",
-				    psr_table->tp1_wakeup_समय);
+				    psr_table->tp1_wakeup_time);
 			fallthrough;
-		हाल 2:
-			i915->vbt.psr.tp1_wakeup_समय_us = 2500;
-			अवरोध;
-		पूर्ण
+		case 2:
+			i915->vbt.psr.tp1_wakeup_time_us = 2500;
+			break;
+		}
 
-		चयन (psr_table->tp2_tp3_wakeup_समय) अणु
-		हाल 0:
-			i915->vbt.psr.tp2_tp3_wakeup_समय_us = 500;
-			अवरोध;
-		हाल 1:
-			i915->vbt.psr.tp2_tp3_wakeup_समय_us = 100;
-			अवरोध;
-		हाल 3:
-			i915->vbt.psr.tp2_tp3_wakeup_समय_us = 0;
-			अवरोध;
-		शेष:
+		switch (psr_table->tp2_tp3_wakeup_time) {
+		case 0:
+			i915->vbt.psr.tp2_tp3_wakeup_time_us = 500;
+			break;
+		case 1:
+			i915->vbt.psr.tp2_tp3_wakeup_time_us = 100;
+			break;
+		case 3:
+			i915->vbt.psr.tp2_tp3_wakeup_time_us = 0;
+			break;
+		default:
 			drm_dbg_kms(&i915->drm,
 				    "VBT tp2_tp3 wakeup time value %d is outside range[0-3], defaulting to max value 2500us\n",
-				    psr_table->tp2_tp3_wakeup_समय);
+				    psr_table->tp2_tp3_wakeup_time);
 			fallthrough;
-		हाल 2:
-			i915->vbt.psr.tp2_tp3_wakeup_समय_us = 2500;
-		अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		i915->vbt.psr.tp1_wakeup_समय_us = psr_table->tp1_wakeup_समय * 100;
-		i915->vbt.psr.tp2_tp3_wakeup_समय_us = psr_table->tp2_tp3_wakeup_समय * 100;
-	पूर्ण
+		case 2:
+			i915->vbt.psr.tp2_tp3_wakeup_time_us = 2500;
+		break;
+		}
+	} else {
+		i915->vbt.psr.tp1_wakeup_time_us = psr_table->tp1_wakeup_time * 100;
+		i915->vbt.psr.tp2_tp3_wakeup_time_us = psr_table->tp2_tp3_wakeup_time * 100;
+	}
 
-	अगर (bdb->version >= 226) अणु
-		u32 wakeup_समय = psr->psr2_tp2_tp3_wakeup_समय;
+	if (bdb->version >= 226) {
+		u32 wakeup_time = psr->psr2_tp2_tp3_wakeup_time;
 
-		wakeup_समय = (wakeup_समय >> (2 * panel_type)) & 0x3;
-		चयन (wakeup_समय) अणु
-		हाल 0:
-			wakeup_समय = 500;
-			अवरोध;
-		हाल 1:
-			wakeup_समय = 100;
-			अवरोध;
-		हाल 3:
-			wakeup_समय = 50;
-			अवरोध;
-		शेष:
-		हाल 2:
-			wakeup_समय = 2500;
-			अवरोध;
-		पूर्ण
-		i915->vbt.psr.psr2_tp2_tp3_wakeup_समय_us = wakeup_समय;
-	पूर्ण अन्यथा अणु
-		/* Reusing PSR1 wakeup समय क्रम PSR2 in older VBTs */
-		i915->vbt.psr.psr2_tp2_tp3_wakeup_समय_us = i915->vbt.psr.tp2_tp3_wakeup_समय_us;
-	पूर्ण
-पूर्ण
+		wakeup_time = (wakeup_time >> (2 * panel_type)) & 0x3;
+		switch (wakeup_time) {
+		case 0:
+			wakeup_time = 500;
+			break;
+		case 1:
+			wakeup_time = 100;
+			break;
+		case 3:
+			wakeup_time = 50;
+			break;
+		default:
+		case 2:
+			wakeup_time = 2500;
+			break;
+		}
+		i915->vbt.psr.psr2_tp2_tp3_wakeup_time_us = wakeup_time;
+	} else {
+		/* Reusing PSR1 wakeup time for PSR2 in older VBTs */
+		i915->vbt.psr.psr2_tp2_tp3_wakeup_time_us = i915->vbt.psr.tp2_tp3_wakeup_time_us;
+	}
+}
 
-अटल व्योम parse_dsi_backlight_ports(काष्ठा drm_i915_निजी *i915,
-				      u16 version, क्रमागत port port)
-अणु
-	अगर (!i915->vbt.dsi.config->dual_link || version < 197) अणु
+static void parse_dsi_backlight_ports(struct drm_i915_private *i915,
+				      u16 version, enum port port)
+{
+	if (!i915->vbt.dsi.config->dual_link || version < 197) {
 		i915->vbt.dsi.bl_ports = BIT(port);
-		अगर (i915->vbt.dsi.config->cabc_supported)
+		if (i915->vbt.dsi.config->cabc_supported)
 			i915->vbt.dsi.cabc_ports = BIT(port);
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	चयन (i915->vbt.dsi.config->dl_dcs_backlight_ports) अणु
-	हाल DL_DCS_PORT_A:
+	switch (i915->vbt.dsi.config->dl_dcs_backlight_ports) {
+	case DL_DCS_PORT_A:
 		i915->vbt.dsi.bl_ports = BIT(PORT_A);
-		अवरोध;
-	हाल DL_DCS_PORT_C:
+		break;
+	case DL_DCS_PORT_C:
 		i915->vbt.dsi.bl_ports = BIT(PORT_C);
-		अवरोध;
-	शेष:
-	हाल DL_DCS_PORT_A_AND_C:
+		break;
+	default:
+	case DL_DCS_PORT_A_AND_C:
 		i915->vbt.dsi.bl_ports = BIT(PORT_A) | BIT(PORT_C);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (!i915->vbt.dsi.config->cabc_supported)
-		वापस;
+	if (!i915->vbt.dsi.config->cabc_supported)
+		return;
 
-	चयन (i915->vbt.dsi.config->dl_dcs_cabc_ports) अणु
-	हाल DL_DCS_PORT_A:
+	switch (i915->vbt.dsi.config->dl_dcs_cabc_ports) {
+	case DL_DCS_PORT_A:
 		i915->vbt.dsi.cabc_ports = BIT(PORT_A);
-		अवरोध;
-	हाल DL_DCS_PORT_C:
+		break;
+	case DL_DCS_PORT_C:
 		i915->vbt.dsi.cabc_ports = BIT(PORT_C);
-		अवरोध;
-	शेष:
-	हाल DL_DCS_PORT_A_AND_C:
+		break;
+	default:
+	case DL_DCS_PORT_A_AND_C:
 		i915->vbt.dsi.cabc_ports =
 					BIT(PORT_A) | BIT(PORT_C);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम
-parse_mipi_config(काष्ठा drm_i915_निजी *i915,
-		  स्थिर काष्ठा bdb_header *bdb)
-अणु
-	स्थिर काष्ठा bdb_mipi_config *start;
-	स्थिर काष्ठा mipi_config *config;
-	स्थिर काष्ठा mipi_pps_data *pps;
-	पूर्णांक panel_type = i915->vbt.panel_type;
-	क्रमागत port port;
+static void
+parse_mipi_config(struct drm_i915_private *i915,
+		  const struct bdb_header *bdb)
+{
+	const struct bdb_mipi_config *start;
+	const struct mipi_config *config;
+	const struct mipi_pps_data *pps;
+	int panel_type = i915->vbt.panel_type;
+	enum port port;
 
-	/* parse MIPI blocks only अगर LFP type is MIPI */
-	अगर (!पूर्णांकel_bios_is_dsi_present(i915, &port))
-		वापस;
+	/* parse MIPI blocks only if LFP type is MIPI */
+	if (!intel_bios_is_dsi_present(i915, &port))
+		return;
 
 	/* Initialize this to undefined indicating no generic MIPI support */
 	i915->vbt.dsi.panel_id = MIPI_DSI_UNDEFINED_PANEL_ID;
 
-	/* Block #40 is alपढ़ोy parsed and panel_fixed_mode is
+	/* Block #40 is already parsed and panel_fixed_mode is
 	 * stored in i915->lfp_lvds_vbt_mode
 	 * resuse this when needed
 	 */
 
-	/* Parse #52 क्रम panel index used from panel_type alपढ़ोy
+	/* Parse #52 for panel index used from panel_type already
 	 * parsed
 	 */
 	start = find_section(bdb, BDB_MIPI_CONFIG);
-	अगर (!start) अणु
+	if (!start) {
 		drm_dbg_kms(&i915->drm, "No MIPI config BDB found");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	drm_dbg(&i915->drm, "Found MIPI Config block, panel index = %d\n",
 		panel_type);
@@ -1073,147 +1072,147 @@ parse_mipi_config(काष्ठा drm_i915_निजी *i915,
 	pps = &start->pps[panel_type];
 
 	/* store as of now full data. Trim when we realise all is not needed */
-	i915->vbt.dsi.config = kmemdup(config, माप(काष्ठा mipi_config), GFP_KERNEL);
-	अगर (!i915->vbt.dsi.config)
-		वापस;
+	i915->vbt.dsi.config = kmemdup(config, sizeof(struct mipi_config), GFP_KERNEL);
+	if (!i915->vbt.dsi.config)
+		return;
 
-	i915->vbt.dsi.pps = kmemdup(pps, माप(काष्ठा mipi_pps_data), GFP_KERNEL);
-	अगर (!i915->vbt.dsi.pps) अणु
-		kमुक्त(i915->vbt.dsi.config);
-		वापस;
-	पूर्ण
+	i915->vbt.dsi.pps = kmemdup(pps, sizeof(struct mipi_pps_data), GFP_KERNEL);
+	if (!i915->vbt.dsi.pps) {
+		kfree(i915->vbt.dsi.config);
+		return;
+	}
 
 	parse_dsi_backlight_ports(i915, bdb->version, port);
 
 	/* FIXME is the 90 vs. 270 correct? */
-	चयन (config->rotation) अणु
-	हाल ENABLE_ROTATION_0:
+	switch (config->rotation) {
+	case ENABLE_ROTATION_0:
 		/*
 		 * Most (all?) VBTs claim 0 degrees despite having
-		 * an upside करोwn panel, thus we करो not trust this.
+		 * an upside down panel, thus we do not trust this.
 		 */
 		i915->vbt.dsi.orientation =
 			DRM_MODE_PANEL_ORIENTATION_UNKNOWN;
-		अवरोध;
-	हाल ENABLE_ROTATION_90:
+		break;
+	case ENABLE_ROTATION_90:
 		i915->vbt.dsi.orientation =
 			DRM_MODE_PANEL_ORIENTATION_RIGHT_UP;
-		अवरोध;
-	हाल ENABLE_ROTATION_180:
+		break;
+	case ENABLE_ROTATION_180:
 		i915->vbt.dsi.orientation =
 			DRM_MODE_PANEL_ORIENTATION_BOTTOM_UP;
-		अवरोध;
-	हाल ENABLE_ROTATION_270:
+		break;
+	case ENABLE_ROTATION_270:
 		i915->vbt.dsi.orientation =
 			DRM_MODE_PANEL_ORIENTATION_LEFT_UP;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	/* We have mandatory mipi config blocks. Initialize as generic panel */
 	i915->vbt.dsi.panel_id = MIPI_DSI_GENERIC_PANEL_ID;
-पूर्ण
+}
 
-/* Find the sequence block and size क्रम the given panel. */
-अटल स्थिर u8 *
-find_panel_sequence_block(स्थिर काष्ठा bdb_mipi_sequence *sequence,
+/* Find the sequence block and size for the given panel. */
+static const u8 *
+find_panel_sequence_block(const struct bdb_mipi_sequence *sequence,
 			  u16 panel_id, u32 *seq_size)
-अणु
+{
 	u32 total = get_blocksize(sequence);
-	स्थिर u8 *data = &sequence->data[0];
+	const u8 *data = &sequence->data[0];
 	u8 current_id;
 	u32 current_size;
-	पूर्णांक header_size = sequence->version >= 3 ? 5 : 3;
-	पूर्णांक index = 0;
-	पूर्णांक i;
+	int header_size = sequence->version >= 3 ? 5 : 3;
+	int index = 0;
+	int i;
 
 	/* skip new block size */
-	अगर (sequence->version >= 3)
+	if (sequence->version >= 3)
 		data += 4;
 
-	क्रम (i = 0; i < MAX_MIPI_CONFIGURATIONS && index < total; i++) अणु
-		अगर (index + header_size > total) अणु
+	for (i = 0; i < MAX_MIPI_CONFIGURATIONS && index < total; i++) {
+		if (index + header_size > total) {
 			DRM_ERROR("Invalid sequence block (header)\n");
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 
 		current_id = *(data + index);
-		अगर (sequence->version >= 3)
-			current_size = *((स्थिर u32 *)(data + index + 1));
-		अन्यथा
-			current_size = *((स्थिर u16 *)(data + index + 1));
+		if (sequence->version >= 3)
+			current_size = *((const u32 *)(data + index + 1));
+		else
+			current_size = *((const u16 *)(data + index + 1));
 
 		index += header_size;
 
-		अगर (index + current_size > total) अणु
+		if (index + current_size > total) {
 			DRM_ERROR("Invalid sequence block\n");
-			वापस शून्य;
-		पूर्ण
+			return NULL;
+		}
 
-		अगर (current_id == panel_id) अणु
+		if (current_id == panel_id) {
 			*seq_size = current_size;
-			वापस data + index;
-		पूर्ण
+			return data + index;
+		}
 
 		index += current_size;
-	पूर्ण
+	}
 
 	DRM_ERROR("Sequence block detected but no valid configuration\n");
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक जाओ_next_sequence(स्थिर u8 *data, पूर्णांक index, पूर्णांक total)
-अणु
+static int goto_next_sequence(const u8 *data, int index, int total)
+{
 	u16 len;
 
 	/* Skip Sequence Byte. */
-	क्रम (index = index + 1; index < total; index += len) अणु
+	for (index = index + 1; index < total; index += len) {
 		u8 operation_byte = *(data + index);
 		index++;
 
-		चयन (operation_byte) अणु
-		हाल MIPI_SEQ_ELEM_END:
-			वापस index;
-		हाल MIPI_SEQ_ELEM_SEND_PKT:
-			अगर (index + 4 > total)
-				वापस 0;
+		switch (operation_byte) {
+		case MIPI_SEQ_ELEM_END:
+			return index;
+		case MIPI_SEQ_ELEM_SEND_PKT:
+			if (index + 4 > total)
+				return 0;
 
-			len = *((स्थिर u16 *)(data + index + 2)) + 4;
-			अवरोध;
-		हाल MIPI_SEQ_ELEM_DELAY:
+			len = *((const u16 *)(data + index + 2)) + 4;
+			break;
+		case MIPI_SEQ_ELEM_DELAY:
 			len = 4;
-			अवरोध;
-		हाल MIPI_SEQ_ELEM_GPIO:
+			break;
+		case MIPI_SEQ_ELEM_GPIO:
 			len = 2;
-			अवरोध;
-		हाल MIPI_SEQ_ELEM_I2C:
-			अगर (index + 7 > total)
-				वापस 0;
+			break;
+		case MIPI_SEQ_ELEM_I2C:
+			if (index + 7 > total)
+				return 0;
 			len = *(data + index + 6) + 7;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			DRM_ERROR("Unknown operation byte\n");
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक जाओ_next_sequence_v3(स्थिर u8 *data, पूर्णांक index, पूर्णांक total)
-अणु
-	पूर्णांक seq_end;
+static int goto_next_sequence_v3(const u8 *data, int index, int total)
+{
+	int seq_end;
 	u16 len;
 	u32 size_of_sequence;
 
 	/*
-	 * Could skip sequence based on Size of Sequence alone, but also करो some
-	 * checking on the काष्ठाure.
+	 * Could skip sequence based on Size of Sequence alone, but also do some
+	 * checking on the structure.
 	 */
-	अगर (total < 5) अणु
+	if (total < 5) {
 		DRM_ERROR("Too small sequence size\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Skip Sequence Byte. */
 	index++;
@@ -1223,204 +1222,204 @@ find_panel_sequence_block(स्थिर काष्ठा bdb_mipi_sequence *
 	 * includes MIPI_SEQ_ELEM_END byte, excludes the final MIPI_SEQ_END
 	 * byte.
 	 */
-	size_of_sequence = *((स्थिर u32 *)(data + index));
+	size_of_sequence = *((const u32 *)(data + index));
 	index += 4;
 
 	seq_end = index + size_of_sequence;
-	अगर (seq_end > total) अणु
+	if (seq_end > total) {
 		DRM_ERROR("Invalid sequence size\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	क्रम (; index < total; index += len) अणु
+	for (; index < total; index += len) {
 		u8 operation_byte = *(data + index);
 		index++;
 
-		अगर (operation_byte == MIPI_SEQ_ELEM_END) अणु
-			अगर (index != seq_end) अणु
+		if (operation_byte == MIPI_SEQ_ELEM_END) {
+			if (index != seq_end) {
 				DRM_ERROR("Invalid element structure\n");
-				वापस 0;
-			पूर्ण
-			वापस index;
-		पूर्ण
+				return 0;
+			}
+			return index;
+		}
 
 		len = *(data + index);
 		index++;
 
 		/*
-		 * FIXME: Would be nice to check elements like क्रम v1/v2 in
-		 * जाओ_next_sequence() above.
+		 * FIXME: Would be nice to check elements like for v1/v2 in
+		 * goto_next_sequence() above.
 		 */
-		चयन (operation_byte) अणु
-		हाल MIPI_SEQ_ELEM_SEND_PKT:
-		हाल MIPI_SEQ_ELEM_DELAY:
-		हाल MIPI_SEQ_ELEM_GPIO:
-		हाल MIPI_SEQ_ELEM_I2C:
-		हाल MIPI_SEQ_ELEM_SPI:
-		हाल MIPI_SEQ_ELEM_PMIC:
-			अवरोध;
-		शेष:
+		switch (operation_byte) {
+		case MIPI_SEQ_ELEM_SEND_PKT:
+		case MIPI_SEQ_ELEM_DELAY:
+		case MIPI_SEQ_ELEM_GPIO:
+		case MIPI_SEQ_ELEM_I2C:
+		case MIPI_SEQ_ELEM_SPI:
+		case MIPI_SEQ_ELEM_PMIC:
+			break;
+		default:
 			DRM_ERROR("Unknown operation byte %u\n",
 				  operation_byte);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Get len of pre-fixed deनिश्चित fragment from a v1 init OTP sequence,
- * skip all delay + gpio opeअक्रमs and stop at the first DSI packet op.
+ * Get len of pre-fixed deassert fragment from a v1 init OTP sequence,
+ * skip all delay + gpio operands and stop at the first DSI packet op.
  */
-अटल पूर्णांक get_init_otp_deनिश्चित_fragment_len(काष्ठा drm_i915_निजी *i915)
-अणु
-	स्थिर u8 *data = i915->vbt.dsi.sequence[MIPI_SEQ_INIT_OTP];
-	पूर्णांक index, len;
+static int get_init_otp_deassert_fragment_len(struct drm_i915_private *i915)
+{
+	const u8 *data = i915->vbt.dsi.sequence[MIPI_SEQ_INIT_OTP];
+	int index, len;
 
-	अगर (drm_WARN_ON(&i915->drm,
+	if (drm_WARN_ON(&i915->drm,
 			!data || i915->vbt.dsi.seq_version != 1))
-		वापस 0;
+		return 0;
 
 	/* index = 1 to skip sequence byte */
-	क्रम (index = 1; data[index] != MIPI_SEQ_ELEM_END; index += len) अणु
-		चयन (data[index]) अणु
-		हाल MIPI_SEQ_ELEM_SEND_PKT:
-			वापस index == 1 ? 0 : index;
-		हाल MIPI_SEQ_ELEM_DELAY:
-			len = 5; /* 1 byte क्रम opeअक्रम + uपूर्णांक32 */
-			अवरोध;
-		हाल MIPI_SEQ_ELEM_GPIO:
-			len = 3; /* 1 byte क्रम op, 1 क्रम gpio_nr, 1 क्रम value */
-			अवरोध;
-		शेष:
-			वापस 0;
-		पूर्ण
-	पूर्ण
+	for (index = 1; data[index] != MIPI_SEQ_ELEM_END; index += len) {
+		switch (data[index]) {
+		case MIPI_SEQ_ELEM_SEND_PKT:
+			return index == 1 ? 0 : index;
+		case MIPI_SEQ_ELEM_DELAY:
+			len = 5; /* 1 byte for operand + uint32 */
+			break;
+		case MIPI_SEQ_ELEM_GPIO:
+			len = 3; /* 1 byte for op, 1 for gpio_nr, 1 for value */
+			break;
+		default:
+			return 0;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Some v1 VBT MIPI sequences करो the deनिश्चित in the init OTP sequence.
- * The deनिश्चित must be करोne beक्रमe calling पूर्णांकel_dsi_device_पढ़ोy, so क्रम
- * these devices we split the init OTP sequence पूर्णांकo a deनिश्चित sequence and
+ * Some v1 VBT MIPI sequences do the deassert in the init OTP sequence.
+ * The deassert must be done before calling intel_dsi_device_ready, so for
+ * these devices we split the init OTP sequence into a deassert sequence and
  * the actual init OTP part.
  */
-अटल व्योम fixup_mipi_sequences(काष्ठा drm_i915_निजी *i915)
-अणु
+static void fixup_mipi_sequences(struct drm_i915_private *i915)
+{
 	u8 *init_otp;
-	पूर्णांक len;
+	int len;
 
-	/* Limit this to VLV क्रम now. */
-	अगर (!IS_VALLEYVIEW(i915))
-		वापस;
+	/* Limit this to VLV for now. */
+	if (!IS_VALLEYVIEW(i915))
+		return;
 
 	/* Limit this to v1 vid-mode sequences */
-	अगर (i915->vbt.dsi.config->is_cmd_mode ||
+	if (i915->vbt.dsi.config->is_cmd_mode ||
 	    i915->vbt.dsi.seq_version != 1)
-		वापस;
+		return;
 
-	/* Only करो this अगर there are otp and निश्चित seqs and no deनिश्चित seq */
-	अगर (!i915->vbt.dsi.sequence[MIPI_SEQ_INIT_OTP] ||
+	/* Only do this if there are otp and assert seqs and no deassert seq */
+	if (!i915->vbt.dsi.sequence[MIPI_SEQ_INIT_OTP] ||
 	    !i915->vbt.dsi.sequence[MIPI_SEQ_ASSERT_RESET] ||
 	    i915->vbt.dsi.sequence[MIPI_SEQ_DEASSERT_RESET])
-		वापस;
+		return;
 
-	/* The deनिश्चित-sequence ends at the first DSI packet */
-	len = get_init_otp_deनिश्चित_fragment_len(i915);
-	अगर (!len)
-		वापस;
+	/* The deassert-sequence ends at the first DSI packet */
+	len = get_init_otp_deassert_fragment_len(i915);
+	if (!len)
+		return;
 
 	drm_dbg_kms(&i915->drm,
 		    "Using init OTP fragment to deassert reset\n");
 
 	/* Copy the fragment, update seq byte and terminate it */
 	init_otp = (u8 *)i915->vbt.dsi.sequence[MIPI_SEQ_INIT_OTP];
-	i915->vbt.dsi.deनिश्चित_seq = kmemdup(init_otp, len + 1, GFP_KERNEL);
-	अगर (!i915->vbt.dsi.deनिश्चित_seq)
-		वापस;
-	i915->vbt.dsi.deनिश्चित_seq[0] = MIPI_SEQ_DEASSERT_RESET;
-	i915->vbt.dsi.deनिश्चित_seq[len] = MIPI_SEQ_ELEM_END;
-	/* Use the copy क्रम deनिश्चित */
+	i915->vbt.dsi.deassert_seq = kmemdup(init_otp, len + 1, GFP_KERNEL);
+	if (!i915->vbt.dsi.deassert_seq)
+		return;
+	i915->vbt.dsi.deassert_seq[0] = MIPI_SEQ_DEASSERT_RESET;
+	i915->vbt.dsi.deassert_seq[len] = MIPI_SEQ_ELEM_END;
+	/* Use the copy for deassert */
 	i915->vbt.dsi.sequence[MIPI_SEQ_DEASSERT_RESET] =
-		i915->vbt.dsi.deनिश्चित_seq;
+		i915->vbt.dsi.deassert_seq;
 	/* Replace the last byte of the fragment with init OTP seq byte */
 	init_otp[len - 1] = MIPI_SEQ_INIT_OTP;
-	/* And make MIPI_MIPI_SEQ_INIT_OTP poपूर्णांक to it */
+	/* And make MIPI_MIPI_SEQ_INIT_OTP point to it */
 	i915->vbt.dsi.sequence[MIPI_SEQ_INIT_OTP] = init_otp + len - 1;
-पूर्ण
+}
 
-अटल व्योम
-parse_mipi_sequence(काष्ठा drm_i915_निजी *i915,
-		    स्थिर काष्ठा bdb_header *bdb)
-अणु
-	पूर्णांक panel_type = i915->vbt.panel_type;
-	स्थिर काष्ठा bdb_mipi_sequence *sequence;
-	स्थिर u8 *seq_data;
+static void
+parse_mipi_sequence(struct drm_i915_private *i915,
+		    const struct bdb_header *bdb)
+{
+	int panel_type = i915->vbt.panel_type;
+	const struct bdb_mipi_sequence *sequence;
+	const u8 *seq_data;
 	u32 seq_size;
 	u8 *data;
-	पूर्णांक index = 0;
+	int index = 0;
 
 	/* Only our generic panel driver uses the sequence block. */
-	अगर (i915->vbt.dsi.panel_id != MIPI_DSI_GENERIC_PANEL_ID)
-		वापस;
+	if (i915->vbt.dsi.panel_id != MIPI_DSI_GENERIC_PANEL_ID)
+		return;
 
 	sequence = find_section(bdb, BDB_MIPI_SEQUENCE);
-	अगर (!sequence) अणु
+	if (!sequence) {
 		drm_dbg_kms(&i915->drm,
 			    "No MIPI Sequence found, parsing complete\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* Fail gracefully क्रम क्रमward incompatible sequence block. */
-	अगर (sequence->version >= 4) अणु
+	/* Fail gracefully for forward incompatible sequence block. */
+	if (sequence->version >= 4) {
 		drm_err(&i915->drm,
 			"Unable to parse MIPI Sequence Block v%u\n",
 			sequence->version);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	drm_dbg(&i915->drm, "Found MIPI sequence block v%u\n",
 		sequence->version);
 
 	seq_data = find_panel_sequence_block(sequence, panel_type, &seq_size);
-	अगर (!seq_data)
-		वापस;
+	if (!seq_data)
+		return;
 
 	data = kmemdup(seq_data, seq_size, GFP_KERNEL);
-	अगर (!data)
-		वापस;
+	if (!data)
+		return;
 
-	/* Parse the sequences, store poपूर्णांकers to each sequence. */
-	क्रम (;;) अणु
+	/* Parse the sequences, store pointers to each sequence. */
+	for (;;) {
 		u8 seq_id = *(data + index);
-		अगर (seq_id == MIPI_SEQ_END)
-			अवरोध;
+		if (seq_id == MIPI_SEQ_END)
+			break;
 
-		अगर (seq_id >= MIPI_SEQ_MAX) अणु
+		if (seq_id >= MIPI_SEQ_MAX) {
 			drm_err(&i915->drm, "Unknown sequence %u\n",
 				seq_id);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		/* Log about presence of sequences we won't run. */
-		अगर (seq_id == MIPI_SEQ_TEAR_ON || seq_id == MIPI_SEQ_TEAR_OFF)
+		if (seq_id == MIPI_SEQ_TEAR_ON || seq_id == MIPI_SEQ_TEAR_OFF)
 			drm_dbg_kms(&i915->drm,
 				    "Unsupported sequence %u\n", seq_id);
 
 		i915->vbt.dsi.sequence[seq_id] = data + index;
 
-		अगर (sequence->version >= 3)
-			index = जाओ_next_sequence_v3(data, index, seq_size);
-		अन्यथा
-			index = जाओ_next_sequence(data, index, seq_size);
-		अगर (!index) अणु
+		if (sequence->version >= 3)
+			index = goto_next_sequence_v3(data, index, seq_size);
+		else
+			index = goto_next_sequence(data, index, seq_size);
+		if (!index) {
 			drm_err(&i915->drm, "Invalid sequence %u\n",
 				seq_id);
-			जाओ err;
-		पूर्ण
-	पूर्ण
+			goto err;
+		}
+	}
 
 	i915->vbt.dsi.data = data;
 	i915->vbt.dsi.size = seq_size;
@@ -1429,107 +1428,107 @@ parse_mipi_sequence(काष्ठा drm_i915_निजी *i915,
 	fixup_mipi_sequences(i915);
 
 	drm_dbg(&i915->drm, "MIPI related VBT parsing complete\n");
-	वापस;
+	return;
 
 err:
-	kमुक्त(data);
-	स_रखो(i915->vbt.dsi.sequence, 0, माप(i915->vbt.dsi.sequence));
-पूर्ण
+	kfree(data);
+	memset(i915->vbt.dsi.sequence, 0, sizeof(i915->vbt.dsi.sequence));
+}
 
-अटल व्योम
-parse_compression_parameters(काष्ठा drm_i915_निजी *i915,
-			     स्थिर काष्ठा bdb_header *bdb)
-अणु
-	स्थिर काष्ठा bdb_compression_parameters *params;
-	काष्ठा पूर्णांकel_bios_encoder_data *devdata;
-	स्थिर काष्ठा child_device_config *child;
+static void
+parse_compression_parameters(struct drm_i915_private *i915,
+			     const struct bdb_header *bdb)
+{
+	const struct bdb_compression_parameters *params;
+	struct intel_bios_encoder_data *devdata;
+	const struct child_device_config *child;
 	u16 block_size;
-	पूर्णांक index;
+	int index;
 
-	अगर (bdb->version < 198)
-		वापस;
+	if (bdb->version < 198)
+		return;
 
 	params = find_section(bdb, BDB_COMPRESSION_PARAMETERS);
-	अगर (params) अणु
+	if (params) {
 		/* Sanity checks */
-		अगर (params->entry_size != माप(params->data[0])) अणु
+		if (params->entry_size != sizeof(params->data[0])) {
 			drm_dbg_kms(&i915->drm,
 				    "VBT: unsupported compression param entry size\n");
-			वापस;
-		पूर्ण
+			return;
+		}
 
 		block_size = get_blocksize(params);
-		अगर (block_size < माप(*params)) अणु
+		if (block_size < sizeof(*params)) {
 			drm_dbg_kms(&i915->drm,
 				    "VBT: expected 16 compression param entries\n");
-			वापस;
-		पूर्ण
-	पूर्ण
+			return;
+		}
+	}
 
-	list_क्रम_each_entry(devdata, &i915->vbt.display_devices, node) अणु
+	list_for_each_entry(devdata, &i915->vbt.display_devices, node) {
 		child = &devdata->child;
 
-		अगर (!child->compression_enable)
-			जारी;
+		if (!child->compression_enable)
+			continue;
 
-		अगर (!params) अणु
+		if (!params) {
 			drm_dbg_kms(&i915->drm,
 				    "VBT: compression params not available\n");
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (child->compression_method_cps) अणु
+		if (child->compression_method_cps) {
 			drm_dbg_kms(&i915->drm,
 				    "VBT: CPS compression not supported\n");
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		index = child->compression_काष्ठाure_index;
+		index = child->compression_structure_index;
 
 		devdata->dsc = kmemdup(&params->data[index],
-				       माप(*devdata->dsc), GFP_KERNEL);
-	पूर्ण
-पूर्ण
+				       sizeof(*devdata->dsc), GFP_KERNEL);
+	}
+}
 
-अटल u8 translate_iboost(u8 val)
-अणु
-	अटल स्थिर u8 mapping[] = अणु 1, 3, 7 पूर्ण; /* See VBT spec */
+static u8 translate_iboost(u8 val)
+{
+	static const u8 mapping[] = { 1, 3, 7 }; /* See VBT spec */
 
-	अगर (val >= ARRAY_SIZE(mapping)) अणु
+	if (val >= ARRAY_SIZE(mapping)) {
 		DRM_DEBUG_KMS("Unsupported I_boost value found in VBT (%d), display may not work properly\n", val);
-		वापस 0;
-	पूर्ण
-	वापस mapping[val];
-पूर्ण
+		return 0;
+	}
+	return mapping[val];
+}
 
-अटल क्रमागत port get_port_by_ddc_pin(काष्ठा drm_i915_निजी *i915, u8 ddc_pin)
-अणु
-	स्थिर काष्ठा ddi_vbt_port_info *info;
-	क्रमागत port port;
+static enum port get_port_by_ddc_pin(struct drm_i915_private *i915, u8 ddc_pin)
+{
+	const struct ddi_vbt_port_info *info;
+	enum port port;
 
-	अगर (!ddc_pin)
-		वापस PORT_NONE;
+	if (!ddc_pin)
+		return PORT_NONE;
 
-	क्रम_each_port(port) अणु
+	for_each_port(port) {
 		info = &i915->vbt.ddi_port_info[port];
 
-		अगर (info->devdata && ddc_pin == info->alternate_ddc_pin)
-			वापस port;
-	पूर्ण
+		if (info->devdata && ddc_pin == info->alternate_ddc_pin)
+			return port;
+	}
 
-	वापस PORT_NONE;
-पूर्ण
+	return PORT_NONE;
+}
 
-अटल व्योम sanitize_ddc_pin(काष्ठा drm_i915_निजी *i915,
-			     क्रमागत port port)
-अणु
-	काष्ठा ddi_vbt_port_info *info = &i915->vbt.ddi_port_info[port];
-	काष्ठा child_device_config *child;
-	क्रमागत port p;
+static void sanitize_ddc_pin(struct drm_i915_private *i915,
+			     enum port port)
+{
+	struct ddi_vbt_port_info *info = &i915->vbt.ddi_port_info[port];
+	struct child_device_config *child;
+	enum port p;
 
 	p = get_port_by_ddc_pin(i915, info->alternate_ddc_pin);
-	अगर (p == PORT_NONE)
-		वापस;
+	if (p == PORT_NONE)
+		return;
 
 	drm_dbg_kms(&i915->drm,
 		    "port %c trying to use the same DDC pin (0x%x) as port %c, "
@@ -1540,7 +1539,7 @@ parse_compression_parameters(काष्ठा drm_i915_निजी *i915,
 	/*
 	 * If we have multiple ports supposedly sharing the pin, then dvi/hdmi
 	 * couldn't exist on the shared port. Otherwise they share the same ddc
-	 * pin and प्रणाली couldn't communicate with them separately.
+	 * pin and system couldn't communicate with them separately.
 	 *
 	 * Give inverse child device order the priority, last one wins. Yes,
 	 * there are real machines (eg. Asrock B250M-HDV) where VBT has both
@@ -1553,36 +1552,36 @@ parse_compression_parameters(काष्ठा drm_i915_निजी *i915,
 	child->device_type |= DEVICE_TYPE_NOT_HDMI_OUTPUT;
 
 	info->alternate_ddc_pin = 0;
-पूर्ण
+}
 
-अटल क्रमागत port get_port_by_aux_ch(काष्ठा drm_i915_निजी *i915, u8 aux_ch)
-अणु
-	स्थिर काष्ठा ddi_vbt_port_info *info;
-	क्रमागत port port;
+static enum port get_port_by_aux_ch(struct drm_i915_private *i915, u8 aux_ch)
+{
+	const struct ddi_vbt_port_info *info;
+	enum port port;
 
-	अगर (!aux_ch)
-		वापस PORT_NONE;
+	if (!aux_ch)
+		return PORT_NONE;
 
-	क्रम_each_port(port) अणु
+	for_each_port(port) {
 		info = &i915->vbt.ddi_port_info[port];
 
-		अगर (info->devdata && aux_ch == info->alternate_aux_channel)
-			वापस port;
-	पूर्ण
+		if (info->devdata && aux_ch == info->alternate_aux_channel)
+			return port;
+	}
 
-	वापस PORT_NONE;
-पूर्ण
+	return PORT_NONE;
+}
 
-अटल व्योम sanitize_aux_ch(काष्ठा drm_i915_निजी *i915,
-			    क्रमागत port port)
-अणु
-	काष्ठा ddi_vbt_port_info *info = &i915->vbt.ddi_port_info[port];
-	काष्ठा child_device_config *child;
-	क्रमागत port p;
+static void sanitize_aux_ch(struct drm_i915_private *i915,
+			    enum port port)
+{
+	struct ddi_vbt_port_info *info = &i915->vbt.ddi_port_info[port];
+	struct child_device_config *child;
+	enum port p;
 
 	p = get_port_by_aux_ch(i915, info->alternate_aux_channel);
-	अगर (p == PORT_NONE)
-		वापस;
+	if (p == PORT_NONE)
+		return;
 
 	drm_dbg_kms(&i915->drm,
 		    "port %c trying to use the same AUX CH (0x%x) as port %c, "
@@ -1593,7 +1592,7 @@ parse_compression_parameters(काष्ठा drm_i915_निजी *i915,
 	/*
 	 * If we have multiple ports supposedly sharing the aux channel, then DP
 	 * couldn't exist on the shared port. Otherwise they share the same aux
-	 * channel and प्रणाली couldn't communicate with them separately.
+	 * channel and system couldn't communicate with them separately.
 	 *
 	 * Give inverse child device order the priority, last one wins. Yes,
 	 * there are real machines (eg. Asrock B250M-HDV) where VBT has both
@@ -1604,17 +1603,17 @@ parse_compression_parameters(काष्ठा drm_i915_निजी *i915,
 
 	child->device_type &= ~DEVICE_TYPE_DISPLAYPORT_OUTPUT;
 	info->alternate_aux_channel = 0;
-पूर्ण
+}
 
-अटल स्थिर u8 cnp_ddc_pin_map[] = अणु
+static const u8 cnp_ddc_pin_map[] = {
 	[0] = 0, /* N/A */
 	[DDC_BUS_DDI_B] = GMBUS_PIN_1_BXT,
 	[DDC_BUS_DDI_C] = GMBUS_PIN_2_BXT,
 	[DDC_BUS_DDI_D] = GMBUS_PIN_4_CNP, /* sic */
 	[DDC_BUS_DDI_F] = GMBUS_PIN_3_BXT, /* sic */
-पूर्ण;
+};
 
-अटल स्थिर u8 icp_ddc_pin_map[] = अणु
+static const u8 icp_ddc_pin_map[] = {
 	[ICL_DDC_BUS_DDI_A] = GMBUS_PIN_1_BXT,
 	[ICL_DDC_BUS_DDI_B] = GMBUS_PIN_2_BXT,
 	[TGL_DDC_BUS_DDI_C] = GMBUS_PIN_3_BXT,
@@ -1624,193 +1623,193 @@ parse_compression_parameters(काष्ठा drm_i915_निजी *i915,
 	[ICL_DDC_BUS_PORT_4] = GMBUS_PIN_12_TC4_ICP,
 	[TGL_DDC_BUS_PORT_5] = GMBUS_PIN_13_TC5_TGP,
 	[TGL_DDC_BUS_PORT_6] = GMBUS_PIN_14_TC6_TGP,
-पूर्ण;
+};
 
-अटल स्थिर u8 rkl_pch_tgp_ddc_pin_map[] = अणु
+static const u8 rkl_pch_tgp_ddc_pin_map[] = {
 	[ICL_DDC_BUS_DDI_A] = GMBUS_PIN_1_BXT,
 	[ICL_DDC_BUS_DDI_B] = GMBUS_PIN_2_BXT,
 	[RKL_DDC_BUS_DDI_D] = GMBUS_PIN_9_TC1_ICP,
 	[RKL_DDC_BUS_DDI_E] = GMBUS_PIN_10_TC2_ICP,
-पूर्ण;
+};
 
-अटल स्थिर u8 adls_ddc_pin_map[] = अणु
+static const u8 adls_ddc_pin_map[] = {
 	[ICL_DDC_BUS_DDI_A] = GMBUS_PIN_1_BXT,
 	[ADLS_DDC_BUS_PORT_TC1] = GMBUS_PIN_9_TC1_ICP,
 	[ADLS_DDC_BUS_PORT_TC2] = GMBUS_PIN_10_TC2_ICP,
 	[ADLS_DDC_BUS_PORT_TC3] = GMBUS_PIN_11_TC3_ICP,
 	[ADLS_DDC_BUS_PORT_TC4] = GMBUS_PIN_12_TC4_ICP,
-पूर्ण;
+};
 
-अटल स्थिर u8 gen9bc_tgp_ddc_pin_map[] = अणु
+static const u8 gen9bc_tgp_ddc_pin_map[] = {
 	[DDC_BUS_DDI_B] = GMBUS_PIN_2_BXT,
 	[DDC_BUS_DDI_C] = GMBUS_PIN_9_TC1_ICP,
 	[DDC_BUS_DDI_D] = GMBUS_PIN_10_TC2_ICP,
-पूर्ण;
+};
 
-अटल u8 map_ddc_pin(काष्ठा drm_i915_निजी *i915, u8 vbt_pin)
-अणु
-	स्थिर u8 *ddc_pin_map;
-	पूर्णांक n_entries;
+static u8 map_ddc_pin(struct drm_i915_private *i915, u8 vbt_pin)
+{
+	const u8 *ddc_pin_map;
+	int n_entries;
 
-	अगर (HAS_PCH_ADP(i915)) अणु
+	if (HAS_PCH_ADP(i915)) {
 		ddc_pin_map = adls_ddc_pin_map;
 		n_entries = ARRAY_SIZE(adls_ddc_pin_map);
-	पूर्ण अन्यथा अगर (INTEL_PCH_TYPE(i915) >= PCH_DG1) अणु
-		वापस vbt_pin;
-	पूर्ण अन्यथा अगर (IS_ROCKETLAKE(i915) && INTEL_PCH_TYPE(i915) == PCH_TGP) अणु
+	} else if (INTEL_PCH_TYPE(i915) >= PCH_DG1) {
+		return vbt_pin;
+	} else if (IS_ROCKETLAKE(i915) && INTEL_PCH_TYPE(i915) == PCH_TGP) {
 		ddc_pin_map = rkl_pch_tgp_ddc_pin_map;
 		n_entries = ARRAY_SIZE(rkl_pch_tgp_ddc_pin_map);
-	पूर्ण अन्यथा अगर (HAS_PCH_TGP(i915) && IS_GEN9_BC(i915)) अणु
+	} else if (HAS_PCH_TGP(i915) && IS_GEN9_BC(i915)) {
 		ddc_pin_map = gen9bc_tgp_ddc_pin_map;
 		n_entries = ARRAY_SIZE(gen9bc_tgp_ddc_pin_map);
-	पूर्ण अन्यथा अगर (INTEL_PCH_TYPE(i915) >= PCH_ICP) अणु
+	} else if (INTEL_PCH_TYPE(i915) >= PCH_ICP) {
 		ddc_pin_map = icp_ddc_pin_map;
 		n_entries = ARRAY_SIZE(icp_ddc_pin_map);
-	पूर्ण अन्यथा अगर (HAS_PCH_CNP(i915)) अणु
+	} else if (HAS_PCH_CNP(i915)) {
 		ddc_pin_map = cnp_ddc_pin_map;
 		n_entries = ARRAY_SIZE(cnp_ddc_pin_map);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Assuming direct map */
-		वापस vbt_pin;
-	पूर्ण
+		return vbt_pin;
+	}
 
-	अगर (vbt_pin < n_entries && ddc_pin_map[vbt_pin] != 0)
-		वापस ddc_pin_map[vbt_pin];
+	if (vbt_pin < n_entries && ddc_pin_map[vbt_pin] != 0)
+		return ddc_pin_map[vbt_pin];
 
 	drm_dbg_kms(&i915->drm,
 		    "Ignoring alternate pin: VBT claims DDC pin %d, which is not valid for this platform\n",
 		    vbt_pin);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल क्रमागत port __dvo_port_to_port(पूर्णांक n_ports, पूर्णांक n_dvo,
-				    स्थिर पूर्णांक port_mapping[][3], u8 dvo_port)
-अणु
-	क्रमागत port port;
-	पूर्णांक i;
+static enum port __dvo_port_to_port(int n_ports, int n_dvo,
+				    const int port_mapping[][3], u8 dvo_port)
+{
+	enum port port;
+	int i;
 
-	क्रम (port = PORT_A; port < n_ports; port++) अणु
-		क्रम (i = 0; i < n_dvo; i++) अणु
-			अगर (port_mapping[port][i] == -1)
-				अवरोध;
+	for (port = PORT_A; port < n_ports; port++) {
+		for (i = 0; i < n_dvo; i++) {
+			if (port_mapping[port][i] == -1)
+				break;
 
-			अगर (dvo_port == port_mapping[port][i])
-				वापस port;
-		पूर्ण
-	पूर्ण
+			if (dvo_port == port_mapping[port][i])
+				return port;
+		}
+	}
 
-	वापस PORT_NONE;
-पूर्ण
+	return PORT_NONE;
+}
 
-अटल क्रमागत port dvo_port_to_port(काष्ठा drm_i915_निजी *i915,
+static enum port dvo_port_to_port(struct drm_i915_private *i915,
 				  u8 dvo_port)
-अणु
+{
 	/*
 	 * Each DDI port can have more than one value on the "DVO Port" field,
-	 * so look क्रम all the possible values क्रम each port.
+	 * so look for all the possible values for each port.
 	 */
-	अटल स्थिर पूर्णांक port_mapping[][3] = अणु
-		[PORT_A] = अणु DVO_PORT_HDMIA, DVO_PORT_DPA, -1 पूर्ण,
-		[PORT_B] = अणु DVO_PORT_HDMIB, DVO_PORT_DPB, -1 पूर्ण,
-		[PORT_C] = अणु DVO_PORT_HDMIC, DVO_PORT_DPC, -1 पूर्ण,
-		[PORT_D] = अणु DVO_PORT_HDMID, DVO_PORT_DPD, -1 पूर्ण,
-		[PORT_E] = अणु DVO_PORT_HDMIE, DVO_PORT_DPE, DVO_PORT_CRT पूर्ण,
-		[PORT_F] = अणु DVO_PORT_HDMIF, DVO_PORT_DPF, -1 पूर्ण,
-		[PORT_G] = अणु DVO_PORT_HDMIG, DVO_PORT_DPG, -1 पूर्ण,
-		[PORT_H] = अणु DVO_PORT_HDMIH, DVO_PORT_DPH, -1 पूर्ण,
-		[PORT_I] = अणु DVO_PORT_HDMII, DVO_PORT_DPI, -1 पूर्ण,
-	पूर्ण;
+	static const int port_mapping[][3] = {
+		[PORT_A] = { DVO_PORT_HDMIA, DVO_PORT_DPA, -1 },
+		[PORT_B] = { DVO_PORT_HDMIB, DVO_PORT_DPB, -1 },
+		[PORT_C] = { DVO_PORT_HDMIC, DVO_PORT_DPC, -1 },
+		[PORT_D] = { DVO_PORT_HDMID, DVO_PORT_DPD, -1 },
+		[PORT_E] = { DVO_PORT_HDMIE, DVO_PORT_DPE, DVO_PORT_CRT },
+		[PORT_F] = { DVO_PORT_HDMIF, DVO_PORT_DPF, -1 },
+		[PORT_G] = { DVO_PORT_HDMIG, DVO_PORT_DPG, -1 },
+		[PORT_H] = { DVO_PORT_HDMIH, DVO_PORT_DPH, -1 },
+		[PORT_I] = { DVO_PORT_HDMII, DVO_PORT_DPI, -1 },
+	};
 	/*
 	 * RKL VBT uses PHY based mapping. Combo PHYs A,B,C,D
 	 * map to DDI A,B,TC1,TC2 respectively.
 	 */
-	अटल स्थिर पूर्णांक rkl_port_mapping[][3] = अणु
-		[PORT_A] = अणु DVO_PORT_HDMIA, DVO_PORT_DPA, -1 पूर्ण,
-		[PORT_B] = अणु DVO_PORT_HDMIB, DVO_PORT_DPB, -1 पूर्ण,
-		[PORT_C] = अणु -1 पूर्ण,
-		[PORT_TC1] = अणु DVO_PORT_HDMIC, DVO_PORT_DPC, -1 पूर्ण,
-		[PORT_TC2] = अणु DVO_PORT_HDMID, DVO_PORT_DPD, -1 पूर्ण,
-	पूर्ण;
+	static const int rkl_port_mapping[][3] = {
+		[PORT_A] = { DVO_PORT_HDMIA, DVO_PORT_DPA, -1 },
+		[PORT_B] = { DVO_PORT_HDMIB, DVO_PORT_DPB, -1 },
+		[PORT_C] = { -1 },
+		[PORT_TC1] = { DVO_PORT_HDMIC, DVO_PORT_DPC, -1 },
+		[PORT_TC2] = { DVO_PORT_HDMID, DVO_PORT_DPD, -1 },
+	};
 	/*
 	 * Alderlake S ports used in the driver are PORT_A, PORT_D, PORT_E,
 	 * PORT_F and PORT_G, we need to map that to correct VBT sections.
 	 */
-	अटल स्थिर पूर्णांक adls_port_mapping[][3] = अणु
-		[PORT_A] = अणु DVO_PORT_HDMIA, DVO_PORT_DPA, -1 पूर्ण,
-		[PORT_B] = अणु -1 पूर्ण,
-		[PORT_C] = अणु -1 पूर्ण,
-		[PORT_TC1] = अणु DVO_PORT_HDMIB, DVO_PORT_DPB, -1 पूर्ण,
-		[PORT_TC2] = अणु DVO_PORT_HDMIC, DVO_PORT_DPC, -1 पूर्ण,
-		[PORT_TC3] = अणु DVO_PORT_HDMID, DVO_PORT_DPD, -1 पूर्ण,
-		[PORT_TC4] = अणु DVO_PORT_HDMIE, DVO_PORT_DPE, -1 पूर्ण,
-	पूर्ण;
+	static const int adls_port_mapping[][3] = {
+		[PORT_A] = { DVO_PORT_HDMIA, DVO_PORT_DPA, -1 },
+		[PORT_B] = { -1 },
+		[PORT_C] = { -1 },
+		[PORT_TC1] = { DVO_PORT_HDMIB, DVO_PORT_DPB, -1 },
+		[PORT_TC2] = { DVO_PORT_HDMIC, DVO_PORT_DPC, -1 },
+		[PORT_TC3] = { DVO_PORT_HDMID, DVO_PORT_DPD, -1 },
+		[PORT_TC4] = { DVO_PORT_HDMIE, DVO_PORT_DPE, -1 },
+	};
 
-	अगर (IS_ALDERLAKE_S(i915))
-		वापस __dvo_port_to_port(ARRAY_SIZE(adls_port_mapping),
+	if (IS_ALDERLAKE_S(i915))
+		return __dvo_port_to_port(ARRAY_SIZE(adls_port_mapping),
 					  ARRAY_SIZE(adls_port_mapping[0]),
 					  adls_port_mapping,
 					  dvo_port);
-	अन्यथा अगर (IS_DG1(i915) || IS_ROCKETLAKE(i915))
-		वापस __dvo_port_to_port(ARRAY_SIZE(rkl_port_mapping),
+	else if (IS_DG1(i915) || IS_ROCKETLAKE(i915))
+		return __dvo_port_to_port(ARRAY_SIZE(rkl_port_mapping),
 					  ARRAY_SIZE(rkl_port_mapping[0]),
 					  rkl_port_mapping,
 					  dvo_port);
-	अन्यथा
-		वापस __dvo_port_to_port(ARRAY_SIZE(port_mapping),
+	else
+		return __dvo_port_to_port(ARRAY_SIZE(port_mapping),
 					  ARRAY_SIZE(port_mapping[0]),
 					  port_mapping,
 					  dvo_port);
-पूर्ण
+}
 
-अटल पूर्णांक parse_bdb_230_dp_max_link_rate(स्थिर पूर्णांक vbt_max_link_rate)
-अणु
-	चयन (vbt_max_link_rate) अणु
-	शेष:
-	हाल BDB_230_VBT_DP_MAX_LINK_RATE_DEF:
-		वापस 0;
-	हाल BDB_230_VBT_DP_MAX_LINK_RATE_UHBR20:
-		वापस 2000000;
-	हाल BDB_230_VBT_DP_MAX_LINK_RATE_UHBR13P5:
-		वापस 1350000;
-	हाल BDB_230_VBT_DP_MAX_LINK_RATE_UHBR10:
-		वापस 1000000;
-	हाल BDB_230_VBT_DP_MAX_LINK_RATE_HBR3:
-		वापस 810000;
-	हाल BDB_230_VBT_DP_MAX_LINK_RATE_HBR2:
-		वापस 540000;
-	हाल BDB_230_VBT_DP_MAX_LINK_RATE_HBR:
-		वापस 270000;
-	हाल BDB_230_VBT_DP_MAX_LINK_RATE_LBR:
-		वापस 162000;
-	पूर्ण
-पूर्ण
+static int parse_bdb_230_dp_max_link_rate(const int vbt_max_link_rate)
+{
+	switch (vbt_max_link_rate) {
+	default:
+	case BDB_230_VBT_DP_MAX_LINK_RATE_DEF:
+		return 0;
+	case BDB_230_VBT_DP_MAX_LINK_RATE_UHBR20:
+		return 2000000;
+	case BDB_230_VBT_DP_MAX_LINK_RATE_UHBR13P5:
+		return 1350000;
+	case BDB_230_VBT_DP_MAX_LINK_RATE_UHBR10:
+		return 1000000;
+	case BDB_230_VBT_DP_MAX_LINK_RATE_HBR3:
+		return 810000;
+	case BDB_230_VBT_DP_MAX_LINK_RATE_HBR2:
+		return 540000;
+	case BDB_230_VBT_DP_MAX_LINK_RATE_HBR:
+		return 270000;
+	case BDB_230_VBT_DP_MAX_LINK_RATE_LBR:
+		return 162000;
+	}
+}
 
-अटल पूर्णांक parse_bdb_216_dp_max_link_rate(स्थिर पूर्णांक vbt_max_link_rate)
-अणु
-	चयन (vbt_max_link_rate) अणु
-	शेष:
-	हाल BDB_216_VBT_DP_MAX_LINK_RATE_HBR3:
-		वापस 810000;
-	हाल BDB_216_VBT_DP_MAX_LINK_RATE_HBR2:
-		वापस 540000;
-	हाल BDB_216_VBT_DP_MAX_LINK_RATE_HBR:
-		वापस 270000;
-	हाल BDB_216_VBT_DP_MAX_LINK_RATE_LBR:
-		वापस 162000;
-	पूर्ण
-पूर्ण
+static int parse_bdb_216_dp_max_link_rate(const int vbt_max_link_rate)
+{
+	switch (vbt_max_link_rate) {
+	default:
+	case BDB_216_VBT_DP_MAX_LINK_RATE_HBR3:
+		return 810000;
+	case BDB_216_VBT_DP_MAX_LINK_RATE_HBR2:
+		return 540000;
+	case BDB_216_VBT_DP_MAX_LINK_RATE_HBR:
+		return 270000;
+	case BDB_216_VBT_DP_MAX_LINK_RATE_LBR:
+		return 162000;
+	}
+}
 
-अटल व्योम sanitize_device_type(काष्ठा पूर्णांकel_bios_encoder_data *devdata,
-				 क्रमागत port port)
-अणु
-	काष्ठा drm_i915_निजी *i915 = devdata->i915;
+static void sanitize_device_type(struct intel_bios_encoder_data *devdata,
+				 enum port port)
+{
+	struct drm_i915_private *i915 = devdata->i915;
 	bool is_hdmi;
 
-	अगर (port != PORT_A || DISPLAY_VER(i915) >= 12)
-		वापस;
+	if (port != PORT_A || DISPLAY_VER(i915) >= 12)
+		return;
 
-	अगर (!(devdata->child.device_type & DEVICE_TYPE_TMDS_DVI_SIGNALING))
-		वापस;
+	if (!(devdata->child.device_type & DEVICE_TYPE_TMDS_DVI_SIGNALING))
+		return;
 
 	is_hdmi = !(devdata->child.device_type & DEVICE_TYPE_NOT_HDMI_OUTPUT);
 
@@ -1819,283 +1818,283 @@ parse_compression_parameters(काष्ठा drm_i915_निजी *i915,
 
 	devdata->child.device_type &= ~DEVICE_TYPE_TMDS_DVI_SIGNALING;
 	devdata->child.device_type |= DEVICE_TYPE_NOT_HDMI_OUTPUT;
-पूर्ण
+}
 
-अटल bool
-पूर्णांकel_bios_encoder_supports_crt(स्थिर काष्ठा पूर्णांकel_bios_encoder_data *devdata)
-अणु
-	वापस devdata->child.device_type & DEVICE_TYPE_ANALOG_OUTPUT;
-पूर्ण
-
-bool
-पूर्णांकel_bios_encoder_supports_dvi(स्थिर काष्ठा पूर्णांकel_bios_encoder_data *devdata)
-अणु
-	वापस devdata->child.device_type & DEVICE_TYPE_TMDS_DVI_SIGNALING;
-पूर्ण
+static bool
+intel_bios_encoder_supports_crt(const struct intel_bios_encoder_data *devdata)
+{
+	return devdata->child.device_type & DEVICE_TYPE_ANALOG_OUTPUT;
+}
 
 bool
-पूर्णांकel_bios_encoder_supports_hdmi(स्थिर काष्ठा पूर्णांकel_bios_encoder_data *devdata)
-अणु
-	वापस पूर्णांकel_bios_encoder_supports_dvi(devdata) &&
+intel_bios_encoder_supports_dvi(const struct intel_bios_encoder_data *devdata)
+{
+	return devdata->child.device_type & DEVICE_TYPE_TMDS_DVI_SIGNALING;
+}
+
+bool
+intel_bios_encoder_supports_hdmi(const struct intel_bios_encoder_data *devdata)
+{
+	return intel_bios_encoder_supports_dvi(devdata) &&
 		(devdata->child.device_type & DEVICE_TYPE_NOT_HDMI_OUTPUT) == 0;
-पूर्ण
+}
 
 bool
-पूर्णांकel_bios_encoder_supports_dp(स्थिर काष्ठा पूर्णांकel_bios_encoder_data *devdata)
-अणु
-	वापस devdata->child.device_type & DEVICE_TYPE_DISPLAYPORT_OUTPUT;
-पूर्ण
+intel_bios_encoder_supports_dp(const struct intel_bios_encoder_data *devdata)
+{
+	return devdata->child.device_type & DEVICE_TYPE_DISPLAYPORT_OUTPUT;
+}
 
-अटल bool
-पूर्णांकel_bios_encoder_supports_edp(स्थिर काष्ठा पूर्णांकel_bios_encoder_data *devdata)
-अणु
-	वापस पूर्णांकel_bios_encoder_supports_dp(devdata) &&
+static bool
+intel_bios_encoder_supports_edp(const struct intel_bios_encoder_data *devdata)
+{
+	return intel_bios_encoder_supports_dp(devdata) &&
 		devdata->child.device_type & DEVICE_TYPE_INTERNAL_CONNECTOR;
-पूर्ण
+}
 
-अटल व्योम parse_ddi_port(काष्ठा drm_i915_निजी *i915,
-			   काष्ठा पूर्णांकel_bios_encoder_data *devdata)
-अणु
-	स्थिर काष्ठा child_device_config *child = &devdata->child;
-	काष्ठा ddi_vbt_port_info *info;
+static void parse_ddi_port(struct drm_i915_private *i915,
+			   struct intel_bios_encoder_data *devdata)
+{
+	const struct child_device_config *child = &devdata->child;
+	struct ddi_vbt_port_info *info;
 	bool is_dvi, is_hdmi, is_dp, is_edp, is_crt, supports_typec_usb, supports_tbt;
-	पूर्णांक dp_boost_level, hdmi_boost_level;
-	क्रमागत port port;
+	int dp_boost_level, hdmi_boost_level;
+	enum port port;
 
 	port = dvo_port_to_port(i915, child->dvo_port);
-	अगर (port == PORT_NONE)
-		वापस;
+	if (port == PORT_NONE)
+		return;
 
 	info = &i915->vbt.ddi_port_info[port];
 
-	अगर (info->devdata) अणु
+	if (info->devdata) {
 		drm_dbg_kms(&i915->drm,
 			    "More than one child device for port %c in VBT, using the first.\n",
 			    port_name(port));
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	sanitize_device_type(devdata, port);
 
-	is_dvi = पूर्णांकel_bios_encoder_supports_dvi(devdata);
-	is_dp = पूर्णांकel_bios_encoder_supports_dp(devdata);
-	is_crt = पूर्णांकel_bios_encoder_supports_crt(devdata);
-	is_hdmi = पूर्णांकel_bios_encoder_supports_hdmi(devdata);
-	is_edp = पूर्णांकel_bios_encoder_supports_edp(devdata);
+	is_dvi = intel_bios_encoder_supports_dvi(devdata);
+	is_dp = intel_bios_encoder_supports_dp(devdata);
+	is_crt = intel_bios_encoder_supports_crt(devdata);
+	is_hdmi = intel_bios_encoder_supports_hdmi(devdata);
+	is_edp = intel_bios_encoder_supports_edp(devdata);
 
-	supports_typec_usb = पूर्णांकel_bios_encoder_supports_typec_usb(devdata);
-	supports_tbt = पूर्णांकel_bios_encoder_supports_tbt(devdata);
+	supports_typec_usb = intel_bios_encoder_supports_typec_usb(devdata);
+	supports_tbt = intel_bios_encoder_supports_tbt(devdata);
 
 	drm_dbg_kms(&i915->drm,
 		    "Port %c VBT info: CRT:%d DVI:%d HDMI:%d DP:%d eDP:%d LSPCON:%d USB-Type-C:%d TBT:%d DSC:%d\n",
 		    port_name(port), is_crt, is_dvi, is_hdmi, is_dp, is_edp,
 		    HAS_LSPCON(i915) && child->lspcon,
 		    supports_typec_usb, supports_tbt,
-		    devdata->dsc != शून्य);
+		    devdata->dsc != NULL);
 
-	अगर (is_dvi) अणु
+	if (is_dvi) {
 		u8 ddc_pin;
 
 		ddc_pin = map_ddc_pin(i915, child->ddc_pin);
-		अगर (पूर्णांकel_gmbus_is_valid_pin(i915, ddc_pin)) अणु
+		if (intel_gmbus_is_valid_pin(i915, ddc_pin)) {
 			info->alternate_ddc_pin = ddc_pin;
 			sanitize_ddc_pin(i915, port);
-		पूर्ण अन्यथा अणु
+		} else {
 			drm_dbg_kms(&i915->drm,
 				    "Port %c has invalid DDC pin %d, "
 				    "sticking to defaults\n",
 				    port_name(port), ddc_pin);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (is_dp) अणु
+	if (is_dp) {
 		info->alternate_aux_channel = child->aux_channel;
 
 		sanitize_aux_ch(i915, port);
-	पूर्ण
+	}
 
-	अगर (i915->vbt.version >= 158) अणु
-		/* The VBT HDMI level shअगरt values match the table we have. */
-		u8 hdmi_level_shअगरt = child->hdmi_level_shअगरter_value;
+	if (i915->vbt.version >= 158) {
+		/* The VBT HDMI level shift values match the table we have. */
+		u8 hdmi_level_shift = child->hdmi_level_shifter_value;
 		drm_dbg_kms(&i915->drm,
 			    "Port %c VBT HDMI level shift: %d\n",
 			    port_name(port),
-			    hdmi_level_shअगरt);
-		info->hdmi_level_shअगरt = hdmi_level_shअगरt;
-		info->hdmi_level_shअगरt_set = true;
-	पूर्ण
+			    hdmi_level_shift);
+		info->hdmi_level_shift = hdmi_level_shift;
+		info->hdmi_level_shift_set = true;
+	}
 
-	अगर (i915->vbt.version >= 204) अणु
-		पूर्णांक max_पंचांगds_घड़ी;
+	if (i915->vbt.version >= 204) {
+		int max_tmds_clock;
 
-		चयन (child->hdmi_max_data_rate) अणु
-		शेष:
+		switch (child->hdmi_max_data_rate) {
+		default:
 			MISSING_CASE(child->hdmi_max_data_rate);
 			fallthrough;
-		हाल HDMI_MAX_DATA_RATE_PLATFORM:
-			max_पंचांगds_घड़ी = 0;
-			अवरोध;
-		हाल HDMI_MAX_DATA_RATE_297:
-			max_पंचांगds_घड़ी = 297000;
-			अवरोध;
-		हाल HDMI_MAX_DATA_RATE_165:
-			max_पंचांगds_घड़ी = 165000;
-			अवरोध;
-		पूर्ण
+		case HDMI_MAX_DATA_RATE_PLATFORM:
+			max_tmds_clock = 0;
+			break;
+		case HDMI_MAX_DATA_RATE_297:
+			max_tmds_clock = 297000;
+			break;
+		case HDMI_MAX_DATA_RATE_165:
+			max_tmds_clock = 165000;
+			break;
+		}
 
-		अगर (max_पंचांगds_घड़ी)
+		if (max_tmds_clock)
 			drm_dbg_kms(&i915->drm,
 				    "Port %c VBT HDMI max TMDS clock: %d kHz\n",
-				    port_name(port), max_पंचांगds_घड़ी);
-		info->max_पंचांगds_घड़ी = max_पंचांगds_घड़ी;
-	पूर्ण
+				    port_name(port), max_tmds_clock);
+		info->max_tmds_clock = max_tmds_clock;
+	}
 
-	/* I_boost config क्रम SKL and above */
-	dp_boost_level = पूर्णांकel_bios_encoder_dp_boost_level(devdata);
-	अगर (dp_boost_level)
+	/* I_boost config for SKL and above */
+	dp_boost_level = intel_bios_encoder_dp_boost_level(devdata);
+	if (dp_boost_level)
 		drm_dbg_kms(&i915->drm,
 			    "Port %c VBT (e)DP boost level: %d\n",
 			    port_name(port), dp_boost_level);
 
-	hdmi_boost_level = पूर्णांकel_bios_encoder_hdmi_boost_level(devdata);
-	अगर (hdmi_boost_level)
+	hdmi_boost_level = intel_bios_encoder_hdmi_boost_level(devdata);
+	if (hdmi_boost_level)
 		drm_dbg_kms(&i915->drm,
 			    "Port %c VBT HDMI boost level: %d\n",
 			    port_name(port), hdmi_boost_level);
 
-	/* DP max link rate क्रम CNL+ */
-	अगर (i915->vbt.version >= 216) अणु
-		अगर (i915->vbt.version >= 230)
+	/* DP max link rate for CNL+ */
+	if (i915->vbt.version >= 216) {
+		if (i915->vbt.version >= 230)
 			info->dp_max_link_rate = parse_bdb_230_dp_max_link_rate(child->dp_max_link_rate);
-		अन्यथा
+		else
 			info->dp_max_link_rate = parse_bdb_216_dp_max_link_rate(child->dp_max_link_rate);
 
 		drm_dbg_kms(&i915->drm,
 			    "Port %c VBT DP max link rate: %d\n",
 			    port_name(port), info->dp_max_link_rate);
-	पूर्ण
+	}
 
 	info->devdata = devdata;
-पूर्ण
+}
 
-अटल व्योम parse_ddi_ports(काष्ठा drm_i915_निजी *i915)
-अणु
-	काष्ठा पूर्णांकel_bios_encoder_data *devdata;
+static void parse_ddi_ports(struct drm_i915_private *i915)
+{
+	struct intel_bios_encoder_data *devdata;
 
-	अगर (!HAS_DDI(i915) && !IS_CHERRYVIEW(i915))
-		वापस;
+	if (!HAS_DDI(i915) && !IS_CHERRYVIEW(i915))
+		return;
 
-	अगर (i915->vbt.version < 155)
-		वापस;
+	if (i915->vbt.version < 155)
+		return;
 
-	list_क्रम_each_entry(devdata, &i915->vbt.display_devices, node)
+	list_for_each_entry(devdata, &i915->vbt.display_devices, node)
 		parse_ddi_port(i915, devdata);
-पूर्ण
+}
 
-अटल व्योम
-parse_general_definitions(काष्ठा drm_i915_निजी *i915,
-			  स्थिर काष्ठा bdb_header *bdb)
-अणु
-	स्थिर काष्ठा bdb_general_definitions *defs;
-	काष्ठा पूर्णांकel_bios_encoder_data *devdata;
-	स्थिर काष्ठा child_device_config *child;
-	पूर्णांक i, child_device_num;
+static void
+parse_general_definitions(struct drm_i915_private *i915,
+			  const struct bdb_header *bdb)
+{
+	const struct bdb_general_definitions *defs;
+	struct intel_bios_encoder_data *devdata;
+	const struct child_device_config *child;
+	int i, child_device_num;
 	u8 expected_size;
 	u16 block_size;
-	पूर्णांक bus_pin;
+	int bus_pin;
 
 	defs = find_section(bdb, BDB_GENERAL_DEFINITIONS);
-	अगर (!defs) अणु
+	if (!defs) {
 		drm_dbg_kms(&i915->drm,
 			    "No general definition block is found, no devices defined.\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	block_size = get_blocksize(defs);
-	अगर (block_size < माप(*defs)) अणु
+	if (block_size < sizeof(*defs)) {
 		drm_dbg_kms(&i915->drm,
 			    "General definitions block too small (%u)\n",
 			    block_size);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	bus_pin = defs->crt_ddc_gmbus_pin;
 	drm_dbg_kms(&i915->drm, "crt_ddc_bus_pin: %d\n", bus_pin);
-	अगर (पूर्णांकel_gmbus_is_valid_pin(i915, bus_pin))
+	if (intel_gmbus_is_valid_pin(i915, bus_pin))
 		i915->vbt.crt_ddc_pin = bus_pin;
 
-	अगर (bdb->version < 106) अणु
+	if (bdb->version < 106) {
 		expected_size = 22;
-	पूर्ण अन्यथा अगर (bdb->version < 111) अणु
+	} else if (bdb->version < 111) {
 		expected_size = 27;
-	पूर्ण अन्यथा अगर (bdb->version < 195) अणु
+	} else if (bdb->version < 195) {
 		expected_size = LEGACY_CHILD_DEVICE_CONFIG_SIZE;
-	पूर्ण अन्यथा अगर (bdb->version == 195) अणु
+	} else if (bdb->version == 195) {
 		expected_size = 37;
-	पूर्ण अन्यथा अगर (bdb->version <= 215) अणु
+	} else if (bdb->version <= 215) {
 		expected_size = 38;
-	पूर्ण अन्यथा अगर (bdb->version <= 237) अणु
+	} else if (bdb->version <= 237) {
 		expected_size = 39;
-	पूर्ण अन्यथा अणु
-		expected_size = माप(*child);
-		BUILD_BUG_ON(माप(*child) < 39);
+	} else {
+		expected_size = sizeof(*child);
+		BUILD_BUG_ON(sizeof(*child) < 39);
 		drm_dbg(&i915->drm,
 			"Expected child device config size for VBT version %u not known; assuming %u\n",
 			bdb->version, expected_size);
-	पूर्ण
+	}
 
-	/* Flag an error क्रम unexpected size, but जारी anyway. */
-	अगर (defs->child_dev_size != expected_size)
+	/* Flag an error for unexpected size, but continue anyway. */
+	if (defs->child_dev_size != expected_size)
 		drm_err(&i915->drm,
 			"Unexpected child device config size %u (expected %u for VBT version %u)\n",
 			defs->child_dev_size, expected_size, bdb->version);
 
 	/* The legacy sized child device config is the minimum we need. */
-	अगर (defs->child_dev_size < LEGACY_CHILD_DEVICE_CONFIG_SIZE) अणु
+	if (defs->child_dev_size < LEGACY_CHILD_DEVICE_CONFIG_SIZE) {
 		drm_dbg_kms(&i915->drm,
 			    "Child device config size %u is too small.\n",
 			    defs->child_dev_size);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* get the number of child device */
-	child_device_num = (block_size - माप(*defs)) / defs->child_dev_size;
+	child_device_num = (block_size - sizeof(*defs)) / defs->child_dev_size;
 
-	क्रम (i = 0; i < child_device_num; i++) अणु
+	for (i = 0; i < child_device_num; i++) {
 		child = child_device_ptr(defs, i);
-		अगर (!child->device_type)
-			जारी;
+		if (!child->device_type)
+			continue;
 
 		drm_dbg_kms(&i915->drm,
 			    "Found VBT child device with type 0x%x\n",
 			    child->device_type);
 
-		devdata = kzalloc(माप(*devdata), GFP_KERNEL);
-		अगर (!devdata)
-			अवरोध;
+		devdata = kzalloc(sizeof(*devdata), GFP_KERNEL);
+		if (!devdata)
+			break;
 
 		devdata->i915 = i915;
 
 		/*
-		 * Copy as much as we know (माप) and is available
+		 * Copy as much as we know (sizeof) and is available
 		 * (child_dev_size) of the child device config. Accessing the
 		 * data must depend on VBT version.
 		 */
-		स_नकल(&devdata->child, child,
-		       min_t(माप_प्रकार, defs->child_dev_size, माप(*child)));
+		memcpy(&devdata->child, child,
+		       min_t(size_t, defs->child_dev_size, sizeof(*child)));
 
 		list_add_tail(&devdata->node, &i915->vbt.display_devices);
-	पूर्ण
+	}
 
-	अगर (list_empty(&i915->vbt.display_devices))
+	if (list_empty(&i915->vbt.display_devices))
 		drm_dbg_kms(&i915->drm,
 			    "no child dev is parsed from VBT\n");
-पूर्ण
+}
 
-/* Common शेषs which may be overridden by VBT. */
-अटल व्योम
-init_vbt_शेषs(काष्ठा drm_i915_निजी *i915)
-अणु
+/* Common defaults which may be overridden by VBT. */
+static void
+init_vbt_defaults(struct drm_i915_private *i915)
+{
 	i915->vbt.crt_ddc_pin = GMBUS_PIN_VGADDC;
 
 	/* Default to having backlight */
@@ -2105,71 +2104,71 @@ init_vbt_शेषs(काष्ठा drm_i915_निजी *i915)
 	i915->vbt.lvds_dither = 1;
 
 	/* SDVO panel data */
-	i915->vbt.sdvo_lvds_vbt_mode = शून्य;
+	i915->vbt.sdvo_lvds_vbt_mode = NULL;
 
 	/* general features */
-	i915->vbt.पूर्णांक_tv_support = 1;
-	i915->vbt.पूर्णांक_crt_support = 1;
+	i915->vbt.int_tv_support = 1;
+	i915->vbt.int_crt_support = 1;
 
 	/* driver features */
-	i915->vbt.पूर्णांक_lvds_support = 1;
+	i915->vbt.int_lvds_support = 1;
 
 	/* Default to using SSC */
 	i915->vbt.lvds_use_ssc = 1;
 	/*
 	 * Core/SandyBridge/IvyBridge use alternative (120MHz) reference
-	 * घड़ी क्रम LVDS.
+	 * clock for LVDS.
 	 */
-	i915->vbt.lvds_ssc_freq = पूर्णांकel_bios_ssc_frequency(i915,
+	i915->vbt.lvds_ssc_freq = intel_bios_ssc_frequency(i915,
 							   !HAS_PCH_SPLIT(i915));
 	drm_dbg_kms(&i915->drm, "Set default to SSC at %d kHz\n",
 		    i915->vbt.lvds_ssc_freq);
-पूर्ण
+}
 
-/* Defaults to initialize only अगर there is no VBT. */
-अटल व्योम
-init_vbt_missing_शेषs(काष्ठा drm_i915_निजी *i915)
-अणु
-	क्रमागत port port;
-	पूर्णांक ports = PORT_A | PORT_B | PORT_C | PORT_D | PORT_E | PORT_F;
+/* Defaults to initialize only if there is no VBT. */
+static void
+init_vbt_missing_defaults(struct drm_i915_private *i915)
+{
+	enum port port;
+	int ports = PORT_A | PORT_B | PORT_C | PORT_D | PORT_E | PORT_F;
 
-	अगर (!HAS_DDI(i915) && !IS_CHERRYVIEW(i915))
-		वापस;
+	if (!HAS_DDI(i915) && !IS_CHERRYVIEW(i915))
+		return;
 
-	क्रम_each_port_masked(port, ports) अणु
-		काष्ठा पूर्णांकel_bios_encoder_data *devdata;
-		काष्ठा child_device_config *child;
-		क्रमागत phy phy = पूर्णांकel_port_to_phy(i915, port);
+	for_each_port_masked(port, ports) {
+		struct intel_bios_encoder_data *devdata;
+		struct child_device_config *child;
+		enum phy phy = intel_port_to_phy(i915, port);
 
 		/*
-		 * VBT has the TypeC mode (native,TBT/USB) and we करोn't want
+		 * VBT has the TypeC mode (native,TBT/USB) and we don't want
 		 * to detect it.
 		 */
-		अगर (पूर्णांकel_phy_is_tc(i915, phy))
-			जारी;
+		if (intel_phy_is_tc(i915, phy))
+			continue;
 
 		/* Create fake child device config */
-		devdata = kzalloc(माप(*devdata), GFP_KERNEL);
-		अगर (!devdata)
-			अवरोध;
+		devdata = kzalloc(sizeof(*devdata), GFP_KERNEL);
+		if (!devdata)
+			break;
 
 		devdata->i915 = i915;
 		child = &devdata->child;
 
-		अगर (port == PORT_F)
+		if (port == PORT_F)
 			child->dvo_port = DVO_PORT_HDMIF;
-		अन्यथा अगर (port == PORT_E)
+		else if (port == PORT_E)
 			child->dvo_port = DVO_PORT_HDMIE;
-		अन्यथा
+		else
 			child->dvo_port = DVO_PORT_HDMIA + port;
 
-		अगर (port != PORT_A && port != PORT_E)
+		if (port != PORT_A && port != PORT_E)
 			child->device_type |= DEVICE_TYPE_TMDS_DVI_SIGNALING;
 
-		अगर (port != PORT_E)
+		if (port != PORT_E)
 			child->device_type |= DEVICE_TYPE_DISPLAYPORT_OUTPUT;
 
-		अगर (port == PORT_A)
+		if (port == PORT_A)
 			child->device_type |= DEVICE_TYPE_INTERNAL_CONNECTOR;
 
 		list_add_tail(&devdata->node, &i915->vbt.display_devices);
@@ -2177,168 +2176,168 @@ init_vbt_missing_शेषs(काष्ठा drm_i915_निजी *i915)
 		drm_dbg_kms(&i915->drm,
 			    "Generating default VBT child device with type 0x04%x on port %c\n",
 			    child->device_type, port_name(port));
-	पूर्ण
+	}
 
 	/* Bypass some minimum baseline VBT version checks */
 	i915->vbt.version = 155;
-पूर्ण
+}
 
-अटल स्थिर काष्ठा bdb_header *get_bdb_header(स्थिर काष्ठा vbt_header *vbt)
-अणु
-	स्थिर व्योम *_vbt = vbt;
+static const struct bdb_header *get_bdb_header(const struct vbt_header *vbt)
+{
+	const void *_vbt = vbt;
 
-	वापस _vbt + vbt->bdb_offset;
-पूर्ण
+	return _vbt + vbt->bdb_offset;
+}
 
 /**
- * पूर्णांकel_bios_is_valid_vbt - करोes the given buffer contain a valid VBT
- * @buf:	poपूर्णांकer to a buffer to validate
+ * intel_bios_is_valid_vbt - does the given buffer contain a valid VBT
+ * @buf:	pointer to a buffer to validate
  * @size:	size of the buffer
  *
  * Returns true on valid VBT.
  */
-bool पूर्णांकel_bios_is_valid_vbt(स्थिर व्योम *buf, माप_प्रकार size)
-अणु
-	स्थिर काष्ठा vbt_header *vbt = buf;
-	स्थिर काष्ठा bdb_header *bdb;
+bool intel_bios_is_valid_vbt(const void *buf, size_t size)
+{
+	const struct vbt_header *vbt = buf;
+	const struct bdb_header *bdb;
 
-	अगर (!vbt)
-		वापस false;
+	if (!vbt)
+		return false;
 
-	अगर (माप(काष्ठा vbt_header) > size) अणु
+	if (sizeof(struct vbt_header) > size) {
 		DRM_DEBUG_DRIVER("VBT header incomplete\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (स_भेद(vbt->signature, "$VBT", 4)) अणु
+	if (memcmp(vbt->signature, "$VBT", 4)) {
 		DRM_DEBUG_DRIVER("VBT invalid signature\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (vbt->vbt_size > size) अणु
+	if (vbt->vbt_size > size) {
 		DRM_DEBUG_DRIVER("VBT incomplete (vbt_size overflows)\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	size = vbt->vbt_size;
 
-	अगर (range_overflows_t(माप_प्रकार,
+	if (range_overflows_t(size_t,
 			      vbt->bdb_offset,
-			      माप(काष्ठा bdb_header),
-			      size)) अणु
+			      sizeof(struct bdb_header),
+			      size)) {
 		DRM_DEBUG_DRIVER("BDB header incomplete\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
 	bdb = get_bdb_header(vbt);
-	अगर (range_overflows_t(माप_प्रकार, vbt->bdb_offset, bdb->bdb_size, size)) अणु
+	if (range_overflows_t(size_t, vbt->bdb_offset, bdb->bdb_size, size)) {
 		DRM_DEBUG_DRIVER("BDB incomplete\n");
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस vbt;
-पूर्ण
+	return vbt;
+}
 
-अटल काष्ठा vbt_header *oprom_get_vbt(काष्ठा drm_i915_निजी *i915)
-अणु
-	काष्ठा pci_dev *pdev = to_pci_dev(i915->drm.dev);
-	व्योम __iomem *p = शून्य, *oprom;
-	काष्ठा vbt_header *vbt;
+static struct vbt_header *oprom_get_vbt(struct drm_i915_private *i915)
+{
+	struct pci_dev *pdev = to_pci_dev(i915->drm.dev);
+	void __iomem *p = NULL, *oprom;
+	struct vbt_header *vbt;
 	u16 vbt_size;
-	माप_प्रकार i, size;
+	size_t i, size;
 
 	oprom = pci_map_rom(pdev, &size);
-	अगर (!oprom)
-		वापस शून्य;
+	if (!oprom)
+		return NULL;
 
-	/* Scour memory looking क्रम the VBT signature. */
-	क्रम (i = 0; i + 4 < size; i += 4) अणु
-		अगर (ioपढ़ो32(oprom + i) != *((स्थिर u32 *)"$VBT"))
-			जारी;
+	/* Scour memory looking for the VBT signature. */
+	for (i = 0; i + 4 < size; i += 4) {
+		if (ioread32(oprom + i) != *((const u32 *)"$VBT"))
+			continue;
 
 		p = oprom + i;
 		size -= i;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (!p)
-		जाओ err_unmap_oprom;
+	if (!p)
+		goto err_unmap_oprom;
 
-	अगर (माप(काष्ठा vbt_header) > size) अणु
+	if (sizeof(struct vbt_header) > size) {
 		drm_dbg(&i915->drm, "VBT header incomplete\n");
-		जाओ err_unmap_oprom;
-	पूर्ण
+		goto err_unmap_oprom;
+	}
 
-	vbt_size = ioपढ़ो16(p + दुरत्व(काष्ठा vbt_header, vbt_size));
-	अगर (vbt_size > size) अणु
+	vbt_size = ioread16(p + offsetof(struct vbt_header, vbt_size));
+	if (vbt_size > size) {
 		drm_dbg(&i915->drm,
 			"VBT incomplete (vbt_size overflows)\n");
-		जाओ err_unmap_oprom;
-	पूर्ण
+		goto err_unmap_oprom;
+	}
 
-	/* The rest will be validated by पूर्णांकel_bios_is_valid_vbt() */
-	vbt = kदो_स्मृति(vbt_size, GFP_KERNEL);
-	अगर (!vbt)
-		जाओ err_unmap_oprom;
+	/* The rest will be validated by intel_bios_is_valid_vbt() */
+	vbt = kmalloc(vbt_size, GFP_KERNEL);
+	if (!vbt)
+		goto err_unmap_oprom;
 
-	स_नकल_fromio(vbt, p, vbt_size);
+	memcpy_fromio(vbt, p, vbt_size);
 
-	अगर (!पूर्णांकel_bios_is_valid_vbt(vbt, vbt_size))
-		जाओ err_मुक्त_vbt;
+	if (!intel_bios_is_valid_vbt(vbt, vbt_size))
+		goto err_free_vbt;
 
 	pci_unmap_rom(pdev, oprom);
 
-	वापस vbt;
+	return vbt;
 
-err_मुक्त_vbt:
-	kमुक्त(vbt);
+err_free_vbt:
+	kfree(vbt);
 err_unmap_oprom:
 	pci_unmap_rom(pdev, oprom);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
 /**
- * पूर्णांकel_bios_init - find VBT and initialize settings from the BIOS
+ * intel_bios_init - find VBT and initialize settings from the BIOS
  * @i915: i915 device instance
  *
  * Parse and initialize settings from the Video BIOS Tables (VBT). If the VBT
  * was not found in ACPI OpRegion, try to find it in PCI ROM first. Also
- * initialize some शेषs अगर the VBT is not present at all.
+ * initialize some defaults if the VBT is not present at all.
  */
-व्योम पूर्णांकel_bios_init(काष्ठा drm_i915_निजी *i915)
-अणु
-	स्थिर काष्ठा vbt_header *vbt = i915->opregion.vbt;
-	काष्ठा vbt_header *oprom_vbt = शून्य;
-	स्थिर काष्ठा bdb_header *bdb;
+void intel_bios_init(struct drm_i915_private *i915)
+{
+	const struct vbt_header *vbt = i915->opregion.vbt;
+	struct vbt_header *oprom_vbt = NULL;
+	const struct bdb_header *bdb;
 
 	INIT_LIST_HEAD(&i915->vbt.display_devices);
 
-	अगर (!HAS_DISPLAY(i915)) अणु
+	if (!HAS_DISPLAY(i915)) {
 		drm_dbg_kms(&i915->drm,
 			    "Skipping VBT init due to disabled display.\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	init_vbt_शेषs(i915);
+	init_vbt_defaults(i915);
 
-	/* If the OpRegion करोes not have VBT, look in PCI ROM. */
-	अगर (!vbt) अणु
+	/* If the OpRegion does not have VBT, look in PCI ROM. */
+	if (!vbt) {
 		oprom_vbt = oprom_get_vbt(i915);
-		अगर (!oprom_vbt)
-			जाओ out;
+		if (!oprom_vbt)
+			goto out;
 
 		vbt = oprom_vbt;
 
 		drm_dbg_kms(&i915->drm, "Found valid VBT in PCI ROM\n");
-	पूर्ण
+	}
 
 	bdb = get_bdb_header(vbt);
 	i915->vbt.version = bdb->version;
 
 	drm_dbg_kms(&i915->drm,
 		    "VBT signature \"%.*s\", BDB version %d\n",
-		    (पूर्णांक)माप(vbt->signature), vbt->signature, bdb->version);
+		    (int)sizeof(vbt->signature), vbt->signature, bdb->version);
 
 	/* Grab useful general definitions */
 	parse_general_features(i915, bdb);
@@ -2348,7 +2347,7 @@ err_unmap_oprom:
 	parse_lfp_backlight(i915, bdb);
 	parse_sdvo_panel_data(i915, bdb);
 	parse_driver_features(i915, bdb);
-	parse_घातer_conservation_features(i915, bdb);
+	parse_power_conservation_features(i915, bdb);
 	parse_edp(i915, bdb);
 	parse_psr(i915, bdb);
 	parse_mipi_config(i915, bdb);
@@ -2358,329 +2357,329 @@ err_unmap_oprom:
 	parse_compression_parameters(i915, bdb);
 
 out:
-	अगर (!vbt) अणु
+	if (!vbt) {
 		drm_info(&i915->drm,
 			 "Failed to find VBIOS tables (VBT)\n");
-		init_vbt_missing_शेषs(i915);
-	पूर्ण
+		init_vbt_missing_defaults(i915);
+	}
 
 	/* Further processing on pre-parsed or generated child device data */
 	parse_sdvo_device_mapping(i915);
 	parse_ddi_ports(i915);
 
-	kमुक्त(oprom_vbt);
-पूर्ण
+	kfree(oprom_vbt);
+}
 
 /**
- * पूर्णांकel_bios_driver_हटाओ - Free any resources allocated by पूर्णांकel_bios_init()
+ * intel_bios_driver_remove - Free any resources allocated by intel_bios_init()
  * @i915: i915 device instance
  */
-व्योम पूर्णांकel_bios_driver_हटाओ(काष्ठा drm_i915_निजी *i915)
-अणु
-	काष्ठा पूर्णांकel_bios_encoder_data *devdata, *n;
+void intel_bios_driver_remove(struct drm_i915_private *i915)
+{
+	struct intel_bios_encoder_data *devdata, *n;
 
-	list_क्रम_each_entry_safe(devdata, n, &i915->vbt.display_devices, node) अणु
+	list_for_each_entry_safe(devdata, n, &i915->vbt.display_devices, node) {
 		list_del(&devdata->node);
-		kमुक्त(devdata->dsc);
-		kमुक्त(devdata);
-	पूर्ण
+		kfree(devdata->dsc);
+		kfree(devdata);
+	}
 
-	kमुक्त(i915->vbt.sdvo_lvds_vbt_mode);
-	i915->vbt.sdvo_lvds_vbt_mode = शून्य;
-	kमुक्त(i915->vbt.lfp_lvds_vbt_mode);
-	i915->vbt.lfp_lvds_vbt_mode = शून्य;
-	kमुक्त(i915->vbt.dsi.data);
-	i915->vbt.dsi.data = शून्य;
-	kमुक्त(i915->vbt.dsi.pps);
-	i915->vbt.dsi.pps = शून्य;
-	kमुक्त(i915->vbt.dsi.config);
-	i915->vbt.dsi.config = शून्य;
-	kमुक्त(i915->vbt.dsi.deनिश्चित_seq);
-	i915->vbt.dsi.deनिश्चित_seq = शून्य;
-पूर्ण
+	kfree(i915->vbt.sdvo_lvds_vbt_mode);
+	i915->vbt.sdvo_lvds_vbt_mode = NULL;
+	kfree(i915->vbt.lfp_lvds_vbt_mode);
+	i915->vbt.lfp_lvds_vbt_mode = NULL;
+	kfree(i915->vbt.dsi.data);
+	i915->vbt.dsi.data = NULL;
+	kfree(i915->vbt.dsi.pps);
+	i915->vbt.dsi.pps = NULL;
+	kfree(i915->vbt.dsi.config);
+	i915->vbt.dsi.config = NULL;
+	kfree(i915->vbt.dsi.deassert_seq);
+	i915->vbt.dsi.deassert_seq = NULL;
+}
 
 /**
- * पूर्णांकel_bios_is_tv_present - is पूर्णांकegrated TV present in VBT
+ * intel_bios_is_tv_present - is integrated TV present in VBT
  * @i915: i915 device instance
  *
- * Return true अगर TV is present. If no child devices were parsed from VBT,
+ * Return true if TV is present. If no child devices were parsed from VBT,
  * assume TV is present.
  */
-bool पूर्णांकel_bios_is_tv_present(काष्ठा drm_i915_निजी *i915)
-अणु
-	स्थिर काष्ठा पूर्णांकel_bios_encoder_data *devdata;
-	स्थिर काष्ठा child_device_config *child;
+bool intel_bios_is_tv_present(struct drm_i915_private *i915)
+{
+	const struct intel_bios_encoder_data *devdata;
+	const struct child_device_config *child;
 
-	अगर (!i915->vbt.पूर्णांक_tv_support)
-		वापस false;
+	if (!i915->vbt.int_tv_support)
+		return false;
 
-	अगर (list_empty(&i915->vbt.display_devices))
-		वापस true;
+	if (list_empty(&i915->vbt.display_devices))
+		return true;
 
-	list_क्रम_each_entry(devdata, &i915->vbt.display_devices, node) अणु
+	list_for_each_entry(devdata, &i915->vbt.display_devices, node) {
 		child = &devdata->child;
 
 		/*
-		 * If the device type is not TV, जारी.
+		 * If the device type is not TV, continue.
 		 */
-		चयन (child->device_type) अणु
-		हाल DEVICE_TYPE_INT_TV:
-		हाल DEVICE_TYPE_TV:
-		हाल DEVICE_TYPE_TV_SVIDEO_COMPOSITE:
-			अवरोध;
-		शेष:
-			जारी;
-		पूर्ण
+		switch (child->device_type) {
+		case DEVICE_TYPE_INT_TV:
+		case DEVICE_TYPE_TV:
+		case DEVICE_TYPE_TV_SVIDEO_COMPOSITE:
+			break;
+		default:
+			continue;
+		}
 		/* Only when the addin_offset is non-zero, it is regarded
 		 * as present.
 		 */
-		अगर (child->addin_offset)
-			वापस true;
-	पूर्ण
+		if (child->addin_offset)
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /**
- * पूर्णांकel_bios_is_lvds_present - is LVDS present in VBT
+ * intel_bios_is_lvds_present - is LVDS present in VBT
  * @i915:	i915 device instance
- * @i2c_pin:	i2c pin क्रम LVDS अगर present
+ * @i2c_pin:	i2c pin for LVDS if present
  *
- * Return true अगर LVDS is present. If no child devices were parsed from VBT,
+ * Return true if LVDS is present. If no child devices were parsed from VBT,
  * assume LVDS is present.
  */
-bool पूर्णांकel_bios_is_lvds_present(काष्ठा drm_i915_निजी *i915, u8 *i2c_pin)
-अणु
-	स्थिर काष्ठा पूर्णांकel_bios_encoder_data *devdata;
-	स्थिर काष्ठा child_device_config *child;
+bool intel_bios_is_lvds_present(struct drm_i915_private *i915, u8 *i2c_pin)
+{
+	const struct intel_bios_encoder_data *devdata;
+	const struct child_device_config *child;
 
-	अगर (list_empty(&i915->vbt.display_devices))
-		वापस true;
+	if (list_empty(&i915->vbt.display_devices))
+		return true;
 
-	list_क्रम_each_entry(devdata, &i915->vbt.display_devices, node) अणु
+	list_for_each_entry(devdata, &i915->vbt.display_devices, node) {
 		child = &devdata->child;
 
-		/* If the device type is not LFP, जारी.
-		 * We have to check both the new identअगरiers as well as the
-		 * old क्रम compatibility with some BIOSes.
+		/* If the device type is not LFP, continue.
+		 * We have to check both the new identifiers as well as the
+		 * old for compatibility with some BIOSes.
 		 */
-		अगर (child->device_type != DEVICE_TYPE_INT_LFP &&
+		if (child->device_type != DEVICE_TYPE_INT_LFP &&
 		    child->device_type != DEVICE_TYPE_LFP)
-			जारी;
+			continue;
 
-		अगर (पूर्णांकel_gmbus_is_valid_pin(i915, child->i2c_pin))
+		if (intel_gmbus_is_valid_pin(i915, child->i2c_pin))
 			*i2c_pin = child->i2c_pin;
 
-		/* However, we cannot trust the BIOS ग_लिखोrs to populate
+		/* However, we cannot trust the BIOS writers to populate
 		 * the VBT correctly.  Since LVDS requires additional
-		 * inक्रमmation from AIM blocks, a non-zero addin offset is
+		 * information from AIM blocks, a non-zero addin offset is
 		 * a good indicator that the LVDS is actually present.
 		 */
-		अगर (child->addin_offset)
-			वापस true;
+		if (child->addin_offset)
+			return true;
 
-		/* But even then some BIOS ग_लिखोrs perक्रमm some black magic
+		/* But even then some BIOS writers perform some black magic
 		 * and instantiate the device without reference to any
-		 * additional data.  Trust that अगर the VBT was written पूर्णांकo
+		 * additional data.  Trust that if the VBT was written into
 		 * the OpRegion then they have validated the LVDS's existence.
 		 */
-		अगर (i915->opregion.vbt)
-			वापस true;
-	पूर्ण
+		if (i915->opregion.vbt)
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /**
- * पूर्णांकel_bios_is_port_present - is the specअगरied digital port present
+ * intel_bios_is_port_present - is the specified digital port present
  * @i915:	i915 device instance
  * @port:	port to check
  *
- * Return true अगर the device in %port is present.
+ * Return true if the device in %port is present.
  */
-bool पूर्णांकel_bios_is_port_present(काष्ठा drm_i915_निजी *i915, क्रमागत port port)
-अणु
-	स्थिर काष्ठा पूर्णांकel_bios_encoder_data *devdata;
-	स्थिर काष्ठा child_device_config *child;
-	अटल स्थिर काष्ठा अणु
+bool intel_bios_is_port_present(struct drm_i915_private *i915, enum port port)
+{
+	const struct intel_bios_encoder_data *devdata;
+	const struct child_device_config *child;
+	static const struct {
 		u16 dp, hdmi;
-	पूर्ण port_mapping[] = अणु
-		[PORT_B] = अणु DVO_PORT_DPB, DVO_PORT_HDMIB, पूर्ण,
-		[PORT_C] = अणु DVO_PORT_DPC, DVO_PORT_HDMIC, पूर्ण,
-		[PORT_D] = अणु DVO_PORT_DPD, DVO_PORT_HDMID, पूर्ण,
-		[PORT_E] = अणु DVO_PORT_DPE, DVO_PORT_HDMIE, पूर्ण,
-		[PORT_F] = अणु DVO_PORT_DPF, DVO_PORT_HDMIF, पूर्ण,
-	पूर्ण;
+	} port_mapping[] = {
+		[PORT_B] = { DVO_PORT_DPB, DVO_PORT_HDMIB, },
+		[PORT_C] = { DVO_PORT_DPC, DVO_PORT_HDMIC, },
+		[PORT_D] = { DVO_PORT_DPD, DVO_PORT_HDMID, },
+		[PORT_E] = { DVO_PORT_DPE, DVO_PORT_HDMIE, },
+		[PORT_F] = { DVO_PORT_DPF, DVO_PORT_HDMIF, },
+	};
 
-	अगर (HAS_DDI(i915)) अणु
-		स्थिर काष्ठा ddi_vbt_port_info *port_info =
+	if (HAS_DDI(i915)) {
+		const struct ddi_vbt_port_info *port_info =
 			&i915->vbt.ddi_port_info[port];
 
-		वापस port_info->devdata;
-	पूर्ण
+		return port_info->devdata;
+	}
 
 	/* FIXME maybe deal with port A as well? */
-	अगर (drm_WARN_ON(&i915->drm,
+	if (drm_WARN_ON(&i915->drm,
 			port == PORT_A) || port >= ARRAY_SIZE(port_mapping))
-		वापस false;
+		return false;
 
-	list_क्रम_each_entry(devdata, &i915->vbt.display_devices, node) अणु
+	list_for_each_entry(devdata, &i915->vbt.display_devices, node) {
 		child = &devdata->child;
 
-		अगर ((child->dvo_port == port_mapping[port].dp ||
+		if ((child->dvo_port == port_mapping[port].dp ||
 		     child->dvo_port == port_mapping[port].hdmi) &&
 		    (child->device_type & (DEVICE_TYPE_TMDS_DVI_SIGNALING |
 					   DEVICE_TYPE_DISPLAYPORT_OUTPUT)))
-			वापस true;
-	पूर्ण
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /**
- * पूर्णांकel_bios_is_port_edp - is the device in given port eDP
+ * intel_bios_is_port_edp - is the device in given port eDP
  * @i915:	i915 device instance
  * @port:	port to check
  *
- * Return true अगर the device in %port is eDP.
+ * Return true if the device in %port is eDP.
  */
-bool पूर्णांकel_bios_is_port_edp(काष्ठा drm_i915_निजी *i915, क्रमागत port port)
-अणु
-	स्थिर काष्ठा पूर्णांकel_bios_encoder_data *devdata;
-	स्थिर काष्ठा child_device_config *child;
-	अटल स्थिर लघु port_mapping[] = अणु
+bool intel_bios_is_port_edp(struct drm_i915_private *i915, enum port port)
+{
+	const struct intel_bios_encoder_data *devdata;
+	const struct child_device_config *child;
+	static const short port_mapping[] = {
 		[PORT_B] = DVO_PORT_DPB,
 		[PORT_C] = DVO_PORT_DPC,
 		[PORT_D] = DVO_PORT_DPD,
 		[PORT_E] = DVO_PORT_DPE,
 		[PORT_F] = DVO_PORT_DPF,
-	पूर्ण;
+	};
 
-	अगर (HAS_DDI(i915)) अणु
-		स्थिर काष्ठा पूर्णांकel_bios_encoder_data *devdata;
+	if (HAS_DDI(i915)) {
+		const struct intel_bios_encoder_data *devdata;
 
-		devdata = पूर्णांकel_bios_encoder_data_lookup(i915, port);
+		devdata = intel_bios_encoder_data_lookup(i915, port);
 
-		वापस devdata && पूर्णांकel_bios_encoder_supports_edp(devdata);
-	पूर्ण
+		return devdata && intel_bios_encoder_supports_edp(devdata);
+	}
 
-	list_क्रम_each_entry(devdata, &i915->vbt.display_devices, node) अणु
+	list_for_each_entry(devdata, &i915->vbt.display_devices, node) {
 		child = &devdata->child;
 
-		अगर (child->dvo_port == port_mapping[port] &&
+		if (child->dvo_port == port_mapping[port] &&
 		    (child->device_type & DEVICE_TYPE_eDP_BITS) ==
 		    (DEVICE_TYPE_eDP & DEVICE_TYPE_eDP_BITS))
-			वापस true;
-	पूर्ण
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल bool child_dev_is_dp_dual_mode(स्थिर काष्ठा child_device_config *child,
-				      क्रमागत port port)
-अणु
-	अटल स्थिर काष्ठा अणु
+static bool child_dev_is_dp_dual_mode(const struct child_device_config *child,
+				      enum port port)
+{
+	static const struct {
 		u16 dp, hdmi;
-	पूर्ण port_mapping[] = अणु
+	} port_mapping[] = {
 		/*
 		 * Buggy VBTs may declare DP ports as having
 		 * HDMI type dvo_port :( So let's check both.
 		 */
-		[PORT_B] = अणु DVO_PORT_DPB, DVO_PORT_HDMIB, पूर्ण,
-		[PORT_C] = अणु DVO_PORT_DPC, DVO_PORT_HDMIC, पूर्ण,
-		[PORT_D] = अणु DVO_PORT_DPD, DVO_PORT_HDMID, पूर्ण,
-		[PORT_E] = अणु DVO_PORT_DPE, DVO_PORT_HDMIE, पूर्ण,
-		[PORT_F] = अणु DVO_PORT_DPF, DVO_PORT_HDMIF, पूर्ण,
-	पूर्ण;
+		[PORT_B] = { DVO_PORT_DPB, DVO_PORT_HDMIB, },
+		[PORT_C] = { DVO_PORT_DPC, DVO_PORT_HDMIC, },
+		[PORT_D] = { DVO_PORT_DPD, DVO_PORT_HDMID, },
+		[PORT_E] = { DVO_PORT_DPE, DVO_PORT_HDMIE, },
+		[PORT_F] = { DVO_PORT_DPF, DVO_PORT_HDMIF, },
+	};
 
-	अगर (port == PORT_A || port >= ARRAY_SIZE(port_mapping))
-		वापस false;
+	if (port == PORT_A || port >= ARRAY_SIZE(port_mapping))
+		return false;
 
-	अगर ((child->device_type & DEVICE_TYPE_DP_DUAL_MODE_BITS) !=
+	if ((child->device_type & DEVICE_TYPE_DP_DUAL_MODE_BITS) !=
 	    (DEVICE_TYPE_DP_DUAL_MODE & DEVICE_TYPE_DP_DUAL_MODE_BITS))
-		वापस false;
+		return false;
 
-	अगर (child->dvo_port == port_mapping[port].dp)
-		वापस true;
+	if (child->dvo_port == port_mapping[port].dp)
+		return true;
 
-	/* Only accept a HDMI dvo_port as DP++ अगर it has an AUX channel */
-	अगर (child->dvo_port == port_mapping[port].hdmi &&
+	/* Only accept a HDMI dvo_port as DP++ if it has an AUX channel */
+	if (child->dvo_port == port_mapping[port].hdmi &&
 	    child->aux_channel != 0)
-		वापस true;
+		return true;
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-bool पूर्णांकel_bios_is_port_dp_dual_mode(काष्ठा drm_i915_निजी *i915,
-				     क्रमागत port port)
-अणु
-	स्थिर काष्ठा पूर्णांकel_bios_encoder_data *devdata;
+bool intel_bios_is_port_dp_dual_mode(struct drm_i915_private *i915,
+				     enum port port)
+{
+	const struct intel_bios_encoder_data *devdata;
 
-	list_क्रम_each_entry(devdata, &i915->vbt.display_devices, node) अणु
-		अगर (child_dev_is_dp_dual_mode(&devdata->child, port))
-			वापस true;
-	पूर्ण
+	list_for_each_entry(devdata, &i915->vbt.display_devices, node) {
+		if (child_dev_is_dp_dual_mode(&devdata->child, port))
+			return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /**
- * पूर्णांकel_bios_is_dsi_present - is DSI present in VBT
+ * intel_bios_is_dsi_present - is DSI present in VBT
  * @i915:	i915 device instance
- * @port:	port क्रम DSI अगर present
+ * @port:	port for DSI if present
  *
- * Return true अगर DSI is present, and वापस the port in %port.
+ * Return true if DSI is present, and return the port in %port.
  */
-bool पूर्णांकel_bios_is_dsi_present(काष्ठा drm_i915_निजी *i915,
-			       क्रमागत port *port)
-अणु
-	स्थिर काष्ठा पूर्णांकel_bios_encoder_data *devdata;
-	स्थिर काष्ठा child_device_config *child;
+bool intel_bios_is_dsi_present(struct drm_i915_private *i915,
+			       enum port *port)
+{
+	const struct intel_bios_encoder_data *devdata;
+	const struct child_device_config *child;
 	u8 dvo_port;
 
-	list_क्रम_each_entry(devdata, &i915->vbt.display_devices, node) अणु
+	list_for_each_entry(devdata, &i915->vbt.display_devices, node) {
 		child = &devdata->child;
 
-		अगर (!(child->device_type & DEVICE_TYPE_MIPI_OUTPUT))
-			जारी;
+		if (!(child->device_type & DEVICE_TYPE_MIPI_OUTPUT))
+			continue;
 
 		dvo_port = child->dvo_port;
 
-		अगर (dvo_port == DVO_PORT_MIPIA ||
+		if (dvo_port == DVO_PORT_MIPIA ||
 		    (dvo_port == DVO_PORT_MIPIB && DISPLAY_VER(i915) >= 11) ||
-		    (dvo_port == DVO_PORT_MIPIC && DISPLAY_VER(i915) < 11)) अणु
-			अगर (port)
+		    (dvo_port == DVO_PORT_MIPIC && DISPLAY_VER(i915) < 11)) {
+			if (port)
 				*port = dvo_port - DVO_PORT_MIPIA;
-			वापस true;
-		पूर्ण अन्यथा अगर (dvo_port == DVO_PORT_MIPIB ||
+			return true;
+		} else if (dvo_port == DVO_PORT_MIPIB ||
 			   dvo_port == DVO_PORT_MIPIC ||
-			   dvo_port == DVO_PORT_MIPID) अणु
+			   dvo_port == DVO_PORT_MIPID) {
 			drm_dbg_kms(&i915->drm,
 				    "VBT has unsupported DSI port %c\n",
 				    port_name(dvo_port - DVO_PORT_MIPIA));
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम fill_dsc(काष्ठा पूर्णांकel_crtc_state *crtc_state,
-		     काष्ठा dsc_compression_parameters_entry *dsc,
-		     पूर्णांक dsc_max_bpc)
-अणु
-	काष्ठा drm_dsc_config *vdsc_cfg = &crtc_state->dsc.config;
-	पूर्णांक bpc = 8;
+static void fill_dsc(struct intel_crtc_state *crtc_state,
+		     struct dsc_compression_parameters_entry *dsc,
+		     int dsc_max_bpc)
+{
+	struct drm_dsc_config *vdsc_cfg = &crtc_state->dsc.config;
+	int bpc = 8;
 
 	vdsc_cfg->dsc_version_major = dsc->version_major;
 	vdsc_cfg->dsc_version_minor = dsc->version_minor;
 
-	अगर (dsc->support_12bpc && dsc_max_bpc >= 12)
+	if (dsc->support_12bpc && dsc_max_bpc >= 12)
 		bpc = 12;
-	अन्यथा अगर (dsc->support_10bpc && dsc_max_bpc >= 10)
+	else if (dsc->support_10bpc && dsc_max_bpc >= 10)
 		bpc = 10;
-	अन्यथा अगर (dsc->support_8bpc && dsc_max_bpc >= 8)
+	else if (dsc->support_8bpc && dsc_max_bpc >= 8)
 		bpc = 8;
-	अन्यथा
+	else
 		DRM_DEBUG_KMS("VBT: Unsupported BPC %d for DCS\n",
 			      dsc_max_bpc);
 
@@ -2691,23 +2690,23 @@ bool पूर्णांकel_bios_is_dsi_present(काष्ठा drm_i915_
 
 	/*
 	 * FIXME: This is ugly, and slice count should take DSC engine
-	 * throughput etc. पूर्णांकo account.
+	 * throughput etc. into account.
 	 *
 	 * Also, per spec DSI supports 1, 2, 3 or 4 horizontal slices.
 	 */
-	अगर (dsc->slices_per_line & BIT(2)) अणु
+	if (dsc->slices_per_line & BIT(2)) {
 		crtc_state->dsc.slice_count = 4;
-	पूर्ण अन्यथा अगर (dsc->slices_per_line & BIT(1)) अणु
+	} else if (dsc->slices_per_line & BIT(1)) {
 		crtc_state->dsc.slice_count = 2;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* FIXME */
-		अगर (!(dsc->slices_per_line & BIT(0)))
+		if (!(dsc->slices_per_line & BIT(0)))
 			DRM_DEBUG_KMS("VBT: Unsupported DSC slice count for DSI\n");
 
 		crtc_state->dsc.slice_count = 1;
-	पूर्ण
+	}
 
-	अगर (crtc_state->hw.adjusted_mode.crtc_hdisplay %
+	if (crtc_state->hw.adjusted_mode.crtc_hdisplay %
 	    crtc_state->dsc.slice_count != 0)
 		DRM_DEBUG_KMS("VBT: DSC hdisplay %d not divisible by slice count %d\n",
 			      crtc_state->hw.adjusted_mode.crtc_hdisplay,
@@ -2720,112 +2719,112 @@ bool पूर्णांकel_bios_is_dsi_present(काष्ठा drm_i915_
 	vdsc_cfg->rc_model_size = drm_dsc_dp_rc_buffer_size(dsc->rc_buffer_block_size,
 							    dsc->rc_buffer_size);
 
-	/* FIXME: DSI spec says bpc + 1 क्रम this one */
+	/* FIXME: DSI spec says bpc + 1 for this one */
 	vdsc_cfg->line_buf_depth = VBT_DSC_LINE_BUFFER_DEPTH(dsc->line_buffer_depth);
 
 	vdsc_cfg->block_pred_enable = dsc->block_prediction_enable;
 
 	vdsc_cfg->slice_height = dsc->slice_height;
-पूर्ण
+}
 
-/* FIXME: initially DSI specअगरic */
-bool पूर्णांकel_bios_get_dsc_params(काष्ठा पूर्णांकel_encoder *encoder,
-			       काष्ठा पूर्णांकel_crtc_state *crtc_state,
-			       पूर्णांक dsc_max_bpc)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(encoder->base.dev);
-	स्थिर काष्ठा पूर्णांकel_bios_encoder_data *devdata;
-	स्थिर काष्ठा child_device_config *child;
+/* FIXME: initially DSI specific */
+bool intel_bios_get_dsc_params(struct intel_encoder *encoder,
+			       struct intel_crtc_state *crtc_state,
+			       int dsc_max_bpc)
+{
+	struct drm_i915_private *i915 = to_i915(encoder->base.dev);
+	const struct intel_bios_encoder_data *devdata;
+	const struct child_device_config *child;
 
-	list_क्रम_each_entry(devdata, &i915->vbt.display_devices, node) अणु
+	list_for_each_entry(devdata, &i915->vbt.display_devices, node) {
 		child = &devdata->child;
 
-		अगर (!(child->device_type & DEVICE_TYPE_MIPI_OUTPUT))
-			जारी;
+		if (!(child->device_type & DEVICE_TYPE_MIPI_OUTPUT))
+			continue;
 
-		अगर (child->dvo_port - DVO_PORT_MIPIA == encoder->port) अणु
-			अगर (!devdata->dsc)
-				वापस false;
+		if (child->dvo_port - DVO_PORT_MIPIA == encoder->port) {
+			if (!devdata->dsc)
+				return false;
 
-			अगर (crtc_state)
+			if (crtc_state)
 				fill_dsc(crtc_state, devdata->dsc, dsc_max_bpc);
 
-			वापस true;
-		पूर्ण
-	पूर्ण
+			return true;
+		}
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /**
- * पूर्णांकel_bios_is_port_hpd_inverted - is HPD inverted क्रम %port
+ * intel_bios_is_port_hpd_inverted - is HPD inverted for %port
  * @i915:	i915 device instance
  * @port:	port to check
  *
- * Return true अगर HPD should be inverted क्रम %port.
+ * Return true if HPD should be inverted for %port.
  */
 bool
-पूर्णांकel_bios_is_port_hpd_inverted(स्थिर काष्ठा drm_i915_निजी *i915,
-				क्रमागत port port)
-अणु
-	स्थिर काष्ठा पूर्णांकel_bios_encoder_data *devdata =
+intel_bios_is_port_hpd_inverted(const struct drm_i915_private *i915,
+				enum port port)
+{
+	const struct intel_bios_encoder_data *devdata =
 		i915->vbt.ddi_port_info[port].devdata;
 
-	अगर (drm_WARN_ON_ONCE(&i915->drm, !IS_GEN9_LP(i915)))
-		वापस false;
+	if (drm_WARN_ON_ONCE(&i915->drm, !IS_GEN9_LP(i915)))
+		return false;
 
-	वापस devdata && devdata->child.hpd_invert;
-पूर्ण
+	return devdata && devdata->child.hpd_invert;
+}
 
 /**
- * पूर्णांकel_bios_is_lspcon_present - अगर LSPCON is attached on %port
+ * intel_bios_is_lspcon_present - if LSPCON is attached on %port
  * @i915:	i915 device instance
  * @port:	port to check
  *
- * Return true अगर LSPCON is present on this port
+ * Return true if LSPCON is present on this port
  */
 bool
-पूर्णांकel_bios_is_lspcon_present(स्थिर काष्ठा drm_i915_निजी *i915,
-			     क्रमागत port port)
-अणु
-	स्थिर काष्ठा पूर्णांकel_bios_encoder_data *devdata =
+intel_bios_is_lspcon_present(const struct drm_i915_private *i915,
+			     enum port port)
+{
+	const struct intel_bios_encoder_data *devdata =
 		i915->vbt.ddi_port_info[port].devdata;
 
-	वापस HAS_LSPCON(i915) && devdata && devdata->child.lspcon;
-पूर्ण
+	return HAS_LSPCON(i915) && devdata && devdata->child.lspcon;
+}
 
 /**
- * पूर्णांकel_bios_is_lane_reversal_needed - अगर lane reversal needed on port
+ * intel_bios_is_lane_reversal_needed - if lane reversal needed on port
  * @i915:       i915 device instance
  * @port:       port to check
  *
- * Return true अगर port requires lane reversal
+ * Return true if port requires lane reversal
  */
 bool
-पूर्णांकel_bios_is_lane_reversal_needed(स्थिर काष्ठा drm_i915_निजी *i915,
-				   क्रमागत port port)
-अणु
-	स्थिर काष्ठा पूर्णांकel_bios_encoder_data *devdata =
+intel_bios_is_lane_reversal_needed(const struct drm_i915_private *i915,
+				   enum port port)
+{
+	const struct intel_bios_encoder_data *devdata =
 		i915->vbt.ddi_port_info[port].devdata;
 
-	वापस devdata && devdata->child.lane_reversal;
-पूर्ण
+	return devdata && devdata->child.lane_reversal;
+}
 
-क्रमागत aux_ch पूर्णांकel_bios_port_aux_ch(काष्ठा drm_i915_निजी *i915,
-				   क्रमागत port port)
-अणु
-	स्थिर काष्ठा ddi_vbt_port_info *info =
+enum aux_ch intel_bios_port_aux_ch(struct drm_i915_private *i915,
+				   enum port port)
+{
+	const struct ddi_vbt_port_info *info =
 		&i915->vbt.ddi_port_info[port];
-	क्रमागत aux_ch aux_ch;
+	enum aux_ch aux_ch;
 
-	अगर (!info->alternate_aux_channel) अणु
-		aux_ch = (क्रमागत aux_ch)port;
+	if (!info->alternate_aux_channel) {
+		aux_ch = (enum aux_ch)port;
 
 		drm_dbg_kms(&i915->drm,
 			    "using AUX %c for port %c (platform default)\n",
 			    aux_ch_name(aux_ch), port_name(port));
-		वापस aux_ch;
-	पूर्ण
+		return aux_ch;
+	}
 
 	/*
 	 * RKL/DG1 VBT uses PHY based mapping. Combo PHYs A,B,C,D
@@ -2834,120 +2833,120 @@ bool
 	 * ADL-S VBT uses PHY based mapping. Combo PHYs A,B,C,D,E
 	 * map to DDI A,TC1,TC2,TC3,TC4 respectively.
 	 */
-	चयन (info->alternate_aux_channel) अणु
-	हाल DP_AUX_A:
+	switch (info->alternate_aux_channel) {
+	case DP_AUX_A:
 		aux_ch = AUX_CH_A;
-		अवरोध;
-	हाल DP_AUX_B:
-		अगर (IS_ALDERLAKE_S(i915))
+		break;
+	case DP_AUX_B:
+		if (IS_ALDERLAKE_S(i915))
 			aux_ch = AUX_CH_USBC1;
-		अन्यथा
+		else
 			aux_ch = AUX_CH_B;
-		अवरोध;
-	हाल DP_AUX_C:
-		अगर (IS_ALDERLAKE_S(i915))
+		break;
+	case DP_AUX_C:
+		if (IS_ALDERLAKE_S(i915))
 			aux_ch = AUX_CH_USBC2;
-		अन्यथा अगर (IS_DG1(i915) || IS_ROCKETLAKE(i915))
+		else if (IS_DG1(i915) || IS_ROCKETLAKE(i915))
 			aux_ch = AUX_CH_USBC1;
-		अन्यथा
+		else
 			aux_ch = AUX_CH_C;
-		अवरोध;
-	हाल DP_AUX_D:
-		अगर (IS_ALDERLAKE_S(i915))
+		break;
+	case DP_AUX_D:
+		if (IS_ALDERLAKE_S(i915))
 			aux_ch = AUX_CH_USBC3;
-		अन्यथा अगर (IS_DG1(i915) || IS_ROCKETLAKE(i915))
+		else if (IS_DG1(i915) || IS_ROCKETLAKE(i915))
 			aux_ch = AUX_CH_USBC2;
-		अन्यथा
+		else
 			aux_ch = AUX_CH_D;
-		अवरोध;
-	हाल DP_AUX_E:
-		अगर (IS_ALDERLAKE_S(i915))
+		break;
+	case DP_AUX_E:
+		if (IS_ALDERLAKE_S(i915))
 			aux_ch = AUX_CH_USBC4;
-		अन्यथा
+		else
 			aux_ch = AUX_CH_E;
-		अवरोध;
-	हाल DP_AUX_F:
+		break;
+	case DP_AUX_F:
 		aux_ch = AUX_CH_F;
-		अवरोध;
-	हाल DP_AUX_G:
+		break;
+	case DP_AUX_G:
 		aux_ch = AUX_CH_G;
-		अवरोध;
-	हाल DP_AUX_H:
+		break;
+	case DP_AUX_H:
 		aux_ch = AUX_CH_H;
-		अवरोध;
-	हाल DP_AUX_I:
+		break;
+	case DP_AUX_I:
 		aux_ch = AUX_CH_I;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		MISSING_CASE(info->alternate_aux_channel);
 		aux_ch = AUX_CH_A;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	drm_dbg_kms(&i915->drm, "using AUX %c for port %c (VBT)\n",
 		    aux_ch_name(aux_ch), port_name(port));
 
-	वापस aux_ch;
-पूर्ण
+	return aux_ch;
+}
 
-पूर्णांक पूर्णांकel_bios_max_पंचांगds_घड़ी(काष्ठा पूर्णांकel_encoder *encoder)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(encoder->base.dev);
+int intel_bios_max_tmds_clock(struct intel_encoder *encoder)
+{
+	struct drm_i915_private *i915 = to_i915(encoder->base.dev);
 
-	वापस i915->vbt.ddi_port_info[encoder->port].max_पंचांगds_घड़ी;
-पूर्ण
+	return i915->vbt.ddi_port_info[encoder->port].max_tmds_clock;
+}
 
-पूर्णांक पूर्णांकel_bios_hdmi_level_shअगरt(काष्ठा पूर्णांकel_encoder *encoder)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(encoder->base.dev);
-	स्थिर काष्ठा ddi_vbt_port_info *info =
+int intel_bios_hdmi_level_shift(struct intel_encoder *encoder)
+{
+	struct drm_i915_private *i915 = to_i915(encoder->base.dev);
+	const struct ddi_vbt_port_info *info =
 		&i915->vbt.ddi_port_info[encoder->port];
 
-	वापस info->hdmi_level_shअगरt_set ? info->hdmi_level_shअगरt : -1;
-पूर्ण
+	return info->hdmi_level_shift_set ? info->hdmi_level_shift : -1;
+}
 
-पूर्णांक पूर्णांकel_bios_encoder_dp_boost_level(स्थिर काष्ठा पूर्णांकel_bios_encoder_data *devdata)
-अणु
-	अगर (!devdata || devdata->i915->vbt.version < 196 || !devdata->child.iboost)
-		वापस 0;
+int intel_bios_encoder_dp_boost_level(const struct intel_bios_encoder_data *devdata)
+{
+	if (!devdata || devdata->i915->vbt.version < 196 || !devdata->child.iboost)
+		return 0;
 
-	वापस translate_iboost(devdata->child.dp_iboost_level);
-पूर्ण
+	return translate_iboost(devdata->child.dp_iboost_level);
+}
 
-पूर्णांक पूर्णांकel_bios_encoder_hdmi_boost_level(स्थिर काष्ठा पूर्णांकel_bios_encoder_data *devdata)
-अणु
-	अगर (!devdata || devdata->i915->vbt.version < 196 || !devdata->child.iboost)
-		वापस 0;
+int intel_bios_encoder_hdmi_boost_level(const struct intel_bios_encoder_data *devdata)
+{
+	if (!devdata || devdata->i915->vbt.version < 196 || !devdata->child.iboost)
+		return 0;
 
-	वापस translate_iboost(devdata->child.hdmi_iboost_level);
-पूर्ण
+	return translate_iboost(devdata->child.hdmi_iboost_level);
+}
 
-पूर्णांक पूर्णांकel_bios_dp_max_link_rate(काष्ठा पूर्णांकel_encoder *encoder)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(encoder->base.dev);
+int intel_bios_dp_max_link_rate(struct intel_encoder *encoder)
+{
+	struct drm_i915_private *i915 = to_i915(encoder->base.dev);
 
-	वापस i915->vbt.ddi_port_info[encoder->port].dp_max_link_rate;
-पूर्ण
+	return i915->vbt.ddi_port_info[encoder->port].dp_max_link_rate;
+}
 
-पूर्णांक पूर्णांकel_bios_alternate_ddc_pin(काष्ठा पूर्णांकel_encoder *encoder)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(encoder->base.dev);
+int intel_bios_alternate_ddc_pin(struct intel_encoder *encoder)
+{
+	struct drm_i915_private *i915 = to_i915(encoder->base.dev);
 
-	वापस i915->vbt.ddi_port_info[encoder->port].alternate_ddc_pin;
-पूर्ण
+	return i915->vbt.ddi_port_info[encoder->port].alternate_ddc_pin;
+}
 
-bool पूर्णांकel_bios_encoder_supports_typec_usb(स्थिर काष्ठा पूर्णांकel_bios_encoder_data *devdata)
-अणु
-	वापस devdata->i915->vbt.version >= 195 && devdata->child.dp_usb_type_c;
-पूर्ण
+bool intel_bios_encoder_supports_typec_usb(const struct intel_bios_encoder_data *devdata)
+{
+	return devdata->i915->vbt.version >= 195 && devdata->child.dp_usb_type_c;
+}
 
-bool पूर्णांकel_bios_encoder_supports_tbt(स्थिर काष्ठा पूर्णांकel_bios_encoder_data *devdata)
-अणु
-	वापस devdata->i915->vbt.version >= 209 && devdata->child.tbt;
-पूर्ण
+bool intel_bios_encoder_supports_tbt(const struct intel_bios_encoder_data *devdata)
+{
+	return devdata->i915->vbt.version >= 209 && devdata->child.tbt;
+}
 
-स्थिर काष्ठा पूर्णांकel_bios_encoder_data *
-पूर्णांकel_bios_encoder_data_lookup(काष्ठा drm_i915_निजी *i915, क्रमागत port port)
-अणु
-	वापस i915->vbt.ddi_port_info[port].devdata;
-पूर्ण
+const struct intel_bios_encoder_data *
+intel_bios_encoder_data_lookup(struct drm_i915_private *i915, enum port port)
+{
+	return i915->vbt.ddi_port_info[port].devdata;
+}

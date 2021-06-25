@@ -1,401 +1,400 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright तऊ 2009 - Maxim Levitsky
+ * Copyright © 2009 - Maxim Levitsky
  * SmartMedia/xD translation layer
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/hdreg.h>
-#समावेश <linux/kthपढ़ो.h>
-#समावेश <linux/मुक्तzer.h>
-#समावेश <linux/sysfs.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mtd/nand-ecc-sw-hamming.h>
-#समावेश "nand/raw/sm_common.h"
-#समावेश "sm_ftl.h"
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/random.h>
+#include <linux/hdreg.h>
+#include <linux/kthread.h>
+#include <linux/freezer.h>
+#include <linux/sysfs.h>
+#include <linux/bitops.h>
+#include <linux/slab.h>
+#include <linux/mtd/nand-ecc-sw-hamming.h>
+#include "nand/raw/sm_common.h"
+#include "sm_ftl.h"
 
 
 
-अटल काष्ठा workqueue_काष्ठा *cache_flush_workqueue;
+static struct workqueue_struct *cache_flush_workqueue;
 
-अटल पूर्णांक cache_समयout = 1000;
-module_param(cache_समयout, पूर्णांक, S_IRUGO);
-MODULE_PARM_DESC(cache_समयout,
+static int cache_timeout = 1000;
+module_param(cache_timeout, int, S_IRUGO);
+MODULE_PARM_DESC(cache_timeout,
 	"Timeout (in ms) for cache flush (1000 ms default");
 
-अटल पूर्णांक debug;
-module_param(debug, पूर्णांक, S_IRUGO | S_IWUSR);
+static int debug;
+module_param(debug, int, S_IRUGO | S_IWUSR);
 MODULE_PARM_DESC(debug, "Debug level (0-2)");
 
 
 /* ------------------- sysfs attributes ---------------------------------- */
-काष्ठा sm_sysfs_attribute अणु
-	काष्ठा device_attribute dev_attr;
-	अक्षर *data;
-	पूर्णांक len;
-पूर्ण;
+struct sm_sysfs_attribute {
+	struct device_attribute dev_attr;
+	char *data;
+	int len;
+};
 
-अटल sमाप_प्रकार sm_attr_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-		     अक्षर *buf)
-अणु
-	काष्ठा sm_sysfs_attribute *sm_attr =
-		container_of(attr, काष्ठा sm_sysfs_attribute, dev_attr);
+static ssize_t sm_attr_show(struct device *dev, struct device_attribute *attr,
+		     char *buf)
+{
+	struct sm_sysfs_attribute *sm_attr =
+		container_of(attr, struct sm_sysfs_attribute, dev_attr);
 
-	म_नकलन(buf, sm_attr->data, sm_attr->len);
-	वापस sm_attr->len;
-पूर्ण
+	strncpy(buf, sm_attr->data, sm_attr->len);
+	return sm_attr->len;
+}
 
 
-#घोषणा NUM_ATTRIBUTES 1
-#घोषणा SM_CIS_VENDOR_OFFSET 0x59
-अटल काष्ठा attribute_group *sm_create_sysfs_attributes(काष्ठा sm_ftl *ftl)
-अणु
-	काष्ठा attribute_group *attr_group;
-	काष्ठा attribute **attributes;
-	काष्ठा sm_sysfs_attribute *venकरोr_attribute;
-	अक्षर *venकरोr;
+#define NUM_ATTRIBUTES 1
+#define SM_CIS_VENDOR_OFFSET 0x59
+static struct attribute_group *sm_create_sysfs_attributes(struct sm_ftl *ftl)
+{
+	struct attribute_group *attr_group;
+	struct attribute **attributes;
+	struct sm_sysfs_attribute *vendor_attribute;
+	char *vendor;
 
-	venकरोr = kstrndup(ftl->cis_buffer + SM_CIS_VENDOR_OFFSET,
+	vendor = kstrndup(ftl->cis_buffer + SM_CIS_VENDOR_OFFSET,
 			  SM_SMALL_PAGE - SM_CIS_VENDOR_OFFSET, GFP_KERNEL);
-	अगर (!venकरोr)
-		जाओ error1;
+	if (!vendor)
+		goto error1;
 
 	/* Initialize sysfs attributes */
-	venकरोr_attribute =
-		kzalloc(माप(काष्ठा sm_sysfs_attribute), GFP_KERNEL);
-	अगर (!venकरोr_attribute)
-		जाओ error2;
+	vendor_attribute =
+		kzalloc(sizeof(struct sm_sysfs_attribute), GFP_KERNEL);
+	if (!vendor_attribute)
+		goto error2;
 
-	sysfs_attr_init(&venकरोr_attribute->dev_attr.attr);
+	sysfs_attr_init(&vendor_attribute->dev_attr.attr);
 
-	venकरोr_attribute->data = venकरोr;
-	venकरोr_attribute->len = म_माप(venकरोr);
-	venकरोr_attribute->dev_attr.attr.name = "vendor";
-	venकरोr_attribute->dev_attr.attr.mode = S_IRUGO;
-	venकरोr_attribute->dev_attr.show = sm_attr_show;
+	vendor_attribute->data = vendor;
+	vendor_attribute->len = strlen(vendor);
+	vendor_attribute->dev_attr.attr.name = "vendor";
+	vendor_attribute->dev_attr.attr.mode = S_IRUGO;
+	vendor_attribute->dev_attr.show = sm_attr_show;
 
 
-	/* Create array of poपूर्णांकers to the attributes */
-	attributes = kसुस्मृति(NUM_ATTRIBUTES + 1, माप(काष्ठा attribute *),
+	/* Create array of pointers to the attributes */
+	attributes = kcalloc(NUM_ATTRIBUTES + 1, sizeof(struct attribute *),
 								GFP_KERNEL);
-	अगर (!attributes)
-		जाओ error3;
-	attributes[0] = &venकरोr_attribute->dev_attr.attr;
+	if (!attributes)
+		goto error3;
+	attributes[0] = &vendor_attribute->dev_attr.attr;
 
 	/* Finally create the attribute group */
-	attr_group = kzalloc(माप(काष्ठा attribute_group), GFP_KERNEL);
-	अगर (!attr_group)
-		जाओ error4;
+	attr_group = kzalloc(sizeof(struct attribute_group), GFP_KERNEL);
+	if (!attr_group)
+		goto error4;
 	attr_group->attrs = attributes;
-	वापस attr_group;
+	return attr_group;
 error4:
-	kमुक्त(attributes);
+	kfree(attributes);
 error3:
-	kमुक्त(venकरोr_attribute);
+	kfree(vendor_attribute);
 error2:
-	kमुक्त(venकरोr);
+	kfree(vendor);
 error1:
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम sm_delete_sysfs_attributes(काष्ठा sm_ftl *ftl)
-अणु
-	काष्ठा attribute **attributes = ftl->disk_attributes->attrs;
-	पूर्णांक i;
+static void sm_delete_sysfs_attributes(struct sm_ftl *ftl)
+{
+	struct attribute **attributes = ftl->disk_attributes->attrs;
+	int i;
 
-	क्रम (i = 0; attributes[i] ; i++) अणु
+	for (i = 0; attributes[i] ; i++) {
 
-		काष्ठा device_attribute *dev_attr = container_of(attributes[i],
-			काष्ठा device_attribute, attr);
+		struct device_attribute *dev_attr = container_of(attributes[i],
+			struct device_attribute, attr);
 
-		काष्ठा sm_sysfs_attribute *sm_attr =
+		struct sm_sysfs_attribute *sm_attr =
 			container_of(dev_attr,
-				काष्ठा sm_sysfs_attribute, dev_attr);
+				struct sm_sysfs_attribute, dev_attr);
 
-		kमुक्त(sm_attr->data);
-		kमुक्त(sm_attr);
-	पूर्ण
+		kfree(sm_attr->data);
+		kfree(sm_attr);
+	}
 
-	kमुक्त(ftl->disk_attributes->attrs);
-	kमुक्त(ftl->disk_attributes);
-पूर्ण
+	kfree(ftl->disk_attributes->attrs);
+	kfree(ftl->disk_attributes);
+}
 
 
 /* ----------------------- oob helpers -------------------------------------- */
 
-अटल पूर्णांक sm_get_lba(uपूर्णांक8_t *lba)
-अणु
+static int sm_get_lba(uint8_t *lba)
+{
 	/* check fixed bits */
-	अगर ((lba[0] & 0xF8) != 0x10)
-		वापस -2;
+	if ((lba[0] & 0xF8) != 0x10)
+		return -2;
 
-	/* check parity - endianness करोesn't matter */
-	अगर (hweight16(*(uपूर्णांक16_t *)lba) & 1)
-		वापस -2;
+	/* check parity - endianness doesn't matter */
+	if (hweight16(*(uint16_t *)lba) & 1)
+		return -2;
 
-	वापस (lba[1] >> 1) | ((lba[0] & 0x07) << 7);
-पूर्ण
+	return (lba[1] >> 1) | ((lba[0] & 0x07) << 7);
+}
 
 
 /*
  * Read LBA associated with block
- * वापसs -1, अगर block is erased
- * वापसs -2 अगर error happens
+ * returns -1, if block is erased
+ * returns -2 if error happens
  */
-अटल पूर्णांक sm_पढ़ो_lba(काष्ठा sm_oob *oob)
-अणु
-	अटल स्थिर uपूर्णांक32_t erased_pattern[4] = अणु
-		0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF पूर्ण;
+static int sm_read_lba(struct sm_oob *oob)
+{
+	static const uint32_t erased_pattern[4] = {
+		0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
 
-	uपूर्णांक16_t lba_test;
-	पूर्णांक lba;
+	uint16_t lba_test;
+	int lba;
 
-	/* First test क्रम erased block */
-	अगर (!स_भेद(oob, erased_pattern, SM_OOB_SIZE))
-		वापस -1;
+	/* First test for erased block */
+	if (!memcmp(oob, erased_pattern, SM_OOB_SIZE))
+		return -1;
 
-	/* Now check is both copies of the LBA dअगरfer too much */
-	lba_test = *(uपूर्णांक16_t *)oob->lba_copy1 ^ *(uपूर्णांक16_t*)oob->lba_copy2;
-	अगर (lba_test && !is_घातer_of_2(lba_test))
-		वापस -2;
+	/* Now check is both copies of the LBA differ too much */
+	lba_test = *(uint16_t *)oob->lba_copy1 ^ *(uint16_t*)oob->lba_copy2;
+	if (lba_test && !is_power_of_2(lba_test))
+		return -2;
 
-	/* And पढ़ो it */
+	/* And read it */
 	lba = sm_get_lba(oob->lba_copy1);
 
-	अगर (lba == -2)
+	if (lba == -2)
 		lba = sm_get_lba(oob->lba_copy2);
 
-	वापस lba;
-पूर्ण
+	return lba;
+}
 
-अटल व्योम sm_ग_लिखो_lba(काष्ठा sm_oob *oob, uपूर्णांक16_t lba)
-अणु
-	uपूर्णांक8_t पंचांगp[2];
+static void sm_write_lba(struct sm_oob *oob, uint16_t lba)
+{
+	uint8_t tmp[2];
 
 	WARN_ON(lba >= 1000);
 
-	पंचांगp[0] = 0x10 | ((lba >> 7) & 0x07);
-	पंचांगp[1] = (lba << 1) & 0xFF;
+	tmp[0] = 0x10 | ((lba >> 7) & 0x07);
+	tmp[1] = (lba << 1) & 0xFF;
 
-	अगर (hweight16(*(uपूर्णांक16_t *)पंचांगp) & 0x01)
-		पंचांगp[1] |= 1;
+	if (hweight16(*(uint16_t *)tmp) & 0x01)
+		tmp[1] |= 1;
 
-	oob->lba_copy1[0] = oob->lba_copy2[0] = पंचांगp[0];
-	oob->lba_copy1[1] = oob->lba_copy2[1] = पंचांगp[1];
-पूर्ण
+	oob->lba_copy1[0] = oob->lba_copy2[0] = tmp[0];
+	oob->lba_copy1[1] = oob->lba_copy2[1] = tmp[1];
+}
 
 
 /* Make offset from parts */
-अटल loff_t sm_mkoffset(काष्ठा sm_ftl *ftl, पूर्णांक zone, पूर्णांक block, पूर्णांक boffset)
-अणु
+static loff_t sm_mkoffset(struct sm_ftl *ftl, int zone, int block, int boffset)
+{
 	WARN_ON(boffset & (SM_SECTOR_SIZE - 1));
 	WARN_ON(zone < 0 || zone >= ftl->zone_count);
 	WARN_ON(block >= ftl->zone_size);
 	WARN_ON(boffset >= ftl->block_size);
 
-	अगर (block == -1)
-		वापस -1;
+	if (block == -1)
+		return -1;
 
-	वापस (zone * SM_MAX_ZONE_SIZE + block) * ftl->block_size + boffset;
-पूर्ण
+	return (zone * SM_MAX_ZONE_SIZE + block) * ftl->block_size + boffset;
+}
 
-/* Breaks offset पूर्णांकo parts */
-अटल व्योम sm_अवरोध_offset(काष्ठा sm_ftl *ftl, loff_t loffset,
-			    पूर्णांक *zone, पूर्णांक *block, पूर्णांक *boffset)
-अणु
+/* Breaks offset into parts */
+static void sm_break_offset(struct sm_ftl *ftl, loff_t loffset,
+			    int *zone, int *block, int *boffset)
+{
 	u64 offset = loffset;
-	*boffset = करो_भाग(offset, ftl->block_size);
-	*block = करो_भाग(offset, ftl->max_lba);
+	*boffset = do_div(offset, ftl->block_size);
+	*block = do_div(offset, ftl->max_lba);
 	*zone = offset >= ftl->zone_count ? -1 : offset;
-पूर्ण
+}
 
 /* ---------------------- low level IO ------------------------------------- */
 
-अटल पूर्णांक sm_correct_sector(uपूर्णांक8_t *buffer, काष्ठा sm_oob *oob)
-अणु
-	bool sm_order = IS_ENABLED(CONFIG_MTD_न_अंकD_ECC_SW_HAMMING_SMC);
-	uपूर्णांक8_t ecc[3];
+static int sm_correct_sector(uint8_t *buffer, struct sm_oob *oob)
+{
+	bool sm_order = IS_ENABLED(CONFIG_MTD_NAND_ECC_SW_HAMMING_SMC);
+	uint8_t ecc[3];
 
 	ecc_sw_hamming_calculate(buffer, SM_SMALL_PAGE, ecc, sm_order);
-	अगर (ecc_sw_hamming_correct(buffer, ecc, oob->ecc1, SM_SMALL_PAGE,
+	if (ecc_sw_hamming_correct(buffer, ecc, oob->ecc1, SM_SMALL_PAGE,
 				   sm_order) < 0)
-		वापस -EIO;
+		return -EIO;
 
 	buffer += SM_SMALL_PAGE;
 
 	ecc_sw_hamming_calculate(buffer, SM_SMALL_PAGE, ecc, sm_order);
-	अगर (ecc_sw_hamming_correct(buffer, ecc, oob->ecc2, SM_SMALL_PAGE,
+	if (ecc_sw_hamming_correct(buffer, ecc, oob->ecc2, SM_SMALL_PAGE,
 				   sm_order) < 0)
-		वापस -EIO;
-	वापस 0;
-पूर्ण
+		return -EIO;
+	return 0;
+}
 
 /* Reads a sector + oob*/
-अटल पूर्णांक sm_पढ़ो_sector(काष्ठा sm_ftl *ftl,
-			  पूर्णांक zone, पूर्णांक block, पूर्णांक boffset,
-			  uपूर्णांक8_t *buffer, काष्ठा sm_oob *oob)
-अणु
-	काष्ठा mtd_info *mtd = ftl->trans->mtd;
-	काष्ठा mtd_oob_ops ops;
-	काष्ठा sm_oob पंचांगp_oob;
-	पूर्णांक ret = -EIO;
-	पूर्णांक try = 0;
+static int sm_read_sector(struct sm_ftl *ftl,
+			  int zone, int block, int boffset,
+			  uint8_t *buffer, struct sm_oob *oob)
+{
+	struct mtd_info *mtd = ftl->trans->mtd;
+	struct mtd_oob_ops ops;
+	struct sm_oob tmp_oob;
+	int ret = -EIO;
+	int try = 0;
 
-	/* FTL can contain -1 entries that are by शेष filled with bits */
-	अगर (block == -1) अणु
-		अगर (buffer)
-			स_रखो(buffer, 0xFF, SM_SECTOR_SIZE);
-		वापस 0;
-	पूर्ण
+	/* FTL can contain -1 entries that are by default filled with bits */
+	if (block == -1) {
+		if (buffer)
+			memset(buffer, 0xFF, SM_SECTOR_SIZE);
+		return 0;
+	}
 
-	/* User might not need the oob, but we करो क्रम data verअगरication */
-	अगर (!oob)
-		oob = &पंचांगp_oob;
+	/* User might not need the oob, but we do for data verification */
+	if (!oob)
+		oob = &tmp_oob;
 
 	ops.mode = ftl->smallpagenand ? MTD_OPS_RAW : MTD_OPS_PLACE_OOB;
 	ops.ooboffs = 0;
 	ops.ooblen = SM_OOB_SIZE;
-	ops.oobbuf = (व्योम *)oob;
+	ops.oobbuf = (void *)oob;
 	ops.len = SM_SECTOR_SIZE;
 	ops.datbuf = buffer;
 
 again:
-	अगर (try++) अणु
-		/* Aव्योम infinite recursion on CIS पढ़ोs, sm_recheck_media
+	if (try++) {
+		/* Avoid infinite recursion on CIS reads, sm_recheck_media
 			won't help anyway */
-		अगर (zone == 0 && block == ftl->cis_block && boffset ==
+		if (zone == 0 && block == ftl->cis_block && boffset ==
 			ftl->cis_boffset)
-			वापस ret;
+			return ret;
 
-		/* Test अगर media is stable */
-		अगर (try == 3 || sm_recheck_media(ftl))
-			वापस ret;
-	पूर्ण
+		/* Test if media is stable */
+		if (try == 3 || sm_recheck_media(ftl))
+			return ret;
+	}
 
-	/* Unक्रमtunately, oob पढ़ो will _always_ succeed,
+	/* Unfortunately, oob read will _always_ succeed,
 		despite card removal..... */
-	ret = mtd_पढ़ो_oob(mtd, sm_mkoffset(ftl, zone, block, boffset), &ops);
+	ret = mtd_read_oob(mtd, sm_mkoffset(ftl, zone, block, boffset), &ops);
 
-	/* Test क्रम unknown errors */
-	अगर (ret != 0 && !mtd_is_bitflip_or_eccerr(ret)) अणु
+	/* Test for unknown errors */
+	if (ret != 0 && !mtd_is_bitflip_or_eccerr(ret)) {
 		dbg("read of block %d at zone %d, failed due to error (%d)",
 			block, zone, ret);
-		जाओ again;
-	पूर्ण
+		goto again;
+	}
 
-	/* Do a basic test on the oob, to guard against वापसed garbage */
-	अगर (oob->reserved != 0xFFFFFFFF && !is_घातer_of_2(~oob->reserved))
-		जाओ again;
+	/* Do a basic test on the oob, to guard against returned garbage */
+	if (oob->reserved != 0xFFFFFFFF && !is_power_of_2(~oob->reserved))
+		goto again;
 
 	/* This should never happen, unless there is a bug in the mtd driver */
 	WARN_ON(ops.oobretlen != SM_OOB_SIZE);
 	WARN_ON(buffer && ops.retlen != SM_SECTOR_SIZE);
 
-	अगर (!buffer)
-		वापस 0;
+	if (!buffer)
+		return 0;
 
-	/* Test अगर sector marked as bad */
-	अगर (!sm_sector_valid(oob)) अणु
+	/* Test if sector marked as bad */
+	if (!sm_sector_valid(oob)) {
 		dbg("read of block %d at zone %d, failed because it is marked"
 			" as bad" , block, zone);
-		जाओ again;
-	पूर्ण
+		goto again;
+	}
 
 	/* Test ECC*/
-	अगर (mtd_is_eccerr(ret) ||
-		(ftl->smallpagenand && sm_correct_sector(buffer, oob))) अणु
+	if (mtd_is_eccerr(ret) ||
+		(ftl->smallpagenand && sm_correct_sector(buffer, oob))) {
 
 		dbg("read of block %d at zone %d, failed due to ECC error",
 			block, zone);
-		जाओ again;
-	पूर्ण
+		goto again;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Writes a sector to media */
-अटल पूर्णांक sm_ग_लिखो_sector(काष्ठा sm_ftl *ftl,
-			   पूर्णांक zone, पूर्णांक block, पूर्णांक boffset,
-			   uपूर्णांक8_t *buffer, काष्ठा sm_oob *oob)
-अणु
-	काष्ठा mtd_oob_ops ops;
-	काष्ठा mtd_info *mtd = ftl->trans->mtd;
-	पूर्णांक ret;
+static int sm_write_sector(struct sm_ftl *ftl,
+			   int zone, int block, int boffset,
+			   uint8_t *buffer, struct sm_oob *oob)
+{
+	struct mtd_oob_ops ops;
+	struct mtd_info *mtd = ftl->trans->mtd;
+	int ret;
 
-	BUG_ON(ftl->पढ़ोonly);
+	BUG_ON(ftl->readonly);
 
-	अगर (zone == 0 && (block == ftl->cis_block || block == 0)) अणु
+	if (zone == 0 && (block == ftl->cis_block || block == 0)) {
 		dbg("attempted to write the CIS!");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
-	अगर (ftl->unstable)
-		वापस -EIO;
+	if (ftl->unstable)
+		return -EIO;
 
 	ops.mode = ftl->smallpagenand ? MTD_OPS_RAW : MTD_OPS_PLACE_OOB;
 	ops.len = SM_SECTOR_SIZE;
 	ops.datbuf = buffer;
 	ops.ooboffs = 0;
 	ops.ooblen = SM_OOB_SIZE;
-	ops.oobbuf = (व्योम *)oob;
+	ops.oobbuf = (void *)oob;
 
-	ret = mtd_ग_लिखो_oob(mtd, sm_mkoffset(ftl, zone, block, boffset), &ops);
+	ret = mtd_write_oob(mtd, sm_mkoffset(ftl, zone, block, boffset), &ops);
 
-	/* Now we assume that hardware will catch ग_लिखो bitflip errors */
+	/* Now we assume that hardware will catch write bitflip errors */
 
-	अगर (ret) अणु
+	if (ret) {
 		dbg("write to block %d at zone %d, failed with error %d",
 			block, zone, ret);
 
 		sm_recheck_media(ftl);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	/* This should never happen, unless there is a bug in the driver */
 	WARN_ON(ops.oobretlen != SM_OOB_SIZE);
 	WARN_ON(buffer && ops.retlen != SM_SECTOR_SIZE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* ------------------------ block IO ------------------------------------- */
 
-/* Write a block using data and lba, and invalid sector biपंचांगap */
-अटल पूर्णांक sm_ग_लिखो_block(काष्ठा sm_ftl *ftl, uपूर्णांक8_t *buf,
-			  पूर्णांक zone, पूर्णांक block, पूर्णांक lba,
-			  अचिन्हित दीर्घ invalid_biपंचांगap)
-अणु
-	bool sm_order = IS_ENABLED(CONFIG_MTD_न_अंकD_ECC_SW_HAMMING_SMC);
-	काष्ठा sm_oob oob;
-	पूर्णांक boffset;
-	पूर्णांक retry = 0;
+/* Write a block using data and lba, and invalid sector bitmap */
+static int sm_write_block(struct sm_ftl *ftl, uint8_t *buf,
+			  int zone, int block, int lba,
+			  unsigned long invalid_bitmap)
+{
+	bool sm_order = IS_ENABLED(CONFIG_MTD_NAND_ECC_SW_HAMMING_SMC);
+	struct sm_oob oob;
+	int boffset;
+	int retry = 0;
 
 	/* Initialize the oob with requested values */
-	स_रखो(&oob, 0xFF, SM_OOB_SIZE);
-	sm_ग_लिखो_lba(&oob, lba);
+	memset(&oob, 0xFF, SM_OOB_SIZE);
+	sm_write_lba(&oob, lba);
 restart:
-	अगर (ftl->unstable)
-		वापस -EIO;
+	if (ftl->unstable)
+		return -EIO;
 
-	क्रम (boffset = 0; boffset < ftl->block_size;
-				boffset += SM_SECTOR_SIZE) अणु
+	for (boffset = 0; boffset < ftl->block_size;
+				boffset += SM_SECTOR_SIZE) {
 
 		oob.data_status = 0xFF;
 
-		अगर (test_bit(boffset / SM_SECTOR_SIZE, &invalid_biपंचांगap)) अणु
+		if (test_bit(boffset / SM_SECTOR_SIZE, &invalid_bitmap)) {
 
-			sm_prपूर्णांकk("sector %d of block at LBA %d of zone %d"
+			sm_printk("sector %d of block at LBA %d of zone %d"
 				" couldn't be read, marking it as invalid",
 				boffset / SM_SECTOR_SIZE, lba, zone);
 
 			oob.data_status = 0;
-		पूर्ण
+		}
 
-		अगर (ftl->smallpagenand) अणु
+		if (ftl->smallpagenand) {
 			ecc_sw_hamming_calculate(buf + boffset,
 						 SM_SMALL_PAGE, oob.ecc1,
 						 sm_order);
@@ -403,766 +402,766 @@ restart:
 			ecc_sw_hamming_calculate(buf + boffset + SM_SMALL_PAGE,
 						 SM_SMALL_PAGE, oob.ecc2,
 						 sm_order);
-		पूर्ण
-		अगर (!sm_ग_लिखो_sector(ftl, zone, block, boffset,
+		}
+		if (!sm_write_sector(ftl, zone, block, boffset,
 							buf + boffset, &oob))
-			जारी;
+			continue;
 
-		अगर (!retry) अणु
+		if (!retry) {
 
-			/* If ग_लिखो fails. try to erase the block */
-			/* This is safe, because we never ग_लिखो in blocks
+			/* If write fails. try to erase the block */
+			/* This is safe, because we never write in blocks
 				that contain valuable data.
-			This is पूर्णांकended to repair block that are marked
+			This is intended to repair block that are marked
 			as erased, but that isn't fully erased*/
 
-			अगर (sm_erase_block(ftl, zone, block, 0))
-				वापस -EIO;
+			if (sm_erase_block(ftl, zone, block, 0))
+				return -EIO;
 
 			retry = 1;
-			जाओ restart;
-		पूर्ण अन्यथा अणु
+			goto restart;
+		} else {
 			sm_mark_block_bad(ftl, zone, block);
-			वापस -EIO;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -EIO;
+		}
+	}
+	return 0;
+}
 
 
 /* Mark whole block at offset 'offs' as bad. */
-अटल व्योम sm_mark_block_bad(काष्ठा sm_ftl *ftl, पूर्णांक zone, पूर्णांक block)
-अणु
-	काष्ठा sm_oob oob;
-	पूर्णांक boffset;
+static void sm_mark_block_bad(struct sm_ftl *ftl, int zone, int block)
+{
+	struct sm_oob oob;
+	int boffset;
 
-	स_रखो(&oob, 0xFF, SM_OOB_SIZE);
+	memset(&oob, 0xFF, SM_OOB_SIZE);
 	oob.block_status = 0xF0;
 
-	अगर (ftl->unstable)
-		वापस;
+	if (ftl->unstable)
+		return;
 
-	अगर (sm_recheck_media(ftl))
-		वापस;
+	if (sm_recheck_media(ftl))
+		return;
 
-	sm_prपूर्णांकk("marking block %d of zone %d as bad", block, zone);
+	sm_printk("marking block %d of zone %d as bad", block, zone);
 
 	/* We aren't checking the return value, because we don't care */
 	/* This also fails on fake xD cards, but I guess these won't expose
 		any bad blocks till fail completely */
-	क्रम (boffset = 0; boffset < ftl->block_size; boffset += SM_SECTOR_SIZE)
-		sm_ग_लिखो_sector(ftl, zone, block, boffset, शून्य, &oob);
-पूर्ण
+	for (boffset = 0; boffset < ftl->block_size; boffset += SM_SECTOR_SIZE)
+		sm_write_sector(ftl, zone, block, boffset, NULL, &oob);
+}
 
 /*
  * Erase a block within a zone
- * If erase succeeds, it updates मुक्त block fअगरo, otherwise marks block as bad
+ * If erase succeeds, it updates free block fifo, otherwise marks block as bad
  */
-अटल पूर्णांक sm_erase_block(काष्ठा sm_ftl *ftl, पूर्णांक zone_num, uपूर्णांक16_t block,
-			  पूर्णांक put_मुक्त)
-अणु
-	काष्ठा ftl_zone *zone = &ftl->zones[zone_num];
-	काष्ठा mtd_info *mtd = ftl->trans->mtd;
-	काष्ठा erase_info erase;
+static int sm_erase_block(struct sm_ftl *ftl, int zone_num, uint16_t block,
+			  int put_free)
+{
+	struct ftl_zone *zone = &ftl->zones[zone_num];
+	struct mtd_info *mtd = ftl->trans->mtd;
+	struct erase_info erase;
 
 	erase.addr = sm_mkoffset(ftl, zone_num, block, 0);
 	erase.len = ftl->block_size;
 
-	अगर (ftl->unstable)
-		वापस -EIO;
+	if (ftl->unstable)
+		return -EIO;
 
-	BUG_ON(ftl->पढ़ोonly);
+	BUG_ON(ftl->readonly);
 
-	अगर (zone_num == 0 && (block == ftl->cis_block || block == 0)) अणु
-		sm_prपूर्णांकk("attempted to erase the CIS!");
-		वापस -EIO;
-	पूर्ण
+	if (zone_num == 0 && (block == ftl->cis_block || block == 0)) {
+		sm_printk("attempted to erase the CIS!");
+		return -EIO;
+	}
 
-	अगर (mtd_erase(mtd, &erase)) अणु
-		sm_prपूर्णांकk("erase of block %d in zone %d failed",
+	if (mtd_erase(mtd, &erase)) {
+		sm_printk("erase of block %d in zone %d failed",
 							block, zone_num);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
-	अगर (put_मुक्त)
-		kfअगरo_in(&zone->मुक्त_sectors,
-			(स्थिर अचिन्हित अक्षर *)&block, माप(block));
+	if (put_free)
+		kfifo_in(&zone->free_sectors,
+			(const unsigned char *)&block, sizeof(block));
 
-	वापस 0;
+	return 0;
 error:
 	sm_mark_block_bad(ftl, zone_num, block);
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
 /* Thoroughly test that block is valid. */
-अटल पूर्णांक sm_check_block(काष्ठा sm_ftl *ftl, पूर्णांक zone, पूर्णांक block)
-अणु
-	पूर्णांक boffset;
-	काष्ठा sm_oob oob;
-	पूर्णांक lbas[] = अणु -3, 0, 0, 0 पूर्ण;
-	पूर्णांक i = 0;
-	पूर्णांक test_lba;
+static int sm_check_block(struct sm_ftl *ftl, int zone, int block)
+{
+	int boffset;
+	struct sm_oob oob;
+	int lbas[] = { -3, 0, 0, 0 };
+	int i = 0;
+	int test_lba;
 
 
-	/* First just check that block करोesn't look fishy */
+	/* First just check that block doesn't look fishy */
 	/* Only blocks that are valid or are sliced in two parts, are
 		accepted */
-	क्रम (boffset = 0; boffset < ftl->block_size;
-					boffset += SM_SECTOR_SIZE) अणु
+	for (boffset = 0; boffset < ftl->block_size;
+					boffset += SM_SECTOR_SIZE) {
 
 		/* This shouldn't happen anyway */
-		अगर (sm_पढ़ो_sector(ftl, zone, block, boffset, शून्य, &oob))
-			वापस -2;
+		if (sm_read_sector(ftl, zone, block, boffset, NULL, &oob))
+			return -2;
 
-		test_lba = sm_पढ़ो_lba(&oob);
+		test_lba = sm_read_lba(&oob);
 
-		अगर (lbas[i] != test_lba)
+		if (lbas[i] != test_lba)
 			lbas[++i] = test_lba;
 
-		/* If we found three dअगरferent LBAs, something is fishy */
-		अगर (i == 3)
-			वापस -EIO;
-	पूर्ण
+		/* If we found three different LBAs, something is fishy */
+		if (i == 3)
+			return -EIO;
+	}
 
 	/* If the block is sliced (partially erased usually) erase it */
-	अगर (i == 2) अणु
+	if (i == 2) {
 		sm_erase_block(ftl, zone, block, 1);
-		वापस 1;
-	पूर्ण
+		return 1;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* ----------------- media scanning --------------------------------- */
-अटल स्थिर काष्ठा chs_entry chs_table[] = अणु
-	अणु 1,    125,  4,  4  पूर्ण,
-	अणु 2,    125,  4,  8  पूर्ण,
-	अणु 4,    250,  4,  8  पूर्ण,
-	अणु 8,    250,  4,  16 पूर्ण,
-	अणु 16,   500,  4,  16 पूर्ण,
-	अणु 32,   500,  8,  16 पूर्ण,
-	अणु 64,   500,  8,  32 पूर्ण,
-	अणु 128,  500,  16, 32 पूर्ण,
-	अणु 256,  1000, 16, 32 पूर्ण,
-	अणु 512,  1015, 32, 63 पूर्ण,
-	अणु 1024, 985,  33, 63 पूर्ण,
-	अणु 2048, 985,  33, 63 पूर्ण,
-	अणु 0 पूर्ण,
-पूर्ण;
+static const struct chs_entry chs_table[] = {
+	{ 1,    125,  4,  4  },
+	{ 2,    125,  4,  8  },
+	{ 4,    250,  4,  8  },
+	{ 8,    250,  4,  16 },
+	{ 16,   500,  4,  16 },
+	{ 32,   500,  8,  16 },
+	{ 64,   500,  8,  32 },
+	{ 128,  500,  16, 32 },
+	{ 256,  1000, 16, 32 },
+	{ 512,  1015, 32, 63 },
+	{ 1024, 985,  33, 63 },
+	{ 2048, 985,  33, 63 },
+	{ 0 },
+};
 
 
-अटल स्थिर uपूर्णांक8_t cis_signature[] = अणु
+static const uint8_t cis_signature[] = {
 	0x01, 0x03, 0xD9, 0x01, 0xFF, 0x18, 0x02, 0xDF, 0x01, 0x20
-पूर्ण;
+};
 /* Find out media parameters.
- * This ideally has to be based on nand id, but क्रम now device size is enough */
-अटल पूर्णांक sm_get_media_info(काष्ठा sm_ftl *ftl, काष्ठा mtd_info *mtd)
-अणु
-	पूर्णांक i;
-	पूर्णांक size_in_megs = mtd->size / (1024 * 1024);
+ * This ideally has to be based on nand id, but for now device size is enough */
+static int sm_get_media_info(struct sm_ftl *ftl, struct mtd_info *mtd)
+{
+	int i;
+	int size_in_megs = mtd->size / (1024 * 1024);
 
-	ftl->पढ़ोonly = mtd->type == MTD_ROM;
+	ftl->readonly = mtd->type == MTD_ROM;
 
-	/* Manual settings क्रम very old devices */
+	/* Manual settings for very old devices */
 	ftl->zone_count = 1;
 	ftl->smallpagenand = 0;
 
-	चयन (size_in_megs) अणु
-	हाल 1:
+	switch (size_in_megs) {
+	case 1:
 		/* 1 MiB flash/rom SmartMedia card (256 byte pages)*/
 		ftl->zone_size = 256;
 		ftl->max_lba = 250;
 		ftl->block_size = 8 * SM_SECTOR_SIZE;
 		ftl->smallpagenand = 1;
 
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		/* 2 MiB flash SmartMedia (256 byte pages)*/
-		अगर (mtd->ग_लिखोsize == SM_SMALL_PAGE) अणु
+		if (mtd->writesize == SM_SMALL_PAGE) {
 			ftl->zone_size = 512;
 			ftl->max_lba = 500;
 			ftl->block_size = 8 * SM_SECTOR_SIZE;
 			ftl->smallpagenand = 1;
 		/* 2 MiB rom SmartMedia */
-		पूर्ण अन्यथा अणु
+		} else {
 
-			अगर (!ftl->पढ़ोonly)
-				वापस -ENODEV;
+			if (!ftl->readonly)
+				return -ENODEV;
 
 			ftl->zone_size = 256;
 			ftl->max_lba = 250;
 			ftl->block_size = 16 * SM_SECTOR_SIZE;
-		पूर्ण
-		अवरोध;
-	हाल 4:
+		}
+		break;
+	case 4:
 		/* 4 MiB flash/rom SmartMedia device */
 		ftl->zone_size = 512;
 		ftl->max_lba = 500;
 		ftl->block_size = 16 * SM_SECTOR_SIZE;
-		अवरोध;
-	हाल 8:
+		break;
+	case 8:
 		/* 8 MiB flash/rom SmartMedia device */
 		ftl->zone_size = 1024;
 		ftl->max_lba = 1000;
 		ftl->block_size = 16 * SM_SECTOR_SIZE;
-	पूर्ण
+	}
 
 	/* Minimum xD size is 16MiB. Also, all xD cards have standard zone
 	   sizes. SmartMedia cards exist up to 128 MiB and have same layout*/
-	अगर (size_in_megs >= 16) अणु
+	if (size_in_megs >= 16) {
 		ftl->zone_count = size_in_megs / 16;
 		ftl->zone_size = 1024;
 		ftl->max_lba = 1000;
 		ftl->block_size = 32 * SM_SECTOR_SIZE;
-	पूर्ण
+	}
 
-	/* Test क्रम proper ग_लिखो,erase and oob sizes */
-	अगर (mtd->erasesize > ftl->block_size)
-		वापस -ENODEV;
+	/* Test for proper write,erase and oob sizes */
+	if (mtd->erasesize > ftl->block_size)
+		return -ENODEV;
 
-	अगर (mtd->ग_लिखोsize > SM_SECTOR_SIZE)
-		वापस -ENODEV;
+	if (mtd->writesize > SM_SECTOR_SIZE)
+		return -ENODEV;
 
-	अगर (ftl->smallpagenand && mtd->oobsize < SM_SMALL_OOB_SIZE)
-		वापस -ENODEV;
+	if (ftl->smallpagenand && mtd->oobsize < SM_SMALL_OOB_SIZE)
+		return -ENODEV;
 
-	अगर (!ftl->smallpagenand && mtd->oobsize < SM_OOB_SIZE)
-		वापस -ENODEV;
+	if (!ftl->smallpagenand && mtd->oobsize < SM_OOB_SIZE)
+		return -ENODEV;
 
 	/* We use OOB */
-	अगर (!mtd_has_oob(mtd))
-		वापस -ENODEV;
+	if (!mtd_has_oob(mtd))
+		return -ENODEV;
 
-	/* Find geometry inक्रमmation */
-	क्रम (i = 0 ; i < ARRAY_SIZE(chs_table) ; i++) अणु
-		अगर (chs_table[i].size == size_in_megs) अणु
+	/* Find geometry information */
+	for (i = 0 ; i < ARRAY_SIZE(chs_table) ; i++) {
+		if (chs_table[i].size == size_in_megs) {
 			ftl->cylinders = chs_table[i].cyl;
 			ftl->heads = chs_table[i].head;
 			ftl->sectors = chs_table[i].sec;
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	sm_prपूर्णांकk("media has unknown size : %dMiB", size_in_megs);
+	sm_printk("media has unknown size : %dMiB", size_in_megs);
 	ftl->cylinders = 985;
 	ftl->heads =  33;
 	ftl->sectors = 63;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* Validate the CIS */
-अटल पूर्णांक sm_पढ़ो_cis(काष्ठा sm_ftl *ftl)
-अणु
-	काष्ठा sm_oob oob;
+static int sm_read_cis(struct sm_ftl *ftl)
+{
+	struct sm_oob oob;
 
-	अगर (sm_पढ़ो_sector(ftl,
+	if (sm_read_sector(ftl,
 		0, ftl->cis_block, ftl->cis_boffset, ftl->cis_buffer, &oob))
-			वापस -EIO;
+			return -EIO;
 
-	अगर (!sm_sector_valid(&oob) || !sm_block_valid(&oob))
-		वापस -EIO;
+	if (!sm_sector_valid(&oob) || !sm_block_valid(&oob))
+		return -EIO;
 
-	अगर (!स_भेद(ftl->cis_buffer + ftl->cis_page_offset,
-			cis_signature, माप(cis_signature))) अणु
-		वापस 0;
-	पूर्ण
+	if (!memcmp(ftl->cis_buffer + ftl->cis_page_offset,
+			cis_signature, sizeof(cis_signature))) {
+		return 0;
+	}
 
-	वापस -EIO;
-पूर्ण
+	return -EIO;
+}
 
-/* Scan the media क्रम the CIS */
-अटल पूर्णांक sm_find_cis(काष्ठा sm_ftl *ftl)
-अणु
-	काष्ठा sm_oob oob;
-	पूर्णांक block, boffset;
-	पूर्णांक block_found = 0;
-	पूर्णांक cis_found = 0;
+/* Scan the media for the CIS */
+static int sm_find_cis(struct sm_ftl *ftl)
+{
+	struct sm_oob oob;
+	int block, boffset;
+	int block_found = 0;
+	int cis_found = 0;
 
-	/* Search क्रम first valid block */
-	क्रम (block = 0 ; block < ftl->zone_size - ftl->max_lba ; block++) अणु
+	/* Search for first valid block */
+	for (block = 0 ; block < ftl->zone_size - ftl->max_lba ; block++) {
 
-		अगर (sm_पढ़ो_sector(ftl, 0, block, 0, शून्य, &oob))
-			जारी;
+		if (sm_read_sector(ftl, 0, block, 0, NULL, &oob))
+			continue;
 
-		अगर (!sm_block_valid(&oob))
-			जारी;
+		if (!sm_block_valid(&oob))
+			continue;
 		block_found = 1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (!block_found)
-		वापस -EIO;
+	if (!block_found)
+		return -EIO;
 
-	/* Search क्रम first valid sector in this block */
-	क्रम (boffset = 0 ; boffset < ftl->block_size;
-						boffset += SM_SECTOR_SIZE) अणु
+	/* Search for first valid sector in this block */
+	for (boffset = 0 ; boffset < ftl->block_size;
+						boffset += SM_SECTOR_SIZE) {
 
-		अगर (sm_पढ़ो_sector(ftl, 0, block, boffset, शून्य, &oob))
-			जारी;
+		if (sm_read_sector(ftl, 0, block, boffset, NULL, &oob))
+			continue;
 
-		अगर (!sm_sector_valid(&oob))
-			जारी;
-		अवरोध;
-	पूर्ण
+		if (!sm_sector_valid(&oob))
+			continue;
+		break;
+	}
 
-	अगर (boffset == ftl->block_size)
-		वापस -EIO;
+	if (boffset == ftl->block_size)
+		return -EIO;
 
 	ftl->cis_block = block;
 	ftl->cis_boffset = boffset;
 	ftl->cis_page_offset = 0;
 
-	cis_found = !sm_पढ़ो_cis(ftl);
+	cis_found = !sm_read_cis(ftl);
 
-	अगर (!cis_found) अणु
+	if (!cis_found) {
 		ftl->cis_page_offset = SM_SMALL_PAGE;
-		cis_found = !sm_पढ़ो_cis(ftl);
-	पूर्ण
+		cis_found = !sm_read_cis(ftl);
+	}
 
-	अगर (cis_found) अणु
+	if (cis_found) {
 		dbg("CIS block found at offset %x",
 			block * ftl->block_size +
 				boffset + ftl->cis_page_offset);
-		वापस 0;
-	पूर्ण
-	वापस -EIO;
-पूर्ण
+		return 0;
+	}
+	return -EIO;
+}
 
-/* Basic test to determine अगर underlying mtd device अगर functional */
-अटल पूर्णांक sm_recheck_media(काष्ठा sm_ftl *ftl)
-अणु
-	अगर (sm_पढ़ो_cis(ftl)) अणु
+/* Basic test to determine if underlying mtd device if functional */
+static int sm_recheck_media(struct sm_ftl *ftl)
+{
+	if (sm_read_cis(ftl)) {
 
-		अगर (!ftl->unstable) अणु
-			sm_prपूर्णांकk("media unstable, not allowing writes");
+		if (!ftl->unstable) {
+			sm_printk("media unstable, not allowing writes");
 			ftl->unstable = 1;
-		पूर्ण
-		वापस -EIO;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		}
+		return -EIO;
+	}
+	return 0;
+}
 
 /* Initialize a FTL zone */
-अटल पूर्णांक sm_init_zone(काष्ठा sm_ftl *ftl, पूर्णांक zone_num)
-अणु
-	काष्ठा ftl_zone *zone = &ftl->zones[zone_num];
-	काष्ठा sm_oob oob;
-	uपूर्णांक16_t block;
-	पूर्णांक lba;
-	पूर्णांक i = 0;
-	पूर्णांक len;
+static int sm_init_zone(struct sm_ftl *ftl, int zone_num)
+{
+	struct ftl_zone *zone = &ftl->zones[zone_num];
+	struct sm_oob oob;
+	uint16_t block;
+	int lba;
+	int i = 0;
+	int len;
 
 	dbg("initializing zone %d", zone_num);
 
-	/* Allocate memory क्रम FTL table */
-	zone->lba_to_phys_table = kदो_स्मृति_array(ftl->max_lba, 2, GFP_KERNEL);
+	/* Allocate memory for FTL table */
+	zone->lba_to_phys_table = kmalloc_array(ftl->max_lba, 2, GFP_KERNEL);
 
-	अगर (!zone->lba_to_phys_table)
-		वापस -ENOMEM;
-	स_रखो(zone->lba_to_phys_table, -1, ftl->max_lba * 2);
+	if (!zone->lba_to_phys_table)
+		return -ENOMEM;
+	memset(zone->lba_to_phys_table, -1, ftl->max_lba * 2);
 
 
-	/* Allocate memory क्रम मुक्त sectors FIFO */
-	अगर (kfअगरo_alloc(&zone->मुक्त_sectors, ftl->zone_size * 2, GFP_KERNEL)) अणु
-		kमुक्त(zone->lba_to_phys_table);
-		वापस -ENOMEM;
-	पूर्ण
+	/* Allocate memory for free sectors FIFO */
+	if (kfifo_alloc(&zone->free_sectors, ftl->zone_size * 2, GFP_KERNEL)) {
+		kfree(zone->lba_to_phys_table);
+		return -ENOMEM;
+	}
 
 	/* Now scan the zone */
-	क्रम (block = 0 ; block < ftl->zone_size ; block++) अणु
+	for (block = 0 ; block < ftl->zone_size ; block++) {
 
 		/* Skip blocks till the CIS (including) */
-		अगर (zone_num == 0 && block <= ftl->cis_block)
-			जारी;
+		if (zone_num == 0 && block <= ftl->cis_block)
+			continue;
 
 		/* Read the oob of first sector */
-		अगर (sm_पढ़ो_sector(ftl, zone_num, block, 0, शून्य, &oob)) अणु
-			kfअगरo_मुक्त(&zone->मुक्त_sectors);
-			kमुक्त(zone->lba_to_phys_table);
-			वापस -EIO;
-		पूर्ण
+		if (sm_read_sector(ftl, zone_num, block, 0, NULL, &oob)) {
+			kfifo_free(&zone->free_sectors);
+			kfree(zone->lba_to_phys_table);
+			return -EIO;
+		}
 
-		/* Test to see अगर block is erased. It is enough to test
+		/* Test to see if block is erased. It is enough to test
 			first sector, because erase happens in one shot */
-		अगर (sm_block_erased(&oob)) अणु
-			kfअगरo_in(&zone->मुक्त_sectors,
-				(अचिन्हित अक्षर *)&block, 2);
-			जारी;
-		पूर्ण
+		if (sm_block_erased(&oob)) {
+			kfifo_in(&zone->free_sectors,
+				(unsigned char *)&block, 2);
+			continue;
+		}
 
 		/* If block is marked as bad, skip it */
 		/* This assumes we can trust first sector*/
 		/* However the way the block valid status is defined, ensures
 			very low probability of failure here */
-		अगर (!sm_block_valid(&oob)) अणु
+		if (!sm_block_valid(&oob)) {
 			dbg("PH %04d <-> <marked bad>", block);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 
-		lba = sm_पढ़ो_lba(&oob);
+		lba = sm_read_lba(&oob);
 
 		/* Invalid LBA means that block is damaged. */
 		/* We can try to erase it, or mark it as bad, but
 			lets leave that to recovery application */
-		अगर (lba == -2 || lba >= ftl->max_lba) अणु
+		if (lba == -2 || lba >= ftl->max_lba) {
 			dbg("PH %04d <-> LBA %04d(bad)", block, lba);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 
 		/* If there is no collision,
 			just put the sector in the FTL table */
-		अगर (zone->lba_to_phys_table[lba] < 0) अणु
+		if (zone->lba_to_phys_table[lba] < 0) {
 			dbg_verbose("PH %04d <-> LBA %04d", block, lba);
 			zone->lba_to_phys_table[lba] = block;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		sm_prपूर्णांकk("collision"
+		sm_printk("collision"
 			" of LBA %d between blocks %d and %d in zone %d",
 			lba, zone->lba_to_phys_table[lba], block, zone_num);
 
 		/* Test that this block is valid*/
-		अगर (sm_check_block(ftl, zone_num, block))
-			जारी;
+		if (sm_check_block(ftl, zone_num, block))
+			continue;
 
 		/* Test now the old block */
-		अगर (sm_check_block(ftl, zone_num,
-					zone->lba_to_phys_table[lba])) अणु
+		if (sm_check_block(ftl, zone_num,
+					zone->lba_to_phys_table[lba])) {
 			zone->lba_to_phys_table[lba] = block;
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* If both blocks are valid and share same LBA, it means that
-			they hold dअगरferent versions of same data. It not
+			they hold different versions of same data. It not
 			known which is more recent, thus just erase one of them
 		*/
-		sm_prपूर्णांकk("both blocks are valid, erasing the later");
+		sm_printk("both blocks are valid, erasing the later");
 		sm_erase_block(ftl, zone_num, block, 1);
-	पूर्ण
+	}
 
 	dbg("zone initialized");
 	zone->initialized = 1;
 
-	/* No मुक्त sectors, means that the zone is heavily damaged, ग_लिखो won't
-		work, but it can still can be (partially) पढ़ो */
-	अगर (!kfअगरo_len(&zone->मुक्त_sectors)) अणु
-		sm_prपूर्णांकk("no free blocks in zone %d", zone_num);
-		वापस 0;
-	पूर्ण
+	/* No free sectors, means that the zone is heavily damaged, write won't
+		work, but it can still can be (partially) read */
+	if (!kfifo_len(&zone->free_sectors)) {
+		sm_printk("no free blocks in zone %d", zone_num);
+		return 0;
+	}
 
-	/* Ranकरोmize first block we ग_लिखो to */
-	get_अक्रमom_bytes(&i, 2);
-	i %= (kfअगरo_len(&zone->मुक्त_sectors) / 2);
+	/* Randomize first block we write to */
+	get_random_bytes(&i, 2);
+	i %= (kfifo_len(&zone->free_sectors) / 2);
 
-	जबतक (i--) अणु
-		len = kfअगरo_out(&zone->मुक्त_sectors,
-					(अचिन्हित अक्षर *)&block, 2);
+	while (i--) {
+		len = kfifo_out(&zone->free_sectors,
+					(unsigned char *)&block, 2);
 		WARN_ON(len != 2);
-		kfअगरo_in(&zone->मुक्त_sectors, (स्थिर अचिन्हित अक्षर *)&block, 2);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		kfifo_in(&zone->free_sectors, (const unsigned char *)&block, 2);
+	}
+	return 0;
+}
 
-/* Get and स्वतःmatically initialize an FTL mapping क्रम one zone */
-अटल काष्ठा ftl_zone *sm_get_zone(काष्ठा sm_ftl *ftl, पूर्णांक zone_num)
-अणु
-	काष्ठा ftl_zone *zone;
-	पूर्णांक error;
+/* Get and automatically initialize an FTL mapping for one zone */
+static struct ftl_zone *sm_get_zone(struct sm_ftl *ftl, int zone_num)
+{
+	struct ftl_zone *zone;
+	int error;
 
 	BUG_ON(zone_num >= ftl->zone_count);
 	zone = &ftl->zones[zone_num];
 
-	अगर (!zone->initialized) अणु
+	if (!zone->initialized) {
 		error = sm_init_zone(ftl, zone_num);
 
-		अगर (error)
-			वापस ERR_PTR(error);
-	पूर्ण
-	वापस zone;
-पूर्ण
+		if (error)
+			return ERR_PTR(error);
+	}
+	return zone;
+}
 
 
 /* ----------------- cache handling ------------------------------------------*/
 
 /* Initialize the one block cache */
-अटल व्योम sm_cache_init(काष्ठा sm_ftl *ftl)
-अणु
-	ftl->cache_data_invalid_biपंचांगap = 0xFFFFFFFF;
+static void sm_cache_init(struct sm_ftl *ftl)
+{
+	ftl->cache_data_invalid_bitmap = 0xFFFFFFFF;
 	ftl->cache_clean = 1;
 	ftl->cache_zone = -1;
 	ftl->cache_block = -1;
-	/*स_रखो(ftl->cache_data, 0xAA, ftl->block_size);*/
-पूर्ण
+	/*memset(ftl->cache_data, 0xAA, ftl->block_size);*/
+}
 
 /* Put sector in one block cache */
-अटल व्योम sm_cache_put(काष्ठा sm_ftl *ftl, अक्षर *buffer, पूर्णांक boffset)
-अणु
-	स_नकल(ftl->cache_data + boffset, buffer, SM_SECTOR_SIZE);
-	clear_bit(boffset / SM_SECTOR_SIZE, &ftl->cache_data_invalid_biपंचांगap);
+static void sm_cache_put(struct sm_ftl *ftl, char *buffer, int boffset)
+{
+	memcpy(ftl->cache_data + boffset, buffer, SM_SECTOR_SIZE);
+	clear_bit(boffset / SM_SECTOR_SIZE, &ftl->cache_data_invalid_bitmap);
 	ftl->cache_clean = 0;
-पूर्ण
+}
 
 /* Read a sector from the cache */
-अटल पूर्णांक sm_cache_get(काष्ठा sm_ftl *ftl, अक्षर *buffer, पूर्णांक boffset)
-अणु
-	अगर (test_bit(boffset / SM_SECTOR_SIZE,
-		&ftl->cache_data_invalid_biपंचांगap))
-			वापस -1;
+static int sm_cache_get(struct sm_ftl *ftl, char *buffer, int boffset)
+{
+	if (test_bit(boffset / SM_SECTOR_SIZE,
+		&ftl->cache_data_invalid_bitmap))
+			return -1;
 
-	स_नकल(buffer, ftl->cache_data + boffset, SM_SECTOR_SIZE);
-	वापस 0;
-पूर्ण
+	memcpy(buffer, ftl->cache_data + boffset, SM_SECTOR_SIZE);
+	return 0;
+}
 
 /* Write the cache to hardware */
-अटल पूर्णांक sm_cache_flush(काष्ठा sm_ftl *ftl)
-अणु
-	काष्ठा ftl_zone *zone;
+static int sm_cache_flush(struct sm_ftl *ftl)
+{
+	struct ftl_zone *zone;
 
-	पूर्णांक sector_num;
-	uपूर्णांक16_t ग_लिखो_sector;
-	पूर्णांक zone_num = ftl->cache_zone;
-	पूर्णांक block_num;
+	int sector_num;
+	uint16_t write_sector;
+	int zone_num = ftl->cache_zone;
+	int block_num;
 
-	अगर (ftl->cache_clean)
-		वापस 0;
+	if (ftl->cache_clean)
+		return 0;
 
-	अगर (ftl->unstable)
-		वापस -EIO;
+	if (ftl->unstable)
+		return -EIO;
 
 	BUG_ON(zone_num < 0);
 	zone = &ftl->zones[zone_num];
 	block_num = zone->lba_to_phys_table[ftl->cache_block];
 
 
-	/* Try to पढ़ो all unपढ़ो areas of the cache block*/
-	क्रम_each_set_bit(sector_num, &ftl->cache_data_invalid_biपंचांगap,
-		ftl->block_size / SM_SECTOR_SIZE) अणु
+	/* Try to read all unread areas of the cache block*/
+	for_each_set_bit(sector_num, &ftl->cache_data_invalid_bitmap,
+		ftl->block_size / SM_SECTOR_SIZE) {
 
-		अगर (!sm_पढ़ो_sector(ftl,
+		if (!sm_read_sector(ftl,
 			zone_num, block_num, sector_num * SM_SECTOR_SIZE,
-			ftl->cache_data + sector_num * SM_SECTOR_SIZE, शून्य))
+			ftl->cache_data + sector_num * SM_SECTOR_SIZE, NULL))
 				clear_bit(sector_num,
-					&ftl->cache_data_invalid_biपंचांगap);
-	पूर्ण
+					&ftl->cache_data_invalid_bitmap);
+	}
 restart:
 
-	अगर (ftl->unstable)
-		वापस -EIO;
+	if (ftl->unstable)
+		return -EIO;
 
 	/* If there are no spare blocks, */
-	/* we could still जारी by erasing/writing the current block,
-		but क्रम such worn out media it करोesn't worth the trouble,
+	/* we could still continue by erasing/writing the current block,
+		but for such worn out media it doesn't worth the trouble,
 			and the dangers */
-	अगर (kfअगरo_out(&zone->मुक्त_sectors,
-				(अचिन्हित अक्षर *)&ग_लिखो_sector, 2) != 2) अणु
+	if (kfifo_out(&zone->free_sectors,
+				(unsigned char *)&write_sector, 2) != 2) {
 		dbg("no free sectors for write!");
-		वापस -EIO;
-	पूर्ण
+		return -EIO;
+	}
 
 
-	अगर (sm_ग_लिखो_block(ftl, ftl->cache_data, zone_num, ग_लिखो_sector,
-		ftl->cache_block, ftl->cache_data_invalid_biपंचांगap))
-			जाओ restart;
+	if (sm_write_block(ftl, ftl->cache_data, zone_num, write_sector,
+		ftl->cache_block, ftl->cache_data_invalid_bitmap))
+			goto restart;
 
 	/* Update the FTL table */
-	zone->lba_to_phys_table[ftl->cache_block] = ग_लिखो_sector;
+	zone->lba_to_phys_table[ftl->cache_block] = write_sector;
 
-	/* Write succesfull, so erase and मुक्त the old block */
-	अगर (block_num > 0)
+	/* Write succesfull, so erase and free the old block */
+	if (block_num > 0)
 		sm_erase_block(ftl, zone_num, block_num, 1);
 
 	sm_cache_init(ftl);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-/* flush समयr, runs a second after last ग_लिखो */
-अटल व्योम sm_cache_flush_समयr(काष्ठा समयr_list *t)
-अणु
-	काष्ठा sm_ftl *ftl = from_समयr(ftl, t, समयr);
+/* flush timer, runs a second after last write */
+static void sm_cache_flush_timer(struct timer_list *t)
+{
+	struct sm_ftl *ftl = from_timer(ftl, t, timer);
 	queue_work(cache_flush_workqueue, &ftl->flush_work);
-पूर्ण
+}
 
-/* cache flush work, kicked by समयr */
-अटल व्योम sm_cache_flush_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा sm_ftl *ftl = container_of(work, काष्ठा sm_ftl, flush_work);
+/* cache flush work, kicked by timer */
+static void sm_cache_flush_work(struct work_struct *work)
+{
+	struct sm_ftl *ftl = container_of(work, struct sm_ftl, flush_work);
 	mutex_lock(&ftl->mutex);
 	sm_cache_flush(ftl);
 	mutex_unlock(&ftl->mutex);
-	वापस;
-पूर्ण
+	return;
+}
 
-/* ---------------- outside पूर्णांकerface -------------------------------------- */
+/* ---------------- outside interface -------------------------------------- */
 
-/* outside पूर्णांकerface: पढ़ो a sector */
-अटल पूर्णांक sm_पढ़ो(काष्ठा mtd_blktrans_dev *dev,
-		   अचिन्हित दीर्घ sect_no, अक्षर *buf)
-अणु
-	काष्ठा sm_ftl *ftl = dev->priv;
-	काष्ठा ftl_zone *zone;
-	पूर्णांक error = 0, in_cache = 0;
-	पूर्णांक zone_num, block, boffset;
+/* outside interface: read a sector */
+static int sm_read(struct mtd_blktrans_dev *dev,
+		   unsigned long sect_no, char *buf)
+{
+	struct sm_ftl *ftl = dev->priv;
+	struct ftl_zone *zone;
+	int error = 0, in_cache = 0;
+	int zone_num, block, boffset;
 
-	sm_अवरोध_offset(ftl, sect_no << 9, &zone_num, &block, &boffset);
+	sm_break_offset(ftl, sect_no << 9, &zone_num, &block, &boffset);
 	mutex_lock(&ftl->mutex);
 
 
 	zone = sm_get_zone(ftl, zone_num);
-	अगर (IS_ERR(zone)) अणु
+	if (IS_ERR(zone)) {
 		error = PTR_ERR(zone);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	/* Have to look at cache first */
-	अगर (ftl->cache_zone == zone_num && ftl->cache_block == block) अणु
+	if (ftl->cache_zone == zone_num && ftl->cache_block == block) {
 		in_cache = 1;
-		अगर (!sm_cache_get(ftl, buf, boffset))
-			जाओ unlock;
-	पूर्ण
+		if (!sm_cache_get(ftl, buf, boffset))
+			goto unlock;
+	}
 
-	/* Translate the block and वापस अगर करोesn't exist in the table */
+	/* Translate the block and return if doesn't exist in the table */
 	block = zone->lba_to_phys_table[block];
 
-	अगर (block == -1) अणु
-		स_रखो(buf, 0xFF, SM_SECTOR_SIZE);
-		जाओ unlock;
-	पूर्ण
+	if (block == -1) {
+		memset(buf, 0xFF, SM_SECTOR_SIZE);
+		goto unlock;
+	}
 
-	अगर (sm_पढ़ो_sector(ftl, zone_num, block, boffset, buf, शून्य)) अणु
+	if (sm_read_sector(ftl, zone_num, block, boffset, buf, NULL)) {
 		error = -EIO;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (in_cache)
+	if (in_cache)
 		sm_cache_put(ftl, buf, boffset);
 unlock:
 	mutex_unlock(&ftl->mutex);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-/* outside पूर्णांकerface: ग_लिखो a sector */
-अटल पूर्णांक sm_ग_लिखो(काष्ठा mtd_blktrans_dev *dev,
-				अचिन्हित दीर्घ sec_no, अक्षर *buf)
-अणु
-	काष्ठा sm_ftl *ftl = dev->priv;
-	काष्ठा ftl_zone *zone;
-	पूर्णांक error = 0, zone_num, block, boffset;
+/* outside interface: write a sector */
+static int sm_write(struct mtd_blktrans_dev *dev,
+				unsigned long sec_no, char *buf)
+{
+	struct sm_ftl *ftl = dev->priv;
+	struct ftl_zone *zone;
+	int error = 0, zone_num, block, boffset;
 
-	BUG_ON(ftl->पढ़ोonly);
-	sm_अवरोध_offset(ftl, sec_no << 9, &zone_num, &block, &boffset);
+	BUG_ON(ftl->readonly);
+	sm_break_offset(ftl, sec_no << 9, &zone_num, &block, &boffset);
 
-	/* No need in flush thपढ़ो running now */
-	del_समयr(&ftl->समयr);
+	/* No need in flush thread running now */
+	del_timer(&ftl->timer);
 	mutex_lock(&ftl->mutex);
 
 	zone = sm_get_zone(ftl, zone_num);
-	अगर (IS_ERR(zone)) अणु
+	if (IS_ERR(zone)) {
 		error = PTR_ERR(zone);
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	/* If entry is not in cache, flush it */
-	अगर (ftl->cache_block != block || ftl->cache_zone != zone_num) अणु
+	if (ftl->cache_block != block || ftl->cache_zone != zone_num) {
 
 		error = sm_cache_flush(ftl);
-		अगर (error)
-			जाओ unlock;
+		if (error)
+			goto unlock;
 
 		ftl->cache_block = block;
 		ftl->cache_zone = zone_num;
-	पूर्ण
+	}
 
 	sm_cache_put(ftl, buf, boffset);
 unlock:
-	mod_समयr(&ftl->समयr, jअगरfies + msecs_to_jअगरfies(cache_समयout));
+	mod_timer(&ftl->timer, jiffies + msecs_to_jiffies(cache_timeout));
 	mutex_unlock(&ftl->mutex);
-	वापस error;
-पूर्ण
+	return error;
+}
 
-/* outside पूर्णांकerface: flush everything */
-अटल पूर्णांक sm_flush(काष्ठा mtd_blktrans_dev *dev)
-अणु
-	काष्ठा sm_ftl *ftl = dev->priv;
-	पूर्णांक retval;
+/* outside interface: flush everything */
+static int sm_flush(struct mtd_blktrans_dev *dev)
+{
+	struct sm_ftl *ftl = dev->priv;
+	int retval;
 
 	mutex_lock(&ftl->mutex);
 	retval =  sm_cache_flush(ftl);
 	mutex_unlock(&ftl->mutex);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-/* outside पूर्णांकerface: device is released */
-अटल व्योम sm_release(काष्ठा mtd_blktrans_dev *dev)
-अणु
-	काष्ठा sm_ftl *ftl = dev->priv;
+/* outside interface: device is released */
+static void sm_release(struct mtd_blktrans_dev *dev)
+{
+	struct sm_ftl *ftl = dev->priv;
 
 	mutex_lock(&ftl->mutex);
-	del_समयr_sync(&ftl->समयr);
+	del_timer_sync(&ftl->timer);
 	cancel_work_sync(&ftl->flush_work);
 	sm_cache_flush(ftl);
 	mutex_unlock(&ftl->mutex);
-पूर्ण
+}
 
-/* outside पूर्णांकerface: get geometry */
-अटल पूर्णांक sm_getgeo(काष्ठा mtd_blktrans_dev *dev, काष्ठा hd_geometry *geo)
-अणु
-	काष्ठा sm_ftl *ftl = dev->priv;
+/* outside interface: get geometry */
+static int sm_getgeo(struct mtd_blktrans_dev *dev, struct hd_geometry *geo)
+{
+	struct sm_ftl *ftl = dev->priv;
 	geo->heads = ftl->heads;
 	geo->sectors = ftl->sectors;
 	geo->cylinders = ftl->cylinders;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* बाह्यal पूर्णांकerface: मुख्य initialization function */
-अटल व्योम sm_add_mtd(काष्ठा mtd_blktrans_ops *tr, काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा mtd_blktrans_dev *trans;
-	काष्ठा sm_ftl *ftl;
+/* external interface: main initialization function */
+static void sm_add_mtd(struct mtd_blktrans_ops *tr, struct mtd_info *mtd)
+{
+	struct mtd_blktrans_dev *trans;
+	struct sm_ftl *ftl;
 
-	/* Allocate & initialize our निजी काष्ठाure */
-	ftl = kzalloc(माप(काष्ठा sm_ftl), GFP_KERNEL);
-	अगर (!ftl)
-		जाओ error1;
+	/* Allocate & initialize our private structure */
+	ftl = kzalloc(sizeof(struct sm_ftl), GFP_KERNEL);
+	if (!ftl)
+		goto error1;
 
 
 	mutex_init(&ftl->mutex);
-	समयr_setup(&ftl->समयr, sm_cache_flush_समयr, 0);
+	timer_setup(&ftl->timer, sm_cache_flush_timer, 0);
 	INIT_WORK(&ftl->flush_work, sm_cache_flush_work);
 
-	/* Read media inक्रमmation */
-	अगर (sm_get_media_info(ftl, mtd)) अणु
+	/* Read media information */
+	if (sm_get_media_info(ftl, mtd)) {
 		dbg("found unsupported mtd device, aborting");
-		जाओ error2;
-	पूर्ण
+		goto error2;
+	}
 
 
-	/* Allocate temporary CIS buffer क्रम पढ़ो retry support */
+	/* Allocate temporary CIS buffer for read retry support */
 	ftl->cis_buffer = kzalloc(SM_SECTOR_SIZE, GFP_KERNEL);
-	अगर (!ftl->cis_buffer)
-		जाओ error2;
+	if (!ftl->cis_buffer)
+		goto error2;
 
 	/* Allocate zone array, it will be initialized on demand */
-	ftl->zones = kसुस्मृति(ftl->zone_count, माप(काष्ठा ftl_zone),
+	ftl->zones = kcalloc(ftl->zone_count, sizeof(struct ftl_zone),
 								GFP_KERNEL);
-	अगर (!ftl->zones)
-		जाओ error3;
+	if (!ftl->zones)
+		goto error3;
 
 	/* Allocate the cache*/
 	ftl->cache_data = kzalloc(ftl->block_size, GFP_KERNEL);
 
-	अगर (!ftl->cache_data)
-		जाओ error4;
+	if (!ftl->cache_data)
+		goto error4;
 
 	sm_cache_init(ftl);
 
 
-	/* Allocate upper layer काष्ठाure and initialize it */
-	trans = kzalloc(माप(काष्ठा mtd_blktrans_dev), GFP_KERNEL);
-	अगर (!trans)
-		जाओ error5;
+	/* Allocate upper layer structure and initialize it */
+	trans = kzalloc(sizeof(struct mtd_blktrans_dev), GFP_KERNEL);
+	if (!trans)
+		goto error5;
 
 	ftl->trans = trans;
 	trans->priv = ftl;
@@ -1171,20 +1170,20 @@ unlock:
 	trans->mtd = mtd;
 	trans->devnum = -1;
 	trans->size = (ftl->block_size * ftl->max_lba * ftl->zone_count) >> 9;
-	trans->पढ़ोonly = ftl->पढ़ोonly;
+	trans->readonly = ftl->readonly;
 
-	अगर (sm_find_cis(ftl)) अणु
+	if (sm_find_cis(ftl)) {
 		dbg("CIS not found on mtd device, aborting");
-		जाओ error6;
-	पूर्ण
+		goto error6;
+	}
 
 	ftl->disk_attributes = sm_create_sysfs_attributes(ftl);
-	अगर (!ftl->disk_attributes)
-		जाओ error6;
+	if (!ftl->disk_attributes)
+		goto error6;
 	trans->disk_attributes = ftl->disk_attributes;
 
-	sm_prपूर्णांकk("Found %d MiB xD/SmartMedia FTL on mtd%d",
-		(पूर्णांक)(mtd->size / (1024 * 1024)), mtd->index);
+	sm_printk("Found %d MiB xD/SmartMedia FTL on mtd%d",
+		(int)(mtd->size / (1024 * 1024)), mtd->index);
 
 	dbg("FTL layout:");
 	dbg("%d zone(s), each consists of %d blocks (+%d spares)",
@@ -1195,51 +1194,51 @@ unlock:
 
 
 	/* Register device*/
-	अगर (add_mtd_blktrans_dev(trans)) अणु
+	if (add_mtd_blktrans_dev(trans)) {
 		dbg("error in mtdblktrans layer");
-		जाओ error6;
-	पूर्ण
-	वापस;
+		goto error6;
+	}
+	return;
 error6:
-	kमुक्त(trans);
+	kfree(trans);
 error5:
-	kमुक्त(ftl->cache_data);
+	kfree(ftl->cache_data);
 error4:
-	kमुक्त(ftl->zones);
+	kfree(ftl->zones);
 error3:
-	kमुक्त(ftl->cis_buffer);
+	kfree(ftl->cis_buffer);
 error2:
-	kमुक्त(ftl);
+	kfree(ftl);
 error1:
-	वापस;
-पूर्ण
+	return;
+}
 
-/* मुख्य पूर्णांकerface: device अणुsurprise,पूर्ण removal */
-अटल व्योम sm_हटाओ_dev(काष्ठा mtd_blktrans_dev *dev)
-अणु
-	काष्ठा sm_ftl *ftl = dev->priv;
-	पूर्णांक i;
+/* main interface: device {surprise,} removal */
+static void sm_remove_dev(struct mtd_blktrans_dev *dev)
+{
+	struct sm_ftl *ftl = dev->priv;
+	int i;
 
 	del_mtd_blktrans_dev(dev);
-	ftl->trans = शून्य;
+	ftl->trans = NULL;
 
-	क्रम (i = 0 ; i < ftl->zone_count; i++) अणु
+	for (i = 0 ; i < ftl->zone_count; i++) {
 
-		अगर (!ftl->zones[i].initialized)
-			जारी;
+		if (!ftl->zones[i].initialized)
+			continue;
 
-		kमुक्त(ftl->zones[i].lba_to_phys_table);
-		kfअगरo_मुक्त(&ftl->zones[i].मुक्त_sectors);
-	पूर्ण
+		kfree(ftl->zones[i].lba_to_phys_table);
+		kfifo_free(&ftl->zones[i].free_sectors);
+	}
 
 	sm_delete_sysfs_attributes(ftl);
-	kमुक्त(ftl->cis_buffer);
-	kमुक्त(ftl->zones);
-	kमुक्त(ftl->cache_data);
-	kमुक्त(ftl);
-पूर्ण
+	kfree(ftl->cis_buffer);
+	kfree(ftl->zones);
+	kfree(ftl->cache_data);
+	kfree(ftl);
+}
 
-अटल काष्ठा mtd_blktrans_ops sm_ftl_ops = अणु
+static struct mtd_blktrans_ops sm_ftl_ops = {
 	.name		= "smblk",
 	.major		= 0,
 	.part_bits	= SM_FTL_PARTN_BITS,
@@ -1247,40 +1246,40 @@ error1:
 	.getgeo		= sm_getgeo,
 
 	.add_mtd	= sm_add_mtd,
-	.हटाओ_dev	= sm_हटाओ_dev,
+	.remove_dev	= sm_remove_dev,
 
-	.पढ़ोsect	= sm_पढ़ो,
-	.ग_लिखोsect	= sm_ग_लिखो,
+	.readsect	= sm_read,
+	.writesect	= sm_write,
 
 	.flush		= sm_flush,
 	.release	= sm_release,
 
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल __init पूर्णांक sm_module_init(व्योम)
-अणु
-	पूर्णांक error = 0;
+static __init int sm_module_init(void)
+{
+	int error = 0;
 
-	cache_flush_workqueue = create_मुक्तzable_workqueue("smflush");
-	अगर (!cache_flush_workqueue)
-		वापस -ENOMEM;
+	cache_flush_workqueue = create_freezable_workqueue("smflush");
+	if (!cache_flush_workqueue)
+		return -ENOMEM;
 
-	error = रेजिस्टर_mtd_blktrans(&sm_ftl_ops);
-	अगर (error)
+	error = register_mtd_blktrans(&sm_ftl_ops);
+	if (error)
 		destroy_workqueue(cache_flush_workqueue);
-	वापस error;
+	return error;
 
-पूर्ण
+}
 
-अटल व्योम __निकास sm_module_निकास(व्योम)
-अणु
+static void __exit sm_module_exit(void)
+{
 	destroy_workqueue(cache_flush_workqueue);
-	deरेजिस्टर_mtd_blktrans(&sm_ftl_ops);
-पूर्ण
+	deregister_mtd_blktrans(&sm_ftl_ops);
+}
 
 module_init(sm_module_init);
-module_निकास(sm_module_निकास);
+module_exit(sm_module_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Maxim Levitsky <maximlevitsky@gmail.com>");

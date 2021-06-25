@@ -1,11 +1,10 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR BSD-3-Clause
+// SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause
 
 /* COMMON Applications Kept Enhanced (CAKE) discipline
  *
  * Copyright (C) 2014-2018 Jonathan Morton <chromatix99@gmail.com>
- * Copyright (C) 2015-2018 Toke Hथचiland-Jथचrgensen <toke@toke.dk>
- * Copyright (C) 2014-2018 Dave Tथअht <dave.taht@gmail.com>
+ * Copyright (C) 2015-2018 Toke Høiland-Jørgensen <toke@toke.dk>
+ * Copyright (C) 2014-2018 Dave Täht <dave.taht@gmail.com>
  * Copyright (C) 2015-2018 Sebastian Moeller <moeller0@gmx.de>
  * (C) 2015-2018 Kevin Darbyshire-Bryant <kevin@darbyshire-bryant.me.uk>
  * Copyright (C) 2017-2018 Ryan Mounce <ryan@mounce.com.au>
@@ -13,149 +12,149 @@
  * The CAKE Principles:
  *		   (or, how to have your cake and eat it too)
  *
- * This is a combination of several shaping, AQM and FQ techniques पूर्णांकo one
+ * This is a combination of several shaping, AQM and FQ techniques into one
  * easy-to-use package:
  *
  * - An overall bandwidth shaper, to move the bottleneck away from dumb CPE
  *   equipment and bloated MACs.  This operates in deficit mode (as in sch_fq),
- *   eliminating the need क्रम any sort of burst parameter (eg. token bucket
+ *   eliminating the need for any sort of burst parameter (eg. token bucket
  *   depth).  Burst support is limited to that necessary to overcome scheduling
  *   latency.
  *
- * - A Dअगरfserv-aware priority queue, giving more priority to certain classes,
- *   up to a specअगरied fraction of bandwidth.  Above that bandwidth threshold,
- *   the priority is reduced to aव्योम starving other tins.
+ * - A Diffserv-aware priority queue, giving more priority to certain classes,
+ *   up to a specified fraction of bandwidth.  Above that bandwidth threshold,
+ *   the priority is reduced to avoid starving other tins.
  *
- * - Each priority tin has a separate Flow Queue प्रणाली, to isolate traffic
+ * - Each priority tin has a separate Flow Queue system, to isolate traffic
  *   flows from each other.  This prevents a burst on one flow from increasing
  *   the delay to another.  Flows are distributed to queues using a
  *   set-associative hash function.
  *
  * - Each queue is actively managed by Cobalt, which is a combination of the
- *   Codel and Blue AQM algorithms.  This serves flows fairly, and संकेतs
- *   congestion early via ECN (अगर available) and/or packet drops, to keep
- *   latency low.  The codel parameters are स्वतः-tuned based on the bandwidth
+ *   Codel and Blue AQM algorithms.  This serves flows fairly, and signals
+ *   congestion early via ECN (if available) and/or packet drops, to keep
+ *   latency low.  The codel parameters are auto-tuned based on the bandwidth
  *   setting, as is necessary at low bandwidths.
  *
- * The configuration parameters are kept deliberately simple क्रम ease of use.
- * Everything has sane शेषs.  Complete generality of configuration is *not*
+ * The configuration parameters are kept deliberately simple for ease of use.
+ * Everything has sane defaults.  Complete generality of configuration is *not*
  * a goal.
  *
  * The priority queue operates according to a weighted DRR scheme, combined with
  * a bandwidth tracker which reuses the shaper logic to detect which side of the
  * bandwidth sharing threshold the tin is operating.  This determines whether a
- * priority-based weight (high) or a bandwidth-based weight (low) is used क्रम
+ * priority-based weight (high) or a bandwidth-based weight (low) is used for
  * that tin in the current pass.
  *
  * This qdisc was inspired by Eric Dumazet's fq_codel code, which he kindly
  * granted us permission to leverage.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/types.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/in.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/jhash.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/reciprocal_भाग.h>
-#समावेश <net/netlink.h>
-#समावेश <linux/अगर_vlan.h>
-#समावेश <net/pkt_sched.h>
-#समावेश <net/pkt_cls.h>
-#समावेश <net/tcp.h>
-#समावेश <net/flow_dissector.h>
+#include <linux/module.h>
+#include <linux/types.h>
+#include <linux/kernel.h>
+#include <linux/jiffies.h>
+#include <linux/string.h>
+#include <linux/in.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/skbuff.h>
+#include <linux/jhash.h>
+#include <linux/slab.h>
+#include <linux/vmalloc.h>
+#include <linux/reciprocal_div.h>
+#include <net/netlink.h>
+#include <linux/if_vlan.h>
+#include <net/pkt_sched.h>
+#include <net/pkt_cls.h>
+#include <net/tcp.h>
+#include <net/flow_dissector.h>
 
-#अगर IS_ENABLED(CONFIG_NF_CONNTRACK)
-#समावेश <net/netfilter/nf_conntrack_core.h>
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_NF_CONNTRACK)
+#include <net/netfilter/nf_conntrack_core.h>
+#endif
 
-#घोषणा CAKE_SET_WAYS (8)
-#घोषणा CAKE_MAX_TINS (8)
-#घोषणा CAKE_QUEUES (1024)
-#घोषणा CAKE_FLOW_MASK 63
-#घोषणा CAKE_FLOW_NAT_FLAG 64
+#define CAKE_SET_WAYS (8)
+#define CAKE_MAX_TINS (8)
+#define CAKE_QUEUES (1024)
+#define CAKE_FLOW_MASK 63
+#define CAKE_FLOW_NAT_FLAG 64
 
-/* काष्ठा cobalt_params - contains codel and blue parameters
- * @पूर्णांकerval:	codel initial drop rate
- * @target:     maximum persistent sojourn समय & blue update rate
- * @mtu_समय:   serialisation delay of maximum-size packet
+/* struct cobalt_params - contains codel and blue parameters
+ * @interval:	codel initial drop rate
+ * @target:     maximum persistent sojourn time & blue update rate
+ * @mtu_time:   serialisation delay of maximum-size packet
  * @p_inc:      increment of blue drop probability (0.32 fxp)
  * @p_dec:      decrement of blue drop probability (0.32 fxp)
  */
-काष्ठा cobalt_params अणु
-	u64	पूर्णांकerval;
+struct cobalt_params {
+	u64	interval;
 	u64	target;
-	u64	mtu_समय;
+	u64	mtu_time;
 	u32	p_inc;
 	u32	p_dec;
-पूर्ण;
+};
 
-/* काष्ठा cobalt_vars - contains codel and blue variables
+/* struct cobalt_vars - contains codel and blue variables
  * @count:		codel dropping frequency
- * @rec_inv_वर्ग_मूल:	reciprocal value of वर्ग_मूल(count) >> 1
- * @drop_next:		समय to drop next packet, or when we dropped last
- * @blue_समयr:		Blue समय to next drop
+ * @rec_inv_sqrt:	reciprocal value of sqrt(count) >> 1
+ * @drop_next:		time to drop next packet, or when we dropped last
+ * @blue_timer:		Blue time to next drop
  * @p_drop:		BLUE drop probability (0.32 fxp)
- * @dropping:		set अगर in dropping state
- * @ecn_marked:		set अगर marked
+ * @dropping:		set if in dropping state
+ * @ecn_marked:		set if marked
  */
-काष्ठा cobalt_vars अणु
+struct cobalt_vars {
 	u32	count;
-	u32	rec_inv_वर्ग_मूल;
-	kसमय_प्रकार	drop_next;
-	kसमय_प्रकार	blue_समयr;
+	u32	rec_inv_sqrt;
+	ktime_t	drop_next;
+	ktime_t	blue_timer;
 	u32     p_drop;
 	bool	dropping;
 	bool    ecn_marked;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	CAKE_SET_NONE = 0,
 	CAKE_SET_SPARSE,
 	CAKE_SET_SPARSE_WAIT, /* counted in SPARSE, actually in BULK */
 	CAKE_SET_BULK,
 	CAKE_SET_DECAYING
-पूर्ण;
+};
 
-काष्ठा cake_flow अणु
-	/* this stuff is all needed per-flow at dequeue समय */
-	काष्ठा sk_buff	  *head;
-	काष्ठा sk_buff	  *tail;
-	काष्ठा list_head  flowchain;
+struct cake_flow {
+	/* this stuff is all needed per-flow at dequeue time */
+	struct sk_buff	  *head;
+	struct sk_buff	  *tail;
+	struct list_head  flowchain;
 	s32		  deficit;
 	u32		  dropped;
-	काष्ठा cobalt_vars cvars;
-	u16		  srchost; /* index पूर्णांकo cake_host table */
+	struct cobalt_vars cvars;
+	u16		  srchost; /* index into cake_host table */
 	u16		  dsthost;
 	u8		  set;
-पूर्ण; /* please try to keep this काष्ठाure <= 64 bytes */
+}; /* please try to keep this structure <= 64 bytes */
 
-काष्ठा cake_host अणु
+struct cake_host {
 	u32 srchost_tag;
 	u32 dsthost_tag;
 	u16 srchost_bulk_flow_count;
 	u16 dsthost_bulk_flow_count;
-पूर्ण;
+};
 
-काष्ठा cake_heap_entry अणु
+struct cake_heap_entry {
 	u16 t:3, b:10;
-पूर्ण;
+};
 
-काष्ठा cake_tin_data अणु
-	काष्ठा cake_flow flows[CAKE_QUEUES];
+struct cake_tin_data {
+	struct cake_flow flows[CAKE_QUEUES];
 	u32	backlogs[CAKE_QUEUES];
-	u32	tags[CAKE_QUEUES]; /* क्रम set association */
+	u32	tags[CAKE_QUEUES]; /* for set association */
 	u16	overflow_idx[CAKE_QUEUES];
-	काष्ठा cake_host hosts[CAKE_QUEUES]; /* क्रम triple isolation */
+	struct cake_host hosts[CAKE_QUEUES]; /* for triple isolation */
 	u16	flow_quantum;
 
-	काष्ठा cobalt_params cparams;
+	struct cobalt_params cparams;
 	u32	drop_overlimit;
 	u16	bulk_flow_count;
 	u16	sparse_flow_count;
@@ -164,12 +163,12 @@
 
 	u32	max_skblen;
 
-	काष्ठा list_head new_flows;
-	काष्ठा list_head old_flows;
-	काष्ठा list_head decaying_flows;
+	struct list_head new_flows;
+	struct list_head old_flows;
+	struct list_head decaying_flows;
 
-	/* समय_next = समय_प्रकारhis + ((len * rate_ns) >> rate_shft) */
-	kसमय_प्रकार	समय_next_packet;
+	/* time_next = time_this + ((len * rate_ns) >> rate_shft) */
+	ktime_t	time_next_packet;
 	u64	tin_rate_ns;
 	u64	tin_rate_bps;
 	u16	tin_rate_shft;
@@ -195,35 +194,35 @@
 	u32	way_hits;
 	u32	way_misses;
 	u32	way_collisions;
-पूर्ण; /* number of tins is small, so size of this काष्ठा करोesn't matter much */
+}; /* number of tins is small, so size of this struct doesn't matter much */
 
-काष्ठा cake_sched_data अणु
-	काष्ठा tcf_proto __rcu *filter_list; /* optional बाह्यal classअगरier */
-	काष्ठा tcf_block *block;
-	काष्ठा cake_tin_data *tins;
+struct cake_sched_data {
+	struct tcf_proto __rcu *filter_list; /* optional external classifier */
+	struct tcf_block *block;
+	struct cake_tin_data *tins;
 
-	काष्ठा cake_heap_entry overflow_heap[CAKE_QUEUES * CAKE_MAX_TINS];
-	u16		overflow_समयout;
+	struct cake_heap_entry overflow_heap[CAKE_QUEUES * CAKE_MAX_TINS];
+	u16		overflow_timeout;
 
 	u16		tin_cnt;
 	u8		tin_mode;
 	u8		flow_mode;
 	u8		ack_filter;
-	u8		aपंचांग_mode;
+	u8		atm_mode;
 
 	u32		fwmark_mask;
 	u16		fwmark_shft;
 
-	/* समय_next = समय_प्रकारhis + ((len * rate_ns) >> rate_shft) */
+	/* time_next = time_this + ((len * rate_ns) >> rate_shft) */
 	u16		rate_shft;
-	kसमय_प्रकार		समय_next_packet;
-	kसमय_प्रकार		failsafe_next_packet;
+	ktime_t		time_next_packet;
+	ktime_t		failsafe_next_packet;
 	u64		rate_ns;
 	u64		rate_bps;
 	u16		rate_flags;
 	s16		rate_overhead;
 	u16		rate_mpu;
-	u64		पूर्णांकerval;
+	u64		interval;
 	u64		target;
 
 	/* resource tracking */
@@ -232,21 +231,21 @@
 	u32		buffer_limit;
 	u32		buffer_config_limit;
 
-	/* indices क्रम dequeue */
+	/* indices for dequeue */
 	u16		cur_tin;
 	u16		cur_flow;
 
-	काष्ठा qdisc_watchकरोg watchकरोg;
-	स्थिर u8	*tin_index;
-	स्थिर u8	*tin_order;
+	struct qdisc_watchdog watchdog;
+	const u8	*tin_index;
+	const u8	*tin_order;
 
 	/* bandwidth capacity estimate */
-	kसमय_प्रकार		last_packet_समय;
-	kसमय_प्रकार		avg_winकरोw_begin;
-	u64		avg_packet_पूर्णांकerval;
-	u64		avg_winकरोw_bytes;
+	ktime_t		last_packet_time;
+	ktime_t		avg_window_begin;
+	u64		avg_packet_interval;
+	u64		avg_window_bytes;
 	u64		avg_peak_bandwidth;
-	kसमय_प्रकार		last_reconfig_समय;
+	ktime_t		last_reconfig_time;
 
 	/* packet length stats */
 	u32		avg_netoff;
@@ -254,54 +253,54 @@
 	u16		max_adjlen;
 	u16		min_netlen;
 	u16		min_adjlen;
-पूर्ण;
+};
 
-क्रमागत अणु
+enum {
 	CAKE_FLAG_OVERHEAD	   = BIT(0),
 	CAKE_FLAG_AUTORATE_INGRESS = BIT(1),
 	CAKE_FLAG_INGRESS	   = BIT(2),
 	CAKE_FLAG_WASH		   = BIT(3),
 	CAKE_FLAG_SPLIT_GSO	   = BIT(4)
-पूर्ण;
+};
 
 /* COBALT operates the Codel and BLUE algorithms in parallel, in order to
  * obtain the best features of each.  Codel is excellent on flows which
- * respond to congestion संकेतs in a TCP-like way.  BLUE is more effective on
+ * respond to congestion signals in a TCP-like way.  BLUE is more effective on
  * unresponsive flows.
  */
 
-काष्ठा cobalt_skb_cb अणु
-	kसमय_प्रकार enqueue_समय;
+struct cobalt_skb_cb {
+	ktime_t enqueue_time;
 	u32     adjusted_len;
-पूर्ण;
+};
 
-अटल u64 us_to_ns(u64 us)
-अणु
-	वापस us * NSEC_PER_USEC;
-पूर्ण
+static u64 us_to_ns(u64 us)
+{
+	return us * NSEC_PER_USEC;
+}
 
-अटल काष्ठा cobalt_skb_cb *get_cobalt_cb(स्थिर काष्ठा sk_buff *skb)
-अणु
-	qdisc_cb_निजी_validate(skb, माप(काष्ठा cobalt_skb_cb));
-	वापस (काष्ठा cobalt_skb_cb *)qdisc_skb_cb(skb)->data;
-पूर्ण
+static struct cobalt_skb_cb *get_cobalt_cb(const struct sk_buff *skb)
+{
+	qdisc_cb_private_validate(skb, sizeof(struct cobalt_skb_cb));
+	return (struct cobalt_skb_cb *)qdisc_skb_cb(skb)->data;
+}
 
-अटल kसमय_प्रकार cobalt_get_enqueue_समय(स्थिर काष्ठा sk_buff *skb)
-अणु
-	वापस get_cobalt_cb(skb)->enqueue_समय;
-पूर्ण
+static ktime_t cobalt_get_enqueue_time(const struct sk_buff *skb)
+{
+	return get_cobalt_cb(skb)->enqueue_time;
+}
 
-अटल व्योम cobalt_set_enqueue_समय(काष्ठा sk_buff *skb,
-				    kसमय_प्रकार now)
-अणु
-	get_cobalt_cb(skb)->enqueue_समय = now;
-पूर्ण
+static void cobalt_set_enqueue_time(struct sk_buff *skb,
+				    ktime_t now)
+{
+	get_cobalt_cb(skb)->enqueue_time = now;
+}
 
-अटल u16 quantum_भाग[CAKE_QUEUES + 1] = अणु0पूर्ण;
+static u16 quantum_div[CAKE_QUEUES + 1] = {0};
 
-/* Dअगरfserv lookup tables */
+/* Diffserv lookup tables */
 
-अटल स्थिर u8 precedence[] = अणु
+static const u8 precedence[] = {
 	0, 0, 0, 0, 0, 0, 0, 0,
 	1, 1, 1, 1, 1, 1, 1, 1,
 	2, 2, 2, 2, 2, 2, 2, 2,
@@ -310,9 +309,9 @@
 	5, 5, 5, 5, 5, 5, 5, 5,
 	6, 6, 6, 6, 6, 6, 6, 6,
 	7, 7, 7, 7, 7, 7, 7, 7,
-पूर्ण;
+};
 
-अटल स्थिर u8 dअगरfserv8[] = अणु
+static const u8 diffserv8[] = {
 	2, 0, 1, 2, 4, 2, 2, 2,
 	1, 2, 1, 2, 1, 2, 1, 2,
 	5, 2, 4, 2, 4, 2, 4, 2,
@@ -321,9 +320,9 @@
 	6, 2, 2, 2, 6, 2, 6, 2,
 	7, 2, 2, 2, 2, 2, 2, 2,
 	7, 2, 2, 2, 2, 2, 2, 2,
-पूर्ण;
+};
 
-अटल स्थिर u8 dअगरfserv4[] = अणु
+static const u8 diffserv4[] = {
 	0, 1, 0, 0, 2, 0, 0, 0,
 	1, 0, 0, 0, 0, 0, 0, 0,
 	2, 0, 2, 0, 2, 0, 2, 0,
@@ -332,9 +331,9 @@
 	3, 0, 0, 0, 3, 0, 3, 0,
 	3, 0, 0, 0, 0, 0, 0, 0,
 	3, 0, 0, 0, 0, 0, 0, 0,
-पूर्ण;
+};
 
-अटल स्थिर u8 dअगरfserv3[] = अणु
+static const u8 diffserv3[] = {
 	0, 1, 0, 0, 2, 0, 0, 0,
 	1, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
@@ -343,9 +342,9 @@
 	0, 0, 0, 0, 2, 0, 2, 0,
 	2, 0, 0, 0, 0, 0, 0, 0,
 	2, 0, 0, 0, 0, 0, 0, 0,
-पूर्ण;
+};
 
-अटल स्थिर u8 bestefक्रमt[] = अणु
+static const u8 besteffort[] = {
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
@@ -354,47 +353,47 @@
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
-पूर्ण;
+};
 
-/* tin priority order क्रम stats dumping */
+/* tin priority order for stats dumping */
 
-अटल स्थिर u8 normal_order[] = अणु0, 1, 2, 3, 4, 5, 6, 7पूर्ण;
-अटल स्थिर u8 bulk_order[] = अणु1, 0, 2, 3पूर्ण;
+static const u8 normal_order[] = {0, 1, 2, 3, 4, 5, 6, 7};
+static const u8 bulk_order[] = {1, 0, 2, 3};
 
-#घोषणा REC_INV_SQRT_CACHE (16)
-अटल u32 cobalt_rec_inv_वर्ग_मूल_cache[REC_INV_SQRT_CACHE] = अणु0पूर्ण;
+#define REC_INV_SQRT_CACHE (16)
+static u32 cobalt_rec_inv_sqrt_cache[REC_INV_SQRT_CACHE] = {0};
 
 /* http://en.wikipedia.org/wiki/Methods_of_computing_square_roots
- * new_invवर्ग_मूल = (invवर्ग_मूल / 2) * (3 - count * invवर्ग_मूल^2)
+ * new_invsqrt = (invsqrt / 2) * (3 - count * invsqrt^2)
  *
- * Here, invवर्ग_मूल is a fixed poपूर्णांक number (< 1.0), 32bit mantissa, aka Q0.32
+ * Here, invsqrt is a fixed point number (< 1.0), 32bit mantissa, aka Q0.32
  */
 
-अटल व्योम cobalt_newton_step(काष्ठा cobalt_vars *vars)
-अणु
-	u32 invवर्ग_मूल, invवर्ग_मूल2;
+static void cobalt_newton_step(struct cobalt_vars *vars)
+{
+	u32 invsqrt, invsqrt2;
 	u64 val;
 
-	invवर्ग_मूल = vars->rec_inv_वर्ग_मूल;
-	invवर्ग_मूल2 = ((u64)invवर्ग_मूल * invवर्ग_मूल) >> 32;
-	val = (3LL << 32) - ((u64)vars->count * invवर्ग_मूल2);
+	invsqrt = vars->rec_inv_sqrt;
+	invsqrt2 = ((u64)invsqrt * invsqrt) >> 32;
+	val = (3LL << 32) - ((u64)vars->count * invsqrt2);
 
-	val >>= 2; /* aव्योम overflow in following multiply */
-	val = (val * invवर्ग_मूल) >> (32 - 2 + 1);
+	val >>= 2; /* avoid overflow in following multiply */
+	val = (val * invsqrt) >> (32 - 2 + 1);
 
-	vars->rec_inv_वर्ग_मूल = val;
-पूर्ण
+	vars->rec_inv_sqrt = val;
+}
 
-अटल व्योम cobalt_invवर्ग_मूल(काष्ठा cobalt_vars *vars)
-अणु
-	अगर (vars->count < REC_INV_SQRT_CACHE)
-		vars->rec_inv_वर्ग_मूल = cobalt_rec_inv_वर्ग_मूल_cache[vars->count];
-	अन्यथा
+static void cobalt_invsqrt(struct cobalt_vars *vars)
+{
+	if (vars->count < REC_INV_SQRT_CACHE)
+		vars->rec_inv_sqrt = cobalt_rec_inv_sqrt_cache[vars->count];
+	else
 		cobalt_newton_step(vars);
-पूर्ण
+}
 
-/* There is a big dअगरference in timing between the accurate values placed in
- * the cache and the approximations given by a single Newton step क्रम small
+/* There is a big difference in timing between the accurate values placed in
+ * the cache and the approximations given by a single Newton step for small
  * count values, particularly when stepping from count 1 to 2 or vice versa.
  * Above 16, a single Newton step gives sufficient accuracy in either
  * direction, given the precision stored.
@@ -403,283 +402,283 @@
  * the value that *should* have been produced at count 4.
  */
 
-अटल व्योम cobalt_cache_init(व्योम)
-अणु
-	काष्ठा cobalt_vars v;
+static void cobalt_cache_init(void)
+{
+	struct cobalt_vars v;
 
-	स_रखो(&v, 0, माप(v));
-	v.rec_inv_वर्ग_मूल = ~0U;
-	cobalt_rec_inv_वर्ग_मूल_cache[0] = v.rec_inv_वर्ग_मूल;
+	memset(&v, 0, sizeof(v));
+	v.rec_inv_sqrt = ~0U;
+	cobalt_rec_inv_sqrt_cache[0] = v.rec_inv_sqrt;
 
-	क्रम (v.count = 1; v.count < REC_INV_SQRT_CACHE; v.count++) अणु
+	for (v.count = 1; v.count < REC_INV_SQRT_CACHE; v.count++) {
 		cobalt_newton_step(&v);
 		cobalt_newton_step(&v);
 		cobalt_newton_step(&v);
 		cobalt_newton_step(&v);
 
-		cobalt_rec_inv_वर्ग_मूल_cache[v.count] = v.rec_inv_वर्ग_मूल;
-	पूर्ण
-पूर्ण
+		cobalt_rec_inv_sqrt_cache[v.count] = v.rec_inv_sqrt;
+	}
+}
 
-अटल व्योम cobalt_vars_init(काष्ठा cobalt_vars *vars)
-अणु
-	स_रखो(vars, 0, माप(*vars));
+static void cobalt_vars_init(struct cobalt_vars *vars)
+{
+	memset(vars, 0, sizeof(*vars));
 
-	अगर (!cobalt_rec_inv_वर्ग_मूल_cache[0]) अणु
+	if (!cobalt_rec_inv_sqrt_cache[0]) {
 		cobalt_cache_init();
-		cobalt_rec_inv_वर्ग_मूल_cache[0] = ~0;
-	पूर्ण
-पूर्ण
+		cobalt_rec_inv_sqrt_cache[0] = ~0;
+	}
+}
 
-/* CoDel control_law is t + पूर्णांकerval/वर्ग_मूल(count)
- * We मुख्यtain in rec_inv_वर्ग_मूल the reciprocal value of वर्ग_मूल(count) to aव्योम
- * both वर्ग_मूल() and भागide operation.
+/* CoDel control_law is t + interval/sqrt(count)
+ * We maintain in rec_inv_sqrt the reciprocal value of sqrt(count) to avoid
+ * both sqrt() and divide operation.
  */
-अटल kसमय_प्रकार cobalt_control(kसमय_प्रकार t,
-			      u64 पूर्णांकerval,
-			      u32 rec_inv_वर्ग_मूल)
-अणु
-	वापस kसमय_add_ns(t, reciprocal_scale(पूर्णांकerval,
-						rec_inv_वर्ग_मूल));
-पूर्ण
+static ktime_t cobalt_control(ktime_t t,
+			      u64 interval,
+			      u32 rec_inv_sqrt)
+{
+	return ktime_add_ns(t, reciprocal_scale(interval,
+						rec_inv_sqrt));
+}
 
 /* Call this when a packet had to be dropped due to queue overflow.  Returns
- * true अगर the BLUE state was quiescent beक्रमe but active after this call.
+ * true if the BLUE state was quiescent before but active after this call.
  */
-अटल bool cobalt_queue_full(काष्ठा cobalt_vars *vars,
-			      काष्ठा cobalt_params *p,
-			      kसमय_प्रकार now)
-अणु
+static bool cobalt_queue_full(struct cobalt_vars *vars,
+			      struct cobalt_params *p,
+			      ktime_t now)
+{
 	bool up = false;
 
-	अगर (kसमय_प्रकारo_ns(kसमय_sub(now, vars->blue_समयr)) > p->target) अणु
+	if (ktime_to_ns(ktime_sub(now, vars->blue_timer)) > p->target) {
 		up = !vars->p_drop;
 		vars->p_drop += p->p_inc;
-		अगर (vars->p_drop < p->p_inc)
+		if (vars->p_drop < p->p_inc)
 			vars->p_drop = ~0;
-		vars->blue_समयr = now;
-	पूर्ण
+		vars->blue_timer = now;
+	}
 	vars->dropping = true;
 	vars->drop_next = now;
-	अगर (!vars->count)
+	if (!vars->count)
 		vars->count = 1;
 
-	वापस up;
-पूर्ण
+	return up;
+}
 
 /* Call this when the queue was serviced but turned out to be empty.  Returns
- * true अगर the BLUE state was active beक्रमe but quiescent after this call.
+ * true if the BLUE state was active before but quiescent after this call.
  */
-अटल bool cobalt_queue_empty(काष्ठा cobalt_vars *vars,
-			       काष्ठा cobalt_params *p,
-			       kसमय_प्रकार now)
-अणु
-	bool करोwn = false;
+static bool cobalt_queue_empty(struct cobalt_vars *vars,
+			       struct cobalt_params *p,
+			       ktime_t now)
+{
+	bool down = false;
 
-	अगर (vars->p_drop &&
-	    kसमय_प्रकारo_ns(kसमय_sub(now, vars->blue_समयr)) > p->target) अणु
-		अगर (vars->p_drop < p->p_dec)
+	if (vars->p_drop &&
+	    ktime_to_ns(ktime_sub(now, vars->blue_timer)) > p->target) {
+		if (vars->p_drop < p->p_dec)
 			vars->p_drop = 0;
-		अन्यथा
+		else
 			vars->p_drop -= p->p_dec;
-		vars->blue_समयr = now;
-		करोwn = !vars->p_drop;
-	पूर्ण
+		vars->blue_timer = now;
+		down = !vars->p_drop;
+	}
 	vars->dropping = false;
 
-	अगर (vars->count && kसमय_प्रकारo_ns(kसमय_sub(now, vars->drop_next)) >= 0) अणु
+	if (vars->count && ktime_to_ns(ktime_sub(now, vars->drop_next)) >= 0) {
 		vars->count--;
-		cobalt_invवर्ग_मूल(vars);
+		cobalt_invsqrt(vars);
 		vars->drop_next = cobalt_control(vars->drop_next,
-						 p->पूर्णांकerval,
-						 vars->rec_inv_वर्ग_मूल);
-	पूर्ण
+						 p->interval,
+						 vars->rec_inv_sqrt);
+	}
 
-	वापस करोwn;
-पूर्ण
+	return down;
+}
 
-/* Call this with a freshly dequeued packet क्रम possible congestion marking.
- * Returns true as an inकाष्ठाion to drop the packet, false क्रम delivery.
+/* Call this with a freshly dequeued packet for possible congestion marking.
+ * Returns true as an instruction to drop the packet, false for delivery.
  */
-अटल bool cobalt_should_drop(काष्ठा cobalt_vars *vars,
-			       काष्ठा cobalt_params *p,
-			       kसमय_प्रकार now,
-			       काष्ठा sk_buff *skb,
+static bool cobalt_should_drop(struct cobalt_vars *vars,
+			       struct cobalt_params *p,
+			       ktime_t now,
+			       struct sk_buff *skb,
 			       u32 bulk_flows)
-अणु
+{
 	bool next_due, over_target, drop = false;
-	kसमय_प्रकार schedule;
+	ktime_t schedule;
 	u64 sojourn;
 
-/* The 'schedule' variable records, in its sign, whether 'now' is beक्रमe or
- * after 'drop_next'.  This allows 'drop_next' to be updated beक्रमe the next
+/* The 'schedule' variable records, in its sign, whether 'now' is before or
+ * after 'drop_next'.  This allows 'drop_next' to be updated before the next
  * scheduling decision is actually branched, without destroying that
- * inक्रमmation.  Similarly, the first 'schedule' value calculated is preserved
+ * information.  Similarly, the first 'schedule' value calculated is preserved
  * in the boolean 'next_due'.
  *
- * As क्रम 'drop_next', we take advantage of the fact that 'interval' is both
- * the delay between first exceeding 'target' and the first संकेतling event,
- * *and* the scaling factor क्रम the संकेतling frequency.  It's thereक्रमe very
- * natural to use a single mechanism क्रम both purposes, and eliminates a
- * signअगरicant amount of reference Codel's spaghetti code.  To help with this,
- * both the '0' and '1' entries in the invवर्ग_मूल cache are 0xFFFFFFFF, as बंद
- * as possible to 1.0 in fixed-poपूर्णांक.
+ * As for 'drop_next', we take advantage of the fact that 'interval' is both
+ * the delay between first exceeding 'target' and the first signalling event,
+ * *and* the scaling factor for the signalling frequency.  It's therefore very
+ * natural to use a single mechanism for both purposes, and eliminates a
+ * significant amount of reference Codel's spaghetti code.  To help with this,
+ * both the '0' and '1' entries in the invsqrt cache are 0xFFFFFFFF, as close
+ * as possible to 1.0 in fixed-point.
  */
 
-	sojourn = kसमय_प्रकारo_ns(kसमय_sub(now, cobalt_get_enqueue_समय(skb)));
-	schedule = kसमय_sub(now, vars->drop_next);
+	sojourn = ktime_to_ns(ktime_sub(now, cobalt_get_enqueue_time(skb)));
+	schedule = ktime_sub(now, vars->drop_next);
 	over_target = sojourn > p->target &&
-		      sojourn > p->mtu_समय * bulk_flows * 2 &&
-		      sojourn > p->mtu_समय * 4;
-	next_due = vars->count && kसमय_प्रकारo_ns(schedule) >= 0;
+		      sojourn > p->mtu_time * bulk_flows * 2 &&
+		      sojourn > p->mtu_time * 4;
+	next_due = vars->count && ktime_to_ns(schedule) >= 0;
 
 	vars->ecn_marked = false;
 
-	अगर (over_target) अणु
-		अगर (!vars->dropping) अणु
+	if (over_target) {
+		if (!vars->dropping) {
 			vars->dropping = true;
 			vars->drop_next = cobalt_control(now,
-							 p->पूर्णांकerval,
-							 vars->rec_inv_वर्ग_मूल);
-		पूर्ण
-		अगर (!vars->count)
+							 p->interval,
+							 vars->rec_inv_sqrt);
+		}
+		if (!vars->count)
 			vars->count = 1;
-	पूर्ण अन्यथा अगर (vars->dropping) अणु
+	} else if (vars->dropping) {
 		vars->dropping = false;
-	पूर्ण
+	}
 
-	अगर (next_due && vars->dropping) अणु
-		/* Use ECN mark अगर possible, otherwise drop */
+	if (next_due && vars->dropping) {
+		/* Use ECN mark if possible, otherwise drop */
 		drop = !(vars->ecn_marked = INET_ECN_set_ce(skb));
 
 		vars->count++;
-		अगर (!vars->count)
+		if (!vars->count)
 			vars->count--;
-		cobalt_invवर्ग_मूल(vars);
+		cobalt_invsqrt(vars);
 		vars->drop_next = cobalt_control(vars->drop_next,
-						 p->पूर्णांकerval,
-						 vars->rec_inv_वर्ग_मूल);
-		schedule = kसमय_sub(now, vars->drop_next);
-	पूर्ण अन्यथा अणु
-		जबतक (next_due) अणु
+						 p->interval,
+						 vars->rec_inv_sqrt);
+		schedule = ktime_sub(now, vars->drop_next);
+	} else {
+		while (next_due) {
 			vars->count--;
-			cobalt_invवर्ग_मूल(vars);
+			cobalt_invsqrt(vars);
 			vars->drop_next = cobalt_control(vars->drop_next,
-							 p->पूर्णांकerval,
-							 vars->rec_inv_वर्ग_मूल);
-			schedule = kसमय_sub(now, vars->drop_next);
-			next_due = vars->count && kसमय_प्रकारo_ns(schedule) >= 0;
-		पूर्ण
-	पूर्ण
+							 p->interval,
+							 vars->rec_inv_sqrt);
+			schedule = ktime_sub(now, vars->drop_next);
+			next_due = vars->count && ktime_to_ns(schedule) >= 0;
+		}
+	}
 
 	/* Simple BLUE implementation.  Lack of ECN is deliberate. */
-	अगर (vars->p_drop)
-		drop |= (pअक्रमom_u32() < vars->p_drop);
+	if (vars->p_drop)
+		drop |= (prandom_u32() < vars->p_drop);
 
-	/* Overload the drop_next field as an activity समयout */
-	अगर (!vars->count)
-		vars->drop_next = kसमय_add_ns(now, p->पूर्णांकerval);
-	अन्यथा अगर (kसमय_प्रकारo_ns(schedule) > 0 && !drop)
+	/* Overload the drop_next field as an activity timeout */
+	if (!vars->count)
+		vars->drop_next = ktime_add_ns(now, p->interval);
+	else if (ktime_to_ns(schedule) > 0 && !drop)
 		vars->drop_next = now;
 
-	वापस drop;
-पूर्ण
+	return drop;
+}
 
-अटल bool cake_update_flowkeys(काष्ठा flow_keys *keys,
-				 स्थिर काष्ठा sk_buff *skb)
-अणु
-#अगर IS_ENABLED(CONFIG_NF_CONNTRACK)
-	काष्ठा nf_conntrack_tuple tuple = अणुपूर्ण;
+static bool cake_update_flowkeys(struct flow_keys *keys,
+				 const struct sk_buff *skb)
+{
+#if IS_ENABLED(CONFIG_NF_CONNTRACK)
+	struct nf_conntrack_tuple tuple = {};
 	bool rev = !skb->_nfct, upd = false;
 	__be32 ip;
 
-	अगर (skb_protocol(skb, true) != htons(ETH_P_IP))
-		वापस false;
+	if (skb_protocol(skb, true) != htons(ETH_P_IP))
+		return false;
 
-	अगर (!nf_ct_get_tuple_skb(&tuple, skb))
-		वापस false;
+	if (!nf_ct_get_tuple_skb(&tuple, skb))
+		return false;
 
 	ip = rev ? tuple.dst.u3.ip : tuple.src.u3.ip;
-	अगर (ip != keys->addrs.v4addrs.src) अणु
+	if (ip != keys->addrs.v4addrs.src) {
 		keys->addrs.v4addrs.src = ip;
 		upd = true;
-	पूर्ण
+	}
 	ip = rev ? tuple.src.u3.ip : tuple.dst.u3.ip;
-	अगर (ip != keys->addrs.v4addrs.dst) अणु
+	if (ip != keys->addrs.v4addrs.dst) {
 		keys->addrs.v4addrs.dst = ip;
 		upd = true;
-	पूर्ण
+	}
 
-	अगर (keys->ports.ports) अणु
+	if (keys->ports.ports) {
 		__be16 port;
 
 		port = rev ? tuple.dst.u.all : tuple.src.u.all;
-		अगर (port != keys->ports.src) अणु
+		if (port != keys->ports.src) {
 			keys->ports.src = port;
 			upd = true;
-		पूर्ण
+		}
 		port = rev ? tuple.src.u.all : tuple.dst.u.all;
-		अगर (port != keys->ports.dst) अणु
+		if (port != keys->ports.dst) {
 			port = keys->ports.dst;
 			upd = true;
-		पूर्ण
-	पूर्ण
-	वापस upd;
-#अन्यथा
-	वापस false;
-#पूर्ण_अगर
-पूर्ण
+		}
+	}
+	return upd;
+#else
+	return false;
+#endif
+}
 
-/* Cake has several subtle multiple bit settings. In these हालs you
+/* Cake has several subtle multiple bit settings. In these cases you
  *  would be matching triple isolate mode as well.
  */
 
-अटल bool cake_dsrc(पूर्णांक flow_mode)
-अणु
-	वापस (flow_mode & CAKE_FLOW_DUAL_SRC) == CAKE_FLOW_DUAL_SRC;
-पूर्ण
+static bool cake_dsrc(int flow_mode)
+{
+	return (flow_mode & CAKE_FLOW_DUAL_SRC) == CAKE_FLOW_DUAL_SRC;
+}
 
-अटल bool cake_ddst(पूर्णांक flow_mode)
-अणु
-	वापस (flow_mode & CAKE_FLOW_DUAL_DST) == CAKE_FLOW_DUAL_DST;
-पूर्ण
+static bool cake_ddst(int flow_mode)
+{
+	return (flow_mode & CAKE_FLOW_DUAL_DST) == CAKE_FLOW_DUAL_DST;
+}
 
-अटल u32 cake_hash(काष्ठा cake_tin_data *q, स्थिर काष्ठा sk_buff *skb,
-		     पूर्णांक flow_mode, u16 flow_override, u16 host_override)
-अणु
+static u32 cake_hash(struct cake_tin_data *q, const struct sk_buff *skb,
+		     int flow_mode, u16 flow_override, u16 host_override)
+{
 	bool hash_flows = (!flow_override && !!(flow_mode & CAKE_FLOW_FLOWS));
 	bool hash_hosts = (!host_override && !!(flow_mode & CAKE_FLOW_HOSTS));
 	bool nat_enabled = !!(flow_mode & CAKE_FLOW_NAT_FLAG);
 	u32 flow_hash = 0, srchost_hash = 0, dsthost_hash = 0;
 	u16 reduced_hash, srchost_idx, dsthost_idx;
-	काष्ठा flow_keys keys, host_keys;
+	struct flow_keys keys, host_keys;
 	bool use_skbhash = skb->l4_hash;
 
-	अगर (unlikely(flow_mode == CAKE_FLOW_NONE))
-		वापस 0;
+	if (unlikely(flow_mode == CAKE_FLOW_NONE))
+		return 0;
 
 	/* If both overrides are set, or we can use the SKB hash and nat mode is
 	 * disabled, we can skip packet dissection entirely. If nat mode is
-	 * enabled there's another check below after करोing the conntrack lookup.
+	 * enabled there's another check below after doing the conntrack lookup.
 	 */
-	अगर ((!hash_flows || (use_skbhash && !nat_enabled)) && !hash_hosts)
-		जाओ skip_hash;
+	if ((!hash_flows || (use_skbhash && !nat_enabled)) && !hash_hosts)
+		goto skip_hash;
 
 	skb_flow_dissect_flow_keys(skb, &keys,
 				   FLOW_DISSECTOR_F_STOP_AT_FLOW_LABEL);
 
-	/* Don't use the SKB hash अगर we change the lookup keys from conntrack */
-	अगर (nat_enabled && cake_update_flowkeys(&keys, skb))
+	/* Don't use the SKB hash if we change the lookup keys from conntrack */
+	if (nat_enabled && cake_update_flowkeys(&keys, skb))
 		use_skbhash = false;
 
-	/* If we can still use the SKB hash and करोn't need the host hash, we can
+	/* If we can still use the SKB hash and don't need the host hash, we can
 	 * skip the rest of the hashing procedure
 	 */
-	अगर (use_skbhash && !hash_hosts)
-		जाओ skip_hash;
+	if (use_skbhash && !hash_hosts)
+		goto skip_hash;
 
 	/* flow_hash_from_keys() sorts the addresses by value, so we have
-	 * to preserve their order in a separate data काष्ठाure to treat
+	 * to preserve their order in a separate data structure to treat
 	 * src and dst host addresses as independently selectable.
 	 */
 	host_keys = keys;
@@ -688,404 +687,404 @@
 	host_keys.keyid.keyid     = 0;
 	host_keys.tags.flow_label = 0;
 
-	चयन (host_keys.control.addr_type) अणु
-	हाल FLOW_DISSECTOR_KEY_IPV4_ADDRS:
+	switch (host_keys.control.addr_type) {
+	case FLOW_DISSECTOR_KEY_IPV4_ADDRS:
 		host_keys.addrs.v4addrs.src = 0;
 		dsthost_hash = flow_hash_from_keys(&host_keys);
 		host_keys.addrs.v4addrs.src = keys.addrs.v4addrs.src;
 		host_keys.addrs.v4addrs.dst = 0;
 		srchost_hash = flow_hash_from_keys(&host_keys);
-		अवरोध;
+		break;
 
-	हाल FLOW_DISSECTOR_KEY_IPV6_ADDRS:
-		स_रखो(&host_keys.addrs.v6addrs.src, 0,
-		       माप(host_keys.addrs.v6addrs.src));
+	case FLOW_DISSECTOR_KEY_IPV6_ADDRS:
+		memset(&host_keys.addrs.v6addrs.src, 0,
+		       sizeof(host_keys.addrs.v6addrs.src));
 		dsthost_hash = flow_hash_from_keys(&host_keys);
 		host_keys.addrs.v6addrs.src = keys.addrs.v6addrs.src;
-		स_रखो(&host_keys.addrs.v6addrs.dst, 0,
-		       माप(host_keys.addrs.v6addrs.dst));
+		memset(&host_keys.addrs.v6addrs.dst, 0,
+		       sizeof(host_keys.addrs.v6addrs.dst));
 		srchost_hash = flow_hash_from_keys(&host_keys);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		dsthost_hash = 0;
 		srchost_hash = 0;
-	पूर्ण
+	}
 
-	/* This *must* be after the above चयन, since as a
+	/* This *must* be after the above switch, since as a
 	 * side-effect it sorts the src and dst addresses.
 	 */
-	अगर (hash_flows && !use_skbhash)
+	if (hash_flows && !use_skbhash)
 		flow_hash = flow_hash_from_keys(&keys);
 
 skip_hash:
-	अगर (flow_override)
+	if (flow_override)
 		flow_hash = flow_override - 1;
-	अन्यथा अगर (use_skbhash)
+	else if (use_skbhash)
 		flow_hash = skb->hash;
-	अगर (host_override) अणु
+	if (host_override) {
 		dsthost_hash = host_override - 1;
 		srchost_hash = host_override - 1;
-	पूर्ण
+	}
 
-	अगर (!(flow_mode & CAKE_FLOW_FLOWS)) अणु
-		अगर (flow_mode & CAKE_FLOW_SRC_IP)
+	if (!(flow_mode & CAKE_FLOW_FLOWS)) {
+		if (flow_mode & CAKE_FLOW_SRC_IP)
 			flow_hash ^= srchost_hash;
 
-		अगर (flow_mode & CAKE_FLOW_DST_IP)
+		if (flow_mode & CAKE_FLOW_DST_IP)
 			flow_hash ^= dsthost_hash;
-	पूर्ण
+	}
 
 	reduced_hash = flow_hash % CAKE_QUEUES;
 
 	/* set-associative hashing */
-	/* fast path अगर no hash collision (direct lookup succeeds) */
-	अगर (likely(q->tags[reduced_hash] == flow_hash &&
-		   q->flows[reduced_hash].set)) अणु
+	/* fast path if no hash collision (direct lookup succeeds) */
+	if (likely(q->tags[reduced_hash] == flow_hash &&
+		   q->flows[reduced_hash].set)) {
 		q->way_directs++;
-	पूर्ण अन्यथा अणु
+	} else {
 		u32 inner_hash = reduced_hash % CAKE_SET_WAYS;
 		u32 outer_hash = reduced_hash - inner_hash;
 		bool allocate_src = false;
 		bool allocate_dst = false;
 		u32 i, k;
 
-		/* check अगर any active queue in the set is reserved क्रम
+		/* check if any active queue in the set is reserved for
 		 * this flow.
 		 */
-		क्रम (i = 0, k = inner_hash; i < CAKE_SET_WAYS;
-		     i++, k = (k + 1) % CAKE_SET_WAYS) अणु
-			अगर (q->tags[outer_hash + k] == flow_hash) अणु
-				अगर (i)
+		for (i = 0, k = inner_hash; i < CAKE_SET_WAYS;
+		     i++, k = (k + 1) % CAKE_SET_WAYS) {
+			if (q->tags[outer_hash + k] == flow_hash) {
+				if (i)
 					q->way_hits++;
 
-				अगर (!q->flows[outer_hash + k].set) अणु
+				if (!q->flows[outer_hash + k].set) {
 					/* need to increment host refcnts */
 					allocate_src = cake_dsrc(flow_mode);
 					allocate_dst = cake_ddst(flow_mode);
-				पूर्ण
+				}
 
-				जाओ found;
-			पूर्ण
-		पूर्ण
+				goto found;
+			}
+		}
 
-		/* no queue is reserved क्रम this flow, look क्रम an
+		/* no queue is reserved for this flow, look for an
 		 * empty one.
 		 */
-		क्रम (i = 0; i < CAKE_SET_WAYS;
-			 i++, k = (k + 1) % CAKE_SET_WAYS) अणु
-			अगर (!q->flows[outer_hash + k].set) अणु
+		for (i = 0; i < CAKE_SET_WAYS;
+			 i++, k = (k + 1) % CAKE_SET_WAYS) {
+			if (!q->flows[outer_hash + k].set) {
 				q->way_misses++;
 				allocate_src = cake_dsrc(flow_mode);
 				allocate_dst = cake_ddst(flow_mode);
-				जाओ found;
-			पूर्ण
-		पूर्ण
+				goto found;
+			}
+		}
 
-		/* With no empty queues, शेष to the original
+		/* With no empty queues, default to the original
 		 * queue, accept the collision, update the host tags.
 		 */
 		q->way_collisions++;
-		अगर (q->flows[outer_hash + k].set == CAKE_SET_BULK) अणु
+		if (q->flows[outer_hash + k].set == CAKE_SET_BULK) {
 			q->hosts[q->flows[reduced_hash].srchost].srchost_bulk_flow_count--;
 			q->hosts[q->flows[reduced_hash].dsthost].dsthost_bulk_flow_count--;
-		पूर्ण
+		}
 		allocate_src = cake_dsrc(flow_mode);
 		allocate_dst = cake_ddst(flow_mode);
 found:
-		/* reserve queue क्रम future packets in same flow */
+		/* reserve queue for future packets in same flow */
 		reduced_hash = outer_hash + k;
 		q->tags[reduced_hash] = flow_hash;
 
-		अगर (allocate_src) अणु
+		if (allocate_src) {
 			srchost_idx = srchost_hash % CAKE_QUEUES;
 			inner_hash = srchost_idx % CAKE_SET_WAYS;
 			outer_hash = srchost_idx - inner_hash;
-			क्रम (i = 0, k = inner_hash; i < CAKE_SET_WAYS;
-				i++, k = (k + 1) % CAKE_SET_WAYS) अणु
-				अगर (q->hosts[outer_hash + k].srchost_tag ==
+			for (i = 0, k = inner_hash; i < CAKE_SET_WAYS;
+				i++, k = (k + 1) % CAKE_SET_WAYS) {
+				if (q->hosts[outer_hash + k].srchost_tag ==
 				    srchost_hash)
-					जाओ found_src;
-			पूर्ण
-			क्रम (i = 0; i < CAKE_SET_WAYS;
-				i++, k = (k + 1) % CAKE_SET_WAYS) अणु
-				अगर (!q->hosts[outer_hash + k].srchost_bulk_flow_count)
-					अवरोध;
-			पूर्ण
+					goto found_src;
+			}
+			for (i = 0; i < CAKE_SET_WAYS;
+				i++, k = (k + 1) % CAKE_SET_WAYS) {
+				if (!q->hosts[outer_hash + k].srchost_bulk_flow_count)
+					break;
+			}
 			q->hosts[outer_hash + k].srchost_tag = srchost_hash;
 found_src:
 			srchost_idx = outer_hash + k;
-			अगर (q->flows[reduced_hash].set == CAKE_SET_BULK)
+			if (q->flows[reduced_hash].set == CAKE_SET_BULK)
 				q->hosts[srchost_idx].srchost_bulk_flow_count++;
 			q->flows[reduced_hash].srchost = srchost_idx;
-		पूर्ण
+		}
 
-		अगर (allocate_dst) अणु
+		if (allocate_dst) {
 			dsthost_idx = dsthost_hash % CAKE_QUEUES;
 			inner_hash = dsthost_idx % CAKE_SET_WAYS;
 			outer_hash = dsthost_idx - inner_hash;
-			क्रम (i = 0, k = inner_hash; i < CAKE_SET_WAYS;
-			     i++, k = (k + 1) % CAKE_SET_WAYS) अणु
-				अगर (q->hosts[outer_hash + k].dsthost_tag ==
+			for (i = 0, k = inner_hash; i < CAKE_SET_WAYS;
+			     i++, k = (k + 1) % CAKE_SET_WAYS) {
+				if (q->hosts[outer_hash + k].dsthost_tag ==
 				    dsthost_hash)
-					जाओ found_dst;
-			पूर्ण
-			क्रम (i = 0; i < CAKE_SET_WAYS;
-			     i++, k = (k + 1) % CAKE_SET_WAYS) अणु
-				अगर (!q->hosts[outer_hash + k].dsthost_bulk_flow_count)
-					अवरोध;
-			पूर्ण
+					goto found_dst;
+			}
+			for (i = 0; i < CAKE_SET_WAYS;
+			     i++, k = (k + 1) % CAKE_SET_WAYS) {
+				if (!q->hosts[outer_hash + k].dsthost_bulk_flow_count)
+					break;
+			}
 			q->hosts[outer_hash + k].dsthost_tag = dsthost_hash;
 found_dst:
 			dsthost_idx = outer_hash + k;
-			अगर (q->flows[reduced_hash].set == CAKE_SET_BULK)
+			if (q->flows[reduced_hash].set == CAKE_SET_BULK)
 				q->hosts[dsthost_idx].dsthost_bulk_flow_count++;
 			q->flows[reduced_hash].dsthost = dsthost_idx;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस reduced_hash;
-पूर्ण
+	return reduced_hash;
+}
 
-/* helper functions : might be changed when/अगर skb use a standard list_head */
-/* हटाओ one skb from head of slot queue */
+/* helper functions : might be changed when/if skb use a standard list_head */
+/* remove one skb from head of slot queue */
 
-अटल काष्ठा sk_buff *dequeue_head(काष्ठा cake_flow *flow)
-अणु
-	काष्ठा sk_buff *skb = flow->head;
+static struct sk_buff *dequeue_head(struct cake_flow *flow)
+{
+	struct sk_buff *skb = flow->head;
 
-	अगर (skb) अणु
+	if (skb) {
 		flow->head = skb->next;
 		skb_mark_not_on_list(skb);
-	पूर्ण
+	}
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
 /* add skb to flow queue (tail add) */
 
-अटल व्योम flow_queue_add(काष्ठा cake_flow *flow, काष्ठा sk_buff *skb)
-अणु
-	अगर (!flow->head)
+static void flow_queue_add(struct cake_flow *flow, struct sk_buff *skb)
+{
+	if (!flow->head)
 		flow->head = skb;
-	अन्यथा
+	else
 		flow->tail->next = skb;
 	flow->tail = skb;
-	skb->next = शून्य;
-पूर्ण
+	skb->next = NULL;
+}
 
-अटल काष्ठा iphdr *cake_get_iphdr(स्थिर काष्ठा sk_buff *skb,
-				    काष्ठा ipv6hdr *buf)
-अणु
-	अचिन्हित पूर्णांक offset = skb_network_offset(skb);
-	काष्ठा iphdr *iph;
+static struct iphdr *cake_get_iphdr(const struct sk_buff *skb,
+				    struct ipv6hdr *buf)
+{
+	unsigned int offset = skb_network_offset(skb);
+	struct iphdr *iph;
 
-	iph = skb_header_poपूर्णांकer(skb, offset, माप(काष्ठा iphdr), buf);
+	iph = skb_header_pointer(skb, offset, sizeof(struct iphdr), buf);
 
-	अगर (!iph)
-		वापस शून्य;
+	if (!iph)
+		return NULL;
 
-	अगर (iph->version == 4 && iph->protocol == IPPROTO_IPV6)
-		वापस skb_header_poपूर्णांकer(skb, offset + iph->ihl * 4,
-					  माप(काष्ठा ipv6hdr), buf);
+	if (iph->version == 4 && iph->protocol == IPPROTO_IPV6)
+		return skb_header_pointer(skb, offset + iph->ihl * 4,
+					  sizeof(struct ipv6hdr), buf);
 
-	अन्यथा अगर (iph->version == 4)
-		वापस iph;
+	else if (iph->version == 4)
+		return iph;
 
-	अन्यथा अगर (iph->version == 6)
-		वापस skb_header_poपूर्णांकer(skb, offset, माप(काष्ठा ipv6hdr),
+	else if (iph->version == 6)
+		return skb_header_pointer(skb, offset, sizeof(struct ipv6hdr),
 					  buf);
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल काष्ठा tcphdr *cake_get_tcphdr(स्थिर काष्ठा sk_buff *skb,
-				      व्योम *buf, अचिन्हित पूर्णांक bufsize)
-अणु
-	अचिन्हित पूर्णांक offset = skb_network_offset(skb);
-	स्थिर काष्ठा ipv6hdr *ipv6h;
-	स्थिर काष्ठा tcphdr *tcph;
-	स्थिर काष्ठा iphdr *iph;
-	काष्ठा ipv6hdr _ipv6h;
-	काष्ठा tcphdr _tcph;
+static struct tcphdr *cake_get_tcphdr(const struct sk_buff *skb,
+				      void *buf, unsigned int bufsize)
+{
+	unsigned int offset = skb_network_offset(skb);
+	const struct ipv6hdr *ipv6h;
+	const struct tcphdr *tcph;
+	const struct iphdr *iph;
+	struct ipv6hdr _ipv6h;
+	struct tcphdr _tcph;
 
-	ipv6h = skb_header_poपूर्णांकer(skb, offset, माप(_ipv6h), &_ipv6h);
+	ipv6h = skb_header_pointer(skb, offset, sizeof(_ipv6h), &_ipv6h);
 
-	अगर (!ipv6h)
-		वापस शून्य;
+	if (!ipv6h)
+		return NULL;
 
-	अगर (ipv6h->version == 4) अणु
-		iph = (काष्ठा iphdr *)ipv6h;
+	if (ipv6h->version == 4) {
+		iph = (struct iphdr *)ipv6h;
 		offset += iph->ihl * 4;
 
-		/* special-हाल 6in4 tunnelling, as that is a common way to get
+		/* special-case 6in4 tunnelling, as that is a common way to get
 		 * v6 connectivity in the home
 		 */
-		अगर (iph->protocol == IPPROTO_IPV6) अणु
-			ipv6h = skb_header_poपूर्णांकer(skb, offset,
-						   माप(_ipv6h), &_ipv6h);
+		if (iph->protocol == IPPROTO_IPV6) {
+			ipv6h = skb_header_pointer(skb, offset,
+						   sizeof(_ipv6h), &_ipv6h);
 
-			अगर (!ipv6h || ipv6h->nexthdr != IPPROTO_TCP)
-				वापस शून्य;
+			if (!ipv6h || ipv6h->nexthdr != IPPROTO_TCP)
+				return NULL;
 
-			offset += माप(काष्ठा ipv6hdr);
+			offset += sizeof(struct ipv6hdr);
 
-		पूर्ण अन्यथा अगर (iph->protocol != IPPROTO_TCP) अणु
-			वापस शून्य;
-		पूर्ण
+		} else if (iph->protocol != IPPROTO_TCP) {
+			return NULL;
+		}
 
-	पूर्ण अन्यथा अगर (ipv6h->version == 6) अणु
-		अगर (ipv6h->nexthdr != IPPROTO_TCP)
-			वापस शून्य;
+	} else if (ipv6h->version == 6) {
+		if (ipv6h->nexthdr != IPPROTO_TCP)
+			return NULL;
 
-		offset += माप(काष्ठा ipv6hdr);
-	पूर्ण अन्यथा अणु
-		वापस शून्य;
-	पूर्ण
+		offset += sizeof(struct ipv6hdr);
+	} else {
+		return NULL;
+	}
 
-	tcph = skb_header_poपूर्णांकer(skb, offset, माप(_tcph), &_tcph);
-	अगर (!tcph || tcph->करोff < 5)
-		वापस शून्य;
+	tcph = skb_header_pointer(skb, offset, sizeof(_tcph), &_tcph);
+	if (!tcph || tcph->doff < 5)
+		return NULL;
 
-	वापस skb_header_poपूर्णांकer(skb, offset,
+	return skb_header_pointer(skb, offset,
 				  min(__tcp_hdrlen(tcph), bufsize), buf);
-पूर्ण
+}
 
-अटल स्थिर व्योम *cake_get_tcpopt(स्थिर काष्ठा tcphdr *tcph,
-				   पूर्णांक code, पूर्णांक *oplen)
-अणु
+static const void *cake_get_tcpopt(const struct tcphdr *tcph,
+				   int code, int *oplen)
+{
 	/* inspired by tcp_parse_options in tcp_input.c */
-	पूर्णांक length = __tcp_hdrlen(tcph) - माप(काष्ठा tcphdr);
-	स्थिर u8 *ptr = (स्थिर u8 *)(tcph + 1);
+	int length = __tcp_hdrlen(tcph) - sizeof(struct tcphdr);
+	const u8 *ptr = (const u8 *)(tcph + 1);
 
-	जबतक (length > 0) अणु
-		पूर्णांक opcode = *ptr++;
-		पूर्णांक opsize;
+	while (length > 0) {
+		int opcode = *ptr++;
+		int opsize;
 
-		अगर (opcode == TCPOPT_EOL)
-			अवरोध;
-		अगर (opcode == TCPOPT_NOP) अणु
+		if (opcode == TCPOPT_EOL)
+			break;
+		if (opcode == TCPOPT_NOP) {
 			length--;
-			जारी;
-		पूर्ण
-		अगर (length < 2)
-			अवरोध;
+			continue;
+		}
+		if (length < 2)
+			break;
 		opsize = *ptr++;
-		अगर (opsize < 2 || opsize > length)
-			अवरोध;
+		if (opsize < 2 || opsize > length)
+			break;
 
-		अगर (opcode == code) अणु
+		if (opcode == code) {
 			*oplen = opsize;
-			वापस ptr;
-		पूर्ण
+			return ptr;
+		}
 
 		ptr += opsize - 2;
 		length -= opsize;
-	पूर्ण
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-/* Compare two SACK sequences. A sequence is considered greater अगर it SACKs more
- * bytes than the other. In the हाल where both sequences ACKs bytes that the
- * other करोesn't, A is considered greater. DSACKs in A also makes A be
+/* Compare two SACK sequences. A sequence is considered greater if it SACKs more
+ * bytes than the other. In the case where both sequences ACKs bytes that the
+ * other doesn't, A is considered greater. DSACKs in A also makes A be
  * considered greater.
  *
- * @वापस -1, 0 or 1 as normal compare functions
+ * @return -1, 0 or 1 as normal compare functions
  */
-अटल पूर्णांक cake_tcph_sack_compare(स्थिर काष्ठा tcphdr *tcph_a,
-				  स्थिर काष्ठा tcphdr *tcph_b)
-अणु
-	स्थिर काष्ठा tcp_sack_block_wire *sack_a, *sack_b;
+static int cake_tcph_sack_compare(const struct tcphdr *tcph_a,
+				  const struct tcphdr *tcph_b)
+{
+	const struct tcp_sack_block_wire *sack_a, *sack_b;
 	u32 ack_seq_a = ntohl(tcph_a->ack_seq);
 	u32 bytes_a = 0, bytes_b = 0;
-	पूर्णांक oplen_a, oplen_b;
+	int oplen_a, oplen_b;
 	bool first = true;
 
 	sack_a = cake_get_tcpopt(tcph_a, TCPOPT_SACK, &oplen_a);
 	sack_b = cake_get_tcpopt(tcph_b, TCPOPT_SACK, &oplen_b);
 
-	/* poपूर्णांकers poपूर्णांक to option contents */
+	/* pointers point to option contents */
 	oplen_a -= TCPOLEN_SACK_BASE;
 	oplen_b -= TCPOLEN_SACK_BASE;
 
-	अगर (sack_a && oplen_a >= माप(*sack_a) &&
-	    (!sack_b || oplen_b < माप(*sack_b)))
-		वापस -1;
-	अन्यथा अगर (sack_b && oplen_b >= माप(*sack_b) &&
-		 (!sack_a || oplen_a < माप(*sack_a)))
-		वापस 1;
-	अन्यथा अगर ((!sack_a || oplen_a < माप(*sack_a)) &&
-		 (!sack_b || oplen_b < माप(*sack_b)))
-		वापस 0;
+	if (sack_a && oplen_a >= sizeof(*sack_a) &&
+	    (!sack_b || oplen_b < sizeof(*sack_b)))
+		return -1;
+	else if (sack_b && oplen_b >= sizeof(*sack_b) &&
+		 (!sack_a || oplen_a < sizeof(*sack_a)))
+		return 1;
+	else if ((!sack_a || oplen_a < sizeof(*sack_a)) &&
+		 (!sack_b || oplen_b < sizeof(*sack_b)))
+		return 0;
 
-	जबतक (oplen_a >= माप(*sack_a)) अणु
-		स्थिर काष्ठा tcp_sack_block_wire *sack_पंचांगp = sack_b;
+	while (oplen_a >= sizeof(*sack_a)) {
+		const struct tcp_sack_block_wire *sack_tmp = sack_b;
 		u32 start_a = get_unaligned_be32(&sack_a->start_seq);
 		u32 end_a = get_unaligned_be32(&sack_a->end_seq);
-		पूर्णांक oplen_पंचांगp = oplen_b;
+		int oplen_tmp = oplen_b;
 		bool found = false;
 
 		/* DSACK; always considered greater to prevent dropping */
-		अगर (beक्रमe(start_a, ack_seq_a))
-			वापस -1;
+		if (before(start_a, ack_seq_a))
+			return -1;
 
 		bytes_a += end_a - start_a;
 
-		जबतक (oplen_पंचांगp >= माप(*sack_पंचांगp)) अणु
-			u32 start_b = get_unaligned_be32(&sack_पंचांगp->start_seq);
-			u32 end_b = get_unaligned_be32(&sack_पंचांगp->end_seq);
+		while (oplen_tmp >= sizeof(*sack_tmp)) {
+			u32 start_b = get_unaligned_be32(&sack_tmp->start_seq);
+			u32 end_b = get_unaligned_be32(&sack_tmp->end_seq);
 
-			/* first समय through we count the total size */
-			अगर (first)
+			/* first time through we count the total size */
+			if (first)
 				bytes_b += end_b - start_b;
 
-			अगर (!after(start_b, start_a) && !beक्रमe(end_b, end_a)) अणु
+			if (!after(start_b, start_a) && !before(end_b, end_a)) {
 				found = true;
-				अगर (!first)
-					अवरोध;
-			पूर्ण
-			oplen_पंचांगp -= माप(*sack_पंचांगp);
-			sack_पंचांगp++;
-		पूर्ण
+				if (!first)
+					break;
+			}
+			oplen_tmp -= sizeof(*sack_tmp);
+			sack_tmp++;
+		}
 
-		अगर (!found)
-			वापस -1;
+		if (!found)
+			return -1;
 
-		oplen_a -= माप(*sack_a);
+		oplen_a -= sizeof(*sack_a);
 		sack_a++;
 		first = false;
-	पूर्ण
+	}
 
 	/* If we made it this far, all ranges SACKed by A are covered by B, so
 	 * either the SACKs are equal, or B SACKs more bytes.
 	 */
-	वापस bytes_b > bytes_a ? 1 : 0;
-पूर्ण
+	return bytes_b > bytes_a ? 1 : 0;
+}
 
-अटल व्योम cake_tcph_get_tstamp(स्थिर काष्ठा tcphdr *tcph,
+static void cake_tcph_get_tstamp(const struct tcphdr *tcph,
 				 u32 *tsval, u32 *tsecr)
-अणु
-	स्थिर u8 *ptr;
-	पूर्णांक opsize;
+{
+	const u8 *ptr;
+	int opsize;
 
 	ptr = cake_get_tcpopt(tcph, TCPOPT_TIMESTAMP, &opsize);
 
-	अगर (ptr && opsize == TCPOLEN_TIMESTAMP) अणु
+	if (ptr && opsize == TCPOLEN_TIMESTAMP) {
 		*tsval = get_unaligned_be32(ptr);
 		*tsecr = get_unaligned_be32(ptr + 4);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल bool cake_tcph_may_drop(स्थिर काष्ठा tcphdr *tcph,
+static bool cake_tcph_may_drop(const struct tcphdr *tcph,
 			       u32 tstamp_new, u32 tsecr_new)
-अणु
+{
 	/* inspired by tcp_parse_options in tcp_input.c */
-	पूर्णांक length = __tcp_hdrlen(tcph) - माप(काष्ठा tcphdr);
-	स्थिर u8 *ptr = (स्थिर u8 *)(tcph + 1);
+	int length = __tcp_hdrlen(tcph) - sizeof(struct tcphdr);
+	const u8 *ptr = (const u8 *)(tcph + 1);
 	u32 tstamp, tsecr;
 
-	/* 3 reserved flags must be unset to aव्योम future अवरोधage
+	/* 3 reserved flags must be unset to avoid future breakage
 	 * ACK must be set
 	 * ECE/CWR are handled separately
 	 * All other flags URG/PSH/RST/SYN/FIN must be unset
@@ -1093,431 +1092,431 @@ found_dst:
 	 * 0x00C00000 = CWR/ECE (handled separately)
 	 * 0x0F3F0000 = 0x0FFF0000 & ~0x00C00000
 	 */
-	अगर (((tcp_flag_word(tcph) &
+	if (((tcp_flag_word(tcph) &
 	      cpu_to_be32(0x0F3F0000)) != TCP_FLAG_ACK))
-		वापस false;
+		return false;
 
-	जबतक (length > 0) अणु
-		पूर्णांक opcode = *ptr++;
-		पूर्णांक opsize;
+	while (length > 0) {
+		int opcode = *ptr++;
+		int opsize;
 
-		अगर (opcode == TCPOPT_EOL)
-			अवरोध;
-		अगर (opcode == TCPOPT_NOP) अणु
+		if (opcode == TCPOPT_EOL)
+			break;
+		if (opcode == TCPOPT_NOP) {
 			length--;
-			जारी;
-		पूर्ण
-		अगर (length < 2)
-			अवरोध;
+			continue;
+		}
+		if (length < 2)
+			break;
 		opsize = *ptr++;
-		अगर (opsize < 2 || opsize > length)
-			अवरोध;
+		if (opsize < 2 || opsize > length)
+			break;
 
-		चयन (opcode) अणु
-		हाल TCPOPT_MD5SIG: /* करोesn't influence state */
-			अवरोध;
+		switch (opcode) {
+		case TCPOPT_MD5SIG: /* doesn't influence state */
+			break;
 
-		हाल TCPOPT_SACK: /* stricter checking perक्रमmed later */
-			अगर (opsize % 8 != 2)
-				वापस false;
-			अवरोध;
+		case TCPOPT_SACK: /* stricter checking performed later */
+			if (opsize % 8 != 2)
+				return false;
+			break;
 
-		हाल TCPOPT_TIMESTAMP:
-			/* only drop बारtamps lower than new */
-			अगर (opsize != TCPOLEN_TIMESTAMP)
-				वापस false;
+		case TCPOPT_TIMESTAMP:
+			/* only drop timestamps lower than new */
+			if (opsize != TCPOLEN_TIMESTAMP)
+				return false;
 			tstamp = get_unaligned_be32(ptr);
 			tsecr = get_unaligned_be32(ptr + 4);
-			अगर (after(tstamp, tstamp_new) ||
+			if (after(tstamp, tstamp_new) ||
 			    after(tsecr, tsecr_new))
-				वापस false;
-			अवरोध;
+				return false;
+			break;
 
-		हाल TCPOPT_MSS:  /* these should only be set on SYN */
-		हाल TCPOPT_WINDOW:
-		हाल TCPOPT_SACK_PERM:
-		हाल TCPOPT_FASTOPEN:
-		हाल TCPOPT_EXP:
-		शेष: /* करोn't drop अगर any unknown options are present */
-			वापस false;
-		पूर्ण
+		case TCPOPT_MSS:  /* these should only be set on SYN */
+		case TCPOPT_WINDOW:
+		case TCPOPT_SACK_PERM:
+		case TCPOPT_FASTOPEN:
+		case TCPOPT_EXP:
+		default: /* don't drop if any unknown options are present */
+			return false;
+		}
 
 		ptr += opsize - 2;
 		length -= opsize;
-	पूर्ण
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल काष्ठा sk_buff *cake_ack_filter(काष्ठा cake_sched_data *q,
-				       काष्ठा cake_flow *flow)
-अणु
+static struct sk_buff *cake_ack_filter(struct cake_sched_data *q,
+				       struct cake_flow *flow)
+{
 	bool aggressive = q->ack_filter == CAKE_ACK_AGGRESSIVE;
-	काष्ठा sk_buff *elig_ack = शून्य, *elig_ack_prev = शून्य;
-	काष्ठा sk_buff *skb_check, *skb_prev = शून्य;
-	स्थिर काष्ठा ipv6hdr *ipv6h, *ipv6h_check;
-	अचिन्हित अक्षर _tcph[64], _tcph_check[64];
-	स्थिर काष्ठा tcphdr *tcph, *tcph_check;
-	स्थिर काष्ठा iphdr *iph, *iph_check;
-	काष्ठा ipv6hdr _iph, _iph_check;
-	स्थिर काष्ठा sk_buff *skb;
-	पूर्णांक seglen, num_found = 0;
+	struct sk_buff *elig_ack = NULL, *elig_ack_prev = NULL;
+	struct sk_buff *skb_check, *skb_prev = NULL;
+	const struct ipv6hdr *ipv6h, *ipv6h_check;
+	unsigned char _tcph[64], _tcph_check[64];
+	const struct tcphdr *tcph, *tcph_check;
+	const struct iphdr *iph, *iph_check;
+	struct ipv6hdr _iph, _iph_check;
+	const struct sk_buff *skb;
+	int seglen, num_found = 0;
 	u32 tstamp = 0, tsecr = 0;
 	__be32 elig_flags = 0;
-	पूर्णांक sack_comp;
+	int sack_comp;
 
 	/* no other possible ACKs to filter */
-	अगर (flow->head == flow->tail)
-		वापस शून्य;
+	if (flow->head == flow->tail)
+		return NULL;
 
 	skb = flow->tail;
-	tcph = cake_get_tcphdr(skb, _tcph, माप(_tcph));
+	tcph = cake_get_tcphdr(skb, _tcph, sizeof(_tcph));
 	iph = cake_get_iphdr(skb, &_iph);
-	अगर (!tcph)
-		वापस शून्य;
+	if (!tcph)
+		return NULL;
 
 	cake_tcph_get_tstamp(tcph, &tstamp, &tsecr);
 
 	/* the 'triggering' packet need only have the ACK flag set.
 	 * also check that SYN is not set, as there won't be any previous ACKs.
 	 */
-	अगर ((tcp_flag_word(tcph) &
+	if ((tcp_flag_word(tcph) &
 	     (TCP_FLAG_ACK | TCP_FLAG_SYN)) != TCP_FLAG_ACK)
-		वापस शून्य;
+		return NULL;
 
-	/* the 'triggering' ACK is at the tail of the queue, we have alपढ़ोy
-	 * वापसed अगर it is the only packet in the flow. loop through the rest
-	 * of the queue looking क्रम pure ACKs with the same 5-tuple as the
+	/* the 'triggering' ACK is at the tail of the queue, we have already
+	 * returned if it is the only packet in the flow. loop through the rest
+	 * of the queue looking for pure ACKs with the same 5-tuple as the
 	 * triggering one.
 	 */
-	क्रम (skb_check = flow->head;
+	for (skb_check = flow->head;
 	     skb_check && skb_check != skb;
-	     skb_prev = skb_check, skb_check = skb_check->next) अणु
+	     skb_prev = skb_check, skb_check = skb_check->next) {
 		iph_check = cake_get_iphdr(skb_check, &_iph_check);
 		tcph_check = cake_get_tcphdr(skb_check, &_tcph_check,
-					     माप(_tcph_check));
+					     sizeof(_tcph_check));
 
 		/* only TCP packets with matching 5-tuple are eligible, and only
 		 * drop safe headers
 		 */
-		अगर (!tcph_check || iph->version != iph_check->version ||
+		if (!tcph_check || iph->version != iph_check->version ||
 		    tcph_check->source != tcph->source ||
 		    tcph_check->dest != tcph->dest)
-			जारी;
+			continue;
 
-		अगर (iph_check->version == 4) अणु
-			अगर (iph_check->saddr != iph->saddr ||
+		if (iph_check->version == 4) {
+			if (iph_check->saddr != iph->saddr ||
 			    iph_check->daddr != iph->daddr)
-				जारी;
+				continue;
 
 			seglen = ntohs(iph_check->tot_len) -
 				       (4 * iph_check->ihl);
-		पूर्ण अन्यथा अगर (iph_check->version == 6) अणु
-			ipv6h = (काष्ठा ipv6hdr *)iph;
-			ipv6h_check = (काष्ठा ipv6hdr *)iph_check;
+		} else if (iph_check->version == 6) {
+			ipv6h = (struct ipv6hdr *)iph;
+			ipv6h_check = (struct ipv6hdr *)iph_check;
 
-			अगर (ipv6_addr_cmp(&ipv6h_check->saddr, &ipv6h->saddr) ||
+			if (ipv6_addr_cmp(&ipv6h_check->saddr, &ipv6h->saddr) ||
 			    ipv6_addr_cmp(&ipv6h_check->daddr, &ipv6h->daddr))
-				जारी;
+				continue;
 
 			seglen = ntohs(ipv6h_check->payload_len);
-		पूर्ण अन्यथा अणु
+		} else {
 			WARN_ON(1);  /* shouldn't happen */
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* If the ECE/CWR flags changed from the previous eligible
-		 * packet in the same flow, we should no दीर्घer be dropping that
-		 * previous packet as this would lose inक्रमmation.
+		 * packet in the same flow, we should no longer be dropping that
+		 * previous packet as this would lose information.
 		 */
-		अगर (elig_ack && (tcp_flag_word(tcph_check) &
-				 (TCP_FLAG_ECE | TCP_FLAG_CWR)) != elig_flags) अणु
-			elig_ack = शून्य;
-			elig_ack_prev = शून्य;
+		if (elig_ack && (tcp_flag_word(tcph_check) &
+				 (TCP_FLAG_ECE | TCP_FLAG_CWR)) != elig_flags) {
+			elig_ack = NULL;
+			elig_ack_prev = NULL;
 			num_found--;
-		पूर्ण
+		}
 
-		/* Check TCP options and flags, करोn't drop ACKs with segment
-		 * data, and करोn't drop ACKs with a higher cumulative ACK
+		/* Check TCP options and flags, don't drop ACKs with segment
+		 * data, and don't drop ACKs with a higher cumulative ACK
 		 * counter than the triggering packet. Check ACK seqno here to
-		 * aव्योम parsing SACK options of packets we are going to exclude
+		 * avoid parsing SACK options of packets we are going to exclude
 		 * anyway.
 		 */
-		अगर (!cake_tcph_may_drop(tcph_check, tstamp, tsecr) ||
+		if (!cake_tcph_may_drop(tcph_check, tstamp, tsecr) ||
 		    (seglen - __tcp_hdrlen(tcph_check)) != 0 ||
 		    after(ntohl(tcph_check->ack_seq), ntohl(tcph->ack_seq)))
-			जारी;
+			continue;
 
 		/* Check SACK options. The triggering packet must SACK more data
 		 * than the ACK under consideration, or SACK the same range but
 		 * have a larger cumulative ACK counter. The latter is a
-		 * pathological हाल, but is contained in the following check
+		 * pathological case, but is contained in the following check
 		 * anyway, just to be safe.
 		 */
 		sack_comp = cake_tcph_sack_compare(tcph_check, tcph);
 
-		अगर (sack_comp < 0 ||
+		if (sack_comp < 0 ||
 		    (ntohl(tcph_check->ack_seq) == ntohl(tcph->ack_seq) &&
 		     sack_comp == 0))
-			जारी;
+			continue;
 
-		/* At this poपूर्णांक we have found an eligible pure ACK to drop; अगर
-		 * we are in aggressive mode, we are करोne. Otherwise, keep
+		/* At this point we have found an eligible pure ACK to drop; if
+		 * we are in aggressive mode, we are done. Otherwise, keep
 		 * searching unless this is the second eligible ACK we
 		 * found.
 		 *
-		 * Since we want to drop ACK बंदst to the head of the queue,
-		 * save the first eligible ACK we find, even अगर we need to loop
+		 * Since we want to drop ACK closest to the head of the queue,
+		 * save the first eligible ACK we find, even if we need to loop
 		 * again.
 		 */
-		अगर (!elig_ack) अणु
+		if (!elig_ack) {
 			elig_ack = skb_check;
 			elig_ack_prev = skb_prev;
 			elig_flags = (tcp_flag_word(tcph_check)
 				      & (TCP_FLAG_ECE | TCP_FLAG_CWR));
-		पूर्ण
+		}
 
-		अगर (num_found++ > 0)
-			जाओ found;
-	पूर्ण
+		if (num_found++ > 0)
+			goto found;
+	}
 
 	/* We made it through the queue without finding two eligible ACKs . If
-	 * we found a single eligible ACK we can drop it in aggressive mode अगर
-	 * we can guarantee that this करोes not पूर्णांकerfere with ECN flag
-	 * inक्रमmation. We ensure this by dropping it only अगर the enqueued
+	 * we found a single eligible ACK we can drop it in aggressive mode if
+	 * we can guarantee that this does not interfere with ECN flag
+	 * information. We ensure this by dropping it only if the enqueued
 	 * packet is consecutive with the eligible ACK, and their flags match.
 	 */
-	अगर (elig_ack && aggressive && elig_ack->next == skb &&
+	if (elig_ack && aggressive && elig_ack->next == skb &&
 	    (elig_flags == (tcp_flag_word(tcph) &
 			    (TCP_FLAG_ECE | TCP_FLAG_CWR))))
-		जाओ found;
+		goto found;
 
-	वापस शून्य;
+	return NULL;
 
 found:
-	अगर (elig_ack_prev)
+	if (elig_ack_prev)
 		elig_ack_prev->next = elig_ack->next;
-	अन्यथा
+	else
 		flow->head = elig_ack->next;
 
 	skb_mark_not_on_list(elig_ack);
 
-	वापस elig_ack;
-पूर्ण
+	return elig_ack;
+}
 
-अटल u64 cake_ewma(u64 avg, u64 sample, u32 shअगरt)
-अणु
-	avg -= avg >> shअगरt;
-	avg += sample >> shअगरt;
-	वापस avg;
-पूर्ण
+static u64 cake_ewma(u64 avg, u64 sample, u32 shift)
+{
+	avg -= avg >> shift;
+	avg += sample >> shift;
+	return avg;
+}
 
-अटल u32 cake_calc_overhead(काष्ठा cake_sched_data *q, u32 len, u32 off)
-अणु
-	अगर (q->rate_flags & CAKE_FLAG_OVERHEAD)
+static u32 cake_calc_overhead(struct cake_sched_data *q, u32 len, u32 off)
+{
+	if (q->rate_flags & CAKE_FLAG_OVERHEAD)
 		len -= off;
 
-	अगर (q->max_netlen < len)
+	if (q->max_netlen < len)
 		q->max_netlen = len;
-	अगर (q->min_netlen > len)
+	if (q->min_netlen > len)
 		q->min_netlen = len;
 
 	len += q->rate_overhead;
 
-	अगर (len < q->rate_mpu)
+	if (len < q->rate_mpu)
 		len = q->rate_mpu;
 
-	अगर (q->aपंचांग_mode == CAKE_ATM_ATM) अणु
+	if (q->atm_mode == CAKE_ATM_ATM) {
 		len += 47;
 		len /= 48;
 		len *= 53;
-	पूर्ण अन्यथा अगर (q->aपंचांग_mode == CAKE_ATM_PTM) अणु
+	} else if (q->atm_mode == CAKE_ATM_PTM) {
 		/* Add one byte per 64 bytes or part thereof.
 		 * This is conservative and easier to calculate than the
 		 * precise value.
 		 */
 		len += (len + 63) / 64;
-	पूर्ण
+	}
 
-	अगर (q->max_adjlen < len)
+	if (q->max_adjlen < len)
 		q->max_adjlen = len;
-	अगर (q->min_adjlen > len)
+	if (q->min_adjlen > len)
 		q->min_adjlen = len;
 
-	वापस len;
-पूर्ण
+	return len;
+}
 
-अटल u32 cake_overhead(काष्ठा cake_sched_data *q, स्थिर काष्ठा sk_buff *skb)
-अणु
-	स्थिर काष्ठा skb_shared_info *shinfo = skb_shinfo(skb);
-	अचिन्हित पूर्णांक hdr_len, last_len = 0;
+static u32 cake_overhead(struct cake_sched_data *q, const struct sk_buff *skb)
+{
+	const struct skb_shared_info *shinfo = skb_shinfo(skb);
+	unsigned int hdr_len, last_len = 0;
 	u32 off = skb_network_offset(skb);
 	u32 len = qdisc_pkt_len(skb);
 	u16 segs = 1;
 
 	q->avg_netoff = cake_ewma(q->avg_netoff, off << 16, 8);
 
-	अगर (!shinfo->gso_size)
-		वापस cake_calc_overhead(q, len, off);
+	if (!shinfo->gso_size)
+		return cake_calc_overhead(q, len, off);
 
 	/* borrowed from qdisc_pkt_len_init() */
 	hdr_len = skb_transport_header(skb) - skb_mac_header(skb);
 
 	/* + transport layer */
-	अगर (likely(shinfo->gso_type & (SKB_GSO_TCPV4 |
-						SKB_GSO_TCPV6))) अणु
-		स्थिर काष्ठा tcphdr *th;
-		काष्ठा tcphdr _tcphdr;
+	if (likely(shinfo->gso_type & (SKB_GSO_TCPV4 |
+						SKB_GSO_TCPV6))) {
+		const struct tcphdr *th;
+		struct tcphdr _tcphdr;
 
-		th = skb_header_poपूर्णांकer(skb, skb_transport_offset(skb),
-					माप(_tcphdr), &_tcphdr);
-		अगर (likely(th))
+		th = skb_header_pointer(skb, skb_transport_offset(skb),
+					sizeof(_tcphdr), &_tcphdr);
+		if (likely(th))
 			hdr_len += __tcp_hdrlen(th);
-	पूर्ण अन्यथा अणु
-		काष्ठा udphdr _udphdr;
+	} else {
+		struct udphdr _udphdr;
 
-		अगर (skb_header_poपूर्णांकer(skb, skb_transport_offset(skb),
-				       माप(_udphdr), &_udphdr))
-			hdr_len += माप(काष्ठा udphdr);
-	पूर्ण
+		if (skb_header_pointer(skb, skb_transport_offset(skb),
+				       sizeof(_udphdr), &_udphdr))
+			hdr_len += sizeof(struct udphdr);
+	}
 
-	अगर (unlikely(shinfo->gso_type & SKB_GSO_DODGY))
+	if (unlikely(shinfo->gso_type & SKB_GSO_DODGY))
 		segs = DIV_ROUND_UP(skb->len - hdr_len,
 				    shinfo->gso_size);
-	अन्यथा
+	else
 		segs = shinfo->gso_segs;
 
 	len = shinfo->gso_size + hdr_len;
 	last_len = skb->len - shinfo->gso_size * (segs - 1);
 
-	वापस (cake_calc_overhead(q, len, off) * (segs - 1) +
+	return (cake_calc_overhead(q, len, off) * (segs - 1) +
 		cake_calc_overhead(q, last_len, off));
-पूर्ण
+}
 
-अटल व्योम cake_heap_swap(काष्ठा cake_sched_data *q, u16 i, u16 j)
-अणु
-	काष्ठा cake_heap_entry ii = q->overflow_heap[i];
-	काष्ठा cake_heap_entry jj = q->overflow_heap[j];
+static void cake_heap_swap(struct cake_sched_data *q, u16 i, u16 j)
+{
+	struct cake_heap_entry ii = q->overflow_heap[i];
+	struct cake_heap_entry jj = q->overflow_heap[j];
 
 	q->overflow_heap[i] = jj;
 	q->overflow_heap[j] = ii;
 
 	q->tins[ii.t].overflow_idx[ii.b] = j;
 	q->tins[jj.t].overflow_idx[jj.b] = i;
-पूर्ण
+}
 
-अटल u32 cake_heap_get_backlog(स्थिर काष्ठा cake_sched_data *q, u16 i)
-अणु
-	काष्ठा cake_heap_entry ii = q->overflow_heap[i];
+static u32 cake_heap_get_backlog(const struct cake_sched_data *q, u16 i)
+{
+	struct cake_heap_entry ii = q->overflow_heap[i];
 
-	वापस q->tins[ii.t].backlogs[ii.b];
-पूर्ण
+	return q->tins[ii.t].backlogs[ii.b];
+}
 
-अटल व्योम cake_heapअगरy(काष्ठा cake_sched_data *q, u16 i)
-अणु
-	अटल स्थिर u32 a = CAKE_MAX_TINS * CAKE_QUEUES;
+static void cake_heapify(struct cake_sched_data *q, u16 i)
+{
+	static const u32 a = CAKE_MAX_TINS * CAKE_QUEUES;
 	u32 mb = cake_heap_get_backlog(q, i);
 	u32 m = i;
 
-	जबतक (m < a) अणु
+	while (m < a) {
 		u32 l = m + m + 1;
 		u32 r = l + 1;
 
-		अगर (l < a) अणु
+		if (l < a) {
 			u32 lb = cake_heap_get_backlog(q, l);
 
-			अगर (lb > mb) अणु
+			if (lb > mb) {
 				m  = l;
 				mb = lb;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (r < a) अणु
+		if (r < a) {
 			u32 rb = cake_heap_get_backlog(q, r);
 
-			अगर (rb > mb) अणु
+			if (rb > mb) {
 				m  = r;
 				mb = rb;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (m != i) अणु
+		if (m != i) {
 			cake_heap_swap(q, i, m);
 			i = m;
-		पूर्ण अन्यथा अणु
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		} else {
+			break;
+		}
+	}
+}
 
-अटल व्योम cake_heapअगरy_up(काष्ठा cake_sched_data *q, u16 i)
-अणु
-	जबतक (i > 0 && i < CAKE_MAX_TINS * CAKE_QUEUES) अणु
+static void cake_heapify_up(struct cake_sched_data *q, u16 i)
+{
+	while (i > 0 && i < CAKE_MAX_TINS * CAKE_QUEUES) {
 		u16 p = (i - 1) >> 1;
 		u32 ib = cake_heap_get_backlog(q, i);
 		u32 pb = cake_heap_get_backlog(q, p);
 
-		अगर (ib > pb) अणु
+		if (ib > pb) {
 			cake_heap_swap(q, i, p);
 			i = p;
-		पूर्ण अन्यथा अणु
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		} else {
+			break;
+		}
+	}
+}
 
-अटल पूर्णांक cake_advance_shaper(काष्ठा cake_sched_data *q,
-			       काष्ठा cake_tin_data *b,
-			       काष्ठा sk_buff *skb,
-			       kसमय_प्रकार now, bool drop)
-अणु
+static int cake_advance_shaper(struct cake_sched_data *q,
+			       struct cake_tin_data *b,
+			       struct sk_buff *skb,
+			       ktime_t now, bool drop)
+{
 	u32 len = get_cobalt_cb(skb)->adjusted_len;
 
-	/* अक्षरge packet bandwidth to this tin
+	/* charge packet bandwidth to this tin
 	 * and to the global shaper.
 	 */
-	अगर (q->rate_ns) अणु
+	if (q->rate_ns) {
 		u64 tin_dur = (len * b->tin_rate_ns) >> b->tin_rate_shft;
 		u64 global_dur = (len * q->rate_ns) >> q->rate_shft;
 		u64 failsafe_dur = global_dur + (global_dur >> 1);
 
-		अगर (kसमय_beक्रमe(b->समय_next_packet, now))
-			b->समय_next_packet = kसमय_add_ns(b->समय_next_packet,
+		if (ktime_before(b->time_next_packet, now))
+			b->time_next_packet = ktime_add_ns(b->time_next_packet,
 							   tin_dur);
 
-		अन्यथा अगर (kसमय_beक्रमe(b->समय_next_packet,
-				      kसमय_add_ns(now, tin_dur)))
-			b->समय_next_packet = kसमय_add_ns(now, tin_dur);
+		else if (ktime_before(b->time_next_packet,
+				      ktime_add_ns(now, tin_dur)))
+			b->time_next_packet = ktime_add_ns(now, tin_dur);
 
-		q->समय_next_packet = kसमय_add_ns(q->समय_next_packet,
+		q->time_next_packet = ktime_add_ns(q->time_next_packet,
 						   global_dur);
-		अगर (!drop)
+		if (!drop)
 			q->failsafe_next_packet = \
-				kसमय_add_ns(q->failsafe_next_packet,
+				ktime_add_ns(q->failsafe_next_packet,
 					     failsafe_dur);
-	पूर्ण
-	वापस len;
-पूर्ण
+	}
+	return len;
+}
 
-अटल अचिन्हित पूर्णांक cake_drop(काष्ठा Qdisc *sch, काष्ठा sk_buff **to_मुक्त)
-अणु
-	काष्ठा cake_sched_data *q = qdisc_priv(sch);
-	kसमय_प्रकार now = kसमय_get();
+static unsigned int cake_drop(struct Qdisc *sch, struct sk_buff **to_free)
+{
+	struct cake_sched_data *q = qdisc_priv(sch);
+	ktime_t now = ktime_get();
 	u32 idx = 0, tin = 0, len;
-	काष्ठा cake_heap_entry qq;
-	काष्ठा cake_tin_data *b;
-	काष्ठा cake_flow *flow;
-	काष्ठा sk_buff *skb;
+	struct cake_heap_entry qq;
+	struct cake_tin_data *b;
+	struct cake_flow *flow;
+	struct sk_buff *skb;
 
-	अगर (!q->overflow_समयout) अणु
-		पूर्णांक i;
+	if (!q->overflow_timeout) {
+		int i;
 		/* Build fresh max-heap */
-		क्रम (i = CAKE_MAX_TINS * CAKE_QUEUES / 2; i >= 0; i--)
-			cake_heapअगरy(q, i);
-	पूर्ण
-	q->overflow_समयout = 65535;
+		for (i = CAKE_MAX_TINS * CAKE_QUEUES / 2; i >= 0; i--)
+			cake_heapify(q, i);
+	}
+	q->overflow_timeout = 65535;
 
-	/* select दीर्घest queue क्रम pruning */
+	/* select longest queue for pruning */
 	qq  = q->overflow_heap[0];
 	tin = qq.t;
 	idx = qq.b;
@@ -1525,13 +1524,13 @@ found:
 	b = &q->tins[tin];
 	flow = &b->flows[idx];
 	skb = dequeue_head(flow);
-	अगर (unlikely(!skb)) अणु
-		/* heap has gone wrong, rebuild it next समय */
-		q->overflow_समयout = 0;
-		वापस idx + (tin << 16);
-	पूर्ण
+	if (unlikely(!skb)) {
+		/* heap has gone wrong, rebuild it next time */
+		q->overflow_timeout = 0;
+		return idx + (tin << 16);
+	}
 
-	अगर (cobalt_queue_full(&flow->cvars, &b->cparams, now))
+	if (cobalt_queue_full(&flow->cvars, &b->cparams, now))
 		b->unresponsive_flow_count++;
 
 	len = qdisc_pkt_len(skb);
@@ -1545,213 +1544,213 @@ found:
 	b->tin_dropped++;
 	sch->qstats.drops++;
 
-	अगर (q->rate_flags & CAKE_FLAG_INGRESS)
+	if (q->rate_flags & CAKE_FLAG_INGRESS)
 		cake_advance_shaper(q, b, skb, now, true);
 
-	__qdisc_drop(skb, to_मुक्त);
+	__qdisc_drop(skb, to_free);
 	sch->q.qlen--;
 
-	cake_heapअगरy(q, 0);
+	cake_heapify(q, 0);
 
-	वापस idx + (tin << 16);
-पूर्ण
+	return idx + (tin << 16);
+}
 
-अटल u8 cake_handle_dअगरfserv(काष्ठा sk_buff *skb, bool wash)
-अणु
-	स्थिर पूर्णांक offset = skb_network_offset(skb);
+static u8 cake_handle_diffserv(struct sk_buff *skb, bool wash)
+{
+	const int offset = skb_network_offset(skb);
 	u16 *buf, buf_;
 	u8 dscp;
 
-	चयन (skb_protocol(skb, true)) अणु
-	हाल htons(ETH_P_IP):
-		buf = skb_header_poपूर्णांकer(skb, offset, माप(buf_), &buf_);
-		अगर (unlikely(!buf))
-			वापस 0;
+	switch (skb_protocol(skb, true)) {
+	case htons(ETH_P_IP):
+		buf = skb_header_pointer(skb, offset, sizeof(buf_), &buf_);
+		if (unlikely(!buf))
+			return 0;
 
 		/* ToS is in the second byte of iphdr */
-		dscp = ipv4_get_dsfield((काष्ठा iphdr *)buf) >> 2;
+		dscp = ipv4_get_dsfield((struct iphdr *)buf) >> 2;
 
-		अगर (wash && dscp) अणु
-			स्थिर पूर्णांक wlen = offset + माप(काष्ठा iphdr);
+		if (wash && dscp) {
+			const int wlen = offset + sizeof(struct iphdr);
 
-			अगर (!pskb_may_pull(skb, wlen) ||
+			if (!pskb_may_pull(skb, wlen) ||
 			    skb_try_make_writable(skb, wlen))
-				वापस 0;
+				return 0;
 
 			ipv4_change_dsfield(ip_hdr(skb), INET_ECN_MASK, 0);
-		पूर्ण
+		}
 
-		वापस dscp;
+		return dscp;
 
-	हाल htons(ETH_P_IPV6):
-		buf = skb_header_poपूर्णांकer(skb, offset, माप(buf_), &buf_);
-		अगर (unlikely(!buf))
-			वापस 0;
+	case htons(ETH_P_IPV6):
+		buf = skb_header_pointer(skb, offset, sizeof(buf_), &buf_);
+		if (unlikely(!buf))
+			return 0;
 
 		/* Traffic class is in the first and second bytes of ipv6hdr */
-		dscp = ipv6_get_dsfield((काष्ठा ipv6hdr *)buf) >> 2;
+		dscp = ipv6_get_dsfield((struct ipv6hdr *)buf) >> 2;
 
-		अगर (wash && dscp) अणु
-			स्थिर पूर्णांक wlen = offset + माप(काष्ठा ipv6hdr);
+		if (wash && dscp) {
+			const int wlen = offset + sizeof(struct ipv6hdr);
 
-			अगर (!pskb_may_pull(skb, wlen) ||
+			if (!pskb_may_pull(skb, wlen) ||
 			    skb_try_make_writable(skb, wlen))
-				वापस 0;
+				return 0;
 
 			ipv6_change_dsfield(ipv6_hdr(skb), INET_ECN_MASK, 0);
-		पूर्ण
+		}
 
-		वापस dscp;
+		return dscp;
 
-	हाल htons(ETH_P_ARP):
-		वापस 0x38;  /* CS7 - Net Control */
+	case htons(ETH_P_ARP):
+		return 0x38;  /* CS7 - Net Control */
 
-	शेष:
-		/* If there is no Dअगरfserv field, treat as best-efक्रमt */
-		वापस 0;
-	पूर्ण
-पूर्ण
+	default:
+		/* If there is no Diffserv field, treat as best-effort */
+		return 0;
+	}
+}
 
-अटल काष्ठा cake_tin_data *cake_select_tin(काष्ठा Qdisc *sch,
-					     काष्ठा sk_buff *skb)
-अणु
-	काष्ठा cake_sched_data *q = qdisc_priv(sch);
+static struct cake_tin_data *cake_select_tin(struct Qdisc *sch,
+					     struct sk_buff *skb)
+{
+	struct cake_sched_data *q = qdisc_priv(sch);
 	u32 tin, mark;
 	bool wash;
 	u8 dscp;
 
-	/* Tin selection: Default to dअगरfserv-based selection, allow overriding
-	 * using firewall marks or skb->priority. Call DSCP parsing early अगर
+	/* Tin selection: Default to diffserv-based selection, allow overriding
+	 * using firewall marks or skb->priority. Call DSCP parsing early if
 	 * wash is enabled, otherwise defer to below to skip unneeded parsing.
 	 */
 	mark = (skb->mark & q->fwmark_mask) >> q->fwmark_shft;
 	wash = !!(q->rate_flags & CAKE_FLAG_WASH);
-	अगर (wash)
-		dscp = cake_handle_dअगरfserv(skb, wash);
+	if (wash)
+		dscp = cake_handle_diffserv(skb, wash);
 
-	अगर (q->tin_mode == CAKE_DIFFSERV_BESTEFFORT)
+	if (q->tin_mode == CAKE_DIFFSERV_BESTEFFORT)
 		tin = 0;
 
-	अन्यथा अगर (mark && mark <= q->tin_cnt)
+	else if (mark && mark <= q->tin_cnt)
 		tin = q->tin_order[mark - 1];
 
-	अन्यथा अगर (TC_H_MAJ(skb->priority) == sch->handle &&
+	else if (TC_H_MAJ(skb->priority) == sch->handle &&
 		 TC_H_MIN(skb->priority) > 0 &&
 		 TC_H_MIN(skb->priority) <= q->tin_cnt)
 		tin = q->tin_order[TC_H_MIN(skb->priority) - 1];
 
-	अन्यथा अणु
-		अगर (!wash)
-			dscp = cake_handle_dअगरfserv(skb, wash);
+	else {
+		if (!wash)
+			dscp = cake_handle_diffserv(skb, wash);
 		tin = q->tin_index[dscp];
 
-		अगर (unlikely(tin >= q->tin_cnt))
+		if (unlikely(tin >= q->tin_cnt))
 			tin = 0;
-	पूर्ण
+	}
 
-	वापस &q->tins[tin];
-पूर्ण
+	return &q->tins[tin];
+}
 
-अटल u32 cake_classअगरy(काष्ठा Qdisc *sch, काष्ठा cake_tin_data **t,
-			 काष्ठा sk_buff *skb, पूर्णांक flow_mode, पूर्णांक *qerr)
-अणु
-	काष्ठा cake_sched_data *q = qdisc_priv(sch);
-	काष्ठा tcf_proto *filter;
-	काष्ठा tcf_result res;
+static u32 cake_classify(struct Qdisc *sch, struct cake_tin_data **t,
+			 struct sk_buff *skb, int flow_mode, int *qerr)
+{
+	struct cake_sched_data *q = qdisc_priv(sch);
+	struct tcf_proto *filter;
+	struct tcf_result res;
 	u16 flow = 0, host = 0;
-	पूर्णांक result;
+	int result;
 
 	filter = rcu_dereference_bh(q->filter_list);
-	अगर (!filter)
-		जाओ hash;
+	if (!filter)
+		goto hash;
 
 	*qerr = NET_XMIT_SUCCESS | __NET_XMIT_BYPASS;
-	result = tcf_classअगरy(skb, filter, &res, false);
+	result = tcf_classify(skb, filter, &res, false);
 
-	अगर (result >= 0) अणु
-#अगर_घोषित CONFIG_NET_CLS_ACT
-		चयन (result) अणु
-		हाल TC_ACT_STOLEN:
-		हाल TC_ACT_QUEUED:
-		हाल TC_ACT_TRAP:
+	if (result >= 0) {
+#ifdef CONFIG_NET_CLS_ACT
+		switch (result) {
+		case TC_ACT_STOLEN:
+		case TC_ACT_QUEUED:
+		case TC_ACT_TRAP:
 			*qerr = NET_XMIT_SUCCESS | __NET_XMIT_STOLEN;
 			fallthrough;
-		हाल TC_ACT_SHOT:
-			वापस 0;
-		पूर्ण
-#पूर्ण_अगर
-		अगर (TC_H_MIN(res.classid) <= CAKE_QUEUES)
+		case TC_ACT_SHOT:
+			return 0;
+		}
+#endif
+		if (TC_H_MIN(res.classid) <= CAKE_QUEUES)
 			flow = TC_H_MIN(res.classid);
-		अगर (TC_H_MAJ(res.classid) <= (CAKE_QUEUES << 16))
+		if (TC_H_MAJ(res.classid) <= (CAKE_QUEUES << 16))
 			host = TC_H_MAJ(res.classid) >> 16;
-	पूर्ण
+	}
 hash:
 	*t = cake_select_tin(sch, skb);
-	वापस cake_hash(*t, skb, flow_mode, flow, host) + 1;
-पूर्ण
+	return cake_hash(*t, skb, flow_mode, flow, host) + 1;
+}
 
-अटल व्योम cake_reconfigure(काष्ठा Qdisc *sch);
+static void cake_reconfigure(struct Qdisc *sch);
 
-अटल s32 cake_enqueue(काष्ठा sk_buff *skb, काष्ठा Qdisc *sch,
-			काष्ठा sk_buff **to_मुक्त)
-अणु
-	काष्ठा cake_sched_data *q = qdisc_priv(sch);
-	पूर्णांक len = qdisc_pkt_len(skb);
-	पूर्णांक ret;
-	काष्ठा sk_buff *ack = शून्य;
-	kसमय_प्रकार now = kसमय_get();
-	काष्ठा cake_tin_data *b;
-	काष्ठा cake_flow *flow;
+static s32 cake_enqueue(struct sk_buff *skb, struct Qdisc *sch,
+			struct sk_buff **to_free)
+{
+	struct cake_sched_data *q = qdisc_priv(sch);
+	int len = qdisc_pkt_len(skb);
+	int ret;
+	struct sk_buff *ack = NULL;
+	ktime_t now = ktime_get();
+	struct cake_tin_data *b;
+	struct cake_flow *flow;
 	u32 idx;
 
-	/* choose flow to insert पूर्णांकo */
-	idx = cake_classअगरy(sch, &b, skb, q->flow_mode, &ret);
-	अगर (idx == 0) अणु
-		अगर (ret & __NET_XMIT_BYPASS)
+	/* choose flow to insert into */
+	idx = cake_classify(sch, &b, skb, q->flow_mode, &ret);
+	if (idx == 0) {
+		if (ret & __NET_XMIT_BYPASS)
 			qdisc_qstats_drop(sch);
-		__qdisc_drop(skb, to_मुक्त);
-		वापस ret;
-	पूर्ण
+		__qdisc_drop(skb, to_free);
+		return ret;
+	}
 	idx--;
 	flow = &b->flows[idx];
 
 	/* ensure shaper state isn't stale */
-	अगर (!b->tin_backlog) अणु
-		अगर (kसमय_beक्रमe(b->समय_next_packet, now))
-			b->समय_next_packet = now;
+	if (!b->tin_backlog) {
+		if (ktime_before(b->time_next_packet, now))
+			b->time_next_packet = now;
 
-		अगर (!sch->q.qlen) अणु
-			अगर (kसमय_beक्रमe(q->समय_next_packet, now)) अणु
+		if (!sch->q.qlen) {
+			if (ktime_before(q->time_next_packet, now)) {
 				q->failsafe_next_packet = now;
-				q->समय_next_packet = now;
-			पूर्ण अन्यथा अगर (kसमय_after(q->समय_next_packet, now) &&
-				   kसमय_after(q->failsafe_next_packet, now)) अणु
+				q->time_next_packet = now;
+			} else if (ktime_after(q->time_next_packet, now) &&
+				   ktime_after(q->failsafe_next_packet, now)) {
 				u64 next = \
-					min(kसमय_प्रकारo_ns(q->समय_next_packet),
-					    kसमय_प्रकारo_ns(
+					min(ktime_to_ns(q->time_next_packet),
+					    ktime_to_ns(
 						   q->failsafe_next_packet));
 				sch->qstats.overlimits++;
-				qdisc_watchकरोg_schedule_ns(&q->watchकरोg, next);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				qdisc_watchdog_schedule_ns(&q->watchdog, next);
+			}
+		}
+	}
 
-	अगर (unlikely(len > b->max_skblen))
+	if (unlikely(len > b->max_skblen))
 		b->max_skblen = len;
 
-	अगर (skb_is_gso(skb) && q->rate_flags & CAKE_FLAG_SPLIT_GSO) अणु
-		काष्ठा sk_buff *segs, *nskb;
-		netdev_features_t features = netअगर_skb_features(skb);
-		अचिन्हित पूर्णांक slen = 0, numsegs = 0;
+	if (skb_is_gso(skb) && q->rate_flags & CAKE_FLAG_SPLIT_GSO) {
+		struct sk_buff *segs, *nskb;
+		netdev_features_t features = netif_skb_features(skb);
+		unsigned int slen = 0, numsegs = 0;
 
 		segs = skb_gso_segment(skb, features & ~NETIF_F_GSO_MASK);
-		अगर (IS_ERR_OR_शून्य(segs))
-			वापस qdisc_drop(skb, sch, to_मुक्त);
+		if (IS_ERR_OR_NULL(segs))
+			return qdisc_drop(skb, sch, to_free);
 
-		skb_list_walk_safe(segs, segs, nskb) अणु
+		skb_list_walk_safe(segs, segs, nskb) {
 			skb_mark_not_on_list(segs);
 			qdisc_skb_cb(segs)->pkt_len = segs->len;
-			cobalt_set_enqueue_समय(segs, now);
+			cobalt_set_enqueue_time(segs, now);
 			get_cobalt_cb(segs)->adjusted_len = cake_overhead(q,
 									  segs);
 			flow_queue_add(flow, segs);
@@ -1761,41 +1760,41 @@ hash:
 			slen += segs->len;
 			q->buffer_used += segs->truesize;
 			b->packets++;
-		पूर्ण
+		}
 
 		/* stats */
 		b->bytes	    += slen;
 		b->backlogs[idx]    += slen;
 		b->tin_backlog      += slen;
 		sch->qstats.backlog += slen;
-		q->avg_winकरोw_bytes += slen;
+		q->avg_window_bytes += slen;
 
 		qdisc_tree_reduce_backlog(sch, 1-numsegs, len-slen);
 		consume_skb(skb);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* not splitting */
-		cobalt_set_enqueue_समय(skb, now);
+		cobalt_set_enqueue_time(skb, now);
 		get_cobalt_cb(skb)->adjusted_len = cake_overhead(q, skb);
 		flow_queue_add(flow, skb);
 
-		अगर (q->ack_filter)
+		if (q->ack_filter)
 			ack = cake_ack_filter(q, flow);
 
-		अगर (ack) अणु
+		if (ack) {
 			b->ack_drops++;
 			sch->qstats.drops++;
 			b->bytes += qdisc_pkt_len(ack);
 			len -= qdisc_pkt_len(ack);
 			q->buffer_used += skb->truesize - ack->truesize;
-			अगर (q->rate_flags & CAKE_FLAG_INGRESS)
+			if (q->rate_flags & CAKE_FLAG_INGRESS)
 				cake_advance_shaper(q, b, ack, now, true);
 
 			qdisc_tree_reduce_backlog(sch, 1, qdisc_pkt_len(ack));
 			consume_skb(ack);
-		पूर्ण अन्यथा अणु
+		} else {
 			sch->q.qlen++;
 			q->buffer_used      += skb->truesize;
-		पूर्ण
+		}
 
 		/* stats */
 		b->packets++;
@@ -1803,80 +1802,80 @@ hash:
 		b->backlogs[idx]    += len;
 		b->tin_backlog      += len;
 		sch->qstats.backlog += len;
-		q->avg_winकरोw_bytes += len;
-	पूर्ण
+		q->avg_window_bytes += len;
+	}
 
-	अगर (q->overflow_समयout)
-		cake_heapअगरy_up(q, b->overflow_idx[idx]);
+	if (q->overflow_timeout)
+		cake_heapify_up(q, b->overflow_idx[idx]);
 
 	/* incoming bandwidth capacity estimate */
-	अगर (q->rate_flags & CAKE_FLAG_AUTORATE_INGRESS) अणु
-		u64 packet_पूर्णांकerval = \
-			kसमय_प्रकारo_ns(kसमय_sub(now, q->last_packet_समय));
+	if (q->rate_flags & CAKE_FLAG_AUTORATE_INGRESS) {
+		u64 packet_interval = \
+			ktime_to_ns(ktime_sub(now, q->last_packet_time));
 
-		अगर (packet_पूर्णांकerval > NSEC_PER_SEC)
-			packet_पूर्णांकerval = NSEC_PER_SEC;
+		if (packet_interval > NSEC_PER_SEC)
+			packet_interval = NSEC_PER_SEC;
 
-		/* filter out लघु-term bursts, eg. wअगरi aggregation */
-		q->avg_packet_पूर्णांकerval = \
-			cake_ewma(q->avg_packet_पूर्णांकerval,
-				  packet_पूर्णांकerval,
-				  (packet_पूर्णांकerval > q->avg_packet_पूर्णांकerval ?
+		/* filter out short-term bursts, eg. wifi aggregation */
+		q->avg_packet_interval = \
+			cake_ewma(q->avg_packet_interval,
+				  packet_interval,
+				  (packet_interval > q->avg_packet_interval ?
 					  2 : 8));
 
-		q->last_packet_समय = now;
+		q->last_packet_time = now;
 
-		अगर (packet_पूर्णांकerval > q->avg_packet_पूर्णांकerval) अणु
-			u64 winकरोw_पूर्णांकerval = \
-				kसमय_प्रकारo_ns(kसमय_sub(now,
-						      q->avg_winकरोw_begin));
-			u64 b = q->avg_winकरोw_bytes * (u64)NSEC_PER_SEC;
+		if (packet_interval > q->avg_packet_interval) {
+			u64 window_interval = \
+				ktime_to_ns(ktime_sub(now,
+						      q->avg_window_begin));
+			u64 b = q->avg_window_bytes * (u64)NSEC_PER_SEC;
 
-			b = भाग64_u64(b, winकरोw_पूर्णांकerval);
+			b = div64_u64(b, window_interval);
 			q->avg_peak_bandwidth =
 				cake_ewma(q->avg_peak_bandwidth, b,
 					  b > q->avg_peak_bandwidth ? 2 : 8);
-			q->avg_winकरोw_bytes = 0;
-			q->avg_winकरोw_begin = now;
+			q->avg_window_bytes = 0;
+			q->avg_window_begin = now;
 
-			अगर (kसमय_after(now,
-					kसमय_add_ms(q->last_reconfig_समय,
-						     250))) अणु
+			if (ktime_after(now,
+					ktime_add_ms(q->last_reconfig_time,
+						     250))) {
 				q->rate_bps = (q->avg_peak_bandwidth * 15) >> 4;
 				cake_reconfigure(sch);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		q->avg_winकरोw_bytes = 0;
-		q->last_packet_समय = now;
-	पूर्ण
+			}
+		}
+	} else {
+		q->avg_window_bytes = 0;
+		q->last_packet_time = now;
+	}
 
 	/* flowchain */
-	अगर (!flow->set || flow->set == CAKE_SET_DECAYING) अणु
-		काष्ठा cake_host *srchost = &b->hosts[flow->srchost];
-		काष्ठा cake_host *dsthost = &b->hosts[flow->dsthost];
+	if (!flow->set || flow->set == CAKE_SET_DECAYING) {
+		struct cake_host *srchost = &b->hosts[flow->srchost];
+		struct cake_host *dsthost = &b->hosts[flow->dsthost];
 		u16 host_load = 1;
 
-		अगर (!flow->set) अणु
+		if (!flow->set) {
 			list_add_tail(&flow->flowchain, &b->new_flows);
-		पूर्ण अन्यथा अणु
+		} else {
 			b->decaying_flow_count--;
 			list_move_tail(&flow->flowchain, &b->new_flows);
-		पूर्ण
+		}
 		flow->set = CAKE_SET_SPARSE;
 		b->sparse_flow_count++;
 
-		अगर (cake_dsrc(q->flow_mode))
+		if (cake_dsrc(q->flow_mode))
 			host_load = max(host_load, srchost->srchost_bulk_flow_count);
 
-		अगर (cake_ddst(q->flow_mode))
+		if (cake_ddst(q->flow_mode))
 			host_load = max(host_load, dsthost->dsthost_bulk_flow_count);
 
 		flow->deficit = (b->flow_quantum *
-				 quantum_भाग[host_load]) >> 16;
-	पूर्ण अन्यथा अगर (flow->set == CAKE_SET_SPARSE_WAIT) अणु
-		काष्ठा cake_host *srchost = &b->hosts[flow->srchost];
-		काष्ठा cake_host *dsthost = &b->hosts[flow->dsthost];
+				 quantum_div[host_load]) >> 16;
+	} else if (flow->set == CAKE_SET_SPARSE_WAIT) {
+		struct cake_host *srchost = &b->hosts[flow->srchost];
+		struct cake_host *dsthost = &b->hosts[flow->dsthost];
 
 		/* this flow was empty, accounted as a sparse flow, but actually
 		 * in the bulk rotation.
@@ -1885,38 +1884,38 @@ hash:
 		b->sparse_flow_count--;
 		b->bulk_flow_count++;
 
-		अगर (cake_dsrc(q->flow_mode))
+		if (cake_dsrc(q->flow_mode))
 			srchost->srchost_bulk_flow_count++;
 
-		अगर (cake_ddst(q->flow_mode))
+		if (cake_ddst(q->flow_mode))
 			dsthost->dsthost_bulk_flow_count++;
 
-	पूर्ण
+	}
 
-	अगर (q->buffer_used > q->buffer_max_used)
+	if (q->buffer_used > q->buffer_max_used)
 		q->buffer_max_used = q->buffer_used;
 
-	अगर (q->buffer_used > q->buffer_limit) अणु
+	if (q->buffer_used > q->buffer_limit) {
 		u32 dropped = 0;
 
-		जबतक (q->buffer_used > q->buffer_limit) अणु
+		while (q->buffer_used > q->buffer_limit) {
 			dropped++;
-			cake_drop(sch, to_मुक्त);
-		पूर्ण
+			cake_drop(sch, to_free);
+		}
 		b->drop_overlimit += dropped;
-	पूर्ण
-	वापस NET_XMIT_SUCCESS;
-पूर्ण
+	}
+	return NET_XMIT_SUCCESS;
+}
 
-अटल काष्ठा sk_buff *cake_dequeue_one(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा cake_sched_data *q = qdisc_priv(sch);
-	काष्ठा cake_tin_data *b = &q->tins[q->cur_tin];
-	काष्ठा cake_flow *flow = &b->flows[q->cur_flow];
-	काष्ठा sk_buff *skb = शून्य;
+static struct sk_buff *cake_dequeue_one(struct Qdisc *sch)
+{
+	struct cake_sched_data *q = qdisc_priv(sch);
+	struct cake_tin_data *b = &q->tins[q->cur_tin];
+	struct cake_flow *flow = &b->flows[q->cur_flow];
+	struct sk_buff *skb = NULL;
 	u32 len;
 
-	अगर (flow->head) अणु
+	if (flow->head) {
 		skb = dequeue_head(flow);
 		len = qdisc_pkt_len(skb);
 		b->backlogs[q->cur_flow] -= len;
@@ -1925,267 +1924,267 @@ hash:
 		q->buffer_used		 -= skb->truesize;
 		sch->q.qlen--;
 
-		अगर (q->overflow_समयout)
-			cake_heapअगरy(q, b->overflow_idx[q->cur_flow]);
-	पूर्ण
-	वापस skb;
-पूर्ण
+		if (q->overflow_timeout)
+			cake_heapify(q, b->overflow_idx[q->cur_flow]);
+	}
+	return skb;
+}
 
-/* Discard leftover packets from a tin no दीर्घer in use. */
-अटल व्योम cake_clear_tin(काष्ठा Qdisc *sch, u16 tin)
-अणु
-	काष्ठा cake_sched_data *q = qdisc_priv(sch);
-	काष्ठा sk_buff *skb;
+/* Discard leftover packets from a tin no longer in use. */
+static void cake_clear_tin(struct Qdisc *sch, u16 tin)
+{
+	struct cake_sched_data *q = qdisc_priv(sch);
+	struct sk_buff *skb;
 
 	q->cur_tin = tin;
-	क्रम (q->cur_flow = 0; q->cur_flow < CAKE_QUEUES; q->cur_flow++)
-		जबतक (!!(skb = cake_dequeue_one(sch)))
-			kमुक्त_skb(skb);
-पूर्ण
+	for (q->cur_flow = 0; q->cur_flow < CAKE_QUEUES; q->cur_flow++)
+		while (!!(skb = cake_dequeue_one(sch)))
+			kfree_skb(skb);
+}
 
-अटल काष्ठा sk_buff *cake_dequeue(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा cake_sched_data *q = qdisc_priv(sch);
-	काष्ठा cake_tin_data *b = &q->tins[q->cur_tin];
-	काष्ठा cake_host *srchost, *dsthost;
-	kसमय_प्रकार now = kसमय_get();
-	काष्ठा cake_flow *flow;
-	काष्ठा list_head *head;
+static struct sk_buff *cake_dequeue(struct Qdisc *sch)
+{
+	struct cake_sched_data *q = qdisc_priv(sch);
+	struct cake_tin_data *b = &q->tins[q->cur_tin];
+	struct cake_host *srchost, *dsthost;
+	ktime_t now = ktime_get();
+	struct cake_flow *flow;
+	struct list_head *head;
 	bool first_flow = true;
-	काष्ठा sk_buff *skb;
+	struct sk_buff *skb;
 	u16 host_load;
 	u64 delay;
 	u32 len;
 
 begin:
-	अगर (!sch->q.qlen)
-		वापस शून्य;
+	if (!sch->q.qlen)
+		return NULL;
 
 	/* global hard shaper */
-	अगर (kसमय_after(q->समय_next_packet, now) &&
-	    kसमय_after(q->failsafe_next_packet, now)) अणु
-		u64 next = min(kसमय_प्रकारo_ns(q->समय_next_packet),
-			       kसमय_प्रकारo_ns(q->failsafe_next_packet));
+	if (ktime_after(q->time_next_packet, now) &&
+	    ktime_after(q->failsafe_next_packet, now)) {
+		u64 next = min(ktime_to_ns(q->time_next_packet),
+			       ktime_to_ns(q->failsafe_next_packet));
 
 		sch->qstats.overlimits++;
-		qdisc_watchकरोg_schedule_ns(&q->watchकरोg, next);
-		वापस शून्य;
-	पूर्ण
+		qdisc_watchdog_schedule_ns(&q->watchdog, next);
+		return NULL;
+	}
 
 	/* Choose a class to work on. */
-	अगर (!q->rate_ns) अणु
+	if (!q->rate_ns) {
 		/* In unlimited mode, can't rely on shaper timings, just balance
 		 * with DRR
 		 */
 		bool wrapped = false, empty = true;
 
-		जबतक (b->tin_deficit < 0 ||
-		       !(b->sparse_flow_count + b->bulk_flow_count)) अणु
-			अगर (b->tin_deficit <= 0)
+		while (b->tin_deficit < 0 ||
+		       !(b->sparse_flow_count + b->bulk_flow_count)) {
+			if (b->tin_deficit <= 0)
 				b->tin_deficit += b->tin_quantum;
-			अगर (b->sparse_flow_count + b->bulk_flow_count)
+			if (b->sparse_flow_count + b->bulk_flow_count)
 				empty = false;
 
 			q->cur_tin++;
 			b++;
-			अगर (q->cur_tin >= q->tin_cnt) अणु
+			if (q->cur_tin >= q->tin_cnt) {
 				q->cur_tin = 0;
 				b = q->tins;
 
-				अगर (wrapped) अणु
-					/* It's possible क्रम q->qlen to be
+				if (wrapped) {
+					/* It's possible for q->qlen to be
 					 * nonzero when we actually have no
 					 * packets anywhere.
 					 */
-					अगर (empty)
-						वापस शून्य;
-				पूर्ण अन्यथा अणु
+					if (empty)
+						return NULL;
+				} else {
 					wrapped = true;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+				}
+			}
+		}
+	} else {
 		/* In shaped mode, choose:
 		 * - Highest-priority tin with queue and meeting schedule, or
 		 * - The earliest-scheduled tin with queue.
 		 */
-		kसमय_प्रकार best_समय = KTIME_MAX;
-		पूर्णांक tin, best_tin = 0;
+		ktime_t best_time = KTIME_MAX;
+		int tin, best_tin = 0;
 
-		क्रम (tin = 0; tin < q->tin_cnt; tin++) अणु
+		for (tin = 0; tin < q->tin_cnt; tin++) {
 			b = q->tins + tin;
-			अगर ((b->sparse_flow_count + b->bulk_flow_count) > 0) अणु
-				kसमय_प्रकार समय_प्रकारo_pkt = \
-					kसमय_sub(b->समय_next_packet, now);
+			if ((b->sparse_flow_count + b->bulk_flow_count) > 0) {
+				ktime_t time_to_pkt = \
+					ktime_sub(b->time_next_packet, now);
 
-				अगर (kसमय_प्रकारo_ns(समय_प्रकारo_pkt) <= 0 ||
-				    kसमय_compare(समय_प्रकारo_pkt,
-						  best_समय) <= 0) अणु
-					best_समय = समय_प्रकारo_pkt;
+				if (ktime_to_ns(time_to_pkt) <= 0 ||
+				    ktime_compare(time_to_pkt,
+						  best_time) <= 0) {
+					best_time = time_to_pkt;
 					best_tin = tin;
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				}
+			}
+		}
 
 		q->cur_tin = best_tin;
 		b = q->tins + best_tin;
 
-		/* No poपूर्णांक in going further अगर no packets to deliver. */
-		अगर (unlikely(!(b->sparse_flow_count + b->bulk_flow_count)))
-			वापस शून्य;
-	पूर्ण
+		/* No point in going further if no packets to deliver. */
+		if (unlikely(!(b->sparse_flow_count + b->bulk_flow_count)))
+			return NULL;
+	}
 
 retry:
 	/* service this class */
 	head = &b->decaying_flows;
-	अगर (!first_flow || list_empty(head)) अणु
+	if (!first_flow || list_empty(head)) {
 		head = &b->new_flows;
-		अगर (list_empty(head)) अणु
+		if (list_empty(head)) {
 			head = &b->old_flows;
-			अगर (unlikely(list_empty(head))) अणु
+			if (unlikely(list_empty(head))) {
 				head = &b->decaying_flows;
-				अगर (unlikely(list_empty(head)))
-					जाओ begin;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	flow = list_first_entry(head, काष्ठा cake_flow, flowchain);
+				if (unlikely(list_empty(head)))
+					goto begin;
+			}
+		}
+	}
+	flow = list_first_entry(head, struct cake_flow, flowchain);
 	q->cur_flow = flow - b->flows;
 	first_flow = false;
 
-	/* triple isolation (modअगरied DRR++) */
+	/* triple isolation (modified DRR++) */
 	srchost = &b->hosts[flow->srchost];
 	dsthost = &b->hosts[flow->dsthost];
 	host_load = 1;
 
 	/* flow isolation (DRR++) */
-	अगर (flow->deficit <= 0) अणु
+	if (flow->deficit <= 0) {
 		/* Keep all flows with deficits out of the sparse and decaying
-		 * rotations.  No non-empty flow can go पूर्णांकo the decaying
+		 * rotations.  No non-empty flow can go into the decaying
 		 * rotation, so they can't get deficits
 		 */
-		अगर (flow->set == CAKE_SET_SPARSE) अणु
-			अगर (flow->head) अणु
+		if (flow->set == CAKE_SET_SPARSE) {
+			if (flow->head) {
 				b->sparse_flow_count--;
 				b->bulk_flow_count++;
 
-				अगर (cake_dsrc(q->flow_mode))
+				if (cake_dsrc(q->flow_mode))
 					srchost->srchost_bulk_flow_count++;
 
-				अगर (cake_ddst(q->flow_mode))
+				if (cake_ddst(q->flow_mode))
 					dsthost->dsthost_bulk_flow_count++;
 
 				flow->set = CAKE_SET_BULK;
-			पूर्ण अन्यथा अणु
-				/* we've moved it to the bulk rotation क्रम
+			} else {
+				/* we've moved it to the bulk rotation for
 				 * correct deficit accounting but we still want
 				 * to count it as a sparse flow, not a bulk one.
 				 */
 				flow->set = CAKE_SET_SPARSE_WAIT;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (cake_dsrc(q->flow_mode))
+		if (cake_dsrc(q->flow_mode))
 			host_load = max(host_load, srchost->srchost_bulk_flow_count);
 
-		अगर (cake_ddst(q->flow_mode))
+		if (cake_ddst(q->flow_mode))
 			host_load = max(host_load, dsthost->dsthost_bulk_flow_count);
 
 		WARN_ON(host_load > CAKE_QUEUES);
 
-		/* The shअगरted pअक्रमom_u32() is a way to apply dithering to
-		 * aव्योम accumulating rounकरोff errors
+		/* The shifted prandom_u32() is a way to apply dithering to
+		 * avoid accumulating roundoff errors
 		 */
-		flow->deficit += (b->flow_quantum * quantum_भाग[host_load] +
-				  (pअक्रमom_u32() >> 16)) >> 16;
+		flow->deficit += (b->flow_quantum * quantum_div[host_load] +
+				  (prandom_u32() >> 16)) >> 16;
 		list_move_tail(&flow->flowchain, &b->old_flows);
 
-		जाओ retry;
-	पूर्ण
+		goto retry;
+	}
 
 	/* Retrieve a packet via the AQM */
-	जबतक (1) अणु
+	while (1) {
 		skb = cake_dequeue_one(sch);
-		अगर (!skb) अणु
+		if (!skb) {
 			/* this queue was actually empty */
-			अगर (cobalt_queue_empty(&flow->cvars, &b->cparams, now))
+			if (cobalt_queue_empty(&flow->cvars, &b->cparams, now))
 				b->unresponsive_flow_count--;
 
-			अगर (flow->cvars.p_drop || flow->cvars.count ||
-			    kसमय_beक्रमe(now, flow->cvars.drop_next)) अणु
+			if (flow->cvars.p_drop || flow->cvars.count ||
+			    ktime_before(now, flow->cvars.drop_next)) {
 				/* keep in the flowchain until the state has
 				 * decayed to rest
 				 */
 				list_move_tail(&flow->flowchain,
 					       &b->decaying_flows);
-				अगर (flow->set == CAKE_SET_BULK) अणु
+				if (flow->set == CAKE_SET_BULK) {
 					b->bulk_flow_count--;
 
-					अगर (cake_dsrc(q->flow_mode))
+					if (cake_dsrc(q->flow_mode))
 						srchost->srchost_bulk_flow_count--;
 
-					अगर (cake_ddst(q->flow_mode))
+					if (cake_ddst(q->flow_mode))
 						dsthost->dsthost_bulk_flow_count--;
 
 					b->decaying_flow_count++;
-				पूर्ण अन्यथा अगर (flow->set == CAKE_SET_SPARSE ||
-					   flow->set == CAKE_SET_SPARSE_WAIT) अणु
+				} else if (flow->set == CAKE_SET_SPARSE ||
+					   flow->set == CAKE_SET_SPARSE_WAIT) {
 					b->sparse_flow_count--;
 					b->decaying_flow_count++;
-				पूर्ण
+				}
 				flow->set = CAKE_SET_DECAYING;
-			पूर्ण अन्यथा अणु
-				/* हटाओ empty queue from the flowchain */
+			} else {
+				/* remove empty queue from the flowchain */
 				list_del_init(&flow->flowchain);
-				अगर (flow->set == CAKE_SET_SPARSE ||
+				if (flow->set == CAKE_SET_SPARSE ||
 				    flow->set == CAKE_SET_SPARSE_WAIT)
 					b->sparse_flow_count--;
-				अन्यथा अगर (flow->set == CAKE_SET_BULK) अणु
+				else if (flow->set == CAKE_SET_BULK) {
 					b->bulk_flow_count--;
 
-					अगर (cake_dsrc(q->flow_mode))
+					if (cake_dsrc(q->flow_mode))
 						srchost->srchost_bulk_flow_count--;
 
-					अगर (cake_ddst(q->flow_mode))
+					if (cake_ddst(q->flow_mode))
 						dsthost->dsthost_bulk_flow_count--;
 
-				पूर्ण अन्यथा
+				} else
 					b->decaying_flow_count--;
 
 				flow->set = CAKE_SET_NONE;
-			पूर्ण
-			जाओ begin;
-		पूर्ण
+			}
+			goto begin;
+		}
 
 		/* Last packet in queue may be marked, shouldn't be dropped */
-		अगर (!cobalt_should_drop(&flow->cvars, &b->cparams, now, skb,
+		if (!cobalt_should_drop(&flow->cvars, &b->cparams, now, skb,
 					(b->bulk_flow_count *
 					 !!(q->rate_flags &
 					    CAKE_FLAG_INGRESS))) ||
 		    !flow->head)
-			अवरोध;
+			break;
 
 		/* drop this packet, get another one */
-		अगर (q->rate_flags & CAKE_FLAG_INGRESS) अणु
+		if (q->rate_flags & CAKE_FLAG_INGRESS) {
 			len = cake_advance_shaper(q, b, skb,
 						  now, true);
 			flow->deficit -= len;
 			b->tin_deficit -= len;
-		पूर्ण
+		}
 		flow->dropped++;
 		b->tin_dropped++;
 		qdisc_tree_reduce_backlog(sch, 1, qdisc_pkt_len(skb));
 		qdisc_qstats_drop(sch);
-		kमुक्त_skb(skb);
-		अगर (q->rate_flags & CAKE_FLAG_INGRESS)
-			जाओ retry;
-	पूर्ण
+		kfree_skb(skb);
+		if (q->rate_flags & CAKE_FLAG_INGRESS)
+			goto retry;
+	}
 
 	b->tin_ecn_mark += !!flow->cvars.ecn_marked;
 	qdisc_bstats_update(sch, skb);
 
 	/* collect delay stats */
-	delay = kसमय_प्रकारo_ns(kसमय_sub(now, cobalt_get_enqueue_समय(skb)));
+	delay = ktime_to_ns(ktime_sub(now, cobalt_get_enqueue_time(skb)));
 	b->avge_delay = cake_ewma(b->avge_delay, delay, 8);
 	b->peak_delay = cake_ewma(b->peak_delay, delay,
 				  delay > b->peak_delay ? 2 : 8);
@@ -2196,84 +2195,84 @@ retry:
 	flow->deficit -= len;
 	b->tin_deficit -= len;
 
-	अगर (kसमय_after(q->समय_next_packet, now) && sch->q.qlen) अणु
-		u64 next = min(kसमय_प्रकारo_ns(q->समय_next_packet),
-			       kसमय_प्रकारo_ns(q->failsafe_next_packet));
+	if (ktime_after(q->time_next_packet, now) && sch->q.qlen) {
+		u64 next = min(ktime_to_ns(q->time_next_packet),
+			       ktime_to_ns(q->failsafe_next_packet));
 
-		qdisc_watchकरोg_schedule_ns(&q->watchकरोg, next);
-	पूर्ण अन्यथा अगर (!sch->q.qlen) अणु
-		पूर्णांक i;
+		qdisc_watchdog_schedule_ns(&q->watchdog, next);
+	} else if (!sch->q.qlen) {
+		int i;
 
-		क्रम (i = 0; i < q->tin_cnt; i++) अणु
-			अगर (q->tins[i].decaying_flow_count) अणु
-				kसमय_प्रकार next = \
-					kसमय_add_ns(now,
+		for (i = 0; i < q->tin_cnt; i++) {
+			if (q->tins[i].decaying_flow_count) {
+				ktime_t next = \
+					ktime_add_ns(now,
 						     q->tins[i].cparams.target);
 
-				qdisc_watchकरोg_schedule_ns(&q->watchकरोg,
-							   kसमय_प्रकारo_ns(next));
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				qdisc_watchdog_schedule_ns(&q->watchdog,
+							   ktime_to_ns(next));
+				break;
+			}
+		}
+	}
 
-	अगर (q->overflow_समयout)
-		q->overflow_समयout--;
+	if (q->overflow_timeout)
+		q->overflow_timeout--;
 
-	वापस skb;
-पूर्ण
+	return skb;
+}
 
-अटल व्योम cake_reset(काष्ठा Qdisc *sch)
-अणु
+static void cake_reset(struct Qdisc *sch)
+{
 	u32 c;
 
-	क्रम (c = 0; c < CAKE_MAX_TINS; c++)
+	for (c = 0; c < CAKE_MAX_TINS; c++)
 		cake_clear_tin(sch, c);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा nla_policy cake_policy[TCA_CAKE_MAX + 1] = अणु
-	[TCA_CAKE_BASE_RATE64]   = अणु .type = NLA_U64 पूर्ण,
-	[TCA_CAKE_DIFFSERV_MODE] = अणु .type = NLA_U32 पूर्ण,
-	[TCA_CAKE_ATM]		 = अणु .type = NLA_U32 पूर्ण,
-	[TCA_CAKE_FLOW_MODE]     = अणु .type = NLA_U32 पूर्ण,
-	[TCA_CAKE_OVERHEAD]      = अणु .type = NLA_S32 पूर्ण,
-	[TCA_CAKE_RTT]		 = अणु .type = NLA_U32 पूर्ण,
-	[TCA_CAKE_TARGET]	 = अणु .type = NLA_U32 पूर्ण,
-	[TCA_CAKE_AUTORATE]      = अणु .type = NLA_U32 पूर्ण,
-	[TCA_CAKE_MEMORY]	 = अणु .type = NLA_U32 पूर्ण,
-	[TCA_CAKE_NAT]		 = अणु .type = NLA_U32 पूर्ण,
-	[TCA_CAKE_RAW]		 = अणु .type = NLA_U32 पूर्ण,
-	[TCA_CAKE_WASH]		 = अणु .type = NLA_U32 पूर्ण,
-	[TCA_CAKE_MPU]		 = अणु .type = NLA_U32 पूर्ण,
-	[TCA_CAKE_INGRESS]	 = अणु .type = NLA_U32 पूर्ण,
-	[TCA_CAKE_ACK_FILTER]	 = अणु .type = NLA_U32 पूर्ण,
-	[TCA_CAKE_SPLIT_GSO]	 = अणु .type = NLA_U32 पूर्ण,
-	[TCA_CAKE_FWMARK]	 = अणु .type = NLA_U32 पूर्ण,
-पूर्ण;
+static const struct nla_policy cake_policy[TCA_CAKE_MAX + 1] = {
+	[TCA_CAKE_BASE_RATE64]   = { .type = NLA_U64 },
+	[TCA_CAKE_DIFFSERV_MODE] = { .type = NLA_U32 },
+	[TCA_CAKE_ATM]		 = { .type = NLA_U32 },
+	[TCA_CAKE_FLOW_MODE]     = { .type = NLA_U32 },
+	[TCA_CAKE_OVERHEAD]      = { .type = NLA_S32 },
+	[TCA_CAKE_RTT]		 = { .type = NLA_U32 },
+	[TCA_CAKE_TARGET]	 = { .type = NLA_U32 },
+	[TCA_CAKE_AUTORATE]      = { .type = NLA_U32 },
+	[TCA_CAKE_MEMORY]	 = { .type = NLA_U32 },
+	[TCA_CAKE_NAT]		 = { .type = NLA_U32 },
+	[TCA_CAKE_RAW]		 = { .type = NLA_U32 },
+	[TCA_CAKE_WASH]		 = { .type = NLA_U32 },
+	[TCA_CAKE_MPU]		 = { .type = NLA_U32 },
+	[TCA_CAKE_INGRESS]	 = { .type = NLA_U32 },
+	[TCA_CAKE_ACK_FILTER]	 = { .type = NLA_U32 },
+	[TCA_CAKE_SPLIT_GSO]	 = { .type = NLA_U32 },
+	[TCA_CAKE_FWMARK]	 = { .type = NLA_U32 },
+};
 
-अटल व्योम cake_set_rate(काष्ठा cake_tin_data *b, u64 rate, u32 mtu,
+static void cake_set_rate(struct cake_tin_data *b, u64 rate, u32 mtu,
 			  u64 target_ns, u64 rtt_est_ns)
-अणु
-	/* convert byte-rate पूर्णांकo समय-per-byte
-	 * so it will always unwedge in reasonable समय.
+{
+	/* convert byte-rate into time-per-byte
+	 * so it will always unwedge in reasonable time.
 	 */
-	अटल स्थिर u64 MIN_RATE = 64;
+	static const u64 MIN_RATE = 64;
 	u32 byte_target = mtu;
 	u64 byte_target_ns;
 	u8  rate_shft = 0;
 	u64 rate_ns = 0;
 
 	b->flow_quantum = 1514;
-	अगर (rate) अणु
+	if (rate) {
 		b->flow_quantum = max(min(rate >> 12, 1514ULL), 300ULL);
 		rate_shft = 34;
 		rate_ns = ((u64)NSEC_PER_SEC) << rate_shft;
-		rate_ns = भाग64_u64(rate_ns, max(MIN_RATE, rate));
-		जबतक (!!(rate_ns >> 34)) अणु
+		rate_ns = div64_u64(rate_ns, max(MIN_RATE, rate));
+		while (!!(rate_ns >> 34)) {
 			rate_ns >>= 1;
 			rate_shft--;
-		पूर्ण
-	पूर्ण /* अन्यथा unlimited, ie. zero delay */
+		}
+	} /* else unlimited, ie. zero delay */
 
 	b->tin_rate_bps  = rate;
 	b->tin_rate_ns   = rate_ns;
@@ -2282,37 +2281,37 @@ retry:
 	byte_target_ns = (byte_target * rate_ns) >> rate_shft;
 
 	b->cparams.target = max((byte_target_ns * 3) / 2, target_ns);
-	b->cparams.पूर्णांकerval = max(rtt_est_ns +
+	b->cparams.interval = max(rtt_est_ns +
 				     b->cparams.target - target_ns,
 				     b->cparams.target * 2);
-	b->cparams.mtu_समय = byte_target_ns;
+	b->cparams.mtu_time = byte_target_ns;
 	b->cparams.p_inc = 1 << 24; /* 1/256 */
 	b->cparams.p_dec = 1 << 20; /* 1/4096 */
-पूर्ण
+}
 
-अटल पूर्णांक cake_config_bestefक्रमt(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा cake_sched_data *q = qdisc_priv(sch);
-	काष्ठा cake_tin_data *b = &q->tins[0];
+static int cake_config_besteffort(struct Qdisc *sch)
+{
+	struct cake_sched_data *q = qdisc_priv(sch);
+	struct cake_tin_data *b = &q->tins[0];
 	u32 mtu = psched_mtu(qdisc_dev(sch));
 	u64 rate = q->rate_bps;
 
 	q->tin_cnt = 1;
 
-	q->tin_index = bestefक्रमt;
+	q->tin_index = besteffort;
 	q->tin_order = normal_order;
 
 	cake_set_rate(b, rate, mtu,
-		      us_to_ns(q->target), us_to_ns(q->पूर्णांकerval));
+		      us_to_ns(q->target), us_to_ns(q->interval));
 	b->tin_quantum = 65535;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cake_config_precedence(काष्ठा Qdisc *sch)
-अणु
-	/* convert high-level (user visible) parameters पूर्णांकo पूर्णांकernal क्रमmat */
-	काष्ठा cake_sched_data *q = qdisc_priv(sch);
+static int cake_config_precedence(struct Qdisc *sch)
+{
+	/* convert high-level (user visible) parameters into internal format */
+	struct cake_sched_data *q = qdisc_priv(sch);
 	u32 mtu = psched_mtu(qdisc_dev(sch));
 	u64 rate = q->rate_bps;
 	u32 quantum = 256;
@@ -2322,11 +2321,11 @@ retry:
 	q->tin_index = precedence;
 	q->tin_order = normal_order;
 
-	क्रम (i = 0; i < q->tin_cnt; i++) अणु
-		काष्ठा cake_tin_data *b = &q->tins[i];
+	for (i = 0; i < q->tin_cnt; i++) {
+		struct cake_tin_data *b = &q->tins[i];
 
 		cake_set_rate(b, rate, mtu, us_to_ns(q->target),
-			      us_to_ns(q->पूर्णांकerval));
+			      us_to_ns(q->interval));
 
 		b->tin_quantum = max_t(u16, 1U, quantum);
 
@@ -2336,15 +2335,15 @@ retry:
 
 		quantum  *= 7;
 		quantum >>= 3;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/*	List of known Dअगरfserv codepoपूर्णांकs:
+/*	List of known Diffserv codepoints:
  *
- *	Least Efक्रमt (CS1, LE)
- *	Best Efक्रमt (CS0)
+ *	Least Effort (CS1, LE)
+ *	Best Effort (CS0)
  *	Max Reliability & LLT "Lo" (TOS1)
  *	Max Throughput (TOS2)
  *	Min Delay (TOS4)
@@ -2362,7 +2361,7 @@ retry:
  *	Voice Admit (VA)
  *	Expedited Forwarding (EF)
 
- *	Total 25 codepoपूर्णांकs.
+ *	Total 25 codepoints.
  */
 
 /*	List of traffic classes in RFC 4594, updated by RFC 8622:
@@ -2372,22 +2371,22 @@ retry:
  *	Network Control (CS6,CS7)      - routing traffic
  *	Telephony (EF,VA)         - aka. VoIP streams
  *	Signalling (CS5)               - VoIP setup
- *	Mulसमयdia Conferencing (AF4x) - aka. video calls
- *	Realसमय Interactive (CS4)     - eg. games
- *	Mulसमयdia Streaming (AF3x)    - eg. YouTube, NetFlix, Twitch
+ *	Multimedia Conferencing (AF4x) - aka. video calls
+ *	Realtime Interactive (CS4)     - eg. games
+ *	Multimedia Streaming (AF3x)    - eg. YouTube, NetFlix, Twitch
  *	Broadcast Video (CS3)
  *	Low Latency Data (AF2x,TOS4)      - eg. database
  *	Ops, Admin, Management (CS2,TOS1) - eg. ssh
- *	Standard Service (CS0 & unrecognised codepoपूर्णांकs)
+ *	Standard Service (CS0 & unrecognised codepoints)
  *	High Throughput Data (AF1x,TOS2)  - eg. web traffic
  *	Low Priority Data (CS1,LE)        - eg. BitTorrent
 
  *	Total 12 traffic classes.
  */
 
-अटल पूर्णांक cake_config_dअगरfserv8(काष्ठा Qdisc *sch)
-अणु
-/*	Pruned list of traffic classes क्रम typical applications:
+static int cake_config_diffserv8(struct Qdisc *sch)
+{
+/*	Pruned list of traffic classes for typical applications:
  *
  *		Network Control          (CS6, CS7)
  *		Minimum Latency          (EF, VA, CS5, CS4)
@@ -2401,7 +2400,7 @@ retry:
  *		Total 8 traffic classes.
  */
 
-	काष्ठा cake_sched_data *q = qdisc_priv(sch);
+	struct cake_sched_data *q = qdisc_priv(sch);
 	u32 mtu = psched_mtu(qdisc_dev(sch));
 	u64 rate = q->rate_bps;
 	u32 quantum = 256;
@@ -2409,16 +2408,16 @@ retry:
 
 	q->tin_cnt = 8;
 
-	/* codepoपूर्णांक to class mapping */
-	q->tin_index = dअगरfserv8;
+	/* codepoint to class mapping */
+	q->tin_index = diffserv8;
 	q->tin_order = normal_order;
 
-	/* class अक्षरacteristics */
-	क्रम (i = 0; i < q->tin_cnt; i++) अणु
-		काष्ठा cake_tin_data *b = &q->tins[i];
+	/* class characteristics */
+	for (i = 0; i < q->tin_cnt; i++) {
+		struct cake_tin_data *b = &q->tins[i];
 
 		cake_set_rate(b, rate, mtu, us_to_ns(q->target),
-			      us_to_ns(q->पूर्णांकerval));
+			      us_to_ns(q->interval));
 
 		b->tin_quantum = max_t(u16, 1U, quantum);
 
@@ -2428,43 +2427,43 @@ retry:
 
 		quantum  *= 7;
 		quantum >>= 3;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cake_config_dअगरfserv4(काष्ठा Qdisc *sch)
-अणु
-/*  Further pruned list of traffic classes क्रम four-class प्रणाली:
+static int cake_config_diffserv4(struct Qdisc *sch)
+{
+/*  Further pruned list of traffic classes for four-class system:
  *
  *	    Latency Sensitive  (CS7, CS6, EF, VA, CS5, CS4)
  *	    Streaming Media    (AF4x, AF3x, CS3, AF2x, TOS4, CS2, TOS1)
- *	    Best Efक्रमt        (CS0, AF1x, TOS2, and those not specअगरied)
+ *	    Best Effort        (CS0, AF1x, TOS2, and those not specified)
  *	    Background Traffic (CS1, LE)
  *
  *		Total 4 traffic classes.
  */
 
-	काष्ठा cake_sched_data *q = qdisc_priv(sch);
+	struct cake_sched_data *q = qdisc_priv(sch);
 	u32 mtu = psched_mtu(qdisc_dev(sch));
 	u64 rate = q->rate_bps;
 	u32 quantum = 1024;
 
 	q->tin_cnt = 4;
 
-	/* codepoपूर्णांक to class mapping */
-	q->tin_index = dअगरfserv4;
+	/* codepoint to class mapping */
+	q->tin_index = diffserv4;
 	q->tin_order = bulk_order;
 
-	/* class अक्षरacteristics */
+	/* class characteristics */
 	cake_set_rate(&q->tins[0], rate, mtu,
-		      us_to_ns(q->target), us_to_ns(q->पूर्णांकerval));
+		      us_to_ns(q->target), us_to_ns(q->interval));
 	cake_set_rate(&q->tins[1], rate >> 4, mtu,
-		      us_to_ns(q->target), us_to_ns(q->पूर्णांकerval));
+		      us_to_ns(q->target), us_to_ns(q->interval));
 	cake_set_rate(&q->tins[2], rate >> 1, mtu,
-		      us_to_ns(q->target), us_to_ns(q->पूर्णांकerval));
+		      us_to_ns(q->target), us_to_ns(q->interval));
 	cake_set_rate(&q->tins[3], rate >> 2, mtu,
-		      us_to_ns(q->target), us_to_ns(q->पूर्णांकerval));
+		      us_to_ns(q->target), us_to_ns(q->interval));
 
 	/* bandwidth-sharing weights */
 	q->tins[0].tin_quantum = quantum;
@@ -2472,146 +2471,146 @@ retry:
 	q->tins[2].tin_quantum = quantum >> 1;
 	q->tins[3].tin_quantum = quantum >> 2;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cake_config_dअगरfserv3(काष्ठा Qdisc *sch)
-अणु
-/*  Simplअगरied Dअगरfserv काष्ठाure with 3 tins.
+static int cake_config_diffserv3(struct Qdisc *sch)
+{
+/*  Simplified Diffserv structure with 3 tins.
  *		Low Priority		(CS1, LE)
- *		Best Efक्रमt
+ *		Best Effort
  *		Latency Sensitive	(TOS4, VA, EF, CS6, CS7)
  */
-	काष्ठा cake_sched_data *q = qdisc_priv(sch);
+	struct cake_sched_data *q = qdisc_priv(sch);
 	u32 mtu = psched_mtu(qdisc_dev(sch));
 	u64 rate = q->rate_bps;
 	u32 quantum = 1024;
 
 	q->tin_cnt = 3;
 
-	/* codepoपूर्णांक to class mapping */
-	q->tin_index = dअगरfserv3;
+	/* codepoint to class mapping */
+	q->tin_index = diffserv3;
 	q->tin_order = bulk_order;
 
-	/* class अक्षरacteristics */
+	/* class characteristics */
 	cake_set_rate(&q->tins[0], rate, mtu,
-		      us_to_ns(q->target), us_to_ns(q->पूर्णांकerval));
+		      us_to_ns(q->target), us_to_ns(q->interval));
 	cake_set_rate(&q->tins[1], rate >> 4, mtu,
-		      us_to_ns(q->target), us_to_ns(q->पूर्णांकerval));
+		      us_to_ns(q->target), us_to_ns(q->interval));
 	cake_set_rate(&q->tins[2], rate >> 2, mtu,
-		      us_to_ns(q->target), us_to_ns(q->पूर्णांकerval));
+		      us_to_ns(q->target), us_to_ns(q->interval));
 
 	/* bandwidth-sharing weights */
 	q->tins[0].tin_quantum = quantum;
 	q->tins[1].tin_quantum = quantum >> 4;
 	q->tins[2].tin_quantum = quantum >> 2;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम cake_reconfigure(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा cake_sched_data *q = qdisc_priv(sch);
-	पूर्णांक c, ft;
+static void cake_reconfigure(struct Qdisc *sch)
+{
+	struct cake_sched_data *q = qdisc_priv(sch);
+	int c, ft;
 
-	चयन (q->tin_mode) अणु
-	हाल CAKE_DIFFSERV_BESTEFFORT:
-		ft = cake_config_bestefक्रमt(sch);
-		अवरोध;
+	switch (q->tin_mode) {
+	case CAKE_DIFFSERV_BESTEFFORT:
+		ft = cake_config_besteffort(sch);
+		break;
 
-	हाल CAKE_DIFFSERV_PRECEDENCE:
+	case CAKE_DIFFSERV_PRECEDENCE:
 		ft = cake_config_precedence(sch);
-		अवरोध;
+		break;
 
-	हाल CAKE_DIFFSERV_DIFFSERV8:
-		ft = cake_config_dअगरfserv8(sch);
-		अवरोध;
+	case CAKE_DIFFSERV_DIFFSERV8:
+		ft = cake_config_diffserv8(sch);
+		break;
 
-	हाल CAKE_DIFFSERV_DIFFSERV4:
-		ft = cake_config_dअगरfserv4(sch);
-		अवरोध;
+	case CAKE_DIFFSERV_DIFFSERV4:
+		ft = cake_config_diffserv4(sch);
+		break;
 
-	हाल CAKE_DIFFSERV_DIFFSERV3:
-	शेष:
-		ft = cake_config_dअगरfserv3(sch);
-		अवरोध;
-	पूर्ण
+	case CAKE_DIFFSERV_DIFFSERV3:
+	default:
+		ft = cake_config_diffserv3(sch);
+		break;
+	}
 
-	क्रम (c = q->tin_cnt; c < CAKE_MAX_TINS; c++) अणु
+	for (c = q->tin_cnt; c < CAKE_MAX_TINS; c++) {
 		cake_clear_tin(sch, c);
-		q->tins[c].cparams.mtu_समय = q->tins[ft].cparams.mtu_समय;
-	पूर्ण
+		q->tins[c].cparams.mtu_time = q->tins[ft].cparams.mtu_time;
+	}
 
 	q->rate_ns   = q->tins[ft].tin_rate_ns;
 	q->rate_shft = q->tins[ft].tin_rate_shft;
 
-	अगर (q->buffer_config_limit) अणु
+	if (q->buffer_config_limit) {
 		q->buffer_limit = q->buffer_config_limit;
-	पूर्ण अन्यथा अगर (q->rate_bps) अणु
-		u64 t = q->rate_bps * q->पूर्णांकerval;
+	} else if (q->rate_bps) {
+		u64 t = q->rate_bps * q->interval;
 
-		करो_भाग(t, USEC_PER_SEC / 4);
+		do_div(t, USEC_PER_SEC / 4);
 		q->buffer_limit = max_t(u32, t, 4U << 20);
-	पूर्ण अन्यथा अणु
+	} else {
 		q->buffer_limit = ~0;
-	पूर्ण
+	}
 
 	sch->flags &= ~TCQ_F_CAN_BYPASS;
 
 	q->buffer_limit = min(q->buffer_limit,
 			      max(sch->limit * psched_mtu(qdisc_dev(sch)),
 				  q->buffer_config_limit));
-पूर्ण
+}
 
-अटल पूर्णांक cake_change(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
-		       काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा cake_sched_data *q = qdisc_priv(sch);
-	काष्ठा nlattr *tb[TCA_CAKE_MAX + 1];
-	पूर्णांक err;
+static int cake_change(struct Qdisc *sch, struct nlattr *opt,
+		       struct netlink_ext_ack *extack)
+{
+	struct cake_sched_data *q = qdisc_priv(sch);
+	struct nlattr *tb[TCA_CAKE_MAX + 1];
+	int err;
 
-	अगर (!opt)
-		वापस -EINVAL;
+	if (!opt)
+		return -EINVAL;
 
 	err = nla_parse_nested_deprecated(tb, TCA_CAKE_MAX, opt, cake_policy,
 					  extack);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर (tb[TCA_CAKE_NAT]) अणु
-#अगर IS_ENABLED(CONFIG_NF_CONNTRACK)
+	if (tb[TCA_CAKE_NAT]) {
+#if IS_ENABLED(CONFIG_NF_CONNTRACK)
 		q->flow_mode &= ~CAKE_FLOW_NAT_FLAG;
 		q->flow_mode |= CAKE_FLOW_NAT_FLAG *
 			!!nla_get_u32(tb[TCA_CAKE_NAT]);
-#अन्यथा
+#else
 		NL_SET_ERR_MSG_ATTR(extack, tb[TCA_CAKE_NAT],
 				    "No conntrack support in kernel");
-		वापस -EOPNOTSUPP;
-#पूर्ण_अगर
-	पूर्ण
+		return -EOPNOTSUPP;
+#endif
+	}
 
-	अगर (tb[TCA_CAKE_BASE_RATE64])
+	if (tb[TCA_CAKE_BASE_RATE64])
 		q->rate_bps = nla_get_u64(tb[TCA_CAKE_BASE_RATE64]);
 
-	अगर (tb[TCA_CAKE_DIFFSERV_MODE])
+	if (tb[TCA_CAKE_DIFFSERV_MODE])
 		q->tin_mode = nla_get_u32(tb[TCA_CAKE_DIFFSERV_MODE]);
 
-	अगर (tb[TCA_CAKE_WASH]) अणु
-		अगर (!!nla_get_u32(tb[TCA_CAKE_WASH]))
+	if (tb[TCA_CAKE_WASH]) {
+		if (!!nla_get_u32(tb[TCA_CAKE_WASH]))
 			q->rate_flags |= CAKE_FLAG_WASH;
-		अन्यथा
+		else
 			q->rate_flags &= ~CAKE_FLAG_WASH;
-	पूर्ण
+	}
 
-	अगर (tb[TCA_CAKE_FLOW_MODE])
+	if (tb[TCA_CAKE_FLOW_MODE])
 		q->flow_mode = ((q->flow_mode & CAKE_FLOW_NAT_FLAG) |
 				(nla_get_u32(tb[TCA_CAKE_FLOW_MODE]) &
 					CAKE_FLOW_MASK));
 
-	अगर (tb[TCA_CAKE_ATM])
-		q->aपंचांग_mode = nla_get_u32(tb[TCA_CAKE_ATM]);
+	if (tb[TCA_CAKE_ATM])
+		q->atm_mode = nla_get_u32(tb[TCA_CAKE_ATM]);
 
-	अगर (tb[TCA_CAKE_OVERHEAD]) अणु
+	if (tb[TCA_CAKE_OVERHEAD]) {
 		q->rate_overhead = nla_get_s32(tb[TCA_CAKE_OVERHEAD]);
 		q->rate_flags |= CAKE_FLAG_OVERHEAD;
 
@@ -2619,128 +2618,128 @@ retry:
 		q->max_adjlen = 0;
 		q->min_netlen = ~0;
 		q->min_adjlen = ~0;
-	पूर्ण
+	}
 
-	अगर (tb[TCA_CAKE_RAW]) अणु
+	if (tb[TCA_CAKE_RAW]) {
 		q->rate_flags &= ~CAKE_FLAG_OVERHEAD;
 
 		q->max_netlen = 0;
 		q->max_adjlen = 0;
 		q->min_netlen = ~0;
 		q->min_adjlen = ~0;
-	पूर्ण
+	}
 
-	अगर (tb[TCA_CAKE_MPU])
+	if (tb[TCA_CAKE_MPU])
 		q->rate_mpu = nla_get_u32(tb[TCA_CAKE_MPU]);
 
-	अगर (tb[TCA_CAKE_RTT]) अणु
-		q->पूर्णांकerval = nla_get_u32(tb[TCA_CAKE_RTT]);
+	if (tb[TCA_CAKE_RTT]) {
+		q->interval = nla_get_u32(tb[TCA_CAKE_RTT]);
 
-		अगर (!q->पूर्णांकerval)
-			q->पूर्णांकerval = 1;
-	पूर्ण
+		if (!q->interval)
+			q->interval = 1;
+	}
 
-	अगर (tb[TCA_CAKE_TARGET]) अणु
+	if (tb[TCA_CAKE_TARGET]) {
 		q->target = nla_get_u32(tb[TCA_CAKE_TARGET]);
 
-		अगर (!q->target)
+		if (!q->target)
 			q->target = 1;
-	पूर्ण
+	}
 
-	अगर (tb[TCA_CAKE_AUTORATE]) अणु
-		अगर (!!nla_get_u32(tb[TCA_CAKE_AUTORATE]))
+	if (tb[TCA_CAKE_AUTORATE]) {
+		if (!!nla_get_u32(tb[TCA_CAKE_AUTORATE]))
 			q->rate_flags |= CAKE_FLAG_AUTORATE_INGRESS;
-		अन्यथा
+		else
 			q->rate_flags &= ~CAKE_FLAG_AUTORATE_INGRESS;
-	पूर्ण
+	}
 
-	अगर (tb[TCA_CAKE_INGRESS]) अणु
-		अगर (!!nla_get_u32(tb[TCA_CAKE_INGRESS]))
+	if (tb[TCA_CAKE_INGRESS]) {
+		if (!!nla_get_u32(tb[TCA_CAKE_INGRESS]))
 			q->rate_flags |= CAKE_FLAG_INGRESS;
-		अन्यथा
+		else
 			q->rate_flags &= ~CAKE_FLAG_INGRESS;
-	पूर्ण
+	}
 
-	अगर (tb[TCA_CAKE_ACK_FILTER])
+	if (tb[TCA_CAKE_ACK_FILTER])
 		q->ack_filter = nla_get_u32(tb[TCA_CAKE_ACK_FILTER]);
 
-	अगर (tb[TCA_CAKE_MEMORY])
+	if (tb[TCA_CAKE_MEMORY])
 		q->buffer_config_limit = nla_get_u32(tb[TCA_CAKE_MEMORY]);
 
-	अगर (tb[TCA_CAKE_SPLIT_GSO]) अणु
-		अगर (!!nla_get_u32(tb[TCA_CAKE_SPLIT_GSO]))
+	if (tb[TCA_CAKE_SPLIT_GSO]) {
+		if (!!nla_get_u32(tb[TCA_CAKE_SPLIT_GSO]))
 			q->rate_flags |= CAKE_FLAG_SPLIT_GSO;
-		अन्यथा
+		else
 			q->rate_flags &= ~CAKE_FLAG_SPLIT_GSO;
-	पूर्ण
+	}
 
-	अगर (tb[TCA_CAKE_FWMARK]) अणु
+	if (tb[TCA_CAKE_FWMARK]) {
 		q->fwmark_mask = nla_get_u32(tb[TCA_CAKE_FWMARK]);
 		q->fwmark_shft = q->fwmark_mask ? __ffs(q->fwmark_mask) : 0;
-	पूर्ण
+	}
 
-	अगर (q->tins) अणु
+	if (q->tins) {
 		sch_tree_lock(sch);
 		cake_reconfigure(sch);
 		sch_tree_unlock(sch);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम cake_destroy(काष्ठा Qdisc *sch)
-अणु
-	काष्ठा cake_sched_data *q = qdisc_priv(sch);
+static void cake_destroy(struct Qdisc *sch)
+{
+	struct cake_sched_data *q = qdisc_priv(sch);
 
-	qdisc_watchकरोg_cancel(&q->watchकरोg);
+	qdisc_watchdog_cancel(&q->watchdog);
 	tcf_block_put(q->block);
-	kvमुक्त(q->tins);
-पूर्ण
+	kvfree(q->tins);
+}
 
-अटल पूर्णांक cake_init(काष्ठा Qdisc *sch, काष्ठा nlattr *opt,
-		     काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा cake_sched_data *q = qdisc_priv(sch);
-	पूर्णांक i, j, err;
+static int cake_init(struct Qdisc *sch, struct nlattr *opt,
+		     struct netlink_ext_ack *extack)
+{
+	struct cake_sched_data *q = qdisc_priv(sch);
+	int i, j, err;
 
 	sch->limit = 10240;
 	q->tin_mode = CAKE_DIFFSERV_DIFFSERV3;
 	q->flow_mode  = CAKE_FLOW_TRIPLE;
 
-	q->rate_bps = 0; /* unlimited by शेष */
+	q->rate_bps = 0; /* unlimited by default */
 
-	q->पूर्णांकerval = 100000; /* 100ms शेष */
+	q->interval = 100000; /* 100ms default */
 	q->target   =   5000; /* 5ms: codel RFC argues
-			       * क्रम 5 to 10% of पूर्णांकerval
+			       * for 5 to 10% of interval
 			       */
 	q->rate_flags |= CAKE_FLAG_SPLIT_GSO;
 	q->cur_tin = 0;
 	q->cur_flow  = 0;
 
-	qdisc_watchकरोg_init(&q->watchकरोg, sch);
+	qdisc_watchdog_init(&q->watchdog, sch);
 
-	अगर (opt) अणु
+	if (opt) {
 		err = cake_change(sch, opt, extack);
 
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
 	err = tcf_block_get(&q->block, &q->filter_list, sch, extack);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	quantum_भाग[0] = ~0;
-	क्रम (i = 1; i <= CAKE_QUEUES; i++)
-		quantum_भाग[i] = 65535 / i;
+	quantum_div[0] = ~0;
+	for (i = 1; i <= CAKE_QUEUES; i++)
+		quantum_div[i] = 65535 / i;
 
-	q->tins = kvसुस्मृति(CAKE_MAX_TINS, माप(काष्ठा cake_tin_data),
+	q->tins = kvcalloc(CAKE_MAX_TINS, sizeof(struct cake_tin_data),
 			   GFP_KERNEL);
-	अगर (!q->tins)
-		जाओ nomem;
+	if (!q->tins)
+		goto nomem;
 
-	क्रम (i = 0; i < CAKE_MAX_TINS; i++) अणु
-		काष्ठा cake_tin_data *b = q->tins + i;
+	for (i = 0; i < CAKE_MAX_TINS; i++) {
+		struct cake_tin_data *b = q->tins + i;
 
 		INIT_LIST_HEAD(&b->new_flows);
 		INIT_LIST_HEAD(&b->old_flows);
@@ -2749,8 +2748,8 @@ retry:
 		b->bulk_flow_count = 0;
 		b->decaying_flow_count = 0;
 
-		क्रम (j = 0; j < CAKE_QUEUES; j++) अणु
-			काष्ठा cake_flow *flow = b->flows + j;
+		for (j = 0; j < CAKE_QUEUES; j++) {
+			struct cake_flow *flow = b->flows + j;
 			u32 k = j * CAKE_MAX_TINS + i;
 
 			INIT_LIST_HEAD(&flow->flowchain);
@@ -2759,113 +2758,113 @@ retry:
 			q->overflow_heap[k].t = i;
 			q->overflow_heap[k].b = j;
 			b->overflow_idx[j] = k;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	cake_reconfigure(sch);
 	q->avg_peak_bandwidth = q->rate_bps;
 	q->min_netlen = ~0;
 	q->min_adjlen = ~0;
-	वापस 0;
+	return 0;
 
 nomem:
 	cake_destroy(sch);
-	वापस -ENOMEM;
-पूर्ण
+	return -ENOMEM;
+}
 
-अटल पूर्णांक cake_dump(काष्ठा Qdisc *sch, काष्ठा sk_buff *skb)
-अणु
-	काष्ठा cake_sched_data *q = qdisc_priv(sch);
-	काष्ठा nlattr *opts;
+static int cake_dump(struct Qdisc *sch, struct sk_buff *skb)
+{
+	struct cake_sched_data *q = qdisc_priv(sch);
+	struct nlattr *opts;
 
 	opts = nla_nest_start_noflag(skb, TCA_OPTIONS);
-	अगर (!opts)
-		जाओ nla_put_failure;
+	if (!opts)
+		goto nla_put_failure;
 
-	अगर (nla_put_u64_64bit(skb, TCA_CAKE_BASE_RATE64, q->rate_bps,
+	if (nla_put_u64_64bit(skb, TCA_CAKE_BASE_RATE64, q->rate_bps,
 			      TCA_CAKE_PAD))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (nla_put_u32(skb, TCA_CAKE_FLOW_MODE,
+	if (nla_put_u32(skb, TCA_CAKE_FLOW_MODE,
 			q->flow_mode & CAKE_FLOW_MASK))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (nla_put_u32(skb, TCA_CAKE_RTT, q->पूर्णांकerval))
-		जाओ nla_put_failure;
+	if (nla_put_u32(skb, TCA_CAKE_RTT, q->interval))
+		goto nla_put_failure;
 
-	अगर (nla_put_u32(skb, TCA_CAKE_TARGET, q->target))
-		जाओ nla_put_failure;
+	if (nla_put_u32(skb, TCA_CAKE_TARGET, q->target))
+		goto nla_put_failure;
 
-	अगर (nla_put_u32(skb, TCA_CAKE_MEMORY, q->buffer_config_limit))
-		जाओ nla_put_failure;
+	if (nla_put_u32(skb, TCA_CAKE_MEMORY, q->buffer_config_limit))
+		goto nla_put_failure;
 
-	अगर (nla_put_u32(skb, TCA_CAKE_AUTORATE,
+	if (nla_put_u32(skb, TCA_CAKE_AUTORATE,
 			!!(q->rate_flags & CAKE_FLAG_AUTORATE_INGRESS)))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (nla_put_u32(skb, TCA_CAKE_INGRESS,
+	if (nla_put_u32(skb, TCA_CAKE_INGRESS,
 			!!(q->rate_flags & CAKE_FLAG_INGRESS)))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (nla_put_u32(skb, TCA_CAKE_ACK_FILTER, q->ack_filter))
-		जाओ nla_put_failure;
+	if (nla_put_u32(skb, TCA_CAKE_ACK_FILTER, q->ack_filter))
+		goto nla_put_failure;
 
-	अगर (nla_put_u32(skb, TCA_CAKE_NAT,
+	if (nla_put_u32(skb, TCA_CAKE_NAT,
 			!!(q->flow_mode & CAKE_FLOW_NAT_FLAG)))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (nla_put_u32(skb, TCA_CAKE_DIFFSERV_MODE, q->tin_mode))
-		जाओ nla_put_failure;
+	if (nla_put_u32(skb, TCA_CAKE_DIFFSERV_MODE, q->tin_mode))
+		goto nla_put_failure;
 
-	अगर (nla_put_u32(skb, TCA_CAKE_WASH,
+	if (nla_put_u32(skb, TCA_CAKE_WASH,
 			!!(q->rate_flags & CAKE_FLAG_WASH)))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (nla_put_u32(skb, TCA_CAKE_OVERHEAD, q->rate_overhead))
-		जाओ nla_put_failure;
+	if (nla_put_u32(skb, TCA_CAKE_OVERHEAD, q->rate_overhead))
+		goto nla_put_failure;
 
-	अगर (!(q->rate_flags & CAKE_FLAG_OVERHEAD))
-		अगर (nla_put_u32(skb, TCA_CAKE_RAW, 0))
-			जाओ nla_put_failure;
+	if (!(q->rate_flags & CAKE_FLAG_OVERHEAD))
+		if (nla_put_u32(skb, TCA_CAKE_RAW, 0))
+			goto nla_put_failure;
 
-	अगर (nla_put_u32(skb, TCA_CAKE_ATM, q->aपंचांग_mode))
-		जाओ nla_put_failure;
+	if (nla_put_u32(skb, TCA_CAKE_ATM, q->atm_mode))
+		goto nla_put_failure;
 
-	अगर (nla_put_u32(skb, TCA_CAKE_MPU, q->rate_mpu))
-		जाओ nla_put_failure;
+	if (nla_put_u32(skb, TCA_CAKE_MPU, q->rate_mpu))
+		goto nla_put_failure;
 
-	अगर (nla_put_u32(skb, TCA_CAKE_SPLIT_GSO,
+	if (nla_put_u32(skb, TCA_CAKE_SPLIT_GSO,
 			!!(q->rate_flags & CAKE_FLAG_SPLIT_GSO)))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (nla_put_u32(skb, TCA_CAKE_FWMARK, q->fwmark_mask))
-		जाओ nla_put_failure;
+	if (nla_put_u32(skb, TCA_CAKE_FWMARK, q->fwmark_mask))
+		goto nla_put_failure;
 
-	वापस nla_nest_end(skb, opts);
+	return nla_nest_end(skb, opts);
 
 nla_put_failure:
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल पूर्णांक cake_dump_stats(काष्ठा Qdisc *sch, काष्ठा gnet_dump *d)
-अणु
-	काष्ठा nlattr *stats = nla_nest_start_noflag(d->skb, TCA_STATS_APP);
-	काष्ठा cake_sched_data *q = qdisc_priv(sch);
-	काष्ठा nlattr *tstats, *ts;
-	पूर्णांक i;
+static int cake_dump_stats(struct Qdisc *sch, struct gnet_dump *d)
+{
+	struct nlattr *stats = nla_nest_start_noflag(d->skb, TCA_STATS_APP);
+	struct cake_sched_data *q = qdisc_priv(sch);
+	struct nlattr *tstats, *ts;
+	int i;
 
-	अगर (!stats)
-		वापस -1;
+	if (!stats)
+		return -1;
 
-#घोषणा PUT_STAT_U32(attr, data) करो अणु				       \
-		अगर (nla_put_u32(d->skb, TCA_CAKE_STATS_ ## attr, data)) \
-			जाओ nla_put_failure;			       \
-	पूर्ण जबतक (0)
-#घोषणा PUT_STAT_U64(attr, data) करो अणु				       \
-		अगर (nla_put_u64_64bit(d->skb, TCA_CAKE_STATS_ ## attr, \
+#define PUT_STAT_U32(attr, data) do {				       \
+		if (nla_put_u32(d->skb, TCA_CAKE_STATS_ ## attr, data)) \
+			goto nla_put_failure;			       \
+	} while (0)
+#define PUT_STAT_U64(attr, data) do {				       \
+		if (nla_put_u64_64bit(d->skb, TCA_CAKE_STATS_ ## attr, \
 					data, TCA_CAKE_STATS_PAD)) \
-			जाओ nla_put_failure;			       \
-	पूर्ण जबतक (0)
+			goto nla_put_failure;			       \
+	} while (0)
 
 	PUT_STAT_U64(CAPACITY_ESTIMATE64, q->avg_peak_bandwidth);
 	PUT_STAT_U32(MEMORY_LIMIT, q->buffer_limit);
@@ -2876,38 +2875,38 @@ nla_put_failure:
 	PUT_STAT_U32(MIN_NETLEN, q->min_netlen);
 	PUT_STAT_U32(MIN_ADJLEN, q->min_adjlen);
 
-#अघोषित PUT_STAT_U32
-#अघोषित PUT_STAT_U64
+#undef PUT_STAT_U32
+#undef PUT_STAT_U64
 
 	tstats = nla_nest_start_noflag(d->skb, TCA_CAKE_STATS_TIN_STATS);
-	अगर (!tstats)
-		जाओ nla_put_failure;
+	if (!tstats)
+		goto nla_put_failure;
 
-#घोषणा PUT_TSTAT_U32(attr, data) करो अणु					\
-		अगर (nla_put_u32(d->skb, TCA_CAKE_TIN_STATS_ ## attr, data)) \
-			जाओ nla_put_failure;				\
-	पूर्ण जबतक (0)
-#घोषणा PUT_TSTAT_U64(attr, data) करो अणु					\
-		अगर (nla_put_u64_64bit(d->skb, TCA_CAKE_TIN_STATS_ ## attr, \
+#define PUT_TSTAT_U32(attr, data) do {					\
+		if (nla_put_u32(d->skb, TCA_CAKE_TIN_STATS_ ## attr, data)) \
+			goto nla_put_failure;				\
+	} while (0)
+#define PUT_TSTAT_U64(attr, data) do {					\
+		if (nla_put_u64_64bit(d->skb, TCA_CAKE_TIN_STATS_ ## attr, \
 					data, TCA_CAKE_TIN_STATS_PAD))	\
-			जाओ nla_put_failure;				\
-	पूर्ण जबतक (0)
+			goto nla_put_failure;				\
+	} while (0)
 
-	क्रम (i = 0; i < q->tin_cnt; i++) अणु
-		काष्ठा cake_tin_data *b = &q->tins[q->tin_order[i]];
+	for (i = 0; i < q->tin_cnt; i++) {
+		struct cake_tin_data *b = &q->tins[q->tin_order[i]];
 
 		ts = nla_nest_start_noflag(d->skb, i + 1);
-		अगर (!ts)
-			जाओ nla_put_failure;
+		if (!ts)
+			goto nla_put_failure;
 
 		PUT_TSTAT_U64(THRESHOLD_RATE64, b->tin_rate_bps);
 		PUT_TSTAT_U64(SENT_BYTES64, b->bytes);
 		PUT_TSTAT_U32(BACKLOG_BYTES, b->tin_backlog);
 
 		PUT_TSTAT_U32(TARGET_US,
-			      kसमय_प्रकारo_us(ns_to_kसमय(b->cparams.target)));
+			      ktime_to_us(ns_to_ktime(b->cparams.target)));
 		PUT_TSTAT_U32(INTERVAL_US,
-			      kसमय_प्रकारo_us(ns_to_kसमय(b->cparams.पूर्णांकerval)));
+			      ktime_to_us(ns_to_ktime(b->cparams.interval)));
 
 		PUT_TSTAT_U32(SENT_PACKETS, b->packets);
 		PUT_TSTAT_U32(DROPPED_PACKETS, b->tin_dropped);
@@ -2915,13 +2914,13 @@ nla_put_failure:
 		PUT_TSTAT_U32(ACKS_DROPPED_PACKETS, b->ack_drops);
 
 		PUT_TSTAT_U32(PEAK_DELAY_US,
-			      kसमय_प्रकारo_us(ns_to_kसमय(b->peak_delay)));
+			      ktime_to_us(ns_to_ktime(b->peak_delay)));
 		PUT_TSTAT_U32(AVG_DELAY_US,
-			      kसमय_प्रकारo_us(ns_to_kसमय(b->avge_delay)));
+			      ktime_to_us(ns_to_ktime(b->avge_delay)));
 		PUT_TSTAT_U32(BASE_DELAY_US,
-			      kसमय_प्रकारo_us(ns_to_kसमय(b->base_delay)));
+			      ktime_to_us(ns_to_ktime(b->base_delay)));
 
-		PUT_TSTAT_U32(WAY_INसूचीECT_HITS, b->way_hits);
+		PUT_TSTAT_U32(WAY_INDIRECT_HITS, b->way_hits);
 		PUT_TSTAT_U32(WAY_MISSES, b->way_misses);
 		PUT_TSTAT_U32(WAY_COLLISIONS, b->way_collisions);
 
@@ -2933,157 +2932,157 @@ nla_put_failure:
 
 		PUT_TSTAT_U32(FLOW_QUANTUM, b->flow_quantum);
 		nla_nest_end(d->skb, ts);
-	पूर्ण
+	}
 
-#अघोषित PUT_TSTAT_U32
-#अघोषित PUT_TSTAT_U64
+#undef PUT_TSTAT_U32
+#undef PUT_TSTAT_U64
 
 	nla_nest_end(d->skb, tstats);
-	वापस nla_nest_end(d->skb, stats);
+	return nla_nest_end(d->skb, stats);
 
 nla_put_failure:
 	nla_nest_cancel(d->skb, stats);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल काष्ठा Qdisc *cake_leaf(काष्ठा Qdisc *sch, अचिन्हित दीर्घ arg)
-अणु
-	वापस शून्य;
-पूर्ण
+static struct Qdisc *cake_leaf(struct Qdisc *sch, unsigned long arg)
+{
+	return NULL;
+}
 
-अटल अचिन्हित दीर्घ cake_find(काष्ठा Qdisc *sch, u32 classid)
-अणु
-	वापस 0;
-पूर्ण
+static unsigned long cake_find(struct Qdisc *sch, u32 classid)
+{
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ cake_bind(काष्ठा Qdisc *sch, अचिन्हित दीर्घ parent,
+static unsigned long cake_bind(struct Qdisc *sch, unsigned long parent,
 			       u32 classid)
-अणु
-	वापस 0;
-पूर्ण
+{
+	return 0;
+}
 
-अटल व्योम cake_unbind(काष्ठा Qdisc *q, अचिन्हित दीर्घ cl)
-अणु
-पूर्ण
+static void cake_unbind(struct Qdisc *q, unsigned long cl)
+{
+}
 
-अटल काष्ठा tcf_block *cake_tcf_block(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl,
-					काष्ठा netlink_ext_ack *extack)
-अणु
-	काष्ठा cake_sched_data *q = qdisc_priv(sch);
+static struct tcf_block *cake_tcf_block(struct Qdisc *sch, unsigned long cl,
+					struct netlink_ext_ack *extack)
+{
+	struct cake_sched_data *q = qdisc_priv(sch);
 
-	अगर (cl)
-		वापस शून्य;
-	वापस q->block;
-पूर्ण
+	if (cl)
+		return NULL;
+	return q->block;
+}
 
-अटल पूर्णांक cake_dump_class(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl,
-			   काष्ठा sk_buff *skb, काष्ठा tcmsg *tcm)
-अणु
+static int cake_dump_class(struct Qdisc *sch, unsigned long cl,
+			   struct sk_buff *skb, struct tcmsg *tcm)
+{
 	tcm->tcm_handle |= TC_H_MIN(cl);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cake_dump_class_stats(काष्ठा Qdisc *sch, अचिन्हित दीर्घ cl,
-				 काष्ठा gnet_dump *d)
-अणु
-	काष्ठा cake_sched_data *q = qdisc_priv(sch);
-	स्थिर काष्ठा cake_flow *flow = शून्य;
-	काष्ठा gnet_stats_queue qs = अणु 0 पूर्ण;
-	काष्ठा nlattr *stats;
+static int cake_dump_class_stats(struct Qdisc *sch, unsigned long cl,
+				 struct gnet_dump *d)
+{
+	struct cake_sched_data *q = qdisc_priv(sch);
+	const struct cake_flow *flow = NULL;
+	struct gnet_stats_queue qs = { 0 };
+	struct nlattr *stats;
 	u32 idx = cl - 1;
 
-	अगर (idx < CAKE_QUEUES * q->tin_cnt) अणु
-		स्थिर काष्ठा cake_tin_data *b = \
+	if (idx < CAKE_QUEUES * q->tin_cnt) {
+		const struct cake_tin_data *b = \
 			&q->tins[q->tin_order[idx / CAKE_QUEUES]];
-		स्थिर काष्ठा sk_buff *skb;
+		const struct sk_buff *skb;
 
 		flow = &b->flows[idx % CAKE_QUEUES];
 
-		अगर (flow->head) अणु
+		if (flow->head) {
 			sch_tree_lock(sch);
 			skb = flow->head;
-			जबतक (skb) अणु
+			while (skb) {
 				qs.qlen++;
 				skb = skb->next;
-			पूर्ण
+			}
 			sch_tree_unlock(sch);
-		पूर्ण
+		}
 		qs.backlog = b->backlogs[idx % CAKE_QUEUES];
 		qs.drops = flow->dropped;
-	पूर्ण
-	अगर (gnet_stats_copy_queue(d, शून्य, &qs, qs.qlen) < 0)
-		वापस -1;
-	अगर (flow) अणु
-		kसमय_प्रकार now = kसमय_get();
+	}
+	if (gnet_stats_copy_queue(d, NULL, &qs, qs.qlen) < 0)
+		return -1;
+	if (flow) {
+		ktime_t now = ktime_get();
 
 		stats = nla_nest_start_noflag(d->skb, TCA_STATS_APP);
-		अगर (!stats)
-			वापस -1;
+		if (!stats)
+			return -1;
 
-#घोषणा PUT_STAT_U32(attr, data) करो अणु				       \
-		अगर (nla_put_u32(d->skb, TCA_CAKE_STATS_ ## attr, data)) \
-			जाओ nla_put_failure;			       \
-	पूर्ण जबतक (0)
-#घोषणा PUT_STAT_S32(attr, data) करो अणु				       \
-		अगर (nla_put_s32(d->skb, TCA_CAKE_STATS_ ## attr, data)) \
-			जाओ nla_put_failure;			       \
-	पूर्ण जबतक (0)
+#define PUT_STAT_U32(attr, data) do {				       \
+		if (nla_put_u32(d->skb, TCA_CAKE_STATS_ ## attr, data)) \
+			goto nla_put_failure;			       \
+	} while (0)
+#define PUT_STAT_S32(attr, data) do {				       \
+		if (nla_put_s32(d->skb, TCA_CAKE_STATS_ ## attr, data)) \
+			goto nla_put_failure;			       \
+	} while (0)
 
 		PUT_STAT_S32(DEFICIT, flow->deficit);
 		PUT_STAT_U32(DROPPING, flow->cvars.dropping);
 		PUT_STAT_U32(COBALT_COUNT, flow->cvars.count);
 		PUT_STAT_U32(P_DROP, flow->cvars.p_drop);
-		अगर (flow->cvars.p_drop) अणु
+		if (flow->cvars.p_drop) {
 			PUT_STAT_S32(BLUE_TIMER_US,
-				     kसमय_प्रकारo_us(
-					     kसमय_sub(now,
-						       flow->cvars.blue_समयr)));
-		पूर्ण
-		अगर (flow->cvars.dropping) अणु
+				     ktime_to_us(
+					     ktime_sub(now,
+						       flow->cvars.blue_timer)));
+		}
+		if (flow->cvars.dropping) {
 			PUT_STAT_S32(DROP_NEXT_US,
-				     kसमय_प्रकारo_us(
-					     kसमय_sub(now,
+				     ktime_to_us(
+					     ktime_sub(now,
 						       flow->cvars.drop_next)));
-		पूर्ण
+		}
 
-		अगर (nla_nest_end(d->skb, stats) < 0)
-			वापस -1;
-	पूर्ण
+		if (nla_nest_end(d->skb, stats) < 0)
+			return -1;
+	}
 
-	वापस 0;
+	return 0;
 
 nla_put_failure:
 	nla_nest_cancel(d->skb, stats);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल व्योम cake_walk(काष्ठा Qdisc *sch, काष्ठा qdisc_walker *arg)
-अणु
-	काष्ठा cake_sched_data *q = qdisc_priv(sch);
-	अचिन्हित पूर्णांक i, j;
+static void cake_walk(struct Qdisc *sch, struct qdisc_walker *arg)
+{
+	struct cake_sched_data *q = qdisc_priv(sch);
+	unsigned int i, j;
 
-	अगर (arg->stop)
-		वापस;
+	if (arg->stop)
+		return;
 
-	क्रम (i = 0; i < q->tin_cnt; i++) अणु
-		काष्ठा cake_tin_data *b = &q->tins[q->tin_order[i]];
+	for (i = 0; i < q->tin_cnt; i++) {
+		struct cake_tin_data *b = &q->tins[q->tin_order[i]];
 
-		क्रम (j = 0; j < CAKE_QUEUES; j++) अणु
-			अगर (list_empty(&b->flows[j].flowchain) ||
-			    arg->count < arg->skip) अणु
+		for (j = 0; j < CAKE_QUEUES; j++) {
+			if (list_empty(&b->flows[j].flowchain) ||
+			    arg->count < arg->skip) {
 				arg->count++;
-				जारी;
-			पूर्ण
-			अगर (arg->fn(sch, i * CAKE_QUEUES + j + 1, arg) < 0) अणु
+				continue;
+			}
+			if (arg->fn(sch, i * CAKE_QUEUES + j + 1, arg) < 0) {
 				arg->stop = 1;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 			arg->count++;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल स्थिर काष्ठा Qdisc_class_ops cake_class_ops = अणु
+static const struct Qdisc_class_ops cake_class_ops = {
 	.leaf		=	cake_leaf,
 	.find		=	cake_find,
 	.tcf_block	=	cake_tcf_block,
@@ -3092,12 +3091,12 @@ nla_put_failure:
 	.dump		=	cake_dump_class,
 	.dump_stats	=	cake_dump_class_stats,
 	.walk		=	cake_walk,
-पूर्ण;
+};
 
-अटल काष्ठा Qdisc_ops cake_qdisc_ops __पढ़ो_mostly = अणु
+static struct Qdisc_ops cake_qdisc_ops __read_mostly = {
 	.cl_ops		=	&cake_class_ops,
 	.id		=	"cake",
-	.priv_size	=	माप(काष्ठा cake_sched_data),
+	.priv_size	=	sizeof(struct cake_sched_data),
 	.enqueue	=	cake_enqueue,
 	.dequeue	=	cake_dequeue,
 	.peek		=	qdisc_peek_dequeued,
@@ -3108,20 +3107,20 @@ nla_put_failure:
 	.dump		=	cake_dump,
 	.dump_stats	=	cake_dump_stats,
 	.owner		=	THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init cake_module_init(व्योम)
-अणु
-	वापस रेजिस्टर_qdisc(&cake_qdisc_ops);
-पूर्ण
+static int __init cake_module_init(void)
+{
+	return register_qdisc(&cake_qdisc_ops);
+}
 
-अटल व्योम __निकास cake_module_निकास(व्योम)
-अणु
-	unरेजिस्टर_qdisc(&cake_qdisc_ops);
-पूर्ण
+static void __exit cake_module_exit(void)
+{
+	unregister_qdisc(&cake_qdisc_ops);
+}
 
 module_init(cake_module_init)
-module_निकास(cake_module_निकास)
+module_exit(cake_module_exit)
 MODULE_AUTHOR("Jonathan Morton");
 MODULE_LICENSE("Dual BSD/GPL");
 MODULE_DESCRIPTION("The CAKE shaper.");

@@ -1,63 +1,62 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Microchip KSZ8863 series रेजिस्टर access through SMI
+ * Microchip KSZ8863 series register access through SMI
  *
  * Copyright (C) 2019 Pengutronix, Michael Grzeschik <kernel@pengutronix.de>
  */
 
-#समावेश "ksz8.h"
-#समावेश "ksz_common.h"
+#include "ksz8.h"
+#include "ksz_common.h"
 
-/* Serial Management Interface (SMI) uses the following frame क्रमmat:
+/* Serial Management Interface (SMI) uses the following frame format:
  *
  *       preamble|start|Read/Write|  PHY   |  REG  |TA|   Data bits      | Idle
  *               |frame| OP code  |address |address|  |                  |
- * पढ़ो | 32x1तखs | 01  |    00    | 1xRRR  | RRRRR |Z0| 00000000DDDDDDDD |  Z
- * ग_लिखो| 32x1तखs | 01  |    00    | 0xRRR  | RRRRR |10| xxxxxxxxDDDDDDDD |  Z
+ * read | 32x1´s | 01  |    00    | 1xRRR  | RRRRR |Z0| 00000000DDDDDDDD |  Z
+ * write| 32x1´s | 01  |    00    | 0xRRR  | RRRRR |10| xxxxxxxxDDDDDDDD |  Z
  *
  */
 
-#घोषणा SMI_KSZ88XX_READ_PHY	BIT(4)
+#define SMI_KSZ88XX_READ_PHY	BIT(4)
 
-अटल पूर्णांक ksz8863_mdio_पढ़ो(व्योम *ctx, स्थिर व्योम *reg_buf, माप_प्रकार reg_len,
-			     व्योम *val_buf, माप_प्रकार val_len)
-अणु
-	काष्ठा ksz_device *dev = ctx;
-	काष्ठा mdio_device *mdev;
+static int ksz8863_mdio_read(void *ctx, const void *reg_buf, size_t reg_len,
+			     void *val_buf, size_t val_len)
+{
+	struct ksz_device *dev = ctx;
+	struct mdio_device *mdev;
 	u8 reg = *(u8 *)reg_buf;
 	u8 *val = val_buf;
-	काष्ठा ksz8 *ksz8;
-	पूर्णांक i, ret = 0;
+	struct ksz8 *ksz8;
+	int i, ret = 0;
 
 	ksz8 = dev->priv;
 	mdev = ksz8->priv;
 
 	mutex_lock_nested(&mdev->bus->mdio_lock, MDIO_MUTEX_NESTED);
-	क्रम (i = 0; i < val_len; i++) अणु
-		पूर्णांक पंचांगp = reg + i;
+	for (i = 0; i < val_len; i++) {
+		int tmp = reg + i;
 
-		ret = __mdiobus_पढ़ो(mdev->bus, ((पंचांगp & 0xE0) >> 5) |
-				     SMI_KSZ88XX_READ_PHY, पंचांगp);
-		अगर (ret < 0)
-			जाओ out;
+		ret = __mdiobus_read(mdev->bus, ((tmp & 0xE0) >> 5) |
+				     SMI_KSZ88XX_READ_PHY, tmp);
+		if (ret < 0)
+			goto out;
 
 		val[i] = ret;
-	पूर्ण
+	}
 	ret = 0;
 
  out:
 	mutex_unlock(&mdev->bus->mdio_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ksz8863_mdio_ग_लिखो(व्योम *ctx, स्थिर व्योम *data, माप_प्रकार count)
-अणु
-	काष्ठा ksz_device *dev = ctx;
-	काष्ठा mdio_device *mdev;
-	काष्ठा ksz8 *ksz8;
-	पूर्णांक i, ret = 0;
+static int ksz8863_mdio_write(void *ctx, const void *data, size_t count)
+{
+	struct ksz_device *dev = ctx;
+	struct mdio_device *mdev;
+	struct ksz8 *ksz8;
+	int i, ret = 0;
 	u32 reg;
 	u8 *val;
 
@@ -68,147 +67,147 @@
 	reg = *(u32 *)data;
 
 	mutex_lock_nested(&mdev->bus->mdio_lock, MDIO_MUTEX_NESTED);
-	क्रम (i = 0; i < (count - 4); i++) अणु
-		पूर्णांक पंचांगp = reg + i;
+	for (i = 0; i < (count - 4); i++) {
+		int tmp = reg + i;
 
-		ret = __mdiobus_ग_लिखो(mdev->bus, ((पंचांगp & 0xE0) >> 5),
-				      पंचांगp, val[i]);
-		अगर (ret < 0)
-			जाओ out;
-	पूर्ण
+		ret = __mdiobus_write(mdev->bus, ((tmp & 0xE0) >> 5),
+				      tmp, val[i]);
+		if (ret < 0)
+			goto out;
+	}
 
  out:
 	mutex_unlock(&mdev->bus->mdio_lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा regmap_bus regmap_smi[] = अणु
-	अणु
-		.पढ़ो = ksz8863_mdio_पढ़ो,
-		.ग_लिखो = ksz8863_mdio_ग_लिखो,
-		.max_raw_पढ़ो = 1,
-		.max_raw_ग_लिखो = 1,
-	पूर्ण,
-	अणु
-		.पढ़ो = ksz8863_mdio_पढ़ो,
-		.ग_लिखो = ksz8863_mdio_ग_लिखो,
-		.val_क्रमmat_endian_शेष = REGMAP_ENDIAN_BIG,
-		.max_raw_पढ़ो = 2,
-		.max_raw_ग_लिखो = 2,
-	पूर्ण,
-	अणु
-		.पढ़ो = ksz8863_mdio_पढ़ो,
-		.ग_लिखो = ksz8863_mdio_ग_लिखो,
-		.val_क्रमmat_endian_शेष = REGMAP_ENDIAN_BIG,
-		.max_raw_पढ़ो = 4,
-		.max_raw_ग_लिखो = 4,
-	पूर्ण
-पूर्ण;
+static const struct regmap_bus regmap_smi[] = {
+	{
+		.read = ksz8863_mdio_read,
+		.write = ksz8863_mdio_write,
+		.max_raw_read = 1,
+		.max_raw_write = 1,
+	},
+	{
+		.read = ksz8863_mdio_read,
+		.write = ksz8863_mdio_write,
+		.val_format_endian_default = REGMAP_ENDIAN_BIG,
+		.max_raw_read = 2,
+		.max_raw_write = 2,
+	},
+	{
+		.read = ksz8863_mdio_read,
+		.write = ksz8863_mdio_write,
+		.val_format_endian_default = REGMAP_ENDIAN_BIG,
+		.max_raw_read = 4,
+		.max_raw_write = 4,
+	}
+};
 
-अटल स्थिर काष्ठा regmap_config ksz8863_regmap_config[] = अणु
-	अणु
+static const struct regmap_config ksz8863_regmap_config[] = {
+	{
 		.name = "#8",
 		.reg_bits = 8,
 		.pad_bits = 24,
 		.val_bits = 8,
 		.cache_type = REGCACHE_NONE,
-		.use_single_पढ़ो = 1,
+		.use_single_read = 1,
 		.lock = ksz_regmap_lock,
 		.unlock = ksz_regmap_unlock,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "#16",
 		.reg_bits = 8,
 		.pad_bits = 24,
 		.val_bits = 16,
 		.cache_type = REGCACHE_NONE,
-		.use_single_पढ़ो = 1,
+		.use_single_read = 1,
 		.lock = ksz_regmap_lock,
 		.unlock = ksz_regmap_unlock,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "#32",
 		.reg_bits = 8,
 		.pad_bits = 24,
 		.val_bits = 32,
 		.cache_type = REGCACHE_NONE,
-		.use_single_पढ़ो = 1,
+		.use_single_read = 1,
 		.lock = ksz_regmap_lock,
 		.unlock = ksz_regmap_unlock,
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल पूर्णांक ksz8863_smi_probe(काष्ठा mdio_device *mdiodev)
-अणु
-	काष्ठा regmap_config rc;
-	काष्ठा ksz_device *dev;
-	काष्ठा ksz8 *ksz8;
-	पूर्णांक ret;
-	पूर्णांक i;
+static int ksz8863_smi_probe(struct mdio_device *mdiodev)
+{
+	struct regmap_config rc;
+	struct ksz_device *dev;
+	struct ksz8 *ksz8;
+	int ret;
+	int i;
 
-	ksz8 = devm_kzalloc(&mdiodev->dev, माप(काष्ठा ksz8), GFP_KERNEL);
-	अगर (!ksz8)
-		वापस -ENOMEM;
+	ksz8 = devm_kzalloc(&mdiodev->dev, sizeof(struct ksz8), GFP_KERNEL);
+	if (!ksz8)
+		return -ENOMEM;
 
 	ksz8->priv = mdiodev;
 
-	dev = ksz_चयन_alloc(&mdiodev->dev, ksz8);
-	अगर (!dev)
-		वापस -ENOMEM;
+	dev = ksz_switch_alloc(&mdiodev->dev, ksz8);
+	if (!dev)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < ARRAY_SIZE(ksz8863_regmap_config); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(ksz8863_regmap_config); i++) {
 		rc = ksz8863_regmap_config[i];
 		rc.lock_arg = &dev->regmap_mutex;
 		dev->regmap[i] = devm_regmap_init(&mdiodev->dev,
 						  &regmap_smi[i], dev,
 						  &rc);
-		अगर (IS_ERR(dev->regmap[i])) अणु
+		if (IS_ERR(dev->regmap[i])) {
 			ret = PTR_ERR(dev->regmap[i]);
 			dev_err(&mdiodev->dev,
 				"Failed to initialize regmap%i: %d\n",
 				ksz8863_regmap_config[i].val_bits, ret);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	अगर (mdiodev->dev.platक्रमm_data)
-		dev->pdata = mdiodev->dev.platक्रमm_data;
+	if (mdiodev->dev.platform_data)
+		dev->pdata = mdiodev->dev.platform_data;
 
-	ret = ksz8_चयन_रेजिस्टर(dev);
+	ret = ksz8_switch_register(dev);
 
 	/* Main DSA driver may not be started yet. */
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	dev_set_drvdata(&mdiodev->dev, dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ksz8863_smi_हटाओ(काष्ठा mdio_device *mdiodev)
-अणु
-	काष्ठा ksz_device *dev = dev_get_drvdata(&mdiodev->dev);
+static void ksz8863_smi_remove(struct mdio_device *mdiodev)
+{
+	struct ksz_device *dev = dev_get_drvdata(&mdiodev->dev);
 
-	अगर (dev)
-		ksz_चयन_हटाओ(dev);
-पूर्ण
+	if (dev)
+		ksz_switch_remove(dev);
+}
 
-अटल स्थिर काष्ठा of_device_id ksz8863_dt_ids[] = अणु
-	अणु .compatible = "microchip,ksz8863" पूर्ण,
-	अणु .compatible = "microchip,ksz8873" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id ksz8863_dt_ids[] = {
+	{ .compatible = "microchip,ksz8863" },
+	{ .compatible = "microchip,ksz8873" },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, ksz8863_dt_ids);
 
-अटल काष्ठा mdio_driver ksz8863_driver = अणु
+static struct mdio_driver ksz8863_driver = {
 	.probe	= ksz8863_smi_probe,
-	.हटाओ	= ksz8863_smi_हटाओ,
-	.mdiodrv.driver = अणु
+	.remove	= ksz8863_smi_remove,
+	.mdiodrv.driver = {
 		.name	= "ksz8863-switch",
 		.of_match_table = ksz8863_dt_ids,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 mdio_module_driver(ksz8863_driver);
 

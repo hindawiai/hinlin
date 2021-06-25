@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2016 Intel Corporation
+ * Copyright © 2016 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -23,16 +22,16 @@
  *
  */
 
-#अगर_अघोषित __MOCK_REQUEST__
-#घोषणा __MOCK_REQUEST__
+#ifndef __MOCK_REQUEST__
+#define __MOCK_REQUEST__
 
-#समावेश <linux/list.h>
+#include <linux/list.h>
 
-#समावेश "../i915_request.h"
+#include "../i915_request.h"
 
-काष्ठा i915_request *
-mock_request(काष्ठा पूर्णांकel_context *ce, अचिन्हित दीर्घ delay);
+struct i915_request *
+mock_request(struct intel_context *ce, unsigned long delay);
 
-bool mock_cancel_request(काष्ठा i915_request *request);
+bool mock_cancel_request(struct i915_request *request);
 
-#पूर्ण_अगर /* !__MOCK_REQUEST__ */
+#endif /* !__MOCK_REQUEST__ */

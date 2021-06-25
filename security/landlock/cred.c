@@ -1,47 +1,46 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Landlock LSM - Credential hooks
  *
- * Copyright तऊ 2017-2020 Mickaथ+l Salaथञn <mic@digikod.net>
- * Copyright तऊ 2018-2020 ANSSI
+ * Copyright © 2017-2020 Mickaël Salaün <mic@digikod.net>
+ * Copyright © 2018-2020 ANSSI
  */
 
-#समावेश <linux/cred.h>
-#समावेश <linux/lsm_hooks.h>
+#include <linux/cred.h>
+#include <linux/lsm_hooks.h>
 
-#समावेश "common.h"
-#समावेश "cred.h"
-#समावेश "ruleset.h"
-#समावेश "setup.h"
+#include "common.h"
+#include "cred.h"
+#include "ruleset.h"
+#include "setup.h"
 
-अटल पूर्णांक hook_cred_prepare(काष्ठा cred *स्थिर new,
-		स्थिर काष्ठा cred *स्थिर old, स्थिर gfp_t gfp)
-अणु
-	काष्ठा landlock_ruleset *स्थिर old_करोm = landlock_cred(old)->करोमुख्य;
+static int hook_cred_prepare(struct cred *const new,
+		const struct cred *const old, const gfp_t gfp)
+{
+	struct landlock_ruleset *const old_dom = landlock_cred(old)->domain;
 
-	अगर (old_करोm) अणु
-		landlock_get_ruleset(old_करोm);
-		landlock_cred(new)->करोमुख्य = old_करोm;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	if (old_dom) {
+		landlock_get_ruleset(old_dom);
+		landlock_cred(new)->domain = old_dom;
+	}
+	return 0;
+}
 
-अटल व्योम hook_cred_मुक्त(काष्ठा cred *स्थिर cred)
-अणु
-	काष्ठा landlock_ruleset *स्थिर करोm = landlock_cred(cred)->करोमुख्य;
+static void hook_cred_free(struct cred *const cred)
+{
+	struct landlock_ruleset *const dom = landlock_cred(cred)->domain;
 
-	अगर (करोm)
-		landlock_put_ruleset_deferred(करोm);
-पूर्ण
+	if (dom)
+		landlock_put_ruleset_deferred(dom);
+}
 
-अटल काष्ठा security_hook_list landlock_hooks[] __lsm_ro_after_init = अणु
+static struct security_hook_list landlock_hooks[] __lsm_ro_after_init = {
 	LSM_HOOK_INIT(cred_prepare, hook_cred_prepare),
-	LSM_HOOK_INIT(cred_मुक्त, hook_cred_मुक्त),
-पूर्ण;
+	LSM_HOOK_INIT(cred_free, hook_cred_free),
+};
 
-__init व्योम landlock_add_cred_hooks(व्योम)
-अणु
+__init void landlock_add_cred_hooks(void)
+{
 	security_add_hooks(landlock_hooks, ARRAY_SIZE(landlock_hooks),
 			LANDLOCK_NAME);
-पूर्ण
+}

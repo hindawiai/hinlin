@@ -1,50 +1,49 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2014 Intel Corporation
+ * Copyright © 2014 Intel Corporation
  */
 
-#अगर_अघोषित __INTEL_EXECLISTS_SUBMISSION_H__
-#घोषणा __INTEL_EXECLISTS_SUBMISSION_H__
+#ifndef __INTEL_EXECLISTS_SUBMISSION_H__
+#define __INTEL_EXECLISTS_SUBMISSION_H__
 
-#समावेश <linux/llist.h>
-#समावेश <linux/types.h>
+#include <linux/llist.h>
+#include <linux/types.h>
 
-काष्ठा drm_prपूर्णांकer;
+struct drm_printer;
 
-काष्ठा i915_request;
-काष्ठा पूर्णांकel_context;
-काष्ठा पूर्णांकel_engine_cs;
-काष्ठा पूर्णांकel_gt;
+struct i915_request;
+struct intel_context;
+struct intel_engine_cs;
+struct intel_gt;
 
-क्रमागत अणु
+enum {
 	INTEL_CONTEXT_SCHEDULE_IN = 0,
 	INTEL_CONTEXT_SCHEDULE_OUT,
 	INTEL_CONTEXT_SCHEDULE_PREEMPTED,
-पूर्ण;
+};
 
-पूर्णांक पूर्णांकel_execlists_submission_setup(काष्ठा पूर्णांकel_engine_cs *engine);
+int intel_execlists_submission_setup(struct intel_engine_cs *engine);
 
-व्योम पूर्णांकel_execlists_show_requests(काष्ठा पूर्णांकel_engine_cs *engine,
-				   काष्ठा drm_prपूर्णांकer *m,
-				   व्योम (*show_request)(काष्ठा drm_prपूर्णांकer *m,
-							स्थिर काष्ठा i915_request *rq,
-							स्थिर अक्षर *prefix,
-							पूर्णांक indent),
-				   अचिन्हित पूर्णांक max);
+void intel_execlists_show_requests(struct intel_engine_cs *engine,
+				   struct drm_printer *m,
+				   void (*show_request)(struct drm_printer *m,
+							const struct i915_request *rq,
+							const char *prefix,
+							int indent),
+				   unsigned int max);
 
-काष्ठा पूर्णांकel_context *
-पूर्णांकel_execlists_create_भव(काष्ठा पूर्णांकel_engine_cs **siblings,
-			       अचिन्हित पूर्णांक count);
+struct intel_context *
+intel_execlists_create_virtual(struct intel_engine_cs **siblings,
+			       unsigned int count);
 
-काष्ठा पूर्णांकel_context *
-पूर्णांकel_execlists_clone_भव(काष्ठा पूर्णांकel_engine_cs *src);
+struct intel_context *
+intel_execlists_clone_virtual(struct intel_engine_cs *src);
 
-पूर्णांक पूर्णांकel_भव_engine_attach_bond(काष्ठा पूर्णांकel_engine_cs *engine,
-				     स्थिर काष्ठा पूर्णांकel_engine_cs *master,
-				     स्थिर काष्ठा पूर्णांकel_engine_cs *sibling);
+int intel_virtual_engine_attach_bond(struct intel_engine_cs *engine,
+				     const struct intel_engine_cs *master,
+				     const struct intel_engine_cs *sibling);
 
 bool
-पूर्णांकel_engine_in_execlists_submission_mode(स्थिर काष्ठा पूर्णांकel_engine_cs *engine);
+intel_engine_in_execlists_submission_mode(const struct intel_engine_cs *engine);
 
-#पूर्ण_अगर /* __INTEL_EXECLISTS_SUBMISSION_H__ */
+#endif /* __INTEL_EXECLISTS_SUBMISSION_H__ */

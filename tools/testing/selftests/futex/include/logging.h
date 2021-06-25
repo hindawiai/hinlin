@@ -1,86 +1,85 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /******************************************************************************
  *
- *   Copyright तऊ International Business Machines  Corp., 2009
+ *   Copyright © International Business Machines  Corp., 2009
  *
  * DESCRIPTION
- *      Glibc independent futex library क्रम testing kernel functionality.
+ *      Glibc independent futex library for testing kernel functionality.
  *
  * AUTHOR
- *      Darren Hart <dvhart@linux.पूर्णांकel.com>
+ *      Darren Hart <dvhart@linux.intel.com>
  *
  * HISTORY
- *      2009-Nov-6: Initial version by Darren Hart <dvhart@linux.पूर्णांकel.com>
+ *      2009-Nov-6: Initial version by Darren Hart <dvhart@linux.intel.com>
  *
  *****************************************************************************/
 
-#अगर_अघोषित _LOGGING_H
-#घोषणा _LOGGING_H
+#ifndef _LOGGING_H
+#define _LOGGING_H
 
-#समावेश <मानकपन.स>
-#समावेश <माला.स>
-#समावेश <unistd.h>
-#समावेश <linux/futex.h>
-#समावेश "kselftest.h"
+#include <stdio.h>
+#include <string.h>
+#include <unistd.h>
+#include <linux/futex.h>
+#include "kselftest.h"
 
 /*
  * Define PASS, ERROR, and FAIL strings with and without color escape
- * sequences, शेष to no color.
+ * sequences, default to no color.
  */
-#घोषणा ESC 0x1B, '['
-#घोषणा BRIGHT '1'
-#घोषणा GREEN '3', '2'
-#घोषणा YELLOW '3', '3'
-#घोषणा RED '3', '1'
-#घोषणा ESCEND 'm'
-#घोषणा BRIGHT_GREEN ESC, BRIGHT, ';', GREEN, ESCEND
-#घोषणा BRIGHT_YELLOW ESC, BRIGHT, ';', YELLOW, ESCEND
-#घोषणा BRIGHT_RED ESC, BRIGHT, ';', RED, ESCEND
-#घोषणा RESET_COLOR ESC, '0', 'm'
-अटल स्थिर अक्षर PASS_COLOR[] = अणुBRIGHT_GREEN, ' ', 'P', 'A', 'S', 'S',
-				  RESET_COLOR, 0पूर्ण;
-अटल स्थिर अक्षर ERROR_COLOR[] = अणुBRIGHT_YELLOW, 'E', 'R', 'R', 'O', 'R',
-				   RESET_COLOR, 0पूर्ण;
-अटल स्थिर अक्षर FAIL_COLOR[] = अणुBRIGHT_RED, ' ', 'F', 'A', 'I', 'L',
-				  RESET_COLOR, 0पूर्ण;
-अटल स्थिर अक्षर INFO_NORMAL[] = " INFO";
-अटल स्थिर अक्षर PASS_NORMAL[] = " PASS";
-अटल स्थिर अक्षर ERROR_NORMAL[] = "ERROR";
-अटल स्थिर अक्षर FAIL_NORMAL[] = " FAIL";
-स्थिर अक्षर *INFO = INFO_NORMAL;
-स्थिर अक्षर *PASS = PASS_NORMAL;
-स्थिर अक्षर *ERROR = ERROR_NORMAL;
-स्थिर अक्षर *FAIL = FAIL_NORMAL;
+#define ESC 0x1B, '['
+#define BRIGHT '1'
+#define GREEN '3', '2'
+#define YELLOW '3', '3'
+#define RED '3', '1'
+#define ESCEND 'm'
+#define BRIGHT_GREEN ESC, BRIGHT, ';', GREEN, ESCEND
+#define BRIGHT_YELLOW ESC, BRIGHT, ';', YELLOW, ESCEND
+#define BRIGHT_RED ESC, BRIGHT, ';', RED, ESCEND
+#define RESET_COLOR ESC, '0', 'm'
+static const char PASS_COLOR[] = {BRIGHT_GREEN, ' ', 'P', 'A', 'S', 'S',
+				  RESET_COLOR, 0};
+static const char ERROR_COLOR[] = {BRIGHT_YELLOW, 'E', 'R', 'R', 'O', 'R',
+				   RESET_COLOR, 0};
+static const char FAIL_COLOR[] = {BRIGHT_RED, ' ', 'F', 'A', 'I', 'L',
+				  RESET_COLOR, 0};
+static const char INFO_NORMAL[] = " INFO";
+static const char PASS_NORMAL[] = " PASS";
+static const char ERROR_NORMAL[] = "ERROR";
+static const char FAIL_NORMAL[] = " FAIL";
+const char *INFO = INFO_NORMAL;
+const char *PASS = PASS_NORMAL;
+const char *ERROR = ERROR_NORMAL;
+const char *FAIL = FAIL_NORMAL;
 
-/* Verbosity setting क्रम INFO messages */
-#घोषणा VQUIET    0
-#घोषणा VCRITICAL 1
-#घोषणा VINFO     2
-#घोषणा VMAX      VINFO
-पूर्णांक _verbose = VCRITICAL;
+/* Verbosity setting for INFO messages */
+#define VQUIET    0
+#define VCRITICAL 1
+#define VINFO     2
+#define VMAX      VINFO
+int _verbose = VCRITICAL;
 
-/* Functional test वापस codes */
-#घोषणा RET_PASS   0
-#घोषणा RET_ERROR -1
-#घोषणा RET_FAIL  -2
+/* Functional test return codes */
+#define RET_PASS   0
+#define RET_ERROR -1
+#define RET_FAIL  -2
 
 /**
- * log_color() - Use colored output क्रम PASS, ERROR, and FAIL strings
+ * log_color() - Use colored output for PASS, ERROR, and FAIL strings
  * @use_color:	use color (1) or not (0)
  */
-व्योम log_color(पूर्णांक use_color)
-अणु
-	अगर (use_color) अणु
+void log_color(int use_color)
+{
+	if (use_color) {
 		PASS = PASS_COLOR;
 		ERROR = ERROR_COLOR;
 		FAIL = FAIL_COLOR;
-	पूर्ण अन्यथा अणु
+	} else {
 		PASS = PASS_NORMAL;
 		ERROR = ERROR_NORMAL;
 		FAIL = FAIL_NORMAL;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * log_verbosity() - Set verbosity of test output
@@ -89,61 +88,61 @@
  * Currently setting verbose=1 will enable INFO messages and 0 will disable
  * them. FAIL and ERROR messages are always displayed.
  */
-व्योम log_verbosity(पूर्णांक level)
-अणु
-	अगर (level > VMAX)
+void log_verbosity(int level)
+{
+	if (level > VMAX)
 		level = VMAX;
-	अन्यथा अगर (level < 0)
+	else if (level < 0)
 		level = 0;
 	_verbose = level;
-पूर्ण
+}
 
 /**
- * prपूर्णांक_result() - Prपूर्णांक standard PASS | ERROR | FAIL results
- * @ret:	the वापस value to be considered: 0 | RET_ERROR | RET_FAIL
+ * print_result() - Print standard PASS | ERROR | FAIL results
+ * @ret:	the return value to be considered: 0 | RET_ERROR | RET_FAIL
  *
- * prपूर्णांक_result() is primarily पूर्णांकended क्रम functional tests.
+ * print_result() is primarily intended for functional tests.
  */
-व्योम prपूर्णांक_result(स्थिर अक्षर *test_name, पूर्णांक ret)
-अणु
-	चयन (ret) अणु
-	हाल RET_PASS:
+void print_result(const char *test_name, int ret)
+{
+	switch (ret) {
+	case RET_PASS:
 		ksft_test_result_pass("%s\n", test_name);
-		ksft_prपूर्णांक_cnts();
-		वापस;
-	हाल RET_ERROR:
+		ksft_print_cnts();
+		return;
+	case RET_ERROR:
 		ksft_test_result_error("%s\n", test_name);
-		ksft_prपूर्णांक_cnts();
-		वापस;
-	हाल RET_FAIL:
+		ksft_print_cnts();
+		return;
+	case RET_FAIL:
 		ksft_test_result_fail("%s\n", test_name);
-		ksft_prपूर्णांक_cnts();
-		वापस;
-	पूर्ण
-पूर्ण
+		ksft_print_cnts();
+		return;
+	}
+}
 
 /* log level macros */
-#घोषणा info(message, vargs...) \
-करो अणु \
-	अगर (_verbose >= VINFO) \
-		ख_लिखो(मानक_त्रुटि, "\t%s: "message, INFO, ##vargs); \
-पूर्ण जबतक (0)
+#define info(message, vargs...) \
+do { \
+	if (_verbose >= VINFO) \
+		fprintf(stderr, "\t%s: "message, INFO, ##vargs); \
+} while (0)
 
-#घोषणा error(message, err, args...) \
-करो अणु \
-	अगर (_verbose >= VCRITICAL) अणु\
-		अगर (err) \
-			ख_लिखो(मानक_त्रुटि, "\t%s: %s: "message, \
-				ERROR, म_त्रुटि(err), ##args); \
-		अन्यथा \
-			ख_लिखो(मानक_त्रुटि, "\t%s: "message, ERROR, ##args); \
-	पूर्ण \
-पूर्ण जबतक (0)
+#define error(message, err, args...) \
+do { \
+	if (_verbose >= VCRITICAL) {\
+		if (err) \
+			fprintf(stderr, "\t%s: %s: "message, \
+				ERROR, strerror(err), ##args); \
+		else \
+			fprintf(stderr, "\t%s: "message, ERROR, ##args); \
+	} \
+} while (0)
 
-#घोषणा fail(message, args...) \
-करो अणु \
-	अगर (_verbose >= VCRITICAL) \
-		ख_लिखो(मानक_त्रुटि, "\t%s: "message, FAIL, ##args); \
-पूर्ण जबतक (0)
+#define fail(message, args...) \
+do { \
+	if (_verbose >= VCRITICAL) \
+		fprintf(stderr, "\t%s: "message, FAIL, ##args); \
+} while (0)
 
-#पूर्ण_अगर
+#endif

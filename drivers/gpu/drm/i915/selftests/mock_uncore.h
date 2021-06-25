@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2017 Intel Corporation
+ * Copyright © 2017 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -23,13 +22,13 @@
  *
  */
 
-#अगर_अघोषित __MOCK_UNCORE_H
-#घोषणा __MOCK_UNCORE_H
+#ifndef __MOCK_UNCORE_H
+#define __MOCK_UNCORE_H
 
-काष्ठा drm_i915_निजी;
-काष्ठा पूर्णांकel_uncore;
+struct drm_i915_private;
+struct intel_uncore;
 
-व्योम mock_uncore_init(काष्ठा पूर्णांकel_uncore *uncore,
-		      काष्ठा drm_i915_निजी *i915);
+void mock_uncore_init(struct intel_uncore *uncore,
+		      struct drm_i915_private *i915);
 
-#पूर्ण_अगर /* !__MOCK_UNCORE_H */
+#endif /* !__MOCK_UNCORE_H */

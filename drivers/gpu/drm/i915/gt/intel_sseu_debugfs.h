@@ -1,18 +1,17 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 
 /*
- * Copyright तऊ 2020 Intel Corporation
+ * Copyright © 2020 Intel Corporation
  */
 
-#अगर_अघोषित INTEL_SSEU_DEBUGFS_H
-#घोषणा INTEL_SSEU_DEBUGFS_H
+#ifndef INTEL_SSEU_DEBUGFS_H
+#define INTEL_SSEU_DEBUGFS_H
 
-काष्ठा पूर्णांकel_gt;
-काष्ठा dentry;
-काष्ठा seq_file;
+struct intel_gt;
+struct dentry;
+struct seq_file;
 
-पूर्णांक पूर्णांकel_sseu_status(काष्ठा seq_file *m, काष्ठा पूर्णांकel_gt *gt);
-व्योम पूर्णांकel_sseu_debugfs_रेजिस्टर(काष्ठा पूर्णांकel_gt *gt, काष्ठा dentry *root);
+int intel_sseu_status(struct seq_file *m, struct intel_gt *gt);
+void intel_sseu_debugfs_register(struct intel_gt *gt, struct dentry *root);
 
-#पूर्ण_अगर /* INTEL_SSEU_DEBUGFS_H */
+#endif /* INTEL_SSEU_DEBUGFS_H */

@@ -1,34 +1,33 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#अगर_अघोषित __I915_GEM_SHRINKER_H__
-#घोषणा __I915_GEM_SHRINKER_H__
+#ifndef __I915_GEM_SHRINKER_H__
+#define __I915_GEM_SHRINKER_H__
 
-#समावेश <linux/bits.h>
+#include <linux/bits.h>
 
-काष्ठा drm_i915_निजी;
-काष्ठा i915_gem_ww_ctx;
-काष्ठा mutex;
+struct drm_i915_private;
+struct i915_gem_ww_ctx;
+struct mutex;
 
 /* i915_gem_shrinker.c */
-अचिन्हित दीर्घ i915_gem_shrink(काष्ठा i915_gem_ww_ctx *ww,
-			      काष्ठा drm_i915_निजी *i915,
-			      अचिन्हित दीर्घ target,
-			      अचिन्हित दीर्घ *nr_scanned,
-			      अचिन्हित flags);
-#घोषणा I915_SHRINK_UNBOUND	BIT(0)
-#घोषणा I915_SHRINK_BOUND	BIT(1)
-#घोषणा I915_SHRINK_ACTIVE	BIT(2)
-#घोषणा I915_SHRINK_VMAPS	BIT(3)
-#घोषणा I915_SHRINK_WRITEBACK	BIT(4)
+unsigned long i915_gem_shrink(struct i915_gem_ww_ctx *ww,
+			      struct drm_i915_private *i915,
+			      unsigned long target,
+			      unsigned long *nr_scanned,
+			      unsigned flags);
+#define I915_SHRINK_UNBOUND	BIT(0)
+#define I915_SHRINK_BOUND	BIT(1)
+#define I915_SHRINK_ACTIVE	BIT(2)
+#define I915_SHRINK_VMAPS	BIT(3)
+#define I915_SHRINK_WRITEBACK	BIT(4)
 
-अचिन्हित दीर्घ i915_gem_shrink_all(काष्ठा drm_i915_निजी *i915);
-व्योम i915_gem_driver_रेजिस्टर__shrinker(काष्ठा drm_i915_निजी *i915);
-व्योम i915_gem_driver_unरेजिस्टर__shrinker(काष्ठा drm_i915_निजी *i915);
-व्योम i915_gem_shrinker_taपूर्णांकs_mutex(काष्ठा drm_i915_निजी *i915,
-				    काष्ठा mutex *mutex);
+unsigned long i915_gem_shrink_all(struct drm_i915_private *i915);
+void i915_gem_driver_register__shrinker(struct drm_i915_private *i915);
+void i915_gem_driver_unregister__shrinker(struct drm_i915_private *i915);
+void i915_gem_shrinker_taints_mutex(struct drm_i915_private *i915,
+				    struct mutex *mutex);
 
-#पूर्ण_अगर /* __I915_GEM_SHRINKER_H__ */
+#endif /* __I915_GEM_SHRINKER_H__ */

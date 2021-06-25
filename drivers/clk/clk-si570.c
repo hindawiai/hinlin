@@ -1,168 +1,167 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Driver क्रम Silicon Lअसल Si570/Si571 Programmable XO/VCXO
+ * Driver for Silicon Labs Si570/Si571 Programmable XO/VCXO
  *
  * Copyright (C) 2010, 2011 Ericsson AB.
  * Copyright (C) 2011 Guenter Roeck.
  * Copyright (C) 2011 - 2021 Xilinx Inc.
  *
  * Author: Guenter Roeck <guenter.roeck@ericsson.com>
- *	   Sथघren Brinkmann <soren.brinkmann@xilinx.com>
+ *	   Sören Brinkmann <soren.brinkmann@xilinx.com>
  */
 
-#समावेश <linux/clk.h>
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/module.h>
-#समावेश <linux/i2c.h>
-#समावेश <linux/regmap.h>
-#समावेश <linux/slab.h>
+#include <linux/clk.h>
+#include <linux/clk-provider.h>
+#include <linux/delay.h>
+#include <linux/module.h>
+#include <linux/i2c.h>
+#include <linux/regmap.h>
+#include <linux/slab.h>
 
-/* Si570 रेजिस्टरs */
-#घोषणा SI570_REG_HS_N1		7
-#घोषणा SI570_REG_N1_RFREQ0	8
-#घोषणा SI570_REG_RFREQ1	9
-#घोषणा SI570_REG_RFREQ2	10
-#घोषणा SI570_REG_RFREQ3	11
-#घोषणा SI570_REG_RFREQ4	12
-#घोषणा SI570_REG_CONTROL	135
-#घोषणा SI570_REG_FREEZE_DCO	137
-#घोषणा SI570_DIV_OFFSET_7PPM	6
+/* Si570 registers */
+#define SI570_REG_HS_N1		7
+#define SI570_REG_N1_RFREQ0	8
+#define SI570_REG_RFREQ1	9
+#define SI570_REG_RFREQ2	10
+#define SI570_REG_RFREQ3	11
+#define SI570_REG_RFREQ4	12
+#define SI570_REG_CONTROL	135
+#define SI570_REG_FREEZE_DCO	137
+#define SI570_DIV_OFFSET_7PPM	6
 
-#घोषणा HS_DIV_SHIFT		5
-#घोषणा HS_DIV_MASK		0xe0
-#घोषणा HS_DIV_OFFSET		4
-#घोषणा N1_6_2_MASK		0x1f
-#घोषणा N1_1_0_MASK		0xc0
-#घोषणा RFREQ_37_32_MASK	0x3f
+#define HS_DIV_SHIFT		5
+#define HS_DIV_MASK		0xe0
+#define HS_DIV_OFFSET		4
+#define N1_6_2_MASK		0x1f
+#define N1_1_0_MASK		0xc0
+#define RFREQ_37_32_MASK	0x3f
 
-#घोषणा SI570_MIN_FREQ		10000000L
-#घोषणा SI570_MAX_FREQ		1417500000L
-#घोषणा SI598_MAX_FREQ		525000000L
+#define SI570_MIN_FREQ		10000000L
+#define SI570_MAX_FREQ		1417500000L
+#define SI598_MAX_FREQ		525000000L
 
-#घोषणा FDCO_MIN		4850000000LL
-#घोषणा FDCO_MAX		5670000000LL
+#define FDCO_MIN		4850000000LL
+#define FDCO_MAX		5670000000LL
 
-#घोषणा SI570_CNTRL_RECALL	(1 << 0)
-#घोषणा SI570_CNTRL_FREEZE_M	(1 << 5)
-#घोषणा SI570_CNTRL_NEWFREQ	(1 << 6)
+#define SI570_CNTRL_RECALL	(1 << 0)
+#define SI570_CNTRL_FREEZE_M	(1 << 5)
+#define SI570_CNTRL_NEWFREQ	(1 << 6)
 
-#घोषणा SI570_FREEZE_DCO	(1 << 4)
+#define SI570_FREEZE_DCO	(1 << 4)
 
 /**
- * काष्ठा clk_si570:
- * @hw:	Clock hw काष्ठा
+ * struct clk_si570:
+ * @hw:	Clock hw struct
  * @regmap:	Device's regmap
- * @भाग_offset:	Rgister offset क्रम भागiders
- * @max_freq:	Maximum frequency क्रम this device
+ * @div_offset:	Rgister offset for dividers
+ * @max_freq:	Maximum frequency for this device
  * @fxtal:	Factory xtal frequency
- * @n1:		Clock भागider N1
- * @hs_भाग:	Clock भागider HSDIV
+ * @n1:		Clock divider N1
+ * @hs_div:	Clock divider HSDIV
  * @rfreq:	Clock multiplier RFREQ
  * @frequency:	Current output frequency
- * @i2c_client:	I2C client poपूर्णांकer
+ * @i2c_client:	I2C client pointer
  */
-काष्ठा clk_si570 अणु
-	काष्ठा clk_hw hw;
-	काष्ठा regmap *regmap;
-	अचिन्हित पूर्णांक भाग_offset;
+struct clk_si570 {
+	struct clk_hw hw;
+	struct regmap *regmap;
+	unsigned int div_offset;
 	u64 max_freq;
 	u64 fxtal;
-	अचिन्हित पूर्णांक n1;
-	अचिन्हित पूर्णांक hs_भाग;
+	unsigned int n1;
+	unsigned int hs_div;
 	u64 rfreq;
 	u64 frequency;
-	काष्ठा i2c_client *i2c_client;
-पूर्ण;
-#घोषणा to_clk_si570(_hw)	container_of(_hw, काष्ठा clk_si570, hw)
+	struct i2c_client *i2c_client;
+};
+#define to_clk_si570(_hw)	container_of(_hw, struct clk_si570, hw)
 
-क्रमागत clk_si570_variant अणु
+enum clk_si570_variant {
 	si57x,
 	si59x
-पूर्ण;
+};
 
 /**
- * si570_get_भागs() - Read घड़ी भागiders from HW
- * @data:	Poपूर्णांकer to काष्ठा clk_si570
+ * si570_get_divs() - Read clock dividers from HW
+ * @data:	Pointer to struct clk_si570
  * @rfreq:	Fractional multiplier (output)
  * @n1:		Divider N1 (output)
- * @hs_भाग:	Divider HSDIV (output)
- * Returns 0 on success, negative त्रुटि_सं otherwise.
+ * @hs_div:	Divider HSDIV (output)
+ * Returns 0 on success, negative errno otherwise.
  *
- * Retrieve घड़ी भागiders and multipliers from the HW.
+ * Retrieve clock dividers and multipliers from the HW.
  */
-अटल पूर्णांक si570_get_भागs(काष्ठा clk_si570 *data, u64 *rfreq,
-		अचिन्हित पूर्णांक *n1, अचिन्हित पूर्णांक *hs_भाग)
-अणु
-	पूर्णांक err;
+static int si570_get_divs(struct clk_si570 *data, u64 *rfreq,
+		unsigned int *n1, unsigned int *hs_div)
+{
+	int err;
 	u8 reg[6];
-	u64 पंचांगp;
+	u64 tmp;
 
-	err = regmap_bulk_पढ़ो(data->regmap, SI570_REG_HS_N1 + data->भाग_offset,
+	err = regmap_bulk_read(data->regmap, SI570_REG_HS_N1 + data->div_offset,
 			reg, ARRAY_SIZE(reg));
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	*hs_भाग = ((reg[0] & HS_DIV_MASK) >> HS_DIV_SHIFT) + HS_DIV_OFFSET;
+	*hs_div = ((reg[0] & HS_DIV_MASK) >> HS_DIV_SHIFT) + HS_DIV_OFFSET;
 	*n1 = ((reg[0] & N1_6_2_MASK) << 2) + ((reg[1] & N1_1_0_MASK) >> 6) + 1;
-	/* Handle invalid हालs */
-	अगर (*n1 > 1)
+	/* Handle invalid cases */
+	if (*n1 > 1)
 		*n1 &= ~1;
 
-	पंचांगp = reg[1] & RFREQ_37_32_MASK;
-	पंचांगp = (पंचांगp << 8) + reg[2];
-	पंचांगp = (पंचांगp << 8) + reg[3];
-	पंचांगp = (पंचांगp << 8) + reg[4];
-	पंचांगp = (पंचांगp << 8) + reg[5];
-	*rfreq = पंचांगp;
+	tmp = reg[1] & RFREQ_37_32_MASK;
+	tmp = (tmp << 8) + reg[2];
+	tmp = (tmp << 8) + reg[3];
+	tmp = (tmp << 8) + reg[4];
+	tmp = (tmp << 8) + reg[5];
+	*rfreq = tmp;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * si570_get_शेषs() - Get शेष values
- * @data:	Driver data काष्ठाure
+ * si570_get_defaults() - Get default values
+ * @data:	Driver data structure
  * @fout:	Factory frequency output
- * @skip_recall:	If true, करोn't recall NVM पूर्णांकo RAM
- * Returns 0 on success, negative त्रुटि_सं otherwise.
+ * @skip_recall:	If true, don't recall NVM into RAM
+ * Returns 0 on success, negative errno otherwise.
  */
-अटल पूर्णांक si570_get_शेषs(काष्ठा clk_si570 *data, u64 fout,
+static int si570_get_defaults(struct clk_si570 *data, u64 fout,
 			      bool skip_recall)
-अणु
-	पूर्णांक err;
+{
+	int err;
 	u64 fdco;
 
-	अगर (!skip_recall)
-		regmap_ग_लिखो(data->regmap, SI570_REG_CONTROL,
+	if (!skip_recall)
+		regmap_write(data->regmap, SI570_REG_CONTROL,
 			     SI570_CNTRL_RECALL);
 
-	err = si570_get_भागs(data, &data->rfreq, &data->n1, &data->hs_भाग);
-	अगर (err)
-		वापस err;
+	err = si570_get_divs(data, &data->rfreq, &data->n1, &data->hs_div);
+	if (err)
+		return err;
 
 	/*
-	 * Accept optional precision loss to aव्योम arithmetic overflows.
-	 * Acceptable per Silicon Lअसल Application Note AN334.
+	 * Accept optional precision loss to avoid arithmetic overflows.
+	 * Acceptable per Silicon Labs Application Note AN334.
 	 */
-	fdco = fout * data->n1 * data->hs_भाग;
-	अगर (fdco >= (1LL << 36))
-		data->fxtal = भाग64_u64(fdco << 24, data->rfreq >> 4);
-	अन्यथा
-		data->fxtal = भाग64_u64(fdco << 28, data->rfreq);
+	fdco = fout * data->n1 * data->hs_div;
+	if (fdco >= (1LL << 36))
+		data->fxtal = div64_u64(fdco << 24, data->rfreq >> 4);
+	else
+		data->fxtal = div64_u64(fdco << 28, data->rfreq);
 
 	data->frequency = fout;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * si570_update_rfreq() - Update घड़ी multiplier
- * @data:	Driver data काष्ठाure
- * Passes on regmap_bulk_ग_लिखो() वापस value.
+ * si570_update_rfreq() - Update clock multiplier
+ * @data:	Driver data structure
+ * Passes on regmap_bulk_write() return value.
  */
-अटल पूर्णांक si570_update_rfreq(काष्ठा clk_si570 *data)
-अणु
+static int si570_update_rfreq(struct clk_si570 *data)
+{
 	u8 reg[5];
 
 	reg[0] = ((data->n1 - 1) << 6) |
@@ -172,246 +171,246 @@
 	reg[3] = (data->rfreq >> 8) & 0xff;
 	reg[4] = data->rfreq & 0xff;
 
-	वापस regmap_bulk_ग_लिखो(data->regmap, SI570_REG_N1_RFREQ0 +
-			data->भाग_offset, reg, ARRAY_SIZE(reg));
-पूर्ण
+	return regmap_bulk_write(data->regmap, SI570_REG_N1_RFREQ0 +
+			data->div_offset, reg, ARRAY_SIZE(reg));
+}
 
 /**
- * si570_calc_भागs() - Caluclate घड़ी भागiders
+ * si570_calc_divs() - Caluclate clock dividers
  * @frequency:	Target frequency
- * @data:	Driver data काष्ठाure
+ * @data:	Driver data structure
  * @out_rfreq:	RFREG fractional multiplier (output)
- * @out_n1:	Clock भागider N1 (output)
- * @out_hs_भाग:	Clock भागider HSDIV (output)
- * Returns 0 on success, negative त्रुटि_सं otherwise.
+ * @out_n1:	Clock divider N1 (output)
+ * @out_hs_div:	Clock divider HSDIV (output)
+ * Returns 0 on success, negative errno otherwise.
  *
- * Calculate the घड़ी भागiders (@out_hs_भाग, @out_n1) and घड़ी multiplier
- * (@out_rfreq) क्रम a given target @frequency.
+ * Calculate the clock dividers (@out_hs_div, @out_n1) and clock multiplier
+ * (@out_rfreq) for a given target @frequency.
  */
-अटल पूर्णांक si570_calc_भागs(अचिन्हित दीर्घ frequency, काष्ठा clk_si570 *data,
-		u64 *out_rfreq, अचिन्हित पूर्णांक *out_n1, अचिन्हित पूर्णांक *out_hs_भाग)
-अणु
-	पूर्णांक i;
-	अचिन्हित पूर्णांक n1, hs_भाग;
-	u64 fdco, best_fdco = ULदीर्घ_उच्च;
-	अटल स्थिर uपूर्णांक8_t si570_hs_भाग_values[] = अणु 11, 9, 7, 6, 5, 4 पूर्ण;
+static int si570_calc_divs(unsigned long frequency, struct clk_si570 *data,
+		u64 *out_rfreq, unsigned int *out_n1, unsigned int *out_hs_div)
+{
+	int i;
+	unsigned int n1, hs_div;
+	u64 fdco, best_fdco = ULLONG_MAX;
+	static const uint8_t si570_hs_div_values[] = { 11, 9, 7, 6, 5, 4 };
 
-	क्रम (i = 0; i < ARRAY_SIZE(si570_hs_भाग_values); i++) अणु
-		hs_भाग = si570_hs_भाग_values[i];
-		/* Calculate lowest possible value क्रम n1 */
-		n1 = भाग_u64(भाग_u64(FDCO_MIN, hs_भाग), frequency);
-		अगर (!n1 || (n1 & 1))
+	for (i = 0; i < ARRAY_SIZE(si570_hs_div_values); i++) {
+		hs_div = si570_hs_div_values[i];
+		/* Calculate lowest possible value for n1 */
+		n1 = div_u64(div_u64(FDCO_MIN, hs_div), frequency);
+		if (!n1 || (n1 & 1))
 			n1++;
-		जबतक (n1 <= 128) अणु
-			fdco = (u64)frequency * (u64)hs_भाग * (u64)n1;
-			अगर (fdco > FDCO_MAX)
-				अवरोध;
-			अगर (fdco >= FDCO_MIN && fdco < best_fdco) अणु
+		while (n1 <= 128) {
+			fdco = (u64)frequency * (u64)hs_div * (u64)n1;
+			if (fdco > FDCO_MAX)
+				break;
+			if (fdco >= FDCO_MIN && fdco < best_fdco) {
 				*out_n1 = n1;
-				*out_hs_भाग = hs_भाग;
-				*out_rfreq = भाग64_u64(fdco << 28, data->fxtal);
+				*out_hs_div = hs_div;
+				*out_rfreq = div64_u64(fdco << 28, data->fxtal);
 				best_fdco = fdco;
-			पूर्ण
+			}
 			n1 += (n1 == 1 ? 1 : 2);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (best_fdco == ULदीर्घ_उच्च)
-		वापस -EINVAL;
+	if (best_fdco == ULLONG_MAX)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित दीर्घ si570_recalc_rate(काष्ठा clk_hw *hw,
-		अचिन्हित दीर्घ parent_rate)
-अणु
-	पूर्णांक err;
+static unsigned long si570_recalc_rate(struct clk_hw *hw,
+		unsigned long parent_rate)
+{
+	int err;
 	u64 rfreq, rate;
-	अचिन्हित पूर्णांक n1, hs_भाग;
-	काष्ठा clk_si570 *data = to_clk_si570(hw);
+	unsigned int n1, hs_div;
+	struct clk_si570 *data = to_clk_si570(hw);
 
-	err = si570_get_भागs(data, &rfreq, &n1, &hs_भाग);
-	अगर (err) अणु
+	err = si570_get_divs(data, &rfreq, &n1, &hs_div);
+	if (err) {
 		dev_err(&data->i2c_client->dev, "unable to recalc rate\n");
-		वापस data->frequency;
-	पूर्ण
+		return data->frequency;
+	}
 
-	rfreq = भाग_u64(rfreq, hs_भाग * n1);
+	rfreq = div_u64(rfreq, hs_div * n1);
 	rate = (data->fxtal * rfreq) >> 28;
 
-	वापस rate;
-पूर्ण
+	return rate;
+}
 
-अटल दीर्घ si570_round_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-		अचिन्हित दीर्घ *parent_rate)
-अणु
-	पूर्णांक err;
+static long si570_round_rate(struct clk_hw *hw, unsigned long rate,
+		unsigned long *parent_rate)
+{
+	int err;
 	u64 rfreq;
-	अचिन्हित पूर्णांक n1, hs_भाग;
-	काष्ठा clk_si570 *data = to_clk_si570(hw);
+	unsigned int n1, hs_div;
+	struct clk_si570 *data = to_clk_si570(hw);
 
-	अगर (!rate)
-		वापस 0;
+	if (!rate)
+		return 0;
 
-	अगर (भाग64_u64(असल(rate - data->frequency) * 10000LL,
-				data->frequency) < 35) अणु
-		rfreq = भाग64_u64((data->rfreq * rate) +
-				भाग64_u64(data->frequency, 2), data->frequency);
+	if (div64_u64(abs(rate - data->frequency) * 10000LL,
+				data->frequency) < 35) {
+		rfreq = div64_u64((data->rfreq * rate) +
+				div64_u64(data->frequency, 2), data->frequency);
 		n1 = data->n1;
-		hs_भाग = data->hs_भाग;
+		hs_div = data->hs_div;
 
-	पूर्ण अन्यथा अणु
-		err = si570_calc_भागs(rate, data, &rfreq, &n1, &hs_भाग);
-		अगर (err) अणु
+	} else {
+		err = si570_calc_divs(rate, data, &rfreq, &n1, &hs_div);
+		if (err) {
 			dev_err(&data->i2c_client->dev,
 					"unable to round rate\n");
-			वापस 0;
-		पूर्ण
-	पूर्ण
+			return 0;
+		}
+	}
 
-	वापस rate;
-पूर्ण
+	return rate;
+}
 
 /**
  * si570_set_frequency() - Adjust output frequency
- * @data:	Driver data काष्ठाure
+ * @data:	Driver data structure
  * @frequency:	Target frequency
  * Returns 0 on success.
  *
- * Update output frequency क्रम big frequency changes (> 3,500 ppm).
+ * Update output frequency for big frequency changes (> 3,500 ppm).
  */
-अटल पूर्णांक si570_set_frequency(काष्ठा clk_si570 *data, अचिन्हित दीर्घ frequency)
-अणु
-	पूर्णांक err;
+static int si570_set_frequency(struct clk_si570 *data, unsigned long frequency)
+{
+	int err;
 
-	err = si570_calc_भागs(frequency, data, &data->rfreq, &data->n1,
-			&data->hs_भाग);
-	अगर (err)
-		वापस err;
+	err = si570_calc_divs(frequency, data, &data->rfreq, &data->n1,
+			&data->hs_div);
+	if (err)
+		return err;
 
 	/*
-	 * The DCO reg should be accessed with a पढ़ो-modअगरy-ग_लिखो operation
+	 * The DCO reg should be accessed with a read-modify-write operation
 	 * per AN334
 	 */
-	regmap_ग_लिखो(data->regmap, SI570_REG_FREEZE_DCO, SI570_FREEZE_DCO);
-	regmap_ग_लिखो(data->regmap, SI570_REG_HS_N1 + data->भाग_offset,
-			((data->hs_भाग - HS_DIV_OFFSET) << HS_DIV_SHIFT) |
+	regmap_write(data->regmap, SI570_REG_FREEZE_DCO, SI570_FREEZE_DCO);
+	regmap_write(data->regmap, SI570_REG_HS_N1 + data->div_offset,
+			((data->hs_div - HS_DIV_OFFSET) << HS_DIV_SHIFT) |
 			(((data->n1 - 1) >> 2) & N1_6_2_MASK));
 	si570_update_rfreq(data);
-	regmap_ग_लिखो(data->regmap, SI570_REG_FREEZE_DCO, 0);
-	regmap_ग_लिखो(data->regmap, SI570_REG_CONTROL, SI570_CNTRL_NEWFREQ);
+	regmap_write(data->regmap, SI570_REG_FREEZE_DCO, 0);
+	regmap_write(data->regmap, SI570_REG_CONTROL, SI570_CNTRL_NEWFREQ);
 
 	/* Applying a new frequency can take up to 10ms */
 	usleep_range(10000, 12000);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * si570_set_frequency_small() - Adjust output frequency
- * @data:	Driver data काष्ठाure
+ * @data:	Driver data structure
  * @frequency:	Target frequency
  * Returns 0 on success.
  *
- * Update output frequency क्रम small frequency changes (< 3,500 ppm).
+ * Update output frequency for small frequency changes (< 3,500 ppm).
  */
-अटल पूर्णांक si570_set_frequency_small(काष्ठा clk_si570 *data,
-				     अचिन्हित दीर्घ frequency)
-अणु
+static int si570_set_frequency_small(struct clk_si570 *data,
+				     unsigned long frequency)
+{
 	/*
 	 * This is a re-implementation of DIV_ROUND_CLOSEST
-	 * using the भाग64_u64 function lieu of letting the compiler
+	 * using the div64_u64 function lieu of letting the compiler
 	 * insert EABI calls
 	 */
-	data->rfreq = भाग64_u64((data->rfreq * frequency) +
-			भाग_u64(data->frequency, 2), data->frequency);
-	regmap_ग_लिखो(data->regmap, SI570_REG_CONTROL, SI570_CNTRL_FREEZE_M);
+	data->rfreq = div64_u64((data->rfreq * frequency) +
+			div_u64(data->frequency, 2), data->frequency);
+	regmap_write(data->regmap, SI570_REG_CONTROL, SI570_CNTRL_FREEZE_M);
 	si570_update_rfreq(data);
-	regmap_ग_लिखो(data->regmap, SI570_REG_CONTROL, 0);
+	regmap_write(data->regmap, SI570_REG_CONTROL, 0);
 
 	/* Applying a new frequency (small change) can take up to 100us */
 	usleep_range(100, 200);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक si570_set_rate(काष्ठा clk_hw *hw, अचिन्हित दीर्घ rate,
-		अचिन्हित दीर्घ parent_rate)
-अणु
-	काष्ठा clk_si570 *data = to_clk_si570(hw);
-	काष्ठा i2c_client *client = data->i2c_client;
-	पूर्णांक err;
+static int si570_set_rate(struct clk_hw *hw, unsigned long rate,
+		unsigned long parent_rate)
+{
+	struct clk_si570 *data = to_clk_si570(hw);
+	struct i2c_client *client = data->i2c_client;
+	int err;
 
-	अगर (rate < SI570_MIN_FREQ || rate > data->max_freq) अणु
+	if (rate < SI570_MIN_FREQ || rate > data->max_freq) {
 		dev_err(&client->dev,
 			"requested frequency %lu Hz is out of range\n", rate);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (भाग64_u64(असल(rate - data->frequency) * 10000LL,
+	if (div64_u64(abs(rate - data->frequency) * 10000LL,
 				data->frequency) < 35)
 		err = si570_set_frequency_small(data, rate);
-	अन्यथा
+	else
 		err = si570_set_frequency(data, rate);
 
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	data->frequency = rate;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा clk_ops si570_clk_ops = अणु
+static const struct clk_ops si570_clk_ops = {
 	.recalc_rate = si570_recalc_rate,
 	.round_rate = si570_round_rate,
 	.set_rate = si570_set_rate,
-पूर्ण;
+};
 
-अटल bool si570_regmap_is_अस्थिर(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल SI570_REG_CONTROL:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool si570_regmap_is_volatile(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case SI570_REG_CONTROL:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool si570_regmap_is_ग_लिखोable(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल SI570_REG_HS_N1 ... (SI570_REG_RFREQ4 + SI570_DIV_OFFSET_7PPM):
-	हाल SI570_REG_CONTROL:
-	हाल SI570_REG_FREEZE_DCO:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool si570_regmap_is_writeable(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case SI570_REG_HS_N1 ... (SI570_REG_RFREQ4 + SI570_DIV_OFFSET_7PPM):
+	case SI570_REG_CONTROL:
+	case SI570_REG_FREEZE_DCO:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल स्थिर काष्ठा regmap_config si570_regmap_config = अणु
+static const struct regmap_config si570_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
 	.cache_type = REGCACHE_RBTREE,
-	.max_रेजिस्टर = 137,
-	.ग_लिखोable_reg = si570_regmap_is_ग_लिखोable,
-	.अस्थिर_reg = si570_regmap_is_अस्थिर,
-पूर्ण;
+	.max_register = 137,
+	.writeable_reg = si570_regmap_is_writeable,
+	.volatile_reg = si570_regmap_is_volatile,
+};
 
-अटल पूर्णांक si570_probe(काष्ठा i2c_client *client,
-		स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा clk_si570 *data;
-	काष्ठा clk_init_data init;
+static int si570_probe(struct i2c_client *client,
+		const struct i2c_device_id *id)
+{
+	struct clk_si570 *data;
+	struct clk_init_data init;
 	u32 initial_fout, factory_fout, stability;
 	bool skip_recall;
-	पूर्णांक err;
-	क्रमागत clk_si570_variant variant = id->driver_data;
+	int err;
+	enum clk_si570_variant variant = id->driver_data;
 
-	data = devm_kzalloc(&client->dev, माप(*data), GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = devm_kzalloc(&client->dev, sizeof(*data), GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
 	init.ops = &si570_clk_ops;
 	init.flags = 0;
@@ -419,110 +418,110 @@
 	data->hw.init = &init;
 	data->i2c_client = client;
 
-	अगर (variant == si57x) अणु
-		err = of_property_पढ़ो_u32(client->dev.of_node,
+	if (variant == si57x) {
+		err = of_property_read_u32(client->dev.of_node,
 				"temperature-stability", &stability);
-		अगर (err) अणु
+		if (err) {
 			dev_err(&client->dev,
 				  "'temperature-stability' property missing\n");
-			वापस err;
-		पूर्ण
-		/* adjust रेजिस्टर offsets क्रम 7ppm devices */
-		अगर (stability == 7)
-			data->भाग_offset = SI570_DIV_OFFSET_7PPM;
+			return err;
+		}
+		/* adjust register offsets for 7ppm devices */
+		if (stability == 7)
+			data->div_offset = SI570_DIV_OFFSET_7PPM;
 
 		data->max_freq = SI570_MAX_FREQ;
-	पूर्ण अन्यथा अणु
+	} else {
 		data->max_freq = SI598_MAX_FREQ;
-	पूर्ण
+	}
 
-	अगर (of_property_पढ़ो_string(client->dev.of_node, "clock-output-names",
+	if (of_property_read_string(client->dev.of_node, "clock-output-names",
 			&init.name))
 		init.name = client->dev.of_node->name;
 
-	err = of_property_पढ़ो_u32(client->dev.of_node, "factory-fout",
+	err = of_property_read_u32(client->dev.of_node, "factory-fout",
 			&factory_fout);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&client->dev, "'factory-fout' property missing\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	skip_recall = of_property_पढ़ो_bool(client->dev.of_node,
+	skip_recall = of_property_read_bool(client->dev.of_node,
 					    "silabs,skip-recall");
 
 	data->regmap = devm_regmap_init_i2c(client, &si570_regmap_config);
-	अगर (IS_ERR(data->regmap)) अणु
+	if (IS_ERR(data->regmap)) {
 		dev_err(&client->dev, "failed to allocate register map\n");
-		वापस PTR_ERR(data->regmap);
-	पूर्ण
+		return PTR_ERR(data->regmap);
+	}
 
 	i2c_set_clientdata(client, data);
-	err = si570_get_शेषs(data, factory_fout, skip_recall);
-	अगर (err)
-		वापस err;
+	err = si570_get_defaults(data, factory_fout, skip_recall);
+	if (err)
+		return err;
 
-	err = devm_clk_hw_रेजिस्टर(&client->dev, &data->hw);
-	अगर (err) अणु
+	err = devm_clk_hw_register(&client->dev, &data->hw);
+	if (err) {
 		dev_err(&client->dev, "clock registration failed\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	err = of_clk_add_hw_provider(client->dev.of_node, of_clk_hw_simple_get,
 				     &data->hw);
-	अगर (err) अणु
+	if (err) {
 		dev_err(&client->dev, "unable to add clk provider\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/* Read the requested initial output frequency from device tree */
-	अगर (!of_property_पढ़ो_u32(client->dev.of_node, "clock-frequency",
-				&initial_fout)) अणु
+	if (!of_property_read_u32(client->dev.of_node, "clock-frequency",
+				&initial_fout)) {
 		err = clk_set_rate(data->hw.clk, initial_fout);
-		अगर (err) अणु
+		if (err) {
 			of_clk_del_provider(client->dev.of_node);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
-	/* Display a message indicating that we've successfully रेजिस्टरed */
+	/* Display a message indicating that we've successfully registered */
 	dev_info(&client->dev, "registered, current frequency %llu Hz\n",
 			data->frequency);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक si570_हटाओ(काष्ठा i2c_client *client)
-अणु
+static int si570_remove(struct i2c_client *client)
+{
 	of_clk_del_provider(client->dev.of_node);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id si570_id[] = अणु
-	अणु "si570", si57x पूर्ण,
-	अणु "si571", si57x पूर्ण,
-	अणु "si598", si59x पूर्ण,
-	अणु "si599", si59x पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+static const struct i2c_device_id si570_id[] = {
+	{ "si570", si57x },
+	{ "si571", si57x },
+	{ "si598", si59x },
+	{ "si599", si59x },
+	{ }
+};
 MODULE_DEVICE_TABLE(i2c, si570_id);
 
-अटल स्थिर काष्ठा of_device_id clk_si570_of_match[] = अणु
-	अणु .compatible = "silabs,si570" पूर्ण,
-	अणु .compatible = "silabs,si571" पूर्ण,
-	अणु .compatible = "silabs,si598" पूर्ण,
-	अणु .compatible = "silabs,si599" पूर्ण,
-	अणु पूर्ण,
-पूर्ण;
+static const struct of_device_id clk_si570_of_match[] = {
+	{ .compatible = "silabs,si570" },
+	{ .compatible = "silabs,si571" },
+	{ .compatible = "silabs,si598" },
+	{ .compatible = "silabs,si599" },
+	{ },
+};
 MODULE_DEVICE_TABLE(of, clk_si570_of_match);
 
-अटल काष्ठा i2c_driver si570_driver = अणु
-	.driver = अणु
+static struct i2c_driver si570_driver = {
+	.driver = {
 		.name = "si570",
 		.of_match_table = clk_si570_of_match,
-	पूर्ण,
+	},
 	.probe		= si570_probe,
-	.हटाओ		= si570_हटाओ,
+	.remove		= si570_remove,
 	.id_table	= si570_id,
-पूर्ण;
+};
 module_i2c_driver(si570_driver);
 
 MODULE_AUTHOR("Guenter Roeck <guenter.roeck@ericsson.com>");

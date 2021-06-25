@@ -1,16 +1,15 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0 OR MIT
+// SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
  *
- * Copyright तऊ 2018-2019 VMware, Inc., Palo Alto, CA., USA
+ * Copyright © 2018-2019 VMware, Inc., Palo Alto, CA., USA
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * The above copyright notice and this permission notice (including the
@@ -27,60 +26,60 @@
  *
  **************************************************************************/
 
-#समावेश <drm/tपंचांग/tपंचांग_placement.h>
+#include <drm/ttm/ttm_placement.h>
 
-#समावेश "vmwgfx_drv.h"
-#समावेश "vmwgfx_resource_priv.h"
-#समावेश "vmwgfx_binding.h"
+#include "vmwgfx_drv.h"
+#include "vmwgfx_resource_priv.h"
+#include "vmwgfx_binding.h"
 
 /**
- * काष्ठा vmw_dx_streamoutput - Streamoutput resource metadata.
- * @res: Base resource काष्ठा.
- * @ctx: Non-refcounted context to which @res beदीर्घ.
+ * struct vmw_dx_streamoutput - Streamoutput resource metadata.
+ * @res: Base resource struct.
+ * @ctx: Non-refcounted context to which @res belong.
  * @cotable: Refcounted cotable holding this Streamoutput.
- * @cotable_head: List head क्रम cotable-so_res list.
- * @id: User-space provided identअगरier.
+ * @cotable_head: List head for cotable-so_res list.
+ * @id: User-space provided identifier.
  * @size: User-space provided mob size.
  * @committed: Whether streamoutput is actually created or pending creation.
  */
-काष्ठा vmw_dx_streamoutput अणु
-	काष्ठा vmw_resource res;
-	काष्ठा vmw_resource *ctx;
-	काष्ठा vmw_resource *cotable;
-	काष्ठा list_head cotable_head;
+struct vmw_dx_streamoutput {
+	struct vmw_resource res;
+	struct vmw_resource *ctx;
+	struct vmw_resource *cotable;
+	struct list_head cotable_head;
 	u32 id;
 	u32 size;
 	bool committed;
-पूर्ण;
+};
 
-अटल पूर्णांक vmw_dx_streamoutput_create(काष्ठा vmw_resource *res);
-अटल पूर्णांक vmw_dx_streamoutput_bind(काष्ठा vmw_resource *res,
-				    काष्ठा tपंचांग_validate_buffer *val_buf);
-अटल पूर्णांक vmw_dx_streamoutput_unbind(काष्ठा vmw_resource *res, bool पढ़ोback,
-				      काष्ठा tपंचांग_validate_buffer *val_buf);
-अटल व्योम vmw_dx_streamoutput_commit_notअगरy(काष्ठा vmw_resource *res,
-					      क्रमागत vmw_cmdbuf_res_state state);
+static int vmw_dx_streamoutput_create(struct vmw_resource *res);
+static int vmw_dx_streamoutput_bind(struct vmw_resource *res,
+				    struct ttm_validate_buffer *val_buf);
+static int vmw_dx_streamoutput_unbind(struct vmw_resource *res, bool readback,
+				      struct ttm_validate_buffer *val_buf);
+static void vmw_dx_streamoutput_commit_notify(struct vmw_resource *res,
+					      enum vmw_cmdbuf_res_state state);
 
-अटल माप_प्रकार vmw_streamoutput_size;
+static size_t vmw_streamoutput_size;
 
-अटल स्थिर काष्ठा vmw_res_func vmw_dx_streamoutput_func = अणु
+static const struct vmw_res_func vmw_dx_streamoutput_func = {
 	.res_type = vmw_res_streamoutput,
 	.needs_backup = true,
 	.may_evict = false,
 	.type_name = "DX streamoutput",
 	.backup_placement = &vmw_mob_placement,
 	.create = vmw_dx_streamoutput_create,
-	.destroy = शून्य, /* Command buffer managed resource. */
+	.destroy = NULL, /* Command buffer managed resource. */
 	.bind = vmw_dx_streamoutput_bind,
 	.unbind = vmw_dx_streamoutput_unbind,
-	.commit_notअगरy = vmw_dx_streamoutput_commit_notअगरy,
-पूर्ण;
+	.commit_notify = vmw_dx_streamoutput_commit_notify,
+};
 
-अटल अंतरभूत काष्ठा vmw_dx_streamoutput *
-vmw_res_to_dx_streamoutput(काष्ठा vmw_resource *res)
-अणु
-	वापस container_of(res, काष्ठा vmw_dx_streamoutput, res);
-पूर्ण
+static inline struct vmw_dx_streamoutput *
+vmw_res_to_dx_streamoutput(struct vmw_resource *res)
+{
+	return container_of(res, struct vmw_dx_streamoutput, res);
+}
 
 /**
  * vmw_dx_streamoutput_unscrub - Reattach the MOB to streamoutput.
@@ -88,70 +87,70 @@ vmw_res_to_dx_streamoutput(काष्ठा vmw_resource *res)
  *
  * Return: 0 on success, negative error code on failure.
  */
-अटल पूर्णांक vmw_dx_streamoutput_unscrub(काष्ठा vmw_resource *res)
-अणु
-	काष्ठा vmw_dx_streamoutput *so = vmw_res_to_dx_streamoutput(res);
-	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
-	काष्ठा अणु
+static int vmw_dx_streamoutput_unscrub(struct vmw_resource *res)
+{
+	struct vmw_dx_streamoutput *so = vmw_res_to_dx_streamoutput(res);
+	struct vmw_private *dev_priv = res->dev_priv;
+	struct {
 		SVGA3dCmdHeader header;
 		SVGA3dCmdDXBindStreamOutput body;
-	पूर्ण *cmd;
+	} *cmd;
 
-	अगर (!list_empty(&so->cotable_head) || !so->committed )
-		वापस 0;
+	if (!list_empty(&so->cotable_head) || !so->committed )
+		return 0;
 
-	cmd = VMW_CMD_CTX_RESERVE(dev_priv, माप(*cmd), so->ctx->id);
-	अगर (!cmd)
-		वापस -ENOMEM;
+	cmd = VMW_CMD_CTX_RESERVE(dev_priv, sizeof(*cmd), so->ctx->id);
+	if (!cmd)
+		return -ENOMEM;
 
 	cmd->header.id = SVGA_3D_CMD_DX_BIND_STREAMOUTPUT;
-	cmd->header.size = माप(cmd->body);
+	cmd->header.size = sizeof(cmd->body);
 	cmd->body.soid = so->id;
 	cmd->body.mobid = res->backup->base.mem.start;
 	cmd->body.offsetInBytes = res->backup_offset;
 	cmd->body.sizeInBytes = so->size;
-	vmw_cmd_commit(dev_priv, माप(*cmd));
+	vmw_cmd_commit(dev_priv, sizeof(*cmd));
 
 	vmw_cotable_add_resource(so->cotable, &so->cotable_head);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vmw_dx_streamoutput_create(काष्ठा vmw_resource *res)
-अणु
-	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
-	काष्ठा vmw_dx_streamoutput *so = vmw_res_to_dx_streamoutput(res);
-	पूर्णांक ret = 0;
+static int vmw_dx_streamoutput_create(struct vmw_resource *res)
+{
+	struct vmw_private *dev_priv = res->dev_priv;
+	struct vmw_dx_streamoutput *so = vmw_res_to_dx_streamoutput(res);
+	int ret = 0;
 
 	WARN_ON_ONCE(!so->committed);
 
-	अगर (vmw_resource_mob_attached(res)) अणु
+	if (vmw_resource_mob_attached(res)) {
 		mutex_lock(&dev_priv->binding_mutex);
 		ret = vmw_dx_streamoutput_unscrub(res);
 		mutex_unlock(&dev_priv->binding_mutex);
-	पूर्ण
+	}
 
 	res->id = so->id;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक vmw_dx_streamoutput_bind(काष्ठा vmw_resource *res,
-				    काष्ठा tपंचांग_validate_buffer *val_buf)
-अणु
-	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
-	काष्ठा tपंचांग_buffer_object *bo = val_buf->bo;
-	पूर्णांक ret;
+static int vmw_dx_streamoutput_bind(struct vmw_resource *res,
+				    struct ttm_validate_buffer *val_buf)
+{
+	struct vmw_private *dev_priv = res->dev_priv;
+	struct ttm_buffer_object *bo = val_buf->bo;
+	int ret;
 
-	अगर (WARN_ON(bo->mem.mem_type != VMW_PL_MOB))
-		वापस -EINVAL;
+	if (WARN_ON(bo->mem.mem_type != VMW_PL_MOB))
+		return -EINVAL;
 
 	mutex_lock(&dev_priv->binding_mutex);
 	ret = vmw_dx_streamoutput_unscrub(res);
 	mutex_unlock(&dev_priv->binding_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * vmw_dx_streamoutput_scrub - Unbind the MOB from streamoutput.
@@ -159,155 +158,155 @@ vmw_res_to_dx_streamoutput(काष्ठा vmw_resource *res)
  *
  * Return: 0 on success, negative error code on failure.
  */
-अटल पूर्णांक vmw_dx_streamoutput_scrub(काष्ठा vmw_resource *res)
-अणु
-	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
-	काष्ठा vmw_dx_streamoutput *so = vmw_res_to_dx_streamoutput(res);
-	काष्ठा अणु
+static int vmw_dx_streamoutput_scrub(struct vmw_resource *res)
+{
+	struct vmw_private *dev_priv = res->dev_priv;
+	struct vmw_dx_streamoutput *so = vmw_res_to_dx_streamoutput(res);
+	struct {
 		SVGA3dCmdHeader header;
 		SVGA3dCmdDXBindStreamOutput body;
-	पूर्ण *cmd;
+	} *cmd;
 
-	अगर (list_empty(&so->cotable_head))
-		वापस 0;
+	if (list_empty(&so->cotable_head))
+		return 0;
 
 	WARN_ON_ONCE(!so->committed);
 
-	cmd = VMW_CMD_CTX_RESERVE(dev_priv, माप(*cmd), so->ctx->id);
-	अगर (!cmd)
-		वापस -ENOMEM;
+	cmd = VMW_CMD_CTX_RESERVE(dev_priv, sizeof(*cmd), so->ctx->id);
+	if (!cmd)
+		return -ENOMEM;
 
 	cmd->header.id = SVGA_3D_CMD_DX_BIND_STREAMOUTPUT;
-	cmd->header.size = माप(cmd->body);
+	cmd->header.size = sizeof(cmd->body);
 	cmd->body.soid = res->id;
 	cmd->body.mobid = SVGA3D_INVALID_ID;
 	cmd->body.offsetInBytes = 0;
 	cmd->body.sizeInBytes = so->size;
-	vmw_cmd_commit(dev_priv, माप(*cmd));
+	vmw_cmd_commit(dev_priv, sizeof(*cmd));
 
 	res->id = -1;
 	list_del_init(&so->cotable_head);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक vmw_dx_streamoutput_unbind(काष्ठा vmw_resource *res, bool पढ़ोback,
-				      काष्ठा tपंचांग_validate_buffer *val_buf)
-अणु
-	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
-	काष्ठा vmw_fence_obj *fence;
-	पूर्णांक ret;
+static int vmw_dx_streamoutput_unbind(struct vmw_resource *res, bool readback,
+				      struct ttm_validate_buffer *val_buf)
+{
+	struct vmw_private *dev_priv = res->dev_priv;
+	struct vmw_fence_obj *fence;
+	int ret;
 
-	अगर (WARN_ON(res->backup->base.mem.mem_type != VMW_PL_MOB))
-		वापस -EINVAL;
+	if (WARN_ON(res->backup->base.mem.mem_type != VMW_PL_MOB))
+		return -EINVAL;
 
 	mutex_lock(&dev_priv->binding_mutex);
 	ret = vmw_dx_streamoutput_scrub(res);
 	mutex_unlock(&dev_priv->binding_mutex);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	(व्योम) vmw_execbuf_fence_commands(शून्य, dev_priv, &fence, शून्य);
+	(void) vmw_execbuf_fence_commands(NULL, dev_priv, &fence, NULL);
 	vmw_bo_fence_single(val_buf->bo, fence);
 
-	अगर (fence != शून्य)
+	if (fence != NULL)
 		vmw_fence_obj_unreference(&fence);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम vmw_dx_streamoutput_commit_notअगरy(काष्ठा vmw_resource *res,
-					   क्रमागत vmw_cmdbuf_res_state state)
-अणु
-	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
-	काष्ठा vmw_dx_streamoutput *so = vmw_res_to_dx_streamoutput(res);
+static void vmw_dx_streamoutput_commit_notify(struct vmw_resource *res,
+					   enum vmw_cmdbuf_res_state state)
+{
+	struct vmw_private *dev_priv = res->dev_priv;
+	struct vmw_dx_streamoutput *so = vmw_res_to_dx_streamoutput(res);
 
-	अगर (state == VMW_CMDBUF_RES_ADD) अणु
+	if (state == VMW_CMDBUF_RES_ADD) {
 		mutex_lock(&dev_priv->binding_mutex);
 		vmw_cotable_add_resource(so->cotable, &so->cotable_head);
 		so->committed = true;
 		res->id = so->id;
 		mutex_unlock(&dev_priv->binding_mutex);
-	पूर्ण अन्यथा अणु
+	} else {
 		mutex_lock(&dev_priv->binding_mutex);
 		list_del_init(&so->cotable_head);
 		so->committed = false;
 		res->id = -1;
 		mutex_unlock(&dev_priv->binding_mutex);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
  * vmw_dx_streamoutput_lookup - Do a streamoutput resource lookup by user key.
- * @man: Command buffer managed resource manager क्रम current context.
- * @user_key: User-space identअगरier क्रम lookup.
+ * @man: Command buffer managed resource manager for current context.
+ * @user_key: User-space identifier for lookup.
  *
- * Return: Valid refcounted vmw_resource on success, error poपूर्णांकer on failure.
+ * Return: Valid refcounted vmw_resource on success, error pointer on failure.
  */
-काष्ठा vmw_resource *
-vmw_dx_streamoutput_lookup(काष्ठा vmw_cmdbuf_res_manager *man,
+struct vmw_resource *
+vmw_dx_streamoutput_lookup(struct vmw_cmdbuf_res_manager *man,
 			   u32 user_key)
-अणु
-	वापस vmw_cmdbuf_res_lookup(man, vmw_cmdbuf_res_streamoutput,
+{
+	return vmw_cmdbuf_res_lookup(man, vmw_cmdbuf_res_streamoutput,
 				     user_key);
-पूर्ण
+}
 
-अटल व्योम vmw_dx_streamoutput_res_मुक्त(काष्ठा vmw_resource *res)
-अणु
-	काष्ठा vmw_निजी *dev_priv = res->dev_priv;
-	काष्ठा vmw_dx_streamoutput *so = vmw_res_to_dx_streamoutput(res);
+static void vmw_dx_streamoutput_res_free(struct vmw_resource *res)
+{
+	struct vmw_private *dev_priv = res->dev_priv;
+	struct vmw_dx_streamoutput *so = vmw_res_to_dx_streamoutput(res);
 
 	vmw_resource_unreference(&so->cotable);
-	kमुक्त(so);
-	tपंचांग_mem_global_मुक्त(vmw_mem_glob(dev_priv), vmw_streamoutput_size);
-पूर्ण
+	kfree(so);
+	ttm_mem_global_free(vmw_mem_glob(dev_priv), vmw_streamoutput_size);
+}
 
-अटल व्योम vmw_dx_streamoutput_hw_destroy(काष्ठा vmw_resource *res)
-अणु
-	/* Destroyed by user-space cmd buf or as part of context takeकरोwn. */
+static void vmw_dx_streamoutput_hw_destroy(struct vmw_resource *res)
+{
+	/* Destroyed by user-space cmd buf or as part of context takedown. */
 	res->id = -1;
-पूर्ण
+}
 
 /**
  * vmw_dx_streamoutput_add - Add a streamoutput as a cmd buf managed resource.
- * @man: Command buffer managed resource manager क्रम current context.
- * @ctx: Poपूर्णांकer to context resource.
- * @user_key: The identअगरier क्रम this streamoutput.
+ * @man: Command buffer managed resource manager for current context.
+ * @ctx: Pointer to context resource.
+ * @user_key: The identifier for this streamoutput.
  * @list: The list of staged command buffer managed resources.
  *
  * Return: 0 on success, negative error code on failure.
  */
-पूर्णांक vmw_dx_streamoutput_add(काष्ठा vmw_cmdbuf_res_manager *man,
-			    काष्ठा vmw_resource *ctx, u32 user_key,
-			    काष्ठा list_head *list)
-अणु
-	काष्ठा vmw_dx_streamoutput *so;
-	काष्ठा vmw_resource *res;
-	काष्ठा vmw_निजी *dev_priv = ctx->dev_priv;
-	काष्ठा tपंचांग_operation_ctx tपंचांग_opt_ctx = अणु
-		.पूर्णांकerruptible = true,
-		.no_रुको_gpu = false
-	पूर्ण;
-	पूर्णांक ret;
+int vmw_dx_streamoutput_add(struct vmw_cmdbuf_res_manager *man,
+			    struct vmw_resource *ctx, u32 user_key,
+			    struct list_head *list)
+{
+	struct vmw_dx_streamoutput *so;
+	struct vmw_resource *res;
+	struct vmw_private *dev_priv = ctx->dev_priv;
+	struct ttm_operation_ctx ttm_opt_ctx = {
+		.interruptible = true,
+		.no_wait_gpu = false
+	};
+	int ret;
 
-	अगर (!vmw_streamoutput_size)
-		vmw_streamoutput_size = tपंचांग_round_pot(माप(*so));
+	if (!vmw_streamoutput_size)
+		vmw_streamoutput_size = ttm_round_pot(sizeof(*so));
 
-	ret = tपंचांग_mem_global_alloc(vmw_mem_glob(dev_priv),
-				   vmw_streamoutput_size, &tपंचांग_opt_ctx);
-	अगर (ret) अणु
-		अगर (ret != -ERESTARTSYS)
+	ret = ttm_mem_global_alloc(vmw_mem_glob(dev_priv),
+				   vmw_streamoutput_size, &ttm_opt_ctx);
+	if (ret) {
+		if (ret != -ERESTARTSYS)
 			DRM_ERROR("Out of graphics memory for streamout.\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	so = kदो_स्मृति(माप(*so), GFP_KERNEL);
-	अगर (!so) अणु
-		tपंचांग_mem_global_मुक्त(vmw_mem_glob(dev_priv),
+	so = kmalloc(sizeof(*so), GFP_KERNEL);
+	if (!so) {
+		ttm_mem_global_free(vmw_mem_glob(dev_priv),
 				    vmw_streamoutput_size);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	res = &so->res;
 	so->ctx = ctx;
@@ -317,15 +316,15 @@ vmw_dx_streamoutput_lookup(काष्ठा vmw_cmdbuf_res_manager *man,
 	so->committed = false;
 	INIT_LIST_HEAD(&so->cotable_head);
 	ret = vmw_resource_init(dev_priv, res, true,
-				vmw_dx_streamoutput_res_मुक्त,
+				vmw_dx_streamoutput_res_free,
 				&vmw_dx_streamoutput_func);
-	अगर (ret)
-		जाओ out_resource_init;
+	if (ret)
+		goto out_resource_init;
 
 	ret = vmw_cmdbuf_res_add(man, vmw_cmdbuf_res_streamoutput, user_key,
 				 res, list);
-	अगर (ret)
-		जाओ out_resource_init;
+	if (ret)
+		goto out_resource_init;
 
 	res->id = so->id;
 	res->hw_destroy = vmw_dx_streamoutput_hw_destroy;
@@ -333,56 +332,56 @@ vmw_dx_streamoutput_lookup(काष्ठा vmw_cmdbuf_res_manager *man,
 out_resource_init:
 	vmw_resource_unreference(&res);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * vmw_dx_streamoutput_set_size - Sets streamoutput mob size in res काष्ठा.
- * @res: The streamoutput res क्रम which need to set size.
+ * vmw_dx_streamoutput_set_size - Sets streamoutput mob size in res struct.
+ * @res: The streamoutput res for which need to set size.
  * @size: The size provided by user-space to set.
  */
-व्योम vmw_dx_streamoutput_set_size(काष्ठा vmw_resource *res, u32 size)
-अणु
-	काष्ठा vmw_dx_streamoutput *so = vmw_res_to_dx_streamoutput(res);
+void vmw_dx_streamoutput_set_size(struct vmw_resource *res, u32 size)
+{
+	struct vmw_dx_streamoutput *so = vmw_res_to_dx_streamoutput(res);
 
 	so->size = size;
-पूर्ण
+}
 
 /**
- * vmw_dx_streamoutput_हटाओ - Stage streamoutput क्रम removal.
- * @man: Command buffer managed resource manager क्रम current context.
- * @user_key: The identअगरier क्रम this streamoutput.
+ * vmw_dx_streamoutput_remove - Stage streamoutput for removal.
+ * @man: Command buffer managed resource manager for current context.
+ * @user_key: The identifier for this streamoutput.
  * @list: The list of staged command buffer managed resources.
  *
  * Return: 0 on success, negative error code on failure.
  */
-पूर्णांक vmw_dx_streamoutput_हटाओ(काष्ठा vmw_cmdbuf_res_manager *man,
+int vmw_dx_streamoutput_remove(struct vmw_cmdbuf_res_manager *man,
 			       u32 user_key,
-			       काष्ठा list_head *list)
-अणु
-	काष्ठा vmw_resource *r;
+			       struct list_head *list)
+{
+	struct vmw_resource *r;
 
-	वापस vmw_cmdbuf_res_हटाओ(man, vmw_cmdbuf_res_streamoutput,
+	return vmw_cmdbuf_res_remove(man, vmw_cmdbuf_res_streamoutput,
 				     (u32)user_key, list, &r);
-पूर्ण
+}
 
 /**
  * vmw_dx_streamoutput_cotable_list_scrub - cotable unbind_func callback.
- * @dev_priv: Device निजी.
+ * @dev_priv: Device private.
  * @list: The list of cotable resources.
- * @पढ़ोback: Whether the call was part of a पढ़ोback unbind.
+ * @readback: Whether the call was part of a readback unbind.
  */
-व्योम vmw_dx_streamoutput_cotable_list_scrub(काष्ठा vmw_निजी *dev_priv,
-					    काष्ठा list_head *list,
-					    bool पढ़ोback)
-अणु
-	काष्ठा vmw_dx_streamoutput *entry, *next;
+void vmw_dx_streamoutput_cotable_list_scrub(struct vmw_private *dev_priv,
+					    struct list_head *list,
+					    bool readback)
+{
+	struct vmw_dx_streamoutput *entry, *next;
 
-	lockdep_निश्चित_held_once(&dev_priv->binding_mutex);
+	lockdep_assert_held_once(&dev_priv->binding_mutex);
 
-	list_क्रम_each_entry_safe(entry, next, list, cotable_head) अणु
+	list_for_each_entry_safe(entry, next, list, cotable_head) {
 		WARN_ON(vmw_dx_streamoutput_scrub(&entry->res));
-		अगर (!पढ़ोback)
+		if (!readback)
 			entry->committed =false;
-	पूर्ण
-पूर्ण
+	}
+}

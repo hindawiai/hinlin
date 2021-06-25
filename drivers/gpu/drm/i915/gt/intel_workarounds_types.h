@@ -1,29 +1,28 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2014-2018 Intel Corporation
+ * Copyright © 2014-2018 Intel Corporation
  */
 
-#अगर_अघोषित __INTEL_WORKAROUNDS_TYPES_H__
-#घोषणा __INTEL_WORKAROUNDS_TYPES_H__
+#ifndef __INTEL_WORKAROUNDS_TYPES_H__
+#define __INTEL_WORKAROUNDS_TYPES_H__
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#समावेश "i915_reg.h"
+#include "i915_reg.h"
 
-काष्ठा i915_wa अणु
+struct i915_wa {
 	i915_reg_t	reg;
 	u32		clr;
 	u32		set;
-	u32		पढ़ो;
-पूर्ण;
+	u32		read;
+};
 
-काष्ठा i915_wa_list अणु
-	स्थिर अक्षर	*name;
-	स्थिर अक्षर	*engine_name;
-	काष्ठा i915_wa	*list;
-	अचिन्हित पूर्णांक	count;
-	अचिन्हित पूर्णांक	wa_count;
-पूर्ण;
+struct i915_wa_list {
+	const char	*name;
+	const char	*engine_name;
+	struct i915_wa	*list;
+	unsigned int	count;
+	unsigned int	wa_count;
+};
 
-#पूर्ण_अगर /* __INTEL_WORKAROUNDS_TYPES_H__ */
+#endif /* __INTEL_WORKAROUNDS_TYPES_H__ */

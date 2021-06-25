@@ -1,59 +1,58 @@
-<शैली गुरु>
 /*
- * CBUS I2C driver क्रम Nokia Internet Tablets.
+ * CBUS I2C driver for Nokia Internet Tablets.
  *
  * Copyright (C) 2004-2010 Nokia Corporation
  *
- * Based on code written by Juha Yrjथघlथअ, David Weinehall, Mikko Ylinen and
+ * Based on code written by Juha Yrjölä, David Weinehall, Mikko Ylinen and
  * Felipe Balbi. Converted to I2C driver by Aaro Koskinen.
  *
  * This file is subject to the terms and conditions of the GNU General
- * Public License. See the file "COPYING" in the मुख्य directory of this
- * archive क्रम more details.
+ * Public License. See the file "COPYING" in the main directory of this
+ * archive for more details.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  */
 
-#समावेश <linux/पन.स>
-#समावेश <linux/i2c.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/gpio/consumer.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/io.h>
+#include <linux/i2c.h>
+#include <linux/slab.h>
+#include <linux/delay.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/gpio/consumer.h>
+#include <linux/interrupt.h>
+#include <linux/platform_device.h>
 
 /*
  * Bit counts are derived from Nokia implementation. These should be checked
- * अगर other CBUS implementations appear.
+ * if other CBUS implementations appear.
  */
-#घोषणा CBUS_ADDR_BITS	3
-#घोषणा CBUS_REG_BITS	5
+#define CBUS_ADDR_BITS	3
+#define CBUS_REG_BITS	5
 
-काष्ठा cbus_host अणु
+struct cbus_host {
 	spinlock_t	lock;		/* host lock */
-	काष्ठा device	*dev;
-	काष्ठा gpio_desc *clk;
-	काष्ठा gpio_desc *dat;
-	काष्ठा gpio_desc *sel;
-पूर्ण;
+	struct device	*dev;
+	struct gpio_desc *clk;
+	struct gpio_desc *dat;
+	struct gpio_desc *sel;
+};
 
 /**
  * cbus_send_bit - sends one bit over the bus
  * @host: the host we're using
- * @bit: one bit of inक्रमmation to send
+ * @bit: one bit of information to send
  */
-अटल व्योम cbus_send_bit(काष्ठा cbus_host *host, अचिन्हित bit)
-अणु
+static void cbus_send_bit(struct cbus_host *host, unsigned bit)
+{
 	gpiod_set_value(host->dat, bit ? 1 : 0);
 	gpiod_set_value(host->clk, 1);
 	gpiod_set_value(host->clk, 0);
-पूर्ण
+}
 
 /**
  * cbus_send_data - sends @len amount of data over the bus
@@ -61,67 +60,67 @@
  * @data: the data to send
  * @len: size of the transfer
  */
-अटल व्योम cbus_send_data(काष्ठा cbus_host *host, अचिन्हित data, अचिन्हित len)
-अणु
-	पूर्णांक i;
+static void cbus_send_data(struct cbus_host *host, unsigned data, unsigned len)
+{
+	int i;
 
-	क्रम (i = len; i > 0; i--)
+	for (i = len; i > 0; i--)
 		cbus_send_bit(host, data & (1 << (i - 1)));
-पूर्ण
+}
 
 /**
  * cbus_receive_bit - receives one bit from the bus
  * @host: the host we're using
  */
-अटल पूर्णांक cbus_receive_bit(काष्ठा cbus_host *host)
-अणु
-	पूर्णांक ret;
+static int cbus_receive_bit(struct cbus_host *host)
+{
+	int ret;
 
 	gpiod_set_value(host->clk, 1);
 	ret = gpiod_get_value(host->dat);
 	gpiod_set_value(host->clk, 0);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * cbus_receive_word - receives 16-bit word from the bus
  * @host: the host we're using
  */
-अटल पूर्णांक cbus_receive_word(काष्ठा cbus_host *host)
-अणु
-	पूर्णांक ret = 0;
-	पूर्णांक i;
+static int cbus_receive_word(struct cbus_host *host)
+{
+	int ret = 0;
+	int i;
 
-	क्रम (i = 16; i > 0; i--) अणु
-		पूर्णांक bit = cbus_receive_bit(host);
+	for (i = 16; i > 0; i--) {
+		int bit = cbus_receive_bit(host);
 
-		अगर (bit < 0)
-			वापस bit;
+		if (bit < 0)
+			return bit;
 
-		अगर (bit)
+		if (bit)
 			ret |= 1 << (i - 1);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
 /**
  * cbus_transfer - transfers data over the bus
  * @host: the host we're using
- * @rw: पढ़ो/ग_लिखो flag
+ * @rw: read/write flag
  * @dev: device address
- * @reg: रेजिस्टर address
- * @data: अगर @rw == I2C_SBUS_WRITE data to send otherwise 0
+ * @reg: register address
+ * @data: if @rw == I2C_SBUS_WRITE data to send otherwise 0
  */
-अटल पूर्णांक cbus_transfer(काष्ठा cbus_host *host, अक्षर rw, अचिन्हित dev,
-			 अचिन्हित reg, अचिन्हित data)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक ret;
+static int cbus_transfer(struct cbus_host *host, char rw, unsigned dev,
+			 unsigned reg, unsigned data)
+{
+	unsigned long flags;
+	int ret;
 
-	/* We करोn't want पूर्णांकerrupts disturbing our transfer */
+	/* We don't want interrupts disturbing our transfer */
 	spin_lock_irqsave(&host->lock, flags);
 
-	/* Reset state and start of transfer, SEL stays करोwn during transfer */
+	/* Reset state and start of transfer, SEL stays down during transfer */
 	gpiod_set_value(host->sel, 0);
 
 	/* Set the DAT pin to output */
@@ -133,26 +132,26 @@
 	/* Send the rw flag */
 	cbus_send_bit(host, rw == I2C_SMBUS_READ);
 
-	/* Send the रेजिस्टर address */
+	/* Send the register address */
 	cbus_send_data(host, reg, CBUS_REG_BITS);
 
-	अगर (rw == I2C_SMBUS_WRITE) अणु
+	if (rw == I2C_SMBUS_WRITE) {
 		cbus_send_data(host, data, 16);
 		ret = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		ret = gpiod_direction_input(host->dat);
-		अगर (ret) अणु
+		if (ret) {
 			dev_dbg(host->dev, "failed setting direction\n");
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 		gpiod_set_value(host->clk, 1);
 
 		ret = cbus_receive_word(host);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			dev_dbg(host->dev, "failed receiving data\n");
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
 	/* Indicate end of transfer, SEL goes up until next transfer */
 	gpiod_set_value(host->sel, 1);
@@ -162,78 +161,78 @@
 out:
 	spin_unlock_irqrestore(&host->lock, flags);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक cbus_i2c_smbus_xfer(काष्ठा i2c_adapter	*adapter,
+static int cbus_i2c_smbus_xfer(struct i2c_adapter	*adapter,
 			       u16			addr,
-			       अचिन्हित लघु		flags,
-			       अक्षर			पढ़ो_ग_लिखो,
+			       unsigned short		flags,
+			       char			read_write,
 			       u8			command,
-			       पूर्णांक			size,
-			       जोड़ i2c_smbus_data	*data)
-अणु
-	काष्ठा cbus_host *chost = i2c_get_adapdata(adapter);
-	पूर्णांक ret;
+			       int			size,
+			       union i2c_smbus_data	*data)
+{
+	struct cbus_host *chost = i2c_get_adapdata(adapter);
+	int ret;
 
-	अगर (size != I2C_SMBUS_WORD_DATA)
-		वापस -EINVAL;
+	if (size != I2C_SMBUS_WORD_DATA)
+		return -EINVAL;
 
-	ret = cbus_transfer(chost, पढ़ो_ग_लिखो == I2C_SMBUS_READ, addr,
+	ret = cbus_transfer(chost, read_write == I2C_SMBUS_READ, addr,
 			    command, data->word);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	अगर (पढ़ो_ग_लिखो == I2C_SMBUS_READ)
+	if (read_write == I2C_SMBUS_READ)
 		data->word = ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 cbus_i2c_func(काष्ठा i2c_adapter *adapter)
-अणु
-	वापस I2C_FUNC_SMBUS_READ_WORD_DATA | I2C_FUNC_SMBUS_WRITE_WORD_DATA;
-पूर्ण
+static u32 cbus_i2c_func(struct i2c_adapter *adapter)
+{
+	return I2C_FUNC_SMBUS_READ_WORD_DATA | I2C_FUNC_SMBUS_WRITE_WORD_DATA;
+}
 
-अटल स्थिर काष्ठा i2c_algorithm cbus_i2c_algo = अणु
+static const struct i2c_algorithm cbus_i2c_algo = {
 	.smbus_xfer	= cbus_i2c_smbus_xfer,
 	.functionality	= cbus_i2c_func,
-पूर्ण;
+};
 
-अटल पूर्णांक cbus_i2c_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा i2c_adapter *adapter = platक्रमm_get_drvdata(pdev);
+static int cbus_i2c_remove(struct platform_device *pdev)
+{
+	struct i2c_adapter *adapter = platform_get_drvdata(pdev);
 
 	i2c_del_adapter(adapter);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक cbus_i2c_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा i2c_adapter *adapter;
-	काष्ठा cbus_host *chost;
+static int cbus_i2c_probe(struct platform_device *pdev)
+{
+	struct i2c_adapter *adapter;
+	struct cbus_host *chost;
 
-	adapter = devm_kzalloc(&pdev->dev, माप(काष्ठा i2c_adapter),
+	adapter = devm_kzalloc(&pdev->dev, sizeof(struct i2c_adapter),
 			       GFP_KERNEL);
-	अगर (!adapter)
-		वापस -ENOMEM;
+	if (!adapter)
+		return -ENOMEM;
 
-	chost = devm_kzalloc(&pdev->dev, माप(*chost), GFP_KERNEL);
-	अगर (!chost)
-		वापस -ENOMEM;
+	chost = devm_kzalloc(&pdev->dev, sizeof(*chost), GFP_KERNEL);
+	if (!chost)
+		return -ENOMEM;
 
-	अगर (gpiod_count(&pdev->dev, शून्य) != 3)
-		वापस -ENODEV;
-	chost->clk = devm_gpiod_get_index(&pdev->dev, शून्य, 0, GPIOD_OUT_LOW);
-	अगर (IS_ERR(chost->clk))
-		वापस PTR_ERR(chost->clk);
-	chost->dat = devm_gpiod_get_index(&pdev->dev, शून्य, 1, GPIOD_IN);
-	अगर (IS_ERR(chost->dat))
-		वापस PTR_ERR(chost->dat);
-	chost->sel = devm_gpiod_get_index(&pdev->dev, शून्य, 2, GPIOD_OUT_HIGH);
-	अगर (IS_ERR(chost->sel))
-		वापस PTR_ERR(chost->sel);
+	if (gpiod_count(&pdev->dev, NULL) != 3)
+		return -ENODEV;
+	chost->clk = devm_gpiod_get_index(&pdev->dev, NULL, 0, GPIOD_OUT_LOW);
+	if (IS_ERR(chost->clk))
+		return PTR_ERR(chost->clk);
+	chost->dat = devm_gpiod_get_index(&pdev->dev, NULL, 1, GPIOD_IN);
+	if (IS_ERR(chost->dat))
+		return PTR_ERR(chost->dat);
+	chost->sel = devm_gpiod_get_index(&pdev->dev, NULL, 2, GPIOD_OUT_HIGH);
+	if (IS_ERR(chost->sel))
+		return PTR_ERR(chost->sel);
 	gpiod_set_consumer_name(chost->clk, "CBUS clk");
 	gpiod_set_consumer_name(chost->dat, "CBUS dat");
 	gpiod_set_consumer_name(chost->sel, "CBUS sel");
@@ -243,40 +242,40 @@ out:
 	adapter->dev.parent	= &pdev->dev;
 	adapter->dev.of_node	= pdev->dev.of_node;
 	adapter->nr		= pdev->id;
-	adapter->समयout	= HZ;
+	adapter->timeout	= HZ;
 	adapter->algo		= &cbus_i2c_algo;
-	strlcpy(adapter->name, "CBUS I2C adapter", माप(adapter->name));
+	strlcpy(adapter->name, "CBUS I2C adapter", sizeof(adapter->name));
 
 	spin_lock_init(&chost->lock);
 	chost->dev = &pdev->dev;
 
 	i2c_set_adapdata(adapter, chost);
-	platक्रमm_set_drvdata(pdev, adapter);
+	platform_set_drvdata(pdev, adapter);
 
-	वापस i2c_add_numbered_adapter(adapter);
-पूर्ण
+	return i2c_add_numbered_adapter(adapter);
+}
 
-#अगर defined(CONFIG_OF)
-अटल स्थिर काष्ठा of_device_id i2c_cbus_dt_ids[] = अणु
-	अणु .compatible = "i2c-cbus-gpio", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
+#if defined(CONFIG_OF)
+static const struct of_device_id i2c_cbus_dt_ids[] = {
+	{ .compatible = "i2c-cbus-gpio", },
+	{ }
+};
 MODULE_DEVICE_TABLE(of, i2c_cbus_dt_ids);
-#पूर्ण_अगर
+#endif
 
-अटल काष्ठा platक्रमm_driver cbus_i2c_driver = अणु
+static struct platform_driver cbus_i2c_driver = {
 	.probe	= cbus_i2c_probe,
-	.हटाओ	= cbus_i2c_हटाओ,
-	.driver	= अणु
+	.remove	= cbus_i2c_remove,
+	.driver	= {
 		.name	= "i2c-cbus-gpio",
 		.of_match_table = of_match_ptr(i2c_cbus_dt_ids),
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(cbus_i2c_driver);
+	},
+};
+module_platform_driver(cbus_i2c_driver);
 
 MODULE_ALIAS("platform:i2c-cbus-gpio");
 MODULE_DESCRIPTION("CBUS I2C driver");
-MODULE_AUTHOR("Juha Yrjथघlथअ");
+MODULE_AUTHOR("Juha Yrjölä");
 MODULE_AUTHOR("David Weinehall");
 MODULE_AUTHOR("Mikko Ylinen");
 MODULE_AUTHOR("Felipe Balbi");

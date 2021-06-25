@@ -1,47 +1,46 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#अगर_अघोषित __INTEL_HDCP_H__
-#घोषणा __INTEL_HDCP_H__
+#ifndef __INTEL_HDCP_H__
+#define __INTEL_HDCP_H__
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#घोषणा HDCP_ENCRYPT_STATUS_CHANGE_TIMEOUT_MS	50
+#define HDCP_ENCRYPT_STATUS_CHANGE_TIMEOUT_MS	50
 
-काष्ठा drm_connector;
-काष्ठा drm_connector_state;
-काष्ठा drm_i915_निजी;
-काष्ठा पूर्णांकel_atomic_state;
-काष्ठा पूर्णांकel_connector;
-काष्ठा पूर्णांकel_crtc_state;
-काष्ठा पूर्णांकel_encoder;
-काष्ठा पूर्णांकel_hdcp_shim;
-काष्ठा पूर्णांकel_digital_port;
-क्रमागत port;
-क्रमागत transcoder;
+struct drm_connector;
+struct drm_connector_state;
+struct drm_i915_private;
+struct intel_atomic_state;
+struct intel_connector;
+struct intel_crtc_state;
+struct intel_encoder;
+struct intel_hdcp_shim;
+struct intel_digital_port;
+enum port;
+enum transcoder;
 
-व्योम पूर्णांकel_hdcp_atomic_check(काष्ठा drm_connector *connector,
-			     काष्ठा drm_connector_state *old_state,
-			     काष्ठा drm_connector_state *new_state);
-पूर्णांक पूर्णांकel_hdcp_init(काष्ठा पूर्णांकel_connector *connector,
-		    काष्ठा पूर्णांकel_digital_port *dig_port,
-		    स्थिर काष्ठा पूर्णांकel_hdcp_shim *hdcp_shim);
-पूर्णांक पूर्णांकel_hdcp_enable(काष्ठा पूर्णांकel_connector *connector,
-		      स्थिर काष्ठा पूर्णांकel_crtc_state *pipe_config, u8 content_type);
-पूर्णांक पूर्णांकel_hdcp_disable(काष्ठा पूर्णांकel_connector *connector);
-व्योम पूर्णांकel_hdcp_update_pipe(काष्ठा पूर्णांकel_atomic_state *state,
-			    काष्ठा पूर्णांकel_encoder *encoder,
-			    स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-			    स्थिर काष्ठा drm_connector_state *conn_state);
-bool is_hdcp_supported(काष्ठा drm_i915_निजी *dev_priv, क्रमागत port port);
-bool पूर्णांकel_hdcp_capable(काष्ठा पूर्णांकel_connector *connector);
-bool पूर्णांकel_hdcp2_capable(काष्ठा पूर्णांकel_connector *connector);
-व्योम पूर्णांकel_hdcp_component_init(काष्ठा drm_i915_निजी *dev_priv);
-व्योम पूर्णांकel_hdcp_component_fini(काष्ठा drm_i915_निजी *dev_priv);
-व्योम पूर्णांकel_hdcp_cleanup(काष्ठा पूर्णांकel_connector *connector);
-व्योम पूर्णांकel_hdcp_handle_cp_irq(काष्ठा पूर्णांकel_connector *connector);
+void intel_hdcp_atomic_check(struct drm_connector *connector,
+			     struct drm_connector_state *old_state,
+			     struct drm_connector_state *new_state);
+int intel_hdcp_init(struct intel_connector *connector,
+		    struct intel_digital_port *dig_port,
+		    const struct intel_hdcp_shim *hdcp_shim);
+int intel_hdcp_enable(struct intel_connector *connector,
+		      const struct intel_crtc_state *pipe_config, u8 content_type);
+int intel_hdcp_disable(struct intel_connector *connector);
+void intel_hdcp_update_pipe(struct intel_atomic_state *state,
+			    struct intel_encoder *encoder,
+			    const struct intel_crtc_state *crtc_state,
+			    const struct drm_connector_state *conn_state);
+bool is_hdcp_supported(struct drm_i915_private *dev_priv, enum port port);
+bool intel_hdcp_capable(struct intel_connector *connector);
+bool intel_hdcp2_capable(struct intel_connector *connector);
+void intel_hdcp_component_init(struct drm_i915_private *dev_priv);
+void intel_hdcp_component_fini(struct drm_i915_private *dev_priv);
+void intel_hdcp_cleanup(struct intel_connector *connector);
+void intel_hdcp_handle_cp_irq(struct intel_connector *connector);
 
-#पूर्ण_अगर /* __INTEL_HDCP_H__ */
+#endif /* __INTEL_HDCP_H__ */

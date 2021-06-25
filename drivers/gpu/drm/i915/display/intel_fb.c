@@ -1,200 +1,199 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
- * Copyright तऊ 2021 Intel Corporation
+ * Copyright © 2021 Intel Corporation
  */
 
-#समावेश <drm/drm_framebuffer.h>
+#include <drm/drm_framebuffer.h>
 
-#समावेश "intel_display.h"
-#समावेश "intel_display_types.h"
-#समावेश "intel_fb.h"
+#include "intel_display.h"
+#include "intel_display_types.h"
+#include "intel_fb.h"
 
-#घोषणा check_array_bounds(i915, a, i) drm_WARN_ON(&(i915)->drm, (i) >= ARRAY_SIZE(a))
+#define check_array_bounds(i915, a, i) drm_WARN_ON(&(i915)->drm, (i) >= ARRAY_SIZE(a))
 
-bool is_ccs_plane(स्थिर काष्ठा drm_framebuffer *fb, पूर्णांक plane)
-अणु
-	अगर (!is_ccs_modअगरier(fb->modअगरier))
-		वापस false;
+bool is_ccs_plane(const struct drm_framebuffer *fb, int plane)
+{
+	if (!is_ccs_modifier(fb->modifier))
+		return false;
 
-	वापस plane >= fb->क्रमmat->num_planes / 2;
-पूर्ण
+	return plane >= fb->format->num_planes / 2;
+}
 
-bool is_gen12_ccs_plane(स्थिर काष्ठा drm_framebuffer *fb, पूर्णांक plane)
-अणु
-	वापस is_gen12_ccs_modअगरier(fb->modअगरier) && is_ccs_plane(fb, plane);
-पूर्ण
+bool is_gen12_ccs_plane(const struct drm_framebuffer *fb, int plane)
+{
+	return is_gen12_ccs_modifier(fb->modifier) && is_ccs_plane(fb, plane);
+}
 
-bool is_gen12_ccs_cc_plane(स्थिर काष्ठा drm_framebuffer *fb, पूर्णांक plane)
-अणु
-	वापस fb->modअगरier == I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS_CC &&
+bool is_gen12_ccs_cc_plane(const struct drm_framebuffer *fb, int plane)
+{
+	return fb->modifier == I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS_CC &&
 	       plane == 2;
-पूर्ण
+}
 
-bool is_aux_plane(स्थिर काष्ठा drm_framebuffer *fb, पूर्णांक plane)
-अणु
-	अगर (is_ccs_modअगरier(fb->modअगरier))
-		वापस is_ccs_plane(fb, plane);
+bool is_aux_plane(const struct drm_framebuffer *fb, int plane)
+{
+	if (is_ccs_modifier(fb->modifier))
+		return is_ccs_plane(fb, plane);
 
-	वापस plane == 1;
-पूर्ण
+	return plane == 1;
+}
 
-bool is_semiplanar_uv_plane(स्थिर काष्ठा drm_framebuffer *fb, पूर्णांक color_plane)
-अणु
-	वापस पूर्णांकel_क्रमmat_info_is_yuv_semiplanar(fb->क्रमmat, fb->modअगरier) &&
+bool is_semiplanar_uv_plane(const struct drm_framebuffer *fb, int color_plane)
+{
+	return intel_format_info_is_yuv_semiplanar(fb->format, fb->modifier) &&
 		color_plane == 1;
-पूर्ण
+}
 
-bool is_surface_linear(स्थिर काष्ठा drm_framebuffer *fb, पूर्णांक color_plane)
-अणु
-	वापस fb->modअगरier == DRM_FORMAT_MOD_LINEAR ||
+bool is_surface_linear(const struct drm_framebuffer *fb, int color_plane)
+{
+	return fb->modifier == DRM_FORMAT_MOD_LINEAR ||
 	       is_gen12_ccs_plane(fb, color_plane);
-पूर्ण
+}
 
-पूर्णांक मुख्य_to_ccs_plane(स्थिर काष्ठा drm_framebuffer *fb, पूर्णांक मुख्य_plane)
-अणु
-	drm_WARN_ON(fb->dev, !is_ccs_modअगरier(fb->modअगरier) ||
-		    (मुख्य_plane && मुख्य_plane >= fb->क्रमmat->num_planes / 2));
+int main_to_ccs_plane(const struct drm_framebuffer *fb, int main_plane)
+{
+	drm_WARN_ON(fb->dev, !is_ccs_modifier(fb->modifier) ||
+		    (main_plane && main_plane >= fb->format->num_planes / 2));
 
-	वापस fb->क्रमmat->num_planes / 2 + मुख्य_plane;
-पूर्ण
+	return fb->format->num_planes / 2 + main_plane;
+}
 
-पूर्णांक skl_ccs_to_मुख्य_plane(स्थिर काष्ठा drm_framebuffer *fb, पूर्णांक ccs_plane)
-अणु
-	drm_WARN_ON(fb->dev, !is_ccs_modअगरier(fb->modअगरier) ||
-		    ccs_plane < fb->क्रमmat->num_planes / 2);
+int skl_ccs_to_main_plane(const struct drm_framebuffer *fb, int ccs_plane)
+{
+	drm_WARN_ON(fb->dev, !is_ccs_modifier(fb->modifier) ||
+		    ccs_plane < fb->format->num_planes / 2);
 
-	अगर (is_gen12_ccs_cc_plane(fb, ccs_plane))
-		वापस 0;
+	if (is_gen12_ccs_cc_plane(fb, ccs_plane))
+		return 0;
 
-	वापस ccs_plane - fb->क्रमmat->num_planes / 2;
-पूर्ण
+	return ccs_plane - fb->format->num_planes / 2;
+}
 
-पूर्णांक skl_मुख्य_to_aux_plane(स्थिर काष्ठा drm_framebuffer *fb, पूर्णांक मुख्य_plane)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(fb->dev);
+int skl_main_to_aux_plane(const struct drm_framebuffer *fb, int main_plane)
+{
+	struct drm_i915_private *i915 = to_i915(fb->dev);
 
-	अगर (is_ccs_modअगरier(fb->modअगरier))
-		वापस मुख्य_to_ccs_plane(fb, मुख्य_plane);
-	अन्यथा अगर (DISPLAY_VER(i915) < 11 &&
-		 पूर्णांकel_क्रमmat_info_is_yuv_semiplanar(fb->क्रमmat, fb->modअगरier))
-		वापस 1;
-	अन्यथा
-		वापस 0;
-पूर्ण
+	if (is_ccs_modifier(fb->modifier))
+		return main_to_ccs_plane(fb, main_plane);
+	else if (DISPLAY_VER(i915) < 11 &&
+		 intel_format_info_is_yuv_semiplanar(fb->format, fb->modifier))
+		return 1;
+	else
+		return 0;
+}
 
-अचिन्हित पूर्णांक पूर्णांकel_tile_size(स्थिर काष्ठा drm_i915_निजी *i915)
-अणु
-	वापस IS_DISPLAY_VER(i915, 2) ? 2048 : 4096;
-पूर्ण
+unsigned int intel_tile_size(const struct drm_i915_private *i915)
+{
+	return IS_DISPLAY_VER(i915, 2) ? 2048 : 4096;
+}
 
-अचिन्हित पूर्णांक पूर्णांकel_tile_height(स्थिर काष्ठा drm_framebuffer *fb, पूर्णांक color_plane)
-अणु
-	अगर (is_gen12_ccs_plane(fb, color_plane))
-		वापस 1;
+unsigned int intel_tile_height(const struct drm_framebuffer *fb, int color_plane)
+{
+	if (is_gen12_ccs_plane(fb, color_plane))
+		return 1;
 
-	वापस पूर्णांकel_tile_size(to_i915(fb->dev)) /
-		पूर्णांकel_tile_width_bytes(fb, color_plane);
-पूर्ण
+	return intel_tile_size(to_i915(fb->dev)) /
+		intel_tile_width_bytes(fb, color_plane);
+}
 
 /* Return the tile dimensions in pixel units */
-अटल व्योम पूर्णांकel_tile_dims(स्थिर काष्ठा drm_framebuffer *fb, पूर्णांक color_plane,
-			    अचिन्हित पूर्णांक *tile_width,
-			    अचिन्हित पूर्णांक *tile_height)
-अणु
-	अचिन्हित पूर्णांक tile_width_bytes = पूर्णांकel_tile_width_bytes(fb, color_plane);
-	अचिन्हित पूर्णांक cpp = fb->क्रमmat->cpp[color_plane];
+static void intel_tile_dims(const struct drm_framebuffer *fb, int color_plane,
+			    unsigned int *tile_width,
+			    unsigned int *tile_height)
+{
+	unsigned int tile_width_bytes = intel_tile_width_bytes(fb, color_plane);
+	unsigned int cpp = fb->format->cpp[color_plane];
 
 	*tile_width = tile_width_bytes / cpp;
-	*tile_height = पूर्णांकel_tile_height(fb, color_plane);
-पूर्ण
+	*tile_height = intel_tile_height(fb, color_plane);
+}
 
-अचिन्हित पूर्णांक पूर्णांकel_tile_row_size(स्थिर काष्ठा drm_framebuffer *fb, पूर्णांक color_plane)
-अणु
-	अचिन्हित पूर्णांक tile_width, tile_height;
+unsigned int intel_tile_row_size(const struct drm_framebuffer *fb, int color_plane)
+{
+	unsigned int tile_width, tile_height;
 
-	पूर्णांकel_tile_dims(fb, color_plane, &tile_width, &tile_height);
+	intel_tile_dims(fb, color_plane, &tile_width, &tile_height);
 
-	वापस fb->pitches[color_plane] * tile_height;
-पूर्ण
+	return fb->pitches[color_plane] * tile_height;
+}
 
-अचिन्हित पूर्णांक पूर्णांकel_cursor_alignment(स्थिर काष्ठा drm_i915_निजी *i915)
-अणु
-	अगर (IS_I830(i915))
-		वापस 16 * 1024;
-	अन्यथा अगर (IS_I85X(i915))
-		वापस 256;
-	अन्यथा अगर (IS_I845G(i915) || IS_I865G(i915))
-		वापस 32;
-	अन्यथा
-		वापस 4 * 1024;
-पूर्ण
+unsigned int intel_cursor_alignment(const struct drm_i915_private *i915)
+{
+	if (IS_I830(i915))
+		return 16 * 1024;
+	else if (IS_I85X(i915))
+		return 256;
+	else if (IS_I845G(i915) || IS_I865G(i915))
+		return 32;
+	else
+		return 4 * 1024;
+}
 
-व्योम पूर्णांकel_fb_plane_get_subsampling(पूर्णांक *hsub, पूर्णांक *vsub,
-				    स्थिर काष्ठा drm_framebuffer *fb,
-				    पूर्णांक color_plane)
-अणु
-	पूर्णांक मुख्य_plane;
+void intel_fb_plane_get_subsampling(int *hsub, int *vsub,
+				    const struct drm_framebuffer *fb,
+				    int color_plane)
+{
+	int main_plane;
 
-	अगर (color_plane == 0) अणु
+	if (color_plane == 0) {
 		*hsub = 1;
 		*vsub = 1;
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/*
-	 * TODO: Deduct the subsampling from the अक्षर block क्रम all CCS
-	 * क्रमmats and planes.
+	 * TODO: Deduct the subsampling from the char block for all CCS
+	 * formats and planes.
 	 */
-	अगर (!is_gen12_ccs_plane(fb, color_plane)) अणु
-		*hsub = fb->क्रमmat->hsub;
-		*vsub = fb->क्रमmat->vsub;
+	if (!is_gen12_ccs_plane(fb, color_plane)) {
+		*hsub = fb->format->hsub;
+		*vsub = fb->format->vsub;
 
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	मुख्य_plane = skl_ccs_to_मुख्य_plane(fb, color_plane);
-	*hsub = drm_क्रमmat_info_block_width(fb->क्रमmat, color_plane) /
-		drm_क्रमmat_info_block_width(fb->क्रमmat, मुख्य_plane);
+	main_plane = skl_ccs_to_main_plane(fb, color_plane);
+	*hsub = drm_format_info_block_width(fb->format, color_plane) /
+		drm_format_info_block_width(fb->format, main_plane);
 
 	/*
 	 * The min stride check in the core framebuffer_check() function
-	 * assumes that क्रमmat->hsub applies to every plane except क्रम the
-	 * first plane. That's incorrect क्रम the CCS AUX plane of the first
-	 * plane, but क्रम the above check to pass we must define the block
+	 * assumes that format->hsub applies to every plane except for the
+	 * first plane. That's incorrect for the CCS AUX plane of the first
+	 * plane, but for the above check to pass we must define the block
 	 * width with that subsampling applied to it. Adjust the width here
 	 * accordingly, so we can calculate the actual subsampling factor.
 	 */
-	अगर (मुख्य_plane == 0)
-		*hsub *= fb->क्रमmat->hsub;
+	if (main_plane == 0)
+		*hsub *= fb->format->hsub;
 
 	*vsub = 32;
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_fb_plane_dims(पूर्णांक *w, पूर्णांक *h, काष्ठा drm_framebuffer *fb, पूर्णांक color_plane)
-अणु
-	पूर्णांक मुख्य_plane = is_ccs_plane(fb, color_plane) ?
-			 skl_ccs_to_मुख्य_plane(fb, color_plane) : 0;
-	पूर्णांक मुख्य_hsub, मुख्य_vsub;
-	पूर्णांक hsub, vsub;
+static void intel_fb_plane_dims(int *w, int *h, struct drm_framebuffer *fb, int color_plane)
+{
+	int main_plane = is_ccs_plane(fb, color_plane) ?
+			 skl_ccs_to_main_plane(fb, color_plane) : 0;
+	int main_hsub, main_vsub;
+	int hsub, vsub;
 
-	पूर्णांकel_fb_plane_get_subsampling(&मुख्य_hsub, &मुख्य_vsub, fb, मुख्य_plane);
-	पूर्णांकel_fb_plane_get_subsampling(&hsub, &vsub, fb, color_plane);
-	*w = fb->width / मुख्य_hsub / hsub;
-	*h = fb->height / मुख्य_vsub / vsub;
-पूर्ण
+	intel_fb_plane_get_subsampling(&main_hsub, &main_vsub, fb, main_plane);
+	intel_fb_plane_get_subsampling(&hsub, &vsub, fb, color_plane);
+	*w = fb->width / main_hsub / hsub;
+	*h = fb->height / main_vsub / vsub;
+}
 
-अटल u32 पूर्णांकel_adjust_tile_offset(पूर्णांक *x, पूर्णांक *y,
-				    अचिन्हित पूर्णांक tile_width,
-				    अचिन्हित पूर्णांक tile_height,
-				    अचिन्हित पूर्णांक tile_size,
-				    अचिन्हित पूर्णांक pitch_tiles,
+static u32 intel_adjust_tile_offset(int *x, int *y,
+				    unsigned int tile_width,
+				    unsigned int tile_height,
+				    unsigned int tile_size,
+				    unsigned int pitch_tiles,
 				    u32 old_offset,
 				    u32 new_offset)
-अणु
-	अचिन्हित पूर्णांक pitch_pixels = pitch_tiles * tile_width;
-	अचिन्हित पूर्णांक tiles;
+{
+	unsigned int pitch_pixels = pitch_tiles * tile_width;
+	unsigned int tiles;
 
 	WARN_ON(old_offset & (tile_size - 1));
 	WARN_ON(new_offset & (tile_size - 1));
@@ -205,105 +204,105 @@ bool is_surface_linear(स्थिर काष्ठा drm_framebuffer *fb, �
 	*y += tiles / pitch_tiles * tile_height;
 	*x += tiles % pitch_tiles * tile_width;
 
-	/* minimize x in हाल it got needlessly big */
+	/* minimize x in case it got needlessly big */
 	*y += *x / pitch_pixels * tile_height;
 	*x %= pitch_pixels;
 
-	वापस new_offset;
-पूर्ण
+	return new_offset;
+}
 
-अटल u32 पूर्णांकel_adjust_aligned_offset(पूर्णांक *x, पूर्णांक *y,
-				       स्थिर काष्ठा drm_framebuffer *fb,
-				       पूर्णांक color_plane,
-				       अचिन्हित पूर्णांक rotation,
-				       अचिन्हित पूर्णांक pitch,
+static u32 intel_adjust_aligned_offset(int *x, int *y,
+				       const struct drm_framebuffer *fb,
+				       int color_plane,
+				       unsigned int rotation,
+				       unsigned int pitch,
 				       u32 old_offset, u32 new_offset)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(fb->dev);
-	अचिन्हित पूर्णांक cpp = fb->क्रमmat->cpp[color_plane];
+{
+	struct drm_i915_private *i915 = to_i915(fb->dev);
+	unsigned int cpp = fb->format->cpp[color_plane];
 
 	drm_WARN_ON(&i915->drm, new_offset > old_offset);
 
-	अगर (!is_surface_linear(fb, color_plane)) अणु
-		अचिन्हित पूर्णांक tile_size, tile_width, tile_height;
-		अचिन्हित पूर्णांक pitch_tiles;
+	if (!is_surface_linear(fb, color_plane)) {
+		unsigned int tile_size, tile_width, tile_height;
+		unsigned int pitch_tiles;
 
-		tile_size = पूर्णांकel_tile_size(i915);
-		पूर्णांकel_tile_dims(fb, color_plane, &tile_width, &tile_height);
+		tile_size = intel_tile_size(i915);
+		intel_tile_dims(fb, color_plane, &tile_width, &tile_height);
 
-		अगर (drm_rotation_90_or_270(rotation)) अणु
+		if (drm_rotation_90_or_270(rotation)) {
 			pitch_tiles = pitch / tile_height;
 			swap(tile_width, tile_height);
-		पूर्ण अन्यथा अणु
+		} else {
 			pitch_tiles = pitch / (tile_width * cpp);
-		पूर्ण
+		}
 
-		पूर्णांकel_adjust_tile_offset(x, y, tile_width, tile_height,
+		intel_adjust_tile_offset(x, y, tile_width, tile_height,
 					 tile_size, pitch_tiles,
 					 old_offset, new_offset);
-	पूर्ण अन्यथा अणु
+	} else {
 		old_offset += *y * pitch + *x * cpp;
 
 		*y = (old_offset - new_offset) / pitch;
 		*x = ((old_offset - new_offset) - *y * pitch) / cpp;
-	पूर्ण
+	}
 
-	वापस new_offset;
-पूर्ण
+	return new_offset;
+}
 
 /*
- * Adjust the tile offset by moving the dअगरference पूर्णांकo
+ * Adjust the tile offset by moving the difference into
  * the x/y offsets.
  */
-u32 पूर्णांकel_plane_adjust_aligned_offset(पूर्णांक *x, पूर्णांक *y,
-				      स्थिर काष्ठा पूर्णांकel_plane_state *state,
-				      पूर्णांक color_plane,
+u32 intel_plane_adjust_aligned_offset(int *x, int *y,
+				      const struct intel_plane_state *state,
+				      int color_plane,
 				      u32 old_offset, u32 new_offset)
-अणु
-	वापस पूर्णांकel_adjust_aligned_offset(x, y, state->hw.fb, color_plane,
+{
+	return intel_adjust_aligned_offset(x, y, state->hw.fb, color_plane,
 					   state->hw.rotation,
 					   state->view.color_plane[color_plane].stride,
 					   old_offset, new_offset);
-पूर्ण
+}
 
 /*
  * Computes the aligned offset to the base tile and adjusts
- * x, y. bytes per pixel is assumed to be a घातer-of-two.
+ * x, y. bytes per pixel is assumed to be a power-of-two.
  *
- * In the 90/270 rotated हाल, x and y are assumed
- * to be alपढ़ोy rotated to match the rotated GTT view, and
+ * In the 90/270 rotated case, x and y are assumed
+ * to be already rotated to match the rotated GTT view, and
  * pitch is the tile_height aligned framebuffer height.
  *
- * This function is used when computing the derived inक्रमmation
- * under पूर्णांकel_framebuffer, so using any of that inक्रमmation
+ * This function is used when computing the derived information
+ * under intel_framebuffer, so using any of that information
  * here is not allowed. Anything under drm_framebuffer can be
  * used. This is why the user has to pass in the pitch since it
- * is specअगरied in the rotated orientation.
+ * is specified in the rotated orientation.
  */
-अटल u32 पूर्णांकel_compute_aligned_offset(काष्ठा drm_i915_निजी *i915,
-					पूर्णांक *x, पूर्णांक *y,
-					स्थिर काष्ठा drm_framebuffer *fb,
-					पूर्णांक color_plane,
-					अचिन्हित पूर्णांक pitch,
-					अचिन्हित पूर्णांक rotation,
+static u32 intel_compute_aligned_offset(struct drm_i915_private *i915,
+					int *x, int *y,
+					const struct drm_framebuffer *fb,
+					int color_plane,
+					unsigned int pitch,
+					unsigned int rotation,
 					u32 alignment)
-अणु
-	अचिन्हित पूर्णांक cpp = fb->क्रमmat->cpp[color_plane];
+{
+	unsigned int cpp = fb->format->cpp[color_plane];
 	u32 offset, offset_aligned;
 
-	अगर (!is_surface_linear(fb, color_plane)) अणु
-		अचिन्हित पूर्णांक tile_size, tile_width, tile_height;
-		अचिन्हित पूर्णांक tile_rows, tiles, pitch_tiles;
+	if (!is_surface_linear(fb, color_plane)) {
+		unsigned int tile_size, tile_width, tile_height;
+		unsigned int tile_rows, tiles, pitch_tiles;
 
-		tile_size = पूर्णांकel_tile_size(i915);
-		पूर्णांकel_tile_dims(fb, color_plane, &tile_width, &tile_height);
+		tile_size = intel_tile_size(i915);
+		intel_tile_dims(fb, color_plane, &tile_width, &tile_height);
 
-		अगर (drm_rotation_90_or_270(rotation)) अणु
+		if (drm_rotation_90_or_270(rotation)) {
 			pitch_tiles = pitch / tile_height;
 			swap(tile_width, tile_height);
-		पूर्ण अन्यथा अणु
+		} else {
 			pitch_tiles = pitch / (tile_width * cpp);
-		पूर्ण
+		}
 
 		tile_rows = *y / tile_height;
 		*y %= tile_height;
@@ -314,110 +313,110 @@ u32 पूर्णांकel_plane_adjust_aligned_offset(पूर्णां
 		offset = (tile_rows * pitch_tiles + tiles) * tile_size;
 
 		offset_aligned = offset;
-		अगर (alignment)
-			offset_aligned = roundकरोwn(offset_aligned, alignment);
+		if (alignment)
+			offset_aligned = rounddown(offset_aligned, alignment);
 
-		पूर्णांकel_adjust_tile_offset(x, y, tile_width, tile_height,
+		intel_adjust_tile_offset(x, y, tile_width, tile_height,
 					 tile_size, pitch_tiles,
 					 offset, offset_aligned);
-	पूर्ण अन्यथा अणु
+	} else {
 		offset = *y * pitch + *x * cpp;
 		offset_aligned = offset;
-		अगर (alignment) अणु
-			offset_aligned = roundकरोwn(offset_aligned, alignment);
+		if (alignment) {
+			offset_aligned = rounddown(offset_aligned, alignment);
 			*y = (offset % alignment) / pitch;
 			*x = ((offset % alignment) - *y * pitch) / cpp;
-		पूर्ण अन्यथा अणु
+		} else {
 			*y = *x = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस offset_aligned;
-पूर्ण
+	return offset_aligned;
+}
 
-u32 पूर्णांकel_plane_compute_aligned_offset(पूर्णांक *x, पूर्णांक *y,
-				       स्थिर काष्ठा पूर्णांकel_plane_state *state,
-				       पूर्णांक color_plane)
-अणु
-	काष्ठा पूर्णांकel_plane *पूर्णांकel_plane = to_पूर्णांकel_plane(state->uapi.plane);
-	काष्ठा drm_i915_निजी *i915 = to_i915(पूर्णांकel_plane->base.dev);
-	स्थिर काष्ठा drm_framebuffer *fb = state->hw.fb;
-	अचिन्हित पूर्णांक rotation = state->hw.rotation;
-	पूर्णांक pitch = state->view.color_plane[color_plane].stride;
+u32 intel_plane_compute_aligned_offset(int *x, int *y,
+				       const struct intel_plane_state *state,
+				       int color_plane)
+{
+	struct intel_plane *intel_plane = to_intel_plane(state->uapi.plane);
+	struct drm_i915_private *i915 = to_i915(intel_plane->base.dev);
+	const struct drm_framebuffer *fb = state->hw.fb;
+	unsigned int rotation = state->hw.rotation;
+	int pitch = state->view.color_plane[color_plane].stride;
 	u32 alignment;
 
-	अगर (पूर्णांकel_plane->id == PLANE_CURSOR)
-		alignment = पूर्णांकel_cursor_alignment(i915);
-	अन्यथा
-		alignment = पूर्णांकel_surf_alignment(fb, color_plane);
+	if (intel_plane->id == PLANE_CURSOR)
+		alignment = intel_cursor_alignment(i915);
+	else
+		alignment = intel_surf_alignment(fb, color_plane);
 
-	वापस पूर्णांकel_compute_aligned_offset(i915, x, y, fb, color_plane,
+	return intel_compute_aligned_offset(i915, x, y, fb, color_plane,
 					    pitch, rotation, alignment);
-पूर्ण
+}
 
-/* Convert the fb->offset[] पूर्णांकo x/y offsets */
-अटल पूर्णांक पूर्णांकel_fb_offset_to_xy(पूर्णांक *x, पूर्णांक *y,
-				 स्थिर काष्ठा drm_framebuffer *fb,
-				 पूर्णांक color_plane)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(fb->dev);
-	अचिन्हित पूर्णांक height;
+/* Convert the fb->offset[] into x/y offsets */
+static int intel_fb_offset_to_xy(int *x, int *y,
+				 const struct drm_framebuffer *fb,
+				 int color_plane)
+{
+	struct drm_i915_private *i915 = to_i915(fb->dev);
+	unsigned int height;
 	u32 alignment;
 
-	अगर (DISPLAY_VER(i915) >= 12 &&
+	if (DISPLAY_VER(i915) >= 12 &&
 	    is_semiplanar_uv_plane(fb, color_plane))
-		alignment = पूर्णांकel_tile_row_size(fb, color_plane);
-	अन्यथा अगर (fb->modअगरier != DRM_FORMAT_MOD_LINEAR)
-		alignment = पूर्णांकel_tile_size(i915);
-	अन्यथा
+		alignment = intel_tile_row_size(fb, color_plane);
+	else if (fb->modifier != DRM_FORMAT_MOD_LINEAR)
+		alignment = intel_tile_size(i915);
+	else
 		alignment = 0;
 
-	अगर (alignment != 0 && fb->offsets[color_plane] % alignment) अणु
+	if (alignment != 0 && fb->offsets[color_plane] % alignment) {
 		drm_dbg_kms(&i915->drm,
 			    "Misaligned offset 0x%08x for color plane %d\n",
 			    fb->offsets[color_plane], color_plane);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	height = drm_framebuffer_plane_height(fb->height, fb, color_plane);
-	height = ALIGN(height, पूर्णांकel_tile_height(fb, color_plane));
+	height = ALIGN(height, intel_tile_height(fb, color_plane));
 
 	/* Catch potential overflows early */
-	अगर (add_overflows_t(u32, mul_u32_u32(height, fb->pitches[color_plane]),
-			    fb->offsets[color_plane])) अणु
+	if (add_overflows_t(u32, mul_u32_u32(height, fb->pitches[color_plane]),
+			    fb->offsets[color_plane])) {
 		drm_dbg_kms(&i915->drm,
 			    "Bad offset 0x%08x or pitch %d for color plane %d\n",
 			    fb->offsets[color_plane], fb->pitches[color_plane],
 			    color_plane);
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
 	*x = 0;
 	*y = 0;
 
-	पूर्णांकel_adjust_aligned_offset(x, y,
+	intel_adjust_aligned_offset(x, y,
 				    fb, color_plane, DRM_MODE_ROTATE_0,
 				    fb->pitches[color_plane],
 				    fb->offsets[color_plane], 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पूर्णांकel_fb_check_ccs_xy(स्थिर काष्ठा drm_framebuffer *fb, पूर्णांक ccs_plane, पूर्णांक x, पूर्णांक y)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(fb->dev);
-	स्थिर काष्ठा पूर्णांकel_framebuffer *पूर्णांकel_fb = to_पूर्णांकel_framebuffer(fb);
-	पूर्णांक मुख्य_plane;
-	पूर्णांक hsub, vsub;
-	पूर्णांक tile_width, tile_height;
-	पूर्णांक ccs_x, ccs_y;
-	पूर्णांक मुख्य_x, मुख्य_y;
+static int intel_fb_check_ccs_xy(const struct drm_framebuffer *fb, int ccs_plane, int x, int y)
+{
+	struct drm_i915_private *i915 = to_i915(fb->dev);
+	const struct intel_framebuffer *intel_fb = to_intel_framebuffer(fb);
+	int main_plane;
+	int hsub, vsub;
+	int tile_width, tile_height;
+	int ccs_x, ccs_y;
+	int main_x, main_y;
 
-	अगर (!is_ccs_plane(fb, ccs_plane) || is_gen12_ccs_cc_plane(fb, ccs_plane))
-		वापस 0;
+	if (!is_ccs_plane(fb, ccs_plane) || is_gen12_ccs_cc_plane(fb, ccs_plane))
+		return 0;
 
-	पूर्णांकel_tile_dims(fb, ccs_plane, &tile_width, &tile_height);
-	पूर्णांकel_fb_plane_get_subsampling(&hsub, &vsub, fb, ccs_plane);
+	intel_tile_dims(fb, ccs_plane, &tile_width, &tile_height);
+	intel_fb_plane_get_subsampling(&hsub, &vsub, fb, ccs_plane);
 
 	tile_width *= hsub;
 	tile_height *= vsub;
@@ -425,229 +424,229 @@ u32 पूर्णांकel_plane_compute_aligned_offset(पूर्णा�
 	ccs_x = (x * hsub) % tile_width;
 	ccs_y = (y * vsub) % tile_height;
 
-	मुख्य_plane = skl_ccs_to_मुख्य_plane(fb, ccs_plane);
-	मुख्य_x = पूर्णांकel_fb->normal_view.color_plane[मुख्य_plane].x % tile_width;
-	मुख्य_y = पूर्णांकel_fb->normal_view.color_plane[मुख्य_plane].y % tile_height;
+	main_plane = skl_ccs_to_main_plane(fb, ccs_plane);
+	main_x = intel_fb->normal_view.color_plane[main_plane].x % tile_width;
+	main_y = intel_fb->normal_view.color_plane[main_plane].y % tile_height;
 
 	/*
-	 * CCS करोesn't have its own x/y offset रेजिस्टर, so the पूर्णांकra CCS tile
-	 * x/y offsets must match between CCS and the मुख्य surface.
+	 * CCS doesn't have its own x/y offset register, so the intra CCS tile
+	 * x/y offsets must match between CCS and the main surface.
 	 */
-	अगर (मुख्य_x != ccs_x || मुख्य_y != ccs_y) अणु
+	if (main_x != ccs_x || main_y != ccs_y) {
 		drm_dbg_kms(&i915->drm,
 			      "Bad CCS x/y (main %d,%d ccs %d,%d) full (main %d,%d ccs %d,%d)\n",
-			      मुख्य_x, मुख्य_y,
+			      main_x, main_y,
 			      ccs_x, ccs_y,
-			      पूर्णांकel_fb->normal_view.color_plane[मुख्य_plane].x,
-			      पूर्णांकel_fb->normal_view.color_plane[मुख्य_plane].y,
+			      intel_fb->normal_view.color_plane[main_plane].x,
+			      intel_fb->normal_view.color_plane[main_plane].y,
 			      x, y);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool पूर्णांकel_plane_can_remap(स्थिर काष्ठा पूर्णांकel_plane_state *plane_state)
-अणु
-	काष्ठा पूर्णांकel_plane *plane = to_पूर्णांकel_plane(plane_state->uapi.plane);
-	काष्ठा drm_i915_निजी *i915 = to_i915(plane->base.dev);
-	स्थिर काष्ठा drm_framebuffer *fb = plane_state->hw.fb;
-	पूर्णांक i;
+static bool intel_plane_can_remap(const struct intel_plane_state *plane_state)
+{
+	struct intel_plane *plane = to_intel_plane(plane_state->uapi.plane);
+	struct drm_i915_private *i915 = to_i915(plane->base.dev);
+	const struct drm_framebuffer *fb = plane_state->hw.fb;
+	int i;
 
-	/* We करोn't want to deal with remapping with cursors */
-	अगर (plane->id == PLANE_CURSOR)
-		वापस false;
+	/* We don't want to deal with remapping with cursors */
+	if (plane->id == PLANE_CURSOR)
+		return false;
 
 	/*
-	 * The display engine limits alपढ़ोy match/exceed the
-	 * render engine limits, so not much poपूर्णांक in remapping.
+	 * The display engine limits already match/exceed the
+	 * render engine limits, so not much point in remapping.
 	 * Would also need to deal with the fence POT alignment
 	 * and gen2 2KiB GTT tile size.
 	 */
-	अगर (DISPLAY_VER(i915) < 4)
-		वापस false;
+	if (DISPLAY_VER(i915) < 4)
+		return false;
 
 	/*
 	 * The new CCS hash mode isn't compatible with remapping as
-	 * the भव address of the pages affects the compressed data.
+	 * the virtual address of the pages affects the compressed data.
 	 */
-	अगर (is_ccs_modअगरier(fb->modअगरier))
-		वापस false;
+	if (is_ccs_modifier(fb->modifier))
+		return false;
 
-	/* Linear needs a page aligned stride क्रम remapping */
-	अगर (fb->modअगरier == DRM_FORMAT_MOD_LINEAR) अणु
-		अचिन्हित पूर्णांक alignment = पूर्णांकel_tile_size(i915) - 1;
+	/* Linear needs a page aligned stride for remapping */
+	if (fb->modifier == DRM_FORMAT_MOD_LINEAR) {
+		unsigned int alignment = intel_tile_size(i915) - 1;
 
-		क्रम (i = 0; i < fb->क्रमmat->num_planes; i++) अणु
-			अगर (fb->pitches[i] & alignment)
-				वापस false;
-		पूर्ण
-	पूर्ण
+		for (i = 0; i < fb->format->num_planes; i++) {
+			if (fb->pitches[i] & alignment)
+				return false;
+		}
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल bool पूर्णांकel_fb_needs_pot_stride_remap(स्थिर काष्ठा पूर्णांकel_framebuffer *fb)
-अणु
-	वापस false;
-पूर्ण
+static bool intel_fb_needs_pot_stride_remap(const struct intel_framebuffer *fb)
+{
+	return false;
+}
 
-अटल पूर्णांक पूर्णांकel_fb_pitch(स्थिर काष्ठा पूर्णांकel_framebuffer *fb, पूर्णांक color_plane, अचिन्हित पूर्णांक rotation)
-अणु
-	अगर (drm_rotation_90_or_270(rotation))
-		वापस fb->rotated_view.color_plane[color_plane].stride;
-	अन्यथा अगर (पूर्णांकel_fb_needs_pot_stride_remap(fb))
-		वापस fb->remapped_view.color_plane[color_plane].stride;
-	अन्यथा
-		वापस fb->normal_view.color_plane[color_plane].stride;
-पूर्ण
+static int intel_fb_pitch(const struct intel_framebuffer *fb, int color_plane, unsigned int rotation)
+{
+	if (drm_rotation_90_or_270(rotation))
+		return fb->rotated_view.color_plane[color_plane].stride;
+	else if (intel_fb_needs_pot_stride_remap(fb))
+		return fb->remapped_view.color_plane[color_plane].stride;
+	else
+		return fb->normal_view.color_plane[color_plane].stride;
+}
 
-अटल bool पूर्णांकel_plane_needs_remap(स्थिर काष्ठा पूर्णांकel_plane_state *plane_state)
-अणु
-	काष्ठा पूर्णांकel_plane *plane = to_पूर्णांकel_plane(plane_state->uapi.plane);
-	स्थिर काष्ठा पूर्णांकel_framebuffer *fb = to_पूर्णांकel_framebuffer(plane_state->hw.fb);
-	अचिन्हित पूर्णांक rotation = plane_state->hw.rotation;
+static bool intel_plane_needs_remap(const struct intel_plane_state *plane_state)
+{
+	struct intel_plane *plane = to_intel_plane(plane_state->uapi.plane);
+	const struct intel_framebuffer *fb = to_intel_framebuffer(plane_state->hw.fb);
+	unsigned int rotation = plane_state->hw.rotation;
 	u32 stride, max_stride;
 
 	/*
-	 * No remapping क्रम invisible planes since we करोn't have
+	 * No remapping for invisible planes since we don't have
 	 * an actual source viewport to remap.
 	 */
-	अगर (!plane_state->uapi.visible)
-		वापस false;
+	if (!plane_state->uapi.visible)
+		return false;
 
-	अगर (!पूर्णांकel_plane_can_remap(plane_state))
-		वापस false;
+	if (!intel_plane_can_remap(plane_state))
+		return false;
 
 	/*
 	 * FIXME: aux plane limits on gen9+ are
-	 * unclear in Bspec, क्रम now no checking.
+	 * unclear in Bspec, for now no checking.
 	 */
-	stride = पूर्णांकel_fb_pitch(fb, 0, rotation);
-	max_stride = plane->max_stride(plane, fb->base.क्रमmat->क्रमmat,
-				       fb->base.modअगरier, rotation);
+	stride = intel_fb_pitch(fb, 0, rotation);
+	max_stride = plane->max_stride(plane, fb->base.format->format,
+				       fb->base.modifier, rotation);
 
-	वापस stride > max_stride;
-पूर्ण
+	return stride > max_stride;
+}
 
-अटल पूर्णांक convert_plane_offset_to_xy(स्थिर काष्ठा पूर्णांकel_framebuffer *fb, पूर्णांक color_plane,
-				      पूर्णांक plane_width, पूर्णांक *x, पूर्णांक *y)
-अणु
-	काष्ठा drm_i915_gem_object *obj = पूर्णांकel_fb_obj(&fb->base);
-	पूर्णांक ret;
+static int convert_plane_offset_to_xy(const struct intel_framebuffer *fb, int color_plane,
+				      int plane_width, int *x, int *y)
+{
+	struct drm_i915_gem_object *obj = intel_fb_obj(&fb->base);
+	int ret;
 
-	ret = पूर्णांकel_fb_offset_to_xy(x, y, &fb->base, color_plane);
-	अगर (ret) अणु
+	ret = intel_fb_offset_to_xy(x, y, &fb->base, color_plane);
+	if (ret) {
 		drm_dbg_kms(fb->base.dev,
 			    "bad fb plane %d offset: 0x%x\n",
 			    color_plane, fb->base.offsets[color_plane]);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	ret = पूर्णांकel_fb_check_ccs_xy(&fb->base, color_plane, *x, *y);
-	अगर (ret)
-		वापस ret;
+	ret = intel_fb_check_ccs_xy(&fb->base, color_plane, *x, *y);
+	if (ret)
+		return ret;
 
 	/*
-	 * The fence (अगर used) is aligned to the start of the object
+	 * The fence (if used) is aligned to the start of the object
 	 * so having the framebuffer wrap around across the edge of the
-	 * fenced region करोesn't really work. We have no API to configure
+	 * fenced region doesn't really work. We have no API to configure
 	 * the fence start offset within the object (nor could we probably
-	 * on gen2/3). So it's just easier अगर we just require that the
-	 * fb layout agrees with the fence layout. We alपढ़ोy check that the
-	 * fb stride matches the fence stride अन्यथाwhere.
+	 * on gen2/3). So it's just easier if we just require that the
+	 * fb layout agrees with the fence layout. We already check that the
+	 * fb stride matches the fence stride elsewhere.
 	 */
-	अगर (color_plane == 0 && i915_gem_object_is_tiled(obj) &&
-	    (*x + plane_width) * fb->base.क्रमmat->cpp[color_plane] > fb->base.pitches[color_plane]) अणु
+	if (color_plane == 0 && i915_gem_object_is_tiled(obj) &&
+	    (*x + plane_width) * fb->base.format->cpp[color_plane] > fb->base.pitches[color_plane]) {
 		drm_dbg_kms(fb->base.dev,
 			    "bad fb plane %d offset: 0x%x\n",
 			    color_plane, fb->base.offsets[color_plane]);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 calc_plane_aligned_offset(स्थिर काष्ठा पूर्णांकel_framebuffer *fb, पूर्णांक color_plane, पूर्णांक *x, पूर्णांक *y)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(fb->base.dev);
-	अचिन्हित पूर्णांक tile_size = पूर्णांकel_tile_size(i915);
+static u32 calc_plane_aligned_offset(const struct intel_framebuffer *fb, int color_plane, int *x, int *y)
+{
+	struct drm_i915_private *i915 = to_i915(fb->base.dev);
+	unsigned int tile_size = intel_tile_size(i915);
 	u32 offset;
 
-	offset = पूर्णांकel_compute_aligned_offset(i915, x, y, &fb->base, color_plane,
+	offset = intel_compute_aligned_offset(i915, x, y, &fb->base, color_plane,
 					      fb->base.pitches[color_plane],
 					      DRM_MODE_ROTATE_0,
 					      tile_size);
 
-	वापस offset / tile_size;
-पूर्ण
+	return offset / tile_size;
+}
 
-काष्ठा fb_plane_view_dims अणु
-	अचिन्हित पूर्णांक width, height;
-	अचिन्हित पूर्णांक tile_width, tile_height;
-पूर्ण;
+struct fb_plane_view_dims {
+	unsigned int width, height;
+	unsigned int tile_width, tile_height;
+};
 
-अटल व्योम init_plane_view_dims(स्थिर काष्ठा पूर्णांकel_framebuffer *fb, पूर्णांक color_plane,
-				 अचिन्हित पूर्णांक width, अचिन्हित पूर्णांक height,
-				 काष्ठा fb_plane_view_dims *dims)
-अणु
+static void init_plane_view_dims(const struct intel_framebuffer *fb, int color_plane,
+				 unsigned int width, unsigned int height,
+				 struct fb_plane_view_dims *dims)
+{
 	dims->width = width;
 	dims->height = height;
 
-	पूर्णांकel_tile_dims(&fb->base, color_plane, &dims->tile_width, &dims->tile_height);
-पूर्ण
+	intel_tile_dims(&fb->base, color_plane, &dims->tile_width, &dims->tile_height);
+}
 
-अटल अचिन्हित पूर्णांक
-plane_view_src_stride_tiles(स्थिर काष्ठा पूर्णांकel_framebuffer *fb, पूर्णांक color_plane,
-			    स्थिर काष्ठा fb_plane_view_dims *dims)
-अणु
-	वापस DIV_ROUND_UP(fb->base.pitches[color_plane],
-			    dims->tile_width * fb->base.क्रमmat->cpp[color_plane]);
-पूर्ण
+static unsigned int
+plane_view_src_stride_tiles(const struct intel_framebuffer *fb, int color_plane,
+			    const struct fb_plane_view_dims *dims)
+{
+	return DIV_ROUND_UP(fb->base.pitches[color_plane],
+			    dims->tile_width * fb->base.format->cpp[color_plane]);
+}
 
-अटल अचिन्हित पूर्णांक
-plane_view_dst_stride_tiles(स्थिर काष्ठा पूर्णांकel_framebuffer *fb, पूर्णांक color_plane,
-			    अचिन्हित पूर्णांक pitch_tiles)
-अणु
-	अगर (पूर्णांकel_fb_needs_pot_stride_remap(fb))
-		वापस roundup_घात_of_two(pitch_tiles);
-	अन्यथा
-		वापस pitch_tiles;
-पूर्ण
+static unsigned int
+plane_view_dst_stride_tiles(const struct intel_framebuffer *fb, int color_plane,
+			    unsigned int pitch_tiles)
+{
+	if (intel_fb_needs_pot_stride_remap(fb))
+		return roundup_pow_of_two(pitch_tiles);
+	else
+		return pitch_tiles;
+}
 
-अटल अचिन्हित पूर्णांक
-plane_view_width_tiles(स्थिर काष्ठा पूर्णांकel_framebuffer *fb, पूर्णांक color_plane,
-		       स्थिर काष्ठा fb_plane_view_dims *dims,
-		       पूर्णांक x)
-अणु
-	वापस DIV_ROUND_UP(x + dims->width, dims->tile_width);
-पूर्ण
+static unsigned int
+plane_view_width_tiles(const struct intel_framebuffer *fb, int color_plane,
+		       const struct fb_plane_view_dims *dims,
+		       int x)
+{
+	return DIV_ROUND_UP(x + dims->width, dims->tile_width);
+}
 
-अटल अचिन्हित पूर्णांक
-plane_view_height_tiles(स्थिर काष्ठा पूर्णांकel_framebuffer *fb, पूर्णांक color_plane,
-			स्थिर काष्ठा fb_plane_view_dims *dims,
-			पूर्णांक y)
-अणु
-	वापस DIV_ROUND_UP(y + dims->height, dims->tile_height);
-पूर्ण
+static unsigned int
+plane_view_height_tiles(const struct intel_framebuffer *fb, int color_plane,
+			const struct fb_plane_view_dims *dims,
+			int y)
+{
+	return DIV_ROUND_UP(y + dims->height, dims->tile_height);
+}
 
-#घोषणा assign_chk_ovf(i915, var, val) (अणु \
+#define assign_chk_ovf(i915, var, val) ({ \
 	drm_WARN_ON(&(i915)->drm, overflows_type(val, var)); \
 	(var) = (val); \
-पूर्ण)
+})
 
-अटल u32 calc_plane_remap_info(स्थिर काष्ठा पूर्णांकel_framebuffer *fb, पूर्णांक color_plane,
-				 स्थिर काष्ठा fb_plane_view_dims *dims,
-				 u32 obj_offset, u32 gtt_offset, पूर्णांक x, पूर्णांक y,
-				 काष्ठा पूर्णांकel_fb_view *view)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(fb->base.dev);
-	काष्ठा पूर्णांकel_remapped_plane_info *remap_info = &view->gtt.remapped.plane[color_plane];
-	काष्ठा i915_color_plane_view *color_plane_info = &view->color_plane[color_plane];
-	अचिन्हित पूर्णांक tile_width = dims->tile_width;
-	अचिन्हित पूर्णांक tile_height = dims->tile_height;
-	अचिन्हित पूर्णांक tile_size = पूर्णांकel_tile_size(i915);
-	काष्ठा drm_rect r;
+static u32 calc_plane_remap_info(const struct intel_framebuffer *fb, int color_plane,
+				 const struct fb_plane_view_dims *dims,
+				 u32 obj_offset, u32 gtt_offset, int x, int y,
+				 struct intel_fb_view *view)
+{
+	struct drm_i915_private *i915 = to_i915(fb->base.dev);
+	struct intel_remapped_plane_info *remap_info = &view->gtt.remapped.plane[color_plane];
+	struct i915_color_plane_view *color_plane_info = &view->color_plane[color_plane];
+	unsigned int tile_width = dims->tile_width;
+	unsigned int tile_height = dims->tile_height;
+	unsigned int tile_size = intel_tile_size(i915);
+	struct drm_rect r;
 	u32 size;
 
 	assign_chk_ovf(i915, remap_info->offset, obj_offset);
@@ -655,7 +654,7 @@ plane_view_height_tiles(स्थिर काष्ठा पूर्णां
 	assign_chk_ovf(i915, remap_info->width, plane_view_width_tiles(fb, color_plane, dims, x));
 	assign_chk_ovf(i915, remap_info->height, plane_view_height_tiles(fb, color_plane, dims, y));
 
-	अगर (view->gtt.type == I915_GGTT_VIEW_ROTATED) अणु
+	if (view->gtt.type == I915_GGTT_VIEW_ROTATED) {
 		check_array_bounds(i915, view->gtt.rotated.plane, color_plane);
 
 		assign_chk_ovf(i915, remap_info->dst_stride,
@@ -677,7 +676,7 @@ plane_view_height_tiles(स्थिर काष्ठा पूर्णां
 
 		/* rotate the tile dimensions to match the GTT view */
 		swap(tile_width, tile_height);
-	पूर्ण अन्यथा अणु
+	} else {
 		drm_WARN_ON(&i915->drm, view->gtt.type != I915_GGTT_VIEW_REMAPPED);
 
 		check_array_bounds(i915, view->gtt.remapped.plane, color_plane);
@@ -689,154 +688,154 @@ plane_view_height_tiles(स्थिर काष्ठा पूर्णां
 		color_plane_info->y = y;
 
 		color_plane_info->stride = remap_info->dst_stride * tile_width *
-					   fb->base.क्रमmat->cpp[color_plane];
+					   fb->base.format->cpp[color_plane];
 
 		size = remap_info->dst_stride * remap_info->height;
-	पूर्ण
+	}
 
 	/*
-	 * We only keep the x/y offsets, so push all of the gtt offset पूर्णांकo
+	 * We only keep the x/y offsets, so push all of the gtt offset into
 	 * the x/y offsets.  x,y will hold the first pixel of the framebuffer
 	 * plane from the start of the remapped/rotated gtt mapping.
 	 */
-	पूर्णांकel_adjust_tile_offset(&color_plane_info->x, &color_plane_info->y,
+	intel_adjust_tile_offset(&color_plane_info->x, &color_plane_info->y,
 				 tile_width, tile_height,
 				 tile_size, remap_info->dst_stride,
 				 gtt_offset * tile_size, 0);
 
-	वापस size;
-पूर्ण
+	return size;
+}
 
-#अघोषित assign_chk_ovf
+#undef assign_chk_ovf
 
 /* Return number of tiles @color_plane needs. */
-अटल अचिन्हित पूर्णांक
-calc_plane_normal_size(स्थिर काष्ठा पूर्णांकel_framebuffer *fb, पूर्णांक color_plane,
-		       स्थिर काष्ठा fb_plane_view_dims *dims,
-		       पूर्णांक x, पूर्णांक y)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(fb->base.dev);
-	अचिन्हित पूर्णांक tiles;
+static unsigned int
+calc_plane_normal_size(const struct intel_framebuffer *fb, int color_plane,
+		       const struct fb_plane_view_dims *dims,
+		       int x, int y)
+{
+	struct drm_i915_private *i915 = to_i915(fb->base.dev);
+	unsigned int tiles;
 
-	अगर (is_surface_linear(&fb->base, color_plane)) अणु
-		अचिन्हित पूर्णांक size;
+	if (is_surface_linear(&fb->base, color_plane)) {
+		unsigned int size;
 
 		size = (y + dims->height) * fb->base.pitches[color_plane] +
-		       x * fb->base.क्रमmat->cpp[color_plane];
-		tiles = DIV_ROUND_UP(size, पूर्णांकel_tile_size(i915));
-	पूर्ण अन्यथा अणु
+		       x * fb->base.format->cpp[color_plane];
+		tiles = DIV_ROUND_UP(size, intel_tile_size(i915));
+	} else {
 		tiles = plane_view_src_stride_tiles(fb, color_plane, dims) *
 			plane_view_height_tiles(fb, color_plane, dims, y);
 		/*
 		 * If the plane isn't horizontally tile aligned,
 		 * we need one more tile.
 		 */
-		अगर (x != 0)
+		if (x != 0)
 			tiles++;
-	पूर्ण
+	}
 
-	वापस tiles;
-पूर्ण
+	return tiles;
+}
 
-अटल व्योम पूर्णांकel_fb_view_init(काष्ठा पूर्णांकel_fb_view *view, क्रमागत i915_ggtt_view_type view_type)
-अणु
-	स_रखो(view, 0, माप(*view));
+static void intel_fb_view_init(struct intel_fb_view *view, enum i915_ggtt_view_type view_type)
+{
+	memset(view, 0, sizeof(*view));
 	view->gtt.type = view_type;
-पूर्ण
+}
 
-पूर्णांक पूर्णांकel_fill_fb_info(काष्ठा drm_i915_निजी *i915, काष्ठा drm_framebuffer *fb)
-अणु
-	काष्ठा पूर्णांकel_framebuffer *पूर्णांकel_fb = to_पूर्णांकel_framebuffer(fb);
-	काष्ठा drm_i915_gem_object *obj = पूर्णांकel_fb_obj(fb);
+int intel_fill_fb_info(struct drm_i915_private *i915, struct drm_framebuffer *fb)
+{
+	struct intel_framebuffer *intel_fb = to_intel_framebuffer(fb);
+	struct drm_i915_gem_object *obj = intel_fb_obj(fb);
 	u32 gtt_offset_rotated = 0;
 	u32 gtt_offset_remapped = 0;
-	अचिन्हित पूर्णांक max_size = 0;
-	पूर्णांक i, num_planes = fb->क्रमmat->num_planes;
-	अचिन्हित पूर्णांक tile_size = पूर्णांकel_tile_size(i915);
+	unsigned int max_size = 0;
+	int i, num_planes = fb->format->num_planes;
+	unsigned int tile_size = intel_tile_size(i915);
 
-	पूर्णांकel_fb_view_init(&पूर्णांकel_fb->normal_view, I915_GGTT_VIEW_NORMAL);
-	पूर्णांकel_fb_view_init(&पूर्णांकel_fb->rotated_view, I915_GGTT_VIEW_ROTATED);
-	पूर्णांकel_fb_view_init(&पूर्णांकel_fb->remapped_view, I915_GGTT_VIEW_REMAPPED);
+	intel_fb_view_init(&intel_fb->normal_view, I915_GGTT_VIEW_NORMAL);
+	intel_fb_view_init(&intel_fb->rotated_view, I915_GGTT_VIEW_ROTATED);
+	intel_fb_view_init(&intel_fb->remapped_view, I915_GGTT_VIEW_REMAPPED);
 
-	क्रम (i = 0; i < num_planes; i++) अणु
-		काष्ठा fb_plane_view_dims view_dims;
-		अचिन्हित पूर्णांक width, height;
-		अचिन्हित पूर्णांक cpp, size;
+	for (i = 0; i < num_planes; i++) {
+		struct fb_plane_view_dims view_dims;
+		unsigned int width, height;
+		unsigned int cpp, size;
 		u32 offset;
-		पूर्णांक x, y;
-		पूर्णांक ret;
+		int x, y;
+		int ret;
 
 		/*
-		 * Plane 2 of Render Compression with Clear Color fb modअगरier
+		 * Plane 2 of Render Compression with Clear Color fb modifier
 		 * is consumed by the driver and not passed to DE. Skip the
 		 * arithmetic related to alignment and offset calculation.
 		 */
-		अगर (is_gen12_ccs_cc_plane(fb, i)) अणु
-			अगर (IS_ALIGNED(fb->offsets[i], PAGE_SIZE))
-				जारी;
-			अन्यथा
-				वापस -EINVAL;
-		पूर्ण
+		if (is_gen12_ccs_cc_plane(fb, i)) {
+			if (IS_ALIGNED(fb->offsets[i], PAGE_SIZE))
+				continue;
+			else
+				return -EINVAL;
+		}
 
-		cpp = fb->क्रमmat->cpp[i];
-		पूर्णांकel_fb_plane_dims(&width, &height, fb, i);
+		cpp = fb->format->cpp[i];
+		intel_fb_plane_dims(&width, &height, fb, i);
 
-		ret = convert_plane_offset_to_xy(पूर्णांकel_fb, i, width, &x, &y);
-		अगर (ret)
-			वापस ret;
+		ret = convert_plane_offset_to_xy(intel_fb, i, width, &x, &y);
+		if (ret)
+			return ret;
 
-		init_plane_view_dims(पूर्णांकel_fb, i, width, height, &view_dims);
+		init_plane_view_dims(intel_fb, i, width, height, &view_dims);
 
 		/*
 		 * First pixel of the framebuffer from
 		 * the start of the normal gtt mapping.
 		 */
-		पूर्णांकel_fb->normal_view.color_plane[i].x = x;
-		पूर्णांकel_fb->normal_view.color_plane[i].y = y;
-		पूर्णांकel_fb->normal_view.color_plane[i].stride = पूर्णांकel_fb->base.pitches[i];
+		intel_fb->normal_view.color_plane[i].x = x;
+		intel_fb->normal_view.color_plane[i].y = y;
+		intel_fb->normal_view.color_plane[i].stride = intel_fb->base.pitches[i];
 
-		offset = calc_plane_aligned_offset(पूर्णांकel_fb, i, &x, &y);
+		offset = calc_plane_aligned_offset(intel_fb, i, &x, &y);
 
-		/* Y or Yf modअगरiers required क्रम 90/270 rotation */
-		अगर (fb->modअगरier == I915_FORMAT_MOD_Y_TILED ||
-		    fb->modअगरier == I915_FORMAT_MOD_Yf_TILED)
-			gtt_offset_rotated += calc_plane_remap_info(पूर्णांकel_fb, i, &view_dims,
+		/* Y or Yf modifiers required for 90/270 rotation */
+		if (fb->modifier == I915_FORMAT_MOD_Y_TILED ||
+		    fb->modifier == I915_FORMAT_MOD_Yf_TILED)
+			gtt_offset_rotated += calc_plane_remap_info(intel_fb, i, &view_dims,
 								    offset, gtt_offset_rotated, x, y,
-								    &पूर्णांकel_fb->rotated_view);
+								    &intel_fb->rotated_view);
 
-		अगर (पूर्णांकel_fb_needs_pot_stride_remap(पूर्णांकel_fb))
-			gtt_offset_remapped += calc_plane_remap_info(पूर्णांकel_fb, i, &view_dims,
+		if (intel_fb_needs_pot_stride_remap(intel_fb))
+			gtt_offset_remapped += calc_plane_remap_info(intel_fb, i, &view_dims,
 								     offset, gtt_offset_remapped, x, y,
-								     &पूर्णांकel_fb->remapped_view);
+								     &intel_fb->remapped_view);
 
-		size = calc_plane_normal_size(पूर्णांकel_fb, i, &view_dims, x, y);
+		size = calc_plane_normal_size(intel_fb, i, &view_dims, x, y);
 		/* how many tiles in total needed in the bo */
 		max_size = max(max_size, offset + size);
-	पूर्ण
+	}
 
-	अगर (mul_u32_u32(max_size, tile_size) > obj->base.size) अणु
+	if (mul_u32_u32(max_size, tile_size) > obj->base.size) {
 		drm_dbg_kms(&i915->drm,
 			    "fb too big for bo (need %llu bytes, have %zu bytes)\n",
 			    mul_u32_u32(max_size, tile_size), obj->base.size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम पूर्णांकel_plane_remap_gtt(काष्ठा पूर्णांकel_plane_state *plane_state)
-अणु
-	काष्ठा drm_i915_निजी *i915 =
+static void intel_plane_remap_gtt(struct intel_plane_state *plane_state)
+{
+	struct drm_i915_private *i915 =
 		to_i915(plane_state->uapi.plane->dev);
-	काष्ठा drm_framebuffer *fb = plane_state->hw.fb;
-	काष्ठा पूर्णांकel_framebuffer *पूर्णांकel_fb = to_पूर्णांकel_framebuffer(fb);
-	अचिन्हित पूर्णांक rotation = plane_state->hw.rotation;
-	पूर्णांक i, num_planes = fb->क्रमmat->num_planes;
-	अचिन्हित पूर्णांक src_x, src_y;
-	अचिन्हित पूर्णांक src_w, src_h;
+	struct drm_framebuffer *fb = plane_state->hw.fb;
+	struct intel_framebuffer *intel_fb = to_intel_framebuffer(fb);
+	unsigned int rotation = plane_state->hw.rotation;
+	int i, num_planes = fb->format->num_planes;
+	unsigned int src_x, src_y;
+	unsigned int src_w, src_h;
 	u32 gtt_offset = 0;
 
-	पूर्णांकel_fb_view_init(&plane_state->view,
+	intel_fb_view_init(&plane_state->view,
 			   drm_rotation_90_or_270(rotation) ? I915_GGTT_VIEW_ROTATED :
 							      I915_GGTT_VIEW_REMAPPED);
 
@@ -845,24 +844,24 @@ calc_plane_normal_size(स्थिर काष्ठा पूर्णां�
 	src_w = drm_rect_width(&plane_state->uapi.src) >> 16;
 	src_h = drm_rect_height(&plane_state->uapi.src) >> 16;
 
-	drm_WARN_ON(&i915->drm, is_ccs_modअगरier(fb->modअगरier));
+	drm_WARN_ON(&i915->drm, is_ccs_modifier(fb->modifier));
 
 	/* Make src coordinates relative to the viewport */
 	drm_rect_translate(&plane_state->uapi.src,
 			   -(src_x << 16), -(src_y << 16));
 
 	/* Rotate src coordinates to match rotated GTT view */
-	अगर (drm_rotation_90_or_270(rotation))
+	if (drm_rotation_90_or_270(rotation))
 		drm_rect_rotate(&plane_state->uapi.src,
 				src_w << 16, src_h << 16,
 				DRM_MODE_ROTATE_270);
 
-	क्रम (i = 0; i < num_planes; i++) अणु
-		अचिन्हित पूर्णांक hsub = i ? fb->क्रमmat->hsub : 1;
-		अचिन्हित पूर्णांक vsub = i ? fb->क्रमmat->vsub : 1;
-		काष्ठा fb_plane_view_dims view_dims;
-		अचिन्हित पूर्णांक width, height;
-		अचिन्हित पूर्णांक x, y;
+	for (i = 0; i < num_planes; i++) {
+		unsigned int hsub = i ? fb->format->hsub : 1;
+		unsigned int vsub = i ? fb->format->vsub : 1;
+		struct fb_plane_view_dims view_dims;
+		unsigned int width, height;
+		unsigned int x, y;
 		u32 offset;
 
 		x = src_x / hsub;
@@ -870,94 +869,94 @@ calc_plane_normal_size(स्थिर काष्ठा पूर्णां�
 		width = src_w / hsub;
 		height = src_h / vsub;
 
-		init_plane_view_dims(पूर्णांकel_fb, i, width, height, &view_dims);
+		init_plane_view_dims(intel_fb, i, width, height, &view_dims);
 
 		/*
 		 * First pixel of the src viewport from the
 		 * start of the normal gtt mapping.
 		 */
-		x += पूर्णांकel_fb->normal_view.color_plane[i].x;
-		y += पूर्णांकel_fb->normal_view.color_plane[i].y;
+		x += intel_fb->normal_view.color_plane[i].x;
+		y += intel_fb->normal_view.color_plane[i].y;
 
-		offset = calc_plane_aligned_offset(पूर्णांकel_fb, i, &x, &y);
+		offset = calc_plane_aligned_offset(intel_fb, i, &x, &y);
 
-		gtt_offset += calc_plane_remap_info(पूर्णांकel_fb, i, &view_dims,
+		gtt_offset += calc_plane_remap_info(intel_fb, i, &view_dims,
 						    offset, gtt_offset, x, y,
 						    &plane_state->view);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम पूर्णांकel_fb_fill_view(स्थिर काष्ठा पूर्णांकel_framebuffer *fb, अचिन्हित पूर्णांक rotation,
-			काष्ठा पूर्णांकel_fb_view *view)
-अणु
-	अगर (drm_rotation_90_or_270(rotation))
+void intel_fb_fill_view(const struct intel_framebuffer *fb, unsigned int rotation,
+			struct intel_fb_view *view)
+{
+	if (drm_rotation_90_or_270(rotation))
 		*view = fb->rotated_view;
-	अन्यथा अगर (पूर्णांकel_fb_needs_pot_stride_remap(fb))
+	else if (intel_fb_needs_pot_stride_remap(fb))
 		*view = fb->remapped_view;
-	अन्यथा
+	else
 		*view = fb->normal_view;
-पूर्ण
+}
 
-अटल पूर्णांक पूर्णांकel_plane_check_stride(स्थिर काष्ठा पूर्णांकel_plane_state *plane_state)
-अणु
-	काष्ठा पूर्णांकel_plane *plane = to_पूर्णांकel_plane(plane_state->uapi.plane);
-	स्थिर काष्ठा drm_framebuffer *fb = plane_state->hw.fb;
-	अचिन्हित पूर्णांक rotation = plane_state->hw.rotation;
+static int intel_plane_check_stride(const struct intel_plane_state *plane_state)
+{
+	struct intel_plane *plane = to_intel_plane(plane_state->uapi.plane);
+	const struct drm_framebuffer *fb = plane_state->hw.fb;
+	unsigned int rotation = plane_state->hw.rotation;
 	u32 stride, max_stride;
 
 	/*
-	 * We ignore stride क्रम all invisible planes that
+	 * We ignore stride for all invisible planes that
 	 * can be remapped. Otherwise we could end up
 	 * with a false positive when the remapping didn't
 	 * kick in due the plane being invisible.
 	 */
-	अगर (पूर्णांकel_plane_can_remap(plane_state) &&
+	if (intel_plane_can_remap(plane_state) &&
 	    !plane_state->uapi.visible)
-		वापस 0;
+		return 0;
 
 	/* FIXME other color planes? */
 	stride = plane_state->view.color_plane[0].stride;
-	max_stride = plane->max_stride(plane, fb->क्रमmat->क्रमmat,
-				       fb->modअगरier, rotation);
+	max_stride = plane->max_stride(plane, fb->format->format,
+				       fb->modifier, rotation);
 
-	अगर (stride > max_stride) अणु
+	if (stride > max_stride) {
 		DRM_DEBUG_KMS("[FB:%d] stride (%d) exceeds [PLANE:%d:%s] max stride (%d)\n",
 			      fb->base.id, stride,
 			      plane->base.base.id, plane->base.name, max_stride);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक पूर्णांकel_plane_compute_gtt(काष्ठा पूर्णांकel_plane_state *plane_state)
-अणु
-	स्थिर काष्ठा पूर्णांकel_framebuffer *fb =
-		to_पूर्णांकel_framebuffer(plane_state->hw.fb);
-	अचिन्हित पूर्णांक rotation = plane_state->hw.rotation;
+int intel_plane_compute_gtt(struct intel_plane_state *plane_state)
+{
+	const struct intel_framebuffer *fb =
+		to_intel_framebuffer(plane_state->hw.fb);
+	unsigned int rotation = plane_state->hw.rotation;
 
-	अगर (!fb)
-		वापस 0;
+	if (!fb)
+		return 0;
 
-	अगर (पूर्णांकel_plane_needs_remap(plane_state)) अणु
-		पूर्णांकel_plane_remap_gtt(plane_state);
+	if (intel_plane_needs_remap(plane_state)) {
+		intel_plane_remap_gtt(plane_state);
 
 		/*
-		 * Someबार even remapping can't overcome
+		 * Sometimes even remapping can't overcome
 		 * the stride limitations :( Can happen with
 		 * big plane sizes and suitably misaligned
 		 * offsets.
 		 */
-		वापस पूर्णांकel_plane_check_stride(plane_state);
-	पूर्ण
+		return intel_plane_check_stride(plane_state);
+	}
 
-	पूर्णांकel_fb_fill_view(fb, rotation, &plane_state->view);
+	intel_fb_fill_view(fb, rotation, &plane_state->view);
 
 	/* Rotate src coordinates to match rotated GTT view */
-	अगर (drm_rotation_90_or_270(rotation))
+	if (drm_rotation_90_or_270(rotation))
 		drm_rect_rotate(&plane_state->uapi.src,
 				fb->base.width << 16, fb->base.height << 16,
 				DRM_MODE_ROTATE_270);
 
-	वापस पूर्णांकel_plane_check_stride(plane_state);
-पूर्ण
+	return intel_plane_check_stride(plane_state);
+}

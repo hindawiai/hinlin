@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * Copyright (C) 2013 Boris BREZILLON <b.brezillon.dev@gmail.com>
  *
@@ -8,519 +7,519 @@
  *	Copyright (C) 2013 Qiang Yu <yuq825@gmail.com>
  *
  *	https://github.com/hno/Allwinner-Info
- *	Copyright (C) 2013 Henrik Nordstrथघm <Henrik Nordstrथघm>
+ *	Copyright (C) 2013 Henrik Nordström <Henrik Nordström>
  *
  *	Copyright (C) 2013 Dmitriy B. <rzk333@gmail.com>
  *	Copyright (C) 2013 Sergey Lapin <slapin@ossfans.org>
  */
 
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/rawnand.h>
-#समावेश <linux/mtd/partitions.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/iopoll.h>
-#समावेश <linux/reset.h>
+#include <linux/dma-mapping.h>
+#include <linux/slab.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/platform_device.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/rawnand.h>
+#include <linux/mtd/partitions.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/dmaengine.h>
+#include <linux/interrupt.h>
+#include <linux/iopoll.h>
+#include <linux/reset.h>
 
-#घोषणा NFC_REG_CTL		0x0000
-#घोषणा NFC_REG_ST		0x0004
-#घोषणा NFC_REG_INT		0x0008
-#घोषणा NFC_REG_TIMING_CTL	0x000C
-#घोषणा NFC_REG_TIMING_CFG	0x0010
-#घोषणा NFC_REG_ADDR_LOW	0x0014
-#घोषणा NFC_REG_ADDR_HIGH	0x0018
-#घोषणा NFC_REG_SECTOR_NUM	0x001C
-#घोषणा NFC_REG_CNT		0x0020
-#घोषणा NFC_REG_CMD		0x0024
-#घोषणा NFC_REG_RCMD_SET	0x0028
-#घोषणा NFC_REG_WCMD_SET	0x002C
-#घोषणा NFC_REG_A10_IO_DATA	0x0030
-#घोषणा NFC_REG_A23_IO_DATA	0x0300
-#घोषणा NFC_REG_ECC_CTL		0x0034
-#घोषणा NFC_REG_ECC_ST		0x0038
-#घोषणा NFC_REG_DEBUG		0x003C
-#घोषणा NFC_REG_ECC_ERR_CNT(x)	((0x0040 + (x)) & ~0x3)
-#घोषणा NFC_REG_USER_DATA(x)	(0x0050 + ((x) * 4))
-#घोषणा NFC_REG_SPARE_AREA	0x00A0
-#घोषणा NFC_REG_PAT_ID		0x00A4
-#घोषणा NFC_REG_MDMA_ADDR	0x00C0
-#घोषणा NFC_REG_MDMA_CNT	0x00C4
-#घोषणा NFC_RAM0_BASE		0x0400
-#घोषणा NFC_RAM1_BASE		0x0800
+#define NFC_REG_CTL		0x0000
+#define NFC_REG_ST		0x0004
+#define NFC_REG_INT		0x0008
+#define NFC_REG_TIMING_CTL	0x000C
+#define NFC_REG_TIMING_CFG	0x0010
+#define NFC_REG_ADDR_LOW	0x0014
+#define NFC_REG_ADDR_HIGH	0x0018
+#define NFC_REG_SECTOR_NUM	0x001C
+#define NFC_REG_CNT		0x0020
+#define NFC_REG_CMD		0x0024
+#define NFC_REG_RCMD_SET	0x0028
+#define NFC_REG_WCMD_SET	0x002C
+#define NFC_REG_A10_IO_DATA	0x0030
+#define NFC_REG_A23_IO_DATA	0x0300
+#define NFC_REG_ECC_CTL		0x0034
+#define NFC_REG_ECC_ST		0x0038
+#define NFC_REG_DEBUG		0x003C
+#define NFC_REG_ECC_ERR_CNT(x)	((0x0040 + (x)) & ~0x3)
+#define NFC_REG_USER_DATA(x)	(0x0050 + ((x) * 4))
+#define NFC_REG_SPARE_AREA	0x00A0
+#define NFC_REG_PAT_ID		0x00A4
+#define NFC_REG_MDMA_ADDR	0x00C0
+#define NFC_REG_MDMA_CNT	0x00C4
+#define NFC_RAM0_BASE		0x0400
+#define NFC_RAM1_BASE		0x0800
 
 /* define bit use in NFC_CTL */
-#घोषणा NFC_EN			BIT(0)
-#घोषणा NFC_RESET		BIT(1)
-#घोषणा NFC_BUS_WIDTH_MSK	BIT(2)
-#घोषणा NFC_BUS_WIDTH_8		(0 << 2)
-#घोषणा NFC_BUS_WIDTH_16	(1 << 2)
-#घोषणा NFC_RB_SEL_MSK		BIT(3)
-#घोषणा NFC_RB_SEL(x)		((x) << 3)
-#घोषणा NFC_CE_SEL_MSK		GENMASK(26, 24)
-#घोषणा NFC_CE_SEL(x)		((x) << 24)
-#घोषणा NFC_CE_CTL		BIT(6)
-#घोषणा NFC_PAGE_SHIFT_MSK	GENMASK(11, 8)
-#घोषणा NFC_PAGE_SHIFT(x)	(((x) < 10 ? 0 : (x) - 10) << 8)
-#घोषणा NFC_SAM			BIT(12)
-#घोषणा NFC_RAM_METHOD		BIT(14)
-#घोषणा NFC_DMA_TYPE_NORMAL	BIT(15)
-#घोषणा NFC_DEBUG_CTL		BIT(31)
+#define NFC_EN			BIT(0)
+#define NFC_RESET		BIT(1)
+#define NFC_BUS_WIDTH_MSK	BIT(2)
+#define NFC_BUS_WIDTH_8		(0 << 2)
+#define NFC_BUS_WIDTH_16	(1 << 2)
+#define NFC_RB_SEL_MSK		BIT(3)
+#define NFC_RB_SEL(x)		((x) << 3)
+#define NFC_CE_SEL_MSK		GENMASK(26, 24)
+#define NFC_CE_SEL(x)		((x) << 24)
+#define NFC_CE_CTL		BIT(6)
+#define NFC_PAGE_SHIFT_MSK	GENMASK(11, 8)
+#define NFC_PAGE_SHIFT(x)	(((x) < 10 ? 0 : (x) - 10) << 8)
+#define NFC_SAM			BIT(12)
+#define NFC_RAM_METHOD		BIT(14)
+#define NFC_DMA_TYPE_NORMAL	BIT(15)
+#define NFC_DEBUG_CTL		BIT(31)
 
 /* define bit use in NFC_ST */
-#घोषणा NFC_RB_B2R		BIT(0)
-#घोषणा NFC_CMD_INT_FLAG	BIT(1)
-#घोषणा NFC_DMA_INT_FLAG	BIT(2)
-#घोषणा NFC_CMD_FIFO_STATUS	BIT(3)
-#घोषणा NFC_STA			BIT(4)
-#घोषणा NFC_NATCH_INT_FLAG	BIT(5)
-#घोषणा NFC_RB_STATE(x)		BIT(x + 8)
+#define NFC_RB_B2R		BIT(0)
+#define NFC_CMD_INT_FLAG	BIT(1)
+#define NFC_DMA_INT_FLAG	BIT(2)
+#define NFC_CMD_FIFO_STATUS	BIT(3)
+#define NFC_STA			BIT(4)
+#define NFC_NATCH_INT_FLAG	BIT(5)
+#define NFC_RB_STATE(x)		BIT(x + 8)
 
 /* define bit use in NFC_INT */
-#घोषणा NFC_B2R_INT_ENABLE	BIT(0)
-#घोषणा NFC_CMD_INT_ENABLE	BIT(1)
-#घोषणा NFC_DMA_INT_ENABLE	BIT(2)
-#घोषणा NFC_INT_MASK		(NFC_B2R_INT_ENABLE | \
+#define NFC_B2R_INT_ENABLE	BIT(0)
+#define NFC_CMD_INT_ENABLE	BIT(1)
+#define NFC_DMA_INT_ENABLE	BIT(2)
+#define NFC_INT_MASK		(NFC_B2R_INT_ENABLE | \
 				 NFC_CMD_INT_ENABLE | \
 				 NFC_DMA_INT_ENABLE)
 
 /* define bit use in NFC_TIMING_CTL */
-#घोषणा NFC_TIMING_CTL_EDO	BIT(8)
+#define NFC_TIMING_CTL_EDO	BIT(8)
 
-/* define NFC_TIMING_CFG रेजिस्टर layout */
-#घोषणा NFC_TIMING_CFG(tWB, tADL, tWHR, tRHW, tCAD)		\
+/* define NFC_TIMING_CFG register layout */
+#define NFC_TIMING_CFG(tWB, tADL, tWHR, tRHW, tCAD)		\
 	(((tWB) & 0x3) | (((tADL) & 0x3) << 2) |		\
 	(((tWHR) & 0x3) << 4) | (((tRHW) & 0x3) << 6) |		\
 	(((tCAD) & 0x7) << 8))
 
 /* define bit use in NFC_CMD */
-#घोषणा NFC_CMD_LOW_BYTE_MSK	GENMASK(7, 0)
-#घोषणा NFC_CMD_HIGH_BYTE_MSK	GENMASK(15, 8)
-#घोषणा NFC_CMD(x)		(x)
-#घोषणा NFC_ADR_NUM_MSK		GENMASK(18, 16)
-#घोषणा NFC_ADR_NUM(x)		(((x) - 1) << 16)
-#घोषणा NFC_SEND_ADR		BIT(19)
-#घोषणा NFC_ACCESS_सूची		BIT(20)
-#घोषणा NFC_DATA_TRANS		BIT(21)
-#घोषणा NFC_SEND_CMD1		BIT(22)
-#घोषणा NFC_WAIT_FLAG		BIT(23)
-#घोषणा NFC_SEND_CMD2		BIT(24)
-#घोषणा NFC_SEQ			BIT(25)
-#घोषणा NFC_DATA_SWAP_METHOD	BIT(26)
-#घोषणा NFC_ROW_AUTO_INC	BIT(27)
-#घोषणा NFC_SEND_CMD3		BIT(28)
-#घोषणा NFC_SEND_CMD4		BIT(29)
-#घोषणा NFC_CMD_TYPE_MSK	GENMASK(31, 30)
-#घोषणा NFC_NORMAL_OP		(0 << 30)
-#घोषणा NFC_ECC_OP		(1 << 30)
-#घोषणा NFC_PAGE_OP		(2U << 30)
+#define NFC_CMD_LOW_BYTE_MSK	GENMASK(7, 0)
+#define NFC_CMD_HIGH_BYTE_MSK	GENMASK(15, 8)
+#define NFC_CMD(x)		(x)
+#define NFC_ADR_NUM_MSK		GENMASK(18, 16)
+#define NFC_ADR_NUM(x)		(((x) - 1) << 16)
+#define NFC_SEND_ADR		BIT(19)
+#define NFC_ACCESS_DIR		BIT(20)
+#define NFC_DATA_TRANS		BIT(21)
+#define NFC_SEND_CMD1		BIT(22)
+#define NFC_WAIT_FLAG		BIT(23)
+#define NFC_SEND_CMD2		BIT(24)
+#define NFC_SEQ			BIT(25)
+#define NFC_DATA_SWAP_METHOD	BIT(26)
+#define NFC_ROW_AUTO_INC	BIT(27)
+#define NFC_SEND_CMD3		BIT(28)
+#define NFC_SEND_CMD4		BIT(29)
+#define NFC_CMD_TYPE_MSK	GENMASK(31, 30)
+#define NFC_NORMAL_OP		(0 << 30)
+#define NFC_ECC_OP		(1 << 30)
+#define NFC_PAGE_OP		(2U << 30)
 
 /* define bit use in NFC_RCMD_SET */
-#घोषणा NFC_READ_CMD_MSK	GENMASK(7, 0)
-#घोषणा NFC_RND_READ_CMD0_MSK	GENMASK(15, 8)
-#घोषणा NFC_RND_READ_CMD1_MSK	GENMASK(23, 16)
+#define NFC_READ_CMD_MSK	GENMASK(7, 0)
+#define NFC_RND_READ_CMD0_MSK	GENMASK(15, 8)
+#define NFC_RND_READ_CMD1_MSK	GENMASK(23, 16)
 
 /* define bit use in NFC_WCMD_SET */
-#घोषणा NFC_PROGRAM_CMD_MSK	GENMASK(7, 0)
-#घोषणा NFC_RND_WRITE_CMD_MSK	GENMASK(15, 8)
-#घोषणा NFC_READ_CMD0_MSK	GENMASK(23, 16)
-#घोषणा NFC_READ_CMD1_MSK	GENMASK(31, 24)
+#define NFC_PROGRAM_CMD_MSK	GENMASK(7, 0)
+#define NFC_RND_WRITE_CMD_MSK	GENMASK(15, 8)
+#define NFC_READ_CMD0_MSK	GENMASK(23, 16)
+#define NFC_READ_CMD1_MSK	GENMASK(31, 24)
 
 /* define bit use in NFC_ECC_CTL */
-#घोषणा NFC_ECC_EN		BIT(0)
-#घोषणा NFC_ECC_PIPELINE	BIT(3)
-#घोषणा NFC_ECC_EXCEPTION	BIT(4)
-#घोषणा NFC_ECC_BLOCK_SIZE_MSK	BIT(5)
-#घोषणा NFC_ECC_BLOCK_512	BIT(5)
-#घोषणा NFC_RANDOM_EN		BIT(9)
-#घोषणा NFC_RANDOM_सूचीECTION	BIT(10)
-#घोषणा NFC_ECC_MODE_MSK	GENMASK(15, 12)
-#घोषणा NFC_ECC_MODE(x)		((x) << 12)
-#घोषणा NFC_RANDOM_SEED_MSK	GENMASK(30, 16)
-#घोषणा NFC_RANDOM_SEED(x)	((x) << 16)
+#define NFC_ECC_EN		BIT(0)
+#define NFC_ECC_PIPELINE	BIT(3)
+#define NFC_ECC_EXCEPTION	BIT(4)
+#define NFC_ECC_BLOCK_SIZE_MSK	BIT(5)
+#define NFC_ECC_BLOCK_512	BIT(5)
+#define NFC_RANDOM_EN		BIT(9)
+#define NFC_RANDOM_DIRECTION	BIT(10)
+#define NFC_ECC_MODE_MSK	GENMASK(15, 12)
+#define NFC_ECC_MODE(x)		((x) << 12)
+#define NFC_RANDOM_SEED_MSK	GENMASK(30, 16)
+#define NFC_RANDOM_SEED(x)	((x) << 16)
 
 /* define bit use in NFC_ECC_ST */
-#घोषणा NFC_ECC_ERR(x)		BIT(x)
-#घोषणा NFC_ECC_ERR_MSK		GENMASK(15, 0)
-#घोषणा NFC_ECC_PAT_FOUND(x)	BIT(x + 16)
-#घोषणा NFC_ECC_ERR_CNT(b, x)	(((x) >> (((b) % 4) * 8)) & 0xff)
+#define NFC_ECC_ERR(x)		BIT(x)
+#define NFC_ECC_ERR_MSK		GENMASK(15, 0)
+#define NFC_ECC_PAT_FOUND(x)	BIT(x + 16)
+#define NFC_ECC_ERR_CNT(b, x)	(((x) >> (((b) % 4) * 8)) & 0xff)
 
-#घोषणा NFC_DEFAULT_TIMEOUT_MS	1000
+#define NFC_DEFAULT_TIMEOUT_MS	1000
 
-#घोषणा NFC_SRAM_SIZE		1024
+#define NFC_SRAM_SIZE		1024
 
-#घोषणा NFC_MAX_CS		7
+#define NFC_MAX_CS		7
 
 /**
- * काष्ठा sunxi_nand_chip_sel - stores inक्रमmation related to न_अंकD Chip Select
+ * struct sunxi_nand_chip_sel - stores information related to NAND Chip Select
  *
- * @cs: the न_अंकD CS id used to communicate with a न_अंकD Chip
+ * @cs: the NAND CS id used to communicate with a NAND Chip
  * @rb: the Ready/Busy pin ID. -1 means no R/B pin connected to the NFC
  */
-काष्ठा sunxi_nand_chip_sel अणु
+struct sunxi_nand_chip_sel {
 	u8 cs;
 	s8 rb;
-पूर्ण;
+};
 
 /**
- * काष्ठा sunxi_nand_hw_ecc - stores inक्रमmation related to HW ECC support
+ * struct sunxi_nand_hw_ecc - stores information related to HW ECC support
  *
  * @mode: the sunxi ECC mode field deduced from ECC requirements
  */
-काष्ठा sunxi_nand_hw_ecc अणु
-	पूर्णांक mode;
-पूर्ण;
+struct sunxi_nand_hw_ecc {
+	int mode;
+};
 
 /**
- * काष्ठा sunxi_nand_chip - stores न_अंकD chip device related inक्रमmation
+ * struct sunxi_nand_chip - stores NAND chip device related information
  *
- * @node: used to store न_अंकD chips पूर्णांकo a list
- * @nand: base न_अंकD chip काष्ठाure
- * @ecc: ECC controller काष्ठाure
- * @clk_rate: clk_rate required क्रम this न_अंकD chip
- * @timing_cfg: TIMING_CFG रेजिस्टर value क्रम this न_अंकD chip
- * @timing_ctl: TIMING_CTL रेजिस्टर value क्रम this न_अंकD chip
- * @nsels: number of CS lines required by the न_अंकD chip
+ * @node: used to store NAND chips into a list
+ * @nand: base NAND chip structure
+ * @ecc: ECC controller structure
+ * @clk_rate: clk_rate required for this NAND chip
+ * @timing_cfg: TIMING_CFG register value for this NAND chip
+ * @timing_ctl: TIMING_CTL register value for this NAND chip
+ * @nsels: number of CS lines required by the NAND chip
  * @sels: array of CS lines descriptions
  */
-काष्ठा sunxi_nand_chip अणु
-	काष्ठा list_head node;
-	काष्ठा nand_chip nand;
-	काष्ठा sunxi_nand_hw_ecc *ecc;
-	अचिन्हित दीर्घ clk_rate;
+struct sunxi_nand_chip {
+	struct list_head node;
+	struct nand_chip nand;
+	struct sunxi_nand_hw_ecc *ecc;
+	unsigned long clk_rate;
 	u32 timing_cfg;
 	u32 timing_ctl;
-	पूर्णांक nsels;
-	काष्ठा sunxi_nand_chip_sel sels[];
-पूर्ण;
+	int nsels;
+	struct sunxi_nand_chip_sel sels[];
+};
 
-अटल अंतरभूत काष्ठा sunxi_nand_chip *to_sunxi_nand(काष्ठा nand_chip *nand)
-अणु
-	वापस container_of(nand, काष्ठा sunxi_nand_chip, nand);
-पूर्ण
+static inline struct sunxi_nand_chip *to_sunxi_nand(struct nand_chip *nand)
+{
+	return container_of(nand, struct sunxi_nand_chip, nand);
+}
 
 /*
- * न_अंकD Controller capabilities काष्ठाure: stores न_अंकD controller capabilities
- * क्रम distinction between compatible strings.
+ * NAND Controller capabilities structure: stores NAND controller capabilities
+ * for distinction between compatible strings.
  *
  * @has_mdma:		Use mbus dma mode, otherwise general dma
  *			through MBUS on A23/A33 needs extra configuration.
- * @reg_io_data:	I/O data रेजिस्टर
+ * @reg_io_data:	I/O data register
  * @dma_maxburst:	DMA maxburst
  */
-काष्ठा sunxi_nfc_caps अणु
+struct sunxi_nfc_caps {
 	bool has_mdma;
-	अचिन्हित पूर्णांक reg_io_data;
-	अचिन्हित पूर्णांक dma_maxburst;
-पूर्ण;
+	unsigned int reg_io_data;
+	unsigned int dma_maxburst;
+};
 
 /**
- * काष्ठा sunxi_nfc - stores sunxi न_अंकD controller inक्रमmation
+ * struct sunxi_nfc - stores sunxi NAND controller information
  *
- * @controller: base controller काष्ठाure
- * @dev: parent device (used to prपूर्णांक error messages)
- * @regs: न_अंकD controller रेजिस्टरs
- * @ahb_clk: न_अंकD controller AHB घड़ी
- * @mod_clk: न_अंकD controller mod घड़ी
- * @reset: न_अंकD controller reset line
- * @asचिन्हित_cs: biपंचांगask describing alपढ़ोy asचिन्हित CS lines
- * @clk_rate: न_अंकD controller current घड़ी rate
- * @chips: a list containing all the न_अंकD chips attached to this न_अंकD
+ * @controller: base controller structure
+ * @dev: parent device (used to print error messages)
+ * @regs: NAND controller registers
+ * @ahb_clk: NAND controller AHB clock
+ * @mod_clk: NAND controller mod clock
+ * @reset: NAND controller reset line
+ * @assigned_cs: bitmask describing already assigned CS lines
+ * @clk_rate: NAND controller current clock rate
+ * @chips: a list containing all the NAND chips attached to this NAND
  *	   controller
- * @complete: a completion object used to रुको क्रम न_अंकD controller events
- * @dmac: the DMA channel attached to the न_अंकD controller
- * @caps: न_अंकD Controller capabilities
+ * @complete: a completion object used to wait for NAND controller events
+ * @dmac: the DMA channel attached to the NAND controller
+ * @caps: NAND Controller capabilities
  */
-काष्ठा sunxi_nfc अणु
-	काष्ठा nand_controller controller;
-	काष्ठा device *dev;
-	व्योम __iomem *regs;
-	काष्ठा clk *ahb_clk;
-	काष्ठा clk *mod_clk;
-	काष्ठा reset_control *reset;
-	अचिन्हित दीर्घ asचिन्हित_cs;
-	अचिन्हित दीर्घ clk_rate;
-	काष्ठा list_head chips;
-	काष्ठा completion complete;
-	काष्ठा dma_chan *dmac;
-	स्थिर काष्ठा sunxi_nfc_caps *caps;
-पूर्ण;
+struct sunxi_nfc {
+	struct nand_controller controller;
+	struct device *dev;
+	void __iomem *regs;
+	struct clk *ahb_clk;
+	struct clk *mod_clk;
+	struct reset_control *reset;
+	unsigned long assigned_cs;
+	unsigned long clk_rate;
+	struct list_head chips;
+	struct completion complete;
+	struct dma_chan *dmac;
+	const struct sunxi_nfc_caps *caps;
+};
 
-अटल अंतरभूत काष्ठा sunxi_nfc *to_sunxi_nfc(काष्ठा nand_controller *ctrl)
-अणु
-	वापस container_of(ctrl, काष्ठा sunxi_nfc, controller);
-पूर्ण
+static inline struct sunxi_nfc *to_sunxi_nfc(struct nand_controller *ctrl)
+{
+	return container_of(ctrl, struct sunxi_nfc, controller);
+}
 
-अटल irqवापस_t sunxi_nfc_पूर्णांकerrupt(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा sunxi_nfc *nfc = dev_id;
-	u32 st = पढ़ोl(nfc->regs + NFC_REG_ST);
-	u32 ien = पढ़ोl(nfc->regs + NFC_REG_INT);
+static irqreturn_t sunxi_nfc_interrupt(int irq, void *dev_id)
+{
+	struct sunxi_nfc *nfc = dev_id;
+	u32 st = readl(nfc->regs + NFC_REG_ST);
+	u32 ien = readl(nfc->regs + NFC_REG_INT);
 
-	अगर (!(ien & st))
-		वापस IRQ_NONE;
+	if (!(ien & st))
+		return IRQ_NONE;
 
-	अगर ((ien & st) == ien)
+	if ((ien & st) == ien)
 		complete(&nfc->complete);
 
-	ग_लिखोl(st & NFC_INT_MASK, nfc->regs + NFC_REG_ST);
-	ग_लिखोl(~st & ien & NFC_INT_MASK, nfc->regs + NFC_REG_INT);
+	writel(st & NFC_INT_MASK, nfc->regs + NFC_REG_ST);
+	writel(~st & ien & NFC_INT_MASK, nfc->regs + NFC_REG_INT);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक sunxi_nfc_रुको_events(काष्ठा sunxi_nfc *nfc, u32 events,
-				 bool use_polling, अचिन्हित पूर्णांक समयout_ms)
-अणु
-	पूर्णांक ret;
+static int sunxi_nfc_wait_events(struct sunxi_nfc *nfc, u32 events,
+				 bool use_polling, unsigned int timeout_ms)
+{
+	int ret;
 
-	अगर (events & ~NFC_INT_MASK)
-		वापस -EINVAL;
+	if (events & ~NFC_INT_MASK)
+		return -EINVAL;
 
-	अगर (!समयout_ms)
-		समयout_ms = NFC_DEFAULT_TIMEOUT_MS;
+	if (!timeout_ms)
+		timeout_ms = NFC_DEFAULT_TIMEOUT_MS;
 
-	अगर (!use_polling) अणु
+	if (!use_polling) {
 		init_completion(&nfc->complete);
 
-		ग_लिखोl(events, nfc->regs + NFC_REG_INT);
+		writel(events, nfc->regs + NFC_REG_INT);
 
-		ret = रुको_क्रम_completion_समयout(&nfc->complete,
-						msecs_to_jअगरfies(समयout_ms));
-		अगर (!ret)
+		ret = wait_for_completion_timeout(&nfc->complete,
+						msecs_to_jiffies(timeout_ms));
+		if (!ret)
 			ret = -ETIMEDOUT;
-		अन्यथा
+		else
 			ret = 0;
 
-		ग_लिखोl(0, nfc->regs + NFC_REG_INT);
-	पूर्ण अन्यथा अणु
+		writel(0, nfc->regs + NFC_REG_INT);
+	} else {
 		u32 status;
 
-		ret = पढ़ोl_poll_समयout(nfc->regs + NFC_REG_ST, status,
+		ret = readl_poll_timeout(nfc->regs + NFC_REG_ST, status,
 					 (status & events) == events, 1,
-					 समयout_ms * 1000);
-	पूर्ण
+					 timeout_ms * 1000);
+	}
 
-	ग_लिखोl(events & NFC_INT_MASK, nfc->regs + NFC_REG_ST);
+	writel(events & NFC_INT_MASK, nfc->regs + NFC_REG_ST);
 
-	अगर (ret)
+	if (ret)
 		dev_err(nfc->dev, "wait interrupt timedout\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sunxi_nfc_रुको_cmd_fअगरo_empty(काष्ठा sunxi_nfc *nfc)
-अणु
+static int sunxi_nfc_wait_cmd_fifo_empty(struct sunxi_nfc *nfc)
+{
 	u32 status;
-	पूर्णांक ret;
+	int ret;
 
-	ret = पढ़ोl_poll_समयout(nfc->regs + NFC_REG_ST, status,
+	ret = readl_poll_timeout(nfc->regs + NFC_REG_ST, status,
 				 !(status & NFC_CMD_FIFO_STATUS), 1,
 				 NFC_DEFAULT_TIMEOUT_MS * 1000);
-	अगर (ret)
+	if (ret)
 		dev_err(nfc->dev, "wait for empty cmd FIFO timedout\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sunxi_nfc_rst(काष्ठा sunxi_nfc *nfc)
-अणु
+static int sunxi_nfc_rst(struct sunxi_nfc *nfc)
+{
 	u32 ctl;
-	पूर्णांक ret;
+	int ret;
 
-	ग_लिखोl(0, nfc->regs + NFC_REG_ECC_CTL);
-	ग_लिखोl(NFC_RESET, nfc->regs + NFC_REG_CTL);
+	writel(0, nfc->regs + NFC_REG_ECC_CTL);
+	writel(NFC_RESET, nfc->regs + NFC_REG_CTL);
 
-	ret = पढ़ोl_poll_समयout(nfc->regs + NFC_REG_CTL, ctl,
+	ret = readl_poll_timeout(nfc->regs + NFC_REG_CTL, ctl,
 				 !(ctl & NFC_RESET), 1,
 				 NFC_DEFAULT_TIMEOUT_MS * 1000);
-	अगर (ret)
+	if (ret)
 		dev_err(nfc->dev, "wait for NAND controller reset timedout\n");
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sunxi_nfc_dma_op_prepare(काष्ठा sunxi_nfc *nfc, स्थिर व्योम *buf,
-				    पूर्णांक chunksize, पूर्णांक nchunks,
-				    क्रमागत dma_data_direction ddir,
-				    काष्ठा scatterlist *sg)
-अणु
-	काष्ठा dma_async_tx_descriptor *dmad;
-	क्रमागत dma_transfer_direction tdir;
+static int sunxi_nfc_dma_op_prepare(struct sunxi_nfc *nfc, const void *buf,
+				    int chunksize, int nchunks,
+				    enum dma_data_direction ddir,
+				    struct scatterlist *sg)
+{
+	struct dma_async_tx_descriptor *dmad;
+	enum dma_transfer_direction tdir;
 	dma_cookie_t dmat;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (ddir == DMA_FROM_DEVICE)
+	if (ddir == DMA_FROM_DEVICE)
 		tdir = DMA_DEV_TO_MEM;
-	अन्यथा
+	else
 		tdir = DMA_MEM_TO_DEV;
 
 	sg_init_one(sg, buf, nchunks * chunksize);
 	ret = dma_map_sg(nfc->dev, sg, 1, ddir);
-	अगर (!ret)
-		वापस -ENOMEM;
+	if (!ret)
+		return -ENOMEM;
 
-	अगर (!nfc->caps->has_mdma) अणु
+	if (!nfc->caps->has_mdma) {
 		dmad = dmaengine_prep_slave_sg(nfc->dmac, sg, 1, tdir, DMA_CTRL_ACK);
-		अगर (!dmad) अणु
+		if (!dmad) {
 			ret = -EINVAL;
-			जाओ err_unmap_buf;
-		पूर्ण
-	पूर्ण
+			goto err_unmap_buf;
+		}
+	}
 
-	ग_लिखोl(पढ़ोl(nfc->regs + NFC_REG_CTL) | NFC_RAM_METHOD,
+	writel(readl(nfc->regs + NFC_REG_CTL) | NFC_RAM_METHOD,
 	       nfc->regs + NFC_REG_CTL);
-	ग_लिखोl(nchunks, nfc->regs + NFC_REG_SECTOR_NUM);
-	ग_लिखोl(chunksize, nfc->regs + NFC_REG_CNT);
+	writel(nchunks, nfc->regs + NFC_REG_SECTOR_NUM);
+	writel(chunksize, nfc->regs + NFC_REG_CNT);
 
-	अगर (nfc->caps->has_mdma) अणु
-		ग_लिखोl(पढ़ोl(nfc->regs + NFC_REG_CTL) & ~NFC_DMA_TYPE_NORMAL,
+	if (nfc->caps->has_mdma) {
+		writel(readl(nfc->regs + NFC_REG_CTL) & ~NFC_DMA_TYPE_NORMAL,
 		       nfc->regs + NFC_REG_CTL);
-		ग_लिखोl(chunksize * nchunks, nfc->regs + NFC_REG_MDMA_CNT);
-		ग_लिखोl(sg_dma_address(sg), nfc->regs + NFC_REG_MDMA_ADDR);
-	पूर्ण अन्यथा अणु
+		writel(chunksize * nchunks, nfc->regs + NFC_REG_MDMA_CNT);
+		writel(sg_dma_address(sg), nfc->regs + NFC_REG_MDMA_ADDR);
+	} else {
 		dmat = dmaengine_submit(dmad);
 
 		ret = dma_submit_error(dmat);
-		अगर (ret)
-			जाओ err_clr_dma_flag;
-	पूर्ण
+		if (ret)
+			goto err_clr_dma_flag;
+	}
 
-	वापस 0;
+	return 0;
 
 err_clr_dma_flag:
-	ग_लिखोl(पढ़ोl(nfc->regs + NFC_REG_CTL) & ~NFC_RAM_METHOD,
+	writel(readl(nfc->regs + NFC_REG_CTL) & ~NFC_RAM_METHOD,
 	       nfc->regs + NFC_REG_CTL);
 
 err_unmap_buf:
 	dma_unmap_sg(nfc->dev, sg, 1, ddir);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम sunxi_nfc_dma_op_cleanup(काष्ठा sunxi_nfc *nfc,
-				     क्रमागत dma_data_direction ddir,
-				     काष्ठा scatterlist *sg)
-अणु
+static void sunxi_nfc_dma_op_cleanup(struct sunxi_nfc *nfc,
+				     enum dma_data_direction ddir,
+				     struct scatterlist *sg)
+{
 	dma_unmap_sg(nfc->dev, sg, 1, ddir);
-	ग_लिखोl(पढ़ोl(nfc->regs + NFC_REG_CTL) & ~NFC_RAM_METHOD,
+	writel(readl(nfc->regs + NFC_REG_CTL) & ~NFC_RAM_METHOD,
 	       nfc->regs + NFC_REG_CTL);
-पूर्ण
+}
 
-अटल व्योम sunxi_nfc_select_chip(काष्ठा nand_chip *nand, अचिन्हित पूर्णांक cs)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(nand);
-	काष्ठा sunxi_nand_chip *sunxi_nand = to_sunxi_nand(nand);
-	काष्ठा sunxi_nfc *nfc = to_sunxi_nfc(sunxi_nand->nand.controller);
-	काष्ठा sunxi_nand_chip_sel *sel;
+static void sunxi_nfc_select_chip(struct nand_chip *nand, unsigned int cs)
+{
+	struct mtd_info *mtd = nand_to_mtd(nand);
+	struct sunxi_nand_chip *sunxi_nand = to_sunxi_nand(nand);
+	struct sunxi_nfc *nfc = to_sunxi_nfc(sunxi_nand->nand.controller);
+	struct sunxi_nand_chip_sel *sel;
 	u32 ctl;
 
-	अगर (cs > 0 && cs >= sunxi_nand->nsels)
-		वापस;
+	if (cs > 0 && cs >= sunxi_nand->nsels)
+		return;
 
-	ctl = पढ़ोl(nfc->regs + NFC_REG_CTL) &
+	ctl = readl(nfc->regs + NFC_REG_CTL) &
 	      ~(NFC_PAGE_SHIFT_MSK | NFC_CE_SEL_MSK | NFC_RB_SEL_MSK | NFC_EN);
 
 	sel = &sunxi_nand->sels[cs];
-	ctl |= NFC_CE_SEL(sel->cs) | NFC_EN | NFC_PAGE_SHIFT(nand->page_shअगरt);
-	अगर (sel->rb >= 0)
+	ctl |= NFC_CE_SEL(sel->cs) | NFC_EN | NFC_PAGE_SHIFT(nand->page_shift);
+	if (sel->rb >= 0)
 		ctl |= NFC_RB_SEL(sel->rb);
 
-	ग_लिखोl(mtd->ग_लिखोsize, nfc->regs + NFC_REG_SPARE_AREA);
+	writel(mtd->writesize, nfc->regs + NFC_REG_SPARE_AREA);
 
-	अगर (nfc->clk_rate != sunxi_nand->clk_rate) अणु
+	if (nfc->clk_rate != sunxi_nand->clk_rate) {
 		clk_set_rate(nfc->mod_clk, sunxi_nand->clk_rate);
 		nfc->clk_rate = sunxi_nand->clk_rate;
-	पूर्ण
+	}
 
-	ग_लिखोl(sunxi_nand->timing_ctl, nfc->regs + NFC_REG_TIMING_CTL);
-	ग_लिखोl(sunxi_nand->timing_cfg, nfc->regs + NFC_REG_TIMING_CFG);
-	ग_लिखोl(ctl, nfc->regs + NFC_REG_CTL);
-पूर्ण
+	writel(sunxi_nand->timing_ctl, nfc->regs + NFC_REG_TIMING_CTL);
+	writel(sunxi_nand->timing_cfg, nfc->regs + NFC_REG_TIMING_CFG);
+	writel(ctl, nfc->regs + NFC_REG_CTL);
+}
 
-अटल व्योम sunxi_nfc_पढ़ो_buf(काष्ठा nand_chip *nand, uपूर्णांक8_t *buf, पूर्णांक len)
-अणु
-	काष्ठा sunxi_nand_chip *sunxi_nand = to_sunxi_nand(nand);
-	काष्ठा sunxi_nfc *nfc = to_sunxi_nfc(sunxi_nand->nand.controller);
-	पूर्णांक ret;
-	पूर्णांक cnt;
-	पूर्णांक offs = 0;
-	u32 पंचांगp;
+static void sunxi_nfc_read_buf(struct nand_chip *nand, uint8_t *buf, int len)
+{
+	struct sunxi_nand_chip *sunxi_nand = to_sunxi_nand(nand);
+	struct sunxi_nfc *nfc = to_sunxi_nfc(sunxi_nand->nand.controller);
+	int ret;
+	int cnt;
+	int offs = 0;
+	u32 tmp;
 
-	जबतक (len > offs) अणु
+	while (len > offs) {
 		bool poll = false;
 
 		cnt = min(len - offs, NFC_SRAM_SIZE);
 
-		ret = sunxi_nfc_रुको_cmd_fअगरo_empty(nfc);
-		अगर (ret)
-			अवरोध;
+		ret = sunxi_nfc_wait_cmd_fifo_empty(nfc);
+		if (ret)
+			break;
 
-		ग_लिखोl(cnt, nfc->regs + NFC_REG_CNT);
-		पंचांगp = NFC_DATA_TRANS | NFC_DATA_SWAP_METHOD;
-		ग_लिखोl(पंचांगp, nfc->regs + NFC_REG_CMD);
+		writel(cnt, nfc->regs + NFC_REG_CNT);
+		tmp = NFC_DATA_TRANS | NFC_DATA_SWAP_METHOD;
+		writel(tmp, nfc->regs + NFC_REG_CMD);
 
-		/* Arbitrary limit क्रम polling mode */
-		अगर (cnt < 64)
+		/* Arbitrary limit for polling mode */
+		if (cnt < 64)
 			poll = true;
 
-		ret = sunxi_nfc_रुको_events(nfc, NFC_CMD_INT_FLAG, poll, 0);
-		अगर (ret)
-			अवरोध;
+		ret = sunxi_nfc_wait_events(nfc, NFC_CMD_INT_FLAG, poll, 0);
+		if (ret)
+			break;
 
-		अगर (buf)
-			स_नकल_fromio(buf + offs, nfc->regs + NFC_RAM0_BASE,
+		if (buf)
+			memcpy_fromio(buf + offs, nfc->regs + NFC_RAM0_BASE,
 				      cnt);
 		offs += cnt;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम sunxi_nfc_ग_लिखो_buf(काष्ठा nand_chip *nand, स्थिर uपूर्णांक8_t *buf,
-				पूर्णांक len)
-अणु
-	काष्ठा sunxi_nand_chip *sunxi_nand = to_sunxi_nand(nand);
-	काष्ठा sunxi_nfc *nfc = to_sunxi_nfc(sunxi_nand->nand.controller);
-	पूर्णांक ret;
-	पूर्णांक cnt;
-	पूर्णांक offs = 0;
-	u32 पंचांगp;
+static void sunxi_nfc_write_buf(struct nand_chip *nand, const uint8_t *buf,
+				int len)
+{
+	struct sunxi_nand_chip *sunxi_nand = to_sunxi_nand(nand);
+	struct sunxi_nfc *nfc = to_sunxi_nfc(sunxi_nand->nand.controller);
+	int ret;
+	int cnt;
+	int offs = 0;
+	u32 tmp;
 
-	जबतक (len > offs) अणु
+	while (len > offs) {
 		bool poll = false;
 
 		cnt = min(len - offs, NFC_SRAM_SIZE);
 
-		ret = sunxi_nfc_रुको_cmd_fअगरo_empty(nfc);
-		अगर (ret)
-			अवरोध;
+		ret = sunxi_nfc_wait_cmd_fifo_empty(nfc);
+		if (ret)
+			break;
 
-		ग_लिखोl(cnt, nfc->regs + NFC_REG_CNT);
-		स_नकल_toio(nfc->regs + NFC_RAM0_BASE, buf + offs, cnt);
-		पंचांगp = NFC_DATA_TRANS | NFC_DATA_SWAP_METHOD |
-		      NFC_ACCESS_सूची;
-		ग_लिखोl(पंचांगp, nfc->regs + NFC_REG_CMD);
+		writel(cnt, nfc->regs + NFC_REG_CNT);
+		memcpy_toio(nfc->regs + NFC_RAM0_BASE, buf + offs, cnt);
+		tmp = NFC_DATA_TRANS | NFC_DATA_SWAP_METHOD |
+		      NFC_ACCESS_DIR;
+		writel(tmp, nfc->regs + NFC_REG_CMD);
 
-		/* Arbitrary limit क्रम polling mode */
-		अगर (cnt < 64)
+		/* Arbitrary limit for polling mode */
+		if (cnt < 64)
 			poll = true;
 
-		ret = sunxi_nfc_रुको_events(nfc, NFC_CMD_INT_FLAG, poll, 0);
-		अगर (ret)
-			अवरोध;
+		ret = sunxi_nfc_wait_events(nfc, NFC_CMD_INT_FLAG, poll, 0);
+		if (ret)
+			break;
 
 		offs += cnt;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* These seed values have been extracted from Allwinner's BSP */
-अटल स्थिर u16 sunxi_nfc_अक्रमomizer_page_seeds[] = अणु
+static const u16 sunxi_nfc_randomizer_page_seeds[] = {
 	0x2b75, 0x0bd0, 0x5ca3, 0x62d1, 0x1c93, 0x07e9, 0x2162, 0x3a72,
 	0x0d67, 0x67f9, 0x1be7, 0x077d, 0x032f, 0x0dac, 0x2716, 0x2436,
 	0x7922, 0x1510, 0x3860, 0x5287, 0x480f, 0x4252, 0x1789, 0x5a2d,
@@ -537,18 +536,18 @@ err_unmap_buf:
 	0x4e3d, 0x1338, 0x50db, 0x454d, 0x764d, 0x40a3, 0x42e6, 0x262b,
 	0x2d2e, 0x1aea, 0x2e17, 0x173d, 0x3a6e, 0x71bf, 0x25f9, 0x0a5d,
 	0x7c57, 0x0fbe, 0x46ce, 0x4939, 0x6b17, 0x37bb, 0x3e91, 0x76db,
-पूर्ण;
+};
 
 /*
- * sunxi_nfc_अक्रमomizer_ecc512_seeds and sunxi_nfc_अक्रमomizer_ecc1024_seeds
+ * sunxi_nfc_randomizer_ecc512_seeds and sunxi_nfc_randomizer_ecc1024_seeds
  * have been generated using
- * sunxi_nfc_अक्रमomizer_step(seed, (step_size * 8) + 15), which is what
- * the अक्रमomizer engine करोes पूर्णांकernally beक्रमe de/scrambling OOB data.
+ * sunxi_nfc_randomizer_step(seed, (step_size * 8) + 15), which is what
+ * the randomizer engine does internally before de/scrambling OOB data.
  *
- * Those tables are अटलally defined to aव्योम calculating अक्रमomizer state
- * at runसमय.
+ * Those tables are statically defined to avoid calculating randomizer state
+ * at runtime.
  */
-अटल स्थिर u16 sunxi_nfc_अक्रमomizer_ecc512_seeds[] = अणु
+static const u16 sunxi_nfc_randomizer_ecc512_seeds[] = {
 	0x3346, 0x367f, 0x1f18, 0x769a, 0x4f64, 0x068c, 0x2ef1, 0x6b64,
 	0x28a9, 0x15d7, 0x30f8, 0x3659, 0x53db, 0x7c5f, 0x71d4, 0x4409,
 	0x26eb, 0x03cc, 0x655d, 0x47d4, 0x4daa, 0x0877, 0x712d, 0x3617,
@@ -565,9 +564,9 @@ err_unmap_buf:
 	0x1562, 0x014b, 0x5b05, 0x2756, 0x5a34, 0x13aa, 0x6cb5, 0x2c36,
 	0x5e72, 0x1306, 0x0861, 0x15ef, 0x1ee8, 0x5a37, 0x7ac4, 0x45dd,
 	0x44c4, 0x7266, 0x2f41, 0x3ccc, 0x045e, 0x7d40, 0x7c66, 0x0fa0,
-पूर्ण;
+};
 
-अटल स्थिर u16 sunxi_nfc_अक्रमomizer_ecc1024_seeds[] = अणु
+static const u16 sunxi_nfc_randomizer_ecc1024_seeds[] = {
 	0x2cf5, 0x35f1, 0x63a4, 0x5274, 0x2bd2, 0x778b, 0x7285, 0x32b6,
 	0x6a5c, 0x70d6, 0x757d, 0x6769, 0x5375, 0x1e81, 0x0cf3, 0x3982,
 	0x6787, 0x042a, 0x6c49, 0x1925, 0x56a8, 0x40a9, 0x063e, 0x7bd9,
@@ -584,958 +583,958 @@ err_unmap_buf:
 	0x5f2a, 0x47e2, 0x6528, 0x6eac, 0x196e, 0x6b96, 0x0450, 0x0179,
 	0x609c, 0x06e1, 0x4626, 0x42c7, 0x273e, 0x486f, 0x0705, 0x1601,
 	0x145b, 0x407e, 0x062b, 0x57a5, 0x53f9, 0x5659, 0x4410, 0x3ccd,
-पूर्ण;
+};
 
-अटल u16 sunxi_nfc_अक्रमomizer_step(u16 state, पूर्णांक count)
-अणु
+static u16 sunxi_nfc_randomizer_step(u16 state, int count)
+{
 	state &= 0x7fff;
 
 	/*
 	 * This loop is just a simple implementation of a Fibonacci LFSR using
 	 * the x16 + x15 + 1 polynomial.
 	 */
-	जबतक (count--)
+	while (count--)
 		state = ((state >> 1) |
 			 (((state ^ (state >> 1)) & 1) << 14)) & 0x7fff;
 
-	वापस state;
-पूर्ण
+	return state;
+}
 
-अटल u16 sunxi_nfc_अक्रमomizer_state(काष्ठा nand_chip *nand, पूर्णांक page,
+static u16 sunxi_nfc_randomizer_state(struct nand_chip *nand, int page,
 				      bool ecc)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(nand);
-	स्थिर u16 *seeds = sunxi_nfc_अक्रमomizer_page_seeds;
-	पूर्णांक mod = mtd_भाग_by_ws(mtd->erasesize, mtd);
+{
+	struct mtd_info *mtd = nand_to_mtd(nand);
+	const u16 *seeds = sunxi_nfc_randomizer_page_seeds;
+	int mod = mtd_div_by_ws(mtd->erasesize, mtd);
 
-	अगर (mod > ARRAY_SIZE(sunxi_nfc_अक्रमomizer_page_seeds))
-		mod = ARRAY_SIZE(sunxi_nfc_अक्रमomizer_page_seeds);
+	if (mod > ARRAY_SIZE(sunxi_nfc_randomizer_page_seeds))
+		mod = ARRAY_SIZE(sunxi_nfc_randomizer_page_seeds);
 
-	अगर (ecc) अणु
-		अगर (mtd->ecc_step_size == 512)
-			seeds = sunxi_nfc_अक्रमomizer_ecc512_seeds;
-		अन्यथा
-			seeds = sunxi_nfc_अक्रमomizer_ecc1024_seeds;
-	पूर्ण
+	if (ecc) {
+		if (mtd->ecc_step_size == 512)
+			seeds = sunxi_nfc_randomizer_ecc512_seeds;
+		else
+			seeds = sunxi_nfc_randomizer_ecc1024_seeds;
+	}
 
-	वापस seeds[page % mod];
-पूर्ण
+	return seeds[page % mod];
+}
 
-अटल व्योम sunxi_nfc_अक्रमomizer_config(काष्ठा nand_chip *nand, पूर्णांक page,
+static void sunxi_nfc_randomizer_config(struct nand_chip *nand, int page,
 					bool ecc)
-अणु
-	काष्ठा sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
-	u32 ecc_ctl = पढ़ोl(nfc->regs + NFC_REG_ECC_CTL);
+{
+	struct sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
+	u32 ecc_ctl = readl(nfc->regs + NFC_REG_ECC_CTL);
 	u16 state;
 
-	अगर (!(nand->options & न_अंकD_NEED_SCRAMBLING))
-		वापस;
+	if (!(nand->options & NAND_NEED_SCRAMBLING))
+		return;
 
-	ecc_ctl = पढ़ोl(nfc->regs + NFC_REG_ECC_CTL);
-	state = sunxi_nfc_अक्रमomizer_state(nand, page, ecc);
-	ecc_ctl = पढ़ोl(nfc->regs + NFC_REG_ECC_CTL) & ~NFC_RANDOM_SEED_MSK;
-	ग_लिखोl(ecc_ctl | NFC_RANDOM_SEED(state), nfc->regs + NFC_REG_ECC_CTL);
-पूर्ण
+	ecc_ctl = readl(nfc->regs + NFC_REG_ECC_CTL);
+	state = sunxi_nfc_randomizer_state(nand, page, ecc);
+	ecc_ctl = readl(nfc->regs + NFC_REG_ECC_CTL) & ~NFC_RANDOM_SEED_MSK;
+	writel(ecc_ctl | NFC_RANDOM_SEED(state), nfc->regs + NFC_REG_ECC_CTL);
+}
 
-अटल व्योम sunxi_nfc_अक्रमomizer_enable(काष्ठा nand_chip *nand)
-अणु
-	काष्ठा sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
+static void sunxi_nfc_randomizer_enable(struct nand_chip *nand)
+{
+	struct sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
 
-	अगर (!(nand->options & न_अंकD_NEED_SCRAMBLING))
-		वापस;
+	if (!(nand->options & NAND_NEED_SCRAMBLING))
+		return;
 
-	ग_लिखोl(पढ़ोl(nfc->regs + NFC_REG_ECC_CTL) | NFC_RANDOM_EN,
+	writel(readl(nfc->regs + NFC_REG_ECC_CTL) | NFC_RANDOM_EN,
 	       nfc->regs + NFC_REG_ECC_CTL);
-पूर्ण
+}
 
-अटल व्योम sunxi_nfc_अक्रमomizer_disable(काष्ठा nand_chip *nand)
-अणु
-	काष्ठा sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
+static void sunxi_nfc_randomizer_disable(struct nand_chip *nand)
+{
+	struct sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
 
-	अगर (!(nand->options & न_अंकD_NEED_SCRAMBLING))
-		वापस;
+	if (!(nand->options & NAND_NEED_SCRAMBLING))
+		return;
 
-	ग_लिखोl(पढ़ोl(nfc->regs + NFC_REG_ECC_CTL) & ~NFC_RANDOM_EN,
+	writel(readl(nfc->regs + NFC_REG_ECC_CTL) & ~NFC_RANDOM_EN,
 	       nfc->regs + NFC_REG_ECC_CTL);
-पूर्ण
+}
 
-अटल व्योम sunxi_nfc_अक्रमomize_bbm(काष्ठा nand_chip *nand, पूर्णांक page, u8 *bbm)
-अणु
-	u16 state = sunxi_nfc_अक्रमomizer_state(nand, page, true);
+static void sunxi_nfc_randomize_bbm(struct nand_chip *nand, int page, u8 *bbm)
+{
+	u16 state = sunxi_nfc_randomizer_state(nand, page, true);
 
 	bbm[0] ^= state;
-	bbm[1] ^= sunxi_nfc_अक्रमomizer_step(state, 8);
-पूर्ण
+	bbm[1] ^= sunxi_nfc_randomizer_step(state, 8);
+}
 
-अटल व्योम sunxi_nfc_अक्रमomizer_ग_लिखो_buf(काष्ठा nand_chip *nand,
-					   स्थिर uपूर्णांक8_t *buf, पूर्णांक len,
-					   bool ecc, पूर्णांक page)
-अणु
-	sunxi_nfc_अक्रमomizer_config(nand, page, ecc);
-	sunxi_nfc_अक्रमomizer_enable(nand);
-	sunxi_nfc_ग_लिखो_buf(nand, buf, len);
-	sunxi_nfc_अक्रमomizer_disable(nand);
-पूर्ण
+static void sunxi_nfc_randomizer_write_buf(struct nand_chip *nand,
+					   const uint8_t *buf, int len,
+					   bool ecc, int page)
+{
+	sunxi_nfc_randomizer_config(nand, page, ecc);
+	sunxi_nfc_randomizer_enable(nand);
+	sunxi_nfc_write_buf(nand, buf, len);
+	sunxi_nfc_randomizer_disable(nand);
+}
 
-अटल व्योम sunxi_nfc_अक्रमomizer_पढ़ो_buf(काष्ठा nand_chip *nand, uपूर्णांक8_t *buf,
-					  पूर्णांक len, bool ecc, पूर्णांक page)
-अणु
-	sunxi_nfc_अक्रमomizer_config(nand, page, ecc);
-	sunxi_nfc_अक्रमomizer_enable(nand);
-	sunxi_nfc_पढ़ो_buf(nand, buf, len);
-	sunxi_nfc_अक्रमomizer_disable(nand);
-पूर्ण
+static void sunxi_nfc_randomizer_read_buf(struct nand_chip *nand, uint8_t *buf,
+					  int len, bool ecc, int page)
+{
+	sunxi_nfc_randomizer_config(nand, page, ecc);
+	sunxi_nfc_randomizer_enable(nand);
+	sunxi_nfc_read_buf(nand, buf, len);
+	sunxi_nfc_randomizer_disable(nand);
+}
 
-अटल व्योम sunxi_nfc_hw_ecc_enable(काष्ठा nand_chip *nand)
-अणु
-	काष्ठा sunxi_nand_chip *sunxi_nand = to_sunxi_nand(nand);
-	काष्ठा sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
+static void sunxi_nfc_hw_ecc_enable(struct nand_chip *nand)
+{
+	struct sunxi_nand_chip *sunxi_nand = to_sunxi_nand(nand);
+	struct sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
 	u32 ecc_ctl;
 
-	ecc_ctl = पढ़ोl(nfc->regs + NFC_REG_ECC_CTL);
+	ecc_ctl = readl(nfc->regs + NFC_REG_ECC_CTL);
 	ecc_ctl &= ~(NFC_ECC_MODE_MSK | NFC_ECC_PIPELINE |
 		     NFC_ECC_BLOCK_SIZE_MSK);
 	ecc_ctl |= NFC_ECC_EN | NFC_ECC_MODE(sunxi_nand->ecc->mode) |
 		   NFC_ECC_EXCEPTION | NFC_ECC_PIPELINE;
 
-	अगर (nand->ecc.size == 512)
+	if (nand->ecc.size == 512)
 		ecc_ctl |= NFC_ECC_BLOCK_512;
 
-	ग_लिखोl(ecc_ctl, nfc->regs + NFC_REG_ECC_CTL);
-पूर्ण
+	writel(ecc_ctl, nfc->regs + NFC_REG_ECC_CTL);
+}
 
-अटल व्योम sunxi_nfc_hw_ecc_disable(काष्ठा nand_chip *nand)
-अणु
-	काष्ठा sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
+static void sunxi_nfc_hw_ecc_disable(struct nand_chip *nand)
+{
+	struct sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
 
-	ग_लिखोl(पढ़ोl(nfc->regs + NFC_REG_ECC_CTL) & ~NFC_ECC_EN,
+	writel(readl(nfc->regs + NFC_REG_ECC_CTL) & ~NFC_ECC_EN,
 	       nfc->regs + NFC_REG_ECC_CTL);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम sunxi_nfc_user_data_to_buf(u32 user_data, u8 *buf)
-अणु
+static inline void sunxi_nfc_user_data_to_buf(u32 user_data, u8 *buf)
+{
 	buf[0] = user_data;
 	buf[1] = user_data >> 8;
 	buf[2] = user_data >> 16;
 	buf[3] = user_data >> 24;
-पूर्ण
+}
 
-अटल अंतरभूत u32 sunxi_nfc_buf_to_user_data(स्थिर u8 *buf)
-अणु
-	वापस buf[0] | (buf[1] << 8) | (buf[2] << 16) | (buf[3] << 24);
-पूर्ण
+static inline u32 sunxi_nfc_buf_to_user_data(const u8 *buf)
+{
+	return buf[0] | (buf[1] << 8) | (buf[2] << 16) | (buf[3] << 24);
+}
 
-अटल व्योम sunxi_nfc_hw_ecc_get_prot_oob_bytes(काष्ठा nand_chip *nand, u8 *oob,
-						पूर्णांक step, bool bbm, पूर्णांक page)
-अणु
-	काष्ठा sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
+static void sunxi_nfc_hw_ecc_get_prot_oob_bytes(struct nand_chip *nand, u8 *oob,
+						int step, bool bbm, int page)
+{
+	struct sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
 
-	sunxi_nfc_user_data_to_buf(पढ़ोl(nfc->regs + NFC_REG_USER_DATA(step)),
+	sunxi_nfc_user_data_to_buf(readl(nfc->regs + NFC_REG_USER_DATA(step)),
 				   oob);
 
-	/* De-अक्रमomize the Bad Block Marker. */
-	अगर (bbm && (nand->options & न_अंकD_NEED_SCRAMBLING))
-		sunxi_nfc_अक्रमomize_bbm(nand, page, oob);
-पूर्ण
+	/* De-randomize the Bad Block Marker. */
+	if (bbm && (nand->options & NAND_NEED_SCRAMBLING))
+		sunxi_nfc_randomize_bbm(nand, page, oob);
+}
 
-अटल व्योम sunxi_nfc_hw_ecc_set_prot_oob_bytes(काष्ठा nand_chip *nand,
-						स्थिर u8 *oob, पूर्णांक step,
-						bool bbm, पूर्णांक page)
-अणु
-	काष्ठा sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
+static void sunxi_nfc_hw_ecc_set_prot_oob_bytes(struct nand_chip *nand,
+						const u8 *oob, int step,
+						bool bbm, int page)
+{
+	struct sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
 	u8 user_data[4];
 
-	/* Ranकरोmize the Bad Block Marker. */
-	अगर (bbm && (nand->options & न_अंकD_NEED_SCRAMBLING)) अणु
-		स_नकल(user_data, oob, माप(user_data));
-		sunxi_nfc_अक्रमomize_bbm(nand, page, user_data);
+	/* Randomize the Bad Block Marker. */
+	if (bbm && (nand->options & NAND_NEED_SCRAMBLING)) {
+		memcpy(user_data, oob, sizeof(user_data));
+		sunxi_nfc_randomize_bbm(nand, page, user_data);
 		oob = user_data;
-	पूर्ण
+	}
 
-	ग_लिखोl(sunxi_nfc_buf_to_user_data(oob),
+	writel(sunxi_nfc_buf_to_user_data(oob),
 	       nfc->regs + NFC_REG_USER_DATA(step));
-पूर्ण
+}
 
-अटल व्योम sunxi_nfc_hw_ecc_update_stats(काष्ठा nand_chip *nand,
-					  अचिन्हित पूर्णांक *max_bitflips, पूर्णांक ret)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(nand);
+static void sunxi_nfc_hw_ecc_update_stats(struct nand_chip *nand,
+					  unsigned int *max_bitflips, int ret)
+{
+	struct mtd_info *mtd = nand_to_mtd(nand);
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		mtd->ecc_stats.failed++;
-	पूर्ण अन्यथा अणु
+	} else {
 		mtd->ecc_stats.corrected += ret;
-		*max_bitflips = max_t(अचिन्हित पूर्णांक, *max_bitflips, ret);
-	पूर्ण
-पूर्ण
+		*max_bitflips = max_t(unsigned int, *max_bitflips, ret);
+	}
+}
 
-अटल पूर्णांक sunxi_nfc_hw_ecc_correct(काष्ठा nand_chip *nand, u8 *data, u8 *oob,
-				    पूर्णांक step, u32 status, bool *erased)
-अणु
-	काष्ठा sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
-	काष्ठा nand_ecc_ctrl *ecc = &nand->ecc;
-	u32 पंचांगp;
+static int sunxi_nfc_hw_ecc_correct(struct nand_chip *nand, u8 *data, u8 *oob,
+				    int step, u32 status, bool *erased)
+{
+	struct sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
+	struct nand_ecc_ctrl *ecc = &nand->ecc;
+	u32 tmp;
 
 	*erased = false;
 
-	अगर (status & NFC_ECC_ERR(step))
-		वापस -EBADMSG;
+	if (status & NFC_ECC_ERR(step))
+		return -EBADMSG;
 
-	अगर (status & NFC_ECC_PAT_FOUND(step)) अणु
+	if (status & NFC_ECC_PAT_FOUND(step)) {
 		u8 pattern;
 
-		अगर (unlikely(!(पढ़ोl(nfc->regs + NFC_REG_PAT_ID) & 0x1))) अणु
+		if (unlikely(!(readl(nfc->regs + NFC_REG_PAT_ID) & 0x1))) {
 			pattern = 0x0;
-		पूर्ण अन्यथा अणु
+		} else {
 			pattern = 0xff;
 			*erased = true;
-		पूर्ण
+		}
 
-		अगर (data)
-			स_रखो(data, pattern, ecc->size);
+		if (data)
+			memset(data, pattern, ecc->size);
 
-		अगर (oob)
-			स_रखो(oob, pattern, ecc->bytes + 4);
+		if (oob)
+			memset(oob, pattern, ecc->bytes + 4);
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	पंचांगp = पढ़ोl(nfc->regs + NFC_REG_ECC_ERR_CNT(step));
+	tmp = readl(nfc->regs + NFC_REG_ECC_ERR_CNT(step));
 
-	वापस NFC_ECC_ERR_CNT(step, पंचांगp);
-पूर्ण
+	return NFC_ECC_ERR_CNT(step, tmp);
+}
 
-अटल पूर्णांक sunxi_nfc_hw_ecc_पढ़ो_chunk(काष्ठा nand_chip *nand,
-				       u8 *data, पूर्णांक data_off,
-				       u8 *oob, पूर्णांक oob_off,
-				       पूर्णांक *cur_off,
-				       अचिन्हित पूर्णांक *max_bitflips,
-				       bool bbm, bool oob_required, पूर्णांक page)
-अणु
-	काष्ठा sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
-	काष्ठा nand_ecc_ctrl *ecc = &nand->ecc;
-	पूर्णांक raw_mode = 0;
+static int sunxi_nfc_hw_ecc_read_chunk(struct nand_chip *nand,
+				       u8 *data, int data_off,
+				       u8 *oob, int oob_off,
+				       int *cur_off,
+				       unsigned int *max_bitflips,
+				       bool bbm, bool oob_required, int page)
+{
+	struct sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
+	struct nand_ecc_ctrl *ecc = &nand->ecc;
+	int raw_mode = 0;
 	bool erased;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (*cur_off != data_off)
-		nand_change_पढ़ो_column_op(nand, data_off, शून्य, 0, false);
+	if (*cur_off != data_off)
+		nand_change_read_column_op(nand, data_off, NULL, 0, false);
 
-	sunxi_nfc_अक्रमomizer_पढ़ो_buf(nand, शून्य, ecc->size, false, page);
+	sunxi_nfc_randomizer_read_buf(nand, NULL, ecc->size, false, page);
 
-	अगर (data_off + ecc->size != oob_off)
-		nand_change_पढ़ो_column_op(nand, oob_off, शून्य, 0, false);
+	if (data_off + ecc->size != oob_off)
+		nand_change_read_column_op(nand, oob_off, NULL, 0, false);
 
-	ret = sunxi_nfc_रुको_cmd_fअगरo_empty(nfc);
-	अगर (ret)
-		वापस ret;
+	ret = sunxi_nfc_wait_cmd_fifo_empty(nfc);
+	if (ret)
+		return ret;
 
-	sunxi_nfc_अक्रमomizer_enable(nand);
-	ग_लिखोl(NFC_DATA_TRANS | NFC_DATA_SWAP_METHOD | NFC_ECC_OP,
+	sunxi_nfc_randomizer_enable(nand);
+	writel(NFC_DATA_TRANS | NFC_DATA_SWAP_METHOD | NFC_ECC_OP,
 	       nfc->regs + NFC_REG_CMD);
 
-	ret = sunxi_nfc_रुको_events(nfc, NFC_CMD_INT_FLAG, false, 0);
-	sunxi_nfc_अक्रमomizer_disable(nand);
-	अगर (ret)
-		वापस ret;
+	ret = sunxi_nfc_wait_events(nfc, NFC_CMD_INT_FLAG, false, 0);
+	sunxi_nfc_randomizer_disable(nand);
+	if (ret)
+		return ret;
 
 	*cur_off = oob_off + ecc->bytes + 4;
 
-	ret = sunxi_nfc_hw_ecc_correct(nand, data, oob_required ? oob : शून्य, 0,
-				       पढ़ोl(nfc->regs + NFC_REG_ECC_ST),
+	ret = sunxi_nfc_hw_ecc_correct(nand, data, oob_required ? oob : NULL, 0,
+				       readl(nfc->regs + NFC_REG_ECC_ST),
 				       &erased);
-	अगर (erased)
-		वापस 1;
+	if (erased)
+		return 1;
 
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		/*
-		 * Re-पढ़ो the data with the अक्रमomizer disabled to identअगरy
+		 * Re-read the data with the randomizer disabled to identify
 		 * bitflips in erased pages.
 		 */
-		अगर (nand->options & न_अंकD_NEED_SCRAMBLING)
-			nand_change_पढ़ो_column_op(nand, data_off, data,
+		if (nand->options & NAND_NEED_SCRAMBLING)
+			nand_change_read_column_op(nand, data_off, data,
 						   ecc->size, false);
-		अन्यथा
-			स_नकल_fromio(data, nfc->regs + NFC_RAM0_BASE,
+		else
+			memcpy_fromio(data, nfc->regs + NFC_RAM0_BASE,
 				      ecc->size);
 
-		nand_change_पढ़ो_column_op(nand, oob_off, oob, ecc->bytes + 4,
+		nand_change_read_column_op(nand, oob_off, oob, ecc->bytes + 4,
 					   false);
 
 		ret = nand_check_erased_ecc_chunk(data,	ecc->size,
 						  oob, ecc->bytes + 4,
-						  शून्य, 0, ecc->strength);
-		अगर (ret >= 0)
+						  NULL, 0, ecc->strength);
+		if (ret >= 0)
 			raw_mode = 1;
-	पूर्ण अन्यथा अणु
-		स_नकल_fromio(data, nfc->regs + NFC_RAM0_BASE, ecc->size);
+	} else {
+		memcpy_fromio(data, nfc->regs + NFC_RAM0_BASE, ecc->size);
 
-		अगर (oob_required) अणु
-			nand_change_पढ़ो_column_op(nand, oob_off, शून्य, 0,
+		if (oob_required) {
+			nand_change_read_column_op(nand, oob_off, NULL, 0,
 						   false);
-			sunxi_nfc_अक्रमomizer_पढ़ो_buf(nand, oob, ecc->bytes + 4,
+			sunxi_nfc_randomizer_read_buf(nand, oob, ecc->bytes + 4,
 						      true, page);
 
 			sunxi_nfc_hw_ecc_get_prot_oob_bytes(nand, oob, 0,
 							    bbm, page);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	sunxi_nfc_hw_ecc_update_stats(nand, max_bitflips, ret);
 
-	वापस raw_mode;
-पूर्ण
+	return raw_mode;
+}
 
-अटल व्योम sunxi_nfc_hw_ecc_पढ़ो_extra_oob(काष्ठा nand_chip *nand,
-					    u8 *oob, पूर्णांक *cur_off,
-					    bool अक्रमomize, पूर्णांक page)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(nand);
-	काष्ठा nand_ecc_ctrl *ecc = &nand->ecc;
-	पूर्णांक offset = ((ecc->bytes + 4) * ecc->steps);
-	पूर्णांक len = mtd->oobsize - offset;
+static void sunxi_nfc_hw_ecc_read_extra_oob(struct nand_chip *nand,
+					    u8 *oob, int *cur_off,
+					    bool randomize, int page)
+{
+	struct mtd_info *mtd = nand_to_mtd(nand);
+	struct nand_ecc_ctrl *ecc = &nand->ecc;
+	int offset = ((ecc->bytes + 4) * ecc->steps);
+	int len = mtd->oobsize - offset;
 
-	अगर (len <= 0)
-		वापस;
+	if (len <= 0)
+		return;
 
-	अगर (!cur_off || *cur_off != offset)
-		nand_change_पढ़ो_column_op(nand, mtd->ग_लिखोsize, शून्य, 0,
+	if (!cur_off || *cur_off != offset)
+		nand_change_read_column_op(nand, mtd->writesize, NULL, 0,
 					   false);
 
-	अगर (!अक्रमomize)
-		sunxi_nfc_पढ़ो_buf(nand, oob + offset, len);
-	अन्यथा
-		sunxi_nfc_अक्रमomizer_पढ़ो_buf(nand, oob + offset, len,
+	if (!randomize)
+		sunxi_nfc_read_buf(nand, oob + offset, len);
+	else
+		sunxi_nfc_randomizer_read_buf(nand, oob + offset, len,
 					      false, page);
 
-	अगर (cur_off)
-		*cur_off = mtd->oobsize + mtd->ग_लिखोsize;
-पूर्ण
+	if (cur_off)
+		*cur_off = mtd->oobsize + mtd->writesize;
+}
 
-अटल पूर्णांक sunxi_nfc_hw_ecc_पढ़ो_chunks_dma(काष्ठा nand_chip *nand, uपूर्णांक8_t *buf,
-					    पूर्णांक oob_required, पूर्णांक page,
-					    पूर्णांक nchunks)
-अणु
-	bool अक्रमomized = nand->options & न_अंकD_NEED_SCRAMBLING;
-	काष्ठा sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
-	काष्ठा mtd_info *mtd = nand_to_mtd(nand);
-	काष्ठा nand_ecc_ctrl *ecc = &nand->ecc;
-	अचिन्हित पूर्णांक max_bitflips = 0;
-	पूर्णांक ret, i, raw_mode = 0;
-	काष्ठा scatterlist sg;
-	u32 status, रुको;
+static int sunxi_nfc_hw_ecc_read_chunks_dma(struct nand_chip *nand, uint8_t *buf,
+					    int oob_required, int page,
+					    int nchunks)
+{
+	bool randomized = nand->options & NAND_NEED_SCRAMBLING;
+	struct sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
+	struct mtd_info *mtd = nand_to_mtd(nand);
+	struct nand_ecc_ctrl *ecc = &nand->ecc;
+	unsigned int max_bitflips = 0;
+	int ret, i, raw_mode = 0;
+	struct scatterlist sg;
+	u32 status, wait;
 
-	ret = sunxi_nfc_रुको_cmd_fअगरo_empty(nfc);
-	अगर (ret)
-		वापस ret;
+	ret = sunxi_nfc_wait_cmd_fifo_empty(nfc);
+	if (ret)
+		return ret;
 
 	ret = sunxi_nfc_dma_op_prepare(nfc, buf, ecc->size, nchunks,
 				       DMA_FROM_DEVICE, &sg);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	sunxi_nfc_hw_ecc_enable(nand);
-	sunxi_nfc_अक्रमomizer_config(nand, page, false);
-	sunxi_nfc_अक्रमomizer_enable(nand);
+	sunxi_nfc_randomizer_config(nand, page, false);
+	sunxi_nfc_randomizer_enable(nand);
 
-	ग_लिखोl((न_अंकD_CMD_RNDOUTSTART << 16) | (न_अंकD_CMD_RNDOUT << 8) |
-	       न_अंकD_CMD_READSTART, nfc->regs + NFC_REG_RCMD_SET);
+	writel((NAND_CMD_RNDOUTSTART << 16) | (NAND_CMD_RNDOUT << 8) |
+	       NAND_CMD_READSTART, nfc->regs + NFC_REG_RCMD_SET);
 
-	रुको = NFC_CMD_INT_FLAG;
+	wait = NFC_CMD_INT_FLAG;
 
-	अगर (nfc->caps->has_mdma)
-		रुको |= NFC_DMA_INT_FLAG;
-	अन्यथा
+	if (nfc->caps->has_mdma)
+		wait |= NFC_DMA_INT_FLAG;
+	else
 		dma_async_issue_pending(nfc->dmac);
 
-	ग_लिखोl(NFC_PAGE_OP | NFC_DATA_SWAP_METHOD | NFC_DATA_TRANS,
+	writel(NFC_PAGE_OP | NFC_DATA_SWAP_METHOD | NFC_DATA_TRANS,
 	       nfc->regs + NFC_REG_CMD);
 
-	ret = sunxi_nfc_रुको_events(nfc, रुको, false, 0);
-	अगर (ret && !nfc->caps->has_mdma)
+	ret = sunxi_nfc_wait_events(nfc, wait, false, 0);
+	if (ret && !nfc->caps->has_mdma)
 		dmaengine_terminate_all(nfc->dmac);
 
-	sunxi_nfc_अक्रमomizer_disable(nand);
+	sunxi_nfc_randomizer_disable(nand);
 	sunxi_nfc_hw_ecc_disable(nand);
 
 	sunxi_nfc_dma_op_cleanup(nfc, DMA_FROM_DEVICE, &sg);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	status = पढ़ोl(nfc->regs + NFC_REG_ECC_ST);
+	status = readl(nfc->regs + NFC_REG_ECC_ST);
 
-	क्रम (i = 0; i < nchunks; i++) अणु
-		पूर्णांक data_off = i * ecc->size;
-		पूर्णांक oob_off = i * (ecc->bytes + 4);
+	for (i = 0; i < nchunks; i++) {
+		int data_off = i * ecc->size;
+		int oob_off = i * (ecc->bytes + 4);
 		u8 *data = buf + data_off;
 		u8 *oob = nand->oob_poi + oob_off;
 		bool erased;
 
-		ret = sunxi_nfc_hw_ecc_correct(nand, अक्रमomized ? data : शून्य,
-					       oob_required ? oob : शून्य,
+		ret = sunxi_nfc_hw_ecc_correct(nand, randomized ? data : NULL,
+					       oob_required ? oob : NULL,
 					       i, status, &erased);
 
 		/* ECC errors are handled in the second loop. */
-		अगर (ret < 0)
-			जारी;
+		if (ret < 0)
+			continue;
 
-		अगर (oob_required && !erased) अणु
+		if (oob_required && !erased) {
 			/* TODO: use DMA to retrieve OOB */
-			nand_change_पढ़ो_column_op(nand,
-						   mtd->ग_लिखोsize + oob_off,
+			nand_change_read_column_op(nand,
+						   mtd->writesize + oob_off,
 						   oob, ecc->bytes + 4, false);
 
 			sunxi_nfc_hw_ecc_get_prot_oob_bytes(nand, oob, i,
 							    !i, page);
-		पूर्ण
+		}
 
-		अगर (erased)
+		if (erased)
 			raw_mode = 1;
 
 		sunxi_nfc_hw_ecc_update_stats(nand, &max_bitflips, ret);
-	पूर्ण
+	}
 
-	अगर (status & NFC_ECC_ERR_MSK) अणु
-		क्रम (i = 0; i < nchunks; i++) अणु
-			पूर्णांक data_off = i * ecc->size;
-			पूर्णांक oob_off = i * (ecc->bytes + 4);
+	if (status & NFC_ECC_ERR_MSK) {
+		for (i = 0; i < nchunks; i++) {
+			int data_off = i * ecc->size;
+			int oob_off = i * (ecc->bytes + 4);
 			u8 *data = buf + data_off;
 			u8 *oob = nand->oob_poi + oob_off;
 
-			अगर (!(status & NFC_ECC_ERR(i)))
-				जारी;
+			if (!(status & NFC_ECC_ERR(i)))
+				continue;
 
 			/*
-			 * Re-पढ़ो the data with the अक्रमomizer disabled to
-			 * identअगरy bitflips in erased pages.
-			 * TODO: use DMA to पढ़ो page in raw mode
+			 * Re-read the data with the randomizer disabled to
+			 * identify bitflips in erased pages.
+			 * TODO: use DMA to read page in raw mode
 			 */
-			अगर (अक्रमomized)
-				nand_change_पढ़ो_column_op(nand, data_off,
+			if (randomized)
+				nand_change_read_column_op(nand, data_off,
 							   data, ecc->size,
 							   false);
 
 			/* TODO: use DMA to retrieve OOB */
-			nand_change_पढ़ो_column_op(nand,
-						   mtd->ग_लिखोsize + oob_off,
+			nand_change_read_column_op(nand,
+						   mtd->writesize + oob_off,
 						   oob, ecc->bytes + 4, false);
 
 			ret = nand_check_erased_ecc_chunk(data,	ecc->size,
 							  oob, ecc->bytes + 4,
-							  शून्य, 0,
+							  NULL, 0,
 							  ecc->strength);
-			अगर (ret >= 0)
+			if (ret >= 0)
 				raw_mode = 1;
 
 			sunxi_nfc_hw_ecc_update_stats(nand, &max_bitflips, ret);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (oob_required)
-		sunxi_nfc_hw_ecc_पढ़ो_extra_oob(nand, nand->oob_poi,
-						शून्य, !raw_mode,
+	if (oob_required)
+		sunxi_nfc_hw_ecc_read_extra_oob(nand, nand->oob_poi,
+						NULL, !raw_mode,
 						page);
 
-	वापस max_bitflips;
-पूर्ण
+	return max_bitflips;
+}
 
-अटल पूर्णांक sunxi_nfc_hw_ecc_ग_लिखो_chunk(काष्ठा nand_chip *nand,
-					स्थिर u8 *data, पूर्णांक data_off,
-					स्थिर u8 *oob, पूर्णांक oob_off,
-					पूर्णांक *cur_off, bool bbm,
-					पूर्णांक page)
-अणु
-	काष्ठा sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
-	काष्ठा nand_ecc_ctrl *ecc = &nand->ecc;
-	पूर्णांक ret;
+static int sunxi_nfc_hw_ecc_write_chunk(struct nand_chip *nand,
+					const u8 *data, int data_off,
+					const u8 *oob, int oob_off,
+					int *cur_off, bool bbm,
+					int page)
+{
+	struct sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
+	struct nand_ecc_ctrl *ecc = &nand->ecc;
+	int ret;
 
-	अगर (data_off != *cur_off)
-		nand_change_ग_लिखो_column_op(nand, data_off, शून्य, 0, false);
+	if (data_off != *cur_off)
+		nand_change_write_column_op(nand, data_off, NULL, 0, false);
 
-	sunxi_nfc_अक्रमomizer_ग_लिखो_buf(nand, data, ecc->size, false, page);
+	sunxi_nfc_randomizer_write_buf(nand, data, ecc->size, false, page);
 
-	अगर (data_off + ecc->size != oob_off)
-		nand_change_ग_लिखो_column_op(nand, oob_off, शून्य, 0, false);
+	if (data_off + ecc->size != oob_off)
+		nand_change_write_column_op(nand, oob_off, NULL, 0, false);
 
-	ret = sunxi_nfc_रुको_cmd_fअगरo_empty(nfc);
-	अगर (ret)
-		वापस ret;
+	ret = sunxi_nfc_wait_cmd_fifo_empty(nfc);
+	if (ret)
+		return ret;
 
-	sunxi_nfc_अक्रमomizer_enable(nand);
+	sunxi_nfc_randomizer_enable(nand);
 	sunxi_nfc_hw_ecc_set_prot_oob_bytes(nand, oob, 0, bbm, page);
 
-	ग_लिखोl(NFC_DATA_TRANS | NFC_DATA_SWAP_METHOD |
-	       NFC_ACCESS_सूची | NFC_ECC_OP,
+	writel(NFC_DATA_TRANS | NFC_DATA_SWAP_METHOD |
+	       NFC_ACCESS_DIR | NFC_ECC_OP,
 	       nfc->regs + NFC_REG_CMD);
 
-	ret = sunxi_nfc_रुको_events(nfc, NFC_CMD_INT_FLAG, false, 0);
-	sunxi_nfc_अक्रमomizer_disable(nand);
-	अगर (ret)
-		वापस ret;
+	ret = sunxi_nfc_wait_events(nfc, NFC_CMD_INT_FLAG, false, 0);
+	sunxi_nfc_randomizer_disable(nand);
+	if (ret)
+		return ret;
 
 	*cur_off = oob_off + ecc->bytes + 4;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sunxi_nfc_hw_ecc_ग_लिखो_extra_oob(काष्ठा nand_chip *nand,
-					     u8 *oob, पूर्णांक *cur_off,
-					     पूर्णांक page)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(nand);
-	काष्ठा nand_ecc_ctrl *ecc = &nand->ecc;
-	पूर्णांक offset = ((ecc->bytes + 4) * ecc->steps);
-	पूर्णांक len = mtd->oobsize - offset;
+static void sunxi_nfc_hw_ecc_write_extra_oob(struct nand_chip *nand,
+					     u8 *oob, int *cur_off,
+					     int page)
+{
+	struct mtd_info *mtd = nand_to_mtd(nand);
+	struct nand_ecc_ctrl *ecc = &nand->ecc;
+	int offset = ((ecc->bytes + 4) * ecc->steps);
+	int len = mtd->oobsize - offset;
 
-	अगर (len <= 0)
-		वापस;
+	if (len <= 0)
+		return;
 
-	अगर (!cur_off || *cur_off != offset)
-		nand_change_ग_लिखो_column_op(nand, offset + mtd->ग_लिखोsize,
-					    शून्य, 0, false);
+	if (!cur_off || *cur_off != offset)
+		nand_change_write_column_op(nand, offset + mtd->writesize,
+					    NULL, 0, false);
 
-	sunxi_nfc_अक्रमomizer_ग_लिखो_buf(nand, oob + offset, len, false, page);
+	sunxi_nfc_randomizer_write_buf(nand, oob + offset, len, false, page);
 
-	अगर (cur_off)
-		*cur_off = mtd->oobsize + mtd->ग_लिखोsize;
-पूर्ण
+	if (cur_off)
+		*cur_off = mtd->oobsize + mtd->writesize;
+}
 
-अटल पूर्णांक sunxi_nfc_hw_ecc_पढ़ो_page(काष्ठा nand_chip *nand, uपूर्णांक8_t *buf,
-				      पूर्णांक oob_required, पूर्णांक page)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(nand);
-	काष्ठा nand_ecc_ctrl *ecc = &nand->ecc;
-	अचिन्हित पूर्णांक max_bitflips = 0;
-	पूर्णांक ret, i, cur_off = 0;
+static int sunxi_nfc_hw_ecc_read_page(struct nand_chip *nand, uint8_t *buf,
+				      int oob_required, int page)
+{
+	struct mtd_info *mtd = nand_to_mtd(nand);
+	struct nand_ecc_ctrl *ecc = &nand->ecc;
+	unsigned int max_bitflips = 0;
+	int ret, i, cur_off = 0;
 	bool raw_mode = false;
 
 	sunxi_nfc_select_chip(nand, nand->cur_cs);
 
-	nand_पढ़ो_page_op(nand, page, 0, शून्य, 0);
+	nand_read_page_op(nand, page, 0, NULL, 0);
 
 	sunxi_nfc_hw_ecc_enable(nand);
 
-	क्रम (i = 0; i < ecc->steps; i++) अणु
-		पूर्णांक data_off = i * ecc->size;
-		पूर्णांक oob_off = i * (ecc->bytes + 4);
+	for (i = 0; i < ecc->steps; i++) {
+		int data_off = i * ecc->size;
+		int oob_off = i * (ecc->bytes + 4);
 		u8 *data = buf + data_off;
 		u8 *oob = nand->oob_poi + oob_off;
 
-		ret = sunxi_nfc_hw_ecc_पढ़ो_chunk(nand, data, data_off, oob,
-						  oob_off + mtd->ग_लिखोsize,
+		ret = sunxi_nfc_hw_ecc_read_chunk(nand, data, data_off, oob,
+						  oob_off + mtd->writesize,
 						  &cur_off, &max_bitflips,
 						  !i, oob_required, page);
-		अगर (ret < 0)
-			वापस ret;
-		अन्यथा अगर (ret)
+		if (ret < 0)
+			return ret;
+		else if (ret)
 			raw_mode = true;
-	पूर्ण
+	}
 
-	अगर (oob_required)
-		sunxi_nfc_hw_ecc_पढ़ो_extra_oob(nand, nand->oob_poi, &cur_off,
+	if (oob_required)
+		sunxi_nfc_hw_ecc_read_extra_oob(nand, nand->oob_poi, &cur_off,
 						!raw_mode, page);
 
 	sunxi_nfc_hw_ecc_disable(nand);
 
-	वापस max_bitflips;
-पूर्ण
+	return max_bitflips;
+}
 
-अटल पूर्णांक sunxi_nfc_hw_ecc_पढ़ो_page_dma(काष्ठा nand_chip *nand, u8 *buf,
-					  पूर्णांक oob_required, पूर्णांक page)
-अणु
-	पूर्णांक ret;
+static int sunxi_nfc_hw_ecc_read_page_dma(struct nand_chip *nand, u8 *buf,
+					  int oob_required, int page)
+{
+	int ret;
 
 	sunxi_nfc_select_chip(nand, nand->cur_cs);
 
-	nand_पढ़ो_page_op(nand, page, 0, शून्य, 0);
+	nand_read_page_op(nand, page, 0, NULL, 0);
 
-	ret = sunxi_nfc_hw_ecc_पढ़ो_chunks_dma(nand, buf, oob_required, page,
+	ret = sunxi_nfc_hw_ecc_read_chunks_dma(nand, buf, oob_required, page,
 					       nand->ecc.steps);
-	अगर (ret >= 0)
-		वापस ret;
+	if (ret >= 0)
+		return ret;
 
 	/* Fallback to PIO mode */
-	वापस sunxi_nfc_hw_ecc_पढ़ो_page(nand, buf, oob_required, page);
-पूर्ण
+	return sunxi_nfc_hw_ecc_read_page(nand, buf, oob_required, page);
+}
 
-अटल पूर्णांक sunxi_nfc_hw_ecc_पढ़ो_subpage(काष्ठा nand_chip *nand,
-					 u32 data_offs, u32 पढ़ोlen,
-					 u8 *bufpoi, पूर्णांक page)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(nand);
-	काष्ठा nand_ecc_ctrl *ecc = &nand->ecc;
-	पूर्णांक ret, i, cur_off = 0;
-	अचिन्हित पूर्णांक max_bitflips = 0;
+static int sunxi_nfc_hw_ecc_read_subpage(struct nand_chip *nand,
+					 u32 data_offs, u32 readlen,
+					 u8 *bufpoi, int page)
+{
+	struct mtd_info *mtd = nand_to_mtd(nand);
+	struct nand_ecc_ctrl *ecc = &nand->ecc;
+	int ret, i, cur_off = 0;
+	unsigned int max_bitflips = 0;
 
 	sunxi_nfc_select_chip(nand, nand->cur_cs);
 
-	nand_पढ़ो_page_op(nand, page, 0, शून्य, 0);
+	nand_read_page_op(nand, page, 0, NULL, 0);
 
 	sunxi_nfc_hw_ecc_enable(nand);
 
-	क्रम (i = data_offs / ecc->size;
-	     i < DIV_ROUND_UP(data_offs + पढ़ोlen, ecc->size); i++) अणु
-		पूर्णांक data_off = i * ecc->size;
-		पूर्णांक oob_off = i * (ecc->bytes + 4);
+	for (i = data_offs / ecc->size;
+	     i < DIV_ROUND_UP(data_offs + readlen, ecc->size); i++) {
+		int data_off = i * ecc->size;
+		int oob_off = i * (ecc->bytes + 4);
 		u8 *data = bufpoi + data_off;
 		u8 *oob = nand->oob_poi + oob_off;
 
-		ret = sunxi_nfc_hw_ecc_पढ़ो_chunk(nand, data, data_off,
+		ret = sunxi_nfc_hw_ecc_read_chunk(nand, data, data_off,
 						  oob,
-						  oob_off + mtd->ग_लिखोsize,
+						  oob_off + mtd->writesize,
 						  &cur_off, &max_bitflips, !i,
 						  false, page);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
 	sunxi_nfc_hw_ecc_disable(nand);
 
-	वापस max_bitflips;
-पूर्ण
+	return max_bitflips;
+}
 
-अटल पूर्णांक sunxi_nfc_hw_ecc_पढ़ो_subpage_dma(काष्ठा nand_chip *nand,
-					     u32 data_offs, u32 पढ़ोlen,
-					     u8 *buf, पूर्णांक page)
-अणु
-	पूर्णांक nchunks = DIV_ROUND_UP(data_offs + पढ़ोlen, nand->ecc.size);
-	पूर्णांक ret;
+static int sunxi_nfc_hw_ecc_read_subpage_dma(struct nand_chip *nand,
+					     u32 data_offs, u32 readlen,
+					     u8 *buf, int page)
+{
+	int nchunks = DIV_ROUND_UP(data_offs + readlen, nand->ecc.size);
+	int ret;
 
 	sunxi_nfc_select_chip(nand, nand->cur_cs);
 
-	nand_पढ़ो_page_op(nand, page, 0, शून्य, 0);
+	nand_read_page_op(nand, page, 0, NULL, 0);
 
-	ret = sunxi_nfc_hw_ecc_पढ़ो_chunks_dma(nand, buf, false, page, nchunks);
-	अगर (ret >= 0)
-		वापस ret;
+	ret = sunxi_nfc_hw_ecc_read_chunks_dma(nand, buf, false, page, nchunks);
+	if (ret >= 0)
+		return ret;
 
 	/* Fallback to PIO mode */
-	वापस sunxi_nfc_hw_ecc_पढ़ो_subpage(nand, data_offs, पढ़ोlen,
+	return sunxi_nfc_hw_ecc_read_subpage(nand, data_offs, readlen,
 					     buf, page);
-पूर्ण
+}
 
-अटल पूर्णांक sunxi_nfc_hw_ecc_ग_लिखो_page(काष्ठा nand_chip *nand,
-				       स्थिर uपूर्णांक8_t *buf, पूर्णांक oob_required,
-				       पूर्णांक page)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(nand);
-	काष्ठा nand_ecc_ctrl *ecc = &nand->ecc;
-	पूर्णांक ret, i, cur_off = 0;
+static int sunxi_nfc_hw_ecc_write_page(struct nand_chip *nand,
+				       const uint8_t *buf, int oob_required,
+				       int page)
+{
+	struct mtd_info *mtd = nand_to_mtd(nand);
+	struct nand_ecc_ctrl *ecc = &nand->ecc;
+	int ret, i, cur_off = 0;
 
 	sunxi_nfc_select_chip(nand, nand->cur_cs);
 
-	nand_prog_page_begin_op(nand, page, 0, शून्य, 0);
+	nand_prog_page_begin_op(nand, page, 0, NULL, 0);
 
 	sunxi_nfc_hw_ecc_enable(nand);
 
-	क्रम (i = 0; i < ecc->steps; i++) अणु
-		पूर्णांक data_off = i * ecc->size;
-		पूर्णांक oob_off = i * (ecc->bytes + 4);
-		स्थिर u8 *data = buf + data_off;
-		स्थिर u8 *oob = nand->oob_poi + oob_off;
+	for (i = 0; i < ecc->steps; i++) {
+		int data_off = i * ecc->size;
+		int oob_off = i * (ecc->bytes + 4);
+		const u8 *data = buf + data_off;
+		const u8 *oob = nand->oob_poi + oob_off;
 
-		ret = sunxi_nfc_hw_ecc_ग_लिखो_chunk(nand, data, data_off, oob,
-						   oob_off + mtd->ग_लिखोsize,
+		ret = sunxi_nfc_hw_ecc_write_chunk(nand, data, data_off, oob,
+						   oob_off + mtd->writesize,
 						   &cur_off, !i, page);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (oob_required || (nand->options & न_अंकD_NEED_SCRAMBLING))
-		sunxi_nfc_hw_ecc_ग_लिखो_extra_oob(nand, nand->oob_poi,
+	if (oob_required || (nand->options & NAND_NEED_SCRAMBLING))
+		sunxi_nfc_hw_ecc_write_extra_oob(nand, nand->oob_poi,
 						 &cur_off, page);
 
 	sunxi_nfc_hw_ecc_disable(nand);
 
-	वापस nand_prog_page_end_op(nand);
-पूर्ण
+	return nand_prog_page_end_op(nand);
+}
 
-अटल पूर्णांक sunxi_nfc_hw_ecc_ग_लिखो_subpage(काष्ठा nand_chip *nand,
+static int sunxi_nfc_hw_ecc_write_subpage(struct nand_chip *nand,
 					  u32 data_offs, u32 data_len,
-					  स्थिर u8 *buf, पूर्णांक oob_required,
-					  पूर्णांक page)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(nand);
-	काष्ठा nand_ecc_ctrl *ecc = &nand->ecc;
-	पूर्णांक ret, i, cur_off = 0;
+					  const u8 *buf, int oob_required,
+					  int page)
+{
+	struct mtd_info *mtd = nand_to_mtd(nand);
+	struct nand_ecc_ctrl *ecc = &nand->ecc;
+	int ret, i, cur_off = 0;
 
 	sunxi_nfc_select_chip(nand, nand->cur_cs);
 
-	nand_prog_page_begin_op(nand, page, 0, शून्य, 0);
+	nand_prog_page_begin_op(nand, page, 0, NULL, 0);
 
 	sunxi_nfc_hw_ecc_enable(nand);
 
-	क्रम (i = data_offs / ecc->size;
-	     i < DIV_ROUND_UP(data_offs + data_len, ecc->size); i++) अणु
-		पूर्णांक data_off = i * ecc->size;
-		पूर्णांक oob_off = i * (ecc->bytes + 4);
-		स्थिर u8 *data = buf + data_off;
-		स्थिर u8 *oob = nand->oob_poi + oob_off;
+	for (i = data_offs / ecc->size;
+	     i < DIV_ROUND_UP(data_offs + data_len, ecc->size); i++) {
+		int data_off = i * ecc->size;
+		int oob_off = i * (ecc->bytes + 4);
+		const u8 *data = buf + data_off;
+		const u8 *oob = nand->oob_poi + oob_off;
 
-		ret = sunxi_nfc_hw_ecc_ग_लिखो_chunk(nand, data, data_off, oob,
-						   oob_off + mtd->ग_लिखोsize,
+		ret = sunxi_nfc_hw_ecc_write_chunk(nand, data, data_off, oob,
+						   oob_off + mtd->writesize,
 						   &cur_off, !i, page);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
 	sunxi_nfc_hw_ecc_disable(nand);
 
-	वापस nand_prog_page_end_op(nand);
-पूर्ण
+	return nand_prog_page_end_op(nand);
+}
 
-अटल पूर्णांक sunxi_nfc_hw_ecc_ग_लिखो_page_dma(काष्ठा nand_chip *nand,
-					   स्थिर u8 *buf,
-					   पूर्णांक oob_required,
-					   पूर्णांक page)
-अणु
-	काष्ठा sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
-	काष्ठा nand_ecc_ctrl *ecc = &nand->ecc;
-	काष्ठा scatterlist sg;
-	u32 रुको;
-	पूर्णांक ret, i;
+static int sunxi_nfc_hw_ecc_write_page_dma(struct nand_chip *nand,
+					   const u8 *buf,
+					   int oob_required,
+					   int page)
+{
+	struct sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
+	struct nand_ecc_ctrl *ecc = &nand->ecc;
+	struct scatterlist sg;
+	u32 wait;
+	int ret, i;
 
 	sunxi_nfc_select_chip(nand, nand->cur_cs);
 
-	ret = sunxi_nfc_रुको_cmd_fअगरo_empty(nfc);
-	अगर (ret)
-		वापस ret;
+	ret = sunxi_nfc_wait_cmd_fifo_empty(nfc);
+	if (ret)
+		return ret;
 
 	ret = sunxi_nfc_dma_op_prepare(nfc, buf, ecc->size, ecc->steps,
 				       DMA_TO_DEVICE, &sg);
-	अगर (ret)
-		जाओ pio_fallback;
+	if (ret)
+		goto pio_fallback;
 
-	क्रम (i = 0; i < ecc->steps; i++) अणु
-		स्थिर u8 *oob = nand->oob_poi + (i * (ecc->bytes + 4));
+	for (i = 0; i < ecc->steps; i++) {
+		const u8 *oob = nand->oob_poi + (i * (ecc->bytes + 4));
 
 		sunxi_nfc_hw_ecc_set_prot_oob_bytes(nand, oob, i, !i, page);
-	पूर्ण
+	}
 
-	nand_prog_page_begin_op(nand, page, 0, शून्य, 0);
+	nand_prog_page_begin_op(nand, page, 0, NULL, 0);
 
 	sunxi_nfc_hw_ecc_enable(nand);
-	sunxi_nfc_अक्रमomizer_config(nand, page, false);
-	sunxi_nfc_अक्रमomizer_enable(nand);
+	sunxi_nfc_randomizer_config(nand, page, false);
+	sunxi_nfc_randomizer_enable(nand);
 
-	ग_लिखोl((न_अंकD_CMD_RNDIN << 8) | न_अंकD_CMD_PAGEPROG,
+	writel((NAND_CMD_RNDIN << 8) | NAND_CMD_PAGEPROG,
 	       nfc->regs + NFC_REG_WCMD_SET);
 
-	रुको = NFC_CMD_INT_FLAG;
+	wait = NFC_CMD_INT_FLAG;
 
-	अगर (nfc->caps->has_mdma)
-		रुको |= NFC_DMA_INT_FLAG;
-	अन्यथा
+	if (nfc->caps->has_mdma)
+		wait |= NFC_DMA_INT_FLAG;
+	else
 		dma_async_issue_pending(nfc->dmac);
 
-	ग_लिखोl(NFC_PAGE_OP | NFC_DATA_SWAP_METHOD |
-	       NFC_DATA_TRANS | NFC_ACCESS_सूची,
+	writel(NFC_PAGE_OP | NFC_DATA_SWAP_METHOD |
+	       NFC_DATA_TRANS | NFC_ACCESS_DIR,
 	       nfc->regs + NFC_REG_CMD);
 
-	ret = sunxi_nfc_रुको_events(nfc, रुको, false, 0);
-	अगर (ret && !nfc->caps->has_mdma)
+	ret = sunxi_nfc_wait_events(nfc, wait, false, 0);
+	if (ret && !nfc->caps->has_mdma)
 		dmaengine_terminate_all(nfc->dmac);
 
-	sunxi_nfc_अक्रमomizer_disable(nand);
+	sunxi_nfc_randomizer_disable(nand);
 	sunxi_nfc_hw_ecc_disable(nand);
 
 	sunxi_nfc_dma_op_cleanup(nfc, DMA_TO_DEVICE, &sg);
 
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (oob_required || (nand->options & न_अंकD_NEED_SCRAMBLING))
+	if (oob_required || (nand->options & NAND_NEED_SCRAMBLING))
 		/* TODO: use DMA to transfer extra OOB bytes ? */
-		sunxi_nfc_hw_ecc_ग_लिखो_extra_oob(nand, nand->oob_poi,
-						 शून्य, page);
+		sunxi_nfc_hw_ecc_write_extra_oob(nand, nand->oob_poi,
+						 NULL, page);
 
-	वापस nand_prog_page_end_op(nand);
+	return nand_prog_page_end_op(nand);
 
 pio_fallback:
-	वापस sunxi_nfc_hw_ecc_ग_लिखो_page(nand, buf, oob_required, page);
-पूर्ण
+	return sunxi_nfc_hw_ecc_write_page(nand, buf, oob_required, page);
+}
 
-अटल पूर्णांक sunxi_nfc_hw_ecc_पढ़ो_oob(काष्ठा nand_chip *nand, पूर्णांक page)
-अणु
+static int sunxi_nfc_hw_ecc_read_oob(struct nand_chip *nand, int page)
+{
 	u8 *buf = nand_get_data_buf(nand);
 
-	वापस nand->ecc.पढ़ो_page(nand, buf, 1, page);
-पूर्ण
+	return nand->ecc.read_page(nand, buf, 1, page);
+}
 
-अटल पूर्णांक sunxi_nfc_hw_ecc_ग_लिखो_oob(काष्ठा nand_chip *nand, पूर्णांक page)
-अणु
-	काष्ठा mtd_info *mtd = nand_to_mtd(nand);
+static int sunxi_nfc_hw_ecc_write_oob(struct nand_chip *nand, int page)
+{
+	struct mtd_info *mtd = nand_to_mtd(nand);
 	u8 *buf = nand_get_data_buf(nand);
-	पूर्णांक ret;
+	int ret;
 
-	स_रखो(buf, 0xff, mtd->ग_लिखोsize);
-	ret = nand->ecc.ग_लिखो_page(nand, buf, 1, page);
-	अगर (ret)
-		वापस ret;
+	memset(buf, 0xff, mtd->writesize);
+	ret = nand->ecc.write_page(nand, buf, 1, page);
+	if (ret)
+		return ret;
 
 	/* Send command to program the OOB data */
-	वापस nand_prog_page_end_op(nand);
-पूर्ण
+	return nand_prog_page_end_op(nand);
+}
 
-अटल स्थिर s32 tWB_lut[] = अणु6, 12, 16, 20पूर्ण;
-अटल स्थिर s32 tRHW_lut[] = अणु4, 8, 12, 20पूर्ण;
+static const s32 tWB_lut[] = {6, 12, 16, 20};
+static const s32 tRHW_lut[] = {4, 8, 12, 20};
 
-अटल पूर्णांक _sunxi_nand_lookup_timing(स्थिर s32 *lut, पूर्णांक lut_size, u32 duration,
+static int _sunxi_nand_lookup_timing(const s32 *lut, int lut_size, u32 duration,
 		u32 clk_period)
-अणु
+{
 	u32 clk_cycles = DIV_ROUND_UP(duration, clk_period);
-	पूर्णांक i;
+	int i;
 
-	क्रम (i = 0; i < lut_size; i++) अणु
-		अगर (clk_cycles <= lut[i])
-			वापस i;
-	पूर्ण
+	for (i = 0; i < lut_size; i++) {
+		if (clk_cycles <= lut[i])
+			return i;
+	}
 
 	/* Doesn't fit */
-	वापस -EINVAL;
-पूर्ण
+	return -EINVAL;
+}
 
-#घोषणा sunxi_nand_lookup_timing(l, p, c) \
+#define sunxi_nand_lookup_timing(l, p, c) \
 			_sunxi_nand_lookup_timing(l, ARRAY_SIZE(l), p, c)
 
-अटल पूर्णांक sunxi_nfc_setup_पूर्णांकerface(काष्ठा nand_chip *nand, पूर्णांक csline,
-				     स्थिर काष्ठा nand_पूर्णांकerface_config *conf)
-अणु
-	काष्ठा sunxi_nand_chip *sunxi_nand = to_sunxi_nand(nand);
-	काष्ठा sunxi_nfc *nfc = to_sunxi_nfc(sunxi_nand->nand.controller);
-	स्थिर काष्ठा nand_sdr_timings *timings;
+static int sunxi_nfc_setup_interface(struct nand_chip *nand, int csline,
+				     const struct nand_interface_config *conf)
+{
+	struct sunxi_nand_chip *sunxi_nand = to_sunxi_nand(nand);
+	struct sunxi_nfc *nfc = to_sunxi_nfc(sunxi_nand->nand.controller);
+	const struct nand_sdr_timings *timings;
 	u32 min_clk_period = 0;
 	s32 tWB, tADL, tWHR, tRHW, tCAD;
-	दीर्घ real_clk_rate;
+	long real_clk_rate;
 
 	timings = nand_get_sdr_timings(conf);
-	अगर (IS_ERR(timings))
-		वापस -ENOTSUPP;
+	if (IS_ERR(timings))
+		return -ENOTSUPP;
 
 	/* T1 <=> tCLS */
-	अगर (timings->tCLS_min > min_clk_period)
+	if (timings->tCLS_min > min_clk_period)
 		min_clk_period = timings->tCLS_min;
 
 	/* T2 <=> tCLH */
-	अगर (timings->tCLH_min > min_clk_period)
+	if (timings->tCLH_min > min_clk_period)
 		min_clk_period = timings->tCLH_min;
 
 	/* T3 <=> tCS */
-	अगर (timings->tCS_min > min_clk_period)
+	if (timings->tCS_min > min_clk_period)
 		min_clk_period = timings->tCS_min;
 
 	/* T4 <=> tCH */
-	अगर (timings->tCH_min > min_clk_period)
+	if (timings->tCH_min > min_clk_period)
 		min_clk_period = timings->tCH_min;
 
 	/* T5 <=> tWP */
-	अगर (timings->tWP_min > min_clk_period)
+	if (timings->tWP_min > min_clk_period)
 		min_clk_period = timings->tWP_min;
 
 	/* T6 <=> tWH */
-	अगर (timings->tWH_min > min_clk_period)
+	if (timings->tWH_min > min_clk_period)
 		min_clk_period = timings->tWH_min;
 
 	/* T7 <=> tALS */
-	अगर (timings->tALS_min > min_clk_period)
+	if (timings->tALS_min > min_clk_period)
 		min_clk_period = timings->tALS_min;
 
 	/* T8 <=> tDS */
-	अगर (timings->tDS_min > min_clk_period)
+	if (timings->tDS_min > min_clk_period)
 		min_clk_period = timings->tDS_min;
 
 	/* T9 <=> tDH */
-	अगर (timings->tDH_min > min_clk_period)
+	if (timings->tDH_min > min_clk_period)
 		min_clk_period = timings->tDH_min;
 
 	/* T10 <=> tRR */
-	अगर (timings->tRR_min > (min_clk_period * 3))
+	if (timings->tRR_min > (min_clk_period * 3))
 		min_clk_period = DIV_ROUND_UP(timings->tRR_min, 3);
 
 	/* T11 <=> tALH */
-	अगर (timings->tALH_min > min_clk_period)
+	if (timings->tALH_min > min_clk_period)
 		min_clk_period = timings->tALH_min;
 
 	/* T12 <=> tRP */
-	अगर (timings->tRP_min > min_clk_period)
+	if (timings->tRP_min > min_clk_period)
 		min_clk_period = timings->tRP_min;
 
 	/* T13 <=> tREH */
-	अगर (timings->tREH_min > min_clk_period)
+	if (timings->tREH_min > min_clk_period)
 		min_clk_period = timings->tREH_min;
 
 	/* T14 <=> tRC */
-	अगर (timings->tRC_min > (min_clk_period * 2))
+	if (timings->tRC_min > (min_clk_period * 2))
 		min_clk_period = DIV_ROUND_UP(timings->tRC_min, 2);
 
 	/* T15 <=> tWC */
-	अगर (timings->tWC_min > (min_clk_period * 2))
+	if (timings->tWC_min > (min_clk_period * 2))
 		min_clk_period = DIV_ROUND_UP(timings->tWC_min, 2);
 
 	/* T16 - T19 + tCAD */
-	अगर (timings->tWB_max > (min_clk_period * 20))
+	if (timings->tWB_max > (min_clk_period * 20))
 		min_clk_period = DIV_ROUND_UP(timings->tWB_max, 20);
 
-	अगर (timings->tADL_min > (min_clk_period * 32))
+	if (timings->tADL_min > (min_clk_period * 32))
 		min_clk_period = DIV_ROUND_UP(timings->tADL_min, 32);
 
-	अगर (timings->tWHR_min > (min_clk_period * 32))
+	if (timings->tWHR_min > (min_clk_period * 32))
 		min_clk_period = DIV_ROUND_UP(timings->tWHR_min, 32);
 
-	अगर (timings->tRHW_min > (min_clk_period * 20))
+	if (timings->tRHW_min > (min_clk_period * 20))
 		min_clk_period = DIV_ROUND_UP(timings->tRHW_min, 20);
 
 	/*
 	 * In non-EDO, tREA should be less than tRP to guarantee that the
-	 * controller करोes not sample the IO lines too early. Unक्रमtunately,
-	 * the sunxi न_अंकD controller करोes not allow us to have dअगरferent
-	 * values क्रम tRP and tREH (tRP = tREH = tRW / 2).
+	 * controller does not sample the IO lines too early. Unfortunately,
+	 * the sunxi NAND controller does not allow us to have different
+	 * values for tRP and tREH (tRP = tREH = tRW / 2).
 	 *
 	 * We have 2 options to overcome this limitation:
 	 *
-	 * 1/ Extend tRC to fulfil the tREA <= tRC / 2 स्थिरraपूर्णांक
-	 * 2/ Use EDO mode (only works अगर timings->tRLOH > 0)
+	 * 1/ Extend tRC to fulfil the tREA <= tRC / 2 constraint
+	 * 2/ Use EDO mode (only works if timings->tRLOH > 0)
 	 */
-	अगर (timings->tREA_max > min_clk_period && !timings->tRLOH_min)
+	if (timings->tREA_max > min_clk_period && !timings->tRLOH_min)
 		min_clk_period = timings->tREA_max;
 
 	tWB  = sunxi_nand_lookup_timing(tWB_lut, timings->tWB_max,
 					min_clk_period);
-	अगर (tWB < 0) अणु
+	if (tWB < 0) {
 		dev_err(nfc->dev, "unsupported tWB\n");
-		वापस tWB;
-	पूर्ण
+		return tWB;
+	}
 
 	tADL = DIV_ROUND_UP(timings->tADL_min, min_clk_period) >> 3;
-	अगर (tADL > 3) अणु
+	if (tADL > 3) {
 		dev_err(nfc->dev, "unsupported tADL\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	tWHR = DIV_ROUND_UP(timings->tWHR_min, min_clk_period) >> 3;
-	अगर (tWHR > 3) अणु
+	if (tWHR > 3) {
 		dev_err(nfc->dev, "unsupported tWHR\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	tRHW = sunxi_nand_lookup_timing(tRHW_lut, timings->tRHW_min,
 					min_clk_period);
-	अगर (tRHW < 0) अणु
+	if (tRHW < 0) {
 		dev_err(nfc->dev, "unsupported tRHW\n");
-		वापस tRHW;
-	पूर्ण
+		return tRHW;
+	}
 
-	अगर (csline == न_अंकD_DATA_IFACE_CHECK_ONLY)
-		वापस 0;
+	if (csline == NAND_DATA_IFACE_CHECK_ONLY)
+		return 0;
 
 	/*
-	 * TODO: according to ONFI specs this value only applies क्रम DDR न_अंकD,
-	 * but Allwinner seems to set this to 0x7. Mimic them क्रम now.
+	 * TODO: according to ONFI specs this value only applies for DDR NAND,
+	 * but Allwinner seems to set this to 0x7. Mimic them for now.
 	 */
 	tCAD = 0x7;
 
-	/* TODO: A83 has some more bits क्रम CDQSS, CS, CLHZ, CCS, WC */
+	/* TODO: A83 has some more bits for CDQSS, CS, CLHZ, CCS, WC */
 	sunxi_nand->timing_cfg = NFC_TIMING_CFG(tWB, tADL, tWHR, tRHW, tCAD);
 
 	/* Convert min_clk_period from picoseconds to nanoseconds */
@@ -1544,562 +1543,562 @@ pio_fallback:
 	/*
 	 * Unlike what is stated in Allwinner datasheet, the clk_rate should
 	 * be set to (1 / min_clk_period), and not (2 / min_clk_period).
-	 * This new क्रमmula was verअगरied with a scope and validated by
+	 * This new formula was verified with a scope and validated by
 	 * Allwinner engineers.
 	 */
 	sunxi_nand->clk_rate = NSEC_PER_SEC / min_clk_period;
 	real_clk_rate = clk_round_rate(nfc->mod_clk, sunxi_nand->clk_rate);
-	अगर (real_clk_rate <= 0) अणु
+	if (real_clk_rate <= 0) {
 		dev_err(nfc->dev, "Unable to round clk %lu\n",
 			sunxi_nand->clk_rate);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	sunxi_nand->timing_ctl = 0;
 
 	/*
-	 * ONFI specअगरication 3.1, paragraph 4.15.2 dictates that EDO data
-	 * output cycle timings shall be used अगर the host drives tRC less than
-	 * 30 ns. We should also use EDO mode अगर tREA is bigger than tRP.
+	 * ONFI specification 3.1, paragraph 4.15.2 dictates that EDO data
+	 * output cycle timings shall be used if the host drives tRC less than
+	 * 30 ns. We should also use EDO mode if tREA is bigger than tRP.
 	 */
 	min_clk_period = NSEC_PER_SEC / real_clk_rate;
-	अगर (min_clk_period * 2 < 30 || min_clk_period * 1000 < timings->tREA_max)
+	if (min_clk_period * 2 < 30 || min_clk_period * 1000 < timings->tREA_max)
 		sunxi_nand->timing_ctl = NFC_TIMING_CTL_EDO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sunxi_nand_ooblayout_ecc(काष्ठा mtd_info *mtd, पूर्णांक section,
-				    काष्ठा mtd_oob_region *oobregion)
-अणु
-	काष्ठा nand_chip *nand = mtd_to_nand(mtd);
-	काष्ठा nand_ecc_ctrl *ecc = &nand->ecc;
+static int sunxi_nand_ooblayout_ecc(struct mtd_info *mtd, int section,
+				    struct mtd_oob_region *oobregion)
+{
+	struct nand_chip *nand = mtd_to_nand(mtd);
+	struct nand_ecc_ctrl *ecc = &nand->ecc;
 
-	अगर (section >= ecc->steps)
-		वापस -दुस्फल;
+	if (section >= ecc->steps)
+		return -ERANGE;
 
 	oobregion->offset = section * (ecc->bytes + 4) + 4;
 	oobregion->length = ecc->bytes;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sunxi_nand_ooblayout_मुक्त(काष्ठा mtd_info *mtd, पूर्णांक section,
-				     काष्ठा mtd_oob_region *oobregion)
-अणु
-	काष्ठा nand_chip *nand = mtd_to_nand(mtd);
-	काष्ठा nand_ecc_ctrl *ecc = &nand->ecc;
+static int sunxi_nand_ooblayout_free(struct mtd_info *mtd, int section,
+				     struct mtd_oob_region *oobregion)
+{
+	struct nand_chip *nand = mtd_to_nand(mtd);
+	struct nand_ecc_ctrl *ecc = &nand->ecc;
 
-	अगर (section > ecc->steps)
-		वापस -दुस्फल;
+	if (section > ecc->steps)
+		return -ERANGE;
 
 	/*
-	 * The first 2 bytes are used क्रम BB markers, hence we
+	 * The first 2 bytes are used for BB markers, hence we
 	 * only have 2 bytes available in the first user data
 	 * section.
 	 */
-	अगर (!section && ecc->engine_type == न_अंकD_ECC_ENGINE_TYPE_ON_HOST) अणु
+	if (!section && ecc->engine_type == NAND_ECC_ENGINE_TYPE_ON_HOST) {
 		oobregion->offset = 2;
 		oobregion->length = 2;
 
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	oobregion->offset = section * (ecc->bytes + 4);
 
-	अगर (section < ecc->steps)
+	if (section < ecc->steps)
 		oobregion->length = 4;
-	अन्यथा
+	else
 		oobregion->offset = mtd->oobsize - oobregion->offset;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा mtd_ooblayout_ops sunxi_nand_ooblayout_ops = अणु
+static const struct mtd_ooblayout_ops sunxi_nand_ooblayout_ops = {
 	.ecc = sunxi_nand_ooblayout_ecc,
-	.मुक्त = sunxi_nand_ooblayout_मुक्त,
-पूर्ण;
+	.free = sunxi_nand_ooblayout_free,
+};
 
-अटल व्योम sunxi_nand_hw_ecc_ctrl_cleanup(काष्ठा sunxi_nand_chip *sunxi_nand)
-अणु
-	kमुक्त(sunxi_nand->ecc);
-पूर्ण
+static void sunxi_nand_hw_ecc_ctrl_cleanup(struct sunxi_nand_chip *sunxi_nand)
+{
+	kfree(sunxi_nand->ecc);
+}
 
-अटल पूर्णांक sunxi_nand_hw_ecc_ctrl_init(काष्ठा nand_chip *nand,
-				       काष्ठा nand_ecc_ctrl *ecc,
-				       काष्ठा device_node *np)
-अणु
-	अटल स्थिर u8 strengths[] = अणु 16, 24, 28, 32, 40, 48, 56, 60, 64 पूर्ण;
-	काष्ठा sunxi_nand_chip *sunxi_nand = to_sunxi_nand(nand);
-	काष्ठा sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
-	काष्ठा mtd_info *mtd = nand_to_mtd(nand);
-	काष्ठा nand_device *nanddev = mtd_to_nanddev(mtd);
-	पूर्णांक nsectors;
-	पूर्णांक ret;
-	पूर्णांक i;
+static int sunxi_nand_hw_ecc_ctrl_init(struct nand_chip *nand,
+				       struct nand_ecc_ctrl *ecc,
+				       struct device_node *np)
+{
+	static const u8 strengths[] = { 16, 24, 28, 32, 40, 48, 56, 60, 64 };
+	struct sunxi_nand_chip *sunxi_nand = to_sunxi_nand(nand);
+	struct sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
+	struct mtd_info *mtd = nand_to_mtd(nand);
+	struct nand_device *nanddev = mtd_to_nanddev(mtd);
+	int nsectors;
+	int ret;
+	int i;
 
-	अगर (nanddev->ecc.user_conf.flags & न_अंकD_ECC_MAXIMIZE_STRENGTH) अणु
-		पूर्णांक bytes;
+	if (nanddev->ecc.user_conf.flags & NAND_ECC_MAXIMIZE_STRENGTH) {
+		int bytes;
 
 		ecc->size = 1024;
-		nsectors = mtd->ग_लिखोsize / ecc->size;
+		nsectors = mtd->writesize / ecc->size;
 
-		/* Reserve 2 bytes क्रम the BBM */
+		/* Reserve 2 bytes for the BBM */
 		bytes = (mtd->oobsize - 2) / nsectors;
 
-		/* 4 non-ECC bytes are added beक्रमe each ECC bytes section */
+		/* 4 non-ECC bytes are added before each ECC bytes section */
 		bytes -= 4;
 
 		/* and bytes has to be even. */
-		अगर (bytes % 2)
+		if (bytes % 2)
 			bytes--;
 
 		ecc->strength = bytes * 8 / fls(8 * ecc->size);
 
-		क्रम (i = 0; i < ARRAY_SIZE(strengths); i++) अणु
-			अगर (strengths[i] > ecc->strength)
-				अवरोध;
-		पूर्ण
+		for (i = 0; i < ARRAY_SIZE(strengths); i++) {
+			if (strengths[i] > ecc->strength)
+				break;
+		}
 
-		अगर (!i)
+		if (!i)
 			ecc->strength = 0;
-		अन्यथा
+		else
 			ecc->strength = strengths[i - 1];
-	पूर्ण
+	}
 
-	अगर (ecc->size != 512 && ecc->size != 1024)
-		वापस -EINVAL;
+	if (ecc->size != 512 && ecc->size != 1024)
+		return -EINVAL;
 
-	sunxi_nand->ecc = kzalloc(माप(*sunxi_nand->ecc), GFP_KERNEL);
-	अगर (!sunxi_nand->ecc)
-		वापस -ENOMEM;
+	sunxi_nand->ecc = kzalloc(sizeof(*sunxi_nand->ecc), GFP_KERNEL);
+	if (!sunxi_nand->ecc)
+		return -ENOMEM;
 
 	/* Prefer 1k ECC chunk over 512 ones */
-	अगर (ecc->size == 512 && mtd->ग_लिखोsize > 512) अणु
+	if (ecc->size == 512 && mtd->writesize > 512) {
 		ecc->size = 1024;
 		ecc->strength *= 2;
-	पूर्ण
+	}
 
 	/* Add ECC info retrieval from DT */
-	क्रम (i = 0; i < ARRAY_SIZE(strengths); i++) अणु
-		अगर (ecc->strength <= strengths[i]) अणु
+	for (i = 0; i < ARRAY_SIZE(strengths); i++) {
+		if (ecc->strength <= strengths[i]) {
 			/*
 			 * Update ecc->strength value with the actual strength
 			 * that will be used by the ECC engine.
 			 */
 			ecc->strength = strengths[i];
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (i >= ARRAY_SIZE(strengths)) अणु
+	if (i >= ARRAY_SIZE(strengths)) {
 		dev_err(nfc->dev, "unsupported strength\n");
 		ret = -ENOTSUPP;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	sunxi_nand->ecc->mode = i;
 
-	/* HW ECC always request ECC bytes क्रम 1024 bytes blocks */
+	/* HW ECC always request ECC bytes for 1024 bytes blocks */
 	ecc->bytes = DIV_ROUND_UP(ecc->strength * fls(8 * 1024), 8);
 
 	/* HW ECC always work with even numbers of ECC bytes */
 	ecc->bytes = ALIGN(ecc->bytes, 2);
 
-	nsectors = mtd->ग_लिखोsize / ecc->size;
+	nsectors = mtd->writesize / ecc->size;
 
-	अगर (mtd->oobsize < ((ecc->bytes + 4) * nsectors)) अणु
+	if (mtd->oobsize < ((ecc->bytes + 4) * nsectors)) {
 		ret = -EINVAL;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	ecc->पढ़ो_oob = sunxi_nfc_hw_ecc_पढ़ो_oob;
-	ecc->ग_लिखो_oob = sunxi_nfc_hw_ecc_ग_लिखो_oob;
+	ecc->read_oob = sunxi_nfc_hw_ecc_read_oob;
+	ecc->write_oob = sunxi_nfc_hw_ecc_write_oob;
 	mtd_set_ooblayout(mtd, &sunxi_nand_ooblayout_ops);
 
-	अगर (nfc->dmac || nfc->caps->has_mdma) अणु
-		ecc->पढ़ो_page = sunxi_nfc_hw_ecc_पढ़ो_page_dma;
-		ecc->पढ़ो_subpage = sunxi_nfc_hw_ecc_पढ़ो_subpage_dma;
-		ecc->ग_लिखो_page = sunxi_nfc_hw_ecc_ग_लिखो_page_dma;
-		nand->options |= न_अंकD_USES_DMA;
-	पूर्ण अन्यथा अणु
-		ecc->पढ़ो_page = sunxi_nfc_hw_ecc_पढ़ो_page;
-		ecc->पढ़ो_subpage = sunxi_nfc_hw_ecc_पढ़ो_subpage;
-		ecc->ग_लिखो_page = sunxi_nfc_hw_ecc_ग_लिखो_page;
-	पूर्ण
+	if (nfc->dmac || nfc->caps->has_mdma) {
+		ecc->read_page = sunxi_nfc_hw_ecc_read_page_dma;
+		ecc->read_subpage = sunxi_nfc_hw_ecc_read_subpage_dma;
+		ecc->write_page = sunxi_nfc_hw_ecc_write_page_dma;
+		nand->options |= NAND_USES_DMA;
+	} else {
+		ecc->read_page = sunxi_nfc_hw_ecc_read_page;
+		ecc->read_subpage = sunxi_nfc_hw_ecc_read_subpage;
+		ecc->write_page = sunxi_nfc_hw_ecc_write_page;
+	}
 
-	/* TODO: support DMA क्रम raw accesses and subpage ग_लिखो */
-	ecc->ग_लिखो_subpage = sunxi_nfc_hw_ecc_ग_लिखो_subpage;
-	ecc->पढ़ो_oob_raw = nand_पढ़ो_oob_std;
-	ecc->ग_लिखो_oob_raw = nand_ग_लिखो_oob_std;
+	/* TODO: support DMA for raw accesses and subpage write */
+	ecc->write_subpage = sunxi_nfc_hw_ecc_write_subpage;
+	ecc->read_oob_raw = nand_read_oob_std;
+	ecc->write_oob_raw = nand_write_oob_std;
 
-	वापस 0;
+	return 0;
 
 err:
-	kमुक्त(sunxi_nand->ecc);
+	kfree(sunxi_nand->ecc);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम sunxi_nand_ecc_cleanup(काष्ठा sunxi_nand_chip *sunxi_nand)
-अणु
-	काष्ठा nand_ecc_ctrl *ecc = &sunxi_nand->nand.ecc;
+static void sunxi_nand_ecc_cleanup(struct sunxi_nand_chip *sunxi_nand)
+{
+	struct nand_ecc_ctrl *ecc = &sunxi_nand->nand.ecc;
 
-	चयन (ecc->engine_type) अणु
-	हाल न_अंकD_ECC_ENGINE_TYPE_ON_HOST:
+	switch (ecc->engine_type) {
+	case NAND_ECC_ENGINE_TYPE_ON_HOST:
 		sunxi_nand_hw_ecc_ctrl_cleanup(sunxi_nand);
-		अवरोध;
-	हाल न_अंकD_ECC_ENGINE_TYPE_NONE:
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	case NAND_ECC_ENGINE_TYPE_NONE:
+	default:
+		break;
+	}
+}
 
-अटल पूर्णांक sunxi_nand_attach_chip(काष्ठा nand_chip *nand)
-अणु
-	स्थिर काष्ठा nand_ecc_props *requirements =
+static int sunxi_nand_attach_chip(struct nand_chip *nand)
+{
+	const struct nand_ecc_props *requirements =
 		nanddev_get_ecc_requirements(&nand->base);
-	काष्ठा nand_ecc_ctrl *ecc = &nand->ecc;
-	काष्ठा device_node *np = nand_get_flash_node(nand);
-	पूर्णांक ret;
+	struct nand_ecc_ctrl *ecc = &nand->ecc;
+	struct device_node *np = nand_get_flash_node(nand);
+	int ret;
 
-	अगर (nand->bbt_options & न_अंकD_BBT_USE_FLASH)
-		nand->bbt_options |= न_अंकD_BBT_NO_OOB;
+	if (nand->bbt_options & NAND_BBT_USE_FLASH)
+		nand->bbt_options |= NAND_BBT_NO_OOB;
 
-	अगर (nand->options & न_अंकD_NEED_SCRAMBLING)
-		nand->options |= न_अंकD_NO_SUBPAGE_WRITE;
+	if (nand->options & NAND_NEED_SCRAMBLING)
+		nand->options |= NAND_NO_SUBPAGE_WRITE;
 
-	nand->options |= न_अंकD_SUBPAGE_READ;
+	nand->options |= NAND_SUBPAGE_READ;
 
-	अगर (!ecc->size) अणु
+	if (!ecc->size) {
 		ecc->size = requirements->step_size;
 		ecc->strength = requirements->strength;
-	पूर्ण
+	}
 
-	अगर (!ecc->size || !ecc->strength)
-		वापस -EINVAL;
+	if (!ecc->size || !ecc->strength)
+		return -EINVAL;
 
-	चयन (ecc->engine_type) अणु
-	हाल न_अंकD_ECC_ENGINE_TYPE_ON_HOST:
+	switch (ecc->engine_type) {
+	case NAND_ECC_ENGINE_TYPE_ON_HOST:
 		ret = sunxi_nand_hw_ecc_ctrl_init(nand, ecc, np);
-		अगर (ret)
-			वापस ret;
-		अवरोध;
-	हाल न_अंकD_ECC_ENGINE_TYPE_NONE:
-	हाल न_अंकD_ECC_ENGINE_TYPE_SOFT:
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		if (ret)
+			return ret;
+		break;
+	case NAND_ECC_ENGINE_TYPE_NONE:
+	case NAND_ECC_ENGINE_TYPE_SOFT:
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sunxi_nfc_exec_subop(काष्ठा nand_chip *nand,
-				स्थिर काष्ठा nand_subop *subop)
-अणु
-	काष्ठा sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
-	u32 cmd = 0, extcmd = 0, cnt = 0, addrs[2] = अणु पूर्ण;
-	अचिन्हित पूर्णांक i, j, reमुख्यing, start;
-	व्योम *inbuf = शून्य;
-	पूर्णांक ret;
+static int sunxi_nfc_exec_subop(struct nand_chip *nand,
+				const struct nand_subop *subop)
+{
+	struct sunxi_nfc *nfc = to_sunxi_nfc(nand->controller);
+	u32 cmd = 0, extcmd = 0, cnt = 0, addrs[2] = { };
+	unsigned int i, j, remaining, start;
+	void *inbuf = NULL;
+	int ret;
 
-	क्रम (i = 0; i < subop->ninstrs; i++) अणु
-		स्थिर काष्ठा nand_op_instr *instr = &subop->instrs[i];
+	for (i = 0; i < subop->ninstrs; i++) {
+		const struct nand_op_instr *instr = &subop->instrs[i];
 
-		चयन (instr->type) अणु
-		हाल न_अंकD_OP_CMD_INSTR:
-			अगर (cmd & NFC_SEND_CMD1) अणु
-				अगर (WARN_ON(cmd & NFC_SEND_CMD2))
-					वापस -EINVAL;
+		switch (instr->type) {
+		case NAND_OP_CMD_INSTR:
+			if (cmd & NFC_SEND_CMD1) {
+				if (WARN_ON(cmd & NFC_SEND_CMD2))
+					return -EINVAL;
 
 				cmd |= NFC_SEND_CMD2;
 				extcmd |= instr->ctx.cmd.opcode;
-			पूर्ण अन्यथा अणु
+			} else {
 				cmd |= NFC_SEND_CMD1 |
 				       NFC_CMD(instr->ctx.cmd.opcode);
-			पूर्ण
-			अवरोध;
+			}
+			break;
 
-		हाल न_अंकD_OP_ADDR_INSTR:
-			reमुख्यing = nand_subop_get_num_addr_cyc(subop, i);
+		case NAND_OP_ADDR_INSTR:
+			remaining = nand_subop_get_num_addr_cyc(subop, i);
 			start = nand_subop_get_addr_start_off(subop, i);
-			क्रम (j = 0; j < 8 && j + start < reमुख्यing; j++) अणु
+			for (j = 0; j < 8 && j + start < remaining; j++) {
 				u32 addr = instr->ctx.addr.addrs[j + start];
 
 				addrs[j / 4] |= addr << (j % 4) * 8;
-			पूर्ण
+			}
 
-			अगर (j)
+			if (j)
 				cmd |= NFC_SEND_ADR | NFC_ADR_NUM(j);
 
-			अवरोध;
+			break;
 
-		हाल न_अंकD_OP_DATA_IN_INSTR:
-		हाल न_अंकD_OP_DATA_OUT_INSTR:
+		case NAND_OP_DATA_IN_INSTR:
+		case NAND_OP_DATA_OUT_INSTR:
 			start = nand_subop_get_data_start_off(subop, i);
-			reमुख्यing = nand_subop_get_data_len(subop, i);
-			cnt = min_t(u32, reमुख्यing, NFC_SRAM_SIZE);
+			remaining = nand_subop_get_data_len(subop, i);
+			cnt = min_t(u32, remaining, NFC_SRAM_SIZE);
 			cmd |= NFC_DATA_TRANS | NFC_DATA_SWAP_METHOD;
 
-			अगर (instr->type == न_अंकD_OP_DATA_OUT_INSTR) अणु
-				cmd |= NFC_ACCESS_सूची;
-				स_नकल_toio(nfc->regs + NFC_RAM0_BASE,
+			if (instr->type == NAND_OP_DATA_OUT_INSTR) {
+				cmd |= NFC_ACCESS_DIR;
+				memcpy_toio(nfc->regs + NFC_RAM0_BASE,
 					    instr->ctx.data.buf.out + start,
 					    cnt);
-			पूर्ण अन्यथा अणु
+			} else {
 				inbuf = instr->ctx.data.buf.in + start;
-			पूर्ण
+			}
 
-			अवरोध;
+			break;
 
-		हाल न_अंकD_OP_WAITRDY_INSTR:
+		case NAND_OP_WAITRDY_INSTR:
 			cmd |= NFC_WAIT_FLAG;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	ret = sunxi_nfc_रुको_cmd_fअगरo_empty(nfc);
-	अगर (ret)
-		वापस ret;
+	ret = sunxi_nfc_wait_cmd_fifo_empty(nfc);
+	if (ret)
+		return ret;
 
-	अगर (cmd & NFC_SEND_ADR) अणु
-		ग_लिखोl(addrs[0], nfc->regs + NFC_REG_ADDR_LOW);
-		ग_लिखोl(addrs[1], nfc->regs + NFC_REG_ADDR_HIGH);
-	पूर्ण
+	if (cmd & NFC_SEND_ADR) {
+		writel(addrs[0], nfc->regs + NFC_REG_ADDR_LOW);
+		writel(addrs[1], nfc->regs + NFC_REG_ADDR_HIGH);
+	}
 
-	अगर (cmd & NFC_SEND_CMD2)
-		ग_लिखोl(extcmd,
+	if (cmd & NFC_SEND_CMD2)
+		writel(extcmd,
 		       nfc->regs +
-		       (cmd & NFC_ACCESS_सूची ?
+		       (cmd & NFC_ACCESS_DIR ?
 			NFC_REG_WCMD_SET : NFC_REG_RCMD_SET));
 
-	अगर (cmd & NFC_DATA_TRANS)
-		ग_लिखोl(cnt, nfc->regs + NFC_REG_CNT);
+	if (cmd & NFC_DATA_TRANS)
+		writel(cnt, nfc->regs + NFC_REG_CNT);
 
-	ग_लिखोl(cmd, nfc->regs + NFC_REG_CMD);
+	writel(cmd, nfc->regs + NFC_REG_CMD);
 
-	ret = sunxi_nfc_रुको_events(nfc, NFC_CMD_INT_FLAG,
+	ret = sunxi_nfc_wait_events(nfc, NFC_CMD_INT_FLAG,
 				    !(cmd & NFC_WAIT_FLAG) && cnt < 64,
 				    0);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (inbuf)
-		स_नकल_fromio(inbuf, nfc->regs + NFC_RAM0_BASE, cnt);
+	if (inbuf)
+		memcpy_fromio(inbuf, nfc->regs + NFC_RAM0_BASE, cnt);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sunxi_nfc_soft_रुकोrdy(काष्ठा nand_chip *nand,
-				  स्थिर काष्ठा nand_subop *subop)
-अणु
-	वापस nand_soft_रुकोrdy(nand,
-				 subop->instrs[0].ctx.रुकोrdy.समयout_ms);
-पूर्ण
+static int sunxi_nfc_soft_waitrdy(struct nand_chip *nand,
+				  const struct nand_subop *subop)
+{
+	return nand_soft_waitrdy(nand,
+				 subop->instrs[0].ctx.waitrdy.timeout_ms);
+}
 
-अटल स्थिर काष्ठा nand_op_parser sunxi_nfc_op_parser = न_अंकD_OP_PARSER(
-	न_अंकD_OP_PARSER_PATTERN(sunxi_nfc_exec_subop,
-			       न_अंकD_OP_PARSER_PAT_CMD_ELEM(true),
-			       न_अंकD_OP_PARSER_PAT_ADDR_ELEM(true, 8),
-			       न_अंकD_OP_PARSER_PAT_CMD_ELEM(true),
-			       न_अंकD_OP_PARSER_PAT_WAITRDY_ELEM(true),
-			       न_अंकD_OP_PARSER_PAT_DATA_IN_ELEM(true, 1024)),
-	न_अंकD_OP_PARSER_PATTERN(sunxi_nfc_exec_subop,
-			       न_अंकD_OP_PARSER_PAT_CMD_ELEM(true),
-			       न_अंकD_OP_PARSER_PAT_ADDR_ELEM(true, 8),
-			       न_अंकD_OP_PARSER_PAT_DATA_OUT_ELEM(true, 1024),
-			       न_अंकD_OP_PARSER_PAT_CMD_ELEM(true),
-			       न_अंकD_OP_PARSER_PAT_WAITRDY_ELEM(true)),
+static const struct nand_op_parser sunxi_nfc_op_parser = NAND_OP_PARSER(
+	NAND_OP_PARSER_PATTERN(sunxi_nfc_exec_subop,
+			       NAND_OP_PARSER_PAT_CMD_ELEM(true),
+			       NAND_OP_PARSER_PAT_ADDR_ELEM(true, 8),
+			       NAND_OP_PARSER_PAT_CMD_ELEM(true),
+			       NAND_OP_PARSER_PAT_WAITRDY_ELEM(true),
+			       NAND_OP_PARSER_PAT_DATA_IN_ELEM(true, 1024)),
+	NAND_OP_PARSER_PATTERN(sunxi_nfc_exec_subop,
+			       NAND_OP_PARSER_PAT_CMD_ELEM(true),
+			       NAND_OP_PARSER_PAT_ADDR_ELEM(true, 8),
+			       NAND_OP_PARSER_PAT_DATA_OUT_ELEM(true, 1024),
+			       NAND_OP_PARSER_PAT_CMD_ELEM(true),
+			       NAND_OP_PARSER_PAT_WAITRDY_ELEM(true)),
 );
 
-अटल स्थिर काष्ठा nand_op_parser sunxi_nfc_norb_op_parser = न_अंकD_OP_PARSER(
-	न_अंकD_OP_PARSER_PATTERN(sunxi_nfc_exec_subop,
-			       न_अंकD_OP_PARSER_PAT_CMD_ELEM(true),
-			       न_अंकD_OP_PARSER_PAT_ADDR_ELEM(true, 8),
-			       न_अंकD_OP_PARSER_PAT_CMD_ELEM(true),
-			       न_अंकD_OP_PARSER_PAT_DATA_IN_ELEM(true, 1024)),
-	न_अंकD_OP_PARSER_PATTERN(sunxi_nfc_exec_subop,
-			       न_अंकD_OP_PARSER_PAT_CMD_ELEM(true),
-			       न_अंकD_OP_PARSER_PAT_ADDR_ELEM(true, 8),
-			       न_अंकD_OP_PARSER_PAT_DATA_OUT_ELEM(true, 1024),
-			       न_अंकD_OP_PARSER_PAT_CMD_ELEM(true)),
-	न_अंकD_OP_PARSER_PATTERN(sunxi_nfc_soft_रुकोrdy,
-			       न_अंकD_OP_PARSER_PAT_WAITRDY_ELEM(false)),
+static const struct nand_op_parser sunxi_nfc_norb_op_parser = NAND_OP_PARSER(
+	NAND_OP_PARSER_PATTERN(sunxi_nfc_exec_subop,
+			       NAND_OP_PARSER_PAT_CMD_ELEM(true),
+			       NAND_OP_PARSER_PAT_ADDR_ELEM(true, 8),
+			       NAND_OP_PARSER_PAT_CMD_ELEM(true),
+			       NAND_OP_PARSER_PAT_DATA_IN_ELEM(true, 1024)),
+	NAND_OP_PARSER_PATTERN(sunxi_nfc_exec_subop,
+			       NAND_OP_PARSER_PAT_CMD_ELEM(true),
+			       NAND_OP_PARSER_PAT_ADDR_ELEM(true, 8),
+			       NAND_OP_PARSER_PAT_DATA_OUT_ELEM(true, 1024),
+			       NAND_OP_PARSER_PAT_CMD_ELEM(true)),
+	NAND_OP_PARSER_PATTERN(sunxi_nfc_soft_waitrdy,
+			       NAND_OP_PARSER_PAT_WAITRDY_ELEM(false)),
 );
 
-अटल पूर्णांक sunxi_nfc_exec_op(काष्ठा nand_chip *nand,
-			     स्थिर काष्ठा nand_operation *op, bool check_only)
-अणु
-	काष्ठा sunxi_nand_chip *sunxi_nand = to_sunxi_nand(nand);
-	स्थिर काष्ठा nand_op_parser *parser;
+static int sunxi_nfc_exec_op(struct nand_chip *nand,
+			     const struct nand_operation *op, bool check_only)
+{
+	struct sunxi_nand_chip *sunxi_nand = to_sunxi_nand(nand);
+	const struct nand_op_parser *parser;
 
-	अगर (!check_only)
+	if (!check_only)
 		sunxi_nfc_select_chip(nand, op->cs);
 
-	अगर (sunxi_nand->sels[op->cs].rb >= 0)
+	if (sunxi_nand->sels[op->cs].rb >= 0)
 		parser = &sunxi_nfc_op_parser;
-	अन्यथा
+	else
 		parser = &sunxi_nfc_norb_op_parser;
 
-	वापस nand_op_parser_exec_op(nand, parser, op, check_only);
-पूर्ण
+	return nand_op_parser_exec_op(nand, parser, op, check_only);
+}
 
-अटल स्थिर काष्ठा nand_controller_ops sunxi_nand_controller_ops = अणु
+static const struct nand_controller_ops sunxi_nand_controller_ops = {
 	.attach_chip = sunxi_nand_attach_chip,
-	.setup_पूर्णांकerface = sunxi_nfc_setup_पूर्णांकerface,
+	.setup_interface = sunxi_nfc_setup_interface,
 	.exec_op = sunxi_nfc_exec_op,
-पूर्ण;
+};
 
-अटल पूर्णांक sunxi_nand_chip_init(काष्ठा device *dev, काष्ठा sunxi_nfc *nfc,
-				काष्ठा device_node *np)
-अणु
-	काष्ठा sunxi_nand_chip *sunxi_nand;
-	काष्ठा mtd_info *mtd;
-	काष्ठा nand_chip *nand;
-	पूर्णांक nsels;
-	पूर्णांक ret;
-	पूर्णांक i;
-	u32 पंचांगp;
+static int sunxi_nand_chip_init(struct device *dev, struct sunxi_nfc *nfc,
+				struct device_node *np)
+{
+	struct sunxi_nand_chip *sunxi_nand;
+	struct mtd_info *mtd;
+	struct nand_chip *nand;
+	int nsels;
+	int ret;
+	int i;
+	u32 tmp;
 
-	अगर (!of_get_property(np, "reg", &nsels))
-		वापस -EINVAL;
+	if (!of_get_property(np, "reg", &nsels))
+		return -EINVAL;
 
-	nsels /= माप(u32);
-	अगर (!nsels) अणु
+	nsels /= sizeof(u32);
+	if (!nsels) {
 		dev_err(dev, "invalid reg property size\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	sunxi_nand = devm_kzalloc(dev, काष्ठा_size(sunxi_nand, sels, nsels),
+	sunxi_nand = devm_kzalloc(dev, struct_size(sunxi_nand, sels, nsels),
 				  GFP_KERNEL);
-	अगर (!sunxi_nand) अणु
+	if (!sunxi_nand) {
 		dev_err(dev, "could not allocate chip\n");
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	sunxi_nand->nsels = nsels;
 
-	क्रम (i = 0; i < nsels; i++) अणु
-		ret = of_property_पढ़ो_u32_index(np, "reg", i, &पंचांगp);
-		अगर (ret) अणु
+	for (i = 0; i < nsels; i++) {
+		ret = of_property_read_u32_index(np, "reg", i, &tmp);
+		if (ret) {
 			dev_err(dev, "could not retrieve reg property: %d\n",
 				ret);
-			वापस ret;
-		पूर्ण
+			return ret;
+		}
 
-		अगर (पंचांगp > NFC_MAX_CS) अणु
+		if (tmp > NFC_MAX_CS) {
 			dev_err(dev,
 				"invalid reg value: %u (max CS = 7)\n",
-				पंचांगp);
-			वापस -EINVAL;
-		पूर्ण
+				tmp);
+			return -EINVAL;
+		}
 
-		अगर (test_and_set_bit(पंचांगp, &nfc->asचिन्हित_cs)) अणु
-			dev_err(dev, "CS %d already assigned\n", पंचांगp);
-			वापस -EINVAL;
-		पूर्ण
+		if (test_and_set_bit(tmp, &nfc->assigned_cs)) {
+			dev_err(dev, "CS %d already assigned\n", tmp);
+			return -EINVAL;
+		}
 
-		sunxi_nand->sels[i].cs = पंचांगp;
+		sunxi_nand->sels[i].cs = tmp;
 
-		अगर (!of_property_पढ़ो_u32_index(np, "allwinner,rb", i, &पंचांगp) &&
-		    पंचांगp < 2)
-			sunxi_nand->sels[i].rb = पंचांगp;
-		अन्यथा
+		if (!of_property_read_u32_index(np, "allwinner,rb", i, &tmp) &&
+		    tmp < 2)
+			sunxi_nand->sels[i].rb = tmp;
+		else
 			sunxi_nand->sels[i].rb = -1;
-	पूर्ण
+	}
 
 	nand = &sunxi_nand->nand;
-	/* Default tR value specअगरied in the ONFI spec (chapter 4.15.1) */
+	/* Default tR value specified in the ONFI spec (chapter 4.15.1) */
 	nand->controller = &nfc->controller;
 	nand->controller->ops = &sunxi_nand_controller_ops;
 
 	/*
-	 * Set the ECC mode to the शेष value in हाल nothing is specअगरied
+	 * Set the ECC mode to the default value in case nothing is specified
 	 * in the DT.
 	 */
-	nand->ecc.engine_type = न_अंकD_ECC_ENGINE_TYPE_ON_HOST;
+	nand->ecc.engine_type = NAND_ECC_ENGINE_TYPE_ON_HOST;
 	nand_set_flash_node(nand, np);
 
 	mtd = nand_to_mtd(nand);
 	mtd->dev.parent = dev;
 
 	ret = nand_scan(nand, nsels);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = mtd_device_रेजिस्टर(mtd, शून्य, 0);
-	अगर (ret) अणु
+	ret = mtd_device_register(mtd, NULL, 0);
+	if (ret) {
 		dev_err(dev, "failed to register mtd device: %d\n", ret);
 		nand_cleanup(nand);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	list_add_tail(&sunxi_nand->node, &nfc->chips);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sunxi_nand_chips_init(काष्ठा device *dev, काष्ठा sunxi_nfc *nfc)
-अणु
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा device_node *nand_np;
-	पूर्णांक nchips = of_get_child_count(np);
-	पूर्णांक ret;
+static int sunxi_nand_chips_init(struct device *dev, struct sunxi_nfc *nfc)
+{
+	struct device_node *np = dev->of_node;
+	struct device_node *nand_np;
+	int nchips = of_get_child_count(np);
+	int ret;
 
-	अगर (nchips > 8) अणु
+	if (nchips > 8) {
 		dev_err(dev, "too many NAND chips: %d (max = 8)\n", nchips);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	क्रम_each_child_of_node(np, nand_np) अणु
+	for_each_child_of_node(np, nand_np) {
 		ret = sunxi_nand_chip_init(dev, nfc, nand_np);
-		अगर (ret) अणु
+		if (ret) {
 			of_node_put(nand_np);
-			वापस ret;
-		पूर्ण
-	पूर्ण
+			return ret;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम sunxi_nand_chips_cleanup(काष्ठा sunxi_nfc *nfc)
-अणु
-	काष्ठा sunxi_nand_chip *sunxi_nand;
-	काष्ठा nand_chip *chip;
-	पूर्णांक ret;
+static void sunxi_nand_chips_cleanup(struct sunxi_nfc *nfc)
+{
+	struct sunxi_nand_chip *sunxi_nand;
+	struct nand_chip *chip;
+	int ret;
 
-	जबतक (!list_empty(&nfc->chips)) अणु
+	while (!list_empty(&nfc->chips)) {
 		sunxi_nand = list_first_entry(&nfc->chips,
-					      काष्ठा sunxi_nand_chip,
+					      struct sunxi_nand_chip,
 					      node);
 		chip = &sunxi_nand->nand;
-		ret = mtd_device_unरेजिस्टर(nand_to_mtd(chip));
+		ret = mtd_device_unregister(nand_to_mtd(chip));
 		WARN_ON(ret);
 		nand_cleanup(chip);
 		sunxi_nand_ecc_cleanup(sunxi_nand);
 		list_del(&sunxi_nand->node);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक sunxi_nfc_dma_init(काष्ठा sunxi_nfc *nfc, काष्ठा resource *r)
-अणु
-	पूर्णांक ret;
+static int sunxi_nfc_dma_init(struct sunxi_nfc *nfc, struct resource *r)
+{
+	int ret;
 
-	अगर (nfc->caps->has_mdma)
-		वापस 0;
+	if (nfc->caps->has_mdma)
+		return 0;
 
 	nfc->dmac = dma_request_chan(nfc->dev, "rxtx");
-	अगर (IS_ERR(nfc->dmac)) अणु
+	if (IS_ERR(nfc->dmac)) {
 		ret = PTR_ERR(nfc->dmac);
-		अगर (ret == -EPROBE_DEFER)
-			वापस ret;
+		if (ret == -EPROBE_DEFER)
+			return ret;
 
 		/* Ignore errors to fall back to PIO mode */
 		dev_warn(nfc->dev, "failed to request rxtx DMA channel: %d\n", ret);
-		nfc->dmac = शून्य;
-	पूर्ण अन्यथा अणु
-		काष्ठा dma_slave_config dmac_cfg = अणु पूर्ण;
+		nfc->dmac = NULL;
+	} else {
+		struct dma_slave_config dmac_cfg = { };
 
 		dmac_cfg.src_addr = r->start + nfc->caps->reg_io_data;
 		dmac_cfg.dst_addr = dmac_cfg.src_addr;
@@ -2108,161 +2107,161 @@ err:
 		dmac_cfg.src_maxburst = nfc->caps->dma_maxburst;
 		dmac_cfg.dst_maxburst = nfc->caps->dma_maxburst;
 		dmaengine_slave_config(nfc->dmac, &dmac_cfg);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक sunxi_nfc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा resource *r;
-	काष्ठा sunxi_nfc *nfc;
-	पूर्णांक irq;
-	पूर्णांक ret;
+static int sunxi_nfc_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct resource *r;
+	struct sunxi_nfc *nfc;
+	int irq;
+	int ret;
 
-	nfc = devm_kzalloc(dev, माप(*nfc), GFP_KERNEL);
-	अगर (!nfc)
-		वापस -ENOMEM;
+	nfc = devm_kzalloc(dev, sizeof(*nfc), GFP_KERNEL);
+	if (!nfc)
+		return -ENOMEM;
 
 	nfc->dev = dev;
 	nand_controller_init(&nfc->controller);
 	INIT_LIST_HEAD(&nfc->chips);
 
-	r = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
+	r = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	nfc->regs = devm_ioremap_resource(dev, r);
-	अगर (IS_ERR(nfc->regs))
-		वापस PTR_ERR(nfc->regs);
+	if (IS_ERR(nfc->regs))
+		return PTR_ERR(nfc->regs);
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
 	nfc->ahb_clk = devm_clk_get(dev, "ahb");
-	अगर (IS_ERR(nfc->ahb_clk)) अणु
+	if (IS_ERR(nfc->ahb_clk)) {
 		dev_err(dev, "failed to retrieve ahb clk\n");
-		वापस PTR_ERR(nfc->ahb_clk);
-	पूर्ण
+		return PTR_ERR(nfc->ahb_clk);
+	}
 
 	ret = clk_prepare_enable(nfc->ahb_clk);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	nfc->mod_clk = devm_clk_get(dev, "mod");
-	अगर (IS_ERR(nfc->mod_clk)) अणु
+	if (IS_ERR(nfc->mod_clk)) {
 		dev_err(dev, "failed to retrieve mod clk\n");
 		ret = PTR_ERR(nfc->mod_clk);
-		जाओ out_ahb_clk_unprepare;
-	पूर्ण
+		goto out_ahb_clk_unprepare;
+	}
 
 	ret = clk_prepare_enable(nfc->mod_clk);
-	अगर (ret)
-		जाओ out_ahb_clk_unprepare;
+	if (ret)
+		goto out_ahb_clk_unprepare;
 
 	nfc->reset = devm_reset_control_get_optional_exclusive(dev, "ahb");
-	अगर (IS_ERR(nfc->reset)) अणु
+	if (IS_ERR(nfc->reset)) {
 		ret = PTR_ERR(nfc->reset);
-		जाओ out_mod_clk_unprepare;
-	पूर्ण
+		goto out_mod_clk_unprepare;
+	}
 
-	ret = reset_control_deनिश्चित(nfc->reset);
-	अगर (ret) अणु
+	ret = reset_control_deassert(nfc->reset);
+	if (ret) {
 		dev_err(dev, "reset err %d\n", ret);
-		जाओ out_mod_clk_unprepare;
-	पूर्ण
+		goto out_mod_clk_unprepare;
+	}
 
 	nfc->caps = of_device_get_match_data(&pdev->dev);
-	अगर (!nfc->caps) अणु
+	if (!nfc->caps) {
 		ret = -EINVAL;
-		जाओ out_ahb_reset_reनिश्चित;
-	पूर्ण
+		goto out_ahb_reset_reassert;
+	}
 
 	ret = sunxi_nfc_rst(nfc);
-	अगर (ret)
-		जाओ out_ahb_reset_reनिश्चित;
+	if (ret)
+		goto out_ahb_reset_reassert;
 
-	ग_लिखोl(0, nfc->regs + NFC_REG_INT);
-	ret = devm_request_irq(dev, irq, sunxi_nfc_पूर्णांकerrupt,
+	writel(0, nfc->regs + NFC_REG_INT);
+	ret = devm_request_irq(dev, irq, sunxi_nfc_interrupt,
 			       0, "sunxi-nand", nfc);
-	अगर (ret)
-		जाओ out_ahb_reset_reनिश्चित;
+	if (ret)
+		goto out_ahb_reset_reassert;
 
 	ret = sunxi_nfc_dma_init(nfc, r);
 
-	अगर (ret)
-		जाओ out_ahb_reset_reनिश्चित;
+	if (ret)
+		goto out_ahb_reset_reassert;
 
-	platक्रमm_set_drvdata(pdev, nfc);
+	platform_set_drvdata(pdev, nfc);
 
 	ret = sunxi_nand_chips_init(dev, nfc);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev, "failed to init nand chips\n");
-		जाओ out_release_dmac;
-	पूर्ण
+		goto out_release_dmac;
+	}
 
-	वापस 0;
+	return 0;
 
 out_release_dmac:
-	अगर (nfc->dmac)
+	if (nfc->dmac)
 		dma_release_channel(nfc->dmac);
-out_ahb_reset_reनिश्चित:
-	reset_control_निश्चित(nfc->reset);
+out_ahb_reset_reassert:
+	reset_control_assert(nfc->reset);
 out_mod_clk_unprepare:
 	clk_disable_unprepare(nfc->mod_clk);
 out_ahb_clk_unprepare:
 	clk_disable_unprepare(nfc->ahb_clk);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक sunxi_nfc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा sunxi_nfc *nfc = platक्रमm_get_drvdata(pdev);
+static int sunxi_nfc_remove(struct platform_device *pdev)
+{
+	struct sunxi_nfc *nfc = platform_get_drvdata(pdev);
 
 	sunxi_nand_chips_cleanup(nfc);
 
-	reset_control_निश्चित(nfc->reset);
+	reset_control_assert(nfc->reset);
 
-	अगर (nfc->dmac)
+	if (nfc->dmac)
 		dma_release_channel(nfc->dmac);
 	clk_disable_unprepare(nfc->mod_clk);
 	clk_disable_unprepare(nfc->ahb_clk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा sunxi_nfc_caps sunxi_nfc_a10_caps = अणु
+static const struct sunxi_nfc_caps sunxi_nfc_a10_caps = {
 	.reg_io_data = NFC_REG_A10_IO_DATA,
 	.dma_maxburst = 4,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा sunxi_nfc_caps sunxi_nfc_a23_caps = अणु
+static const struct sunxi_nfc_caps sunxi_nfc_a23_caps = {
 	.has_mdma = true,
 	.reg_io_data = NFC_REG_A23_IO_DATA,
 	.dma_maxburst = 8,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id sunxi_nfc_ids[] = अणु
-	अणु
+static const struct of_device_id sunxi_nfc_ids[] = {
+	{
 		.compatible = "allwinner,sun4i-a10-nand",
 		.data = &sunxi_nfc_a10_caps,
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "allwinner,sun8i-a23-nand-controller",
 		.data = &sunxi_nfc_a23_caps,
-	पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+	},
+	{ /* sentinel */ }
+};
 MODULE_DEVICE_TABLE(of, sunxi_nfc_ids);
 
-अटल काष्ठा platक्रमm_driver sunxi_nfc_driver = अणु
-	.driver = अणु
+static struct platform_driver sunxi_nfc_driver = {
+	.driver = {
 		.name = "sunxi_nand",
 		.of_match_table = sunxi_nfc_ids,
-	पूर्ण,
+	},
 	.probe = sunxi_nfc_probe,
-	.हटाओ = sunxi_nfc_हटाओ,
-पूर्ण;
-module_platक्रमm_driver(sunxi_nfc_driver);
+	.remove = sunxi_nfc_remove,
+};
+module_platform_driver(sunxi_nfc_driver);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Boris BREZILLON");

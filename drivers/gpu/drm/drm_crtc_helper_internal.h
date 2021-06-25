@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2016 Intel Corporation
+ * Copyright © 2016 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -23,52 +22,52 @@
 
 /*
  * This header file contains mode setting related functions and definitions
- * which are only used within the drm kms helper module as पूर्णांकernal
+ * which are only used within the drm kms helper module as internal
  * implementation details and are not exported to drivers.
  */
 
-#समावेश <drm/drm_connector.h>
-#समावेश <drm/drm_crtc.h>
-#समावेश <drm/drm_dp_helper.h>
-#समावेश <drm/drm_encoder.h>
-#समावेश <drm/drm_modes.h>
+#include <drm/drm_connector.h>
+#include <drm/drm_crtc.h>
+#include <drm/drm_dp_helper.h>
+#include <drm/drm_encoder.h>
+#include <drm/drm_modes.h>
 
 /* drm_dp_aux_dev.c */
-#अगर_घोषित CONFIG_DRM_DP_AUX_CHARDEV
-पूर्णांक drm_dp_aux_dev_init(व्योम);
-व्योम drm_dp_aux_dev_निकास(व्योम);
-पूर्णांक drm_dp_aux_रेजिस्टर_devnode(काष्ठा drm_dp_aux *aux);
-व्योम drm_dp_aux_unरेजिस्टर_devnode(काष्ठा drm_dp_aux *aux);
-#अन्यथा
-अटल अंतरभूत पूर्णांक drm_dp_aux_dev_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+#ifdef CONFIG_DRM_DP_AUX_CHARDEV
+int drm_dp_aux_dev_init(void);
+void drm_dp_aux_dev_exit(void);
+int drm_dp_aux_register_devnode(struct drm_dp_aux *aux);
+void drm_dp_aux_unregister_devnode(struct drm_dp_aux *aux);
+#else
+static inline int drm_dp_aux_dev_init(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम drm_dp_aux_dev_निकास(व्योम)
-अणु
-पूर्ण
+static inline void drm_dp_aux_dev_exit(void)
+{
+}
 
-अटल अंतरभूत पूर्णांक drm_dp_aux_रेजिस्टर_devnode(काष्ठा drm_dp_aux *aux)
-अणु
-	वापस 0;
-पूर्ण
+static inline int drm_dp_aux_register_devnode(struct drm_dp_aux *aux)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम drm_dp_aux_unरेजिस्टर_devnode(काष्ठा drm_dp_aux *aux)
-अणु
-पूर्ण
-#पूर्ण_अगर
+static inline void drm_dp_aux_unregister_devnode(struct drm_dp_aux *aux)
+{
+}
+#endif
 
 /* drm_probe_helper.c */
-क्रमागत drm_mode_status drm_crtc_mode_valid(काष्ठा drm_crtc *crtc,
-					 स्थिर काष्ठा drm_display_mode *mode);
-क्रमागत drm_mode_status drm_encoder_mode_valid(काष्ठा drm_encoder *encoder,
-					    स्थिर काष्ठा drm_display_mode *mode);
-पूर्णांक
-drm_connector_mode_valid(काष्ठा drm_connector *connector,
-			 काष्ठा drm_display_mode *mode,
-			 काष्ठा drm_modeset_acquire_ctx *ctx,
-			 क्रमागत drm_mode_status *status);
+enum drm_mode_status drm_crtc_mode_valid(struct drm_crtc *crtc,
+					 const struct drm_display_mode *mode);
+enum drm_mode_status drm_encoder_mode_valid(struct drm_encoder *encoder,
+					    const struct drm_display_mode *mode);
+int
+drm_connector_mode_valid(struct drm_connector *connector,
+			 struct drm_display_mode *mode,
+			 struct drm_modeset_acquire_ctx *ctx,
+			 enum drm_mode_status *status);
 
-काष्ठा drm_encoder *
-drm_connector_get_single_encoder(काष्ठा drm_connector *connector);
+struct drm_encoder *
+drm_connector_get_single_encoder(struct drm_connector *connector);

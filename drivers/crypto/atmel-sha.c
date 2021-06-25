@@ -1,290 +1,289 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Cryptographic API.
  *
- * Support क्रम ATMEL SHA1/SHA256 HW acceleration.
+ * Support for ATMEL SHA1/SHA256 HW acceleration.
  *
- * Copyright (c) 2012 Eukrथऊa Electromatique - ATMEL
+ * Copyright (c) 2012 Eukréa Electromatique - ATMEL
  * Author: Nicolas Royer <nicolas@eukrea.com>
  *
  * Some ideas are from omap-sham.c drivers.
  */
 
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/err.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/hw_अक्रमom.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/err.h>
+#include <linux/clk.h>
+#include <linux/io.h>
+#include <linux/hw_random.h>
+#include <linux/platform_device.h>
 
-#समावेश <linux/device.h>
-#समावेश <linux/dmaengine.h>
-#समावेश <linux/init.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/irq.h>
-#समावेश <linux/scatterlist.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/crypto.h>
-#समावेश <crypto/scatterwalk.h>
-#समावेश <crypto/algapi.h>
-#समावेश <crypto/sha1.h>
-#समावेश <crypto/sha2.h>
-#समावेश <crypto/hash.h>
-#समावेश <crypto/पूर्णांकernal/hash.h>
-#समावेश "atmel-sha-regs.h"
-#समावेश "atmel-authenc.h"
+#include <linux/device.h>
+#include <linux/dmaengine.h>
+#include <linux/init.h>
+#include <linux/errno.h>
+#include <linux/interrupt.h>
+#include <linux/irq.h>
+#include <linux/scatterlist.h>
+#include <linux/dma-mapping.h>
+#include <linux/of_device.h>
+#include <linux/delay.h>
+#include <linux/crypto.h>
+#include <crypto/scatterwalk.h>
+#include <crypto/algapi.h>
+#include <crypto/sha1.h>
+#include <crypto/sha2.h>
+#include <crypto/hash.h>
+#include <crypto/internal/hash.h>
+#include "atmel-sha-regs.h"
+#include "atmel-authenc.h"
 
-#घोषणा ATMEL_SHA_PRIORITY	300
+#define ATMEL_SHA_PRIORITY	300
 
 /* SHA flags */
-#घोषणा SHA_FLAGS_BUSY			BIT(0)
-#घोषणा	SHA_FLAGS_FINAL			BIT(1)
-#घोषणा SHA_FLAGS_DMA_ACTIVE	BIT(2)
-#घोषणा SHA_FLAGS_OUTPUT_READY	BIT(3)
-#घोषणा SHA_FLAGS_INIT			BIT(4)
-#घोषणा SHA_FLAGS_CPU			BIT(5)
-#घोषणा SHA_FLAGS_DMA_READY		BIT(6)
-#घोषणा SHA_FLAGS_DUMP_REG	BIT(7)
+#define SHA_FLAGS_BUSY			BIT(0)
+#define	SHA_FLAGS_FINAL			BIT(1)
+#define SHA_FLAGS_DMA_ACTIVE	BIT(2)
+#define SHA_FLAGS_OUTPUT_READY	BIT(3)
+#define SHA_FLAGS_INIT			BIT(4)
+#define SHA_FLAGS_CPU			BIT(5)
+#define SHA_FLAGS_DMA_READY		BIT(6)
+#define SHA_FLAGS_DUMP_REG	BIT(7)
 
 /* bits[11:8] are reserved. */
 
-#घोषणा SHA_FLAGS_FINUP		BIT(16)
-#घोषणा SHA_FLAGS_SG		BIT(17)
-#घोषणा SHA_FLAGS_ERROR		BIT(23)
-#घोषणा SHA_FLAGS_PAD		BIT(24)
-#घोषणा SHA_FLAGS_RESTORE	BIT(25)
-#घोषणा SHA_FLAGS_IDATAR0	BIT(26)
-#घोषणा SHA_FLAGS_WAIT_DATARDY	BIT(27)
+#define SHA_FLAGS_FINUP		BIT(16)
+#define SHA_FLAGS_SG		BIT(17)
+#define SHA_FLAGS_ERROR		BIT(23)
+#define SHA_FLAGS_PAD		BIT(24)
+#define SHA_FLAGS_RESTORE	BIT(25)
+#define SHA_FLAGS_IDATAR0	BIT(26)
+#define SHA_FLAGS_WAIT_DATARDY	BIT(27)
 
-#घोषणा SHA_OP_INIT	0
-#घोषणा SHA_OP_UPDATE	1
-#घोषणा SHA_OP_FINAL	2
-#घोषणा SHA_OP_DIGEST	3
+#define SHA_OP_INIT	0
+#define SHA_OP_UPDATE	1
+#define SHA_OP_FINAL	2
+#define SHA_OP_DIGEST	3
 
-#घोषणा SHA_BUFFER_LEN		(PAGE_SIZE / 16)
+#define SHA_BUFFER_LEN		(PAGE_SIZE / 16)
 
-#घोषणा ATMEL_SHA_DMA_THRESHOLD		56
+#define ATMEL_SHA_DMA_THRESHOLD		56
 
-काष्ठा aपंचांगel_sha_caps अणु
+struct atmel_sha_caps {
 	bool	has_dma;
 	bool	has_dualbuff;
 	bool	has_sha224;
 	bool	has_sha_384_512;
 	bool	has_uihv;
 	bool	has_hmac;
-पूर्ण;
+};
 
-काष्ठा aपंचांगel_sha_dev;
+struct atmel_sha_dev;
 
 /*
- * .statesize = माप(काष्ठा aपंचांगel_sha_reqctx) must be <= PAGE_SIZE / 8 as
+ * .statesize = sizeof(struct atmel_sha_reqctx) must be <= PAGE_SIZE / 8 as
  * tested by the ahash_prepare_alg() function.
  */
-काष्ठा aपंचांगel_sha_reqctx अणु
-	काष्ठा aपंचांगel_sha_dev	*dd;
-	अचिन्हित दीर्घ	flags;
-	अचिन्हित दीर्घ	op;
+struct atmel_sha_reqctx {
+	struct atmel_sha_dev	*dd;
+	unsigned long	flags;
+	unsigned long	op;
 
-	u8	digest[SHA512_DIGEST_SIZE] __aligned(माप(u32));
+	u8	digest[SHA512_DIGEST_SIZE] __aligned(sizeof(u32));
 	u64	digcnt[2];
-	माप_प्रकार	bufcnt;
-	माप_प्रकार	buflen;
+	size_t	bufcnt;
+	size_t	buflen;
 	dma_addr_t	dma_addr;
 
 	/* walk state */
-	काष्ठा scatterlist	*sg;
-	अचिन्हित पूर्णांक	offset;	/* offset in current sg */
-	अचिन्हित पूर्णांक	total;	/* total request */
+	struct scatterlist	*sg;
+	unsigned int	offset;	/* offset in current sg */
+	unsigned int	total;	/* total request */
 
-	माप_प्रकार block_size;
-	माप_प्रकार hash_size;
+	size_t block_size;
+	size_t hash_size;
 
-	u8 buffer[SHA_BUFFER_LEN + SHA512_BLOCK_SIZE] __aligned(माप(u32));
-पूर्ण;
+	u8 buffer[SHA_BUFFER_LEN + SHA512_BLOCK_SIZE] __aligned(sizeof(u32));
+};
 
-प्रकार पूर्णांक (*aपंचांगel_sha_fn_t)(काष्ठा aपंचांगel_sha_dev *);
+typedef int (*atmel_sha_fn_t)(struct atmel_sha_dev *);
 
-काष्ठा aपंचांगel_sha_ctx अणु
-	काष्ठा aपंचांगel_sha_dev	*dd;
-	aपंचांगel_sha_fn_t		start;
+struct atmel_sha_ctx {
+	struct atmel_sha_dev	*dd;
+	atmel_sha_fn_t		start;
 
-	अचिन्हित दीर्घ		flags;
-पूर्ण;
+	unsigned long		flags;
+};
 
-#घोषणा ATMEL_SHA_QUEUE_LENGTH	50
+#define ATMEL_SHA_QUEUE_LENGTH	50
 
-काष्ठा aपंचांगel_sha_dma अणु
-	काष्ठा dma_chan			*chan;
-	काष्ठा dma_slave_config dma_conf;
-	काष्ठा scatterlist	*sg;
-	पूर्णांक			nents;
-	अचिन्हित पूर्णांक		last_sg_length;
-पूर्ण;
+struct atmel_sha_dma {
+	struct dma_chan			*chan;
+	struct dma_slave_config dma_conf;
+	struct scatterlist	*sg;
+	int			nents;
+	unsigned int		last_sg_length;
+};
 
-काष्ठा aपंचांगel_sha_dev अणु
-	काष्ठा list_head	list;
-	अचिन्हित दीर्घ		phys_base;
-	काष्ठा device		*dev;
-	काष्ठा clk			*iclk;
-	पूर्णांक					irq;
-	व्योम __iomem		*io_base;
+struct atmel_sha_dev {
+	struct list_head	list;
+	unsigned long		phys_base;
+	struct device		*dev;
+	struct clk			*iclk;
+	int					irq;
+	void __iomem		*io_base;
 
 	spinlock_t		lock;
-	काष्ठा tasklet_काष्ठा	करोne_task;
-	काष्ठा tasklet_काष्ठा	queue_task;
+	struct tasklet_struct	done_task;
+	struct tasklet_struct	queue_task;
 
-	अचिन्हित दीर्घ		flags;
-	काष्ठा crypto_queue	queue;
-	काष्ठा ahash_request	*req;
+	unsigned long		flags;
+	struct crypto_queue	queue;
+	struct ahash_request	*req;
 	bool			is_async;
-	bool			क्रमce_complete;
-	aपंचांगel_sha_fn_t		resume;
-	aपंचांगel_sha_fn_t		cpu_transfer_complete;
+	bool			force_complete;
+	atmel_sha_fn_t		resume;
+	atmel_sha_fn_t		cpu_transfer_complete;
 
-	काष्ठा aपंचांगel_sha_dma	dma_lch_in;
+	struct atmel_sha_dma	dma_lch_in;
 
-	काष्ठा aपंचांगel_sha_caps	caps;
+	struct atmel_sha_caps	caps;
 
-	काष्ठा scatterlist	पंचांगp;
+	struct scatterlist	tmp;
 
 	u32	hw_version;
-पूर्ण;
+};
 
-काष्ठा aपंचांगel_sha_drv अणु
-	काष्ठा list_head	dev_list;
+struct atmel_sha_drv {
+	struct list_head	dev_list;
 	spinlock_t		lock;
-पूर्ण;
+};
 
-अटल काष्ठा aपंचांगel_sha_drv aपंचांगel_sha = अणु
-	.dev_list = LIST_HEAD_INIT(aपंचांगel_sha.dev_list),
-	.lock = __SPIN_LOCK_UNLOCKED(aपंचांगel_sha.lock),
-पूर्ण;
+static struct atmel_sha_drv atmel_sha = {
+	.dev_list = LIST_HEAD_INIT(atmel_sha.dev_list),
+	.lock = __SPIN_LOCK_UNLOCKED(atmel_sha.lock),
+};
 
-#अगर_घोषित VERBOSE_DEBUG
-अटल स्थिर अक्षर *aपंचांगel_sha_reg_name(u32 offset, अक्षर *पंचांगp, माप_प्रकार sz, bool wr)
-अणु
-	चयन (offset) अणु
-	हाल SHA_CR:
-		वापस "CR";
+#ifdef VERBOSE_DEBUG
+static const char *atmel_sha_reg_name(u32 offset, char *tmp, size_t sz, bool wr)
+{
+	switch (offset) {
+	case SHA_CR:
+		return "CR";
 
-	हाल SHA_MR:
-		वापस "MR";
+	case SHA_MR:
+		return "MR";
 
-	हाल SHA_IER:
-		वापस "IER";
+	case SHA_IER:
+		return "IER";
 
-	हाल SHA_IDR:
-		वापस "IDR";
+	case SHA_IDR:
+		return "IDR";
 
-	हाल SHA_IMR:
-		वापस "IMR";
+	case SHA_IMR:
+		return "IMR";
 
-	हाल SHA_ISR:
-		वापस "ISR";
+	case SHA_ISR:
+		return "ISR";
 
-	हाल SHA_MSR:
-		वापस "MSR";
+	case SHA_MSR:
+		return "MSR";
 
-	हाल SHA_BCR:
-		वापस "BCR";
+	case SHA_BCR:
+		return "BCR";
 
-	हाल SHA_REG_DIN(0):
-	हाल SHA_REG_DIN(1):
-	हाल SHA_REG_DIN(2):
-	हाल SHA_REG_DIN(3):
-	हाल SHA_REG_DIN(4):
-	हाल SHA_REG_DIN(5):
-	हाल SHA_REG_DIN(6):
-	हाल SHA_REG_DIN(7):
-	हाल SHA_REG_DIN(8):
-	हाल SHA_REG_DIN(9):
-	हाल SHA_REG_DIN(10):
-	हाल SHA_REG_DIN(11):
-	हाल SHA_REG_DIN(12):
-	हाल SHA_REG_DIN(13):
-	हाल SHA_REG_DIN(14):
-	हाल SHA_REG_DIN(15):
-		snम_लिखो(पंचांगp, sz, "IDATAR[%u]", (offset - SHA_REG_DIN(0)) >> 2);
-		अवरोध;
+	case SHA_REG_DIN(0):
+	case SHA_REG_DIN(1):
+	case SHA_REG_DIN(2):
+	case SHA_REG_DIN(3):
+	case SHA_REG_DIN(4):
+	case SHA_REG_DIN(5):
+	case SHA_REG_DIN(6):
+	case SHA_REG_DIN(7):
+	case SHA_REG_DIN(8):
+	case SHA_REG_DIN(9):
+	case SHA_REG_DIN(10):
+	case SHA_REG_DIN(11):
+	case SHA_REG_DIN(12):
+	case SHA_REG_DIN(13):
+	case SHA_REG_DIN(14):
+	case SHA_REG_DIN(15):
+		snprintf(tmp, sz, "IDATAR[%u]", (offset - SHA_REG_DIN(0)) >> 2);
+		break;
 
-	हाल SHA_REG_DIGEST(0):
-	हाल SHA_REG_DIGEST(1):
-	हाल SHA_REG_DIGEST(2):
-	हाल SHA_REG_DIGEST(3):
-	हाल SHA_REG_DIGEST(4):
-	हाल SHA_REG_DIGEST(5):
-	हाल SHA_REG_DIGEST(6):
-	हाल SHA_REG_DIGEST(7):
-	हाल SHA_REG_DIGEST(8):
-	हाल SHA_REG_DIGEST(9):
-	हाल SHA_REG_DIGEST(10):
-	हाल SHA_REG_DIGEST(11):
-	हाल SHA_REG_DIGEST(12):
-	हाल SHA_REG_DIGEST(13):
-	हाल SHA_REG_DIGEST(14):
-	हाल SHA_REG_DIGEST(15):
-		अगर (wr)
-			snम_लिखो(पंचांगp, sz, "IDATAR[%u]",
+	case SHA_REG_DIGEST(0):
+	case SHA_REG_DIGEST(1):
+	case SHA_REG_DIGEST(2):
+	case SHA_REG_DIGEST(3):
+	case SHA_REG_DIGEST(4):
+	case SHA_REG_DIGEST(5):
+	case SHA_REG_DIGEST(6):
+	case SHA_REG_DIGEST(7):
+	case SHA_REG_DIGEST(8):
+	case SHA_REG_DIGEST(9):
+	case SHA_REG_DIGEST(10):
+	case SHA_REG_DIGEST(11):
+	case SHA_REG_DIGEST(12):
+	case SHA_REG_DIGEST(13):
+	case SHA_REG_DIGEST(14):
+	case SHA_REG_DIGEST(15):
+		if (wr)
+			snprintf(tmp, sz, "IDATAR[%u]",
 				 16u + ((offset - SHA_REG_DIGEST(0)) >> 2));
-		अन्यथा
-			snम_लिखो(पंचांगp, sz, "ODATAR[%u]",
+		else
+			snprintf(tmp, sz, "ODATAR[%u]",
 				 (offset - SHA_REG_DIGEST(0)) >> 2);
-		अवरोध;
+		break;
 
-	हाल SHA_HW_VERSION:
-		वापस "HWVER";
+	case SHA_HW_VERSION:
+		return "HWVER";
 
-	शेष:
-		snम_लिखो(पंचांगp, sz, "0x%02x", offset);
-		अवरोध;
-	पूर्ण
+	default:
+		snprintf(tmp, sz, "0x%02x", offset);
+		break;
+	}
 
-	वापस पंचांगp;
-पूर्ण
+	return tmp;
+}
 
-#पूर्ण_अगर /* VERBOSE_DEBUG */
+#endif /* VERBOSE_DEBUG */
 
-अटल अंतरभूत u32 aपंचांगel_sha_पढ़ो(काष्ठा aपंचांगel_sha_dev *dd, u32 offset)
-अणु
-	u32 value = पढ़ोl_relaxed(dd->io_base + offset);
+static inline u32 atmel_sha_read(struct atmel_sha_dev *dd, u32 offset)
+{
+	u32 value = readl_relaxed(dd->io_base + offset);
 
-#अगर_घोषित VERBOSE_DEBUG
-	अगर (dd->flags & SHA_FLAGS_DUMP_REG) अणु
-		अक्षर पंचांगp[16];
+#ifdef VERBOSE_DEBUG
+	if (dd->flags & SHA_FLAGS_DUMP_REG) {
+		char tmp[16];
 
 		dev_vdbg(dd->dev, "read 0x%08x from %s\n", value,
-			 aपंचांगel_sha_reg_name(offset, पंचांगp, माप(पंचांगp), false));
-	पूर्ण
-#पूर्ण_अगर /* VERBOSE_DEBUG */
+			 atmel_sha_reg_name(offset, tmp, sizeof(tmp), false));
+	}
+#endif /* VERBOSE_DEBUG */
 
-	वापस value;
-पूर्ण
+	return value;
+}
 
-अटल अंतरभूत व्योम aपंचांगel_sha_ग_लिखो(काष्ठा aपंचांगel_sha_dev *dd,
+static inline void atmel_sha_write(struct atmel_sha_dev *dd,
 					u32 offset, u32 value)
-अणु
-#अगर_घोषित VERBOSE_DEBUG
-	अगर (dd->flags & SHA_FLAGS_DUMP_REG) अणु
-		अक्षर पंचांगp[16];
+{
+#ifdef VERBOSE_DEBUG
+	if (dd->flags & SHA_FLAGS_DUMP_REG) {
+		char tmp[16];
 
 		dev_vdbg(dd->dev, "write 0x%08x into %s\n", value,
-			 aपंचांगel_sha_reg_name(offset, पंचांगp, माप(पंचांगp), true));
-	पूर्ण
-#पूर्ण_अगर /* VERBOSE_DEBUG */
+			 atmel_sha_reg_name(offset, tmp, sizeof(tmp), true));
+	}
+#endif /* VERBOSE_DEBUG */
 
-	ग_लिखोl_relaxed(value, dd->io_base + offset);
-पूर्ण
+	writel_relaxed(value, dd->io_base + offset);
+}
 
-अटल अंतरभूत पूर्णांक aपंचांगel_sha_complete(काष्ठा aपंचांगel_sha_dev *dd, पूर्णांक err)
-अणु
-	काष्ठा ahash_request *req = dd->req;
+static inline int atmel_sha_complete(struct atmel_sha_dev *dd, int err)
+{
+	struct ahash_request *req = dd->req;
 
 	dd->flags &= ~(SHA_FLAGS_BUSY | SHA_FLAGS_FINAL | SHA_FLAGS_CPU |
 		       SHA_FLAGS_DMA_READY | SHA_FLAGS_OUTPUT_READY |
@@ -292,37 +291,37 @@
 
 	clk_disable(dd->iclk);
 
-	अगर ((dd->is_async || dd->क्रमce_complete) && req->base.complete)
+	if ((dd->is_async || dd->force_complete) && req->base.complete)
 		req->base.complete(&req->base, err);
 
 	/* handle new request */
 	tasklet_schedule(&dd->queue_task);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल माप_प्रकार aपंचांगel_sha_append_sg(काष्ठा aपंचांगel_sha_reqctx *ctx)
-अणु
-	माप_प्रकार count;
+static size_t atmel_sha_append_sg(struct atmel_sha_reqctx *ctx)
+{
+	size_t count;
 
-	जबतक ((ctx->bufcnt < ctx->buflen) && ctx->total) अणु
+	while ((ctx->bufcnt < ctx->buflen) && ctx->total) {
 		count = min(ctx->sg->length - ctx->offset, ctx->total);
 		count = min(count, ctx->buflen - ctx->bufcnt);
 
-		अगर (count <= 0) अणु
+		if (count <= 0) {
 			/*
-			* Check अगर count <= 0 because the buffer is full or
-			* because the sg length is 0. In the latest हाल,
-			* check अगर there is another sg in the list, a 0 length
-			* sg करोesn't necessarily mean the end of the sg list.
+			* Check if count <= 0 because the buffer is full or
+			* because the sg length is 0. In the latest case,
+			* check if there is another sg in the list, a 0 length
+			* sg doesn't necessarily mean the end of the sg list.
 			*/
-			अगर ((ctx->sg->length == 0) && !sg_is_last(ctx->sg)) अणु
+			if ((ctx->sg->length == 0) && !sg_is_last(ctx->sg)) {
 				ctx->sg = sg_next(ctx->sg);
-				जारी;
-			पूर्ण अन्यथा अणु
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				continue;
+			} else {
+				break;
+			}
+		}
 
 		scatterwalk_map_and_copy(ctx->buffer + ctx->bufcnt, ctx->sg,
 			ctx->offset, count, 0);
@@ -331,17 +330,17 @@
 		ctx->offset += count;
 		ctx->total -= count;
 
-		अगर (ctx->offset == ctx->sg->length) अणु
+		if (ctx->offset == ctx->sg->length) {
 			ctx->sg = sg_next(ctx->sg);
-			अगर (ctx->sg)
+			if (ctx->sg)
 				ctx->offset = 0;
-			अन्यथा
+			else
 				ctx->total = 0;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * The purpose of this padding is to ensure that the padded message is a
@@ -352,16 +351,16 @@
  * is appended.
  *
  * For SHA1/SHA224/SHA256, padlen is calculated as followed:
- *  - अगर message length < 56 bytes then padlen = 56 - message length
- *  - अन्यथा padlen = 64 + 56 - message length
+ *  - if message length < 56 bytes then padlen = 56 - message length
+ *  - else padlen = 64 + 56 - message length
  *
  * For SHA384/SHA512, padlen is calculated as followed:
- *  - अगर message length < 112 bytes then padlen = 112 - message length
- *  - अन्यथा padlen = 128 + 112 - message length
+ *  - if message length < 112 bytes then padlen = 112 - message length
+ *  - else padlen = 128 + 112 - message length
  */
-अटल व्योम aपंचांगel_sha_fill_padding(काष्ठा aपंचांगel_sha_reqctx *ctx, पूर्णांक length)
-अणु
-	अचिन्हित पूर्णांक index, padlen;
+static void atmel_sha_fill_padding(struct atmel_sha_reqctx *ctx, int length)
+{
+	unsigned int index, padlen;
 	__be64 bits[2];
 	u64 size[2];
 
@@ -369,67 +368,67 @@
 	size[1] = ctx->digcnt[1];
 
 	size[0] += ctx->bufcnt;
-	अगर (size[0] < ctx->bufcnt)
+	if (size[0] < ctx->bufcnt)
 		size[1]++;
 
 	size[0] += length;
-	अगर (size[0]  < length)
+	if (size[0]  < length)
 		size[1]++;
 
 	bits[1] = cpu_to_be64(size[0] << 3);
 	bits[0] = cpu_to_be64(size[1] << 3 | size[0] >> 61);
 
-	चयन (ctx->flags & SHA_FLAGS_ALGO_MASK) अणु
-	हाल SHA_FLAGS_SHA384:
-	हाल SHA_FLAGS_SHA512:
+	switch (ctx->flags & SHA_FLAGS_ALGO_MASK) {
+	case SHA_FLAGS_SHA384:
+	case SHA_FLAGS_SHA512:
 		index = ctx->bufcnt & 0x7f;
 		padlen = (index < 112) ? (112 - index) : ((128+112) - index);
 		*(ctx->buffer + ctx->bufcnt) = 0x80;
-		स_रखो(ctx->buffer + ctx->bufcnt + 1, 0, padlen-1);
-		स_नकल(ctx->buffer + ctx->bufcnt + padlen, bits, 16);
+		memset(ctx->buffer + ctx->bufcnt + 1, 0, padlen-1);
+		memcpy(ctx->buffer + ctx->bufcnt + padlen, bits, 16);
 		ctx->bufcnt += padlen + 16;
 		ctx->flags |= SHA_FLAGS_PAD;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		index = ctx->bufcnt & 0x3f;
 		padlen = (index < 56) ? (56 - index) : ((64+56) - index);
 		*(ctx->buffer + ctx->bufcnt) = 0x80;
-		स_रखो(ctx->buffer + ctx->bufcnt + 1, 0, padlen-1);
-		स_नकल(ctx->buffer + ctx->bufcnt + padlen, &bits[1], 8);
+		memset(ctx->buffer + ctx->bufcnt + 1, 0, padlen-1);
+		memcpy(ctx->buffer + ctx->bufcnt + padlen, &bits[1], 8);
 		ctx->bufcnt += padlen + 8;
 		ctx->flags |= SHA_FLAGS_PAD;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल काष्ठा aपंचांगel_sha_dev *aपंचांगel_sha_find_dev(काष्ठा aपंचांगel_sha_ctx *tctx)
-अणु
-	काष्ठा aपंचांगel_sha_dev *dd = शून्य;
-	काष्ठा aपंचांगel_sha_dev *पंचांगp;
+static struct atmel_sha_dev *atmel_sha_find_dev(struct atmel_sha_ctx *tctx)
+{
+	struct atmel_sha_dev *dd = NULL;
+	struct atmel_sha_dev *tmp;
 
-	spin_lock_bh(&aपंचांगel_sha.lock);
-	अगर (!tctx->dd) अणु
-		list_क्रम_each_entry(पंचांगp, &aपंचांगel_sha.dev_list, list) अणु
-			dd = पंचांगp;
-			अवरोध;
-		पूर्ण
+	spin_lock_bh(&atmel_sha.lock);
+	if (!tctx->dd) {
+		list_for_each_entry(tmp, &atmel_sha.dev_list, list) {
+			dd = tmp;
+			break;
+		}
 		tctx->dd = dd;
-	पूर्ण अन्यथा अणु
+	} else {
 		dd = tctx->dd;
-	पूर्ण
+	}
 
-	spin_unlock_bh(&aपंचांगel_sha.lock);
+	spin_unlock_bh(&atmel_sha.lock);
 
-	वापस dd;
-पूर्ण
+	return dd;
+}
 
-अटल पूर्णांक aपंचांगel_sha_init(काष्ठा ahash_request *req)
-अणु
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	काष्ठा aपंचांगel_sha_ctx *tctx = crypto_ahash_ctx(tfm);
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
-	काष्ठा aपंचांगel_sha_dev *dd = aपंचांगel_sha_find_dev(tctx);
+static int atmel_sha_init(struct ahash_request *req)
+{
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	struct atmel_sha_ctx *tctx = crypto_ahash_ctx(tfm);
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
+	struct atmel_sha_dev *dd = atmel_sha_find_dev(tctx);
 
 	ctx->dd = dd;
 
@@ -438,90 +437,90 @@
 	dev_dbg(dd->dev, "init: digest size: %u\n",
 		crypto_ahash_digestsize(tfm));
 
-	चयन (crypto_ahash_digestsize(tfm)) अणु
-	हाल SHA1_DIGEST_SIZE:
+	switch (crypto_ahash_digestsize(tfm)) {
+	case SHA1_DIGEST_SIZE:
 		ctx->flags |= SHA_FLAGS_SHA1;
 		ctx->block_size = SHA1_BLOCK_SIZE;
-		अवरोध;
-	हाल SHA224_DIGEST_SIZE:
+		break;
+	case SHA224_DIGEST_SIZE:
 		ctx->flags |= SHA_FLAGS_SHA224;
 		ctx->block_size = SHA224_BLOCK_SIZE;
-		अवरोध;
-	हाल SHA256_DIGEST_SIZE:
+		break;
+	case SHA256_DIGEST_SIZE:
 		ctx->flags |= SHA_FLAGS_SHA256;
 		ctx->block_size = SHA256_BLOCK_SIZE;
-		अवरोध;
-	हाल SHA384_DIGEST_SIZE:
+		break;
+	case SHA384_DIGEST_SIZE:
 		ctx->flags |= SHA_FLAGS_SHA384;
 		ctx->block_size = SHA384_BLOCK_SIZE;
-		अवरोध;
-	हाल SHA512_DIGEST_SIZE:
+		break;
+	case SHA512_DIGEST_SIZE:
 		ctx->flags |= SHA_FLAGS_SHA512;
 		ctx->block_size = SHA512_BLOCK_SIZE;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
 	ctx->bufcnt = 0;
 	ctx->digcnt[0] = 0;
 	ctx->digcnt[1] = 0;
 	ctx->buflen = SHA_BUFFER_LEN;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम aपंचांगel_sha_ग_लिखो_ctrl(काष्ठा aपंचांगel_sha_dev *dd, पूर्णांक dma)
-अणु
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(dd->req);
+static void atmel_sha_write_ctrl(struct atmel_sha_dev *dd, int dma)
+{
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(dd->req);
 	u32 valmr = SHA_MR_MODE_AUTO;
-	अचिन्हित पूर्णांक i, hashsize = 0;
+	unsigned int i, hashsize = 0;
 
-	अगर (likely(dma)) अणु
-		अगर (!dd->caps.has_dma)
-			aपंचांगel_sha_ग_लिखो(dd, SHA_IER, SHA_INT_TXBUFE);
+	if (likely(dma)) {
+		if (!dd->caps.has_dma)
+			atmel_sha_write(dd, SHA_IER, SHA_INT_TXBUFE);
 		valmr = SHA_MR_MODE_PDC;
-		अगर (dd->caps.has_dualbuff)
+		if (dd->caps.has_dualbuff)
 			valmr |= SHA_MR_DUALBUFF;
-	पूर्ण अन्यथा अणु
-		aपंचांगel_sha_ग_लिखो(dd, SHA_IER, SHA_INT_DATARDY);
-	पूर्ण
+	} else {
+		atmel_sha_write(dd, SHA_IER, SHA_INT_DATARDY);
+	}
 
-	चयन (ctx->flags & SHA_FLAGS_ALGO_MASK) अणु
-	हाल SHA_FLAGS_SHA1:
+	switch (ctx->flags & SHA_FLAGS_ALGO_MASK) {
+	case SHA_FLAGS_SHA1:
 		valmr |= SHA_MR_ALGO_SHA1;
 		hashsize = SHA1_DIGEST_SIZE;
-		अवरोध;
+		break;
 
-	हाल SHA_FLAGS_SHA224:
+	case SHA_FLAGS_SHA224:
 		valmr |= SHA_MR_ALGO_SHA224;
 		hashsize = SHA256_DIGEST_SIZE;
-		अवरोध;
+		break;
 
-	हाल SHA_FLAGS_SHA256:
+	case SHA_FLAGS_SHA256:
 		valmr |= SHA_MR_ALGO_SHA256;
 		hashsize = SHA256_DIGEST_SIZE;
-		अवरोध;
+		break;
 
-	हाल SHA_FLAGS_SHA384:
+	case SHA_FLAGS_SHA384:
 		valmr |= SHA_MR_ALGO_SHA384;
 		hashsize = SHA512_DIGEST_SIZE;
-		अवरोध;
+		break;
 
-	हाल SHA_FLAGS_SHA512:
+	case SHA_FLAGS_SHA512:
 		valmr |= SHA_MR_ALGO_SHA512;
 		hashsize = SHA512_DIGEST_SIZE;
-		अवरोध;
+		break;
 
-	शेष:
-		अवरोध;
-	पूर्ण
+	default:
+		break;
+	}
 
-	/* Setting CR_FIRST only क्रम the first iteration */
-	अगर (!(ctx->digcnt[0] || ctx->digcnt[1])) अणु
-		aपंचांगel_sha_ग_लिखो(dd, SHA_CR, SHA_CR_FIRST);
-	पूर्ण अन्यथा अगर (dd->caps.has_uihv && (ctx->flags & SHA_FLAGS_RESTORE)) अणु
-		स्थिर u32 *hash = (स्थिर u32 *)ctx->digest;
+	/* Setting CR_FIRST only for the first iteration */
+	if (!(ctx->digcnt[0] || ctx->digcnt[1])) {
+		atmel_sha_write(dd, SHA_CR, SHA_CR_FIRST);
+	} else if (dd->caps.has_uihv && (ctx->flags & SHA_FLAGS_RESTORE)) {
+		const u32 *hash = (const u32 *)ctx->digest;
 
 		/*
 		 * Restore the hardware context: update the User Initialize
@@ -530,117 +529,117 @@
 		 * request.
 		 */
 		ctx->flags &= ~SHA_FLAGS_RESTORE;
-		aपंचांगel_sha_ग_लिखो(dd, SHA_CR, SHA_CR_WUIHV);
-		क्रम (i = 0; i < hashsize / माप(u32); ++i)
-			aपंचांगel_sha_ग_लिखो(dd, SHA_REG_DIN(i), hash[i]);
-		aपंचांगel_sha_ग_लिखो(dd, SHA_CR, SHA_CR_FIRST);
+		atmel_sha_write(dd, SHA_CR, SHA_CR_WUIHV);
+		for (i = 0; i < hashsize / sizeof(u32); ++i)
+			atmel_sha_write(dd, SHA_REG_DIN(i), hash[i]);
+		atmel_sha_write(dd, SHA_CR, SHA_CR_FIRST);
 		valmr |= SHA_MR_UIHV;
-	पूर्ण
+	}
 	/*
 	 * WARNING: If the UIHV feature is not available, the hardware CANNOT
-	 * process concurrent requests: the पूर्णांकernal रेजिस्टरs used to store
+	 * process concurrent requests: the internal registers used to store
 	 * the hash/digest are still set to the partial digest output values
 	 * computed during the latest round.
 	 */
 
-	aपंचांगel_sha_ग_लिखो(dd, SHA_MR, valmr);
-पूर्ण
+	atmel_sha_write(dd, SHA_MR, valmr);
+}
 
-अटल अंतरभूत पूर्णांक aपंचांगel_sha_रुको_क्रम_data_पढ़ोy(काष्ठा aपंचांगel_sha_dev *dd,
-						aपंचांगel_sha_fn_t resume)
-अणु
-	u32 isr = aपंचांगel_sha_पढ़ो(dd, SHA_ISR);
+static inline int atmel_sha_wait_for_data_ready(struct atmel_sha_dev *dd,
+						atmel_sha_fn_t resume)
+{
+	u32 isr = atmel_sha_read(dd, SHA_ISR);
 
-	अगर (unlikely(isr & SHA_INT_DATARDY))
-		वापस resume(dd);
+	if (unlikely(isr & SHA_INT_DATARDY))
+		return resume(dd);
 
 	dd->resume = resume;
-	aपंचांगel_sha_ग_लिखो(dd, SHA_IER, SHA_INT_DATARDY);
-	वापस -EINPROGRESS;
-पूर्ण
+	atmel_sha_write(dd, SHA_IER, SHA_INT_DATARDY);
+	return -EINPROGRESS;
+}
 
-अटल पूर्णांक aपंचांगel_sha_xmit_cpu(काष्ठा aपंचांगel_sha_dev *dd, स्थिर u8 *buf,
-			      माप_प्रकार length, पूर्णांक final)
-अणु
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(dd->req);
-	पूर्णांक count, len32;
-	स्थिर u32 *buffer = (स्थिर u32 *)buf;
+static int atmel_sha_xmit_cpu(struct atmel_sha_dev *dd, const u8 *buf,
+			      size_t length, int final)
+{
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(dd->req);
+	int count, len32;
+	const u32 *buffer = (const u32 *)buf;
 
 	dev_dbg(dd->dev, "xmit_cpu: digcnt: 0x%llx 0x%llx, length: %zd, final: %d\n",
 		ctx->digcnt[1], ctx->digcnt[0], length, final);
 
-	aपंचांगel_sha_ग_लिखो_ctrl(dd, 0);
+	atmel_sha_write_ctrl(dd, 0);
 
-	/* should be non-zero beक्रमe next lines to disable घड़ीs later */
+	/* should be non-zero before next lines to disable clocks later */
 	ctx->digcnt[0] += length;
-	अगर (ctx->digcnt[0] < length)
+	if (ctx->digcnt[0] < length)
 		ctx->digcnt[1]++;
 
-	अगर (final)
-		dd->flags |= SHA_FLAGS_FINAL; /* catch last पूर्णांकerrupt */
+	if (final)
+		dd->flags |= SHA_FLAGS_FINAL; /* catch last interrupt */
 
-	len32 = DIV_ROUND_UP(length, माप(u32));
+	len32 = DIV_ROUND_UP(length, sizeof(u32));
 
 	dd->flags |= SHA_FLAGS_CPU;
 
-	क्रम (count = 0; count < len32; count++)
-		aपंचांगel_sha_ग_लिखो(dd, SHA_REG_DIN(count), buffer[count]);
+	for (count = 0; count < len32; count++)
+		atmel_sha_write(dd, SHA_REG_DIN(count), buffer[count]);
 
-	वापस -EINPROGRESS;
-पूर्ण
+	return -EINPROGRESS;
+}
 
-अटल पूर्णांक aपंचांगel_sha_xmit_pdc(काष्ठा aपंचांगel_sha_dev *dd, dma_addr_t dma_addr1,
-		माप_प्रकार length1, dma_addr_t dma_addr2, माप_प्रकार length2, पूर्णांक final)
-अणु
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(dd->req);
-	पूर्णांक len32;
+static int atmel_sha_xmit_pdc(struct atmel_sha_dev *dd, dma_addr_t dma_addr1,
+		size_t length1, dma_addr_t dma_addr2, size_t length2, int final)
+{
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(dd->req);
+	int len32;
 
 	dev_dbg(dd->dev, "xmit_pdc: digcnt: 0x%llx 0x%llx, length: %zd, final: %d\n",
 		ctx->digcnt[1], ctx->digcnt[0], length1, final);
 
-	len32 = DIV_ROUND_UP(length1, माप(u32));
-	aपंचांगel_sha_ग_लिखो(dd, SHA_PTCR, SHA_PTCR_TXTDIS);
-	aपंचांगel_sha_ग_लिखो(dd, SHA_TPR, dma_addr1);
-	aपंचांगel_sha_ग_लिखो(dd, SHA_TCR, len32);
+	len32 = DIV_ROUND_UP(length1, sizeof(u32));
+	atmel_sha_write(dd, SHA_PTCR, SHA_PTCR_TXTDIS);
+	atmel_sha_write(dd, SHA_TPR, dma_addr1);
+	atmel_sha_write(dd, SHA_TCR, len32);
 
-	len32 = DIV_ROUND_UP(length2, माप(u32));
-	aपंचांगel_sha_ग_लिखो(dd, SHA_TNPR, dma_addr2);
-	aपंचांगel_sha_ग_लिखो(dd, SHA_TNCR, len32);
+	len32 = DIV_ROUND_UP(length2, sizeof(u32));
+	atmel_sha_write(dd, SHA_TNPR, dma_addr2);
+	atmel_sha_write(dd, SHA_TNCR, len32);
 
-	aपंचांगel_sha_ग_लिखो_ctrl(dd, 1);
+	atmel_sha_write_ctrl(dd, 1);
 
-	/* should be non-zero beक्रमe next lines to disable घड़ीs later */
+	/* should be non-zero before next lines to disable clocks later */
 	ctx->digcnt[0] += length1;
-	अगर (ctx->digcnt[0] < length1)
+	if (ctx->digcnt[0] < length1)
 		ctx->digcnt[1]++;
 
-	अगर (final)
-		dd->flags |= SHA_FLAGS_FINAL; /* catch last पूर्णांकerrupt */
+	if (final)
+		dd->flags |= SHA_FLAGS_FINAL; /* catch last interrupt */
 
 	dd->flags |=  SHA_FLAGS_DMA_ACTIVE;
 
 	/* Start DMA transfer */
-	aपंचांगel_sha_ग_लिखो(dd, SHA_PTCR, SHA_PTCR_TXTEN);
+	atmel_sha_write(dd, SHA_PTCR, SHA_PTCR_TXTEN);
 
-	वापस -EINPROGRESS;
-पूर्ण
+	return -EINPROGRESS;
+}
 
-अटल व्योम aपंचांगel_sha_dma_callback(व्योम *data)
-अणु
-	काष्ठा aपंचांगel_sha_dev *dd = data;
+static void atmel_sha_dma_callback(void *data)
+{
+	struct atmel_sha_dev *dd = data;
 
 	dd->is_async = true;
 
-	/* dma_lch_in - completed - रुको DATRDY */
-	aपंचांगel_sha_ग_लिखो(dd, SHA_IER, SHA_INT_DATARDY);
-पूर्ण
+	/* dma_lch_in - completed - wait DATRDY */
+	atmel_sha_write(dd, SHA_IER, SHA_INT_DATARDY);
+}
 
-अटल पूर्णांक aपंचांगel_sha_xmit_dma(काष्ठा aपंचांगel_sha_dev *dd, dma_addr_t dma_addr1,
-		माप_प्रकार length1, dma_addr_t dma_addr2, माप_प्रकार length2, पूर्णांक final)
-अणु
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(dd->req);
-	काष्ठा dma_async_tx_descriptor	*in_desc;
-	काष्ठा scatterlist sg[2];
+static int atmel_sha_xmit_dma(struct atmel_sha_dev *dd, dma_addr_t dma_addr1,
+		size_t length1, dma_addr_t dma_addr2, size_t length2, int final)
+{
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(dd->req);
+	struct dma_async_tx_descriptor	*in_desc;
+	struct scatterlist sg[2];
 
 	dev_dbg(dd->dev, "xmit_dma: digcnt: 0x%llx 0x%llx, length: %zd, final: %d\n",
 		ctx->digcnt[1], ctx->digcnt[0], length1, final);
@@ -650,7 +649,7 @@
 
 	dmaengine_slave_config(dd->dma_lch_in.chan, &dd->dma_lch_in.dma_conf);
 
-	अगर (length2) अणु
+	if (length2) {
 		sg_init_table(sg, 2);
 		sg_dma_address(&sg[0]) = dma_addr1;
 		sg_dma_len(&sg[0]) = length1;
@@ -658,28 +657,28 @@
 		sg_dma_len(&sg[1]) = length2;
 		in_desc = dmaengine_prep_slave_sg(dd->dma_lch_in.chan, sg, 2,
 			DMA_MEM_TO_DEV, DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-	पूर्ण अन्यथा अणु
+	} else {
 		sg_init_table(sg, 1);
 		sg_dma_address(&sg[0]) = dma_addr1;
 		sg_dma_len(&sg[0]) = length1;
 		in_desc = dmaengine_prep_slave_sg(dd->dma_lch_in.chan, sg, 1,
 			DMA_MEM_TO_DEV, DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-	पूर्ण
-	अगर (!in_desc)
-		वापस aपंचांगel_sha_complete(dd, -EINVAL);
+	}
+	if (!in_desc)
+		return atmel_sha_complete(dd, -EINVAL);
 
-	in_desc->callback = aपंचांगel_sha_dma_callback;
+	in_desc->callback = atmel_sha_dma_callback;
 	in_desc->callback_param = dd;
 
-	aपंचांगel_sha_ग_लिखो_ctrl(dd, 1);
+	atmel_sha_write_ctrl(dd, 1);
 
-	/* should be non-zero beक्रमe next lines to disable घड़ीs later */
+	/* should be non-zero before next lines to disable clocks later */
 	ctx->digcnt[0] += length1;
-	अगर (ctx->digcnt[0] < length1)
+	if (ctx->digcnt[0] < length1)
 		ctx->digcnt[1]++;
 
-	अगर (final)
-		dd->flags |= SHA_FLAGS_FINAL; /* catch last पूर्णांकerrupt */
+	if (final)
+		dd->flags |= SHA_FLAGS_FINAL; /* catch last interrupt */
 
 	dd->flags |=  SHA_FLAGS_DMA_ACTIVE;
 
@@ -687,110 +686,110 @@
 	dmaengine_submit(in_desc);
 	dma_async_issue_pending(dd->dma_lch_in.chan);
 
-	वापस -EINPROGRESS;
-पूर्ण
+	return -EINPROGRESS;
+}
 
-अटल पूर्णांक aपंचांगel_sha_xmit_start(काष्ठा aपंचांगel_sha_dev *dd, dma_addr_t dma_addr1,
-		माप_प्रकार length1, dma_addr_t dma_addr2, माप_प्रकार length2, पूर्णांक final)
-अणु
-	अगर (dd->caps.has_dma)
-		वापस aपंचांगel_sha_xmit_dma(dd, dma_addr1, length1,
+static int atmel_sha_xmit_start(struct atmel_sha_dev *dd, dma_addr_t dma_addr1,
+		size_t length1, dma_addr_t dma_addr2, size_t length2, int final)
+{
+	if (dd->caps.has_dma)
+		return atmel_sha_xmit_dma(dd, dma_addr1, length1,
 				dma_addr2, length2, final);
-	अन्यथा
-		वापस aपंचांगel_sha_xmit_pdc(dd, dma_addr1, length1,
+	else
+		return atmel_sha_xmit_pdc(dd, dma_addr1, length1,
 				dma_addr2, length2, final);
-पूर्ण
+}
 
-अटल पूर्णांक aपंचांगel_sha_update_cpu(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(dd->req);
-	पूर्णांक bufcnt;
+static int atmel_sha_update_cpu(struct atmel_sha_dev *dd)
+{
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(dd->req);
+	int bufcnt;
 
-	aपंचांगel_sha_append_sg(ctx);
-	aपंचांगel_sha_fill_padding(ctx, 0);
+	atmel_sha_append_sg(ctx);
+	atmel_sha_fill_padding(ctx, 0);
 	bufcnt = ctx->bufcnt;
 	ctx->bufcnt = 0;
 
-	वापस aपंचांगel_sha_xmit_cpu(dd, ctx->buffer, bufcnt, 1);
-पूर्ण
+	return atmel_sha_xmit_cpu(dd, ctx->buffer, bufcnt, 1);
+}
 
-अटल पूर्णांक aपंचांगel_sha_xmit_dma_map(काष्ठा aपंचांगel_sha_dev *dd,
-					काष्ठा aपंचांगel_sha_reqctx *ctx,
-					माप_प्रकार length, पूर्णांक final)
-अणु
+static int atmel_sha_xmit_dma_map(struct atmel_sha_dev *dd,
+					struct atmel_sha_reqctx *ctx,
+					size_t length, int final)
+{
 	ctx->dma_addr = dma_map_single(dd->dev, ctx->buffer,
 				ctx->buflen + ctx->block_size, DMA_TO_DEVICE);
-	अगर (dma_mapping_error(dd->dev, ctx->dma_addr)) अणु
+	if (dma_mapping_error(dd->dev, ctx->dma_addr)) {
 		dev_err(dd->dev, "dma %zu bytes error\n", ctx->buflen +
 				ctx->block_size);
-		वापस aपंचांगel_sha_complete(dd, -EINVAL);
-	पूर्ण
+		return atmel_sha_complete(dd, -EINVAL);
+	}
 
 	ctx->flags &= ~SHA_FLAGS_SG;
 
-	/* next call करोes not fail... so no unmap in the हाल of error */
-	वापस aपंचांगel_sha_xmit_start(dd, ctx->dma_addr, length, 0, 0, final);
-पूर्ण
+	/* next call does not fail... so no unmap in the case of error */
+	return atmel_sha_xmit_start(dd, ctx->dma_addr, length, 0, 0, final);
+}
 
-अटल पूर्णांक aपंचांगel_sha_update_dma_slow(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(dd->req);
-	अचिन्हित पूर्णांक final;
-	माप_प्रकार count;
+static int atmel_sha_update_dma_slow(struct atmel_sha_dev *dd)
+{
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(dd->req);
+	unsigned int final;
+	size_t count;
 
-	aपंचांगel_sha_append_sg(ctx);
+	atmel_sha_append_sg(ctx);
 
 	final = (ctx->flags & SHA_FLAGS_FINUP) && !ctx->total;
 
 	dev_dbg(dd->dev, "slow: bufcnt: %zu, digcnt: 0x%llx 0x%llx, final: %d\n",
 		 ctx->bufcnt, ctx->digcnt[1], ctx->digcnt[0], final);
 
-	अगर (final)
-		aपंचांगel_sha_fill_padding(ctx, 0);
+	if (final)
+		atmel_sha_fill_padding(ctx, 0);
 
-	अगर (final || (ctx->bufcnt == ctx->buflen)) अणु
+	if (final || (ctx->bufcnt == ctx->buflen)) {
 		count = ctx->bufcnt;
 		ctx->bufcnt = 0;
-		वापस aपंचांगel_sha_xmit_dma_map(dd, ctx, count, final);
-	पूर्ण
+		return atmel_sha_xmit_dma_map(dd, ctx, count, final);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aपंचांगel_sha_update_dma_start(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(dd->req);
-	अचिन्हित पूर्णांक length, final, tail;
-	काष्ठा scatterlist *sg;
-	अचिन्हित पूर्णांक count;
+static int atmel_sha_update_dma_start(struct atmel_sha_dev *dd)
+{
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(dd->req);
+	unsigned int length, final, tail;
+	struct scatterlist *sg;
+	unsigned int count;
 
-	अगर (!ctx->total)
-		वापस 0;
+	if (!ctx->total)
+		return 0;
 
-	अगर (ctx->bufcnt || ctx->offset)
-		वापस aपंचांगel_sha_update_dma_slow(dd);
+	if (ctx->bufcnt || ctx->offset)
+		return atmel_sha_update_dma_slow(dd);
 
 	dev_dbg(dd->dev, "fast: digcnt: 0x%llx 0x%llx, bufcnt: %zd, total: %u\n",
 		ctx->digcnt[1], ctx->digcnt[0], ctx->bufcnt, ctx->total);
 
 	sg = ctx->sg;
 
-	अगर (!IS_ALIGNED(sg->offset, माप(u32)))
-		वापस aपंचांगel_sha_update_dma_slow(dd);
+	if (!IS_ALIGNED(sg->offset, sizeof(u32)))
+		return atmel_sha_update_dma_slow(dd);
 
-	अगर (!sg_is_last(sg) && !IS_ALIGNED(sg->length, ctx->block_size))
+	if (!sg_is_last(sg) && !IS_ALIGNED(sg->length, ctx->block_size))
 		/* size is not ctx->block_size aligned */
-		वापस aपंचांगel_sha_update_dma_slow(dd);
+		return atmel_sha_update_dma_slow(dd);
 
 	length = min(ctx->total, sg->length);
 
-	अगर (sg_is_last(sg)) अणु
-		अगर (!(ctx->flags & SHA_FLAGS_FINUP)) अणु
+	if (sg_is_last(sg)) {
+		if (!(ctx->flags & SHA_FLAGS_FINUP)) {
 			/* not last sg must be ctx->block_size aligned */
 			tail = length & (ctx->block_size - 1);
 			length -= tail;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ctx->total -= length;
 	ctx->offset = length; /* offset where to start slow */
@@ -798,289 +797,289 @@
 	final = (ctx->flags & SHA_FLAGS_FINUP) && !ctx->total;
 
 	/* Add padding */
-	अगर (final) अणु
+	if (final) {
 		tail = length & (ctx->block_size - 1);
 		length -= tail;
 		ctx->total += tail;
 		ctx->offset = length; /* offset where to start slow */
 
 		sg = ctx->sg;
-		aपंचांगel_sha_append_sg(ctx);
+		atmel_sha_append_sg(ctx);
 
-		aपंचांगel_sha_fill_padding(ctx, length);
+		atmel_sha_fill_padding(ctx, length);
 
 		ctx->dma_addr = dma_map_single(dd->dev, ctx->buffer,
 			ctx->buflen + ctx->block_size, DMA_TO_DEVICE);
-		अगर (dma_mapping_error(dd->dev, ctx->dma_addr)) अणु
+		if (dma_mapping_error(dd->dev, ctx->dma_addr)) {
 			dev_err(dd->dev, "dma %zu bytes error\n",
 				ctx->buflen + ctx->block_size);
-			वापस aपंचांगel_sha_complete(dd, -EINVAL);
-		पूर्ण
+			return atmel_sha_complete(dd, -EINVAL);
+		}
 
-		अगर (length == 0) अणु
+		if (length == 0) {
 			ctx->flags &= ~SHA_FLAGS_SG;
 			count = ctx->bufcnt;
 			ctx->bufcnt = 0;
-			वापस aपंचांगel_sha_xmit_start(dd, ctx->dma_addr, count, 0,
+			return atmel_sha_xmit_start(dd, ctx->dma_addr, count, 0,
 					0, final);
-		पूर्ण अन्यथा अणु
+		} else {
 			ctx->sg = sg;
-			अगर (!dma_map_sg(dd->dev, ctx->sg, 1,
-				DMA_TO_DEVICE)) अणु
+			if (!dma_map_sg(dd->dev, ctx->sg, 1,
+				DMA_TO_DEVICE)) {
 					dev_err(dd->dev, "dma_map_sg  error\n");
-					वापस aपंचांगel_sha_complete(dd, -EINVAL);
-			पूर्ण
+					return atmel_sha_complete(dd, -EINVAL);
+			}
 
 			ctx->flags |= SHA_FLAGS_SG;
 
 			count = ctx->bufcnt;
 			ctx->bufcnt = 0;
-			वापस aपंचांगel_sha_xmit_start(dd, sg_dma_address(ctx->sg),
+			return atmel_sha_xmit_start(dd, sg_dma_address(ctx->sg),
 					length, ctx->dma_addr, count, final);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!dma_map_sg(dd->dev, ctx->sg, 1, DMA_TO_DEVICE)) अणु
+	if (!dma_map_sg(dd->dev, ctx->sg, 1, DMA_TO_DEVICE)) {
 		dev_err(dd->dev, "dma_map_sg  error\n");
-		वापस aपंचांगel_sha_complete(dd, -EINVAL);
-	पूर्ण
+		return atmel_sha_complete(dd, -EINVAL);
+	}
 
 	ctx->flags |= SHA_FLAGS_SG;
 
-	/* next call करोes not fail... so no unmap in the हाल of error */
-	वापस aपंचांगel_sha_xmit_start(dd, sg_dma_address(ctx->sg), length, 0,
+	/* next call does not fail... so no unmap in the case of error */
+	return atmel_sha_xmit_start(dd, sg_dma_address(ctx->sg), length, 0,
 								0, final);
-पूर्ण
+}
 
-अटल व्योम aपंचांगel_sha_update_dma_stop(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(dd->req);
+static void atmel_sha_update_dma_stop(struct atmel_sha_dev *dd)
+{
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(dd->req);
 
-	अगर (ctx->flags & SHA_FLAGS_SG) अणु
+	if (ctx->flags & SHA_FLAGS_SG) {
 		dma_unmap_sg(dd->dev, ctx->sg, 1, DMA_TO_DEVICE);
-		अगर (ctx->sg->length == ctx->offset) अणु
+		if (ctx->sg->length == ctx->offset) {
 			ctx->sg = sg_next(ctx->sg);
-			अगर (ctx->sg)
+			if (ctx->sg)
 				ctx->offset = 0;
-		पूर्ण
-		अगर (ctx->flags & SHA_FLAGS_PAD) अणु
+		}
+		if (ctx->flags & SHA_FLAGS_PAD) {
 			dma_unmap_single(dd->dev, ctx->dma_addr,
 				ctx->buflen + ctx->block_size, DMA_TO_DEVICE);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		dma_unmap_single(dd->dev, ctx->dma_addr, ctx->buflen +
 						ctx->block_size, DMA_TO_DEVICE);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक aपंचांगel_sha_update_req(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
-	काष्ठा ahash_request *req = dd->req;
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
-	पूर्णांक err;
+static int atmel_sha_update_req(struct atmel_sha_dev *dd)
+{
+	struct ahash_request *req = dd->req;
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
+	int err;
 
 	dev_dbg(dd->dev, "update_req: total: %u, digcnt: 0x%llx 0x%llx\n",
 		ctx->total, ctx->digcnt[1], ctx->digcnt[0]);
 
-	अगर (ctx->flags & SHA_FLAGS_CPU)
-		err = aपंचांगel_sha_update_cpu(dd);
-	अन्यथा
-		err = aपंचांगel_sha_update_dma_start(dd);
+	if (ctx->flags & SHA_FLAGS_CPU)
+		err = atmel_sha_update_cpu(dd);
+	else
+		err = atmel_sha_update_dma_start(dd);
 
-	/* रुको क्रम dma completion beक्रमe can take more data */
+	/* wait for dma completion before can take more data */
 	dev_dbg(dd->dev, "update: err: %d, digcnt: 0x%llx 0%llx\n",
 			err, ctx->digcnt[1], ctx->digcnt[0]);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक aपंचांगel_sha_final_req(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
-	काष्ठा ahash_request *req = dd->req;
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
-	पूर्णांक err = 0;
-	पूर्णांक count;
+static int atmel_sha_final_req(struct atmel_sha_dev *dd)
+{
+	struct ahash_request *req = dd->req;
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
+	int err = 0;
+	int count;
 
-	अगर (ctx->bufcnt >= ATMEL_SHA_DMA_THRESHOLD) अणु
-		aपंचांगel_sha_fill_padding(ctx, 0);
+	if (ctx->bufcnt >= ATMEL_SHA_DMA_THRESHOLD) {
+		atmel_sha_fill_padding(ctx, 0);
 		count = ctx->bufcnt;
 		ctx->bufcnt = 0;
-		err = aपंचांगel_sha_xmit_dma_map(dd, ctx, count, 1);
-	पूर्ण
+		err = atmel_sha_xmit_dma_map(dd, ctx, count, 1);
+	}
 	/* faster to handle last block with cpu */
-	अन्यथा अणु
-		aपंचांगel_sha_fill_padding(ctx, 0);
+	else {
+		atmel_sha_fill_padding(ctx, 0);
 		count = ctx->bufcnt;
 		ctx->bufcnt = 0;
-		err = aपंचांगel_sha_xmit_cpu(dd, ctx->buffer, count, 1);
-	पूर्ण
+		err = atmel_sha_xmit_cpu(dd, ctx->buffer, count, 1);
+	}
 
 	dev_dbg(dd->dev, "final_req: err: %d\n", err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम aपंचांगel_sha_copy_hash(काष्ठा ahash_request *req)
-अणु
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
+static void atmel_sha_copy_hash(struct ahash_request *req)
+{
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
 	u32 *hash = (u32 *)ctx->digest;
-	अचिन्हित पूर्णांक i, hashsize;
+	unsigned int i, hashsize;
 
-	चयन (ctx->flags & SHA_FLAGS_ALGO_MASK) अणु
-	हाल SHA_FLAGS_SHA1:
+	switch (ctx->flags & SHA_FLAGS_ALGO_MASK) {
+	case SHA_FLAGS_SHA1:
 		hashsize = SHA1_DIGEST_SIZE;
-		अवरोध;
+		break;
 
-	हाल SHA_FLAGS_SHA224:
-	हाल SHA_FLAGS_SHA256:
+	case SHA_FLAGS_SHA224:
+	case SHA_FLAGS_SHA256:
 		hashsize = SHA256_DIGEST_SIZE;
-		अवरोध;
+		break;
 
-	हाल SHA_FLAGS_SHA384:
-	हाल SHA_FLAGS_SHA512:
+	case SHA_FLAGS_SHA384:
+	case SHA_FLAGS_SHA512:
 		hashsize = SHA512_DIGEST_SIZE;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		/* Should not happen... */
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	क्रम (i = 0; i < hashsize / माप(u32); ++i)
-		hash[i] = aपंचांगel_sha_पढ़ो(ctx->dd, SHA_REG_DIGEST(i));
+	for (i = 0; i < hashsize / sizeof(u32); ++i)
+		hash[i] = atmel_sha_read(ctx->dd, SHA_REG_DIGEST(i));
 	ctx->flags |= SHA_FLAGS_RESTORE;
-पूर्ण
+}
 
-अटल व्योम aपंचांगel_sha_copy_पढ़ोy_hash(काष्ठा ahash_request *req)
-अणु
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
+static void atmel_sha_copy_ready_hash(struct ahash_request *req)
+{
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
 
-	अगर (!req->result)
-		वापस;
+	if (!req->result)
+		return;
 
-	चयन (ctx->flags & SHA_FLAGS_ALGO_MASK) अणु
-	शेष:
-	हाल SHA_FLAGS_SHA1:
-		स_नकल(req->result, ctx->digest, SHA1_DIGEST_SIZE);
-		अवरोध;
+	switch (ctx->flags & SHA_FLAGS_ALGO_MASK) {
+	default:
+	case SHA_FLAGS_SHA1:
+		memcpy(req->result, ctx->digest, SHA1_DIGEST_SIZE);
+		break;
 
-	हाल SHA_FLAGS_SHA224:
-		स_नकल(req->result, ctx->digest, SHA224_DIGEST_SIZE);
-		अवरोध;
+	case SHA_FLAGS_SHA224:
+		memcpy(req->result, ctx->digest, SHA224_DIGEST_SIZE);
+		break;
 
-	हाल SHA_FLAGS_SHA256:
-		स_नकल(req->result, ctx->digest, SHA256_DIGEST_SIZE);
-		अवरोध;
+	case SHA_FLAGS_SHA256:
+		memcpy(req->result, ctx->digest, SHA256_DIGEST_SIZE);
+		break;
 
-	हाल SHA_FLAGS_SHA384:
-		स_नकल(req->result, ctx->digest, SHA384_DIGEST_SIZE);
-		अवरोध;
+	case SHA_FLAGS_SHA384:
+		memcpy(req->result, ctx->digest, SHA384_DIGEST_SIZE);
+		break;
 
-	हाल SHA_FLAGS_SHA512:
-		स_नकल(req->result, ctx->digest, SHA512_DIGEST_SIZE);
-		अवरोध;
-	पूर्ण
-पूर्ण
+	case SHA_FLAGS_SHA512:
+		memcpy(req->result, ctx->digest, SHA512_DIGEST_SIZE);
+		break;
+	}
+}
 
-अटल पूर्णांक aपंचांगel_sha_finish(काष्ठा ahash_request *req)
-अणु
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
-	काष्ठा aपंचांगel_sha_dev *dd = ctx->dd;
+static int atmel_sha_finish(struct ahash_request *req)
+{
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
+	struct atmel_sha_dev *dd = ctx->dd;
 
-	अगर (ctx->digcnt[0] || ctx->digcnt[1])
-		aपंचांगel_sha_copy_पढ़ोy_hash(req);
+	if (ctx->digcnt[0] || ctx->digcnt[1])
+		atmel_sha_copy_ready_hash(req);
 
 	dev_dbg(dd->dev, "digcnt: 0x%llx 0x%llx, bufcnt: %zd\n", ctx->digcnt[1],
 		ctx->digcnt[0], ctx->bufcnt);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम aपंचांगel_sha_finish_req(काष्ठा ahash_request *req, पूर्णांक err)
-अणु
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
-	काष्ठा aपंचांगel_sha_dev *dd = ctx->dd;
+static void atmel_sha_finish_req(struct ahash_request *req, int err)
+{
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
+	struct atmel_sha_dev *dd = ctx->dd;
 
-	अगर (!err) अणु
-		aपंचांगel_sha_copy_hash(req);
-		अगर (SHA_FLAGS_FINAL & dd->flags)
-			err = aपंचांगel_sha_finish(req);
-	पूर्ण अन्यथा अणु
+	if (!err) {
+		atmel_sha_copy_hash(req);
+		if (SHA_FLAGS_FINAL & dd->flags)
+			err = atmel_sha_finish(req);
+	} else {
 		ctx->flags |= SHA_FLAGS_ERROR;
-	पूर्ण
+	}
 
 	/* atomic operation is not needed here */
-	(व्योम)aपंचांगel_sha_complete(dd, err);
-पूर्ण
+	(void)atmel_sha_complete(dd, err);
+}
 
-अटल पूर्णांक aपंचांगel_sha_hw_init(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
-	पूर्णांक err;
+static int atmel_sha_hw_init(struct atmel_sha_dev *dd)
+{
+	int err;
 
 	err = clk_enable(dd->iclk);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	अगर (!(SHA_FLAGS_INIT & dd->flags)) अणु
-		aपंचांगel_sha_ग_लिखो(dd, SHA_CR, SHA_CR_SWRST);
+	if (!(SHA_FLAGS_INIT & dd->flags)) {
+		atmel_sha_write(dd, SHA_CR, SHA_CR_SWRST);
 		dd->flags |= SHA_FLAGS_INIT;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत अचिन्हित पूर्णांक aपंचांगel_sha_get_version(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
-	वापस aपंचांगel_sha_पढ़ो(dd, SHA_HW_VERSION) & 0x00000fff;
-पूर्ण
+static inline unsigned int atmel_sha_get_version(struct atmel_sha_dev *dd)
+{
+	return atmel_sha_read(dd, SHA_HW_VERSION) & 0x00000fff;
+}
 
-अटल पूर्णांक aपंचांगel_sha_hw_version_init(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
-	पूर्णांक err;
+static int atmel_sha_hw_version_init(struct atmel_sha_dev *dd)
+{
+	int err;
 
-	err = aपंचांगel_sha_hw_init(dd);
-	अगर (err)
-		वापस err;
+	err = atmel_sha_hw_init(dd);
+	if (err)
+		return err;
 
-	dd->hw_version = aपंचांगel_sha_get_version(dd);
+	dd->hw_version = atmel_sha_get_version(dd);
 
 	dev_info(dd->dev,
 			"version: 0x%x\n", dd->hw_version);
 
 	clk_disable(dd->iclk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक aपंचांगel_sha_handle_queue(काष्ठा aपंचांगel_sha_dev *dd,
-				  काष्ठा ahash_request *req)
-अणु
-	काष्ठा crypto_async_request *async_req, *backlog;
-	काष्ठा aपंचांगel_sha_ctx *ctx;
-	अचिन्हित दीर्घ flags;
+static int atmel_sha_handle_queue(struct atmel_sha_dev *dd,
+				  struct ahash_request *req)
+{
+	struct crypto_async_request *async_req, *backlog;
+	struct atmel_sha_ctx *ctx;
+	unsigned long flags;
 	bool start_async;
-	पूर्णांक err = 0, ret = 0;
+	int err = 0, ret = 0;
 
 	spin_lock_irqsave(&dd->lock, flags);
-	अगर (req)
+	if (req)
 		ret = ahash_enqueue_request(&dd->queue, req);
 
-	अगर (SHA_FLAGS_BUSY & dd->flags) अणु
+	if (SHA_FLAGS_BUSY & dd->flags) {
 		spin_unlock_irqrestore(&dd->lock, flags);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	backlog = crypto_get_backlog(&dd->queue);
 	async_req = crypto_dequeue_request(&dd->queue);
-	अगर (async_req)
+	if (async_req)
 		dd->flags |= SHA_FLAGS_BUSY;
 
 	spin_unlock_irqrestore(&dd->lock, flags);
 
-	अगर (!async_req)
-		वापस ret;
+	if (!async_req)
+		return ret;
 
-	अगर (backlog)
+	if (backlog)
 		backlog->complete(backlog, -EINPROGRESS);
 
 	ctx = crypto_tfm_ctx(async_req->tfm);
@@ -1088,485 +1087,485 @@
 	dd->req = ahash_request_cast(async_req);
 	start_async = (dd->req != req);
 	dd->is_async = start_async;
-	dd->क्रमce_complete = false;
+	dd->force_complete = false;
 
 	/* WARNING: ctx->start() MAY change dd->is_async. */
 	err = ctx->start(dd);
-	वापस (start_async) ? ret : err;
-पूर्ण
+	return (start_async) ? ret : err;
+}
 
-अटल पूर्णांक aपंचांगel_sha_करोne(काष्ठा aपंचांगel_sha_dev *dd);
+static int atmel_sha_done(struct atmel_sha_dev *dd);
 
-अटल पूर्णांक aपंचांगel_sha_start(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
-	काष्ठा ahash_request *req = dd->req;
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
-	पूर्णांक err;
+static int atmel_sha_start(struct atmel_sha_dev *dd)
+{
+	struct ahash_request *req = dd->req;
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
+	int err;
 
 	dev_dbg(dd->dev, "handling new req, op: %lu, nbytes: %u\n",
 						ctx->op, req->nbytes);
 
-	err = aपंचांगel_sha_hw_init(dd);
-	अगर (err)
-		वापस aपंचांगel_sha_complete(dd, err);
+	err = atmel_sha_hw_init(dd);
+	if (err)
+		return atmel_sha_complete(dd, err);
 
 	/*
-	 * aपंचांगel_sha_update_req() and aपंचांगel_sha_final_req() can वापस either:
+	 * atmel_sha_update_req() and atmel_sha_final_req() can return either:
 	 *  -EINPROGRESS: the hardware is busy and the SHA driver will resume
-	 *                its job later in the करोne_task.
-	 *                This is the मुख्य path.
+	 *                its job later in the done_task.
+	 *                This is the main path.
 	 *
-	 * 0: the SHA driver can जारी its job then release the hardware
-	 *    later, अगर needed, with aपंचांगel_sha_finish_req().
+	 * 0: the SHA driver can continue its job then release the hardware
+	 *    later, if needed, with atmel_sha_finish_req().
 	 *    This is the alternate path.
 	 *
-	 * < 0: an error has occurred so aपंचांगel_sha_complete(dd, err) has alपढ़ोy
+	 * < 0: an error has occurred so atmel_sha_complete(dd, err) has already
 	 *      been called, hence the hardware has been released.
 	 *      The SHA driver must stop its job without calling
-	 *      aपंचांगel_sha_finish_req(), otherwise aपंचांगel_sha_complete() would be
-	 *      called a second समय.
+	 *      atmel_sha_finish_req(), otherwise atmel_sha_complete() would be
+	 *      called a second time.
 	 *
-	 * Please note that currently, aपंचांगel_sha_final_req() never वापसs 0.
+	 * Please note that currently, atmel_sha_final_req() never returns 0.
 	 */
 
-	dd->resume = aपंचांगel_sha_करोne;
-	अगर (ctx->op == SHA_OP_UPDATE) अणु
-		err = aपंचांगel_sha_update_req(dd);
-		अगर (!err && (ctx->flags & SHA_FLAGS_FINUP))
+	dd->resume = atmel_sha_done;
+	if (ctx->op == SHA_OP_UPDATE) {
+		err = atmel_sha_update_req(dd);
+		if (!err && (ctx->flags & SHA_FLAGS_FINUP))
 			/* no final() after finup() */
-			err = aपंचांगel_sha_final_req(dd);
-	पूर्ण अन्यथा अगर (ctx->op == SHA_OP_FINAL) अणु
-		err = aपंचांगel_sha_final_req(dd);
-	पूर्ण
+			err = atmel_sha_final_req(dd);
+	} else if (ctx->op == SHA_OP_FINAL) {
+		err = atmel_sha_final_req(dd);
+	}
 
-	अगर (!err)
-		/* करोne_task will not finish it, so करो it here */
-		aपंचांगel_sha_finish_req(req, err);
+	if (!err)
+		/* done_task will not finish it, so do it here */
+		atmel_sha_finish_req(req, err);
 
 	dev_dbg(dd->dev, "exit, err: %d\n", err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक aपंचांगel_sha_enqueue(काष्ठा ahash_request *req, अचिन्हित पूर्णांक op)
-अणु
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
-	काष्ठा aपंचांगel_sha_ctx *tctx = crypto_tfm_ctx(req->base.tfm);
-	काष्ठा aपंचांगel_sha_dev *dd = tctx->dd;
+static int atmel_sha_enqueue(struct ahash_request *req, unsigned int op)
+{
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
+	struct atmel_sha_ctx *tctx = crypto_tfm_ctx(req->base.tfm);
+	struct atmel_sha_dev *dd = tctx->dd;
 
 	ctx->op = op;
 
-	वापस aपंचांगel_sha_handle_queue(dd, req);
-पूर्ण
+	return atmel_sha_handle_queue(dd, req);
+}
 
-अटल पूर्णांक aपंचांगel_sha_update(काष्ठा ahash_request *req)
-अणु
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
+static int atmel_sha_update(struct ahash_request *req)
+{
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
 
-	अगर (!req->nbytes)
-		वापस 0;
+	if (!req->nbytes)
+		return 0;
 
 	ctx->total = req->nbytes;
 	ctx->sg = req->src;
 	ctx->offset = 0;
 
-	अगर (ctx->flags & SHA_FLAGS_FINUP) अणु
-		अगर (ctx->bufcnt + ctx->total < ATMEL_SHA_DMA_THRESHOLD)
-			/* faster to use CPU क्रम लघु transfers */
+	if (ctx->flags & SHA_FLAGS_FINUP) {
+		if (ctx->bufcnt + ctx->total < ATMEL_SHA_DMA_THRESHOLD)
+			/* faster to use CPU for short transfers */
 			ctx->flags |= SHA_FLAGS_CPU;
-	पूर्ण अन्यथा अगर (ctx->bufcnt + ctx->total < ctx->buflen) अणु
-		aपंचांगel_sha_append_sg(ctx);
-		वापस 0;
-	पूर्ण
-	वापस aपंचांगel_sha_enqueue(req, SHA_OP_UPDATE);
-पूर्ण
+	} else if (ctx->bufcnt + ctx->total < ctx->buflen) {
+		atmel_sha_append_sg(ctx);
+		return 0;
+	}
+	return atmel_sha_enqueue(req, SHA_OP_UPDATE);
+}
 
-अटल पूर्णांक aपंचांगel_sha_final(काष्ठा ahash_request *req)
-अणु
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
-
-	ctx->flags |= SHA_FLAGS_FINUP;
-
-	अगर (ctx->flags & SHA_FLAGS_ERROR)
-		वापस 0; /* uncompleted hash is not needed */
-
-	अगर (ctx->flags & SHA_FLAGS_PAD)
-		/* copy पढ़ोy hash (+ finalize hmac) */
-		वापस aपंचांगel_sha_finish(req);
-
-	वापस aपंचांगel_sha_enqueue(req, SHA_OP_FINAL);
-पूर्ण
-
-अटल पूर्णांक aपंचांगel_sha_finup(काष्ठा ahash_request *req)
-अणु
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
-	पूर्णांक err1, err2;
+static int atmel_sha_final(struct ahash_request *req)
+{
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
 
 	ctx->flags |= SHA_FLAGS_FINUP;
 
-	err1 = aपंचांगel_sha_update(req);
-	अगर (err1 == -EINPROGRESS ||
+	if (ctx->flags & SHA_FLAGS_ERROR)
+		return 0; /* uncompleted hash is not needed */
+
+	if (ctx->flags & SHA_FLAGS_PAD)
+		/* copy ready hash (+ finalize hmac) */
+		return atmel_sha_finish(req);
+
+	return atmel_sha_enqueue(req, SHA_OP_FINAL);
+}
+
+static int atmel_sha_finup(struct ahash_request *req)
+{
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
+	int err1, err2;
+
+	ctx->flags |= SHA_FLAGS_FINUP;
+
+	err1 = atmel_sha_update(req);
+	if (err1 == -EINPROGRESS ||
 	    (err1 == -EBUSY && (ahash_request_flags(req) &
 				CRYPTO_TFM_REQ_MAY_BACKLOG)))
-		वापस err1;
+		return err1;
 
 	/*
 	 * final() has to be always called to cleanup resources
-	 * even अगर udpate() failed, except EINPROGRESS
+	 * even if udpate() failed, except EINPROGRESS
 	 */
-	err2 = aपंचांगel_sha_final(req);
+	err2 = atmel_sha_final(req);
 
-	वापस err1 ?: err2;
-पूर्ण
+	return err1 ?: err2;
+}
 
-अटल पूर्णांक aपंचांगel_sha_digest(काष्ठा ahash_request *req)
-अणु
-	वापस aपंचांगel_sha_init(req) ?: aपंचांगel_sha_finup(req);
-पूर्ण
+static int atmel_sha_digest(struct ahash_request *req)
+{
+	return atmel_sha_init(req) ?: atmel_sha_finup(req);
+}
 
 
-अटल पूर्णांक aपंचांगel_sha_export(काष्ठा ahash_request *req, व्योम *out)
-अणु
-	स्थिर काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
+static int atmel_sha_export(struct ahash_request *req, void *out)
+{
+	const struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
 
-	स_नकल(out, ctx, माप(*ctx));
-	वापस 0;
-पूर्ण
+	memcpy(out, ctx, sizeof(*ctx));
+	return 0;
+}
 
-अटल पूर्णांक aपंचांगel_sha_import(काष्ठा ahash_request *req, स्थिर व्योम *in)
-अणु
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
+static int atmel_sha_import(struct ahash_request *req, const void *in)
+{
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
 
-	स_नकल(ctx, in, माप(*ctx));
-	वापस 0;
-पूर्ण
+	memcpy(ctx, in, sizeof(*ctx));
+	return 0;
+}
 
-अटल पूर्णांक aपंचांगel_sha_cra_init(काष्ठा crypto_tfm *tfm)
-अणु
-	काष्ठा aपंचांगel_sha_ctx *ctx = crypto_tfm_ctx(tfm);
+static int atmel_sha_cra_init(struct crypto_tfm *tfm)
+{
+	struct atmel_sha_ctx *ctx = crypto_tfm_ctx(tfm);
 
 	crypto_ahash_set_reqsize(__crypto_ahash_cast(tfm),
-				 माप(काष्ठा aपंचांगel_sha_reqctx));
-	ctx->start = aपंचांगel_sha_start;
+				 sizeof(struct atmel_sha_reqctx));
+	ctx->start = atmel_sha_start;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम aपंचांगel_sha_alg_init(काष्ठा ahash_alg *alg)
-अणु
+static void atmel_sha_alg_init(struct ahash_alg *alg)
+{
 	alg->halg.base.cra_priority = ATMEL_SHA_PRIORITY;
 	alg->halg.base.cra_flags = CRYPTO_ALG_ASYNC;
-	alg->halg.base.cra_ctxsize = माप(काष्ठा aपंचांगel_sha_ctx);
+	alg->halg.base.cra_ctxsize = sizeof(struct atmel_sha_ctx);
 	alg->halg.base.cra_module = THIS_MODULE;
-	alg->halg.base.cra_init = aपंचांगel_sha_cra_init;
+	alg->halg.base.cra_init = atmel_sha_cra_init;
 
-	alg->halg.statesize = माप(काष्ठा aपंचांगel_sha_reqctx);
+	alg->halg.statesize = sizeof(struct atmel_sha_reqctx);
 
-	alg->init = aपंचांगel_sha_init;
-	alg->update = aपंचांगel_sha_update;
-	alg->final = aपंचांगel_sha_final;
-	alg->finup = aपंचांगel_sha_finup;
-	alg->digest = aपंचांगel_sha_digest;
-	alg->export = aपंचांगel_sha_export;
-	alg->import = aपंचांगel_sha_import;
-पूर्ण
+	alg->init = atmel_sha_init;
+	alg->update = atmel_sha_update;
+	alg->final = atmel_sha_final;
+	alg->finup = atmel_sha_finup;
+	alg->digest = atmel_sha_digest;
+	alg->export = atmel_sha_export;
+	alg->import = atmel_sha_import;
+}
 
-अटल काष्ठा ahash_alg sha_1_256_algs[] = अणु
-अणु
+static struct ahash_alg sha_1_256_algs[] = {
+{
 	.halg.base.cra_name		= "sha1",
 	.halg.base.cra_driver_name	= "atmel-sha1",
 	.halg.base.cra_blocksize	= SHA1_BLOCK_SIZE,
 
 	.halg.digestsize = SHA1_DIGEST_SIZE,
-पूर्ण,
-अणु
+},
+{
 	.halg.base.cra_name		= "sha256",
 	.halg.base.cra_driver_name	= "atmel-sha256",
 	.halg.base.cra_blocksize	= SHA256_BLOCK_SIZE,
 
 	.halg.digestsize = SHA256_DIGEST_SIZE,
-पूर्ण,
-पूर्ण;
+},
+};
 
-अटल काष्ठा ahash_alg sha_224_alg = अणु
+static struct ahash_alg sha_224_alg = {
 	.halg.base.cra_name		= "sha224",
 	.halg.base.cra_driver_name	= "atmel-sha224",
 	.halg.base.cra_blocksize	= SHA224_BLOCK_SIZE,
 
 	.halg.digestsize = SHA224_DIGEST_SIZE,
-पूर्ण;
+};
 
-अटल काष्ठा ahash_alg sha_384_512_algs[] = अणु
-अणु
+static struct ahash_alg sha_384_512_algs[] = {
+{
 	.halg.base.cra_name		= "sha384",
 	.halg.base.cra_driver_name	= "atmel-sha384",
 	.halg.base.cra_blocksize	= SHA384_BLOCK_SIZE,
 	.halg.base.cra_alignmask	= 0x3,
 
 	.halg.digestsize = SHA384_DIGEST_SIZE,
-पूर्ण,
-अणु
+},
+{
 	.halg.base.cra_name		= "sha512",
 	.halg.base.cra_driver_name	= "atmel-sha512",
 	.halg.base.cra_blocksize	= SHA512_BLOCK_SIZE,
 	.halg.base.cra_alignmask	= 0x3,
 
 	.halg.digestsize = SHA512_DIGEST_SIZE,
-पूर्ण,
-पूर्ण;
+},
+};
 
-अटल व्योम aपंचांगel_sha_queue_task(अचिन्हित दीर्घ data)
-अणु
-	काष्ठा aपंचांगel_sha_dev *dd = (काष्ठा aपंचांगel_sha_dev *)data;
+static void atmel_sha_queue_task(unsigned long data)
+{
+	struct atmel_sha_dev *dd = (struct atmel_sha_dev *)data;
 
-	aपंचांगel_sha_handle_queue(dd, शून्य);
-पूर्ण
+	atmel_sha_handle_queue(dd, NULL);
+}
 
-अटल पूर्णांक aपंचांगel_sha_करोne(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
-	पूर्णांक err = 0;
+static int atmel_sha_done(struct atmel_sha_dev *dd)
+{
+	int err = 0;
 
-	अगर (SHA_FLAGS_CPU & dd->flags) अणु
-		अगर (SHA_FLAGS_OUTPUT_READY & dd->flags) अणु
+	if (SHA_FLAGS_CPU & dd->flags) {
+		if (SHA_FLAGS_OUTPUT_READY & dd->flags) {
 			dd->flags &= ~SHA_FLAGS_OUTPUT_READY;
-			जाओ finish;
-		पूर्ण
-	पूर्ण अन्यथा अगर (SHA_FLAGS_DMA_READY & dd->flags) अणु
-		अगर (SHA_FLAGS_DMA_ACTIVE & dd->flags) अणु
+			goto finish;
+		}
+	} else if (SHA_FLAGS_DMA_READY & dd->flags) {
+		if (SHA_FLAGS_DMA_ACTIVE & dd->flags) {
 			dd->flags &= ~SHA_FLAGS_DMA_ACTIVE;
-			aपंचांगel_sha_update_dma_stop(dd);
-		पूर्ण
-		अगर (SHA_FLAGS_OUTPUT_READY & dd->flags) अणु
-			/* hash or semi-hash पढ़ोy */
+			atmel_sha_update_dma_stop(dd);
+		}
+		if (SHA_FLAGS_OUTPUT_READY & dd->flags) {
+			/* hash or semi-hash ready */
 			dd->flags &= ~(SHA_FLAGS_DMA_READY |
 						SHA_FLAGS_OUTPUT_READY);
-			err = aपंचांगel_sha_update_dma_start(dd);
-			अगर (err != -EINPROGRESS)
-				जाओ finish;
-		पूर्ण
-	पूर्ण
-	वापस err;
+			err = atmel_sha_update_dma_start(dd);
+			if (err != -EINPROGRESS)
+				goto finish;
+		}
+	}
+	return err;
 
 finish:
 	/* finish curent request */
-	aपंचांगel_sha_finish_req(dd->req, err);
+	atmel_sha_finish_req(dd->req, err);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम aपंचांगel_sha_करोne_task(अचिन्हित दीर्घ data)
-अणु
-	काष्ठा aपंचांगel_sha_dev *dd = (काष्ठा aपंचांगel_sha_dev *)data;
+static void atmel_sha_done_task(unsigned long data)
+{
+	struct atmel_sha_dev *dd = (struct atmel_sha_dev *)data;
 
 	dd->is_async = true;
-	(व्योम)dd->resume(dd);
-पूर्ण
+	(void)dd->resume(dd);
+}
 
-अटल irqवापस_t aपंचांगel_sha_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा aपंचांगel_sha_dev *sha_dd = dev_id;
+static irqreturn_t atmel_sha_irq(int irq, void *dev_id)
+{
+	struct atmel_sha_dev *sha_dd = dev_id;
 	u32 reg;
 
-	reg = aपंचांगel_sha_पढ़ो(sha_dd, SHA_ISR);
-	अगर (reg & aपंचांगel_sha_पढ़ो(sha_dd, SHA_IMR)) अणु
-		aपंचांगel_sha_ग_लिखो(sha_dd, SHA_IDR, reg);
-		अगर (SHA_FLAGS_BUSY & sha_dd->flags) अणु
+	reg = atmel_sha_read(sha_dd, SHA_ISR);
+	if (reg & atmel_sha_read(sha_dd, SHA_IMR)) {
+		atmel_sha_write(sha_dd, SHA_IDR, reg);
+		if (SHA_FLAGS_BUSY & sha_dd->flags) {
 			sha_dd->flags |= SHA_FLAGS_OUTPUT_READY;
-			अगर (!(SHA_FLAGS_CPU & sha_dd->flags))
+			if (!(SHA_FLAGS_CPU & sha_dd->flags))
 				sha_dd->flags |= SHA_FLAGS_DMA_READY;
-			tasklet_schedule(&sha_dd->करोne_task);
-		पूर्ण अन्यथा अणु
+			tasklet_schedule(&sha_dd->done_task);
+		} else {
 			dev_warn(sha_dd->dev, "SHA interrupt when no active requests.\n");
-		पूर्ण
-		वापस IRQ_HANDLED;
-	पूर्ण
+		}
+		return IRQ_HANDLED;
+	}
 
-	वापस IRQ_NONE;
-पूर्ण
+	return IRQ_NONE;
+}
 
 
 /* DMA transfer functions */
 
-अटल bool aपंचांगel_sha_dma_check_aligned(काष्ठा aपंचांगel_sha_dev *dd,
-					काष्ठा scatterlist *sg,
-					माप_प्रकार len)
-अणु
-	काष्ठा aपंचांगel_sha_dma *dma = &dd->dma_lch_in;
-	काष्ठा ahash_request *req = dd->req;
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
-	माप_प्रकार bs = ctx->block_size;
-	पूर्णांक nents;
+static bool atmel_sha_dma_check_aligned(struct atmel_sha_dev *dd,
+					struct scatterlist *sg,
+					size_t len)
+{
+	struct atmel_sha_dma *dma = &dd->dma_lch_in;
+	struct ahash_request *req = dd->req;
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
+	size_t bs = ctx->block_size;
+	int nents;
 
-	क्रम (nents = 0; sg; sg = sg_next(sg), ++nents) अणु
-		अगर (!IS_ALIGNED(sg->offset, माप(u32)))
-			वापस false;
+	for (nents = 0; sg; sg = sg_next(sg), ++nents) {
+		if (!IS_ALIGNED(sg->offset, sizeof(u32)))
+			return false;
 
 		/*
 		 * This is the last sg, the only one that is allowed to
 		 * have an unaligned length.
 		 */
-		अगर (len <= sg->length) अणु
+		if (len <= sg->length) {
 			dma->nents = nents + 1;
 			dma->last_sg_length = sg->length;
-			sg->length = ALIGN(len, माप(u32));
-			वापस true;
-		पूर्ण
+			sg->length = ALIGN(len, sizeof(u32));
+			return true;
+		}
 
 		/* All other sg lengths MUST be aligned to the block size. */
-		अगर (!IS_ALIGNED(sg->length, bs))
-			वापस false;
+		if (!IS_ALIGNED(sg->length, bs))
+			return false;
 
 		len -= sg->length;
-	पूर्ण
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम aपंचांगel_sha_dma_callback2(व्योम *data)
-अणु
-	काष्ठा aपंचांगel_sha_dev *dd = data;
-	काष्ठा aपंचांगel_sha_dma *dma = &dd->dma_lch_in;
-	काष्ठा scatterlist *sg;
-	पूर्णांक nents;
+static void atmel_sha_dma_callback2(void *data)
+{
+	struct atmel_sha_dev *dd = data;
+	struct atmel_sha_dma *dma = &dd->dma_lch_in;
+	struct scatterlist *sg;
+	int nents;
 
 	dma_unmap_sg(dd->dev, dma->sg, dma->nents, DMA_TO_DEVICE);
 
 	sg = dma->sg;
-	क्रम (nents = 0; nents < dma->nents - 1; ++nents)
+	for (nents = 0; nents < dma->nents - 1; ++nents)
 		sg = sg_next(sg);
 	sg->length = dma->last_sg_length;
 
 	dd->is_async = true;
-	(व्योम)aपंचांगel_sha_रुको_क्रम_data_पढ़ोy(dd, dd->resume);
-पूर्ण
+	(void)atmel_sha_wait_for_data_ready(dd, dd->resume);
+}
 
-अटल पूर्णांक aपंचांगel_sha_dma_start(काष्ठा aपंचांगel_sha_dev *dd,
-			       काष्ठा scatterlist *src,
-			       माप_प्रकार len,
-			       aपंचांगel_sha_fn_t resume)
-अणु
-	काष्ठा aपंचांगel_sha_dma *dma = &dd->dma_lch_in;
-	काष्ठा dma_slave_config *config = &dma->dma_conf;
-	काष्ठा dma_chan *chan = dma->chan;
-	काष्ठा dma_async_tx_descriptor *desc;
+static int atmel_sha_dma_start(struct atmel_sha_dev *dd,
+			       struct scatterlist *src,
+			       size_t len,
+			       atmel_sha_fn_t resume)
+{
+	struct atmel_sha_dma *dma = &dd->dma_lch_in;
+	struct dma_slave_config *config = &dma->dma_conf;
+	struct dma_chan *chan = dma->chan;
+	struct dma_async_tx_descriptor *desc;
 	dma_cookie_t cookie;
-	अचिन्हित पूर्णांक sg_len;
-	पूर्णांक err;
+	unsigned int sg_len;
+	int err;
 
 	dd->resume = resume;
 
 	/*
-	 * dma->nents has alपढ़ोy been initialized by
-	 * aपंचांगel_sha_dma_check_aligned().
+	 * dma->nents has already been initialized by
+	 * atmel_sha_dma_check_aligned().
 	 */
 	dma->sg = src;
 	sg_len = dma_map_sg(dd->dev, dma->sg, dma->nents, DMA_TO_DEVICE);
-	अगर (!sg_len) अणु
+	if (!sg_len) {
 		err = -ENOMEM;
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
 	config->src_maxburst = 16;
 	config->dst_maxburst = 16;
 	err = dmaengine_slave_config(chan, config);
-	अगर (err)
-		जाओ unmap_sg;
+	if (err)
+		goto unmap_sg;
 
 	desc = dmaengine_prep_slave_sg(chan, dma->sg, sg_len, DMA_MEM_TO_DEV,
 				       DMA_PREP_INTERRUPT | DMA_CTRL_ACK);
-	अगर (!desc) अणु
+	if (!desc) {
 		err = -ENOMEM;
-		जाओ unmap_sg;
-	पूर्ण
+		goto unmap_sg;
+	}
 
-	desc->callback = aपंचांगel_sha_dma_callback2;
+	desc->callback = atmel_sha_dma_callback2;
 	desc->callback_param = dd;
 	cookie = dmaengine_submit(desc);
 	err = dma_submit_error(cookie);
-	अगर (err)
-		जाओ unmap_sg;
+	if (err)
+		goto unmap_sg;
 
 	dma_async_issue_pending(chan);
 
-	वापस -EINPROGRESS;
+	return -EINPROGRESS;
 
 unmap_sg:
 	dma_unmap_sg(dd->dev, dma->sg, dma->nents, DMA_TO_DEVICE);
-निकास:
-	वापस aपंचांगel_sha_complete(dd, err);
-पूर्ण
+exit:
+	return atmel_sha_complete(dd, err);
+}
 
 
 /* CPU transfer functions */
 
-अटल पूर्णांक aपंचांगel_sha_cpu_transfer(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
-	काष्ठा ahash_request *req = dd->req;
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
-	स्थिर u32 *words = (स्थिर u32 *)ctx->buffer;
-	माप_प्रकार i, num_words;
+static int atmel_sha_cpu_transfer(struct atmel_sha_dev *dd)
+{
+	struct ahash_request *req = dd->req;
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
+	const u32 *words = (const u32 *)ctx->buffer;
+	size_t i, num_words;
 	u32 isr, din, din_inc;
 
 	din_inc = (ctx->flags & SHA_FLAGS_IDATAR0) ? 0 : 1;
-	क्रम (;;) अणु
-		/* Write data पूर्णांकo the Input Data Registers. */
-		num_words = DIV_ROUND_UP(ctx->bufcnt, माप(u32));
-		क्रम (i = 0, din = 0; i < num_words; ++i, din += din_inc)
-			aपंचांगel_sha_ग_लिखो(dd, SHA_REG_DIN(din), words[i]);
+	for (;;) {
+		/* Write data into the Input Data Registers. */
+		num_words = DIV_ROUND_UP(ctx->bufcnt, sizeof(u32));
+		for (i = 0, din = 0; i < num_words; ++i, din += din_inc)
+			atmel_sha_write(dd, SHA_REG_DIN(din), words[i]);
 
 		ctx->offset += ctx->bufcnt;
 		ctx->total -= ctx->bufcnt;
 
-		अगर (!ctx->total)
-			अवरोध;
+		if (!ctx->total)
+			break;
 
 		/*
 		 * Prepare next block:
-		 * Fill ctx->buffer now with the next data to be written पूर्णांकo
-		 * IDATARx: it gives समय क्रम the SHA hardware to process
+		 * Fill ctx->buffer now with the next data to be written into
+		 * IDATARx: it gives time for the SHA hardware to process
 		 * the current data so the SHA_INT_DATARDY flag might be set
-		 * in SHA_ISR when polling this रेजिस्टर at the beginning of
+		 * in SHA_ISR when polling this register at the beginning of
 		 * the next loop.
 		 */
-		ctx->bufcnt = min_t(माप_प्रकार, ctx->block_size, ctx->total);
+		ctx->bufcnt = min_t(size_t, ctx->block_size, ctx->total);
 		scatterwalk_map_and_copy(ctx->buffer, ctx->sg,
 					 ctx->offset, ctx->bufcnt, 0);
 
-		/* Wait क्रम hardware to be पढ़ोy again. */
-		isr = aपंचांगel_sha_पढ़ो(dd, SHA_ISR);
-		अगर (!(isr & SHA_INT_DATARDY)) अणु
-			/* Not पढ़ोy yet. */
-			dd->resume = aपंचांगel_sha_cpu_transfer;
-			aपंचांगel_sha_ग_लिखो(dd, SHA_IER, SHA_INT_DATARDY);
-			वापस -EINPROGRESS;
-		पूर्ण
-	पूर्ण
+		/* Wait for hardware to be ready again. */
+		isr = atmel_sha_read(dd, SHA_ISR);
+		if (!(isr & SHA_INT_DATARDY)) {
+			/* Not ready yet. */
+			dd->resume = atmel_sha_cpu_transfer;
+			atmel_sha_write(dd, SHA_IER, SHA_INT_DATARDY);
+			return -EINPROGRESS;
+		}
+	}
 
-	अगर (unlikely(!(ctx->flags & SHA_FLAGS_WAIT_DATARDY)))
-		वापस dd->cpu_transfer_complete(dd);
+	if (unlikely(!(ctx->flags & SHA_FLAGS_WAIT_DATARDY)))
+		return dd->cpu_transfer_complete(dd);
 
-	वापस aपंचांगel_sha_रुको_क्रम_data_पढ़ोy(dd, dd->cpu_transfer_complete);
-पूर्ण
+	return atmel_sha_wait_for_data_ready(dd, dd->cpu_transfer_complete);
+}
 
-अटल पूर्णांक aपंचांगel_sha_cpu_start(काष्ठा aपंचांगel_sha_dev *dd,
-			       काष्ठा scatterlist *sg,
-			       अचिन्हित पूर्णांक len,
+static int atmel_sha_cpu_start(struct atmel_sha_dev *dd,
+			       struct scatterlist *sg,
+			       unsigned int len,
 			       bool idatar0_only,
-			       bool रुको_data_पढ़ोy,
-			       aपंचांगel_sha_fn_t resume)
-अणु
-	काष्ठा ahash_request *req = dd->req;
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
+			       bool wait_data_ready,
+			       atmel_sha_fn_t resume)
+{
+	struct ahash_request *req = dd->req;
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
 
-	अगर (!len)
-		वापस resume(dd);
+	if (!len)
+		return resume(dd);
 
 	ctx->flags &= ~(SHA_FLAGS_IDATAR0 | SHA_FLAGS_WAIT_DATARDY);
 
-	अगर (idatar0_only)
+	if (idatar0_only)
 		ctx->flags |= SHA_FLAGS_IDATAR0;
 
-	अगर (रुको_data_पढ़ोy)
+	if (wait_data_ready)
 		ctx->flags |= SHA_FLAGS_WAIT_DATARDY;
 
 	ctx->sg = sg;
@@ -1574,667 +1573,667 @@ unmap_sg:
 	ctx->offset = 0;
 
 	/* Prepare the first block to be written. */
-	ctx->bufcnt = min_t(माप_प्रकार, ctx->block_size, ctx->total);
+	ctx->bufcnt = min_t(size_t, ctx->block_size, ctx->total);
 	scatterwalk_map_and_copy(ctx->buffer, ctx->sg,
 				 ctx->offset, ctx->bufcnt, 0);
 
 	dd->cpu_transfer_complete = resume;
-	वापस aपंचांगel_sha_cpu_transfer(dd);
-पूर्ण
+	return atmel_sha_cpu_transfer(dd);
+}
 
-अटल पूर्णांक aपंचांगel_sha_cpu_hash(काष्ठा aपंचांगel_sha_dev *dd,
-			      स्थिर व्योम *data, अचिन्हित पूर्णांक datalen,
-			      bool स्वतः_padding,
-			      aपंचांगel_sha_fn_t resume)
-अणु
-	काष्ठा ahash_request *req = dd->req;
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
-	u32 msglen = (स्वतः_padding) ? datalen : 0;
+static int atmel_sha_cpu_hash(struct atmel_sha_dev *dd,
+			      const void *data, unsigned int datalen,
+			      bool auto_padding,
+			      atmel_sha_fn_t resume)
+{
+	struct ahash_request *req = dd->req;
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
+	u32 msglen = (auto_padding) ? datalen : 0;
 	u32 mr = SHA_MR_MODE_AUTO;
 
-	अगर (!(IS_ALIGNED(datalen, ctx->block_size) || स्वतः_padding))
-		वापस aपंचांगel_sha_complete(dd, -EINVAL);
+	if (!(IS_ALIGNED(datalen, ctx->block_size) || auto_padding))
+		return atmel_sha_complete(dd, -EINVAL);
 
 	mr |= (ctx->flags & SHA_FLAGS_ALGO_MASK);
-	aपंचांगel_sha_ग_लिखो(dd, SHA_MR, mr);
-	aपंचांगel_sha_ग_लिखो(dd, SHA_MSR, msglen);
-	aपंचांगel_sha_ग_लिखो(dd, SHA_BCR, msglen);
-	aपंचांगel_sha_ग_लिखो(dd, SHA_CR, SHA_CR_FIRST);
+	atmel_sha_write(dd, SHA_MR, mr);
+	atmel_sha_write(dd, SHA_MSR, msglen);
+	atmel_sha_write(dd, SHA_BCR, msglen);
+	atmel_sha_write(dd, SHA_CR, SHA_CR_FIRST);
 
-	sg_init_one(&dd->पंचांगp, data, datalen);
-	वापस aपंचांगel_sha_cpu_start(dd, &dd->पंचांगp, datalen, false, true, resume);
-पूर्ण
+	sg_init_one(&dd->tmp, data, datalen);
+	return atmel_sha_cpu_start(dd, &dd->tmp, datalen, false, true, resume);
+}
 
 
 /* hmac functions */
 
-काष्ठा aपंचांगel_sha_hmac_key अणु
+struct atmel_sha_hmac_key {
 	bool			valid;
-	अचिन्हित पूर्णांक		keylen;
+	unsigned int		keylen;
 	u8			buffer[SHA512_BLOCK_SIZE];
 	u8			*keydup;
-पूर्ण;
+};
 
-अटल अंतरभूत व्योम aपंचांगel_sha_hmac_key_init(काष्ठा aपंचांगel_sha_hmac_key *hkey)
-अणु
-	स_रखो(hkey, 0, माप(*hkey));
-पूर्ण
+static inline void atmel_sha_hmac_key_init(struct atmel_sha_hmac_key *hkey)
+{
+	memset(hkey, 0, sizeof(*hkey));
+}
 
-अटल अंतरभूत व्योम aपंचांगel_sha_hmac_key_release(काष्ठा aपंचांगel_sha_hmac_key *hkey)
-अणु
-	kमुक्त(hkey->keydup);
-	स_रखो(hkey, 0, माप(*hkey));
-पूर्ण
+static inline void atmel_sha_hmac_key_release(struct atmel_sha_hmac_key *hkey)
+{
+	kfree(hkey->keydup);
+	memset(hkey, 0, sizeof(*hkey));
+}
 
-अटल अंतरभूत पूर्णांक aपंचांगel_sha_hmac_key_set(काष्ठा aपंचांगel_sha_hmac_key *hkey,
-					 स्थिर u8 *key,
-					 अचिन्हित पूर्णांक keylen)
-अणु
-	aपंचांगel_sha_hmac_key_release(hkey);
+static inline int atmel_sha_hmac_key_set(struct atmel_sha_hmac_key *hkey,
+					 const u8 *key,
+					 unsigned int keylen)
+{
+	atmel_sha_hmac_key_release(hkey);
 
-	अगर (keylen > माप(hkey->buffer)) अणु
+	if (keylen > sizeof(hkey->buffer)) {
 		hkey->keydup = kmemdup(key, keylen, GFP_KERNEL);
-		अगर (!hkey->keydup)
-			वापस -ENOMEM;
+		if (!hkey->keydup)
+			return -ENOMEM;
 
-	पूर्ण अन्यथा अणु
-		स_नकल(hkey->buffer, key, keylen);
-	पूर्ण
+	} else {
+		memcpy(hkey->buffer, key, keylen);
+	}
 
 	hkey->valid = true;
 	hkey->keylen = keylen;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत bool aपंचांगel_sha_hmac_key_get(स्थिर काष्ठा aपंचांगel_sha_hmac_key *hkey,
-					  स्थिर u8 **key,
-					  अचिन्हित पूर्णांक *keylen)
-अणु
-	अगर (!hkey->valid)
-		वापस false;
+static inline bool atmel_sha_hmac_key_get(const struct atmel_sha_hmac_key *hkey,
+					  const u8 **key,
+					  unsigned int *keylen)
+{
+	if (!hkey->valid)
+		return false;
 
 	*keylen = hkey->keylen;
 	*key = (hkey->keydup) ? hkey->keydup : hkey->buffer;
-	वापस true;
-पूर्ण
+	return true;
+}
 
 
-काष्ठा aपंचांगel_sha_hmac_ctx अणु
-	काष्ठा aपंचांगel_sha_ctx	base;
+struct atmel_sha_hmac_ctx {
+	struct atmel_sha_ctx	base;
 
-	काष्ठा aपंचांगel_sha_hmac_key	hkey;
-	u32			ipad[SHA512_BLOCK_SIZE / माप(u32)];
-	u32			opad[SHA512_BLOCK_SIZE / माप(u32)];
-	aपंचांगel_sha_fn_t		resume;
-पूर्ण;
+	struct atmel_sha_hmac_key	hkey;
+	u32			ipad[SHA512_BLOCK_SIZE / sizeof(u32)];
+	u32			opad[SHA512_BLOCK_SIZE / sizeof(u32)];
+	atmel_sha_fn_t		resume;
+};
 
-अटल पूर्णांक aपंचांगel_sha_hmac_setup(काष्ठा aपंचांगel_sha_dev *dd,
-				aपंचांगel_sha_fn_t resume);
-अटल पूर्णांक aपंचांगel_sha_hmac_prehash_key(काष्ठा aपंचांगel_sha_dev *dd,
-				      स्थिर u8 *key, अचिन्हित पूर्णांक keylen);
-अटल पूर्णांक aपंचांगel_sha_hmac_prehash_key_करोne(काष्ठा aपंचांगel_sha_dev *dd);
-अटल पूर्णांक aपंचांगel_sha_hmac_compute_ipad_hash(काष्ठा aपंचांगel_sha_dev *dd);
-अटल पूर्णांक aपंचांगel_sha_hmac_compute_opad_hash(काष्ठा aपंचांगel_sha_dev *dd);
-अटल पूर्णांक aपंचांगel_sha_hmac_setup_करोne(काष्ठा aपंचांगel_sha_dev *dd);
+static int atmel_sha_hmac_setup(struct atmel_sha_dev *dd,
+				atmel_sha_fn_t resume);
+static int atmel_sha_hmac_prehash_key(struct atmel_sha_dev *dd,
+				      const u8 *key, unsigned int keylen);
+static int atmel_sha_hmac_prehash_key_done(struct atmel_sha_dev *dd);
+static int atmel_sha_hmac_compute_ipad_hash(struct atmel_sha_dev *dd);
+static int atmel_sha_hmac_compute_opad_hash(struct atmel_sha_dev *dd);
+static int atmel_sha_hmac_setup_done(struct atmel_sha_dev *dd);
 
-अटल पूर्णांक aपंचांगel_sha_hmac_init_करोne(काष्ठा aपंचांगel_sha_dev *dd);
-अटल पूर्णांक aपंचांगel_sha_hmac_final(काष्ठा aपंचांगel_sha_dev *dd);
-अटल पूर्णांक aपंचांगel_sha_hmac_final_करोne(काष्ठा aपंचांगel_sha_dev *dd);
-अटल पूर्णांक aपंचांगel_sha_hmac_digest2(काष्ठा aपंचांगel_sha_dev *dd);
+static int atmel_sha_hmac_init_done(struct atmel_sha_dev *dd);
+static int atmel_sha_hmac_final(struct atmel_sha_dev *dd);
+static int atmel_sha_hmac_final_done(struct atmel_sha_dev *dd);
+static int atmel_sha_hmac_digest2(struct atmel_sha_dev *dd);
 
-अटल पूर्णांक aपंचांगel_sha_hmac_setup(काष्ठा aपंचांगel_sha_dev *dd,
-				aपंचांगel_sha_fn_t resume)
-अणु
-	काष्ठा ahash_request *req = dd->req;
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	काष्ठा aपंचांगel_sha_hmac_ctx *hmac = crypto_ahash_ctx(tfm);
-	अचिन्हित पूर्णांक keylen;
-	स्थिर u8 *key;
-	माप_प्रकार bs;
+static int atmel_sha_hmac_setup(struct atmel_sha_dev *dd,
+				atmel_sha_fn_t resume)
+{
+	struct ahash_request *req = dd->req;
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	struct atmel_sha_hmac_ctx *hmac = crypto_ahash_ctx(tfm);
+	unsigned int keylen;
+	const u8 *key;
+	size_t bs;
 
 	hmac->resume = resume;
-	चयन (ctx->flags & SHA_FLAGS_ALGO_MASK) अणु
-	हाल SHA_FLAGS_SHA1:
+	switch (ctx->flags & SHA_FLAGS_ALGO_MASK) {
+	case SHA_FLAGS_SHA1:
 		ctx->block_size = SHA1_BLOCK_SIZE;
 		ctx->hash_size = SHA1_DIGEST_SIZE;
-		अवरोध;
+		break;
 
-	हाल SHA_FLAGS_SHA224:
+	case SHA_FLAGS_SHA224:
 		ctx->block_size = SHA224_BLOCK_SIZE;
 		ctx->hash_size = SHA256_DIGEST_SIZE;
-		अवरोध;
+		break;
 
-	हाल SHA_FLAGS_SHA256:
+	case SHA_FLAGS_SHA256:
 		ctx->block_size = SHA256_BLOCK_SIZE;
 		ctx->hash_size = SHA256_DIGEST_SIZE;
-		अवरोध;
+		break;
 
-	हाल SHA_FLAGS_SHA384:
+	case SHA_FLAGS_SHA384:
 		ctx->block_size = SHA384_BLOCK_SIZE;
 		ctx->hash_size = SHA512_DIGEST_SIZE;
-		अवरोध;
+		break;
 
-	हाल SHA_FLAGS_SHA512:
+	case SHA_FLAGS_SHA512:
 		ctx->block_size = SHA512_BLOCK_SIZE;
 		ctx->hash_size = SHA512_DIGEST_SIZE;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस aपंचांगel_sha_complete(dd, -EINVAL);
-	पूर्ण
+	default:
+		return atmel_sha_complete(dd, -EINVAL);
+	}
 	bs = ctx->block_size;
 
-	अगर (likely(!aपंचांगel_sha_hmac_key_get(&hmac->hkey, &key, &keylen)))
-		वापस resume(dd);
+	if (likely(!atmel_sha_hmac_key_get(&hmac->hkey, &key, &keylen)))
+		return resume(dd);
 
 	/* Compute K' from K. */
-	अगर (unlikely(keylen > bs))
-		वापस aपंचांगel_sha_hmac_prehash_key(dd, key, keylen);
+	if (unlikely(keylen > bs))
+		return atmel_sha_hmac_prehash_key(dd, key, keylen);
 
 	/* Prepare ipad. */
-	स_नकल((u8 *)hmac->ipad, key, keylen);
-	स_रखो((u8 *)hmac->ipad + keylen, 0, bs - keylen);
-	वापस aपंचांगel_sha_hmac_compute_ipad_hash(dd);
-पूर्ण
+	memcpy((u8 *)hmac->ipad, key, keylen);
+	memset((u8 *)hmac->ipad + keylen, 0, bs - keylen);
+	return atmel_sha_hmac_compute_ipad_hash(dd);
+}
 
-अटल पूर्णांक aपंचांगel_sha_hmac_prehash_key(काष्ठा aपंचांगel_sha_dev *dd,
-				      स्थिर u8 *key, अचिन्हित पूर्णांक keylen)
-अणु
-	वापस aपंचांगel_sha_cpu_hash(dd, key, keylen, true,
-				  aपंचांगel_sha_hmac_prehash_key_करोne);
-पूर्ण
+static int atmel_sha_hmac_prehash_key(struct atmel_sha_dev *dd,
+				      const u8 *key, unsigned int keylen)
+{
+	return atmel_sha_cpu_hash(dd, key, keylen, true,
+				  atmel_sha_hmac_prehash_key_done);
+}
 
-अटल पूर्णांक aपंचांगel_sha_hmac_prehash_key_करोne(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
-	काष्ठा ahash_request *req = dd->req;
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	काष्ठा aपंचांगel_sha_hmac_ctx *hmac = crypto_ahash_ctx(tfm);
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
-	माप_प्रकार ds = crypto_ahash_digestsize(tfm);
-	माप_प्रकार bs = ctx->block_size;
-	माप_प्रकार i, num_words = ds / माप(u32);
+static int atmel_sha_hmac_prehash_key_done(struct atmel_sha_dev *dd)
+{
+	struct ahash_request *req = dd->req;
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	struct atmel_sha_hmac_ctx *hmac = crypto_ahash_ctx(tfm);
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
+	size_t ds = crypto_ahash_digestsize(tfm);
+	size_t bs = ctx->block_size;
+	size_t i, num_words = ds / sizeof(u32);
 
 	/* Prepare ipad. */
-	क्रम (i = 0; i < num_words; ++i)
-		hmac->ipad[i] = aपंचांगel_sha_पढ़ो(dd, SHA_REG_DIGEST(i));
-	स_रखो((u8 *)hmac->ipad + ds, 0, bs - ds);
-	वापस aपंचांगel_sha_hmac_compute_ipad_hash(dd);
-पूर्ण
+	for (i = 0; i < num_words; ++i)
+		hmac->ipad[i] = atmel_sha_read(dd, SHA_REG_DIGEST(i));
+	memset((u8 *)hmac->ipad + ds, 0, bs - ds);
+	return atmel_sha_hmac_compute_ipad_hash(dd);
+}
 
-अटल पूर्णांक aपंचांगel_sha_hmac_compute_ipad_hash(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
-	काष्ठा ahash_request *req = dd->req;
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	काष्ठा aपंचांगel_sha_hmac_ctx *hmac = crypto_ahash_ctx(tfm);
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
-	माप_प्रकार bs = ctx->block_size;
-	माप_प्रकार i, num_words = bs / माप(u32);
+static int atmel_sha_hmac_compute_ipad_hash(struct atmel_sha_dev *dd)
+{
+	struct ahash_request *req = dd->req;
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	struct atmel_sha_hmac_ctx *hmac = crypto_ahash_ctx(tfm);
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
+	size_t bs = ctx->block_size;
+	size_t i, num_words = bs / sizeof(u32);
 
-	स_नकल(hmac->opad, hmac->ipad, bs);
-	क्रम (i = 0; i < num_words; ++i) अणु
+	memcpy(hmac->opad, hmac->ipad, bs);
+	for (i = 0; i < num_words; ++i) {
 		hmac->ipad[i] ^= 0x36363636;
 		hmac->opad[i] ^= 0x5c5c5c5c;
-	पूर्ण
+	}
 
-	वापस aपंचांगel_sha_cpu_hash(dd, hmac->ipad, bs, false,
-				  aपंचांगel_sha_hmac_compute_opad_hash);
-पूर्ण
+	return atmel_sha_cpu_hash(dd, hmac->ipad, bs, false,
+				  atmel_sha_hmac_compute_opad_hash);
+}
 
-अटल पूर्णांक aपंचांगel_sha_hmac_compute_opad_hash(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
-	काष्ठा ahash_request *req = dd->req;
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	काष्ठा aपंचांगel_sha_hmac_ctx *hmac = crypto_ahash_ctx(tfm);
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
-	माप_प्रकार bs = ctx->block_size;
-	माप_प्रकार hs = ctx->hash_size;
-	माप_प्रकार i, num_words = hs / माप(u32);
+static int atmel_sha_hmac_compute_opad_hash(struct atmel_sha_dev *dd)
+{
+	struct ahash_request *req = dd->req;
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	struct atmel_sha_hmac_ctx *hmac = crypto_ahash_ctx(tfm);
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
+	size_t bs = ctx->block_size;
+	size_t hs = ctx->hash_size;
+	size_t i, num_words = hs / sizeof(u32);
 
-	क्रम (i = 0; i < num_words; ++i)
-		hmac->ipad[i] = aपंचांगel_sha_पढ़ो(dd, SHA_REG_DIGEST(i));
-	वापस aपंचांगel_sha_cpu_hash(dd, hmac->opad, bs, false,
-				  aपंचांगel_sha_hmac_setup_करोne);
-पूर्ण
+	for (i = 0; i < num_words; ++i)
+		hmac->ipad[i] = atmel_sha_read(dd, SHA_REG_DIGEST(i));
+	return atmel_sha_cpu_hash(dd, hmac->opad, bs, false,
+				  atmel_sha_hmac_setup_done);
+}
 
-अटल पूर्णांक aपंचांगel_sha_hmac_setup_करोne(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
-	काष्ठा ahash_request *req = dd->req;
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	काष्ठा aपंचांगel_sha_hmac_ctx *hmac = crypto_ahash_ctx(tfm);
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
-	माप_प्रकार hs = ctx->hash_size;
-	माप_प्रकार i, num_words = hs / माप(u32);
+static int atmel_sha_hmac_setup_done(struct atmel_sha_dev *dd)
+{
+	struct ahash_request *req = dd->req;
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	struct atmel_sha_hmac_ctx *hmac = crypto_ahash_ctx(tfm);
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
+	size_t hs = ctx->hash_size;
+	size_t i, num_words = hs / sizeof(u32);
 
-	क्रम (i = 0; i < num_words; ++i)
-		hmac->opad[i] = aपंचांगel_sha_पढ़ो(dd, SHA_REG_DIGEST(i));
-	aपंचांगel_sha_hmac_key_release(&hmac->hkey);
-	वापस hmac->resume(dd);
-पूर्ण
+	for (i = 0; i < num_words; ++i)
+		hmac->opad[i] = atmel_sha_read(dd, SHA_REG_DIGEST(i));
+	atmel_sha_hmac_key_release(&hmac->hkey);
+	return hmac->resume(dd);
+}
 
-अटल पूर्णांक aपंचांगel_sha_hmac_start(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
-	काष्ठा ahash_request *req = dd->req;
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
-	पूर्णांक err;
+static int atmel_sha_hmac_start(struct atmel_sha_dev *dd)
+{
+	struct ahash_request *req = dd->req;
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
+	int err;
 
-	err = aपंचांगel_sha_hw_init(dd);
-	अगर (err)
-		वापस aपंचांगel_sha_complete(dd, err);
+	err = atmel_sha_hw_init(dd);
+	if (err)
+		return atmel_sha_complete(dd, err);
 
-	चयन (ctx->op) अणु
-	हाल SHA_OP_INIT:
-		err = aपंचांगel_sha_hmac_setup(dd, aपंचांगel_sha_hmac_init_करोne);
-		अवरोध;
+	switch (ctx->op) {
+	case SHA_OP_INIT:
+		err = atmel_sha_hmac_setup(dd, atmel_sha_hmac_init_done);
+		break;
 
-	हाल SHA_OP_UPDATE:
-		dd->resume = aपंचांगel_sha_करोne;
-		err = aपंचांगel_sha_update_req(dd);
-		अवरोध;
+	case SHA_OP_UPDATE:
+		dd->resume = atmel_sha_done;
+		err = atmel_sha_update_req(dd);
+		break;
 
-	हाल SHA_OP_FINAL:
-		dd->resume = aपंचांगel_sha_hmac_final;
-		err = aपंचांगel_sha_final_req(dd);
-		अवरोध;
+	case SHA_OP_FINAL:
+		dd->resume = atmel_sha_hmac_final;
+		err = atmel_sha_final_req(dd);
+		break;
 
-	हाल SHA_OP_DIGEST:
-		err = aपंचांगel_sha_hmac_setup(dd, aपंचांगel_sha_hmac_digest2);
-		अवरोध;
+	case SHA_OP_DIGEST:
+		err = atmel_sha_hmac_setup(dd, atmel_sha_hmac_digest2);
+		break;
 
-	शेष:
-		वापस aपंचांगel_sha_complete(dd, -EINVAL);
-	पूर्ण
+	default:
+		return atmel_sha_complete(dd, -EINVAL);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक aपंचांगel_sha_hmac_setkey(काष्ठा crypto_ahash *tfm, स्थिर u8 *key,
-				 अचिन्हित पूर्णांक keylen)
-अणु
-	काष्ठा aपंचांगel_sha_hmac_ctx *hmac = crypto_ahash_ctx(tfm);
+static int atmel_sha_hmac_setkey(struct crypto_ahash *tfm, const u8 *key,
+				 unsigned int keylen)
+{
+	struct atmel_sha_hmac_ctx *hmac = crypto_ahash_ctx(tfm);
 
-	वापस aपंचांगel_sha_hmac_key_set(&hmac->hkey, key, keylen);
-पूर्ण
+	return atmel_sha_hmac_key_set(&hmac->hkey, key, keylen);
+}
 
-अटल पूर्णांक aपंचांगel_sha_hmac_init(काष्ठा ahash_request *req)
-अणु
-	पूर्णांक err;
+static int atmel_sha_hmac_init(struct ahash_request *req)
+{
+	int err;
 
-	err = aपंचांगel_sha_init(req);
-	अगर (err)
-		वापस err;
+	err = atmel_sha_init(req);
+	if (err)
+		return err;
 
-	वापस aपंचांगel_sha_enqueue(req, SHA_OP_INIT);
-पूर्ण
+	return atmel_sha_enqueue(req, SHA_OP_INIT);
+}
 
-अटल पूर्णांक aपंचांगel_sha_hmac_init_करोne(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
-	काष्ठा ahash_request *req = dd->req;
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	काष्ठा aपंचांगel_sha_hmac_ctx *hmac = crypto_ahash_ctx(tfm);
-	माप_प्रकार bs = ctx->block_size;
-	माप_प्रकार hs = ctx->hash_size;
+static int atmel_sha_hmac_init_done(struct atmel_sha_dev *dd)
+{
+	struct ahash_request *req = dd->req;
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	struct atmel_sha_hmac_ctx *hmac = crypto_ahash_ctx(tfm);
+	size_t bs = ctx->block_size;
+	size_t hs = ctx->hash_size;
 
 	ctx->bufcnt = 0;
 	ctx->digcnt[0] = bs;
 	ctx->digcnt[1] = 0;
 	ctx->flags |= SHA_FLAGS_RESTORE;
-	स_नकल(ctx->digest, hmac->ipad, hs);
-	वापस aपंचांगel_sha_complete(dd, 0);
-पूर्ण
+	memcpy(ctx->digest, hmac->ipad, hs);
+	return atmel_sha_complete(dd, 0);
+}
 
-अटल पूर्णांक aपंचांगel_sha_hmac_final(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
-	काष्ठा ahash_request *req = dd->req;
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	काष्ठा aपंचांगel_sha_hmac_ctx *hmac = crypto_ahash_ctx(tfm);
+static int atmel_sha_hmac_final(struct atmel_sha_dev *dd)
+{
+	struct ahash_request *req = dd->req;
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	struct atmel_sha_hmac_ctx *hmac = crypto_ahash_ctx(tfm);
 	u32 *digest = (u32 *)ctx->digest;
-	माप_प्रकार ds = crypto_ahash_digestsize(tfm);
-	माप_प्रकार bs = ctx->block_size;
-	माप_प्रकार hs = ctx->hash_size;
-	माप_प्रकार i, num_words;
+	size_t ds = crypto_ahash_digestsize(tfm);
+	size_t bs = ctx->block_size;
+	size_t hs = ctx->hash_size;
+	size_t i, num_words;
 	u32 mr;
 
 	/* Save d = SHA((K' + ipad) | msg). */
-	num_words = ds / माप(u32);
-	क्रम (i = 0; i < num_words; ++i)
-		digest[i] = aपंचांगel_sha_पढ़ो(dd, SHA_REG_DIGEST(i));
+	num_words = ds / sizeof(u32);
+	for (i = 0; i < num_words; ++i)
+		digest[i] = atmel_sha_read(dd, SHA_REG_DIGEST(i));
 
 	/* Restore context to finish computing SHA((K' + opad) | d). */
-	aपंचांगel_sha_ग_लिखो(dd, SHA_CR, SHA_CR_WUIHV);
-	num_words = hs / माप(u32);
-	क्रम (i = 0; i < num_words; ++i)
-		aपंचांगel_sha_ग_लिखो(dd, SHA_REG_DIN(i), hmac->opad[i]);
+	atmel_sha_write(dd, SHA_CR, SHA_CR_WUIHV);
+	num_words = hs / sizeof(u32);
+	for (i = 0; i < num_words; ++i)
+		atmel_sha_write(dd, SHA_REG_DIN(i), hmac->opad[i]);
 
 	mr = SHA_MR_MODE_AUTO | SHA_MR_UIHV;
 	mr |= (ctx->flags & SHA_FLAGS_ALGO_MASK);
-	aपंचांगel_sha_ग_लिखो(dd, SHA_MR, mr);
-	aपंचांगel_sha_ग_लिखो(dd, SHA_MSR, bs + ds);
-	aपंचांगel_sha_ग_लिखो(dd, SHA_BCR, ds);
-	aपंचांगel_sha_ग_लिखो(dd, SHA_CR, SHA_CR_FIRST);
+	atmel_sha_write(dd, SHA_MR, mr);
+	atmel_sha_write(dd, SHA_MSR, bs + ds);
+	atmel_sha_write(dd, SHA_BCR, ds);
+	atmel_sha_write(dd, SHA_CR, SHA_CR_FIRST);
 
-	sg_init_one(&dd->पंचांगp, digest, ds);
-	वापस aपंचांगel_sha_cpu_start(dd, &dd->पंचांगp, ds, false, true,
-				   aपंचांगel_sha_hmac_final_करोne);
-पूर्ण
+	sg_init_one(&dd->tmp, digest, ds);
+	return atmel_sha_cpu_start(dd, &dd->tmp, ds, false, true,
+				   atmel_sha_hmac_final_done);
+}
 
-अटल पूर्णांक aपंचांगel_sha_hmac_final_करोne(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
+static int atmel_sha_hmac_final_done(struct atmel_sha_dev *dd)
+{
 	/*
-	 * req->result might not be माप(u32) aligned, so copy the
-	 * digest पूर्णांकo ctx->digest[] beक्रमe स_नकल() the data पूर्णांकo
+	 * req->result might not be sizeof(u32) aligned, so copy the
+	 * digest into ctx->digest[] before memcpy() the data into
 	 * req->result.
 	 */
-	aपंचांगel_sha_copy_hash(dd->req);
-	aपंचांगel_sha_copy_पढ़ोy_hash(dd->req);
-	वापस aपंचांगel_sha_complete(dd, 0);
-पूर्ण
+	atmel_sha_copy_hash(dd->req);
+	atmel_sha_copy_ready_hash(dd->req);
+	return atmel_sha_complete(dd, 0);
+}
 
-अटल पूर्णांक aपंचांगel_sha_hmac_digest(काष्ठा ahash_request *req)
-अणु
-	पूर्णांक err;
+static int atmel_sha_hmac_digest(struct ahash_request *req)
+{
+	int err;
 
-	err = aपंचांगel_sha_init(req);
-	अगर (err)
-		वापस err;
+	err = atmel_sha_init(req);
+	if (err)
+		return err;
 
-	वापस aपंचांगel_sha_enqueue(req, SHA_OP_DIGEST);
-पूर्ण
+	return atmel_sha_enqueue(req, SHA_OP_DIGEST);
+}
 
-अटल पूर्णांक aपंचांगel_sha_hmac_digest2(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
-	काष्ठा ahash_request *req = dd->req;
-	काष्ठा aपंचांगel_sha_reqctx *ctx = ahash_request_ctx(req);
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	काष्ठा aपंचांगel_sha_hmac_ctx *hmac = crypto_ahash_ctx(tfm);
-	माप_प्रकार hs = ctx->hash_size;
-	माप_प्रकार i, num_words = hs / माप(u32);
+static int atmel_sha_hmac_digest2(struct atmel_sha_dev *dd)
+{
+	struct ahash_request *req = dd->req;
+	struct atmel_sha_reqctx *ctx = ahash_request_ctx(req);
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	struct atmel_sha_hmac_ctx *hmac = crypto_ahash_ctx(tfm);
+	size_t hs = ctx->hash_size;
+	size_t i, num_words = hs / sizeof(u32);
 	bool use_dma = false;
 	u32 mr;
 
-	/* Special हाल क्रम empty message. */
-	अगर (!req->nbytes)
-		वापस aपंचांगel_sha_complete(dd, -EINVAL); // TODO:
+	/* Special case for empty message. */
+	if (!req->nbytes)
+		return atmel_sha_complete(dd, -EINVAL); // TODO:
 
 	/* Check DMA threshold and alignment. */
-	अगर (req->nbytes > ATMEL_SHA_DMA_THRESHOLD &&
-	    aपंचांगel_sha_dma_check_aligned(dd, req->src, req->nbytes))
+	if (req->nbytes > ATMEL_SHA_DMA_THRESHOLD &&
+	    atmel_sha_dma_check_aligned(dd, req->src, req->nbytes))
 		use_dma = true;
 
 	/* Write both initial hash values to compute a HMAC. */
-	aपंचांगel_sha_ग_लिखो(dd, SHA_CR, SHA_CR_WUIHV);
-	क्रम (i = 0; i < num_words; ++i)
-		aपंचांगel_sha_ग_लिखो(dd, SHA_REG_DIN(i), hmac->ipad[i]);
+	atmel_sha_write(dd, SHA_CR, SHA_CR_WUIHV);
+	for (i = 0; i < num_words; ++i)
+		atmel_sha_write(dd, SHA_REG_DIN(i), hmac->ipad[i]);
 
-	aपंचांगel_sha_ग_लिखो(dd, SHA_CR, SHA_CR_WUIEHV);
-	क्रम (i = 0; i < num_words; ++i)
-		aपंचांगel_sha_ग_लिखो(dd, SHA_REG_DIN(i), hmac->opad[i]);
+	atmel_sha_write(dd, SHA_CR, SHA_CR_WUIEHV);
+	for (i = 0; i < num_words; ++i)
+		atmel_sha_write(dd, SHA_REG_DIN(i), hmac->opad[i]);
 
 	/* Write the Mode, Message Size, Bytes Count then Control Registers. */
 	mr = (SHA_MR_HMAC | SHA_MR_DUALBUFF);
 	mr |= ctx->flags & SHA_FLAGS_ALGO_MASK;
-	अगर (use_dma)
+	if (use_dma)
 		mr |= SHA_MR_MODE_IDATAR0;
-	अन्यथा
+	else
 		mr |= SHA_MR_MODE_AUTO;
-	aपंचांगel_sha_ग_लिखो(dd, SHA_MR, mr);
+	atmel_sha_write(dd, SHA_MR, mr);
 
-	aपंचांगel_sha_ग_लिखो(dd, SHA_MSR, req->nbytes);
-	aपंचांगel_sha_ग_लिखो(dd, SHA_BCR, req->nbytes);
+	atmel_sha_write(dd, SHA_MSR, req->nbytes);
+	atmel_sha_write(dd, SHA_BCR, req->nbytes);
 
-	aपंचांगel_sha_ग_लिखो(dd, SHA_CR, SHA_CR_FIRST);
+	atmel_sha_write(dd, SHA_CR, SHA_CR_FIRST);
 
 	/* Process data. */
-	अगर (use_dma)
-		वापस aपंचांगel_sha_dma_start(dd, req->src, req->nbytes,
-					   aपंचांगel_sha_hmac_final_करोne);
+	if (use_dma)
+		return atmel_sha_dma_start(dd, req->src, req->nbytes,
+					   atmel_sha_hmac_final_done);
 
-	वापस aपंचांगel_sha_cpu_start(dd, req->src, req->nbytes, false, true,
-				   aपंचांगel_sha_hmac_final_करोne);
-पूर्ण
+	return atmel_sha_cpu_start(dd, req->src, req->nbytes, false, true,
+				   atmel_sha_hmac_final_done);
+}
 
-अटल पूर्णांक aपंचांगel_sha_hmac_cra_init(काष्ठा crypto_tfm *tfm)
-अणु
-	काष्ठा aपंचांगel_sha_hmac_ctx *hmac = crypto_tfm_ctx(tfm);
+static int atmel_sha_hmac_cra_init(struct crypto_tfm *tfm)
+{
+	struct atmel_sha_hmac_ctx *hmac = crypto_tfm_ctx(tfm);
 
 	crypto_ahash_set_reqsize(__crypto_ahash_cast(tfm),
-				 माप(काष्ठा aपंचांगel_sha_reqctx));
-	hmac->base.start = aपंचांगel_sha_hmac_start;
-	aपंचांगel_sha_hmac_key_init(&hmac->hkey);
+				 sizeof(struct atmel_sha_reqctx));
+	hmac->base.start = atmel_sha_hmac_start;
+	atmel_sha_hmac_key_init(&hmac->hkey);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम aपंचांगel_sha_hmac_cra_निकास(काष्ठा crypto_tfm *tfm)
-अणु
-	काष्ठा aपंचांगel_sha_hmac_ctx *hmac = crypto_tfm_ctx(tfm);
+static void atmel_sha_hmac_cra_exit(struct crypto_tfm *tfm)
+{
+	struct atmel_sha_hmac_ctx *hmac = crypto_tfm_ctx(tfm);
 
-	aपंचांगel_sha_hmac_key_release(&hmac->hkey);
-पूर्ण
+	atmel_sha_hmac_key_release(&hmac->hkey);
+}
 
-अटल व्योम aपंचांगel_sha_hmac_alg_init(काष्ठा ahash_alg *alg)
-अणु
+static void atmel_sha_hmac_alg_init(struct ahash_alg *alg)
+{
 	alg->halg.base.cra_priority = ATMEL_SHA_PRIORITY;
 	alg->halg.base.cra_flags = CRYPTO_ALG_ASYNC;
-	alg->halg.base.cra_ctxsize = माप(काष्ठा aपंचांगel_sha_hmac_ctx);
+	alg->halg.base.cra_ctxsize = sizeof(struct atmel_sha_hmac_ctx);
 	alg->halg.base.cra_module = THIS_MODULE;
-	alg->halg.base.cra_init	= aपंचांगel_sha_hmac_cra_init;
-	alg->halg.base.cra_निकास	= aपंचांगel_sha_hmac_cra_निकास;
+	alg->halg.base.cra_init	= atmel_sha_hmac_cra_init;
+	alg->halg.base.cra_exit	= atmel_sha_hmac_cra_exit;
 
-	alg->halg.statesize = माप(काष्ठा aपंचांगel_sha_reqctx);
+	alg->halg.statesize = sizeof(struct atmel_sha_reqctx);
 
-	alg->init = aपंचांगel_sha_hmac_init;
-	alg->update = aपंचांगel_sha_update;
-	alg->final = aपंचांगel_sha_final;
-	alg->digest = aपंचांगel_sha_hmac_digest;
-	alg->setkey = aपंचांगel_sha_hmac_setkey;
-	alg->export = aपंचांगel_sha_export;
-	alg->import = aपंचांगel_sha_import;
-पूर्ण
+	alg->init = atmel_sha_hmac_init;
+	alg->update = atmel_sha_update;
+	alg->final = atmel_sha_final;
+	alg->digest = atmel_sha_hmac_digest;
+	alg->setkey = atmel_sha_hmac_setkey;
+	alg->export = atmel_sha_export;
+	alg->import = atmel_sha_import;
+}
 
-अटल काष्ठा ahash_alg sha_hmac_algs[] = अणु
-अणु
+static struct ahash_alg sha_hmac_algs[] = {
+{
 	.halg.base.cra_name		= "hmac(sha1)",
 	.halg.base.cra_driver_name	= "atmel-hmac-sha1",
 	.halg.base.cra_blocksize	= SHA1_BLOCK_SIZE,
 
 	.halg.digestsize = SHA1_DIGEST_SIZE,
-पूर्ण,
-अणु
+},
+{
 	.halg.base.cra_name		= "hmac(sha224)",
 	.halg.base.cra_driver_name	= "atmel-hmac-sha224",
 	.halg.base.cra_blocksize	= SHA224_BLOCK_SIZE,
 
 	.halg.digestsize = SHA224_DIGEST_SIZE,
-पूर्ण,
-अणु
+},
+{
 	.halg.base.cra_name		= "hmac(sha256)",
 	.halg.base.cra_driver_name	= "atmel-hmac-sha256",
 	.halg.base.cra_blocksize	= SHA256_BLOCK_SIZE,
 
 	.halg.digestsize = SHA256_DIGEST_SIZE,
-पूर्ण,
-अणु
+},
+{
 	.halg.base.cra_name		= "hmac(sha384)",
 	.halg.base.cra_driver_name	= "atmel-hmac-sha384",
 	.halg.base.cra_blocksize	= SHA384_BLOCK_SIZE,
 
 	.halg.digestsize = SHA384_DIGEST_SIZE,
-पूर्ण,
-अणु
+},
+{
 	.halg.base.cra_name		= "hmac(sha512)",
 	.halg.base.cra_driver_name	= "atmel-hmac-sha512",
 	.halg.base.cra_blocksize	= SHA512_BLOCK_SIZE,
 
 	.halg.digestsize = SHA512_DIGEST_SIZE,
-पूर्ण,
-पूर्ण;
+},
+};
 
-#अगर IS_ENABLED(CONFIG_CRYPTO_DEV_ATMEL_AUTHENC)
+#if IS_ENABLED(CONFIG_CRYPTO_DEV_ATMEL_AUTHENC)
 /* authenc functions */
 
-अटल पूर्णांक aपंचांगel_sha_authenc_init2(काष्ठा aपंचांगel_sha_dev *dd);
-अटल पूर्णांक aपंचांगel_sha_authenc_init_करोne(काष्ठा aपंचांगel_sha_dev *dd);
-अटल पूर्णांक aपंचांगel_sha_authenc_final_करोne(काष्ठा aपंचांगel_sha_dev *dd);
+static int atmel_sha_authenc_init2(struct atmel_sha_dev *dd);
+static int atmel_sha_authenc_init_done(struct atmel_sha_dev *dd);
+static int atmel_sha_authenc_final_done(struct atmel_sha_dev *dd);
 
 
-काष्ठा aपंचांगel_sha_authenc_ctx अणु
-	काष्ठा crypto_ahash	*tfm;
-पूर्ण;
+struct atmel_sha_authenc_ctx {
+	struct crypto_ahash	*tfm;
+};
 
-काष्ठा aपंचांगel_sha_authenc_reqctx अणु
-	काष्ठा aपंचांगel_sha_reqctx	base;
+struct atmel_sha_authenc_reqctx {
+	struct atmel_sha_reqctx	base;
 
-	aपंचांगel_aes_authenc_fn_t	cb;
-	काष्ठा aपंचांगel_aes_dev	*aes_dev;
+	atmel_aes_authenc_fn_t	cb;
+	struct atmel_aes_dev	*aes_dev;
 
 	/* _init() parameters. */
-	काष्ठा scatterlist	*assoc;
+	struct scatterlist	*assoc;
 	u32			assoclen;
 	u32			textlen;
 
 	/* _final() parameters. */
 	u32			*digest;
-	अचिन्हित पूर्णांक		digestlen;
-पूर्ण;
+	unsigned int		digestlen;
+};
 
-अटल व्योम aपंचांगel_sha_authenc_complete(काष्ठा crypto_async_request *areq,
-				       पूर्णांक err)
-अणु
-	काष्ठा ahash_request *req = areq->data;
-	काष्ठा aपंचांगel_sha_authenc_reqctx *authctx  = ahash_request_ctx(req);
+static void atmel_sha_authenc_complete(struct crypto_async_request *areq,
+				       int err)
+{
+	struct ahash_request *req = areq->data;
+	struct atmel_sha_authenc_reqctx *authctx  = ahash_request_ctx(req);
 
 	authctx->cb(authctx->aes_dev, err, authctx->base.dd->is_async);
-पूर्ण
+}
 
-अटल पूर्णांक aपंचांगel_sha_authenc_start(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
-	काष्ठा ahash_request *req = dd->req;
-	काष्ठा aपंचांगel_sha_authenc_reqctx *authctx = ahash_request_ctx(req);
-	पूर्णांक err;
+static int atmel_sha_authenc_start(struct atmel_sha_dev *dd)
+{
+	struct ahash_request *req = dd->req;
+	struct atmel_sha_authenc_reqctx *authctx = ahash_request_ctx(req);
+	int err;
 
 	/*
-	 * Force aपंचांगel_sha_complete() to call req->base.complete(), ie
-	 * aपंचांगel_sha_authenc_complete(), which in turn calls authctx->cb().
+	 * Force atmel_sha_complete() to call req->base.complete(), ie
+	 * atmel_sha_authenc_complete(), which in turn calls authctx->cb().
 	 */
-	dd->क्रमce_complete = true;
+	dd->force_complete = true;
 
-	err = aपंचांगel_sha_hw_init(dd);
-	वापस authctx->cb(authctx->aes_dev, err, dd->is_async);
-पूर्ण
+	err = atmel_sha_hw_init(dd);
+	return authctx->cb(authctx->aes_dev, err, dd->is_async);
+}
 
-bool aपंचांगel_sha_authenc_is_पढ़ोy(व्योम)
-अणु
-	काष्ठा aपंचांगel_sha_ctx dummy;
+bool atmel_sha_authenc_is_ready(void)
+{
+	struct atmel_sha_ctx dummy;
 
-	dummy.dd = शून्य;
-	वापस (aपंचांगel_sha_find_dev(&dummy) != शून्य);
-पूर्ण
-EXPORT_SYMBOL_GPL(aपंचांगel_sha_authenc_is_पढ़ोy);
+	dummy.dd = NULL;
+	return (atmel_sha_find_dev(&dummy) != NULL);
+}
+EXPORT_SYMBOL_GPL(atmel_sha_authenc_is_ready);
 
-अचिन्हित पूर्णांक aपंचांगel_sha_authenc_get_reqsize(व्योम)
-अणु
-	वापस माप(काष्ठा aपंचांगel_sha_authenc_reqctx);
-पूर्ण
-EXPORT_SYMBOL_GPL(aपंचांगel_sha_authenc_get_reqsize);
+unsigned int atmel_sha_authenc_get_reqsize(void)
+{
+	return sizeof(struct atmel_sha_authenc_reqctx);
+}
+EXPORT_SYMBOL_GPL(atmel_sha_authenc_get_reqsize);
 
-काष्ठा aपंचांगel_sha_authenc_ctx *aपंचांगel_sha_authenc_spawn(अचिन्हित दीर्घ mode)
-अणु
-	काष्ठा aपंचांगel_sha_authenc_ctx *auth;
-	काष्ठा crypto_ahash *tfm;
-	काष्ठा aपंचांगel_sha_ctx *tctx;
-	स्थिर अक्षर *name;
-	पूर्णांक err = -EINVAL;
+struct atmel_sha_authenc_ctx *atmel_sha_authenc_spawn(unsigned long mode)
+{
+	struct atmel_sha_authenc_ctx *auth;
+	struct crypto_ahash *tfm;
+	struct atmel_sha_ctx *tctx;
+	const char *name;
+	int err = -EINVAL;
 
-	चयन (mode & SHA_FLAGS_MODE_MASK) अणु
-	हाल SHA_FLAGS_HMAC_SHA1:
+	switch (mode & SHA_FLAGS_MODE_MASK) {
+	case SHA_FLAGS_HMAC_SHA1:
 		name = "atmel-hmac-sha1";
-		अवरोध;
+		break;
 
-	हाल SHA_FLAGS_HMAC_SHA224:
+	case SHA_FLAGS_HMAC_SHA224:
 		name = "atmel-hmac-sha224";
-		अवरोध;
+		break;
 
-	हाल SHA_FLAGS_HMAC_SHA256:
+	case SHA_FLAGS_HMAC_SHA256:
 		name = "atmel-hmac-sha256";
-		अवरोध;
+		break;
 
-	हाल SHA_FLAGS_HMAC_SHA384:
+	case SHA_FLAGS_HMAC_SHA384:
 		name = "atmel-hmac-sha384";
-		अवरोध;
+		break;
 
-	हाल SHA_FLAGS_HMAC_SHA512:
+	case SHA_FLAGS_HMAC_SHA512:
 		name = "atmel-hmac-sha512";
-		अवरोध;
+		break;
 
-	शेष:
-		जाओ error;
-	पूर्ण
+	default:
+		goto error;
+	}
 
 	tfm = crypto_alloc_ahash(name, 0, 0);
-	अगर (IS_ERR(tfm)) अणु
+	if (IS_ERR(tfm)) {
 		err = PTR_ERR(tfm);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 	tctx = crypto_ahash_ctx(tfm);
-	tctx->start = aपंचांगel_sha_authenc_start;
+	tctx->start = atmel_sha_authenc_start;
 	tctx->flags = mode;
 
-	auth = kzalloc(माप(*auth), GFP_KERNEL);
-	अगर (!auth) अणु
+	auth = kzalloc(sizeof(*auth), GFP_KERNEL);
+	if (!auth) {
 		err = -ENOMEM;
-		जाओ err_मुक्त_ahash;
-	पूर्ण
+		goto err_free_ahash;
+	}
 	auth->tfm = tfm;
 
-	वापस auth;
+	return auth;
 
-err_मुक्त_ahash:
-	crypto_मुक्त_ahash(tfm);
+err_free_ahash:
+	crypto_free_ahash(tfm);
 error:
-	वापस ERR_PTR(err);
-पूर्ण
-EXPORT_SYMBOL_GPL(aपंचांगel_sha_authenc_spawn);
+	return ERR_PTR(err);
+}
+EXPORT_SYMBOL_GPL(atmel_sha_authenc_spawn);
 
-व्योम aपंचांगel_sha_authenc_मुक्त(काष्ठा aपंचांगel_sha_authenc_ctx *auth)
-अणु
-	अगर (auth)
-		crypto_मुक्त_ahash(auth->tfm);
-	kमुक्त(auth);
-पूर्ण
-EXPORT_SYMBOL_GPL(aपंचांगel_sha_authenc_मुक्त);
+void atmel_sha_authenc_free(struct atmel_sha_authenc_ctx *auth)
+{
+	if (auth)
+		crypto_free_ahash(auth->tfm);
+	kfree(auth);
+}
+EXPORT_SYMBOL_GPL(atmel_sha_authenc_free);
 
-पूर्णांक aपंचांगel_sha_authenc_setkey(काष्ठा aपंचांगel_sha_authenc_ctx *auth,
-			     स्थिर u8 *key, अचिन्हित पूर्णांक keylen, u32 flags)
-अणु
-	काष्ठा crypto_ahash *tfm = auth->tfm;
+int atmel_sha_authenc_setkey(struct atmel_sha_authenc_ctx *auth,
+			     const u8 *key, unsigned int keylen, u32 flags)
+{
+	struct crypto_ahash *tfm = auth->tfm;
 
 	crypto_ahash_clear_flags(tfm, CRYPTO_TFM_REQ_MASK);
 	crypto_ahash_set_flags(tfm, flags & CRYPTO_TFM_REQ_MASK);
-	वापस crypto_ahash_setkey(tfm, key, keylen);
-पूर्ण
-EXPORT_SYMBOL_GPL(aपंचांगel_sha_authenc_setkey);
+	return crypto_ahash_setkey(tfm, key, keylen);
+}
+EXPORT_SYMBOL_GPL(atmel_sha_authenc_setkey);
 
-पूर्णांक aपंचांगel_sha_authenc_schedule(काष्ठा ahash_request *req,
-			       काष्ठा aपंचांगel_sha_authenc_ctx *auth,
-			       aपंचांगel_aes_authenc_fn_t cb,
-			       काष्ठा aपंचांगel_aes_dev *aes_dev)
-अणु
-	काष्ठा aपंचांगel_sha_authenc_reqctx *authctx = ahash_request_ctx(req);
-	काष्ठा aपंचांगel_sha_reqctx *ctx = &authctx->base;
-	काष्ठा crypto_ahash *tfm = auth->tfm;
-	काष्ठा aपंचांगel_sha_ctx *tctx = crypto_ahash_ctx(tfm);
-	काष्ठा aपंचांगel_sha_dev *dd;
+int atmel_sha_authenc_schedule(struct ahash_request *req,
+			       struct atmel_sha_authenc_ctx *auth,
+			       atmel_aes_authenc_fn_t cb,
+			       struct atmel_aes_dev *aes_dev)
+{
+	struct atmel_sha_authenc_reqctx *authctx = ahash_request_ctx(req);
+	struct atmel_sha_reqctx *ctx = &authctx->base;
+	struct crypto_ahash *tfm = auth->tfm;
+	struct atmel_sha_ctx *tctx = crypto_ahash_ctx(tfm);
+	struct atmel_sha_dev *dd;
 
-	/* Reset request context (MUST be करोne first). */
-	स_रखो(authctx, 0, माप(*authctx));
+	/* Reset request context (MUST be done first). */
+	memset(authctx, 0, sizeof(*authctx));
 
 	/* Get SHA device. */
-	dd = aपंचांगel_sha_find_dev(tctx);
-	अगर (!dd)
-		वापस cb(aes_dev, -ENODEV, false);
+	dd = atmel_sha_find_dev(tctx);
+	if (!dd)
+		return cb(aes_dev, -ENODEV, false);
 
 	/* Init request context. */
 	ctx->dd = dd;
@@ -2242,26 +2241,26 @@ EXPORT_SYMBOL_GPL(aपंचांगel_sha_authenc_setkey);
 	authctx->cb = cb;
 	authctx->aes_dev = aes_dev;
 	ahash_request_set_tfm(req, tfm);
-	ahash_request_set_callback(req, 0, aपंचांगel_sha_authenc_complete, req);
+	ahash_request_set_callback(req, 0, atmel_sha_authenc_complete, req);
 
-	वापस aपंचांगel_sha_handle_queue(dd, req);
-पूर्ण
-EXPORT_SYMBOL_GPL(aपंचांगel_sha_authenc_schedule);
+	return atmel_sha_handle_queue(dd, req);
+}
+EXPORT_SYMBOL_GPL(atmel_sha_authenc_schedule);
 
-पूर्णांक aपंचांगel_sha_authenc_init(काष्ठा ahash_request *req,
-			   काष्ठा scatterlist *assoc, अचिन्हित पूर्णांक assoclen,
-			   अचिन्हित पूर्णांक textlen,
-			   aपंचांगel_aes_authenc_fn_t cb,
-			   काष्ठा aपंचांगel_aes_dev *aes_dev)
-अणु
-	काष्ठा aपंचांगel_sha_authenc_reqctx *authctx = ahash_request_ctx(req);
-	काष्ठा aपंचांगel_sha_reqctx *ctx = &authctx->base;
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	काष्ठा aपंचांगel_sha_hmac_ctx *hmac = crypto_ahash_ctx(tfm);
-	काष्ठा aपंचांगel_sha_dev *dd = ctx->dd;
+int atmel_sha_authenc_init(struct ahash_request *req,
+			   struct scatterlist *assoc, unsigned int assoclen,
+			   unsigned int textlen,
+			   atmel_aes_authenc_fn_t cb,
+			   struct atmel_aes_dev *aes_dev)
+{
+	struct atmel_sha_authenc_reqctx *authctx = ahash_request_ctx(req);
+	struct atmel_sha_reqctx *ctx = &authctx->base;
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	struct atmel_sha_hmac_ctx *hmac = crypto_ahash_ctx(tfm);
+	struct atmel_sha_dev *dd = ctx->dd;
 
-	अगर (unlikely(!IS_ALIGNED(assoclen, माप(u32))))
-		वापस aपंचांगel_sha_complete(dd, -EINVAL);
+	if (unlikely(!IS_ALIGNED(assoclen, sizeof(u32))))
+		return atmel_sha_complete(dd, -EINVAL);
 
 	authctx->cb = cb;
 	authctx->aes_dev = aes_dev;
@@ -2270,214 +2269,214 @@ EXPORT_SYMBOL_GPL(aपंचांगel_sha_authenc_schedule);
 	authctx->textlen = textlen;
 
 	ctx->flags = hmac->base.flags;
-	वापस aपंचांगel_sha_hmac_setup(dd, aपंचांगel_sha_authenc_init2);
-पूर्ण
-EXPORT_SYMBOL_GPL(aपंचांगel_sha_authenc_init);
+	return atmel_sha_hmac_setup(dd, atmel_sha_authenc_init2);
+}
+EXPORT_SYMBOL_GPL(atmel_sha_authenc_init);
 
-अटल पूर्णांक aपंचांगel_sha_authenc_init2(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
-	काष्ठा ahash_request *req = dd->req;
-	काष्ठा aपंचांगel_sha_authenc_reqctx *authctx = ahash_request_ctx(req);
-	काष्ठा aपंचांगel_sha_reqctx *ctx = &authctx->base;
-	काष्ठा crypto_ahash *tfm = crypto_ahash_reqtfm(req);
-	काष्ठा aपंचांगel_sha_hmac_ctx *hmac = crypto_ahash_ctx(tfm);
-	माप_प्रकार hs = ctx->hash_size;
-	माप_प्रकार i, num_words = hs / माप(u32);
+static int atmel_sha_authenc_init2(struct atmel_sha_dev *dd)
+{
+	struct ahash_request *req = dd->req;
+	struct atmel_sha_authenc_reqctx *authctx = ahash_request_ctx(req);
+	struct atmel_sha_reqctx *ctx = &authctx->base;
+	struct crypto_ahash *tfm = crypto_ahash_reqtfm(req);
+	struct atmel_sha_hmac_ctx *hmac = crypto_ahash_ctx(tfm);
+	size_t hs = ctx->hash_size;
+	size_t i, num_words = hs / sizeof(u32);
 	u32 mr, msg_size;
 
-	aपंचांगel_sha_ग_लिखो(dd, SHA_CR, SHA_CR_WUIHV);
-	क्रम (i = 0; i < num_words; ++i)
-		aपंचांगel_sha_ग_लिखो(dd, SHA_REG_DIN(i), hmac->ipad[i]);
+	atmel_sha_write(dd, SHA_CR, SHA_CR_WUIHV);
+	for (i = 0; i < num_words; ++i)
+		atmel_sha_write(dd, SHA_REG_DIN(i), hmac->ipad[i]);
 
-	aपंचांगel_sha_ग_लिखो(dd, SHA_CR, SHA_CR_WUIEHV);
-	क्रम (i = 0; i < num_words; ++i)
-		aपंचांगel_sha_ग_लिखो(dd, SHA_REG_DIN(i), hmac->opad[i]);
+	atmel_sha_write(dd, SHA_CR, SHA_CR_WUIEHV);
+	for (i = 0; i < num_words; ++i)
+		atmel_sha_write(dd, SHA_REG_DIN(i), hmac->opad[i]);
 
 	mr = (SHA_MR_MODE_IDATAR0 |
 	      SHA_MR_HMAC |
 	      SHA_MR_DUALBUFF);
 	mr |= ctx->flags & SHA_FLAGS_ALGO_MASK;
-	aपंचांगel_sha_ग_लिखो(dd, SHA_MR, mr);
+	atmel_sha_write(dd, SHA_MR, mr);
 
 	msg_size = authctx->assoclen + authctx->textlen;
-	aपंचांगel_sha_ग_लिखो(dd, SHA_MSR, msg_size);
-	aपंचांगel_sha_ग_लिखो(dd, SHA_BCR, msg_size);
+	atmel_sha_write(dd, SHA_MSR, msg_size);
+	atmel_sha_write(dd, SHA_BCR, msg_size);
 
-	aपंचांगel_sha_ग_लिखो(dd, SHA_CR, SHA_CR_FIRST);
+	atmel_sha_write(dd, SHA_CR, SHA_CR_FIRST);
 
 	/* Process assoc data. */
-	वापस aपंचांगel_sha_cpu_start(dd, authctx->assoc, authctx->assoclen,
+	return atmel_sha_cpu_start(dd, authctx->assoc, authctx->assoclen,
 				   true, false,
-				   aपंचांगel_sha_authenc_init_करोne);
-पूर्ण
+				   atmel_sha_authenc_init_done);
+}
 
-अटल पूर्णांक aपंचांगel_sha_authenc_init_करोne(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
-	काष्ठा ahash_request *req = dd->req;
-	काष्ठा aपंचांगel_sha_authenc_reqctx *authctx = ahash_request_ctx(req);
+static int atmel_sha_authenc_init_done(struct atmel_sha_dev *dd)
+{
+	struct ahash_request *req = dd->req;
+	struct atmel_sha_authenc_reqctx *authctx = ahash_request_ctx(req);
 
-	वापस authctx->cb(authctx->aes_dev, 0, dd->is_async);
-पूर्ण
+	return authctx->cb(authctx->aes_dev, 0, dd->is_async);
+}
 
-पूर्णांक aपंचांगel_sha_authenc_final(काष्ठा ahash_request *req,
-			    u32 *digest, अचिन्हित पूर्णांक digestlen,
-			    aपंचांगel_aes_authenc_fn_t cb,
-			    काष्ठा aपंचांगel_aes_dev *aes_dev)
-अणु
-	काष्ठा aपंचांगel_sha_authenc_reqctx *authctx = ahash_request_ctx(req);
-	काष्ठा aपंचांगel_sha_reqctx *ctx = &authctx->base;
-	काष्ठा aपंचांगel_sha_dev *dd = ctx->dd;
+int atmel_sha_authenc_final(struct ahash_request *req,
+			    u32 *digest, unsigned int digestlen,
+			    atmel_aes_authenc_fn_t cb,
+			    struct atmel_aes_dev *aes_dev)
+{
+	struct atmel_sha_authenc_reqctx *authctx = ahash_request_ctx(req);
+	struct atmel_sha_reqctx *ctx = &authctx->base;
+	struct atmel_sha_dev *dd = ctx->dd;
 
-	चयन (ctx->flags & SHA_FLAGS_ALGO_MASK) अणु
-	हाल SHA_FLAGS_SHA1:
+	switch (ctx->flags & SHA_FLAGS_ALGO_MASK) {
+	case SHA_FLAGS_SHA1:
 		authctx->digestlen = SHA1_DIGEST_SIZE;
-		अवरोध;
+		break;
 
-	हाल SHA_FLAGS_SHA224:
+	case SHA_FLAGS_SHA224:
 		authctx->digestlen = SHA224_DIGEST_SIZE;
-		अवरोध;
+		break;
 
-	हाल SHA_FLAGS_SHA256:
+	case SHA_FLAGS_SHA256:
 		authctx->digestlen = SHA256_DIGEST_SIZE;
-		अवरोध;
+		break;
 
-	हाल SHA_FLAGS_SHA384:
+	case SHA_FLAGS_SHA384:
 		authctx->digestlen = SHA384_DIGEST_SIZE;
-		अवरोध;
+		break;
 
-	हाल SHA_FLAGS_SHA512:
+	case SHA_FLAGS_SHA512:
 		authctx->digestlen = SHA512_DIGEST_SIZE;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस aपंचांगel_sha_complete(dd, -EINVAL);
-	पूर्ण
-	अगर (authctx->digestlen > digestlen)
+	default:
+		return atmel_sha_complete(dd, -EINVAL);
+	}
+	if (authctx->digestlen > digestlen)
 		authctx->digestlen = digestlen;
 
 	authctx->cb = cb;
 	authctx->aes_dev = aes_dev;
 	authctx->digest = digest;
-	वापस aपंचांगel_sha_रुको_क्रम_data_पढ़ोy(dd,
-					     aपंचांगel_sha_authenc_final_करोne);
-पूर्ण
-EXPORT_SYMBOL_GPL(aपंचांगel_sha_authenc_final);
+	return atmel_sha_wait_for_data_ready(dd,
+					     atmel_sha_authenc_final_done);
+}
+EXPORT_SYMBOL_GPL(atmel_sha_authenc_final);
 
-अटल पूर्णांक aपंचांगel_sha_authenc_final_करोne(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
-	काष्ठा ahash_request *req = dd->req;
-	काष्ठा aपंचांगel_sha_authenc_reqctx *authctx = ahash_request_ctx(req);
-	माप_प्रकार i, num_words = authctx->digestlen / माप(u32);
+static int atmel_sha_authenc_final_done(struct atmel_sha_dev *dd)
+{
+	struct ahash_request *req = dd->req;
+	struct atmel_sha_authenc_reqctx *authctx = ahash_request_ctx(req);
+	size_t i, num_words = authctx->digestlen / sizeof(u32);
 
-	क्रम (i = 0; i < num_words; ++i)
-		authctx->digest[i] = aपंचांगel_sha_पढ़ो(dd, SHA_REG_DIGEST(i));
+	for (i = 0; i < num_words; ++i)
+		authctx->digest[i] = atmel_sha_read(dd, SHA_REG_DIGEST(i));
 
-	वापस aपंचांगel_sha_complete(dd, 0);
-पूर्ण
+	return atmel_sha_complete(dd, 0);
+}
 
-व्योम aपंचांगel_sha_authenc_पात(काष्ठा ahash_request *req)
-अणु
-	काष्ठा aपंचांगel_sha_authenc_reqctx *authctx = ahash_request_ctx(req);
-	काष्ठा aपंचांगel_sha_reqctx *ctx = &authctx->base;
-	काष्ठा aपंचांगel_sha_dev *dd = ctx->dd;
+void atmel_sha_authenc_abort(struct ahash_request *req)
+{
+	struct atmel_sha_authenc_reqctx *authctx = ahash_request_ctx(req);
+	struct atmel_sha_reqctx *ctx = &authctx->base;
+	struct atmel_sha_dev *dd = ctx->dd;
 
-	/* Prevent aपंचांगel_sha_complete() from calling req->base.complete(). */
+	/* Prevent atmel_sha_complete() from calling req->base.complete(). */
 	dd->is_async = false;
-	dd->क्रमce_complete = false;
-	(व्योम)aपंचांगel_sha_complete(dd, 0);
-पूर्ण
-EXPORT_SYMBOL_GPL(aपंचांगel_sha_authenc_पात);
+	dd->force_complete = false;
+	(void)atmel_sha_complete(dd, 0);
+}
+EXPORT_SYMBOL_GPL(atmel_sha_authenc_abort);
 
-#पूर्ण_अगर /* CONFIG_CRYPTO_DEV_ATMEL_AUTHENC */
+#endif /* CONFIG_CRYPTO_DEV_ATMEL_AUTHENC */
 
 
-अटल व्योम aपंचांगel_sha_unरेजिस्टर_algs(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
-	पूर्णांक i;
+static void atmel_sha_unregister_algs(struct atmel_sha_dev *dd)
+{
+	int i;
 
-	अगर (dd->caps.has_hmac)
-		क्रम (i = 0; i < ARRAY_SIZE(sha_hmac_algs); i++)
-			crypto_unरेजिस्टर_ahash(&sha_hmac_algs[i]);
+	if (dd->caps.has_hmac)
+		for (i = 0; i < ARRAY_SIZE(sha_hmac_algs); i++)
+			crypto_unregister_ahash(&sha_hmac_algs[i]);
 
-	क्रम (i = 0; i < ARRAY_SIZE(sha_1_256_algs); i++)
-		crypto_unरेजिस्टर_ahash(&sha_1_256_algs[i]);
+	for (i = 0; i < ARRAY_SIZE(sha_1_256_algs); i++)
+		crypto_unregister_ahash(&sha_1_256_algs[i]);
 
-	अगर (dd->caps.has_sha224)
-		crypto_unरेजिस्टर_ahash(&sha_224_alg);
+	if (dd->caps.has_sha224)
+		crypto_unregister_ahash(&sha_224_alg);
 
-	अगर (dd->caps.has_sha_384_512) अणु
-		क्रम (i = 0; i < ARRAY_SIZE(sha_384_512_algs); i++)
-			crypto_unरेजिस्टर_ahash(&sha_384_512_algs[i]);
-	पूर्ण
-पूर्ण
+	if (dd->caps.has_sha_384_512) {
+		for (i = 0; i < ARRAY_SIZE(sha_384_512_algs); i++)
+			crypto_unregister_ahash(&sha_384_512_algs[i]);
+	}
+}
 
-अटल पूर्णांक aपंचांगel_sha_रेजिस्टर_algs(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
-	पूर्णांक err, i, j;
+static int atmel_sha_register_algs(struct atmel_sha_dev *dd)
+{
+	int err, i, j;
 
-	क्रम (i = 0; i < ARRAY_SIZE(sha_1_256_algs); i++) अणु
-		aपंचांगel_sha_alg_init(&sha_1_256_algs[i]);
+	for (i = 0; i < ARRAY_SIZE(sha_1_256_algs); i++) {
+		atmel_sha_alg_init(&sha_1_256_algs[i]);
 
-		err = crypto_रेजिस्टर_ahash(&sha_1_256_algs[i]);
-		अगर (err)
-			जाओ err_sha_1_256_algs;
-	पूर्ण
+		err = crypto_register_ahash(&sha_1_256_algs[i]);
+		if (err)
+			goto err_sha_1_256_algs;
+	}
 
-	अगर (dd->caps.has_sha224) अणु
-		aपंचांगel_sha_alg_init(&sha_224_alg);
+	if (dd->caps.has_sha224) {
+		atmel_sha_alg_init(&sha_224_alg);
 
-		err = crypto_रेजिस्टर_ahash(&sha_224_alg);
-		अगर (err)
-			जाओ err_sha_224_algs;
-	पूर्ण
+		err = crypto_register_ahash(&sha_224_alg);
+		if (err)
+			goto err_sha_224_algs;
+	}
 
-	अगर (dd->caps.has_sha_384_512) अणु
-		क्रम (i = 0; i < ARRAY_SIZE(sha_384_512_algs); i++) अणु
-			aपंचांगel_sha_alg_init(&sha_384_512_algs[i]);
+	if (dd->caps.has_sha_384_512) {
+		for (i = 0; i < ARRAY_SIZE(sha_384_512_algs); i++) {
+			atmel_sha_alg_init(&sha_384_512_algs[i]);
 
-			err = crypto_रेजिस्टर_ahash(&sha_384_512_algs[i]);
-			अगर (err)
-				जाओ err_sha_384_512_algs;
-		पूर्ण
-	पूर्ण
+			err = crypto_register_ahash(&sha_384_512_algs[i]);
+			if (err)
+				goto err_sha_384_512_algs;
+		}
+	}
 
-	अगर (dd->caps.has_hmac) अणु
-		क्रम (i = 0; i < ARRAY_SIZE(sha_hmac_algs); i++) अणु
-			aपंचांगel_sha_hmac_alg_init(&sha_hmac_algs[i]);
+	if (dd->caps.has_hmac) {
+		for (i = 0; i < ARRAY_SIZE(sha_hmac_algs); i++) {
+			atmel_sha_hmac_alg_init(&sha_hmac_algs[i]);
 
-			err = crypto_रेजिस्टर_ahash(&sha_hmac_algs[i]);
-			अगर (err)
-				जाओ err_sha_hmac_algs;
-		पूर्ण
-	पूर्ण
+			err = crypto_register_ahash(&sha_hmac_algs[i]);
+			if (err)
+				goto err_sha_hmac_algs;
+		}
+	}
 
-	वापस 0;
+	return 0;
 
 	/*i = ARRAY_SIZE(sha_hmac_algs);*/
 err_sha_hmac_algs:
-	क्रम (j = 0; j < i; j++)
-		crypto_unरेजिस्टर_ahash(&sha_hmac_algs[j]);
+	for (j = 0; j < i; j++)
+		crypto_unregister_ahash(&sha_hmac_algs[j]);
 	i = ARRAY_SIZE(sha_384_512_algs);
 err_sha_384_512_algs:
-	क्रम (j = 0; j < i; j++)
-		crypto_unरेजिस्टर_ahash(&sha_384_512_algs[j]);
-	crypto_unरेजिस्टर_ahash(&sha_224_alg);
+	for (j = 0; j < i; j++)
+		crypto_unregister_ahash(&sha_384_512_algs[j]);
+	crypto_unregister_ahash(&sha_224_alg);
 err_sha_224_algs:
 	i = ARRAY_SIZE(sha_1_256_algs);
 err_sha_1_256_algs:
-	क्रम (j = 0; j < i; j++)
-		crypto_unरेजिस्टर_ahash(&sha_1_256_algs[j]);
+	for (j = 0; j < i; j++)
+		crypto_unregister_ahash(&sha_1_256_algs[j]);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक aपंचांगel_sha_dma_init(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
+static int atmel_sha_dma_init(struct atmel_sha_dev *dd)
+{
 	dd->dma_lch_in.chan = dma_request_chan(dd->dev, "tx");
-	अगर (IS_ERR(dd->dma_lch_in.chan)) अणु
+	if (IS_ERR(dd->dma_lch_in.chan)) {
 		dev_err(dd->dev, "DMA channel is not available\n");
-		वापस PTR_ERR(dd->dma_lch_in.chan);
-	पूर्ण
+		return PTR_ERR(dd->dma_lch_in.chan);
+	}
 
 	dd->dma_lch_in.dma_conf.dst_addr = dd->phys_base +
 		SHA_REG_DIN(0);
@@ -2489,16 +2488,16 @@ err_sha_1_256_algs:
 		DMA_SLAVE_BUSWIDTH_4_BYTES;
 	dd->dma_lch_in.dma_conf.device_fc = false;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम aपंचांगel_sha_dma_cleanup(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
+static void atmel_sha_dma_cleanup(struct atmel_sha_dev *dd)
+{
 	dma_release_channel(dd->dma_lch_in.chan);
-पूर्ण
+}
 
-अटल व्योम aपंचांगel_sha_get_cap(काष्ठा aपंचांगel_sha_dev *dd)
-अणु
+static void atmel_sha_get_cap(struct atmel_sha_dev *dd)
+{
 
 	dd->caps.has_dma = 0;
 	dd->caps.has_dualbuff = 0;
@@ -2508,197 +2507,197 @@ err_sha_1_256_algs:
 	dd->caps.has_hmac = 0;
 
 	/* keep only major version number */
-	चयन (dd->hw_version & 0xff0) अणु
-	हाल 0x510:
+	switch (dd->hw_version & 0xff0) {
+	case 0x510:
 		dd->caps.has_dma = 1;
 		dd->caps.has_dualbuff = 1;
 		dd->caps.has_sha224 = 1;
 		dd->caps.has_sha_384_512 = 1;
 		dd->caps.has_uihv = 1;
 		dd->caps.has_hmac = 1;
-		अवरोध;
-	हाल 0x420:
+		break;
+	case 0x420:
 		dd->caps.has_dma = 1;
 		dd->caps.has_dualbuff = 1;
 		dd->caps.has_sha224 = 1;
 		dd->caps.has_sha_384_512 = 1;
 		dd->caps.has_uihv = 1;
-		अवरोध;
-	हाल 0x410:
+		break;
+	case 0x410:
 		dd->caps.has_dma = 1;
 		dd->caps.has_dualbuff = 1;
 		dd->caps.has_sha224 = 1;
 		dd->caps.has_sha_384_512 = 1;
-		अवरोध;
-	हाल 0x400:
+		break;
+	case 0x400:
 		dd->caps.has_dma = 1;
 		dd->caps.has_dualbuff = 1;
 		dd->caps.has_sha224 = 1;
-		अवरोध;
-	हाल 0x320:
-		अवरोध;
-	शेष:
+		break;
+	case 0x320:
+		break;
+	default:
 		dev_warn(dd->dev,
 				"Unmanaged sha version, set minimum capabilities\n");
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-#अगर defined(CONFIG_OF)
-अटल स्थिर काष्ठा of_device_id aपंचांगel_sha_dt_ids[] = अणु
-	अणु .compatible = "atmel,at91sam9g46-sha" पूर्ण,
-	अणु /* sentinel */ पूर्ण
-पूर्ण;
+#if defined(CONFIG_OF)
+static const struct of_device_id atmel_sha_dt_ids[] = {
+	{ .compatible = "atmel,at91sam9g46-sha" },
+	{ /* sentinel */ }
+};
 
-MODULE_DEVICE_TABLE(of, aपंचांगel_sha_dt_ids);
-#पूर्ण_अगर
+MODULE_DEVICE_TABLE(of, atmel_sha_dt_ids);
+#endif
 
-अटल पूर्णांक aपंचांगel_sha_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा aपंचांगel_sha_dev *sha_dd;
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा resource *sha_res;
-	पूर्णांक err;
+static int atmel_sha_probe(struct platform_device *pdev)
+{
+	struct atmel_sha_dev *sha_dd;
+	struct device *dev = &pdev->dev;
+	struct resource *sha_res;
+	int err;
 
-	sha_dd = devm_kzalloc(&pdev->dev, माप(*sha_dd), GFP_KERNEL);
-	अगर (!sha_dd)
-		वापस -ENOMEM;
+	sha_dd = devm_kzalloc(&pdev->dev, sizeof(*sha_dd), GFP_KERNEL);
+	if (!sha_dd)
+		return -ENOMEM;
 
 	sha_dd->dev = dev;
 
-	platक्रमm_set_drvdata(pdev, sha_dd);
+	platform_set_drvdata(pdev, sha_dd);
 
 	INIT_LIST_HEAD(&sha_dd->list);
 	spin_lock_init(&sha_dd->lock);
 
-	tasklet_init(&sha_dd->करोne_task, aपंचांगel_sha_करोne_task,
-					(अचिन्हित दीर्घ)sha_dd);
-	tasklet_init(&sha_dd->queue_task, aपंचांगel_sha_queue_task,
-					(अचिन्हित दीर्घ)sha_dd);
+	tasklet_init(&sha_dd->done_task, atmel_sha_done_task,
+					(unsigned long)sha_dd);
+	tasklet_init(&sha_dd->queue_task, atmel_sha_queue_task,
+					(unsigned long)sha_dd);
 
 	crypto_init_queue(&sha_dd->queue, ATMEL_SHA_QUEUE_LENGTH);
 
 	/* Get the base address */
-	sha_res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	अगर (!sha_res) अणु
+	sha_res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	if (!sha_res) {
 		dev_err(dev, "no MEM resource info\n");
 		err = -ENODEV;
-		जाओ err_tasklet_समाप्त;
-	पूर्ण
+		goto err_tasklet_kill;
+	}
 	sha_dd->phys_base = sha_res->start;
 
 	/* Get the IRQ */
-	sha_dd->irq = platक्रमm_get_irq(pdev,  0);
-	अगर (sha_dd->irq < 0) अणु
+	sha_dd->irq = platform_get_irq(pdev,  0);
+	if (sha_dd->irq < 0) {
 		err = sha_dd->irq;
-		जाओ err_tasklet_समाप्त;
-	पूर्ण
+		goto err_tasklet_kill;
+	}
 
-	err = devm_request_irq(&pdev->dev, sha_dd->irq, aपंचांगel_sha_irq,
+	err = devm_request_irq(&pdev->dev, sha_dd->irq, atmel_sha_irq,
 			       IRQF_SHARED, "atmel-sha", sha_dd);
-	अगर (err) अणु
+	if (err) {
 		dev_err(dev, "unable to request sha irq.\n");
-		जाओ err_tasklet_समाप्त;
-	पूर्ण
+		goto err_tasklet_kill;
+	}
 
-	/* Initializing the घड़ी */
+	/* Initializing the clock */
 	sha_dd->iclk = devm_clk_get(&pdev->dev, "sha_clk");
-	अगर (IS_ERR(sha_dd->iclk)) अणु
+	if (IS_ERR(sha_dd->iclk)) {
 		dev_err(dev, "clock initialization failed.\n");
 		err = PTR_ERR(sha_dd->iclk);
-		जाओ err_tasklet_समाप्त;
-	पूर्ण
+		goto err_tasklet_kill;
+	}
 
 	sha_dd->io_base = devm_ioremap_resource(&pdev->dev, sha_res);
-	अगर (IS_ERR(sha_dd->io_base)) अणु
+	if (IS_ERR(sha_dd->io_base)) {
 		dev_err(dev, "can't ioremap\n");
 		err = PTR_ERR(sha_dd->io_base);
-		जाओ err_tasklet_समाप्त;
-	पूर्ण
+		goto err_tasklet_kill;
+	}
 
 	err = clk_prepare(sha_dd->iclk);
-	अगर (err)
-		जाओ err_tasklet_समाप्त;
+	if (err)
+		goto err_tasklet_kill;
 
-	err = aपंचांगel_sha_hw_version_init(sha_dd);
-	अगर (err)
-		जाओ err_iclk_unprepare;
+	err = atmel_sha_hw_version_init(sha_dd);
+	if (err)
+		goto err_iclk_unprepare;
 
-	aपंचांगel_sha_get_cap(sha_dd);
+	atmel_sha_get_cap(sha_dd);
 
-	अगर (sha_dd->caps.has_dma) अणु
-		err = aपंचांगel_sha_dma_init(sha_dd);
-		अगर (err)
-			जाओ err_iclk_unprepare;
+	if (sha_dd->caps.has_dma) {
+		err = atmel_sha_dma_init(sha_dd);
+		if (err)
+			goto err_iclk_unprepare;
 
 		dev_info(dev, "using %s for DMA transfers\n",
 				dma_chan_name(sha_dd->dma_lch_in.chan));
-	पूर्ण
+	}
 
-	spin_lock(&aपंचांगel_sha.lock);
-	list_add_tail(&sha_dd->list, &aपंचांगel_sha.dev_list);
-	spin_unlock(&aपंचांगel_sha.lock);
+	spin_lock(&atmel_sha.lock);
+	list_add_tail(&sha_dd->list, &atmel_sha.dev_list);
+	spin_unlock(&atmel_sha.lock);
 
-	err = aपंचांगel_sha_रेजिस्टर_algs(sha_dd);
-	अगर (err)
-		जाओ err_algs;
+	err = atmel_sha_register_algs(sha_dd);
+	if (err)
+		goto err_algs;
 
 	dev_info(dev, "Atmel SHA1/SHA256%s%s\n",
 			sha_dd->caps.has_sha224 ? "/SHA224" : "",
 			sha_dd->caps.has_sha_384_512 ? "/SHA384/SHA512" : "");
 
-	वापस 0;
+	return 0;
 
 err_algs:
-	spin_lock(&aपंचांगel_sha.lock);
+	spin_lock(&atmel_sha.lock);
 	list_del(&sha_dd->list);
-	spin_unlock(&aपंचांगel_sha.lock);
-	अगर (sha_dd->caps.has_dma)
-		aपंचांगel_sha_dma_cleanup(sha_dd);
+	spin_unlock(&atmel_sha.lock);
+	if (sha_dd->caps.has_dma)
+		atmel_sha_dma_cleanup(sha_dd);
 err_iclk_unprepare:
 	clk_unprepare(sha_dd->iclk);
-err_tasklet_समाप्त:
-	tasklet_समाप्त(&sha_dd->queue_task);
-	tasklet_समाप्त(&sha_dd->करोne_task);
+err_tasklet_kill:
+	tasklet_kill(&sha_dd->queue_task);
+	tasklet_kill(&sha_dd->done_task);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक aपंचांगel_sha_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा aपंचांगel_sha_dev *sha_dd;
+static int atmel_sha_remove(struct platform_device *pdev)
+{
+	struct atmel_sha_dev *sha_dd;
 
-	sha_dd = platक्रमm_get_drvdata(pdev);
-	अगर (!sha_dd)
-		वापस -ENODEV;
-	spin_lock(&aपंचांगel_sha.lock);
+	sha_dd = platform_get_drvdata(pdev);
+	if (!sha_dd)
+		return -ENODEV;
+	spin_lock(&atmel_sha.lock);
 	list_del(&sha_dd->list);
-	spin_unlock(&aपंचांगel_sha.lock);
+	spin_unlock(&atmel_sha.lock);
 
-	aपंचांगel_sha_unरेजिस्टर_algs(sha_dd);
+	atmel_sha_unregister_algs(sha_dd);
 
-	tasklet_समाप्त(&sha_dd->queue_task);
-	tasklet_समाप्त(&sha_dd->करोne_task);
+	tasklet_kill(&sha_dd->queue_task);
+	tasklet_kill(&sha_dd->done_task);
 
-	अगर (sha_dd->caps.has_dma)
-		aपंचांगel_sha_dma_cleanup(sha_dd);
+	if (sha_dd->caps.has_dma)
+		atmel_sha_dma_cleanup(sha_dd);
 
 	clk_unprepare(sha_dd->iclk);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver aपंचांगel_sha_driver = अणु
-	.probe		= aपंचांगel_sha_probe,
-	.हटाओ		= aपंचांगel_sha_हटाओ,
-	.driver		= अणु
+static struct platform_driver atmel_sha_driver = {
+	.probe		= atmel_sha_probe,
+	.remove		= atmel_sha_remove,
+	.driver		= {
 		.name	= "atmel_sha",
-		.of_match_table	= of_match_ptr(aपंचांगel_sha_dt_ids),
-	पूर्ण,
-पूर्ण;
+		.of_match_table	= of_match_ptr(atmel_sha_dt_ids),
+	},
+};
 
-module_platक्रमm_driver(aपंचांगel_sha_driver);
+module_platform_driver(atmel_sha_driver);
 
 MODULE_DESCRIPTION("Atmel SHA (1/256/224/384/512) hw acceleration support.");
 MODULE_LICENSE("GPL v2");
-MODULE_AUTHOR("Nicolas Royer - Eukrथऊa Electromatique");
+MODULE_AUTHOR("Nicolas Royer - Eukréa Electromatique");

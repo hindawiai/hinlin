@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2010 Intel Corporation
+ * Copyright © 2010 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,117 +21,117 @@
  * DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *	Li Peng <peng.li@पूर्णांकel.com>
+ *	Li Peng <peng.li@intel.com>
  */
 
-#समावेश <linux/delay.h>
+#include <linux/delay.h>
 
-#समावेश <drm/drm.h>
-#समावेश <drm/drm_simple_kms_helper.h>
+#include <drm/drm.h>
+#include <drm/drm_simple_kms_helper.h>
 
-#समावेश "psb_drv.h"
-#समावेश "psb_intel_drv.h"
-#समावेश "psb_intel_reg.h"
+#include "psb_drv.h"
+#include "psb_intel_drv.h"
+#include "psb_intel_reg.h"
 
-#घोषणा HDMI_READ(reg)		पढ़ोl(hdmi_dev->regs + (reg))
-#घोषणा HDMI_WRITE(reg, val)	ग_लिखोl(val, hdmi_dev->regs + (reg))
+#define HDMI_READ(reg)		readl(hdmi_dev->regs + (reg))
+#define HDMI_WRITE(reg, val)	writel(val, hdmi_dev->regs + (reg))
 
-#घोषणा HDMI_HCR	0x1000
-#घोषणा HCR_ENABLE_HDCP		(1 << 5)
-#घोषणा HCR_ENABLE_AUDIO	(1 << 2)
-#घोषणा HCR_ENABLE_PIXEL	(1 << 1)
-#घोषणा HCR_ENABLE_TMDS		(1 << 0)
+#define HDMI_HCR	0x1000
+#define HCR_ENABLE_HDCP		(1 << 5)
+#define HCR_ENABLE_AUDIO	(1 << 2)
+#define HCR_ENABLE_PIXEL	(1 << 1)
+#define HCR_ENABLE_TMDS		(1 << 0)
 
-#घोषणा HDMI_HICR	0x1004
-#घोषणा HDMI_HSR	0x1008
-#घोषणा HDMI_HISR	0x100C
-#घोषणा HDMI_DETECT_HDP		(1 << 0)
+#define HDMI_HICR	0x1004
+#define HDMI_HSR	0x1008
+#define HDMI_HISR	0x100C
+#define HDMI_DETECT_HDP		(1 << 0)
 
-#घोषणा HDMI_VIDEO_REG	0x3000
-#घोषणा HDMI_UNIT_EN		(1 << 7)
-#घोषणा HDMI_MODE_OUTPUT	(1 << 0)
-#घोषणा HDMI_HBLANK_A	0x3100
+#define HDMI_VIDEO_REG	0x3000
+#define HDMI_UNIT_EN		(1 << 7)
+#define HDMI_MODE_OUTPUT	(1 << 0)
+#define HDMI_HBLANK_A	0x3100
 
-#घोषणा HDMI_AUDIO_CTRL	0x4000
-#घोषणा HDMI_ENABLE_AUDIO	(1 << 0)
+#define HDMI_AUDIO_CTRL	0x4000
+#define HDMI_ENABLE_AUDIO	(1 << 0)
 
-#घोषणा PCH_HTOTAL_B	0x3100
-#घोषणा PCH_HBLANK_B	0x3104
-#घोषणा PCH_HSYNC_B	0x3108
-#घोषणा PCH_VTOTAL_B	0x310C
-#घोषणा PCH_VBLANK_B	0x3110
-#घोषणा PCH_VSYNC_B	0x3114
-#घोषणा PCH_PIPEBSRC	0x311C
+#define PCH_HTOTAL_B	0x3100
+#define PCH_HBLANK_B	0x3104
+#define PCH_HSYNC_B	0x3108
+#define PCH_VTOTAL_B	0x310C
+#define PCH_VBLANK_B	0x3110
+#define PCH_VSYNC_B	0x3114
+#define PCH_PIPEBSRC	0x311C
 
-#घोषणा PCH_PIPEB_DSL	0x3800
-#घोषणा PCH_PIPEB_SLC	0x3804
-#घोषणा PCH_PIPEBCONF	0x3808
-#घोषणा PCH_PIPEBSTAT	0x3824
+#define PCH_PIPEB_DSL	0x3800
+#define PCH_PIPEB_SLC	0x3804
+#define PCH_PIPEBCONF	0x3808
+#define PCH_PIPEBSTAT	0x3824
 
-#घोषणा CDVO_DFT	0x5000
-#घोषणा CDVO_SLEWRATE	0x5004
-#घोषणा CDVO_STRENGTH	0x5008
-#घोषणा CDVO_RCOMP	0x500C
+#define CDVO_DFT	0x5000
+#define CDVO_SLEWRATE	0x5004
+#define CDVO_STRENGTH	0x5008
+#define CDVO_RCOMP	0x500C
 
-#घोषणा DPLL_CTRL       0x6000
-#घोषणा DPLL_PDIV_SHIFT		16
-#घोषणा DPLL_PDIV_MASK		(0xf << 16)
-#घोषणा DPLL_PWRDN		(1 << 4)
-#घोषणा DPLL_RESET		(1 << 3)
-#घोषणा DPLL_FASTEN		(1 << 2)
-#घोषणा DPLL_ENSTAT		(1 << 1)
-#घोषणा DPLL_DITHEN		(1 << 0)
+#define DPLL_CTRL       0x6000
+#define DPLL_PDIV_SHIFT		16
+#define DPLL_PDIV_MASK		(0xf << 16)
+#define DPLL_PWRDN		(1 << 4)
+#define DPLL_RESET		(1 << 3)
+#define DPLL_FASTEN		(1 << 2)
+#define DPLL_ENSTAT		(1 << 1)
+#define DPLL_DITHEN		(1 << 0)
 
-#घोषणा DPLL_DIV_CTRL   0x6004
-#घोषणा DPLL_CLKF_MASK		0xffffffc0
-#घोषणा DPLL_CLKR_MASK		(0x3f)
+#define DPLL_DIV_CTRL   0x6004
+#define DPLL_CLKF_MASK		0xffffffc0
+#define DPLL_CLKR_MASK		(0x3f)
 
-#घोषणा DPLL_CLK_ENABLE 0x6008
-#घोषणा DPLL_EN_DISP		(1 << 31)
-#घोषणा DPLL_SEL_HDMI		(1 << 8)
-#घोषणा DPLL_EN_HDMI		(1 << 1)
-#घोषणा DPLL_EN_VGA		(1 << 0)
+#define DPLL_CLK_ENABLE 0x6008
+#define DPLL_EN_DISP		(1 << 31)
+#define DPLL_SEL_HDMI		(1 << 8)
+#define DPLL_EN_HDMI		(1 << 1)
+#define DPLL_EN_VGA		(1 << 0)
 
-#घोषणा DPLL_ADJUST     0x600C
-#घोषणा DPLL_STATUS     0x6010
-#घोषणा DPLL_UPDATE     0x6014
-#घोषणा DPLL_DFT        0x6020
+#define DPLL_ADJUST     0x600C
+#define DPLL_STATUS     0x6010
+#define DPLL_UPDATE     0x6014
+#define DPLL_DFT        0x6020
 
-काष्ठा पूर्णांकel_range अणु
-	पूर्णांक	min, max;
-पूर्ण;
+struct intel_range {
+	int	min, max;
+};
 
-काष्ठा oaktrail_hdmi_limit अणु
-	काष्ठा पूर्णांकel_range vco, np, nr, nf;
-पूर्ण;
+struct oaktrail_hdmi_limit {
+	struct intel_range vco, np, nr, nf;
+};
 
-काष्ठा oaktrail_hdmi_घड़ी अणु
-	पूर्णांक np;
-	पूर्णांक nr;
-	पूर्णांक nf;
-	पूर्णांक करोt;
-पूर्ण;
+struct oaktrail_hdmi_clock {
+	int np;
+	int nr;
+	int nf;
+	int dot;
+};
 
-#घोषणा VCO_MIN		320000
-#घोषणा VCO_MAX		1650000
-#घोषणा	NP_MIN		1
-#घोषणा	NP_MAX		15
-#घोषणा	NR_MIN		1
-#घोषणा	NR_MAX		64
-#घोषणा NF_MIN		2
-#घोषणा NF_MAX		4095
+#define VCO_MIN		320000
+#define VCO_MAX		1650000
+#define	NP_MIN		1
+#define	NP_MAX		15
+#define	NR_MIN		1
+#define	NR_MAX		64
+#define NF_MIN		2
+#define NF_MAX		4095
 
-अटल स्थिर काष्ठा oaktrail_hdmi_limit oaktrail_hdmi_limit = अणु
-	.vco = अणु .min = VCO_MIN,		.max = VCO_MAX पूर्ण,
-	.np  = अणु .min = NP_MIN,			.max = NP_MAX  पूर्ण,
-	.nr  = अणु .min = NR_MIN,			.max = NR_MAX  पूर्ण,
-	.nf  = अणु .min = NF_MIN,			.max = NF_MAX  पूर्ण,
-पूर्ण;
+static const struct oaktrail_hdmi_limit oaktrail_hdmi_limit = {
+	.vco = { .min = VCO_MIN,		.max = VCO_MAX },
+	.np  = { .min = NP_MIN,			.max = NP_MAX  },
+	.nr  = { .min = NR_MIN,			.max = NR_MAX  },
+	.nf  = { .min = NF_MIN,			.max = NF_MAX  },
+};
 
-अटल व्योम oaktrail_hdmi_audio_enable(काष्ठा drm_device *dev)
-अणु
-	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
-	काष्ठा oaktrail_hdmi_dev *hdmi_dev = dev_priv->hdmi_priv;
+static void oaktrail_hdmi_audio_enable(struct drm_device *dev)
+{
+	struct drm_psb_private *dev_priv = dev->dev_private;
+	struct oaktrail_hdmi_dev *hdmi_dev = dev_priv->hdmi_priv;
 
 	HDMI_WRITE(HDMI_HCR, 0x67);
 	HDMI_READ(HDMI_HCR);
@@ -142,12 +141,12 @@
 
 	HDMI_WRITE(HDMI_AUDIO_CTRL, 0x1);
 	HDMI_READ(HDMI_AUDIO_CTRL);
-पूर्ण
+}
 
-अटल व्योम oaktrail_hdmi_audio_disable(काष्ठा drm_device *dev)
-अणु
-	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
-	काष्ठा oaktrail_hdmi_dev *hdmi_dev = dev_priv->hdmi_priv;
+static void oaktrail_hdmi_audio_disable(struct drm_device *dev)
+{
+	struct drm_psb_private *dev_priv = dev->dev_private;
+	struct oaktrail_hdmi_dev *hdmi_dev = dev_priv->hdmi_priv;
 
 	HDMI_WRITE(0x51a8, 0x0);
 	HDMI_READ(0x51a8);
@@ -157,40 +156,40 @@
 
 	HDMI_WRITE(HDMI_HCR, 0x47);
 	HDMI_READ(HDMI_HCR);
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक htotal_calculate(काष्ठा drm_display_mode *mode)
-अणु
+static unsigned int htotal_calculate(struct drm_display_mode *mode)
+{
 	u32 new_crtc_htotal;
 
 	/*
 	 * 1024 x 768  new_crtc_htotal = 0x1024;
 	 * 1280 x 1024 new_crtc_htotal = 0x0c34;
 	 */
-	new_crtc_htotal = (mode->crtc_htotal - 1) * 200 * 1000 / mode->घड़ी;
+	new_crtc_htotal = (mode->crtc_htotal - 1) * 200 * 1000 / mode->clock;
 
 	DRM_DEBUG_KMS("new crtc htotal 0x%4x\n", new_crtc_htotal);
-	वापस (mode->crtc_hdisplay - 1) | (new_crtc_htotal << 16);
-पूर्ण
+	return (mode->crtc_hdisplay - 1) | (new_crtc_htotal << 16);
+}
 
-अटल व्योम oaktrail_hdmi_find_dpll(काष्ठा drm_crtc *crtc, पूर्णांक target,
-				पूर्णांक refclk, काष्ठा oaktrail_hdmi_घड़ी *best_घड़ी)
-अणु
-	पूर्णांक np_min, np_max, nr_min, nr_max;
-	पूर्णांक np, nr, nf;
+static void oaktrail_hdmi_find_dpll(struct drm_crtc *crtc, int target,
+				int refclk, struct oaktrail_hdmi_clock *best_clock)
+{
+	int np_min, np_max, nr_min, nr_max;
+	int np, nr, nf;
 
 	np_min = DIV_ROUND_UP(oaktrail_hdmi_limit.vco.min, target * 10);
 	np_max = oaktrail_hdmi_limit.vco.max / (target * 10);
-	अगर (np_min < oaktrail_hdmi_limit.np.min)
+	if (np_min < oaktrail_hdmi_limit.np.min)
 		np_min = oaktrail_hdmi_limit.np.min;
-	अगर (np_max > oaktrail_hdmi_limit.np.max)
+	if (np_max > oaktrail_hdmi_limit.np.max)
 		np_max = oaktrail_hdmi_limit.np.max;
 
 	nr_min = DIV_ROUND_UP((refclk * 1000), (target * 10 * np_max));
 	nr_max = DIV_ROUND_UP((refclk * 1000), (target * 10 * np_min));
-	अगर (nr_min < oaktrail_hdmi_limit.nr.min)
+	if (nr_min < oaktrail_hdmi_limit.nr.min)
 		nr_min = oaktrail_hdmi_limit.nr.min;
-	अगर (nr_max > oaktrail_hdmi_limit.nr.max)
+	if (nr_max > oaktrail_hdmi_limit.nr.max)
 		nr_max = oaktrail_hdmi_limit.nr.max;
 
 	np = DIV_ROUND_UP((refclk * 1000), (target * 10 * nr_max));
@@ -202,100 +201,100 @@
 	 * 1024 x 768  np = 1; nr = 0x26; nf = 0x0fd8000;
 	 * 1280 x 1024 np = 1; nr = 0x17; nf = 0x1034000;
 	 */
-	best_घड़ी->np = np;
-	best_घड़ी->nr = nr - 1;
-	best_घड़ी->nf = (nf << 14);
-पूर्ण
+	best_clock->np = np;
+	best_clock->nr = nr - 1;
+	best_clock->nf = (nf << 14);
+}
 
-अटल व्योम scu_busy_loop(व्योम __iomem *scu_base)
-अणु
+static void scu_busy_loop(void __iomem *scu_base)
+{
 	u32 status = 0;
 	u32 loop_count = 0;
 
-	status = पढ़ोl(scu_base + 0x04);
-	जबतक (status & 1) अणु
-		udelay(1); /* scu processing समय is in few u secods */
-		status = पढ़ोl(scu_base + 0x04);
+	status = readl(scu_base + 0x04);
+	while (status & 1) {
+		udelay(1); /* scu processing time is in few u secods */
+		status = readl(scu_base + 0x04);
 		loop_count++;
-		/* अवरोध अगर scu करोesn't reset busy bit after huge retry */
-		अगर (loop_count > 1000) अणु
+		/* break if scu doesn't reset busy bit after huge retry */
+		if (loop_count > 1000) {
 			DRM_DEBUG_KMS("SCU IPC timed out");
-			वापस;
-		पूर्ण
-	पूर्ण
-पूर्ण
+			return;
+		}
+	}
+}
 
 /*
- *	You करोn't want to know, you really really don't want to know....
+ *	You don't want to know, you really really don't want to know....
  *
- *	This is magic. However it's safe magic because of the way the platक्रमm
+ *	This is magic. However it's safe magic because of the way the platform
  *	works and it is necessary magic.
  */
-अटल व्योम oaktrail_hdmi_reset(काष्ठा drm_device *dev)
-अणु
-	व्योम __iomem *base;
-	अचिन्हित दीर्घ scu_ipc_mmio = 0xff11c000UL;
-	पूर्णांक scu_len = 1024;
+static void oaktrail_hdmi_reset(struct drm_device *dev)
+{
+	void __iomem *base;
+	unsigned long scu_ipc_mmio = 0xff11c000UL;
+	int scu_len = 1024;
 
-	base = ioremap((resource_माप_प्रकार)scu_ipc_mmio, scu_len);
-	अगर (base == शून्य) अणु
+	base = ioremap((resource_size_t)scu_ipc_mmio, scu_len);
+	if (base == NULL) {
 		DRM_ERROR("failed to map scu mmio\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	/* scu ipc: निश्चित hdmi controller reset */
-	ग_लिखोl(0xff11d118, base + 0x0c);
-	ग_लिखोl(0x7fffffdf, base + 0x80);
-	ग_लिखोl(0x42005, base + 0x0);
+	/* scu ipc: assert hdmi controller reset */
+	writel(0xff11d118, base + 0x0c);
+	writel(0x7fffffdf, base + 0x80);
+	writel(0x42005, base + 0x0);
 	scu_busy_loop(base);
 
-	/* scu ipc: de-निश्चित hdmi controller reset */
-	ग_लिखोl(0xff11d118, base + 0x0c);
-	ग_लिखोl(0x7fffffff, base + 0x80);
-	ग_लिखोl(0x42005, base + 0x0);
+	/* scu ipc: de-assert hdmi controller reset */
+	writel(0xff11d118, base + 0x0c);
+	writel(0x7fffffff, base + 0x80);
+	writel(0x42005, base + 0x0);
 	scu_busy_loop(base);
 
 	iounmap(base);
-पूर्ण
+}
 
-पूर्णांक oaktrail_crtc_hdmi_mode_set(काष्ठा drm_crtc *crtc,
-			    काष्ठा drm_display_mode *mode,
-			    काष्ठा drm_display_mode *adjusted_mode,
-			    पूर्णांक x, पूर्णांक y,
-			    काष्ठा drm_framebuffer *old_fb)
-अणु
-	काष्ठा drm_device *dev = crtc->dev;
-	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
-	काष्ठा oaktrail_hdmi_dev *hdmi_dev = dev_priv->hdmi_priv;
-	पूर्णांक pipe = 1;
-	पूर्णांक htot_reg = (pipe == 0) ? HTOTAL_A : HTOTAL_B;
-	पूर्णांक hblank_reg = (pipe == 0) ? HBLANK_A : HBLANK_B;
-	पूर्णांक hsync_reg = (pipe == 0) ? HSYNC_A : HSYNC_B;
-	पूर्णांक vtot_reg = (pipe == 0) ? VTOTAL_A : VTOTAL_B;
-	पूर्णांक vblank_reg = (pipe == 0) ? VBLANK_A : VBLANK_B;
-	पूर्णांक vsync_reg = (pipe == 0) ? VSYNC_A : VSYNC_B;
-	पूर्णांक dspsize_reg = (pipe == 0) ? DSPASIZE : DSPBSIZE;
-	पूर्णांक dsppos_reg = (pipe == 0) ? DSPAPOS : DSPBPOS;
-	पूर्णांक pipesrc_reg = (pipe == 0) ? PIPEASRC : PIPEBSRC;
-	पूर्णांक pipeconf_reg = (pipe == 0) ? PIPEACONF : PIPEBCONF;
-	पूर्णांक refclk;
-	काष्ठा oaktrail_hdmi_घड़ी घड़ी;
+int oaktrail_crtc_hdmi_mode_set(struct drm_crtc *crtc,
+			    struct drm_display_mode *mode,
+			    struct drm_display_mode *adjusted_mode,
+			    int x, int y,
+			    struct drm_framebuffer *old_fb)
+{
+	struct drm_device *dev = crtc->dev;
+	struct drm_psb_private *dev_priv = dev->dev_private;
+	struct oaktrail_hdmi_dev *hdmi_dev = dev_priv->hdmi_priv;
+	int pipe = 1;
+	int htot_reg = (pipe == 0) ? HTOTAL_A : HTOTAL_B;
+	int hblank_reg = (pipe == 0) ? HBLANK_A : HBLANK_B;
+	int hsync_reg = (pipe == 0) ? HSYNC_A : HSYNC_B;
+	int vtot_reg = (pipe == 0) ? VTOTAL_A : VTOTAL_B;
+	int vblank_reg = (pipe == 0) ? VBLANK_A : VBLANK_B;
+	int vsync_reg = (pipe == 0) ? VSYNC_A : VSYNC_B;
+	int dspsize_reg = (pipe == 0) ? DSPASIZE : DSPBSIZE;
+	int dsppos_reg = (pipe == 0) ? DSPAPOS : DSPBPOS;
+	int pipesrc_reg = (pipe == 0) ? PIPEASRC : PIPEBSRC;
+	int pipeconf_reg = (pipe == 0) ? PIPEACONF : PIPEBCONF;
+	int refclk;
+	struct oaktrail_hdmi_clock clock;
 	u32 dspcntr, pipeconf, dpll, temp;
-	पूर्णांक dspcntr_reg = DSPBCNTR;
+	int dspcntr_reg = DSPBCNTR;
 
-	अगर (!gma_घातer_begin(dev, true))
-		वापस 0;
+	if (!gma_power_begin(dev, true))
+		return 0;
 
 	/* Disable the VGA plane that we never use */
 	REG_WRITE(VGACNTRL, VGA_DISP_DISABLE);
 
-	/* Disable dpll अगर necessary */
+	/* Disable dpll if necessary */
 	dpll = REG_READ(DPLL_CTRL);
-	अगर ((dpll & DPLL_PWRDN) == 0) अणु
+	if ((dpll & DPLL_PWRDN) == 0) {
 		REG_WRITE(DPLL_CTRL, dpll | (DPLL_PWRDN | DPLL_RESET));
 		REG_WRITE(DPLL_DIV_CTRL, 0x00000000);
 		REG_WRITE(DPLL_STATUS, 0x1);
-	पूर्ण
+	}
 	udelay(150);
 
 	/* Reset controller */
@@ -303,16 +302,16 @@
 
 	/* program and enable dpll */
 	refclk = 25000;
-	oaktrail_hdmi_find_dpll(crtc, adjusted_mode->घड़ी, refclk, &घड़ी);
+	oaktrail_hdmi_find_dpll(crtc, adjusted_mode->clock, refclk, &clock);
 
 	/* Set the DPLL */
 	dpll = REG_READ(DPLL_CTRL);
 	dpll &= ~DPLL_PDIV_MASK;
 	dpll &= ~(DPLL_PWRDN | DPLL_RESET);
 	REG_WRITE(DPLL_CTRL, 0x00000008);
-	REG_WRITE(DPLL_DIV_CTRL, ((घड़ी.nf << 6) | घड़ी.nr));
-	REG_WRITE(DPLL_ADJUST, ((घड़ी.nf >> 14) - 1));
-	REG_WRITE(DPLL_CTRL, (dpll | (घड़ी.np << DPLL_PDIV_SHIFT) | DPLL_ENSTAT | DPLL_DITHEN));
+	REG_WRITE(DPLL_DIV_CTRL, ((clock.nf << 6) | clock.nr));
+	REG_WRITE(DPLL_ADJUST, ((clock.nf >> 14) - 1));
+	REG_WRITE(DPLL_CTRL, (dpll | (clock.np << DPLL_PDIV_SHIFT) | DPLL_ENSTAT | DPLL_DITHEN));
 	REG_WRITE(DPLL_UPDATE, 0x80000000);
 	REG_WRITE(DPLL_CLK_ENABLE, 0x80050102);
 	udelay(150);
@@ -348,12 +347,12 @@
 	REG_WRITE(dsppos_reg, 0);
 
 	/* Flush the plane changes */
-	अणु
-		स्थिर काष्ठा drm_crtc_helper_funcs *crtc_funcs = crtc->helper_निजी;
+	{
+		const struct drm_crtc_helper_funcs *crtc_funcs = crtc->helper_private;
 		crtc_funcs->mode_set_base(crtc, x, y, old_fb);
-	पूर्ण
+	}
 
-	/* Set up the display plane रेजिस्टर */
+	/* Set up the display plane register */
 	dspcntr = REG_READ(dspcntr_reg);
 	dspcntr |= DISPPLANE_GAMMA_ENABLE;
 	dspcntr |= DISPPLANE_SEL_PIPE_B;
@@ -368,106 +367,106 @@
 
 	REG_WRITE(PCH_PIPEBCONF, pipeconf);
 	REG_READ(PCH_PIPEBCONF);
-	gma_रुको_क्रम_vblank(dev);
+	gma_wait_for_vblank(dev);
 
 	REG_WRITE(dspcntr_reg, dspcntr);
-	gma_रुको_क्रम_vblank(dev);
+	gma_wait_for_vblank(dev);
 
-	gma_घातer_end(dev);
+	gma_power_end(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम oaktrail_crtc_hdmi_dpms(काष्ठा drm_crtc *crtc, पूर्णांक mode)
-अणु
-	काष्ठा drm_device *dev = crtc->dev;
+void oaktrail_crtc_hdmi_dpms(struct drm_crtc *crtc, int mode)
+{
+	struct drm_device *dev = crtc->dev;
 	u32 temp;
 
 	DRM_DEBUG_KMS("%s %d\n", __func__, mode);
 
-	चयन (mode) अणु
-	हाल DRM_MODE_DPMS_OFF:
+	switch (mode) {
+	case DRM_MODE_DPMS_OFF:
 		REG_WRITE(VGACNTRL, 0x80000000);
 
 		/* Disable plane */
 		temp = REG_READ(DSPBCNTR);
-		अगर ((temp & DISPLAY_PLANE_ENABLE) != 0) अणु
+		if ((temp & DISPLAY_PLANE_ENABLE) != 0) {
 			REG_WRITE(DSPBCNTR, temp & ~DISPLAY_PLANE_ENABLE);
 			REG_READ(DSPBCNTR);
 			/* Flush the plane changes */
 			REG_WRITE(DSPBSURF, REG_READ(DSPBSURF));
 			REG_READ(DSPBSURF);
-		पूर्ण
+		}
 
 		/* Disable pipe B */
 		temp = REG_READ(PIPEBCONF);
-		अगर ((temp & PIPEACONF_ENABLE) != 0) अणु
+		if ((temp & PIPEACONF_ENABLE) != 0) {
 			REG_WRITE(PIPEBCONF, temp & ~PIPEACONF_ENABLE);
 			REG_READ(PIPEBCONF);
-		पूर्ण
+		}
 
 		/* Disable LNW Pipes, etc */
 		temp = REG_READ(PCH_PIPEBCONF);
-		अगर ((temp & PIPEACONF_ENABLE) != 0) अणु
+		if ((temp & PIPEACONF_ENABLE) != 0) {
 			REG_WRITE(PCH_PIPEBCONF, temp & ~PIPEACONF_ENABLE);
 			REG_READ(PCH_PIPEBCONF);
-		पूर्ण
+		}
 
-		/* रुको क्रम pipe off */
+		/* wait for pipe off */
 		udelay(150);
 
 		/* Disable dpll */
 		temp = REG_READ(DPLL_CTRL);
-		अगर ((temp & DPLL_PWRDN) == 0) अणु
+		if ((temp & DPLL_PWRDN) == 0) {
 			REG_WRITE(DPLL_CTRL, temp | (DPLL_PWRDN | DPLL_RESET));
 			REG_WRITE(DPLL_STATUS, 0x1);
-		पूर्ण
+		}
 
-		/* रुको क्रम dpll off */
+		/* wait for dpll off */
 		udelay(150);
 
-		अवरोध;
-	हाल DRM_MODE_DPMS_ON:
-	हाल DRM_MODE_DPMS_STANDBY:
-	हाल DRM_MODE_DPMS_SUSPEND:
+		break;
+	case DRM_MODE_DPMS_ON:
+	case DRM_MODE_DPMS_STANDBY:
+	case DRM_MODE_DPMS_SUSPEND:
 		/* Enable dpll */
 		temp = REG_READ(DPLL_CTRL);
-		अगर ((temp & DPLL_PWRDN) != 0) अणु
+		if ((temp & DPLL_PWRDN) != 0) {
 			REG_WRITE(DPLL_CTRL, temp & ~(DPLL_PWRDN | DPLL_RESET));
 			temp = REG_READ(DPLL_CLK_ENABLE);
 			REG_WRITE(DPLL_CLK_ENABLE, temp | DPLL_EN_DISP | DPLL_SEL_HDMI | DPLL_EN_HDMI);
 			REG_READ(DPLL_CLK_ENABLE);
-		पूर्ण
-		/* रुको क्रम dpll warm up */
+		}
+		/* wait for dpll warm up */
 		udelay(150);
 
 		/* Enable pipe B */
 		temp = REG_READ(PIPEBCONF);
-		अगर ((temp & PIPEACONF_ENABLE) == 0) अणु
+		if ((temp & PIPEACONF_ENABLE) == 0) {
 			REG_WRITE(PIPEBCONF, temp | PIPEACONF_ENABLE);
 			REG_READ(PIPEBCONF);
-		पूर्ण
+		}
 
 		/* Enable LNW Pipe B */
 		temp = REG_READ(PCH_PIPEBCONF);
-		अगर ((temp & PIPEACONF_ENABLE) == 0) अणु
+		if ((temp & PIPEACONF_ENABLE) == 0) {
 			REG_WRITE(PCH_PIPEBCONF, temp | PIPEACONF_ENABLE);
 			REG_READ(PCH_PIPEBCONF);
-		पूर्ण
+		}
 
-		gma_रुको_क्रम_vblank(dev);
+		gma_wait_for_vblank(dev);
 
 		/* Enable plane */
 		temp = REG_READ(DSPBCNTR);
-		अगर ((temp & DISPLAY_PLANE_ENABLE) == 0) अणु
+		if ((temp & DISPLAY_PLANE_ENABLE) == 0) {
 			REG_WRITE(DSPBCNTR, temp | DISPLAY_PLANE_ENABLE);
 			/* Flush the plane changes */
 			REG_WRITE(DSPBSURF, REG_READ(DSPBSURF));
 			REG_READ(DSPBSURF);
-		पूर्ण
+		}
 
 		gma_crtc_load_lut(crtc);
-	पूर्ण
+	}
 
 	/* DSPARB */
 	REG_WRITE(DSPARB, 0x00003fbf);
@@ -487,65 +486,65 @@
 	/* LNC Chicken Bits - Squawk! */
 	REG_WRITE(0x70400, 0x4000);
 
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल व्योम oaktrail_hdmi_dpms(काष्ठा drm_encoder *encoder, पूर्णांक mode)
-अणु
-	अटल पूर्णांक dpms_mode = -1;
+static void oaktrail_hdmi_dpms(struct drm_encoder *encoder, int mode)
+{
+	static int dpms_mode = -1;
 
-	काष्ठा drm_device *dev = encoder->dev;
-	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
-	काष्ठा oaktrail_hdmi_dev *hdmi_dev = dev_priv->hdmi_priv;
+	struct drm_device *dev = encoder->dev;
+	struct drm_psb_private *dev_priv = dev->dev_private;
+	struct oaktrail_hdmi_dev *hdmi_dev = dev_priv->hdmi_priv;
 	u32 temp;
 
-	अगर (dpms_mode == mode)
-		वापस;
+	if (dpms_mode == mode)
+		return;
 
-	अगर (mode != DRM_MODE_DPMS_ON)
+	if (mode != DRM_MODE_DPMS_ON)
 		temp = 0x0;
-	अन्यथा
+	else
 		temp = 0x99;
 
 	dpms_mode = mode;
 	HDMI_WRITE(HDMI_VIDEO_REG, temp);
-पूर्ण
+}
 
-अटल क्रमागत drm_mode_status oaktrail_hdmi_mode_valid(काष्ठा drm_connector *connector,
-				काष्ठा drm_display_mode *mode)
-अणु
-	अगर (mode->घड़ी > 165000)
-		वापस MODE_CLOCK_HIGH;
-	अगर (mode->घड़ी < 20000)
-		वापस MODE_CLOCK_LOW;
+static enum drm_mode_status oaktrail_hdmi_mode_valid(struct drm_connector *connector,
+				struct drm_display_mode *mode)
+{
+	if (mode->clock > 165000)
+		return MODE_CLOCK_HIGH;
+	if (mode->clock < 20000)
+		return MODE_CLOCK_LOW;
 
-	अगर (mode->flags & DRM_MODE_FLAG_DBLSCAN)
-		वापस MODE_NO_DBLESCAN;
+	if (mode->flags & DRM_MODE_FLAG_DBLSCAN)
+		return MODE_NO_DBLESCAN;
 
-	वापस MODE_OK;
-पूर्ण
+	return MODE_OK;
+}
 
-अटल क्रमागत drm_connector_status
-oaktrail_hdmi_detect(काष्ठा drm_connector *connector, bool क्रमce)
-अणु
-	क्रमागत drm_connector_status status;
-	काष्ठा drm_device *dev = connector->dev;
-	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
-	काष्ठा oaktrail_hdmi_dev *hdmi_dev = dev_priv->hdmi_priv;
+static enum drm_connector_status
+oaktrail_hdmi_detect(struct drm_connector *connector, bool force)
+{
+	enum drm_connector_status status;
+	struct drm_device *dev = connector->dev;
+	struct drm_psb_private *dev_priv = dev->dev_private;
+	struct oaktrail_hdmi_dev *hdmi_dev = dev_priv->hdmi_priv;
 	u32 temp;
 
 	temp = HDMI_READ(HDMI_HSR);
 	DRM_DEBUG_KMS("HDMI_HSR %x\n", temp);
 
-	अगर ((temp & HDMI_DETECT_HDP) != 0)
+	if ((temp & HDMI_DETECT_HDP) != 0)
 		status = connector_status_connected;
-	अन्यथा
+	else
 		status = connector_status_disconnected;
 
-	वापस status;
-पूर्ण
+	return status;
+}
 
-अटल स्थिर अचिन्हित अक्षर raw_edid[] = अणु
+static const unsigned char raw_edid[] = {
 	0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x10, 0xac, 0x2f, 0xa0,
 	0x53, 0x55, 0x33, 0x30, 0x16, 0x13, 0x01, 0x03, 0x0e, 0x3a, 0x24, 0x78,
 	0xea, 0xe9, 0xf5, 0xac, 0x51, 0x30, 0xb4, 0x25, 0x11, 0x50, 0x54, 0xa5,
@@ -557,86 +556,86 @@ oaktrail_hdmi_detect(काष्ठा drm_connector *connector, bool क्र
 	0x45, 0x4c, 0x4c, 0x20, 0x32, 0x37, 0x30, 0x39, 0x57, 0x0a, 0x20, 0x20,
 	0x00, 0x00, 0x00, 0xfd, 0x00, 0x38, 0x4c, 0x1e, 0x53, 0x11, 0x00, 0x0a,
 	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x00, 0x8d
-पूर्ण;
+};
 
-अटल पूर्णांक oaktrail_hdmi_get_modes(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा i2c_adapter *i2c_adap;
-	काष्ठा edid *edid;
-	पूर्णांक ret = 0;
+static int oaktrail_hdmi_get_modes(struct drm_connector *connector)
+{
+	struct i2c_adapter *i2c_adap;
+	struct edid *edid;
+	int ret = 0;
 
 	/*
 	 *	FIXME: We need to figure this lot out. In theory we can
-	 *	पढ़ो the EDID somehow but I've yet to find working reference
+	 *	read the EDID somehow but I've yet to find working reference
 	 *	code.
 	 */
 	i2c_adap = i2c_get_adapter(3);
-	अगर (i2c_adap == शून्य) अणु
+	if (i2c_adap == NULL) {
 		DRM_ERROR("No ddc adapter available!\n");
-		edid = (काष्ठा edid *)raw_edid;
-	पूर्ण अन्यथा अणु
-		edid = (काष्ठा edid *)raw_edid;
+		edid = (struct edid *)raw_edid;
+	} else {
+		edid = (struct edid *)raw_edid;
 		/* FIXME ? edid = drm_get_edid(connector, i2c_adap); */
-	पूर्ण
+	}
 
-	अगर (edid) अणु
+	if (edid) {
 		drm_connector_update_edid_property(connector, edid);
 		ret = drm_add_edid_modes(connector, edid);
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल व्योम oaktrail_hdmi_mode_set(काष्ठा drm_encoder *encoder,
-			       काष्ठा drm_display_mode *mode,
-			       काष्ठा drm_display_mode *adjusted_mode)
-अणु
-	काष्ठा drm_device *dev = encoder->dev;
+static void oaktrail_hdmi_mode_set(struct drm_encoder *encoder,
+			       struct drm_display_mode *mode,
+			       struct drm_display_mode *adjusted_mode)
+{
+	struct drm_device *dev = encoder->dev;
 
 	oaktrail_hdmi_audio_enable(dev);
-	वापस;
-पूर्ण
+	return;
+}
 
-अटल व्योम oaktrail_hdmi_destroy(काष्ठा drm_connector *connector)
-अणु
-	वापस;
-पूर्ण
+static void oaktrail_hdmi_destroy(struct drm_connector *connector)
+{
+	return;
+}
 
-अटल स्थिर काष्ठा drm_encoder_helper_funcs oaktrail_hdmi_helper_funcs = अणु
+static const struct drm_encoder_helper_funcs oaktrail_hdmi_helper_funcs = {
 	.dpms = oaktrail_hdmi_dpms,
 	.prepare = gma_encoder_prepare,
 	.mode_set = oaktrail_hdmi_mode_set,
 	.commit = gma_encoder_commit,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा drm_connector_helper_funcs
-					oaktrail_hdmi_connector_helper_funcs = अणु
+static const struct drm_connector_helper_funcs
+					oaktrail_hdmi_connector_helper_funcs = {
 	.get_modes = oaktrail_hdmi_get_modes,
 	.mode_valid = oaktrail_hdmi_mode_valid,
 	.best_encoder = gma_best_encoder,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा drm_connector_funcs oaktrail_hdmi_connector_funcs = अणु
+static const struct drm_connector_funcs oaktrail_hdmi_connector_funcs = {
 	.dpms = drm_helper_connector_dpms,
 	.detect = oaktrail_hdmi_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.destroy = oaktrail_hdmi_destroy,
-पूर्ण;
+};
 
-व्योम oaktrail_hdmi_init(काष्ठा drm_device *dev,
-					काष्ठा psb_पूर्णांकel_mode_device *mode_dev)
-अणु
-	काष्ठा gma_encoder *gma_encoder;
-	काष्ठा gma_connector *gma_connector;
-	काष्ठा drm_connector *connector;
-	काष्ठा drm_encoder *encoder;
+void oaktrail_hdmi_init(struct drm_device *dev,
+					struct psb_intel_mode_device *mode_dev)
+{
+	struct gma_encoder *gma_encoder;
+	struct gma_connector *gma_connector;
+	struct drm_connector *connector;
+	struct drm_encoder *encoder;
 
-	gma_encoder = kzalloc(माप(काष्ठा gma_encoder), GFP_KERNEL);
-	अगर (!gma_encoder)
-		वापस;
+	gma_encoder = kzalloc(sizeof(struct gma_encoder), GFP_KERNEL);
+	if (!gma_encoder)
+		return;
 
-	gma_connector = kzalloc(माप(काष्ठा gma_connector), GFP_KERNEL);
-	अगर (!gma_connector)
-		जाओ failed_connector;
+	gma_connector = kzalloc(sizeof(struct gma_connector), GFP_KERNEL);
+	if (!gma_connector)
+		goto failed_connector;
 
 	connector = &gma_connector->base;
 	encoder = &gma_encoder->base;
@@ -653,55 +652,55 @@ oaktrail_hdmi_detect(काष्ठा drm_connector *connector, bool क्र
 	drm_connector_helper_add(connector, &oaktrail_hdmi_connector_helper_funcs);
 
 	connector->display_info.subpixel_order = SubPixelHorizontalRGB;
-	connector->पूर्णांकerlace_allowed = false;
-	connector->द्विगुनscan_allowed = false;
-	drm_connector_रेजिस्टर(connector);
+	connector->interlace_allowed = false;
+	connector->doublescan_allowed = false;
+	drm_connector_register(connector);
 	dev_info(dev->dev, "HDMI initialised.\n");
 
-	वापस;
+	return;
 
 failed_connector:
-	kमुक्त(gma_encoder);
-पूर्ण
+	kfree(gma_encoder);
+}
 
-व्योम oaktrail_hdmi_setup(काष्ठा drm_device *dev)
-अणु
-	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
-	काष्ठा pci_dev *pdev;
-	काष्ठा oaktrail_hdmi_dev *hdmi_dev;
-	पूर्णांक ret;
+void oaktrail_hdmi_setup(struct drm_device *dev)
+{
+	struct drm_psb_private *dev_priv = dev->dev_private;
+	struct pci_dev *pdev;
+	struct oaktrail_hdmi_dev *hdmi_dev;
+	int ret;
 
-	pdev = pci_get_device(PCI_VENDOR_ID_INTEL, 0x080d, शून्य);
-	अगर (!pdev)
-		वापस;
+	pdev = pci_get_device(PCI_VENDOR_ID_INTEL, 0x080d, NULL);
+	if (!pdev)
+		return;
 
-	hdmi_dev = kzalloc(माप(काष्ठा oaktrail_hdmi_dev), GFP_KERNEL);
-	अगर (!hdmi_dev) अणु
+	hdmi_dev = kzalloc(sizeof(struct oaktrail_hdmi_dev), GFP_KERNEL);
+	if (!hdmi_dev) {
 		dev_err(dev->dev, "failed to allocate memory\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 
 	ret = pci_enable_device(pdev);
-	अगर (ret) अणु
+	if (ret) {
 		dev_err(dev->dev, "failed to enable hdmi controller\n");
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
 	hdmi_dev->mmio = pci_resource_start(pdev, 0);
 	hdmi_dev->mmio_len = pci_resource_len(pdev, 0);
 	hdmi_dev->regs = ioremap(hdmi_dev->mmio, hdmi_dev->mmio_len);
-	अगर (!hdmi_dev->regs) अणु
+	if (!hdmi_dev->regs) {
 		dev_err(dev->dev, "failed to map hdmi mmio\n");
-		जाओ मुक्त;
-	पूर्ण
+		goto free;
+	}
 
 	hdmi_dev->dev = pdev;
 	pci_set_drvdata(pdev, hdmi_dev);
 
 	/* Initialize i2c controller */
 	ret = oaktrail_hdmi_i2c_init(hdmi_dev->dev);
-	अगर (ret)
+	if (ret)
 		dev_err(dev->dev, "HDMI I2C initialization failed\n");
 
 	dev_priv->hdmi_priv = hdmi_dev;
@@ -709,38 +708,38 @@ failed_connector:
 
 	dev_info(dev->dev, "HDMI hardware present.\n");
 
-	वापस;
+	return;
 
-मुक्त:
-	kमुक्त(hdmi_dev);
+free:
+	kfree(hdmi_dev);
 out:
-	वापस;
-पूर्ण
+	return;
+}
 
-व्योम oaktrail_hdmi_tearकरोwn(काष्ठा drm_device *dev)
-अणु
-	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
-	काष्ठा oaktrail_hdmi_dev *hdmi_dev = dev_priv->hdmi_priv;
-	काष्ठा pci_dev *pdev;
+void oaktrail_hdmi_teardown(struct drm_device *dev)
+{
+	struct drm_psb_private *dev_priv = dev->dev_private;
+	struct oaktrail_hdmi_dev *hdmi_dev = dev_priv->hdmi_priv;
+	struct pci_dev *pdev;
 
-	अगर (hdmi_dev) अणु
+	if (hdmi_dev) {
 		pdev = hdmi_dev->dev;
-		pci_set_drvdata(pdev, शून्य);
-		oaktrail_hdmi_i2c_निकास(pdev);
+		pci_set_drvdata(pdev, NULL);
+		oaktrail_hdmi_i2c_exit(pdev);
 		iounmap(hdmi_dev->regs);
-		kमुक्त(hdmi_dev);
+		kfree(hdmi_dev);
 		pci_dev_put(pdev);
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* save HDMI रेजिस्टर state */
-व्योम oaktrail_hdmi_save(काष्ठा drm_device *dev)
-अणु
-	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
-	काष्ठा oaktrail_hdmi_dev *hdmi_dev = dev_priv->hdmi_priv;
-	काष्ठा psb_state *regs = &dev_priv->regs.psb;
-	काष्ठा psb_pipe *pipeb = &dev_priv->regs.pipe[1];
-	पूर्णांक i;
+/* save HDMI register state */
+void oaktrail_hdmi_save(struct drm_device *dev)
+{
+	struct drm_psb_private *dev_priv = dev->dev_private;
+	struct oaktrail_hdmi_dev *hdmi_dev = dev_priv->hdmi_priv;
+	struct psb_state *regs = &dev_priv->regs.psb;
+	struct psb_pipe *pipeb = &dev_priv->regs.pipe[1];
+	int i;
 
 	/* dpll */
 	hdmi_dev->saveDPLL_CTRL = PSB_RVDC32(DPLL_CTRL);
@@ -774,7 +773,7 @@ out:
 	pipeb->addr = PSB_RVDC32(DSPBBASE);
 	pipeb->surf = PSB_RVDC32(DSPBSURF);
 	pipeb->linoff = PSB_RVDC32(DSPBLINOFF);
-	pipeb->tileoff = PSB_RVDC32(DSPBTILखातापूर्णF);
+	pipeb->tileoff = PSB_RVDC32(DSPBTILEOFF);
 
 	/* cursor B */
 	regs->saveDSPBCURSOR_CTRL = PSB_RVDC32(CURBCNTR);
@@ -782,18 +781,18 @@ out:
 	regs->saveDSPBCURSOR_POS = PSB_RVDC32(CURBPOS);
 
 	/* save palette */
-	क्रम (i = 0; i < 256; i++)
+	for (i = 0; i < 256; i++)
 		pipeb->palette[i] = PSB_RVDC32(PALETTE_B + (i << 2));
-पूर्ण
+}
 
-/* restore HDMI रेजिस्टर state */
-व्योम oaktrail_hdmi_restore(काष्ठा drm_device *dev)
-अणु
-	काष्ठा drm_psb_निजी *dev_priv = dev->dev_निजी;
-	काष्ठा oaktrail_hdmi_dev *hdmi_dev = dev_priv->hdmi_priv;
-	काष्ठा psb_state *regs = &dev_priv->regs.psb;
-	काष्ठा psb_pipe *pipeb = &dev_priv->regs.pipe[1];
-	पूर्णांक i;
+/* restore HDMI register state */
+void oaktrail_hdmi_restore(struct drm_device *dev)
+{
+	struct drm_psb_private *dev_priv = dev->dev_private;
+	struct oaktrail_hdmi_dev *hdmi_dev = dev_priv->hdmi_priv;
+	struct psb_state *regs = &dev_priv->regs.psb;
+	struct psb_pipe *pipeb = &dev_priv->regs.pipe[1];
+	int i;
 
 	/* dpll */
 	PSB_WVDC32(hdmi_dev->saveDPLL_CTRL, DPLL_CTRL);
@@ -826,7 +825,7 @@ out:
 	/* plane */
 	PSB_WVDC32(pipeb->linoff, DSPBLINOFF);
 	PSB_WVDC32(pipeb->stride, DSPBSTRIDE);
-	PSB_WVDC32(pipeb->tileoff, DSPBTILखातापूर्णF);
+	PSB_WVDC32(pipeb->tileoff, DSPBTILEOFF);
 	PSB_WVDC32(pipeb->cntr, DSPBCNTR);
 	PSB_WVDC32(pipeb->surf, DSPBSURF);
 
@@ -836,6 +835,6 @@ out:
 	PSB_WVDC32(regs->saveDSPBCURSOR_BASE, CURBBASE);
 
 	/* restore palette */
-	क्रम (i = 0; i < 256; i++)
+	for (i = 0; i < 256; i++)
 		PSB_WVDC32(pipeb->palette[i], PALETTE_B + (i << 2));
-पूर्ण
+}

@@ -1,4 +1,3 @@
-<शैली गुरु>
 /*
  * arch/arm64/kernel/topology.c
  *
@@ -8,252 +7,252 @@
  * arch/sh/kernel/topology.c
  *
  * This file is subject to the terms and conditions of the GNU General Public
- * License.  See the file "COPYING" in the मुख्य directory of this archive
- * क्रम more details.
+ * License.  See the file "COPYING" in the main directory of this archive
+ * for more details.
  */
 
-#समावेश <linux/acpi.h>
-#समावेश <linux/arch_topology.h>
-#समावेश <linux/cacheinfo.h>
-#समावेश <linux/cpufreq.h>
-#समावेश <linux/init.h>
-#समावेश <linux/percpu.h>
+#include <linux/acpi.h>
+#include <linux/arch_topology.h>
+#include <linux/cacheinfo.h>
+#include <linux/cpufreq.h>
+#include <linux/init.h>
+#include <linux/percpu.h>
 
-#समावेश <यंत्र/cpu.h>
-#समावेश <यंत्र/cputype.h>
-#समावेश <यंत्र/topology.h>
+#include <asm/cpu.h>
+#include <asm/cputype.h>
+#include <asm/topology.h>
 
-व्योम store_cpu_topology(अचिन्हित पूर्णांक cpuid)
-अणु
-	काष्ठा cpu_topology *cpuid_topo = &cpu_topology[cpuid];
+void store_cpu_topology(unsigned int cpuid)
+{
+	struct cpu_topology *cpuid_topo = &cpu_topology[cpuid];
 	u64 mpidr;
 
-	अगर (cpuid_topo->package_id != -1)
-		जाओ topology_populated;
+	if (cpuid_topo->package_id != -1)
+		goto topology_populated;
 
-	mpidr = पढ़ो_cpuid_mpidr();
+	mpidr = read_cpuid_mpidr();
 
-	/* Uniprocessor प्रणालीs can rely on शेष topology values */
-	अगर (mpidr & MPIDR_UP_BITMASK)
-		वापस;
+	/* Uniprocessor systems can rely on default topology values */
+	if (mpidr & MPIDR_UP_BITMASK)
+		return;
 
 	/*
 	 * This would be the place to create cpu topology based on MPIDR.
 	 *
 	 * However, it cannot be trusted to depict the actual topology; some
-	 * pieces of the architecture enक्रमce an artअगरicial cap on Aff0 values
+	 * pieces of the architecture enforce an artificial cap on Aff0 values
 	 * (e.g. GICv3's ICC_SGI1R_EL1 limits it to 15), leading to an
-	 * artअगरicial cycling of Aff1, Aff2 and Aff3 values. IOW, these end up
-	 * having असलolutely no relationship to the actual underlying प्रणाली
+	 * artificial cycling of Aff1, Aff2 and Aff3 values. IOW, these end up
+	 * having absolutely no relationship to the actual underlying system
 	 * topology, and cannot be reasonably used as core / package ID.
 	 *
-	 * If the MT bit is set, Aff0 *could* be used to define a thपढ़ो ID, but
+	 * If the MT bit is set, Aff0 *could* be used to define a thread ID, but
 	 * we still wouldn't be able to obtain a sane core ID. This means we
-	 * need to entirely ignore MPIDR क्रम any topology deduction.
+	 * need to entirely ignore MPIDR for any topology deduction.
 	 */
-	cpuid_topo->thपढ़ो_id  = -1;
+	cpuid_topo->thread_id  = -1;
 	cpuid_topo->core_id    = cpuid;
 	cpuid_topo->package_id = cpu_to_node(cpuid);
 
 	pr_debug("CPU%u: cluster %d core %d thread %d mpidr %#016llx\n",
 		 cpuid, cpuid_topo->package_id, cpuid_topo->core_id,
-		 cpuid_topo->thपढ़ो_id, mpidr);
+		 cpuid_topo->thread_id, mpidr);
 
 topology_populated:
 	update_siblings_masks(cpuid);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_ACPI
-अटल bool __init acpi_cpu_is_thपढ़ोed(पूर्णांक cpu)
-अणु
-	पूर्णांक is_thपढ़ोed = acpi_pptt_cpu_is_thपढ़ो(cpu);
+#ifdef CONFIG_ACPI
+static bool __init acpi_cpu_is_threaded(int cpu)
+{
+	int is_threaded = acpi_pptt_cpu_is_thread(cpu);
 
 	/*
-	 * अगर the PPTT करोesn't have thपढ़ो inक्रमmation, assume a homogeneous
-	 * machine and वापस the current CPU's thपढ़ो state.
+	 * if the PPTT doesn't have thread information, assume a homogeneous
+	 * machine and return the current CPU's thread state.
 	 */
-	अगर (is_thपढ़ोed < 0)
-		is_thपढ़ोed = पढ़ो_cpuid_mpidr() & MPIDR_MT_BITMASK;
+	if (is_threaded < 0)
+		is_threaded = read_cpuid_mpidr() & MPIDR_MT_BITMASK;
 
-	वापस !!is_thपढ़ोed;
-पूर्ण
+	return !!is_threaded;
+}
 
 /*
- * Propagate the topology inक्रमmation of the processor_topology_node tree to the
+ * Propagate the topology information of the processor_topology_node tree to the
  * cpu_topology array.
  */
-पूर्णांक __init parse_acpi_topology(व्योम)
-अणु
-	पूर्णांक cpu, topology_id;
+int __init parse_acpi_topology(void)
+{
+	int cpu, topology_id;
 
-	अगर (acpi_disabled)
-		वापस 0;
+	if (acpi_disabled)
+		return 0;
 
-	क्रम_each_possible_cpu(cpu) अणु
-		पूर्णांक i, cache_id;
+	for_each_possible_cpu(cpu) {
+		int i, cache_id;
 
 		topology_id = find_acpi_cpu_topology(cpu, 0);
-		अगर (topology_id < 0)
-			वापस topology_id;
+		if (topology_id < 0)
+			return topology_id;
 
-		अगर (acpi_cpu_is_thपढ़ोed(cpu)) अणु
-			cpu_topology[cpu].thपढ़ो_id = topology_id;
+		if (acpi_cpu_is_threaded(cpu)) {
+			cpu_topology[cpu].thread_id = topology_id;
 			topology_id = find_acpi_cpu_topology(cpu, 1);
 			cpu_topology[cpu].core_id   = topology_id;
-		पूर्ण अन्यथा अणु
-			cpu_topology[cpu].thपढ़ो_id  = -1;
+		} else {
+			cpu_topology[cpu].thread_id  = -1;
 			cpu_topology[cpu].core_id    = topology_id;
-		पूर्ण
+		}
 		topology_id = find_acpi_cpu_topology_package(cpu);
 		cpu_topology[cpu].package_id = topology_id;
 
 		i = acpi_find_last_cache_level(cpu);
 
-		अगर (i > 0) अणु
+		if (i > 0) {
 			/*
 			 * this is the only part of cpu_topology that has
 			 * a direct relationship with the cache topology
 			 */
 			cache_id = find_acpi_cpu_cache_topology(cpu, i);
-			अगर (cache_id > 0)
+			if (cache_id > 0)
 				cpu_topology[cpu].llc_id = cache_id;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
-#पूर्ण_अगर
+	return 0;
+}
+#endif
 
-#अगर_घोषित CONFIG_ARM64_AMU_EXTN
-#घोषणा पढ़ो_corecnt()	पढ़ो_sysreg_s(SYS_AMEVCNTR0_CORE_EL0)
-#घोषणा पढ़ो_स्थिरcnt()	पढ़ो_sysreg_s(SYS_AMEVCNTR0_CONST_EL0)
-#अन्यथा
-#घोषणा पढ़ो_corecnt()	(0UL)
-#घोषणा पढ़ो_स्थिरcnt()	(0UL)
-#पूर्ण_अगर
+#ifdef CONFIG_ARM64_AMU_EXTN
+#define read_corecnt()	read_sysreg_s(SYS_AMEVCNTR0_CORE_EL0)
+#define read_constcnt()	read_sysreg_s(SYS_AMEVCNTR0_CONST_EL0)
+#else
+#define read_corecnt()	(0UL)
+#define read_constcnt()	(0UL)
+#endif
 
-#अघोषित pr_fmt
-#घोषणा pr_fmt(fmt) "AMU: " fmt
+#undef pr_fmt
+#define pr_fmt(fmt) "AMU: " fmt
 
-अटल DEFINE_PER_CPU_READ_MOSTLY(अचिन्हित दीर्घ, arch_max_freq_scale);
-अटल DEFINE_PER_CPU(u64, arch_स्थिर_cycles_prev);
-अटल DEFINE_PER_CPU(u64, arch_core_cycles_prev);
-अटल cpumask_var_t amu_fie_cpus;
+static DEFINE_PER_CPU_READ_MOSTLY(unsigned long, arch_max_freq_scale);
+static DEFINE_PER_CPU(u64, arch_const_cycles_prev);
+static DEFINE_PER_CPU(u64, arch_core_cycles_prev);
+static cpumask_var_t amu_fie_cpus;
 
-व्योम update_freq_counters_refs(व्योम)
-अणु
-	this_cpu_ग_लिखो(arch_core_cycles_prev, पढ़ो_corecnt());
-	this_cpu_ग_लिखो(arch_स्थिर_cycles_prev, पढ़ो_स्थिरcnt());
-पूर्ण
+void update_freq_counters_refs(void)
+{
+	this_cpu_write(arch_core_cycles_prev, read_corecnt());
+	this_cpu_write(arch_const_cycles_prev, read_constcnt());
+}
 
-अटल अंतरभूत bool freq_counters_valid(पूर्णांक cpu)
-अणु
-	अगर ((cpu >= nr_cpu_ids) || !cpumask_test_cpu(cpu, cpu_present_mask))
-		वापस false;
+static inline bool freq_counters_valid(int cpu)
+{
+	if ((cpu >= nr_cpu_ids) || !cpumask_test_cpu(cpu, cpu_present_mask))
+		return false;
 
-	अगर (!cpu_has_amu_feat(cpu)) अणु
+	if (!cpu_has_amu_feat(cpu)) {
 		pr_debug("CPU%d: counters are not supported.\n", cpu);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (unlikely(!per_cpu(arch_स्थिर_cycles_prev, cpu) ||
-		     !per_cpu(arch_core_cycles_prev, cpu))) अणु
+	if (unlikely(!per_cpu(arch_const_cycles_prev, cpu) ||
+		     !per_cpu(arch_core_cycles_prev, cpu))) {
 		pr_debug("CPU%d: cycle counters are not enabled.\n", cpu);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक freq_inv_set_max_ratio(पूर्णांक cpu, u64 max_rate, u64 ref_rate)
-अणु
+static int freq_inv_set_max_ratio(int cpu, u64 max_rate, u64 ref_rate)
+{
 	u64 ratio;
 
-	अगर (unlikely(!max_rate || !ref_rate)) अणु
+	if (unlikely(!max_rate || !ref_rate)) {
 		pr_debug("CPU%d: invalid maximum or reference frequency.\n",
 			 cpu);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * Pre-compute the fixed ratio between the frequency of the स्थिरant
+	 * Pre-compute the fixed ratio between the frequency of the constant
 	 * reference counter and the maximum frequency of the CPU.
 	 *
 	 *			    ref_rate
-	 * arch_max_freq_scale =   ---------- * SCHED_CAPACITY_SCALEतऑ
+	 * arch_max_freq_scale =   ---------- * SCHED_CAPACITY_SCALE²
 	 *			    max_rate
 	 *
-	 * We use a factor of 2 * SCHED_CAPACITY_SHIFT -> SCHED_CAPACITY_SCALEतऑ
-	 * in order to ensure a good resolution क्रम arch_max_freq_scale क्रम
-	 * very low reference frequencies (करोwn to the KHz range which should
+	 * We use a factor of 2 * SCHED_CAPACITY_SHIFT -> SCHED_CAPACITY_SCALE²
+	 * in order to ensure a good resolution for arch_max_freq_scale for
+	 * very low reference frequencies (down to the KHz range which should
 	 * be unlikely).
 	 */
 	ratio = ref_rate << (2 * SCHED_CAPACITY_SHIFT);
-	ratio = भाग64_u64(ratio, max_rate);
-	अगर (!ratio) अणु
+	ratio = div64_u64(ratio, max_rate);
+	if (!ratio) {
 		WARN_ONCE(1, "Reference frequency too low.\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	per_cpu(arch_max_freq_scale, cpu) = (अचिन्हित दीर्घ)ratio;
+	per_cpu(arch_max_freq_scale, cpu) = (unsigned long)ratio;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम amu_scale_freq_tick(व्योम)
-अणु
-	u64 prev_core_cnt, prev_स्थिर_cnt;
-	u64 core_cnt, स्थिर_cnt, scale;
+static void amu_scale_freq_tick(void)
+{
+	u64 prev_core_cnt, prev_const_cnt;
+	u64 core_cnt, const_cnt, scale;
 
-	prev_स्थिर_cnt = this_cpu_पढ़ो(arch_स्थिर_cycles_prev);
-	prev_core_cnt = this_cpu_पढ़ो(arch_core_cycles_prev);
+	prev_const_cnt = this_cpu_read(arch_const_cycles_prev);
+	prev_core_cnt = this_cpu_read(arch_core_cycles_prev);
 
 	update_freq_counters_refs();
 
-	स्थिर_cnt = this_cpu_पढ़ो(arch_स्थिर_cycles_prev);
-	core_cnt = this_cpu_पढ़ो(arch_core_cycles_prev);
+	const_cnt = this_cpu_read(arch_const_cycles_prev);
+	core_cnt = this_cpu_read(arch_core_cycles_prev);
 
-	अगर (unlikely(core_cnt <= prev_core_cnt ||
-		     स्थिर_cnt <= prev_स्थिर_cnt))
-		वापस;
+	if (unlikely(core_cnt <= prev_core_cnt ||
+		     const_cnt <= prev_const_cnt))
+		return;
 
 	/*
 	 *	    /\core    arch_max_freq_scale
 	 * scale =  ------- * --------------------
-	 *	    /\स्थिर   SCHED_CAPACITY_SCALE
+	 *	    /\const   SCHED_CAPACITY_SCALE
 	 *
-	 * See validate_cpu_freq_invariance_counters() क्रम details on
+	 * See validate_cpu_freq_invariance_counters() for details on
 	 * arch_max_freq_scale and the use of SCHED_CAPACITY_SHIFT.
 	 */
 	scale = core_cnt - prev_core_cnt;
-	scale *= this_cpu_पढ़ो(arch_max_freq_scale);
-	scale = भाग64_u64(scale >> SCHED_CAPACITY_SHIFT,
-			  स्थिर_cnt - prev_स्थिर_cnt);
+	scale *= this_cpu_read(arch_max_freq_scale);
+	scale = div64_u64(scale >> SCHED_CAPACITY_SHIFT,
+			  const_cnt - prev_const_cnt);
 
-	scale = min_t(अचिन्हित दीर्घ, scale, SCHED_CAPACITY_SCALE);
-	this_cpu_ग_लिखो(arch_freq_scale, (अचिन्हित दीर्घ)scale);
-पूर्ण
+	scale = min_t(unsigned long, scale, SCHED_CAPACITY_SCALE);
+	this_cpu_write(arch_freq_scale, (unsigned long)scale);
+}
 
-अटल काष्ठा scale_freq_data amu_sfd = अणु
+static struct scale_freq_data amu_sfd = {
 	.source = SCALE_FREQ_SOURCE_ARCH,
 	.set_freq_scale = amu_scale_freq_tick,
-पूर्ण;
+};
 
-अटल व्योम amu_fie_setup(स्थिर काष्ठा cpumask *cpus)
-अणु
-	पूर्णांक cpu;
+static void amu_fie_setup(const struct cpumask *cpus)
+{
+	int cpu;
 
-	/* We are alपढ़ोy set since the last insmod of cpufreq driver */
-	अगर (unlikely(cpumask_subset(cpus, amu_fie_cpus)))
-		वापस;
+	/* We are already set since the last insmod of cpufreq driver */
+	if (unlikely(cpumask_subset(cpus, amu_fie_cpus)))
+		return;
 
-	क्रम_each_cpu(cpu, cpus) अणु
-		अगर (!freq_counters_valid(cpu) ||
+	for_each_cpu(cpu, cpus) {
+		if (!freq_counters_valid(cpu) ||
 		    freq_inv_set_max_ratio(cpu,
 					   cpufreq_get_hw_max_freq(cpu) * 1000,
-					   arch_समयr_get_rate()))
-			वापस;
-	पूर्ण
+					   arch_timer_get_rate()))
+			return;
+	}
 
 	cpumask_or(amu_fie_cpus, amu_fie_cpus, cpus);
 
@@ -261,113 +260,113 @@ topology_populated:
 
 	pr_debug("CPUs[%*pbl]: counters will be used for FIE.",
 		 cpumask_pr_args(cpus));
-पूर्ण
+}
 
-अटल पूर्णांक init_amu_fie_callback(काष्ठा notअगरier_block *nb, अचिन्हित दीर्घ val,
-				 व्योम *data)
-अणु
-	काष्ठा cpufreq_policy *policy = data;
+static int init_amu_fie_callback(struct notifier_block *nb, unsigned long val,
+				 void *data)
+{
+	struct cpufreq_policy *policy = data;
 
-	अगर (val == CPUFREQ_CREATE_POLICY)
+	if (val == CPUFREQ_CREATE_POLICY)
 		amu_fie_setup(policy->related_cpus);
 
 	/*
-	 * We करोn't need to handle CPUFREQ_REMOVE_POLICY event as the AMU
-	 * counters करोn't have any dependency on cpufreq driver once we have
+	 * We don't need to handle CPUFREQ_REMOVE_POLICY event as the AMU
+	 * counters don't have any dependency on cpufreq driver once we have
 	 * initialized AMU support and enabled invariance. The AMU counters will
-	 * keep on working just fine in the असलence of the cpufreq driver, and
-	 * क्रम the CPUs क्रम which there are no counters available, the last set
-	 * value of arch_freq_scale will reमुख्य valid as that is the frequency
+	 * keep on working just fine in the absence of the cpufreq driver, and
+	 * for the CPUs for which there are no counters available, the last set
+	 * value of arch_freq_scale will remain valid as that is the frequency
 	 * those CPUs are running at.
 	 */
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा notअगरier_block init_amu_fie_notअगरier = अणु
-	.notअगरier_call = init_amu_fie_callback,
-पूर्ण;
+static struct notifier_block init_amu_fie_notifier = {
+	.notifier_call = init_amu_fie_callback,
+};
 
-अटल पूर्णांक __init init_amu_fie(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init init_amu_fie(void)
+{
+	int ret;
 
-	अगर (!zalloc_cpumask_var(&amu_fie_cpus, GFP_KERNEL))
-		वापस -ENOMEM;
+	if (!zalloc_cpumask_var(&amu_fie_cpus, GFP_KERNEL))
+		return -ENOMEM;
 
-	ret = cpufreq_रेजिस्टर_notअगरier(&init_amu_fie_notअगरier,
+	ret = cpufreq_register_notifier(&init_amu_fie_notifier,
 					CPUFREQ_POLICY_NOTIFIER);
-	अगर (ret)
-		मुक्त_cpumask_var(amu_fie_cpus);
+	if (ret)
+		free_cpumask_var(amu_fie_cpus);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 core_initcall(init_amu_fie);
 
-#अगर_घोषित CONFIG_ACPI_CPPC_LIB
-#समावेश <acpi/cppc_acpi.h>
+#ifdef CONFIG_ACPI_CPPC_LIB
+#include <acpi/cppc_acpi.h>
 
-अटल व्योम cpu_पढ़ो_corecnt(व्योम *val)
-अणु
-	*(u64 *)val = पढ़ो_corecnt();
-पूर्ण
+static void cpu_read_corecnt(void *val)
+{
+	*(u64 *)val = read_corecnt();
+}
 
-अटल व्योम cpu_पढ़ो_स्थिरcnt(व्योम *val)
-अणु
-	*(u64 *)val = पढ़ो_स्थिरcnt();
-पूर्ण
+static void cpu_read_constcnt(void *val)
+{
+	*(u64 *)val = read_constcnt();
+}
 
-अटल अंतरभूत
-पूर्णांक counters_पढ़ो_on_cpu(पूर्णांक cpu, smp_call_func_t func, u64 *val)
-अणु
+static inline
+int counters_read_on_cpu(int cpu, smp_call_func_t func, u64 *val)
+{
 	/*
-	 * Abort call on counterless CPU or when पूर्णांकerrupts are
+	 * Abort call on counterless CPU or when interrupts are
 	 * disabled - can lead to deadlock in smp sync call.
 	 */
-	अगर (!cpu_has_amu_feat(cpu))
-		वापस -EOPNOTSUPP;
+	if (!cpu_has_amu_feat(cpu))
+		return -EOPNOTSUPP;
 
-	अगर (WARN_ON_ONCE(irqs_disabled()))
-		वापस -EPERM;
+	if (WARN_ON_ONCE(irqs_disabled()))
+		return -EPERM;
 
 	smp_call_function_single(cpu, func, val, 1);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Refer to drivers/acpi/cppc_acpi.c क्रम the description of the functions
+ * Refer to drivers/acpi/cppc_acpi.c for the description of the functions
  * below.
  */
-bool cpc_ffh_supported(व्योम)
-अणु
-	वापस freq_counters_valid(get_cpu_with_amu_feat());
-पूर्ण
+bool cpc_ffh_supported(void)
+{
+	return freq_counters_valid(get_cpu_with_amu_feat());
+}
 
-पूर्णांक cpc_पढ़ो_ffh(पूर्णांक cpu, काष्ठा cpc_reg *reg, u64 *val)
-अणु
-	पूर्णांक ret = -EOPNOTSUPP;
+int cpc_read_ffh(int cpu, struct cpc_reg *reg, u64 *val)
+{
+	int ret = -EOPNOTSUPP;
 
-	चयन ((u64)reg->address) अणु
-	हाल 0x0:
-		ret = counters_पढ़ो_on_cpu(cpu, cpu_पढ़ो_corecnt, val);
-		अवरोध;
-	हाल 0x1:
-		ret = counters_पढ़ो_on_cpu(cpu, cpu_पढ़ो_स्थिरcnt, val);
-		अवरोध;
-	पूर्ण
+	switch ((u64)reg->address) {
+	case 0x0:
+		ret = counters_read_on_cpu(cpu, cpu_read_corecnt, val);
+		break;
+	case 0x1:
+		ret = counters_read_on_cpu(cpu, cpu_read_constcnt, val);
+		break;
+	}
 
-	अगर (!ret) अणु
+	if (!ret) {
 		*val &= GENMASK_ULL(reg->bit_offset + reg->bit_width - 1,
 				    reg->bit_offset);
 		*val >>= reg->bit_offset;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक cpc_ग_लिखो_ffh(पूर्णांक cpunum, काष्ठा cpc_reg *reg, u64 val)
-अणु
-	वापस -EOPNOTSUPP;
-पूर्ण
-#पूर्ण_अगर /* CONFIG_ACPI_CPPC_LIB */
+int cpc_write_ffh(int cpunum, struct cpc_reg *reg, u64 val)
+{
+	return -EOPNOTSUPP;
+}
+#endif /* CONFIG_ACPI_CPPC_LIB */

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2016 Intel Corporation
+ * Copyright © 2016 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -23,443 +22,443 @@
  *
  */
 
-#अगर_अघोषित __I915_UTILS_H
-#घोषणा __I915_UTILS_H
+#ifndef __I915_UTILS_H
+#define __I915_UTILS_H
 
-#समावेश <linux/list.h>
-#समावेश <linux/overflow.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/types.h>
-#समावेश <linux/workqueue.h>
+#include <linux/list.h>
+#include <linux/overflow.h>
+#include <linux/sched.h>
+#include <linux/types.h>
+#include <linux/workqueue.h>
 
-काष्ठा drm_i915_निजी;
-काष्ठा समयr_list;
+struct drm_i915_private;
+struct timer_list;
 
-#घोषणा FDO_BUG_URL "https://gitlab.freedesktop.org/drm/intel/-/wikis/How-to-file-i915-bugs"
+#define FDO_BUG_URL "https://gitlab.freedesktop.org/drm/intel/-/wikis/How-to-file-i915-bugs"
 
-#अघोषित WARN_ON
+#undef WARN_ON
 /* Many gcc seem to no see through this and fall over :( */
-#अगर 0
-#घोषणा WARN_ON(x) (अणु \
+#if 0
+#define WARN_ON(x) ({ \
 	bool __i915_warn_cond = (x); \
-	अगर (__builtin_स्थिरant_p(__i915_warn_cond)) \
+	if (__builtin_constant_p(__i915_warn_cond)) \
 		BUILD_BUG_ON(__i915_warn_cond); \
-	WARN(__i915_warn_cond, "WARN_ON(" #x ")"); पूर्ण)
-#अन्यथा
-#घोषणा WARN_ON(x) WARN((x), "%s", "WARN_ON(" __stringअगरy(x) ")")
-#पूर्ण_अगर
+	WARN(__i915_warn_cond, "WARN_ON(" #x ")"); })
+#else
+#define WARN_ON(x) WARN((x), "%s", "WARN_ON(" __stringify(x) ")")
+#endif
 
-#अघोषित WARN_ON_ONCE
-#घोषणा WARN_ON_ONCE(x) WARN_ONCE((x), "%s", "WARN_ON_ONCE(" __stringअगरy(x) ")")
+#undef WARN_ON_ONCE
+#define WARN_ON_ONCE(x) WARN_ONCE((x), "%s", "WARN_ON_ONCE(" __stringify(x) ")")
 
-#घोषणा MISSING_CASE(x) WARN(1, "Missing case (%s == %ld)\n", \
-			     __stringअगरy(x), (दीर्घ)(x))
+#define MISSING_CASE(x) WARN(1, "Missing case (%s == %ld)\n", \
+			     __stringify(x), (long)(x))
 
-व्योम __म_लिखो(3, 4)
-__i915_prपूर्णांकk(काष्ठा drm_i915_निजी *dev_priv, स्थिर अक्षर *level,
-	      स्थिर अक्षर *fmt, ...);
+void __printf(3, 4)
+__i915_printk(struct drm_i915_private *dev_priv, const char *level,
+	      const char *fmt, ...);
 
-#घोषणा i915_report_error(dev_priv, fmt, ...)				   \
-	__i915_prपूर्णांकk(dev_priv, KERN_ERR, fmt, ##__VA_ARGS__)
+#define i915_report_error(dev_priv, fmt, ...)				   \
+	__i915_printk(dev_priv, KERN_ERR, fmt, ##__VA_ARGS__)
 
-#अगर IS_ENABLED(CONFIG_DRM_I915_DEBUG)
+#if IS_ENABLED(CONFIG_DRM_I915_DEBUG)
 
-पूर्णांक __i915_inject_probe_error(काष्ठा drm_i915_निजी *i915, पूर्णांक err,
-			      स्थिर अक्षर *func, पूर्णांक line);
-#घोषणा i915_inject_probe_error(_i915, _err) \
+int __i915_inject_probe_error(struct drm_i915_private *i915, int err,
+			      const char *func, int line);
+#define i915_inject_probe_error(_i915, _err) \
 	__i915_inject_probe_error((_i915), (_err), __func__, __LINE__)
-bool i915_error_injected(व्योम);
+bool i915_error_injected(void);
 
-#अन्यथा
+#else
 
-#घोषणा i915_inject_probe_error(i915, e) (अणु BUILD_BUG_ON_INVALID(i915); 0; पूर्ण)
-#घोषणा i915_error_injected() false
+#define i915_inject_probe_error(i915, e) ({ BUILD_BUG_ON_INVALID(i915); 0; })
+#define i915_error_injected() false
 
-#पूर्ण_अगर
+#endif
 
-#घोषणा i915_inject_probe_failure(i915) i915_inject_probe_error((i915), -ENODEV)
+#define i915_inject_probe_failure(i915) i915_inject_probe_error((i915), -ENODEV)
 
-#घोषणा i915_probe_error(i915, fmt, ...)				   \
-	__i915_prपूर्णांकk(i915, i915_error_injected() ? KERN_DEBUG : KERN_ERR, \
+#define i915_probe_error(i915, fmt, ...)				   \
+	__i915_printk(i915, i915_error_injected() ? KERN_DEBUG : KERN_ERR, \
 		      fmt, ##__VA_ARGS__)
 
-#अगर defined(GCC_VERSION) && GCC_VERSION >= 70000
-#घोषणा add_overflows_t(T, A, B) \
+#if defined(GCC_VERSION) && GCC_VERSION >= 70000
+#define add_overflows_t(T, A, B) \
 	__builtin_add_overflow_p((A), (B), (T)0)
-#अन्यथा
-#घोषणा add_overflows_t(T, A, B) (अणु \
+#else
+#define add_overflows_t(T, A, B) ({ \
 	typeof(A) a = (A); \
 	typeof(B) b = (B); \
 	(T)(a + b) < a; \
-पूर्ण)
-#पूर्ण_अगर
+})
+#endif
 
-#घोषणा add_overflows(A, B) \
+#define add_overflows(A, B) \
 	add_overflows_t(typeof((A) + (B)), (A), (B))
 
-#घोषणा range_overflows(start, size, max) (अणु \
+#define range_overflows(start, size, max) ({ \
 	typeof(start) start__ = (start); \
 	typeof(size) size__ = (size); \
 	typeof(max) max__ = (max); \
-	(व्योम)(&start__ == &size__); \
-	(व्योम)(&start__ == &max__); \
+	(void)(&start__ == &size__); \
+	(void)(&start__ == &max__); \
 	start__ >= max__ || size__ > max__ - start__; \
-पूर्ण)
+})
 
-#घोषणा range_overflows_t(type, start, size, max) \
+#define range_overflows_t(type, start, size, max) \
 	range_overflows((type)(start), (type)(size), (type)(max))
 
-#घोषणा range_overflows_end(start, size, max) (अणु \
+#define range_overflows_end(start, size, max) ({ \
 	typeof(start) start__ = (start); \
 	typeof(size) size__ = (size); \
 	typeof(max) max__ = (max); \
-	(व्योम)(&start__ == &size__); \
-	(व्योम)(&start__ == &max__); \
+	(void)(&start__ == &size__); \
+	(void)(&start__ == &max__); \
 	start__ > max__ || size__ > max__ - start__; \
-पूर्ण)
+})
 
-#घोषणा range_overflows_end_t(type, start, size, max) \
+#define range_overflows_end_t(type, start, size, max) \
 	range_overflows_end((type)(start), (type)(size), (type)(max))
 
-/* Note we करोn't consider signbits :| */
-#घोषणा overflows_type(x, T) \
-	(माप(x) > माप(T) && (x) >> BITS_PER_TYPE(T))
+/* Note we don't consider signbits :| */
+#define overflows_type(x, T) \
+	(sizeof(x) > sizeof(T) && (x) >> BITS_PER_TYPE(T))
 
-अटल अंतरभूत bool
-__check_काष्ठा_size(माप_प्रकार base, माप_प्रकार arr, माप_प्रकार count, माप_प्रकार *size)
-अणु
-	माप_प्रकार sz;
+static inline bool
+__check_struct_size(size_t base, size_t arr, size_t count, size_t *size)
+{
+	size_t sz;
 
-	अगर (check_mul_overflow(count, arr, &sz))
-		वापस false;
+	if (check_mul_overflow(count, arr, &sz))
+		return false;
 
-	अगर (check_add_overflow(sz, base, &sz))
-		वापस false;
+	if (check_add_overflow(sz, base, &sz))
+		return false;
 
 	*size = sz;
-	वापस true;
-पूर्ण
+	return true;
+}
 
 /**
- * check_काष्ठा_size() - Calculate size of काष्ठाure with trailing array.
- * @p: Poपूर्णांकer to the काष्ठाure.
+ * check_struct_size() - Calculate size of structure with trailing array.
+ * @p: Pointer to the structure.
  * @member: Name of the array member.
  * @n: Number of elements in the array.
- * @sz: Total size of काष्ठाure and array
+ * @sz: Total size of structure and array
  *
- * Calculates size of memory needed क्रम काष्ठाure @p followed by an
- * array of @n @member elements, like काष्ठा_size() but reports
+ * Calculates size of memory needed for structure @p followed by an
+ * array of @n @member elements, like struct_size() but reports
  * whether it overflowed, and the resultant size in @sz
  *
- * Return: false अगर the calculation overflowed.
+ * Return: false if the calculation overflowed.
  */
-#घोषणा check_काष्ठा_size(p, member, n, sz) \
-	likely(__check_काष्ठा_size(माप(*(p)), \
-				   माप(*(p)->member) + __must_be_array((p)->member), \
+#define check_struct_size(p, member, n, sz) \
+	likely(__check_struct_size(sizeof(*(p)), \
+				   sizeof(*(p)->member) + __must_be_array((p)->member), \
 				   n, sz))
 
-#घोषणा ptr_mask_bits(ptr, n) (अणु					\
-	अचिन्हित दीर्घ __v = (अचिन्हित दीर्घ)(ptr);			\
+#define ptr_mask_bits(ptr, n) ({					\
+	unsigned long __v = (unsigned long)(ptr);			\
 	(typeof(ptr))(__v & -BIT(n));					\
-पूर्ण)
+})
 
-#घोषणा ptr_unmask_bits(ptr, n) ((अचिन्हित दीर्घ)(ptr) & (BIT(n) - 1))
+#define ptr_unmask_bits(ptr, n) ((unsigned long)(ptr) & (BIT(n) - 1))
 
-#घोषणा ptr_unpack_bits(ptr, bits, n) (अणु				\
-	अचिन्हित दीर्घ __v = (अचिन्हित दीर्घ)(ptr);			\
+#define ptr_unpack_bits(ptr, bits, n) ({				\
+	unsigned long __v = (unsigned long)(ptr);			\
 	*(bits) = __v & (BIT(n) - 1);					\
 	(typeof(ptr))(__v & -BIT(n));					\
-पूर्ण)
+})
 
-#घोषणा ptr_pack_bits(ptr, bits, n) (अणु					\
-	अचिन्हित दीर्घ __bits = (bits);					\
+#define ptr_pack_bits(ptr, bits, n) ({					\
+	unsigned long __bits = (bits);					\
 	GEM_BUG_ON(__bits & -BIT(n));					\
-	((typeof(ptr))((अचिन्हित दीर्घ)(ptr) | __bits));			\
-पूर्ण)
+	((typeof(ptr))((unsigned long)(ptr) | __bits));			\
+})
 
-#घोषणा ptr_dec(ptr) (अणु							\
-	अचिन्हित दीर्घ __v = (अचिन्हित दीर्घ)(ptr);			\
+#define ptr_dec(ptr) ({							\
+	unsigned long __v = (unsigned long)(ptr);			\
 	(typeof(ptr))(__v - 1);						\
-पूर्ण)
+})
 
-#घोषणा ptr_inc(ptr) (अणु							\
-	अचिन्हित दीर्घ __v = (अचिन्हित दीर्घ)(ptr);			\
+#define ptr_inc(ptr) ({							\
+	unsigned long __v = (unsigned long)(ptr);			\
 	(typeof(ptr))(__v + 1);						\
-पूर्ण)
+})
 
-#घोषणा page_mask_bits(ptr) ptr_mask_bits(ptr, PAGE_SHIFT)
-#घोषणा page_unmask_bits(ptr) ptr_unmask_bits(ptr, PAGE_SHIFT)
-#घोषणा page_pack_bits(ptr, bits) ptr_pack_bits(ptr, bits, PAGE_SHIFT)
-#घोषणा page_unpack_bits(ptr, bits) ptr_unpack_bits(ptr, bits, PAGE_SHIFT)
+#define page_mask_bits(ptr) ptr_mask_bits(ptr, PAGE_SHIFT)
+#define page_unmask_bits(ptr) ptr_unmask_bits(ptr, PAGE_SHIFT)
+#define page_pack_bits(ptr, bits) ptr_pack_bits(ptr, bits, PAGE_SHIFT)
+#define page_unpack_bits(ptr, bits) ptr_unpack_bits(ptr, bits, PAGE_SHIFT)
 
-#घोषणा काष्ठा_member(T, member) (((T *)0)->member)
+#define struct_member(T, member) (((T *)0)->member)
 
-#घोषणा ptr_offset(ptr, member) दुरत्व(typeof(*(ptr)), member)
+#define ptr_offset(ptr, member) offsetof(typeof(*(ptr)), member)
 
-#घोषणा fetch_and_zero(ptr) (अणु						\
+#define fetch_and_zero(ptr) ({						\
 	typeof(*ptr) __T = *(ptr);					\
 	*(ptr) = (typeof(*ptr))0;					\
 	__T;								\
-पूर्ण)
+})
 
 /*
- * container_of_user: Extract the superclass from a poपूर्णांकer to a member.
+ * container_of_user: Extract the superclass from a pointer to a member.
  *
  * Exactly like container_of() with the exception that it plays nicely
- * with sparse क्रम __user @ptr.
+ * with sparse for __user @ptr.
  */
-#घोषणा container_of_user(ptr, type, member) (अणु				\
-	व्योम __user *__mptr = (व्योम __user *)(ptr);			\
-	BUILD_BUG_ON_MSG(!__same_type(*(ptr), काष्ठा_member(type, member)) && \
-			 !__same_type(*(ptr), व्योम),			\
+#define container_of_user(ptr, type, member) ({				\
+	void __user *__mptr = (void __user *)(ptr);			\
+	BUILD_BUG_ON_MSG(!__same_type(*(ptr), struct_member(type, member)) && \
+			 !__same_type(*(ptr), void),			\
 			 "pointer type mismatch in container_of()");	\
-	((type __user *)(__mptr - दुरत्व(type, member))); पूर्ण)
+	((type __user *)(__mptr - offsetof(type, member))); })
 
 /*
  * check_user_mbz: Check that a user value exists and is zero
  *
- * Frequently in our uABI we reserve space क्रम future extensions, and
- * two ensure that userspace is prepared we enक्रमce that space must
- * be zero. (Then any future extension can safely assume a शेष value
+ * Frequently in our uABI we reserve space for future extensions, and
+ * two ensure that userspace is prepared we enforce that space must
+ * be zero. (Then any future extension can safely assume a default value
  * of 0.)
  *
- * check_user_mbz() combines checking that the user poपूर्णांकer is accessible
+ * check_user_mbz() combines checking that the user pointer is accessible
  * and that the contained value is zero.
  *
- * Returns: -EFAULT अगर not accessible, -EINVAL अगर !zero, or 0 on success.
+ * Returns: -EFAULT if not accessible, -EINVAL if !zero, or 0 on success.
  */
-#घोषणा check_user_mbz(U) (अणु						\
+#define check_user_mbz(U) ({						\
 	typeof(*(U)) mbz__;						\
 	get_user(mbz__, (U)) ? -EFAULT : mbz__ ? -EINVAL : 0;		\
-पूर्ण)
+})
 
-अटल अंतरभूत u64 ptr_to_u64(स्थिर व्योम *ptr)
-अणु
-	वापस (uपूर्णांकptr_t)ptr;
-पूर्ण
+static inline u64 ptr_to_u64(const void *ptr)
+{
+	return (uintptr_t)ptr;
+}
 
-#घोषणा u64_to_ptr(T, x) (अणु						\
+#define u64_to_ptr(T, x) ({						\
 	typecheck(u64, x);						\
-	(T *)(uपूर्णांकptr_t)(x);						\
-पूर्ण)
+	(T *)(uintptr_t)(x);						\
+})
 
-#घोषणा __mask_next_bit(mask) (अणु					\
-	पूर्णांक __idx = ffs(mask) - 1;					\
+#define __mask_next_bit(mask) ({					\
+	int __idx = ffs(mask) - 1;					\
 	mask &= ~BIT(__idx);						\
 	__idx;								\
-पूर्ण)
+})
 
-अटल अंतरभूत bool is_घातer_of_2_u64(u64 n)
-अणु
-	वापस (n != 0 && ((n & (n - 1)) == 0));
-पूर्ण
+static inline bool is_power_of_2_u64(u64 n)
+{
+	return (n != 0 && ((n & (n - 1)) == 0));
+}
 
-अटल अंतरभूत व्योम __list_del_many(काष्ठा list_head *head,
-				   काष्ठा list_head *first)
-अणु
+static inline void __list_del_many(struct list_head *head,
+				   struct list_head *first)
+{
 	first->prev = head;
 	WRITE_ONCE(head->next, first);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक list_is_last_rcu(स्थिर काष्ठा list_head *list,
-				   स्थिर काष्ठा list_head *head)
-अणु
-	वापस READ_ONCE(list->next) == head;
-पूर्ण
+static inline int list_is_last_rcu(const struct list_head *list,
+				   const struct list_head *head)
+{
+	return READ_ONCE(list->next) == head;
+}
 
-अटल अंतरभूत अचिन्हित दीर्घ msecs_to_jअगरfies_समयout(स्थिर अचिन्हित पूर्णांक m)
-अणु
-	अचिन्हित दीर्घ j = msecs_to_jअगरfies(m);
+static inline unsigned long msecs_to_jiffies_timeout(const unsigned int m)
+{
+	unsigned long j = msecs_to_jiffies(m);
 
-	वापस min_t(अचिन्हित दीर्घ, MAX_JIFFY_OFFSET, j + 1);
-पूर्ण
+	return min_t(unsigned long, MAX_JIFFY_OFFSET, j + 1);
+}
 
 /*
- * If you need to रुको X milliseconds between events A and B, but event B
- * करोesn't happen exactly after event A, you record the बारtamp (jअगरfies) of
- * when event A happened, then just beक्रमe event B you call this function and
- * pass the बारtamp as the first argument, and X as the second argument.
+ * If you need to wait X milliseconds between events A and B, but event B
+ * doesn't happen exactly after event A, you record the timestamp (jiffies) of
+ * when event A happened, then just before event B you call this function and
+ * pass the timestamp as the first argument, and X as the second argument.
  */
-अटल अंतरभूत व्योम
-रुको_reमुख्यing_ms_from_jअगरfies(अचिन्हित दीर्घ बारtamp_jअगरfies, पूर्णांक to_रुको_ms)
-अणु
-	अचिन्हित दीर्घ target_jअगरfies, पंचांगp_jअगरfies, reमुख्यing_jअगरfies;
+static inline void
+wait_remaining_ms_from_jiffies(unsigned long timestamp_jiffies, int to_wait_ms)
+{
+	unsigned long target_jiffies, tmp_jiffies, remaining_jiffies;
 
 	/*
-	 * Don't re-पढ़ो the value of "jiffies" every समय since it may change
-	 * behind our back and अवरोध the math.
+	 * Don't re-read the value of "jiffies" every time since it may change
+	 * behind our back and break the math.
 	 */
-	पंचांगp_jअगरfies = jअगरfies;
-	target_jअगरfies = बारtamp_jअगरfies +
-			 msecs_to_jअगरfies_समयout(to_रुको_ms);
+	tmp_jiffies = jiffies;
+	target_jiffies = timestamp_jiffies +
+			 msecs_to_jiffies_timeout(to_wait_ms);
 
-	अगर (समय_after(target_jअगरfies, पंचांगp_jअगरfies)) अणु
-		reमुख्यing_jअगरfies = target_jअगरfies - पंचांगp_jअगरfies;
-		जबतक (reमुख्यing_jअगरfies)
-			reमुख्यing_jअगरfies =
-			    schedule_समयout_unपूर्णांकerruptible(reमुख्यing_jअगरfies);
-	पूर्ण
-पूर्ण
+	if (time_after(target_jiffies, tmp_jiffies)) {
+		remaining_jiffies = target_jiffies - tmp_jiffies;
+		while (remaining_jiffies)
+			remaining_jiffies =
+			    schedule_timeout_uninterruptible(remaining_jiffies);
+	}
+}
 
 /**
- * __रुको_क्रम - magic रुको macro
+ * __wait_for - magic wait macro
  *
- * Macro to help aव्योम खोलो coding check/रुको/समयout patterns. Note that it's
- * important that we check the condition again after having समयd out, since the
- * समयout could be due to preemption or similar and we've never had a chance to
- * check the condition beक्रमe the समयout.
+ * Macro to help avoid open coding check/wait/timeout patterns. Note that it's
+ * important that we check the condition again after having timed out, since the
+ * timeout could be due to preemption or similar and we've never had a chance to
+ * check the condition before the timeout.
  */
-#घोषणा __रुको_क्रम(OP, COND, US, Wmin, Wmax) (अणु \
-	स्थिर kसमय_प्रकार end__ = kसमय_add_ns(kसमय_get_raw(), 1000ll * (US)); \
-	दीर्घ रुको__ = (Wmin); /* recommended min क्रम usleep is 10 us */	\
-	पूर्णांक ret__;							\
+#define __wait_for(OP, COND, US, Wmin, Wmax) ({ \
+	const ktime_t end__ = ktime_add_ns(ktime_get_raw(), 1000ll * (US)); \
+	long wait__ = (Wmin); /* recommended min for usleep is 10 us */	\
+	int ret__;							\
 	might_sleep();							\
-	क्रम (;;) अणु							\
-		स्थिर bool expired__ = kसमय_after(kसमय_get_raw(), end__); \
+	for (;;) {							\
+		const bool expired__ = ktime_after(ktime_get_raw(), end__); \
 		OP;							\
-		/* Guarantee COND check prior to समयout */		\
+		/* Guarantee COND check prior to timeout */		\
 		barrier();						\
-		अगर (COND) अणु						\
+		if (COND) {						\
 			ret__ = 0;					\
-			अवरोध;						\
-		पूर्ण							\
-		अगर (expired__) अणु					\
+			break;						\
+		}							\
+		if (expired__) {					\
 			ret__ = -ETIMEDOUT;				\
-			अवरोध;						\
-		पूर्ण							\
-		usleep_range(रुको__, रुको__ * 2);			\
-		अगर (रुको__ < (Wmax))					\
-			रुको__ <<= 1;					\
-	पूर्ण								\
+			break;						\
+		}							\
+		usleep_range(wait__, wait__ * 2);			\
+		if (wait__ < (Wmax))					\
+			wait__ <<= 1;					\
+	}								\
 	ret__;								\
-पूर्ण)
+})
 
-#घोषणा _रुको_क्रम(COND, US, Wmin, Wmax)	__रुको_क्रम(, (COND), (US), (Wmin), \
+#define _wait_for(COND, US, Wmin, Wmax)	__wait_for(, (COND), (US), (Wmin), \
 						   (Wmax))
-#घोषणा रुको_क्रम(COND, MS)		_रुको_क्रम((COND), (MS) * 1000, 10, 1000)
+#define wait_for(COND, MS)		_wait_for((COND), (MS) * 1000, 10, 1000)
 
 /* If CONFIG_PREEMPT_COUNT is disabled, in_atomic() always reports false. */
-#अगर defined(CONFIG_DRM_I915_DEBUG) && defined(CONFIG_PREEMPT_COUNT)
+#if defined(CONFIG_DRM_I915_DEBUG) && defined(CONFIG_PREEMPT_COUNT)
 # define _WAIT_FOR_ATOMIC_CHECK(ATOMIC) WARN_ON_ONCE((ATOMIC) && !in_atomic())
-#अन्यथा
-# define _WAIT_FOR_ATOMIC_CHECK(ATOMIC) करो अणु पूर्ण जबतक (0)
-#पूर्ण_अगर
+#else
+# define _WAIT_FOR_ATOMIC_CHECK(ATOMIC) do { } while (0)
+#endif
 
-#घोषणा _रुको_क्रम_atomic(COND, US, ATOMIC) \
-(अणु \
-	पूर्णांक cpu, ret, समयout = (US) * 1000; \
+#define _wait_for_atomic(COND, US, ATOMIC) \
+({ \
+	int cpu, ret, timeout = (US) * 1000; \
 	u64 base; \
 	_WAIT_FOR_ATOMIC_CHECK(ATOMIC); \
-	अगर (!(ATOMIC)) अणु \
+	if (!(ATOMIC)) { \
 		preempt_disable(); \
 		cpu = smp_processor_id(); \
-	पूर्ण \
-	base = local_घड़ी(); \
-	क्रम (;;) अणु \
-		u64 now = local_घड़ी(); \
-		अगर (!(ATOMIC)) \
+	} \
+	base = local_clock(); \
+	for (;;) { \
+		u64 now = local_clock(); \
+		if (!(ATOMIC)) \
 			preempt_enable(); \
-		/* Guarantee COND check prior to समयout */ \
+		/* Guarantee COND check prior to timeout */ \
 		barrier(); \
-		अगर (COND) अणु \
+		if (COND) { \
 			ret = 0; \
-			अवरोध; \
-		पूर्ण \
-		अगर (now - base >= समयout) अणु \
+			break; \
+		} \
+		if (now - base >= timeout) { \
 			ret = -ETIMEDOUT; \
-			अवरोध; \
-		पूर्ण \
+			break; \
+		} \
 		cpu_relax(); \
-		अगर (!(ATOMIC)) अणु \
+		if (!(ATOMIC)) { \
 			preempt_disable(); \
-			अगर (unlikely(cpu != smp_processor_id())) अणु \
-				समयout -= now - base; \
+			if (unlikely(cpu != smp_processor_id())) { \
+				timeout -= now - base; \
 				cpu = smp_processor_id(); \
-				base = local_घड़ी(); \
-			पूर्ण \
-		पूर्ण \
-	पूर्ण \
+				base = local_clock(); \
+			} \
+		} \
+	} \
 	ret; \
-पूर्ण)
+})
 
-#घोषणा रुको_क्रम_us(COND, US) \
-(अणु \
-	पूर्णांक ret__; \
-	BUILD_BUG_ON(!__builtin_स्थिरant_p(US)); \
-	अगर ((US) > 10) \
-		ret__ = _रुको_क्रम((COND), (US), 10, 10); \
-	अन्यथा \
-		ret__ = _रुको_क्रम_atomic((COND), (US), 0); \
+#define wait_for_us(COND, US) \
+({ \
+	int ret__; \
+	BUILD_BUG_ON(!__builtin_constant_p(US)); \
+	if ((US) > 10) \
+		ret__ = _wait_for((COND), (US), 10, 10); \
+	else \
+		ret__ = _wait_for_atomic((COND), (US), 0); \
 	ret__; \
-पूर्ण)
+})
 
-#घोषणा रुको_क्रम_atomic_us(COND, US) \
-(अणु \
-	BUILD_BUG_ON(!__builtin_स्थिरant_p(US)); \
+#define wait_for_atomic_us(COND, US) \
+({ \
+	BUILD_BUG_ON(!__builtin_constant_p(US)); \
 	BUILD_BUG_ON((US) > 50000); \
-	_रुको_क्रम_atomic((COND), (US), 1); \
-पूर्ण)
+	_wait_for_atomic((COND), (US), 1); \
+})
 
-#घोषणा रुको_क्रम_atomic(COND, MS) रुको_क्रम_atomic_us((COND), (MS) * 1000)
+#define wait_for_atomic(COND, MS) wait_for_atomic_us((COND), (MS) * 1000)
 
-#घोषणा KHz(x) (1000 * (x))
-#घोषणा MHz(x) KHz(1000 * (x))
+#define KHz(x) (1000 * (x))
+#define MHz(x) KHz(1000 * (x))
 
-#घोषणा KBps(x) (1000 * (x))
-#घोषणा MBps(x) KBps(1000 * (x))
-#घोषणा GBps(x) ((u64)1000 * MBps((x)))
+#define KBps(x) (1000 * (x))
+#define MBps(x) KBps(1000 * (x))
+#define GBps(x) ((u64)1000 * MBps((x)))
 
-अटल अंतरभूत स्थिर अक्षर *yesno(bool v)
-अणु
-	वापस v ? "yes" : "no";
-पूर्ण
+static inline const char *yesno(bool v)
+{
+	return v ? "yes" : "no";
+}
 
-अटल अंतरभूत स्थिर अक्षर *onoff(bool v)
-अणु
-	वापस v ? "on" : "off";
-पूर्ण
+static inline const char *onoff(bool v)
+{
+	return v ? "on" : "off";
+}
 
-अटल अंतरभूत स्थिर अक्षर *enableddisabled(bool v)
-अणु
-	वापस v ? "enabled" : "disabled";
-पूर्ण
+static inline const char *enableddisabled(bool v)
+{
+	return v ? "enabled" : "disabled";
+}
 
-व्योम add_taपूर्णांक_क्रम_CI(काष्ठा drm_i915_निजी *i915, अचिन्हित पूर्णांक taपूर्णांक);
-अटल अंतरभूत व्योम __add_taपूर्णांक_क्रम_CI(अचिन्हित पूर्णांक taपूर्णांक)
-अणु
+void add_taint_for_CI(struct drm_i915_private *i915, unsigned int taint);
+static inline void __add_taint_for_CI(unsigned int taint)
+{
 	/*
-	 * The प्रणाली is "ok", just about surviving क्रम the user, but
+	 * The system is "ok", just about surviving for the user, but
 	 * CI results are now unreliable as the HW is very suspect.
-	 * CI checks the taपूर्णांक state after every test and will reboot
-	 * the machine अगर the kernel is taपूर्णांकed.
+	 * CI checks the taint state after every test and will reboot
+	 * the machine if the kernel is tainted.
 	 */
-	add_taपूर्णांक(taपूर्णांक, LOCKDEP_STILL_OK);
-पूर्ण
+	add_taint(taint, LOCKDEP_STILL_OK);
+}
 
-व्योम cancel_समयr(काष्ठा समयr_list *t);
-व्योम set_समयr_ms(काष्ठा समयr_list *t, अचिन्हित दीर्घ समयout);
+void cancel_timer(struct timer_list *t);
+void set_timer_ms(struct timer_list *t, unsigned long timeout);
 
-अटल अंतरभूत bool समयr_active(स्थिर काष्ठा समयr_list *t)
-अणु
-	वापस READ_ONCE(t->expires);
-पूर्ण
+static inline bool timer_active(const struct timer_list *t)
+{
+	return READ_ONCE(t->expires);
+}
 
-अटल अंतरभूत bool समयr_expired(स्थिर काष्ठा समयr_list *t)
-अणु
-	वापस समयr_active(t) && !समयr_pending(t);
-पूर्ण
+static inline bool timer_expired(const struct timer_list *t)
+{
+	return timer_active(t) && !timer_pending(t);
+}
 
 /*
- * This is a lookalike क्रम IS_ENABLED() that takes a kconfig value,
+ * This is a lookalike for IS_ENABLED() that takes a kconfig value,
  * e.g. CONFIG_DRM_I915_SPIN_REQUEST, and evaluates whether it is non-zero
  * i.e. whether the configuration is active. Wrapping up the config inside
  * a boolean context prevents clang and smatch from complaining about potential
- * issues in confusing logical-&& with bitwise-& क्रम स्थिरants.
+ * issues in confusing logical-&& with bitwise-& for constants.
  *
- * Sadly IS_ENABLED() itself करोes not work with kconfig values.
+ * Sadly IS_ENABLED() itself does not work with kconfig values.
  *
- * Returns 0 अगर @config is 0, 1 अगर set to any value.
+ * Returns 0 if @config is 0, 1 if set to any value.
  */
-#घोषणा IS_ACTIVE(config) ((config) != 0)
+#define IS_ACTIVE(config) ((config) != 0)
 
-#पूर्ण_अगर /* !__I915_UTILS_H */
+#endif /* !__I915_UTILS_H */

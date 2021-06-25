@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,82 +19,82 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  *
- * Authors: Christian Kथघnig
+ * Authors: Christian König
  */
 
-#समावेश "amdgpu.h"
+#include "amdgpu.h"
 
-अटल अंतरभूत काष्ठा amdgpu_gtt_mgr *to_gtt_mgr(काष्ठा tपंचांग_resource_manager *man)
-अणु
-	वापस container_of(man, काष्ठा amdgpu_gtt_mgr, manager);
-पूर्ण
+static inline struct amdgpu_gtt_mgr *to_gtt_mgr(struct ttm_resource_manager *man)
+{
+	return container_of(man, struct amdgpu_gtt_mgr, manager);
+}
 
-काष्ठा amdgpu_gtt_node अणु
-	काष्ठा drm_mm_node node;
-	काष्ठा tपंचांग_buffer_object *tbo;
-पूर्ण;
+struct amdgpu_gtt_node {
+	struct drm_mm_node node;
+	struct ttm_buffer_object *tbo;
+};
 
 /**
  * DOC: mem_info_gtt_total
  *
- * The amdgpu driver provides a sysfs API क्रम reporting current total size of
+ * The amdgpu driver provides a sysfs API for reporting current total size of
  * the GTT.
- * The file mem_info_gtt_total is used क्रम this, and वापसs the total size of
+ * The file mem_info_gtt_total is used for this, and returns the total size of
  * the GTT block, in bytes
  */
-अटल sमाप_प्रकार amdgpu_mem_info_gtt_total_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
-	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
-	काष्ठा tपंचांग_resource_manager *man = tपंचांग_manager_type(&adev->mman.bdev, TTM_PL_TT);
+static ssize_t amdgpu_mem_info_gtt_total_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct drm_device *ddev = dev_get_drvdata(dev);
+	struct amdgpu_device *adev = drm_to_adev(ddev);
+	struct ttm_resource_manager *man = ttm_manager_type(&adev->mman.bdev, TTM_PL_TT);
 
-	वापस sysfs_emit(buf, "%llu\n", man->size * PAGE_SIZE);
-पूर्ण
+	return sysfs_emit(buf, "%llu\n", man->size * PAGE_SIZE);
+}
 
 /**
  * DOC: mem_info_gtt_used
  *
- * The amdgpu driver provides a sysfs API क्रम reporting current total amount of
+ * The amdgpu driver provides a sysfs API for reporting current total amount of
  * used GTT.
- * The file mem_info_gtt_used is used क्रम this, and वापसs the current used
+ * The file mem_info_gtt_used is used for this, and returns the current used
  * size of the GTT block, in bytes
  */
-अटल sमाप_प्रकार amdgpu_mem_info_gtt_used_show(काष्ठा device *dev,
-		काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा drm_device *ddev = dev_get_drvdata(dev);
-	काष्ठा amdgpu_device *adev = drm_to_adev(ddev);
-	काष्ठा tपंचांग_resource_manager *man = tपंचांग_manager_type(&adev->mman.bdev, TTM_PL_TT);
+static ssize_t amdgpu_mem_info_gtt_used_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	struct drm_device *ddev = dev_get_drvdata(dev);
+	struct amdgpu_device *adev = drm_to_adev(ddev);
+	struct ttm_resource_manager *man = ttm_manager_type(&adev->mman.bdev, TTM_PL_TT);
 
-	वापस sysfs_emit(buf, "%llu\n", amdgpu_gtt_mgr_usage(man));
-पूर्ण
+	return sysfs_emit(buf, "%llu\n", amdgpu_gtt_mgr_usage(man));
+}
 
-अटल DEVICE_ATTR(mem_info_gtt_total, S_IRUGO,
-	           amdgpu_mem_info_gtt_total_show, शून्य);
-अटल DEVICE_ATTR(mem_info_gtt_used, S_IRUGO,
-	           amdgpu_mem_info_gtt_used_show, शून्य);
+static DEVICE_ATTR(mem_info_gtt_total, S_IRUGO,
+	           amdgpu_mem_info_gtt_total_show, NULL);
+static DEVICE_ATTR(mem_info_gtt_used, S_IRUGO,
+	           amdgpu_mem_info_gtt_used_show, NULL);
 
-अटल स्थिर काष्ठा tपंचांग_resource_manager_func amdgpu_gtt_mgr_func;
+static const struct ttm_resource_manager_func amdgpu_gtt_mgr_func;
 /**
  * amdgpu_gtt_mgr_init - init GTT manager and DRM MM
  *
- * @adev: amdgpu_device poपूर्णांकer
+ * @adev: amdgpu_device pointer
  * @gtt_size: maximum size of GTT
  *
  * Allocate and initialize the GTT manager.
  */
-पूर्णांक amdgpu_gtt_mgr_init(काष्ठा amdgpu_device *adev, uपूर्णांक64_t gtt_size)
-अणु
-	काष्ठा amdgpu_gtt_mgr *mgr = &adev->mman.gtt_mgr;
-	काष्ठा tपंचांग_resource_manager *man = &mgr->manager;
-	uपूर्णांक64_t start, size;
-	पूर्णांक ret;
+int amdgpu_gtt_mgr_init(struct amdgpu_device *adev, uint64_t gtt_size)
+{
+	struct amdgpu_gtt_mgr *mgr = &adev->mman.gtt_mgr;
+	struct ttm_resource_manager *man = &mgr->manager;
+	uint64_t start, size;
+	int ret;
 
 	man->use_tt = true;
 	man->func = &amdgpu_gtt_mgr_func;
 
-	tपंचांग_resource_manager_init(man, gtt_size >> PAGE_SHIFT);
+	ttm_resource_manager_init(man, gtt_size >> PAGE_SHIFT);
 
 	start = AMDGPU_GTT_MAX_TRANSFER_SIZE * AMDGPU_GTT_NUM_TRANSFER_WINDOWS;
 	size = (adev->gmc.gart_size >> PAGE_SHIFT) - start;
@@ -104,103 +103,103 @@
 	atomic64_set(&mgr->available, gtt_size >> PAGE_SHIFT);
 
 	ret = device_create_file(adev->dev, &dev_attr_mem_info_gtt_total);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("Failed to create device file mem_info_gtt_total\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	ret = device_create_file(adev->dev, &dev_attr_mem_info_gtt_used);
-	अगर (ret) अणु
+	if (ret) {
 		DRM_ERROR("Failed to create device file mem_info_gtt_used\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	tपंचांग_set_driver_manager(&adev->mman.bdev, TTM_PL_TT, &mgr->manager);
-	tपंचांग_resource_manager_set_used(man, true);
-	वापस 0;
-पूर्ण
+	ttm_set_driver_manager(&adev->mman.bdev, TTM_PL_TT, &mgr->manager);
+	ttm_resource_manager_set_used(man, true);
+	return 0;
+}
 
 /**
- * amdgpu_gtt_mgr_fini - मुक्त and destroy GTT manager
+ * amdgpu_gtt_mgr_fini - free and destroy GTT manager
  *
- * @adev: amdgpu_device poपूर्णांकer
+ * @adev: amdgpu_device pointer
  *
- * Destroy and मुक्त the GTT manager, वापसs -EBUSY अगर ranges are still
+ * Destroy and free the GTT manager, returns -EBUSY if ranges are still
  * allocated inside it.
  */
-व्योम amdgpu_gtt_mgr_fini(काष्ठा amdgpu_device *adev)
-अणु
-	काष्ठा amdgpu_gtt_mgr *mgr = &adev->mman.gtt_mgr;
-	काष्ठा tपंचांग_resource_manager *man = &mgr->manager;
-	पूर्णांक ret;
+void amdgpu_gtt_mgr_fini(struct amdgpu_device *adev)
+{
+	struct amdgpu_gtt_mgr *mgr = &adev->mman.gtt_mgr;
+	struct ttm_resource_manager *man = &mgr->manager;
+	int ret;
 
-	tपंचांग_resource_manager_set_used(man, false);
+	ttm_resource_manager_set_used(man, false);
 
-	ret = tपंचांग_resource_manager_evict_all(&adev->mman.bdev, man);
-	अगर (ret)
-		वापस;
+	ret = ttm_resource_manager_evict_all(&adev->mman.bdev, man);
+	if (ret)
+		return;
 
 	spin_lock(&mgr->lock);
-	drm_mm_takeकरोwn(&mgr->mm);
+	drm_mm_takedown(&mgr->mm);
 	spin_unlock(&mgr->lock);
 
-	device_हटाओ_file(adev->dev, &dev_attr_mem_info_gtt_total);
-	device_हटाओ_file(adev->dev, &dev_attr_mem_info_gtt_used);
+	device_remove_file(adev->dev, &dev_attr_mem_info_gtt_total);
+	device_remove_file(adev->dev, &dev_attr_mem_info_gtt_used);
 
-	tपंचांग_resource_manager_cleanup(man);
-	tपंचांग_set_driver_manager(&adev->mman.bdev, TTM_PL_TT, शून्य);
-पूर्ण
+	ttm_resource_manager_cleanup(man);
+	ttm_set_driver_manager(&adev->mman.bdev, TTM_PL_TT, NULL);
+}
 
 /**
- * amdgpu_gtt_mgr_has_gart_addr - Check अगर mem has address space
+ * amdgpu_gtt_mgr_has_gart_addr - Check if mem has address space
  *
  * @mem: the mem object to check
  *
- * Check अगर a mem object has alपढ़ोy address space allocated.
+ * Check if a mem object has already address space allocated.
  */
-bool amdgpu_gtt_mgr_has_gart_addr(काष्ठा tपंचांग_resource *mem)
-अणु
-	वापस mem->mm_node != शून्य;
-पूर्ण
+bool amdgpu_gtt_mgr_has_gart_addr(struct ttm_resource *mem)
+{
+	return mem->mm_node != NULL;
+}
 
 /**
  * amdgpu_gtt_mgr_new - allocate a new node
  *
  * @man: TTM memory type manager
- * @tbo: TTM BO we need this range क्रम
+ * @tbo: TTM BO we need this range for
  * @place: placement flags and restrictions
  * @mem: the resulting mem object
  *
- * Dummy, allocate the node but no space क्रम it yet.
+ * Dummy, allocate the node but no space for it yet.
  */
-अटल पूर्णांक amdgpu_gtt_mgr_new(काष्ठा tपंचांग_resource_manager *man,
-			      काष्ठा tपंचांग_buffer_object *tbo,
-			      स्थिर काष्ठा tपंचांग_place *place,
-			      काष्ठा tपंचांग_resource *mem)
-अणु
-	काष्ठा amdgpu_gtt_mgr *mgr = to_gtt_mgr(man);
-	काष्ठा amdgpu_gtt_node *node;
-	पूर्णांक r;
+static int amdgpu_gtt_mgr_new(struct ttm_resource_manager *man,
+			      struct ttm_buffer_object *tbo,
+			      const struct ttm_place *place,
+			      struct ttm_resource *mem)
+{
+	struct amdgpu_gtt_mgr *mgr = to_gtt_mgr(man);
+	struct amdgpu_gtt_node *node;
+	int r;
 
 	spin_lock(&mgr->lock);
-	अगर ((&tbo->mem == mem || tbo->mem.mem_type != TTM_PL_TT) &&
-	    atomic64_पढ़ो(&mgr->available) < mem->num_pages) अणु
+	if ((&tbo->mem == mem || tbo->mem.mem_type != TTM_PL_TT) &&
+	    atomic64_read(&mgr->available) < mem->num_pages) {
 		spin_unlock(&mgr->lock);
-		वापस -ENOSPC;
-	पूर्ण
+		return -ENOSPC;
+	}
 	atomic64_sub(mem->num_pages, &mgr->available);
 	spin_unlock(&mgr->lock);
 
-	अगर (!place->lpfn) अणु
-		mem->mm_node = शून्य;
+	if (!place->lpfn) {
+		mem->mm_node = NULL;
 		mem->start = AMDGPU_BO_INVALID_OFFSET;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	node = kzalloc(माप(*node), GFP_KERNEL);
-	अगर (!node) अणु
+	node = kzalloc(sizeof(*node), GFP_KERNEL);
+	if (!node) {
 		r = -ENOMEM;
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
 	node->tbo = tbo;
 
@@ -210,105 +209,105 @@ bool amdgpu_gtt_mgr_has_gart_addr(काष्ठा tपंचांग_resourc
 					place->lpfn, DRM_MM_INSERT_BEST);
 	spin_unlock(&mgr->lock);
 
-	अगर (unlikely(r))
-		जाओ err_मुक्त;
+	if (unlikely(r))
+		goto err_free;
 
 	mem->mm_node = node;
 	mem->start = node->node.start;
 
-	वापस 0;
+	return 0;
 
-err_मुक्त:
-	kमुक्त(node);
+err_free:
+	kfree(node);
 
 err_out:
 	atomic64_add(mem->num_pages, &mgr->available);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /**
- * amdgpu_gtt_mgr_del - मुक्त ranges
+ * amdgpu_gtt_mgr_del - free ranges
  *
  * @man: TTM memory type manager
  * @mem: TTM memory object
  *
  * Free the allocated GTT again.
  */
-अटल व्योम amdgpu_gtt_mgr_del(काष्ठा tपंचांग_resource_manager *man,
-			       काष्ठा tपंचांग_resource *mem)
-अणु
-	काष्ठा amdgpu_gtt_mgr *mgr = to_gtt_mgr(man);
-	काष्ठा amdgpu_gtt_node *node = mem->mm_node;
+static void amdgpu_gtt_mgr_del(struct ttm_resource_manager *man,
+			       struct ttm_resource *mem)
+{
+	struct amdgpu_gtt_mgr *mgr = to_gtt_mgr(man);
+	struct amdgpu_gtt_node *node = mem->mm_node;
 
-	अगर (node) अणु
+	if (node) {
 		spin_lock(&mgr->lock);
-		drm_mm_हटाओ_node(&node->node);
+		drm_mm_remove_node(&node->node);
 		spin_unlock(&mgr->lock);
-		kमुक्त(node);
-	पूर्ण
+		kfree(node);
+	}
 
 	atomic64_add(mem->num_pages, &mgr->available);
-पूर्ण
+}
 
 /**
- * amdgpu_gtt_mgr_usage - वापस usage of GTT करोमुख्य
+ * amdgpu_gtt_mgr_usage - return usage of GTT domain
  *
  * @man: TTM memory type manager
  *
- * Return how many bytes are used in the GTT करोमुख्य
+ * Return how many bytes are used in the GTT domain
  */
-uपूर्णांक64_t amdgpu_gtt_mgr_usage(काष्ठा tपंचांग_resource_manager *man)
-अणु
-	काष्ठा amdgpu_gtt_mgr *mgr = to_gtt_mgr(man);
-	s64 result = man->size - atomic64_पढ़ो(&mgr->available);
+uint64_t amdgpu_gtt_mgr_usage(struct ttm_resource_manager *man)
+{
+	struct amdgpu_gtt_mgr *mgr = to_gtt_mgr(man);
+	s64 result = man->size - atomic64_read(&mgr->available);
 
-	वापस (result > 0 ? result : 0) * PAGE_SIZE;
-पूर्ण
+	return (result > 0 ? result : 0) * PAGE_SIZE;
+}
 
-पूर्णांक amdgpu_gtt_mgr_recover(काष्ठा tपंचांग_resource_manager *man)
-अणु
-	काष्ठा amdgpu_gtt_mgr *mgr = to_gtt_mgr(man);
-	काष्ठा amdgpu_gtt_node *node;
-	काष्ठा drm_mm_node *mm_node;
-	पूर्णांक r = 0;
+int amdgpu_gtt_mgr_recover(struct ttm_resource_manager *man)
+{
+	struct amdgpu_gtt_mgr *mgr = to_gtt_mgr(man);
+	struct amdgpu_gtt_node *node;
+	struct drm_mm_node *mm_node;
+	int r = 0;
 
 	spin_lock(&mgr->lock);
-	drm_mm_क्रम_each_node(mm_node, &mgr->mm) अणु
-		node = container_of(mm_node, काष्ठा amdgpu_gtt_node, node);
-		r = amdgpu_tपंचांग_recover_gart(node->tbo);
-		अगर (r)
-			अवरोध;
-	पूर्ण
+	drm_mm_for_each_node(mm_node, &mgr->mm) {
+		node = container_of(mm_node, struct amdgpu_gtt_node, node);
+		r = amdgpu_ttm_recover_gart(node->tbo);
+		if (r)
+			break;
+	}
 	spin_unlock(&mgr->lock);
 
-	वापस r;
-पूर्ण
+	return r;
+}
 
 /**
  * amdgpu_gtt_mgr_debug - dump VRAM table
  *
  * @man: TTM memory type manager
- * @prपूर्णांकer: DRM prपूर्णांकer to use
+ * @printer: DRM printer to use
  *
- * Dump the table content using prपूर्णांकk.
+ * Dump the table content using printk.
  */
-अटल व्योम amdgpu_gtt_mgr_debug(काष्ठा tपंचांग_resource_manager *man,
-				 काष्ठा drm_prपूर्णांकer *prपूर्णांकer)
-अणु
-	काष्ठा amdgpu_gtt_mgr *mgr = to_gtt_mgr(man);
+static void amdgpu_gtt_mgr_debug(struct ttm_resource_manager *man,
+				 struct drm_printer *printer)
+{
+	struct amdgpu_gtt_mgr *mgr = to_gtt_mgr(man);
 
 	spin_lock(&mgr->lock);
-	drm_mm_prपूर्णांक(&mgr->mm, prपूर्णांकer);
+	drm_mm_print(&mgr->mm, printer);
 	spin_unlock(&mgr->lock);
 
-	drm_म_लिखो(prपूर्णांकer, "man size:%llu pages, gtt available:%lld pages, usage:%lluMB\n",
-		   man->size, (u64)atomic64_पढ़ो(&mgr->available),
+	drm_printf(printer, "man size:%llu pages, gtt available:%lld pages, usage:%lluMB\n",
+		   man->size, (u64)atomic64_read(&mgr->available),
 		   amdgpu_gtt_mgr_usage(man) >> 20);
-पूर्ण
+}
 
-अटल स्थिर काष्ठा tपंचांग_resource_manager_func amdgpu_gtt_mgr_func = अणु
+static const struct ttm_resource_manager_func amdgpu_gtt_mgr_func = {
 	.alloc = amdgpu_gtt_mgr_new,
-	.मुक्त = amdgpu_gtt_mgr_del,
+	.free = amdgpu_gtt_mgr_del,
 	.debug = amdgpu_gtt_mgr_debug
-पूर्ण;
+};

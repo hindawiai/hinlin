@@ -1,226 +1,225 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-only */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright तऊ 2008 Keith Packard <keithp@keithp.com>
+ * Copyright © 2008 Keith Packard <keithp@keithp.com>
  */
 
-#अगर_अघोषित _LINUX_IO_MAPPING_H
-#घोषणा _LINUX_IO_MAPPING_H
+#ifndef _LINUX_IO_MAPPING_H
+#define _LINUX_IO_MAPPING_H
 
-#समावेश <linux/types.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/pgtable.h>
-#समावेश <यंत्र/page.h>
+#include <linux/types.h>
+#include <linux/slab.h>
+#include <linux/bug.h>
+#include <linux/io.h>
+#include <linux/pgtable.h>
+#include <asm/page.h>
 
 /*
- * The io_mapping mechanism provides an असलtraction क्रम mapping
- * inभागidual pages from an io device to the CPU in an efficient fashion.
+ * The io_mapping mechanism provides an abstraction for mapping
+ * individual pages from an io device to the CPU in an efficient fashion.
  *
  * See Documentation/driver-api/io-mapping.rst
  */
 
-काष्ठा io_mapping अणु
-	resource_माप_प्रकार base;
-	अचिन्हित दीर्घ size;
+struct io_mapping {
+	resource_size_t base;
+	unsigned long size;
 	pgprot_t prot;
-	व्योम __iomem *iomem;
-पूर्ण;
+	void __iomem *iomem;
+};
 
-#अगर_घोषित CONFIG_HAVE_ATOMIC_IOMAP
+#ifdef CONFIG_HAVE_ATOMIC_IOMAP
 
-#समावेश <linux/pfn.h>
-#समावेश <यंत्र/iomap.h>
+#include <linux/pfn.h>
+#include <asm/iomap.h>
 /*
  * For small address space machines, mapping large objects
- * पूर्णांकo the kernel भव space isn't practical. Where
+ * into the kernel virtual space isn't practical. Where
  * available, use fixmap support to dynamically map pages
- * of the object at run समय.
+ * of the object at run time.
  */
 
-अटल अंतरभूत काष्ठा io_mapping *
-io_mapping_init_wc(काष्ठा io_mapping *iomap,
-		   resource_माप_प्रकार base,
-		   अचिन्हित दीर्घ size)
-अणु
+static inline struct io_mapping *
+io_mapping_init_wc(struct io_mapping *iomap,
+		   resource_size_t base,
+		   unsigned long size)
+{
 	pgprot_t prot;
 
-	अगर (iomap_create_wc(base, size, &prot))
-		वापस शून्य;
+	if (iomap_create_wc(base, size, &prot))
+		return NULL;
 
 	iomap->base = base;
 	iomap->size = size;
 	iomap->prot = prot;
-	वापस iomap;
-पूर्ण
+	return iomap;
+}
 
-अटल अंतरभूत व्योम
-io_mapping_fini(काष्ठा io_mapping *mapping)
-अणु
-	iomap_मुक्त(mapping->base, mapping->size);
-पूर्ण
+static inline void
+io_mapping_fini(struct io_mapping *mapping)
+{
+	iomap_free(mapping->base, mapping->size);
+}
 
 /* Atomic map/unmap */
-अटल अंतरभूत व्योम __iomem *
-io_mapping_map_atomic_wc(काष्ठा io_mapping *mapping,
-			 अचिन्हित दीर्घ offset)
-अणु
-	resource_माप_प्रकार phys_addr;
+static inline void __iomem *
+io_mapping_map_atomic_wc(struct io_mapping *mapping,
+			 unsigned long offset)
+{
+	resource_size_t phys_addr;
 
 	BUG_ON(offset >= mapping->size);
 	phys_addr = mapping->base + offset;
 	preempt_disable();
 	pagefault_disable();
-	वापस __iomap_local_pfn_prot(PHYS_PFN(phys_addr), mapping->prot);
-पूर्ण
+	return __iomap_local_pfn_prot(PHYS_PFN(phys_addr), mapping->prot);
+}
 
-अटल अंतरभूत व्योम
-io_mapping_unmap_atomic(व्योम __iomem *vaddr)
-अणु
-	kunmap_local_indexed((व्योम __क्रमce *)vaddr);
+static inline void
+io_mapping_unmap_atomic(void __iomem *vaddr)
+{
+	kunmap_local_indexed((void __force *)vaddr);
 	pagefault_enable();
 	preempt_enable();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम __iomem *
-io_mapping_map_local_wc(काष्ठा io_mapping *mapping, अचिन्हित दीर्घ offset)
-अणु
-	resource_माप_प्रकार phys_addr;
-
-	BUG_ON(offset >= mapping->size);
-	phys_addr = mapping->base + offset;
-	वापस __iomap_local_pfn_prot(PHYS_PFN(phys_addr), mapping->prot);
-पूर्ण
-
-अटल अंतरभूत व्योम io_mapping_unmap_local(व्योम __iomem *vaddr)
-अणु
-	kunmap_local_indexed((व्योम __क्रमce *)vaddr);
-पूर्ण
-
-अटल अंतरभूत व्योम __iomem *
-io_mapping_map_wc(काष्ठा io_mapping *mapping,
-		  अचिन्हित दीर्घ offset,
-		  अचिन्हित दीर्घ size)
-अणु
-	resource_माप_प्रकार phys_addr;
+static inline void __iomem *
+io_mapping_map_local_wc(struct io_mapping *mapping, unsigned long offset)
+{
+	resource_size_t phys_addr;
 
 	BUG_ON(offset >= mapping->size);
 	phys_addr = mapping->base + offset;
+	return __iomap_local_pfn_prot(PHYS_PFN(phys_addr), mapping->prot);
+}
 
-	वापस ioremap_wc(phys_addr, size);
-पूर्ण
+static inline void io_mapping_unmap_local(void __iomem *vaddr)
+{
+	kunmap_local_indexed((void __force *)vaddr);
+}
 
-अटल अंतरभूत व्योम
-io_mapping_unmap(व्योम __iomem *vaddr)
-अणु
+static inline void __iomem *
+io_mapping_map_wc(struct io_mapping *mapping,
+		  unsigned long offset,
+		  unsigned long size)
+{
+	resource_size_t phys_addr;
+
+	BUG_ON(offset >= mapping->size);
+	phys_addr = mapping->base + offset;
+
+	return ioremap_wc(phys_addr, size);
+}
+
+static inline void
+io_mapping_unmap(void __iomem *vaddr)
+{
 	iounmap(vaddr);
-पूर्ण
+}
 
-#अन्यथा  /* HAVE_ATOMIC_IOMAP */
+#else  /* HAVE_ATOMIC_IOMAP */
 
-#समावेश <linux/uaccess.h>
+#include <linux/uaccess.h>
 
 /* Create the io_mapping object*/
-अटल अंतरभूत काष्ठा io_mapping *
-io_mapping_init_wc(काष्ठा io_mapping *iomap,
-		   resource_माप_प्रकार base,
-		   अचिन्हित दीर्घ size)
-अणु
+static inline struct io_mapping *
+io_mapping_init_wc(struct io_mapping *iomap,
+		   resource_size_t base,
+		   unsigned long size)
+{
 	iomap->iomem = ioremap_wc(base, size);
-	अगर (!iomap->iomem)
-		वापस शून्य;
+	if (!iomap->iomem)
+		return NULL;
 
 	iomap->base = base;
 	iomap->size = size;
-#अगर defined(pgprot_noncached_wc) /* archs can't agree on a name ... */
+#if defined(pgprot_noncached_wc) /* archs can't agree on a name ... */
 	iomap->prot = pgprot_noncached_wc(PAGE_KERNEL);
-#या_अगर defined(pgprot_ग_लिखोcombine)
-	iomap->prot = pgprot_ग_लिखोcombine(PAGE_KERNEL);
-#अन्यथा
+#elif defined(pgprot_writecombine)
+	iomap->prot = pgprot_writecombine(PAGE_KERNEL);
+#else
 	iomap->prot = pgprot_noncached(PAGE_KERNEL);
-#पूर्ण_अगर
+#endif
 
-	वापस iomap;
-पूर्ण
+	return iomap;
+}
 
-अटल अंतरभूत व्योम
-io_mapping_fini(काष्ठा io_mapping *mapping)
-अणु
+static inline void
+io_mapping_fini(struct io_mapping *mapping)
+{
 	iounmap(mapping->iomem);
-पूर्ण
+}
 
 /* Non-atomic map/unmap */
-अटल अंतरभूत व्योम __iomem *
-io_mapping_map_wc(काष्ठा io_mapping *mapping,
-		  अचिन्हित दीर्घ offset,
-		  अचिन्हित दीर्घ size)
-अणु
-	वापस mapping->iomem + offset;
-पूर्ण
+static inline void __iomem *
+io_mapping_map_wc(struct io_mapping *mapping,
+		  unsigned long offset,
+		  unsigned long size)
+{
+	return mapping->iomem + offset;
+}
 
-अटल अंतरभूत व्योम
-io_mapping_unmap(व्योम __iomem *vaddr)
-अणु
-पूर्ण
+static inline void
+io_mapping_unmap(void __iomem *vaddr)
+{
+}
 
 /* Atomic map/unmap */
-अटल अंतरभूत व्योम __iomem *
-io_mapping_map_atomic_wc(काष्ठा io_mapping *mapping,
-			 अचिन्हित दीर्घ offset)
-अणु
+static inline void __iomem *
+io_mapping_map_atomic_wc(struct io_mapping *mapping,
+			 unsigned long offset)
+{
 	preempt_disable();
 	pagefault_disable();
-	वापस io_mapping_map_wc(mapping, offset, PAGE_SIZE);
-पूर्ण
+	return io_mapping_map_wc(mapping, offset, PAGE_SIZE);
+}
 
-अटल अंतरभूत व्योम
-io_mapping_unmap_atomic(व्योम __iomem *vaddr)
-अणु
+static inline void
+io_mapping_unmap_atomic(void __iomem *vaddr)
+{
 	io_mapping_unmap(vaddr);
 	pagefault_enable();
 	preempt_enable();
-पूर्ण
+}
 
-अटल अंतरभूत व्योम __iomem *
-io_mapping_map_local_wc(काष्ठा io_mapping *mapping, अचिन्हित दीर्घ offset)
-अणु
-	वापस io_mapping_map_wc(mapping, offset, PAGE_SIZE);
-पूर्ण
+static inline void __iomem *
+io_mapping_map_local_wc(struct io_mapping *mapping, unsigned long offset)
+{
+	return io_mapping_map_wc(mapping, offset, PAGE_SIZE);
+}
 
-अटल अंतरभूत व्योम io_mapping_unmap_local(व्योम __iomem *vaddr)
-अणु
+static inline void io_mapping_unmap_local(void __iomem *vaddr)
+{
 	io_mapping_unmap(vaddr);
-पूर्ण
+}
 
-#पूर्ण_अगर /* !HAVE_ATOMIC_IOMAP */
+#endif /* !HAVE_ATOMIC_IOMAP */
 
-अटल अंतरभूत काष्ठा io_mapping *
-io_mapping_create_wc(resource_माप_प्रकार base,
-		     अचिन्हित दीर्घ size)
-अणु
-	काष्ठा io_mapping *iomap;
+static inline struct io_mapping *
+io_mapping_create_wc(resource_size_t base,
+		     unsigned long size)
+{
+	struct io_mapping *iomap;
 
-	iomap = kदो_स्मृति(माप(*iomap), GFP_KERNEL);
-	अगर (!iomap)
-		वापस शून्य;
+	iomap = kmalloc(sizeof(*iomap), GFP_KERNEL);
+	if (!iomap)
+		return NULL;
 
-	अगर (!io_mapping_init_wc(iomap, base, size)) अणु
-		kमुक्त(iomap);
-		वापस शून्य;
-	पूर्ण
+	if (!io_mapping_init_wc(iomap, base, size)) {
+		kfree(iomap);
+		return NULL;
+	}
 
-	वापस iomap;
-पूर्ण
+	return iomap;
+}
 
-अटल अंतरभूत व्योम
-io_mapping_मुक्त(काष्ठा io_mapping *iomap)
-अणु
+static inline void
+io_mapping_free(struct io_mapping *iomap)
+{
 	io_mapping_fini(iomap);
-	kमुक्त(iomap);
-पूर्ण
+	kfree(iomap);
+}
 
-#पूर्ण_अगर /* _LINUX_IO_MAPPING_H */
+#endif /* _LINUX_IO_MAPPING_H */
 
-पूर्णांक io_mapping_map_user(काष्ठा io_mapping *iomap, काष्ठा vm_area_काष्ठा *vma,
-		अचिन्हित दीर्घ addr, अचिन्हित दीर्घ pfn, अचिन्हित दीर्घ size);
+int io_mapping_map_user(struct io_mapping *iomap, struct vm_area_struct *vma,
+		unsigned long addr, unsigned long pfn, unsigned long size);

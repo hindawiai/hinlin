@@ -1,107 +1,106 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /* Copyright (C) B.A.T.M.A.N. contributors:
  *
- * Martin Hundebथचll, Jeppe Ledet-Pedersen
+ * Martin Hundebøll, Jeppe Ledet-Pedersen
  */
 
-#अगर_अघोषित _NET_BATMAN_ADV_NETWORK_CODING_H_
-#घोषणा _NET_BATMAN_ADV_NETWORK_CODING_H_
+#ifndef _NET_BATMAN_ADV_NETWORK_CODING_H_
+#define _NET_BATMAN_ADV_NETWORK_CODING_H_
 
-#समावेश "main.h"
+#include "main.h"
 
-#समावेश <linux/netdevice.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/types.h>
-#समावेश <uapi/linux/batadv_packet.h>
+#include <linux/netdevice.h>
+#include <linux/skbuff.h>
+#include <linux/types.h>
+#include <uapi/linux/batadv_packet.h>
 
-#अगर_घोषित CONFIG_BATMAN_ADV_NC
+#ifdef CONFIG_BATMAN_ADV_NC
 
-व्योम batadv_nc_status_update(काष्ठा net_device *net_dev);
-पूर्णांक batadv_nc_init(व्योम);
-पूर्णांक batadv_nc_mesh_init(काष्ठा batadv_priv *bat_priv);
-व्योम batadv_nc_mesh_मुक्त(काष्ठा batadv_priv *bat_priv);
-व्योम batadv_nc_update_nc_node(काष्ठा batadv_priv *bat_priv,
-			      काष्ठा batadv_orig_node *orig_node,
-			      काष्ठा batadv_orig_node *orig_neigh_node,
-			      काष्ठा batadv_ogm_packet *ogm_packet,
-			      पूर्णांक is_single_hop_neigh);
-व्योम batadv_nc_purge_orig(काष्ठा batadv_priv *bat_priv,
-			  काष्ठा batadv_orig_node *orig_node,
-			  bool (*to_purge)(काष्ठा batadv_priv *,
-					   काष्ठा batadv_nc_node *));
-व्योम batadv_nc_init_bat_priv(काष्ठा batadv_priv *bat_priv);
-व्योम batadv_nc_init_orig(काष्ठा batadv_orig_node *orig_node);
-bool batadv_nc_skb_क्रमward(काष्ठा sk_buff *skb,
-			   काष्ठा batadv_neigh_node *neigh_node);
-व्योम batadv_nc_skb_store_क्रम_decoding(काष्ठा batadv_priv *bat_priv,
-				      काष्ठा sk_buff *skb);
-व्योम batadv_nc_skb_store_snअगरfed_unicast(काष्ठा batadv_priv *bat_priv,
-					 काष्ठा sk_buff *skb);
+void batadv_nc_status_update(struct net_device *net_dev);
+int batadv_nc_init(void);
+int batadv_nc_mesh_init(struct batadv_priv *bat_priv);
+void batadv_nc_mesh_free(struct batadv_priv *bat_priv);
+void batadv_nc_update_nc_node(struct batadv_priv *bat_priv,
+			      struct batadv_orig_node *orig_node,
+			      struct batadv_orig_node *orig_neigh_node,
+			      struct batadv_ogm_packet *ogm_packet,
+			      int is_single_hop_neigh);
+void batadv_nc_purge_orig(struct batadv_priv *bat_priv,
+			  struct batadv_orig_node *orig_node,
+			  bool (*to_purge)(struct batadv_priv *,
+					   struct batadv_nc_node *));
+void batadv_nc_init_bat_priv(struct batadv_priv *bat_priv);
+void batadv_nc_init_orig(struct batadv_orig_node *orig_node);
+bool batadv_nc_skb_forward(struct sk_buff *skb,
+			   struct batadv_neigh_node *neigh_node);
+void batadv_nc_skb_store_for_decoding(struct batadv_priv *bat_priv,
+				      struct sk_buff *skb);
+void batadv_nc_skb_store_sniffed_unicast(struct batadv_priv *bat_priv,
+					 struct sk_buff *skb);
 
-#अन्यथा /* अगरdef CONFIG_BATMAN_ADV_NC */
+#else /* ifdef CONFIG_BATMAN_ADV_NC */
 
-अटल अंतरभूत व्योम batadv_nc_status_update(काष्ठा net_device *net_dev)
-अणु
-पूर्ण
+static inline void batadv_nc_status_update(struct net_device *net_dev)
+{
+}
 
-अटल अंतरभूत पूर्णांक batadv_nc_init(व्योम)
-अणु
-	वापस 0;
-पूर्ण
+static inline int batadv_nc_init(void)
+{
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक batadv_nc_mesh_init(काष्ठा batadv_priv *bat_priv)
-अणु
-	वापस 0;
-पूर्ण
+static inline int batadv_nc_mesh_init(struct batadv_priv *bat_priv)
+{
+	return 0;
+}
 
-अटल अंतरभूत व्योम batadv_nc_mesh_मुक्त(काष्ठा batadv_priv *bat_priv)
-अणु
-पूर्ण
+static inline void batadv_nc_mesh_free(struct batadv_priv *bat_priv)
+{
+}
 
-अटल अंतरभूत व्योम
-batadv_nc_update_nc_node(काष्ठा batadv_priv *bat_priv,
-			 काष्ठा batadv_orig_node *orig_node,
-			 काष्ठा batadv_orig_node *orig_neigh_node,
-			 काष्ठा batadv_ogm_packet *ogm_packet,
-			 पूर्णांक is_single_hop_neigh)
-अणु
-पूर्ण
+static inline void
+batadv_nc_update_nc_node(struct batadv_priv *bat_priv,
+			 struct batadv_orig_node *orig_node,
+			 struct batadv_orig_node *orig_neigh_node,
+			 struct batadv_ogm_packet *ogm_packet,
+			 int is_single_hop_neigh)
+{
+}
 
-अटल अंतरभूत व्योम
-batadv_nc_purge_orig(काष्ठा batadv_priv *bat_priv,
-		     काष्ठा batadv_orig_node *orig_node,
-		     bool (*to_purge)(काष्ठा batadv_priv *,
-				      काष्ठा batadv_nc_node *))
-अणु
-पूर्ण
+static inline void
+batadv_nc_purge_orig(struct batadv_priv *bat_priv,
+		     struct batadv_orig_node *orig_node,
+		     bool (*to_purge)(struct batadv_priv *,
+				      struct batadv_nc_node *))
+{
+}
 
-अटल अंतरभूत व्योम batadv_nc_init_bat_priv(काष्ठा batadv_priv *bat_priv)
-अणु
-पूर्ण
+static inline void batadv_nc_init_bat_priv(struct batadv_priv *bat_priv)
+{
+}
 
-अटल अंतरभूत व्योम batadv_nc_init_orig(काष्ठा batadv_orig_node *orig_node)
-अणु
-पूर्ण
+static inline void batadv_nc_init_orig(struct batadv_orig_node *orig_node)
+{
+}
 
-अटल अंतरभूत bool batadv_nc_skb_क्रमward(काष्ठा sk_buff *skb,
-					 काष्ठा batadv_neigh_node *neigh_node)
-अणु
-	वापस false;
-पूर्ण
+static inline bool batadv_nc_skb_forward(struct sk_buff *skb,
+					 struct batadv_neigh_node *neigh_node)
+{
+	return false;
+}
 
-अटल अंतरभूत व्योम
-batadv_nc_skb_store_क्रम_decoding(काष्ठा batadv_priv *bat_priv,
-				 काष्ठा sk_buff *skb)
-अणु
-पूर्ण
+static inline void
+batadv_nc_skb_store_for_decoding(struct batadv_priv *bat_priv,
+				 struct sk_buff *skb)
+{
+}
 
-अटल अंतरभूत व्योम
-batadv_nc_skb_store_snअगरfed_unicast(काष्ठा batadv_priv *bat_priv,
-				    काष्ठा sk_buff *skb)
-अणु
-पूर्ण
+static inline void
+batadv_nc_skb_store_sniffed_unicast(struct batadv_priv *bat_priv,
+				    struct sk_buff *skb)
+{
+}
 
-#पूर्ण_अगर /* अगरdef CONFIG_BATMAN_ADV_NC */
+#endif /* ifdef CONFIG_BATMAN_ADV_NC */
 
-#पूर्ण_अगर /* _NET_BATMAN_ADV_NETWORK_CODING_H_ */
+#endif /* _NET_BATMAN_ADV_NETWORK_CODING_H_ */

@@ -1,72 +1,71 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Simple पढ़ो-only (writable only क्रम RAM) mtdblock driver
+ * Simple read-only (writable only for RAM) mtdblock driver
  *
- * Copyright तऊ 2001-2010 David Woodhouse <dwmw2@infradead.org>
+ * Copyright © 2001-2010 David Woodhouse <dwmw2@infradead.org>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/mtd/blktrans.h>
-#समावेश <linux/module.h>
-#समावेश <linux/major.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/blktrans.h>
+#include <linux/module.h>
+#include <linux/major.h>
 
-अटल पूर्णांक mtdblock_पढ़ोsect(काष्ठा mtd_blktrans_dev *dev,
-			      अचिन्हित दीर्घ block, अक्षर *buf)
-अणु
-	माप_प्रकार retlen;
+static int mtdblock_readsect(struct mtd_blktrans_dev *dev,
+			      unsigned long block, char *buf)
+{
+	size_t retlen;
 
-	अगर (mtd_पढ़ो(dev->mtd, (block * 512), 512, &retlen, buf))
-		वापस 1;
-	वापस 0;
-पूर्ण
+	if (mtd_read(dev->mtd, (block * 512), 512, &retlen, buf))
+		return 1;
+	return 0;
+}
 
-अटल पूर्णांक mtdblock_ग_लिखोsect(काष्ठा mtd_blktrans_dev *dev,
-			      अचिन्हित दीर्घ block, अक्षर *buf)
-अणु
-	माप_प्रकार retlen;
+static int mtdblock_writesect(struct mtd_blktrans_dev *dev,
+			      unsigned long block, char *buf)
+{
+	size_t retlen;
 
-	अगर (mtd_ग_लिखो(dev->mtd, (block * 512), 512, &retlen, buf))
-		वापस 1;
-	वापस 0;
-पूर्ण
+	if (mtd_write(dev->mtd, (block * 512), 512, &retlen, buf))
+		return 1;
+	return 0;
+}
 
-अटल व्योम mtdblock_add_mtd(काष्ठा mtd_blktrans_ops *tr, काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा mtd_blktrans_dev *dev = kzalloc(माप(*dev), GFP_KERNEL);
+static void mtdblock_add_mtd(struct mtd_blktrans_ops *tr, struct mtd_info *mtd)
+{
+	struct mtd_blktrans_dev *dev = kzalloc(sizeof(*dev), GFP_KERNEL);
 
-	अगर (!dev)
-		वापस;
+	if (!dev)
+		return;
 
 	dev->mtd = mtd;
 	dev->devnum = mtd->index;
 
 	dev->size = mtd->size >> 9;
 	dev->tr = tr;
-	dev->पढ़ोonly = 1;
+	dev->readonly = 1;
 
-	अगर (add_mtd_blktrans_dev(dev))
-		kमुक्त(dev);
-पूर्ण
+	if (add_mtd_blktrans_dev(dev))
+		kfree(dev);
+}
 
-अटल व्योम mtdblock_हटाओ_dev(काष्ठा mtd_blktrans_dev *dev)
-अणु
+static void mtdblock_remove_dev(struct mtd_blktrans_dev *dev)
+{
 	del_mtd_blktrans_dev(dev);
-पूर्ण
+}
 
-अटल काष्ठा mtd_blktrans_ops mtdblock_tr = अणु
+static struct mtd_blktrans_ops mtdblock_tr = {
 	.name		= "mtdblock",
 	.major		= MTD_BLOCK_MAJOR,
 	.part_bits	= 0,
 	.blksize 	= 512,
-	.पढ़ोsect	= mtdblock_पढ़ोsect,
-	.ग_लिखोsect	= mtdblock_ग_लिखोsect,
+	.readsect	= mtdblock_readsect,
+	.writesect	= mtdblock_writesect,
 	.add_mtd	= mtdblock_add_mtd,
-	.हटाओ_dev	= mtdblock_हटाओ_dev,
+	.remove_dev	= mtdblock_remove_dev,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
 module_mtd_blktrans(mtdblock_tr);
 

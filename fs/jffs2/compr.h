@@ -1,106 +1,105 @@
-<शैली गुरु>
 /*
  * JFFS2 -- Journalling Flash File System, Version 2.
  *
- * Copyright तऊ 2004   Ferenc Havasi <havasi@inf.u-szeged.hu>,
+ * Copyright © 2004   Ferenc Havasi <havasi@inf.u-szeged.hu>,
  *		      University of Szeged, Hungary
- * Copyright तऊ 2004-2010 David Woodhouse <dwmw2@infradead.org>
+ * Copyright © 2004-2010 David Woodhouse <dwmw2@infradead.org>
  *
- * For licensing inक्रमmation, see the file 'LICENCE' in this directory.
+ * For licensing information, see the file 'LICENCE' in this directory.
  *
  */
 
-#अगर_अघोषित __JFFS2_COMPR_H__
-#घोषणा __JFFS2_COMPR_H__
+#ifndef __JFFS2_COMPR_H__
+#define __JFFS2_COMPR_H__
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/list.h>
-#समावेश <linux/types.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/slab.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/fs.h>
-#समावेश <linux/jffs2.h>
-#समावेश "jffs2_fs_i.h"
-#समावेश "jffs2_fs_sb.h"
-#समावेश "nodelist.h"
+#include <linux/kernel.h>
+#include <linux/vmalloc.h>
+#include <linux/list.h>
+#include <linux/types.h>
+#include <linux/string.h>
+#include <linux/slab.h>
+#include <linux/errno.h>
+#include <linux/fs.h>
+#include <linux/jffs2.h>
+#include "jffs2_fs_i.h"
+#include "jffs2_fs_sb.h"
+#include "nodelist.h"
 
-#घोषणा JFFS2_RUBINMIPS_PRIORITY 10
-#घोषणा JFFS2_DYNRUBIN_PRIORITY  20
-#घोषणा JFFS2_LZARI_PRIORITY     30
-#घोषणा JFFS2_RTIME_PRIORITY     50
-#घोषणा JFFS2_ZLIB_PRIORITY      60
-#घोषणा JFFS2_LZO_PRIORITY       80
+#define JFFS2_RUBINMIPS_PRIORITY 10
+#define JFFS2_DYNRUBIN_PRIORITY  20
+#define JFFS2_LZARI_PRIORITY     30
+#define JFFS2_RTIME_PRIORITY     50
+#define JFFS2_ZLIB_PRIORITY      60
+#define JFFS2_LZO_PRIORITY       80
 
 
-#घोषणा JFFS2_RUBINMIPS_DISABLED /* RUBINs will be used only */
-#घोषणा JFFS2_DYNRUBIN_DISABLED  /*	   क्रम decompression */
+#define JFFS2_RUBINMIPS_DISABLED /* RUBINs will be used only */
+#define JFFS2_DYNRUBIN_DISABLED  /*	   for decompression */
 
-#घोषणा JFFS2_COMPR_MODE_NONE       0
-#घोषणा JFFS2_COMPR_MODE_PRIORITY   1
-#घोषणा JFFS2_COMPR_MODE_SIZE       2
-#घोषणा JFFS2_COMPR_MODE_FAVOURLZO  3
-#घोषणा JFFS2_COMPR_MODE_FORCELZO   4
-#घोषणा JFFS2_COMPR_MODE_FORCEZLIB  5
+#define JFFS2_COMPR_MODE_NONE       0
+#define JFFS2_COMPR_MODE_PRIORITY   1
+#define JFFS2_COMPR_MODE_SIZE       2
+#define JFFS2_COMPR_MODE_FAVOURLZO  3
+#define JFFS2_COMPR_MODE_FORCELZO   4
+#define JFFS2_COMPR_MODE_FORCEZLIB  5
 
-#घोषणा FAVOUR_LZO_PERCENT 80
+#define FAVOUR_LZO_PERCENT 80
 
-काष्ठा jffs2_compressor अणु
-	काष्ठा list_head list;
-	पूर्णांक priority;			/* used by prirority comr. mode */
-	अक्षर *name;
-	अक्षर compr;			/* JFFS2_COMPR_XXX */
-	पूर्णांक (*compress)(अचिन्हित अक्षर *data_in, अचिन्हित अक्षर *cpage_out,
-			uपूर्णांक32_t *srclen, uपूर्णांक32_t *destlen);
-	पूर्णांक (*decompress)(अचिन्हित अक्षर *cdata_in, अचिन्हित अक्षर *data_out,
-			  uपूर्णांक32_t cdatalen, uपूर्णांक32_t datalen);
-	पूर्णांक usecount;
-	पूर्णांक disabled;		/* अगर set the compressor won't compress */
-	अचिन्हित अक्षर *compr_buf;	/* used by size compr. mode */
-	uपूर्णांक32_t compr_buf_size;	/* used by size compr. mode */
-	uपूर्णांक32_t stat_compr_orig_size;
-	uपूर्णांक32_t stat_compr_new_size;
-	uपूर्णांक32_t stat_compr_blocks;
-	uपूर्णांक32_t stat_decompr_blocks;
-पूर्ण;
+struct jffs2_compressor {
+	struct list_head list;
+	int priority;			/* used by prirority comr. mode */
+	char *name;
+	char compr;			/* JFFS2_COMPR_XXX */
+	int (*compress)(unsigned char *data_in, unsigned char *cpage_out,
+			uint32_t *srclen, uint32_t *destlen);
+	int (*decompress)(unsigned char *cdata_in, unsigned char *data_out,
+			  uint32_t cdatalen, uint32_t datalen);
+	int usecount;
+	int disabled;		/* if set the compressor won't compress */
+	unsigned char *compr_buf;	/* used by size compr. mode */
+	uint32_t compr_buf_size;	/* used by size compr. mode */
+	uint32_t stat_compr_orig_size;
+	uint32_t stat_compr_new_size;
+	uint32_t stat_compr_blocks;
+	uint32_t stat_decompr_blocks;
+};
 
-पूर्णांक jffs2_रेजिस्टर_compressor(काष्ठा jffs2_compressor *comp);
-पूर्णांक jffs2_unरेजिस्टर_compressor(काष्ठा jffs2_compressor *comp);
+int jffs2_register_compressor(struct jffs2_compressor *comp);
+int jffs2_unregister_compressor(struct jffs2_compressor *comp);
 
-पूर्णांक jffs2_compressors_init(व्योम);
-पूर्णांक jffs2_compressors_निकास(व्योम);
+int jffs2_compressors_init(void);
+int jffs2_compressors_exit(void);
 
-uपूर्णांक16_t jffs2_compress(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_inode_info *f,
-			अचिन्हित अक्षर *data_in, अचिन्हित अक्षर **cpage_out,
-			uपूर्णांक32_t *datalen, uपूर्णांक32_t *cdatalen);
+uint16_t jffs2_compress(struct jffs2_sb_info *c, struct jffs2_inode_info *f,
+			unsigned char *data_in, unsigned char **cpage_out,
+			uint32_t *datalen, uint32_t *cdatalen);
 
-पूर्णांक jffs2_decompress(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_inode_info *f,
-		     uपूर्णांक16_t comprtype, अचिन्हित अक्षर *cdata_in,
-		     अचिन्हित अक्षर *data_out, uपूर्णांक32_t cdatalen, uपूर्णांक32_t datalen);
+int jffs2_decompress(struct jffs2_sb_info *c, struct jffs2_inode_info *f,
+		     uint16_t comprtype, unsigned char *cdata_in,
+		     unsigned char *data_out, uint32_t cdatalen, uint32_t datalen);
 
-व्योम jffs2_मुक्त_comprbuf(अचिन्हित अक्षर *comprbuf, अचिन्हित अक्षर *orig);
+void jffs2_free_comprbuf(unsigned char *comprbuf, unsigned char *orig);
 
 /* Compressor modules */
-/* These functions will be called by jffs2_compressors_init/निकास */
+/* These functions will be called by jffs2_compressors_init/exit */
 
-#अगर_घोषित CONFIG_JFFS2_RUBIN
-पूर्णांक jffs2_rubinmips_init(व्योम);
-व्योम jffs2_rubinmips_निकास(व्योम);
-पूर्णांक jffs2_dynrubin_init(व्योम);
-व्योम jffs2_dynrubin_निकास(व्योम);
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_JFFS2_RTIME
-पूर्णांक jffs2_rसमय_init(व्योम);
-व्योम jffs2_rसमय_निकास(व्योम);
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_JFFS2_ZLIB
-पूर्णांक jffs2_zlib_init(व्योम);
-व्योम jffs2_zlib_निकास(व्योम);
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_JFFS2_LZO
-पूर्णांक jffs2_lzo_init(व्योम);
-व्योम jffs2_lzo_निकास(व्योम);
-#पूर्ण_अगर
+#ifdef CONFIG_JFFS2_RUBIN
+int jffs2_rubinmips_init(void);
+void jffs2_rubinmips_exit(void);
+int jffs2_dynrubin_init(void);
+void jffs2_dynrubin_exit(void);
+#endif
+#ifdef CONFIG_JFFS2_RTIME
+int jffs2_rtime_init(void);
+void jffs2_rtime_exit(void);
+#endif
+#ifdef CONFIG_JFFS2_ZLIB
+int jffs2_zlib_init(void);
+void jffs2_zlib_exit(void);
+#endif
+#ifdef CONFIG_JFFS2_LZO
+int jffs2_lzo_init(void);
+void jffs2_lzo_exit(void);
+#endif
 
-#पूर्ण_अगर /* __JFFS2_COMPR_H__ */
+#endif /* __JFFS2_COMPR_H__ */

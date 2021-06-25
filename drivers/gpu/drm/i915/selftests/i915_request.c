@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2016 Intel Corporation
+ * Copyright © 2016 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -23,202 +22,202 @@
  *
  */
 
-#समावेश <linux/prime_numbers.h>
-#समावेश <linux/pm_qos.h>
-#समावेश <linux/sort.h>
+#include <linux/prime_numbers.h>
+#include <linux/pm_qos.h>
+#include <linux/sort.h>
 
-#समावेश "gem/i915_gem_pm.h"
-#समावेश "gem/selftests/mock_context.h"
+#include "gem/i915_gem_pm.h"
+#include "gem/selftests/mock_context.h"
 
-#समावेश "gt/intel_engine_heartbeat.h"
-#समावेश "gt/intel_engine_pm.h"
-#समावेश "gt/intel_engine_user.h"
-#समावेश "gt/intel_gt.h"
-#समावेश "gt/intel_gt_clock_utils.h"
-#समावेश "gt/intel_gt_requests.h"
-#समावेश "gt/selftest_engine_heartbeat.h"
+#include "gt/intel_engine_heartbeat.h"
+#include "gt/intel_engine_pm.h"
+#include "gt/intel_engine_user.h"
+#include "gt/intel_gt.h"
+#include "gt/intel_gt_clock_utils.h"
+#include "gt/intel_gt_requests.h"
+#include "gt/selftest_engine_heartbeat.h"
 
-#समावेश "i915_random.h"
-#समावेश "i915_selftest.h"
-#समावेश "igt_flush_test.h"
-#समावेश "igt_live_test.h"
-#समावेश "igt_spinner.h"
-#समावेश "lib_sw_fence.h"
+#include "i915_random.h"
+#include "i915_selftest.h"
+#include "igt_flush_test.h"
+#include "igt_live_test.h"
+#include "igt_spinner.h"
+#include "lib_sw_fence.h"
 
-#समावेश "mock_drm.h"
-#समावेश "mock_gem_device.h"
+#include "mock_drm.h"
+#include "mock_gem_device.h"
 
-अटल अचिन्हित पूर्णांक num_uabi_engines(काष्ठा drm_i915_निजी *i915)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	अचिन्हित पूर्णांक count;
+static unsigned int num_uabi_engines(struct drm_i915_private *i915)
+{
+	struct intel_engine_cs *engine;
+	unsigned int count;
 
 	count = 0;
-	क्रम_each_uabi_engine(engine, i915)
+	for_each_uabi_engine(engine, i915)
 		count++;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल काष्ठा पूर्णांकel_engine_cs *rcs0(काष्ठा drm_i915_निजी *i915)
-अणु
-	वापस पूर्णांकel_engine_lookup_user(i915, I915_ENGINE_CLASS_RENDER, 0);
-पूर्ण
+static struct intel_engine_cs *rcs0(struct drm_i915_private *i915)
+{
+	return intel_engine_lookup_user(i915, I915_ENGINE_CLASS_RENDER, 0);
+}
 
-अटल पूर्णांक igt_add_request(व्योम *arg)
-अणु
-	काष्ठा drm_i915_निजी *i915 = arg;
-	काष्ठा i915_request *request;
+static int igt_add_request(void *arg)
+{
+	struct drm_i915_private *i915 = arg;
+	struct i915_request *request;
 
 	/* Basic preliminary test to create a request and let it loose! */
 
 	request = mock_request(rcs0(i915)->kernel_context, HZ / 10);
-	अगर (!request)
-		वापस -ENOMEM;
+	if (!request)
+		return -ENOMEM;
 
 	i915_request_add(request);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक igt_रुको_request(व्योम *arg)
-अणु
-	स्थिर दीर्घ T = HZ / 4;
-	काष्ठा drm_i915_निजी *i915 = arg;
-	काष्ठा i915_request *request;
-	पूर्णांक err = -EINVAL;
+static int igt_wait_request(void *arg)
+{
+	const long T = HZ / 4;
+	struct drm_i915_private *i915 = arg;
+	struct i915_request *request;
+	int err = -EINVAL;
 
-	/* Submit a request, then रुको upon it */
+	/* Submit a request, then wait upon it */
 
 	request = mock_request(rcs0(i915)->kernel_context, T);
-	अगर (!request)
-		वापस -ENOMEM;
+	if (!request)
+		return -ENOMEM;
 
 	i915_request_get(request);
 
-	अगर (i915_request_रुको(request, 0, 0) != -ETIME) अणु
+	if (i915_request_wait(request, 0, 0) != -ETIME) {
 		pr_err("request wait (busy query) succeeded (expected timeout before submit!)\n");
-		जाओ out_request;
-	पूर्ण
+		goto out_request;
+	}
 
-	अगर (i915_request_रुको(request, 0, T) != -ETIME) अणु
+	if (i915_request_wait(request, 0, T) != -ETIME) {
 		pr_err("request wait succeeded (expected timeout before submit!)\n");
-		जाओ out_request;
-	पूर्ण
+		goto out_request;
+	}
 
-	अगर (i915_request_completed(request)) अणु
+	if (i915_request_completed(request)) {
 		pr_err("request completed before submit!!\n");
-		जाओ out_request;
-	पूर्ण
+		goto out_request;
+	}
 
 	i915_request_add(request);
 
-	अगर (i915_request_रुको(request, 0, 0) != -ETIME) अणु
+	if (i915_request_wait(request, 0, 0) != -ETIME) {
 		pr_err("request wait (busy query) succeeded (expected timeout after submit!)\n");
-		जाओ out_request;
-	पूर्ण
+		goto out_request;
+	}
 
-	अगर (i915_request_completed(request)) अणु
+	if (i915_request_completed(request)) {
 		pr_err("request completed immediately!\n");
-		जाओ out_request;
-	पूर्ण
+		goto out_request;
+	}
 
-	अगर (i915_request_रुको(request, 0, T / 2) != -ETIME) अणु
+	if (i915_request_wait(request, 0, T / 2) != -ETIME) {
 		pr_err("request wait succeeded (expected timeout!)\n");
-		जाओ out_request;
-	पूर्ण
+		goto out_request;
+	}
 
-	अगर (i915_request_रुको(request, 0, T) == -ETIME) अणु
+	if (i915_request_wait(request, 0, T) == -ETIME) {
 		pr_err("request wait timed out!\n");
-		जाओ out_request;
-	पूर्ण
+		goto out_request;
+	}
 
-	अगर (!i915_request_completed(request)) अणु
+	if (!i915_request_completed(request)) {
 		pr_err("request not complete after waiting!\n");
-		जाओ out_request;
-	पूर्ण
+		goto out_request;
+	}
 
-	अगर (i915_request_रुको(request, 0, T) == -ETIME) अणु
+	if (i915_request_wait(request, 0, T) == -ETIME) {
 		pr_err("request wait timed out when already complete!\n");
-		जाओ out_request;
-	पूर्ण
+		goto out_request;
+	}
 
 	err = 0;
 out_request:
 	i915_request_put(request);
 	mock_device_flush(i915);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक igt_fence_रुको(व्योम *arg)
-अणु
-	स्थिर दीर्घ T = HZ / 4;
-	काष्ठा drm_i915_निजी *i915 = arg;
-	काष्ठा i915_request *request;
-	पूर्णांक err = -EINVAL;
+static int igt_fence_wait(void *arg)
+{
+	const long T = HZ / 4;
+	struct drm_i915_private *i915 = arg;
+	struct i915_request *request;
+	int err = -EINVAL;
 
-	/* Submit a request, treat it as a fence and रुको upon it */
+	/* Submit a request, treat it as a fence and wait upon it */
 
 	request = mock_request(rcs0(i915)->kernel_context, T);
-	अगर (!request)
-		वापस -ENOMEM;
+	if (!request)
+		return -ENOMEM;
 
-	अगर (dma_fence_रुको_समयout(&request->fence, false, T) != -ETIME) अणु
+	if (dma_fence_wait_timeout(&request->fence, false, T) != -ETIME) {
 		pr_err("fence wait success before submit (expected timeout)!\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	i915_request_add(request);
 
-	अगर (dma_fence_is_संकेतed(&request->fence)) अणु
+	if (dma_fence_is_signaled(&request->fence)) {
 		pr_err("fence signaled immediately!\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (dma_fence_रुको_समयout(&request->fence, false, T / 2) != -ETIME) अणु
+	if (dma_fence_wait_timeout(&request->fence, false, T / 2) != -ETIME) {
 		pr_err("fence wait success after submit (expected timeout)!\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (dma_fence_रुको_समयout(&request->fence, false, T) <= 0) अणु
+	if (dma_fence_wait_timeout(&request->fence, false, T) <= 0) {
 		pr_err("fence wait timed out (expected success)!\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (!dma_fence_is_संकेतed(&request->fence)) अणु
+	if (!dma_fence_is_signaled(&request->fence)) {
 		pr_err("fence unsignaled after waiting!\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (dma_fence_रुको_समयout(&request->fence, false, T) <= 0) अणु
+	if (dma_fence_wait_timeout(&request->fence, false, T) <= 0) {
 		pr_err("fence wait timed out when complete (expected success)!\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	err = 0;
 out:
 	mock_device_flush(i915);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक igt_request_शुरुआत(व्योम *arg)
-अणु
-	काष्ठा drm_i915_निजी *i915 = arg;
-	काष्ठा i915_request *request, *vip;
-	काष्ठा i915_gem_context *ctx[2];
-	काष्ठा पूर्णांकel_context *ce;
-	पूर्णांक err = -EINVAL;
+static int igt_request_rewind(void *arg)
+{
+	struct drm_i915_private *i915 = arg;
+	struct i915_request *request, *vip;
+	struct i915_gem_context *ctx[2];
+	struct intel_context *ce;
+	int err = -EINVAL;
 
 	ctx[0] = mock_context(i915, "A");
 
 	ce = i915_gem_context_get_engine(ctx[0], RCS0);
 	GEM_BUG_ON(IS_ERR(ce));
 	request = mock_request(ce, 2 * HZ);
-	पूर्णांकel_context_put(ce);
-	अगर (!request) अणु
+	intel_context_put(ce);
+	if (!request) {
 		err = -ENOMEM;
-		जाओ err_context_0;
-	पूर्ण
+		goto err_context_0;
+	}
 
 	i915_request_get(request);
 	i915_request_add(request);
@@ -228,856 +227,856 @@ out:
 	ce = i915_gem_context_get_engine(ctx[1], RCS0);
 	GEM_BUG_ON(IS_ERR(ce));
 	vip = mock_request(ce, 0);
-	पूर्णांकel_context_put(ce);
-	अगर (!vip) अणु
+	intel_context_put(ce);
+	if (!vip) {
 		err = -ENOMEM;
-		जाओ err_context_1;
-	पूर्ण
+		goto err_context_1;
+	}
 
 	/* Simulate preemption by manual reordering */
-	अगर (!mock_cancel_request(request)) अणु
+	if (!mock_cancel_request(request)) {
 		pr_err("failed to cancel request (already executed)!\n");
 		i915_request_add(vip);
-		जाओ err_context_1;
-	पूर्ण
+		goto err_context_1;
+	}
 	i915_request_get(vip);
 	i915_request_add(vip);
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	request->engine->submit_request(request);
-	rcu_पढ़ो_unlock();
+	rcu_read_unlock();
 
 
-	अगर (i915_request_रुको(vip, 0, HZ) == -ETIME) अणु
+	if (i915_request_wait(vip, 0, HZ) == -ETIME) {
 		pr_err("timed out waiting for high priority request\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर (i915_request_completed(request)) अणु
+	if (i915_request_completed(request)) {
 		pr_err("low priority request already completed\n");
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	err = 0;
 err:
 	i915_request_put(vip);
 err_context_1:
-	mock_context_बंद(ctx[1]);
+	mock_context_close(ctx[1]);
 	i915_request_put(request);
 err_context_0:
-	mock_context_बंद(ctx[0]);
+	mock_context_close(ctx[0]);
 	mock_device_flush(i915);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-काष्ठा smoketest अणु
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	काष्ठा i915_gem_context **contexts;
-	atomic_दीर्घ_t num_रुकोs, num_fences;
-	पूर्णांक ncontexts, max_batch;
-	काष्ठा i915_request *(*request_alloc)(काष्ठा पूर्णांकel_context *ce);
-पूर्ण;
+struct smoketest {
+	struct intel_engine_cs *engine;
+	struct i915_gem_context **contexts;
+	atomic_long_t num_waits, num_fences;
+	int ncontexts, max_batch;
+	struct i915_request *(*request_alloc)(struct intel_context *ce);
+};
 
-अटल काष्ठा i915_request *
-__mock_request_alloc(काष्ठा पूर्णांकel_context *ce)
-अणु
-	वापस mock_request(ce, 0);
-पूर्ण
+static struct i915_request *
+__mock_request_alloc(struct intel_context *ce)
+{
+	return mock_request(ce, 0);
+}
 
-अटल काष्ठा i915_request *
-__live_request_alloc(काष्ठा पूर्णांकel_context *ce)
-अणु
-	वापस पूर्णांकel_context_create_request(ce);
-पूर्ण
+static struct i915_request *
+__live_request_alloc(struct intel_context *ce)
+{
+	return intel_context_create_request(ce);
+}
 
-अटल पूर्णांक __igt_bपढ़ोcrumbs_smoketest(व्योम *arg)
-अणु
-	काष्ठा smoketest *t = arg;
-	स्थिर अचिन्हित पूर्णांक max_batch = min(t->ncontexts, t->max_batch) - 1;
-	स्थिर अचिन्हित पूर्णांक total = 4 * t->ncontexts + 1;
-	अचिन्हित पूर्णांक num_रुकोs = 0, num_fences = 0;
-	काष्ठा i915_request **requests;
+static int __igt_breadcrumbs_smoketest(void *arg)
+{
+	struct smoketest *t = arg;
+	const unsigned int max_batch = min(t->ncontexts, t->max_batch) - 1;
+	const unsigned int total = 4 * t->ncontexts + 1;
+	unsigned int num_waits = 0, num_fences = 0;
+	struct i915_request **requests;
 	I915_RND_STATE(prng);
-	अचिन्हित पूर्णांक *order;
-	पूर्णांक err = 0;
+	unsigned int *order;
+	int err = 0;
 
 	/*
 	 * A very simple test to catch the most egregious of list handling bugs.
 	 *
 	 * At its heart, we simply create oodles of requests running across
-	 * multiple kthपढ़ोs and enable संकेतing on them, क्रम the sole purpose
-	 * of stressing our bपढ़ोcrumb handling. The only inspection we करो is
-	 * that the fences were marked as संकेतed.
+	 * multiple kthreads and enable signaling on them, for the sole purpose
+	 * of stressing our breadcrumb handling. The only inspection we do is
+	 * that the fences were marked as signaled.
 	 */
 
-	requests = kसुस्मृति(total, माप(*requests), GFP_KERNEL);
-	अगर (!requests)
-		वापस -ENOMEM;
+	requests = kcalloc(total, sizeof(*requests), GFP_KERNEL);
+	if (!requests)
+		return -ENOMEM;
 
-	order = i915_अक्रमom_order(total, &prng);
-	अगर (!order) अणु
+	order = i915_random_order(total, &prng);
+	if (!order) {
 		err = -ENOMEM;
-		जाओ out_requests;
-	पूर्ण
+		goto out_requests;
+	}
 
-	जबतक (!kthपढ़ो_should_stop()) अणु
-		काष्ठा i915_sw_fence *submit, *रुको;
-		अचिन्हित पूर्णांक n, count;
+	while (!kthread_should_stop()) {
+		struct i915_sw_fence *submit, *wait;
+		unsigned int n, count;
 
 		submit = heap_fence_create(GFP_KERNEL);
-		अगर (!submit) अणु
+		if (!submit) {
 			err = -ENOMEM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		रुको = heap_fence_create(GFP_KERNEL);
-		अगर (!रुको) अणु
+		wait = heap_fence_create(GFP_KERNEL);
+		if (!wait) {
 			i915_sw_fence_commit(submit);
 			heap_fence_put(submit);
 			err = -ENOMEM;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		i915_अक्रमom_reorder(order, total, &prng);
-		count = 1 + i915_pअक्रमom_u32_max_state(max_batch, &prng);
+		i915_random_reorder(order, total, &prng);
+		count = 1 + i915_prandom_u32_max_state(max_batch, &prng);
 
-		क्रम (n = 0; n < count; n++) अणु
-			काष्ठा i915_gem_context *ctx =
+		for (n = 0; n < count; n++) {
+			struct i915_gem_context *ctx =
 				t->contexts[order[n] % t->ncontexts];
-			काष्ठा i915_request *rq;
-			काष्ठा पूर्णांकel_context *ce;
+			struct i915_request *rq;
+			struct intel_context *ce;
 
 			ce = i915_gem_context_get_engine(ctx, t->engine->legacy_idx);
 			GEM_BUG_ON(IS_ERR(ce));
 			rq = t->request_alloc(ce);
-			पूर्णांकel_context_put(ce);
-			अगर (IS_ERR(rq)) अणु
+			intel_context_put(ce);
+			if (IS_ERR(rq)) {
 				err = PTR_ERR(rq);
 				count = n;
-				अवरोध;
-			पूर्ण
+				break;
+			}
 
-			err = i915_sw_fence_aरुको_sw_fence_gfp(&rq->submit,
+			err = i915_sw_fence_await_sw_fence_gfp(&rq->submit,
 							       submit,
 							       GFP_KERNEL);
 
 			requests[n] = i915_request_get(rq);
 			i915_request_add(rq);
 
-			अगर (err >= 0)
-				err = i915_sw_fence_aरुको_dma_fence(रुको,
+			if (err >= 0)
+				err = i915_sw_fence_await_dma_fence(wait,
 								    &rq->fence,
 								    0,
 								    GFP_KERNEL);
 
-			अगर (err < 0) अणु
+			if (err < 0) {
 				i915_request_put(rq);
 				count = n;
-				अवरोध;
-			पूर्ण
-		पूर्ण
+				break;
+			}
+		}
 
 		i915_sw_fence_commit(submit);
-		i915_sw_fence_commit(रुको);
+		i915_sw_fence_commit(wait);
 
-		अगर (!रुको_event_समयout(रुको->रुको,
-					i915_sw_fence_करोne(रुको),
-					5 * HZ)) अणु
-			काष्ठा i915_request *rq = requests[count - 1];
+		if (!wait_event_timeout(wait->wait,
+					i915_sw_fence_done(wait),
+					5 * HZ)) {
+			struct i915_request *rq = requests[count - 1];
 
 			pr_err("waiting for %d/%d fences (last %llx:%lld) on %s timed out!\n",
-			       atomic_पढ़ो(&रुको->pending), count,
+			       atomic_read(&wait->pending), count,
 			       rq->fence.context, rq->fence.seqno,
 			       t->engine->name);
 			GEM_TRACE_DUMP();
 
-			पूर्णांकel_gt_set_wedged(t->engine->gt);
+			intel_gt_set_wedged(t->engine->gt);
 			GEM_BUG_ON(!i915_request_completed(rq));
-			i915_sw_fence_रुको(रुको);
+			i915_sw_fence_wait(wait);
 			err = -EIO;
-		पूर्ण
+		}
 
-		क्रम (n = 0; n < count; n++) अणु
-			काष्ठा i915_request *rq = requests[n];
+		for (n = 0; n < count; n++) {
+			struct i915_request *rq = requests[n];
 
-			अगर (!test_bit(DMA_FENCE_FLAG_SIGNALED_BIT,
-				      &rq->fence.flags)) अणु
+			if (!test_bit(DMA_FENCE_FLAG_SIGNALED_BIT,
+				      &rq->fence.flags)) {
 				pr_err("%llu:%llu was not signaled!\n",
 				       rq->fence.context, rq->fence.seqno);
 				err = -EINVAL;
-			पूर्ण
+			}
 
 			i915_request_put(rq);
-		पूर्ण
+		}
 
-		heap_fence_put(रुको);
+		heap_fence_put(wait);
 		heap_fence_put(submit);
 
-		अगर (err < 0)
-			अवरोध;
+		if (err < 0)
+			break;
 
 		num_fences += count;
-		num_रुकोs++;
+		num_waits++;
 
 		cond_resched();
-	पूर्ण
+	}
 
-	atomic_दीर्घ_add(num_fences, &t->num_fences);
-	atomic_दीर्घ_add(num_रुकोs, &t->num_रुकोs);
+	atomic_long_add(num_fences, &t->num_fences);
+	atomic_long_add(num_waits, &t->num_waits);
 
-	kमुक्त(order);
+	kfree(order);
 out_requests:
-	kमुक्त(requests);
-	वापस err;
-पूर्ण
+	kfree(requests);
+	return err;
+}
 
-अटल पूर्णांक mock_bपढ़ोcrumbs_smoketest(व्योम *arg)
-अणु
-	काष्ठा drm_i915_निजी *i915 = arg;
-	काष्ठा smoketest t = अणु
+static int mock_breadcrumbs_smoketest(void *arg)
+{
+	struct drm_i915_private *i915 = arg;
+	struct smoketest t = {
 		.engine = rcs0(i915),
 		.ncontexts = 1024,
 		.max_batch = 1024,
 		.request_alloc = __mock_request_alloc
-	पूर्ण;
-	अचिन्हित पूर्णांक ncpus = num_online_cpus();
-	काष्ठा task_काष्ठा **thपढ़ोs;
-	अचिन्हित पूर्णांक n;
-	पूर्णांक ret = 0;
+	};
+	unsigned int ncpus = num_online_cpus();
+	struct task_struct **threads;
+	unsigned int n;
+	int ret = 0;
 
 	/*
-	 * Smoketest our bपढ़ोcrumb/संकेत handling क्रम requests across multiple
-	 * thपढ़ोs. A very simple test to only catch the most egregious of bugs.
-	 * See __igt_bपढ़ोcrumbs_smoketest();
+	 * Smoketest our breadcrumb/signal handling for requests across multiple
+	 * threads. A very simple test to only catch the most egregious of bugs.
+	 * See __igt_breadcrumbs_smoketest();
 	 */
 
-	thपढ़ोs = kसुस्मृति(ncpus, माप(*thपढ़ोs), GFP_KERNEL);
-	अगर (!thपढ़ोs)
-		वापस -ENOMEM;
+	threads = kcalloc(ncpus, sizeof(*threads), GFP_KERNEL);
+	if (!threads)
+		return -ENOMEM;
 
-	t.contexts = kसुस्मृति(t.ncontexts, माप(*t.contexts), GFP_KERNEL);
-	अगर (!t.contexts) अणु
+	t.contexts = kcalloc(t.ncontexts, sizeof(*t.contexts), GFP_KERNEL);
+	if (!t.contexts) {
 		ret = -ENOMEM;
-		जाओ out_thपढ़ोs;
-	पूर्ण
+		goto out_threads;
+	}
 
-	क्रम (n = 0; n < t.ncontexts; n++) अणु
+	for (n = 0; n < t.ncontexts; n++) {
 		t.contexts[n] = mock_context(t.engine->i915, "mock");
-		अगर (!t.contexts[n]) अणु
+		if (!t.contexts[n]) {
 			ret = -ENOMEM;
-			जाओ out_contexts;
-		पूर्ण
-	पूर्ण
+			goto out_contexts;
+		}
+	}
 
-	क्रम (n = 0; n < ncpus; n++) अणु
-		thपढ़ोs[n] = kthपढ़ो_run(__igt_bपढ़ोcrumbs_smoketest,
+	for (n = 0; n < ncpus; n++) {
+		threads[n] = kthread_run(__igt_breadcrumbs_smoketest,
 					 &t, "igt/%d", n);
-		अगर (IS_ERR(thपढ़ोs[n])) अणु
-			ret = PTR_ERR(thपढ़ोs[n]);
+		if (IS_ERR(threads[n])) {
+			ret = PTR_ERR(threads[n]);
 			ncpus = n;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		get_task_काष्ठा(thपढ़ोs[n]);
-	पूर्ण
+		get_task_struct(threads[n]);
+	}
 
-	yield(); /* start all thपढ़ोs beक्रमe we begin */
-	msleep(jअगरfies_to_msecs(i915_selftest.समयout_jअगरfies));
+	yield(); /* start all threads before we begin */
+	msleep(jiffies_to_msecs(i915_selftest.timeout_jiffies));
 
-	क्रम (n = 0; n < ncpus; n++) अणु
-		पूर्णांक err;
+	for (n = 0; n < ncpus; n++) {
+		int err;
 
-		err = kthपढ़ो_stop(thपढ़ोs[n]);
-		अगर (err < 0 && !ret)
+		err = kthread_stop(threads[n]);
+		if (err < 0 && !ret)
 			ret = err;
 
-		put_task_काष्ठा(thपढ़ोs[n]);
-	पूर्ण
+		put_task_struct(threads[n]);
+	}
 	pr_info("Completed %lu waits for %lu fence across %d cpus\n",
-		atomic_दीर्घ_पढ़ो(&t.num_रुकोs),
-		atomic_दीर्घ_पढ़ो(&t.num_fences),
+		atomic_long_read(&t.num_waits),
+		atomic_long_read(&t.num_fences),
 		ncpus);
 
 out_contexts:
-	क्रम (n = 0; n < t.ncontexts; n++) अणु
-		अगर (!t.contexts[n])
-			अवरोध;
-		mock_context_बंद(t.contexts[n]);
-	पूर्ण
-	kमुक्त(t.contexts);
-out_thपढ़ोs:
-	kमुक्त(thपढ़ोs);
-	वापस ret;
-पूर्ण
+	for (n = 0; n < t.ncontexts; n++) {
+		if (!t.contexts[n])
+			break;
+		mock_context_close(t.contexts[n]);
+	}
+	kfree(t.contexts);
+out_threads:
+	kfree(threads);
+	return ret;
+}
 
-पूर्णांक i915_request_mock_selftests(व्योम)
-अणु
-	अटल स्थिर काष्ठा i915_subtest tests[] = अणु
+int i915_request_mock_selftests(void)
+{
+	static const struct i915_subtest tests[] = {
 		SUBTEST(igt_add_request),
-		SUBTEST(igt_रुको_request),
-		SUBTEST(igt_fence_रुको),
-		SUBTEST(igt_request_शुरुआत),
-		SUBTEST(mock_bपढ़ोcrumbs_smoketest),
-	पूर्ण;
-	काष्ठा drm_i915_निजी *i915;
-	पूर्णांकel_wakeref_t wakeref;
-	पूर्णांक err = 0;
+		SUBTEST(igt_wait_request),
+		SUBTEST(igt_fence_wait),
+		SUBTEST(igt_request_rewind),
+		SUBTEST(mock_breadcrumbs_smoketest),
+	};
+	struct drm_i915_private *i915;
+	intel_wakeref_t wakeref;
+	int err = 0;
 
 	i915 = mock_gem_device();
-	अगर (!i915)
-		वापस -ENOMEM;
+	if (!i915)
+		return -ENOMEM;
 
-	with_पूर्णांकel_runसमय_pm(&i915->runसमय_pm, wakeref)
+	with_intel_runtime_pm(&i915->runtime_pm, wakeref)
 		err = i915_subtests(tests, i915);
 
 	mock_destroy_device(i915);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक live_nop_request(व्योम *arg)
-अणु
-	काष्ठा drm_i915_निजी *i915 = arg;
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	काष्ठा igt_live_test t;
-	पूर्णांक err = -ENODEV;
+static int live_nop_request(void *arg)
+{
+	struct drm_i915_private *i915 = arg;
+	struct intel_engine_cs *engine;
+	struct igt_live_test t;
+	int err = -ENODEV;
 
 	/*
 	 * Submit various sized batches of empty requests, to each engine
-	 * (inभागidually), and रुको क्रम the batch to complete. We can check
+	 * (individually), and wait for the batch to complete. We can check
 	 * the overhead of submitting requests to the hardware.
 	 */
 
-	क्रम_each_uabi_engine(engine, i915) अणु
-		अचिन्हित दीर्घ n, prime;
-		IGT_TIMEOUT(end_समय);
-		kसमय_प्रकार बार[2] = अणुपूर्ण;
+	for_each_uabi_engine(engine, i915) {
+		unsigned long n, prime;
+		IGT_TIMEOUT(end_time);
+		ktime_t times[2] = {};
 
 		err = igt_live_test_begin(&t, i915, __func__, engine->name);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
-		पूर्णांकel_engine_pm_get(engine);
-		क्रम_each_prime_number_from(prime, 1, 8192) अणु
-			काष्ठा i915_request *request = शून्य;
+		intel_engine_pm_get(engine);
+		for_each_prime_number_from(prime, 1, 8192) {
+			struct i915_request *request = NULL;
 
-			बार[1] = kसमय_get_raw();
+			times[1] = ktime_get_raw();
 
-			क्रम (n = 0; n < prime; n++) अणु
+			for (n = 0; n < prime; n++) {
 				i915_request_put(request);
 				request = i915_request_create(engine->kernel_context);
-				अगर (IS_ERR(request))
-					वापस PTR_ERR(request);
+				if (IS_ERR(request))
+					return PTR_ERR(request);
 
 				/*
-				 * This space is left पूर्णांकentionally blank.
+				 * This space is left intentionally blank.
 				 *
-				 * We करो not actually want to perक्रमm any
+				 * We do not actually want to perform any
 				 * action with this request, we just want
 				 * to measure the latency in allocation
-				 * and submission of our bपढ़ोcrumbs -
+				 * and submission of our breadcrumbs -
 				 * ensuring that the bare request is sufficient
-				 * क्रम the प्रणाली to work (i.e. proper HEAD
-				 * tracking of the rings, पूर्णांकerrupt handling,
+				 * for the system to work (i.e. proper HEAD
+				 * tracking of the rings, interrupt handling,
 				 * etc). It also gives us the lowest bounds
-				 * क्रम latency.
+				 * for latency.
 				 */
 
 				i915_request_get(request);
 				i915_request_add(request);
-			पूर्ण
-			i915_request_रुको(request, 0, MAX_SCHEDULE_TIMEOUT);
+			}
+			i915_request_wait(request, 0, MAX_SCHEDULE_TIMEOUT);
 			i915_request_put(request);
 
-			बार[1] = kसमय_sub(kसमय_get_raw(), बार[1]);
-			अगर (prime == 1)
-				बार[0] = बार[1];
+			times[1] = ktime_sub(ktime_get_raw(), times[1]);
+			if (prime == 1)
+				times[0] = times[1];
 
-			अगर (__igt_समयout(end_समय, शून्य))
-				अवरोध;
-		पूर्ण
-		पूर्णांकel_engine_pm_put(engine);
+			if (__igt_timeout(end_time, NULL))
+				break;
+		}
+		intel_engine_pm_put(engine);
 
 		err = igt_live_test_end(&t);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		pr_info("Request latencies on %s: 1 = %lluns, %lu = %lluns\n",
 			engine->name,
-			kसमय_प्रकारo_ns(बार[0]),
-			prime, भाग64_u64(kसमय_प्रकारo_ns(बार[1]), prime));
-	पूर्ण
+			ktime_to_ns(times[0]),
+			prime, div64_u64(ktime_to_ns(times[1]), prime));
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __cancel_inactive(काष्ठा पूर्णांकel_engine_cs *engine)
-अणु
-	काष्ठा पूर्णांकel_context *ce;
-	काष्ठा igt_spinner spin;
-	काष्ठा i915_request *rq;
-	पूर्णांक err = 0;
+static int __cancel_inactive(struct intel_engine_cs *engine)
+{
+	struct intel_context *ce;
+	struct igt_spinner spin;
+	struct i915_request *rq;
+	int err = 0;
 
-	अगर (igt_spinner_init(&spin, engine->gt))
-		वापस -ENOMEM;
+	if (igt_spinner_init(&spin, engine->gt))
+		return -ENOMEM;
 
-	ce = पूर्णांकel_context_create(engine);
-	अगर (IS_ERR(ce)) अणु
+	ce = intel_context_create(engine);
+	if (IS_ERR(ce)) {
 		err = PTR_ERR(ce);
-		जाओ out_spin;
-	पूर्ण
+		goto out_spin;
+	}
 
 	rq = igt_spinner_create_request(&spin, ce, MI_ARB_CHECK);
-	अगर (IS_ERR(rq)) अणु
+	if (IS_ERR(rq)) {
 		err = PTR_ERR(rq);
-		जाओ out_ce;
-	पूर्ण
+		goto out_ce;
+	}
 
 	pr_debug("%s: Cancelling inactive request\n", engine->name);
 	i915_request_cancel(rq, -EINTR);
 	i915_request_get(rq);
 	i915_request_add(rq);
 
-	अगर (i915_request_रुको(rq, 0, HZ / 5) < 0) अणु
-		काष्ठा drm_prपूर्णांकer p = drm_info_prपूर्णांकer(engine->i915->drm.dev);
+	if (i915_request_wait(rq, 0, HZ / 5) < 0) {
+		struct drm_printer p = drm_info_printer(engine->i915->drm.dev);
 
 		pr_err("%s: Failed to cancel inactive request\n", engine->name);
-		पूर्णांकel_engine_dump(engine, &p, "%s\n", engine->name);
+		intel_engine_dump(engine, &p, "%s\n", engine->name);
 		err = -ETIME;
-		जाओ out_rq;
-	पूर्ण
+		goto out_rq;
+	}
 
-	अगर (rq->fence.error != -EINTR) अणु
+	if (rq->fence.error != -EINTR) {
 		pr_err("%s: fence not cancelled (%u)\n",
 		       engine->name, rq->fence.error);
 		err = -EINVAL;
-	पूर्ण
+	}
 
 out_rq:
 	i915_request_put(rq);
 out_ce:
-	पूर्णांकel_context_put(ce);
+	intel_context_put(ce);
 out_spin:
 	igt_spinner_fini(&spin);
-	अगर (err)
+	if (err)
 		pr_err("%s: %s error %d\n", __func__, engine->name, err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __cancel_active(काष्ठा पूर्णांकel_engine_cs *engine)
-अणु
-	काष्ठा पूर्णांकel_context *ce;
-	काष्ठा igt_spinner spin;
-	काष्ठा i915_request *rq;
-	पूर्णांक err = 0;
+static int __cancel_active(struct intel_engine_cs *engine)
+{
+	struct intel_context *ce;
+	struct igt_spinner spin;
+	struct i915_request *rq;
+	int err = 0;
 
-	अगर (igt_spinner_init(&spin, engine->gt))
-		वापस -ENOMEM;
+	if (igt_spinner_init(&spin, engine->gt))
+		return -ENOMEM;
 
-	ce = पूर्णांकel_context_create(engine);
-	अगर (IS_ERR(ce)) अणु
+	ce = intel_context_create(engine);
+	if (IS_ERR(ce)) {
 		err = PTR_ERR(ce);
-		जाओ out_spin;
-	पूर्ण
+		goto out_spin;
+	}
 
 	rq = igt_spinner_create_request(&spin, ce, MI_ARB_CHECK);
-	अगर (IS_ERR(rq)) अणु
+	if (IS_ERR(rq)) {
 		err = PTR_ERR(rq);
-		जाओ out_ce;
-	पूर्ण
+		goto out_ce;
+	}
 
 	pr_debug("%s: Cancelling active request\n", engine->name);
 	i915_request_get(rq);
 	i915_request_add(rq);
-	अगर (!igt_रुको_क्रम_spinner(&spin, rq)) अणु
-		काष्ठा drm_prपूर्णांकer p = drm_info_prपूर्णांकer(engine->i915->drm.dev);
+	if (!igt_wait_for_spinner(&spin, rq)) {
+		struct drm_printer p = drm_info_printer(engine->i915->drm.dev);
 
 		pr_err("Failed to start spinner on %s\n", engine->name);
-		पूर्णांकel_engine_dump(engine, &p, "%s\n", engine->name);
+		intel_engine_dump(engine, &p, "%s\n", engine->name);
 		err = -ETIME;
-		जाओ out_rq;
-	पूर्ण
+		goto out_rq;
+	}
 	i915_request_cancel(rq, -EINTR);
 
-	अगर (i915_request_रुको(rq, 0, HZ / 5) < 0) अणु
-		काष्ठा drm_prपूर्णांकer p = drm_info_prपूर्णांकer(engine->i915->drm.dev);
+	if (i915_request_wait(rq, 0, HZ / 5) < 0) {
+		struct drm_printer p = drm_info_printer(engine->i915->drm.dev);
 
 		pr_err("%s: Failed to cancel active request\n", engine->name);
-		पूर्णांकel_engine_dump(engine, &p, "%s\n", engine->name);
+		intel_engine_dump(engine, &p, "%s\n", engine->name);
 		err = -ETIME;
-		जाओ out_rq;
-	पूर्ण
+		goto out_rq;
+	}
 
-	अगर (rq->fence.error != -EINTR) अणु
+	if (rq->fence.error != -EINTR) {
 		pr_err("%s: fence not cancelled (%u)\n",
 		       engine->name, rq->fence.error);
 		err = -EINVAL;
-	पूर्ण
+	}
 
 out_rq:
 	i915_request_put(rq);
 out_ce:
-	पूर्णांकel_context_put(ce);
+	intel_context_put(ce);
 out_spin:
 	igt_spinner_fini(&spin);
-	अगर (err)
+	if (err)
 		pr_err("%s: %s error %d\n", __func__, engine->name, err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __cancel_completed(काष्ठा पूर्णांकel_engine_cs *engine)
-अणु
-	काष्ठा पूर्णांकel_context *ce;
-	काष्ठा igt_spinner spin;
-	काष्ठा i915_request *rq;
-	पूर्णांक err = 0;
+static int __cancel_completed(struct intel_engine_cs *engine)
+{
+	struct intel_context *ce;
+	struct igt_spinner spin;
+	struct i915_request *rq;
+	int err = 0;
 
-	अगर (igt_spinner_init(&spin, engine->gt))
-		वापस -ENOMEM;
+	if (igt_spinner_init(&spin, engine->gt))
+		return -ENOMEM;
 
-	ce = पूर्णांकel_context_create(engine);
-	अगर (IS_ERR(ce)) अणु
+	ce = intel_context_create(engine);
+	if (IS_ERR(ce)) {
 		err = PTR_ERR(ce);
-		जाओ out_spin;
-	पूर्ण
+		goto out_spin;
+	}
 
 	rq = igt_spinner_create_request(&spin, ce, MI_ARB_CHECK);
-	अगर (IS_ERR(rq)) अणु
+	if (IS_ERR(rq)) {
 		err = PTR_ERR(rq);
-		जाओ out_ce;
-	पूर्ण
+		goto out_ce;
+	}
 	igt_spinner_end(&spin);
 	i915_request_get(rq);
 	i915_request_add(rq);
 
-	अगर (i915_request_रुको(rq, 0, HZ / 5) < 0) अणु
+	if (i915_request_wait(rq, 0, HZ / 5) < 0) {
 		err = -ETIME;
-		जाओ out_rq;
-	पूर्ण
+		goto out_rq;
+	}
 
 	pr_debug("%s: Cancelling completed request\n", engine->name);
 	i915_request_cancel(rq, -EINTR);
-	अगर (rq->fence.error) अणु
+	if (rq->fence.error) {
 		pr_err("%s: fence not cancelled (%u)\n",
 		       engine->name, rq->fence.error);
 		err = -EINVAL;
-	पूर्ण
+	}
 
 out_rq:
 	i915_request_put(rq);
 out_ce:
-	पूर्णांकel_context_put(ce);
+	intel_context_put(ce);
 out_spin:
 	igt_spinner_fini(&spin);
-	अगर (err)
+	if (err)
 		pr_err("%s: %s error %d\n", __func__, engine->name, err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक live_cancel_request(व्योम *arg)
-अणु
-	काष्ठा drm_i915_निजी *i915 = arg;
-	काष्ठा पूर्णांकel_engine_cs *engine;
+static int live_cancel_request(void *arg)
+{
+	struct drm_i915_private *i915 = arg;
+	struct intel_engine_cs *engine;
 
 	/*
 	 * Check cancellation of requests. We expect to be able to immediately
-	 * cancel active requests, even अगर they are currently on the GPU.
+	 * cancel active requests, even if they are currently on the GPU.
 	 */
 
-	क्रम_each_uabi_engine(engine, i915) अणु
-		काष्ठा igt_live_test t;
-		पूर्णांक err, err2;
+	for_each_uabi_engine(engine, i915) {
+		struct igt_live_test t;
+		int err, err2;
 
-		अगर (!पूर्णांकel_engine_has_preemption(engine))
-			जारी;
+		if (!intel_engine_has_preemption(engine))
+			continue;
 
 		err = igt_live_test_begin(&t, i915, __func__, engine->name);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		err = __cancel_inactive(engine);
-		अगर (err == 0)
+		if (err == 0)
 			err = __cancel_active(engine);
-		अगर (err == 0)
+		if (err == 0)
 			err = __cancel_completed(engine);
 
 		err2 = igt_live_test_end(&t);
-		अगर (err)
-			वापस err;
-		अगर (err2)
-			वापस err2;
-	पूर्ण
+		if (err)
+			return err;
+		if (err2)
+			return err2;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा i915_vma *empty_batch(काष्ठा drm_i915_निजी *i915)
-अणु
-	काष्ठा drm_i915_gem_object *obj;
-	काष्ठा i915_vma *vma;
+static struct i915_vma *empty_batch(struct drm_i915_private *i915)
+{
+	struct drm_i915_gem_object *obj;
+	struct i915_vma *vma;
 	u32 *cmd;
-	पूर्णांक err;
+	int err;
 
-	obj = i915_gem_object_create_पूर्णांकernal(i915, PAGE_SIZE);
-	अगर (IS_ERR(obj))
-		वापस ERR_CAST(obj);
+	obj = i915_gem_object_create_internal(i915, PAGE_SIZE);
+	if (IS_ERR(obj))
+		return ERR_CAST(obj);
 
 	cmd = i915_gem_object_pin_map_unlocked(obj, I915_MAP_WB);
-	अगर (IS_ERR(cmd)) अणु
+	if (IS_ERR(cmd)) {
 		err = PTR_ERR(cmd);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	*cmd = MI_BATCH_BUFFER_END;
 
 	__i915_gem_object_flush_map(obj, 0, 64);
 	i915_gem_object_unpin_map(obj);
 
-	पूर्णांकel_gt_chipset_flush(&i915->gt);
+	intel_gt_chipset_flush(&i915->gt);
 
-	vma = i915_vma_instance(obj, &i915->ggtt.vm, शून्य);
-	अगर (IS_ERR(vma)) अणु
+	vma = i915_vma_instance(obj, &i915->ggtt.vm, NULL);
+	if (IS_ERR(vma)) {
 		err = PTR_ERR(vma);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	err = i915_vma_pin(vma, 0, 0, PIN_USER | PIN_GLOBAL);
-	अगर (err)
-		जाओ err;
+	if (err)
+		goto err;
 
-	/* Force the रुको रुको now to aव्योम including it in the benchmark */
+	/* Force the wait wait now to avoid including it in the benchmark */
 	err = i915_vma_sync(vma);
-	अगर (err)
-		जाओ err_pin;
+	if (err)
+		goto err_pin;
 
-	वापस vma;
+	return vma;
 
 err_pin:
 	i915_vma_unpin(vma);
 err:
 	i915_gem_object_put(obj);
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-अटल काष्ठा i915_request *
-empty_request(काष्ठा पूर्णांकel_engine_cs *engine,
-	      काष्ठा i915_vma *batch)
-अणु
-	काष्ठा i915_request *request;
-	पूर्णांक err;
+static struct i915_request *
+empty_request(struct intel_engine_cs *engine,
+	      struct i915_vma *batch)
+{
+	struct i915_request *request;
+	int err;
 
 	request = i915_request_create(engine->kernel_context);
-	अगर (IS_ERR(request))
-		वापस request;
+	if (IS_ERR(request))
+		return request;
 
 	err = engine->emit_bb_start(request,
 				    batch->node.start,
 				    batch->node.size,
 				    I915_DISPATCH_SECURE);
-	अगर (err)
-		जाओ out_request;
+	if (err)
+		goto out_request;
 
 	i915_request_get(request);
 out_request:
 	i915_request_add(request);
-	वापस err ? ERR_PTR(err) : request;
-पूर्ण
+	return err ? ERR_PTR(err) : request;
+}
 
-अटल पूर्णांक live_empty_request(व्योम *arg)
-अणु
-	काष्ठा drm_i915_निजी *i915 = arg;
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	काष्ठा igt_live_test t;
-	काष्ठा i915_vma *batch;
-	पूर्णांक err = 0;
+static int live_empty_request(void *arg)
+{
+	struct drm_i915_private *i915 = arg;
+	struct intel_engine_cs *engine;
+	struct igt_live_test t;
+	struct i915_vma *batch;
+	int err = 0;
 
 	/*
 	 * Submit various sized batches of empty requests, to each engine
-	 * (inभागidually), and रुको क्रम the batch to complete. We can check
+	 * (individually), and wait for the batch to complete. We can check
 	 * the overhead of submitting requests to the hardware.
 	 */
 
 	batch = empty_batch(i915);
-	अगर (IS_ERR(batch))
-		वापस PTR_ERR(batch);
+	if (IS_ERR(batch))
+		return PTR_ERR(batch);
 
-	क्रम_each_uabi_engine(engine, i915) अणु
-		IGT_TIMEOUT(end_समय);
-		काष्ठा i915_request *request;
-		अचिन्हित दीर्घ n, prime;
-		kसमय_प्रकार बार[2] = अणुपूर्ण;
+	for_each_uabi_engine(engine, i915) {
+		IGT_TIMEOUT(end_time);
+		struct i915_request *request;
+		unsigned long n, prime;
+		ktime_t times[2] = {};
 
 		err = igt_live_test_begin(&t, i915, __func__, engine->name);
-		अगर (err)
-			जाओ out_batch;
+		if (err)
+			goto out_batch;
 
-		पूर्णांकel_engine_pm_get(engine);
+		intel_engine_pm_get(engine);
 
 		/* Warmup / preload */
 		request = empty_request(engine, batch);
-		अगर (IS_ERR(request)) अणु
+		if (IS_ERR(request)) {
 			err = PTR_ERR(request);
-			पूर्णांकel_engine_pm_put(engine);
-			जाओ out_batch;
-		पूर्ण
-		i915_request_रुको(request, 0, MAX_SCHEDULE_TIMEOUT);
+			intel_engine_pm_put(engine);
+			goto out_batch;
+		}
+		i915_request_wait(request, 0, MAX_SCHEDULE_TIMEOUT);
 
-		क्रम_each_prime_number_from(prime, 1, 8192) अणु
-			बार[1] = kसमय_get_raw();
+		for_each_prime_number_from(prime, 1, 8192) {
+			times[1] = ktime_get_raw();
 
-			क्रम (n = 0; n < prime; n++) अणु
+			for (n = 0; n < prime; n++) {
 				i915_request_put(request);
 				request = empty_request(engine, batch);
-				अगर (IS_ERR(request)) अणु
+				if (IS_ERR(request)) {
 					err = PTR_ERR(request);
-					पूर्णांकel_engine_pm_put(engine);
-					जाओ out_batch;
-				पूर्ण
-			पूर्ण
-			i915_request_रुको(request, 0, MAX_SCHEDULE_TIMEOUT);
+					intel_engine_pm_put(engine);
+					goto out_batch;
+				}
+			}
+			i915_request_wait(request, 0, MAX_SCHEDULE_TIMEOUT);
 
-			बार[1] = kसमय_sub(kसमय_get_raw(), बार[1]);
-			अगर (prime == 1)
-				बार[0] = बार[1];
+			times[1] = ktime_sub(ktime_get_raw(), times[1]);
+			if (prime == 1)
+				times[0] = times[1];
 
-			अगर (__igt_समयout(end_समय, शून्य))
-				अवरोध;
-		पूर्ण
+			if (__igt_timeout(end_time, NULL))
+				break;
+		}
 		i915_request_put(request);
-		पूर्णांकel_engine_pm_put(engine);
+		intel_engine_pm_put(engine);
 
 		err = igt_live_test_end(&t);
-		अगर (err)
-			जाओ out_batch;
+		if (err)
+			goto out_batch;
 
 		pr_info("Batch latencies on %s: 1 = %lluns, %lu = %lluns\n",
 			engine->name,
-			kसमय_प्रकारo_ns(बार[0]),
-			prime, भाग64_u64(kसमय_प्रकारo_ns(बार[1]), prime));
-	पूर्ण
+			ktime_to_ns(times[0]),
+			prime, div64_u64(ktime_to_ns(times[1]), prime));
+	}
 
 out_batch:
 	i915_vma_unpin(batch);
 	i915_vma_put(batch);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल काष्ठा i915_vma *recursive_batch(काष्ठा drm_i915_निजी *i915)
-अणु
-	काष्ठा drm_i915_gem_object *obj;
-	स्थिर पूर्णांक gen = INTEL_GEN(i915);
-	काष्ठा i915_vma *vma;
+static struct i915_vma *recursive_batch(struct drm_i915_private *i915)
+{
+	struct drm_i915_gem_object *obj;
+	const int gen = INTEL_GEN(i915);
+	struct i915_vma *vma;
 	u32 *cmd;
-	पूर्णांक err;
+	int err;
 
-	obj = i915_gem_object_create_पूर्णांकernal(i915, PAGE_SIZE);
-	अगर (IS_ERR(obj))
-		वापस ERR_CAST(obj);
+	obj = i915_gem_object_create_internal(i915, PAGE_SIZE);
+	if (IS_ERR(obj))
+		return ERR_CAST(obj);
 
-	vma = i915_vma_instance(obj, i915->gt.vm, शून्य);
-	अगर (IS_ERR(vma)) अणु
+	vma = i915_vma_instance(obj, i915->gt.vm, NULL);
+	if (IS_ERR(vma)) {
 		err = PTR_ERR(vma);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	err = i915_vma_pin(vma, 0, 0, PIN_USER);
-	अगर (err)
-		जाओ err;
+	if (err)
+		goto err;
 
 	cmd = i915_gem_object_pin_map_unlocked(obj, I915_MAP_WC);
-	अगर (IS_ERR(cmd)) अणु
+	if (IS_ERR(cmd)) {
 		err = PTR_ERR(cmd);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	अगर (gen >= 8) अणु
+	if (gen >= 8) {
 		*cmd++ = MI_BATCH_BUFFER_START | 1 << 8 | 1;
 		*cmd++ = lower_32_bits(vma->node.start);
 		*cmd++ = upper_32_bits(vma->node.start);
-	पूर्ण अन्यथा अगर (gen >= 6) अणु
+	} else if (gen >= 6) {
 		*cmd++ = MI_BATCH_BUFFER_START | 1 << 8;
 		*cmd++ = lower_32_bits(vma->node.start);
-	पूर्ण अन्यथा अणु
+	} else {
 		*cmd++ = MI_BATCH_BUFFER_START | MI_BATCH_GTT;
 		*cmd++ = lower_32_bits(vma->node.start);
-	पूर्ण
-	*cmd++ = MI_BATCH_BUFFER_END; /* terminate early in हाल of error */
+	}
+	*cmd++ = MI_BATCH_BUFFER_END; /* terminate early in case of error */
 
 	__i915_gem_object_flush_map(obj, 0, 64);
 	i915_gem_object_unpin_map(obj);
 
-	पूर्णांकel_gt_chipset_flush(&i915->gt);
+	intel_gt_chipset_flush(&i915->gt);
 
-	वापस vma;
+	return vma;
 
 err:
 	i915_gem_object_put(obj);
-	वापस ERR_PTR(err);
-पूर्ण
+	return ERR_PTR(err);
+}
 
-अटल पूर्णांक recursive_batch_resolve(काष्ठा i915_vma *batch)
-अणु
+static int recursive_batch_resolve(struct i915_vma *batch)
+{
 	u32 *cmd;
 
 	cmd = i915_gem_object_pin_map_unlocked(batch->obj, I915_MAP_WC);
-	अगर (IS_ERR(cmd))
-		वापस PTR_ERR(cmd);
+	if (IS_ERR(cmd))
+		return PTR_ERR(cmd);
 
 	*cmd = MI_BATCH_BUFFER_END;
 
-	__i915_gem_object_flush_map(batch->obj, 0, माप(*cmd));
+	__i915_gem_object_flush_map(batch->obj, 0, sizeof(*cmd));
 	i915_gem_object_unpin_map(batch->obj);
 
-	पूर्णांकel_gt_chipset_flush(batch->vm->gt);
+	intel_gt_chipset_flush(batch->vm->gt);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक live_all_engines(व्योम *arg)
-अणु
-	काष्ठा drm_i915_निजी *i915 = arg;
-	स्थिर अचिन्हित पूर्णांक nengines = num_uabi_engines(i915);
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	काष्ठा i915_request **request;
-	काष्ठा igt_live_test t;
-	काष्ठा i915_vma *batch;
-	अचिन्हित पूर्णांक idx;
-	पूर्णांक err;
+static int live_all_engines(void *arg)
+{
+	struct drm_i915_private *i915 = arg;
+	const unsigned int nengines = num_uabi_engines(i915);
+	struct intel_engine_cs *engine;
+	struct i915_request **request;
+	struct igt_live_test t;
+	struct i915_vma *batch;
+	unsigned int idx;
+	int err;
 
 	/*
 	 * Check we can submit requests to all engines simultaneously. We
-	 * send a recursive batch to each engine - checking that we करोn't
-	 * block करोing so, and that they करोn't complete too soon.
+	 * send a recursive batch to each engine - checking that we don't
+	 * block doing so, and that they don't complete too soon.
 	 */
 
-	request = kसुस्मृति(nengines, माप(*request), GFP_KERNEL);
-	अगर (!request)
-		वापस -ENOMEM;
+	request = kcalloc(nengines, sizeof(*request), GFP_KERNEL);
+	if (!request)
+		return -ENOMEM;
 
 	err = igt_live_test_begin(&t, i915, __func__, "");
-	अगर (err)
-		जाओ out_मुक्त;
+	if (err)
+		goto out_free;
 
 	batch = recursive_batch(i915);
-	अगर (IS_ERR(batch)) अणु
+	if (IS_ERR(batch)) {
 		err = PTR_ERR(batch);
 		pr_err("%s: Unable to create batch, err=%d\n", __func__, err);
-		जाओ out_मुक्त;
-	पूर्ण
+		goto out_free;
+	}
 
 	i915_vma_lock(batch);
 
 	idx = 0;
-	क्रम_each_uabi_engine(engine, i915) अणु
-		request[idx] = पूर्णांकel_engine_create_kernel_request(engine);
-		अगर (IS_ERR(request[idx])) अणु
+	for_each_uabi_engine(engine, i915) {
+		request[idx] = intel_engine_create_kernel_request(engine);
+		if (IS_ERR(request[idx])) {
 			err = PTR_ERR(request[idx]);
 			pr_err("%s: Request allocation failed with err=%d\n",
 			       __func__, err);
-			जाओ out_request;
-		पूर्ण
+			goto out_request;
+		}
 
-		err = i915_request_aरुको_object(request[idx], batch->obj, 0);
-		अगर (err == 0)
+		err = i915_request_await_object(request[idx], batch->obj, 0);
+		if (err == 0)
 			err = i915_vma_move_to_active(batch, request[idx], 0);
 		GEM_BUG_ON(err);
 
@@ -1091,123 +1090,123 @@ err:
 		i915_request_get(request[idx]);
 		i915_request_add(request[idx]);
 		idx++;
-	पूर्ण
+	}
 
 	i915_vma_unlock(batch);
 
 	idx = 0;
-	क्रम_each_uabi_engine(engine, i915) अणु
-		अगर (i915_request_completed(request[idx])) अणु
+	for_each_uabi_engine(engine, i915) {
+		if (i915_request_completed(request[idx])) {
 			pr_err("%s(%s): request completed too early!\n",
 			       __func__, engine->name);
 			err = -EINVAL;
-			जाओ out_request;
-		पूर्ण
+			goto out_request;
+		}
 		idx++;
-	पूर्ण
+	}
 
 	err = recursive_batch_resolve(batch);
-	अगर (err) अणु
+	if (err) {
 		pr_err("%s: failed to resolve batch, err=%d\n", __func__, err);
-		जाओ out_request;
-	पूर्ण
+		goto out_request;
+	}
 
 	idx = 0;
-	क्रम_each_uabi_engine(engine, i915) अणु
-		दीर्घ समयout;
+	for_each_uabi_engine(engine, i915) {
+		long timeout;
 
-		समयout = i915_request_रुको(request[idx], 0,
+		timeout = i915_request_wait(request[idx], 0,
 					    MAX_SCHEDULE_TIMEOUT);
-		अगर (समयout < 0) अणु
-			err = समयout;
+		if (timeout < 0) {
+			err = timeout;
 			pr_err("%s: error waiting for request on %s, err=%d\n",
 			       __func__, engine->name, err);
-			जाओ out_request;
-		पूर्ण
+			goto out_request;
+		}
 
 		GEM_BUG_ON(!i915_request_completed(request[idx]));
 		i915_request_put(request[idx]);
-		request[idx] = शून्य;
+		request[idx] = NULL;
 		idx++;
-	पूर्ण
+	}
 
 	err = igt_live_test_end(&t);
 
 out_request:
 	idx = 0;
-	क्रम_each_uabi_engine(engine, i915) अणु
-		अगर (request[idx])
+	for_each_uabi_engine(engine, i915) {
+		if (request[idx])
 			i915_request_put(request[idx]);
 		idx++;
-	पूर्ण
+	}
 	i915_vma_unpin(batch);
 	i915_vma_put(batch);
-out_मुक्त:
-	kमुक्त(request);
-	वापस err;
-पूर्ण
+out_free:
+	kfree(request);
+	return err;
+}
 
-अटल पूर्णांक live_sequential_engines(व्योम *arg)
-अणु
-	काष्ठा drm_i915_निजी *i915 = arg;
-	स्थिर अचिन्हित पूर्णांक nengines = num_uabi_engines(i915);
-	काष्ठा i915_request **request;
-	काष्ठा i915_request *prev = शून्य;
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	काष्ठा igt_live_test t;
-	अचिन्हित पूर्णांक idx;
-	पूर्णांक err;
+static int live_sequential_engines(void *arg)
+{
+	struct drm_i915_private *i915 = arg;
+	const unsigned int nengines = num_uabi_engines(i915);
+	struct i915_request **request;
+	struct i915_request *prev = NULL;
+	struct intel_engine_cs *engine;
+	struct igt_live_test t;
+	unsigned int idx;
+	int err;
 
 	/*
 	 * Check we can submit requests to all engines sequentially, such
-	 * that each successive request रुकोs क्रम the earlier ones. This
-	 * tests that we करोn't execute requests out of order, even though
+	 * that each successive request waits for the earlier ones. This
+	 * tests that we don't execute requests out of order, even though
 	 * they are running on independent engines.
 	 */
 
-	request = kसुस्मृति(nengines, माप(*request), GFP_KERNEL);
-	अगर (!request)
-		वापस -ENOMEM;
+	request = kcalloc(nengines, sizeof(*request), GFP_KERNEL);
+	if (!request)
+		return -ENOMEM;
 
 	err = igt_live_test_begin(&t, i915, __func__, "");
-	अगर (err)
-		जाओ out_मुक्त;
+	if (err)
+		goto out_free;
 
 	idx = 0;
-	क्रम_each_uabi_engine(engine, i915) अणु
-		काष्ठा i915_vma *batch;
+	for_each_uabi_engine(engine, i915) {
+		struct i915_vma *batch;
 
 		batch = recursive_batch(i915);
-		अगर (IS_ERR(batch)) अणु
+		if (IS_ERR(batch)) {
 			err = PTR_ERR(batch);
 			pr_err("%s: Unable to create batch for %s, err=%d\n",
 			       __func__, engine->name, err);
-			जाओ out_मुक्त;
-		पूर्ण
+			goto out_free;
+		}
 
 		i915_vma_lock(batch);
-		request[idx] = पूर्णांकel_engine_create_kernel_request(engine);
-		अगर (IS_ERR(request[idx])) अणु
+		request[idx] = intel_engine_create_kernel_request(engine);
+		if (IS_ERR(request[idx])) {
 			err = PTR_ERR(request[idx]);
 			pr_err("%s: Request allocation failed for %s with err=%d\n",
 			       __func__, engine->name, err);
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 
-		अगर (prev) अणु
-			err = i915_request_aरुको_dma_fence(request[idx],
+		if (prev) {
+			err = i915_request_await_dma_fence(request[idx],
 							   &prev->fence);
-			अगर (err) अणु
+			if (err) {
 				i915_request_add(request[idx]);
 				pr_err("%s: Request await failed for %s with err=%d\n",
 				       __func__, engine->name, err);
-				जाओ out_unlock;
-			पूर्ण
-		पूर्ण
+				goto out_unlock;
+			}
+		}
 
-		err = i915_request_aरुको_object(request[idx],
+		err = i915_request_await_object(request[idx],
 						batch->obj, false);
-		अगर (err == 0)
+		if (err == 0)
 			err = i915_vma_move_to_active(batch, request[idx], 0);
 		GEM_BUG_ON(err);
 
@@ -1226,570 +1225,570 @@ out_मुक्त:
 
 out_unlock:
 		i915_vma_unlock(batch);
-		अगर (err)
-			जाओ out_request;
-	पूर्ण
+		if (err)
+			goto out_request;
+	}
 
 	idx = 0;
-	क्रम_each_uabi_engine(engine, i915) अणु
-		दीर्घ समयout;
+	for_each_uabi_engine(engine, i915) {
+		long timeout;
 
-		अगर (i915_request_completed(request[idx])) अणु
+		if (i915_request_completed(request[idx])) {
 			pr_err("%s(%s): request completed too early!\n",
 			       __func__, engine->name);
 			err = -EINVAL;
-			जाओ out_request;
-		पूर्ण
+			goto out_request;
+		}
 
 		err = recursive_batch_resolve(request[idx]->batch);
-		अगर (err) अणु
+		if (err) {
 			pr_err("%s: failed to resolve batch, err=%d\n",
 			       __func__, err);
-			जाओ out_request;
-		पूर्ण
+			goto out_request;
+		}
 
-		समयout = i915_request_रुको(request[idx], 0,
+		timeout = i915_request_wait(request[idx], 0,
 					    MAX_SCHEDULE_TIMEOUT);
-		अगर (समयout < 0) अणु
-			err = समयout;
+		if (timeout < 0) {
+			err = timeout;
 			pr_err("%s: error waiting for request on %s, err=%d\n",
 			       __func__, engine->name, err);
-			जाओ out_request;
-		पूर्ण
+			goto out_request;
+		}
 
 		GEM_BUG_ON(!i915_request_completed(request[idx]));
 		idx++;
-	पूर्ण
+	}
 
 	err = igt_live_test_end(&t);
 
 out_request:
 	idx = 0;
-	क्रम_each_uabi_engine(engine, i915) अणु
+	for_each_uabi_engine(engine, i915) {
 		u32 *cmd;
 
-		अगर (!request[idx])
-			अवरोध;
+		if (!request[idx])
+			break;
 
 		cmd = i915_gem_object_pin_map_unlocked(request[idx]->batch->obj,
 						       I915_MAP_WC);
-		अगर (!IS_ERR(cmd)) अणु
+		if (!IS_ERR(cmd)) {
 			*cmd = MI_BATCH_BUFFER_END;
 
 			__i915_gem_object_flush_map(request[idx]->batch->obj,
-						    0, माप(*cmd));
+						    0, sizeof(*cmd));
 			i915_gem_object_unpin_map(request[idx]->batch->obj);
 
-			पूर्णांकel_gt_chipset_flush(engine->gt);
-		पूर्ण
+			intel_gt_chipset_flush(engine->gt);
+		}
 
 		i915_vma_put(request[idx]->batch);
 		i915_request_put(request[idx]);
 		idx++;
-	पूर्ण
-out_मुक्त:
-	kमुक्त(request);
-	वापस err;
-पूर्ण
+	}
+out_free:
+	kfree(request);
+	return err;
+}
 
-अटल पूर्णांक __live_parallel_engine1(व्योम *arg)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine = arg;
-	IGT_TIMEOUT(end_समय);
-	अचिन्हित दीर्घ count;
-	पूर्णांक err = 0;
+static int __live_parallel_engine1(void *arg)
+{
+	struct intel_engine_cs *engine = arg;
+	IGT_TIMEOUT(end_time);
+	unsigned long count;
+	int err = 0;
 
 	count = 0;
-	पूर्णांकel_engine_pm_get(engine);
-	करो अणु
-		काष्ठा i915_request *rq;
+	intel_engine_pm_get(engine);
+	do {
+		struct i915_request *rq;
 
 		rq = i915_request_create(engine->kernel_context);
-		अगर (IS_ERR(rq)) अणु
+		if (IS_ERR(rq)) {
 			err = PTR_ERR(rq);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		i915_request_get(rq);
 		i915_request_add(rq);
 
 		err = 0;
-		अगर (i915_request_रुको(rq, 0, HZ / 5) < 0)
+		if (i915_request_wait(rq, 0, HZ / 5) < 0)
 			err = -ETIME;
 		i915_request_put(rq);
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 
 		count++;
-	पूर्ण जबतक (!__igt_समयout(end_समय, शून्य));
-	पूर्णांकel_engine_pm_put(engine);
+	} while (!__igt_timeout(end_time, NULL));
+	intel_engine_pm_put(engine);
 
 	pr_info("%s: %lu request + sync\n", engine->name, count);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __live_parallel_engineN(व्योम *arg)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine = arg;
-	IGT_TIMEOUT(end_समय);
-	अचिन्हित दीर्घ count;
-	पूर्णांक err = 0;
+static int __live_parallel_engineN(void *arg)
+{
+	struct intel_engine_cs *engine = arg;
+	IGT_TIMEOUT(end_time);
+	unsigned long count;
+	int err = 0;
 
 	count = 0;
-	पूर्णांकel_engine_pm_get(engine);
-	करो अणु
-		काष्ठा i915_request *rq;
+	intel_engine_pm_get(engine);
+	do {
+		struct i915_request *rq;
 
 		rq = i915_request_create(engine->kernel_context);
-		अगर (IS_ERR(rq)) अणु
+		if (IS_ERR(rq)) {
 			err = PTR_ERR(rq);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		i915_request_add(rq);
 		count++;
-	पूर्ण जबतक (!__igt_समयout(end_समय, शून्य));
-	पूर्णांकel_engine_pm_put(engine);
+	} while (!__igt_timeout(end_time, NULL));
+	intel_engine_pm_put(engine);
 
 	pr_info("%s: %lu requests\n", engine->name, count);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल bool wake_all(काष्ठा drm_i915_निजी *i915)
-अणु
-	अगर (atomic_dec_and_test(&i915->selftest.counter)) अणु
+static bool wake_all(struct drm_i915_private *i915)
+{
+	if (atomic_dec_and_test(&i915->selftest.counter)) {
 		wake_up_var(&i915->selftest.counter);
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक रुको_क्रम_all(काष्ठा drm_i915_निजी *i915)
-अणु
-	अगर (wake_all(i915))
-		वापस 0;
+static int wait_for_all(struct drm_i915_private *i915)
+{
+	if (wake_all(i915))
+		return 0;
 
-	अगर (रुको_var_event_समयout(&i915->selftest.counter,
-				   !atomic_पढ़ो(&i915->selftest.counter),
-				   i915_selftest.समयout_jअगरfies))
-		वापस 0;
+	if (wait_var_event_timeout(&i915->selftest.counter,
+				   !atomic_read(&i915->selftest.counter),
+				   i915_selftest.timeout_jiffies))
+		return 0;
 
-	वापस -ETIME;
-पूर्ण
+	return -ETIME;
+}
 
-अटल पूर्णांक __live_parallel_spin(व्योम *arg)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine = arg;
-	काष्ठा igt_spinner spin;
-	काष्ठा i915_request *rq;
-	पूर्णांक err = 0;
+static int __live_parallel_spin(void *arg)
+{
+	struct intel_engine_cs *engine = arg;
+	struct igt_spinner spin;
+	struct i915_request *rq;
+	int err = 0;
 
 	/*
-	 * Create a spinner running क्रम eternity on each engine. If a second
+	 * Create a spinner running for eternity on each engine. If a second
 	 * spinner is incorrectly placed on the same engine, it will not be
-	 * able to start in समय.
+	 * able to start in time.
 	 */
 
-	अगर (igt_spinner_init(&spin, engine->gt)) अणु
+	if (igt_spinner_init(&spin, engine->gt)) {
 		wake_all(engine->i915);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	पूर्णांकel_engine_pm_get(engine);
+	intel_engine_pm_get(engine);
 	rq = igt_spinner_create_request(&spin,
 					engine->kernel_context,
 					MI_NOOP); /* no preemption */
-	पूर्णांकel_engine_pm_put(engine);
-	अगर (IS_ERR(rq)) अणु
+	intel_engine_pm_put(engine);
+	if (IS_ERR(rq)) {
 		err = PTR_ERR(rq);
-		अगर (err == -ENODEV)
+		if (err == -ENODEV)
 			err = 0;
 		wake_all(engine->i915);
-		जाओ out_spin;
-	पूर्ण
+		goto out_spin;
+	}
 
 	i915_request_get(rq);
 	i915_request_add(rq);
-	अगर (igt_रुको_क्रम_spinner(&spin, rq)) अणु
-		/* Occupy this engine क्रम the whole test */
-		err = रुको_क्रम_all(engine->i915);
-	पूर्ण अन्यथा अणु
+	if (igt_wait_for_spinner(&spin, rq)) {
+		/* Occupy this engine for the whole test */
+		err = wait_for_all(engine->i915);
+	} else {
 		pr_err("Failed to start spinner on %s\n", engine->name);
 		err = -EINVAL;
-	पूर्ण
+	}
 	igt_spinner_end(&spin);
 
-	अगर (err == 0 && i915_request_रुको(rq, 0, HZ / 5) < 0)
+	if (err == 0 && i915_request_wait(rq, 0, HZ / 5) < 0)
 		err = -EIO;
 	i915_request_put(rq);
 
 out_spin:
 	igt_spinner_fini(&spin);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक live_parallel_engines(व्योम *arg)
-अणु
-	काष्ठा drm_i915_निजी *i915 = arg;
-	अटल पूर्णांक (* स्थिर func[])(व्योम *arg) = अणु
+static int live_parallel_engines(void *arg)
+{
+	struct drm_i915_private *i915 = arg;
+	static int (* const func[])(void *arg) = {
 		__live_parallel_engine1,
 		__live_parallel_engineN,
 		__live_parallel_spin,
-		शून्य,
-	पूर्ण;
-	स्थिर अचिन्हित पूर्णांक nengines = num_uabi_engines(i915);
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	पूर्णांक (* स्थिर *fn)(व्योम *arg);
-	काष्ठा task_काष्ठा **tsk;
-	पूर्णांक err = 0;
+		NULL,
+	};
+	const unsigned int nengines = num_uabi_engines(i915);
+	struct intel_engine_cs *engine;
+	int (* const *fn)(void *arg);
+	struct task_struct **tsk;
+	int err = 0;
 
 	/*
 	 * Check we can submit requests to all engines concurrently. This
-	 * tests that we load up the प्रणाली maximally.
+	 * tests that we load up the system maximally.
 	 */
 
-	tsk = kसुस्मृति(nengines, माप(*tsk), GFP_KERNEL);
-	अगर (!tsk)
-		वापस -ENOMEM;
+	tsk = kcalloc(nengines, sizeof(*tsk), GFP_KERNEL);
+	if (!tsk)
+		return -ENOMEM;
 
-	क्रम (fn = func; !err && *fn; fn++) अणु
-		अक्षर name[KSYM_NAME_LEN];
-		काष्ठा igt_live_test t;
-		अचिन्हित पूर्णांक idx;
+	for (fn = func; !err && *fn; fn++) {
+		char name[KSYM_NAME_LEN];
+		struct igt_live_test t;
+		unsigned int idx;
 
-		snम_लिखो(name, माप(name), "%ps", *fn);
+		snprintf(name, sizeof(name), "%ps", *fn);
 		err = igt_live_test_begin(&t, i915, __func__, name);
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 
 		atomic_set(&i915->selftest.counter, nengines);
 
 		idx = 0;
-		क्रम_each_uabi_engine(engine, i915) अणु
-			tsk[idx] = kthपढ़ो_run(*fn, engine,
+		for_each_uabi_engine(engine, i915) {
+			tsk[idx] = kthread_run(*fn, engine,
 					       "igt/parallel:%s",
 					       engine->name);
-			अगर (IS_ERR(tsk[idx])) अणु
+			if (IS_ERR(tsk[idx])) {
 				err = PTR_ERR(tsk[idx]);
-				अवरोध;
-			पूर्ण
-			get_task_काष्ठा(tsk[idx++]);
-		पूर्ण
+				break;
+			}
+			get_task_struct(tsk[idx++]);
+		}
 
-		yield(); /* start all thपढ़ोs beक्रमe we kthपढ़ो_stop() */
+		yield(); /* start all threads before we kthread_stop() */
 
 		idx = 0;
-		क्रम_each_uabi_engine(engine, i915) अणु
-			पूर्णांक status;
+		for_each_uabi_engine(engine, i915) {
+			int status;
 
-			अगर (IS_ERR(tsk[idx]))
-				अवरोध;
+			if (IS_ERR(tsk[idx]))
+				break;
 
-			status = kthपढ़ो_stop(tsk[idx]);
-			अगर (status && !err)
+			status = kthread_stop(tsk[idx]);
+			if (status && !err)
 				err = status;
 
-			put_task_काष्ठा(tsk[idx++]);
-		पूर्ण
+			put_task_struct(tsk[idx++]);
+		}
 
-		अगर (igt_live_test_end(&t))
+		if (igt_live_test_end(&t))
 			err = -EIO;
-	पूर्ण
+	}
 
-	kमुक्त(tsk);
-	वापस err;
-पूर्ण
+	kfree(tsk);
+	return err;
+}
 
-अटल पूर्णांक
-max_batches(काष्ठा i915_gem_context *ctx, काष्ठा पूर्णांकel_engine_cs *engine)
-अणु
-	काष्ठा i915_request *rq;
-	पूर्णांक ret;
+static int
+max_batches(struct i915_gem_context *ctx, struct intel_engine_cs *engine)
+{
+	struct i915_request *rq;
+	int ret;
 
 	/*
-	 * Beक्रमe execlists, all contexts share the same ringbuffer. With
+	 * Before execlists, all contexts share the same ringbuffer. With
 	 * execlists, each context/engine has a separate ringbuffer and
-	 * क्रम the purposes of this test, inexhaustible.
+	 * for the purposes of this test, inexhaustible.
 	 *
 	 * For the global ringbuffer though, we have to be very careful
-	 * that we करो not wrap जबतक preventing the execution of requests
-	 * with a unसंकेतed fence.
+	 * that we do not wrap while preventing the execution of requests
+	 * with a unsignaled fence.
 	 */
-	अगर (HAS_EXECLISTS(ctx->i915))
-		वापस पूर्णांक_उच्च;
+	if (HAS_EXECLISTS(ctx->i915))
+		return INT_MAX;
 
 	rq = igt_request_alloc(ctx, engine);
-	अगर (IS_ERR(rq)) अणु
+	if (IS_ERR(rq)) {
 		ret = PTR_ERR(rq);
-	पूर्ण अन्यथा अणु
-		पूर्णांक sz;
+	} else {
+		int sz;
 
 		ret = rq->ring->size - rq->reserved_space;
 		i915_request_add(rq);
 
 		sz = rq->ring->emit - rq->head;
-		अगर (sz < 0)
+		if (sz < 0)
 			sz += rq->ring->size;
 		ret /= sz;
-		ret /= 2; /* leave half spare, in हाल of emergency! */
-	पूर्ण
+		ret /= 2; /* leave half spare, in case of emergency! */
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक live_bपढ़ोcrumbs_smoketest(व्योम *arg)
-अणु
-	काष्ठा drm_i915_निजी *i915 = arg;
-	स्थिर अचिन्हित पूर्णांक nengines = num_uabi_engines(i915);
-	स्थिर अचिन्हित पूर्णांक ncpus = num_online_cpus();
-	अचिन्हित दीर्घ num_रुकोs, num_fences;
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	काष्ठा task_काष्ठा **thपढ़ोs;
-	काष्ठा igt_live_test live;
-	पूर्णांकel_wakeref_t wakeref;
-	काष्ठा smoketest *smoke;
-	अचिन्हित पूर्णांक n, idx;
-	काष्ठा file *file;
-	पूर्णांक ret = 0;
+static int live_breadcrumbs_smoketest(void *arg)
+{
+	struct drm_i915_private *i915 = arg;
+	const unsigned int nengines = num_uabi_engines(i915);
+	const unsigned int ncpus = num_online_cpus();
+	unsigned long num_waits, num_fences;
+	struct intel_engine_cs *engine;
+	struct task_struct **threads;
+	struct igt_live_test live;
+	intel_wakeref_t wakeref;
+	struct smoketest *smoke;
+	unsigned int n, idx;
+	struct file *file;
+	int ret = 0;
 
 	/*
-	 * Smoketest our bपढ़ोcrumb/संकेत handling क्रम requests across multiple
-	 * thपढ़ोs. A very simple test to only catch the most egregious of bugs.
-	 * See __igt_bपढ़ोcrumbs_smoketest();
+	 * Smoketest our breadcrumb/signal handling for requests across multiple
+	 * threads. A very simple test to only catch the most egregious of bugs.
+	 * See __igt_breadcrumbs_smoketest();
 	 *
-	 * On real hardware this समय.
+	 * On real hardware this time.
 	 */
 
-	wakeref = पूर्णांकel_runसमय_pm_get(&i915->runसमय_pm);
+	wakeref = intel_runtime_pm_get(&i915->runtime_pm);
 
 	file = mock_file(i915);
-	अगर (IS_ERR(file)) अणु
+	if (IS_ERR(file)) {
 		ret = PTR_ERR(file);
-		जाओ out_rpm;
-	पूर्ण
+		goto out_rpm;
+	}
 
-	smoke = kसुस्मृति(nengines, माप(*smoke), GFP_KERNEL);
-	अगर (!smoke) अणु
+	smoke = kcalloc(nengines, sizeof(*smoke), GFP_KERNEL);
+	if (!smoke) {
 		ret = -ENOMEM;
-		जाओ out_file;
-	पूर्ण
+		goto out_file;
+	}
 
-	thपढ़ोs = kसुस्मृति(ncpus * nengines, माप(*thपढ़ोs), GFP_KERNEL);
-	अगर (!thपढ़ोs) अणु
+	threads = kcalloc(ncpus * nengines, sizeof(*threads), GFP_KERNEL);
+	if (!threads) {
 		ret = -ENOMEM;
-		जाओ out_smoke;
-	पूर्ण
+		goto out_smoke;
+	}
 
 	smoke[0].request_alloc = __live_request_alloc;
 	smoke[0].ncontexts = 64;
-	smoke[0].contexts = kसुस्मृति(smoke[0].ncontexts,
-				    माप(*smoke[0].contexts),
+	smoke[0].contexts = kcalloc(smoke[0].ncontexts,
+				    sizeof(*smoke[0].contexts),
 				    GFP_KERNEL);
-	अगर (!smoke[0].contexts) अणु
+	if (!smoke[0].contexts) {
 		ret = -ENOMEM;
-		जाओ out_thपढ़ोs;
-	पूर्ण
+		goto out_threads;
+	}
 
-	क्रम (n = 0; n < smoke[0].ncontexts; n++) अणु
+	for (n = 0; n < smoke[0].ncontexts; n++) {
 		smoke[0].contexts[n] = live_context(i915, file);
-		अगर (IS_ERR(smoke[0].contexts[n])) अणु
+		if (IS_ERR(smoke[0].contexts[n])) {
 			ret = PTR_ERR(smoke[0].contexts[n]);
-			जाओ out_contexts;
-		पूर्ण
-	पूर्ण
+			goto out_contexts;
+		}
+	}
 
 	ret = igt_live_test_begin(&live, i915, __func__, "");
-	अगर (ret)
-		जाओ out_contexts;
+	if (ret)
+		goto out_contexts;
 
 	idx = 0;
-	क्रम_each_uabi_engine(engine, i915) अणु
+	for_each_uabi_engine(engine, i915) {
 		smoke[idx] = smoke[0];
 		smoke[idx].engine = engine;
 		smoke[idx].max_batch =
 			max_batches(smoke[0].contexts[0], engine);
-		अगर (smoke[idx].max_batch < 0) अणु
+		if (smoke[idx].max_batch < 0) {
 			ret = smoke[idx].max_batch;
-			जाओ out_flush;
-		पूर्ण
-		/* One ring पूर्णांकerleaved between requests from all cpus */
+			goto out_flush;
+		}
+		/* One ring interleaved between requests from all cpus */
 		smoke[idx].max_batch /= num_online_cpus() + 1;
 		pr_debug("Limiting batches to %d requests on %s\n",
 			 smoke[idx].max_batch, engine->name);
 
-		क्रम (n = 0; n < ncpus; n++) अणु
-			काष्ठा task_काष्ठा *tsk;
+		for (n = 0; n < ncpus; n++) {
+			struct task_struct *tsk;
 
-			tsk = kthपढ़ो_run(__igt_bपढ़ोcrumbs_smoketest,
+			tsk = kthread_run(__igt_breadcrumbs_smoketest,
 					  &smoke[idx], "igt/%d.%d", idx, n);
-			अगर (IS_ERR(tsk)) अणु
+			if (IS_ERR(tsk)) {
 				ret = PTR_ERR(tsk);
-				जाओ out_flush;
-			पूर्ण
+				goto out_flush;
+			}
 
-			get_task_काष्ठा(tsk);
-			thपढ़ोs[idx * ncpus + n] = tsk;
-		पूर्ण
+			get_task_struct(tsk);
+			threads[idx * ncpus + n] = tsk;
+		}
 
 		idx++;
-	पूर्ण
+	}
 
-	yield(); /* start all thपढ़ोs beक्रमe we begin */
-	msleep(jअगरfies_to_msecs(i915_selftest.समयout_jअगरfies));
+	yield(); /* start all threads before we begin */
+	msleep(jiffies_to_msecs(i915_selftest.timeout_jiffies));
 
 out_flush:
 	idx = 0;
-	num_रुकोs = 0;
+	num_waits = 0;
 	num_fences = 0;
-	क्रम_each_uabi_engine(engine, i915) अणु
-		क्रम (n = 0; n < ncpus; n++) अणु
-			काष्ठा task_काष्ठा *tsk = thपढ़ोs[idx * ncpus + n];
-			पूर्णांक err;
+	for_each_uabi_engine(engine, i915) {
+		for (n = 0; n < ncpus; n++) {
+			struct task_struct *tsk = threads[idx * ncpus + n];
+			int err;
 
-			अगर (!tsk)
-				जारी;
+			if (!tsk)
+				continue;
 
-			err = kthपढ़ो_stop(tsk);
-			अगर (err < 0 && !ret)
+			err = kthread_stop(tsk);
+			if (err < 0 && !ret)
 				ret = err;
 
-			put_task_काष्ठा(tsk);
-		पूर्ण
+			put_task_struct(tsk);
+		}
 
-		num_रुकोs += atomic_दीर्घ_पढ़ो(&smoke[idx].num_रुकोs);
-		num_fences += atomic_दीर्घ_पढ़ो(&smoke[idx].num_fences);
+		num_waits += atomic_long_read(&smoke[idx].num_waits);
+		num_fences += atomic_long_read(&smoke[idx].num_fences);
 		idx++;
-	पूर्ण
+	}
 	pr_info("Completed %lu waits for %lu fences across %d engines and %d cpus\n",
-		num_रुकोs, num_fences, idx, ncpus);
+		num_waits, num_fences, idx, ncpus);
 
 	ret = igt_live_test_end(&live) ?: ret;
 out_contexts:
-	kमुक्त(smoke[0].contexts);
-out_thपढ़ोs:
-	kमुक्त(thपढ़ोs);
+	kfree(smoke[0].contexts);
+out_threads:
+	kfree(threads);
 out_smoke:
-	kमुक्त(smoke);
+	kfree(smoke);
 out_file:
 	fput(file);
 out_rpm:
-	पूर्णांकel_runसमय_pm_put(&i915->runसमय_pm, wakeref);
+	intel_runtime_pm_put(&i915->runtime_pm, wakeref);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक i915_request_live_selftests(काष्ठा drm_i915_निजी *i915)
-अणु
-	अटल स्थिर काष्ठा i915_subtest tests[] = अणु
+int i915_request_live_selftests(struct drm_i915_private *i915)
+{
+	static const struct i915_subtest tests[] = {
 		SUBTEST(live_nop_request),
 		SUBTEST(live_all_engines),
 		SUBTEST(live_sequential_engines),
 		SUBTEST(live_parallel_engines),
 		SUBTEST(live_empty_request),
 		SUBTEST(live_cancel_request),
-		SUBTEST(live_bपढ़ोcrumbs_smoketest),
-	पूर्ण;
+		SUBTEST(live_breadcrumbs_smoketest),
+	};
 
-	अगर (पूर्णांकel_gt_is_wedged(&i915->gt))
-		वापस 0;
+	if (intel_gt_is_wedged(&i915->gt))
+		return 0;
 
-	वापस i915_subtests(tests, i915);
-पूर्ण
+	return i915_subtests(tests, i915);
+}
 
-अटल पूर्णांक चयन_to_kernel_sync(काष्ठा पूर्णांकel_context *ce, पूर्णांक err)
-अणु
-	काष्ठा i915_request *rq;
-	काष्ठा dma_fence *fence;
+static int switch_to_kernel_sync(struct intel_context *ce, int err)
+{
+	struct i915_request *rq;
+	struct dma_fence *fence;
 
-	rq = पूर्णांकel_engine_create_kernel_request(ce->engine);
-	अगर (IS_ERR(rq))
-		वापस PTR_ERR(rq);
+	rq = intel_engine_create_kernel_request(ce->engine);
+	if (IS_ERR(rq))
+		return PTR_ERR(rq);
 
-	fence = i915_active_fence_get(&ce->समयline->last_request);
-	अगर (fence) अणु
-		i915_request_aरुको_dma_fence(rq, fence);
+	fence = i915_active_fence_get(&ce->timeline->last_request);
+	if (fence) {
+		i915_request_await_dma_fence(rq, fence);
 		dma_fence_put(fence);
-	पूर्ण
+	}
 
 	rq = i915_request_get(rq);
 	i915_request_add(rq);
-	अगर (i915_request_रुको(rq, 0, HZ / 2) < 0 && !err)
+	if (i915_request_wait(rq, 0, HZ / 2) < 0 && !err)
 		err = -ETIME;
 	i915_request_put(rq);
 
-	जबतक (!err && !पूर्णांकel_engine_is_idle(ce->engine))
-		पूर्णांकel_engine_flush_submission(ce->engine);
+	while (!err && !intel_engine_is_idle(ce->engine))
+		intel_engine_flush_submission(ce->engine);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-काष्ठा perf_stats अणु
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	अचिन्हित दीर्घ count;
-	kसमय_प्रकार समय;
-	kसमय_प्रकार busy;
-	u64 runसमय;
-पूर्ण;
+struct perf_stats {
+	struct intel_engine_cs *engine;
+	unsigned long count;
+	ktime_t time;
+	ktime_t busy;
+	u64 runtime;
+};
 
-काष्ठा perf_series अणु
-	काष्ठा drm_i915_निजी *i915;
-	अचिन्हित पूर्णांक nengines;
-	काष्ठा पूर्णांकel_context *ce[];
-पूर्ण;
+struct perf_series {
+	struct drm_i915_private *i915;
+	unsigned int nengines;
+	struct intel_context *ce[];
+};
 
-अटल पूर्णांक cmp_u32(स्थिर व्योम *A, स्थिर व्योम *B)
-अणु
-	स्थिर u32 *a = A, *b = B;
+static int cmp_u32(const void *A, const void *B)
+{
+	const u32 *a = A, *b = B;
 
-	वापस *a - *b;
-पूर्ण
+	return *a - *b;
+}
 
-अटल u32 trअगरilter(u32 *a)
-अणु
+static u32 trifilter(u32 *a)
+{
 	u64 sum;
 
-#घोषणा TF_COUNT 5
-	sort(a, TF_COUNT, माप(*a), cmp_u32, शून्य);
+#define TF_COUNT 5
+	sort(a, TF_COUNT, sizeof(*a), cmp_u32, NULL);
 
 	sum = mul_u32_u32(a[2], 2);
 	sum += a[1];
 	sum += a[3];
 
 	GEM_BUG_ON(sum > U32_MAX);
-	वापस sum;
-#घोषणा TF_BIAS 2
-पूर्ण
+	return sum;
+#define TF_BIAS 2
+}
 
-अटल u64 cycles_to_ns(काष्ठा पूर्णांकel_engine_cs *engine, u32 cycles)
-अणु
-	u64 ns = पूर्णांकel_gt_घड़ी_पूर्णांकerval_to_ns(engine->gt, cycles);
+static u64 cycles_to_ns(struct intel_engine_cs *engine, u32 cycles)
+{
+	u64 ns = intel_gt_clock_interval_to_ns(engine->gt, cycles);
 
-	वापस DIV_ROUND_CLOSEST(ns, 1 << TF_BIAS);
-पूर्ण
+	return DIV_ROUND_CLOSEST(ns, 1 << TF_BIAS);
+}
 
-अटल u32 *emit_बारtamp_store(u32 *cs, काष्ठा पूर्णांकel_context *ce, u32 offset)
-अणु
+static u32 *emit_timestamp_store(u32 *cs, struct intel_context *ce, u32 offset)
+{
 	*cs++ = MI_STORE_REGISTER_MEM_GEN8 | MI_USE_GGTT;
 	*cs++ = i915_mmio_reg_offset(RING_TIMESTAMP((ce->engine->mmio_base)));
 	*cs++ = offset;
 	*cs++ = 0;
 
-	वापस cs;
-पूर्ण
+	return cs;
+}
 
-अटल u32 *emit_store_dw(u32 *cs, u32 offset, u32 value)
-अणु
+static u32 *emit_store_dw(u32 *cs, u32 offset, u32 value)
+{
 	*cs++ = MI_STORE_DWORD_IMM_GEN4 | MI_USE_GGTT;
 	*cs++ = offset;
 	*cs++ = 0;
 	*cs++ = value;
 
-	वापस cs;
-पूर्ण
+	return cs;
+}
 
-अटल u32 *emit_semaphore_poll(u32 *cs, u32 mode, u32 value, u32 offset)
-अणु
+static u32 *emit_semaphore_poll(u32 *cs, u32 mode, u32 value, u32 offset)
+{
 	*cs++ = MI_SEMAPHORE_WAIT |
 		MI_SEMAPHORE_GLOBAL_GTT |
 		MI_SEMAPHORE_POLL |
@@ -1798,48 +1797,48 @@ out_rpm:
 	*cs++ = offset;
 	*cs++ = 0;
 
-	वापस cs;
-पूर्ण
+	return cs;
+}
 
-अटल u32 *emit_semaphore_poll_until(u32 *cs, u32 offset, u32 value)
-अणु
-	वापस emit_semaphore_poll(cs, MI_SEMAPHORE_SAD_EQ_SDD, value, offset);
-पूर्ण
+static u32 *emit_semaphore_poll_until(u32 *cs, u32 offset, u32 value)
+{
+	return emit_semaphore_poll(cs, MI_SEMAPHORE_SAD_EQ_SDD, value, offset);
+}
 
-अटल व्योम semaphore_set(u32 *sema, u32 value)
-अणु
+static void semaphore_set(u32 *sema, u32 value)
+{
 	WRITE_ONCE(*sema, value);
 	wmb(); /* flush the update to the cache, and beyond */
-पूर्ण
+}
 
-अटल u32 *hwsp_scratch(स्थिर काष्ठा पूर्णांकel_context *ce)
-अणु
-	वापस स_रखो32(ce->engine->status_page.addr + 1000, 0, 21);
-पूर्ण
+static u32 *hwsp_scratch(const struct intel_context *ce)
+{
+	return memset32(ce->engine->status_page.addr + 1000, 0, 21);
+}
 
-अटल u32 hwsp_offset(स्थिर काष्ठा पूर्णांकel_context *ce, u32 *dw)
-अणु
-	वापस (i915_ggtt_offset(ce->engine->status_page.vma) +
+static u32 hwsp_offset(const struct intel_context *ce, u32 *dw)
+{
+	return (i915_ggtt_offset(ce->engine->status_page.vma) +
 		offset_in_page(dw));
-पूर्ण
+}
 
-अटल पूर्णांक measure_semaphore_response(काष्ठा पूर्णांकel_context *ce)
-अणु
+static int measure_semaphore_response(struct intel_context *ce)
+{
 	u32 *sema = hwsp_scratch(ce);
-	स्थिर u32 offset = hwsp_offset(ce, sema);
+	const u32 offset = hwsp_offset(ce, sema);
 	u32 elapsed[TF_COUNT], cycles;
-	काष्ठा i915_request *rq;
+	struct i915_request *rq;
 	u32 *cs;
-	पूर्णांक err;
-	पूर्णांक i;
+	int err;
+	int i;
 
 	/*
-	 * Measure how many cycles it takes क्रम the HW to detect the change
+	 * Measure how many cycles it takes for the HW to detect the change
 	 * in a semaphore value.
 	 *
-	 *    A: पढ़ो CS_TIMESTAMP from CPU
+	 *    A: read CS_TIMESTAMP from CPU
 	 *    poke semaphore
-	 *    B: पढ़ो CS_TIMESTAMP on GPU
+	 *    B: read CS_TIMESTAMP on GPU
 	 *
 	 * Semaphore latency: B - A
 	 */
@@ -1847,100 +1846,100 @@ out_rpm:
 	semaphore_set(sema, -1);
 
 	rq = i915_request_create(ce);
-	अगर (IS_ERR(rq))
-		वापस PTR_ERR(rq);
+	if (IS_ERR(rq))
+		return PTR_ERR(rq);
 
-	cs = पूर्णांकel_ring_begin(rq, 4 + 12 * ARRAY_SIZE(elapsed));
-	अगर (IS_ERR(cs)) अणु
+	cs = intel_ring_begin(rq, 4 + 12 * ARRAY_SIZE(elapsed));
+	if (IS_ERR(cs)) {
 		i915_request_add(rq);
 		err = PTR_ERR(cs);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	cs = emit_store_dw(cs, offset, 0);
-	क्रम (i = 1; i <= ARRAY_SIZE(elapsed); i++) अणु
+	for (i = 1; i <= ARRAY_SIZE(elapsed); i++) {
 		cs = emit_semaphore_poll_until(cs, offset, i);
-		cs = emit_बारtamp_store(cs, ce, offset + i * माप(u32));
+		cs = emit_timestamp_store(cs, ce, offset + i * sizeof(u32));
 		cs = emit_store_dw(cs, offset, 0);
-	पूर्ण
+	}
 
-	पूर्णांकel_ring_advance(rq, cs);
+	intel_ring_advance(rq, cs);
 	i915_request_add(rq);
 
-	अगर (रुको_क्रम(READ_ONCE(*sema) == 0, 50)) अणु
+	if (wait_for(READ_ONCE(*sema) == 0, 50)) {
 		err = -EIO;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	क्रम (i = 1; i <= ARRAY_SIZE(elapsed); i++) अणु
+	for (i = 1; i <= ARRAY_SIZE(elapsed); i++) {
 		preempt_disable();
 		cycles = ENGINE_READ_FW(ce->engine, RING_TIMESTAMP);
 		semaphore_set(sema, i);
 		preempt_enable();
 
-		अगर (रुको_क्रम(READ_ONCE(*sema) == 0, 50)) अणु
+		if (wait_for(READ_ONCE(*sema) == 0, 50)) {
 			err = -EIO;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		elapsed[i - 1] = sema[i] - cycles;
-	पूर्ण
+	}
 
-	cycles = trअगरilter(elapsed);
+	cycles = trifilter(elapsed);
 	pr_info("%s: semaphore response %d cycles, %lluns\n",
 		ce->engine->name, cycles >> TF_BIAS,
 		cycles_to_ns(ce->engine, cycles));
 
-	वापस पूर्णांकel_gt_रुको_क्रम_idle(ce->engine->gt, HZ);
+	return intel_gt_wait_for_idle(ce->engine->gt, HZ);
 
 err:
-	पूर्णांकel_gt_set_wedged(ce->engine->gt);
-	वापस err;
-पूर्ण
+	intel_gt_set_wedged(ce->engine->gt);
+	return err;
+}
 
-अटल पूर्णांक measure_idle_dispatch(काष्ठा पूर्णांकel_context *ce)
-अणु
+static int measure_idle_dispatch(struct intel_context *ce)
+{
 	u32 *sema = hwsp_scratch(ce);
-	स्थिर u32 offset = hwsp_offset(ce, sema);
+	const u32 offset = hwsp_offset(ce, sema);
 	u32 elapsed[TF_COUNT], cycles;
 	u32 *cs;
-	पूर्णांक err;
-	पूर्णांक i;
+	int err;
+	int i;
 
 	/*
-	 * Measure how दीर्घ it takes क्रम us to submit a request जबतक the
+	 * Measure how long it takes for us to submit a request while the
 	 * engine is idle, but is resting in our context.
 	 *
-	 *    A: पढ़ो CS_TIMESTAMP from CPU
+	 *    A: read CS_TIMESTAMP from CPU
 	 *    submit request
-	 *    B: पढ़ो CS_TIMESTAMP on GPU
+	 *    B: read CS_TIMESTAMP on GPU
 	 *
 	 * Submission latency: B - A
 	 */
 
-	क्रम (i = 0; i < ARRAY_SIZE(elapsed); i++) अणु
-		काष्ठा i915_request *rq;
+	for (i = 0; i < ARRAY_SIZE(elapsed); i++) {
+		struct i915_request *rq;
 
-		err = पूर्णांकel_gt_रुको_क्रम_idle(ce->engine->gt, HZ / 2);
-		अगर (err)
-			वापस err;
+		err = intel_gt_wait_for_idle(ce->engine->gt, HZ / 2);
+		if (err)
+			return err;
 
 		rq = i915_request_create(ce);
-		अगर (IS_ERR(rq)) अणु
+		if (IS_ERR(rq)) {
 			err = PTR_ERR(rq);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
-		cs = पूर्णांकel_ring_begin(rq, 4);
-		अगर (IS_ERR(cs)) अणु
+		cs = intel_ring_begin(rq, 4);
+		if (IS_ERR(cs)) {
 			i915_request_add(rq);
 			err = PTR_ERR(cs);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
-		cs = emit_बारtamp_store(cs, ce, offset + i * माप(u32));
+		cs = emit_timestamp_store(cs, ce, offset + i * sizeof(u32));
 
-		पूर्णांकel_ring_advance(rq, cs);
+		intel_ring_advance(rq, cs);
 
 		preempt_disable();
 		local_bh_disable();
@@ -1948,74 +1947,74 @@ err:
 		i915_request_add(rq);
 		local_bh_enable();
 		preempt_enable();
-	पूर्ण
+	}
 
-	err = पूर्णांकel_gt_रुको_क्रम_idle(ce->engine->gt, HZ / 2);
-	अगर (err)
-		जाओ err;
+	err = intel_gt_wait_for_idle(ce->engine->gt, HZ / 2);
+	if (err)
+		goto err;
 
-	क्रम (i = 0; i < ARRAY_SIZE(elapsed); i++)
+	for (i = 0; i < ARRAY_SIZE(elapsed); i++)
 		elapsed[i] = sema[i] - elapsed[i];
 
-	cycles = trअगरilter(elapsed);
+	cycles = trifilter(elapsed);
 	pr_info("%s: idle dispatch latency %d cycles, %lluns\n",
 		ce->engine->name, cycles >> TF_BIAS,
 		cycles_to_ns(ce->engine, cycles));
 
-	वापस पूर्णांकel_gt_रुको_क्रम_idle(ce->engine->gt, HZ);
+	return intel_gt_wait_for_idle(ce->engine->gt, HZ);
 
 err:
-	पूर्णांकel_gt_set_wedged(ce->engine->gt);
-	वापस err;
-पूर्ण
+	intel_gt_set_wedged(ce->engine->gt);
+	return err;
+}
 
-अटल पूर्णांक measure_busy_dispatch(काष्ठा पूर्णांकel_context *ce)
-अणु
+static int measure_busy_dispatch(struct intel_context *ce)
+{
 	u32 *sema = hwsp_scratch(ce);
-	स्थिर u32 offset = hwsp_offset(ce, sema);
+	const u32 offset = hwsp_offset(ce, sema);
 	u32 elapsed[TF_COUNT + 1], cycles;
 	u32 *cs;
-	पूर्णांक err;
-	पूर्णांक i;
+	int err;
+	int i;
 
 	/*
-	 * Measure how दीर्घ it takes क्रम us to submit a request जबतक the
+	 * Measure how long it takes for us to submit a request while the
 	 * engine is busy, polling on a semaphore in our context. With
 	 * direct submission, this will include the cost of a lite restore.
 	 *
-	 *    A: पढ़ो CS_TIMESTAMP from CPU
+	 *    A: read CS_TIMESTAMP from CPU
 	 *    submit request
-	 *    B: पढ़ो CS_TIMESTAMP on GPU
+	 *    B: read CS_TIMESTAMP on GPU
 	 *
 	 * Submission latency: B - A
 	 */
 
-	क्रम (i = 1; i <= ARRAY_SIZE(elapsed); i++) अणु
-		काष्ठा i915_request *rq;
+	for (i = 1; i <= ARRAY_SIZE(elapsed); i++) {
+		struct i915_request *rq;
 
 		rq = i915_request_create(ce);
-		अगर (IS_ERR(rq)) अणु
+		if (IS_ERR(rq)) {
 			err = PTR_ERR(rq);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
-		cs = पूर्णांकel_ring_begin(rq, 12);
-		अगर (IS_ERR(cs)) अणु
+		cs = intel_ring_begin(rq, 12);
+		if (IS_ERR(cs)) {
 			i915_request_add(rq);
 			err = PTR_ERR(cs);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
-		cs = emit_store_dw(cs, offset + i * माप(u32), -1);
+		cs = emit_store_dw(cs, offset + i * sizeof(u32), -1);
 		cs = emit_semaphore_poll_until(cs, offset, i);
-		cs = emit_बारtamp_store(cs, ce, offset + i * माप(u32));
+		cs = emit_timestamp_store(cs, ce, offset + i * sizeof(u32));
 
-		पूर्णांकel_ring_advance(rq, cs);
+		intel_ring_advance(rq, cs);
 
-		अगर (i > 1 && रुको_क्रम(READ_ONCE(sema[i - 1]), 500)) अणु
+		if (i > 1 && wait_for(READ_ONCE(sema[i - 1]), 500)) {
 			err = -EIO;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		preempt_disable();
 		local_bh_disable();
@@ -2024,639 +2023,639 @@ err:
 		local_bh_enable();
 		semaphore_set(sema, i - 1);
 		preempt_enable();
-	पूर्ण
+	}
 
-	रुको_क्रम(READ_ONCE(sema[i - 1]), 500);
+	wait_for(READ_ONCE(sema[i - 1]), 500);
 	semaphore_set(sema, i - 1);
 
-	क्रम (i = 1; i <= TF_COUNT; i++) अणु
+	for (i = 1; i <= TF_COUNT; i++) {
 		GEM_BUG_ON(sema[i] == -1);
 		elapsed[i - 1] = sema[i] - elapsed[i];
-	पूर्ण
+	}
 
-	cycles = trअगरilter(elapsed);
+	cycles = trifilter(elapsed);
 	pr_info("%s: busy dispatch latency %d cycles, %lluns\n",
 		ce->engine->name, cycles >> TF_BIAS,
 		cycles_to_ns(ce->engine, cycles));
 
-	वापस पूर्णांकel_gt_रुको_क्रम_idle(ce->engine->gt, HZ);
+	return intel_gt_wait_for_idle(ce->engine->gt, HZ);
 
 err:
-	पूर्णांकel_gt_set_wedged(ce->engine->gt);
-	वापस err;
-पूर्ण
+	intel_gt_set_wedged(ce->engine->gt);
+	return err;
+}
 
-अटल पूर्णांक plug(काष्ठा पूर्णांकel_engine_cs *engine, u32 *sema, u32 mode, पूर्णांक value)
-अणु
-	स्थिर u32 offset =
+static int plug(struct intel_engine_cs *engine, u32 *sema, u32 mode, int value)
+{
+	const u32 offset =
 		i915_ggtt_offset(engine->status_page.vma) +
 		offset_in_page(sema);
-	काष्ठा i915_request *rq;
+	struct i915_request *rq;
 	u32 *cs;
 
 	rq = i915_request_create(engine->kernel_context);
-	अगर (IS_ERR(rq))
-		वापस PTR_ERR(rq);
+	if (IS_ERR(rq))
+		return PTR_ERR(rq);
 
-	cs = पूर्णांकel_ring_begin(rq, 4);
-	अगर (IS_ERR(cs)) अणु
+	cs = intel_ring_begin(rq, 4);
+	if (IS_ERR(cs)) {
 		i915_request_add(rq);
-		वापस PTR_ERR(cs);
-	पूर्ण
+		return PTR_ERR(cs);
+	}
 
 	cs = emit_semaphore_poll(cs, mode, value, offset);
 
-	पूर्णांकel_ring_advance(rq, cs);
+	intel_ring_advance(rq, cs);
 	i915_request_add(rq);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक measure_पूर्णांकer_request(काष्ठा पूर्णांकel_context *ce)
-अणु
+static int measure_inter_request(struct intel_context *ce)
+{
 	u32 *sema = hwsp_scratch(ce);
-	स्थिर u32 offset = hwsp_offset(ce, sema);
+	const u32 offset = hwsp_offset(ce, sema);
 	u32 elapsed[TF_COUNT + 1], cycles;
-	काष्ठा i915_sw_fence *submit;
-	पूर्णांक i, err;
+	struct i915_sw_fence *submit;
+	int i, err;
 
 	/*
-	 * Measure how दीर्घ it takes to advance from one request पूर्णांकo the
+	 * Measure how long it takes to advance from one request into the
 	 * next. Between each request we flush the GPU caches to memory,
-	 * update the bपढ़ोcrumbs, and then invalidate those caches.
+	 * update the breadcrumbs, and then invalidate those caches.
 	 * We queue up all the requests to be submitted in one batch so
 	 * it should be one set of contiguous measurements.
 	 *
-	 *    A: पढ़ो CS_TIMESTAMP on GPU
+	 *    A: read CS_TIMESTAMP on GPU
 	 *    advance request
-	 *    B: पढ़ो CS_TIMESTAMP on GPU
+	 *    B: read CS_TIMESTAMP on GPU
 	 *
 	 * Request latency: B - A
 	 */
 
 	err = plug(ce->engine, sema, MI_SEMAPHORE_SAD_NEQ_SDD, 0);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	submit = heap_fence_create(GFP_KERNEL);
-	अगर (!submit) अणु
+	if (!submit) {
 		semaphore_set(sema, 1);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	पूर्णांकel_engine_flush_submission(ce->engine);
-	क्रम (i = 1; i <= ARRAY_SIZE(elapsed); i++) अणु
-		काष्ठा i915_request *rq;
+	intel_engine_flush_submission(ce->engine);
+	for (i = 1; i <= ARRAY_SIZE(elapsed); i++) {
+		struct i915_request *rq;
 		u32 *cs;
 
 		rq = i915_request_create(ce);
-		अगर (IS_ERR(rq)) अणु
+		if (IS_ERR(rq)) {
 			err = PTR_ERR(rq);
-			जाओ err_submit;
-		पूर्ण
+			goto err_submit;
+		}
 
-		err = i915_sw_fence_aरुको_sw_fence_gfp(&rq->submit,
+		err = i915_sw_fence_await_sw_fence_gfp(&rq->submit,
 						       submit,
 						       GFP_KERNEL);
-		अगर (err < 0) अणु
+		if (err < 0) {
 			i915_request_add(rq);
-			जाओ err_submit;
-		पूर्ण
+			goto err_submit;
+		}
 
-		cs = पूर्णांकel_ring_begin(rq, 4);
-		अगर (IS_ERR(cs)) अणु
+		cs = intel_ring_begin(rq, 4);
+		if (IS_ERR(cs)) {
 			i915_request_add(rq);
 			err = PTR_ERR(cs);
-			जाओ err_submit;
-		पूर्ण
+			goto err_submit;
+		}
 
-		cs = emit_बारtamp_store(cs, ce, offset + i * माप(u32));
+		cs = emit_timestamp_store(cs, ce, offset + i * sizeof(u32));
 
-		पूर्णांकel_ring_advance(rq, cs);
+		intel_ring_advance(rq, cs);
 		i915_request_add(rq);
-	पूर्ण
+	}
 	i915_sw_fence_commit(submit);
-	पूर्णांकel_engine_flush_submission(ce->engine);
+	intel_engine_flush_submission(ce->engine);
 	heap_fence_put(submit);
 
 	semaphore_set(sema, 1);
-	err = पूर्णांकel_gt_रुको_क्रम_idle(ce->engine->gt, HZ / 2);
-	अगर (err)
-		जाओ err;
+	err = intel_gt_wait_for_idle(ce->engine->gt, HZ / 2);
+	if (err)
+		goto err;
 
-	क्रम (i = 1; i <= TF_COUNT; i++)
+	for (i = 1; i <= TF_COUNT; i++)
 		elapsed[i - 1] = sema[i + 1] - sema[i];
 
-	cycles = trअगरilter(elapsed);
+	cycles = trifilter(elapsed);
 	pr_info("%s: inter-request latency %d cycles, %lluns\n",
 		ce->engine->name, cycles >> TF_BIAS,
 		cycles_to_ns(ce->engine, cycles));
 
-	वापस पूर्णांकel_gt_रुको_क्रम_idle(ce->engine->gt, HZ);
+	return intel_gt_wait_for_idle(ce->engine->gt, HZ);
 
 err_submit:
 	i915_sw_fence_commit(submit);
 	heap_fence_put(submit);
 	semaphore_set(sema, 1);
 err:
-	पूर्णांकel_gt_set_wedged(ce->engine->gt);
-	वापस err;
-पूर्ण
+	intel_gt_set_wedged(ce->engine->gt);
+	return err;
+}
 
-अटल पूर्णांक measure_context_चयन(काष्ठा पूर्णांकel_context *ce)
-अणु
+static int measure_context_switch(struct intel_context *ce)
+{
 	u32 *sema = hwsp_scratch(ce);
-	स्थिर u32 offset = hwsp_offset(ce, sema);
-	काष्ठा i915_request *fence = शून्य;
+	const u32 offset = hwsp_offset(ce, sema);
+	struct i915_request *fence = NULL;
 	u32 elapsed[TF_COUNT + 1], cycles;
-	पूर्णांक i, j, err;
+	int i, j, err;
 	u32 *cs;
 
 	/*
-	 * Measure how दीर्घ it takes to advance from one request in one
+	 * Measure how long it takes to advance from one request in one
 	 * context to a request in another context. This allows us to
-	 * measure how दीर्घ the context save/restore take, aदीर्घ with all
-	 * the पूर्णांकer-context setup we require.
+	 * measure how long the context save/restore take, along with all
+	 * the inter-context setup we require.
 	 *
-	 *    A: पढ़ो CS_TIMESTAMP on GPU
-	 *    चयन context
-	 *    B: पढ़ो CS_TIMESTAMP on GPU
+	 *    A: read CS_TIMESTAMP on GPU
+	 *    switch context
+	 *    B: read CS_TIMESTAMP on GPU
 	 *
-	 * Context चयन latency: B - A
+	 * Context switch latency: B - A
 	 */
 
 	err = plug(ce->engine, sema, MI_SEMAPHORE_SAD_NEQ_SDD, 0);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	क्रम (i = 1; i <= ARRAY_SIZE(elapsed); i++) अणु
-		काष्ठा पूर्णांकel_context *arr[] = अणु
+	for (i = 1; i <= ARRAY_SIZE(elapsed); i++) {
+		struct intel_context *arr[] = {
 			ce, ce->engine->kernel_context
-		पूर्ण;
-		u32 addr = offset + ARRAY_SIZE(arr) * i * माप(u32);
+		};
+		u32 addr = offset + ARRAY_SIZE(arr) * i * sizeof(u32);
 
-		क्रम (j = 0; j < ARRAY_SIZE(arr); j++) अणु
-			काष्ठा i915_request *rq;
+		for (j = 0; j < ARRAY_SIZE(arr); j++) {
+			struct i915_request *rq;
 
 			rq = i915_request_create(arr[j]);
-			अगर (IS_ERR(rq)) अणु
+			if (IS_ERR(rq)) {
 				err = PTR_ERR(rq);
-				जाओ err_fence;
-			पूर्ण
+				goto err_fence;
+			}
 
-			अगर (fence) अणु
-				err = i915_request_aरुको_dma_fence(rq,
+			if (fence) {
+				err = i915_request_await_dma_fence(rq,
 								   &fence->fence);
-				अगर (err) अणु
+				if (err) {
 					i915_request_add(rq);
-					जाओ err_fence;
-				पूर्ण
-			पूर्ण
+					goto err_fence;
+				}
+			}
 
-			cs = पूर्णांकel_ring_begin(rq, 4);
-			अगर (IS_ERR(cs)) अणु
+			cs = intel_ring_begin(rq, 4);
+			if (IS_ERR(cs)) {
 				i915_request_add(rq);
 				err = PTR_ERR(cs);
-				जाओ err_fence;
-			पूर्ण
+				goto err_fence;
+			}
 
-			cs = emit_बारtamp_store(cs, ce, addr);
-			addr += माप(u32);
+			cs = emit_timestamp_store(cs, ce, addr);
+			addr += sizeof(u32);
 
-			पूर्णांकel_ring_advance(rq, cs);
+			intel_ring_advance(rq, cs);
 
 			i915_request_put(fence);
 			fence = i915_request_get(rq);
 
 			i915_request_add(rq);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	i915_request_put(fence);
-	पूर्णांकel_engine_flush_submission(ce->engine);
+	intel_engine_flush_submission(ce->engine);
 
 	semaphore_set(sema, 1);
-	err = पूर्णांकel_gt_रुको_क्रम_idle(ce->engine->gt, HZ / 2);
-	अगर (err)
-		जाओ err;
+	err = intel_gt_wait_for_idle(ce->engine->gt, HZ / 2);
+	if (err)
+		goto err;
 
-	क्रम (i = 1; i <= TF_COUNT; i++)
+	for (i = 1; i <= TF_COUNT; i++)
 		elapsed[i - 1] = sema[2 * i + 2] - sema[2 * i + 1];
 
-	cycles = trअगरilter(elapsed);
+	cycles = trifilter(elapsed);
 	pr_info("%s: context switch latency %d cycles, %lluns\n",
 		ce->engine->name, cycles >> TF_BIAS,
 		cycles_to_ns(ce->engine, cycles));
 
-	वापस पूर्णांकel_gt_रुको_क्रम_idle(ce->engine->gt, HZ);
+	return intel_gt_wait_for_idle(ce->engine->gt, HZ);
 
 err_fence:
 	i915_request_put(fence);
 	semaphore_set(sema, 1);
 err:
-	पूर्णांकel_gt_set_wedged(ce->engine->gt);
-	वापस err;
-पूर्ण
+	intel_gt_set_wedged(ce->engine->gt);
+	return err;
+}
 
-अटल पूर्णांक measure_preemption(काष्ठा पूर्णांकel_context *ce)
-अणु
+static int measure_preemption(struct intel_context *ce)
+{
 	u32 *sema = hwsp_scratch(ce);
-	स्थिर u32 offset = hwsp_offset(ce, sema);
+	const u32 offset = hwsp_offset(ce, sema);
 	u32 elapsed[TF_COUNT], cycles;
 	u32 *cs;
-	पूर्णांक err;
-	पूर्णांक i;
+	int err;
+	int i;
 
 	/*
-	 * We measure two latencies जबतक triggering preemption. The first
-	 * latency is how दीर्घ it takes क्रम us to submit a preempting request.
-	 * The second latency is how it takes क्रम us to वापस from the
+	 * We measure two latencies while triggering preemption. The first
+	 * latency is how long it takes for us to submit a preempting request.
+	 * The second latency is how it takes for us to return from the
 	 * preemption back to the original context.
 	 *
-	 *    A: पढ़ो CS_TIMESTAMP from CPU
+	 *    A: read CS_TIMESTAMP from CPU
 	 *    submit preemption
-	 *    B: पढ़ो CS_TIMESTAMP on GPU (in preempting context)
-	 *    context चयन
-	 *    C: पढ़ो CS_TIMESTAMP on GPU (in original context)
+	 *    B: read CS_TIMESTAMP on GPU (in preempting context)
+	 *    context switch
+	 *    C: read CS_TIMESTAMP on GPU (in original context)
 	 *
 	 * Preemption dispatch latency: B - A
-	 * Preemption चयन latency: C - B
+	 * Preemption switch latency: C - B
 	 */
 
-	अगर (!पूर्णांकel_engine_has_preemption(ce->engine))
-		वापस 0;
+	if (!intel_engine_has_preemption(ce->engine))
+		return 0;
 
-	क्रम (i = 1; i <= ARRAY_SIZE(elapsed); i++) अणु
-		u32 addr = offset + 2 * i * माप(u32);
-		काष्ठा i915_request *rq;
+	for (i = 1; i <= ARRAY_SIZE(elapsed); i++) {
+		u32 addr = offset + 2 * i * sizeof(u32);
+		struct i915_request *rq;
 
 		rq = i915_request_create(ce);
-		अगर (IS_ERR(rq)) अणु
+		if (IS_ERR(rq)) {
 			err = PTR_ERR(rq);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
-		cs = पूर्णांकel_ring_begin(rq, 12);
-		अगर (IS_ERR(cs)) अणु
+		cs = intel_ring_begin(rq, 12);
+		if (IS_ERR(cs)) {
 			i915_request_add(rq);
 			err = PTR_ERR(cs);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		cs = emit_store_dw(cs, addr, -1);
 		cs = emit_semaphore_poll_until(cs, offset, i);
-		cs = emit_बारtamp_store(cs, ce, addr + माप(u32));
+		cs = emit_timestamp_store(cs, ce, addr + sizeof(u32));
 
-		पूर्णांकel_ring_advance(rq, cs);
+		intel_ring_advance(rq, cs);
 		i915_request_add(rq);
 
-		अगर (रुको_क्रम(READ_ONCE(sema[2 * i]) == -1, 500)) अणु
+		if (wait_for(READ_ONCE(sema[2 * i]) == -1, 500)) {
 			err = -EIO;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		rq = i915_request_create(ce->engine->kernel_context);
-		अगर (IS_ERR(rq)) अणु
+		if (IS_ERR(rq)) {
 			err = PTR_ERR(rq);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
-		cs = पूर्णांकel_ring_begin(rq, 8);
-		अगर (IS_ERR(cs)) अणु
+		cs = intel_ring_begin(rq, 8);
+		if (IS_ERR(cs)) {
 			i915_request_add(rq);
 			err = PTR_ERR(cs);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
-		cs = emit_बारtamp_store(cs, ce, addr);
+		cs = emit_timestamp_store(cs, ce, addr);
 		cs = emit_store_dw(cs, offset, i);
 
-		पूर्णांकel_ring_advance(rq, cs);
+		intel_ring_advance(rq, cs);
 		rq->sched.attr.priority = I915_PRIORITY_BARRIER;
 
 		elapsed[i - 1] = ENGINE_READ_FW(ce->engine, RING_TIMESTAMP);
 		i915_request_add(rq);
-	पूर्ण
+	}
 
-	अगर (रुको_क्रम(READ_ONCE(sema[2 * i - 2]) != -1, 500)) अणु
+	if (wait_for(READ_ONCE(sema[2 * i - 2]) != -1, 500)) {
 		err = -EIO;
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
-	क्रम (i = 1; i <= TF_COUNT; i++)
+	for (i = 1; i <= TF_COUNT; i++)
 		elapsed[i - 1] = sema[2 * i + 0] - elapsed[i - 1];
 
-	cycles = trअगरilter(elapsed);
+	cycles = trifilter(elapsed);
 	pr_info("%s: preemption dispatch latency %d cycles, %lluns\n",
 		ce->engine->name, cycles >> TF_BIAS,
 		cycles_to_ns(ce->engine, cycles));
 
-	क्रम (i = 1; i <= TF_COUNT; i++)
+	for (i = 1; i <= TF_COUNT; i++)
 		elapsed[i - 1] = sema[2 * i + 1] - sema[2 * i + 0];
 
-	cycles = trअगरilter(elapsed);
+	cycles = trifilter(elapsed);
 	pr_info("%s: preemption switch latency %d cycles, %lluns\n",
 		ce->engine->name, cycles >> TF_BIAS,
 		cycles_to_ns(ce->engine, cycles));
 
-	वापस पूर्णांकel_gt_रुको_क्रम_idle(ce->engine->gt, HZ);
+	return intel_gt_wait_for_idle(ce->engine->gt, HZ);
 
 err:
-	पूर्णांकel_gt_set_wedged(ce->engine->gt);
-	वापस err;
-पूर्ण
+	intel_gt_set_wedged(ce->engine->gt);
+	return err;
+}
 
-काष्ठा संकेत_cb अणु
-	काष्ठा dma_fence_cb base;
+struct signal_cb {
+	struct dma_fence_cb base;
 	bool seen;
-पूर्ण;
+};
 
-अटल व्योम संकेत_cb(काष्ठा dma_fence *fence, काष्ठा dma_fence_cb *cb)
-अणु
-	काष्ठा संकेत_cb *s = container_of(cb, typeof(*s), base);
+static void signal_cb(struct dma_fence *fence, struct dma_fence_cb *cb)
+{
+	struct signal_cb *s = container_of(cb, typeof(*s), base);
 
 	smp_store_mb(s->seen, true); /* be safe, be strong */
-पूर्ण
+}
 
-अटल पूर्णांक measure_completion(काष्ठा पूर्णांकel_context *ce)
-अणु
+static int measure_completion(struct intel_context *ce)
+{
 	u32 *sema = hwsp_scratch(ce);
-	स्थिर u32 offset = hwsp_offset(ce, sema);
+	const u32 offset = hwsp_offset(ce, sema);
 	u32 elapsed[TF_COUNT], cycles;
 	u32 *cs;
-	पूर्णांक err;
-	पूर्णांक i;
+	int err;
+	int i;
 
 	/*
-	 * Measure how दीर्घ it takes क्रम the संकेत (पूर्णांकerrupt) to be
+	 * Measure how long it takes for the signal (interrupt) to be
 	 * sent from the GPU to be processed by the CPU.
 	 *
-	 *    A: पढ़ो CS_TIMESTAMP on GPU
-	 *    संकेत
-	 *    B: पढ़ो CS_TIMESTAMP from CPU
+	 *    A: read CS_TIMESTAMP on GPU
+	 *    signal
+	 *    B: read CS_TIMESTAMP from CPU
 	 *
 	 * Completion latency: B - A
 	 */
 
-	क्रम (i = 1; i <= ARRAY_SIZE(elapsed); i++) अणु
-		काष्ठा संकेत_cb cb = अणु .seen = false पूर्ण;
-		काष्ठा i915_request *rq;
+	for (i = 1; i <= ARRAY_SIZE(elapsed); i++) {
+		struct signal_cb cb = { .seen = false };
+		struct i915_request *rq;
 
 		rq = i915_request_create(ce);
-		अगर (IS_ERR(rq)) अणु
+		if (IS_ERR(rq)) {
 			err = PTR_ERR(rq);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
-		cs = पूर्णांकel_ring_begin(rq, 12);
-		अगर (IS_ERR(cs)) अणु
+		cs = intel_ring_begin(rq, 12);
+		if (IS_ERR(cs)) {
 			i915_request_add(rq);
 			err = PTR_ERR(cs);
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
-		cs = emit_store_dw(cs, offset + i * माप(u32), -1);
+		cs = emit_store_dw(cs, offset + i * sizeof(u32), -1);
 		cs = emit_semaphore_poll_until(cs, offset, i);
-		cs = emit_बारtamp_store(cs, ce, offset + i * माप(u32));
+		cs = emit_timestamp_store(cs, ce, offset + i * sizeof(u32));
 
-		पूर्णांकel_ring_advance(rq, cs);
+		intel_ring_advance(rq, cs);
 
-		dma_fence_add_callback(&rq->fence, &cb.base, संकेत_cb);
+		dma_fence_add_callback(&rq->fence, &cb.base, signal_cb);
 		i915_request_add(rq);
 
-		पूर्णांकel_engine_flush_submission(ce->engine);
-		अगर (रुको_क्रम(READ_ONCE(sema[i]) == -1, 50)) अणु
+		intel_engine_flush_submission(ce->engine);
+		if (wait_for(READ_ONCE(sema[i]) == -1, 50)) {
 			err = -EIO;
-			जाओ err;
-		पूर्ण
+			goto err;
+		}
 
 		preempt_disable();
 		semaphore_set(sema, i);
-		जबतक (!READ_ONCE(cb.seen))
+		while (!READ_ONCE(cb.seen))
 			cpu_relax();
 
 		elapsed[i - 1] = ENGINE_READ_FW(ce->engine, RING_TIMESTAMP);
 		preempt_enable();
-	पूर्ण
+	}
 
-	err = पूर्णांकel_gt_रुको_क्रम_idle(ce->engine->gt, HZ / 2);
-	अगर (err)
-		जाओ err;
+	err = intel_gt_wait_for_idle(ce->engine->gt, HZ / 2);
+	if (err)
+		goto err;
 
-	क्रम (i = 0; i < ARRAY_SIZE(elapsed); i++) अणु
+	for (i = 0; i < ARRAY_SIZE(elapsed); i++) {
 		GEM_BUG_ON(sema[i + 1] == -1);
 		elapsed[i] = elapsed[i] - sema[i + 1];
-	पूर्ण
+	}
 
-	cycles = trअगरilter(elapsed);
+	cycles = trifilter(elapsed);
 	pr_info("%s: completion latency %d cycles, %lluns\n",
 		ce->engine->name, cycles >> TF_BIAS,
 		cycles_to_ns(ce->engine, cycles));
 
-	वापस पूर्णांकel_gt_रुको_क्रम_idle(ce->engine->gt, HZ);
+	return intel_gt_wait_for_idle(ce->engine->gt, HZ);
 
 err:
-	पूर्णांकel_gt_set_wedged(ce->engine->gt);
-	वापस err;
-पूर्ण
+	intel_gt_set_wedged(ce->engine->gt);
+	return err;
+}
 
-अटल व्योम rps_pin(काष्ठा पूर्णांकel_gt *gt)
-अणु
+static void rps_pin(struct intel_gt *gt)
+{
 	/* Pin the frequency to max */
-	atomic_inc(&gt->rps.num_रुकोers);
-	पूर्णांकel_uncore_क्रमcewake_get(gt->uncore, FORCEWAKE_ALL);
+	atomic_inc(&gt->rps.num_waiters);
+	intel_uncore_forcewake_get(gt->uncore, FORCEWAKE_ALL);
 
 	mutex_lock(&gt->rps.lock);
-	पूर्णांकel_rps_set(&gt->rps, gt->rps.max_freq);
+	intel_rps_set(&gt->rps, gt->rps.max_freq);
 	mutex_unlock(&gt->rps.lock);
-पूर्ण
+}
 
-अटल व्योम rps_unpin(काष्ठा पूर्णांकel_gt *gt)
-अणु
-	पूर्णांकel_uncore_क्रमcewake_put(gt->uncore, FORCEWAKE_ALL);
-	atomic_dec(&gt->rps.num_रुकोers);
-पूर्ण
+static void rps_unpin(struct intel_gt *gt)
+{
+	intel_uncore_forcewake_put(gt->uncore, FORCEWAKE_ALL);
+	atomic_dec(&gt->rps.num_waiters);
+}
 
-अटल पूर्णांक perf_request_latency(व्योम *arg)
-अणु
-	काष्ठा drm_i915_निजी *i915 = arg;
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	काष्ठा pm_qos_request qos;
-	पूर्णांक err = 0;
+static int perf_request_latency(void *arg)
+{
+	struct drm_i915_private *i915 = arg;
+	struct intel_engine_cs *engine;
+	struct pm_qos_request qos;
+	int err = 0;
 
-	अगर (INTEL_GEN(i915) < 8) /* per-engine CS बारtamp, semaphores */
-		वापस 0;
+	if (INTEL_GEN(i915) < 8) /* per-engine CS timestamp, semaphores */
+		return 0;
 
 	cpu_latency_qos_add_request(&qos, 0); /* disable cstates */
 
-	क्रम_each_uabi_engine(engine, i915) अणु
-		काष्ठा पूर्णांकel_context *ce;
+	for_each_uabi_engine(engine, i915) {
+		struct intel_context *ce;
 
-		ce = पूर्णांकel_context_create(engine);
-		अगर (IS_ERR(ce)) अणु
+		ce = intel_context_create(engine);
+		if (IS_ERR(ce)) {
 			err = PTR_ERR(ce);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		err = पूर्णांकel_context_pin(ce);
-		अगर (err) अणु
-			पूर्णांकel_context_put(ce);
-			जाओ out;
-		पूर्ण
+		err = intel_context_pin(ce);
+		if (err) {
+			intel_context_put(ce);
+			goto out;
+		}
 
 		st_engine_heartbeat_disable(engine);
 		rps_pin(engine->gt);
 
-		अगर (err == 0)
+		if (err == 0)
 			err = measure_semaphore_response(ce);
-		अगर (err == 0)
+		if (err == 0)
 			err = measure_idle_dispatch(ce);
-		अगर (err == 0)
+		if (err == 0)
 			err = measure_busy_dispatch(ce);
-		अगर (err == 0)
-			err = measure_पूर्णांकer_request(ce);
-		अगर (err == 0)
-			err = measure_context_चयन(ce);
-		अगर (err == 0)
+		if (err == 0)
+			err = measure_inter_request(ce);
+		if (err == 0)
+			err = measure_context_switch(ce);
+		if (err == 0)
 			err = measure_preemption(ce);
-		अगर (err == 0)
+		if (err == 0)
 			err = measure_completion(ce);
 
 		rps_unpin(engine->gt);
 		st_engine_heartbeat_enable(engine);
 
-		पूर्णांकel_context_unpin(ce);
-		पूर्णांकel_context_put(ce);
-		अगर (err)
-			जाओ out;
-	पूर्ण
+		intel_context_unpin(ce);
+		intel_context_put(ce);
+		if (err)
+			goto out;
+	}
 
 out:
-	अगर (igt_flush_test(i915))
+	if (igt_flush_test(i915))
 		err = -EIO;
 
-	cpu_latency_qos_हटाओ_request(&qos);
-	वापस err;
-पूर्ण
+	cpu_latency_qos_remove_request(&qos);
+	return err;
+}
 
-अटल पूर्णांक s_sync0(व्योम *arg)
-अणु
-	काष्ठा perf_series *ps = arg;
-	IGT_TIMEOUT(end_समय);
-	अचिन्हित पूर्णांक idx = 0;
-	पूर्णांक err = 0;
+static int s_sync0(void *arg)
+{
+	struct perf_series *ps = arg;
+	IGT_TIMEOUT(end_time);
+	unsigned int idx = 0;
+	int err = 0;
 
 	GEM_BUG_ON(!ps->nengines);
-	करो अणु
-		काष्ठा i915_request *rq;
+	do {
+		struct i915_request *rq;
 
 		rq = i915_request_create(ps->ce[idx]);
-		अगर (IS_ERR(rq)) अणु
+		if (IS_ERR(rq)) {
 			err = PTR_ERR(rq);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		i915_request_get(rq);
 		i915_request_add(rq);
 
-		अगर (i915_request_रुको(rq, 0, HZ / 5) < 0)
+		if (i915_request_wait(rq, 0, HZ / 5) < 0)
 			err = -ETIME;
 		i915_request_put(rq);
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 
-		अगर (++idx == ps->nengines)
+		if (++idx == ps->nengines)
 			idx = 0;
-	पूर्ण जबतक (!__igt_समयout(end_समय, शून्य));
+	} while (!__igt_timeout(end_time, NULL));
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक s_sync1(व्योम *arg)
-अणु
-	काष्ठा perf_series *ps = arg;
-	काष्ठा i915_request *prev = शून्य;
-	IGT_TIMEOUT(end_समय);
-	अचिन्हित पूर्णांक idx = 0;
-	पूर्णांक err = 0;
+static int s_sync1(void *arg)
+{
+	struct perf_series *ps = arg;
+	struct i915_request *prev = NULL;
+	IGT_TIMEOUT(end_time);
+	unsigned int idx = 0;
+	int err = 0;
 
 	GEM_BUG_ON(!ps->nengines);
-	करो अणु
-		काष्ठा i915_request *rq;
+	do {
+		struct i915_request *rq;
 
 		rq = i915_request_create(ps->ce[idx]);
-		अगर (IS_ERR(rq)) अणु
+		if (IS_ERR(rq)) {
 			err = PTR_ERR(rq);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		i915_request_get(rq);
 		i915_request_add(rq);
 
-		अगर (prev && i915_request_रुको(prev, 0, HZ / 5) < 0)
+		if (prev && i915_request_wait(prev, 0, HZ / 5) < 0)
 			err = -ETIME;
 		i915_request_put(prev);
 		prev = rq;
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 
-		अगर (++idx == ps->nengines)
+		if (++idx == ps->nengines)
 			idx = 0;
-	पूर्ण जबतक (!__igt_समयout(end_समय, शून्य));
+	} while (!__igt_timeout(end_time, NULL));
 	i915_request_put(prev);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक s_many(व्योम *arg)
-अणु
-	काष्ठा perf_series *ps = arg;
-	IGT_TIMEOUT(end_समय);
-	अचिन्हित पूर्णांक idx = 0;
+static int s_many(void *arg)
+{
+	struct perf_series *ps = arg;
+	IGT_TIMEOUT(end_time);
+	unsigned int idx = 0;
 
 	GEM_BUG_ON(!ps->nengines);
-	करो अणु
-		काष्ठा i915_request *rq;
+	do {
+		struct i915_request *rq;
 
 		rq = i915_request_create(ps->ce[idx]);
-		अगर (IS_ERR(rq))
-			वापस PTR_ERR(rq);
+		if (IS_ERR(rq))
+			return PTR_ERR(rq);
 
 		i915_request_add(rq);
 
-		अगर (++idx == ps->nengines)
+		if (++idx == ps->nengines)
 			idx = 0;
-	पूर्ण जबतक (!__igt_समयout(end_समय, शून्य));
+	} while (!__igt_timeout(end_time, NULL));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक perf_series_engines(व्योम *arg)
-अणु
-	काष्ठा drm_i915_निजी *i915 = arg;
-	अटल पूर्णांक (* स्थिर func[])(व्योम *arg) = अणु
+static int perf_series_engines(void *arg)
+{
+	struct drm_i915_private *i915 = arg;
+	static int (* const func[])(void *arg) = {
 		s_sync0,
 		s_sync1,
 		s_many,
-		शून्य,
-	पूर्ण;
-	स्थिर अचिन्हित पूर्णांक nengines = num_uabi_engines(i915);
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	पूर्णांक (* स्थिर *fn)(व्योम *arg);
-	काष्ठा pm_qos_request qos;
-	काष्ठा perf_stats *stats;
-	काष्ठा perf_series *ps;
-	अचिन्हित पूर्णांक idx;
-	पूर्णांक err = 0;
+		NULL,
+	};
+	const unsigned int nengines = num_uabi_engines(i915);
+	struct intel_engine_cs *engine;
+	int (* const *fn)(void *arg);
+	struct pm_qos_request qos;
+	struct perf_stats *stats;
+	struct perf_series *ps;
+	unsigned int idx;
+	int err = 0;
 
-	stats = kसुस्मृति(nengines, माप(*stats), GFP_KERNEL);
-	अगर (!stats)
-		वापस -ENOMEM;
+	stats = kcalloc(nengines, sizeof(*stats), GFP_KERNEL);
+	if (!stats)
+		return -ENOMEM;
 
-	ps = kzalloc(काष्ठा_size(ps, ce, nengines), GFP_KERNEL);
-	अगर (!ps) अणु
-		kमुक्त(stats);
-		वापस -ENOMEM;
-	पूर्ण
+	ps = kzalloc(struct_size(ps, ce, nengines), GFP_KERNEL);
+	if (!ps) {
+		kfree(stats);
+		return -ENOMEM;
+	}
 
 	cpu_latency_qos_add_request(&qos, 0); /* disable cstates */
 
@@ -2664,426 +2663,426 @@ out:
 	ps->nengines = nengines;
 
 	idx = 0;
-	क्रम_each_uabi_engine(engine, i915) अणु
-		काष्ठा पूर्णांकel_context *ce;
+	for_each_uabi_engine(engine, i915) {
+		struct intel_context *ce;
 
-		ce = पूर्णांकel_context_create(engine);
-		अगर (IS_ERR(ce)) अणु
+		ce = intel_context_create(engine);
+		if (IS_ERR(ce)) {
 			err = PTR_ERR(ce);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
-		err = पूर्णांकel_context_pin(ce);
-		अगर (err) अणु
-			पूर्णांकel_context_put(ce);
-			जाओ out;
-		पूर्ण
+		err = intel_context_pin(ce);
+		if (err) {
+			intel_context_put(ce);
+			goto out;
+		}
 
 		ps->ce[idx++] = ce;
-	पूर्ण
+	}
 	GEM_BUG_ON(idx != ps->nengines);
 
-	क्रम (fn = func; *fn && !err; fn++) अणु
-		अक्षर name[KSYM_NAME_LEN];
-		काष्ठा igt_live_test t;
+	for (fn = func; *fn && !err; fn++) {
+		char name[KSYM_NAME_LEN];
+		struct igt_live_test t;
 
-		snम_लिखो(name, माप(name), "%ps", *fn);
+		snprintf(name, sizeof(name), "%ps", *fn);
 		err = igt_live_test_begin(&t, i915, __func__, name);
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 
-		क्रम (idx = 0; idx < nengines; idx++) अणु
-			काष्ठा perf_stats *p =
-				स_रखो(&stats[idx], 0, माप(stats[idx]));
-			काष्ठा पूर्णांकel_context *ce = ps->ce[idx];
+		for (idx = 0; idx < nengines; idx++) {
+			struct perf_stats *p =
+				memset(&stats[idx], 0, sizeof(stats[idx]));
+			struct intel_context *ce = ps->ce[idx];
 
 			p->engine = ps->ce[idx]->engine;
-			पूर्णांकel_engine_pm_get(p->engine);
+			intel_engine_pm_get(p->engine);
 
-			अगर (पूर्णांकel_engine_supports_stats(p->engine))
-				p->busy = पूर्णांकel_engine_get_busy_समय(p->engine,
-								     &p->समय) + 1;
-			अन्यथा
-				p->समय = kसमय_get();
-			p->runसमय = -पूर्णांकel_context_get_total_runसमय_ns(ce);
-		पूर्ण
+			if (intel_engine_supports_stats(p->engine))
+				p->busy = intel_engine_get_busy_time(p->engine,
+								     &p->time) + 1;
+			else
+				p->time = ktime_get();
+			p->runtime = -intel_context_get_total_runtime_ns(ce);
+		}
 
 		err = (*fn)(ps);
-		अगर (igt_live_test_end(&t))
+		if (igt_live_test_end(&t))
 			err = -EIO;
 
-		क्रम (idx = 0; idx < nengines; idx++) अणु
-			काष्ठा perf_stats *p = &stats[idx];
-			काष्ठा पूर्णांकel_context *ce = ps->ce[idx];
-			पूर्णांक पूर्णांकeger, decimal;
+		for (idx = 0; idx < nengines; idx++) {
+			struct perf_stats *p = &stats[idx];
+			struct intel_context *ce = ps->ce[idx];
+			int integer, decimal;
 			u64 busy, dt, now;
 
-			अगर (p->busy)
-				p->busy = kसमय_sub(पूर्णांकel_engine_get_busy_समय(p->engine,
+			if (p->busy)
+				p->busy = ktime_sub(intel_engine_get_busy_time(p->engine,
 									       &now),
 						    p->busy - 1);
-			अन्यथा
-				now = kसमय_get();
-			p->समय = kसमय_sub(now, p->समय);
+			else
+				now = ktime_get();
+			p->time = ktime_sub(now, p->time);
 
-			err = चयन_to_kernel_sync(ce, err);
-			p->runसमय += पूर्णांकel_context_get_total_runसमय_ns(ce);
-			पूर्णांकel_engine_pm_put(p->engine);
+			err = switch_to_kernel_sync(ce, err);
+			p->runtime += intel_context_get_total_runtime_ns(ce);
+			intel_engine_pm_put(p->engine);
 
-			busy = 100 * kसमय_प्रकारo_ns(p->busy);
-			dt = kसमय_प्रकारo_ns(p->समय);
-			अगर (dt) अणु
-				पूर्णांकeger = भाग64_u64(busy, dt);
-				busy -= पूर्णांकeger * dt;
-				decimal = भाग64_u64(100 * busy, dt);
-			पूर्ण अन्यथा अणु
-				पूर्णांकeger = 0;
+			busy = 100 * ktime_to_ns(p->busy);
+			dt = ktime_to_ns(p->time);
+			if (dt) {
+				integer = div64_u64(busy, dt);
+				busy -= integer * dt;
+				decimal = div64_u64(100 * busy, dt);
+			} else {
+				integer = 0;
 				decimal = 0;
-			पूर्ण
+			}
 
 			pr_info("%s %5s: { seqno:%d, busy:%d.%02d%%, runtime:%lldms, walltime:%lldms }\n",
-				name, p->engine->name, ce->समयline->seqno,
-				पूर्णांकeger, decimal,
-				भाग_u64(p->runसमय, 1000 * 1000),
-				भाग_u64(kसमय_प्रकारo_ns(p->समय), 1000 * 1000));
-		पूर्ण
-	पूर्ण
+				name, p->engine->name, ce->timeline->seqno,
+				integer, decimal,
+				div_u64(p->runtime, 1000 * 1000),
+				div_u64(ktime_to_ns(p->time), 1000 * 1000));
+		}
+	}
 
 out:
-	क्रम (idx = 0; idx < nengines; idx++) अणु
-		अगर (IS_ERR_OR_शून्य(ps->ce[idx]))
-			अवरोध;
+	for (idx = 0; idx < nengines; idx++) {
+		if (IS_ERR_OR_NULL(ps->ce[idx]))
+			break;
 
-		पूर्णांकel_context_unpin(ps->ce[idx]);
-		पूर्णांकel_context_put(ps->ce[idx]);
-	पूर्ण
-	kमुक्त(ps);
+		intel_context_unpin(ps->ce[idx]);
+		intel_context_put(ps->ce[idx]);
+	}
+	kfree(ps);
 
-	cpu_latency_qos_हटाओ_request(&qos);
-	kमुक्त(stats);
-	वापस err;
-पूर्ण
+	cpu_latency_qos_remove_request(&qos);
+	kfree(stats);
+	return err;
+}
 
-अटल पूर्णांक p_sync0(व्योम *arg)
-अणु
-	काष्ठा perf_stats *p = arg;
-	काष्ठा पूर्णांकel_engine_cs *engine = p->engine;
-	काष्ठा पूर्णांकel_context *ce;
-	IGT_TIMEOUT(end_समय);
-	अचिन्हित दीर्घ count;
+static int p_sync0(void *arg)
+{
+	struct perf_stats *p = arg;
+	struct intel_engine_cs *engine = p->engine;
+	struct intel_context *ce;
+	IGT_TIMEOUT(end_time);
+	unsigned long count;
 	bool busy;
-	पूर्णांक err = 0;
+	int err = 0;
 
-	ce = पूर्णांकel_context_create(engine);
-	अगर (IS_ERR(ce))
-		वापस PTR_ERR(ce);
+	ce = intel_context_create(engine);
+	if (IS_ERR(ce))
+		return PTR_ERR(ce);
 
-	err = पूर्णांकel_context_pin(ce);
-	अगर (err) अणु
-		पूर्णांकel_context_put(ce);
-		वापस err;
-	पूर्ण
+	err = intel_context_pin(ce);
+	if (err) {
+		intel_context_put(ce);
+		return err;
+	}
 
-	अगर (पूर्णांकel_engine_supports_stats(engine)) अणु
-		p->busy = पूर्णांकel_engine_get_busy_समय(engine, &p->समय);
+	if (intel_engine_supports_stats(engine)) {
+		p->busy = intel_engine_get_busy_time(engine, &p->time);
 		busy = true;
-	पूर्ण अन्यथा अणु
-		p->समय = kसमय_get();
+	} else {
+		p->time = ktime_get();
 		busy = false;
-	पूर्ण
+	}
 
 	count = 0;
-	करो अणु
-		काष्ठा i915_request *rq;
+	do {
+		struct i915_request *rq;
 
 		rq = i915_request_create(ce);
-		अगर (IS_ERR(rq)) अणु
+		if (IS_ERR(rq)) {
 			err = PTR_ERR(rq);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		i915_request_get(rq);
 		i915_request_add(rq);
 
 		err = 0;
-		अगर (i915_request_रुको(rq, 0, HZ / 5) < 0)
+		if (i915_request_wait(rq, 0, HZ / 5) < 0)
 			err = -ETIME;
 		i915_request_put(rq);
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 
 		count++;
-	पूर्ण जबतक (!__igt_समयout(end_समय, शून्य));
+	} while (!__igt_timeout(end_time, NULL));
 
-	अगर (busy) अणु
-		kसमय_प्रकार now;
+	if (busy) {
+		ktime_t now;
 
-		p->busy = kसमय_sub(पूर्णांकel_engine_get_busy_समय(engine, &now),
+		p->busy = ktime_sub(intel_engine_get_busy_time(engine, &now),
 				    p->busy);
-		p->समय = kसमय_sub(now, p->समय);
-	पूर्ण अन्यथा अणु
-		p->समय = kसमय_sub(kसमय_get(), p->समय);
-	पूर्ण
+		p->time = ktime_sub(now, p->time);
+	} else {
+		p->time = ktime_sub(ktime_get(), p->time);
+	}
 
-	err = चयन_to_kernel_sync(ce, err);
-	p->runसमय = पूर्णांकel_context_get_total_runसमय_ns(ce);
+	err = switch_to_kernel_sync(ce, err);
+	p->runtime = intel_context_get_total_runtime_ns(ce);
 	p->count = count;
 
-	पूर्णांकel_context_unpin(ce);
-	पूर्णांकel_context_put(ce);
-	वापस err;
-पूर्ण
+	intel_context_unpin(ce);
+	intel_context_put(ce);
+	return err;
+}
 
-अटल पूर्णांक p_sync1(व्योम *arg)
-अणु
-	काष्ठा perf_stats *p = arg;
-	काष्ठा पूर्णांकel_engine_cs *engine = p->engine;
-	काष्ठा i915_request *prev = शून्य;
-	काष्ठा पूर्णांकel_context *ce;
-	IGT_TIMEOUT(end_समय);
-	अचिन्हित दीर्घ count;
+static int p_sync1(void *arg)
+{
+	struct perf_stats *p = arg;
+	struct intel_engine_cs *engine = p->engine;
+	struct i915_request *prev = NULL;
+	struct intel_context *ce;
+	IGT_TIMEOUT(end_time);
+	unsigned long count;
 	bool busy;
-	पूर्णांक err = 0;
+	int err = 0;
 
-	ce = पूर्णांकel_context_create(engine);
-	अगर (IS_ERR(ce))
-		वापस PTR_ERR(ce);
+	ce = intel_context_create(engine);
+	if (IS_ERR(ce))
+		return PTR_ERR(ce);
 
-	err = पूर्णांकel_context_pin(ce);
-	अगर (err) अणु
-		पूर्णांकel_context_put(ce);
-		वापस err;
-	पूर्ण
+	err = intel_context_pin(ce);
+	if (err) {
+		intel_context_put(ce);
+		return err;
+	}
 
-	अगर (पूर्णांकel_engine_supports_stats(engine)) अणु
-		p->busy = पूर्णांकel_engine_get_busy_समय(engine, &p->समय);
+	if (intel_engine_supports_stats(engine)) {
+		p->busy = intel_engine_get_busy_time(engine, &p->time);
 		busy = true;
-	पूर्ण अन्यथा अणु
-		p->समय = kसमय_get();
+	} else {
+		p->time = ktime_get();
 		busy = false;
-	पूर्ण
+	}
 
 	count = 0;
-	करो अणु
-		काष्ठा i915_request *rq;
+	do {
+		struct i915_request *rq;
 
 		rq = i915_request_create(ce);
-		अगर (IS_ERR(rq)) अणु
+		if (IS_ERR(rq)) {
 			err = PTR_ERR(rq);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		i915_request_get(rq);
 		i915_request_add(rq);
 
 		err = 0;
-		अगर (prev && i915_request_रुको(prev, 0, HZ / 5) < 0)
+		if (prev && i915_request_wait(prev, 0, HZ / 5) < 0)
 			err = -ETIME;
 		i915_request_put(prev);
 		prev = rq;
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 
 		count++;
-	पूर्ण जबतक (!__igt_समयout(end_समय, शून्य));
+	} while (!__igt_timeout(end_time, NULL));
 	i915_request_put(prev);
 
-	अगर (busy) अणु
-		kसमय_प्रकार now;
+	if (busy) {
+		ktime_t now;
 
-		p->busy = kसमय_sub(पूर्णांकel_engine_get_busy_समय(engine, &now),
+		p->busy = ktime_sub(intel_engine_get_busy_time(engine, &now),
 				    p->busy);
-		p->समय = kसमय_sub(now, p->समय);
-	पूर्ण अन्यथा अणु
-		p->समय = kसमय_sub(kसमय_get(), p->समय);
-	पूर्ण
+		p->time = ktime_sub(now, p->time);
+	} else {
+		p->time = ktime_sub(ktime_get(), p->time);
+	}
 
-	err = चयन_to_kernel_sync(ce, err);
-	p->runसमय = पूर्णांकel_context_get_total_runसमय_ns(ce);
+	err = switch_to_kernel_sync(ce, err);
+	p->runtime = intel_context_get_total_runtime_ns(ce);
 	p->count = count;
 
-	पूर्णांकel_context_unpin(ce);
-	पूर्णांकel_context_put(ce);
-	वापस err;
-पूर्ण
+	intel_context_unpin(ce);
+	intel_context_put(ce);
+	return err;
+}
 
-अटल पूर्णांक p_many(व्योम *arg)
-अणु
-	काष्ठा perf_stats *p = arg;
-	काष्ठा पूर्णांकel_engine_cs *engine = p->engine;
-	काष्ठा पूर्णांकel_context *ce;
-	IGT_TIMEOUT(end_समय);
-	अचिन्हित दीर्घ count;
-	पूर्णांक err = 0;
+static int p_many(void *arg)
+{
+	struct perf_stats *p = arg;
+	struct intel_engine_cs *engine = p->engine;
+	struct intel_context *ce;
+	IGT_TIMEOUT(end_time);
+	unsigned long count;
+	int err = 0;
 	bool busy;
 
-	ce = पूर्णांकel_context_create(engine);
-	अगर (IS_ERR(ce))
-		वापस PTR_ERR(ce);
+	ce = intel_context_create(engine);
+	if (IS_ERR(ce))
+		return PTR_ERR(ce);
 
-	err = पूर्णांकel_context_pin(ce);
-	अगर (err) अणु
-		पूर्णांकel_context_put(ce);
-		वापस err;
-	पूर्ण
+	err = intel_context_pin(ce);
+	if (err) {
+		intel_context_put(ce);
+		return err;
+	}
 
-	अगर (पूर्णांकel_engine_supports_stats(engine)) अणु
-		p->busy = पूर्णांकel_engine_get_busy_समय(engine, &p->समय);
+	if (intel_engine_supports_stats(engine)) {
+		p->busy = intel_engine_get_busy_time(engine, &p->time);
 		busy = true;
-	पूर्ण अन्यथा अणु
-		p->समय = kसमय_get();
+	} else {
+		p->time = ktime_get();
 		busy = false;
-	पूर्ण
+	}
 
 	count = 0;
-	करो अणु
-		काष्ठा i915_request *rq;
+	do {
+		struct i915_request *rq;
 
 		rq = i915_request_create(ce);
-		अगर (IS_ERR(rq)) अणु
+		if (IS_ERR(rq)) {
 			err = PTR_ERR(rq);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		i915_request_add(rq);
 		count++;
-	पूर्ण जबतक (!__igt_समयout(end_समय, शून्य));
+	} while (!__igt_timeout(end_time, NULL));
 
-	अगर (busy) अणु
-		kसमय_प्रकार now;
+	if (busy) {
+		ktime_t now;
 
-		p->busy = kसमय_sub(पूर्णांकel_engine_get_busy_समय(engine, &now),
+		p->busy = ktime_sub(intel_engine_get_busy_time(engine, &now),
 				    p->busy);
-		p->समय = kसमय_sub(now, p->समय);
-	पूर्ण अन्यथा अणु
-		p->समय = kसमय_sub(kसमय_get(), p->समय);
-	पूर्ण
+		p->time = ktime_sub(now, p->time);
+	} else {
+		p->time = ktime_sub(ktime_get(), p->time);
+	}
 
-	err = चयन_to_kernel_sync(ce, err);
-	p->runसमय = पूर्णांकel_context_get_total_runसमय_ns(ce);
+	err = switch_to_kernel_sync(ce, err);
+	p->runtime = intel_context_get_total_runtime_ns(ce);
 	p->count = count;
 
-	पूर्णांकel_context_unpin(ce);
-	पूर्णांकel_context_put(ce);
-	वापस err;
-पूर्ण
+	intel_context_unpin(ce);
+	intel_context_put(ce);
+	return err;
+}
 
-अटल पूर्णांक perf_parallel_engines(व्योम *arg)
-अणु
-	काष्ठा drm_i915_निजी *i915 = arg;
-	अटल पूर्णांक (* स्थिर func[])(व्योम *arg) = अणु
+static int perf_parallel_engines(void *arg)
+{
+	struct drm_i915_private *i915 = arg;
+	static int (* const func[])(void *arg) = {
 		p_sync0,
 		p_sync1,
 		p_many,
-		शून्य,
-	पूर्ण;
-	स्थिर अचिन्हित पूर्णांक nengines = num_uabi_engines(i915);
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	पूर्णांक (* स्थिर *fn)(व्योम *arg);
-	काष्ठा pm_qos_request qos;
-	काष्ठा अणु
-		काष्ठा perf_stats p;
-		काष्ठा task_काष्ठा *tsk;
-	पूर्ण *engines;
-	पूर्णांक err = 0;
+		NULL,
+	};
+	const unsigned int nengines = num_uabi_engines(i915);
+	struct intel_engine_cs *engine;
+	int (* const *fn)(void *arg);
+	struct pm_qos_request qos;
+	struct {
+		struct perf_stats p;
+		struct task_struct *tsk;
+	} *engines;
+	int err = 0;
 
-	engines = kसुस्मृति(nengines, माप(*engines), GFP_KERNEL);
-	अगर (!engines)
-		वापस -ENOMEM;
+	engines = kcalloc(nengines, sizeof(*engines), GFP_KERNEL);
+	if (!engines)
+		return -ENOMEM;
 
 	cpu_latency_qos_add_request(&qos, 0);
 
-	क्रम (fn = func; *fn; fn++) अणु
-		अक्षर name[KSYM_NAME_LEN];
-		काष्ठा igt_live_test t;
-		अचिन्हित पूर्णांक idx;
+	for (fn = func; *fn; fn++) {
+		char name[KSYM_NAME_LEN];
+		struct igt_live_test t;
+		unsigned int idx;
 
-		snम_लिखो(name, माप(name), "%ps", *fn);
+		snprintf(name, sizeof(name), "%ps", *fn);
 		err = igt_live_test_begin(&t, i915, __func__, name);
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 
 		atomic_set(&i915->selftest.counter, nengines);
 
 		idx = 0;
-		क्रम_each_uabi_engine(engine, i915) अणु
-			पूर्णांकel_engine_pm_get(engine);
+		for_each_uabi_engine(engine, i915) {
+			intel_engine_pm_get(engine);
 
-			स_रखो(&engines[idx].p, 0, माप(engines[idx].p));
+			memset(&engines[idx].p, 0, sizeof(engines[idx].p));
 			engines[idx].p.engine = engine;
 
-			engines[idx].tsk = kthपढ़ो_run(*fn, &engines[idx].p,
+			engines[idx].tsk = kthread_run(*fn, &engines[idx].p,
 						       "igt:%s", engine->name);
-			अगर (IS_ERR(engines[idx].tsk)) अणु
+			if (IS_ERR(engines[idx].tsk)) {
 				err = PTR_ERR(engines[idx].tsk);
-				पूर्णांकel_engine_pm_put(engine);
-				अवरोध;
-			पूर्ण
-			get_task_काष्ठा(engines[idx++].tsk);
-		पूर्ण
+				intel_engine_pm_put(engine);
+				break;
+			}
+			get_task_struct(engines[idx++].tsk);
+		}
 
-		yield(); /* start all thपढ़ोs beक्रमe we kthपढ़ो_stop() */
+		yield(); /* start all threads before we kthread_stop() */
 
 		idx = 0;
-		क्रम_each_uabi_engine(engine, i915) अणु
-			पूर्णांक status;
+		for_each_uabi_engine(engine, i915) {
+			int status;
 
-			अगर (IS_ERR(engines[idx].tsk))
-				अवरोध;
+			if (IS_ERR(engines[idx].tsk))
+				break;
 
-			status = kthपढ़ो_stop(engines[idx].tsk);
-			अगर (status && !err)
+			status = kthread_stop(engines[idx].tsk);
+			if (status && !err)
 				err = status;
 
-			पूर्णांकel_engine_pm_put(engine);
-			put_task_काष्ठा(engines[idx++].tsk);
-		पूर्ण
+			intel_engine_pm_put(engine);
+			put_task_struct(engines[idx++].tsk);
+		}
 
-		अगर (igt_live_test_end(&t))
+		if (igt_live_test_end(&t))
 			err = -EIO;
-		अगर (err)
-			अवरोध;
+		if (err)
+			break;
 
 		idx = 0;
-		क्रम_each_uabi_engine(engine, i915) अणु
-			काष्ठा perf_stats *p = &engines[idx].p;
-			u64 busy = 100 * kसमय_प्रकारo_ns(p->busy);
-			u64 dt = kसमय_प्रकारo_ns(p->समय);
-			पूर्णांक पूर्णांकeger, decimal;
+		for_each_uabi_engine(engine, i915) {
+			struct perf_stats *p = &engines[idx].p;
+			u64 busy = 100 * ktime_to_ns(p->busy);
+			u64 dt = ktime_to_ns(p->time);
+			int integer, decimal;
 
-			अगर (dt) अणु
-				पूर्णांकeger = भाग64_u64(busy, dt);
-				busy -= पूर्णांकeger * dt;
-				decimal = भाग64_u64(100 * busy, dt);
-			पूर्ण अन्यथा अणु
-				पूर्णांकeger = 0;
+			if (dt) {
+				integer = div64_u64(busy, dt);
+				busy -= integer * dt;
+				decimal = div64_u64(100 * busy, dt);
+			} else {
+				integer = 0;
 				decimal = 0;
-			पूर्ण
+			}
 
 			GEM_BUG_ON(engine != p->engine);
 			pr_info("%s %5s: { count:%lu, busy:%d.%02d%%, runtime:%lldms, walltime:%lldms }\n",
-				name, engine->name, p->count, पूर्णांकeger, decimal,
-				भाग_u64(p->runसमय, 1000 * 1000),
-				भाग_u64(kसमय_प्रकारo_ns(p->समय), 1000 * 1000));
+				name, engine->name, p->count, integer, decimal,
+				div_u64(p->runtime, 1000 * 1000),
+				div_u64(ktime_to_ns(p->time), 1000 * 1000));
 			idx++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	cpu_latency_qos_हटाओ_request(&qos);
-	kमुक्त(engines);
-	वापस err;
-पूर्ण
+	cpu_latency_qos_remove_request(&qos);
+	kfree(engines);
+	return err;
+}
 
-पूर्णांक i915_request_perf_selftests(काष्ठा drm_i915_निजी *i915)
-अणु
-	अटल स्थिर काष्ठा i915_subtest tests[] = अणु
+int i915_request_perf_selftests(struct drm_i915_private *i915)
+{
+	static const struct i915_subtest tests[] = {
 		SUBTEST(perf_request_latency),
 		SUBTEST(perf_series_engines),
 		SUBTEST(perf_parallel_engines),
-	पूर्ण;
+	};
 
-	अगर (पूर्णांकel_gt_is_wedged(&i915->gt))
-		वापस 0;
+	if (intel_gt_is_wedged(&i915->gt))
+		return 0;
 
-	वापस i915_subtests(tests, i915);
-पूर्ण
+	return i915_subtests(tests, i915);
+}

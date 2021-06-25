@@ -1,20 +1,19 @@
-<शैली गुरु>
 /*
  * Legacy: Generic DRM Buffer Management
  *
  * Copyright 1999, 2000 Precision Insight, Inc., Cedar Park, Texas.
- * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, Calअगरornia.
+ * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
  * All Rights Reserved.
  *
  * Author: Rickard E. (Rik) Faith <faith@valinux.com>
  * Author: Gareth Hughes <gareth@valinux.com>
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -29,136 +28,136 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#समावेश <linux/export.h>
-#समावेश <linux/log2.h>
-#समावेश <linux/mm.h>
-#समावेश <linux/mman.h>
-#समावेश <linux/nospec.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/vदो_स्मृति.h>
+#include <linux/export.h>
+#include <linux/log2.h>
+#include <linux/mm.h>
+#include <linux/mman.h>
+#include <linux/nospec.h>
+#include <linux/pci.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <linux/vmalloc.h>
 
-#समावेश <यंत्र/shmparam.h>
+#include <asm/shmparam.h>
 
-#समावेश <drm/drm_agpsupport.h>
-#समावेश <drm/drm_device.h>
-#समावेश <drm/drm_drv.h>
-#समावेश <drm/drm_file.h>
-#समावेश <drm/drm_prपूर्णांक.h>
+#include <drm/drm_agpsupport.h>
+#include <drm/drm_device.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_file.h>
+#include <drm/drm_print.h>
 
-#समावेश "drm_legacy.h"
+#include "drm_legacy.h"
 
 
-अटल काष्ठा drm_map_list *drm_find_matching_map(काष्ठा drm_device *dev,
-						  काष्ठा drm_local_map *map)
-अणु
-	काष्ठा drm_map_list *entry;
+static struct drm_map_list *drm_find_matching_map(struct drm_device *dev,
+						  struct drm_local_map *map)
+{
+	struct drm_map_list *entry;
 
-	list_क्रम_each_entry(entry, &dev->maplist, head) अणु
+	list_for_each_entry(entry, &dev->maplist, head) {
 		/*
 		 * Because the kernel-userspace ABI is fixed at a 32-bit offset
-		 * जबतक PCI resources may live above that, we only compare the
-		 * lower 32 bits of the map offset क्रम maps of type
+		 * while PCI resources may live above that, we only compare the
+		 * lower 32 bits of the map offset for maps of type
 		 * _DRM_FRAMEBUFFER or _DRM_REGISTERS.
-		 * It is assumed that अगर a driver have more than one resource
-		 * of each type, the lower 32 bits are dअगरferent.
+		 * It is assumed that if a driver have more than one resource
+		 * of each type, the lower 32 bits are different.
 		 */
-		अगर (!entry->map ||
+		if (!entry->map ||
 		    map->type != entry->map->type ||
 		    entry->master != dev->master)
-			जारी;
-		चयन (map->type) अणु
-		हाल _DRM_SHM:
-			अगर (map->flags != _DRM_CONTAINS_LOCK)
-				अवरोध;
-			वापस entry;
-		हाल _DRM_REGISTERS:
-		हाल _DRM_FRAME_BUFFER:
-			अगर ((entry->map->offset & 0xffffffff) ==
+			continue;
+		switch (map->type) {
+		case _DRM_SHM:
+			if (map->flags != _DRM_CONTAINS_LOCK)
+				break;
+			return entry;
+		case _DRM_REGISTERS:
+		case _DRM_FRAME_BUFFER:
+			if ((entry->map->offset & 0xffffffff) ==
 			    (map->offset & 0xffffffff))
-				वापस entry;
-			अवरोध;
-		शेष: /* Make gcc happy */
+				return entry;
+			break;
+		default: /* Make gcc happy */
 			;
-		पूर्ण
-		अगर (entry->map->offset == map->offset)
-			वापस entry;
-	पूर्ण
+		}
+		if (entry->map->offset == map->offset)
+			return entry;
+	}
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल पूर्णांक drm_map_handle(काष्ठा drm_device *dev, काष्ठा drm_hash_item *hash,
-			  अचिन्हित दीर्घ user_token, पूर्णांक hashed_handle, पूर्णांक shm)
-अणु
-	पूर्णांक use_hashed_handle, shअगरt;
-	अचिन्हित दीर्घ add;
+static int drm_map_handle(struct drm_device *dev, struct drm_hash_item *hash,
+			  unsigned long user_token, int hashed_handle, int shm)
+{
+	int use_hashed_handle, shift;
+	unsigned long add;
 
-#अगर (BITS_PER_LONG == 64)
+#if (BITS_PER_LONG == 64)
 	use_hashed_handle = ((user_token & 0xFFFFFFFF00000000UL) || hashed_handle);
-#या_अगर (BITS_PER_LONG == 32)
+#elif (BITS_PER_LONG == 32)
 	use_hashed_handle = hashed_handle;
-#अन्यथा
-#त्रुटि Unsupported दीर्घ size. Neither 64 nor 32 bits.
-#पूर्ण_अगर
+#else
+#error Unsupported long size. Neither 64 nor 32 bits.
+#endif
 
-	अगर (!use_hashed_handle) अणु
-		पूर्णांक ret;
+	if (!use_hashed_handle) {
+		int ret;
 
 		hash->key = user_token >> PAGE_SHIFT;
 		ret = drm_ht_insert_item(&dev->map_hash, hash);
-		अगर (ret != -EINVAL)
-			वापस ret;
-	पूर्ण
+		if (ret != -EINVAL)
+			return ret;
+	}
 
-	shअगरt = 0;
+	shift = 0;
 	add = DRM_MAP_HASH_OFFSET >> PAGE_SHIFT;
-	अगर (shm && (SHMLBA > PAGE_SIZE)) अणु
-		पूर्णांक bits = ilog2(SHMLBA >> PAGE_SHIFT) + 1;
+	if (shm && (SHMLBA > PAGE_SIZE)) {
+		int bits = ilog2(SHMLBA >> PAGE_SHIFT) + 1;
 
 		/* For shared memory, we have to preserve the SHMLBA
 		 * bits of the eventual vma->vm_pgoff value during
-		 * mmap().  Otherwise we run पूर्णांकo cache aliasing problems
-		 * on some platक्रमms.  On these platक्रमms, the pgoff of
-		 * a mmap() request is used to pick a suitable भव
-		 * address क्रम the mmap() region such that it will not
+		 * mmap().  Otherwise we run into cache aliasing problems
+		 * on some platforms.  On these platforms, the pgoff of
+		 * a mmap() request is used to pick a suitable virtual
+		 * address for the mmap() region such that it will not
 		 * cause cache aliasing problems.
 		 *
-		 * Thereक्रमe, make sure the SHMLBA relevant bits of the
+		 * Therefore, make sure the SHMLBA relevant bits of the
 		 * hash value we use are equal to those in the original
-		 * kernel भव address.
+		 * kernel virtual address.
 		 */
-		shअगरt = bits;
+		shift = bits;
 		add |= ((user_token >> PAGE_SHIFT) & ((1UL << bits) - 1UL));
-	पूर्ण
+	}
 
-	वापस drm_ht_just_insert_please(&dev->map_hash, hash,
+	return drm_ht_just_insert_please(&dev->map_hash, hash,
 					 user_token, 32 - PAGE_SHIFT - 3,
-					 shअगरt, add);
-पूर्ण
+					 shift, add);
+}
 
 /*
- * Core function to create a range of memory available क्रम mapping by a
+ * Core function to create a range of memory available for mapping by a
  * non-root process.
  *
- * Adjusts the memory offset to its असलolute value according to the mapping
+ * Adjusts the memory offset to its absolute value according to the mapping
  * type.  Adds the map to the map list drm_device::maplist. Adds MTRR's where
- * applicable and अगर supported by the kernel.
+ * applicable and if supported by the kernel.
  */
-अटल पूर्णांक drm_addmap_core(काष्ठा drm_device *dev, resource_माप_प्रकार offset,
-			   अचिन्हित पूर्णांक size, क्रमागत drm_map_type type,
-			   क्रमागत drm_map_flags flags,
-			   काष्ठा drm_map_list **maplist)
-अणु
-	काष्ठा drm_local_map *map;
-	काष्ठा drm_map_list *list;
-	अचिन्हित दीर्घ user_token;
-	पूर्णांक ret;
+static int drm_addmap_core(struct drm_device *dev, resource_size_t offset,
+			   unsigned int size, enum drm_map_type type,
+			   enum drm_map_flags flags,
+			   struct drm_map_list **maplist)
+{
+	struct drm_local_map *map;
+	struct drm_map_list *list;
+	unsigned long user_token;
+	int ret;
 
-	map = kदो_स्मृति(माप(*map), GFP_KERNEL);
-	अगर (!map)
-		वापस -ENOMEM;
+	map = kmalloc(sizeof(*map), GFP_KERNEL);
+	if (!map)
+		return -ENOMEM;
 
 	map->offset = offset;
 	map->size = size;
@@ -166,503 +165,503 @@
 	map->type = type;
 
 	/* Only allow shared memory to be removable since we only keep enough
-	 * book keeping inक्रमmation about shared memory to allow क्रम removal
-	 * when processes विभाजन.
+	 * book keeping information about shared memory to allow for removal
+	 * when processes fork.
 	 */
-	अगर ((map->flags & _DRM_REMOVABLE) && map->type != _DRM_SHM) अणु
-		kमुक्त(map);
-		वापस -EINVAL;
-	पूर्ण
+	if ((map->flags & _DRM_REMOVABLE) && map->type != _DRM_SHM) {
+		kfree(map);
+		return -EINVAL;
+	}
 	DRM_DEBUG("offset = 0x%08llx, size = 0x%08lx, type = %d\n",
-		  (अचिन्हित दीर्घ दीर्घ)map->offset, map->size, map->type);
+		  (unsigned long long)map->offset, map->size, map->type);
 
 	/* page-align _DRM_SHM maps. They are allocated here so there is no security
 	 * hole created by that and it works around various broken drivers that use
 	 * a non-aligned quantity to map the SAREA. --BenH
 	 */
-	अगर (map->type == _DRM_SHM)
+	if (map->type == _DRM_SHM)
 		map->size = PAGE_ALIGN(map->size);
 
-	अगर ((map->offset & (~(resource_माप_प्रकार)PAGE_MASK)) || (map->size & (~PAGE_MASK))) अणु
-		kमुक्त(map);
-		वापस -EINVAL;
-	पूर्ण
+	if ((map->offset & (~(resource_size_t)PAGE_MASK)) || (map->size & (~PAGE_MASK))) {
+		kfree(map);
+		return -EINVAL;
+	}
 	map->mtrr = -1;
-	map->handle = शून्य;
+	map->handle = NULL;
 
-	चयन (map->type) अणु
-	हाल _DRM_REGISTERS:
-	हाल _DRM_FRAME_BUFFER:
-#अगर !defined(__sparc__) && !defined(__alpha__) && !defined(__ia64__) && !defined(__घातerpc64__) && !defined(__x86_64__) && !defined(__arm__)
-		अगर (map->offset + (map->size-1) < map->offset ||
-		    map->offset < virt_to_phys(high_memory)) अणु
-			kमुक्त(map);
-			वापस -EINVAL;
-		पूर्ण
-#पूर्ण_अगर
+	switch (map->type) {
+	case _DRM_REGISTERS:
+	case _DRM_FRAME_BUFFER:
+#if !defined(__sparc__) && !defined(__alpha__) && !defined(__ia64__) && !defined(__powerpc64__) && !defined(__x86_64__) && !defined(__arm__)
+		if (map->offset + (map->size-1) < map->offset ||
+		    map->offset < virt_to_phys(high_memory)) {
+			kfree(map);
+			return -EINVAL;
+		}
+#endif
 		/* Some drivers preinitialize some maps, without the X Server
-		 * needing to be aware of it.  Thereक्रमe, we just वापस success
+		 * needing to be aware of it.  Therefore, we just return success
 		 * when the server tries to create a duplicate map.
 		 */
 		list = drm_find_matching_map(dev, map);
-		अगर (list != शून्य) अणु
-			अगर (list->map->size != map->size) अणु
+		if (list != NULL) {
+			if (list->map->size != map->size) {
 				DRM_DEBUG("Matching maps of type %d with "
 					  "mismatched sizes, (%ld vs %ld)\n",
 					  map->type, map->size,
 					  list->map->size);
 				list->map->size = map->size;
-			पूर्ण
+			}
 
-			kमुक्त(map);
+			kfree(map);
 			*maplist = list;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		अगर (map->type == _DRM_FRAME_BUFFER ||
-		    (map->flags & _DRM_WRITE_COMBINING)) अणु
+		if (map->type == _DRM_FRAME_BUFFER ||
+		    (map->flags & _DRM_WRITE_COMBINING)) {
 			map->mtrr =
 				arch_phys_wc_add(map->offset, map->size);
-		पूर्ण
-		अगर (map->type == _DRM_REGISTERS) अणु
-			अगर (map->flags & _DRM_WRITE_COMBINING)
+		}
+		if (map->type == _DRM_REGISTERS) {
+			if (map->flags & _DRM_WRITE_COMBINING)
 				map->handle = ioremap_wc(map->offset,
 							 map->size);
-			अन्यथा
+			else
 				map->handle = ioremap(map->offset, map->size);
-			अगर (!map->handle) अणु
-				kमुक्त(map);
-				वापस -ENOMEM;
-			पूर्ण
-		पूर्ण
+			if (!map->handle) {
+				kfree(map);
+				return -ENOMEM;
+			}
+		}
 
-		अवरोध;
-	हाल _DRM_SHM:
+		break;
+	case _DRM_SHM:
 		list = drm_find_matching_map(dev, map);
-		अगर (list != शून्य) अणु
-			अगर (list->map->size != map->size) अणु
+		if (list != NULL) {
+			if (list->map->size != map->size) {
 				DRM_DEBUG("Matching maps of type %d with "
 					  "mismatched sizes, (%ld vs %ld)\n",
 					  map->type, map->size, list->map->size);
 				list->map->size = map->size;
-			पूर्ण
+			}
 
-			kमुक्त(map);
+			kfree(map);
 			*maplist = list;
-			वापस 0;
-		पूर्ण
-		map->handle = vदो_स्मृति_user(map->size);
+			return 0;
+		}
+		map->handle = vmalloc_user(map->size);
 		DRM_DEBUG("%lu %d %p\n",
 			  map->size, order_base_2(map->size), map->handle);
-		अगर (!map->handle) अणु
-			kमुक्त(map);
-			वापस -ENOMEM;
-		पूर्ण
-		map->offset = (अचिन्हित दीर्घ)map->handle;
-		अगर (map->flags & _DRM_CONTAINS_LOCK) अणु
+		if (!map->handle) {
+			kfree(map);
+			return -ENOMEM;
+		}
+		map->offset = (unsigned long)map->handle;
+		if (map->flags & _DRM_CONTAINS_LOCK) {
 			/* Prevent a 2nd X Server from creating a 2nd lock */
-			अगर (dev->master->lock.hw_lock != शून्य) अणु
-				vमुक्त(map->handle);
-				kमुक्त(map);
-				वापस -EBUSY;
-			पूर्ण
-			dev->sigdata.lock = dev->master->lock.hw_lock = map->handle;	/* Poपूर्णांकer to lock */
-		पूर्ण
-		अवरोध;
-	हाल _DRM_AGP: अणु
-		काष्ठा drm_agp_mem *entry;
-		पूर्णांक valid = 0;
+			if (dev->master->lock.hw_lock != NULL) {
+				vfree(map->handle);
+				kfree(map);
+				return -EBUSY;
+			}
+			dev->sigdata.lock = dev->master->lock.hw_lock = map->handle;	/* Pointer to lock */
+		}
+		break;
+	case _DRM_AGP: {
+		struct drm_agp_mem *entry;
+		int valid = 0;
 
-		अगर (!dev->agp) अणु
-			kमुक्त(map);
-			वापस -EINVAL;
-		पूर्ण
-#अगर_घोषित __alpha__
+		if (!dev->agp) {
+			kfree(map);
+			return -EINVAL;
+		}
+#ifdef __alpha__
 		map->offset += dev->hose->mem_space->start;
-#पूर्ण_अगर
-		/* In some हालs (i810 driver), user space may have alपढ़ोy
+#endif
+		/* In some cases (i810 driver), user space may have already
 		 * added the AGP base itself, because dev->agp->base previously
 		 * only got set during AGP enable.  So, only add the base
-		 * address अगर the map's offset isn't alपढ़ोy within the
+		 * address if the map's offset isn't already within the
 		 * aperture.
 		 */
-		अगर (map->offset < dev->agp->base ||
+		if (map->offset < dev->agp->base ||
 		    map->offset > dev->agp->base +
-		    dev->agp->agp_info.aper_size * 1024 * 1024 - 1) अणु
+		    dev->agp->agp_info.aper_size * 1024 * 1024 - 1) {
 			map->offset += dev->agp->base;
-		पूर्ण
-		map->mtrr = dev->agp->agp_mtrr;	/* क्रम geपंचांगap */
+		}
+		map->mtrr = dev->agp->agp_mtrr;	/* for getmap */
 
 		/* This assumes the DRM is in total control of AGP space.
-		 * It's not always the हाल as AGP can be in the control
+		 * It's not always the case as AGP can be in the control
 		 * of user space (i.e. i810 driver). So this loop will get
-		 * skipped and we द्विगुन check that dev->agp->memory is
-		 * actually set as well as being invalid beक्रमe EPERM'ing
+		 * skipped and we double check that dev->agp->memory is
+		 * actually set as well as being invalid before EPERM'ing
 		 */
-		list_क्रम_each_entry(entry, &dev->agp->memory, head) अणु
-			अगर ((map->offset >= entry->bound) &&
-			    (map->offset + map->size <= entry->bound + entry->pages * PAGE_SIZE)) अणु
+		list_for_each_entry(entry, &dev->agp->memory, head) {
+			if ((map->offset >= entry->bound) &&
+			    (map->offset + map->size <= entry->bound + entry->pages * PAGE_SIZE)) {
 				valid = 1;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-		अगर (!list_empty(&dev->agp->memory) && !valid) अणु
-			kमुक्त(map);
-			वापस -EPERM;
-		पूर्ण
+				break;
+			}
+		}
+		if (!list_empty(&dev->agp->memory) && !valid) {
+			kfree(map);
+			return -EPERM;
+		}
 		DRM_DEBUG("AGP offset = 0x%08llx, size = 0x%08lx\n",
-			  (अचिन्हित दीर्घ दीर्घ)map->offset, map->size);
+			  (unsigned long long)map->offset, map->size);
 
-		अवरोध;
-	पूर्ण
-	हाल _DRM_SCATTER_GATHER:
-		अगर (!dev->sg) अणु
-			kमुक्त(map);
-			वापस -EINVAL;
-		पूर्ण
-		map->offset += (अचिन्हित दीर्घ)dev->sg->भव;
-		अवरोध;
-	हाल _DRM_CONSISTENT:
+		break;
+	}
+	case _DRM_SCATTER_GATHER:
+		if (!dev->sg) {
+			kfree(map);
+			return -EINVAL;
+		}
+		map->offset += (unsigned long)dev->sg->virtual;
+		break;
+	case _DRM_CONSISTENT:
 		/* dma_addr_t is 64bit on i386 with CONFIG_HIGHMEM64G,
 		 * As we're limiting the address to 2^32-1 (or less),
-		 * casting it करोwn to 32 bits is no problem, but we
-		 * need to poपूर्णांक to a 64bit variable first. */
+		 * casting it down to 32 bits is no problem, but we
+		 * need to point to a 64bit variable first. */
 		map->handle = dma_alloc_coherent(dev->dev,
 						 map->size,
 						 &map->offset,
 						 GFP_KERNEL);
-		अगर (!map->handle) अणु
-			kमुक्त(map);
-			वापस -ENOMEM;
-		पूर्ण
-		अवरोध;
-	शेष:
-		kमुक्त(map);
-		वापस -EINVAL;
-	पूर्ण
+		if (!map->handle) {
+			kfree(map);
+			return -ENOMEM;
+		}
+		break;
+	default:
+		kfree(map);
+		return -EINVAL;
+	}
 
-	list = kzalloc(माप(*list), GFP_KERNEL);
-	अगर (!list) अणु
-		अगर (map->type == _DRM_REGISTERS)
+	list = kzalloc(sizeof(*list), GFP_KERNEL);
+	if (!list) {
+		if (map->type == _DRM_REGISTERS)
 			iounmap(map->handle);
-		kमुक्त(map);
-		वापस -EINVAL;
-	पूर्ण
+		kfree(map);
+		return -EINVAL;
+	}
 	list->map = map;
 
-	mutex_lock(&dev->काष्ठा_mutex);
+	mutex_lock(&dev->struct_mutex);
 	list_add(&list->head, &dev->maplist);
 
 	/* Assign a 32-bit handle */
-	/* We करो it here so that dev->काष्ठा_mutex protects the increment */
-	user_token = (map->type == _DRM_SHM) ? (अचिन्हित दीर्घ)map->handle :
+	/* We do it here so that dev->struct_mutex protects the increment */
+	user_token = (map->type == _DRM_SHM) ? (unsigned long)map->handle :
 		map->offset;
 	ret = drm_map_handle(dev, &list->hash, user_token, 0,
 			     (map->type == _DRM_SHM));
-	अगर (ret) अणु
-		अगर (map->type == _DRM_REGISTERS)
+	if (ret) {
+		if (map->type == _DRM_REGISTERS)
 			iounmap(map->handle);
-		kमुक्त(map);
-		kमुक्त(list);
-		mutex_unlock(&dev->काष्ठा_mutex);
-		वापस ret;
-	पूर्ण
+		kfree(map);
+		kfree(list);
+		mutex_unlock(&dev->struct_mutex);
+		return ret;
+	}
 
 	list->user_token = list->hash.key << PAGE_SHIFT;
-	mutex_unlock(&dev->काष्ठा_mutex);
+	mutex_unlock(&dev->struct_mutex);
 
-	अगर (!(map->flags & _DRM_DRIVER))
+	if (!(map->flags & _DRM_DRIVER))
 		list->master = dev->master;
 	*maplist = list;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक drm_legacy_addmap(काष्ठा drm_device *dev, resource_माप_प्रकार offset,
-		      अचिन्हित पूर्णांक size, क्रमागत drm_map_type type,
-		      क्रमागत drm_map_flags flags, काष्ठा drm_local_map **map_ptr)
-अणु
-	काष्ठा drm_map_list *list;
-	पूर्णांक rc;
+int drm_legacy_addmap(struct drm_device *dev, resource_size_t offset,
+		      unsigned int size, enum drm_map_type type,
+		      enum drm_map_flags flags, struct drm_local_map **map_ptr)
+{
+	struct drm_map_list *list;
+	int rc;
 
 	rc = drm_addmap_core(dev, offset, size, type, flags, &list);
-	अगर (!rc)
+	if (!rc)
 		*map_ptr = list->map;
-	वापस rc;
-पूर्ण
+	return rc;
+}
 EXPORT_SYMBOL(drm_legacy_addmap);
 
-काष्ठा drm_local_map *drm_legacy_findmap(काष्ठा drm_device *dev,
-					 अचिन्हित पूर्णांक token)
-अणु
-	काष्ठा drm_map_list *_entry;
+struct drm_local_map *drm_legacy_findmap(struct drm_device *dev,
+					 unsigned int token)
+{
+	struct drm_map_list *_entry;
 
-	list_क्रम_each_entry(_entry, &dev->maplist, head)
-		अगर (_entry->user_token == token)
-			वापस _entry->map;
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(_entry, &dev->maplist, head)
+		if (_entry->user_token == token)
+			return _entry->map;
+	return NULL;
+}
 EXPORT_SYMBOL(drm_legacy_findmap);
 
 /*
- * Ioctl to specअगरy a range of memory that is available क्रम mapping by a
+ * Ioctl to specify a range of memory that is available for mapping by a
  * non-root process.
  *
  * \param inode device inode.
- * \param file_priv DRM file निजी.
+ * \param file_priv DRM file private.
  * \param cmd command.
- * \param arg poपूर्णांकer to a drm_map काष्ठाure.
- * \लeturn zero on success or a negative value on error.
+ * \param arg pointer to a drm_map structure.
+ * \return zero on success or a negative value on error.
  *
  */
-पूर्णांक drm_legacy_addmap_ioctl(काष्ठा drm_device *dev, व्योम *data,
-			    काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_map *map = data;
-	काष्ठा drm_map_list *maplist;
-	पूर्णांक err;
+int drm_legacy_addmap_ioctl(struct drm_device *dev, void *data,
+			    struct drm_file *file_priv)
+{
+	struct drm_map *map = data;
+	struct drm_map_list *maplist;
+	int err;
 
-	अगर (!(capable(CAP_SYS_ADMIN) || map->type == _DRM_AGP || map->type == _DRM_SHM))
-		वापस -EPERM;
+	if (!(capable(CAP_SYS_ADMIN) || map->type == _DRM_AGP || map->type == _DRM_SHM))
+		return -EPERM;
 
-	अगर (!drm_core_check_feature(dev, DRIVER_KMS_LEGACY_CONTEXT) &&
+	if (!drm_core_check_feature(dev, DRIVER_KMS_LEGACY_CONTEXT) &&
 	    !drm_core_check_feature(dev, DRIVER_LEGACY))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
 	err = drm_addmap_core(dev, map->offset, map->size, map->type,
 			      map->flags, &maplist);
 
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	/* aव्योम a warning on 64-bit, this casting isn't very nice, but the API is set so too late */
-	map->handle = (व्योम *)(अचिन्हित दीर्घ)maplist->user_token;
+	/* avoid a warning on 64-bit, this casting isn't very nice, but the API is set so too late */
+	map->handle = (void *)(unsigned long)maplist->user_token;
 
 	/*
 	 * It appears that there are no users of this value whatsoever --
 	 * drmAddMap just discards it.  Let's not encourage its use.
-	 * (Keeping drm_addmap_core's वापसed mtrr value would be wrong --
+	 * (Keeping drm_addmap_core's returned mtrr value would be wrong --
 	 *  it's not a real mtrr index anymore.)
 	 */
 	map->mtrr = -1;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Get a mapping inक्रमmation.
+ * Get a mapping information.
  *
  * \param inode device inode.
- * \param file_priv DRM file निजी.
+ * \param file_priv DRM file private.
  * \param cmd command.
- * \param arg user argument, poपूर्णांकing to a drm_map काष्ठाure.
+ * \param arg user argument, pointing to a drm_map structure.
  *
- * \लeturn zero on success or a negative number on failure.
+ * \return zero on success or a negative number on failure.
  *
- * Searches क्रम the mapping with the specअगरied offset and copies its inक्रमmation
- * पूर्णांकo userspace
+ * Searches for the mapping with the specified offset and copies its information
+ * into userspace
  */
-पूर्णांक drm_legacy_geपंचांगap_ioctl(काष्ठा drm_device *dev, व्योम *data,
-			    काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_map *map = data;
-	काष्ठा drm_map_list *r_list = शून्य;
-	काष्ठा list_head *list;
-	पूर्णांक idx;
-	पूर्णांक i;
+int drm_legacy_getmap_ioctl(struct drm_device *dev, void *data,
+			    struct drm_file *file_priv)
+{
+	struct drm_map *map = data;
+	struct drm_map_list *r_list = NULL;
+	struct list_head *list;
+	int idx;
+	int i;
 
-	अगर (!drm_core_check_feature(dev, DRIVER_KMS_LEGACY_CONTEXT) &&
+	if (!drm_core_check_feature(dev, DRIVER_KMS_LEGACY_CONTEXT) &&
 	    !drm_core_check_feature(dev, DRIVER_LEGACY))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
 	idx = map->offset;
-	अगर (idx < 0)
-		वापस -EINVAL;
+	if (idx < 0)
+		return -EINVAL;
 
 	i = 0;
-	mutex_lock(&dev->काष्ठा_mutex);
-	list_क्रम_each(list, &dev->maplist) अणु
-		अगर (i == idx) अणु
-			r_list = list_entry(list, काष्ठा drm_map_list, head);
-			अवरोध;
-		पूर्ण
+	mutex_lock(&dev->struct_mutex);
+	list_for_each(list, &dev->maplist) {
+		if (i == idx) {
+			r_list = list_entry(list, struct drm_map_list, head);
+			break;
+		}
 		i++;
-	पूर्ण
-	अगर (!r_list || !r_list->map) अणु
-		mutex_unlock(&dev->काष्ठा_mutex);
-		वापस -EINVAL;
-	पूर्ण
+	}
+	if (!r_list || !r_list->map) {
+		mutex_unlock(&dev->struct_mutex);
+		return -EINVAL;
+	}
 
 	map->offset = r_list->map->offset;
 	map->size = r_list->map->size;
 	map->type = r_list->map->type;
 	map->flags = r_list->map->flags;
-	map->handle = (व्योम *)(अचिन्हित दीर्घ) r_list->user_token;
+	map->handle = (void *)(unsigned long) r_list->user_token;
 	map->mtrr = arch_phys_wc_index(r_list->map->mtrr);
 
-	mutex_unlock(&dev->काष्ठा_mutex);
+	mutex_unlock(&dev->struct_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Remove a map निजी from list and deallocate resources अगर the mapping
+ * Remove a map private from list and deallocate resources if the mapping
  * isn't in use.
  *
- * Searches the map on drm_device::maplist, हटाओs it from the list, see अगर
+ * Searches the map on drm_device::maplist, removes it from the list, see if
  * it's being used, and free any associated resource (such as MTRR's) if it's not
  * being on use.
  *
  * \sa drm_legacy_addmap
  */
-पूर्णांक drm_legacy_rmmap_locked(काष्ठा drm_device *dev, काष्ठा drm_local_map *map)
-अणु
-	काष्ठा drm_map_list *r_list = शून्य, *list_t;
-	पूर्णांक found = 0;
-	काष्ठा drm_master *master;
+int drm_legacy_rmmap_locked(struct drm_device *dev, struct drm_local_map *map)
+{
+	struct drm_map_list *r_list = NULL, *list_t;
+	int found = 0;
+	struct drm_master *master;
 
-	/* Find the list entry क्रम the map and हटाओ it */
-	list_क्रम_each_entry_safe(r_list, list_t, &dev->maplist, head) अणु
-		अगर (r_list->map == map) अणु
+	/* Find the list entry for the map and remove it */
+	list_for_each_entry_safe(r_list, list_t, &dev->maplist, head) {
+		if (r_list->map == map) {
 			master = r_list->master;
 			list_del(&r_list->head);
-			drm_ht_हटाओ_key(&dev->map_hash,
+			drm_ht_remove_key(&dev->map_hash,
 					  r_list->user_token >> PAGE_SHIFT);
-			kमुक्त(r_list);
+			kfree(r_list);
 			found = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (!found)
-		वापस -EINVAL;
+	if (!found)
+		return -EINVAL;
 
-	चयन (map->type) अणु
-	हाल _DRM_REGISTERS:
+	switch (map->type) {
+	case _DRM_REGISTERS:
 		iounmap(map->handle);
 		fallthrough;
-	हाल _DRM_FRAME_BUFFER:
+	case _DRM_FRAME_BUFFER:
 		arch_phys_wc_del(map->mtrr);
-		अवरोध;
-	हाल _DRM_SHM:
-		vमुक्त(map->handle);
-		अगर (master) अणु
-			अगर (dev->sigdata.lock == master->lock.hw_lock)
-				dev->sigdata.lock = शून्य;
-			master->lock.hw_lock = शून्य;   /* SHM हटाओd */
-			master->lock.file_priv = शून्य;
-			wake_up_पूर्णांकerruptible_all(&master->lock.lock_queue);
-		पूर्ण
-		अवरोध;
-	हाल _DRM_AGP:
-	हाल _DRM_SCATTER_GATHER:
-		अवरोध;
-	हाल _DRM_CONSISTENT:
-		dma_मुक्त_coherent(dev->dev,
+		break;
+	case _DRM_SHM:
+		vfree(map->handle);
+		if (master) {
+			if (dev->sigdata.lock == master->lock.hw_lock)
+				dev->sigdata.lock = NULL;
+			master->lock.hw_lock = NULL;   /* SHM removed */
+			master->lock.file_priv = NULL;
+			wake_up_interruptible_all(&master->lock.lock_queue);
+		}
+		break;
+	case _DRM_AGP:
+	case _DRM_SCATTER_GATHER:
+		break;
+	case _DRM_CONSISTENT:
+		dma_free_coherent(dev->dev,
 				  map->size,
 				  map->handle,
 				  map->offset);
-		अवरोध;
-	पूर्ण
-	kमुक्त(map);
+		break;
+	}
+	kfree(map);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(drm_legacy_rmmap_locked);
 
-व्योम drm_legacy_rmmap(काष्ठा drm_device *dev, काष्ठा drm_local_map *map)
-अणु
-	अगर (!drm_core_check_feature(dev, DRIVER_KMS_LEGACY_CONTEXT) &&
+void drm_legacy_rmmap(struct drm_device *dev, struct drm_local_map *map)
+{
+	if (!drm_core_check_feature(dev, DRIVER_KMS_LEGACY_CONTEXT) &&
 	    !drm_core_check_feature(dev, DRIVER_LEGACY))
-		वापस;
+		return;
 
-	mutex_lock(&dev->काष्ठा_mutex);
+	mutex_lock(&dev->struct_mutex);
 	drm_legacy_rmmap_locked(dev, map);
-	mutex_unlock(&dev->काष्ठा_mutex);
-पूर्ण
+	mutex_unlock(&dev->struct_mutex);
+}
 EXPORT_SYMBOL(drm_legacy_rmmap);
 
-व्योम drm_legacy_master_rmmaps(काष्ठा drm_device *dev, काष्ठा drm_master *master)
-अणु
-	काष्ठा drm_map_list *r_list, *list_temp;
+void drm_legacy_master_rmmaps(struct drm_device *dev, struct drm_master *master)
+{
+	struct drm_map_list *r_list, *list_temp;
 
-	अगर (!drm_core_check_feature(dev, DRIVER_LEGACY))
-		वापस;
+	if (!drm_core_check_feature(dev, DRIVER_LEGACY))
+		return;
 
-	mutex_lock(&dev->काष्ठा_mutex);
-	list_क्रम_each_entry_safe(r_list, list_temp, &dev->maplist, head) अणु
-		अगर (r_list->master == master) अणु
+	mutex_lock(&dev->struct_mutex);
+	list_for_each_entry_safe(r_list, list_temp, &dev->maplist, head) {
+		if (r_list->master == master) {
 			drm_legacy_rmmap_locked(dev, r_list->map);
-			r_list = शून्य;
-		पूर्ण
-	पूर्ण
-	mutex_unlock(&dev->काष्ठा_mutex);
-पूर्ण
+			r_list = NULL;
+		}
+	}
+	mutex_unlock(&dev->struct_mutex);
+}
 
-व्योम drm_legacy_rmmaps(काष्ठा drm_device *dev)
-अणु
-	काष्ठा drm_map_list *r_list, *list_temp;
+void drm_legacy_rmmaps(struct drm_device *dev)
+{
+	struct drm_map_list *r_list, *list_temp;
 
-	list_क्रम_each_entry_safe(r_list, list_temp, &dev->maplist, head)
+	list_for_each_entry_safe(r_list, list_temp, &dev->maplist, head)
 		drm_legacy_rmmap(dev, r_list->map);
-पूर्ण
+}
 
-/* The rmmap ioctl appears to be unnecessary.  All mappings are torn करोwn on
- * the last बंद of the device, and this is necessary क्रम cleanup when things
- * निकास uncleanly.  Thereक्रमe, having userland manually हटाओ mappings seems
- * like a poपूर्णांकless exercise since they're going away anyway.
+/* The rmmap ioctl appears to be unnecessary.  All mappings are torn down on
+ * the last close of the device, and this is necessary for cleanup when things
+ * exit uncleanly.  Therefore, having userland manually remove mappings seems
+ * like a pointless exercise since they're going away anyway.
  *
- * One use हाल might be after addmap is allowed क्रम normal users क्रम SHM and
- * माला_लो used by drivers that the server करोesn't need to care about.  This seems
+ * One use case might be after addmap is allowed for normal users for SHM and
+ * gets used by drivers that the server doesn't need to care about.  This seems
  * unlikely.
  *
  * \param inode device inode.
- * \param file_priv DRM file निजी.
+ * \param file_priv DRM file private.
  * \param cmd command.
- * \param arg poपूर्णांकer to a काष्ठा drm_map काष्ठाure.
- * \लeturn zero on success or a negative value on error.
+ * \param arg pointer to a struct drm_map structure.
+ * \return zero on success or a negative value on error.
  */
-पूर्णांक drm_legacy_rmmap_ioctl(काष्ठा drm_device *dev, व्योम *data,
-			   काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_map *request = data;
-	काष्ठा drm_local_map *map = शून्य;
-	काष्ठा drm_map_list *r_list;
-	पूर्णांक ret;
+int drm_legacy_rmmap_ioctl(struct drm_device *dev, void *data,
+			   struct drm_file *file_priv)
+{
+	struct drm_map *request = data;
+	struct drm_local_map *map = NULL;
+	struct drm_map_list *r_list;
+	int ret;
 
-	अगर (!drm_core_check_feature(dev, DRIVER_KMS_LEGACY_CONTEXT) &&
+	if (!drm_core_check_feature(dev, DRIVER_KMS_LEGACY_CONTEXT) &&
 	    !drm_core_check_feature(dev, DRIVER_LEGACY))
-		वापस -EOPNOTSUPP;
+		return -EOPNOTSUPP;
 
-	mutex_lock(&dev->काष्ठा_mutex);
-	list_क्रम_each_entry(r_list, &dev->maplist, head) अणु
-		अगर (r_list->map &&
-		    r_list->user_token == (अचिन्हित दीर्घ)request->handle &&
-		    r_list->map->flags & _DRM_REMOVABLE) अणु
+	mutex_lock(&dev->struct_mutex);
+	list_for_each_entry(r_list, &dev->maplist, head) {
+		if (r_list->map &&
+		    r_list->user_token == (unsigned long)request->handle &&
+		    r_list->map->flags & _DRM_REMOVABLE) {
 			map = r_list->map;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	/* List has wrapped around to the head poपूर्णांकer, or it's empty we didn't
+	/* List has wrapped around to the head pointer, or it's empty we didn't
 	 * find anything.
 	 */
-	अगर (list_empty(&dev->maplist) || !map) अणु
-		mutex_unlock(&dev->काष्ठा_mutex);
-		वापस -EINVAL;
-	पूर्ण
+	if (list_empty(&dev->maplist) || !map) {
+		mutex_unlock(&dev->struct_mutex);
+		return -EINVAL;
+	}
 
 	/* Register and framebuffer maps are permanent */
-	अगर ((map->type == _DRM_REGISTERS) || (map->type == _DRM_FRAME_BUFFER)) अणु
-		mutex_unlock(&dev->काष्ठा_mutex);
-		वापस 0;
-	पूर्ण
+	if ((map->type == _DRM_REGISTERS) || (map->type == _DRM_FRAME_BUFFER)) {
+		mutex_unlock(&dev->struct_mutex);
+		return 0;
+	}
 
 	ret = drm_legacy_rmmap_locked(dev, map);
 
-	mutex_unlock(&dev->काष्ठा_mutex);
+	mutex_unlock(&dev->struct_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Cleanup after an error on one of the addbufs() functions.
@@ -672,65 +671,65 @@ EXPORT_SYMBOL(drm_legacy_rmmap);
  *
  * Frees any pages and buffers associated with the given entry.
  */
-अटल व्योम drm_cleanup_buf_error(काष्ठा drm_device *dev,
-				  काष्ठा drm_buf_entry *entry)
-अणु
-	पूर्णांक i;
+static void drm_cleanup_buf_error(struct drm_device *dev,
+				  struct drm_buf_entry *entry)
+{
+	int i;
 
-	अगर (entry->seg_count) अणु
-		क्रम (i = 0; i < entry->seg_count; i++) अणु
-			अगर (entry->seglist[i]) अणु
-				drm_pci_मुक्त(dev, entry->seglist[i]);
-			पूर्ण
-		पूर्ण
-		kमुक्त(entry->seglist);
+	if (entry->seg_count) {
+		for (i = 0; i < entry->seg_count; i++) {
+			if (entry->seglist[i]) {
+				drm_pci_free(dev, entry->seglist[i]);
+			}
+		}
+		kfree(entry->seglist);
 
 		entry->seg_count = 0;
-	पूर्ण
+	}
 
-	अगर (entry->buf_count) अणु
-		क्रम (i = 0; i < entry->buf_count; i++) अणु
-			kमुक्त(entry->buflist[i].dev_निजी);
-		पूर्ण
-		kमुक्त(entry->buflist);
+	if (entry->buf_count) {
+		for (i = 0; i < entry->buf_count; i++) {
+			kfree(entry->buflist[i].dev_private);
+		}
+		kfree(entry->buflist);
 
 		entry->buf_count = 0;
-	पूर्ण
-पूर्ण
+	}
+}
 
-#अगर IS_ENABLED(CONFIG_AGP)
+#if IS_ENABLED(CONFIG_AGP)
 /*
- * Add AGP buffers क्रम DMA transfers.
+ * Add AGP buffers for DMA transfers.
  *
- * \param dev काष्ठा drm_device to which the buffers are to be added.
- * \param request poपूर्णांकer to a काष्ठा drm_buf_desc describing the request.
- * \लeturn zero on success or a negative number on failure.
+ * \param dev struct drm_device to which the buffers are to be added.
+ * \param request pointer to a struct drm_buf_desc describing the request.
+ * \return zero on success or a negative number on failure.
  *
- * After some sanity checks creates a drm_buf काष्ठाure क्रम each buffer and
- * पुनः_स्मृतिates the buffer list of the same size order to accommodate the new
+ * After some sanity checks creates a drm_buf structure for each buffer and
+ * reallocates the buffer list of the same size order to accommodate the new
  * buffers.
  */
-पूर्णांक drm_legacy_addbufs_agp(काष्ठा drm_device *dev,
-			   काष्ठा drm_buf_desc *request)
-अणु
-	काष्ठा drm_device_dma *dma = dev->dma;
-	काष्ठा drm_buf_entry *entry;
-	काष्ठा drm_agp_mem *agp_entry;
-	काष्ठा drm_buf *buf;
-	अचिन्हित दीर्घ offset;
-	अचिन्हित दीर्घ agp_offset;
-	पूर्णांक count;
-	पूर्णांक order;
-	पूर्णांक size;
-	पूर्णांक alignment;
-	पूर्णांक page_order;
-	पूर्णांक total;
-	पूर्णांक byte_count;
-	पूर्णांक i, valid;
-	काष्ठा drm_buf **temp_buflist;
+int drm_legacy_addbufs_agp(struct drm_device *dev,
+			   struct drm_buf_desc *request)
+{
+	struct drm_device_dma *dma = dev->dma;
+	struct drm_buf_entry *entry;
+	struct drm_agp_mem *agp_entry;
+	struct drm_buf *buf;
+	unsigned long offset;
+	unsigned long agp_offset;
+	int count;
+	int order;
+	int size;
+	int alignment;
+	int page_order;
+	int total;
+	int byte_count;
+	int i, valid;
+	struct drm_buf **temp_buflist;
 
-	अगर (!dma)
-		वापस -EINVAL;
+	if (!dma)
+		return -EINVAL;
 
 	count = request->count;
 	order = order_base_2(request->size);
@@ -752,57 +751,57 @@ EXPORT_SYMBOL(drm_legacy_rmmap);
 	DRM_DEBUG("page_order: %d\n", page_order);
 	DRM_DEBUG("total:      %d\n", total);
 
-	अगर (order < DRM_MIN_ORDER || order > DRM_MAX_ORDER)
-		वापस -EINVAL;
+	if (order < DRM_MIN_ORDER || order > DRM_MAX_ORDER)
+		return -EINVAL;
 
 	/* Make sure buffers are located in AGP memory that we own */
 	valid = 0;
-	list_क्रम_each_entry(agp_entry, &dev->agp->memory, head) अणु
-		अगर ((agp_offset >= agp_entry->bound) &&
-		    (agp_offset + total * count <= agp_entry->bound + agp_entry->pages * PAGE_SIZE)) अणु
+	list_for_each_entry(agp_entry, &dev->agp->memory, head) {
+		if ((agp_offset >= agp_entry->bound) &&
+		    (agp_offset + total * count <= agp_entry->bound + agp_entry->pages * PAGE_SIZE)) {
 			valid = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	अगर (!list_empty(&dev->agp->memory) && !valid) अणु
+			break;
+		}
+	}
+	if (!list_empty(&dev->agp->memory) && !valid) {
 		DRM_DEBUG("zone invalid\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	spin_lock(&dev->buf_lock);
-	अगर (dev->buf_use) अणु
+	if (dev->buf_use) {
 		spin_unlock(&dev->buf_lock);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 	atomic_inc(&dev->buf_alloc);
 	spin_unlock(&dev->buf_lock);
 
-	mutex_lock(&dev->काष्ठा_mutex);
+	mutex_lock(&dev->struct_mutex);
 	entry = &dma->bufs[order];
-	अगर (entry->buf_count) अणु
-		mutex_unlock(&dev->काष्ठा_mutex);
+	if (entry->buf_count) {
+		mutex_unlock(&dev->struct_mutex);
 		atomic_dec(&dev->buf_alloc);
-		वापस -ENOMEM;	/* May only call once क्रम each order */
-	पूर्ण
+		return -ENOMEM;	/* May only call once for each order */
+	}
 
-	अगर (count < 0 || count > 4096) अणु
-		mutex_unlock(&dev->काष्ठा_mutex);
+	if (count < 0 || count > 4096) {
+		mutex_unlock(&dev->struct_mutex);
 		atomic_dec(&dev->buf_alloc);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	entry->buflist = kसुस्मृति(count, माप(*entry->buflist), GFP_KERNEL);
-	अगर (!entry->buflist) अणु
-		mutex_unlock(&dev->काष्ठा_mutex);
+	entry->buflist = kcalloc(count, sizeof(*entry->buflist), GFP_KERNEL);
+	if (!entry->buflist) {
+		mutex_unlock(&dev->struct_mutex);
 		atomic_dec(&dev->buf_alloc);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	entry->buf_size = size;
 	entry->page_order = page_order;
 
 	offset = 0;
 
-	जबतक (entry->buf_count < count) अणु
+	while (entry->buf_count < count) {
 		buf = &entry->buflist[entry->buf_count];
 		buf->idx = dma->buf_count + entry->buf_count;
 		buf->total = alignment;
@@ -811,47 +810,47 @@ EXPORT_SYMBOL(drm_legacy_rmmap);
 
 		buf->offset = (dma->byte_count + offset);
 		buf->bus_address = agp_offset + offset;
-		buf->address = (व्योम *)(agp_offset + offset);
-		buf->next = शून्य;
-		buf->रुकोing = 0;
+		buf->address = (void *)(agp_offset + offset);
+		buf->next = NULL;
+		buf->waiting = 0;
 		buf->pending = 0;
-		buf->file_priv = शून्य;
+		buf->file_priv = NULL;
 
 		buf->dev_priv_size = dev->driver->dev_priv_size;
-		buf->dev_निजी = kzalloc(buf->dev_priv_size, GFP_KERNEL);
-		अगर (!buf->dev_निजी) अणु
-			/* Set count correctly so we मुक्त the proper amount. */
+		buf->dev_private = kzalloc(buf->dev_priv_size, GFP_KERNEL);
+		if (!buf->dev_private) {
+			/* Set count correctly so we free the proper amount. */
 			entry->buf_count = count;
 			drm_cleanup_buf_error(dev, entry);
-			mutex_unlock(&dev->काष्ठा_mutex);
+			mutex_unlock(&dev->struct_mutex);
 			atomic_dec(&dev->buf_alloc);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		DRM_DEBUG("buffer %d @ %p\n", entry->buf_count, buf->address);
 
 		offset += alignment;
 		entry->buf_count++;
 		byte_count += PAGE_SIZE << page_order;
-	पूर्ण
+	}
 
 	DRM_DEBUG("byte_count: %d\n", byte_count);
 
-	temp_buflist = kपुनः_स्मृति(dma->buflist,
+	temp_buflist = krealloc(dma->buflist,
 				(dma->buf_count + entry->buf_count) *
-				माप(*dma->buflist), GFP_KERNEL);
-	अगर (!temp_buflist) अणु
+				sizeof(*dma->buflist), GFP_KERNEL);
+	if (!temp_buflist) {
 		/* Free the entry because it isn't valid */
 		drm_cleanup_buf_error(dev, entry);
-		mutex_unlock(&dev->काष्ठा_mutex);
+		mutex_unlock(&dev->struct_mutex);
 		atomic_dec(&dev->buf_alloc);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	dma->buflist = temp_buflist;
 
-	क्रम (i = 0; i < entry->buf_count; i++) अणु
+	for (i = 0; i < entry->buf_count; i++) {
 		dma->buflist[i + dma->buf_count] = &entry->buflist[i];
-	पूर्ण
+	}
 
 	dma->buf_count += entry->buf_count;
 	dma->seg_count += entry->seg_count;
@@ -861,7 +860,7 @@ EXPORT_SYMBOL(drm_legacy_rmmap);
 	DRM_DEBUG("dma->buf_count : %d\n", dma->buf_count);
 	DRM_DEBUG("entry->buf_count : %d\n", entry->buf_count);
 
-	mutex_unlock(&dev->काष्ठा_mutex);
+	mutex_unlock(&dev->struct_mutex);
 
 	request->count = entry->buf_count;
 	request->size = size;
@@ -869,39 +868,39 @@ EXPORT_SYMBOL(drm_legacy_rmmap);
 	dma->flags = _DRM_DMA_USE_AGP;
 
 	atomic_dec(&dev->buf_alloc);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 EXPORT_SYMBOL(drm_legacy_addbufs_agp);
-#पूर्ण_अगर /* CONFIG_AGP */
+#endif /* CONFIG_AGP */
 
-पूर्णांक drm_legacy_addbufs_pci(काष्ठा drm_device *dev,
-			   काष्ठा drm_buf_desc *request)
-अणु
-	काष्ठा drm_device_dma *dma = dev->dma;
-	पूर्णांक count;
-	पूर्णांक order;
-	पूर्णांक size;
-	पूर्णांक total;
-	पूर्णांक page_order;
-	काष्ठा drm_buf_entry *entry;
+int drm_legacy_addbufs_pci(struct drm_device *dev,
+			   struct drm_buf_desc *request)
+{
+	struct drm_device_dma *dma = dev->dma;
+	int count;
+	int order;
+	int size;
+	int total;
+	int page_order;
+	struct drm_buf_entry *entry;
 	drm_dma_handle_t *dmah;
-	काष्ठा drm_buf *buf;
-	पूर्णांक alignment;
-	अचिन्हित दीर्घ offset;
-	पूर्णांक i;
-	पूर्णांक byte_count;
-	पूर्णांक page_count;
-	अचिन्हित दीर्घ *temp_pagelist;
-	काष्ठा drm_buf **temp_buflist;
+	struct drm_buf *buf;
+	int alignment;
+	unsigned long offset;
+	int i;
+	int byte_count;
+	int page_count;
+	unsigned long *temp_pagelist;
+	struct drm_buf **temp_buflist;
 
-	अगर (!drm_core_check_feature(dev, DRIVER_PCI_DMA))
-		वापस -EOPNOTSUPP;
+	if (!drm_core_check_feature(dev, DRIVER_PCI_DMA))
+		return -EOPNOTSUPP;
 
-	अगर (!dma)
-		वापस -EINVAL;
+	if (!dma)
+		return -EINVAL;
 
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EPERM;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
 
 	count = request->count;
 	order = order_base_2(request->size);
@@ -910,8 +909,8 @@ EXPORT_SYMBOL(drm_legacy_addbufs_agp);
 	DRM_DEBUG("count=%d, size=%d (%d), order=%d\n",
 		  request->count, request->size, size, order);
 
-	अगर (order < DRM_MIN_ORDER || order > DRM_MAX_ORDER)
-		वापस -EINVAL;
+	if (order < DRM_MIN_ORDER || order > DRM_MAX_ORDER)
+		return -EINVAL;
 
 	alignment = (request->flags & _DRM_PAGE_ALIGN)
 	    ? PAGE_ALIGN(size) : size;
@@ -919,57 +918,57 @@ EXPORT_SYMBOL(drm_legacy_addbufs_agp);
 	total = PAGE_SIZE << page_order;
 
 	spin_lock(&dev->buf_lock);
-	अगर (dev->buf_use) अणु
+	if (dev->buf_use) {
 		spin_unlock(&dev->buf_lock);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 	atomic_inc(&dev->buf_alloc);
 	spin_unlock(&dev->buf_lock);
 
-	mutex_lock(&dev->काष्ठा_mutex);
+	mutex_lock(&dev->struct_mutex);
 	entry = &dma->bufs[order];
-	अगर (entry->buf_count) अणु
-		mutex_unlock(&dev->काष्ठा_mutex);
+	if (entry->buf_count) {
+		mutex_unlock(&dev->struct_mutex);
 		atomic_dec(&dev->buf_alloc);
-		वापस -ENOMEM;	/* May only call once क्रम each order */
-	पूर्ण
+		return -ENOMEM;	/* May only call once for each order */
+	}
 
-	अगर (count < 0 || count > 4096) अणु
-		mutex_unlock(&dev->काष्ठा_mutex);
+	if (count < 0 || count > 4096) {
+		mutex_unlock(&dev->struct_mutex);
 		atomic_dec(&dev->buf_alloc);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	entry->buflist = kसुस्मृति(count, माप(*entry->buflist), GFP_KERNEL);
-	अगर (!entry->buflist) अणु
-		mutex_unlock(&dev->काष्ठा_mutex);
+	entry->buflist = kcalloc(count, sizeof(*entry->buflist), GFP_KERNEL);
+	if (!entry->buflist) {
+		mutex_unlock(&dev->struct_mutex);
 		atomic_dec(&dev->buf_alloc);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
-	entry->seglist = kसुस्मृति(count, माप(*entry->seglist), GFP_KERNEL);
-	अगर (!entry->seglist) अणु
-		kमुक्त(entry->buflist);
-		mutex_unlock(&dev->काष्ठा_mutex);
+	entry->seglist = kcalloc(count, sizeof(*entry->seglist), GFP_KERNEL);
+	if (!entry->seglist) {
+		kfree(entry->buflist);
+		mutex_unlock(&dev->struct_mutex);
 		atomic_dec(&dev->buf_alloc);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	/* Keep the original pagelist until we know all the allocations
 	 * have succeeded
 	 */
-	temp_pagelist = kदो_स्मृति_array(dma->page_count + (count << page_order),
-				      माप(*dma->pagelist),
+	temp_pagelist = kmalloc_array(dma->page_count + (count << page_order),
+				      sizeof(*dma->pagelist),
 				      GFP_KERNEL);
-	अगर (!temp_pagelist) अणु
-		kमुक्त(entry->buflist);
-		kमुक्त(entry->seglist);
-		mutex_unlock(&dev->काष्ठा_mutex);
+	if (!temp_pagelist) {
+		kfree(entry->buflist);
+		kfree(entry->seglist);
+		mutex_unlock(&dev->struct_mutex);
 		atomic_dec(&dev->buf_alloc);
-		वापस -ENOMEM;
-	पूर्ण
-	स_नकल(temp_pagelist,
-	       dma->pagelist, dma->page_count * माप(*dma->pagelist));
+		return -ENOMEM;
+	}
+	memcpy(temp_pagelist,
+	       dma->pagelist, dma->page_count * sizeof(*dma->pagelist));
 	DRM_DEBUG("pagelist: %d entries\n",
 		  dma->page_count + (count << page_order));
 
@@ -978,87 +977,87 @@ EXPORT_SYMBOL(drm_legacy_addbufs_agp);
 	byte_count = 0;
 	page_count = 0;
 
-	जबतक (entry->buf_count < count) अणु
+	while (entry->buf_count < count) {
 
 		dmah = drm_pci_alloc(dev, PAGE_SIZE << page_order, 0x1000);
 
-		अगर (!dmah) अणु
-			/* Set count correctly so we मुक्त the proper amount. */
+		if (!dmah) {
+			/* Set count correctly so we free the proper amount. */
 			entry->buf_count = count;
 			entry->seg_count = count;
 			drm_cleanup_buf_error(dev, entry);
-			kमुक्त(temp_pagelist);
-			mutex_unlock(&dev->काष्ठा_mutex);
+			kfree(temp_pagelist);
+			mutex_unlock(&dev->struct_mutex);
 			atomic_dec(&dev->buf_alloc);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 		entry->seglist[entry->seg_count++] = dmah;
-		क्रम (i = 0; i < (1 << page_order); i++) अणु
+		for (i = 0; i < (1 << page_order); i++) {
 			DRM_DEBUG("page %d @ 0x%08lx\n",
 				  dma->page_count + page_count,
-				  (अचिन्हित दीर्घ)dmah->vaddr + PAGE_SIZE * i);
+				  (unsigned long)dmah->vaddr + PAGE_SIZE * i);
 			temp_pagelist[dma->page_count + page_count++]
-				= (अचिन्हित दीर्घ)dmah->vaddr + PAGE_SIZE * i;
-		पूर्ण
-		क्रम (offset = 0;
+				= (unsigned long)dmah->vaddr + PAGE_SIZE * i;
+		}
+		for (offset = 0;
 		     offset + size <= total && entry->buf_count < count;
-		     offset += alignment, ++entry->buf_count) अणु
+		     offset += alignment, ++entry->buf_count) {
 			buf = &entry->buflist[entry->buf_count];
 			buf->idx = dma->buf_count + entry->buf_count;
 			buf->total = alignment;
 			buf->order = order;
 			buf->used = 0;
 			buf->offset = (dma->byte_count + byte_count + offset);
-			buf->address = (व्योम *)(dmah->vaddr + offset);
+			buf->address = (void *)(dmah->vaddr + offset);
 			buf->bus_address = dmah->busaddr + offset;
-			buf->next = शून्य;
-			buf->रुकोing = 0;
+			buf->next = NULL;
+			buf->waiting = 0;
 			buf->pending = 0;
-			buf->file_priv = शून्य;
+			buf->file_priv = NULL;
 
 			buf->dev_priv_size = dev->driver->dev_priv_size;
-			buf->dev_निजी = kzalloc(buf->dev_priv_size,
+			buf->dev_private = kzalloc(buf->dev_priv_size,
 						GFP_KERNEL);
-			अगर (!buf->dev_निजी) अणु
-				/* Set count correctly so we मुक्त the proper amount. */
+			if (!buf->dev_private) {
+				/* Set count correctly so we free the proper amount. */
 				entry->buf_count = count;
 				entry->seg_count = count;
 				drm_cleanup_buf_error(dev, entry);
-				kमुक्त(temp_pagelist);
-				mutex_unlock(&dev->काष्ठा_mutex);
+				kfree(temp_pagelist);
+				mutex_unlock(&dev->struct_mutex);
 				atomic_dec(&dev->buf_alloc);
-				वापस -ENOMEM;
-			पूर्ण
+				return -ENOMEM;
+			}
 
 			DRM_DEBUG("buffer %d @ %p\n",
 				  entry->buf_count, buf->address);
-		पूर्ण
+		}
 		byte_count += PAGE_SIZE << page_order;
-	पूर्ण
+	}
 
-	temp_buflist = kपुनः_स्मृति(dma->buflist,
+	temp_buflist = krealloc(dma->buflist,
 				(dma->buf_count + entry->buf_count) *
-				माप(*dma->buflist), GFP_KERNEL);
-	अगर (!temp_buflist) अणु
+				sizeof(*dma->buflist), GFP_KERNEL);
+	if (!temp_buflist) {
 		/* Free the entry because it isn't valid */
 		drm_cleanup_buf_error(dev, entry);
-		kमुक्त(temp_pagelist);
-		mutex_unlock(&dev->काष्ठा_mutex);
+		kfree(temp_pagelist);
+		mutex_unlock(&dev->struct_mutex);
 		atomic_dec(&dev->buf_alloc);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	dma->buflist = temp_buflist;
 
-	क्रम (i = 0; i < entry->buf_count; i++) अणु
+	for (i = 0; i < entry->buf_count; i++) {
 		dma->buflist[i + dma->buf_count] = &entry->buflist[i];
-	पूर्ण
+	}
 
 	/* No allocations failed, so now we can replace the original pagelist
 	 * with the new one.
 	 */
-	अगर (dma->page_count) अणु
-		kमुक्त(dma->pagelist);
-	पूर्ण
+	if (dma->page_count) {
+		kfree(dma->pagelist);
+	}
 	dma->pagelist = temp_pagelist;
 
 	dma->buf_count += entry->buf_count;
@@ -1066,46 +1065,46 @@ EXPORT_SYMBOL(drm_legacy_addbufs_agp);
 	dma->page_count += entry->seg_count << page_order;
 	dma->byte_count += PAGE_SIZE * (entry->seg_count << page_order);
 
-	mutex_unlock(&dev->काष्ठा_mutex);
+	mutex_unlock(&dev->struct_mutex);
 
 	request->count = entry->buf_count;
 	request->size = size;
 
-	अगर (request->flags & _DRM_PCI_BUFFER_RO)
+	if (request->flags & _DRM_PCI_BUFFER_RO)
 		dma->flags = _DRM_DMA_USE_PCI_RO;
 
 	atomic_dec(&dev->buf_alloc);
-	वापस 0;
+	return 0;
 
-पूर्ण
+}
 EXPORT_SYMBOL(drm_legacy_addbufs_pci);
 
-अटल पूर्णांक drm_legacy_addbufs_sg(काष्ठा drm_device *dev,
-				 काष्ठा drm_buf_desc *request)
-अणु
-	काष्ठा drm_device_dma *dma = dev->dma;
-	काष्ठा drm_buf_entry *entry;
-	काष्ठा drm_buf *buf;
-	अचिन्हित दीर्घ offset;
-	अचिन्हित दीर्घ agp_offset;
-	पूर्णांक count;
-	पूर्णांक order;
-	पूर्णांक size;
-	पूर्णांक alignment;
-	पूर्णांक page_order;
-	पूर्णांक total;
-	पूर्णांक byte_count;
-	पूर्णांक i;
-	काष्ठा drm_buf **temp_buflist;
+static int drm_legacy_addbufs_sg(struct drm_device *dev,
+				 struct drm_buf_desc *request)
+{
+	struct drm_device_dma *dma = dev->dma;
+	struct drm_buf_entry *entry;
+	struct drm_buf *buf;
+	unsigned long offset;
+	unsigned long agp_offset;
+	int count;
+	int order;
+	int size;
+	int alignment;
+	int page_order;
+	int total;
+	int byte_count;
+	int i;
+	struct drm_buf **temp_buflist;
 
-	अगर (!drm_core_check_feature(dev, DRIVER_SG))
-		वापस -EOPNOTSUPP;
+	if (!drm_core_check_feature(dev, DRIVER_SG))
+		return -EOPNOTSUPP;
 
-	अगर (!dma)
-		वापस -EINVAL;
+	if (!dma)
+		return -EINVAL;
 
-	अगर (!capable(CAP_SYS_ADMIN))
-		वापस -EPERM;
+	if (!capable(CAP_SYS_ADMIN))
+		return -EPERM;
 
 	count = request->count;
 	order = order_base_2(request->size);
@@ -1127,44 +1126,44 @@ EXPORT_SYMBOL(drm_legacy_addbufs_pci);
 	DRM_DEBUG("page_order: %d\n", page_order);
 	DRM_DEBUG("total:      %d\n", total);
 
-	अगर (order < DRM_MIN_ORDER || order > DRM_MAX_ORDER)
-		वापस -EINVAL;
+	if (order < DRM_MIN_ORDER || order > DRM_MAX_ORDER)
+		return -EINVAL;
 
 	spin_lock(&dev->buf_lock);
-	अगर (dev->buf_use) अणु
+	if (dev->buf_use) {
 		spin_unlock(&dev->buf_lock);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 	atomic_inc(&dev->buf_alloc);
 	spin_unlock(&dev->buf_lock);
 
-	mutex_lock(&dev->काष्ठा_mutex);
+	mutex_lock(&dev->struct_mutex);
 	entry = &dma->bufs[order];
-	अगर (entry->buf_count) अणु
-		mutex_unlock(&dev->काष्ठा_mutex);
+	if (entry->buf_count) {
+		mutex_unlock(&dev->struct_mutex);
 		atomic_dec(&dev->buf_alloc);
-		वापस -ENOMEM;	/* May only call once क्रम each order */
-	पूर्ण
+		return -ENOMEM;	/* May only call once for each order */
+	}
 
-	अगर (count < 0 || count > 4096) अणु
-		mutex_unlock(&dev->काष्ठा_mutex);
+	if (count < 0 || count > 4096) {
+		mutex_unlock(&dev->struct_mutex);
 		atomic_dec(&dev->buf_alloc);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	entry->buflist = kसुस्मृति(count, माप(*entry->buflist), GFP_KERNEL);
-	अगर (!entry->buflist) अणु
-		mutex_unlock(&dev->काष्ठा_mutex);
+	entry->buflist = kcalloc(count, sizeof(*entry->buflist), GFP_KERNEL);
+	if (!entry->buflist) {
+		mutex_unlock(&dev->struct_mutex);
 		atomic_dec(&dev->buf_alloc);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	entry->buf_size = size;
 	entry->page_order = page_order;
 
 	offset = 0;
 
-	जबतक (entry->buf_count < count) अणु
+	while (entry->buf_count < count) {
 		buf = &entry->buflist[entry->buf_count];
 		buf->idx = dma->buf_count + entry->buf_count;
 		buf->total = alignment;
@@ -1173,48 +1172,48 @@ EXPORT_SYMBOL(drm_legacy_addbufs_pci);
 
 		buf->offset = (dma->byte_count + offset);
 		buf->bus_address = agp_offset + offset;
-		buf->address = (व्योम *)(agp_offset + offset
-					+ (अचिन्हित दीर्घ)dev->sg->भव);
-		buf->next = शून्य;
-		buf->रुकोing = 0;
+		buf->address = (void *)(agp_offset + offset
+					+ (unsigned long)dev->sg->virtual);
+		buf->next = NULL;
+		buf->waiting = 0;
 		buf->pending = 0;
-		buf->file_priv = शून्य;
+		buf->file_priv = NULL;
 
 		buf->dev_priv_size = dev->driver->dev_priv_size;
-		buf->dev_निजी = kzalloc(buf->dev_priv_size, GFP_KERNEL);
-		अगर (!buf->dev_निजी) अणु
-			/* Set count correctly so we मुक्त the proper amount. */
+		buf->dev_private = kzalloc(buf->dev_priv_size, GFP_KERNEL);
+		if (!buf->dev_private) {
+			/* Set count correctly so we free the proper amount. */
 			entry->buf_count = count;
 			drm_cleanup_buf_error(dev, entry);
-			mutex_unlock(&dev->काष्ठा_mutex);
+			mutex_unlock(&dev->struct_mutex);
 			atomic_dec(&dev->buf_alloc);
-			वापस -ENOMEM;
-		पूर्ण
+			return -ENOMEM;
+		}
 
 		DRM_DEBUG("buffer %d @ %p\n", entry->buf_count, buf->address);
 
 		offset += alignment;
 		entry->buf_count++;
 		byte_count += PAGE_SIZE << page_order;
-	पूर्ण
+	}
 
 	DRM_DEBUG("byte_count: %d\n", byte_count);
 
-	temp_buflist = kपुनः_स्मृति(dma->buflist,
+	temp_buflist = krealloc(dma->buflist,
 				(dma->buf_count + entry->buf_count) *
-				माप(*dma->buflist), GFP_KERNEL);
-	अगर (!temp_buflist) अणु
+				sizeof(*dma->buflist), GFP_KERNEL);
+	if (!temp_buflist) {
 		/* Free the entry because it isn't valid */
 		drm_cleanup_buf_error(dev, entry);
-		mutex_unlock(&dev->काष्ठा_mutex);
+		mutex_unlock(&dev->struct_mutex);
 		atomic_dec(&dev->buf_alloc);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	dma->buflist = temp_buflist;
 
-	क्रम (i = 0; i < entry->buf_count; i++) अणु
+	for (i = 0; i < entry->buf_count; i++) {
 		dma->buflist[i + dma->buf_count] = &entry->buflist[i];
-	पूर्ण
+	}
 
 	dma->buf_count += entry->buf_count;
 	dma->seg_count += entry->seg_count;
@@ -1224,7 +1223,7 @@ EXPORT_SYMBOL(drm_legacy_addbufs_pci);
 	DRM_DEBUG("dma->buf_count : %d\n", dma->buf_count);
 	DRM_DEBUG("entry->buf_count : %d\n", entry->buf_count);
 
-	mutex_unlock(&dev->काष्ठा_mutex);
+	mutex_unlock(&dev->struct_mutex);
 
 	request->count = entry->buf_count;
 	request->size = size;
@@ -1232,106 +1231,106 @@ EXPORT_SYMBOL(drm_legacy_addbufs_pci);
 	dma->flags = _DRM_DMA_USE_SG;
 
 	atomic_dec(&dev->buf_alloc);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Add buffers क्रम DMA transfers (ioctl).
+ * Add buffers for DMA transfers (ioctl).
  *
  * \param inode device inode.
- * \param file_priv DRM file निजी.
+ * \param file_priv DRM file private.
  * \param cmd command.
- * \param arg poपूर्णांकer to a काष्ठा drm_buf_desc request.
- * \लeturn zero on success or a negative number on failure.
+ * \param arg pointer to a struct drm_buf_desc request.
+ * \return zero on success or a negative number on failure.
  *
- * According with the memory type specअगरied in drm_buf_desc::flags and the
+ * According with the memory type specified in drm_buf_desc::flags and the
  * build options, it dispatches the call either to addbufs_agp(),
- * addbufs_sg() or addbufs_pci() क्रम AGP, scatter-gather or consistent
+ * addbufs_sg() or addbufs_pci() for AGP, scatter-gather or consistent
  * PCI memory respectively.
  */
-पूर्णांक drm_legacy_addbufs(काष्ठा drm_device *dev, व्योम *data,
-		       काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_buf_desc *request = data;
-	पूर्णांक ret;
+int drm_legacy_addbufs(struct drm_device *dev, void *data,
+		       struct drm_file *file_priv)
+{
+	struct drm_buf_desc *request = data;
+	int ret;
 
-	अगर (!drm_core_check_feature(dev, DRIVER_LEGACY))
-		वापस -EOPNOTSUPP;
+	if (!drm_core_check_feature(dev, DRIVER_LEGACY))
+		return -EOPNOTSUPP;
 
-	अगर (!drm_core_check_feature(dev, DRIVER_HAVE_DMA))
-		वापस -EOPNOTSUPP;
+	if (!drm_core_check_feature(dev, DRIVER_HAVE_DMA))
+		return -EOPNOTSUPP;
 
-#अगर IS_ENABLED(CONFIG_AGP)
-	अगर (request->flags & _DRM_AGP_BUFFER)
+#if IS_ENABLED(CONFIG_AGP)
+	if (request->flags & _DRM_AGP_BUFFER)
 		ret = drm_legacy_addbufs_agp(dev, request);
-	अन्यथा
-#पूर्ण_अगर
-	अगर (request->flags & _DRM_SG_BUFFER)
+	else
+#endif
+	if (request->flags & _DRM_SG_BUFFER)
 		ret = drm_legacy_addbufs_sg(dev, request);
-	अन्यथा अगर (request->flags & _DRM_FB_BUFFER)
+	else if (request->flags & _DRM_FB_BUFFER)
 		ret = -EINVAL;
-	अन्यथा
+	else
 		ret = drm_legacy_addbufs_pci(dev, request);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
- * Get inक्रमmation about the buffer mappings.
+ * Get information about the buffer mappings.
  *
- * This was originally mean क्रम debugging purposes, or by a sophisticated
+ * This was originally mean for debugging purposes, or by a sophisticated
  * client library to determine how best to use the available buffers (e.g.,
- * large buffers can be used क्रम image transfer).
+ * large buffers can be used for image transfer).
  *
  * \param inode device inode.
- * \param file_priv DRM file निजी.
+ * \param file_priv DRM file private.
  * \param cmd command.
- * \param arg poपूर्णांकer to a drm_buf_info काष्ठाure.
- * \लeturn zero on success or a negative number on failure.
+ * \param arg pointer to a drm_buf_info structure.
+ * \return zero on success or a negative number on failure.
  *
- * Increments drm_device::buf_use जबतक holding the drm_device::buf_lock
- * lock, preventing of allocating more buffers after this call. Inक्रमmation
- * about each requested buffer is then copied पूर्णांकo user space.
+ * Increments drm_device::buf_use while holding the drm_device::buf_lock
+ * lock, preventing of allocating more buffers after this call. Information
+ * about each requested buffer is then copied into user space.
  */
-पूर्णांक __drm_legacy_infobufs(काष्ठा drm_device *dev,
-			व्योम *data, पूर्णांक *p,
-			पूर्णांक (*f)(व्योम *, पूर्णांक, काष्ठा drm_buf_entry *))
-अणु
-	काष्ठा drm_device_dma *dma = dev->dma;
-	पूर्णांक i;
-	पूर्णांक count;
+int __drm_legacy_infobufs(struct drm_device *dev,
+			void *data, int *p,
+			int (*f)(void *, int, struct drm_buf_entry *))
+{
+	struct drm_device_dma *dma = dev->dma;
+	int i;
+	int count;
 
-	अगर (!drm_core_check_feature(dev, DRIVER_LEGACY))
-		वापस -EOPNOTSUPP;
+	if (!drm_core_check_feature(dev, DRIVER_LEGACY))
+		return -EOPNOTSUPP;
 
-	अगर (!drm_core_check_feature(dev, DRIVER_HAVE_DMA))
-		वापस -EOPNOTSUPP;
+	if (!drm_core_check_feature(dev, DRIVER_HAVE_DMA))
+		return -EOPNOTSUPP;
 
-	अगर (!dma)
-		वापस -EINVAL;
+	if (!dma)
+		return -EINVAL;
 
 	spin_lock(&dev->buf_lock);
-	अगर (atomic_पढ़ो(&dev->buf_alloc)) अणु
+	if (atomic_read(&dev->buf_alloc)) {
 		spin_unlock(&dev->buf_lock);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 	++dev->buf_use;		/* Can't allocate more after this call */
 	spin_unlock(&dev->buf_lock);
 
-	क्रम (i = 0, count = 0; i < DRM_MAX_ORDER + 1; i++) अणु
-		अगर (dma->bufs[i].buf_count)
+	for (i = 0, count = 0; i < DRM_MAX_ORDER + 1; i++) {
+		if (dma->bufs[i].buf_count)
 			++count;
-	पूर्ण
+	}
 
 	DRM_DEBUG("count = %d\n", count);
 
-	अगर (*p >= count) अणु
-		क्रम (i = 0, count = 0; i < DRM_MAX_ORDER + 1; i++) अणु
-			काष्ठा drm_buf_entry *from = &dma->bufs[i];
+	if (*p >= count) {
+		for (i = 0, count = 0; i < DRM_MAX_ORDER + 1; i++) {
+			struct drm_buf_entry *from = &dma->bufs[i];
 
-			अगर (from->buf_count) अणु
-				अगर (f(data, count, from) < 0)
-					वापस -EFAULT;
+			if (from->buf_count) {
+				if (f(data, count, from) < 0)
+					return -EFAULT;
 				DRM_DEBUG("%d %d %d %d %d\n",
 					  i,
 					  dma->bufs[i].buf_count,
@@ -1339,272 +1338,272 @@ EXPORT_SYMBOL(drm_legacy_addbufs_pci);
 					  dma->bufs[i].low_mark,
 					  dma->bufs[i].high_mark);
 				++count;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 	*p = count;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक copy_one_buf(व्योम *data, पूर्णांक count, काष्ठा drm_buf_entry *from)
-अणु
-	काष्ठा drm_buf_info *request = data;
-	काष्ठा drm_buf_desc __user *to = &request->list[count];
-	काष्ठा drm_buf_desc v = अणु.count = from->buf_count,
+static int copy_one_buf(void *data, int count, struct drm_buf_entry *from)
+{
+	struct drm_buf_info *request = data;
+	struct drm_buf_desc __user *to = &request->list[count];
+	struct drm_buf_desc v = {.count = from->buf_count,
 				 .size = from->buf_size,
 				 .low_mark = from->low_mark,
-				 .high_mark = from->high_markपूर्ण;
+				 .high_mark = from->high_mark};
 
-	अगर (copy_to_user(to, &v, दुरत्व(काष्ठा drm_buf_desc, flags)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user(to, &v, offsetof(struct drm_buf_desc, flags)))
+		return -EFAULT;
+	return 0;
+}
 
-पूर्णांक drm_legacy_infobufs(काष्ठा drm_device *dev, व्योम *data,
-			काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_buf_info *request = data;
+int drm_legacy_infobufs(struct drm_device *dev, void *data,
+			struct drm_file *file_priv)
+{
+	struct drm_buf_info *request = data;
 
-	वापस __drm_legacy_infobufs(dev, data, &request->count, copy_one_buf);
-पूर्ण
+	return __drm_legacy_infobufs(dev, data, &request->count, copy_one_buf);
+}
 
 /*
- * Specअगरies a low and high water mark क्रम buffer allocation
+ * Specifies a low and high water mark for buffer allocation
  *
  * \param inode device inode.
- * \param file_priv DRM file निजी.
+ * \param file_priv DRM file private.
  * \param cmd command.
- * \param arg a poपूर्णांकer to a drm_buf_desc काष्ठाure.
- * \लeturn zero on success or a negative number on failure.
+ * \param arg a pointer to a drm_buf_desc structure.
+ * \return zero on success or a negative number on failure.
  *
- * Verअगरies that the size order is bounded between the admissible orders and
+ * Verifies that the size order is bounded between the admissible orders and
  * updates the respective drm_device_dma::bufs entry low and high water mark.
  *
- * \नote This ioctl is deprecated and mostly never used.
+ * \note This ioctl is deprecated and mostly never used.
  */
-पूर्णांक drm_legacy_markbufs(काष्ठा drm_device *dev, व्योम *data,
-			काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_device_dma *dma = dev->dma;
-	काष्ठा drm_buf_desc *request = data;
-	पूर्णांक order;
-	काष्ठा drm_buf_entry *entry;
+int drm_legacy_markbufs(struct drm_device *dev, void *data,
+			struct drm_file *file_priv)
+{
+	struct drm_device_dma *dma = dev->dma;
+	struct drm_buf_desc *request = data;
+	int order;
+	struct drm_buf_entry *entry;
 
-	अगर (!drm_core_check_feature(dev, DRIVER_LEGACY))
-		वापस -EOPNOTSUPP;
+	if (!drm_core_check_feature(dev, DRIVER_LEGACY))
+		return -EOPNOTSUPP;
 
-	अगर (!drm_core_check_feature(dev, DRIVER_HAVE_DMA))
-		वापस -EOPNOTSUPP;
+	if (!drm_core_check_feature(dev, DRIVER_HAVE_DMA))
+		return -EOPNOTSUPP;
 
-	अगर (!dma)
-		वापस -EINVAL;
+	if (!dma)
+		return -EINVAL;
 
 	DRM_DEBUG("%d, %d, %d\n",
 		  request->size, request->low_mark, request->high_mark);
 	order = order_base_2(request->size);
-	अगर (order < DRM_MIN_ORDER || order > DRM_MAX_ORDER)
-		वापस -EINVAL;
+	if (order < DRM_MIN_ORDER || order > DRM_MAX_ORDER)
+		return -EINVAL;
 	entry = &dma->bufs[order];
 
-	अगर (request->low_mark < 0 || request->low_mark > entry->buf_count)
-		वापस -EINVAL;
-	अगर (request->high_mark < 0 || request->high_mark > entry->buf_count)
-		वापस -EINVAL;
+	if (request->low_mark < 0 || request->low_mark > entry->buf_count)
+		return -EINVAL;
+	if (request->high_mark < 0 || request->high_mark > entry->buf_count)
+		return -EINVAL;
 
 	entry->low_mark = request->low_mark;
 	entry->high_mark = request->high_mark;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Unreserve the buffers in list, previously reserved using drmDMA.
  *
  * \param inode device inode.
- * \param file_priv DRM file निजी.
+ * \param file_priv DRM file private.
  * \param cmd command.
- * \param arg poपूर्णांकer to a drm_buf_मुक्त काष्ठाure.
- * \लeturn zero on success or a negative number on failure.
+ * \param arg pointer to a drm_buf_free structure.
+ * \return zero on success or a negative number on failure.
  *
- * Calls मुक्त_buffer() क्रम each used buffer.
- * This function is primarily used क्रम debugging.
+ * Calls free_buffer() for each used buffer.
+ * This function is primarily used for debugging.
  */
-पूर्णांक drm_legacy_मुक्तbufs(काष्ठा drm_device *dev, व्योम *data,
-			काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_device_dma *dma = dev->dma;
-	काष्ठा drm_buf_मुक्त *request = data;
-	पूर्णांक i;
-	पूर्णांक idx;
-	काष्ठा drm_buf *buf;
+int drm_legacy_freebufs(struct drm_device *dev, void *data,
+			struct drm_file *file_priv)
+{
+	struct drm_device_dma *dma = dev->dma;
+	struct drm_buf_free *request = data;
+	int i;
+	int idx;
+	struct drm_buf *buf;
 
-	अगर (!drm_core_check_feature(dev, DRIVER_LEGACY))
-		वापस -EOPNOTSUPP;
+	if (!drm_core_check_feature(dev, DRIVER_LEGACY))
+		return -EOPNOTSUPP;
 
-	अगर (!drm_core_check_feature(dev, DRIVER_HAVE_DMA))
-		वापस -EOPNOTSUPP;
+	if (!drm_core_check_feature(dev, DRIVER_HAVE_DMA))
+		return -EOPNOTSUPP;
 
-	अगर (!dma)
-		वापस -EINVAL;
+	if (!dma)
+		return -EINVAL;
 
 	DRM_DEBUG("%d\n", request->count);
-	क्रम (i = 0; i < request->count; i++) अणु
-		अगर (copy_from_user(&idx, &request->list[i], माप(idx)))
-			वापस -EFAULT;
-		अगर (idx < 0 || idx >= dma->buf_count) अणु
+	for (i = 0; i < request->count; i++) {
+		if (copy_from_user(&idx, &request->list[i], sizeof(idx)))
+			return -EFAULT;
+		if (idx < 0 || idx >= dma->buf_count) {
 			DRM_ERROR("Index %d (of %d max)\n",
 				  idx, dma->buf_count - 1);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		idx = array_index_nospec(idx, dma->buf_count);
 		buf = dma->buflist[idx];
-		अगर (buf->file_priv != file_priv) अणु
+		if (buf->file_priv != file_priv) {
 			DRM_ERROR("Process %d freeing buffer not owned\n",
 				  task_pid_nr(current));
-			वापस -EINVAL;
-		पूर्ण
-		drm_legacy_मुक्त_buffer(dev, buf);
-	पूर्ण
+			return -EINVAL;
+		}
+		drm_legacy_free_buffer(dev, buf);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * Maps all of the DMA buffers पूर्णांकo client-भव space (ioctl).
+ * Maps all of the DMA buffers into client-virtual space (ioctl).
  *
  * \param inode device inode.
- * \param file_priv DRM file निजी.
+ * \param file_priv DRM file private.
  * \param cmd command.
- * \param arg poपूर्णांकer to a drm_buf_map काष्ठाure.
- * \लeturn zero on success or a negative number on failure.
+ * \param arg pointer to a drm_buf_map structure.
+ * \return zero on success or a negative number on failure.
  *
- * Maps the AGP, SG or PCI buffer region with vm_mmap(), and copies inक्रमmation
- * about each buffer पूर्णांकo user space. For PCI buffers, it calls vm_mmap() with
- * offset equal to 0, which drm_mmap() पूर्णांकerpretes as PCI buffers and calls
+ * Maps the AGP, SG or PCI buffer region with vm_mmap(), and copies information
+ * about each buffer into user space. For PCI buffers, it calls vm_mmap() with
+ * offset equal to 0, which drm_mmap() interpretes as PCI buffers and calls
  * drm_mmap_dma().
  */
-पूर्णांक __drm_legacy_mapbufs(काष्ठा drm_device *dev, व्योम *data, पूर्णांक *p,
-			 व्योम __user **v,
-			 पूर्णांक (*f)(व्योम *, पूर्णांक, अचिन्हित दीर्घ,
-				 काष्ठा drm_buf *),
-				 काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_device_dma *dma = dev->dma;
-	पूर्णांक retcode = 0;
-	अचिन्हित दीर्घ भव;
-	पूर्णांक i;
+int __drm_legacy_mapbufs(struct drm_device *dev, void *data, int *p,
+			 void __user **v,
+			 int (*f)(void *, int, unsigned long,
+				 struct drm_buf *),
+				 struct drm_file *file_priv)
+{
+	struct drm_device_dma *dma = dev->dma;
+	int retcode = 0;
+	unsigned long virtual;
+	int i;
 
-	अगर (!drm_core_check_feature(dev, DRIVER_LEGACY))
-		वापस -EOPNOTSUPP;
+	if (!drm_core_check_feature(dev, DRIVER_LEGACY))
+		return -EOPNOTSUPP;
 
-	अगर (!drm_core_check_feature(dev, DRIVER_HAVE_DMA))
-		वापस -EOPNOTSUPP;
+	if (!drm_core_check_feature(dev, DRIVER_HAVE_DMA))
+		return -EOPNOTSUPP;
 
-	अगर (!dma)
-		वापस -EINVAL;
+	if (!dma)
+		return -EINVAL;
 
 	spin_lock(&dev->buf_lock);
-	अगर (atomic_पढ़ो(&dev->buf_alloc)) अणु
+	if (atomic_read(&dev->buf_alloc)) {
 		spin_unlock(&dev->buf_lock);
-		वापस -EBUSY;
-	पूर्ण
+		return -EBUSY;
+	}
 	dev->buf_use++;		/* Can't allocate more after this call */
 	spin_unlock(&dev->buf_lock);
 
-	अगर (*p >= dma->buf_count) अणु
-		अगर ((dev->agp && (dma->flags & _DRM_DMA_USE_AGP))
+	if (*p >= dma->buf_count) {
+		if ((dev->agp && (dma->flags & _DRM_DMA_USE_AGP))
 		    || (drm_core_check_feature(dev, DRIVER_SG)
-			&& (dma->flags & _DRM_DMA_USE_SG))) अणु
-			काष्ठा drm_local_map *map = dev->agp_buffer_map;
-			अचिन्हित दीर्घ token = dev->agp_buffer_token;
+			&& (dma->flags & _DRM_DMA_USE_SG))) {
+			struct drm_local_map *map = dev->agp_buffer_map;
+			unsigned long token = dev->agp_buffer_token;
 
-			अगर (!map) अणु
+			if (!map) {
 				retcode = -EINVAL;
-				जाओ करोne;
-			पूर्ण
-			भव = vm_mmap(file_priv->filp, 0, map->size,
+				goto done;
+			}
+			virtual = vm_mmap(file_priv->filp, 0, map->size,
 					  PROT_READ | PROT_WRITE,
 					  MAP_SHARED,
 					  token);
-		पूर्ण अन्यथा अणु
-			भव = vm_mmap(file_priv->filp, 0, dma->byte_count,
+		} else {
+			virtual = vm_mmap(file_priv->filp, 0, dma->byte_count,
 					  PROT_READ | PROT_WRITE,
 					  MAP_SHARED, 0);
-		पूर्ण
-		अगर (भव > -1024UL) अणु
+		}
+		if (virtual > -1024UL) {
 			/* Real error */
-			retcode = (चिन्हित दीर्घ)भव;
-			जाओ करोne;
-		पूर्ण
-		*v = (व्योम __user *)भव;
+			retcode = (signed long)virtual;
+			goto done;
+		}
+		*v = (void __user *)virtual;
 
-		क्रम (i = 0; i < dma->buf_count; i++) अणु
-			अगर (f(data, i, भव, dma->buflist[i]) < 0) अणु
+		for (i = 0; i < dma->buf_count; i++) {
+			if (f(data, i, virtual, dma->buflist[i]) < 0) {
 				retcode = -EFAULT;
-				जाओ करोne;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-      करोne:
+				goto done;
+			}
+		}
+	}
+      done:
 	*p = dma->buf_count;
 	DRM_DEBUG("%d buffers, retcode = %d\n", *p, retcode);
 
-	वापस retcode;
-पूर्ण
+	return retcode;
+}
 
-अटल पूर्णांक map_one_buf(व्योम *data, पूर्णांक idx, अचिन्हित दीर्घ भव,
-			काष्ठा drm_buf *buf)
-अणु
-	काष्ठा drm_buf_map *request = data;
-	अचिन्हित दीर्घ address = भव + buf->offset;	/* *** */
+static int map_one_buf(void *data, int idx, unsigned long virtual,
+			struct drm_buf *buf)
+{
+	struct drm_buf_map *request = data;
+	unsigned long address = virtual + buf->offset;	/* *** */
 
-	अगर (copy_to_user(&request->list[idx].idx, &buf->idx,
-			 माप(request->list[0].idx)))
-		वापस -EFAULT;
-	अगर (copy_to_user(&request->list[idx].total, &buf->total,
-			 माप(request->list[0].total)))
-		वापस -EFAULT;
-	अगर (clear_user(&request->list[idx].used, माप(पूर्णांक)))
-		वापस -EFAULT;
-	अगर (copy_to_user(&request->list[idx].address, &address,
-			 माप(address)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user(&request->list[idx].idx, &buf->idx,
+			 sizeof(request->list[0].idx)))
+		return -EFAULT;
+	if (copy_to_user(&request->list[idx].total, &buf->total,
+			 sizeof(request->list[0].total)))
+		return -EFAULT;
+	if (clear_user(&request->list[idx].used, sizeof(int)))
+		return -EFAULT;
+	if (copy_to_user(&request->list[idx].address, &address,
+			 sizeof(address)))
+		return -EFAULT;
+	return 0;
+}
 
-पूर्णांक drm_legacy_mapbufs(काष्ठा drm_device *dev, व्योम *data,
-		       काष्ठा drm_file *file_priv)
-अणु
-	काष्ठा drm_buf_map *request = data;
+int drm_legacy_mapbufs(struct drm_device *dev, void *data,
+		       struct drm_file *file_priv)
+{
+	struct drm_buf_map *request = data;
 
-	वापस __drm_legacy_mapbufs(dev, data, &request->count,
-				    &request->भव, map_one_buf,
+	return __drm_legacy_mapbufs(dev, data, &request->count,
+				    &request->virtual, map_one_buf,
 				    file_priv);
-पूर्ण
+}
 
-पूर्णांक drm_legacy_dma_ioctl(काष्ठा drm_device *dev, व्योम *data,
-		  काष्ठा drm_file *file_priv)
-अणु
-	अगर (!drm_core_check_feature(dev, DRIVER_LEGACY))
-		वापस -EOPNOTSUPP;
+int drm_legacy_dma_ioctl(struct drm_device *dev, void *data,
+		  struct drm_file *file_priv)
+{
+	if (!drm_core_check_feature(dev, DRIVER_LEGACY))
+		return -EOPNOTSUPP;
 
-	अगर (dev->driver->dma_ioctl)
-		वापस dev->driver->dma_ioctl(dev, data, file_priv);
-	अन्यथा
-		वापस -EINVAL;
-पूर्ण
+	if (dev->driver->dma_ioctl)
+		return dev->driver->dma_ioctl(dev, data, file_priv);
+	else
+		return -EINVAL;
+}
 
-काष्ठा drm_local_map *drm_legacy_माला_लोarea(काष्ठा drm_device *dev)
-अणु
-	काष्ठा drm_map_list *entry;
+struct drm_local_map *drm_legacy_getsarea(struct drm_device *dev)
+{
+	struct drm_map_list *entry;
 
-	list_क्रम_each_entry(entry, &dev->maplist, head) अणु
-		अगर (entry->map && entry->map->type == _DRM_SHM &&
-		    (entry->map->flags & _DRM_CONTAINS_LOCK)) अणु
-			वापस entry->map;
-		पूर्ण
-	पूर्ण
-	वापस शून्य;
-पूर्ण
-EXPORT_SYMBOL(drm_legacy_माला_लोarea);
+	list_for_each_entry(entry, &dev->maplist, head) {
+		if (entry->map && entry->map->type == _DRM_SHM &&
+		    (entry->map->flags & _DRM_CONTAINS_LOCK)) {
+			return entry->map;
+		}
+	}
+	return NULL;
+}
+EXPORT_SYMBOL(drm_legacy_getsarea);

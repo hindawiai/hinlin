@@ -1,247 +1,246 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#समावेश "intel_context.h"
-#समावेश "intel_engine_pm.h"
-#समावेश "intel_gpu_commands.h"
-#समावेश "intel_gt_requests.h"
-#समावेश "intel_ring.h"
-#समावेश "selftest_rc6.h"
+#include "intel_context.h"
+#include "intel_engine_pm.h"
+#include "intel_gpu_commands.h"
+#include "intel_gt_requests.h"
+#include "intel_ring.h"
+#include "selftest_rc6.h"
 
-#समावेश "selftests/i915_random.h"
-#समावेश "selftests/librapl.h"
+#include "selftests/i915_random.h"
+#include "selftests/librapl.h"
 
-अटल u64 rc6_residency(काष्ठा पूर्णांकel_rc6 *rc6)
-अणु
+static u64 rc6_residency(struct intel_rc6 *rc6)
+{
 	u64 result;
 
 	/* XXX VLV_GT_MEDIA_RC6? */
 
-	result = पूर्णांकel_rc6_residency_ns(rc6, GEN6_GT_GFX_RC6);
-	अगर (HAS_RC6p(rc6_to_i915(rc6)))
-		result += पूर्णांकel_rc6_residency_ns(rc6, GEN6_GT_GFX_RC6p);
-	अगर (HAS_RC6pp(rc6_to_i915(rc6)))
-		result += पूर्णांकel_rc6_residency_ns(rc6, GEN6_GT_GFX_RC6pp);
+	result = intel_rc6_residency_ns(rc6, GEN6_GT_GFX_RC6);
+	if (HAS_RC6p(rc6_to_i915(rc6)))
+		result += intel_rc6_residency_ns(rc6, GEN6_GT_GFX_RC6p);
+	if (HAS_RC6pp(rc6_to_i915(rc6)))
+		result += intel_rc6_residency_ns(rc6, GEN6_GT_GFX_RC6pp);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-पूर्णांक live_rc6_manual(व्योम *arg)
-अणु
-	काष्ठा पूर्णांकel_gt *gt = arg;
-	काष्ठा पूर्णांकel_rc6 *rc6 = &gt->rc6;
-	u64 rc0_घातer, rc6_घातer;
-	पूर्णांकel_wakeref_t wakeref;
-	kसमय_प्रकार dt;
+int live_rc6_manual(void *arg)
+{
+	struct intel_gt *gt = arg;
+	struct intel_rc6 *rc6 = &gt->rc6;
+	u64 rc0_power, rc6_power;
+	intel_wakeref_t wakeref;
+	ktime_t dt;
 	u64 res[2];
-	पूर्णांक err = 0;
+	int err = 0;
 
 	/*
 	 * Our claim is that we can "encourage" the GPU to enter rc6 at will.
 	 * Let's try it!
 	 */
 
-	अगर (!rc6->enabled)
-		वापस 0;
+	if (!rc6->enabled)
+		return 0;
 
 	/* bsw/byt use a PCU and decouple RC6 from our manual control */
-	अगर (IS_VALLEYVIEW(gt->i915) || IS_CHERRYVIEW(gt->i915))
-		वापस 0;
+	if (IS_VALLEYVIEW(gt->i915) || IS_CHERRYVIEW(gt->i915))
+		return 0;
 
-	wakeref = पूर्णांकel_runसमय_pm_get(gt->uncore->rpm);
+	wakeref = intel_runtime_pm_get(gt->uncore->rpm);
 
-	/* Force RC6 off क्रम starters */
-	__पूर्णांकel_rc6_disable(rc6);
+	/* Force RC6 off for starters */
+	__intel_rc6_disable(rc6);
 	msleep(1); /* wakeup is not immediate, takes about 100us on icl */
 
 	res[0] = rc6_residency(rc6);
 
-	dt = kसमय_get();
-	rc0_घातer = librapl_energy_uJ();
+	dt = ktime_get();
+	rc0_power = librapl_energy_uJ();
 	msleep(250);
-	rc0_घातer = librapl_energy_uJ() - rc0_घातer;
-	dt = kसमय_sub(kसमय_get(), dt);
+	rc0_power = librapl_energy_uJ() - rc0_power;
+	dt = ktime_sub(ktime_get(), dt);
 	res[1] = rc6_residency(rc6);
-	अगर ((res[1] - res[0]) >> 10) अणु
+	if ((res[1] - res[0]) >> 10) {
 		pr_err("RC6 residency increased by %lldus while disabled for 250ms!\n",
 		       (res[1] - res[0]) >> 10);
 		err = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	rc0_घातer = भाग64_u64(NSEC_PER_SEC * rc0_घातer, kसमय_प्रकारo_ns(dt));
-	अगर (!rc0_घातer) अणु
+	rc0_power = div64_u64(NSEC_PER_SEC * rc0_power, ktime_to_ns(dt));
+	if (!rc0_power) {
 		pr_err("No power measured while in RC0\n");
 		err = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	/* Manually enter RC6 */
-	पूर्णांकel_rc6_park(rc6);
+	intel_rc6_park(rc6);
 
 	res[0] = rc6_residency(rc6);
-	पूर्णांकel_uncore_क्रमcewake_flush(rc6_to_uncore(rc6), FORCEWAKE_ALL);
-	dt = kसमय_get();
-	rc6_घातer = librapl_energy_uJ();
+	intel_uncore_forcewake_flush(rc6_to_uncore(rc6), FORCEWAKE_ALL);
+	dt = ktime_get();
+	rc6_power = librapl_energy_uJ();
 	msleep(100);
-	rc6_घातer = librapl_energy_uJ() - rc6_घातer;
-	dt = kसमय_sub(kसमय_get(), dt);
+	rc6_power = librapl_energy_uJ() - rc6_power;
+	dt = ktime_sub(ktime_get(), dt);
 	res[1] = rc6_residency(rc6);
-	अगर (res[1] == res[0]) अणु
+	if (res[1] == res[0]) {
 		pr_err("Did not enter RC6! RC6_STATE=%08x, RC6_CONTROL=%08x, residency=%lld\n",
-		       पूर्णांकel_uncore_पढ़ो_fw(gt->uncore, GEN6_RC_STATE),
-		       पूर्णांकel_uncore_पढ़ो_fw(gt->uncore, GEN6_RC_CONTROL),
+		       intel_uncore_read_fw(gt->uncore, GEN6_RC_STATE),
+		       intel_uncore_read_fw(gt->uncore, GEN6_RC_CONTROL),
 		       res[0]);
 		err = -EINVAL;
-	पूर्ण
+	}
 
-	rc6_घातer = भाग64_u64(NSEC_PER_SEC * rc6_घातer, kसमय_प्रकारo_ns(dt));
+	rc6_power = div64_u64(NSEC_PER_SEC * rc6_power, ktime_to_ns(dt));
 	pr_info("GPU consumed %llduW in RC0 and %llduW in RC6\n",
-		rc0_घातer, rc6_घातer);
-	अगर (2 * rc6_घातer > rc0_घातer) अणु
+		rc0_power, rc6_power);
+	if (2 * rc6_power > rc0_power) {
 		pr_err("GPU leaked energy while in RC6!\n");
 		err = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	/* Restore what should have been the original state! */
-	पूर्णांकel_rc6_unpark(rc6);
+	intel_rc6_unpark(rc6);
 
 out_unlock:
-	पूर्णांकel_runसमय_pm_put(gt->uncore->rpm, wakeref);
-	वापस err;
-पूर्ण
+	intel_runtime_pm_put(gt->uncore->rpm, wakeref);
+	return err;
+}
 
-अटल स्थिर u32 *__live_rc6_ctx(काष्ठा पूर्णांकel_context *ce)
-अणु
-	काष्ठा i915_request *rq;
-	स्थिर u32 *result;
+static const u32 *__live_rc6_ctx(struct intel_context *ce)
+{
+	struct i915_request *rq;
+	const u32 *result;
 	u32 cmd;
 	u32 *cs;
 
-	rq = पूर्णांकel_context_create_request(ce);
-	अगर (IS_ERR(rq))
-		वापस ERR_CAST(rq);
+	rq = intel_context_create_request(ce);
+	if (IS_ERR(rq))
+		return ERR_CAST(rq);
 
-	cs = पूर्णांकel_ring_begin(rq, 4);
-	अगर (IS_ERR(cs)) अणु
+	cs = intel_ring_begin(rq, 4);
+	if (IS_ERR(cs)) {
 		i915_request_add(rq);
-		वापस cs;
-	पूर्ण
+		return cs;
+	}
 
 	cmd = MI_STORE_REGISTER_MEM | MI_USE_GGTT;
-	अगर (INTEL_GEN(rq->engine->i915) >= 8)
+	if (INTEL_GEN(rq->engine->i915) >= 8)
 		cmd++;
 
 	*cs++ = cmd;
 	*cs++ = i915_mmio_reg_offset(GEN8_RC6_CTX_INFO);
-	*cs++ = ce->समयline->hwsp_offset + 8;
+	*cs++ = ce->timeline->hwsp_offset + 8;
 	*cs++ = 0;
-	पूर्णांकel_ring_advance(rq, cs);
+	intel_ring_advance(rq, cs);
 
 	result = rq->hwsp_seqno + 2;
 	i915_request_add(rq);
 
-	वापस result;
-पूर्ण
+	return result;
+}
 
-अटल काष्ठा पूर्णांकel_engine_cs **
-अक्रमomised_engines(काष्ठा पूर्णांकel_gt *gt,
-		   काष्ठा rnd_state *prng,
-		   अचिन्हित पूर्णांक *count)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine, **engines;
-	क्रमागत पूर्णांकel_engine_id id;
-	पूर्णांक n;
+static struct intel_engine_cs **
+randomised_engines(struct intel_gt *gt,
+		   struct rnd_state *prng,
+		   unsigned int *count)
+{
+	struct intel_engine_cs *engine, **engines;
+	enum intel_engine_id id;
+	int n;
 
 	n = 0;
-	क्रम_each_engine(engine, gt, id)
+	for_each_engine(engine, gt, id)
 		n++;
-	अगर (!n)
-		वापस शून्य;
+	if (!n)
+		return NULL;
 
-	engines = kदो_स्मृति_array(n, माप(*engines), GFP_KERNEL);
-	अगर (!engines)
-		वापस शून्य;
+	engines = kmalloc_array(n, sizeof(*engines), GFP_KERNEL);
+	if (!engines)
+		return NULL;
 
 	n = 0;
-	क्रम_each_engine(engine, gt, id)
+	for_each_engine(engine, gt, id)
 		engines[n++] = engine;
 
-	i915_pअक्रमom_shuffle(engines, माप(*engines), n, prng);
+	i915_prandom_shuffle(engines, sizeof(*engines), n, prng);
 
 	*count = n;
-	वापस engines;
-पूर्ण
+	return engines;
+}
 
-पूर्णांक live_rc6_ctx_wa(व्योम *arg)
-अणु
-	काष्ठा पूर्णांकel_gt *gt = arg;
-	काष्ठा पूर्णांकel_engine_cs **engines;
-	अचिन्हित पूर्णांक n, count;
+int live_rc6_ctx_wa(void *arg)
+{
+	struct intel_gt *gt = arg;
+	struct intel_engine_cs **engines;
+	unsigned int n, count;
 	I915_RND_STATE(prng);
-	पूर्णांक err = 0;
+	int err = 0;
 
-	/* A पढ़ो of CTX_INFO upsets rc6. Poke the bear! */
-	अगर (INTEL_GEN(gt->i915) < 8)
-		वापस 0;
+	/* A read of CTX_INFO upsets rc6. Poke the bear! */
+	if (INTEL_GEN(gt->i915) < 8)
+		return 0;
 
-	engines = अक्रमomised_engines(gt, &prng, &count);
-	अगर (!engines)
-		वापस 0;
+	engines = randomised_engines(gt, &prng, &count);
+	if (!engines)
+		return 0;
 
-	क्रम (n = 0; n < count; n++) अणु
-		काष्ठा पूर्णांकel_engine_cs *engine = engines[n];
-		पूर्णांक pass;
+	for (n = 0; n < count; n++) {
+		struct intel_engine_cs *engine = engines[n];
+		int pass;
 
-		क्रम (pass = 0; pass < 2; pass++) अणु
-			काष्ठा i915_gpu_error *error = &gt->i915->gpu_error;
-			काष्ठा पूर्णांकel_context *ce;
-			अचिन्हित पूर्णांक resets =
+		for (pass = 0; pass < 2; pass++) {
+			struct i915_gpu_error *error = &gt->i915->gpu_error;
+			struct intel_context *ce;
+			unsigned int resets =
 				i915_reset_engine_count(error, engine);
-			स्थिर u32 *res;
+			const u32 *res;
 
-			/* Use a sacrअगरical context */
-			ce = पूर्णांकel_context_create(engine);
-			अगर (IS_ERR(ce)) अणु
+			/* Use a sacrifical context */
+			ce = intel_context_create(engine);
+			if (IS_ERR(ce)) {
 				err = PTR_ERR(ce);
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
-			पूर्णांकel_engine_pm_get(engine);
+			intel_engine_pm_get(engine);
 			res = __live_rc6_ctx(ce);
-			पूर्णांकel_engine_pm_put(engine);
-			पूर्णांकel_context_put(ce);
-			अगर (IS_ERR(res)) अणु
+			intel_engine_pm_put(engine);
+			intel_context_put(ce);
+			if (IS_ERR(res)) {
 				err = PTR_ERR(res);
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
-			अगर (पूर्णांकel_gt_रुको_क्रम_idle(gt, HZ / 5) == -ETIME) अणु
-				पूर्णांकel_gt_set_wedged(gt);
+			if (intel_gt_wait_for_idle(gt, HZ / 5) == -ETIME) {
+				intel_gt_set_wedged(gt);
 				err = -ETIME;
-				जाओ out;
-			पूर्ण
+				goto out;
+			}
 
-			पूर्णांकel_gt_pm_रुको_क्रम_idle(gt);
+			intel_gt_pm_wait_for_idle(gt);
 			pr_debug("%s: CTX_INFO=%0x\n",
 				 engine->name, READ_ONCE(*res));
 
-			अगर (resets !=
-			    i915_reset_engine_count(error, engine)) अणु
+			if (resets !=
+			    i915_reset_engine_count(error, engine)) {
 				pr_err("%s: GPU reset required\n",
 				       engine->name);
-				add_taपूर्णांक_क्रम_CI(gt->i915, TAINT_WARN);
+				add_taint_for_CI(gt->i915, TAINT_WARN);
 				err = -EIO;
-				जाओ out;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				goto out;
+			}
+		}
+	}
 
 out:
-	kमुक्त(engines);
-	वापस err;
-पूर्ण
+	kfree(engines);
+	return err;
+}

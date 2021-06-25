@@ -1,5 +1,4 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * X-Box gamepad driver
  *
@@ -14,24 +13,24 @@
  *               2010 Christoph Fritz <chf.fritz@googlemail.com>
  *
  * This driver is based on:
- *  - inक्रमmation from     http://euc.jp/periphs/xbox-controller.ja.hपंचांगl
- *  - the iForce driver    drivers/अक्षर/joystick/अगरorce.c
+ *  - information from     http://euc.jp/periphs/xbox-controller.ja.html
+ *  - the iForce driver    drivers/char/joystick/iforce.c
  *  - the skeleton-driver  drivers/usb/usb-skeleton.c
- *  - Xbox 360 inक्रमmation http://www.मुक्त60.org/wiki/Gamepad
- *  - Xbox One inक्रमmation https://github.com/quantus/xbox-one-controller-protocol
+ *  - Xbox 360 information http://www.free60.org/wiki/Gamepad
+ *  - Xbox One information https://github.com/quantus/xbox-one-controller-protocol
  *
  * Thanks to:
- *  - ITO Takayuki क्रम providing essential xpad inक्रमmation on his website
- *  - Vojtech Pavlik     - अगरorce driver / input subप्रणाली
- *  - Greg Kroah-Harपंचांगan - usb-skeleton driver
+ *  - ITO Takayuki for providing essential xpad information on his website
+ *  - Vojtech Pavlik     - iforce driver / input subsystem
+ *  - Greg Kroah-Hartman - usb-skeleton driver
  *  - XBOX Linux project - extra USB id's
- *  - Pekka Pथघyry (quantus) - Xbox One controller reverse engineering
+ *  - Pekka Pöyry (quantus) - Xbox One controller reverse engineering
  *
  * TODO:
  *  - fine tune axes (especially trigger axes)
  *  - fix "analog" buttons (reported as digital now)
  *  - get rumble working
- *  - need USB IDs क्रम other dance pads
+ *  - need USB IDs for other dance pads
  *
  * History:
  *
@@ -39,392 +38,392 @@
  *
  * 2002-07-02 - 0.0.2 : basic working version
  *  - all axes and 9 of the 10 buttons work (german InterAct device)
- *  - the black button करोes not work
+ *  - the black button does not work
  *
  * 2002-07-14 - 0.0.3 : rework by Vojtech Pavlik
  *  - indentation fixes
  *  - usb + input init sequence fixes
  *
  * 2002-07-16 - 0.0.4 : minor changes, merge with Vojtech's v0.0.3
- *  - verअगरied the lack of HID and report descriptors
- *  - verअगरied that ALL buttons WORK
+ *  - verified the lack of HID and report descriptors
+ *  - verified that ALL buttons WORK
  *  - fixed d-pad to axes mapping
  *
- * 2002-07-17 - 0.0.5 : simplअगरied d-pad handling
+ * 2002-07-17 - 0.0.5 : simplified d-pad handling
  *
  * 2004-10-02 - 0.0.6 : DDR pad support
  *  - borrowed from the XBOX linux kernel
- *  - USB id's क्रम commonly used dance pads are present
+ *  - USB id's for commonly used dance pads are present
  *  - dance pads will map D-PAD to buttons, not axes
- *  - pass the module paramater 'dpad_to_buttons' to क्रमce
- *    the D-PAD to map to buttons अगर your pad is not detected
+ *  - pass the module paramater 'dpad_to_buttons' to force
+ *    the D-PAD to map to buttons if your pad is not detected
  *
  * Later changes can be tracked in SCM.
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/input.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/module.h>
-#समावेश <linux/usb/input.h>
-#समावेश <linux/usb/quirks.h>
+#include <linux/kernel.h>
+#include <linux/input.h>
+#include <linux/rcupdate.h>
+#include <linux/slab.h>
+#include <linux/stat.h>
+#include <linux/module.h>
+#include <linux/usb/input.h>
+#include <linux/usb/quirks.h>
 
-#घोषणा XPAD_PKT_LEN 64
+#define XPAD_PKT_LEN 64
 
 /*
- * xbox d-pads should map to buttons, as is required क्रम DDR pads
- * but we map them to axes when possible to simplअगरy things
+ * xbox d-pads should map to buttons, as is required for DDR pads
+ * but we map them to axes when possible to simplify things
  */
-#घोषणा MAP_DPAD_TO_BUTTONS		(1 << 0)
-#घोषणा MAP_TRIGGERS_TO_BUTTONS		(1 << 1)
-#घोषणा MAP_STICKS_TO_शून्य		(1 << 2)
-#घोषणा DANCEPAD_MAP_CONFIG	(MAP_DPAD_TO_BUTTONS |			\
-				MAP_TRIGGERS_TO_BUTTONS | MAP_STICKS_TO_शून्य)
+#define MAP_DPAD_TO_BUTTONS		(1 << 0)
+#define MAP_TRIGGERS_TO_BUTTONS		(1 << 1)
+#define MAP_STICKS_TO_NULL		(1 << 2)
+#define DANCEPAD_MAP_CONFIG	(MAP_DPAD_TO_BUTTONS |			\
+				MAP_TRIGGERS_TO_BUTTONS | MAP_STICKS_TO_NULL)
 
-#घोषणा XTYPE_XBOX        0
-#घोषणा XTYPE_XBOX360     1
-#घोषणा XTYPE_XBOX360W    2
-#घोषणा XTYPE_XBOXONE     3
-#घोषणा XTYPE_UNKNOWN     4
+#define XTYPE_XBOX        0
+#define XTYPE_XBOX360     1
+#define XTYPE_XBOX360W    2
+#define XTYPE_XBOXONE     3
+#define XTYPE_UNKNOWN     4
 
-अटल bool dpad_to_buttons;
+static bool dpad_to_buttons;
 module_param(dpad_to_buttons, bool, S_IRUGO);
 MODULE_PARM_DESC(dpad_to_buttons, "Map D-PAD to buttons rather than axes for unknown pads");
 
-अटल bool triggers_to_buttons;
+static bool triggers_to_buttons;
 module_param(triggers_to_buttons, bool, S_IRUGO);
 MODULE_PARM_DESC(triggers_to_buttons, "Map triggers to buttons rather than axes for unknown pads");
 
-अटल bool sticks_to_null;
+static bool sticks_to_null;
 module_param(sticks_to_null, bool, S_IRUGO);
 MODULE_PARM_DESC(sticks_to_null, "Do not map sticks at all for unknown pads");
 
-अटल bool स्वतः_घातeroff = true;
-module_param(स्वतः_घातeroff, bool, S_IWUSR | S_IRUGO);
-MODULE_PARM_DESC(स्वतः_घातeroff, "Power off wireless controllers on suspend");
+static bool auto_poweroff = true;
+module_param(auto_poweroff, bool, S_IWUSR | S_IRUGO);
+MODULE_PARM_DESC(auto_poweroff, "Power off wireless controllers on suspend");
 
-अटल स्थिर काष्ठा xpad_device अणु
-	u16 idVenकरोr;
+static const struct xpad_device {
+	u16 idVendor;
 	u16 idProduct;
-	अक्षर *name;
+	char *name;
 	u8 mapping;
 	u8 xtype;
-पूर्ण xpad_device[] = अणु
-	अणु 0x0079, 0x18d4, "GPD Win 2 X-Box Controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x044f, 0x0f00, "Thrustmaster Wheel", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x044f, 0x0f03, "Thrustmaster Wheel", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x044f, 0x0f07, "Thrustmaster, Inc. Controller", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x044f, 0x0f10, "Thrustmaster Modena GT Wheel", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x044f, 0xb326, "Thrustmaster Gamepad GP XID", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x045e, 0x0202, "Microsoft X-Box pad v1 (US)", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x045e, 0x0285, "Microsoft X-Box pad (Japan)", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x045e, 0x0287, "Microsoft Xbox Controller S", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x045e, 0x0288, "Microsoft Xbox Controller S v2", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x045e, 0x0289, "Microsoft X-Box pad v2 (US)", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x045e, 0x028e, "Microsoft X-Box 360 pad", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x045e, 0x028f, "Microsoft X-Box 360 pad v2", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x045e, 0x0291, "Xbox 360 Wireless Receiver (XBOX)", MAP_DPAD_TO_BUTTONS, XTYPE_XBOX360W पूर्ण,
-	अणु 0x045e, 0x02d1, "Microsoft X-Box One pad", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x045e, 0x02dd, "Microsoft X-Box One pad (Firmware 2015)", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x045e, 0x02e3, "Microsoft X-Box One Elite pad", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x045e, 0x02ea, "Microsoft X-Box One S pad", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x045e, 0x0719, "Xbox 360 Wireless Receiver", MAP_DPAD_TO_BUTTONS, XTYPE_XBOX360W पूर्ण,
-	अणु 0x046d, 0xc21d, "Logitech Gamepad F310", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x046d, 0xc21e, "Logitech Gamepad F510", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x046d, 0xc21f, "Logitech Gamepad F710", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x046d, 0xc242, "Logitech Chillstream Controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x046d, 0xca84, "Logitech Xbox Cordless Controller", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x046d, 0xca88, "Logitech Compact Controller for Xbox", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x046d, 0xca8a, "Logitech Precision Vibration Feedback Wheel", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x046d, 0xcaa3, "Logitech DriveFx Racing Wheel", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x056e, 0x2004, "Elecom JC-U3613M", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x05fd, 0x1007, "Mad Catz Controller (unverified)", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x05fd, 0x107a, "InterAct 'PowerPad Pro' X-Box pad (Germany)", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x05fe, 0x3030, "Chic Controller", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x05fe, 0x3031, "Chic Controller", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x062a, 0x0020, "Logic3 Xbox GamePad", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x062a, 0x0033, "Competition Pro Steering Wheel", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x06a3, 0x0200, "Saitek Racing Wheel", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x06a3, 0x0201, "Saitek Adrenalin", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x06a3, 0xf51a, "Saitek P3600", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0738, 0x4506, "Mad Catz 4506 Wireless Controller", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0738, 0x4516, "Mad Catz Control Pad", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0738, 0x4520, "Mad Catz Control Pad Pro", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0738, 0x4522, "Mad Catz LumiCON", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0738, 0x4526, "Mad Catz Control Pad Pro", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0738, 0x4530, "Mad Catz Universal MC2 Racing Wheel and Pedals", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0738, 0x4536, "Mad Catz MicroCON", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0738, 0x4540, "Mad Catz Beat Pad", MAP_DPAD_TO_BUTTONS, XTYPE_XBOX पूर्ण,
-	अणु 0x0738, 0x4556, "Mad Catz Lynx Wireless Controller", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0738, 0x4586, "Mad Catz MicroCon Wireless Controller", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0738, 0x4588, "Mad Catz Blaster", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0738, 0x45ff, "Mad Catz Beat Pad (w/ Handle)", MAP_DPAD_TO_BUTTONS, XTYPE_XBOX पूर्ण,
-	अणु 0x0738, 0x4716, "Mad Catz Wired Xbox 360 Controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0738, 0x4718, "Mad Catz Street Fighter IV FightStick SE", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0738, 0x4726, "Mad Catz Xbox 360 Controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0738, 0x4728, "Mad Catz Street Fighter IV FightPad", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0738, 0x4736, "Mad Catz MicroCon Gamepad", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0738, 0x4738, "Mad Catz Wired Xbox 360 Controller (SFIV)", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0738, 0x4740, "Mad Catz Beat Pad", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0738, 0x4743, "Mad Catz Beat Pad Pro", MAP_DPAD_TO_BUTTONS, XTYPE_XBOX पूर्ण,
-	अणु 0x0738, 0x4758, "Mad Catz Arcade Game Stick", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0738, 0x4a01, "Mad Catz FightStick TE 2", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0738, 0x6040, "Mad Catz Beat Pad Pro", MAP_DPAD_TO_BUTTONS, XTYPE_XBOX पूर्ण,
-	अणु 0x0738, 0x9871, "Mad Catz Portable Drum", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0738, 0xb726, "Mad Catz Xbox controller - MW2", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0738, 0xb738, "Mad Catz MVC2TE Stick 2", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0738, 0xbeef, "Mad Catz JOYTECH NEO SE Advanced GamePad", XTYPE_XBOX360 पूर्ण,
-	अणु 0x0738, 0xcb02, "Saitek Cyborg Rumble Pad - PC/Xbox 360", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0738, 0xcb03, "Saitek P3200 Rumble Pad - PC/Xbox 360", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0738, 0xcb29, "Saitek Aviator Stick AV8R02", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0738, 0xf738, "Super SFIV FightStick TE S", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x07ff, 0xffff, "Mad Catz GamePad", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0c12, 0x0005, "Intec wireless", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0c12, 0x8801, "Nyko Xbox Controller", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0c12, 0x8802, "Zeroplus Xbox Controller", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0c12, 0x8809, "RedOctane Xbox Dance Pad", DANCEPAD_MAP_CONFIG, XTYPE_XBOX पूर्ण,
-	अणु 0x0c12, 0x880a, "Pelican Eclipse PL-2023", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0c12, 0x8810, "Zeroplus Xbox Controller", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0c12, 0x9902, "HAMA VibraX - *FAULTY HARDWARE*", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0d2f, 0x0002, "Andamiro Pump It Up pad", MAP_DPAD_TO_BUTTONS, XTYPE_XBOX पूर्ण,
-	अणु 0x0e4c, 0x1097, "Radica Gamester Controller", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0e4c, 0x1103, "Radica Gamester Reflex", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX पूर्ण,
-	अणु 0x0e4c, 0x2390, "Radica Games Jtech Controller", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0e4c, 0x3510, "Radica Gamester", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0e6f, 0x0003, "Logic3 Freebird wireless Controller", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0e6f, 0x0005, "Eclipse wireless Controller", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0e6f, 0x0006, "Edge wireless Controller", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0e6f, 0x0008, "After Glow Pro Controller", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0e6f, 0x0105, "HSM3 Xbox360 dancepad", MAP_DPAD_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0e6f, 0x0113, "Afterglow AX.1 Gamepad for Xbox 360", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0e6f, 0x011f, "Rock Candy Gamepad Wired Controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0e6f, 0x0131, "PDP EA Sports Controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0e6f, 0x0133, "Xbox 360 Wired Controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0e6f, 0x0139, "Afterglow Prismatic Wired Controller", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0e6f, 0x013a, "PDP Xbox One Controller", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0e6f, 0x0146, "Rock Candy Wired Controller for Xbox One", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0e6f, 0x0147, "PDP Marvel Xbox One Controller", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0e6f, 0x015c, "PDP Xbox One Arcade Stick", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0e6f, 0x0161, "PDP Xbox One Controller", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0e6f, 0x0162, "PDP Xbox One Controller", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0e6f, 0x0163, "PDP Xbox One Controller", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0e6f, 0x0164, "PDP Battlefield One", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0e6f, 0x0165, "PDP Titanfall 2", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0e6f, 0x0201, "Pelican PL-3601 'TSZ' Wired Xbox 360 Controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0e6f, 0x0213, "Afterglow Gamepad for Xbox 360", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0e6f, 0x021f, "Rock Candy Gamepad for Xbox 360", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0e6f, 0x0246, "Rock Candy Gamepad for Xbox One 2015", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0e6f, 0x02a0, "PDP Xbox One Controller", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0e6f, 0x02a1, "PDP Xbox One Controller", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0e6f, 0x02a2, "PDP Wired Controller for Xbox One - Crimson Red", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0e6f, 0x02a4, "PDP Wired Controller for Xbox One - Stealth Series", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0e6f, 0x02a6, "PDP Wired Controller for Xbox One - Camo Series", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0e6f, 0x02a7, "PDP Xbox One Controller", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0e6f, 0x02a8, "PDP Xbox One Controller", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0e6f, 0x02ab, "PDP Controller for Xbox One", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0e6f, 0x02ad, "PDP Wired Controller for Xbox One - Stealth Series", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0e6f, 0x02b3, "Afterglow Prismatic Wired Controller", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0e6f, 0x02b8, "Afterglow Prismatic Wired Controller", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0e6f, 0x0301, "Logic3 Controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0e6f, 0x0346, "Rock Candy Gamepad for Xbox One 2016", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0e6f, 0x0401, "Logic3 Controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0e6f, 0x0413, "Afterglow AX.1 Gamepad for Xbox 360", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0e6f, 0x0501, "PDP Xbox 360 Controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0e6f, 0xf900, "PDP Afterglow AX.1", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0e8f, 0x0201, "SmartJoy Frag Xpad/PS2 adaptor", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0e8f, 0x3008, "Generic xbox control (dealextreme)", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0f0d, 0x000a, "Hori Co. DOA4 FightStick", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0f0d, 0x000c, "Hori PadEX Turbo", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0f0d, 0x000d, "Hori Fighting Stick EX2", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0f0d, 0x0016, "Hori Real Arcade Pro.EX", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0f0d, 0x001b, "Hori Real Arcade Pro VX", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x0f0d, 0x0063, "Hori Real Arcade Pro Hayabusa (USA) Xbox One", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0f0d, 0x0067, "HORIPAD ONE", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0f0d, 0x0078, "Hori Real Arcade Pro V Kai Xbox One", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOXONE पूर्ण,
-	अणु 0x0f30, 0x010b, "Philips Recoil", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0f30, 0x0202, "Joytech Advanced Controller", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0f30, 0x8888, "BigBen XBMiniPad Controller", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x102c, 0xff0c, "Joytech Wireless Advanced Controller", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x1038, 0x1430, "SteelSeries Stratus Duo", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1038, 0x1431, "SteelSeries Stratus Duo", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x11c9, 0x55f0, "Nacon GC-100XF", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1209, 0x2882, "Ardwiino Controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x12ab, 0x0004, "Honey Bee Xbox360 dancepad", MAP_DPAD_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x12ab, 0x0301, "PDP AFTERGLOW AX.1", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x12ab, 0x0303, "Mortal Kombat Klassic FightStick", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x12ab, 0x8809, "Xbox DDR dancepad", MAP_DPAD_TO_BUTTONS, XTYPE_XBOX पूर्ण,
-	अणु 0x1430, 0x4748, "RedOctane Guitar Hero X-plorer", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1430, 0x8888, "TX6500+ Dance Pad (first generation)", MAP_DPAD_TO_BUTTONS, XTYPE_XBOX पूर्ण,
-	अणु 0x1430, 0xf801, "RedOctane Controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x146b, 0x0601, "BigBen Interactive XBOX 360 Controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1532, 0x0037, "Razer Sabertooth", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1532, 0x0a00, "Razer Atrox Arcade Stick", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOXONE पूर्ण,
-	अणु 0x1532, 0x0a03, "Razer Wildcat", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x15e4, 0x3f00, "Power A Mini Pro Elite", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x15e4, 0x3f0a, "Xbox Airflo wired controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x15e4, 0x3f10, "Batarang Xbox 360 controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x162e, 0xbeef, "Joytech Neo-Se Take2", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1689, 0xfd00, "Razer Onza Tournament Edition", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1689, 0xfd01, "Razer Onza Classic Edition", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1689, 0xfe00, "Razer Sabertooth", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1949, 0x041a, "Amazon Game Controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0x0002, "Harmonix Rock Band Guitar", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0x0003, "Harmonix Rock Band Drumkit", MAP_DPAD_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0x0130, "Ion Drum Rocker", MAP_DPAD_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf016, "Mad Catz Xbox 360 Controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf018, "Mad Catz Street Fighter IV SE Fighting Stick", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf019, "Mad Catz Brawlstick for Xbox 360", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf021, "Mad Cats Ghost Recon FS GamePad", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf023, "MLG Pro Circuit Controller (Xbox)", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf025, "Mad Catz Call Of Duty", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf027, "Mad Catz FPS Pro", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf028, "Street Fighter IV FightPad", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf02e, "Mad Catz Fightpad", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf030, "Mad Catz Xbox 360 MC2 MicroCon Racing Wheel", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf036, "Mad Catz MicroCon GamePad Pro", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf038, "Street Fighter IV FightStick TE", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf039, "Mad Catz MvC2 TE", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf03a, "Mad Catz SFxT Fightstick Pro", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf03d, "Street Fighter IV Arcade Stick TE - Chun Li", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf03e, "Mad Catz MLG FightStick TE", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf03f, "Mad Catz FightStick SoulCaliber", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf042, "Mad Catz FightStick TES+", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf080, "Mad Catz FightStick TE2", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf501, "HoriPad EX2 Turbo", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf502, "Hori Real Arcade Pro.VX SA", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf503, "Hori Fighting Stick VX", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf504, "Hori Real Arcade Pro. EX", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf505, "Hori Fighting Stick EX2B", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf506, "Hori Real Arcade Pro.EX Premium VLX", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf900, "Harmonix Xbox 360 Controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf901, "Gamestop Xbox 360 Controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf903, "Tron Xbox 360 controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf904, "PDP Versus Fighting Pad", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xf906, "MortalKombat FightStick", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xfa01, "MadCatz GamePad", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xfd00, "Razer Onza TE", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x1bad, 0xfd01, "Razer Onza", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x20d6, 0x2001, "BDA Xbox Series X Wired Controller", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x20d6, 0x2009, "PowerA Enhanced Wired Controller for Xbox Series X|S", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x20d6, 0x281f, "PowerA Wired Controller For Xbox 360", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x2e24, 0x0652, "Hyperkin Duke X-Box One pad", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x24c6, 0x5000, "Razer Atrox Arcade Stick", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x24c6, 0x5300, "PowerA MINI PROEX Controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x24c6, 0x5303, "Xbox Airflo wired controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x24c6, 0x530a, "Xbox 360 Pro EX Controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x24c6, 0x531a, "PowerA Pro Ex", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x24c6, 0x5397, "FUS1ON Tournament Controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x24c6, 0x541a, "PowerA Xbox One Mini Wired Controller", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x24c6, 0x542a, "Xbox ONE spectra", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x24c6, 0x543a, "PowerA Xbox One wired controller", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x24c6, 0x5500, "Hori XBOX 360 EX 2 with Turbo", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x24c6, 0x5501, "Hori Real Arcade Pro VX-SA", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x24c6, 0x5502, "Hori Fighting Stick VX Alt", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x24c6, 0x5503, "Hori Fighting Edge", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x24c6, 0x5506, "Hori SOULCALIBUR V Stick", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x24c6, 0x550d, "Hori GEM Xbox controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x24c6, 0x550e, "Hori Real Arcade Pro V Kai 360", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 पूर्ण,
-	अणु 0x24c6, 0x551a, "PowerA FUSION Pro Controller", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x24c6, 0x561a, "PowerA FUSION Controller", 0, XTYPE_XBOXONE पूर्ण,
-	अणु 0x24c6, 0x5b00, "ThrustMaster Ferrari 458 Racing Wheel", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x24c6, 0x5b02, "Thrustmaster, Inc. GPX Controller", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x24c6, 0x5b03, "Thrustmaster Ferrari 458 Racing Wheel", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x24c6, 0x5d04, "Razer Sabertooth", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x24c6, 0xfafe, "Rock Candy Gamepad for Xbox 360", 0, XTYPE_XBOX360 पूर्ण,
-	अणु 0x3767, 0x0101, "Fanatec Speedster 3 Forceshock Wheel", 0, XTYPE_XBOX पूर्ण,
-	अणु 0xffff, 0xffff, "Chinese-made Xbox Controller", 0, XTYPE_XBOX पूर्ण,
-	अणु 0x0000, 0x0000, "Generic X-Box pad", 0, XTYPE_UNKNOWN पूर्ण
-पूर्ण;
+} xpad_device[] = {
+	{ 0x0079, 0x18d4, "GPD Win 2 X-Box Controller", 0, XTYPE_XBOX360 },
+	{ 0x044f, 0x0f00, "Thrustmaster Wheel", 0, XTYPE_XBOX },
+	{ 0x044f, 0x0f03, "Thrustmaster Wheel", 0, XTYPE_XBOX },
+	{ 0x044f, 0x0f07, "Thrustmaster, Inc. Controller", 0, XTYPE_XBOX },
+	{ 0x044f, 0x0f10, "Thrustmaster Modena GT Wheel", 0, XTYPE_XBOX },
+	{ 0x044f, 0xb326, "Thrustmaster Gamepad GP XID", 0, XTYPE_XBOX360 },
+	{ 0x045e, 0x0202, "Microsoft X-Box pad v1 (US)", 0, XTYPE_XBOX },
+	{ 0x045e, 0x0285, "Microsoft X-Box pad (Japan)", 0, XTYPE_XBOX },
+	{ 0x045e, 0x0287, "Microsoft Xbox Controller S", 0, XTYPE_XBOX },
+	{ 0x045e, 0x0288, "Microsoft Xbox Controller S v2", 0, XTYPE_XBOX },
+	{ 0x045e, 0x0289, "Microsoft X-Box pad v2 (US)", 0, XTYPE_XBOX },
+	{ 0x045e, 0x028e, "Microsoft X-Box 360 pad", 0, XTYPE_XBOX360 },
+	{ 0x045e, 0x028f, "Microsoft X-Box 360 pad v2", 0, XTYPE_XBOX360 },
+	{ 0x045e, 0x0291, "Xbox 360 Wireless Receiver (XBOX)", MAP_DPAD_TO_BUTTONS, XTYPE_XBOX360W },
+	{ 0x045e, 0x02d1, "Microsoft X-Box One pad", 0, XTYPE_XBOXONE },
+	{ 0x045e, 0x02dd, "Microsoft X-Box One pad (Firmware 2015)", 0, XTYPE_XBOXONE },
+	{ 0x045e, 0x02e3, "Microsoft X-Box One Elite pad", 0, XTYPE_XBOXONE },
+	{ 0x045e, 0x02ea, "Microsoft X-Box One S pad", 0, XTYPE_XBOXONE },
+	{ 0x045e, 0x0719, "Xbox 360 Wireless Receiver", MAP_DPAD_TO_BUTTONS, XTYPE_XBOX360W },
+	{ 0x046d, 0xc21d, "Logitech Gamepad F310", 0, XTYPE_XBOX360 },
+	{ 0x046d, 0xc21e, "Logitech Gamepad F510", 0, XTYPE_XBOX360 },
+	{ 0x046d, 0xc21f, "Logitech Gamepad F710", 0, XTYPE_XBOX360 },
+	{ 0x046d, 0xc242, "Logitech Chillstream Controller", 0, XTYPE_XBOX360 },
+	{ 0x046d, 0xca84, "Logitech Xbox Cordless Controller", 0, XTYPE_XBOX },
+	{ 0x046d, 0xca88, "Logitech Compact Controller for Xbox", 0, XTYPE_XBOX },
+	{ 0x046d, 0xca8a, "Logitech Precision Vibration Feedback Wheel", 0, XTYPE_XBOX },
+	{ 0x046d, 0xcaa3, "Logitech DriveFx Racing Wheel", 0, XTYPE_XBOX360 },
+	{ 0x056e, 0x2004, "Elecom JC-U3613M", 0, XTYPE_XBOX360 },
+	{ 0x05fd, 0x1007, "Mad Catz Controller (unverified)", 0, XTYPE_XBOX },
+	{ 0x05fd, 0x107a, "InterAct 'PowerPad Pro' X-Box pad (Germany)", 0, XTYPE_XBOX },
+	{ 0x05fe, 0x3030, "Chic Controller", 0, XTYPE_XBOX },
+	{ 0x05fe, 0x3031, "Chic Controller", 0, XTYPE_XBOX },
+	{ 0x062a, 0x0020, "Logic3 Xbox GamePad", 0, XTYPE_XBOX },
+	{ 0x062a, 0x0033, "Competition Pro Steering Wheel", 0, XTYPE_XBOX },
+	{ 0x06a3, 0x0200, "Saitek Racing Wheel", 0, XTYPE_XBOX },
+	{ 0x06a3, 0x0201, "Saitek Adrenalin", 0, XTYPE_XBOX },
+	{ 0x06a3, 0xf51a, "Saitek P3600", 0, XTYPE_XBOX360 },
+	{ 0x0738, 0x4506, "Mad Catz 4506 Wireless Controller", 0, XTYPE_XBOX },
+	{ 0x0738, 0x4516, "Mad Catz Control Pad", 0, XTYPE_XBOX },
+	{ 0x0738, 0x4520, "Mad Catz Control Pad Pro", 0, XTYPE_XBOX },
+	{ 0x0738, 0x4522, "Mad Catz LumiCON", 0, XTYPE_XBOX },
+	{ 0x0738, 0x4526, "Mad Catz Control Pad Pro", 0, XTYPE_XBOX },
+	{ 0x0738, 0x4530, "Mad Catz Universal MC2 Racing Wheel and Pedals", 0, XTYPE_XBOX },
+	{ 0x0738, 0x4536, "Mad Catz MicroCON", 0, XTYPE_XBOX },
+	{ 0x0738, 0x4540, "Mad Catz Beat Pad", MAP_DPAD_TO_BUTTONS, XTYPE_XBOX },
+	{ 0x0738, 0x4556, "Mad Catz Lynx Wireless Controller", 0, XTYPE_XBOX },
+	{ 0x0738, 0x4586, "Mad Catz MicroCon Wireless Controller", 0, XTYPE_XBOX },
+	{ 0x0738, 0x4588, "Mad Catz Blaster", 0, XTYPE_XBOX },
+	{ 0x0738, 0x45ff, "Mad Catz Beat Pad (w/ Handle)", MAP_DPAD_TO_BUTTONS, XTYPE_XBOX },
+	{ 0x0738, 0x4716, "Mad Catz Wired Xbox 360 Controller", 0, XTYPE_XBOX360 },
+	{ 0x0738, 0x4718, "Mad Catz Street Fighter IV FightStick SE", 0, XTYPE_XBOX360 },
+	{ 0x0738, 0x4726, "Mad Catz Xbox 360 Controller", 0, XTYPE_XBOX360 },
+	{ 0x0738, 0x4728, "Mad Catz Street Fighter IV FightPad", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x0738, 0x4736, "Mad Catz MicroCon Gamepad", 0, XTYPE_XBOX360 },
+	{ 0x0738, 0x4738, "Mad Catz Wired Xbox 360 Controller (SFIV)", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x0738, 0x4740, "Mad Catz Beat Pad", 0, XTYPE_XBOX360 },
+	{ 0x0738, 0x4743, "Mad Catz Beat Pad Pro", MAP_DPAD_TO_BUTTONS, XTYPE_XBOX },
+	{ 0x0738, 0x4758, "Mad Catz Arcade Game Stick", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x0738, 0x4a01, "Mad Catz FightStick TE 2", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOXONE },
+	{ 0x0738, 0x6040, "Mad Catz Beat Pad Pro", MAP_DPAD_TO_BUTTONS, XTYPE_XBOX },
+	{ 0x0738, 0x9871, "Mad Catz Portable Drum", 0, XTYPE_XBOX360 },
+	{ 0x0738, 0xb726, "Mad Catz Xbox controller - MW2", 0, XTYPE_XBOX360 },
+	{ 0x0738, 0xb738, "Mad Catz MVC2TE Stick 2", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x0738, 0xbeef, "Mad Catz JOYTECH NEO SE Advanced GamePad", XTYPE_XBOX360 },
+	{ 0x0738, 0xcb02, "Saitek Cyborg Rumble Pad - PC/Xbox 360", 0, XTYPE_XBOX360 },
+	{ 0x0738, 0xcb03, "Saitek P3200 Rumble Pad - PC/Xbox 360", 0, XTYPE_XBOX360 },
+	{ 0x0738, 0xcb29, "Saitek Aviator Stick AV8R02", 0, XTYPE_XBOX360 },
+	{ 0x0738, 0xf738, "Super SFIV FightStick TE S", 0, XTYPE_XBOX360 },
+	{ 0x07ff, 0xffff, "Mad Catz GamePad", 0, XTYPE_XBOX360 },
+	{ 0x0c12, 0x0005, "Intec wireless", 0, XTYPE_XBOX },
+	{ 0x0c12, 0x8801, "Nyko Xbox Controller", 0, XTYPE_XBOX },
+	{ 0x0c12, 0x8802, "Zeroplus Xbox Controller", 0, XTYPE_XBOX },
+	{ 0x0c12, 0x8809, "RedOctane Xbox Dance Pad", DANCEPAD_MAP_CONFIG, XTYPE_XBOX },
+	{ 0x0c12, 0x880a, "Pelican Eclipse PL-2023", 0, XTYPE_XBOX },
+	{ 0x0c12, 0x8810, "Zeroplus Xbox Controller", 0, XTYPE_XBOX },
+	{ 0x0c12, 0x9902, "HAMA VibraX - *FAULTY HARDWARE*", 0, XTYPE_XBOX },
+	{ 0x0d2f, 0x0002, "Andamiro Pump It Up pad", MAP_DPAD_TO_BUTTONS, XTYPE_XBOX },
+	{ 0x0e4c, 0x1097, "Radica Gamester Controller", 0, XTYPE_XBOX },
+	{ 0x0e4c, 0x1103, "Radica Gamester Reflex", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX },
+	{ 0x0e4c, 0x2390, "Radica Games Jtech Controller", 0, XTYPE_XBOX },
+	{ 0x0e4c, 0x3510, "Radica Gamester", 0, XTYPE_XBOX },
+	{ 0x0e6f, 0x0003, "Logic3 Freebird wireless Controller", 0, XTYPE_XBOX },
+	{ 0x0e6f, 0x0005, "Eclipse wireless Controller", 0, XTYPE_XBOX },
+	{ 0x0e6f, 0x0006, "Edge wireless Controller", 0, XTYPE_XBOX },
+	{ 0x0e6f, 0x0008, "After Glow Pro Controller", 0, XTYPE_XBOX },
+	{ 0x0e6f, 0x0105, "HSM3 Xbox360 dancepad", MAP_DPAD_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x0e6f, 0x0113, "Afterglow AX.1 Gamepad for Xbox 360", 0, XTYPE_XBOX360 },
+	{ 0x0e6f, 0x011f, "Rock Candy Gamepad Wired Controller", 0, XTYPE_XBOX360 },
+	{ 0x0e6f, 0x0131, "PDP EA Sports Controller", 0, XTYPE_XBOX360 },
+	{ 0x0e6f, 0x0133, "Xbox 360 Wired Controller", 0, XTYPE_XBOX360 },
+	{ 0x0e6f, 0x0139, "Afterglow Prismatic Wired Controller", 0, XTYPE_XBOXONE },
+	{ 0x0e6f, 0x013a, "PDP Xbox One Controller", 0, XTYPE_XBOXONE },
+	{ 0x0e6f, 0x0146, "Rock Candy Wired Controller for Xbox One", 0, XTYPE_XBOXONE },
+	{ 0x0e6f, 0x0147, "PDP Marvel Xbox One Controller", 0, XTYPE_XBOXONE },
+	{ 0x0e6f, 0x015c, "PDP Xbox One Arcade Stick", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOXONE },
+	{ 0x0e6f, 0x0161, "PDP Xbox One Controller", 0, XTYPE_XBOXONE },
+	{ 0x0e6f, 0x0162, "PDP Xbox One Controller", 0, XTYPE_XBOXONE },
+	{ 0x0e6f, 0x0163, "PDP Xbox One Controller", 0, XTYPE_XBOXONE },
+	{ 0x0e6f, 0x0164, "PDP Battlefield One", 0, XTYPE_XBOXONE },
+	{ 0x0e6f, 0x0165, "PDP Titanfall 2", 0, XTYPE_XBOXONE },
+	{ 0x0e6f, 0x0201, "Pelican PL-3601 'TSZ' Wired Xbox 360 Controller", 0, XTYPE_XBOX360 },
+	{ 0x0e6f, 0x0213, "Afterglow Gamepad for Xbox 360", 0, XTYPE_XBOX360 },
+	{ 0x0e6f, 0x021f, "Rock Candy Gamepad for Xbox 360", 0, XTYPE_XBOX360 },
+	{ 0x0e6f, 0x0246, "Rock Candy Gamepad for Xbox One 2015", 0, XTYPE_XBOXONE },
+	{ 0x0e6f, 0x02a0, "PDP Xbox One Controller", 0, XTYPE_XBOXONE },
+	{ 0x0e6f, 0x02a1, "PDP Xbox One Controller", 0, XTYPE_XBOXONE },
+	{ 0x0e6f, 0x02a2, "PDP Wired Controller for Xbox One - Crimson Red", 0, XTYPE_XBOXONE },
+	{ 0x0e6f, 0x02a4, "PDP Wired Controller for Xbox One - Stealth Series", 0, XTYPE_XBOXONE },
+	{ 0x0e6f, 0x02a6, "PDP Wired Controller for Xbox One - Camo Series", 0, XTYPE_XBOXONE },
+	{ 0x0e6f, 0x02a7, "PDP Xbox One Controller", 0, XTYPE_XBOXONE },
+	{ 0x0e6f, 0x02a8, "PDP Xbox One Controller", 0, XTYPE_XBOXONE },
+	{ 0x0e6f, 0x02ab, "PDP Controller for Xbox One", 0, XTYPE_XBOXONE },
+	{ 0x0e6f, 0x02ad, "PDP Wired Controller for Xbox One - Stealth Series", 0, XTYPE_XBOXONE },
+	{ 0x0e6f, 0x02b3, "Afterglow Prismatic Wired Controller", 0, XTYPE_XBOXONE },
+	{ 0x0e6f, 0x02b8, "Afterglow Prismatic Wired Controller", 0, XTYPE_XBOXONE },
+	{ 0x0e6f, 0x0301, "Logic3 Controller", 0, XTYPE_XBOX360 },
+	{ 0x0e6f, 0x0346, "Rock Candy Gamepad for Xbox One 2016", 0, XTYPE_XBOXONE },
+	{ 0x0e6f, 0x0401, "Logic3 Controller", 0, XTYPE_XBOX360 },
+	{ 0x0e6f, 0x0413, "Afterglow AX.1 Gamepad for Xbox 360", 0, XTYPE_XBOX360 },
+	{ 0x0e6f, 0x0501, "PDP Xbox 360 Controller", 0, XTYPE_XBOX360 },
+	{ 0x0e6f, 0xf900, "PDP Afterglow AX.1", 0, XTYPE_XBOX360 },
+	{ 0x0e8f, 0x0201, "SmartJoy Frag Xpad/PS2 adaptor", 0, XTYPE_XBOX },
+	{ 0x0e8f, 0x3008, "Generic xbox control (dealextreme)", 0, XTYPE_XBOX },
+	{ 0x0f0d, 0x000a, "Hori Co. DOA4 FightStick", 0, XTYPE_XBOX360 },
+	{ 0x0f0d, 0x000c, "Hori PadEX Turbo", 0, XTYPE_XBOX360 },
+	{ 0x0f0d, 0x000d, "Hori Fighting Stick EX2", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x0f0d, 0x0016, "Hori Real Arcade Pro.EX", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x0f0d, 0x001b, "Hori Real Arcade Pro VX", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x0f0d, 0x0063, "Hori Real Arcade Pro Hayabusa (USA) Xbox One", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOXONE },
+	{ 0x0f0d, 0x0067, "HORIPAD ONE", 0, XTYPE_XBOXONE },
+	{ 0x0f0d, 0x0078, "Hori Real Arcade Pro V Kai Xbox One", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOXONE },
+	{ 0x0f30, 0x010b, "Philips Recoil", 0, XTYPE_XBOX },
+	{ 0x0f30, 0x0202, "Joytech Advanced Controller", 0, XTYPE_XBOX },
+	{ 0x0f30, 0x8888, "BigBen XBMiniPad Controller", 0, XTYPE_XBOX },
+	{ 0x102c, 0xff0c, "Joytech Wireless Advanced Controller", 0, XTYPE_XBOX },
+	{ 0x1038, 0x1430, "SteelSeries Stratus Duo", 0, XTYPE_XBOX360 },
+	{ 0x1038, 0x1431, "SteelSeries Stratus Duo", 0, XTYPE_XBOX360 },
+	{ 0x11c9, 0x55f0, "Nacon GC-100XF", 0, XTYPE_XBOX360 },
+	{ 0x1209, 0x2882, "Ardwiino Controller", 0, XTYPE_XBOX360 },
+	{ 0x12ab, 0x0004, "Honey Bee Xbox360 dancepad", MAP_DPAD_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x12ab, 0x0301, "PDP AFTERGLOW AX.1", 0, XTYPE_XBOX360 },
+	{ 0x12ab, 0x0303, "Mortal Kombat Klassic FightStick", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x12ab, 0x8809, "Xbox DDR dancepad", MAP_DPAD_TO_BUTTONS, XTYPE_XBOX },
+	{ 0x1430, 0x4748, "RedOctane Guitar Hero X-plorer", 0, XTYPE_XBOX360 },
+	{ 0x1430, 0x8888, "TX6500+ Dance Pad (first generation)", MAP_DPAD_TO_BUTTONS, XTYPE_XBOX },
+	{ 0x1430, 0xf801, "RedOctane Controller", 0, XTYPE_XBOX360 },
+	{ 0x146b, 0x0601, "BigBen Interactive XBOX 360 Controller", 0, XTYPE_XBOX360 },
+	{ 0x1532, 0x0037, "Razer Sabertooth", 0, XTYPE_XBOX360 },
+	{ 0x1532, 0x0a00, "Razer Atrox Arcade Stick", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOXONE },
+	{ 0x1532, 0x0a03, "Razer Wildcat", 0, XTYPE_XBOXONE },
+	{ 0x15e4, 0x3f00, "Power A Mini Pro Elite", 0, XTYPE_XBOX360 },
+	{ 0x15e4, 0x3f0a, "Xbox Airflo wired controller", 0, XTYPE_XBOX360 },
+	{ 0x15e4, 0x3f10, "Batarang Xbox 360 controller", 0, XTYPE_XBOX360 },
+	{ 0x162e, 0xbeef, "Joytech Neo-Se Take2", 0, XTYPE_XBOX360 },
+	{ 0x1689, 0xfd00, "Razer Onza Tournament Edition", 0, XTYPE_XBOX360 },
+	{ 0x1689, 0xfd01, "Razer Onza Classic Edition", 0, XTYPE_XBOX360 },
+	{ 0x1689, 0xfe00, "Razer Sabertooth", 0, XTYPE_XBOX360 },
+	{ 0x1949, 0x041a, "Amazon Game Controller", 0, XTYPE_XBOX360 },
+	{ 0x1bad, 0x0002, "Harmonix Rock Band Guitar", 0, XTYPE_XBOX360 },
+	{ 0x1bad, 0x0003, "Harmonix Rock Band Drumkit", MAP_DPAD_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x1bad, 0x0130, "Ion Drum Rocker", MAP_DPAD_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf016, "Mad Catz Xbox 360 Controller", 0, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf018, "Mad Catz Street Fighter IV SE Fighting Stick", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf019, "Mad Catz Brawlstick for Xbox 360", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf021, "Mad Cats Ghost Recon FS GamePad", 0, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf023, "MLG Pro Circuit Controller (Xbox)", 0, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf025, "Mad Catz Call Of Duty", 0, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf027, "Mad Catz FPS Pro", 0, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf028, "Street Fighter IV FightPad", 0, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf02e, "Mad Catz Fightpad", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf030, "Mad Catz Xbox 360 MC2 MicroCon Racing Wheel", 0, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf036, "Mad Catz MicroCon GamePad Pro", 0, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf038, "Street Fighter IV FightStick TE", 0, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf039, "Mad Catz MvC2 TE", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf03a, "Mad Catz SFxT Fightstick Pro", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf03d, "Street Fighter IV Arcade Stick TE - Chun Li", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf03e, "Mad Catz MLG FightStick TE", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf03f, "Mad Catz FightStick SoulCaliber", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf042, "Mad Catz FightStick TES+", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf080, "Mad Catz FightStick TE2", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf501, "HoriPad EX2 Turbo", 0, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf502, "Hori Real Arcade Pro.VX SA", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf503, "Hori Fighting Stick VX", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf504, "Hori Real Arcade Pro. EX", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf505, "Hori Fighting Stick EX2B", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf506, "Hori Real Arcade Pro.EX Premium VLX", 0, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf900, "Harmonix Xbox 360 Controller", 0, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf901, "Gamestop Xbox 360 Controller", 0, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf903, "Tron Xbox 360 controller", 0, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf904, "PDP Versus Fighting Pad", 0, XTYPE_XBOX360 },
+	{ 0x1bad, 0xf906, "MortalKombat FightStick", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x1bad, 0xfa01, "MadCatz GamePad", 0, XTYPE_XBOX360 },
+	{ 0x1bad, 0xfd00, "Razer Onza TE", 0, XTYPE_XBOX360 },
+	{ 0x1bad, 0xfd01, "Razer Onza", 0, XTYPE_XBOX360 },
+	{ 0x20d6, 0x2001, "BDA Xbox Series X Wired Controller", 0, XTYPE_XBOXONE },
+	{ 0x20d6, 0x2009, "PowerA Enhanced Wired Controller for Xbox Series X|S", 0, XTYPE_XBOXONE },
+	{ 0x20d6, 0x281f, "PowerA Wired Controller For Xbox 360", 0, XTYPE_XBOX360 },
+	{ 0x2e24, 0x0652, "Hyperkin Duke X-Box One pad", 0, XTYPE_XBOXONE },
+	{ 0x24c6, 0x5000, "Razer Atrox Arcade Stick", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x24c6, 0x5300, "PowerA MINI PROEX Controller", 0, XTYPE_XBOX360 },
+	{ 0x24c6, 0x5303, "Xbox Airflo wired controller", 0, XTYPE_XBOX360 },
+	{ 0x24c6, 0x530a, "Xbox 360 Pro EX Controller", 0, XTYPE_XBOX360 },
+	{ 0x24c6, 0x531a, "PowerA Pro Ex", 0, XTYPE_XBOX360 },
+	{ 0x24c6, 0x5397, "FUS1ON Tournament Controller", 0, XTYPE_XBOX360 },
+	{ 0x24c6, 0x541a, "PowerA Xbox One Mini Wired Controller", 0, XTYPE_XBOXONE },
+	{ 0x24c6, 0x542a, "Xbox ONE spectra", 0, XTYPE_XBOXONE },
+	{ 0x24c6, 0x543a, "PowerA Xbox One wired controller", 0, XTYPE_XBOXONE },
+	{ 0x24c6, 0x5500, "Hori XBOX 360 EX 2 with Turbo", 0, XTYPE_XBOX360 },
+	{ 0x24c6, 0x5501, "Hori Real Arcade Pro VX-SA", 0, XTYPE_XBOX360 },
+	{ 0x24c6, 0x5502, "Hori Fighting Stick VX Alt", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x24c6, 0x5503, "Hori Fighting Edge", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x24c6, 0x5506, "Hori SOULCALIBUR V Stick", 0, XTYPE_XBOX360 },
+	{ 0x24c6, 0x550d, "Hori GEM Xbox controller", 0, XTYPE_XBOX360 },
+	{ 0x24c6, 0x550e, "Hori Real Arcade Pro V Kai 360", MAP_TRIGGERS_TO_BUTTONS, XTYPE_XBOX360 },
+	{ 0x24c6, 0x551a, "PowerA FUSION Pro Controller", 0, XTYPE_XBOXONE },
+	{ 0x24c6, 0x561a, "PowerA FUSION Controller", 0, XTYPE_XBOXONE },
+	{ 0x24c6, 0x5b00, "ThrustMaster Ferrari 458 Racing Wheel", 0, XTYPE_XBOX360 },
+	{ 0x24c6, 0x5b02, "Thrustmaster, Inc. GPX Controller", 0, XTYPE_XBOX360 },
+	{ 0x24c6, 0x5b03, "Thrustmaster Ferrari 458 Racing Wheel", 0, XTYPE_XBOX360 },
+	{ 0x24c6, 0x5d04, "Razer Sabertooth", 0, XTYPE_XBOX360 },
+	{ 0x24c6, 0xfafe, "Rock Candy Gamepad for Xbox 360", 0, XTYPE_XBOX360 },
+	{ 0x3767, 0x0101, "Fanatec Speedster 3 Forceshock Wheel", 0, XTYPE_XBOX },
+	{ 0xffff, 0xffff, "Chinese-made Xbox Controller", 0, XTYPE_XBOX },
+	{ 0x0000, 0x0000, "Generic X-Box pad", 0, XTYPE_UNKNOWN }
+};
 
 /* buttons shared with xbox and xbox360 */
-अटल स्थिर चिन्हित लघु xpad_common_btn[] = अणु
+static const signed short xpad_common_btn[] = {
 	BTN_A, BTN_B, BTN_X, BTN_Y,			/* "analog" buttons */
 	BTN_START, BTN_SELECT, BTN_THUMBL, BTN_THUMBR,	/* start/back/sticks */
 	-1						/* terminating entry */
-पूर्ण;
+};
 
 /* original xbox controllers only */
-अटल स्थिर चिन्हित लघु xpad_btn[] = अणु
+static const signed short xpad_btn[] = {
 	BTN_C, BTN_Z,		/* "analog" buttons */
 	-1			/* terminating entry */
-पूर्ण;
+};
 
 /* used when dpad is mapped to buttons */
-अटल स्थिर चिन्हित लघु xpad_btn_pad[] = अणु
+static const signed short xpad_btn_pad[] = {
 	BTN_TRIGGER_HAPPY1, BTN_TRIGGER_HAPPY2,		/* d-pad left, right */
-	BTN_TRIGGER_HAPPY3, BTN_TRIGGER_HAPPY4,		/* d-pad up, करोwn */
+	BTN_TRIGGER_HAPPY3, BTN_TRIGGER_HAPPY4,		/* d-pad up, down */
 	-1				/* terminating entry */
-पूर्ण;
+};
 
 /* used when triggers are mapped to buttons */
-अटल स्थिर चिन्हित लघु xpad_btn_triggers[] = अणु
+static const signed short xpad_btn_triggers[] = {
 	BTN_TL2, BTN_TR2,		/* triggers left/right */
 	-1
-पूर्ण;
+};
 
-अटल स्थिर चिन्हित लघु xpad360_btn[] = अणु  /* buttons क्रम x360 controller */
+static const signed short xpad360_btn[] = {  /* buttons for x360 controller */
 	BTN_TL, BTN_TR,		/* Button LB/RB */
 	BTN_MODE,		/* The big X button */
 	-1
-पूर्ण;
+};
 
-अटल स्थिर चिन्हित लघु xpad_असल[] = अणु
+static const signed short xpad_abs[] = {
 	ABS_X, ABS_Y,		/* left stick */
 	ABS_RX, ABS_RY,		/* right stick */
 	-1			/* terminating entry */
-पूर्ण;
+};
 
 /* used when dpad is mapped to axes */
-अटल स्थिर चिन्हित लघु xpad_असल_pad[] = अणु
+static const signed short xpad_abs_pad[] = {
 	ABS_HAT0X, ABS_HAT0Y,	/* d-pad axes */
 	-1			/* terminating entry */
-पूर्ण;
+};
 
 /* used when triggers are mapped to axes */
-अटल स्थिर चिन्हित लघु xpad_असल_triggers[] = अणु
+static const signed short xpad_abs_triggers[] = {
 	ABS_Z, ABS_RZ,		/* triggers left/right */
 	-1
-पूर्ण;
+};
 
 /*
- * Xbox 360 has a venकरोr-specअगरic class, so we cannot match it with only
- * USB_INTERFACE_INFO (also specअगरically refused by USB subप्रणाली), so we
- * match against venकरोr id as well. Wired Xbox 360 devices have protocol 1,
+ * Xbox 360 has a vendor-specific class, so we cannot match it with only
+ * USB_INTERFACE_INFO (also specifically refused by USB subsystem), so we
+ * match against vendor id as well. Wired Xbox 360 devices have protocol 1,
  * wireless controllers have protocol 129.
  */
-#घोषणा XPAD_XBOX360_VENDOR_PROTOCOL(vend, pr) \
+#define XPAD_XBOX360_VENDOR_PROTOCOL(vend, pr) \
 	.match_flags = USB_DEVICE_ID_MATCH_VENDOR | USB_DEVICE_ID_MATCH_INT_INFO, \
-	.idVenकरोr = (vend), \
+	.idVendor = (vend), \
 	.bInterfaceClass = USB_CLASS_VENDOR_SPEC, \
 	.bInterfaceSubClass = 93, \
 	.bInterfaceProtocol = (pr)
-#घोषणा XPAD_XBOX360_VENDOR(vend) \
-	अणु XPAD_XBOX360_VENDOR_PROTOCOL((vend), 1) पूर्ण, \
-	अणु XPAD_XBOX360_VENDOR_PROTOCOL((vend), 129) पूर्ण
+#define XPAD_XBOX360_VENDOR(vend) \
+	{ XPAD_XBOX360_VENDOR_PROTOCOL((vend), 1) }, \
+	{ XPAD_XBOX360_VENDOR_PROTOCOL((vend), 129) }
 
 /* The Xbox One controller uses subclass 71 and protocol 208. */
-#घोषणा XPAD_XBOXONE_VENDOR_PROTOCOL(vend, pr) \
+#define XPAD_XBOXONE_VENDOR_PROTOCOL(vend, pr) \
 	.match_flags = USB_DEVICE_ID_MATCH_VENDOR | USB_DEVICE_ID_MATCH_INT_INFO, \
-	.idVenकरोr = (vend), \
+	.idVendor = (vend), \
 	.bInterfaceClass = USB_CLASS_VENDOR_SPEC, \
 	.bInterfaceSubClass = 71, \
 	.bInterfaceProtocol = (pr)
-#घोषणा XPAD_XBOXONE_VENDOR(vend) \
-	अणु XPAD_XBOXONE_VENDOR_PROTOCOL((vend), 208) पूर्ण
+#define XPAD_XBOXONE_VENDOR(vend) \
+	{ XPAD_XBOXONE_VENDOR_PROTOCOL((vend), 208) }
 
-अटल स्थिर काष्ठा usb_device_id xpad_table[] = अणु
-	अणु USB_INTERFACE_INFO('X', 'B', 0) पूर्ण,	/* X-Box USB-IF not approved class */
+static const struct usb_device_id xpad_table[] = {
+	{ USB_INTERFACE_INFO('X', 'B', 0) },	/* X-Box USB-IF not approved class */
 	XPAD_XBOX360_VENDOR(0x0079),		/* GPD Win 2 Controller */
-	XPAD_XBOX360_VENDOR(0x044f),		/* Thrusपंचांगaster X-Box 360 controllers */
+	XPAD_XBOX360_VENDOR(0x044f),		/* Thrustmaster X-Box 360 controllers */
 	XPAD_XBOX360_VENDOR(0x045e),		/* Microsoft X-Box 360 controllers */
 	XPAD_XBOXONE_VENDOR(0x045e),		/* Microsoft X-Box One controllers */
 	XPAD_XBOX360_VENDOR(0x046d),		/* Logitech X-Box 360 style controllers */
 	XPAD_XBOX360_VENDOR(0x056e),		/* Elecom JC-U3613M */
 	XPAD_XBOX360_VENDOR(0x06a3),		/* Saitek P3600 */
 	XPAD_XBOX360_VENDOR(0x0738),		/* Mad Catz X-Box 360 controllers */
-	अणु USB_DEVICE(0x0738, 0x4540) पूर्ण,		/* Mad Catz Beat Pad */
+	{ USB_DEVICE(0x0738, 0x4540) },		/* Mad Catz Beat Pad */
 	XPAD_XBOXONE_VENDOR(0x0738),		/* Mad Catz FightStick TE 2 */
 	XPAD_XBOX360_VENDOR(0x07ff),		/* Mad Catz GamePad */
 	XPAD_XBOX360_VENDOR(0x0e6f),		/* 0x0e6f X-Box 360 controllers */
@@ -450,100 +449,100 @@ MODULE_PARM_DESC(स्वतः_घातeroff, "Power off wireless controllers
 	XPAD_XBOXONE_VENDOR(0x24c6),		/* PowerA Controllers */
 	XPAD_XBOXONE_VENDOR(0x2e24),		/* Hyperkin Duke X-Box One pad */
 	XPAD_XBOX360_VENDOR(0x2f24),		/* GameSir Controllers */
-	अणु पूर्ण
-पूर्ण;
+	{ }
+};
 
 MODULE_DEVICE_TABLE(usb, xpad_table);
 
-काष्ठा xboxone_init_packet अणु
-	u16 idVenकरोr;
+struct xboxone_init_packet {
+	u16 idVendor;
 	u16 idProduct;
-	स्थिर u8 *data;
+	const u8 *data;
 	u8 len;
-पूर्ण;
+};
 
-#घोषणा XBOXONE_INIT_PKT(_vid, _pid, _data)		\
-	अणु						\
-		.idVenकरोr	= (_vid),		\
+#define XBOXONE_INIT_PKT(_vid, _pid, _data)		\
+	{						\
+		.idVendor	= (_vid),		\
 		.idProduct	= (_pid),		\
 		.data		= (_data),		\
 		.len		= ARRAY_SIZE(_data),	\
-	पूर्ण
+	}
 
 
 /*
- * This packet is required क्रम all Xbox One pads with 2015
+ * This packet is required for all Xbox One pads with 2015
  * or later firmware installed (or present from the factory).
  */
-अटल स्थिर u8 xboxone_fw2015_init[] = अणु
+static const u8 xboxone_fw2015_init[] = {
 	0x05, 0x20, 0x00, 0x01, 0x00
-पूर्ण;
+};
 
 /*
- * This packet is required क्रम Xbox One S (0x045e:0x02ea)
+ * This packet is required for Xbox One S (0x045e:0x02ea)
  * and Xbox One Elite Series 2 (0x045e:0x0b00) pads to
  * initialize the controller that was previously used in
  * Bluetooth mode.
  */
-अटल स्थिर u8 xboxone_s_init[] = अणु
+static const u8 xboxone_s_init[] = {
 	0x05, 0x20, 0x00, 0x0f, 0x06
-पूर्ण;
+};
 
 /*
- * This packet is required क्रम the Titanfall 2 Xbox One pads
- * (0x0e6f:0x0165) to finish initialization and क्रम Hori pads
+ * This packet is required for the Titanfall 2 Xbox One pads
+ * (0x0e6f:0x0165) to finish initialization and for Hori pads
  * (0x0f0d:0x0067) to make the analog sticks work.
  */
-अटल स्थिर u8 xboxone_hori_init[] = अणु
+static const u8 xboxone_hori_init[] = {
 	0x01, 0x20, 0x00, 0x09, 0x00, 0x04, 0x20, 0x3a,
 	0x00, 0x00, 0x00, 0x80, 0x00
-पूर्ण;
+};
 
 /*
- * This packet is required क्रम most (all?) of the PDP pads to start
+ * This packet is required for most (all?) of the PDP pads to start
  * sending input reports. These pads include: (0x0e6f:0x02ab),
  * (0x0e6f:0x02a4), (0x0e6f:0x02a6).
  */
-अटल स्थिर u8 xboxone_pdp_init1[] = अणु
+static const u8 xboxone_pdp_init1[] = {
 	0x0a, 0x20, 0x00, 0x03, 0x00, 0x01, 0x14
-पूर्ण;
+};
 
 /*
- * This packet is required क्रम most (all?) of the PDP pads to start
+ * This packet is required for most (all?) of the PDP pads to start
  * sending input reports. These pads include: (0x0e6f:0x02ab),
  * (0x0e6f:0x02a4), (0x0e6f:0x02a6).
  */
-अटल स्थिर u8 xboxone_pdp_init2[] = अणु
+static const u8 xboxone_pdp_init2[] = {
 	0x06, 0x20, 0x00, 0x02, 0x01, 0x00
-पूर्ण;
+};
 
 /*
- * A specअगरic rumble packet is required क्रम some PowerA pads to start
+ * A specific rumble packet is required for some PowerA pads to start
  * sending input reports. One of those pads is (0x24c6:0x543a).
  */
-अटल स्थिर u8 xboxone_rumblebegin_init[] = अणु
+static const u8 xboxone_rumblebegin_init[] = {
 	0x09, 0x00, 0x00, 0x09, 0x00, 0x0F, 0x00, 0x00,
 	0x1D, 0x1D, 0xFF, 0x00, 0x00
-पूर्ण;
+};
 
 /*
- * A rumble packet with zero FF पूर्णांकensity will immediately
+ * A rumble packet with zero FF intensity will immediately
  * terminate the rumbling required to init PowerA pads.
- * This should happen fast enough that the motors करोn't
+ * This should happen fast enough that the motors don't
  * spin up to enough speed to actually vibrate the gamepad.
  */
-अटल स्थिर u8 xboxone_rumbleend_init[] = अणु
+static const u8 xboxone_rumbleend_init[] = {
 	0x09, 0x00, 0x00, 0x09, 0x00, 0x0F, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00
-पूर्ण;
+};
 
 /*
- * This specअगरies the selection of init packets that a gamepad
+ * This specifies the selection of init packets that a gamepad
  * will be sent on init *and* the order in which they will be
  * sent. The correct sequence number will be added when the
  * packet is going to be sent.
  */
-अटल स्थिर काष्ठा xboxone_init_packet xboxone_init_packets[] = अणु
+static const struct xboxone_init_packet xboxone_init_packets[] = {
 	XBOXONE_INIT_PKT(0x0e6f, 0x0165, xboxone_hori_init),
 	XBOXONE_INIT_PKT(0x0f0d, 0x0067, xboxone_hori_init),
 	XBOXONE_INIT_PKT(0x0000, 0x0000, xboxone_fw2015_init),
@@ -557,112 +556,112 @@ MODULE_DEVICE_TABLE(usb, xpad_table);
 	XBOXONE_INIT_PKT(0x24c6, 0x541a, xboxone_rumbleend_init),
 	XBOXONE_INIT_PKT(0x24c6, 0x542a, xboxone_rumbleend_init),
 	XBOXONE_INIT_PKT(0x24c6, 0x543a, xboxone_rumbleend_init),
-पूर्ण;
+};
 
-काष्ठा xpad_output_packet अणु
+struct xpad_output_packet {
 	u8 data[XPAD_PKT_LEN];
 	u8 len;
 	bool pending;
-पूर्ण;
+};
 
-#घोषणा XPAD_OUT_CMD_IDX	0
-#घोषणा XPAD_OUT_FF_IDX		1
-#घोषणा XPAD_OUT_LED_IDX	(1 + IS_ENABLED(CONFIG_JOYSTICK_XPAD_FF))
-#घोषणा XPAD_NUM_OUT_PACKETS	(1 + \
+#define XPAD_OUT_CMD_IDX	0
+#define XPAD_OUT_FF_IDX		1
+#define XPAD_OUT_LED_IDX	(1 + IS_ENABLED(CONFIG_JOYSTICK_XPAD_FF))
+#define XPAD_NUM_OUT_PACKETS	(1 + \
 				 IS_ENABLED(CONFIG_JOYSTICK_XPAD_FF) + \
 				 IS_ENABLED(CONFIG_JOYSTICK_XPAD_LEDS))
 
-काष्ठा usb_xpad अणु
-	काष्ठा input_dev *dev;		/* input device पूर्णांकerface */
-	काष्ठा input_dev __rcu *x360w_dev;
-	काष्ठा usb_device *udev;	/* usb device */
-	काष्ठा usb_पूर्णांकerface *पूर्णांकf;	/* usb पूर्णांकerface */
+struct usb_xpad {
+	struct input_dev *dev;		/* input device interface */
+	struct input_dev __rcu *x360w_dev;
+	struct usb_device *udev;	/* usb device */
+	struct usb_interface *intf;	/* usb interface */
 
 	bool pad_present;
 	bool input_created;
 
-	काष्ठा urb *irq_in;		/* urb क्रम पूर्णांकerrupt in report */
-	अचिन्हित अक्षर *idata;		/* input data */
+	struct urb *irq_in;		/* urb for interrupt in report */
+	unsigned char *idata;		/* input data */
 	dma_addr_t idata_dma;
 
-	काष्ठा urb *irq_out;		/* urb क्रम पूर्णांकerrupt out report */
-	काष्ठा usb_anchor irq_out_anchor;
+	struct urb *irq_out;		/* urb for interrupt out report */
+	struct usb_anchor irq_out_anchor;
 	bool irq_out_active;		/* we must not use an active URB */
-	u8 odata_serial;		/* serial number क्रम xbox one protocol */
-	अचिन्हित अक्षर *odata;		/* output data */
+	u8 odata_serial;		/* serial number for xbox one protocol */
+	unsigned char *odata;		/* output data */
 	dma_addr_t odata_dma;
 	spinlock_t odata_lock;
 
-	काष्ठा xpad_output_packet out_packets[XPAD_NUM_OUT_PACKETS];
-	पूर्णांक last_out_packet;
-	पूर्णांक init_seq;
+	struct xpad_output_packet out_packets[XPAD_NUM_OUT_PACKETS];
+	int last_out_packet;
+	int init_seq;
 
-#अगर defined(CONFIG_JOYSTICK_XPAD_LEDS)
-	काष्ठा xpad_led *led;
-#पूर्ण_अगर
+#if defined(CONFIG_JOYSTICK_XPAD_LEDS)
+	struct xpad_led *led;
+#endif
 
-	अक्षर phys[64];			/* physical device path */
+	char phys[64];			/* physical device path */
 
-	पूर्णांक mapping;			/* map d-pad to buttons or to axes */
-	पूर्णांक xtype;			/* type of xbox device */
-	पूर्णांक pad_nr;			/* the order x360 pads were attached */
-	स्थिर अक्षर *name;		/* name of the device */
-	काष्ठा work_काष्ठा work;	/* init/हटाओ device from callback */
-पूर्ण;
+	int mapping;			/* map d-pad to buttons or to axes */
+	int xtype;			/* type of xbox device */
+	int pad_nr;			/* the order x360 pads were attached */
+	const char *name;		/* name of the device */
+	struct work_struct work;	/* init/remove device from callback */
+};
 
-अटल पूर्णांक xpad_init_input(काष्ठा usb_xpad *xpad);
-अटल व्योम xpad_deinit_input(काष्ठा usb_xpad *xpad);
-अटल व्योम xpaकरोne_ack_mode_report(काष्ठा usb_xpad *xpad, u8 seq_num);
+static int xpad_init_input(struct usb_xpad *xpad);
+static void xpad_deinit_input(struct usb_xpad *xpad);
+static void xpadone_ack_mode_report(struct usb_xpad *xpad, u8 seq_num);
 
 /*
  *	xpad_process_packet
  *
- *	Completes a request by converting the data पूर्णांकo events क्रम the
- *	input subप्रणाली.
+ *	Completes a request by converting the data into events for the
+ *	input subsystem.
  *
  *	The used report descriptor was taken from ITO Takayukis website:
- *	 http://euc.jp/periphs/xbox-controller.ja.hपंचांगl
+ *	 http://euc.jp/periphs/xbox-controller.ja.html
  */
-अटल व्योम xpad_process_packet(काष्ठा usb_xpad *xpad, u16 cmd, अचिन्हित अक्षर *data)
-अणु
-	काष्ठा input_dev *dev = xpad->dev;
+static void xpad_process_packet(struct usb_xpad *xpad, u16 cmd, unsigned char *data)
+{
+	struct input_dev *dev = xpad->dev;
 
-	अगर (!(xpad->mapping & MAP_STICKS_TO_शून्य)) अणु
+	if (!(xpad->mapping & MAP_STICKS_TO_NULL)) {
 		/* left stick */
-		input_report_असल(dev, ABS_X,
+		input_report_abs(dev, ABS_X,
 				 (__s16) le16_to_cpup((__le16 *)(data + 12)));
-		input_report_असल(dev, ABS_Y,
+		input_report_abs(dev, ABS_Y,
 				 ~(__s16) le16_to_cpup((__le16 *)(data + 14)));
 
 		/* right stick */
-		input_report_असल(dev, ABS_RX,
+		input_report_abs(dev, ABS_RX,
 				 (__s16) le16_to_cpup((__le16 *)(data + 16)));
-		input_report_असल(dev, ABS_RY,
+		input_report_abs(dev, ABS_RY,
 				 ~(__s16) le16_to_cpup((__le16 *)(data + 18)));
-	पूर्ण
+	}
 
 	/* triggers left/right */
-	अगर (xpad->mapping & MAP_TRIGGERS_TO_BUTTONS) अणु
+	if (xpad->mapping & MAP_TRIGGERS_TO_BUTTONS) {
 		input_report_key(dev, BTN_TL2, data[10]);
 		input_report_key(dev, BTN_TR2, data[11]);
-	पूर्ण अन्यथा अणु
-		input_report_असल(dev, ABS_Z, data[10]);
-		input_report_असल(dev, ABS_RZ, data[11]);
-	पूर्ण
+	} else {
+		input_report_abs(dev, ABS_Z, data[10]);
+		input_report_abs(dev, ABS_RZ, data[11]);
+	}
 
 	/* digital pad */
-	अगर (xpad->mapping & MAP_DPAD_TO_BUTTONS) अणु
-		/* dpad as buttons (left, right, up, करोwn) */
+	if (xpad->mapping & MAP_DPAD_TO_BUTTONS) {
+		/* dpad as buttons (left, right, up, down) */
 		input_report_key(dev, BTN_TRIGGER_HAPPY1, data[2] & 0x04);
 		input_report_key(dev, BTN_TRIGGER_HAPPY2, data[2] & 0x08);
 		input_report_key(dev, BTN_TRIGGER_HAPPY3, data[2] & 0x01);
 		input_report_key(dev, BTN_TRIGGER_HAPPY4, data[2] & 0x02);
-	पूर्ण अन्यथा अणु
-		input_report_असल(dev, ABS_HAT0X,
+	} else {
+		input_report_abs(dev, ABS_HAT0X,
 				 !!(data[2] & 0x08) - !!(data[2] & 0x04));
-		input_report_असल(dev, ABS_HAT0Y,
+		input_report_abs(dev, ABS_HAT0Y,
 				 !!(data[2] & 0x02) - !!(data[2] & 0x01));
-	पूर्ण
+	}
 
 	/* start/back buttons and stick press left/right */
 	input_report_key(dev, BTN_START,  data[2] & 0x10);
@@ -681,47 +680,47 @@ MODULE_DEVICE_TABLE(usb, xpad_table);
 	input_report_key(dev, BTN_Z, data[9]);
 
 	input_sync(dev);
-पूर्ण
+}
 
 /*
  *	xpad360_process_packet
  *
- *	Completes a request by converting the data पूर्णांकo events क्रम the
- *	input subप्रणाली. It is version क्रम xbox 360 controller
+ *	Completes a request by converting the data into events for the
+ *	input subsystem. It is version for xbox 360 controller
  *
  *	The used report descriptor was taken from:
- *		http://www.मुक्त60.org/wiki/Gamepad
+ *		http://www.free60.org/wiki/Gamepad
  */
 
-अटल व्योम xpad360_process_packet(काष्ठा usb_xpad *xpad, काष्ठा input_dev *dev,
-				   u16 cmd, अचिन्हित अक्षर *data)
-अणु
+static void xpad360_process_packet(struct usb_xpad *xpad, struct input_dev *dev,
+				   u16 cmd, unsigned char *data)
+{
 	/* valid pad data */
-	अगर (data[0] != 0x00)
-		वापस;
+	if (data[0] != 0x00)
+		return;
 
 	/* digital pad */
-	अगर (xpad->mapping & MAP_DPAD_TO_BUTTONS) अणु
-		/* dpad as buttons (left, right, up, करोwn) */
+	if (xpad->mapping & MAP_DPAD_TO_BUTTONS) {
+		/* dpad as buttons (left, right, up, down) */
 		input_report_key(dev, BTN_TRIGGER_HAPPY1, data[2] & 0x04);
 		input_report_key(dev, BTN_TRIGGER_HAPPY2, data[2] & 0x08);
 		input_report_key(dev, BTN_TRIGGER_HAPPY3, data[2] & 0x01);
 		input_report_key(dev, BTN_TRIGGER_HAPPY4, data[2] & 0x02);
-	पूर्ण
+	}
 
 	/*
-	 * This should be a simple अन्यथा block. However historically
-	 * xbox360w has mapped DPAD to buttons जबतक xbox360 did not. This
-	 * made no sense, but now we can not just चयन back and have to
+	 * This should be a simple else block. However historically
+	 * xbox360w has mapped DPAD to buttons while xbox360 did not. This
+	 * made no sense, but now we can not just switch back and have to
 	 * support both behaviors.
 	 */
-	अगर (!(xpad->mapping & MAP_DPAD_TO_BUTTONS) ||
-	    xpad->xtype == XTYPE_XBOX360W) अणु
-		input_report_असल(dev, ABS_HAT0X,
+	if (!(xpad->mapping & MAP_DPAD_TO_BUTTONS) ||
+	    xpad->xtype == XTYPE_XBOX360W) {
+		input_report_abs(dev, ABS_HAT0X,
 				 !!(data[2] & 0x08) - !!(data[2] & 0x04));
-		input_report_असल(dev, ABS_HAT0Y,
+		input_report_abs(dev, ABS_HAT0Y,
 				 !!(data[2] & 0x02) - !!(data[2] & 0x01));
-	पूर्ण
+	}
 
 	/* start/back buttons */
 	input_report_key(dev, BTN_START,  data[2] & 0x10);
@@ -740,62 +739,62 @@ MODULE_DEVICE_TABLE(usb, xpad_table);
 	input_report_key(dev, BTN_TR,	data[3] & 0x02);
 	input_report_key(dev, BTN_MODE,	data[3] & 0x04);
 
-	अगर (!(xpad->mapping & MAP_STICKS_TO_शून्य)) अणु
+	if (!(xpad->mapping & MAP_STICKS_TO_NULL)) {
 		/* left stick */
-		input_report_असल(dev, ABS_X,
+		input_report_abs(dev, ABS_X,
 				 (__s16) le16_to_cpup((__le16 *)(data + 6)));
-		input_report_असल(dev, ABS_Y,
+		input_report_abs(dev, ABS_Y,
 				 ~(__s16) le16_to_cpup((__le16 *)(data + 8)));
 
 		/* right stick */
-		input_report_असल(dev, ABS_RX,
+		input_report_abs(dev, ABS_RX,
 				 (__s16) le16_to_cpup((__le16 *)(data + 10)));
-		input_report_असल(dev, ABS_RY,
+		input_report_abs(dev, ABS_RY,
 				 ~(__s16) le16_to_cpup((__le16 *)(data + 12)));
-	पूर्ण
+	}
 
 	/* triggers left/right */
-	अगर (xpad->mapping & MAP_TRIGGERS_TO_BUTTONS) अणु
+	if (xpad->mapping & MAP_TRIGGERS_TO_BUTTONS) {
 		input_report_key(dev, BTN_TL2, data[4]);
 		input_report_key(dev, BTN_TR2, data[5]);
-	पूर्ण अन्यथा अणु
-		input_report_असल(dev, ABS_Z, data[4]);
-		input_report_असल(dev, ABS_RZ, data[5]);
-	पूर्ण
+	} else {
+		input_report_abs(dev, ABS_Z, data[4]);
+		input_report_abs(dev, ABS_RZ, data[5]);
+	}
 
 	input_sync(dev);
-पूर्ण
+}
 
-अटल व्योम xpad_presence_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा usb_xpad *xpad = container_of(work, काष्ठा usb_xpad, work);
-	पूर्णांक error;
+static void xpad_presence_work(struct work_struct *work)
+{
+	struct usb_xpad *xpad = container_of(work, struct usb_xpad, work);
+	int error;
 
-	अगर (xpad->pad_present) अणु
+	if (xpad->pad_present) {
 		error = xpad_init_input(xpad);
-		अगर (error) अणु
-			/* complain only, not much अन्यथा we can करो here */
+		if (error) {
+			/* complain only, not much else we can do here */
 			dev_err(&xpad->dev->dev,
 				"unable to init device: %d\n", error);
-		पूर्ण अन्यथा अणु
-			rcu_assign_poपूर्णांकer(xpad->x360w_dev, xpad->dev);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		RCU_INIT_POINTER(xpad->x360w_dev, शून्य);
+		} else {
+			rcu_assign_pointer(xpad->x360w_dev, xpad->dev);
+		}
+	} else {
+		RCU_INIT_POINTER(xpad->x360w_dev, NULL);
 		synchronize_rcu();
 		/*
 		 * Now that we are sure xpad360w_process_packet is not
 		 * using input device we can get rid of it.
 		 */
 		xpad_deinit_input(xpad);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * xpad360w_process_packet
  *
- * Completes a request by converting the data पूर्णांकo events क्रम the
- * input subप्रणाली. It is version क्रम xbox 360 wireless controller.
+ * Completes a request by converting the data into events for the
+ * input subsystem. It is version for xbox 360 wireless controller.
  *
  * Byte.Bit
  * 00.1 - Status change: The controller or headset has connected/disconnected
@@ -805,62 +804,62 @@ MODULE_DEVICE_TABLE(usb, xpad_table);
  * 01.1 - Pad state (Bytes 4+) valid
  *
  */
-अटल व्योम xpad360w_process_packet(काष्ठा usb_xpad *xpad, u16 cmd, अचिन्हित अक्षर *data)
-अणु
-	काष्ठा input_dev *dev;
+static void xpad360w_process_packet(struct usb_xpad *xpad, u16 cmd, unsigned char *data)
+{
+	struct input_dev *dev;
 	bool present;
 
 	/* Presence change */
-	अगर (data[0] & 0x08) अणु
+	if (data[0] & 0x08) {
 		present = (data[1] & 0x80) != 0;
 
-		अगर (xpad->pad_present != present) अणु
+		if (xpad->pad_present != present) {
 			xpad->pad_present = present;
 			schedule_work(&xpad->work);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Valid pad data */
-	अगर (data[1] != 0x1)
-		वापस;
+	if (data[1] != 0x1)
+		return;
 
-	rcu_पढ़ो_lock();
+	rcu_read_lock();
 	dev = rcu_dereference(xpad->x360w_dev);
-	अगर (dev)
+	if (dev)
 		xpad360_process_packet(xpad, dev, cmd, &data[4]);
-	rcu_पढ़ो_unlock();
-पूर्ण
+	rcu_read_unlock();
+}
 
 /*
- *	xpaकरोne_process_packet
+ *	xpadone_process_packet
  *
- *	Completes a request by converting the data पूर्णांकo events क्रम the
- *	input subप्रणाली. This version is क्रम the Xbox One controller.
+ *	Completes a request by converting the data into events for the
+ *	input subsystem. This version is for the Xbox One controller.
  *
- *	The report क्रमmat was gleaned from
+ *	The report format was gleaned from
  *	https://github.com/kylelemons/xbox/blob/master/xbox.go
  */
-अटल व्योम xpaकरोne_process_packet(काष्ठा usb_xpad *xpad, u16 cmd, अचिन्हित अक्षर *data)
-अणु
-	काष्ठा input_dev *dev = xpad->dev;
+static void xpadone_process_packet(struct usb_xpad *xpad, u16 cmd, unsigned char *data)
+{
+	struct input_dev *dev = xpad->dev;
 
 	/* the xbox button has its own special report */
-	अगर (data[0] == 0X07) अणु
+	if (data[0] == 0X07) {
 		/*
 		 * The Xbox One S controller requires these reports to be
-		 * acked otherwise it जारीs sending them क्रमever and
+		 * acked otherwise it continues sending them forever and
 		 * won't report further mode button events.
 		 */
-		अगर (data[1] == 0x30)
-			xpaकरोne_ack_mode_report(xpad, data[2]);
+		if (data[1] == 0x30)
+			xpadone_ack_mode_report(xpad, data[2]);
 
 		input_report_key(dev, BTN_MODE, data[4] & 0x01);
 		input_sync(dev);
-		वापस;
-	पूर्ण
+		return;
+	}
 	/* check invalid packet */
-	अन्यथा अगर (data[0] != 0X20)
-		वापस;
+	else if (data[0] != 0X20)
+		return;
 
 	/* menu/view buttons */
 	input_report_key(dev, BTN_START,  data[4] & 0x04);
@@ -873,18 +872,18 @@ MODULE_DEVICE_TABLE(usb, xpad_table);
 	input_report_key(dev, BTN_Y,	data[4] & 0x80);
 
 	/* digital pad */
-	अगर (xpad->mapping & MAP_DPAD_TO_BUTTONS) अणु
-		/* dpad as buttons (left, right, up, करोwn) */
+	if (xpad->mapping & MAP_DPAD_TO_BUTTONS) {
+		/* dpad as buttons (left, right, up, down) */
 		input_report_key(dev, BTN_TRIGGER_HAPPY1, data[5] & 0x04);
 		input_report_key(dev, BTN_TRIGGER_HAPPY2, data[5] & 0x08);
 		input_report_key(dev, BTN_TRIGGER_HAPPY3, data[5] & 0x01);
 		input_report_key(dev, BTN_TRIGGER_HAPPY4, data[5] & 0x02);
-	पूर्ण अन्यथा अणु
-		input_report_असल(dev, ABS_HAT0X,
+	} else {
+		input_report_abs(dev, ABS_HAT0X,
 				 !!(data[5] & 0x08) - !!(data[5] & 0x04));
-		input_report_असल(dev, ABS_HAT0Y,
+		input_report_abs(dev, ABS_HAT0Y,
 				 !!(data[5] & 0x02) - !!(data[5] & 0x01));
-	पूर्ण
+	}
 
 	/* TL/TR */
 	input_report_key(dev, BTN_TL,	data[5] & 0x10);
@@ -894,280 +893,280 @@ MODULE_DEVICE_TABLE(usb, xpad_table);
 	input_report_key(dev, BTN_THUMBL, data[5] & 0x40);
 	input_report_key(dev, BTN_THUMBR, data[5] & 0x80);
 
-	अगर (!(xpad->mapping & MAP_STICKS_TO_शून्य)) अणु
+	if (!(xpad->mapping & MAP_STICKS_TO_NULL)) {
 		/* left stick */
-		input_report_असल(dev, ABS_X,
+		input_report_abs(dev, ABS_X,
 				 (__s16) le16_to_cpup((__le16 *)(data + 10)));
-		input_report_असल(dev, ABS_Y,
+		input_report_abs(dev, ABS_Y,
 				 ~(__s16) le16_to_cpup((__le16 *)(data + 12)));
 
 		/* right stick */
-		input_report_असल(dev, ABS_RX,
+		input_report_abs(dev, ABS_RX,
 				 (__s16) le16_to_cpup((__le16 *)(data + 14)));
-		input_report_असल(dev, ABS_RY,
+		input_report_abs(dev, ABS_RY,
 				 ~(__s16) le16_to_cpup((__le16 *)(data + 16)));
-	पूर्ण
+	}
 
 	/* triggers left/right */
-	अगर (xpad->mapping & MAP_TRIGGERS_TO_BUTTONS) अणु
+	if (xpad->mapping & MAP_TRIGGERS_TO_BUTTONS) {
 		input_report_key(dev, BTN_TL2,
 				 (__u16) le16_to_cpup((__le16 *)(data + 6)));
 		input_report_key(dev, BTN_TR2,
 				 (__u16) le16_to_cpup((__le16 *)(data + 8)));
-	पूर्ण अन्यथा अणु
-		input_report_असल(dev, ABS_Z,
+	} else {
+		input_report_abs(dev, ABS_Z,
 				 (__u16) le16_to_cpup((__le16 *)(data + 6)));
-		input_report_असल(dev, ABS_RZ,
+		input_report_abs(dev, ABS_RZ,
 				 (__u16) le16_to_cpup((__le16 *)(data + 8)));
-	पूर्ण
+	}
 
 	input_sync(dev);
-पूर्ण
+}
 
-अटल व्योम xpad_irq_in(काष्ठा urb *urb)
-अणु
-	काष्ठा usb_xpad *xpad = urb->context;
-	काष्ठा device *dev = &xpad->पूर्णांकf->dev;
-	पूर्णांक retval, status;
+static void xpad_irq_in(struct urb *urb)
+{
+	struct usb_xpad *xpad = urb->context;
+	struct device *dev = &xpad->intf->dev;
+	int retval, status;
 
 	status = urb->status;
 
-	चयन (status) अणु
-	हाल 0:
+	switch (status) {
+	case 0:
 		/* success */
-		अवरोध;
-	हाल -ECONNRESET:
-	हाल -ENOENT:
-	हाल -ESHUTDOWN:
+		break;
+	case -ECONNRESET:
+	case -ENOENT:
+	case -ESHUTDOWN:
 		/* this urb is terminated, clean up */
 		dev_dbg(dev, "%s - urb shutting down with status: %d\n",
 			__func__, status);
-		वापस;
-	शेष:
+		return;
+	default:
 		dev_dbg(dev, "%s - nonzero urb status received: %d\n",
 			__func__, status);
-		जाओ निकास;
-	पूर्ण
+		goto exit;
+	}
 
-	चयन (xpad->xtype) अणु
-	हाल XTYPE_XBOX360:
+	switch (xpad->xtype) {
+	case XTYPE_XBOX360:
 		xpad360_process_packet(xpad, xpad->dev, 0, xpad->idata);
-		अवरोध;
-	हाल XTYPE_XBOX360W:
+		break;
+	case XTYPE_XBOX360W:
 		xpad360w_process_packet(xpad, 0, xpad->idata);
-		अवरोध;
-	हाल XTYPE_XBOXONE:
-		xpaकरोne_process_packet(xpad, 0, xpad->idata);
-		अवरोध;
-	शेष:
+		break;
+	case XTYPE_XBOXONE:
+		xpadone_process_packet(xpad, 0, xpad->idata);
+		break;
+	default:
 		xpad_process_packet(xpad, 0, xpad->idata);
-	पूर्ण
+	}
 
-निकास:
+exit:
 	retval = usb_submit_urb(urb, GFP_ATOMIC);
-	अगर (retval)
+	if (retval)
 		dev_err(dev, "%s - usb_submit_urb failed with result %d\n",
 			__func__, retval);
-पूर्ण
+}
 
 /* Callers must hold xpad->odata_lock spinlock */
-अटल bool xpad_prepare_next_init_packet(काष्ठा usb_xpad *xpad)
-अणु
-	स्थिर काष्ठा xboxone_init_packet *init_packet;
+static bool xpad_prepare_next_init_packet(struct usb_xpad *xpad)
+{
+	const struct xboxone_init_packet *init_packet;
 
-	अगर (xpad->xtype != XTYPE_XBOXONE)
-		वापस false;
+	if (xpad->xtype != XTYPE_XBOXONE)
+		return false;
 
-	/* Perक्रमm initialization sequence क्रम Xbox One pads that require it */
-	जबतक (xpad->init_seq < ARRAY_SIZE(xboxone_init_packets)) अणु
+	/* Perform initialization sequence for Xbox One pads that require it */
+	while (xpad->init_seq < ARRAY_SIZE(xboxone_init_packets)) {
 		init_packet = &xboxone_init_packets[xpad->init_seq++];
 
-		अगर (init_packet->idVenकरोr != 0 &&
-		    init_packet->idVenकरोr != xpad->dev->id.venकरोr)
-			जारी;
+		if (init_packet->idVendor != 0 &&
+		    init_packet->idVendor != xpad->dev->id.vendor)
+			continue;
 
-		अगर (init_packet->idProduct != 0 &&
+		if (init_packet->idProduct != 0 &&
 		    init_packet->idProduct != xpad->dev->id.product)
-			जारी;
+			continue;
 
 		/* This packet applies to our device, so prepare to send it */
-		स_नकल(xpad->odata, init_packet->data, init_packet->len);
+		memcpy(xpad->odata, init_packet->data, init_packet->len);
 		xpad->irq_out->transfer_buffer_length = init_packet->len;
 
 		/* Update packet with current sequence number */
 		xpad->odata[2] = xpad->odata_serial++;
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /* Callers must hold xpad->odata_lock spinlock */
-अटल bool xpad_prepare_next_out_packet(काष्ठा usb_xpad *xpad)
-अणु
-	काष्ठा xpad_output_packet *pkt, *packet = शून्य;
-	पूर्णांक i;
+static bool xpad_prepare_next_out_packet(struct usb_xpad *xpad)
+{
+	struct xpad_output_packet *pkt, *packet = NULL;
+	int i;
 
-	/* We may have init packets to send beक्रमe we can send user commands */
-	अगर (xpad_prepare_next_init_packet(xpad))
-		वापस true;
+	/* We may have init packets to send before we can send user commands */
+	if (xpad_prepare_next_init_packet(xpad))
+		return true;
 
-	क्रम (i = 0; i < XPAD_NUM_OUT_PACKETS; i++) अणु
-		अगर (++xpad->last_out_packet >= XPAD_NUM_OUT_PACKETS)
+	for (i = 0; i < XPAD_NUM_OUT_PACKETS; i++) {
+		if (++xpad->last_out_packet >= XPAD_NUM_OUT_PACKETS)
 			xpad->last_out_packet = 0;
 
 		pkt = &xpad->out_packets[xpad->last_out_packet];
-		अगर (pkt->pending) अणु
-			dev_dbg(&xpad->पूर्णांकf->dev,
+		if (pkt->pending) {
+			dev_dbg(&xpad->intf->dev,
 				"%s - found pending output packet %d\n",
 				__func__, xpad->last_out_packet);
 			packet = pkt;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (packet) अणु
-		स_नकल(xpad->odata, packet->data, packet->len);
+	if (packet) {
+		memcpy(xpad->odata, packet->data, packet->len);
 		xpad->irq_out->transfer_buffer_length = packet->len;
 		packet->pending = false;
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
 /* Callers must hold xpad->odata_lock spinlock */
-अटल पूर्णांक xpad_try_sending_next_out_packet(काष्ठा usb_xpad *xpad)
-अणु
-	पूर्णांक error;
+static int xpad_try_sending_next_out_packet(struct usb_xpad *xpad)
+{
+	int error;
 
-	अगर (!xpad->irq_out_active && xpad_prepare_next_out_packet(xpad)) अणु
+	if (!xpad->irq_out_active && xpad_prepare_next_out_packet(xpad)) {
 		usb_anchor_urb(xpad->irq_out, &xpad->irq_out_anchor);
 		error = usb_submit_urb(xpad->irq_out, GFP_ATOMIC);
-		अगर (error) अणु
-			dev_err(&xpad->पूर्णांकf->dev,
+		if (error) {
+			dev_err(&xpad->intf->dev,
 				"%s - usb_submit_urb failed with result %d\n",
 				__func__, error);
 			usb_unanchor_urb(xpad->irq_out);
-			वापस -EIO;
-		पूर्ण
+			return -EIO;
+		}
 
 		xpad->irq_out_active = true;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम xpad_irq_out(काष्ठा urb *urb)
-अणु
-	काष्ठा usb_xpad *xpad = urb->context;
-	काष्ठा device *dev = &xpad->पूर्णांकf->dev;
-	पूर्णांक status = urb->status;
-	पूर्णांक error;
-	अचिन्हित दीर्घ flags;
+static void xpad_irq_out(struct urb *urb)
+{
+	struct usb_xpad *xpad = urb->context;
+	struct device *dev = &xpad->intf->dev;
+	int status = urb->status;
+	int error;
+	unsigned long flags;
 
 	spin_lock_irqsave(&xpad->odata_lock, flags);
 
-	चयन (status) अणु
-	हाल 0:
+	switch (status) {
+	case 0:
 		/* success */
 		xpad->irq_out_active = xpad_prepare_next_out_packet(xpad);
-		अवरोध;
+		break;
 
-	हाल -ECONNRESET:
-	हाल -ENOENT:
-	हाल -ESHUTDOWN:
+	case -ECONNRESET:
+	case -ENOENT:
+	case -ESHUTDOWN:
 		/* this urb is terminated, clean up */
 		dev_dbg(dev, "%s - urb shutting down with status: %d\n",
 			__func__, status);
 		xpad->irq_out_active = false;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		dev_dbg(dev, "%s - nonzero urb status received: %d\n",
 			__func__, status);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (xpad->irq_out_active) अणु
+	if (xpad->irq_out_active) {
 		usb_anchor_urb(urb, &xpad->irq_out_anchor);
 		error = usb_submit_urb(urb, GFP_ATOMIC);
-		अगर (error) अणु
+		if (error) {
 			dev_err(dev,
 				"%s - usb_submit_urb failed with result %d\n",
 				__func__, error);
 			usb_unanchor_urb(urb);
 			xpad->irq_out_active = false;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	spin_unlock_irqrestore(&xpad->odata_lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक xpad_init_output(काष्ठा usb_पूर्णांकerface *पूर्णांकf, काष्ठा usb_xpad *xpad,
-			काष्ठा usb_endpoपूर्णांक_descriptor *ep_irq_out)
-अणु
-	पूर्णांक error;
+static int xpad_init_output(struct usb_interface *intf, struct usb_xpad *xpad,
+			struct usb_endpoint_descriptor *ep_irq_out)
+{
+	int error;
 
-	अगर (xpad->xtype == XTYPE_UNKNOWN)
-		वापस 0;
+	if (xpad->xtype == XTYPE_UNKNOWN)
+		return 0;
 
 	init_usb_anchor(&xpad->irq_out_anchor);
 
 	xpad->odata = usb_alloc_coherent(xpad->udev, XPAD_PKT_LEN,
 					 GFP_KERNEL, &xpad->odata_dma);
-	अगर (!xpad->odata)
-		वापस -ENOMEM;
+	if (!xpad->odata)
+		return -ENOMEM;
 
 	spin_lock_init(&xpad->odata_lock);
 
 	xpad->irq_out = usb_alloc_urb(0, GFP_KERNEL);
-	अगर (!xpad->irq_out) अणु
+	if (!xpad->irq_out) {
 		error = -ENOMEM;
-		जाओ err_मुक्त_coherent;
-	पूर्ण
+		goto err_free_coherent;
+	}
 
-	usb_fill_पूर्णांक_urb(xpad->irq_out, xpad->udev,
-			 usb_sndपूर्णांकpipe(xpad->udev, ep_irq_out->bEndpoपूर्णांकAddress),
+	usb_fill_int_urb(xpad->irq_out, xpad->udev,
+			 usb_sndintpipe(xpad->udev, ep_irq_out->bEndpointAddress),
 			 xpad->odata, XPAD_PKT_LEN,
 			 xpad_irq_out, xpad, ep_irq_out->bInterval);
 	xpad->irq_out->transfer_dma = xpad->odata_dma;
 	xpad->irq_out->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_coherent:
-	usb_मुक्त_coherent(xpad->udev, XPAD_PKT_LEN, xpad->odata, xpad->odata_dma);
-	वापस error;
-पूर्ण
+err_free_coherent:
+	usb_free_coherent(xpad->udev, XPAD_PKT_LEN, xpad->odata, xpad->odata_dma);
+	return error;
+}
 
-अटल व्योम xpad_stop_output(काष्ठा usb_xpad *xpad)
-अणु
-	अगर (xpad->xtype != XTYPE_UNKNOWN) अणु
-		अगर (!usb_रुको_anchor_empty_समयout(&xpad->irq_out_anchor,
-						   5000)) अणु
-			dev_warn(&xpad->पूर्णांकf->dev,
+static void xpad_stop_output(struct usb_xpad *xpad)
+{
+	if (xpad->xtype != XTYPE_UNKNOWN) {
+		if (!usb_wait_anchor_empty_timeout(&xpad->irq_out_anchor,
+						   5000)) {
+			dev_warn(&xpad->intf->dev,
 				 "timed out waiting for output URB to complete, killing\n");
-			usb_समाप्त_anchored_urbs(&xpad->irq_out_anchor);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			usb_kill_anchored_urbs(&xpad->irq_out_anchor);
+		}
+	}
+}
 
-अटल व्योम xpad_deinit_output(काष्ठा usb_xpad *xpad)
-अणु
-	अगर (xpad->xtype != XTYPE_UNKNOWN) अणु
-		usb_मुक्त_urb(xpad->irq_out);
-		usb_मुक्त_coherent(xpad->udev, XPAD_PKT_LEN,
+static void xpad_deinit_output(struct usb_xpad *xpad)
+{
+	if (xpad->xtype != XTYPE_UNKNOWN) {
+		usb_free_urb(xpad->irq_out);
+		usb_free_coherent(xpad->udev, XPAD_PKT_LEN,
 				xpad->odata, xpad->odata_dma);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक xpad_inquiry_pad_presence(काष्ठा usb_xpad *xpad)
-अणु
-	काष्ठा xpad_output_packet *packet =
+static int xpad_inquiry_pad_presence(struct usb_xpad *xpad)
+{
+	struct xpad_output_packet *packet =
 			&xpad->out_packets[XPAD_OUT_CMD_IDX];
-	अचिन्हित दीर्घ flags;
-	पूर्णांक retval;
+	unsigned long flags;
+	int retval;
 
 	spin_lock_irqsave(&xpad->odata_lock, flags);
 
@@ -1192,19 +1191,19 @@ err_मुक्त_coherent:
 
 	spin_unlock_irqrestore(&xpad->odata_lock, flags);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक xpad_start_xbox_one(काष्ठा usb_xpad *xpad)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक retval;
+static int xpad_start_xbox_one(struct usb_xpad *xpad)
+{
+	unsigned long flags;
+	int retval;
 
 	spin_lock_irqsave(&xpad->odata_lock, flags);
 
 	/*
 	 * Begin the init sequence by attempting to send a packet.
-	 * We will cycle through the init packet sequence beक्रमe
+	 * We will cycle through the init packet sequence before
 	 * sending any packets from the output ring.
 	 */
 	xpad->init_seq = 0;
@@ -1212,23 +1211,23 @@ err_मुक्त_coherent:
 
 	spin_unlock_irqrestore(&xpad->odata_lock, flags);
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल व्योम xpaकरोne_ack_mode_report(काष्ठा usb_xpad *xpad, u8 seq_num)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा xpad_output_packet *packet =
+static void xpadone_ack_mode_report(struct usb_xpad *xpad, u8 seq_num)
+{
+	unsigned long flags;
+	struct xpad_output_packet *packet =
 			&xpad->out_packets[XPAD_OUT_CMD_IDX];
-	अटल स्थिर u8 mode_report_ack[] = अणु
+	static const u8 mode_report_ack[] = {
 		0x01, 0x20, 0x00, 0x09, 0x00, 0x07, 0x20, 0x02,
 		0x00, 0x00, 0x00, 0x00, 0x00
-	पूर्ण;
+	};
 
 	spin_lock_irqsave(&xpad->odata_lock, flags);
 
-	packet->len = माप(mode_report_ack);
-	स_नकल(packet->data, mode_report_ack, packet->len);
+	packet->len = sizeof(mode_report_ack);
+	memcpy(packet->data, mode_report_ack, packet->len);
 	packet->data[2] = seq_num;
 	packet->pending = true;
 
@@ -1237,28 +1236,28 @@ err_मुक्त_coherent:
 	xpad_try_sending_next_out_packet(xpad);
 
 	spin_unlock_irqrestore(&xpad->odata_lock, flags);
-पूर्ण
+}
 
-#अगर_घोषित CONFIG_JOYSTICK_XPAD_FF
-अटल पूर्णांक xpad_play_effect(काष्ठा input_dev *dev, व्योम *data, काष्ठा ff_effect *effect)
-अणु
-	काष्ठा usb_xpad *xpad = input_get_drvdata(dev);
-	काष्ठा xpad_output_packet *packet = &xpad->out_packets[XPAD_OUT_FF_IDX];
+#ifdef CONFIG_JOYSTICK_XPAD_FF
+static int xpad_play_effect(struct input_dev *dev, void *data, struct ff_effect *effect)
+{
+	struct usb_xpad *xpad = input_get_drvdata(dev);
+	struct xpad_output_packet *packet = &xpad->out_packets[XPAD_OUT_FF_IDX];
 	__u16 strong;
 	__u16 weak;
-	पूर्णांक retval;
-	अचिन्हित दीर्घ flags;
+	int retval;
+	unsigned long flags;
 
-	अगर (effect->type != FF_RUMBLE)
-		वापस 0;
+	if (effect->type != FF_RUMBLE)
+		return 0;
 
 	strong = effect->u.rumble.strong_magnitude;
 	weak = effect->u.rumble.weak_magnitude;
 
 	spin_lock_irqsave(&xpad->odata_lock, flags);
 
-	चयन (xpad->xtype) अणु
-	हाल XTYPE_XBOX:
+	switch (xpad->xtype) {
+	case XTYPE_XBOX:
 		packet->data[0] = 0x00;
 		packet->data[1] = 0x06;
 		packet->data[2] = 0x00;
@@ -1267,9 +1266,9 @@ err_मुक्त_coherent:
 		packet->data[5] = weak / 256;	/* right actuator */
 		packet->len = 6;
 		packet->pending = true;
-		अवरोध;
+		break;
 
-	हाल XTYPE_XBOX360:
+	case XTYPE_XBOX360:
 		packet->data[0] = 0x00;
 		packet->data[1] = 0x08;
 		packet->data[2] = 0x00;
@@ -1280,9 +1279,9 @@ err_मुक्त_coherent:
 		packet->data[7] = 0x00;
 		packet->len = 8;
 		packet->pending = true;
-		अवरोध;
+		break;
 
-	हाल XTYPE_XBOX360W:
+	case XTYPE_XBOX360W:
 		packet->data[0] = 0x00;
 		packet->data[1] = 0x01;
 		packet->data[2] = 0x0F;
@@ -1297,9 +1296,9 @@ err_मुक्त_coherent:
 		packet->data[11] = 0x00;
 		packet->len = 12;
 		packet->pending = true;
-		अवरोध;
+		break;
 
-	हाल XTYPE_XBOXONE:
+	case XTYPE_XBOXONE:
 		packet->data[0] = 0x09; /* activate rumble */
 		packet->data[1] = 0x00;
 		packet->data[2] = xpad->odata_serial++;
@@ -1315,48 +1314,48 @@ err_मुक्त_coherent:
 		packet->data[12] = 0xFF; /* repeat count */
 		packet->len = 13;
 		packet->pending = true;
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		dev_dbg(&xpad->dev->dev,
 			"%s - rumble command sent to unsupported xpad type: %d\n",
 			__func__, xpad->xtype);
 		retval = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	retval = xpad_try_sending_next_out_packet(xpad);
 
 out:
 	spin_unlock_irqrestore(&xpad->odata_lock, flags);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल पूर्णांक xpad_init_ff(काष्ठा usb_xpad *xpad)
-अणु
-	अगर (xpad->xtype == XTYPE_UNKNOWN)
-		वापस 0;
+static int xpad_init_ff(struct usb_xpad *xpad)
+{
+	if (xpad->xtype == XTYPE_UNKNOWN)
+		return 0;
 
 	input_set_capability(xpad->dev, EV_FF, FF_RUMBLE);
 
-	वापस input_ff_create_memless(xpad->dev, शून्य, xpad_play_effect);
-पूर्ण
+	return input_ff_create_memless(xpad->dev, NULL, xpad_play_effect);
+}
 
-#अन्यथा
-अटल पूर्णांक xpad_init_ff(काष्ठा usb_xpad *xpad) अणु वापस 0; पूर्ण
-#पूर्ण_अगर
+#else
+static int xpad_init_ff(struct usb_xpad *xpad) { return 0; }
+#endif
 
-#अगर defined(CONFIG_JOYSTICK_XPAD_LEDS)
-#समावेश <linux/leds.h>
-#समावेश <linux/idr.h>
+#if defined(CONFIG_JOYSTICK_XPAD_LEDS)
+#include <linux/leds.h>
+#include <linux/idr.h>
 
-अटल DEFINE_IDA(xpad_pad_seq);
+static DEFINE_IDA(xpad_pad_seq);
 
-काष्ठा xpad_led अणु
-	अक्षर name[16];
-	काष्ठा led_classdev led_cdev;
-	काष्ठा usb_xpad *xpad;
-पूर्ण;
+struct xpad_led {
+	char name[16];
+	struct led_classdev led_cdev;
+	struct usb_xpad *xpad;
+};
 
 /*
  * set the LEDs on Xbox360 / Wireless Controllers
@@ -1378,26 +1377,26 @@ out:
  * 14: persistent slow all blink
  * 15: blink once, then previous setting
  */
-अटल व्योम xpad_send_led_command(काष्ठा usb_xpad *xpad, पूर्णांक command)
-अणु
-	काष्ठा xpad_output_packet *packet =
+static void xpad_send_led_command(struct usb_xpad *xpad, int command)
+{
+	struct xpad_output_packet *packet =
 			&xpad->out_packets[XPAD_OUT_LED_IDX];
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	command %= 16;
 
 	spin_lock_irqsave(&xpad->odata_lock, flags);
 
-	चयन (xpad->xtype) अणु
-	हाल XTYPE_XBOX360:
+	switch (xpad->xtype) {
+	case XTYPE_XBOX360:
 		packet->data[0] = 0x01;
 		packet->data[1] = 0x03;
 		packet->data[2] = command;
 		packet->len = 3;
 		packet->pending = true;
-		अवरोध;
+		break;
 
-	हाल XTYPE_XBOX360W:
+	case XTYPE_XBOX360W:
 		packet->data[0] = 0x00;
 		packet->data[1] = 0x00;
 		packet->data[2] = 0x08;
@@ -1412,52 +1411,52 @@ out:
 		packet->data[11] = 0x00;
 		packet->len = 12;
 		packet->pending = true;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	xpad_try_sending_next_out_packet(xpad);
 
 	spin_unlock_irqrestore(&xpad->odata_lock, flags);
-पूर्ण
+}
 
 /*
  * Light up the segment corresponding to the pad number on
  * Xbox 360 Controllers.
  */
-अटल व्योम xpad_identअगरy_controller(काष्ठा usb_xpad *xpad)
-अणु
+static void xpad_identify_controller(struct usb_xpad *xpad)
+{
 	led_set_brightness(&xpad->led->led_cdev, (xpad->pad_nr % 4) + 2);
-पूर्ण
+}
 
-अटल व्योम xpad_led_set(काष्ठा led_classdev *led_cdev,
-			 क्रमागत led_brightness value)
-अणु
-	काष्ठा xpad_led *xpad_led = container_of(led_cdev,
-						 काष्ठा xpad_led, led_cdev);
+static void xpad_led_set(struct led_classdev *led_cdev,
+			 enum led_brightness value)
+{
+	struct xpad_led *xpad_led = container_of(led_cdev,
+						 struct xpad_led, led_cdev);
 
 	xpad_send_led_command(xpad_led->xpad, value);
-पूर्ण
+}
 
-अटल पूर्णांक xpad_led_probe(काष्ठा usb_xpad *xpad)
-अणु
-	काष्ठा xpad_led *led;
-	काष्ठा led_classdev *led_cdev;
-	पूर्णांक error;
+static int xpad_led_probe(struct usb_xpad *xpad)
+{
+	struct xpad_led *led;
+	struct led_classdev *led_cdev;
+	int error;
 
-	अगर (xpad->xtype != XTYPE_XBOX360 && xpad->xtype != XTYPE_XBOX360W)
-		वापस 0;
+	if (xpad->xtype != XTYPE_XBOX360 && xpad->xtype != XTYPE_XBOX360W)
+		return 0;
 
-	xpad->led = led = kzalloc(माप(काष्ठा xpad_led), GFP_KERNEL);
-	अगर (!led)
-		वापस -ENOMEM;
+	xpad->led = led = kzalloc(sizeof(struct xpad_led), GFP_KERNEL);
+	if (!led)
+		return -ENOMEM;
 
 	xpad->pad_nr = ida_simple_get(&xpad_pad_seq, 0, 0, GFP_KERNEL);
-	अगर (xpad->pad_nr < 0) अणु
+	if (xpad->pad_nr < 0) {
 		error = xpad->pad_nr;
-		जाओ err_मुक्त_mem;
-	पूर्ण
+		goto err_free_mem;
+	}
 
-	snम_लिखो(led->name, माप(led->name), "xpad%d", xpad->pad_nr);
+	snprintf(led->name, sizeof(led->name), "xpad%d", xpad->pad_nr);
 	led->xpad = xpad;
 
 	led_cdev = &led->led_cdev;
@@ -1465,64 +1464,64 @@ out:
 	led_cdev->brightness_set = xpad_led_set;
 	led_cdev->flags = LED_CORE_SUSPENDRESUME;
 
-	error = led_classdev_रेजिस्टर(&xpad->udev->dev, led_cdev);
-	अगर (error)
-		जाओ err_मुक्त_id;
+	error = led_classdev_register(&xpad->udev->dev, led_cdev);
+	if (error)
+		goto err_free_id;
 
-	xpad_identअगरy_controller(xpad);
+	xpad_identify_controller(xpad);
 
-	वापस 0;
+	return 0;
 
-err_मुक्त_id:
-	ida_simple_हटाओ(&xpad_pad_seq, xpad->pad_nr);
-err_मुक्त_mem:
-	kमुक्त(led);
-	xpad->led = शून्य;
-	वापस error;
-पूर्ण
+err_free_id:
+	ida_simple_remove(&xpad_pad_seq, xpad->pad_nr);
+err_free_mem:
+	kfree(led);
+	xpad->led = NULL;
+	return error;
+}
 
-अटल व्योम xpad_led_disconnect(काष्ठा usb_xpad *xpad)
-अणु
-	काष्ठा xpad_led *xpad_led = xpad->led;
+static void xpad_led_disconnect(struct usb_xpad *xpad)
+{
+	struct xpad_led *xpad_led = xpad->led;
 
-	अगर (xpad_led) अणु
-		led_classdev_unरेजिस्टर(&xpad_led->led_cdev);
-		ida_simple_हटाओ(&xpad_pad_seq, xpad->pad_nr);
-		kमुक्त(xpad_led);
-	पूर्ण
-पूर्ण
-#अन्यथा
-अटल पूर्णांक xpad_led_probe(काष्ठा usb_xpad *xpad) अणु वापस 0; पूर्ण
-अटल व्योम xpad_led_disconnect(काष्ठा usb_xpad *xpad) अणु पूर्ण
-#पूर्ण_अगर
+	if (xpad_led) {
+		led_classdev_unregister(&xpad_led->led_cdev);
+		ida_simple_remove(&xpad_pad_seq, xpad->pad_nr);
+		kfree(xpad_led);
+	}
+}
+#else
+static int xpad_led_probe(struct usb_xpad *xpad) { return 0; }
+static void xpad_led_disconnect(struct usb_xpad *xpad) { }
+#endif
 
-अटल पूर्णांक xpad_start_input(काष्ठा usb_xpad *xpad)
-अणु
-	पूर्णांक error;
+static int xpad_start_input(struct usb_xpad *xpad)
+{
+	int error;
 
-	अगर (usb_submit_urb(xpad->irq_in, GFP_KERNEL))
-		वापस -EIO;
+	if (usb_submit_urb(xpad->irq_in, GFP_KERNEL))
+		return -EIO;
 
-	अगर (xpad->xtype == XTYPE_XBOXONE) अणु
+	if (xpad->xtype == XTYPE_XBOXONE) {
 		error = xpad_start_xbox_one(xpad);
-		अगर (error) अणु
-			usb_समाप्त_urb(xpad->irq_in);
-			वापस error;
-		पूर्ण
-	पूर्ण
+		if (error) {
+			usb_kill_urb(xpad->irq_in);
+			return error;
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम xpad_stop_input(काष्ठा usb_xpad *xpad)
-अणु
-	usb_समाप्त_urb(xpad->irq_in);
-पूर्ण
+static void xpad_stop_input(struct usb_xpad *xpad)
+{
+	usb_kill_urb(xpad->irq_in);
+}
 
-अटल व्योम xpad360w_घातeroff_controller(काष्ठा usb_xpad *xpad)
-अणु
-	अचिन्हित दीर्घ flags;
-	काष्ठा xpad_output_packet *packet =
+static void xpad360w_poweroff_controller(struct usb_xpad *xpad)
+{
+	unsigned long flags;
+	struct xpad_output_packet *packet =
 			&xpad->out_packets[XPAD_OUT_CMD_IDX];
 
 	spin_lock_irqsave(&xpad->odata_lock, flags);
@@ -1542,343 +1541,343 @@ err_मुक्त_mem:
 	packet->len = 12;
 	packet->pending = true;
 
-	/* Reset the sequence so we send out घातeroff now */
+	/* Reset the sequence so we send out poweroff now */
 	xpad->last_out_packet = -1;
 	xpad_try_sending_next_out_packet(xpad);
 
 	spin_unlock_irqrestore(&xpad->odata_lock, flags);
-पूर्ण
+}
 
-अटल पूर्णांक xpad360w_start_input(काष्ठा usb_xpad *xpad)
-अणु
-	पूर्णांक error;
+static int xpad360w_start_input(struct usb_xpad *xpad)
+{
+	int error;
 
 	error = usb_submit_urb(xpad->irq_in, GFP_KERNEL);
-	अगर (error)
-		वापस -EIO;
+	if (error)
+		return -EIO;
 
 	/*
 	 * Send presence packet.
-	 * This will क्रमce the controller to resend connection packets.
-	 * This is useful in the हाल we activate the module after the
-	 * adapter has been plugged in, as it won't स्वतःmatically
+	 * This will force the controller to resend connection packets.
+	 * This is useful in the case we activate the module after the
+	 * adapter has been plugged in, as it won't automatically
 	 * send us info about the controllers.
 	 */
 	error = xpad_inquiry_pad_presence(xpad);
-	अगर (error) अणु
-		usb_समाप्त_urb(xpad->irq_in);
-		वापस error;
-	पूर्ण
+	if (error) {
+		usb_kill_urb(xpad->irq_in);
+		return error;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम xpad360w_stop_input(काष्ठा usb_xpad *xpad)
-अणु
-	usb_समाप्त_urb(xpad->irq_in);
+static void xpad360w_stop_input(struct usb_xpad *xpad)
+{
+	usb_kill_urb(xpad->irq_in);
 
-	/* Make sure we are करोne with presence work अगर it was scheduled */
+	/* Make sure we are done with presence work if it was scheduled */
 	flush_work(&xpad->work);
-पूर्ण
+}
 
-अटल पूर्णांक xpad_खोलो(काष्ठा input_dev *dev)
-अणु
-	काष्ठा usb_xpad *xpad = input_get_drvdata(dev);
+static int xpad_open(struct input_dev *dev)
+{
+	struct usb_xpad *xpad = input_get_drvdata(dev);
 
-	वापस xpad_start_input(xpad);
-पूर्ण
+	return xpad_start_input(xpad);
+}
 
-अटल व्योम xpad_बंद(काष्ठा input_dev *dev)
-अणु
-	काष्ठा usb_xpad *xpad = input_get_drvdata(dev);
+static void xpad_close(struct input_dev *dev)
+{
+	struct usb_xpad *xpad = input_get_drvdata(dev);
 
 	xpad_stop_input(xpad);
-पूर्ण
+}
 
-अटल व्योम xpad_set_up_असल(काष्ठा input_dev *input_dev, चिन्हित लघु असल)
-अणु
-	काष्ठा usb_xpad *xpad = input_get_drvdata(input_dev);
+static void xpad_set_up_abs(struct input_dev *input_dev, signed short abs)
+{
+	struct usb_xpad *xpad = input_get_drvdata(input_dev);
 
-	चयन (असल) अणु
-	हाल ABS_X:
-	हाल ABS_Y:
-	हाल ABS_RX:
-	हाल ABS_RY:	/* the two sticks */
-		input_set_असल_params(input_dev, असल, -32768, 32767, 16, 128);
-		अवरोध;
-	हाल ABS_Z:
-	हाल ABS_RZ:	/* the triggers (अगर mapped to axes) */
-		अगर (xpad->xtype == XTYPE_XBOXONE)
-			input_set_असल_params(input_dev, असल, 0, 1023, 0, 0);
-		अन्यथा
-			input_set_असल_params(input_dev, असल, 0, 255, 0, 0);
-		अवरोध;
-	हाल ABS_HAT0X:
-	हाल ABS_HAT0Y:	/* the d-pad (only अगर dpad is mapped to axes */
-		input_set_असल_params(input_dev, असल, -1, 1, 0, 0);
-		अवरोध;
-	शेष:
-		input_set_असल_params(input_dev, असल, 0, 0, 0, 0);
-		अवरोध;
-	पूर्ण
-पूर्ण
+	switch (abs) {
+	case ABS_X:
+	case ABS_Y:
+	case ABS_RX:
+	case ABS_RY:	/* the two sticks */
+		input_set_abs_params(input_dev, abs, -32768, 32767, 16, 128);
+		break;
+	case ABS_Z:
+	case ABS_RZ:	/* the triggers (if mapped to axes) */
+		if (xpad->xtype == XTYPE_XBOXONE)
+			input_set_abs_params(input_dev, abs, 0, 1023, 0, 0);
+		else
+			input_set_abs_params(input_dev, abs, 0, 255, 0, 0);
+		break;
+	case ABS_HAT0X:
+	case ABS_HAT0Y:	/* the d-pad (only if dpad is mapped to axes */
+		input_set_abs_params(input_dev, abs, -1, 1, 0, 0);
+		break;
+	default:
+		input_set_abs_params(input_dev, abs, 0, 0, 0, 0);
+		break;
+	}
+}
 
-अटल व्योम xpad_deinit_input(काष्ठा usb_xpad *xpad)
-अणु
-	अगर (xpad->input_created) अणु
+static void xpad_deinit_input(struct usb_xpad *xpad)
+{
+	if (xpad->input_created) {
 		xpad->input_created = false;
 		xpad_led_disconnect(xpad);
-		input_unरेजिस्टर_device(xpad->dev);
-	पूर्ण
-पूर्ण
+		input_unregister_device(xpad->dev);
+	}
+}
 
-अटल पूर्णांक xpad_init_input(काष्ठा usb_xpad *xpad)
-अणु
-	काष्ठा input_dev *input_dev;
-	पूर्णांक i, error;
+static int xpad_init_input(struct usb_xpad *xpad)
+{
+	struct input_dev *input_dev;
+	int i, error;
 
 	input_dev = input_allocate_device();
-	अगर (!input_dev)
-		वापस -ENOMEM;
+	if (!input_dev)
+		return -ENOMEM;
 
 	xpad->dev = input_dev;
 	input_dev->name = xpad->name;
 	input_dev->phys = xpad->phys;
 	usb_to_input_id(xpad->udev, &input_dev->id);
 
-	अगर (xpad->xtype == XTYPE_XBOX360W) अणु
-		/* x360w controllers and the receiver have dअगरferent ids */
+	if (xpad->xtype == XTYPE_XBOX360W) {
+		/* x360w controllers and the receiver have different ids */
 		input_dev->id.product = 0x02a1;
-	पूर्ण
+	}
 
-	input_dev->dev.parent = &xpad->पूर्णांकf->dev;
+	input_dev->dev.parent = &xpad->intf->dev;
 
 	input_set_drvdata(input_dev, xpad);
 
-	अगर (xpad->xtype != XTYPE_XBOX360W) अणु
-		input_dev->खोलो = xpad_खोलो;
-		input_dev->बंद = xpad_बंद;
-	पूर्ण
+	if (xpad->xtype != XTYPE_XBOX360W) {
+		input_dev->open = xpad_open;
+		input_dev->close = xpad_close;
+	}
 
-	अगर (!(xpad->mapping & MAP_STICKS_TO_शून्य)) अणु
+	if (!(xpad->mapping & MAP_STICKS_TO_NULL)) {
 		/* set up axes */
-		क्रम (i = 0; xpad_असल[i] >= 0; i++)
-			xpad_set_up_असल(input_dev, xpad_असल[i]);
-	पूर्ण
+		for (i = 0; xpad_abs[i] >= 0; i++)
+			xpad_set_up_abs(input_dev, xpad_abs[i]);
+	}
 
 	/* set up standard buttons */
-	क्रम (i = 0; xpad_common_btn[i] >= 0; i++)
+	for (i = 0; xpad_common_btn[i] >= 0; i++)
 		input_set_capability(input_dev, EV_KEY, xpad_common_btn[i]);
 
-	/* set up model-specअगरic ones */
-	अगर (xpad->xtype == XTYPE_XBOX360 || xpad->xtype == XTYPE_XBOX360W ||
-	    xpad->xtype == XTYPE_XBOXONE) अणु
-		क्रम (i = 0; xpad360_btn[i] >= 0; i++)
+	/* set up model-specific ones */
+	if (xpad->xtype == XTYPE_XBOX360 || xpad->xtype == XTYPE_XBOX360W ||
+	    xpad->xtype == XTYPE_XBOXONE) {
+		for (i = 0; xpad360_btn[i] >= 0; i++)
 			input_set_capability(input_dev, EV_KEY, xpad360_btn[i]);
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; xpad_btn[i] >= 0; i++)
+	} else {
+		for (i = 0; xpad_btn[i] >= 0; i++)
 			input_set_capability(input_dev, EV_KEY, xpad_btn[i]);
-	पूर्ण
+	}
 
-	अगर (xpad->mapping & MAP_DPAD_TO_BUTTONS) अणु
-		क्रम (i = 0; xpad_btn_pad[i] >= 0; i++)
+	if (xpad->mapping & MAP_DPAD_TO_BUTTONS) {
+		for (i = 0; xpad_btn_pad[i] >= 0; i++)
 			input_set_capability(input_dev, EV_KEY,
 					     xpad_btn_pad[i]);
-	पूर्ण
+	}
 
 	/*
-	 * This should be a simple अन्यथा block. However historically
-	 * xbox360w has mapped DPAD to buttons जबतक xbox360 did not. This
-	 * made no sense, but now we can not just चयन back and have to
+	 * This should be a simple else block. However historically
+	 * xbox360w has mapped DPAD to buttons while xbox360 did not. This
+	 * made no sense, but now we can not just switch back and have to
 	 * support both behaviors.
 	 */
-	अगर (!(xpad->mapping & MAP_DPAD_TO_BUTTONS) ||
-	    xpad->xtype == XTYPE_XBOX360W) अणु
-		क्रम (i = 0; xpad_असल_pad[i] >= 0; i++)
-			xpad_set_up_असल(input_dev, xpad_असल_pad[i]);
-	पूर्ण
+	if (!(xpad->mapping & MAP_DPAD_TO_BUTTONS) ||
+	    xpad->xtype == XTYPE_XBOX360W) {
+		for (i = 0; xpad_abs_pad[i] >= 0; i++)
+			xpad_set_up_abs(input_dev, xpad_abs_pad[i]);
+	}
 
-	अगर (xpad->mapping & MAP_TRIGGERS_TO_BUTTONS) अणु
-		क्रम (i = 0; xpad_btn_triggers[i] >= 0; i++)
+	if (xpad->mapping & MAP_TRIGGERS_TO_BUTTONS) {
+		for (i = 0; xpad_btn_triggers[i] >= 0; i++)
 			input_set_capability(input_dev, EV_KEY,
 					     xpad_btn_triggers[i]);
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; xpad_असल_triggers[i] >= 0; i++)
-			xpad_set_up_असल(input_dev, xpad_असल_triggers[i]);
-	पूर्ण
+	} else {
+		for (i = 0; xpad_abs_triggers[i] >= 0; i++)
+			xpad_set_up_abs(input_dev, xpad_abs_triggers[i]);
+	}
 
 	error = xpad_init_ff(xpad);
-	अगर (error)
-		जाओ err_मुक्त_input;
+	if (error)
+		goto err_free_input;
 
 	error = xpad_led_probe(xpad);
-	अगर (error)
-		जाओ err_destroy_ff;
+	if (error)
+		goto err_destroy_ff;
 
-	error = input_रेजिस्टर_device(xpad->dev);
-	अगर (error)
-		जाओ err_disconnect_led;
+	error = input_register_device(xpad->dev);
+	if (error)
+		goto err_disconnect_led;
 
 	xpad->input_created = true;
-	वापस 0;
+	return 0;
 
 err_disconnect_led:
 	xpad_led_disconnect(xpad);
 err_destroy_ff:
 	input_ff_destroy(input_dev);
-err_मुक्त_input:
-	input_मुक्त_device(input_dev);
-	वापस error;
-पूर्ण
+err_free_input:
+	input_free_device(input_dev);
+	return error;
+}
 
-अटल पूर्णांक xpad_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकf, स्थिर काष्ठा usb_device_id *id)
-अणु
-	काष्ठा usb_device *udev = पूर्णांकerface_to_usbdev(पूर्णांकf);
-	काष्ठा usb_xpad *xpad;
-	काष्ठा usb_endpoपूर्णांक_descriptor *ep_irq_in, *ep_irq_out;
-	पूर्णांक i, error;
+static int xpad_probe(struct usb_interface *intf, const struct usb_device_id *id)
+{
+	struct usb_device *udev = interface_to_usbdev(intf);
+	struct usb_xpad *xpad;
+	struct usb_endpoint_descriptor *ep_irq_in, *ep_irq_out;
+	int i, error;
 
-	अगर (पूर्णांकf->cur_altsetting->desc.bNumEndpoपूर्णांकs != 2)
-		वापस -ENODEV;
+	if (intf->cur_altsetting->desc.bNumEndpoints != 2)
+		return -ENODEV;
 
-	क्रम (i = 0; xpad_device[i].idVenकरोr; i++) अणु
-		अगर ((le16_to_cpu(udev->descriptor.idVenकरोr) == xpad_device[i].idVenकरोr) &&
+	for (i = 0; xpad_device[i].idVendor; i++) {
+		if ((le16_to_cpu(udev->descriptor.idVendor) == xpad_device[i].idVendor) &&
 		    (le16_to_cpu(udev->descriptor.idProduct) == xpad_device[i].idProduct))
-			अवरोध;
-	पूर्ण
+			break;
+	}
 
-	xpad = kzalloc(माप(काष्ठा usb_xpad), GFP_KERNEL);
-	अगर (!xpad)
-		वापस -ENOMEM;
+	xpad = kzalloc(sizeof(struct usb_xpad), GFP_KERNEL);
+	if (!xpad)
+		return -ENOMEM;
 
-	usb_make_path(udev, xpad->phys, माप(xpad->phys));
-	strlcat(xpad->phys, "/input0", माप(xpad->phys));
+	usb_make_path(udev, xpad->phys, sizeof(xpad->phys));
+	strlcat(xpad->phys, "/input0", sizeof(xpad->phys));
 
 	xpad->idata = usb_alloc_coherent(udev, XPAD_PKT_LEN,
 					 GFP_KERNEL, &xpad->idata_dma);
-	अगर (!xpad->idata) अणु
+	if (!xpad->idata) {
 		error = -ENOMEM;
-		जाओ err_मुक्त_mem;
-	पूर्ण
+		goto err_free_mem;
+	}
 
 	xpad->irq_in = usb_alloc_urb(0, GFP_KERNEL);
-	अगर (!xpad->irq_in) अणु
+	if (!xpad->irq_in) {
 		error = -ENOMEM;
-		जाओ err_मुक्त_idata;
-	पूर्ण
+		goto err_free_idata;
+	}
 
 	xpad->udev = udev;
-	xpad->पूर्णांकf = पूर्णांकf;
+	xpad->intf = intf;
 	xpad->mapping = xpad_device[i].mapping;
 	xpad->xtype = xpad_device[i].xtype;
 	xpad->name = xpad_device[i].name;
 	INIT_WORK(&xpad->work, xpad_presence_work);
 
-	अगर (xpad->xtype == XTYPE_UNKNOWN) अणु
-		अगर (पूर्णांकf->cur_altsetting->desc.bInterfaceClass == USB_CLASS_VENDOR_SPEC) अणु
-			अगर (पूर्णांकf->cur_altsetting->desc.bInterfaceProtocol == 129)
+	if (xpad->xtype == XTYPE_UNKNOWN) {
+		if (intf->cur_altsetting->desc.bInterfaceClass == USB_CLASS_VENDOR_SPEC) {
+			if (intf->cur_altsetting->desc.bInterfaceProtocol == 129)
 				xpad->xtype = XTYPE_XBOX360W;
-			अन्यथा अगर (पूर्णांकf->cur_altsetting->desc.bInterfaceProtocol == 208)
+			else if (intf->cur_altsetting->desc.bInterfaceProtocol == 208)
 				xpad->xtype = XTYPE_XBOXONE;
-			अन्यथा
+			else
 				xpad->xtype = XTYPE_XBOX360;
-		पूर्ण अन्यथा अणु
+		} else {
 			xpad->xtype = XTYPE_XBOX;
-		पूर्ण
+		}
 
-		अगर (dpad_to_buttons)
+		if (dpad_to_buttons)
 			xpad->mapping |= MAP_DPAD_TO_BUTTONS;
-		अगर (triggers_to_buttons)
+		if (triggers_to_buttons)
 			xpad->mapping |= MAP_TRIGGERS_TO_BUTTONS;
-		अगर (sticks_to_null)
-			xpad->mapping |= MAP_STICKS_TO_शून्य;
-	पूर्ण
+		if (sticks_to_null)
+			xpad->mapping |= MAP_STICKS_TO_NULL;
+	}
 
-	अगर (xpad->xtype == XTYPE_XBOXONE &&
-	    पूर्णांकf->cur_altsetting->desc.bInterfaceNumber != 0) अणु
+	if (xpad->xtype == XTYPE_XBOXONE &&
+	    intf->cur_altsetting->desc.bInterfaceNumber != 0) {
 		/*
-		 * The Xbox One controller lists three पूर्णांकerfaces all with the
-		 * same पूर्णांकerface class, subclass and protocol. Dअगरferentiate by
-		 * पूर्णांकerface number.
+		 * The Xbox One controller lists three interfaces all with the
+		 * same interface class, subclass and protocol. Differentiate by
+		 * interface number.
 		 */
 		error = -ENODEV;
-		जाओ err_मुक्त_in_urb;
-	पूर्ण
+		goto err_free_in_urb;
+	}
 
-	ep_irq_in = ep_irq_out = शून्य;
+	ep_irq_in = ep_irq_out = NULL;
 
-	क्रम (i = 0; i < 2; i++) अणु
-		काष्ठा usb_endpoपूर्णांक_descriptor *ep =
-				&पूर्णांकf->cur_altsetting->endpoपूर्णांक[i].desc;
+	for (i = 0; i < 2; i++) {
+		struct usb_endpoint_descriptor *ep =
+				&intf->cur_altsetting->endpoint[i].desc;
 
-		अगर (usb_endpoपूर्णांक_xfer_पूर्णांक(ep)) अणु
-			अगर (usb_endpoपूर्णांक_dir_in(ep))
+		if (usb_endpoint_xfer_int(ep)) {
+			if (usb_endpoint_dir_in(ep))
 				ep_irq_in = ep;
-			अन्यथा
+			else
 				ep_irq_out = ep;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (!ep_irq_in || !ep_irq_out) अणु
+	if (!ep_irq_in || !ep_irq_out) {
 		error = -ENODEV;
-		जाओ err_मुक्त_in_urb;
-	पूर्ण
+		goto err_free_in_urb;
+	}
 
-	error = xpad_init_output(पूर्णांकf, xpad, ep_irq_out);
-	अगर (error)
-		जाओ err_मुक्त_in_urb;
+	error = xpad_init_output(intf, xpad, ep_irq_out);
+	if (error)
+		goto err_free_in_urb;
 
-	usb_fill_पूर्णांक_urb(xpad->irq_in, udev,
-			 usb_rcvपूर्णांकpipe(udev, ep_irq_in->bEndpoपूर्णांकAddress),
+	usb_fill_int_urb(xpad->irq_in, udev,
+			 usb_rcvintpipe(udev, ep_irq_in->bEndpointAddress),
 			 xpad->idata, XPAD_PKT_LEN, xpad_irq_in,
 			 xpad, ep_irq_in->bInterval);
 	xpad->irq_in->transfer_dma = xpad->idata_dma;
 	xpad->irq_in->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
 
-	usb_set_पूर्णांकfdata(पूर्णांकf, xpad);
+	usb_set_intfdata(intf, xpad);
 
-	अगर (xpad->xtype == XTYPE_XBOX360W) अणु
+	if (xpad->xtype == XTYPE_XBOX360W) {
 		/*
-		 * Submit the पूर्णांक URB immediately rather than रुकोing क्रम खोलो
+		 * Submit the int URB immediately rather than waiting for open
 		 * because we get status messages from the device whether
 		 * or not any controllers are attached.  In fact, it's
 		 * exactly the message that a controller has arrived that
-		 * we're रुकोing क्रम.
+		 * we're waiting for.
 		 */
 		error = xpad360w_start_input(xpad);
-		अगर (error)
-			जाओ err_deinit_output;
+		if (error)
+			goto err_deinit_output;
 		/*
 		 * Wireless controllers require RESET_RESUME to work properly
 		 * after suspend. Ideally this quirk should be in usb core
-		 * quirk list, but we have too many venकरोrs producing these
-		 * controllers and we'd need to मुख्यtain 2 identical lists
+		 * quirk list, but we have too many vendors producing these
+		 * controllers and we'd need to maintain 2 identical lists
 		 * here in this driver and in usb core.
 		 */
 		udev->quirks |= USB_QUIRK_RESET_RESUME;
-	पूर्ण अन्यथा अणु
+	} else {
 		error = xpad_init_input(xpad);
-		अगर (error)
-			जाओ err_deinit_output;
-	पूर्ण
-	वापस 0;
+		if (error)
+			goto err_deinit_output;
+	}
+	return 0;
 
 err_deinit_output:
 	xpad_deinit_output(xpad);
-err_मुक्त_in_urb:
-	usb_मुक्त_urb(xpad->irq_in);
-err_मुक्त_idata:
-	usb_मुक्त_coherent(udev, XPAD_PKT_LEN, xpad->idata, xpad->idata_dma);
-err_मुक्त_mem:
-	kमुक्त(xpad);
-	वापस error;
-पूर्ण
+err_free_in_urb:
+	usb_free_urb(xpad->irq_in);
+err_free_idata:
+	usb_free_coherent(udev, XPAD_PKT_LEN, xpad->idata, xpad->idata_dma);
+err_free_mem:
+	kfree(xpad);
+	return error;
+}
 
-अटल व्योम xpad_disconnect(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा usb_xpad *xpad = usb_get_पूर्णांकfdata(पूर्णांकf);
+static void xpad_disconnect(struct usb_interface *intf)
+{
+	struct usb_xpad *xpad = usb_get_intfdata(intf);
 
-	अगर (xpad->xtype == XTYPE_XBOX360W)
+	if (xpad->xtype == XTYPE_XBOX360W)
 		xpad360w_stop_input(xpad);
 
 	xpad_deinit_input(xpad);
@@ -1891,24 +1890,24 @@ err_मुक्त_mem:
 
 	xpad_deinit_output(xpad);
 
-	usb_मुक्त_urb(xpad->irq_in);
-	usb_मुक्त_coherent(xpad->udev, XPAD_PKT_LEN,
+	usb_free_urb(xpad->irq_in);
+	usb_free_coherent(xpad->udev, XPAD_PKT_LEN,
 			xpad->idata, xpad->idata_dma);
 
-	kमुक्त(xpad);
+	kfree(xpad);
 
-	usb_set_पूर्णांकfdata(पूर्णांकf, शून्य);
-पूर्ण
+	usb_set_intfdata(intf, NULL);
+}
 
-अटल पूर्णांक xpad_suspend(काष्ठा usb_पूर्णांकerface *पूर्णांकf, pm_message_t message)
-अणु
-	काष्ठा usb_xpad *xpad = usb_get_पूर्णांकfdata(पूर्णांकf);
-	काष्ठा input_dev *input = xpad->dev;
+static int xpad_suspend(struct usb_interface *intf, pm_message_t message)
+{
+	struct usb_xpad *xpad = usb_get_intfdata(intf);
+	struct input_dev *input = xpad->dev;
 
-	अगर (xpad->xtype == XTYPE_XBOX360W) अणु
+	if (xpad->xtype == XTYPE_XBOX360W) {
 		/*
 		 * Wireless controllers always listen to input so
-		 * they are notअगरied when controller shows up
+		 * they are notified when controller shows up
 		 * or goes away.
 		 */
 		xpad360w_stop_input(xpad);
@@ -1916,50 +1915,50 @@ err_मुक्त_mem:
 		/*
 		 * The wireless adapter is going off now, so the
 		 * gamepads are going to become disconnected.
-		 * Unless explicitly disabled, घातer them करोwn
-		 * so they करोn't just sit there flashing.
+		 * Unless explicitly disabled, power them down
+		 * so they don't just sit there flashing.
 		 */
-		अगर (स्वतः_घातeroff && xpad->pad_present)
-			xpad360w_घातeroff_controller(xpad);
-	पूर्ण अन्यथा अणु
+		if (auto_poweroff && xpad->pad_present)
+			xpad360w_poweroff_controller(xpad);
+	} else {
 		mutex_lock(&input->mutex);
-		अगर (input_device_enabled(input))
+		if (input_device_enabled(input))
 			xpad_stop_input(xpad);
 		mutex_unlock(&input->mutex);
-	पूर्ण
+	}
 
 	xpad_stop_output(xpad);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक xpad_resume(काष्ठा usb_पूर्णांकerface *पूर्णांकf)
-अणु
-	काष्ठा usb_xpad *xpad = usb_get_पूर्णांकfdata(पूर्णांकf);
-	काष्ठा input_dev *input = xpad->dev;
-	पूर्णांक retval = 0;
+static int xpad_resume(struct usb_interface *intf)
+{
+	struct usb_xpad *xpad = usb_get_intfdata(intf);
+	struct input_dev *input = xpad->dev;
+	int retval = 0;
 
-	अगर (xpad->xtype == XTYPE_XBOX360W) अणु
+	if (xpad->xtype == XTYPE_XBOX360W) {
 		retval = xpad360w_start_input(xpad);
-	पूर्ण अन्यथा अणु
+	} else {
 		mutex_lock(&input->mutex);
-		अगर (input_device_enabled(input)) अणु
+		if (input_device_enabled(input)) {
 			retval = xpad_start_input(xpad);
-		पूर्ण अन्यथा अगर (xpad->xtype == XTYPE_XBOXONE) अणु
+		} else if (xpad->xtype == XTYPE_XBOXONE) {
 			/*
-			 * Even अगर there are no users, we'll send Xbox One pads
-			 * the startup sequence so they करोn't sit there and
-			 * blink until somebody खोलोs the input device again.
+			 * Even if there are no users, we'll send Xbox One pads
+			 * the startup sequence so they don't sit there and
+			 * blink until somebody opens the input device again.
 			 */
 			retval = xpad_start_xbox_one(xpad);
-		पूर्ण
+		}
 		mutex_unlock(&input->mutex);
-	पूर्ण
+	}
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
-अटल काष्ठा usb_driver xpad_driver = अणु
+static struct usb_driver xpad_driver = {
 	.name		= "xpad",
 	.probe		= xpad_probe,
 	.disconnect	= xpad_disconnect,
@@ -1967,7 +1966,7 @@ err_मुक्त_mem:
 	.resume		= xpad_resume,
 	.reset_resume	= xpad_resume,
 	.id_table	= xpad_table,
-पूर्ण;
+};
 
 module_usb_driver(xpad_driver);
 

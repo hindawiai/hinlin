@@ -1,96 +1,95 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * X1830 SoC CGU driver
- * Copyright (c) 2019 ोउॉओौओ (Zhou Yanjie) <zhouyanjie@wanyeetech.com>
+ * Copyright (c) 2019 周琰杰 (Zhou Yanjie) <zhouyanjie@wanyeetech.com>
  */
 
-#समावेश <linux/clk-provider.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/of.h>
+#include <linux/clk-provider.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/of.h>
 
-#समावेश <dt-bindings/घड़ी/x1830-cgu.h>
+#include <dt-bindings/clock/x1830-cgu.h>
 
-#समावेश "cgu.h"
-#समावेश "pm.h"
+#include "cgu.h"
+#include "pm.h"
 
-/* CGU रेजिस्टर offsets */
-#घोषणा CGU_REG_CPCCR		0x00
-#घोषणा CGU_REG_CPPCR		0x0c
-#घोषणा CGU_REG_APLL		0x10
-#घोषणा CGU_REG_MPLL		0x14
-#घोषणा CGU_REG_CLKGR0		0x20
-#घोषणा CGU_REG_OPCR		0x24
-#घोषणा CGU_REG_CLKGR1		0x28
-#घोषणा CGU_REG_DDRCDR		0x2c
-#घोषणा CGU_REG_USBPCR		0x3c
-#घोषणा CGU_REG_USBRDT		0x40
-#घोषणा CGU_REG_USBVBFIL	0x44
-#घोषणा CGU_REG_USBPCR1		0x48
-#घोषणा CGU_REG_MACCDR		0x54
-#घोषणा CGU_REG_EPLL		0x58
-#घोषणा CGU_REG_I2SCDR		0x60
-#घोषणा CGU_REG_LPCDR		0x64
-#घोषणा CGU_REG_MSC0CDR		0x68
-#घोषणा CGU_REG_I2SCDR1		0x70
-#घोषणा CGU_REG_SSICDR		0x74
-#घोषणा CGU_REG_CIMCDR		0x7c
-#घोषणा CGU_REG_MSC1CDR		0xa4
-#घोषणा CGU_REG_CMP_INTR	0xb0
-#घोषणा CGU_REG_CMP_INTRE	0xb4
-#घोषणा CGU_REG_DRCG		0xd0
-#घोषणा CGU_REG_CPCSR		0xd4
-#घोषणा CGU_REG_VPLL		0xe0
-#घोषणा CGU_REG_MACPHYC		0xe8
+/* CGU register offsets */
+#define CGU_REG_CPCCR		0x00
+#define CGU_REG_CPPCR		0x0c
+#define CGU_REG_APLL		0x10
+#define CGU_REG_MPLL		0x14
+#define CGU_REG_CLKGR0		0x20
+#define CGU_REG_OPCR		0x24
+#define CGU_REG_CLKGR1		0x28
+#define CGU_REG_DDRCDR		0x2c
+#define CGU_REG_USBPCR		0x3c
+#define CGU_REG_USBRDT		0x40
+#define CGU_REG_USBVBFIL	0x44
+#define CGU_REG_USBPCR1		0x48
+#define CGU_REG_MACCDR		0x54
+#define CGU_REG_EPLL		0x58
+#define CGU_REG_I2SCDR		0x60
+#define CGU_REG_LPCDR		0x64
+#define CGU_REG_MSC0CDR		0x68
+#define CGU_REG_I2SCDR1		0x70
+#define CGU_REG_SSICDR		0x74
+#define CGU_REG_CIMCDR		0x7c
+#define CGU_REG_MSC1CDR		0xa4
+#define CGU_REG_CMP_INTR	0xb0
+#define CGU_REG_CMP_INTRE	0xb4
+#define CGU_REG_DRCG		0xd0
+#define CGU_REG_CPCSR		0xd4
+#define CGU_REG_VPLL		0xe0
+#define CGU_REG_MACPHYC		0xe8
 
-/* bits within the OPCR रेजिस्टर */
-#घोषणा OPCR_GATE_USBPHYCLK	BIT(23)
-#घोषणा OPCR_SPENDN0		BIT(7)
-#घोषणा OPCR_SPENDN1		BIT(6)
+/* bits within the OPCR register */
+#define OPCR_GATE_USBPHYCLK	BIT(23)
+#define OPCR_SPENDN0		BIT(7)
+#define OPCR_SPENDN1		BIT(6)
 
-/* bits within the USBPCR रेजिस्टर */
-#घोषणा USBPCR_SIDDQ		BIT(21)
-#घोषणा USBPCR_OTG_DISABLE	BIT(20)
+/* bits within the USBPCR register */
+#define USBPCR_SIDDQ		BIT(21)
+#define USBPCR_OTG_DISABLE	BIT(20)
 
-अटल काष्ठा ingenic_cgu *cgu;
+static struct ingenic_cgu *cgu;
 
-अटल पूर्णांक x1830_usb_phy_enable(काष्ठा clk_hw *hw)
-अणु
-	व्योम __iomem *reg_opcr		= cgu->base + CGU_REG_OPCR;
-	व्योम __iomem *reg_usbpcr	= cgu->base + CGU_REG_USBPCR;
+static int x1830_usb_phy_enable(struct clk_hw *hw)
+{
+	void __iomem *reg_opcr		= cgu->base + CGU_REG_OPCR;
+	void __iomem *reg_usbpcr	= cgu->base + CGU_REG_USBPCR;
 
-	ग_लिखोl((पढ़ोl(reg_opcr) | OPCR_SPENDN0) & ~OPCR_GATE_USBPHYCLK, reg_opcr);
-	ग_लिखोl(पढ़ोl(reg_usbpcr) & ~USBPCR_OTG_DISABLE & ~USBPCR_SIDDQ, reg_usbpcr);
-	वापस 0;
-पूर्ण
+	writel((readl(reg_opcr) | OPCR_SPENDN0) & ~OPCR_GATE_USBPHYCLK, reg_opcr);
+	writel(readl(reg_usbpcr) & ~USBPCR_OTG_DISABLE & ~USBPCR_SIDDQ, reg_usbpcr);
+	return 0;
+}
 
-अटल व्योम x1830_usb_phy_disable(काष्ठा clk_hw *hw)
-अणु
-	व्योम __iomem *reg_opcr		= cgu->base + CGU_REG_OPCR;
-	व्योम __iomem *reg_usbpcr	= cgu->base + CGU_REG_USBPCR;
+static void x1830_usb_phy_disable(struct clk_hw *hw)
+{
+	void __iomem *reg_opcr		= cgu->base + CGU_REG_OPCR;
+	void __iomem *reg_usbpcr	= cgu->base + CGU_REG_USBPCR;
 
-	ग_लिखोl((पढ़ोl(reg_opcr) & ~OPCR_SPENDN0) | OPCR_GATE_USBPHYCLK, reg_opcr);
-	ग_लिखोl(पढ़ोl(reg_usbpcr) | USBPCR_OTG_DISABLE | USBPCR_SIDDQ, reg_usbpcr);
-पूर्ण
+	writel((readl(reg_opcr) & ~OPCR_SPENDN0) | OPCR_GATE_USBPHYCLK, reg_opcr);
+	writel(readl(reg_usbpcr) | USBPCR_OTG_DISABLE | USBPCR_SIDDQ, reg_usbpcr);
+}
 
-अटल पूर्णांक x1830_usb_phy_is_enabled(काष्ठा clk_hw *hw)
-अणु
-	व्योम __iomem *reg_opcr		= cgu->base + CGU_REG_OPCR;
-	व्योम __iomem *reg_usbpcr	= cgu->base + CGU_REG_USBPCR;
+static int x1830_usb_phy_is_enabled(struct clk_hw *hw)
+{
+	void __iomem *reg_opcr		= cgu->base + CGU_REG_OPCR;
+	void __iomem *reg_usbpcr	= cgu->base + CGU_REG_USBPCR;
 
-	वापस (पढ़ोl(reg_opcr) & OPCR_SPENDN0) &&
-		!(पढ़ोl(reg_usbpcr) & USBPCR_SIDDQ) &&
-		!(पढ़ोl(reg_usbpcr) & USBPCR_OTG_DISABLE);
-पूर्ण
+	return (readl(reg_opcr) & OPCR_SPENDN0) &&
+		!(readl(reg_usbpcr) & USBPCR_SIDDQ) &&
+		!(readl(reg_usbpcr) & USBPCR_OTG_DISABLE);
+}
 
-अटल स्थिर काष्ठा clk_ops x1830_otg_phy_ops = अणु
+static const struct clk_ops x1830_otg_phy_ops = {
 	.enable		= x1830_usb_phy_enable,
 	.disable	= x1830_usb_phy_disable,
 	.is_enabled	= x1830_usb_phy_is_enabled,
-पूर्ण;
+};
 
-अटल स्थिर s8 pll_od_encoding[64] = अणु
+static const s8 pll_od_encoding[64] = {
 	0x0, 0x1,  -1, 0x2,  -1,  -1,  -1, 0x3,
 	 -1,  -1,  -1,  -1,  -1,  -1,  -1, 0x4,
 	 -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
@@ -99,30 +98,30 @@
 	 -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
 	 -1,  -1,  -1,  -1,  -1,  -1,  -1,  -1,
 	 -1,  -1,  -1,  -1,  -1,  -1,  -1, 0x6,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा ingenic_cgu_clk_info x1830_cgu_घड़ीs[] = अणु
+static const struct ingenic_cgu_clk_info x1830_cgu_clocks[] = {
 
-	/* External घड़ीs */
+	/* External clocks */
 
-	[X1830_CLK_EXCLK] = अणु "ext", CGU_CLK_EXT पूर्ण,
-	[X1830_CLK_RTCLK] = अणु "rtc", CGU_CLK_EXT पूर्ण,
+	[X1830_CLK_EXCLK] = { "ext", CGU_CLK_EXT },
+	[X1830_CLK_RTCLK] = { "rtc", CGU_CLK_EXT },
 
 	/* PLLs */
 
-	[X1830_CLK_APLL] = अणु
+	[X1830_CLK_APLL] = {
 		"apll", CGU_CLK_PLL,
-		.parents = अणु X1830_CLK_EXCLK, -1, -1, -1 पूर्ण,
-		.pll = अणु
+		.parents = { X1830_CLK_EXCLK, -1, -1, -1 },
+		.pll = {
 			.reg = CGU_REG_APLL,
 			.rate_multiplier = 2,
-			.m_shअगरt = 20,
+			.m_shift = 20,
 			.m_bits = 9,
 			.m_offset = 1,
-			.n_shअगरt = 14,
+			.n_shift = 14,
 			.n_bits = 6,
 			.n_offset = 1,
-			.od_shअगरt = 11,
+			.od_shift = 11,
 			.od_bits = 3,
 			.od_max = 64,
 			.od_encoding = pll_od_encoding,
@@ -130,22 +129,22 @@
 			.bypass_bit = 30,
 			.enable_bit = 0,
 			.stable_bit = 3,
-		पूर्ण,
-	पूर्ण,
+		},
+	},
 
-	[X1830_CLK_MPLL] = अणु
+	[X1830_CLK_MPLL] = {
 		"mpll", CGU_CLK_PLL,
-		.parents = अणु X1830_CLK_EXCLK, -1, -1, -1 पूर्ण,
-		.pll = अणु
+		.parents = { X1830_CLK_EXCLK, -1, -1, -1 },
+		.pll = {
 			.reg = CGU_REG_MPLL,
 			.rate_multiplier = 2,
-			.m_shअगरt = 20,
+			.m_shift = 20,
 			.m_bits = 9,
 			.m_offset = 1,
-			.n_shअगरt = 14,
+			.n_shift = 14,
 			.n_bits = 6,
 			.n_offset = 1,
-			.od_shअगरt = 11,
+			.od_shift = 11,
 			.od_bits = 3,
 			.od_max = 64,
 			.od_encoding = pll_od_encoding,
@@ -153,22 +152,22 @@
 			.bypass_bit = 28,
 			.enable_bit = 0,
 			.stable_bit = 3,
-		पूर्ण,
-	पूर्ण,
+		},
+	},
 
-	[X1830_CLK_EPLL] = अणु
+	[X1830_CLK_EPLL] = {
 		"epll", CGU_CLK_PLL,
-		.parents = अणु X1830_CLK_EXCLK, -1, -1, -1 पूर्ण,
-		.pll = अणु
+		.parents = { X1830_CLK_EXCLK, -1, -1, -1 },
+		.pll = {
 			.reg = CGU_REG_EPLL,
 			.rate_multiplier = 2,
-			.m_shअगरt = 20,
+			.m_shift = 20,
 			.m_bits = 9,
 			.m_offset = 1,
-			.n_shअगरt = 14,
+			.n_shift = 14,
 			.n_bits = 6,
 			.n_offset = 1,
-			.od_shअगरt = 11,
+			.od_shift = 11,
 			.od_bits = 3,
 			.od_max = 64,
 			.od_encoding = pll_od_encoding,
@@ -176,22 +175,22 @@
 			.bypass_bit = 24,
 			.enable_bit = 0,
 			.stable_bit = 3,
-		पूर्ण,
-	पूर्ण,
+		},
+	},
 
-	[X1830_CLK_VPLL] = अणु
+	[X1830_CLK_VPLL] = {
 		"vpll", CGU_CLK_PLL,
-		.parents = अणु X1830_CLK_EXCLK, -1, -1, -1 पूर्ण,
-		.pll = अणु
+		.parents = { X1830_CLK_EXCLK, -1, -1, -1 },
+		.pll = {
 			.reg = CGU_REG_VPLL,
 			.rate_multiplier = 2,
-			.m_shअगरt = 20,
+			.m_shift = 20,
 			.m_bits = 9,
 			.m_offset = 1,
-			.n_shअगरt = 14,
+			.n_shift = 14,
 			.n_bits = 6,
 			.n_offset = 1,
-			.od_shअगरt = 11,
+			.od_shift = 11,
 			.od_bits = 3,
 			.od_max = 64,
 			.od_encoding = pll_od_encoding,
@@ -199,264 +198,264 @@
 			.bypass_bit = 26,
 			.enable_bit = 0,
 			.stable_bit = 3,
-		पूर्ण,
-	पूर्ण,
+		},
+	},
 
-	/* Custom (SoC-specअगरic) OTG PHY */
+	/* Custom (SoC-specific) OTG PHY */
 
-	[X1830_CLK_OTGPHY] = अणु
+	[X1830_CLK_OTGPHY] = {
 		"otg_phy", CGU_CLK_CUSTOM,
-		.parents = अणु X1830_CLK_EXCLK, -1, -1, -1 पूर्ण,
-		.custom = अणु &x1830_otg_phy_ops पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_EXCLK, -1, -1, -1 },
+		.custom = { &x1830_otg_phy_ops },
+	},
 
-	/* Muxes & भागiders */
+	/* Muxes & dividers */
 
-	[X1830_CLK_SCLKA] = अणु
+	[X1830_CLK_SCLKA] = {
 		"sclk_a", CGU_CLK_MUX,
-		.parents = अणु -1, X1830_CLK_EXCLK, X1830_CLK_APLL, -1 पूर्ण,
-		.mux = अणु CGU_REG_CPCCR, 30, 2 पूर्ण,
-	पूर्ण,
+		.parents = { -1, X1830_CLK_EXCLK, X1830_CLK_APLL, -1 },
+		.mux = { CGU_REG_CPCCR, 30, 2 },
+	},
 
-	[X1830_CLK_CPUMUX] = अणु
+	[X1830_CLK_CPUMUX] = {
 		"cpu_mux", CGU_CLK_MUX,
-		.parents = अणु -1, X1830_CLK_SCLKA, X1830_CLK_MPLL, -1 पूर्ण,
-		.mux = अणु CGU_REG_CPCCR, 28, 2 पूर्ण,
-	पूर्ण,
+		.parents = { -1, X1830_CLK_SCLKA, X1830_CLK_MPLL, -1 },
+		.mux = { CGU_REG_CPCCR, 28, 2 },
+	},
 
-	[X1830_CLK_CPU] = अणु
+	[X1830_CLK_CPU] = {
 		"cpu", CGU_CLK_DIV | CGU_CLK_GATE,
-		.parents = अणु X1830_CLK_CPUMUX, -1, -1, -1 पूर्ण,
-		.भाग = अणु CGU_REG_CPCCR, 0, 1, 4, 22, -1, -1 पूर्ण,
-		.gate = अणु CGU_REG_CLKGR1, 15 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_CPUMUX, -1, -1, -1 },
+		.div = { CGU_REG_CPCCR, 0, 1, 4, 22, -1, -1 },
+		.gate = { CGU_REG_CLKGR1, 15 },
+	},
 
-	[X1830_CLK_L2CACHE] = अणु
+	[X1830_CLK_L2CACHE] = {
 		"l2cache", CGU_CLK_DIV,
-		.parents = अणु X1830_CLK_CPUMUX, -1, -1, -1 पूर्ण,
-		.भाग = अणु CGU_REG_CPCCR, 4, 1, 4, 22, -1, -1 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_CPUMUX, -1, -1, -1 },
+		.div = { CGU_REG_CPCCR, 4, 1, 4, 22, -1, -1 },
+	},
 
-	[X1830_CLK_AHB0] = अणु
+	[X1830_CLK_AHB0] = {
 		"ahb0", CGU_CLK_MUX | CGU_CLK_DIV,
-		.parents = अणु -1, X1830_CLK_SCLKA, X1830_CLK_MPLL, -1 पूर्ण,
-		.mux = अणु CGU_REG_CPCCR, 26, 2 पूर्ण,
-		.भाग = अणु CGU_REG_CPCCR, 8, 1, 4, 21, -1, -1 पूर्ण,
-	पूर्ण,
+		.parents = { -1, X1830_CLK_SCLKA, X1830_CLK_MPLL, -1 },
+		.mux = { CGU_REG_CPCCR, 26, 2 },
+		.div = { CGU_REG_CPCCR, 8, 1, 4, 21, -1, -1 },
+	},
 
-	[X1830_CLK_AHB2PMUX] = अणु
+	[X1830_CLK_AHB2PMUX] = {
 		"ahb2_apb_mux", CGU_CLK_MUX,
-		.parents = अणु -1, X1830_CLK_SCLKA, X1830_CLK_MPLL, -1 पूर्ण,
-		.mux = अणु CGU_REG_CPCCR, 24, 2 पूर्ण,
-	पूर्ण,
+		.parents = { -1, X1830_CLK_SCLKA, X1830_CLK_MPLL, -1 },
+		.mux = { CGU_REG_CPCCR, 24, 2 },
+	},
 
-	[X1830_CLK_AHB2] = अणु
+	[X1830_CLK_AHB2] = {
 		"ahb2", CGU_CLK_DIV,
-		.parents = अणु X1830_CLK_AHB2PMUX, -1, -1, -1 पूर्ण,
-		.भाग = अणु CGU_REG_CPCCR, 12, 1, 4, 20, -1, -1 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_AHB2PMUX, -1, -1, -1 },
+		.div = { CGU_REG_CPCCR, 12, 1, 4, 20, -1, -1 },
+	},
 
-	[X1830_CLK_PCLK] = अणु
+	[X1830_CLK_PCLK] = {
 		"pclk", CGU_CLK_DIV | CGU_CLK_GATE,
-		.parents = अणु X1830_CLK_AHB2PMUX, -1, -1, -1 पूर्ण,
-		.भाग = अणु CGU_REG_CPCCR, 16, 1, 4, 20, -1, -1 पूर्ण,
-		.gate = अणु CGU_REG_CLKGR1, 14 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_AHB2PMUX, -1, -1, -1 },
+		.div = { CGU_REG_CPCCR, 16, 1, 4, 20, -1, -1 },
+		.gate = { CGU_REG_CLKGR1, 14 },
+	},
 
-	[X1830_CLK_DDR] = अणु
+	[X1830_CLK_DDR] = {
 		"ddr", CGU_CLK_MUX | CGU_CLK_DIV | CGU_CLK_GATE,
-		.parents = अणु -1, X1830_CLK_SCLKA, X1830_CLK_MPLL, -1 पूर्ण,
-		.mux = अणु CGU_REG_DDRCDR, 30, 2 पूर्ण,
-		.भाग = अणु CGU_REG_DDRCDR, 0, 1, 4, 29, 28, 27 पूर्ण,
-		.gate = अणु CGU_REG_CLKGR0, 31 पूर्ण,
-	पूर्ण,
+		.parents = { -1, X1830_CLK_SCLKA, X1830_CLK_MPLL, -1 },
+		.mux = { CGU_REG_DDRCDR, 30, 2 },
+		.div = { CGU_REG_DDRCDR, 0, 1, 4, 29, 28, 27 },
+		.gate = { CGU_REG_CLKGR0, 31 },
+	},
 
-	[X1830_CLK_MAC] = अणु
+	[X1830_CLK_MAC] = {
 		"mac", CGU_CLK_MUX | CGU_CLK_DIV | CGU_CLK_GATE,
-		.parents = अणु X1830_CLK_SCLKA, X1830_CLK_MPLL,
-					 X1830_CLK_VPLL, X1830_CLK_EPLL पूर्ण,
-		.mux = अणु CGU_REG_MACCDR, 30, 2 पूर्ण,
-		.भाग = अणु CGU_REG_MACCDR, 0, 1, 8, 29, 28, 27 पूर्ण,
-		.gate = अणु CGU_REG_CLKGR1, 4 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_SCLKA, X1830_CLK_MPLL,
+					 X1830_CLK_VPLL, X1830_CLK_EPLL },
+		.mux = { CGU_REG_MACCDR, 30, 2 },
+		.div = { CGU_REG_MACCDR, 0, 1, 8, 29, 28, 27 },
+		.gate = { CGU_REG_CLKGR1, 4 },
+	},
 
-	[X1830_CLK_LCD] = अणु
+	[X1830_CLK_LCD] = {
 		"lcd", CGU_CLK_MUX | CGU_CLK_DIV | CGU_CLK_GATE,
-		.parents = अणु X1830_CLK_SCLKA, X1830_CLK_MPLL,
-					 X1830_CLK_VPLL, X1830_CLK_EPLL पूर्ण,
-		.mux = अणु CGU_REG_LPCDR, 30, 2 पूर्ण,
-		.भाग = अणु CGU_REG_LPCDR, 0, 1, 8, 28, 27, 26 पूर्ण,
-		.gate = अणु CGU_REG_CLKGR1, 9 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_SCLKA, X1830_CLK_MPLL,
+					 X1830_CLK_VPLL, X1830_CLK_EPLL },
+		.mux = { CGU_REG_LPCDR, 30, 2 },
+		.div = { CGU_REG_LPCDR, 0, 1, 8, 28, 27, 26 },
+		.gate = { CGU_REG_CLKGR1, 9 },
+	},
 
-	[X1830_CLK_MSCMUX] = अणु
+	[X1830_CLK_MSCMUX] = {
 		"msc_mux", CGU_CLK_MUX,
-		.parents = अणु X1830_CLK_SCLKA, X1830_CLK_MPLL,
-					 X1830_CLK_VPLL, X1830_CLK_EPLL पूर्ण,
-		.mux = अणु CGU_REG_MSC0CDR, 30, 2 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_SCLKA, X1830_CLK_MPLL,
+					 X1830_CLK_VPLL, X1830_CLK_EPLL },
+		.mux = { CGU_REG_MSC0CDR, 30, 2 },
+	},
 
-	[X1830_CLK_MSC0] = अणु
+	[X1830_CLK_MSC0] = {
 		"msc0", CGU_CLK_DIV | CGU_CLK_GATE,
-		.parents = अणु X1830_CLK_MSCMUX, -1, -1, -1 पूर्ण,
-		.भाग = अणु CGU_REG_MSC0CDR, 0, 2, 8, 29, 28, 27 पूर्ण,
-		.gate = अणु CGU_REG_CLKGR0, 4 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_MSCMUX, -1, -1, -1 },
+		.div = { CGU_REG_MSC0CDR, 0, 2, 8, 29, 28, 27 },
+		.gate = { CGU_REG_CLKGR0, 4 },
+	},
 
-	[X1830_CLK_MSC1] = अणु
+	[X1830_CLK_MSC1] = {
 		"msc1", CGU_CLK_DIV | CGU_CLK_GATE,
-		.parents = अणु X1830_CLK_MSCMUX, -1, -1, -1 पूर्ण,
-		.भाग = अणु CGU_REG_MSC1CDR, 0, 2, 8, 29, 28, 27 पूर्ण,
-		.gate = अणु CGU_REG_CLKGR0, 5 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_MSCMUX, -1, -1, -1 },
+		.div = { CGU_REG_MSC1CDR, 0, 2, 8, 29, 28, 27 },
+		.gate = { CGU_REG_CLKGR0, 5 },
+	},
 
-	[X1830_CLK_SSIPLL] = अणु
+	[X1830_CLK_SSIPLL] = {
 		"ssi_pll", CGU_CLK_MUX | CGU_CLK_DIV,
-		.parents = अणु X1830_CLK_SCLKA, X1830_CLK_MPLL,
-					 X1830_CLK_VPLL, X1830_CLK_EPLL पूर्ण,
-		.mux = अणु CGU_REG_SSICDR, 30, 2 पूर्ण,
-		.भाग = अणु CGU_REG_SSICDR, 0, 1, 8, 28, 27, 26 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_SCLKA, X1830_CLK_MPLL,
+					 X1830_CLK_VPLL, X1830_CLK_EPLL },
+		.mux = { CGU_REG_SSICDR, 30, 2 },
+		.div = { CGU_REG_SSICDR, 0, 1, 8, 28, 27, 26 },
+	},
 
-	[X1830_CLK_SSIPLL_DIV2] = अणु
+	[X1830_CLK_SSIPLL_DIV2] = {
 		"ssi_pll_div2", CGU_CLK_FIXDIV,
-		.parents = अणु X1830_CLK_SSIPLL पूर्ण,
-		.fixभाग = अणु 2 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_SSIPLL },
+		.fixdiv = { 2 },
+	},
 
-	[X1830_CLK_SSIMUX] = अणु
+	[X1830_CLK_SSIMUX] = {
 		"ssi_mux", CGU_CLK_MUX,
-		.parents = अणु X1830_CLK_EXCLK, X1830_CLK_SSIPLL_DIV2, -1, -1 पूर्ण,
-		.mux = अणु CGU_REG_SSICDR, 29, 1 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_EXCLK, X1830_CLK_SSIPLL_DIV2, -1, -1 },
+		.mux = { CGU_REG_SSICDR, 29, 1 },
+	},
 
-	[X1830_CLK_EXCLK_DIV512] = अणु
+	[X1830_CLK_EXCLK_DIV512] = {
 		"exclk_div512", CGU_CLK_FIXDIV,
-		.parents = अणु X1830_CLK_EXCLK पूर्ण,
-		.fixभाग = अणु 512 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_EXCLK },
+		.fixdiv = { 512 },
+	},
 
-	[X1830_CLK_RTC] = अणु
+	[X1830_CLK_RTC] = {
 		"rtc_ercs", CGU_CLK_MUX | CGU_CLK_GATE,
-		.parents = अणु X1830_CLK_EXCLK_DIV512, X1830_CLK_RTCLK पूर्ण,
-		.mux = अणु CGU_REG_OPCR, 2, 1पूर्ण,
-		.gate = अणु CGU_REG_CLKGR0, 29 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_EXCLK_DIV512, X1830_CLK_RTCLK },
+		.mux = { CGU_REG_OPCR, 2, 1},
+		.gate = { CGU_REG_CLKGR0, 29 },
+	},
 
-	/* Gate-only घड़ीs */
+	/* Gate-only clocks */
 
-	[X1830_CLK_EMC] = अणु
+	[X1830_CLK_EMC] = {
 		"emc", CGU_CLK_GATE,
-		.parents = अणु X1830_CLK_AHB2, -1, -1, -1 पूर्ण,
-		.gate = अणु CGU_REG_CLKGR0, 0 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_AHB2, -1, -1, -1 },
+		.gate = { CGU_REG_CLKGR0, 0 },
+	},
 
-	[X1830_CLK_EFUSE] = अणु
+	[X1830_CLK_EFUSE] = {
 		"efuse", CGU_CLK_GATE,
-		.parents = अणु X1830_CLK_AHB2, -1, -1, -1 पूर्ण,
-		.gate = अणु CGU_REG_CLKGR0, 1 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_AHB2, -1, -1, -1 },
+		.gate = { CGU_REG_CLKGR0, 1 },
+	},
 
-	[X1830_CLK_OTG] = अणु
+	[X1830_CLK_OTG] = {
 		"otg", CGU_CLK_GATE,
-		.parents = अणु X1830_CLK_EXCLK, -1, -1, -1 पूर्ण,
-		.gate = अणु CGU_REG_CLKGR0, 3 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_EXCLK, -1, -1, -1 },
+		.gate = { CGU_REG_CLKGR0, 3 },
+	},
 
-	[X1830_CLK_SSI0] = अणु
+	[X1830_CLK_SSI0] = {
 		"ssi0", CGU_CLK_GATE,
-		.parents = अणु X1830_CLK_SSIMUX, -1, -1, -1 पूर्ण,
-		.gate = अणु CGU_REG_CLKGR0, 6 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_SSIMUX, -1, -1, -1 },
+		.gate = { CGU_REG_CLKGR0, 6 },
+	},
 
-	[X1830_CLK_SMB0] = अणु
+	[X1830_CLK_SMB0] = {
 		"smb0", CGU_CLK_GATE,
-		.parents = अणु X1830_CLK_PCLK, -1, -1, -1 पूर्ण,
-		.gate = अणु CGU_REG_CLKGR0, 7 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_PCLK, -1, -1, -1 },
+		.gate = { CGU_REG_CLKGR0, 7 },
+	},
 
-	[X1830_CLK_SMB1] = अणु
+	[X1830_CLK_SMB1] = {
 		"smb1", CGU_CLK_GATE,
-		.parents = अणु X1830_CLK_PCLK, -1, -1, -1 पूर्ण,
-		.gate = अणु CGU_REG_CLKGR0, 8 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_PCLK, -1, -1, -1 },
+		.gate = { CGU_REG_CLKGR0, 8 },
+	},
 
-	[X1830_CLK_SMB2] = अणु
+	[X1830_CLK_SMB2] = {
 		"smb2", CGU_CLK_GATE,
-		.parents = अणु X1830_CLK_PCLK, -1, -1, -1 पूर्ण,
-		.gate = अणु CGU_REG_CLKGR0, 9 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_PCLK, -1, -1, -1 },
+		.gate = { CGU_REG_CLKGR0, 9 },
+	},
 
-	[X1830_CLK_UART0] = अणु
+	[X1830_CLK_UART0] = {
 		"uart0", CGU_CLK_GATE,
-		.parents = अणु X1830_CLK_EXCLK, -1, -1, -1 पूर्ण,
-		.gate = अणु CGU_REG_CLKGR0, 14 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_EXCLK, -1, -1, -1 },
+		.gate = { CGU_REG_CLKGR0, 14 },
+	},
 
-	[X1830_CLK_UART1] = अणु
+	[X1830_CLK_UART1] = {
 		"uart1", CGU_CLK_GATE,
-		.parents = अणु X1830_CLK_EXCLK, -1, -1, -1 पूर्ण,
-		.gate = अणु CGU_REG_CLKGR0, 15 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_EXCLK, -1, -1, -1 },
+		.gate = { CGU_REG_CLKGR0, 15 },
+	},
 
-	[X1830_CLK_SSI1] = अणु
+	[X1830_CLK_SSI1] = {
 		"ssi1", CGU_CLK_GATE,
-		.parents = अणु X1830_CLK_SSIMUX, -1, -1, -1 पूर्ण,
-		.gate = अणु CGU_REG_CLKGR0, 19 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_SSIMUX, -1, -1, -1 },
+		.gate = { CGU_REG_CLKGR0, 19 },
+	},
 
-	[X1830_CLK_SFC] = अणु
+	[X1830_CLK_SFC] = {
 		"sfc", CGU_CLK_GATE,
-		.parents = अणु X1830_CLK_SSIPLL, -1, -1, -1 पूर्ण,
-		.gate = अणु CGU_REG_CLKGR0, 20 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_SSIPLL, -1, -1, -1 },
+		.gate = { CGU_REG_CLKGR0, 20 },
+	},
 
-	[X1830_CLK_PDMA] = अणु
+	[X1830_CLK_PDMA] = {
 		"pdma", CGU_CLK_GATE,
-		.parents = अणु X1830_CLK_EXCLK, -1, -1, -1 पूर्ण,
-		.gate = अणु CGU_REG_CLKGR0, 21 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_EXCLK, -1, -1, -1 },
+		.gate = { CGU_REG_CLKGR0, 21 },
+	},
 
-	[X1830_CLK_TCU] = अणु
+	[X1830_CLK_TCU] = {
 		"tcu", CGU_CLK_GATE,
-		.parents = अणु X1830_CLK_EXCLK, -1, -1, -1 पूर्ण,
-		.gate = अणु CGU_REG_CLKGR0, 30 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_EXCLK, -1, -1, -1 },
+		.gate = { CGU_REG_CLKGR0, 30 },
+	},
 
-	[X1830_CLK_DTRNG] = अणु
+	[X1830_CLK_DTRNG] = {
 		"dtrng", CGU_CLK_GATE,
-		.parents = अणु X1830_CLK_PCLK, -1, -1, -1 पूर्ण,
-		.gate = अणु CGU_REG_CLKGR1, 1 पूर्ण,
-	पूर्ण,
+		.parents = { X1830_CLK_PCLK, -1, -1, -1 },
+		.gate = { CGU_REG_CLKGR1, 1 },
+	},
 
-	[X1830_CLK_OST] = अणु
+	[X1830_CLK_OST] = {
 		"ost", CGU_CLK_GATE,
-		.parents = अणु X1830_CLK_EXCLK, -1, -1, -1 पूर्ण,
-		.gate = अणु CGU_REG_CLKGR1, 11 पूर्ण,
-	पूर्ण,
-पूर्ण;
+		.parents = { X1830_CLK_EXCLK, -1, -1, -1 },
+		.gate = { CGU_REG_CLKGR1, 11 },
+	},
+};
 
-अटल व्योम __init x1830_cgu_init(काष्ठा device_node *np)
-अणु
-	पूर्णांक retval;
+static void __init x1830_cgu_init(struct device_node *np)
+{
+	int retval;
 
-	cgu = ingenic_cgu_new(x1830_cgu_घड़ीs,
-			      ARRAY_SIZE(x1830_cgu_घड़ीs), np);
-	अगर (!cgu) अणु
+	cgu = ingenic_cgu_new(x1830_cgu_clocks,
+			      ARRAY_SIZE(x1830_cgu_clocks), np);
+	if (!cgu) {
 		pr_err("%s: failed to initialise CGU\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	retval = ingenic_cgu_रेजिस्टर_घड़ीs(cgu);
-	अगर (retval) अणु
+	retval = ingenic_cgu_register_clocks(cgu);
+	if (retval) {
 		pr_err("%s: failed to register CGU Clocks\n", __func__);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	ingenic_cgu_रेजिस्टर_syscore_ops(cgu);
-पूर्ण
+	ingenic_cgu_register_syscore_ops(cgu);
+}
 /*
- * CGU has some children devices, this is useful क्रम probing children devices
- * in the हाल where the device node is compatible with "simple-mfd".
+ * CGU has some children devices, this is useful for probing children devices
+ * in the case where the device node is compatible with "simple-mfd".
  */
 CLK_OF_DECLARE_DRIVER(x1830_cgu, "ingenic,x1830-cgu", x1830_cgu_init);

@@ -1,310 +1,309 @@
-<शैली गुरु>
 /*
  * JFFS2 -- Journalling Flash File System, Version 2.
  *
- * Copyright तऊ 2006  NEC Corporation
+ * Copyright © 2006  NEC Corporation
  *
  * Created by KaiGai Kohei <kaigai@ak.jp.nec.com>
  *
- * For licensing inक्रमmation, see the file 'LICENCE' in this directory.
+ * For licensing information, see the file 'LICENCE' in this directory.
  *
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/crc32.h>
-#समावेश <linux/jffs2.h>
-#समावेश <linux/xattr.h>
-#समावेश <linux/posix_acl_xattr.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश "nodelist.h"
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/fs.h>
+#include <linux/sched.h>
+#include <linux/time.h>
+#include <linux/crc32.h>
+#include <linux/jffs2.h>
+#include <linux/xattr.h>
+#include <linux/posix_acl_xattr.h>
+#include <linux/mtd/mtd.h>
+#include "nodelist.h"
 
-अटल माप_प्रकार jffs2_acl_size(पूर्णांक count)
-अणु
-	अगर (count <= 4) अणु
-		वापस माप(काष्ठा jffs2_acl_header)
-		       + count * माप(काष्ठा jffs2_acl_entry_लघु);
-	पूर्ण अन्यथा अणु
-		वापस माप(काष्ठा jffs2_acl_header)
-		       + 4 * माप(काष्ठा jffs2_acl_entry_लघु)
-		       + (count - 4) * माप(काष्ठा jffs2_acl_entry);
-	पूर्ण
-पूर्ण
+static size_t jffs2_acl_size(int count)
+{
+	if (count <= 4) {
+		return sizeof(struct jffs2_acl_header)
+		       + count * sizeof(struct jffs2_acl_entry_short);
+	} else {
+		return sizeof(struct jffs2_acl_header)
+		       + 4 * sizeof(struct jffs2_acl_entry_short)
+		       + (count - 4) * sizeof(struct jffs2_acl_entry);
+	}
+}
 
-अटल पूर्णांक jffs2_acl_count(माप_प्रकार size)
-अणु
-	माप_प्रकार s;
+static int jffs2_acl_count(size_t size)
+{
+	size_t s;
 
-	size -= माप(काष्ठा jffs2_acl_header);
-	अगर (size < 4 * माप(काष्ठा jffs2_acl_entry_लघु)) अणु
-		अगर (size % माप(काष्ठा jffs2_acl_entry_लघु))
-			वापस -1;
-		वापस size / माप(काष्ठा jffs2_acl_entry_लघु);
-	पूर्ण अन्यथा अणु
-		s = size - 4 * माप(काष्ठा jffs2_acl_entry_लघु);
-		अगर (s % माप(काष्ठा jffs2_acl_entry))
-			वापस -1;
-		वापस s / माप(काष्ठा jffs2_acl_entry) + 4;
-	पूर्ण
-पूर्ण
+	size -= sizeof(struct jffs2_acl_header);
+	if (size < 4 * sizeof(struct jffs2_acl_entry_short)) {
+		if (size % sizeof(struct jffs2_acl_entry_short))
+			return -1;
+		return size / sizeof(struct jffs2_acl_entry_short);
+	} else {
+		s = size - 4 * sizeof(struct jffs2_acl_entry_short);
+		if (s % sizeof(struct jffs2_acl_entry))
+			return -1;
+		return s / sizeof(struct jffs2_acl_entry) + 4;
+	}
+}
 
-अटल काष्ठा posix_acl *jffs2_acl_from_medium(व्योम *value, माप_प्रकार size)
-अणु
-	व्योम *end = value + size;
-	काष्ठा jffs2_acl_header *header = value;
-	काष्ठा jffs2_acl_entry *entry;
-	काष्ठा posix_acl *acl;
-	uपूर्णांक32_t ver;
-	पूर्णांक i, count;
+static struct posix_acl *jffs2_acl_from_medium(void *value, size_t size)
+{
+	void *end = value + size;
+	struct jffs2_acl_header *header = value;
+	struct jffs2_acl_entry *entry;
+	struct posix_acl *acl;
+	uint32_t ver;
+	int i, count;
 
-	अगर (!value)
-		वापस शून्य;
-	अगर (size < माप(काष्ठा jffs2_acl_header))
-		वापस ERR_PTR(-EINVAL);
+	if (!value)
+		return NULL;
+	if (size < sizeof(struct jffs2_acl_header))
+		return ERR_PTR(-EINVAL);
 	ver = je32_to_cpu(header->a_version);
-	अगर (ver != JFFS2_ACL_VERSION) अणु
+	if (ver != JFFS2_ACL_VERSION) {
 		JFFS2_WARNING("Invalid ACL version. (=%u)\n", ver);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 
-	value += माप(काष्ठा jffs2_acl_header);
+	value += sizeof(struct jffs2_acl_header);
 	count = jffs2_acl_count(size);
-	अगर (count < 0)
-		वापस ERR_PTR(-EINVAL);
-	अगर (count == 0)
-		वापस शून्य;
+	if (count < 0)
+		return ERR_PTR(-EINVAL);
+	if (count == 0)
+		return NULL;
 
 	acl = posix_acl_alloc(count, GFP_KERNEL);
-	अगर (!acl)
-		वापस ERR_PTR(-ENOMEM);
+	if (!acl)
+		return ERR_PTR(-ENOMEM);
 
-	क्रम (i=0; i < count; i++) अणु
+	for (i=0; i < count; i++) {
 		entry = value;
-		अगर (value + माप(काष्ठा jffs2_acl_entry_लघु) > end)
-			जाओ fail;
+		if (value + sizeof(struct jffs2_acl_entry_short) > end)
+			goto fail;
 		acl->a_entries[i].e_tag = je16_to_cpu(entry->e_tag);
 		acl->a_entries[i].e_perm = je16_to_cpu(entry->e_perm);
-		चयन (acl->a_entries[i].e_tag) अणु
-			हाल ACL_USER_OBJ:
-			हाल ACL_GROUP_OBJ:
-			हाल ACL_MASK:
-			हाल ACL_OTHER:
-				value += माप(काष्ठा jffs2_acl_entry_लघु);
-				अवरोध;
+		switch (acl->a_entries[i].e_tag) {
+			case ACL_USER_OBJ:
+			case ACL_GROUP_OBJ:
+			case ACL_MASK:
+			case ACL_OTHER:
+				value += sizeof(struct jffs2_acl_entry_short);
+				break;
 
-			हाल ACL_USER:
-				value += माप(काष्ठा jffs2_acl_entry);
-				अगर (value > end)
-					जाओ fail;
+			case ACL_USER:
+				value += sizeof(struct jffs2_acl_entry);
+				if (value > end)
+					goto fail;
 				acl->a_entries[i].e_uid =
 					make_kuid(&init_user_ns,
 						  je32_to_cpu(entry->e_id));
-				अवरोध;
-			हाल ACL_GROUP:
-				value += माप(काष्ठा jffs2_acl_entry);
-				अगर (value > end)
-					जाओ fail;
+				break;
+			case ACL_GROUP:
+				value += sizeof(struct jffs2_acl_entry);
+				if (value > end)
+					goto fail;
 				acl->a_entries[i].e_gid =
 					make_kgid(&init_user_ns,
 						  je32_to_cpu(entry->e_id));
-				अवरोध;
+				break;
 
-			शेष:
-				जाओ fail;
-		पूर्ण
-	पूर्ण
-	अगर (value != end)
-		जाओ fail;
-	वापस acl;
+			default:
+				goto fail;
+		}
+	}
+	if (value != end)
+		goto fail;
+	return acl;
  fail:
 	posix_acl_release(acl);
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
+	return ERR_PTR(-EINVAL);
+}
 
-अटल व्योम *jffs2_acl_to_medium(स्थिर काष्ठा posix_acl *acl, माप_प्रकार *size)
-अणु
-	काष्ठा jffs2_acl_header *header;
-	काष्ठा jffs2_acl_entry *entry;
-	व्योम *e;
-	माप_प्रकार i;
+static void *jffs2_acl_to_medium(const struct posix_acl *acl, size_t *size)
+{
+	struct jffs2_acl_header *header;
+	struct jffs2_acl_entry *entry;
+	void *e;
+	size_t i;
 
 	*size = jffs2_acl_size(acl->a_count);
-	header = kदो_स्मृति(काष्ठा_size(header, a_entries, acl->a_count),
+	header = kmalloc(struct_size(header, a_entries, acl->a_count),
 			GFP_KERNEL);
-	अगर (!header)
-		वापस ERR_PTR(-ENOMEM);
+	if (!header)
+		return ERR_PTR(-ENOMEM);
 	header->a_version = cpu_to_je32(JFFS2_ACL_VERSION);
 	e = header + 1;
-	क्रम (i=0; i < acl->a_count; i++) अणु
-		स्थिर काष्ठा posix_acl_entry *acl_e = &acl->a_entries[i];
+	for (i=0; i < acl->a_count; i++) {
+		const struct posix_acl_entry *acl_e = &acl->a_entries[i];
 		entry = e;
 		entry->e_tag = cpu_to_je16(acl_e->e_tag);
 		entry->e_perm = cpu_to_je16(acl_e->e_perm);
-		चयन(acl_e->e_tag) अणु
-			हाल ACL_USER:
+		switch(acl_e->e_tag) {
+			case ACL_USER:
 				entry->e_id = cpu_to_je32(
 					from_kuid(&init_user_ns, acl_e->e_uid));
-				e += माप(काष्ठा jffs2_acl_entry);
-				अवरोध;
-			हाल ACL_GROUP:
+				e += sizeof(struct jffs2_acl_entry);
+				break;
+			case ACL_GROUP:
 				entry->e_id = cpu_to_je32(
 					from_kgid(&init_user_ns, acl_e->e_gid));
-				e += माप(काष्ठा jffs2_acl_entry);
-				अवरोध;
+				e += sizeof(struct jffs2_acl_entry);
+				break;
 
-			हाल ACL_USER_OBJ:
-			हाल ACL_GROUP_OBJ:
-			हाल ACL_MASK:
-			हाल ACL_OTHER:
-				e += माप(काष्ठा jffs2_acl_entry_लघु);
-				अवरोध;
+			case ACL_USER_OBJ:
+			case ACL_GROUP_OBJ:
+			case ACL_MASK:
+			case ACL_OTHER:
+				e += sizeof(struct jffs2_acl_entry_short);
+				break;
 
-			शेष:
-				जाओ fail;
-		पूर्ण
-	पूर्ण
-	वापस header;
+			default:
+				goto fail;
+		}
+	}
+	return header;
  fail:
-	kमुक्त(header);
-	वापस ERR_PTR(-EINVAL);
-पूर्ण
+	kfree(header);
+	return ERR_PTR(-EINVAL);
+}
 
-काष्ठा posix_acl *jffs2_get_acl(काष्ठा inode *inode, पूर्णांक type)
-अणु
-	काष्ठा posix_acl *acl;
-	अक्षर *value = शून्य;
-	पूर्णांक rc, xprefix;
+struct posix_acl *jffs2_get_acl(struct inode *inode, int type)
+{
+	struct posix_acl *acl;
+	char *value = NULL;
+	int rc, xprefix;
 
-	चयन (type) अणु
-	हाल ACL_TYPE_ACCESS:
+	switch (type) {
+	case ACL_TYPE_ACCESS:
 		xprefix = JFFS2_XPREFIX_ACL_ACCESS;
-		अवरोध;
-	हाल ACL_TYPE_DEFAULT:
+		break;
+	case ACL_TYPE_DEFAULT:
 		xprefix = JFFS2_XPREFIX_ACL_DEFAULT;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		BUG();
-	पूर्ण
-	rc = करो_jffs2_getxattr(inode, xprefix, "", शून्य, 0);
-	अगर (rc > 0) अणु
-		value = kदो_स्मृति(rc, GFP_KERNEL);
-		अगर (!value)
-			वापस ERR_PTR(-ENOMEM);
-		rc = करो_jffs2_getxattr(inode, xprefix, "", value, rc);
-	पूर्ण
-	अगर (rc > 0) अणु
+	}
+	rc = do_jffs2_getxattr(inode, xprefix, "", NULL, 0);
+	if (rc > 0) {
+		value = kmalloc(rc, GFP_KERNEL);
+		if (!value)
+			return ERR_PTR(-ENOMEM);
+		rc = do_jffs2_getxattr(inode, xprefix, "", value, rc);
+	}
+	if (rc > 0) {
 		acl = jffs2_acl_from_medium(value, rc);
-	पूर्ण अन्यथा अगर (rc == -ENODATA || rc == -ENOSYS) अणु
-		acl = शून्य;
-	पूर्ण अन्यथा अणु
+	} else if (rc == -ENODATA || rc == -ENOSYS) {
+		acl = NULL;
+	} else {
 		acl = ERR_PTR(rc);
-	पूर्ण
-	kमुक्त(value);
-	वापस acl;
-पूर्ण
+	}
+	kfree(value);
+	return acl;
+}
 
-अटल पूर्णांक __jffs2_set_acl(काष्ठा inode *inode, पूर्णांक xprefix, काष्ठा posix_acl *acl)
-अणु
-	अक्षर *value = शून्य;
-	माप_प्रकार size = 0;
-	पूर्णांक rc;
+static int __jffs2_set_acl(struct inode *inode, int xprefix, struct posix_acl *acl)
+{
+	char *value = NULL;
+	size_t size = 0;
+	int rc;
 
-	अगर (acl) अणु
+	if (acl) {
 		value = jffs2_acl_to_medium(acl, &size);
-		अगर (IS_ERR(value))
-			वापस PTR_ERR(value);
-	पूर्ण
-	rc = करो_jffs2_setxattr(inode, xprefix, "", value, size, 0);
-	अगर (!value && rc == -ENODATA)
+		if (IS_ERR(value))
+			return PTR_ERR(value);
+	}
+	rc = do_jffs2_setxattr(inode, xprefix, "", value, size, 0);
+	if (!value && rc == -ENODATA)
 		rc = 0;
-	kमुक्त(value);
+	kfree(value);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक jffs2_set_acl(काष्ठा user_namespace *mnt_userns, काष्ठा inode *inode,
-		  काष्ठा posix_acl *acl, पूर्णांक type)
-अणु
-	पूर्णांक rc, xprefix;
+int jffs2_set_acl(struct user_namespace *mnt_userns, struct inode *inode,
+		  struct posix_acl *acl, int type)
+{
+	int rc, xprefix;
 
-	चयन (type) अणु
-	हाल ACL_TYPE_ACCESS:
+	switch (type) {
+	case ACL_TYPE_ACCESS:
 		xprefix = JFFS2_XPREFIX_ACL_ACCESS;
-		अगर (acl) अणु
+		if (acl) {
 			umode_t mode;
 
 			rc = posix_acl_update_mode(&init_user_ns, inode, &mode,
 						   &acl);
-			अगर (rc)
-				वापस rc;
-			अगर (inode->i_mode != mode) अणु
-				काष्ठा iattr attr;
+			if (rc)
+				return rc;
+			if (inode->i_mode != mode) {
+				struct iattr attr;
 
 				attr.ia_valid = ATTR_MODE | ATTR_CTIME;
 				attr.ia_mode = mode;
-				attr.ia_स_समय = current_समय(inode);
-				rc = jffs2_करो_setattr(inode, &attr);
-				अगर (rc < 0)
-					वापस rc;
-			पूर्ण
-		पूर्ण
-		अवरोध;
-	हाल ACL_TYPE_DEFAULT:
+				attr.ia_ctime = current_time(inode);
+				rc = jffs2_do_setattr(inode, &attr);
+				if (rc < 0)
+					return rc;
+			}
+		}
+		break;
+	case ACL_TYPE_DEFAULT:
 		xprefix = JFFS2_XPREFIX_ACL_DEFAULT;
-		अगर (!S_ISसूची(inode->i_mode))
-			वापस acl ? -EACCES : 0;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		if (!S_ISDIR(inode->i_mode))
+			return acl ? -EACCES : 0;
+		break;
+	default:
+		return -EINVAL;
+	}
 	rc = __jffs2_set_acl(inode, xprefix, acl);
-	अगर (!rc)
+	if (!rc)
 		set_cached_acl(inode, type, acl);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-पूर्णांक jffs2_init_acl_pre(काष्ठा inode *dir_i, काष्ठा inode *inode, umode_t *i_mode)
-अणु
-	काष्ठा posix_acl *शेष_acl, *acl;
-	पूर्णांक rc;
+int jffs2_init_acl_pre(struct inode *dir_i, struct inode *inode, umode_t *i_mode)
+{
+	struct posix_acl *default_acl, *acl;
+	int rc;
 
 	cache_no_acl(inode);
 
-	rc = posix_acl_create(dir_i, i_mode, &शेष_acl, &acl);
-	अगर (rc)
-		वापस rc;
+	rc = posix_acl_create(dir_i, i_mode, &default_acl, &acl);
+	if (rc)
+		return rc;
 
-	अगर (शेष_acl) अणु
-		set_cached_acl(inode, ACL_TYPE_DEFAULT, शेष_acl);
-		posix_acl_release(शेष_acl);
-	पूर्ण
-	अगर (acl) अणु
+	if (default_acl) {
+		set_cached_acl(inode, ACL_TYPE_DEFAULT, default_acl);
+		posix_acl_release(default_acl);
+	}
+	if (acl) {
 		set_cached_acl(inode, ACL_TYPE_ACCESS, acl);
 		posix_acl_release(acl);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-पूर्णांक jffs2_init_acl_post(काष्ठा inode *inode)
-अणु
-	पूर्णांक rc;
+int jffs2_init_acl_post(struct inode *inode)
+{
+	int rc;
 
-	अगर (inode->i_शेष_acl) अणु
-		rc = __jffs2_set_acl(inode, JFFS2_XPREFIX_ACL_DEFAULT, inode->i_शेष_acl);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+	if (inode->i_default_acl) {
+		rc = __jffs2_set_acl(inode, JFFS2_XPREFIX_ACL_DEFAULT, inode->i_default_acl);
+		if (rc)
+			return rc;
+	}
 
-	अगर (inode->i_acl) अणु
+	if (inode->i_acl) {
 		rc = __jffs2_set_acl(inode, JFFS2_XPREFIX_ACL_ACCESS, inode->i_acl);
-		अगर (rc)
-			वापस rc;
-	पूर्ण
+		if (rc)
+			return rc;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

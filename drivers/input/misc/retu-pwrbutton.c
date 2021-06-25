@@ -1,61 +1,60 @@
-<शैली गुरु>
 /*
- * Retu घातer button driver.
+ * Retu power button driver.
  *
  * Copyright (C) 2004-2010 Nokia Corporation
  *
- * Original code written by Ari Saastamoinen, Juha Yrjथघlथअ and Felipe Balbi.
+ * Original code written by Ari Saastamoinen, Juha Yrjölä and Felipe Balbi.
  * Rewritten by Aaro Koskinen.
  *
  * This file is subject to the terms and conditions of the GNU General
- * Public License. See the file "COPYING" in the मुख्य directory of this
- * archive क्रम more details.
+ * Public License. See the file "COPYING" in the main directory of this
+ * archive for more details.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  */
 
-#समावेश <linux/irq.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/input.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mfd/retu.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/platक्रमm_device.h>
+#include <linux/irq.h>
+#include <linux/slab.h>
+#include <linux/errno.h>
+#include <linux/input.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/mfd/retu.h>
+#include <linux/interrupt.h>
+#include <linux/platform_device.h>
 
-#घोषणा RETU_STATUS_PWRONX (1 << 5)
+#define RETU_STATUS_PWRONX (1 << 5)
 
-अटल irqवापस_t retu_pwrbutton_irq(पूर्णांक irq, व्योम *_pwr)
-अणु
-	काष्ठा input_dev *idev = _pwr;
-	काष्ठा retu_dev *rdev = input_get_drvdata(idev);
+static irqreturn_t retu_pwrbutton_irq(int irq, void *_pwr)
+{
+	struct input_dev *idev = _pwr;
+	struct retu_dev *rdev = input_get_drvdata(idev);
 	bool state;
 
-	state = !(retu_पढ़ो(rdev, RETU_REG_STATUS) & RETU_STATUS_PWRONX);
+	state = !(retu_read(rdev, RETU_REG_STATUS) & RETU_STATUS_PWRONX);
 	input_report_key(idev, KEY_POWER, state);
 	input_sync(idev);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक retu_pwrbutton_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा retu_dev *rdev = dev_get_drvdata(pdev->dev.parent);
-	काष्ठा input_dev *idev;
-	पूर्णांक irq;
-	पूर्णांक error;
+static int retu_pwrbutton_probe(struct platform_device *pdev)
+{
+	struct retu_dev *rdev = dev_get_drvdata(pdev->dev.parent);
+	struct input_dev *idev;
+	int irq;
+	int error;
 
-	irq = platक्रमm_get_irq(pdev, 0);
-	अगर (irq < 0)
-		वापस irq;
+	irq = platform_get_irq(pdev, 0);
+	if (irq < 0)
+		return irq;
 
 	idev = devm_input_allocate_device(&pdev->dev);
-	अगर (!idev)
-		वापस -ENOMEM;
+	if (!idev)
+		return -ENOMEM;
 
 	idev->name = "retu-pwrbutton";
 	idev->dev.parent = &pdev->dev;
@@ -63,27 +62,27 @@
 	input_set_capability(idev, EV_KEY, KEY_POWER);
 	input_set_drvdata(idev, rdev);
 
-	error = devm_request_thपढ़ोed_irq(&pdev->dev, irq,
-					  शून्य, retu_pwrbutton_irq,
+	error = devm_request_threaded_irq(&pdev->dev, irq,
+					  NULL, retu_pwrbutton_irq,
 					  IRQF_ONESHOT,
 					  "retu-pwrbutton", idev);
-	अगर (error)
-		वापस error;
+	if (error)
+		return error;
 
-	error = input_रेजिस्टर_device(idev);
-	अगर (error)
-		वापस error;
+	error = input_register_device(idev);
+	if (error)
+		return error;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा platक्रमm_driver retu_pwrbutton_driver = अणु
+static struct platform_driver retu_pwrbutton_driver = {
 	.probe		= retu_pwrbutton_probe,
-	.driver		= अणु
+	.driver		= {
 		.name	= "retu-pwrbutton",
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(retu_pwrbutton_driver);
+	},
+};
+module_platform_driver(retu_pwrbutton_driver);
 
 MODULE_ALIAS("platform:retu-pwrbutton");
 MODULE_DESCRIPTION("Retu Power Button");

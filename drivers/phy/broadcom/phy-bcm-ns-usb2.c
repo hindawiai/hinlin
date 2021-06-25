@@ -1,132 +1,131 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Broadcom Northstar USB 2.0 PHY Driver
  *
- * Copyright (C) 2016 Rafaध Miधecki <zajec5@gmail.com>
+ * Copyright (C) 2016 Rafał Miłecki <zajec5@gmail.com>
  */
 
-#समावेश <linux/bcma/bcma.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/err.h>
-#समावेश <linux/module.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/of_platक्रमm.h>
-#समावेश <linux/phy/phy.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/slab.h>
+#include <linux/bcma/bcma.h>
+#include <linux/clk.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/module.h>
+#include <linux/of_address.h>
+#include <linux/of_platform.h>
+#include <linux/phy/phy.h>
+#include <linux/platform_device.h>
+#include <linux/slab.h>
 
-काष्ठा bcm_ns_usb2 अणु
-	काष्ठा device *dev;
-	काष्ठा clk *ref_clk;
-	काष्ठा phy *phy;
-	व्योम __iomem *dmu;
-पूर्ण;
+struct bcm_ns_usb2 {
+	struct device *dev;
+	struct clk *ref_clk;
+	struct phy *phy;
+	void __iomem *dmu;
+};
 
-अटल पूर्णांक bcm_ns_usb2_phy_init(काष्ठा phy *phy)
-अणु
-	काष्ठा bcm_ns_usb2 *usb2 = phy_get_drvdata(phy);
-	काष्ठा device *dev = usb2->dev;
-	व्योम __iomem *dmu = usb2->dmu;
-	u32 ref_clk_rate, usb2ctl, usb_pll_nभाग, usb_pll_pभाग;
-	पूर्णांक err = 0;
+static int bcm_ns_usb2_phy_init(struct phy *phy)
+{
+	struct bcm_ns_usb2 *usb2 = phy_get_drvdata(phy);
+	struct device *dev = usb2->dev;
+	void __iomem *dmu = usb2->dmu;
+	u32 ref_clk_rate, usb2ctl, usb_pll_ndiv, usb_pll_pdiv;
+	int err = 0;
 
 	err = clk_prepare_enable(usb2->ref_clk);
-	अगर (err < 0) अणु
+	if (err < 0) {
 		dev_err(dev, "Failed to prepare ref clock: %d\n", err);
-		जाओ err_out;
-	पूर्ण
+		goto err_out;
+	}
 
 	ref_clk_rate = clk_get_rate(usb2->ref_clk);
-	अगर (!ref_clk_rate) अणु
+	if (!ref_clk_rate) {
 		dev_err(dev, "Failed to get ref clock rate\n");
 		err = -EINVAL;
-		जाओ err_clk_off;
-	पूर्ण
+		goto err_clk_off;
+	}
 
-	usb2ctl = पढ़ोl(dmu + BCMA_DMU_CRU_USB2_CONTROL);
+	usb2ctl = readl(dmu + BCMA_DMU_CRU_USB2_CONTROL);
 
-	अगर (usb2ctl & BCMA_DMU_CRU_USB2_CONTROL_USB_PLL_PDIV_MASK) अणु
-		usb_pll_pभाग = usb2ctl;
-		usb_pll_pभाग &= BCMA_DMU_CRU_USB2_CONTROL_USB_PLL_PDIV_MASK;
-		usb_pll_pभाग >>= BCMA_DMU_CRU_USB2_CONTROL_USB_PLL_PDIV_SHIFT;
-	पूर्ण अन्यथा अणु
-		usb_pll_pभाग = 1 << 3;
-	पूर्ण
+	if (usb2ctl & BCMA_DMU_CRU_USB2_CONTROL_USB_PLL_PDIV_MASK) {
+		usb_pll_pdiv = usb2ctl;
+		usb_pll_pdiv &= BCMA_DMU_CRU_USB2_CONTROL_USB_PLL_PDIV_MASK;
+		usb_pll_pdiv >>= BCMA_DMU_CRU_USB2_CONTROL_USB_PLL_PDIV_SHIFT;
+	} else {
+		usb_pll_pdiv = 1 << 3;
+	}
 
-	/* Calculate nभाग based on a solid 1920 MHz that is क्रम USB2 PHY */
-	usb_pll_nभाग = (1920000000 * usb_pll_pभाग) / ref_clk_rate;
+	/* Calculate ndiv based on a solid 1920 MHz that is for USB2 PHY */
+	usb_pll_ndiv = (1920000000 * usb_pll_pdiv) / ref_clk_rate;
 
 	/* Unlock DMU PLL settings with some magic value */
-	ग_लिखोl(0x0000ea68, dmu + BCMA_DMU_CRU_CLKSET_KEY);
+	writel(0x0000ea68, dmu + BCMA_DMU_CRU_CLKSET_KEY);
 
 	/* Write USB 2.0 PLL control setting */
 	usb2ctl &= ~BCMA_DMU_CRU_USB2_CONTROL_USB_PLL_NDIV_MASK;
-	usb2ctl |= usb_pll_nभाग << BCMA_DMU_CRU_USB2_CONTROL_USB_PLL_NDIV_SHIFT;
-	ग_लिखोl(usb2ctl, dmu + BCMA_DMU_CRU_USB2_CONTROL);
+	usb2ctl |= usb_pll_ndiv << BCMA_DMU_CRU_USB2_CONTROL_USB_PLL_NDIV_SHIFT;
+	writel(usb2ctl, dmu + BCMA_DMU_CRU_USB2_CONTROL);
 
 	/* Lock DMU PLL settings */
-	ग_लिखोl(0x00000000, dmu + BCMA_DMU_CRU_CLKSET_KEY);
+	writel(0x00000000, dmu + BCMA_DMU_CRU_CLKSET_KEY);
 
 err_clk_off:
 	clk_disable_unprepare(usb2->ref_clk);
 err_out:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल स्थिर काष्ठा phy_ops ops = अणु
+static const struct phy_ops ops = {
 	.init		= bcm_ns_usb2_phy_init,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक bcm_ns_usb2_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा bcm_ns_usb2 *usb2;
-	काष्ठा phy_provider *phy_provider;
+static int bcm_ns_usb2_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct bcm_ns_usb2 *usb2;
+	struct phy_provider *phy_provider;
 
-	usb2 = devm_kzalloc(&pdev->dev, माप(*usb2), GFP_KERNEL);
-	अगर (!usb2)
-		वापस -ENOMEM;
+	usb2 = devm_kzalloc(&pdev->dev, sizeof(*usb2), GFP_KERNEL);
+	if (!usb2)
+		return -ENOMEM;
 	usb2->dev = dev;
 
-	usb2->dmu = devm_platक्रमm_ioremap_resource_byname(pdev, "dmu");
-	अगर (IS_ERR(usb2->dmu)) अणु
+	usb2->dmu = devm_platform_ioremap_resource_byname(pdev, "dmu");
+	if (IS_ERR(usb2->dmu)) {
 		dev_err(dev, "Failed to map DMU regs\n");
-		वापस PTR_ERR(usb2->dmu);
-	पूर्ण
+		return PTR_ERR(usb2->dmu);
+	}
 
 	usb2->ref_clk = devm_clk_get(dev, "phy-ref-clk");
-	अगर (IS_ERR(usb2->ref_clk)) अणु
+	if (IS_ERR(usb2->ref_clk)) {
 		dev_err(dev, "Clock not defined\n");
-		वापस PTR_ERR(usb2->ref_clk);
-	पूर्ण
+		return PTR_ERR(usb2->ref_clk);
+	}
 
-	usb2->phy = devm_phy_create(dev, शून्य, &ops);
-	अगर (IS_ERR(usb2->phy))
-		वापस PTR_ERR(usb2->phy);
+	usb2->phy = devm_phy_create(dev, NULL, &ops);
+	if (IS_ERR(usb2->phy))
+		return PTR_ERR(usb2->phy);
 
 	phy_set_drvdata(usb2->phy, usb2);
-	platक्रमm_set_drvdata(pdev, usb2);
+	platform_set_drvdata(pdev, usb2);
 
-	phy_provider = devm_of_phy_provider_रेजिस्टर(dev, of_phy_simple_xlate);
-	वापस PTR_ERR_OR_ZERO(phy_provider);
-पूर्ण
+	phy_provider = devm_of_phy_provider_register(dev, of_phy_simple_xlate);
+	return PTR_ERR_OR_ZERO(phy_provider);
+}
 
-अटल स्थिर काष्ठा of_device_id bcm_ns_usb2_id_table[] = अणु
-	अणु .compatible = "brcm,ns-usb2-phy", पूर्ण,
-	अणुपूर्ण,
-पूर्ण;
+static const struct of_device_id bcm_ns_usb2_id_table[] = {
+	{ .compatible = "brcm,ns-usb2-phy", },
+	{},
+};
 MODULE_DEVICE_TABLE(of, bcm_ns_usb2_id_table);
 
-अटल काष्ठा platक्रमm_driver bcm_ns_usb2_driver = अणु
+static struct platform_driver bcm_ns_usb2_driver = {
 	.probe		= bcm_ns_usb2_probe,
-	.driver = अणु
+	.driver = {
 		.name = "bcm_ns_usb2",
 		.of_match_table = bcm_ns_usb2_id_table,
-	पूर्ण,
-पूर्ण;
-module_platक्रमm_driver(bcm_ns_usb2_driver);
+	},
+};
+module_platform_driver(bcm_ns_usb2_driver);
 
 MODULE_LICENSE("GPL v2");

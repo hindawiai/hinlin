@@ -1,139 +1,138 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#अगर_अघोषित __INTEL_MEMORY_REGION_H__
-#घोषणा __INTEL_MEMORY_REGION_H__
+#ifndef __INTEL_MEMORY_REGION_H__
+#define __INTEL_MEMORY_REGION_H__
 
-#समावेश <linux/kref.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/io-mapping.h>
-#समावेश <drm/drm_mm.h>
+#include <linux/kref.h>
+#include <linux/ioport.h>
+#include <linux/mutex.h>
+#include <linux/io-mapping.h>
+#include <drm/drm_mm.h>
 
-#समावेश "i915_buddy.h"
+#include "i915_buddy.h"
 
-काष्ठा drm_i915_निजी;
-काष्ठा drm_i915_gem_object;
-काष्ठा पूर्णांकel_memory_region;
-काष्ठा sg_table;
+struct drm_i915_private;
+struct drm_i915_gem_object;
+struct intel_memory_region;
+struct sg_table;
 
 /**
  *  Base memory type
  */
-क्रमागत पूर्णांकel_memory_type अणु
+enum intel_memory_type {
 	INTEL_MEMORY_SYSTEM = 0,
 	INTEL_MEMORY_LOCAL,
 	INTEL_MEMORY_STOLEN_SYSTEM,
-पूर्ण;
+};
 
-क्रमागत पूर्णांकel_region_id अणु
+enum intel_region_id {
 	INTEL_REGION_SMEM = 0,
 	INTEL_REGION_LMEM,
 	INTEL_REGION_STOLEN_SMEM,
 	INTEL_REGION_UNKNOWN, /* Should be last */
-पूर्ण;
+};
 
-#घोषणा REGION_SMEM     BIT(INTEL_REGION_SMEM)
-#घोषणा REGION_LMEM     BIT(INTEL_REGION_LMEM)
-#घोषणा REGION_STOLEN_SMEM   BIT(INTEL_REGION_STOLEN_SMEM)
+#define REGION_SMEM     BIT(INTEL_REGION_SMEM)
+#define REGION_LMEM     BIT(INTEL_REGION_LMEM)
+#define REGION_STOLEN_SMEM   BIT(INTEL_REGION_STOLEN_SMEM)
 
-#घोषणा I915_ALLOC_MIN_PAGE_SIZE  BIT(0)
-#घोषणा I915_ALLOC_CONTIGUOUS     BIT(1)
+#define I915_ALLOC_MIN_PAGE_SIZE  BIT(0)
+#define I915_ALLOC_CONTIGUOUS     BIT(1)
 
-#घोषणा क्रम_each_memory_region(mr, i915, id) \
-	क्रम (id = 0; id < ARRAY_SIZE((i915)->mm.regions); id++) \
-		क्रम_each_अगर((mr) = (i915)->mm.regions[id])
+#define for_each_memory_region(mr, i915, id) \
+	for (id = 0; id < ARRAY_SIZE((i915)->mm.regions); id++) \
+		for_each_if((mr) = (i915)->mm.regions[id])
 
-काष्ठा पूर्णांकel_memory_region_ops अणु
-	अचिन्हित पूर्णांक flags;
+struct intel_memory_region_ops {
+	unsigned int flags;
 
-	पूर्णांक (*init)(काष्ठा पूर्णांकel_memory_region *mem);
-	व्योम (*release)(काष्ठा पूर्णांकel_memory_region *mem);
+	int (*init)(struct intel_memory_region *mem);
+	void (*release)(struct intel_memory_region *mem);
 
-	पूर्णांक (*init_object)(काष्ठा पूर्णांकel_memory_region *mem,
-			   काष्ठा drm_i915_gem_object *obj,
-			   resource_माप_प्रकार size,
-			   अचिन्हित पूर्णांक flags);
-पूर्ण;
+	int (*init_object)(struct intel_memory_region *mem,
+			   struct drm_i915_gem_object *obj,
+			   resource_size_t size,
+			   unsigned int flags);
+};
 
-काष्ठा पूर्णांकel_memory_region अणु
-	काष्ठा drm_i915_निजी *i915;
+struct intel_memory_region {
+	struct drm_i915_private *i915;
 
-	स्थिर काष्ठा पूर्णांकel_memory_region_ops *ops;
+	const struct intel_memory_region_ops *ops;
 
-	काष्ठा io_mapping iomap;
-	काष्ठा resource region;
+	struct io_mapping iomap;
+	struct resource region;
 
 	/* For fake LMEM */
-	काष्ठा drm_mm_node fake_mappable;
+	struct drm_mm_node fake_mappable;
 
-	काष्ठा i915_buddy_mm mm;
-	काष्ठा mutex mm_lock;
+	struct i915_buddy_mm mm;
+	struct mutex mm_lock;
 
-	काष्ठा kref kref;
+	struct kref kref;
 
-	resource_माप_प्रकार io_start;
-	resource_माप_प्रकार min_page_size;
-	resource_माप_प्रकार total;
-	resource_माप_प्रकार avail;
+	resource_size_t io_start;
+	resource_size_t min_page_size;
+	resource_size_t total;
+	resource_size_t avail;
 
 	u16 type;
 	u16 instance;
-	क्रमागत पूर्णांकel_region_id id;
-	अक्षर name[8];
+	enum intel_region_id id;
+	char name[8];
 
-	काष्ठा list_head reserved;
+	struct list_head reserved;
 
 	dma_addr_t remap_addr;
 
-	काष्ठा अणु
-		काष्ठा mutex lock; /* Protects access to objects */
-		काष्ठा list_head list;
-		काष्ठा list_head purgeable;
-	पूर्ण objects;
-पूर्ण;
+	struct {
+		struct mutex lock; /* Protects access to objects */
+		struct list_head list;
+		struct list_head purgeable;
+	} objects;
+};
 
-पूर्णांक पूर्णांकel_memory_region_init_buddy(काष्ठा पूर्णांकel_memory_region *mem);
-व्योम पूर्णांकel_memory_region_release_buddy(काष्ठा पूर्णांकel_memory_region *mem);
+int intel_memory_region_init_buddy(struct intel_memory_region *mem);
+void intel_memory_region_release_buddy(struct intel_memory_region *mem);
 
-पूर्णांक __पूर्णांकel_memory_region_get_pages_buddy(काष्ठा पूर्णांकel_memory_region *mem,
-					  resource_माप_प्रकार size,
-					  अचिन्हित पूर्णांक flags,
-					  काष्ठा list_head *blocks);
-काष्ठा i915_buddy_block *
-__पूर्णांकel_memory_region_get_block_buddy(काष्ठा पूर्णांकel_memory_region *mem,
-				      resource_माप_प्रकार size,
-				      अचिन्हित पूर्णांक flags);
-व्योम __पूर्णांकel_memory_region_put_pages_buddy(काष्ठा पूर्णांकel_memory_region *mem,
-					   काष्ठा list_head *blocks);
-व्योम __पूर्णांकel_memory_region_put_block_buddy(काष्ठा i915_buddy_block *block);
+int __intel_memory_region_get_pages_buddy(struct intel_memory_region *mem,
+					  resource_size_t size,
+					  unsigned int flags,
+					  struct list_head *blocks);
+struct i915_buddy_block *
+__intel_memory_region_get_block_buddy(struct intel_memory_region *mem,
+				      resource_size_t size,
+				      unsigned int flags);
+void __intel_memory_region_put_pages_buddy(struct intel_memory_region *mem,
+					   struct list_head *blocks);
+void __intel_memory_region_put_block_buddy(struct i915_buddy_block *block);
 
-पूर्णांक पूर्णांकel_memory_region_reserve(काष्ठा पूर्णांकel_memory_region *mem,
+int intel_memory_region_reserve(struct intel_memory_region *mem,
 				u64 offset, u64 size);
 
-काष्ठा पूर्णांकel_memory_region *
-पूर्णांकel_memory_region_create(काष्ठा drm_i915_निजी *i915,
-			   resource_माप_प्रकार start,
-			   resource_माप_प्रकार size,
-			   resource_माप_प्रकार min_page_size,
-			   resource_माप_प्रकार io_start,
-			   स्थिर काष्ठा पूर्णांकel_memory_region_ops *ops);
+struct intel_memory_region *
+intel_memory_region_create(struct drm_i915_private *i915,
+			   resource_size_t start,
+			   resource_size_t size,
+			   resource_size_t min_page_size,
+			   resource_size_t io_start,
+			   const struct intel_memory_region_ops *ops);
 
-काष्ठा पूर्णांकel_memory_region *
-पूर्णांकel_memory_region_get(काष्ठा पूर्णांकel_memory_region *mem);
-व्योम पूर्णांकel_memory_region_put(काष्ठा पूर्णांकel_memory_region *mem);
+struct intel_memory_region *
+intel_memory_region_get(struct intel_memory_region *mem);
+void intel_memory_region_put(struct intel_memory_region *mem);
 
-पूर्णांक पूर्णांकel_memory_regions_hw_probe(काष्ठा drm_i915_निजी *i915);
-व्योम पूर्णांकel_memory_regions_driver_release(काष्ठा drm_i915_निजी *i915);
-काष्ठा पूर्णांकel_memory_region *
-पूर्णांकel_memory_region_by_type(काष्ठा drm_i915_निजी *i915,
-			    क्रमागत पूर्णांकel_memory_type mem_type);
+int intel_memory_regions_hw_probe(struct drm_i915_private *i915);
+void intel_memory_regions_driver_release(struct drm_i915_private *i915);
+struct intel_memory_region *
+intel_memory_region_by_type(struct drm_i915_private *i915,
+			    enum intel_memory_type mem_type);
 
-__म_लिखो(2, 3) व्योम
-पूर्णांकel_memory_region_set_name(काष्ठा पूर्णांकel_memory_region *mem,
-			     स्थिर अक्षर *fmt, ...);
+__printf(2, 3) void
+intel_memory_region_set_name(struct intel_memory_region *mem,
+			     const char *fmt, ...);
 
-#पूर्ण_अगर
+#endif

@@ -1,520 +1,519 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Common घातer driver क्रम PDAs and phones with one or two बाह्यal
- * घातer supplies (AC/USB) connected to मुख्य and backup batteries,
- * and optional builtin अक्षरger.
+ * Common power driver for PDAs and phones with one or two external
+ * power supplies (AC/USB) connected to main and backup batteries,
+ * and optional builtin charger.
  *
- * Copyright तऊ 2007 Anton Vorontsov <cbou@mail.ru>
+ * Copyright © 2007 Anton Vorontsov <cbou@mail.ru>
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/err.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/notअगरier.h>
-#समावेश <linux/घातer_supply.h>
-#समावेश <linux/pda_घातer.h>
-#समावेश <linux/regulator/consumer.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/usb/otg.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/err.h>
+#include <linux/interrupt.h>
+#include <linux/notifier.h>
+#include <linux/power_supply.h>
+#include <linux/pda_power.h>
+#include <linux/regulator/consumer.h>
+#include <linux/timer.h>
+#include <linux/jiffies.h>
+#include <linux/usb/otg.h>
 
-अटल अंतरभूत अचिन्हित पूर्णांक get_irq_flags(काष्ठा resource *res)
-अणु
-	वापस IRQF_SHARED | (res->flags & IRQF_TRIGGER_MASK);
-पूर्ण
+static inline unsigned int get_irq_flags(struct resource *res)
+{
+	return IRQF_SHARED | (res->flags & IRQF_TRIGGER_MASK);
+}
 
-अटल काष्ठा device *dev;
-अटल काष्ठा pda_घातer_pdata *pdata;
-अटल काष्ठा resource *ac_irq, *usb_irq;
-अटल काष्ठा delayed_work अक्षरger_work;
-अटल काष्ठा delayed_work polling_work;
-अटल काष्ठा delayed_work supply_work;
-अटल पूर्णांक polling;
-अटल काष्ठा घातer_supply *pda_psy_ac, *pda_psy_usb;
+static struct device *dev;
+static struct pda_power_pdata *pdata;
+static struct resource *ac_irq, *usb_irq;
+static struct delayed_work charger_work;
+static struct delayed_work polling_work;
+static struct delayed_work supply_work;
+static int polling;
+static struct power_supply *pda_psy_ac, *pda_psy_usb;
 
-#अगर IS_ENABLED(CONFIG_USB_PHY)
-अटल काष्ठा usb_phy *transceiver;
-अटल काष्ठा notअगरier_block otg_nb;
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_USB_PHY)
+static struct usb_phy *transceiver;
+static struct notifier_block otg_nb;
+#endif
 
-अटल काष्ठा regulator *ac_draw;
+static struct regulator *ac_draw;
 
-क्रमागत अणु
+enum {
 	PDA_PSY_OFFLINE = 0,
 	PDA_PSY_ONLINE = 1,
 	PDA_PSY_TO_CHANGE,
-पूर्ण;
-अटल पूर्णांक new_ac_status = -1;
-अटल पूर्णांक new_usb_status = -1;
-अटल पूर्णांक ac_status = -1;
-अटल पूर्णांक usb_status = -1;
+};
+static int new_ac_status = -1;
+static int new_usb_status = -1;
+static int ac_status = -1;
+static int usb_status = -1;
 
-अटल पूर्णांक pda_घातer_get_property(काष्ठा घातer_supply *psy,
-				  क्रमागत घातer_supply_property psp,
-				  जोड़ घातer_supply_propval *val)
-अणु
-	चयन (psp) अणु
-	हाल POWER_SUPPLY_PROP_ONLINE:
-		अगर (psy->desc->type == POWER_SUPPLY_TYPE_MAINS)
-			val->पूर्णांकval = pdata->is_ac_online ?
+static int pda_power_get_property(struct power_supply *psy,
+				  enum power_supply_property psp,
+				  union power_supply_propval *val)
+{
+	switch (psp) {
+	case POWER_SUPPLY_PROP_ONLINE:
+		if (psy->desc->type == POWER_SUPPLY_TYPE_MAINS)
+			val->intval = pdata->is_ac_online ?
 				      pdata->is_ac_online() : 0;
-		अन्यथा
-			val->पूर्णांकval = pdata->is_usb_online ?
+		else
+			val->intval = pdata->is_usb_online ?
 				      pdata->is_usb_online() : 0;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल क्रमागत घातer_supply_property pda_घातer_props[] = अणु
+static enum power_supply_property pda_power_props[] = {
 	POWER_SUPPLY_PROP_ONLINE,
-पूर्ण;
+};
 
-अटल अक्षर *pda_घातer_supplied_to[] = अणु
+static char *pda_power_supplied_to[] = {
 	"main-battery",
 	"backup-battery",
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा घातer_supply_desc pda_psy_ac_desc = अणु
+static const struct power_supply_desc pda_psy_ac_desc = {
 	.name = "ac",
 	.type = POWER_SUPPLY_TYPE_MAINS,
-	.properties = pda_घातer_props,
-	.num_properties = ARRAY_SIZE(pda_घातer_props),
-	.get_property = pda_घातer_get_property,
-पूर्ण;
+	.properties = pda_power_props,
+	.num_properties = ARRAY_SIZE(pda_power_props),
+	.get_property = pda_power_get_property,
+};
 
-अटल स्थिर काष्ठा घातer_supply_desc pda_psy_usb_desc = अणु
+static const struct power_supply_desc pda_psy_usb_desc = {
 	.name = "usb",
 	.type = POWER_SUPPLY_TYPE_USB,
-	.properties = pda_घातer_props,
-	.num_properties = ARRAY_SIZE(pda_घातer_props),
-	.get_property = pda_घातer_get_property,
-पूर्ण;
+	.properties = pda_power_props,
+	.num_properties = ARRAY_SIZE(pda_power_props),
+	.get_property = pda_power_get_property,
+};
 
-अटल व्योम update_status(व्योम)
-अणु
-	अगर (pdata->is_ac_online)
+static void update_status(void)
+{
+	if (pdata->is_ac_online)
 		new_ac_status = !!pdata->is_ac_online();
 
-	अगर (pdata->is_usb_online)
+	if (pdata->is_usb_online)
 		new_usb_status = !!pdata->is_usb_online();
-पूर्ण
+}
 
-अटल व्योम update_अक्षरger(व्योम)
-अणु
-	अटल पूर्णांक regulator_enabled;
-	पूर्णांक max_uA = pdata->ac_max_uA;
+static void update_charger(void)
+{
+	static int regulator_enabled;
+	int max_uA = pdata->ac_max_uA;
 
-	अगर (pdata->set_अक्षरge) अणु
-		अगर (new_ac_status > 0) अणु
+	if (pdata->set_charge) {
+		if (new_ac_status > 0) {
 			dev_dbg(dev, "charger on (AC)\n");
-			pdata->set_अक्षरge(PDA_POWER_CHARGE_AC);
-		पूर्ण अन्यथा अगर (new_usb_status > 0) अणु
+			pdata->set_charge(PDA_POWER_CHARGE_AC);
+		} else if (new_usb_status > 0) {
 			dev_dbg(dev, "charger on (USB)\n");
-			pdata->set_अक्षरge(PDA_POWER_CHARGE_USB);
-		पूर्ण अन्यथा अणु
+			pdata->set_charge(PDA_POWER_CHARGE_USB);
+		} else {
 			dev_dbg(dev, "charger off\n");
-			pdata->set_अक्षरge(0);
-		पूर्ण
-	पूर्ण अन्यथा अगर (ac_draw) अणु
-		अगर (new_ac_status > 0) अणु
+			pdata->set_charge(0);
+		}
+	} else if (ac_draw) {
+		if (new_ac_status > 0) {
 			regulator_set_current_limit(ac_draw, max_uA, max_uA);
-			अगर (!regulator_enabled) अणु
+			if (!regulator_enabled) {
 				dev_dbg(dev, "charger on (AC)\n");
 				WARN_ON(regulator_enable(ac_draw));
 				regulator_enabled = 1;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (regulator_enabled) अणु
+			}
+		} else {
+			if (regulator_enabled) {
 				dev_dbg(dev, "charger off\n");
 				WARN_ON(regulator_disable(ac_draw));
 				regulator_enabled = 0;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-पूर्ण
+			}
+		}
+	}
+}
 
-अटल व्योम supply_work_func(काष्ठा work_काष्ठा *work)
-अणु
-	अगर (ac_status == PDA_PSY_TO_CHANGE) अणु
+static void supply_work_func(struct work_struct *work)
+{
+	if (ac_status == PDA_PSY_TO_CHANGE) {
 		ac_status = new_ac_status;
-		घातer_supply_changed(pda_psy_ac);
-	पूर्ण
+		power_supply_changed(pda_psy_ac);
+	}
 
-	अगर (usb_status == PDA_PSY_TO_CHANGE) अणु
+	if (usb_status == PDA_PSY_TO_CHANGE) {
 		usb_status = new_usb_status;
-		घातer_supply_changed(pda_psy_usb);
-	पूर्ण
-पूर्ण
+		power_supply_changed(pda_psy_usb);
+	}
+}
 
-अटल व्योम psy_changed(व्योम)
-अणु
-	update_अक्षरger();
+static void psy_changed(void)
+{
+	update_charger();
 
 	/*
-	 * Okay, अक्षरger set. Now रुको a bit beक्रमe notअगरying supplicants,
-	 * अक्षरge घातer should stabilize.
+	 * Okay, charger set. Now wait a bit before notifying supplicants,
+	 * charge power should stabilize.
 	 */
 	cancel_delayed_work(&supply_work);
 	schedule_delayed_work(&supply_work,
-			      msecs_to_jअगरfies(pdata->रुको_क्रम_अक्षरger));
-पूर्ण
+			      msecs_to_jiffies(pdata->wait_for_charger));
+}
 
-अटल व्योम अक्षरger_work_func(काष्ठा work_काष्ठा *work)
-अणु
+static void charger_work_func(struct work_struct *work)
+{
 	update_status();
 	psy_changed();
-पूर्ण
+}
 
-अटल irqवापस_t घातer_changed_isr(पूर्णांक irq, व्योम *घातer_supply)
-अणु
-	अगर (घातer_supply == pda_psy_ac)
+static irqreturn_t power_changed_isr(int irq, void *power_supply)
+{
+	if (power_supply == pda_psy_ac)
 		ac_status = PDA_PSY_TO_CHANGE;
-	अन्यथा अगर (घातer_supply == pda_psy_usb)
+	else if (power_supply == pda_psy_usb)
 		usb_status = PDA_PSY_TO_CHANGE;
-	अन्यथा
-		वापस IRQ_NONE;
+	else
+		return IRQ_NONE;
 
 	/*
-	 * Wait a bit beक्रमe पढ़ोing ac/usb line status and setting अक्षरger,
-	 * because ac/usb status पढ़ोings may lag from irq.
+	 * Wait a bit before reading ac/usb line status and setting charger,
+	 * because ac/usb status readings may lag from irq.
 	 */
-	cancel_delayed_work(&अक्षरger_work);
-	schedule_delayed_work(&अक्षरger_work,
-			      msecs_to_jअगरfies(pdata->रुको_क्रम_status));
+	cancel_delayed_work(&charger_work);
+	schedule_delayed_work(&charger_work,
+			      msecs_to_jiffies(pdata->wait_for_status));
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल व्योम polling_work_func(काष्ठा work_काष्ठा *work)
-अणु
-	पूर्णांक changed = 0;
+static void polling_work_func(struct work_struct *work)
+{
+	int changed = 0;
 
 	dev_dbg(dev, "polling...\n");
 
 	update_status();
 
-	अगर (!ac_irq && new_ac_status != ac_status) अणु
+	if (!ac_irq && new_ac_status != ac_status) {
 		ac_status = PDA_PSY_TO_CHANGE;
 		changed = 1;
-	पूर्ण
+	}
 
-	अगर (!usb_irq && new_usb_status != usb_status) अणु
+	if (!usb_irq && new_usb_status != usb_status) {
 		usb_status = PDA_PSY_TO_CHANGE;
 		changed = 1;
-	पूर्ण
+	}
 
-	अगर (changed)
+	if (changed)
 		psy_changed();
 
 	cancel_delayed_work(&polling_work);
 	schedule_delayed_work(&polling_work,
-			      msecs_to_jअगरfies(pdata->polling_पूर्णांकerval));
-पूर्ण
+			      msecs_to_jiffies(pdata->polling_interval));
+}
 
-#अगर IS_ENABLED(CONFIG_USB_PHY)
-अटल पूर्णांक otg_is_usb_online(व्योम)
-अणु
-	वापस (transceiver->last_event == USB_EVENT_VBUS ||
+#if IS_ENABLED(CONFIG_USB_PHY)
+static int otg_is_usb_online(void)
+{
+	return (transceiver->last_event == USB_EVENT_VBUS ||
 		transceiver->last_event == USB_EVENT_ENUMERATED);
-पूर्ण
+}
 
-अटल पूर्णांक otg_is_ac_online(व्योम)
-अणु
-	वापस (transceiver->last_event == USB_EVENT_CHARGER);
-पूर्ण
+static int otg_is_ac_online(void)
+{
+	return (transceiver->last_event == USB_EVENT_CHARGER);
+}
 
-अटल पूर्णांक otg_handle_notअगरication(काष्ठा notअगरier_block *nb,
-		अचिन्हित दीर्घ event, व्योम *unused)
-अणु
-	चयन (event) अणु
-	हाल USB_EVENT_CHARGER:
+static int otg_handle_notification(struct notifier_block *nb,
+		unsigned long event, void *unused)
+{
+	switch (event) {
+	case USB_EVENT_CHARGER:
 		ac_status = PDA_PSY_TO_CHANGE;
-		अवरोध;
-	हाल USB_EVENT_VBUS:
-	हाल USB_EVENT_ENUMERATED:
+		break;
+	case USB_EVENT_VBUS:
+	case USB_EVENT_ENUMERATED:
 		usb_status = PDA_PSY_TO_CHANGE;
-		अवरोध;
-	हाल USB_EVENT_NONE:
+		break;
+	case USB_EVENT_NONE:
 		ac_status = PDA_PSY_TO_CHANGE;
 		usb_status = PDA_PSY_TO_CHANGE;
-		अवरोध;
-	शेष:
-		वापस NOTIFY_OK;
-	पूर्ण
+		break;
+	default:
+		return NOTIFY_OK;
+	}
 
 	/*
-	 * Wait a bit beक्रमe पढ़ोing ac/usb line status and setting अक्षरger,
-	 * because ac/usb status पढ़ोings may lag from irq.
+	 * Wait a bit before reading ac/usb line status and setting charger,
+	 * because ac/usb status readings may lag from irq.
 	 */
-	cancel_delayed_work(&अक्षरger_work);
-	schedule_delayed_work(&अक्षरger_work,
-			      msecs_to_jअगरfies(pdata->रुको_क्रम_status));
+	cancel_delayed_work(&charger_work);
+	schedule_delayed_work(&charger_work,
+			      msecs_to_jiffies(pdata->wait_for_status));
 
-	वापस NOTIFY_OK;
-पूर्ण
-#पूर्ण_अगर
+	return NOTIFY_OK;
+}
+#endif
 
-अटल पूर्णांक pda_घातer_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा घातer_supply_config psy_cfg = अणुपूर्ण;
-	पूर्णांक ret = 0;
+static int pda_power_probe(struct platform_device *pdev)
+{
+	struct power_supply_config psy_cfg = {};
+	int ret = 0;
 
 	dev = &pdev->dev;
 
-	अगर (pdev->id != -1) अणु
+	if (pdev->id != -1) {
 		dev_err(dev, "it's meaningless to register several "
 			"pda_powers; use id = -1\n");
 		ret = -EINVAL;
-		जाओ wrongid;
-	पूर्ण
+		goto wrongid;
+	}
 
-	pdata = pdev->dev.platक्रमm_data;
+	pdata = pdev->dev.platform_data;
 
-	अगर (pdata->init) अणु
+	if (pdata->init) {
 		ret = pdata->init(dev);
-		अगर (ret < 0)
-			जाओ init_failed;
-	पूर्ण
+		if (ret < 0)
+			goto init_failed;
+	}
 
 	ac_draw = regulator_get(dev, "ac_draw");
-	अगर (IS_ERR(ac_draw)) अणु
+	if (IS_ERR(ac_draw)) {
 		dev_dbg(dev, "couldn't get ac_draw regulator\n");
-		ac_draw = शून्य;
-	पूर्ण
+		ac_draw = NULL;
+	}
 
 	update_status();
-	update_अक्षरger();
+	update_charger();
 
-	अगर (!pdata->रुको_क्रम_status)
-		pdata->रुको_क्रम_status = 500;
+	if (!pdata->wait_for_status)
+		pdata->wait_for_status = 500;
 
-	अगर (!pdata->रुको_क्रम_अक्षरger)
-		pdata->रुको_क्रम_अक्षरger = 500;
+	if (!pdata->wait_for_charger)
+		pdata->wait_for_charger = 500;
 
-	अगर (!pdata->polling_पूर्णांकerval)
-		pdata->polling_पूर्णांकerval = 2000;
+	if (!pdata->polling_interval)
+		pdata->polling_interval = 2000;
 
-	अगर (!pdata->ac_max_uA)
+	if (!pdata->ac_max_uA)
 		pdata->ac_max_uA = 500000;
 
-	INIT_DELAYED_WORK(&अक्षरger_work, अक्षरger_work_func);
+	INIT_DELAYED_WORK(&charger_work, charger_work_func);
 	INIT_DELAYED_WORK(&supply_work, supply_work_func);
 
-	ac_irq = platक्रमm_get_resource_byname(pdev, IORESOURCE_IRQ, "ac");
-	usb_irq = platक्रमm_get_resource_byname(pdev, IORESOURCE_IRQ, "usb");
+	ac_irq = platform_get_resource_byname(pdev, IORESOURCE_IRQ, "ac");
+	usb_irq = platform_get_resource_byname(pdev, IORESOURCE_IRQ, "usb");
 
-	अगर (pdata->supplied_to) अणु
+	if (pdata->supplied_to) {
 		psy_cfg.supplied_to = pdata->supplied_to;
 		psy_cfg.num_supplicants = pdata->num_supplicants;
-	पूर्ण अन्यथा अणु
-		psy_cfg.supplied_to = pda_घातer_supplied_to;
-		psy_cfg.num_supplicants = ARRAY_SIZE(pda_घातer_supplied_to);
-	पूर्ण
+	} else {
+		psy_cfg.supplied_to = pda_power_supplied_to;
+		psy_cfg.num_supplicants = ARRAY_SIZE(pda_power_supplied_to);
+	}
 
-#अगर IS_ENABLED(CONFIG_USB_PHY)
+#if IS_ENABLED(CONFIG_USB_PHY)
 	transceiver = usb_get_phy(USB_PHY_TYPE_USB2);
-	अगर (!IS_ERR_OR_शून्य(transceiver)) अणु
-		अगर (!pdata->is_usb_online)
+	if (!IS_ERR_OR_NULL(transceiver)) {
+		if (!pdata->is_usb_online)
 			pdata->is_usb_online = otg_is_usb_online;
-		अगर (!pdata->is_ac_online)
+		if (!pdata->is_ac_online)
 			pdata->is_ac_online = otg_is_ac_online;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	अगर (pdata->is_ac_online) अणु
-		pda_psy_ac = घातer_supply_रेजिस्टर(&pdev->dev,
+	if (pdata->is_ac_online) {
+		pda_psy_ac = power_supply_register(&pdev->dev,
 						   &pda_psy_ac_desc, &psy_cfg);
-		अगर (IS_ERR(pda_psy_ac)) अणु
+		if (IS_ERR(pda_psy_ac)) {
 			dev_err(dev, "failed to register %s power supply\n",
 				pda_psy_ac_desc.name);
 			ret = PTR_ERR(pda_psy_ac);
-			जाओ ac_supply_failed;
-		पूर्ण
+			goto ac_supply_failed;
+		}
 
-		अगर (ac_irq) अणु
-			ret = request_irq(ac_irq->start, घातer_changed_isr,
+		if (ac_irq) {
+			ret = request_irq(ac_irq->start, power_changed_isr,
 					  get_irq_flags(ac_irq), ac_irq->name,
 					  pda_psy_ac);
-			अगर (ret) अणु
+			if (ret) {
 				dev_err(dev, "request ac irq failed\n");
-				जाओ ac_irq_failed;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				goto ac_irq_failed;
+			}
+		} else {
 			polling = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (pdata->is_usb_online) अणु
-		pda_psy_usb = घातer_supply_रेजिस्टर(&pdev->dev,
+	if (pdata->is_usb_online) {
+		pda_psy_usb = power_supply_register(&pdev->dev,
 						    &pda_psy_usb_desc,
 						    &psy_cfg);
-		अगर (IS_ERR(pda_psy_usb)) अणु
+		if (IS_ERR(pda_psy_usb)) {
 			dev_err(dev, "failed to register %s power supply\n",
 				pda_psy_usb_desc.name);
 			ret = PTR_ERR(pda_psy_usb);
-			जाओ usb_supply_failed;
-		पूर्ण
+			goto usb_supply_failed;
+		}
 
-		अगर (usb_irq) अणु
-			ret = request_irq(usb_irq->start, घातer_changed_isr,
+		if (usb_irq) {
+			ret = request_irq(usb_irq->start, power_changed_isr,
 					  get_irq_flags(usb_irq),
 					  usb_irq->name, pda_psy_usb);
-			अगर (ret) अणु
+			if (ret) {
 				dev_err(dev, "request usb irq failed\n");
-				जाओ usb_irq_failed;
-			पूर्ण
-		पूर्ण अन्यथा अणु
+				goto usb_irq_failed;
+			}
+		} else {
 			polling = 1;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-#अगर IS_ENABLED(CONFIG_USB_PHY)
-	अगर (!IS_ERR_OR_शून्य(transceiver) && pdata->use_otg_notअगरier) अणु
-		otg_nb.notअगरier_call = otg_handle_notअगरication;
-		ret = usb_रेजिस्टर_notअगरier(transceiver, &otg_nb);
-		अगर (ret) अणु
+#if IS_ENABLED(CONFIG_USB_PHY)
+	if (!IS_ERR_OR_NULL(transceiver) && pdata->use_otg_notifier) {
+		otg_nb.notifier_call = otg_handle_notification;
+		ret = usb_register_notifier(transceiver, &otg_nb);
+		if (ret) {
 			dev_err(dev, "failure to register otg notifier\n");
-			जाओ otg_reg_notअगरier_failed;
-		पूर्ण
+			goto otg_reg_notifier_failed;
+		}
 		polling = 0;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 
-	अगर (polling) अणु
+	if (polling) {
 		dev_dbg(dev, "will poll for status\n");
 		INIT_DELAYED_WORK(&polling_work, polling_work_func);
 		cancel_delayed_work(&polling_work);
 		schedule_delayed_work(&polling_work,
-				      msecs_to_jअगरfies(pdata->polling_पूर्णांकerval));
-	पूर्ण
+				      msecs_to_jiffies(pdata->polling_interval));
+	}
 
-	अगर (ac_irq || usb_irq)
+	if (ac_irq || usb_irq)
 		device_init_wakeup(&pdev->dev, 1);
 
-	वापस 0;
+	return 0;
 
-#अगर IS_ENABLED(CONFIG_USB_PHY)
-otg_reg_notअगरier_failed:
-	अगर (pdata->is_usb_online && usb_irq)
-		मुक्त_irq(usb_irq->start, pda_psy_usb);
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_USB_PHY)
+otg_reg_notifier_failed:
+	if (pdata->is_usb_online && usb_irq)
+		free_irq(usb_irq->start, pda_psy_usb);
+#endif
 usb_irq_failed:
-	अगर (pdata->is_usb_online)
-		घातer_supply_unरेजिस्टर(pda_psy_usb);
+	if (pdata->is_usb_online)
+		power_supply_unregister(pda_psy_usb);
 usb_supply_failed:
-	अगर (pdata->is_ac_online && ac_irq)
-		मुक्त_irq(ac_irq->start, pda_psy_ac);
-#अगर IS_ENABLED(CONFIG_USB_PHY)
-	अगर (!IS_ERR_OR_शून्य(transceiver))
+	if (pdata->is_ac_online && ac_irq)
+		free_irq(ac_irq->start, pda_psy_ac);
+#if IS_ENABLED(CONFIG_USB_PHY)
+	if (!IS_ERR_OR_NULL(transceiver))
 		usb_put_phy(transceiver);
-#पूर्ण_अगर
+#endif
 ac_irq_failed:
-	अगर (pdata->is_ac_online)
-		घातer_supply_unरेजिस्टर(pda_psy_ac);
+	if (pdata->is_ac_online)
+		power_supply_unregister(pda_psy_ac);
 ac_supply_failed:
-	अगर (ac_draw) अणु
+	if (ac_draw) {
 		regulator_put(ac_draw);
-		ac_draw = शून्य;
-	पूर्ण
-	अगर (pdata->निकास)
-		pdata->निकास(dev);
+		ac_draw = NULL;
+	}
+	if (pdata->exit)
+		pdata->exit(dev);
 init_failed:
 wrongid:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक pda_घातer_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-#अगर IS_ENABLED(CONFIG_USB_PHY)
-	अगर (!IS_ERR_OR_शून्य(transceiver) && pdata->use_otg_notअगरier)
-		usb_unरेजिस्टर_notअगरier(transceiver, &otg_nb);
-#पूर्ण_अगर
-	अगर (pdata->is_usb_online && usb_irq)
-		मुक्त_irq(usb_irq->start, pda_psy_usb);
-	अगर (pdata->is_ac_online && ac_irq)
-		मुक्त_irq(ac_irq->start, pda_psy_ac);
+static int pda_power_remove(struct platform_device *pdev)
+{
+#if IS_ENABLED(CONFIG_USB_PHY)
+	if (!IS_ERR_OR_NULL(transceiver) && pdata->use_otg_notifier)
+		usb_unregister_notifier(transceiver, &otg_nb);
+#endif
+	if (pdata->is_usb_online && usb_irq)
+		free_irq(usb_irq->start, pda_psy_usb);
+	if (pdata->is_ac_online && ac_irq)
+		free_irq(ac_irq->start, pda_psy_ac);
 
-	अगर (polling)
+	if (polling)
 		cancel_delayed_work_sync(&polling_work);
-	cancel_delayed_work_sync(&अक्षरger_work);
+	cancel_delayed_work_sync(&charger_work);
 	cancel_delayed_work_sync(&supply_work);
 
-	अगर (pdata->is_usb_online)
-		घातer_supply_unरेजिस्टर(pda_psy_usb);
-	अगर (pdata->is_ac_online)
-		घातer_supply_unरेजिस्टर(pda_psy_ac);
-#अगर IS_ENABLED(CONFIG_USB_PHY)
-	अगर (!IS_ERR_OR_शून्य(transceiver))
+	if (pdata->is_usb_online)
+		power_supply_unregister(pda_psy_usb);
+	if (pdata->is_ac_online)
+		power_supply_unregister(pda_psy_ac);
+#if IS_ENABLED(CONFIG_USB_PHY)
+	if (!IS_ERR_OR_NULL(transceiver))
 		usb_put_phy(transceiver);
-#पूर्ण_अगर
-	अगर (ac_draw) अणु
+#endif
+	if (ac_draw) {
 		regulator_put(ac_draw);
-		ac_draw = शून्य;
-	पूर्ण
-	अगर (pdata->निकास)
-		pdata->निकास(dev);
+		ac_draw = NULL;
+	}
+	if (pdata->exit)
+		pdata->exit(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक ac_wakeup_enabled;
-अटल पूर्णांक usb_wakeup_enabled;
+#ifdef CONFIG_PM
+static int ac_wakeup_enabled;
+static int usb_wakeup_enabled;
 
-अटल पूर्णांक pda_घातer_suspend(काष्ठा platक्रमm_device *pdev, pm_message_t state)
-अणु
-	अगर (pdata->suspend) अणु
-		पूर्णांक ret = pdata->suspend(state);
+static int pda_power_suspend(struct platform_device *pdev, pm_message_t state)
+{
+	if (pdata->suspend) {
+		int ret = pdata->suspend(state);
 
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (device_may_wakeup(&pdev->dev)) अणु
-		अगर (ac_irq)
+	if (device_may_wakeup(&pdev->dev)) {
+		if (ac_irq)
 			ac_wakeup_enabled = !enable_irq_wake(ac_irq->start);
-		अगर (usb_irq)
+		if (usb_irq)
 			usb_wakeup_enabled = !enable_irq_wake(usb_irq->start);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pda_घातer_resume(काष्ठा platक्रमm_device *pdev)
-अणु
-	अगर (device_may_wakeup(&pdev->dev)) अणु
-		अगर (usb_irq && usb_wakeup_enabled)
+static int pda_power_resume(struct platform_device *pdev)
+{
+	if (device_may_wakeup(&pdev->dev)) {
+		if (usb_irq && usb_wakeup_enabled)
 			disable_irq_wake(usb_irq->start);
-		अगर (ac_irq && ac_wakeup_enabled)
+		if (ac_irq && ac_wakeup_enabled)
 			disable_irq_wake(ac_irq->start);
-	पूर्ण
+	}
 
-	अगर (pdata->resume)
-		वापस pdata->resume();
+	if (pdata->resume)
+		return pdata->resume();
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा pda_घातer_suspend शून्य
-#घोषणा pda_घातer_resume शून्य
-#पूर्ण_अगर /* CONFIG_PM */
+	return 0;
+}
+#else
+#define pda_power_suspend NULL
+#define pda_power_resume NULL
+#endif /* CONFIG_PM */
 
-अटल काष्ठा platक्रमm_driver pda_घातer_pdrv = अणु
-	.driver = अणु
+static struct platform_driver pda_power_pdrv = {
+	.driver = {
 		.name = "pda-power",
-	पूर्ण,
-	.probe = pda_घातer_probe,
-	.हटाओ = pda_घातer_हटाओ,
-	.suspend = pda_घातer_suspend,
-	.resume = pda_घातer_resume,
-पूर्ण;
+	},
+	.probe = pda_power_probe,
+	.remove = pda_power_remove,
+	.suspend = pda_power_suspend,
+	.resume = pda_power_resume,
+};
 
-module_platक्रमm_driver(pda_घातer_pdrv);
+module_platform_driver(pda_power_pdrv);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Anton Vorontsov <cbou@mail.ru>");

@@ -1,602 +1,601 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /* Copyright (C) B.A.T.M.A.N. contributors:
  *
- * Linus Lथञssing, Marek Lindner
+ * Linus Lüssing, Marek Lindner
  */
 
-#समावेश "bat_v.h"
-#समावेश "main.h"
+#include "bat_v.h"
+#include "main.h"
 
-#समावेश <linux/atomic.h>
-#समावेश <linux/cache.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/अगर_ether.h>
-#समावेश <linux/init.h>
-#समावेश <linux/jअगरfies.h>
-#समावेश <linux/kref.h>
-#समावेश <linux/list.h>
-#समावेश <linux/minmax.h>
-#समावेश <linux/netdevice.h>
-#समावेश <linux/netlink.h>
-#समावेश <linux/rculist.h>
-#समावेश <linux/rcupdate.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/मानकघोष.स>
-#समावेश <linux/types.h>
-#समावेश <linux/workqueue.h>
-#समावेश <net/genetlink.h>
-#समावेश <net/netlink.h>
-#समावेश <uapi/linux/batadv_packet.h>
-#समावेश <uapi/linux/baपंचांगan_adv.h>
+#include <linux/atomic.h>
+#include <linux/cache.h>
+#include <linux/errno.h>
+#include <linux/if_ether.h>
+#include <linux/init.h>
+#include <linux/jiffies.h>
+#include <linux/kref.h>
+#include <linux/list.h>
+#include <linux/minmax.h>
+#include <linux/netdevice.h>
+#include <linux/netlink.h>
+#include <linux/rculist.h>
+#include <linux/rcupdate.h>
+#include <linux/skbuff.h>
+#include <linux/spinlock.h>
+#include <linux/stddef.h>
+#include <linux/types.h>
+#include <linux/workqueue.h>
+#include <net/genetlink.h>
+#include <net/netlink.h>
+#include <uapi/linux/batadv_packet.h>
+#include <uapi/linux/batman_adv.h>
 
-#समावेश "bat_algo.h"
-#समावेश "bat_v_elp.h"
-#समावेश "bat_v_ogm.h"
-#समावेश "gateway_client.h"
-#समावेश "gateway_common.h"
-#समावेश "hard-interface.h"
-#समावेश "hash.h"
-#समावेश "log.h"
-#समावेश "netlink.h"
-#समावेश "originator.h"
+#include "bat_algo.h"
+#include "bat_v_elp.h"
+#include "bat_v_ogm.h"
+#include "gateway_client.h"
+#include "gateway_common.h"
+#include "hard-interface.h"
+#include "hash.h"
+#include "log.h"
+#include "netlink.h"
+#include "originator.h"
 
-अटल व्योम batadv_v_अगरace_activate(काष्ठा batadv_hard_अगरace *hard_अगरace)
-अणु
-	काष्ठा batadv_priv *bat_priv = netdev_priv(hard_अगरace->soft_अगरace);
-	काष्ठा batadv_hard_अगरace *primary_अगर;
+static void batadv_v_iface_activate(struct batadv_hard_iface *hard_iface)
+{
+	struct batadv_priv *bat_priv = netdev_priv(hard_iface->soft_iface);
+	struct batadv_hard_iface *primary_if;
 
-	primary_अगर = batadv_primary_अगर_get_selected(bat_priv);
+	primary_if = batadv_primary_if_get_selected(bat_priv);
 
-	अगर (primary_अगर) अणु
-		batadv_v_elp_अगरace_activate(primary_अगर, hard_अगरace);
-		batadv_hardअगर_put(primary_अगर);
-	पूर्ण
+	if (primary_if) {
+		batadv_v_elp_iface_activate(primary_if, hard_iface);
+		batadv_hardif_put(primary_if);
+	}
 
-	/* B.A.T.M.A.N. V करोes not use any queuing mechanism, thereक्रमe it can
-	 * set the पूर्णांकerface as ACTIVE right away, without any risk of race
+	/* B.A.T.M.A.N. V does not use any queuing mechanism, therefore it can
+	 * set the interface as ACTIVE right away, without any risk of race
 	 * condition
 	 */
-	अगर (hard_अगरace->अगर_status == BATADV_IF_TO_BE_ACTIVATED)
-		hard_अगरace->अगर_status = BATADV_IF_ACTIVE;
-पूर्ण
+	if (hard_iface->if_status == BATADV_IF_TO_BE_ACTIVATED)
+		hard_iface->if_status = BATADV_IF_ACTIVE;
+}
 
-अटल पूर्णांक batadv_v_अगरace_enable(काष्ठा batadv_hard_अगरace *hard_अगरace)
-अणु
-	पूर्णांक ret;
+static int batadv_v_iface_enable(struct batadv_hard_iface *hard_iface)
+{
+	int ret;
 
-	ret = batadv_v_elp_अगरace_enable(hard_अगरace);
-	अगर (ret < 0)
-		वापस ret;
+	ret = batadv_v_elp_iface_enable(hard_iface);
+	if (ret < 0)
+		return ret;
 
-	ret = batadv_v_ogm_अगरace_enable(hard_अगरace);
-	अगर (ret < 0)
-		batadv_v_elp_अगरace_disable(hard_अगरace);
+	ret = batadv_v_ogm_iface_enable(hard_iface);
+	if (ret < 0)
+		batadv_v_elp_iface_disable(hard_iface);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम batadv_v_अगरace_disable(काष्ठा batadv_hard_अगरace *hard_अगरace)
-अणु
-	batadv_v_ogm_अगरace_disable(hard_अगरace);
-	batadv_v_elp_अगरace_disable(hard_अगरace);
-पूर्ण
+static void batadv_v_iface_disable(struct batadv_hard_iface *hard_iface)
+{
+	batadv_v_ogm_iface_disable(hard_iface);
+	batadv_v_elp_iface_disable(hard_iface);
+}
 
-अटल व्योम batadv_v_primary_अगरace_set(काष्ठा batadv_hard_अगरace *hard_अगरace)
-अणु
-	batadv_v_elp_primary_अगरace_set(hard_अगरace);
-	batadv_v_ogm_primary_अगरace_set(hard_अगरace);
-पूर्ण
+static void batadv_v_primary_iface_set(struct batadv_hard_iface *hard_iface)
+{
+	batadv_v_elp_primary_iface_set(hard_iface);
+	batadv_v_ogm_primary_iface_set(hard_iface);
+}
 
 /**
- * batadv_v_अगरace_update_mac() - react to hard-पूर्णांकerface MAC address change
- * @hard_अगरace: the modअगरied पूर्णांकerface
+ * batadv_v_iface_update_mac() - react to hard-interface MAC address change
+ * @hard_iface: the modified interface
  *
- * If the modअगरied पूर्णांकerface is the primary one, update the originator
+ * If the modified interface is the primary one, update the originator
  * address in the ELP and OGM messages to reflect the new MAC address.
  */
-अटल व्योम batadv_v_अगरace_update_mac(काष्ठा batadv_hard_अगरace *hard_अगरace)
-अणु
-	काष्ठा batadv_priv *bat_priv = netdev_priv(hard_अगरace->soft_अगरace);
-	काष्ठा batadv_hard_अगरace *primary_अगर;
+static void batadv_v_iface_update_mac(struct batadv_hard_iface *hard_iface)
+{
+	struct batadv_priv *bat_priv = netdev_priv(hard_iface->soft_iface);
+	struct batadv_hard_iface *primary_if;
 
-	primary_अगर = batadv_primary_अगर_get_selected(bat_priv);
-	अगर (primary_अगर != hard_अगरace)
-		जाओ out;
+	primary_if = batadv_primary_if_get_selected(bat_priv);
+	if (primary_if != hard_iface)
+		goto out;
 
-	batadv_v_primary_अगरace_set(hard_अगरace);
+	batadv_v_primary_iface_set(hard_iface);
 out:
-	अगर (primary_अगर)
-		batadv_hardअगर_put(primary_अगर);
-पूर्ण
+	if (primary_if)
+		batadv_hardif_put(primary_if);
+}
 
-अटल व्योम
-batadv_v_hardअगर_neigh_init(काष्ठा batadv_hardअगर_neigh_node *hardअगर_neigh)
-अणु
-	ewma_throughput_init(&hardअगर_neigh->bat_v.throughput);
-	INIT_WORK(&hardअगर_neigh->bat_v.metric_work,
+static void
+batadv_v_hardif_neigh_init(struct batadv_hardif_neigh_node *hardif_neigh)
+{
+	ewma_throughput_init(&hardif_neigh->bat_v.throughput);
+	INIT_WORK(&hardif_neigh->bat_v.metric_work,
 		  batadv_v_elp_throughput_metric_update);
-पूर्ण
+}
 
 /**
- * batadv_v_neigh_dump_neigh() - Dump a neighbour पूर्णांकo a message
- * @msg: Netlink message to dump पूर्णांकo
+ * batadv_v_neigh_dump_neigh() - Dump a neighbour into a message
+ * @msg: Netlink message to dump into
  * @portid: Port making netlink request
  * @seq: Sequence number of netlink message
- * @hardअगर_neigh: Neighbour to dump
+ * @hardif_neigh: Neighbour to dump
  *
  * Return: Error code, or 0 on success
  */
-अटल पूर्णांक
-batadv_v_neigh_dump_neigh(काष्ठा sk_buff *msg, u32 portid, u32 seq,
-			  काष्ठा batadv_hardअगर_neigh_node *hardअगर_neigh)
-अणु
-	व्योम *hdr;
-	अचिन्हित पूर्णांक last_seen_msecs;
+static int
+batadv_v_neigh_dump_neigh(struct sk_buff *msg, u32 portid, u32 seq,
+			  struct batadv_hardif_neigh_node *hardif_neigh)
+{
+	void *hdr;
+	unsigned int last_seen_msecs;
 	u32 throughput;
 
-	last_seen_msecs = jअगरfies_to_msecs(jअगरfies - hardअगर_neigh->last_seen);
-	throughput = ewma_throughput_पढ़ो(&hardअगर_neigh->bat_v.throughput);
+	last_seen_msecs = jiffies_to_msecs(jiffies - hardif_neigh->last_seen);
+	throughput = ewma_throughput_read(&hardif_neigh->bat_v.throughput);
 	throughput = throughput * 100;
 
 	hdr = genlmsg_put(msg, portid, seq, &batadv_netlink_family, NLM_F_MULTI,
 			  BATADV_CMD_GET_NEIGHBORS);
-	अगर (!hdr)
-		वापस -ENOBUFS;
+	if (!hdr)
+		return -ENOBUFS;
 
-	अगर (nla_put(msg, BATADV_ATTR_NEIGH_ADDRESS, ETH_ALEN,
-		    hardअगर_neigh->addr) ||
+	if (nla_put(msg, BATADV_ATTR_NEIGH_ADDRESS, ETH_ALEN,
+		    hardif_neigh->addr) ||
 	    nla_put_u32(msg, BATADV_ATTR_HARD_IFINDEX,
-			hardअगर_neigh->अगर_incoming->net_dev->अगरindex) ||
+			hardif_neigh->if_incoming->net_dev->ifindex) ||
 	    nla_put_u32(msg, BATADV_ATTR_LAST_SEEN_MSECS,
 			last_seen_msecs) ||
 	    nla_put_u32(msg, BATADV_ATTR_THROUGHPUT, throughput))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
 	genlmsg_end(msg, hdr);
-	वापस 0;
+	return 0;
 
  nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
 /**
- * batadv_v_neigh_dump_hardअगर() - Dump the  neighbours of a hard पूर्णांकerface पूर्णांकo
+ * batadv_v_neigh_dump_hardif() - Dump the  neighbours of a hard interface into
  *  a message
- * @msg: Netlink message to dump पूर्णांकo
+ * @msg: Netlink message to dump into
  * @portid: Port making netlink request
  * @seq: Sequence number of netlink message
- * @bat_priv: The bat priv with all the soft पूर्णांकerface inक्रमmation
- * @hard_अगरace: The hard पूर्णांकerface to be dumped
+ * @bat_priv: The bat priv with all the soft interface information
+ * @hard_iface: The hard interface to be dumped
  * @idx_s: Entries to be skipped
  *
- * This function assumes the caller holds rcu_पढ़ो_lock().
+ * This function assumes the caller holds rcu_read_lock().
  *
  * Return: Error code, or 0 on success
  */
-अटल पूर्णांक
-batadv_v_neigh_dump_hardअगर(काष्ठा sk_buff *msg, u32 portid, u32 seq,
-			   काष्ठा batadv_priv *bat_priv,
-			   काष्ठा batadv_hard_अगरace *hard_अगरace,
-			   पूर्णांक *idx_s)
-अणु
-	काष्ठा batadv_hardअगर_neigh_node *hardअगर_neigh;
-	पूर्णांक idx = 0;
+static int
+batadv_v_neigh_dump_hardif(struct sk_buff *msg, u32 portid, u32 seq,
+			   struct batadv_priv *bat_priv,
+			   struct batadv_hard_iface *hard_iface,
+			   int *idx_s)
+{
+	struct batadv_hardif_neigh_node *hardif_neigh;
+	int idx = 0;
 
-	hlist_क्रम_each_entry_rcu(hardअगर_neigh,
-				 &hard_अगरace->neigh_list, list) अणु
-		अगर (idx++ < *idx_s)
-			जारी;
+	hlist_for_each_entry_rcu(hardif_neigh,
+				 &hard_iface->neigh_list, list) {
+		if (idx++ < *idx_s)
+			continue;
 
-		अगर (batadv_v_neigh_dump_neigh(msg, portid, seq, hardअगर_neigh)) अणु
+		if (batadv_v_neigh_dump_neigh(msg, portid, seq, hardif_neigh)) {
 			*idx_s = idx - 1;
-			वापस -EMSGSIZE;
-		पूर्ण
-	पूर्ण
+			return -EMSGSIZE;
+		}
+	}
 
 	*idx_s = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * batadv_v_neigh_dump() - Dump the neighbours of a hard पूर्णांकerface  पूर्णांकo a
+ * batadv_v_neigh_dump() - Dump the neighbours of a hard interface  into a
  *  message
- * @msg: Netlink message to dump पूर्णांकo
+ * @msg: Netlink message to dump into
  * @cb: Control block containing additional options
- * @bat_priv: The bat priv with all the soft पूर्णांकerface inक्रमmation
- * @single_hardअगर: Limit dumping to this hard पूर्णांकerface
+ * @bat_priv: The bat priv with all the soft interface information
+ * @single_hardif: Limit dumping to this hard interface
  */
-अटल व्योम
-batadv_v_neigh_dump(काष्ठा sk_buff *msg, काष्ठा netlink_callback *cb,
-		    काष्ठा batadv_priv *bat_priv,
-		    काष्ठा batadv_hard_अगरace *single_hardअगर)
-अणु
-	काष्ठा batadv_hard_अगरace *hard_अगरace;
-	पूर्णांक i_hardअगर = 0;
-	पूर्णांक i_hardअगर_s = cb->args[0];
-	पूर्णांक idx = cb->args[1];
-	पूर्णांक portid = NETLINK_CB(cb->skb).portid;
+static void
+batadv_v_neigh_dump(struct sk_buff *msg, struct netlink_callback *cb,
+		    struct batadv_priv *bat_priv,
+		    struct batadv_hard_iface *single_hardif)
+{
+	struct batadv_hard_iface *hard_iface;
+	int i_hardif = 0;
+	int i_hardif_s = cb->args[0];
+	int idx = cb->args[1];
+	int portid = NETLINK_CB(cb->skb).portid;
 
-	rcu_पढ़ो_lock();
-	अगर (single_hardअगर) अणु
-		अगर (i_hardअगर_s == 0) अणु
-			अगर (batadv_v_neigh_dump_hardअगर(msg, portid,
+	rcu_read_lock();
+	if (single_hardif) {
+		if (i_hardif_s == 0) {
+			if (batadv_v_neigh_dump_hardif(msg, portid,
 						       cb->nlh->nlmsg_seq,
-						       bat_priv, single_hardअगर,
+						       bat_priv, single_hardif,
 						       &idx) == 0)
-				i_hardअगर++;
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		list_क्रम_each_entry_rcu(hard_अगरace, &batadv_hardअगर_list, list) अणु
-			अगर (hard_अगरace->soft_अगरace != bat_priv->soft_अगरace)
-				जारी;
+				i_hardif++;
+		}
+	} else {
+		list_for_each_entry_rcu(hard_iface, &batadv_hardif_list, list) {
+			if (hard_iface->soft_iface != bat_priv->soft_iface)
+				continue;
 
-			अगर (i_hardअगर++ < i_hardअगर_s)
-				जारी;
+			if (i_hardif++ < i_hardif_s)
+				continue;
 
-			अगर (batadv_v_neigh_dump_hardअगर(msg, portid,
+			if (batadv_v_neigh_dump_hardif(msg, portid,
 						       cb->nlh->nlmsg_seq,
-						       bat_priv, hard_अगरace,
-						       &idx)) अणु
-				i_hardअगर--;
-				अवरोध;
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
+						       bat_priv, hard_iface,
+						       &idx)) {
+				i_hardif--;
+				break;
+			}
+		}
+	}
+	rcu_read_unlock();
 
-	cb->args[0] = i_hardअगर;
+	cb->args[0] = i_hardif;
 	cb->args[1] = idx;
-पूर्ण
+}
 
 /**
- * batadv_v_orig_dump_subentry() - Dump an originator subentry पूर्णांकo a message
- * @msg: Netlink message to dump पूर्णांकo
+ * batadv_v_orig_dump_subentry() - Dump an originator subentry into a message
+ * @msg: Netlink message to dump into
  * @portid: Port making netlink request
  * @seq: Sequence number of netlink message
- * @bat_priv: The bat priv with all the soft पूर्णांकerface inक्रमmation
- * @अगर_outgoing: Limit dump to entries with this outgoing पूर्णांकerface
+ * @bat_priv: The bat priv with all the soft interface information
+ * @if_outgoing: Limit dump to entries with this outgoing interface
  * @orig_node: Originator to dump
  * @neigh_node: Single hops neighbour
  * @best: Is the best originator
  *
  * Return: Error code, or 0 on success
  */
-अटल पूर्णांक
-batadv_v_orig_dump_subentry(काष्ठा sk_buff *msg, u32 portid, u32 seq,
-			    काष्ठा batadv_priv *bat_priv,
-			    काष्ठा batadv_hard_अगरace *अगर_outgoing,
-			    काष्ठा batadv_orig_node *orig_node,
-			    काष्ठा batadv_neigh_node *neigh_node,
+static int
+batadv_v_orig_dump_subentry(struct sk_buff *msg, u32 portid, u32 seq,
+			    struct batadv_priv *bat_priv,
+			    struct batadv_hard_iface *if_outgoing,
+			    struct batadv_orig_node *orig_node,
+			    struct batadv_neigh_node *neigh_node,
 			    bool best)
-अणु
-	काष्ठा batadv_neigh_अगरinfo *n_अगरinfo;
-	अचिन्हित पूर्णांक last_seen_msecs;
+{
+	struct batadv_neigh_ifinfo *n_ifinfo;
+	unsigned int last_seen_msecs;
 	u32 throughput;
-	व्योम *hdr;
+	void *hdr;
 
-	n_अगरinfo = batadv_neigh_अगरinfo_get(neigh_node, अगर_outgoing);
-	अगर (!n_अगरinfo)
-		वापस 0;
+	n_ifinfo = batadv_neigh_ifinfo_get(neigh_node, if_outgoing);
+	if (!n_ifinfo)
+		return 0;
 
-	throughput = n_अगरinfo->bat_v.throughput * 100;
+	throughput = n_ifinfo->bat_v.throughput * 100;
 
-	batadv_neigh_अगरinfo_put(n_अगरinfo);
+	batadv_neigh_ifinfo_put(n_ifinfo);
 
-	last_seen_msecs = jअगरfies_to_msecs(jअगरfies - orig_node->last_seen);
+	last_seen_msecs = jiffies_to_msecs(jiffies - orig_node->last_seen);
 
-	अगर (अगर_outgoing != BATADV_IF_DEFAULT &&
-	    अगर_outgoing != neigh_node->अगर_incoming)
-		वापस 0;
+	if (if_outgoing != BATADV_IF_DEFAULT &&
+	    if_outgoing != neigh_node->if_incoming)
+		return 0;
 
 	hdr = genlmsg_put(msg, portid, seq, &batadv_netlink_family, NLM_F_MULTI,
 			  BATADV_CMD_GET_ORIGINATORS);
-	अगर (!hdr)
-		वापस -ENOBUFS;
+	if (!hdr)
+		return -ENOBUFS;
 
-	अगर (nla_put(msg, BATADV_ATTR_ORIG_ADDRESS, ETH_ALEN, orig_node->orig) ||
+	if (nla_put(msg, BATADV_ATTR_ORIG_ADDRESS, ETH_ALEN, orig_node->orig) ||
 	    nla_put(msg, BATADV_ATTR_NEIGH_ADDRESS, ETH_ALEN,
 		    neigh_node->addr) ||
 	    nla_put_u32(msg, BATADV_ATTR_HARD_IFINDEX,
-			neigh_node->अगर_incoming->net_dev->अगरindex) ||
+			neigh_node->if_incoming->net_dev->ifindex) ||
 	    nla_put_u32(msg, BATADV_ATTR_THROUGHPUT, throughput) ||
 	    nla_put_u32(msg, BATADV_ATTR_LAST_SEEN_MSECS,
 			last_seen_msecs))
-		जाओ nla_put_failure;
+		goto nla_put_failure;
 
-	अगर (best && nla_put_flag(msg, BATADV_ATTR_FLAG_BEST))
-		जाओ nla_put_failure;
+	if (best && nla_put_flag(msg, BATADV_ATTR_FLAG_BEST))
+		goto nla_put_failure;
 
 	genlmsg_end(msg, hdr);
-	वापस 0;
+	return 0;
 
  nla_put_failure:
 	genlmsg_cancel(msg, hdr);
-	वापस -EMSGSIZE;
-पूर्ण
+	return -EMSGSIZE;
+}
 
 /**
- * batadv_v_orig_dump_entry() - Dump an originator entry पूर्णांकo a message
- * @msg: Netlink message to dump पूर्णांकo
+ * batadv_v_orig_dump_entry() - Dump an originator entry into a message
+ * @msg: Netlink message to dump into
  * @portid: Port making netlink request
  * @seq: Sequence number of netlink message
- * @bat_priv: The bat priv with all the soft पूर्णांकerface inक्रमmation
- * @अगर_outgoing: Limit dump to entries with this outgoing पूर्णांकerface
+ * @bat_priv: The bat priv with all the soft interface information
+ * @if_outgoing: Limit dump to entries with this outgoing interface
  * @orig_node: Originator to dump
  * @sub_s: Number of sub entries to skip
  *
- * This function assumes the caller holds rcu_पढ़ो_lock().
+ * This function assumes the caller holds rcu_read_lock().
  *
  * Return: Error code, or 0 on success
  */
-अटल पूर्णांक
-batadv_v_orig_dump_entry(काष्ठा sk_buff *msg, u32 portid, u32 seq,
-			 काष्ठा batadv_priv *bat_priv,
-			 काष्ठा batadv_hard_अगरace *अगर_outgoing,
-			 काष्ठा batadv_orig_node *orig_node, पूर्णांक *sub_s)
-अणु
-	काष्ठा batadv_neigh_node *neigh_node_best;
-	काष्ठा batadv_neigh_node *neigh_node;
-	पूर्णांक sub = 0;
+static int
+batadv_v_orig_dump_entry(struct sk_buff *msg, u32 portid, u32 seq,
+			 struct batadv_priv *bat_priv,
+			 struct batadv_hard_iface *if_outgoing,
+			 struct batadv_orig_node *orig_node, int *sub_s)
+{
+	struct batadv_neigh_node *neigh_node_best;
+	struct batadv_neigh_node *neigh_node;
+	int sub = 0;
 	bool best;
 
-	neigh_node_best = batadv_orig_router_get(orig_node, अगर_outgoing);
-	अगर (!neigh_node_best)
-		जाओ out;
+	neigh_node_best = batadv_orig_router_get(orig_node, if_outgoing);
+	if (!neigh_node_best)
+		goto out;
 
-	hlist_क्रम_each_entry_rcu(neigh_node, &orig_node->neigh_list, list) अणु
-		अगर (sub++ < *sub_s)
-			जारी;
+	hlist_for_each_entry_rcu(neigh_node, &orig_node->neigh_list, list) {
+		if (sub++ < *sub_s)
+			continue;
 
 		best = (neigh_node == neigh_node_best);
 
-		अगर (batadv_v_orig_dump_subentry(msg, portid, seq, bat_priv,
-						अगर_outgoing, orig_node,
-						neigh_node, best)) अणु
+		if (batadv_v_orig_dump_subentry(msg, portid, seq, bat_priv,
+						if_outgoing, orig_node,
+						neigh_node, best)) {
 			batadv_neigh_node_put(neigh_node_best);
 
 			*sub_s = sub - 1;
-			वापस -EMSGSIZE;
-		पूर्ण
-	पूर्ण
+			return -EMSGSIZE;
+		}
+	}
 
  out:
-	अगर (neigh_node_best)
+	if (neigh_node_best)
 		batadv_neigh_node_put(neigh_node_best);
 
 	*sub_s = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * batadv_v_orig_dump_bucket() - Dump an originator bucket पूर्णांकo a message
- * @msg: Netlink message to dump पूर्णांकo
+ * batadv_v_orig_dump_bucket() - Dump an originator bucket into a message
+ * @msg: Netlink message to dump into
  * @portid: Port making netlink request
  * @seq: Sequence number of netlink message
- * @bat_priv: The bat priv with all the soft पूर्णांकerface inक्रमmation
- * @अगर_outgoing: Limit dump to entries with this outgoing पूर्णांकerface
+ * @bat_priv: The bat priv with all the soft interface information
+ * @if_outgoing: Limit dump to entries with this outgoing interface
  * @head: Bucket to be dumped
  * @idx_s: Number of entries to be skipped
  * @sub: Number of sub entries to be skipped
  *
  * Return: Error code, or 0 on success
  */
-अटल पूर्णांक
-batadv_v_orig_dump_bucket(काष्ठा sk_buff *msg, u32 portid, u32 seq,
-			  काष्ठा batadv_priv *bat_priv,
-			  काष्ठा batadv_hard_अगरace *अगर_outgoing,
-			  काष्ठा hlist_head *head, पूर्णांक *idx_s, पूर्णांक *sub)
-अणु
-	काष्ठा batadv_orig_node *orig_node;
-	पूर्णांक idx = 0;
+static int
+batadv_v_orig_dump_bucket(struct sk_buff *msg, u32 portid, u32 seq,
+			  struct batadv_priv *bat_priv,
+			  struct batadv_hard_iface *if_outgoing,
+			  struct hlist_head *head, int *idx_s, int *sub)
+{
+	struct batadv_orig_node *orig_node;
+	int idx = 0;
 
-	rcu_पढ़ो_lock();
-	hlist_क्रम_each_entry_rcu(orig_node, head, hash_entry) अणु
-		अगर (idx++ < *idx_s)
-			जारी;
+	rcu_read_lock();
+	hlist_for_each_entry_rcu(orig_node, head, hash_entry) {
+		if (idx++ < *idx_s)
+			continue;
 
-		अगर (batadv_v_orig_dump_entry(msg, portid, seq, bat_priv,
-					     अगर_outgoing, orig_node, sub)) अणु
-			rcu_पढ़ो_unlock();
+		if (batadv_v_orig_dump_entry(msg, portid, seq, bat_priv,
+					     if_outgoing, orig_node, sub)) {
+			rcu_read_unlock();
 			*idx_s = idx - 1;
-			वापस -EMSGSIZE;
-		पूर्ण
-	पूर्ण
-	rcu_पढ़ो_unlock();
+			return -EMSGSIZE;
+		}
+	}
+	rcu_read_unlock();
 
 	*idx_s = 0;
 	*sub = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * batadv_v_orig_dump() - Dump the originators पूर्णांकo a message
- * @msg: Netlink message to dump पूर्णांकo
+ * batadv_v_orig_dump() - Dump the originators into a message
+ * @msg: Netlink message to dump into
  * @cb: Control block containing additional options
- * @bat_priv: The bat priv with all the soft पूर्णांकerface inक्रमmation
- * @अगर_outgoing: Limit dump to entries with this outgoing पूर्णांकerface
+ * @bat_priv: The bat priv with all the soft interface information
+ * @if_outgoing: Limit dump to entries with this outgoing interface
  */
-अटल व्योम
-batadv_v_orig_dump(काष्ठा sk_buff *msg, काष्ठा netlink_callback *cb,
-		   काष्ठा batadv_priv *bat_priv,
-		   काष्ठा batadv_hard_अगरace *अगर_outgoing)
-अणु
-	काष्ठा batadv_hashtable *hash = bat_priv->orig_hash;
-	काष्ठा hlist_head *head;
-	पूर्णांक bucket = cb->args[0];
-	पूर्णांक idx = cb->args[1];
-	पूर्णांक sub = cb->args[2];
-	पूर्णांक portid = NETLINK_CB(cb->skb).portid;
+static void
+batadv_v_orig_dump(struct sk_buff *msg, struct netlink_callback *cb,
+		   struct batadv_priv *bat_priv,
+		   struct batadv_hard_iface *if_outgoing)
+{
+	struct batadv_hashtable *hash = bat_priv->orig_hash;
+	struct hlist_head *head;
+	int bucket = cb->args[0];
+	int idx = cb->args[1];
+	int sub = cb->args[2];
+	int portid = NETLINK_CB(cb->skb).portid;
 
-	जबतक (bucket < hash->size) अणु
+	while (bucket < hash->size) {
 		head = &hash->table[bucket];
 
-		अगर (batadv_v_orig_dump_bucket(msg, portid,
+		if (batadv_v_orig_dump_bucket(msg, portid,
 					      cb->nlh->nlmsg_seq,
-					      bat_priv, अगर_outgoing, head, &idx,
+					      bat_priv, if_outgoing, head, &idx,
 					      &sub))
-			अवरोध;
+			break;
 
 		bucket++;
-	पूर्ण
+	}
 
 	cb->args[0] = bucket;
 	cb->args[1] = idx;
 	cb->args[2] = sub;
-पूर्ण
+}
 
-अटल पूर्णांक batadv_v_neigh_cmp(काष्ठा batadv_neigh_node *neigh1,
-			      काष्ठा batadv_hard_अगरace *अगर_outgoing1,
-			      काष्ठा batadv_neigh_node *neigh2,
-			      काष्ठा batadv_hard_अगरace *अगर_outgoing2)
-अणु
-	काष्ठा batadv_neigh_अगरinfo *अगरinfo1, *अगरinfo2;
-	पूर्णांक ret = 0;
+static int batadv_v_neigh_cmp(struct batadv_neigh_node *neigh1,
+			      struct batadv_hard_iface *if_outgoing1,
+			      struct batadv_neigh_node *neigh2,
+			      struct batadv_hard_iface *if_outgoing2)
+{
+	struct batadv_neigh_ifinfo *ifinfo1, *ifinfo2;
+	int ret = 0;
 
-	अगरinfo1 = batadv_neigh_अगरinfo_get(neigh1, अगर_outgoing1);
-	अगर (!अगरinfo1)
-		जाओ err_अगरinfo1;
+	ifinfo1 = batadv_neigh_ifinfo_get(neigh1, if_outgoing1);
+	if (!ifinfo1)
+		goto err_ifinfo1;
 
-	अगरinfo2 = batadv_neigh_अगरinfo_get(neigh2, अगर_outgoing2);
-	अगर (!अगरinfo2)
-		जाओ err_अगरinfo2;
+	ifinfo2 = batadv_neigh_ifinfo_get(neigh2, if_outgoing2);
+	if (!ifinfo2)
+		goto err_ifinfo2;
 
-	ret = अगरinfo1->bat_v.throughput - अगरinfo2->bat_v.throughput;
+	ret = ifinfo1->bat_v.throughput - ifinfo2->bat_v.throughput;
 
-	batadv_neigh_अगरinfo_put(अगरinfo2);
-err_अगरinfo2:
-	batadv_neigh_अगरinfo_put(अगरinfo1);
-err_अगरinfo1:
-	वापस ret;
-पूर्ण
+	batadv_neigh_ifinfo_put(ifinfo2);
+err_ifinfo2:
+	batadv_neigh_ifinfo_put(ifinfo1);
+err_ifinfo1:
+	return ret;
+}
 
-अटल bool batadv_v_neigh_is_sob(काष्ठा batadv_neigh_node *neigh1,
-				  काष्ठा batadv_hard_अगरace *अगर_outgoing1,
-				  काष्ठा batadv_neigh_node *neigh2,
-				  काष्ठा batadv_hard_अगरace *अगर_outgoing2)
-अणु
-	काष्ठा batadv_neigh_अगरinfo *अगरinfo1, *अगरinfo2;
+static bool batadv_v_neigh_is_sob(struct batadv_neigh_node *neigh1,
+				  struct batadv_hard_iface *if_outgoing1,
+				  struct batadv_neigh_node *neigh2,
+				  struct batadv_hard_iface *if_outgoing2)
+{
+	struct batadv_neigh_ifinfo *ifinfo1, *ifinfo2;
 	u32 threshold;
 	bool ret = false;
 
-	अगरinfo1 = batadv_neigh_अगरinfo_get(neigh1, अगर_outgoing1);
-	अगर (!अगरinfo1)
-		जाओ err_अगरinfo1;
+	ifinfo1 = batadv_neigh_ifinfo_get(neigh1, if_outgoing1);
+	if (!ifinfo1)
+		goto err_ifinfo1;
 
-	अगरinfo2 = batadv_neigh_अगरinfo_get(neigh2, अगर_outgoing2);
-	अगर (!अगरinfo2)
-		जाओ err_अगरinfo2;
+	ifinfo2 = batadv_neigh_ifinfo_get(neigh2, if_outgoing2);
+	if (!ifinfo2)
+		goto err_ifinfo2;
 
-	threshold = अगरinfo1->bat_v.throughput / 4;
-	threshold = अगरinfo1->bat_v.throughput - threshold;
+	threshold = ifinfo1->bat_v.throughput / 4;
+	threshold = ifinfo1->bat_v.throughput - threshold;
 
-	ret = अगरinfo2->bat_v.throughput > threshold;
+	ret = ifinfo2->bat_v.throughput > threshold;
 
-	batadv_neigh_अगरinfo_put(अगरinfo2);
-err_अगरinfo2:
-	batadv_neigh_अगरinfo_put(अगरinfo1);
-err_अगरinfo1:
-	वापस ret;
-पूर्ण
+	batadv_neigh_ifinfo_put(ifinfo2);
+err_ifinfo2:
+	batadv_neigh_ifinfo_put(ifinfo1);
+err_ifinfo1:
+	return ret;
+}
 
 /**
  * batadv_v_init_sel_class() - initialize GW selection class
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @bat_priv: the bat priv with all the soft interface information
  */
-अटल व्योम batadv_v_init_sel_class(काष्ठा batadv_priv *bat_priv)
-अणु
-	/* set शेष throughput dअगरference threshold to 5Mbps */
+static void batadv_v_init_sel_class(struct batadv_priv *bat_priv)
+{
+	/* set default throughput difference threshold to 5Mbps */
 	atomic_set(&bat_priv->gw.sel_class, 50);
-पूर्ण
+}
 
-अटल sमाप_प्रकार batadv_v_store_sel_class(काष्ठा batadv_priv *bat_priv,
-					अक्षर *buff, माप_प्रकार count)
-अणु
+static ssize_t batadv_v_store_sel_class(struct batadv_priv *bat_priv,
+					char *buff, size_t count)
+{
 	u32 old_class, class;
 
-	अगर (!batadv_parse_throughput(bat_priv->soft_अगरace, buff,
+	if (!batadv_parse_throughput(bat_priv->soft_iface, buff,
 				     "B.A.T.M.A.N. V GW selection class",
 				     &class))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	old_class = atomic_पढ़ो(&bat_priv->gw.sel_class);
+	old_class = atomic_read(&bat_priv->gw.sel_class);
 	atomic_set(&bat_priv->gw.sel_class, class);
 
-	अगर (old_class != class)
+	if (old_class != class)
 		batadv_gw_reselect(bat_priv);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 /**
- * batadv_v_gw_throughput_get() - retrieve the GW-bandwidth क्रम a given GW
- * @gw_node: the GW to retrieve the metric क्रम
- * @bw: the poपूर्णांकer where the metric will be stored. The metric is computed as
+ * batadv_v_gw_throughput_get() - retrieve the GW-bandwidth for a given GW
+ * @gw_node: the GW to retrieve the metric for
+ * @bw: the pointer where the metric will be stored. The metric is computed as
  *  the minimum between the GW advertised throughput and the path throughput to
  *  it in the mesh
  *
  * Return: 0 on success, -1 on failure
  */
-अटल पूर्णांक batadv_v_gw_throughput_get(काष्ठा batadv_gw_node *gw_node, u32 *bw)
-अणु
-	काष्ठा batadv_neigh_अगरinfo *router_अगरinfo = शून्य;
-	काष्ठा batadv_orig_node *orig_node;
-	काष्ठा batadv_neigh_node *router;
-	पूर्णांक ret = -1;
+static int batadv_v_gw_throughput_get(struct batadv_gw_node *gw_node, u32 *bw)
+{
+	struct batadv_neigh_ifinfo *router_ifinfo = NULL;
+	struct batadv_orig_node *orig_node;
+	struct batadv_neigh_node *router;
+	int ret = -1;
 
 	orig_node = gw_node->orig_node;
 	router = batadv_orig_router_get(orig_node, BATADV_IF_DEFAULT);
-	अगर (!router)
-		जाओ out;
+	if (!router)
+		goto out;
 
-	router_अगरinfo = batadv_neigh_अगरinfo_get(router, BATADV_IF_DEFAULT);
-	अगर (!router_अगरinfo)
-		जाओ out;
+	router_ifinfo = batadv_neigh_ifinfo_get(router, BATADV_IF_DEFAULT);
+	if (!router_ifinfo)
+		goto out;
 
 	/* the GW metric is computed as the minimum between the path throughput
 	 * to reach the GW itself and the advertised bandwidth.
 	 * This gives us an approximation of the effective throughput that the
 	 * client can expect via this particular GW node
 	 */
-	*bw = router_अगरinfo->bat_v.throughput;
-	*bw = min_t(u32, *bw, gw_node->bandwidth_करोwn);
+	*bw = router_ifinfo->bat_v.throughput;
+	*bw = min_t(u32, *bw, gw_node->bandwidth_down);
 
 	ret = 0;
 out:
-	अगर (router)
+	if (router)
 		batadv_neigh_node_put(router);
-	अगर (router_अगरinfo)
-		batadv_neigh_अगरinfo_put(router_अगरinfo);
+	if (router_ifinfo)
+		batadv_neigh_ifinfo_put(router_ifinfo);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
  * batadv_v_gw_get_best_gw_node() - retrieve the best GW node
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @bat_priv: the bat priv with all the soft interface information
  *
- * Return: the GW node having the best GW-metric, शून्य अगर no GW is known
+ * Return: the GW node having the best GW-metric, NULL if no GW is known
  */
-अटल काष्ठा batadv_gw_node *
-batadv_v_gw_get_best_gw_node(काष्ठा batadv_priv *bat_priv)
-अणु
-	काष्ठा batadv_gw_node *gw_node, *curr_gw = शून्य;
+static struct batadv_gw_node *
+batadv_v_gw_get_best_gw_node(struct batadv_priv *bat_priv)
+{
+	struct batadv_gw_node *gw_node, *curr_gw = NULL;
 	u32 max_bw = 0, bw;
 
-	rcu_पढ़ो_lock();
-	hlist_क्रम_each_entry_rcu(gw_node, &bat_priv->gw.gateway_list, list) अणु
-		अगर (!kref_get_unless_zero(&gw_node->refcount))
-			जारी;
+	rcu_read_lock();
+	hlist_for_each_entry_rcu(gw_node, &bat_priv->gw.gateway_list, list) {
+		if (!kref_get_unless_zero(&gw_node->refcount))
+			continue;
 
-		अगर (batadv_v_gw_throughput_get(gw_node, &bw) < 0)
-			जाओ next;
+		if (batadv_v_gw_throughput_get(gw_node, &bw) < 0)
+			goto next;
 
-		अगर (curr_gw && bw <= max_bw)
-			जाओ next;
+		if (curr_gw && bw <= max_bw)
+			goto next;
 
-		अगर (curr_gw)
+		if (curr_gw)
 			batadv_gw_node_put(curr_gw);
 
 		curr_gw = gw_node;
@@ -605,53 +604,53 @@ batadv_v_gw_get_best_gw_node(काष्ठा batadv_priv *bat_priv)
 
 next:
 		batadv_gw_node_put(gw_node);
-	पूर्ण
-	rcu_पढ़ो_unlock();
+	}
+	rcu_read_unlock();
 
-	वापस curr_gw;
-पूर्ण
+	return curr_gw;
+}
 
 /**
- * batadv_v_gw_is_eligible() - check अगर a originator would be selected as GW
- * @bat_priv: the bat priv with all the soft पूर्णांकerface inक्रमmation
+ * batadv_v_gw_is_eligible() - check if a originator would be selected as GW
+ * @bat_priv: the bat priv with all the soft interface information
  * @curr_gw_orig: originator representing the currently selected GW
  * @orig_node: the originator representing the new candidate
  *
- * Return: true अगर orig_node can be selected as current GW, false otherwise
+ * Return: true if orig_node can be selected as current GW, false otherwise
  */
-अटल bool batadv_v_gw_is_eligible(काष्ठा batadv_priv *bat_priv,
-				    काष्ठा batadv_orig_node *curr_gw_orig,
-				    काष्ठा batadv_orig_node *orig_node)
-अणु
-	काष्ठा batadv_gw_node *curr_gw, *orig_gw = शून्य;
+static bool batadv_v_gw_is_eligible(struct batadv_priv *bat_priv,
+				    struct batadv_orig_node *curr_gw_orig,
+				    struct batadv_orig_node *orig_node)
+{
+	struct batadv_gw_node *curr_gw, *orig_gw = NULL;
 	u32 gw_throughput, orig_throughput, threshold;
 	bool ret = false;
 
-	threshold = atomic_पढ़ो(&bat_priv->gw.sel_class);
+	threshold = atomic_read(&bat_priv->gw.sel_class);
 
 	curr_gw = batadv_gw_node_get(bat_priv, curr_gw_orig);
-	अगर (!curr_gw) अणु
+	if (!curr_gw) {
 		ret = true;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (batadv_v_gw_throughput_get(curr_gw, &gw_throughput) < 0) अणु
+	if (batadv_v_gw_throughput_get(curr_gw, &gw_throughput) < 0) {
 		ret = true;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	orig_gw = batadv_gw_node_get(bat_priv, orig_node);
-	अगर (!orig_gw)
-		जाओ out;
+	if (!orig_gw)
+		goto out;
 
-	अगर (batadv_v_gw_throughput_get(orig_gw, &orig_throughput) < 0)
-		जाओ out;
+	if (batadv_v_gw_throughput_get(orig_gw, &orig_throughput) < 0)
+		goto out;
 
-	अगर (orig_throughput < gw_throughput)
-		जाओ out;
+	if (orig_throughput < gw_throughput)
+		goto out;
 
-	अगर ((orig_throughput - gw_throughput) < threshold)
-		जाओ out;
+	if ((orig_throughput - gw_throughput) < threshold)
+		goto out;
 
 	batadv_dbg(BATADV_DBG_BATMAN, bat_priv,
 		   "Restarting gateway selection: better gateway found (throughput curr: %u, throughput new: %u)\n",
@@ -659,218 +658,218 @@ next:
 
 	ret = true;
 out:
-	अगर (curr_gw)
+	if (curr_gw)
 		batadv_gw_node_put(curr_gw);
-	अगर (orig_gw)
+	if (orig_gw)
 		batadv_gw_node_put(orig_gw);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * batadv_v_gw_dump_entry() - Dump a gateway पूर्णांकo a message
- * @msg: Netlink message to dump पूर्णांकo
+ * batadv_v_gw_dump_entry() - Dump a gateway into a message
+ * @msg: Netlink message to dump into
  * @portid: Port making netlink request
  * @cb: Control block containing additional options
- * @bat_priv: The bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @bat_priv: The bat priv with all the soft interface information
  * @gw_node: Gateway to be dumped
  *
  * Return: Error code, or 0 on success
  */
-अटल पूर्णांक batadv_v_gw_dump_entry(काष्ठा sk_buff *msg, u32 portid,
-				  काष्ठा netlink_callback *cb,
-				  काष्ठा batadv_priv *bat_priv,
-				  काष्ठा batadv_gw_node *gw_node)
-अणु
-	काष्ठा batadv_neigh_अगरinfo *router_अगरinfo = शून्य;
-	काष्ठा batadv_neigh_node *router;
-	काष्ठा batadv_gw_node *curr_gw = शून्य;
-	पूर्णांक ret = 0;
-	व्योम *hdr;
+static int batadv_v_gw_dump_entry(struct sk_buff *msg, u32 portid,
+				  struct netlink_callback *cb,
+				  struct batadv_priv *bat_priv,
+				  struct batadv_gw_node *gw_node)
+{
+	struct batadv_neigh_ifinfo *router_ifinfo = NULL;
+	struct batadv_neigh_node *router;
+	struct batadv_gw_node *curr_gw = NULL;
+	int ret = 0;
+	void *hdr;
 
 	router = batadv_orig_router_get(gw_node->orig_node, BATADV_IF_DEFAULT);
-	अगर (!router)
-		जाओ out;
+	if (!router)
+		goto out;
 
-	router_अगरinfo = batadv_neigh_अगरinfo_get(router, BATADV_IF_DEFAULT);
-	अगर (!router_अगरinfo)
-		जाओ out;
+	router_ifinfo = batadv_neigh_ifinfo_get(router, BATADV_IF_DEFAULT);
+	if (!router_ifinfo)
+		goto out;
 
 	curr_gw = batadv_gw_get_selected_gw_node(bat_priv);
 
 	hdr = genlmsg_put(msg, portid, cb->nlh->nlmsg_seq,
 			  &batadv_netlink_family, NLM_F_MULTI,
 			  BATADV_CMD_GET_GATEWAYS);
-	अगर (!hdr) अणु
+	if (!hdr) {
 		ret = -ENOBUFS;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	genl_dump_check_consistent(cb, hdr);
 
 	ret = -EMSGSIZE;
 
-	अगर (curr_gw == gw_node) अणु
-		अगर (nla_put_flag(msg, BATADV_ATTR_FLAG_BEST)) अणु
+	if (curr_gw == gw_node) {
+		if (nla_put_flag(msg, BATADV_ATTR_FLAG_BEST)) {
 			genlmsg_cancel(msg, hdr);
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			goto out;
+		}
+	}
 
-	अगर (nla_put(msg, BATADV_ATTR_ORIG_ADDRESS, ETH_ALEN,
-		    gw_node->orig_node->orig)) अणु
+	if (nla_put(msg, BATADV_ATTR_ORIG_ADDRESS, ETH_ALEN,
+		    gw_node->orig_node->orig)) {
 		genlmsg_cancel(msg, hdr);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (nla_put_u32(msg, BATADV_ATTR_THROUGHPUT,
-			router_अगरinfo->bat_v.throughput)) अणु
+	if (nla_put_u32(msg, BATADV_ATTR_THROUGHPUT,
+			router_ifinfo->bat_v.throughput)) {
 		genlmsg_cancel(msg, hdr);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (nla_put(msg, BATADV_ATTR_ROUTER, ETH_ALEN, router->addr)) अणु
+	if (nla_put(msg, BATADV_ATTR_ROUTER, ETH_ALEN, router->addr)) {
 		genlmsg_cancel(msg, hdr);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (nla_put_string(msg, BATADV_ATTR_HARD_IFNAME,
-			   router->अगर_incoming->net_dev->name)) अणु
+	if (nla_put_string(msg, BATADV_ATTR_HARD_IFNAME,
+			   router->if_incoming->net_dev->name)) {
 		genlmsg_cancel(msg, hdr);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (nla_put_u32(msg, BATADV_ATTR_BANDWIDTH_DOWN,
-			gw_node->bandwidth_करोwn)) अणु
+	if (nla_put_u32(msg, BATADV_ATTR_BANDWIDTH_DOWN,
+			gw_node->bandwidth_down)) {
 		genlmsg_cancel(msg, hdr);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	अगर (nla_put_u32(msg, BATADV_ATTR_BANDWIDTH_UP, gw_node->bandwidth_up)) अणु
+	if (nla_put_u32(msg, BATADV_ATTR_BANDWIDTH_UP, gw_node->bandwidth_up)) {
 		genlmsg_cancel(msg, hdr);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	genlmsg_end(msg, hdr);
 	ret = 0;
 
 out:
-	अगर (curr_gw)
+	if (curr_gw)
 		batadv_gw_node_put(curr_gw);
-	अगर (router_अगरinfo)
-		batadv_neigh_अगरinfo_put(router_अगरinfo);
-	अगर (router)
+	if (router_ifinfo)
+		batadv_neigh_ifinfo_put(router_ifinfo);
+	if (router)
 		batadv_neigh_node_put(router);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /**
- * batadv_v_gw_dump() - Dump gateways पूर्णांकo a message
- * @msg: Netlink message to dump पूर्णांकo
+ * batadv_v_gw_dump() - Dump gateways into a message
+ * @msg: Netlink message to dump into
  * @cb: Control block containing additional options
- * @bat_priv: The bat priv with all the soft पूर्णांकerface inक्रमmation
+ * @bat_priv: The bat priv with all the soft interface information
  */
-अटल व्योम batadv_v_gw_dump(काष्ठा sk_buff *msg, काष्ठा netlink_callback *cb,
-			     काष्ठा batadv_priv *bat_priv)
-अणु
-	पूर्णांक portid = NETLINK_CB(cb->skb).portid;
-	काष्ठा batadv_gw_node *gw_node;
-	पूर्णांक idx_skip = cb->args[0];
-	पूर्णांक idx = 0;
+static void batadv_v_gw_dump(struct sk_buff *msg, struct netlink_callback *cb,
+			     struct batadv_priv *bat_priv)
+{
+	int portid = NETLINK_CB(cb->skb).portid;
+	struct batadv_gw_node *gw_node;
+	int idx_skip = cb->args[0];
+	int idx = 0;
 
 	spin_lock_bh(&bat_priv->gw.list_lock);
 	cb->seq = bat_priv->gw.generation << 1 | 1;
 
-	hlist_क्रम_each_entry(gw_node, &bat_priv->gw.gateway_list, list) अणु
-		अगर (idx++ < idx_skip)
-			जारी;
+	hlist_for_each_entry(gw_node, &bat_priv->gw.gateway_list, list) {
+		if (idx++ < idx_skip)
+			continue;
 
-		अगर (batadv_v_gw_dump_entry(msg, portid, cb, bat_priv,
-					   gw_node)) अणु
+		if (batadv_v_gw_dump_entry(msg, portid, cb, bat_priv,
+					   gw_node)) {
 			idx_skip = idx - 1;
-			जाओ unlock;
-		पूर्ण
-	पूर्ण
+			goto unlock;
+		}
+	}
 
 	idx_skip = idx;
 unlock:
 	spin_unlock_bh(&bat_priv->gw.list_lock);
 
 	cb->args[0] = idx_skip;
-पूर्ण
+}
 
-अटल काष्ठा batadv_algo_ops batadv_baपंचांगan_v __पढ़ो_mostly = अणु
+static struct batadv_algo_ops batadv_batman_v __read_mostly = {
 	.name = "BATMAN_V",
-	.अगरace = अणु
-		.activate = batadv_v_अगरace_activate,
-		.enable = batadv_v_अगरace_enable,
-		.disable = batadv_v_अगरace_disable,
-		.update_mac = batadv_v_अगरace_update_mac,
-		.primary_set = batadv_v_primary_अगरace_set,
-	पूर्ण,
-	.neigh = अणु
-		.hardअगर_init = batadv_v_hardअगर_neigh_init,
+	.iface = {
+		.activate = batadv_v_iface_activate,
+		.enable = batadv_v_iface_enable,
+		.disable = batadv_v_iface_disable,
+		.update_mac = batadv_v_iface_update_mac,
+		.primary_set = batadv_v_primary_iface_set,
+	},
+	.neigh = {
+		.hardif_init = batadv_v_hardif_neigh_init,
 		.cmp = batadv_v_neigh_cmp,
 		.is_similar_or_better = batadv_v_neigh_is_sob,
 		.dump = batadv_v_neigh_dump,
-	पूर्ण,
-	.orig = अणु
+	},
+	.orig = {
 		.dump = batadv_v_orig_dump,
-	पूर्ण,
-	.gw = अणु
+	},
+	.gw = {
 		.init_sel_class = batadv_v_init_sel_class,
 		.store_sel_class = batadv_v_store_sel_class,
 		.get_best_gw_node = batadv_v_gw_get_best_gw_node,
 		.is_eligible = batadv_v_gw_is_eligible,
 		.dump = batadv_v_gw_dump,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /**
- * batadv_v_hardअगर_init() - initialize the algorithm specअगरic fields in the
- *  hard-पूर्णांकerface object
- * @hard_अगरace: the hard-पूर्णांकerface to initialize
+ * batadv_v_hardif_init() - initialize the algorithm specific fields in the
+ *  hard-interface object
+ * @hard_iface: the hard-interface to initialize
  */
-व्योम batadv_v_hardअगर_init(काष्ठा batadv_hard_अगरace *hard_अगरace)
-अणु
-	/* enable link throughput स्वतः-detection by setting the throughput
+void batadv_v_hardif_init(struct batadv_hard_iface *hard_iface)
+{
+	/* enable link throughput auto-detection by setting the throughput
 	 * override to zero
 	 */
-	atomic_set(&hard_अगरace->bat_v.throughput_override, 0);
-	atomic_set(&hard_अगरace->bat_v.elp_पूर्णांकerval, 500);
+	atomic_set(&hard_iface->bat_v.throughput_override, 0);
+	atomic_set(&hard_iface->bat_v.elp_interval, 500);
 
-	hard_अगरace->bat_v.aggr_len = 0;
-	skb_queue_head_init(&hard_अगरace->bat_v.aggr_list);
-	INIT_DELAYED_WORK(&hard_अगरace->bat_v.aggr_wq,
+	hard_iface->bat_v.aggr_len = 0;
+	skb_queue_head_init(&hard_iface->bat_v.aggr_list);
+	INIT_DELAYED_WORK(&hard_iface->bat_v.aggr_wq,
 			  batadv_v_ogm_aggr_work);
-पूर्ण
+}
 
 /**
- * batadv_v_mesh_init() - initialize the B.A.T.M.A.N. V निजी resources क्रम a
+ * batadv_v_mesh_init() - initialize the B.A.T.M.A.N. V private resources for a
  *  mesh
- * @bat_priv: the object representing the mesh पूर्णांकerface to initialise
+ * @bat_priv: the object representing the mesh interface to initialise
  *
  * Return: 0 on success or a negative error code otherwise
  */
-पूर्णांक batadv_v_mesh_init(काष्ठा batadv_priv *bat_priv)
-अणु
-	पूर्णांक ret = 0;
+int batadv_v_mesh_init(struct batadv_priv *bat_priv)
+{
+	int ret = 0;
 
 	ret = batadv_v_ogm_init(bat_priv);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * batadv_v_mesh_मुक्त() - मुक्त the B.A.T.M.A.N. V निजी resources क्रम a mesh
- * @bat_priv: the object representing the mesh पूर्णांकerface to मुक्त
+ * batadv_v_mesh_free() - free the B.A.T.M.A.N. V private resources for a mesh
+ * @bat_priv: the object representing the mesh interface to free
  */
-व्योम batadv_v_mesh_मुक्त(काष्ठा batadv_priv *bat_priv)
-अणु
-	batadv_v_ogm_मुक्त(bat_priv);
-पूर्ण
+void batadv_v_mesh_free(struct batadv_priv *bat_priv)
+{
+	batadv_v_ogm_free(bat_priv);
+}
 
 /**
  * batadv_v_init() - B.A.T.M.A.N. V initialization function
@@ -880,32 +879,32 @@ unlock:
  *
  * Return: 0 on success or a negative error code otherwise
  */
-पूर्णांक __init batadv_v_init(व्योम)
-अणु
-	पूर्णांक ret;
+int __init batadv_v_init(void)
+{
+	int ret;
 
 	/* B.A.T.M.A.N. V echo location protocol packet  */
-	ret = batadv_recv_handler_रेजिस्टर(BATADV_ELP,
+	ret = batadv_recv_handler_register(BATADV_ELP,
 					   batadv_v_elp_packet_recv);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	ret = batadv_recv_handler_रेजिस्टर(BATADV_OGM2,
+	ret = batadv_recv_handler_register(BATADV_OGM2,
 					   batadv_v_ogm_packet_recv);
-	अगर (ret < 0)
-		जाओ elp_unरेजिस्टर;
+	if (ret < 0)
+		goto elp_unregister;
 
-	ret = batadv_algo_रेजिस्टर(&batadv_baपंचांगan_v);
-	अगर (ret < 0)
-		जाओ ogm_unरेजिस्टर;
+	ret = batadv_algo_register(&batadv_batman_v);
+	if (ret < 0)
+		goto ogm_unregister;
 
-	वापस ret;
+	return ret;
 
-ogm_unरेजिस्टर:
-	batadv_recv_handler_unरेजिस्टर(BATADV_OGM2);
+ogm_unregister:
+	batadv_recv_handler_unregister(BATADV_OGM2);
 
-elp_unरेजिस्टर:
-	batadv_recv_handler_unरेजिस्टर(BATADV_ELP);
+elp_unregister:
+	batadv_recv_handler_unregister(BATADV_ELP);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

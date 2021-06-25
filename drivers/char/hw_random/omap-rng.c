@@ -1,80 +1,79 @@
-<शैली गुरु>
 /*
- * omap-rng.c - RNG driver क्रम TI OMAP CPU family
+ * omap-rng.c - RNG driver for TI OMAP CPU family
  *
- * Author: Deepak Saxena <dsaxena@plनिकासy.net>
+ * Author: Deepak Saxena <dsaxena@plexity.net>
  *
  * Copyright 2005 (c) MontaVista Software, Inc.
  *
  * Mostly based on original driver:
  *
  * Copyright (C) 2005 Nokia Corporation
- * Author: Juha Yrjथघlथअ <juha.yrjola@nokia.com>
+ * Author: Juha Yrjölä <juha.yrjola@nokia.com>
  *
  * This file is licensed under  the terms of the GNU General Public
  * License version 2. This program is licensed "as is" without any
  * warranty of any kind, whether express or implied.
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/init.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/err.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/hw_अक्रमom.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/pm_runसमय.स>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/of_address.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/random.h>
+#include <linux/err.h>
+#include <linux/platform_device.h>
+#include <linux/hw_random.h>
+#include <linux/delay.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/pm_runtime.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
+#include <linux/of_address.h>
+#include <linux/interrupt.h>
+#include <linux/clk.h>
+#include <linux/io.h>
 
-#घोषणा RNG_REG_STATUS_RDY			(1 << 0)
+#define RNG_REG_STATUS_RDY			(1 << 0)
 
-#घोषणा RNG_REG_INTACK_RDY_MASK			(1 << 0)
-#घोषणा RNG_REG_INTACK_SHUTDOWN_OFLO_MASK	(1 << 1)
-#घोषणा RNG_SHUTDOWN_OFLO_MASK			(1 << 1)
+#define RNG_REG_INTACK_RDY_MASK			(1 << 0)
+#define RNG_REG_INTACK_SHUTDOWN_OFLO_MASK	(1 << 1)
+#define RNG_SHUTDOWN_OFLO_MASK			(1 << 1)
 
-#घोषणा RNG_CONTROL_STARTUP_CYCLES_SHIFT	16
-#घोषणा RNG_CONTROL_STARTUP_CYCLES_MASK		(0xffff << 16)
-#घोषणा RNG_CONTROL_ENABLE_TRNG_SHIFT		10
-#घोषणा RNG_CONTROL_ENABLE_TRNG_MASK		(1 << 10)
+#define RNG_CONTROL_STARTUP_CYCLES_SHIFT	16
+#define RNG_CONTROL_STARTUP_CYCLES_MASK		(0xffff << 16)
+#define RNG_CONTROL_ENABLE_TRNG_SHIFT		10
+#define RNG_CONTROL_ENABLE_TRNG_MASK		(1 << 10)
 
-#घोषणा RNG_CONFIG_MAX_REFIL_CYCLES_SHIFT	16
-#घोषणा RNG_CONFIG_MAX_REFIL_CYCLES_MASK	(0xffff << 16)
-#घोषणा RNG_CONFIG_MIN_REFIL_CYCLES_SHIFT	0
-#घोषणा RNG_CONFIG_MIN_REFIL_CYCLES_MASK	(0xff << 0)
+#define RNG_CONFIG_MAX_REFIL_CYCLES_SHIFT	16
+#define RNG_CONFIG_MAX_REFIL_CYCLES_MASK	(0xffff << 16)
+#define RNG_CONFIG_MIN_REFIL_CYCLES_SHIFT	0
+#define RNG_CONFIG_MIN_REFIL_CYCLES_MASK	(0xff << 0)
 
-#घोषणा RNG_CONTROL_STARTUP_CYCLES		0xff
-#घोषणा RNG_CONFIG_MIN_REFIL_CYCLES		0x21
-#घोषणा RNG_CONFIG_MAX_REFIL_CYCLES		0x22
+#define RNG_CONTROL_STARTUP_CYCLES		0xff
+#define RNG_CONFIG_MIN_REFIL_CYCLES		0x21
+#define RNG_CONFIG_MAX_REFIL_CYCLES		0x22
 
-#घोषणा RNG_ALARMCNT_ALARM_TH_SHIFT		0x0
-#घोषणा RNG_ALARMCNT_ALARM_TH_MASK		(0xff << 0)
-#घोषणा RNG_ALARMCNT_SHUTDOWN_TH_SHIFT		16
-#घोषणा RNG_ALARMCNT_SHUTDOWN_TH_MASK		(0x1f << 16)
-#घोषणा RNG_ALARM_THRESHOLD			0xff
-#घोषणा RNG_SHUTDOWN_THRESHOLD			0x4
+#define RNG_ALARMCNT_ALARM_TH_SHIFT		0x0
+#define RNG_ALARMCNT_ALARM_TH_MASK		(0xff << 0)
+#define RNG_ALARMCNT_SHUTDOWN_TH_SHIFT		16
+#define RNG_ALARMCNT_SHUTDOWN_TH_MASK		(0x1f << 16)
+#define RNG_ALARM_THRESHOLD			0xff
+#define RNG_SHUTDOWN_THRESHOLD			0x4
 
-#घोषणा RNG_REG_FROENABLE_MASK			0xffffff
-#घोषणा RNG_REG_FRODETUNE_MASK			0xffffff
+#define RNG_REG_FROENABLE_MASK			0xffffff
+#define RNG_REG_FRODETUNE_MASK			0xffffff
 
-#घोषणा OMAP2_RNG_OUTPUT_SIZE			0x4
-#घोषणा OMAP4_RNG_OUTPUT_SIZE			0x8
-#घोषणा EIP76_RNG_OUTPUT_SIZE			0x10
+#define OMAP2_RNG_OUTPUT_SIZE			0x4
+#define OMAP4_RNG_OUTPUT_SIZE			0x8
+#define EIP76_RNG_OUTPUT_SIZE			0x10
 
 /*
  * EIP76 RNG takes approx. 700us to produce 16 bytes of output data
- * as per testing results. And to account क्रम the lack of udelay()'s
- * reliability, we keep the समयout as 1000us.
+ * as per testing results. And to account for the lack of udelay()'s
+ * reliability, we keep the timeout as 1000us.
  */
-#घोषणा RNG_DATA_FILL_TIMEOUT			100
+#define RNG_DATA_FILL_TIMEOUT			100
 
-क्रमागत अणु
+enum {
 	RNG_OUTPUT_0_REG = 0,
 	RNG_OUTPUT_1_REG,
 	RNG_OUTPUT_2_REG,
@@ -91,17 +90,17 @@
 	RNG_ALARMSTOP_REG,
 	RNG_REV_REG,
 	RNG_SYSCONFIG_REG,
-पूर्ण;
+};
 
-अटल स्थिर u16 reg_map_omap2[] = अणु
+static const u16 reg_map_omap2[] = {
 	[RNG_OUTPUT_0_REG]	= 0x0,
 	[RNG_STATUS_REG]	= 0x4,
 	[RNG_CONFIG_REG]	= 0x28,
 	[RNG_REV_REG]		= 0x3c,
 	[RNG_SYSCONFIG_REG]	= 0x40,
-पूर्ण;
+};
 
-अटल स्थिर u16 reg_map_omap4[] = अणु
+static const u16 reg_map_omap4[] = {
 	[RNG_OUTPUT_0_REG]	= 0x0,
 	[RNG_OUTPUT_1_REG]	= 0x4,
 	[RNG_STATUS_REG]	= 0x8,
@@ -116,9 +115,9 @@
 	[RNG_ALARMSTOP_REG]	= 0x2c,
 	[RNG_REV_REG]		= 0x1FE0,
 	[RNG_SYSCONFIG_REG]	= 0x1FE4,
-पूर्ण;
+};
 
-अटल स्थिर u16 reg_map_eip76[] = अणु
+static const u16 reg_map_eip76[] = {
 	[RNG_OUTPUT_0_REG]	= 0x0,
 	[RNG_OUTPUT_1_REG]	= 0x4,
 	[RNG_OUTPUT_2_REG]	= 0x8,
@@ -133,442 +132,442 @@
 	[RNG_ALARMMASK_REG]	= 0x28,
 	[RNG_ALARMSTOP_REG]	= 0x2c,
 	[RNG_REV_REG]		= 0x7c,
-पूर्ण;
+};
 
-काष्ठा omap_rng_dev;
+struct omap_rng_dev;
 /**
- * काष्ठा omap_rng_pdata - RNG IP block-specअगरic data
- * @regs: Poपूर्णांकer to the रेजिस्टर offsets काष्ठाure.
+ * struct omap_rng_pdata - RNG IP block-specific data
+ * @regs: Pointer to the register offsets structure.
  * @data_size: No. of bytes in RNG output.
- * @data_present: Callback to determine अगर data is available.
- * @init: Callback क्रम IP specअगरic initialization sequence.
- * @cleanup: Callback क्रम IP specअगरic cleanup sequence.
+ * @data_present: Callback to determine if data is available.
+ * @init: Callback for IP specific initialization sequence.
+ * @cleanup: Callback for IP specific cleanup sequence.
  */
-काष्ठा omap_rng_pdata अणु
+struct omap_rng_pdata {
 	u16	*regs;
 	u32	data_size;
-	u32	(*data_present)(काष्ठा omap_rng_dev *priv);
-	पूर्णांक	(*init)(काष्ठा omap_rng_dev *priv);
-	व्योम	(*cleanup)(काष्ठा omap_rng_dev *priv);
-पूर्ण;
+	u32	(*data_present)(struct omap_rng_dev *priv);
+	int	(*init)(struct omap_rng_dev *priv);
+	void	(*cleanup)(struct omap_rng_dev *priv);
+};
 
-काष्ठा omap_rng_dev अणु
-	व्योम __iomem			*base;
-	काष्ठा device			*dev;
-	स्थिर काष्ठा omap_rng_pdata	*pdata;
-	काष्ठा hwrng rng;
-	काष्ठा clk 			*clk;
-	काष्ठा clk			*clk_reg;
-पूर्ण;
+struct omap_rng_dev {
+	void __iomem			*base;
+	struct device			*dev;
+	const struct omap_rng_pdata	*pdata;
+	struct hwrng rng;
+	struct clk 			*clk;
+	struct clk			*clk_reg;
+};
 
-अटल अंतरभूत u32 omap_rng_पढ़ो(काष्ठा omap_rng_dev *priv, u16 reg)
-अणु
-	वापस __raw_पढ़ोl(priv->base + priv->pdata->regs[reg]);
-पूर्ण
+static inline u32 omap_rng_read(struct omap_rng_dev *priv, u16 reg)
+{
+	return __raw_readl(priv->base + priv->pdata->regs[reg]);
+}
 
-अटल अंतरभूत व्योम omap_rng_ग_लिखो(काष्ठा omap_rng_dev *priv, u16 reg,
+static inline void omap_rng_write(struct omap_rng_dev *priv, u16 reg,
 				      u32 val)
-अणु
-	__raw_ग_लिखोl(val, priv->base + priv->pdata->regs[reg]);
-पूर्ण
+{
+	__raw_writel(val, priv->base + priv->pdata->regs[reg]);
+}
 
 
-अटल पूर्णांक omap_rng_करो_पढ़ो(काष्ठा hwrng *rng, व्योम *data, माप_प्रकार max,
-			    bool रुको)
-अणु
-	काष्ठा omap_rng_dev *priv;
-	पूर्णांक i, present;
+static int omap_rng_do_read(struct hwrng *rng, void *data, size_t max,
+			    bool wait)
+{
+	struct omap_rng_dev *priv;
+	int i, present;
 
-	priv = (काष्ठा omap_rng_dev *)rng->priv;
+	priv = (struct omap_rng_dev *)rng->priv;
 
-	अगर (max < priv->pdata->data_size)
-		वापस 0;
+	if (max < priv->pdata->data_size)
+		return 0;
 
-	क्रम (i = 0; i < RNG_DATA_FILL_TIMEOUT; i++) अणु
+	for (i = 0; i < RNG_DATA_FILL_TIMEOUT; i++) {
 		present = priv->pdata->data_present(priv);
-		अगर (present || !रुको)
-			अवरोध;
+		if (present || !wait)
+			break;
 
 		udelay(10);
-	पूर्ण
-	अगर (!present)
-		वापस 0;
+	}
+	if (!present)
+		return 0;
 
-	स_नकल_fromio(data, priv->base + priv->pdata->regs[RNG_OUTPUT_0_REG],
+	memcpy_fromio(data, priv->base + priv->pdata->regs[RNG_OUTPUT_0_REG],
 		      priv->pdata->data_size);
 
-	अगर (priv->pdata->regs[RNG_INTACK_REG])
-		omap_rng_ग_लिखो(priv, RNG_INTACK_REG, RNG_REG_INTACK_RDY_MASK);
+	if (priv->pdata->regs[RNG_INTACK_REG])
+		omap_rng_write(priv, RNG_INTACK_REG, RNG_REG_INTACK_RDY_MASK);
 
-	वापस priv->pdata->data_size;
-पूर्ण
+	return priv->pdata->data_size;
+}
 
-अटल पूर्णांक omap_rng_init(काष्ठा hwrng *rng)
-अणु
-	काष्ठा omap_rng_dev *priv;
+static int omap_rng_init(struct hwrng *rng)
+{
+	struct omap_rng_dev *priv;
 
-	priv = (काष्ठा omap_rng_dev *)rng->priv;
-	वापस priv->pdata->init(priv);
-पूर्ण
+	priv = (struct omap_rng_dev *)rng->priv;
+	return priv->pdata->init(priv);
+}
 
-अटल व्योम omap_rng_cleanup(काष्ठा hwrng *rng)
-अणु
-	काष्ठा omap_rng_dev *priv;
+static void omap_rng_cleanup(struct hwrng *rng)
+{
+	struct omap_rng_dev *priv;
 
-	priv = (काष्ठा omap_rng_dev *)rng->priv;
+	priv = (struct omap_rng_dev *)rng->priv;
 	priv->pdata->cleanup(priv);
-पूर्ण
+}
 
 
-अटल अंतरभूत u32 omap2_rng_data_present(काष्ठा omap_rng_dev *priv)
-अणु
-	वापस omap_rng_पढ़ो(priv, RNG_STATUS_REG) ? 0 : 1;
-पूर्ण
+static inline u32 omap2_rng_data_present(struct omap_rng_dev *priv)
+{
+	return omap_rng_read(priv, RNG_STATUS_REG) ? 0 : 1;
+}
 
-अटल पूर्णांक omap2_rng_init(काष्ठा omap_rng_dev *priv)
-अणु
-	omap_rng_ग_लिखो(priv, RNG_SYSCONFIG_REG, 0x1);
-	वापस 0;
-पूर्ण
+static int omap2_rng_init(struct omap_rng_dev *priv)
+{
+	omap_rng_write(priv, RNG_SYSCONFIG_REG, 0x1);
+	return 0;
+}
 
-अटल व्योम omap2_rng_cleanup(काष्ठा omap_rng_dev *priv)
-अणु
-	omap_rng_ग_लिखो(priv, RNG_SYSCONFIG_REG, 0x0);
-पूर्ण
+static void omap2_rng_cleanup(struct omap_rng_dev *priv)
+{
+	omap_rng_write(priv, RNG_SYSCONFIG_REG, 0x0);
+}
 
-अटल काष्ठा omap_rng_pdata omap2_rng_pdata = अणु
+static struct omap_rng_pdata omap2_rng_pdata = {
 	.regs		= (u16 *)reg_map_omap2,
 	.data_size	= OMAP2_RNG_OUTPUT_SIZE,
 	.data_present	= omap2_rng_data_present,
 	.init		= omap2_rng_init,
 	.cleanup	= omap2_rng_cleanup,
-पूर्ण;
+};
 
-अटल अंतरभूत u32 omap4_rng_data_present(काष्ठा omap_rng_dev *priv)
-अणु
-	वापस omap_rng_पढ़ो(priv, RNG_STATUS_REG) & RNG_REG_STATUS_RDY;
-पूर्ण
+static inline u32 omap4_rng_data_present(struct omap_rng_dev *priv)
+{
+	return omap_rng_read(priv, RNG_STATUS_REG) & RNG_REG_STATUS_RDY;
+}
 
-अटल पूर्णांक eip76_rng_init(काष्ठा omap_rng_dev *priv)
-अणु
+static int eip76_rng_init(struct omap_rng_dev *priv)
+{
 	u32 val;
 
-	/* Return अगर RNG is alपढ़ोy running. */
-	अगर (omap_rng_पढ़ो(priv, RNG_CONTROL_REG) & RNG_CONTROL_ENABLE_TRNG_MASK)
-		वापस 0;
+	/* Return if RNG is already running. */
+	if (omap_rng_read(priv, RNG_CONTROL_REG) & RNG_CONTROL_ENABLE_TRNG_MASK)
+		return 0;
 
 	/*  Number of 512 bit blocks of raw Noise Source output data that must
 	 *  be processed by either the Conditioning Function or the
-	 *  SP 800-90 DRBG ै BC_DFै  functionality to yield a ै full entropyै 
+	 *  SP 800-90 DRBG ‘BC_DF’ functionality to yield a ‘full entropy’
 	 *  output value.
 	 */
 	val = 0x5 << RNG_CONFIG_MIN_REFIL_CYCLES_SHIFT;
 
-	/* Number of FRO samples that are XOR-ed together पूर्णांकo one bit to be
-	 * shअगरted पूर्णांकo the मुख्य shअगरt रेजिस्टर
+	/* Number of FRO samples that are XOR-ed together into one bit to be
+	 * shifted into the main shift register
 	 */
 	val |= RNG_CONFIG_MAX_REFIL_CYCLES << RNG_CONFIG_MAX_REFIL_CYCLES_SHIFT;
-	omap_rng_ग_लिखो(priv, RNG_CONFIG_REG, val);
+	omap_rng_write(priv, RNG_CONFIG_REG, val);
 
 	/* Enable all available FROs */
-	omap_rng_ग_लिखो(priv, RNG_FRODETUNE_REG, 0x0);
-	omap_rng_ग_लिखो(priv, RNG_FROENABLE_REG, RNG_REG_FROENABLE_MASK);
+	omap_rng_write(priv, RNG_FRODETUNE_REG, 0x0);
+	omap_rng_write(priv, RNG_FROENABLE_REG, RNG_REG_FROENABLE_MASK);
 
 	/* Enable TRNG */
 	val = RNG_CONTROL_ENABLE_TRNG_MASK;
-	omap_rng_ग_लिखो(priv, RNG_CONTROL_REG, val);
+	omap_rng_write(priv, RNG_CONTROL_REG, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक omap4_rng_init(काष्ठा omap_rng_dev *priv)
-अणु
+static int omap4_rng_init(struct omap_rng_dev *priv)
+{
 	u32 val;
 
-	/* Return अगर RNG is alपढ़ोy running. */
-	अगर (omap_rng_पढ़ो(priv, RNG_CONTROL_REG) & RNG_CONTROL_ENABLE_TRNG_MASK)
-		वापस 0;
+	/* Return if RNG is already running. */
+	if (omap_rng_read(priv, RNG_CONTROL_REG) & RNG_CONTROL_ENABLE_TRNG_MASK)
+		return 0;
 
 	val = RNG_CONFIG_MIN_REFIL_CYCLES << RNG_CONFIG_MIN_REFIL_CYCLES_SHIFT;
 	val |= RNG_CONFIG_MAX_REFIL_CYCLES << RNG_CONFIG_MAX_REFIL_CYCLES_SHIFT;
-	omap_rng_ग_लिखो(priv, RNG_CONFIG_REG, val);
+	omap_rng_write(priv, RNG_CONFIG_REG, val);
 
-	omap_rng_ग_लिखो(priv, RNG_FRODETUNE_REG, 0x0);
-	omap_rng_ग_लिखो(priv, RNG_FROENABLE_REG, RNG_REG_FROENABLE_MASK);
+	omap_rng_write(priv, RNG_FRODETUNE_REG, 0x0);
+	omap_rng_write(priv, RNG_FROENABLE_REG, RNG_REG_FROENABLE_MASK);
 	val = RNG_ALARM_THRESHOLD << RNG_ALARMCNT_ALARM_TH_SHIFT;
 	val |= RNG_SHUTDOWN_THRESHOLD << RNG_ALARMCNT_SHUTDOWN_TH_SHIFT;
-	omap_rng_ग_लिखो(priv, RNG_ALARMCNT_REG, val);
+	omap_rng_write(priv, RNG_ALARMCNT_REG, val);
 
 	val = RNG_CONTROL_STARTUP_CYCLES << RNG_CONTROL_STARTUP_CYCLES_SHIFT;
 	val |= RNG_CONTROL_ENABLE_TRNG_MASK;
-	omap_rng_ग_लिखो(priv, RNG_CONTROL_REG, val);
+	omap_rng_write(priv, RNG_CONTROL_REG, val);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम omap4_rng_cleanup(काष्ठा omap_rng_dev *priv)
-अणु
-	पूर्णांक val;
+static void omap4_rng_cleanup(struct omap_rng_dev *priv)
+{
+	int val;
 
-	val = omap_rng_पढ़ो(priv, RNG_CONTROL_REG);
+	val = omap_rng_read(priv, RNG_CONTROL_REG);
 	val &= ~RNG_CONTROL_ENABLE_TRNG_MASK;
-	omap_rng_ग_लिखो(priv, RNG_CONTROL_REG, val);
-पूर्ण
+	omap_rng_write(priv, RNG_CONTROL_REG, val);
+}
 
-अटल irqवापस_t omap4_rng_irq(पूर्णांक irq, व्योम *dev_id)
-अणु
-	काष्ठा omap_rng_dev *priv = dev_id;
+static irqreturn_t omap4_rng_irq(int irq, void *dev_id)
+{
+	struct omap_rng_dev *priv = dev_id;
 	u32 fro_detune, fro_enable;
 
 	/*
-	 * Interrupt उठाओd by a fro shutकरोwn threshold, करो the following:
+	 * Interrupt raised by a fro shutdown threshold, do the following:
 	 * 1. Clear the alarm events.
-	 * 2. De tune the FROs which are shutकरोwn.
-	 * 3. Re enable the shutकरोwn FROs.
+	 * 2. De tune the FROs which are shutdown.
+	 * 3. Re enable the shutdown FROs.
 	 */
-	omap_rng_ग_लिखो(priv, RNG_ALARMMASK_REG, 0x0);
-	omap_rng_ग_लिखो(priv, RNG_ALARMSTOP_REG, 0x0);
+	omap_rng_write(priv, RNG_ALARMMASK_REG, 0x0);
+	omap_rng_write(priv, RNG_ALARMSTOP_REG, 0x0);
 
-	fro_enable = omap_rng_पढ़ो(priv, RNG_FROENABLE_REG);
+	fro_enable = omap_rng_read(priv, RNG_FROENABLE_REG);
 	fro_detune = ~fro_enable & RNG_REG_FRODETUNE_MASK;
-	fro_detune = fro_detune | omap_rng_पढ़ो(priv, RNG_FRODETUNE_REG);
+	fro_detune = fro_detune | omap_rng_read(priv, RNG_FRODETUNE_REG);
 	fro_enable = RNG_REG_FROENABLE_MASK;
 
-	omap_rng_ग_लिखो(priv, RNG_FRODETUNE_REG, fro_detune);
-	omap_rng_ग_लिखो(priv, RNG_FROENABLE_REG, fro_enable);
+	omap_rng_write(priv, RNG_FRODETUNE_REG, fro_detune);
+	omap_rng_write(priv, RNG_FROENABLE_REG, fro_enable);
 
-	omap_rng_ग_लिखो(priv, RNG_INTACK_REG, RNG_REG_INTACK_SHUTDOWN_OFLO_MASK);
+	omap_rng_write(priv, RNG_INTACK_REG, RNG_REG_INTACK_SHUTDOWN_OFLO_MASK);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल काष्ठा omap_rng_pdata omap4_rng_pdata = अणु
+static struct omap_rng_pdata omap4_rng_pdata = {
 	.regs		= (u16 *)reg_map_omap4,
 	.data_size	= OMAP4_RNG_OUTPUT_SIZE,
 	.data_present	= omap4_rng_data_present,
 	.init		= omap4_rng_init,
 	.cleanup	= omap4_rng_cleanup,
-पूर्ण;
+};
 
-अटल काष्ठा omap_rng_pdata eip76_rng_pdata = अणु
+static struct omap_rng_pdata eip76_rng_pdata = {
 	.regs		= (u16 *)reg_map_eip76,
 	.data_size	= EIP76_RNG_OUTPUT_SIZE,
 	.data_present	= omap4_rng_data_present,
 	.init		= eip76_rng_init,
 	.cleanup	= omap4_rng_cleanup,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id omap_rng_of_match[] __maybe_unused = अणु
-		अणु
+static const struct of_device_id omap_rng_of_match[] __maybe_unused = {
+		{
 			.compatible	= "ti,omap2-rng",
 			.data		= &omap2_rng_pdata,
-		पूर्ण,
-		अणु
+		},
+		{
 			.compatible	= "ti,omap4-rng",
 			.data		= &omap4_rng_pdata,
-		पूर्ण,
-		अणु
+		},
+		{
 			.compatible	= "inside-secure,safexcel-eip76",
 			.data		= &eip76_rng_pdata,
-		पूर्ण,
-		अणुपूर्ण,
-पूर्ण;
+		},
+		{},
+};
 MODULE_DEVICE_TABLE(of, omap_rng_of_match);
 
-अटल पूर्णांक of_get_omap_rng_device_details(काष्ठा omap_rng_dev *priv,
-					  काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक irq, err;
+static int of_get_omap_rng_device_details(struct omap_rng_dev *priv,
+					  struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	int irq, err;
 
 	priv->pdata = of_device_get_match_data(dev);
-	अगर (!priv->pdata)
-		वापस -ENODEV;
+	if (!priv->pdata)
+		return -ENODEV;
 
 
-	अगर (of_device_is_compatible(dev->of_node, "ti,omap4-rng") ||
-	    of_device_is_compatible(dev->of_node, "inside-secure,safexcel-eip76")) अणु
-		irq = platक्रमm_get_irq(pdev, 0);
-		अगर (irq < 0)
-			वापस irq;
+	if (of_device_is_compatible(dev->of_node, "ti,omap4-rng") ||
+	    of_device_is_compatible(dev->of_node, "inside-secure,safexcel-eip76")) {
+		irq = platform_get_irq(pdev, 0);
+		if (irq < 0)
+			return irq;
 
 		err = devm_request_irq(dev, irq, omap4_rng_irq,
 				       IRQF_TRIGGER_NONE, dev_name(dev), priv);
-		अगर (err) अणु
+		if (err) {
 			dev_err(dev, "unable to request irq %d, err = %d\n",
 				irq, err);
-			वापस err;
-		पूर्ण
+			return err;
+		}
 
 		/*
-		 * On OMAP4, enabling the shutकरोwn_oflo पूर्णांकerrupt is
-		 * करोne in the पूर्णांकerrupt mask रेजिस्टर. There is no
-		 * such रेजिस्टर on EIP76, and it's enabled by the
-		 * same bit in the control रेजिस्टर
+		 * On OMAP4, enabling the shutdown_oflo interrupt is
+		 * done in the interrupt mask register. There is no
+		 * such register on EIP76, and it's enabled by the
+		 * same bit in the control register
 		 */
-		अगर (priv->pdata->regs[RNG_INTMASK_REG])
-			omap_rng_ग_लिखो(priv, RNG_INTMASK_REG,
+		if (priv->pdata->regs[RNG_INTMASK_REG])
+			omap_rng_write(priv, RNG_INTMASK_REG,
 				       RNG_SHUTDOWN_OFLO_MASK);
-		अन्यथा
-			omap_rng_ग_लिखो(priv, RNG_CONTROL_REG,
+		else
+			omap_rng_write(priv, RNG_CONTROL_REG,
 				       RNG_SHUTDOWN_OFLO_MASK);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक get_omap_rng_device_details(काष्ठा omap_rng_dev *omap_rng)
-अणु
+static int get_omap_rng_device_details(struct omap_rng_dev *omap_rng)
+{
 	/* Only OMAP2/3 can be non-DT */
 	omap_rng->pdata = &omap2_rng_pdata;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक omap_rng_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा omap_rng_dev *priv;
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक ret;
+static int omap_rng_probe(struct platform_device *pdev)
+{
+	struct omap_rng_dev *priv;
+	struct device *dev = &pdev->dev;
+	int ret;
 
-	priv = devm_kzalloc(dev, माप(काष्ठा omap_rng_dev), GFP_KERNEL);
-	अगर (!priv)
-		वापस -ENOMEM;
+	priv = devm_kzalloc(dev, sizeof(struct omap_rng_dev), GFP_KERNEL);
+	if (!priv)
+		return -ENOMEM;
 
-	priv->rng.पढ़ो = omap_rng_करो_पढ़ो;
+	priv->rng.read = omap_rng_do_read;
 	priv->rng.init = omap_rng_init;
 	priv->rng.cleanup = omap_rng_cleanup;
 	priv->rng.quality = 900;
 
-	priv->rng.priv = (अचिन्हित दीर्घ)priv;
-	platक्रमm_set_drvdata(pdev, priv);
+	priv->rng.priv = (unsigned long)priv;
+	platform_set_drvdata(pdev, priv);
 	priv->dev = dev;
 
-	priv->base = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(priv->base)) अणु
+	priv->base = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(priv->base)) {
 		ret = PTR_ERR(priv->base);
-		जाओ err_ioremap;
-	पूर्ण
+		goto err_ioremap;
+	}
 
 	priv->rng.name = devm_kstrdup(dev, dev_name(dev), GFP_KERNEL);
-	अगर (!priv->rng.name) अणु
+	if (!priv->rng.name) {
 		ret = -ENOMEM;
-		जाओ err_ioremap;
-	पूर्ण
+		goto err_ioremap;
+	}
 
-	pm_runसमय_enable(&pdev->dev);
-	ret = pm_runसमय_get_sync(&pdev->dev);
-	अगर (ret < 0) अणु
+	pm_runtime_enable(&pdev->dev);
+	ret = pm_runtime_get_sync(&pdev->dev);
+	if (ret < 0) {
 		dev_err(&pdev->dev, "Failed to runtime_get device: %d\n", ret);
-		pm_runसमय_put_noidle(&pdev->dev);
-		जाओ err_ioremap;
-	पूर्ण
+		pm_runtime_put_noidle(&pdev->dev);
+		goto err_ioremap;
+	}
 
-	priv->clk = devm_clk_get(&pdev->dev, शून्य);
-	अगर (PTR_ERR(priv->clk) == -EPROBE_DEFER)
-		वापस -EPROBE_DEFER;
-	अगर (!IS_ERR(priv->clk)) अणु
+	priv->clk = devm_clk_get(&pdev->dev, NULL);
+	if (PTR_ERR(priv->clk) == -EPROBE_DEFER)
+		return -EPROBE_DEFER;
+	if (!IS_ERR(priv->clk)) {
 		ret = clk_prepare_enable(priv->clk);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&pdev->dev,
 				"Unable to enable the clk: %d\n", ret);
-			जाओ err_रेजिस्टर;
-		पूर्ण
-	पूर्ण
+			goto err_register;
+		}
+	}
 
 	priv->clk_reg = devm_clk_get(&pdev->dev, "reg");
-	अगर (PTR_ERR(priv->clk_reg) == -EPROBE_DEFER)
-		वापस -EPROBE_DEFER;
-	अगर (!IS_ERR(priv->clk_reg)) अणु
+	if (PTR_ERR(priv->clk_reg) == -EPROBE_DEFER)
+		return -EPROBE_DEFER;
+	if (!IS_ERR(priv->clk_reg)) {
 		ret = clk_prepare_enable(priv->clk_reg);
-		अगर (ret) अणु
+		if (ret) {
 			dev_err(&pdev->dev,
 				"Unable to enable the register clk: %d\n",
 				ret);
-			जाओ err_रेजिस्टर;
-		पूर्ण
-	पूर्ण
+			goto err_register;
+		}
+	}
 
 	ret = (dev->of_node) ? of_get_omap_rng_device_details(priv, pdev) :
 				get_omap_rng_device_details(priv);
-	अगर (ret)
-		जाओ err_रेजिस्टर;
+	if (ret)
+		goto err_register;
 
-	ret = devm_hwrng_रेजिस्टर(&pdev->dev, &priv->rng);
-	अगर (ret)
-		जाओ err_रेजिस्टर;
+	ret = devm_hwrng_register(&pdev->dev, &priv->rng);
+	if (ret)
+		goto err_register;
 
 	dev_info(&pdev->dev, "Random Number Generator ver. %02x\n",
-		 omap_rng_पढ़ो(priv, RNG_REV_REG));
+		 omap_rng_read(priv, RNG_REV_REG));
 
-	वापस 0;
+	return 0;
 
-err_रेजिस्टर:
-	priv->base = शून्य;
-	pm_runसमय_put_sync(&pdev->dev);
-	pm_runसमय_disable(&pdev->dev);
+err_register:
+	priv->base = NULL;
+	pm_runtime_put_sync(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
 	clk_disable_unprepare(priv->clk_reg);
 	clk_disable_unprepare(priv->clk);
 err_ioremap:
 	dev_err(dev, "initialization failed.\n");
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक omap_rng_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा omap_rng_dev *priv = platक्रमm_get_drvdata(pdev);
+static int omap_rng_remove(struct platform_device *pdev)
+{
+	struct omap_rng_dev *priv = platform_get_drvdata(pdev);
 
 
 	priv->pdata->cleanup(priv);
 
-	pm_runसमय_put_sync(&pdev->dev);
-	pm_runसमय_disable(&pdev->dev);
+	pm_runtime_put_sync(&pdev->dev);
+	pm_runtime_disable(&pdev->dev);
 
 	clk_disable_unprepare(priv->clk);
 	clk_disable_unprepare(priv->clk_reg);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused omap_rng_suspend(काष्ठा device *dev)
-अणु
-	काष्ठा omap_rng_dev *priv = dev_get_drvdata(dev);
+static int __maybe_unused omap_rng_suspend(struct device *dev)
+{
+	struct omap_rng_dev *priv = dev_get_drvdata(dev);
 
 	priv->pdata->cleanup(priv);
-	pm_runसमय_put_sync(dev);
+	pm_runtime_put_sync(dev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __maybe_unused omap_rng_resume(काष्ठा device *dev)
-अणु
-	काष्ठा omap_rng_dev *priv = dev_get_drvdata(dev);
-	पूर्णांक ret;
+static int __maybe_unused omap_rng_resume(struct device *dev)
+{
+	struct omap_rng_dev *priv = dev_get_drvdata(dev);
+	int ret;
 
-	ret = pm_runसमय_get_sync(dev);
-	अगर (ret < 0) अणु
+	ret = pm_runtime_get_sync(dev);
+	if (ret < 0) {
 		dev_err(dev, "Failed to runtime_get device: %d\n", ret);
-		pm_runसमय_put_noidle(dev);
-		वापस ret;
-	पूर्ण
+		pm_runtime_put_noidle(dev);
+		return ret;
+	}
 
 	priv->pdata->init(priv);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल SIMPLE_DEV_PM_OPS(omap_rng_pm, omap_rng_suspend, omap_rng_resume);
+static SIMPLE_DEV_PM_OPS(omap_rng_pm, omap_rng_suspend, omap_rng_resume);
 
-अटल काष्ठा platक्रमm_driver omap_rng_driver = अणु
-	.driver = अणु
+static struct platform_driver omap_rng_driver = {
+	.driver = {
 		.name		= "omap_rng",
 		.pm		= &omap_rng_pm,
 		.of_match_table = of_match_ptr(omap_rng_of_match),
-	पूर्ण,
+	},
 	.probe		= omap_rng_probe,
-	.हटाओ		= omap_rng_हटाओ,
-पूर्ण;
+	.remove		= omap_rng_remove,
+};
 
-module_platक्रमm_driver(omap_rng_driver);
+module_platform_driver(omap_rng_driver);
 MODULE_ALIAS("platform:omap_rng");
 MODULE_AUTHOR("Deepak Saxena (and others)");
 MODULE_LICENSE("GPL");

@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright(c) 2011-2016 Intel Corporation. All rights reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,183 +21,183 @@
  * SOFTWARE.
  *
  * Authors:
- *    Kevin Tian <kevin.tian@पूर्णांकel.com>
- *    Eddie Dong <eddie.करोng@पूर्णांकel.com>
- *    Zhiyuan Lv <zhiyuan.lv@पूर्णांकel.com>
+ *    Kevin Tian <kevin.tian@intel.com>
+ *    Eddie Dong <eddie.dong@intel.com>
+ *    Zhiyuan Lv <zhiyuan.lv@intel.com>
  *
  * Contributors:
- *    Min He <min.he@पूर्णांकel.com>
- *    Tina Zhang <tina.zhang@पूर्णांकel.com>
- *    Pei Zhang <pei.zhang@पूर्णांकel.com>
- *    Niu Bing <bing.niu@पूर्णांकel.com>
- *    Ping Gao <ping.a.gao@पूर्णांकel.com>
- *    Zhi Wang <zhi.a.wang@पूर्णांकel.com>
+ *    Min He <min.he@intel.com>
+ *    Tina Zhang <tina.zhang@intel.com>
+ *    Pei Zhang <pei.zhang@intel.com>
+ *    Niu Bing <bing.niu@intel.com>
+ *    Ping Gao <ping.a.gao@intel.com>
+ *    Zhi Wang <zhi.a.wang@intel.com>
  *
 
  */
 
-#समावेश "i915_drv.h"
-#समावेश "gvt.h"
-#समावेश "i915_pvinfo.h"
-#समावेश "display/intel_display_types.h"
+#include "i915_drv.h"
+#include "gvt.h"
+#include "i915_pvinfo.h"
+#include "display/intel_display_types.h"
 
 /* XXX FIXME i915 has changed PP_XXX definition */
-#घोषणा PCH_PP_STATUS  _MMIO(0xc7200)
-#घोषणा PCH_PP_CONTROL _MMIO(0xc7204)
-#घोषणा PCH_PP_ON_DELAYS _MMIO(0xc7208)
-#घोषणा PCH_PP_OFF_DELAYS _MMIO(0xc720c)
-#घोषणा PCH_PP_DIVISOR _MMIO(0xc7210)
+#define PCH_PP_STATUS  _MMIO(0xc7200)
+#define PCH_PP_CONTROL _MMIO(0xc7204)
+#define PCH_PP_ON_DELAYS _MMIO(0xc7208)
+#define PCH_PP_OFF_DELAYS _MMIO(0xc720c)
+#define PCH_PP_DIVISOR _MMIO(0xc7210)
 
-अचिन्हित दीर्घ पूर्णांकel_gvt_get_device_type(काष्ठा पूर्णांकel_gvt *gvt)
-अणु
-	काष्ठा drm_i915_निजी *i915 = gvt->gt->i915;
+unsigned long intel_gvt_get_device_type(struct intel_gvt *gvt)
+{
+	struct drm_i915_private *i915 = gvt->gt->i915;
 
-	अगर (IS_BROADWELL(i915))
-		वापस D_BDW;
-	अन्यथा अगर (IS_SKYLAKE(i915))
-		वापस D_SKL;
-	अन्यथा अगर (IS_KABYLAKE(i915))
-		वापस D_KBL;
-	अन्यथा अगर (IS_BROXTON(i915))
-		वापस D_BXT;
-	अन्यथा अगर (IS_COFFEELAKE(i915) || IS_COMETLAKE(i915))
-		वापस D_CFL;
+	if (IS_BROADWELL(i915))
+		return D_BDW;
+	else if (IS_SKYLAKE(i915))
+		return D_SKL;
+	else if (IS_KABYLAKE(i915))
+		return D_KBL;
+	else if (IS_BROXTON(i915))
+		return D_BXT;
+	else if (IS_COFFEELAKE(i915) || IS_COMETLAKE(i915))
+		return D_CFL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-bool पूर्णांकel_gvt_match_device(काष्ठा पूर्णांकel_gvt *gvt,
-		अचिन्हित दीर्घ device)
-अणु
-	वापस पूर्णांकel_gvt_get_device_type(gvt) & device;
-पूर्ण
+bool intel_gvt_match_device(struct intel_gvt *gvt,
+		unsigned long device)
+{
+	return intel_gvt_get_device_type(gvt) & device;
+}
 
-अटल व्योम पढ़ो_vreg(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-	व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	स_नकल(p_data, &vgpu_vreg(vgpu, offset), bytes);
-पूर्ण
+static void read_vreg(struct intel_vgpu *vgpu, unsigned int offset,
+	void *p_data, unsigned int bytes)
+{
+	memcpy(p_data, &vgpu_vreg(vgpu, offset), bytes);
+}
 
-अटल व्योम ग_लिखो_vreg(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-	व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	स_नकल(&vgpu_vreg(vgpu, offset), p_data, bytes);
-पूर्ण
+static void write_vreg(struct intel_vgpu *vgpu, unsigned int offset,
+	void *p_data, unsigned int bytes)
+{
+	memcpy(&vgpu_vreg(vgpu, offset), p_data, bytes);
+}
 
-काष्ठा पूर्णांकel_gvt_mmio_info *पूर्णांकel_gvt_find_mmio_info(काष्ठा पूर्णांकel_gvt *gvt,
-						  अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा पूर्णांकel_gvt_mmio_info *e;
+struct intel_gvt_mmio_info *intel_gvt_find_mmio_info(struct intel_gvt *gvt,
+						  unsigned int offset)
+{
+	struct intel_gvt_mmio_info *e;
 
-	hash_क्रम_each_possible(gvt->mmio.mmio_info_table, e, node, offset) अणु
-		अगर (e->offset == offset)
-			वापस e;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	hash_for_each_possible(gvt->mmio.mmio_info_table, e, node, offset) {
+		if (e->offset == offset)
+			return e;
+	}
+	return NULL;
+}
 
-अटल पूर्णांक new_mmio_info(काष्ठा पूर्णांकel_gvt *gvt,
+static int new_mmio_info(struct intel_gvt *gvt,
 		u32 offset, u16 flags, u32 size,
 		u32 addr_mask, u32 ro_mask, u32 device,
-		gvt_mmio_func पढ़ो, gvt_mmio_func ग_लिखो)
-अणु
-	काष्ठा पूर्णांकel_gvt_mmio_info *info, *p;
+		gvt_mmio_func read, gvt_mmio_func write)
+{
+	struct intel_gvt_mmio_info *info, *p;
 	u32 start, end, i;
 
-	अगर (!पूर्णांकel_gvt_match_device(gvt, device))
-		वापस 0;
+	if (!intel_gvt_match_device(gvt, device))
+		return 0;
 
-	अगर (WARN_ON(!IS_ALIGNED(offset, 4)))
-		वापस -EINVAL;
+	if (WARN_ON(!IS_ALIGNED(offset, 4)))
+		return -EINVAL;
 
 	start = offset;
 	end = offset + size;
 
-	क्रम (i = start; i < end; i += 4) अणु
-		info = kzalloc(माप(*info), GFP_KERNEL);
-		अगर (!info)
-			वापस -ENOMEM;
+	for (i = start; i < end; i += 4) {
+		info = kzalloc(sizeof(*info), GFP_KERNEL);
+		if (!info)
+			return -ENOMEM;
 
 		info->offset = i;
-		p = पूर्णांकel_gvt_find_mmio_info(gvt, info->offset);
-		अगर (p) अणु
+		p = intel_gvt_find_mmio_info(gvt, info->offset);
+		if (p) {
 			WARN(1, "dup mmio definition offset %x\n",
 				info->offset);
-			kमुक्त(info);
+			kfree(info);
 
-			/* We वापस -EEXIST here to make GVT-g load fail.
+			/* We return -EEXIST here to make GVT-g load fail.
 			 * So duplicated MMIO can be found as soon as
 			 * possible.
 			 */
-			वापस -EEXIST;
-		पूर्ण
+			return -EEXIST;
+		}
 
 		info->ro_mask = ro_mask;
 		info->device = device;
-		info->पढ़ो = पढ़ो ? पढ़ो : पूर्णांकel_vgpu_शेष_mmio_पढ़ो;
-		info->ग_लिखो = ग_लिखो ? ग_लिखो : पूर्णांकel_vgpu_शेष_mmio_ग_लिखो;
+		info->read = read ? read : intel_vgpu_default_mmio_read;
+		info->write = write ? write : intel_vgpu_default_mmio_write;
 		gvt->mmio.mmio_attribute[info->offset / 4] = flags;
 		INIT_HLIST_NODE(&info->node);
 		hash_add(gvt->mmio.mmio_info_table, &info->node, info->offset);
 		gvt->mmio.num_tracked_mmio++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /**
- * पूर्णांकel_gvt_render_mmio_to_engine - convert a mmio offset पूर्णांकo the engine
+ * intel_gvt_render_mmio_to_engine - convert a mmio offset into the engine
  * @gvt: a GVT device
- * @offset: रेजिस्टर offset
+ * @offset: register offset
  *
  * Returns:
  * The engine containing the offset within its mmio page.
  */
-स्थिर काष्ठा पूर्णांकel_engine_cs *
-पूर्णांकel_gvt_render_mmio_to_engine(काष्ठा पूर्णांकel_gvt *gvt, अचिन्हित पूर्णांक offset)
-अणु
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	क्रमागत पूर्णांकel_engine_id id;
+const struct intel_engine_cs *
+intel_gvt_render_mmio_to_engine(struct intel_gvt *gvt, unsigned int offset)
+{
+	struct intel_engine_cs *engine;
+	enum intel_engine_id id;
 
 	offset &= ~GENMASK(11, 0);
-	क्रम_each_engine(engine, gvt->gt, id)
-		अगर (engine->mmio_base == offset)
-			वापस engine;
+	for_each_engine(engine, gvt->gt, id)
+		if (engine->mmio_base == offset)
+			return engine;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-#घोषणा offset_to_fence_num(offset) \
+#define offset_to_fence_num(offset) \
 	((offset - i915_mmio_reg_offset(FENCE_REG_GEN6_LO(0))) >> 3)
 
-#घोषणा fence_num_to_offset(num) \
+#define fence_num_to_offset(num) \
 	(num * 8 + i915_mmio_reg_offset(FENCE_REG_GEN6_LO(0)))
 
 
-व्योम enter_failsafe_mode(काष्ठा पूर्णांकel_vgpu *vgpu, पूर्णांक reason)
-अणु
-	चयन (reason) अणु
-	हाल GVT_FAILSAFE_UNSUPPORTED_GUEST:
+void enter_failsafe_mode(struct intel_vgpu *vgpu, int reason)
+{
+	switch (reason) {
+	case GVT_FAILSAFE_UNSUPPORTED_GUEST:
 		pr_err("Detected your guest driver doesn't support GVT-g.\n");
-		अवरोध;
-	हाल GVT_FAILSAFE_INSUFFICIENT_RESOURCE:
+		break;
+	case GVT_FAILSAFE_INSUFFICIENT_RESOURCE:
 		pr_err("Graphics resource is not enough for the guest\n");
-		अवरोध;
-	हाल GVT_FAILSAFE_GUEST_ERR:
+		break;
+	case GVT_FAILSAFE_GUEST_ERR:
 		pr_err("GVT Internal error  for the guest\n");
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 	pr_err("Now vgpu %d will enter failsafe mode.\n", vgpu->id);
 	vgpu->failsafe = true;
-पूर्ण
+}
 
-अटल पूर्णांक sanitize_fence_mmio_access(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक fence_num, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	अचिन्हित पूर्णांक max_fence = vgpu_fence_sz(vgpu);
+static int sanitize_fence_mmio_access(struct intel_vgpu *vgpu,
+		unsigned int fence_num, void *p_data, unsigned int bytes)
+{
+	unsigned int max_fence = vgpu_fence_sz(vgpu);
 
-	अगर (fence_num >= max_fence) अणु
+	if (fence_num >= max_fence) {
 		gvt_vgpu_err("access oob fence reg %d/%d\n",
 			     fence_num, max_fence);
 
@@ -206,466 +205,466 @@ bool पूर्णांकel_gvt_match_device(काष्ठा पूर्
 		 * pv_info first, we treat guest not supporting GVT,
 		 * and we will let vgpu enter failsafe mode.
 		 */
-		अगर (!vgpu->pv_notअगरied)
+		if (!vgpu->pv_notified)
 			enter_failsafe_mode(vgpu,
 					GVT_FAILSAFE_UNSUPPORTED_GUEST);
 
-		स_रखो(p_data, 0, bytes);
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		memset(p_data, 0, bytes);
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक gamw_echo_dev_rw_ia_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int gamw_echo_dev_rw_ia_write(struct intel_vgpu *vgpu,
+		unsigned int offset, void *p_data, unsigned int bytes)
+{
 	u32 ips = (*(u32 *)p_data) & GAMW_ECO_ENABLE_64K_IPS_FIELD;
 
-	अगर (INTEL_GEN(vgpu->gvt->gt->i915) <= 10) अणु
-		अगर (ips == GAMW_ECO_ENABLE_64K_IPS_FIELD)
+	if (INTEL_GEN(vgpu->gvt->gt->i915) <= 10) {
+		if (ips == GAMW_ECO_ENABLE_64K_IPS_FIELD)
 			gvt_dbg_core("vgpu%d: ips enabled\n", vgpu->id);
-		अन्यथा अगर (!ips)
+		else if (!ips)
 			gvt_dbg_core("vgpu%d: ips disabled\n", vgpu->id);
-		अन्यथा अणु
-			/* All engines must be enabled together क्रम vGPU,
-			 * since we करोn't know which engine the ppgtt will
-			 * bind to when shaकरोwing.
+		else {
+			/* All engines must be enabled together for vGPU,
+			 * since we don't know which engine the ppgtt will
+			 * bind to when shadowing.
 			 */
 			gvt_vgpu_err("Unsupported IPS setting %x, cannot enable 64K gtt.\n",
 				     ips);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
-	वापस 0;
-पूर्ण
+	write_vreg(vgpu, offset, p_data, bytes);
+	return 0;
+}
 
-अटल पूर्णांक fence_mmio_पढ़ो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक off,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	पूर्णांक ret;
+static int fence_mmio_read(struct intel_vgpu *vgpu, unsigned int off,
+		void *p_data, unsigned int bytes)
+{
+	int ret;
 
 	ret = sanitize_fence_mmio_access(vgpu, offset_to_fence_num(off),
 			p_data, bytes);
-	अगर (ret)
-		वापस ret;
-	पढ़ो_vreg(vgpu, off, p_data, bytes);
-	वापस 0;
-पूर्ण
+	if (ret)
+		return ret;
+	read_vreg(vgpu, off, p_data, bytes);
+	return 0;
+}
 
-अटल पूर्णांक fence_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक off,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	काष्ठा पूर्णांकel_gvt *gvt = vgpu->gvt;
-	अचिन्हित पूर्णांक fence_num = offset_to_fence_num(off);
-	पूर्णांक ret;
+static int fence_mmio_write(struct intel_vgpu *vgpu, unsigned int off,
+		void *p_data, unsigned int bytes)
+{
+	struct intel_gvt *gvt = vgpu->gvt;
+	unsigned int fence_num = offset_to_fence_num(off);
+	int ret;
 
 	ret = sanitize_fence_mmio_access(vgpu, fence_num, p_data, bytes);
-	अगर (ret)
-		वापस ret;
-	ग_लिखो_vreg(vgpu, off, p_data, bytes);
+	if (ret)
+		return ret;
+	write_vreg(vgpu, off, p_data, bytes);
 
 	mmio_hw_access_pre(gvt->gt);
-	पूर्णांकel_vgpu_ग_लिखो_fence(vgpu, fence_num,
+	intel_vgpu_write_fence(vgpu, fence_num,
 			vgpu_vreg64(vgpu, fence_num_to_offset(fence_num)));
 	mmio_hw_access_post(gvt->gt);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा CALC_MODE_MASK_REG(old, new) \
+#define CALC_MODE_MASK_REG(old, new) \
 	(((new) & GENMASK(31, 16)) \
 	 | ((((old) & GENMASK(15, 0)) & ~((new) >> 16)) \
 	 | ((new) & ((new) >> 16))))
 
-अटल पूर्णांक mul_क्रमce_wake_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int mul_force_wake_write(struct intel_vgpu *vgpu,
+		unsigned int offset, void *p_data, unsigned int bytes)
+{
 	u32 old, new;
 	u32 ack_reg_offset;
 
 	old = vgpu_vreg(vgpu, offset);
 	new = CALC_MODE_MASK_REG(old, *(u32 *)p_data);
 
-	अगर (INTEL_GEN(vgpu->gvt->gt->i915)  >=  9) अणु
-		चयन (offset) अणु
-		हाल FORCEWAKE_RENDER_GEN9_REG:
+	if (INTEL_GEN(vgpu->gvt->gt->i915)  >=  9) {
+		switch (offset) {
+		case FORCEWAKE_RENDER_GEN9_REG:
 			ack_reg_offset = FORCEWAKE_ACK_RENDER_GEN9_REG;
-			अवरोध;
-		हाल FORCEWAKE_GT_GEN9_REG:
+			break;
+		case FORCEWAKE_GT_GEN9_REG:
 			ack_reg_offset = FORCEWAKE_ACK_GT_GEN9_REG;
-			अवरोध;
-		हाल FORCEWAKE_MEDIA_GEN9_REG:
+			break;
+		case FORCEWAKE_MEDIA_GEN9_REG:
 			ack_reg_offset = FORCEWAKE_ACK_MEDIA_GEN9_REG;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			/*should not hit here*/
 			gvt_vgpu_err("invalid forcewake offset 0x%x\n", offset);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			return -EINVAL;
+		}
+	} else {
 		ack_reg_offset = FORCEWAKE_ACK_HSW_REG;
-	पूर्ण
+	}
 
 	vgpu_vreg(vgpu, offset) = new;
 	vgpu_vreg(vgpu, ack_reg_offset) = (new & GENMASK(15, 0));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gdrst_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-			    व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	पूर्णांकel_engine_mask_t engine_mask = 0;
+static int gdrst_mmio_write(struct intel_vgpu *vgpu, unsigned int offset,
+			    void *p_data, unsigned int bytes)
+{
+	intel_engine_mask_t engine_mask = 0;
 	u32 data;
 
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
+	write_vreg(vgpu, offset, p_data, bytes);
 	data = vgpu_vreg(vgpu, offset);
 
-	अगर (data & GEN6_GRDOM_FULL) अणु
+	if (data & GEN6_GRDOM_FULL) {
 		gvt_dbg_mmio("vgpu%d: request full GPU reset\n", vgpu->id);
 		engine_mask = ALL_ENGINES;
-	पूर्ण अन्यथा अणु
-		अगर (data & GEN6_GRDOM_RENDER) अणु
+	} else {
+		if (data & GEN6_GRDOM_RENDER) {
 			gvt_dbg_mmio("vgpu%d: request RCS reset\n", vgpu->id);
 			engine_mask |= BIT(RCS0);
-		पूर्ण
-		अगर (data & GEN6_GRDOM_MEDIA) अणु
+		}
+		if (data & GEN6_GRDOM_MEDIA) {
 			gvt_dbg_mmio("vgpu%d: request VCS reset\n", vgpu->id);
 			engine_mask |= BIT(VCS0);
-		पूर्ण
-		अगर (data & GEN6_GRDOM_BLT) अणु
+		}
+		if (data & GEN6_GRDOM_BLT) {
 			gvt_dbg_mmio("vgpu%d: request BCS Reset\n", vgpu->id);
 			engine_mask |= BIT(BCS0);
-		पूर्ण
-		अगर (data & GEN6_GRDOM_VECS) अणु
+		}
+		if (data & GEN6_GRDOM_VECS) {
 			gvt_dbg_mmio("vgpu%d: request VECS Reset\n", vgpu->id);
 			engine_mask |= BIT(VECS0);
-		पूर्ण
-		अगर (data & GEN8_GRDOM_MEDIA2) अणु
+		}
+		if (data & GEN8_GRDOM_MEDIA2) {
 			gvt_dbg_mmio("vgpu%d: request VCS2 Reset\n", vgpu->id);
 			engine_mask |= BIT(VCS1);
-		पूर्ण
-		अगर (data & GEN9_GRDOM_GUC) अणु
+		}
+		if (data & GEN9_GRDOM_GUC) {
 			gvt_dbg_mmio("vgpu%d: request GUC Reset\n", vgpu->id);
 			vgpu_vreg_t(vgpu, GUC_STATUS) |= GS_MIA_IN_RESET;
-		पूर्ण
+		}
 		engine_mask &= vgpu->gvt->gt->info.engine_mask;
-	पूर्ण
+	}
 
-	/* vgpu_lock alपढ़ोy hold by emulate mmio r/w */
-	पूर्णांकel_gvt_reset_vgpu_locked(vgpu, false, engine_mask);
+	/* vgpu_lock already hold by emulate mmio r/w */
+	intel_gvt_reset_vgpu_locked(vgpu, false, engine_mask);
 
-	/* sw will रुको क्रम the device to ack the reset request */
+	/* sw will wait for the device to ack the reset request */
 	vgpu_vreg(vgpu, offset) = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gmbus_mmio_पढ़ो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	वापस पूर्णांकel_gvt_i2c_handle_gmbus_पढ़ो(vgpu, offset, p_data, bytes);
-पूर्ण
+static int gmbus_mmio_read(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
+	return intel_gvt_i2c_handle_gmbus_read(vgpu, offset, p_data, bytes);
+}
 
-अटल पूर्णांक gmbus_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	वापस पूर्णांकel_gvt_i2c_handle_gmbus_ग_लिखो(vgpu, offset, p_data, bytes);
-पूर्ण
+static int gmbus_mmio_write(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
+	return intel_gvt_i2c_handle_gmbus_write(vgpu, offset, p_data, bytes);
+}
 
-अटल पूर्णांक pch_pp_control_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
+static int pch_pp_control_mmio_write(struct intel_vgpu *vgpu,
+		unsigned int offset, void *p_data, unsigned int bytes)
+{
+	write_vreg(vgpu, offset, p_data, bytes);
 
-	अगर (vgpu_vreg(vgpu, offset) & PANEL_POWER_ON) अणु
+	if (vgpu_vreg(vgpu, offset) & PANEL_POWER_ON) {
 		vgpu_vreg_t(vgpu, PCH_PP_STATUS) |= PP_ON;
 		vgpu_vreg_t(vgpu, PCH_PP_STATUS) |= PP_SEQUENCE_STATE_ON_IDLE;
 		vgpu_vreg_t(vgpu, PCH_PP_STATUS) &= ~PP_SEQUENCE_POWER_DOWN;
 		vgpu_vreg_t(vgpu, PCH_PP_STATUS) &= ~PP_CYCLE_DELAY_ACTIVE;
 
-	पूर्ण अन्यथा
+	} else
 		vgpu_vreg_t(vgpu, PCH_PP_STATUS) &=
 			~(PP_ON | PP_SEQUENCE_POWER_DOWN
 					| PP_CYCLE_DELAY_ACTIVE);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक transconf_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
+static int transconf_mmio_write(struct intel_vgpu *vgpu,
+		unsigned int offset, void *p_data, unsigned int bytes)
+{
+	write_vreg(vgpu, offset, p_data, bytes);
 
-	अगर (vgpu_vreg(vgpu, offset) & TRANS_ENABLE)
+	if (vgpu_vreg(vgpu, offset) & TRANS_ENABLE)
 		vgpu_vreg(vgpu, offset) |= TRANS_STATE_ENABLE;
-	अन्यथा
+	else
 		vgpu_vreg(vgpu, offset) &= ~TRANS_STATE_ENABLE;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lcpll_ctl_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
+static int lcpll_ctl_mmio_write(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
+	write_vreg(vgpu, offset, p_data, bytes);
 
-	अगर (vgpu_vreg(vgpu, offset) & LCPLL_PLL_DISABLE)
+	if (vgpu_vreg(vgpu, offset) & LCPLL_PLL_DISABLE)
 		vgpu_vreg(vgpu, offset) &= ~LCPLL_PLL_LOCK;
-	अन्यथा
+	else
 		vgpu_vreg(vgpu, offset) |= LCPLL_PLL_LOCK;
 
-	अगर (vgpu_vreg(vgpu, offset) & LCPLL_CD_SOURCE_FCLK)
+	if (vgpu_vreg(vgpu, offset) & LCPLL_CD_SOURCE_FCLK)
 		vgpu_vreg(vgpu, offset) |= LCPLL_CD_SOURCE_FCLK_DONE;
-	अन्यथा
+	else
 		vgpu_vreg(vgpu, offset) &= ~LCPLL_CD_SOURCE_FCLK_DONE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dpy_reg_mmio_पढ़ो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	चयन (offset) अणु
-	हाल 0xe651c:
-	हाल 0xe661c:
-	हाल 0xe671c:
-	हाल 0xe681c:
+static int dpy_reg_mmio_read(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
+	switch (offset) {
+	case 0xe651c:
+	case 0xe661c:
+	case 0xe671c:
+	case 0xe681c:
 		vgpu_vreg(vgpu, offset) = 1 << 17;
-		अवरोध;
-	हाल 0xe6c04:
+		break;
+	case 0xe6c04:
 		vgpu_vreg(vgpu, offset) = 0x3;
-		अवरोध;
-	हाल 0xe6e1c:
+		break;
+	case 0xe6e1c:
 		vgpu_vreg(vgpu, offset) = 0x2f << 16;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	पढ़ो_vreg(vgpu, offset, p_data, bytes);
-	वापस 0;
-पूर्ण
+	read_vreg(vgpu, offset, p_data, bytes);
+	return 0;
+}
 
 /*
  * Only PIPE_A is enabled in current vGPU display and PIPE_A is tied to
  *   TRANSCODER_A in HW. DDI/PORT could be PORT_x depends on
- *   setup_भव_dp_monitor().
- * emulate_monitor_status_change() set up PLL क्रम PORT_x as the initial enabled
- *   DPLL. Later guest driver may setup a dअगरferent DPLLx when setting mode.
- * So the correct sequence to find DP stream घड़ी is:
+ *   setup_virtual_dp_monitor().
+ * emulate_monitor_status_change() set up PLL for PORT_x as the initial enabled
+ *   DPLL. Later guest driver may setup a different DPLLx when setting mode.
+ * So the correct sequence to find DP stream clock is:
  *   Check TRANS_DDI_FUNC_CTL on TRANSCODER_A to get PORT_x.
- *   Check correct PLLx क्रम PORT_x to get PLL frequency and DP bitrate.
+ *   Check correct PLLx for PORT_x to get PLL frequency and DP bitrate.
  * Then Refresh rate then can be calculated based on follow equations:
- *   Pixel घड़ी = h_total * v_total * refresh_rate
- *   stream घड़ी = Pixel घड़ी
+ *   Pixel clock = h_total * v_total * refresh_rate
+ *   stream clock = Pixel clock
  *   ls_clk = DP bitrate
  *   Link M/N = strm_clk / ls_clk
  */
 
-अटल u32 bdw_vgpu_get_dp_bitrate(काष्ठा पूर्णांकel_vgpu *vgpu, क्रमागत port port)
-अणु
+static u32 bdw_vgpu_get_dp_bitrate(struct intel_vgpu *vgpu, enum port port)
+{
 	u32 dp_br = 0;
 	u32 ddi_pll_sel = vgpu_vreg_t(vgpu, PORT_CLK_SEL(port));
 
-	चयन (ddi_pll_sel) अणु
-	हाल PORT_CLK_SEL_LCPLL_2700:
+	switch (ddi_pll_sel) {
+	case PORT_CLK_SEL_LCPLL_2700:
 		dp_br = 270000 * 2;
-		अवरोध;
-	हाल PORT_CLK_SEL_LCPLL_1350:
+		break;
+	case PORT_CLK_SEL_LCPLL_1350:
 		dp_br = 135000 * 2;
-		अवरोध;
-	हाल PORT_CLK_SEL_LCPLL_810:
+		break;
+	case PORT_CLK_SEL_LCPLL_810:
 		dp_br = 81000 * 2;
-		अवरोध;
-	हाल PORT_CLK_SEL_SPLL:
-	अणु
-		चयन (vgpu_vreg_t(vgpu, SPLL_CTL) & SPLL_FREQ_MASK) अणु
-		हाल SPLL_FREQ_810MHz:
+		break;
+	case PORT_CLK_SEL_SPLL:
+	{
+		switch (vgpu_vreg_t(vgpu, SPLL_CTL) & SPLL_FREQ_MASK) {
+		case SPLL_FREQ_810MHz:
 			dp_br = 81000 * 2;
-			अवरोध;
-		हाल SPLL_FREQ_1350MHz:
+			break;
+		case SPLL_FREQ_1350MHz:
 			dp_br = 135000 * 2;
-			अवरोध;
-		हाल SPLL_FREQ_2700MHz:
+			break;
+		case SPLL_FREQ_2700MHz:
 			dp_br = 270000 * 2;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			gvt_dbg_dpy("vgpu-%d PORT_%c can't get freq from SPLL 0x%08x\n",
 				    vgpu->id, port_name(port), vgpu_vreg_t(vgpu, SPLL_CTL));
-			अवरोध;
-		पूर्ण
-		अवरोध;
-	पूर्ण
-	हाल PORT_CLK_SEL_WRPLL1:
-	हाल PORT_CLK_SEL_WRPLL2:
-	अणु
+			break;
+		}
+		break;
+	}
+	case PORT_CLK_SEL_WRPLL1:
+	case PORT_CLK_SEL_WRPLL2:
+	{
 		u32 wrpll_ctl;
-		पूर्णांक refclk, n, p, r;
+		int refclk, n, p, r;
 
-		अगर (ddi_pll_sel == PORT_CLK_SEL_WRPLL1)
+		if (ddi_pll_sel == PORT_CLK_SEL_WRPLL1)
 			wrpll_ctl = vgpu_vreg_t(vgpu, WRPLL_CTL(DPLL_ID_WRPLL1));
-		अन्यथा
+		else
 			wrpll_ctl = vgpu_vreg_t(vgpu, WRPLL_CTL(DPLL_ID_WRPLL2));
 
-		चयन (wrpll_ctl & WRPLL_REF_MASK) अणु
-		हाल WRPLL_REF_PCH_SSC:
+		switch (wrpll_ctl & WRPLL_REF_MASK) {
+		case WRPLL_REF_PCH_SSC:
 			refclk = vgpu->gvt->gt->i915->dpll.ref_clks.ssc;
-			अवरोध;
-		हाल WRPLL_REF_LCPLL:
+			break;
+		case WRPLL_REF_LCPLL:
 			refclk = 2700000;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			gvt_dbg_dpy("vgpu-%d PORT_%c WRPLL can't get refclk 0x%08x\n",
 				    vgpu->id, port_name(port), wrpll_ctl);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		r = wrpll_ctl & WRPLL_DIVIDER_REF_MASK;
 		p = (wrpll_ctl & WRPLL_DIVIDER_POST_MASK) >> WRPLL_DIVIDER_POST_SHIFT;
 		n = (wrpll_ctl & WRPLL_DIVIDER_FB_MASK) >> WRPLL_DIVIDER_FB_SHIFT;
 
 		dp_br = (refclk * n / 10) / (p * r) * 2;
-		अवरोध;
-	पूर्ण
-	शेष:
+		break;
+	}
+	default:
 		gvt_dbg_dpy("vgpu-%d PORT_%c has invalid clock select 0x%08x\n",
 			    vgpu->id, port_name(port), vgpu_vreg_t(vgpu, PORT_CLK_SEL(port)));
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 out:
-	वापस dp_br;
-पूर्ण
+	return dp_br;
+}
 
-अटल u32 bxt_vgpu_get_dp_bitrate(काष्ठा पूर्णांकel_vgpu *vgpu, क्रमागत port port)
-अणु
+static u32 bxt_vgpu_get_dp_bitrate(struct intel_vgpu *vgpu, enum port port)
+{
 	u32 dp_br = 0;
-	पूर्णांक refclk = vgpu->gvt->gt->i915->dpll.ref_clks.nssc;
-	क्रमागत dpio_phy phy = DPIO_PHY0;
-	क्रमागत dpio_channel ch = DPIO_CH0;
-	काष्ठा dpll घड़ी = अणु0पूर्ण;
+	int refclk = vgpu->gvt->gt->i915->dpll.ref_clks.nssc;
+	enum dpio_phy phy = DPIO_PHY0;
+	enum dpio_channel ch = DPIO_CH0;
+	struct dpll clock = {0};
 	u32 temp;
 
-	/* Port to PHY mapping is fixed, see bxt_ddi_phy_infoअणुपूर्ण */
-	चयन (port) अणु
-	हाल PORT_A:
+	/* Port to PHY mapping is fixed, see bxt_ddi_phy_info{} */
+	switch (port) {
+	case PORT_A:
 		phy = DPIO_PHY1;
 		ch = DPIO_CH0;
-		अवरोध;
-	हाल PORT_B:
+		break;
+	case PORT_B:
 		phy = DPIO_PHY0;
 		ch = DPIO_CH0;
-		अवरोध;
-	हाल PORT_C:
+		break;
+	case PORT_C:
 		phy = DPIO_PHY0;
 		ch = DPIO_CH1;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		gvt_dbg_dpy("vgpu-%d no PHY for PORT_%c\n", vgpu->id, port_name(port));
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	temp = vgpu_vreg_t(vgpu, BXT_PORT_PLL_ENABLE(port));
-	अगर (!(temp & PORT_PLL_ENABLE) || !(temp & PORT_PLL_LOCK)) अणु
+	if (!(temp & PORT_PLL_ENABLE) || !(temp & PORT_PLL_LOCK)) {
 		gvt_dbg_dpy("vgpu-%d PORT_%c PLL_ENABLE 0x%08x isn't enabled or locked\n",
 			    vgpu->id, port_name(port), temp);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	घड़ी.m1 = 2;
-	घड़ी.m2 = (vgpu_vreg_t(vgpu, BXT_PORT_PLL(phy, ch, 0)) & PORT_PLL_M2_MASK) << 22;
-	अगर (vgpu_vreg_t(vgpu, BXT_PORT_PLL(phy, ch, 3)) & PORT_PLL_M2_FRAC_ENABLE)
-		घड़ी.m2 |= vgpu_vreg_t(vgpu, BXT_PORT_PLL(phy, ch, 2)) & PORT_PLL_M2_FRAC_MASK;
-	घड़ी.n = (vgpu_vreg_t(vgpu, BXT_PORT_PLL(phy, ch, 1)) & PORT_PLL_N_MASK) >> PORT_PLL_N_SHIFT;
-	घड़ी.p1 = (vgpu_vreg_t(vgpu, BXT_PORT_PLL_EBB_0(phy, ch)) & PORT_PLL_P1_MASK) >> PORT_PLL_P1_SHIFT;
-	घड़ी.p2 = (vgpu_vreg_t(vgpu, BXT_PORT_PLL_EBB_0(phy, ch)) & PORT_PLL_P2_MASK) >> PORT_PLL_P2_SHIFT;
-	घड़ी.m = घड़ी.m1 * घड़ी.m2;
-	घड़ी.p = घड़ी.p1 * घड़ी.p2;
+	clock.m1 = 2;
+	clock.m2 = (vgpu_vreg_t(vgpu, BXT_PORT_PLL(phy, ch, 0)) & PORT_PLL_M2_MASK) << 22;
+	if (vgpu_vreg_t(vgpu, BXT_PORT_PLL(phy, ch, 3)) & PORT_PLL_M2_FRAC_ENABLE)
+		clock.m2 |= vgpu_vreg_t(vgpu, BXT_PORT_PLL(phy, ch, 2)) & PORT_PLL_M2_FRAC_MASK;
+	clock.n = (vgpu_vreg_t(vgpu, BXT_PORT_PLL(phy, ch, 1)) & PORT_PLL_N_MASK) >> PORT_PLL_N_SHIFT;
+	clock.p1 = (vgpu_vreg_t(vgpu, BXT_PORT_PLL_EBB_0(phy, ch)) & PORT_PLL_P1_MASK) >> PORT_PLL_P1_SHIFT;
+	clock.p2 = (vgpu_vreg_t(vgpu, BXT_PORT_PLL_EBB_0(phy, ch)) & PORT_PLL_P2_MASK) >> PORT_PLL_P2_SHIFT;
+	clock.m = clock.m1 * clock.m2;
+	clock.p = clock.p1 * clock.p2;
 
-	अगर (घड़ी.n == 0 || घड़ी.p == 0) अणु
+	if (clock.n == 0 || clock.p == 0) {
 		gvt_dbg_dpy("vgpu-%d PORT_%c PLL has invalid divider\n", vgpu->id, port_name(port));
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
-	घड़ी.vco = DIV_ROUND_CLOSEST_ULL(mul_u32_u32(refclk, घड़ी.m), घड़ी.n << 22);
-	घड़ी.करोt = DIV_ROUND_CLOSEST(घड़ी.vco, घड़ी.p);
+	clock.vco = DIV_ROUND_CLOSEST_ULL(mul_u32_u32(refclk, clock.m), clock.n << 22);
+	clock.dot = DIV_ROUND_CLOSEST(clock.vco, clock.p);
 
-	dp_br = घड़ी.करोt / 5;
+	dp_br = clock.dot / 5;
 
 out:
-	वापस dp_br;
-पूर्ण
+	return dp_br;
+}
 
-अटल u32 skl_vgpu_get_dp_bitrate(काष्ठा पूर्णांकel_vgpu *vgpu, क्रमागत port port)
-अणु
+static u32 skl_vgpu_get_dp_bitrate(struct intel_vgpu *vgpu, enum port port)
+{
 	u32 dp_br = 0;
-	क्रमागत पूर्णांकel_dpll_id dpll_id = DPLL_ID_SKL_DPLL0;
+	enum intel_dpll_id dpll_id = DPLL_ID_SKL_DPLL0;
 
-	/* Find the enabled DPLL क्रम the DDI/PORT */
-	अगर (!(vgpu_vreg_t(vgpu, DPLL_CTRL2) & DPLL_CTRL2_DDI_CLK_OFF(port)) &&
-	    (vgpu_vreg_t(vgpu, DPLL_CTRL2) & DPLL_CTRL2_DDI_SEL_OVERRIDE(port))) अणु
+	/* Find the enabled DPLL for the DDI/PORT */
+	if (!(vgpu_vreg_t(vgpu, DPLL_CTRL2) & DPLL_CTRL2_DDI_CLK_OFF(port)) &&
+	    (vgpu_vreg_t(vgpu, DPLL_CTRL2) & DPLL_CTRL2_DDI_SEL_OVERRIDE(port))) {
 		dpll_id += (vgpu_vreg_t(vgpu, DPLL_CTRL2) &
 			DPLL_CTRL2_DDI_CLK_SEL_MASK(port)) >>
 			DPLL_CTRL2_DDI_CLK_SEL_SHIFT(port);
-	पूर्ण अन्यथा अणु
+	} else {
 		gvt_dbg_dpy("vgpu-%d DPLL for PORT_%c isn't turned on\n",
 			    vgpu->id, port_name(port));
-		वापस dp_br;
-	पूर्ण
+		return dp_br;
+	}
 
 	/* Find PLL output frequency from correct DPLL, and get bir rate */
-	चयन ((vgpu_vreg_t(vgpu, DPLL_CTRL1) &
+	switch ((vgpu_vreg_t(vgpu, DPLL_CTRL1) &
 		DPLL_CTRL1_LINK_RATE_MASK(dpll_id)) >>
-		DPLL_CTRL1_LINK_RATE_SHIFT(dpll_id)) अणु
-		हाल DPLL_CTRL1_LINK_RATE_810:
+		DPLL_CTRL1_LINK_RATE_SHIFT(dpll_id)) {
+		case DPLL_CTRL1_LINK_RATE_810:
 			dp_br = 81000 * 2;
-			अवरोध;
-		हाल DPLL_CTRL1_LINK_RATE_1080:
+			break;
+		case DPLL_CTRL1_LINK_RATE_1080:
 			dp_br = 108000 * 2;
-			अवरोध;
-		हाल DPLL_CTRL1_LINK_RATE_1350:
+			break;
+		case DPLL_CTRL1_LINK_RATE_1350:
 			dp_br = 135000 * 2;
-			अवरोध;
-		हाल DPLL_CTRL1_LINK_RATE_1620:
+			break;
+		case DPLL_CTRL1_LINK_RATE_1620:
 			dp_br = 162000 * 2;
-			अवरोध;
-		हाल DPLL_CTRL1_LINK_RATE_2160:
+			break;
+		case DPLL_CTRL1_LINK_RATE_2160:
 			dp_br = 216000 * 2;
-			अवरोध;
-		हाल DPLL_CTRL1_LINK_RATE_2700:
+			break;
+		case DPLL_CTRL1_LINK_RATE_2700:
 			dp_br = 270000 * 2;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dp_br = 0;
 			gvt_dbg_dpy("vgpu-%d PORT_%c fail to get DPLL-%d freq\n",
 				    vgpu->id, port_name(port), dpll_id);
-	पूर्ण
+	}
 
-	वापस dp_br;
-पूर्ण
+	return dp_br;
+}
 
-अटल व्योम vgpu_update_refresh_rate(काष्ठा पूर्णांकel_vgpu *vgpu)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = vgpu->gvt->gt->i915;
-	क्रमागत port port;
+static void vgpu_update_refresh_rate(struct intel_vgpu *vgpu)
+{
+	struct drm_i915_private *dev_priv = vgpu->gvt->gt->i915;
+	enum port port;
 	u32 dp_br, link_m, link_n, htotal, vtotal;
 
-	/* Find DDI/PORT asचिन्हित to TRANSCODER_A, expect B or D */
+	/* Find DDI/PORT assigned to TRANSCODER_A, expect B or D */
 	port = (vgpu_vreg_t(vgpu, TRANS_DDI_FUNC_CTL(TRANSCODER_A)) &
 		TRANS_DDI_PORT_MASK) >> TRANS_DDI_PORT_SHIFT;
-	अगर (port != PORT_B && port != PORT_D) अणु
+	if (port != PORT_B && port != PORT_D) {
 		gvt_dbg_dpy("vgpu-%d unsupported PORT_%c\n", vgpu->id, port_name(port));
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* Calculate DP bitrate from PLL */
-	अगर (IS_BROADWELL(dev_priv))
+	if (IS_BROADWELL(dev_priv))
 		dp_br = bdw_vgpu_get_dp_bitrate(vgpu, port);
-	अन्यथा अगर (IS_BROXTON(dev_priv))
+	else if (IS_BROXTON(dev_priv))
 		dp_br = bxt_vgpu_get_dp_bitrate(vgpu, port);
-	अन्यथा
+	else
 		dp_br = skl_vgpu_get_dp_bitrate(vgpu, port);
 
-	/* Get DP link symbol घड़ी M/N */
+	/* Get DP link symbol clock M/N */
 	link_m = vgpu_vreg_t(vgpu, PIPE_LINK_M1(TRANSCODER_A));
 	link_n = vgpu_vreg_t(vgpu, PIPE_LINK_N1(TRANSCODER_A));
 
@@ -673,47 +672,47 @@ out:
 	htotal = (vgpu_vreg_t(vgpu, HTOTAL(TRANSCODER_A)) >> TRANS_HTOTAL_SHIFT);
 	vtotal = (vgpu_vreg_t(vgpu, VTOTAL(TRANSCODER_A)) >> TRANS_VTOTAL_SHIFT);
 
-	अगर (dp_br && link_n && htotal && vtotal) अणु
+	if (dp_br && link_n && htotal && vtotal) {
 		u64 pixel_clk = 0;
 		u32 new_rate = 0;
-		u32 *old_rate = &(पूर्णांकel_vgpu_port(vgpu, vgpu->display.port_num)->vrefresh_k);
+		u32 *old_rate = &(intel_vgpu_port(vgpu, vgpu->display.port_num)->vrefresh_k);
 
-		/* Calcuate pixel घड़ी by (ls_clk * M / N) */
-		pixel_clk = भाग_u64(mul_u32_u32(link_m, dp_br), link_n);
+		/* Calcuate pixel clock by (ls_clk * M / N) */
+		pixel_clk = div_u64(mul_u32_u32(link_m, dp_br), link_n);
 		pixel_clk *= MSEC_PER_SEC;
 
 		/* Calcuate refresh rate by (pixel_clk / (h_total * v_total)) */
 		new_rate = DIV64_U64_ROUND_CLOSEST(mul_u64_u32_shr(pixel_clk, MSEC_PER_SEC, 0), mul_u32_u32(htotal + 1, vtotal + 1));
 
-		अगर (*old_rate != new_rate)
+		if (*old_rate != new_rate)
 			*old_rate = new_rate;
 
 		gvt_dbg_dpy("vgpu-%d PIPE_%c refresh rate updated to %d\n",
 			    vgpu->id, pipe_name(PIPE_A), new_rate);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक pipeconf_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int pipeconf_mmio_write(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
 	u32 data;
 
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
+	write_vreg(vgpu, offset, p_data, bytes);
 	data = vgpu_vreg(vgpu, offset);
 
-	अगर (data & PIPECONF_ENABLE) अणु
+	if (data & PIPECONF_ENABLE) {
 		vgpu_vreg(vgpu, offset) |= I965_PIPECONF_ACTIVE;
 		vgpu_update_refresh_rate(vgpu);
 		vgpu_update_vblank_emulation(vgpu, true);
-	पूर्ण अन्यथा अणु
+	} else {
 		vgpu_vreg(vgpu, offset) &= ~I965_PIPECONF_ACTIVE;
 		vgpu_update_vblank_emulation(vgpu, false);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
 /* sorted in ascending order */
-अटल i915_reg_t क्रमce_nonpriv_white_list[] = अणु
+static i915_reg_t force_nonpriv_white_list[] = {
 	_MMIO(0xd80),
 	GEN9_CS_DEBUG_MODE1, //_MMIO(0x20ec)
 	GEN9_CTX_PREEMPT_REG,//_MMIO(0x2248)
@@ -745,222 +744,222 @@ out:
 	_MMIO(0xe48c),
 	_MMIO(0xe5f4),
 	_MMIO(0x64844),
-पूर्ण;
+};
 
-/* a simple द्वा_खोज */
-अटल अंतरभूत bool in_whitelist(u32 reg)
-अणु
-	पूर्णांक left = 0, right = ARRAY_SIZE(क्रमce_nonpriv_white_list);
-	i915_reg_t *array = क्रमce_nonpriv_white_list;
+/* a simple bsearch */
+static inline bool in_whitelist(u32 reg)
+{
+	int left = 0, right = ARRAY_SIZE(force_nonpriv_white_list);
+	i915_reg_t *array = force_nonpriv_white_list;
 
-	जबतक (left < right) अणु
-		पूर्णांक mid = (left + right)/2;
+	while (left < right) {
+		int mid = (left + right)/2;
 
-		अगर (reg > array[mid].reg)
+		if (reg > array[mid].reg)
 			left = mid + 1;
-		अन्यथा अगर (reg < array[mid].reg)
+		else if (reg < array[mid].reg)
 			right = mid;
-		अन्यथा
-			वापस true;
-	पूर्ण
-	वापस false;
-पूर्ण
+		else
+			return true;
+	}
+	return false;
+}
 
-अटल पूर्णांक क्रमce_nonpriv_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
-	अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int force_nonpriv_write(struct intel_vgpu *vgpu,
+	unsigned int offset, void *p_data, unsigned int bytes)
+{
 	u32 reg_nonpriv = (*(u32 *)p_data) & REG_GENMASK(25, 2);
-	स्थिर काष्ठा पूर्णांकel_engine_cs *engine =
-		पूर्णांकel_gvt_render_mmio_to_engine(vgpu->gvt, offset);
+	const struct intel_engine_cs *engine =
+		intel_gvt_render_mmio_to_engine(vgpu->gvt, offset);
 
-	अगर (bytes != 4 || !IS_ALIGNED(offset, bytes) || !engine) अणु
+	if (bytes != 4 || !IS_ALIGNED(offset, bytes) || !engine) {
 		gvt_err("vgpu(%d) Invalid FORCE_NONPRIV offset %x(%dB)\n",
 			vgpu->id, offset, bytes);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (!in_whitelist(reg_nonpriv) &&
-	    reg_nonpriv != i915_mmio_reg_offset(RING_NOPID(engine->mmio_base))) अणु
+	if (!in_whitelist(reg_nonpriv) &&
+	    reg_nonpriv != i915_mmio_reg_offset(RING_NOPID(engine->mmio_base))) {
 		gvt_err("vgpu(%d) Invalid FORCE_NONPRIV write %x at offset %x\n",
 			vgpu->id, reg_nonpriv, offset);
-	पूर्ण अन्यथा
-		पूर्णांकel_vgpu_शेष_mmio_ग_लिखो(vgpu, offset, p_data, bytes);
+	} else
+		intel_vgpu_default_mmio_write(vgpu, offset, p_data, bytes);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ddi_buf_ctl_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
+static int ddi_buf_ctl_mmio_write(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
+	write_vreg(vgpu, offset, p_data, bytes);
 
-	अगर (vgpu_vreg(vgpu, offset) & DDI_BUF_CTL_ENABLE) अणु
+	if (vgpu_vreg(vgpu, offset) & DDI_BUF_CTL_ENABLE) {
 		vgpu_vreg(vgpu, offset) &= ~DDI_BUF_IS_IDLE;
-	पूर्ण अन्यथा अणु
+	} else {
 		vgpu_vreg(vgpu, offset) |= DDI_BUF_IS_IDLE;
-		अगर (offset == i915_mmio_reg_offset(DDI_BUF_CTL(PORT_E)))
+		if (offset == i915_mmio_reg_offset(DDI_BUF_CTL(PORT_E)))
 			vgpu_vreg_t(vgpu, DP_TP_STATUS(PORT_E))
 				&= ~DP_TP_STATUS_AUTOTRAIN_DONE;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक fdi_rx_iir_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int fdi_rx_iir_mmio_write(struct intel_vgpu *vgpu,
+		unsigned int offset, void *p_data, unsigned int bytes)
+{
 	vgpu_vreg(vgpu, offset) &= ~*(u32 *)p_data;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा FDI_LINK_TRAIN_PATTERN1         0
-#घोषणा FDI_LINK_TRAIN_PATTERN2         1
+#define FDI_LINK_TRAIN_PATTERN1         0
+#define FDI_LINK_TRAIN_PATTERN2         1
 
-अटल पूर्णांक fdi_स्वतः_training_started(काष्ठा पूर्णांकel_vgpu *vgpu)
-अणु
+static int fdi_auto_training_started(struct intel_vgpu *vgpu)
+{
 	u32 ddi_buf_ctl = vgpu_vreg_t(vgpu, DDI_BUF_CTL(PORT_E));
 	u32 rx_ctl = vgpu_vreg(vgpu, _FDI_RXA_CTL);
 	u32 tx_ctl = vgpu_vreg_t(vgpu, DP_TP_CTL(PORT_E));
 
-	अगर ((ddi_buf_ctl & DDI_BUF_CTL_ENABLE) &&
+	if ((ddi_buf_ctl & DDI_BUF_CTL_ENABLE) &&
 			(rx_ctl & FDI_RX_ENABLE) &&
 			(rx_ctl & FDI_AUTO_TRAINING) &&
 			(tx_ctl & DP_TP_CTL_ENABLE) &&
 			(tx_ctl & DP_TP_CTL_FDI_AUTOTRAIN))
-		वापस 1;
-	अन्यथा
-		वापस 0;
-पूर्ण
+		return 1;
+	else
+		return 0;
+}
 
-अटल पूर्णांक check_fdi_rx_train_status(काष्ठा पूर्णांकel_vgpu *vgpu,
-		क्रमागत pipe pipe, अचिन्हित पूर्णांक train_pattern)
-अणु
+static int check_fdi_rx_train_status(struct intel_vgpu *vgpu,
+		enum pipe pipe, unsigned int train_pattern)
+{
 	i915_reg_t fdi_rx_imr, fdi_tx_ctl, fdi_rx_ctl;
-	अचिन्हित पूर्णांक fdi_rx_check_bits, fdi_tx_check_bits;
-	अचिन्हित पूर्णांक fdi_rx_train_bits, fdi_tx_train_bits;
-	अचिन्हित पूर्णांक fdi_iir_check_bits;
+	unsigned int fdi_rx_check_bits, fdi_tx_check_bits;
+	unsigned int fdi_rx_train_bits, fdi_tx_train_bits;
+	unsigned int fdi_iir_check_bits;
 
 	fdi_rx_imr = FDI_RX_IMR(pipe);
 	fdi_tx_ctl = FDI_TX_CTL(pipe);
 	fdi_rx_ctl = FDI_RX_CTL(pipe);
 
-	अगर (train_pattern == FDI_LINK_TRAIN_PATTERN1) अणु
+	if (train_pattern == FDI_LINK_TRAIN_PATTERN1) {
 		fdi_rx_train_bits = FDI_LINK_TRAIN_PATTERN_1_CPT;
 		fdi_tx_train_bits = FDI_LINK_TRAIN_PATTERN_1;
 		fdi_iir_check_bits = FDI_RX_BIT_LOCK;
-	पूर्ण अन्यथा अगर (train_pattern == FDI_LINK_TRAIN_PATTERN2) अणु
+	} else if (train_pattern == FDI_LINK_TRAIN_PATTERN2) {
 		fdi_rx_train_bits = FDI_LINK_TRAIN_PATTERN_2_CPT;
 		fdi_tx_train_bits = FDI_LINK_TRAIN_PATTERN_2;
 		fdi_iir_check_bits = FDI_RX_SYMBOL_LOCK;
-	पूर्ण अन्यथा अणु
+	} else {
 		gvt_vgpu_err("Invalid train pattern %d\n", train_pattern);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	fdi_rx_check_bits = FDI_RX_ENABLE | fdi_rx_train_bits;
 	fdi_tx_check_bits = FDI_TX_ENABLE | fdi_tx_train_bits;
 
 	/* If imr bit has been masked */
-	अगर (vgpu_vreg_t(vgpu, fdi_rx_imr) & fdi_iir_check_bits)
-		वापस 0;
+	if (vgpu_vreg_t(vgpu, fdi_rx_imr) & fdi_iir_check_bits)
+		return 0;
 
-	अगर (((vgpu_vreg_t(vgpu, fdi_tx_ctl) & fdi_tx_check_bits)
+	if (((vgpu_vreg_t(vgpu, fdi_tx_ctl) & fdi_tx_check_bits)
 			== fdi_tx_check_bits)
 		&& ((vgpu_vreg_t(vgpu, fdi_rx_ctl) & fdi_rx_check_bits)
 			== fdi_rx_check_bits))
-		वापस 1;
-	अन्यथा
-		वापस 0;
-पूर्ण
+		return 1;
+	else
+		return 0;
+}
 
-#घोषणा INVALID_INDEX (~0U)
+#define INVALID_INDEX (~0U)
 
-अटल अचिन्हित पूर्णांक calc_index(अचिन्हित पूर्णांक offset, अचिन्हित पूर्णांक start,
-	अचिन्हित पूर्णांक next, अचिन्हित पूर्णांक end, i915_reg_t i915_end)
-अणु
-	अचिन्हित पूर्णांक range = next - start;
+static unsigned int calc_index(unsigned int offset, unsigned int start,
+	unsigned int next, unsigned int end, i915_reg_t i915_end)
+{
+	unsigned int range = next - start;
 
-	अगर (!end)
+	if (!end)
 		end = i915_mmio_reg_offset(i915_end);
-	अगर (offset < start || offset > end)
-		वापस INVALID_INDEX;
+	if (offset < start || offset > end)
+		return INVALID_INDEX;
 	offset -= start;
-	वापस offset / range;
-पूर्ण
+	return offset / range;
+}
 
-#घोषणा FDI_RX_CTL_TO_PIPE(offset) \
+#define FDI_RX_CTL_TO_PIPE(offset) \
 	calc_index(offset, _FDI_RXA_CTL, _FDI_RXB_CTL, 0, FDI_RX_CTL(PIPE_C))
 
-#घोषणा FDI_TX_CTL_TO_PIPE(offset) \
+#define FDI_TX_CTL_TO_PIPE(offset) \
 	calc_index(offset, _FDI_TXA_CTL, _FDI_TXB_CTL, 0, FDI_TX_CTL(PIPE_C))
 
-#घोषणा FDI_RX_IMR_TO_PIPE(offset) \
+#define FDI_RX_IMR_TO_PIPE(offset) \
 	calc_index(offset, _FDI_RXA_IMR, _FDI_RXB_IMR, 0, FDI_RX_IMR(PIPE_C))
 
-अटल पूर्णांक update_fdi_rx_iir_status(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int update_fdi_rx_iir_status(struct intel_vgpu *vgpu,
+		unsigned int offset, void *p_data, unsigned int bytes)
+{
 	i915_reg_t fdi_rx_iir;
-	अचिन्हित पूर्णांक index;
-	पूर्णांक ret;
+	unsigned int index;
+	int ret;
 
-	अगर (FDI_RX_CTL_TO_PIPE(offset) != INVALID_INDEX)
+	if (FDI_RX_CTL_TO_PIPE(offset) != INVALID_INDEX)
 		index = FDI_RX_CTL_TO_PIPE(offset);
-	अन्यथा अगर (FDI_TX_CTL_TO_PIPE(offset) != INVALID_INDEX)
+	else if (FDI_TX_CTL_TO_PIPE(offset) != INVALID_INDEX)
 		index = FDI_TX_CTL_TO_PIPE(offset);
-	अन्यथा अगर (FDI_RX_IMR_TO_PIPE(offset) != INVALID_INDEX)
+	else if (FDI_RX_IMR_TO_PIPE(offset) != INVALID_INDEX)
 		index = FDI_RX_IMR_TO_PIPE(offset);
-	अन्यथा अणु
+	else {
 		gvt_vgpu_err("Unsupport registers %x\n", offset);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
+	write_vreg(vgpu, offset, p_data, bytes);
 
 	fdi_rx_iir = FDI_RX_IIR(index);
 
 	ret = check_fdi_rx_train_status(vgpu, index, FDI_LINK_TRAIN_PATTERN1);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (ret)
+	if (ret < 0)
+		return ret;
+	if (ret)
 		vgpu_vreg_t(vgpu, fdi_rx_iir) |= FDI_RX_BIT_LOCK;
 
 	ret = check_fdi_rx_train_status(vgpu, index, FDI_LINK_TRAIN_PATTERN2);
-	अगर (ret < 0)
-		वापस ret;
-	अगर (ret)
+	if (ret < 0)
+		return ret;
+	if (ret)
 		vgpu_vreg_t(vgpu, fdi_rx_iir) |= FDI_RX_SYMBOL_LOCK;
 
-	अगर (offset == _FDI_RXA_CTL)
-		अगर (fdi_स्वतः_training_started(vgpu))
+	if (offset == _FDI_RXA_CTL)
+		if (fdi_auto_training_started(vgpu))
 			vgpu_vreg_t(vgpu, DP_TP_STATUS(PORT_E)) |=
 				DP_TP_STATUS_AUTOTRAIN_DONE;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा DP_TP_CTL_TO_PORT(offset) \
+#define DP_TP_CTL_TO_PORT(offset) \
 	calc_index(offset, _DP_TP_CTL_A, _DP_TP_CTL_B, 0, DP_TP_CTL(PORT_E))
 
-अटल पूर्णांक dp_tp_ctl_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int dp_tp_ctl_mmio_write(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
 	i915_reg_t status_reg;
-	अचिन्हित पूर्णांक index;
+	unsigned int index;
 	u32 data;
 
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
+	write_vreg(vgpu, offset, p_data, bytes);
 
 	index = DP_TP_CTL_TO_PORT(offset);
 	data = (vgpu_vreg(vgpu, offset) & GENMASK(10, 8)) >> 8;
-	अगर (data == 0x2) अणु
+	if (data == 0x2) {
 		status_reg = DP_TP_STATUS(index);
 		vgpu_vreg_t(vgpu, status_reg) |= (1 << 25);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक dp_tp_status_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int dp_tp_status_mmio_write(struct intel_vgpu *vgpu,
+		unsigned int offset, void *p_data, unsigned int bytes)
+{
 	u32 reg_val;
 	u32 sticky_mask;
 
@@ -970,142 +969,142 @@ out:
 	vgpu_vreg(vgpu, offset) = (reg_val & ~sticky_mask) |
 		(vgpu_vreg(vgpu, offset) & sticky_mask);
 	vgpu_vreg(vgpu, offset) &= ~(reg_val & sticky_mask);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pch_adpa_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int pch_adpa_mmio_write(struct intel_vgpu *vgpu,
+		unsigned int offset, void *p_data, unsigned int bytes)
+{
 	u32 data;
 
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
+	write_vreg(vgpu, offset, p_data, bytes);
 	data = vgpu_vreg(vgpu, offset);
 
-	अगर (data & ADPA_CRT_HOTPLUG_FORCE_TRIGGER)
+	if (data & ADPA_CRT_HOTPLUG_FORCE_TRIGGER)
 		vgpu_vreg(vgpu, offset) &= ~ADPA_CRT_HOTPLUG_FORCE_TRIGGER;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक south_chicken2_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int south_chicken2_mmio_write(struct intel_vgpu *vgpu,
+		unsigned int offset, void *p_data, unsigned int bytes)
+{
 	u32 data;
 
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
+	write_vreg(vgpu, offset, p_data, bytes);
 	data = vgpu_vreg(vgpu, offset);
 
-	अगर (data & FDI_MPHY_IOSFSB_RESET_CTL)
+	if (data & FDI_MPHY_IOSFSB_RESET_CTL)
 		vgpu_vreg(vgpu, offset) |= FDI_MPHY_IOSFSB_RESET_STATUS;
-	अन्यथा
+	else
 		vgpu_vreg(vgpu, offset) &= ~FDI_MPHY_IOSFSB_RESET_STATUS;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा DSPSURF_TO_PIPE(offset) \
+#define DSPSURF_TO_PIPE(offset) \
 	calc_index(offset, _DSPASURF, _DSPBSURF, 0, DSPSURF(PIPE_C))
 
-अटल पूर्णांक pri_surf_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = vgpu->gvt->gt->i915;
+static int pri_surf_mmio_write(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
+	struct drm_i915_private *dev_priv = vgpu->gvt->gt->i915;
 	u32 pipe = DSPSURF_TO_PIPE(offset);
-	पूर्णांक event = SKL_FLIP_EVENT(pipe, PLANE_PRIMARY);
+	int event = SKL_FLIP_EVENT(pipe, PLANE_PRIMARY);
 
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
+	write_vreg(vgpu, offset, p_data, bytes);
 	vgpu_vreg_t(vgpu, DSPSURFLIVE(pipe)) = vgpu_vreg(vgpu, offset);
 
 	vgpu_vreg_t(vgpu, PIPE_FLIPCOUNT_G4X(pipe))++;
 
-	अगर (vgpu_vreg_t(vgpu, DSPCNTR(pipe)) & PLANE_CTL_ASYNC_FLIP)
-		पूर्णांकel_vgpu_trigger_भव_event(vgpu, event);
-	अन्यथा
-		set_bit(event, vgpu->irq.flip_करोne_event[pipe]);
+	if (vgpu_vreg_t(vgpu, DSPCNTR(pipe)) & PLANE_CTL_ASYNC_FLIP)
+		intel_vgpu_trigger_virtual_event(vgpu, event);
+	else
+		set_bit(event, vgpu->irq.flip_done_event[pipe]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा SPRSURF_TO_PIPE(offset) \
+#define SPRSURF_TO_PIPE(offset) \
 	calc_index(offset, _SPRA_SURF, _SPRB_SURF, 0, SPRSURF(PIPE_C))
 
-अटल पूर्णांक spr_surf_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int spr_surf_mmio_write(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
 	u32 pipe = SPRSURF_TO_PIPE(offset);
-	पूर्णांक event = SKL_FLIP_EVENT(pipe, PLANE_SPRITE0);
+	int event = SKL_FLIP_EVENT(pipe, PLANE_SPRITE0);
 
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
+	write_vreg(vgpu, offset, p_data, bytes);
 	vgpu_vreg_t(vgpu, SPRSURFLIVE(pipe)) = vgpu_vreg(vgpu, offset);
 
-	अगर (vgpu_vreg_t(vgpu, SPRCTL(pipe)) & PLANE_CTL_ASYNC_FLIP)
-		पूर्णांकel_vgpu_trigger_भव_event(vgpu, event);
-	अन्यथा
-		set_bit(event, vgpu->irq.flip_करोne_event[pipe]);
+	if (vgpu_vreg_t(vgpu, SPRCTL(pipe)) & PLANE_CTL_ASYNC_FLIP)
+		intel_vgpu_trigger_virtual_event(vgpu, event);
+	else
+		set_bit(event, vgpu->irq.flip_done_event[pipe]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक reg50080_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
-			       अचिन्हित पूर्णांक offset, व्योम *p_data,
-			       अचिन्हित पूर्णांक bytes)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = vgpu->gvt->gt->i915;
-	क्रमागत pipe pipe = REG_50080_TO_PIPE(offset);
-	क्रमागत plane_id plane = REG_50080_TO_PLANE(offset);
-	पूर्णांक event = SKL_FLIP_EVENT(pipe, plane);
+static int reg50080_mmio_write(struct intel_vgpu *vgpu,
+			       unsigned int offset, void *p_data,
+			       unsigned int bytes)
+{
+	struct drm_i915_private *dev_priv = vgpu->gvt->gt->i915;
+	enum pipe pipe = REG_50080_TO_PIPE(offset);
+	enum plane_id plane = REG_50080_TO_PLANE(offset);
+	int event = SKL_FLIP_EVENT(pipe, plane);
 
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
-	अगर (plane == PLANE_PRIMARY) अणु
+	write_vreg(vgpu, offset, p_data, bytes);
+	if (plane == PLANE_PRIMARY) {
 		vgpu_vreg_t(vgpu, DSPSURFLIVE(pipe)) = vgpu_vreg(vgpu, offset);
 		vgpu_vreg_t(vgpu, PIPE_FLIPCOUNT_G4X(pipe))++;
-	पूर्ण अन्यथा अणु
+	} else {
 		vgpu_vreg_t(vgpu, SPRSURFLIVE(pipe)) = vgpu_vreg(vgpu, offset);
-	पूर्ण
+	}
 
-	अगर ((vgpu_vreg(vgpu, offset) & REG50080_FLIP_TYPE_MASK) == REG50080_FLIP_TYPE_ASYNC)
-		पूर्णांकel_vgpu_trigger_भव_event(vgpu, event);
-	अन्यथा
-		set_bit(event, vgpu->irq.flip_करोne_event[pipe]);
+	if ((vgpu_vreg(vgpu, offset) & REG50080_FLIP_TYPE_MASK) == REG50080_FLIP_TYPE_ASYNC)
+		intel_vgpu_trigger_virtual_event(vgpu, event);
+	else
+		set_bit(event, vgpu->irq.flip_done_event[pipe]);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक trigger_aux_channel_पूर्णांकerrupt(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक reg)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = vgpu->gvt->gt->i915;
-	क्रमागत पूर्णांकel_gvt_event_type event;
+static int trigger_aux_channel_interrupt(struct intel_vgpu *vgpu,
+		unsigned int reg)
+{
+	struct drm_i915_private *dev_priv = vgpu->gvt->gt->i915;
+	enum intel_gvt_event_type event;
 
-	अगर (reg == i915_mmio_reg_offset(DP_AUX_CH_CTL(AUX_CH_A)))
+	if (reg == i915_mmio_reg_offset(DP_AUX_CH_CTL(AUX_CH_A)))
 		event = AUX_CHANNEL_A;
-	अन्यथा अगर (reg == _PCH_DPB_AUX_CH_CTL ||
+	else if (reg == _PCH_DPB_AUX_CH_CTL ||
 		 reg == i915_mmio_reg_offset(DP_AUX_CH_CTL(AUX_CH_B)))
 		event = AUX_CHANNEL_B;
-	अन्यथा अगर (reg == _PCH_DPC_AUX_CH_CTL ||
+	else if (reg == _PCH_DPC_AUX_CH_CTL ||
 		 reg == i915_mmio_reg_offset(DP_AUX_CH_CTL(AUX_CH_C)))
 		event = AUX_CHANNEL_C;
-	अन्यथा अगर (reg == _PCH_DPD_AUX_CH_CTL ||
+	else if (reg == _PCH_DPD_AUX_CH_CTL ||
 		 reg == i915_mmio_reg_offset(DP_AUX_CH_CTL(AUX_CH_D)))
 		event = AUX_CHANNEL_D;
-	अन्यथा अणु
+	else {
 		drm_WARN_ON(&dev_priv->drm, true);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	पूर्णांकel_vgpu_trigger_भव_event(vgpu, event);
-	वापस 0;
-पूर्ण
+	intel_vgpu_trigger_virtual_event(vgpu, event);
+	return 0;
+}
 
-अटल पूर्णांक dp_aux_ch_ctl_trans_करोne(काष्ठा पूर्णांकel_vgpu *vgpu, u32 value,
-		अचिन्हित पूर्णांक reg, पूर्णांक len, bool data_valid)
-अणु
-	/* mark transaction करोne */
+static int dp_aux_ch_ctl_trans_done(struct intel_vgpu *vgpu, u32 value,
+		unsigned int reg, int len, bool data_valid)
+{
+	/* mark transaction done */
 	value |= DP_AUX_CH_CTL_DONE;
 	value &= ~DP_AUX_CH_CTL_SEND_BUSY;
 	value &= ~DP_AUX_CH_CTL_RECEIVE_ERROR;
 
-	अगर (data_valid)
+	if (data_valid)
 		value &= ~DP_AUX_CH_CTL_TIME_OUT_ERROR;
-	अन्यथा
+	else
 		value |= DP_AUX_CH_CTL_TIME_OUT_ERROR;
 
 	/* message size */
@@ -1113,162 +1112,162 @@ out:
 	value |= (len << 20);
 	vgpu_vreg(vgpu, reg) = value;
 
-	अगर (value & DP_AUX_CH_CTL_INTERRUPT)
-		वापस trigger_aux_channel_पूर्णांकerrupt(vgpu, reg);
-	वापस 0;
-पूर्ण
+	if (value & DP_AUX_CH_CTL_INTERRUPT)
+		return trigger_aux_channel_interrupt(vgpu, reg);
+	return 0;
+}
 
-अटल व्योम dp_aux_ch_ctl_link_training(काष्ठा पूर्णांकel_vgpu_dpcd_data *dpcd,
+static void dp_aux_ch_ctl_link_training(struct intel_vgpu_dpcd_data *dpcd,
 		u8 t)
-अणु
-	अगर ((t & DPCD_TRAINING_PATTERN_SET_MASK) == DPCD_TRAINING_PATTERN_1) अणु
-		/* training pattern 1 क्रम CR */
+{
+	if ((t & DPCD_TRAINING_PATTERN_SET_MASK) == DPCD_TRAINING_PATTERN_1) {
+		/* training pattern 1 for CR */
 		/* set LANE0_CR_DONE, LANE1_CR_DONE */
 		dpcd->data[DPCD_LANE0_1_STATUS] |= DPCD_LANES_CR_DONE;
 		/* set LANE2_CR_DONE, LANE3_CR_DONE */
 		dpcd->data[DPCD_LANE2_3_STATUS] |= DPCD_LANES_CR_DONE;
-	पूर्ण अन्यथा अगर ((t & DPCD_TRAINING_PATTERN_SET_MASK) ==
-			DPCD_TRAINING_PATTERN_2) अणु
-		/* training pattern 2 क्रम EQ */
-		/* Set CHANNEL_EQ_DONE and  SYMBOL_LOCKED क्रम Lane0_1 */
+	} else if ((t & DPCD_TRAINING_PATTERN_SET_MASK) ==
+			DPCD_TRAINING_PATTERN_2) {
+		/* training pattern 2 for EQ */
+		/* Set CHANNEL_EQ_DONE and  SYMBOL_LOCKED for Lane0_1 */
 		dpcd->data[DPCD_LANE0_1_STATUS] |= DPCD_LANES_EQ_DONE;
 		dpcd->data[DPCD_LANE0_1_STATUS] |= DPCD_SYMBOL_LOCKED;
-		/* Set CHANNEL_EQ_DONE and  SYMBOL_LOCKED क्रम Lane2_3 */
+		/* Set CHANNEL_EQ_DONE and  SYMBOL_LOCKED for Lane2_3 */
 		dpcd->data[DPCD_LANE2_3_STATUS] |= DPCD_LANES_EQ_DONE;
 		dpcd->data[DPCD_LANE2_3_STATUS] |= DPCD_SYMBOL_LOCKED;
 		/* set INTERLANE_ALIGN_DONE */
 		dpcd->data[DPCD_LANE_ALIGN_STATUS_UPDATED] |=
 			DPCD_INTERLANE_ALIGN_DONE;
-	पूर्ण अन्यथा अगर ((t & DPCD_TRAINING_PATTERN_SET_MASK) ==
-			DPCD_LINK_TRAINING_DISABLED) अणु
+	} else if ((t & DPCD_TRAINING_PATTERN_SET_MASK) ==
+			DPCD_LINK_TRAINING_DISABLED) {
 		/* finish link training */
 		/* set sink status as synchronized */
 		dpcd->data[DPCD_SINK_STATUS] = DPCD_SINK_IN_SYNC;
-	पूर्ण
-पूर्ण
+	}
+}
 
-#घोषणा _REG_HSW_DP_AUX_CH_CTL(dp) \
+#define _REG_HSW_DP_AUX_CH_CTL(dp) \
 	((dp) ? (_PCH_DPB_AUX_CH_CTL + ((dp)-1)*0x100) : 0x64010)
 
-#घोषणा _REG_SKL_DP_AUX_CH_CTL(dp) (0x64010 + (dp) * 0x100)
+#define _REG_SKL_DP_AUX_CH_CTL(dp) (0x64010 + (dp) * 0x100)
 
-#घोषणा OFFSET_TO_DP_AUX_PORT(offset) (((offset) & 0xF00) >> 8)
+#define OFFSET_TO_DP_AUX_PORT(offset) (((offset) & 0xF00) >> 8)
 
-#घोषणा dpy_is_valid_port(port)	\
+#define dpy_is_valid_port(port)	\
 		(((port) >= PORT_A) && ((port) < I915_MAX_PORTS))
 
-अटल पूर्णांक dp_aux_ch_ctl_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	काष्ठा पूर्णांकel_vgpu_display *display = &vgpu->display;
-	पूर्णांक msg, addr, ctrl, op, len;
-	पूर्णांक port_index = OFFSET_TO_DP_AUX_PORT(offset);
-	काष्ठा पूर्णांकel_vgpu_dpcd_data *dpcd = शून्य;
-	काष्ठा पूर्णांकel_vgpu_port *port = शून्य;
+static int dp_aux_ch_ctl_mmio_write(struct intel_vgpu *vgpu,
+		unsigned int offset, void *p_data, unsigned int bytes)
+{
+	struct intel_vgpu_display *display = &vgpu->display;
+	int msg, addr, ctrl, op, len;
+	int port_index = OFFSET_TO_DP_AUX_PORT(offset);
+	struct intel_vgpu_dpcd_data *dpcd = NULL;
+	struct intel_vgpu_port *port = NULL;
 	u32 data;
 
-	अगर (!dpy_is_valid_port(port_index)) अणु
+	if (!dpy_is_valid_port(port_index)) {
 		gvt_vgpu_err("Unsupported DP port access!\n");
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
+	write_vreg(vgpu, offset, p_data, bytes);
 	data = vgpu_vreg(vgpu, offset);
 
-	अगर ((INTEL_GEN(vgpu->gvt->gt->i915) >= 9)
-		&& offset != _REG_SKL_DP_AUX_CH_CTL(port_index)) अणु
-		/* SKL DPB/C/D aux ctl रेजिस्टर changed */
-		वापस 0;
-	पूर्ण अन्यथा अगर (IS_BROADWELL(vgpu->gvt->gt->i915) &&
-		   offset != _REG_HSW_DP_AUX_CH_CTL(port_index)) अणु
-		/* ग_लिखो to the data रेजिस्टरs */
-		वापस 0;
-	पूर्ण
+	if ((INTEL_GEN(vgpu->gvt->gt->i915) >= 9)
+		&& offset != _REG_SKL_DP_AUX_CH_CTL(port_index)) {
+		/* SKL DPB/C/D aux ctl register changed */
+		return 0;
+	} else if (IS_BROADWELL(vgpu->gvt->gt->i915) &&
+		   offset != _REG_HSW_DP_AUX_CH_CTL(port_index)) {
+		/* write to the data registers */
+		return 0;
+	}
 
-	अगर (!(data & DP_AUX_CH_CTL_SEND_BUSY)) अणु
+	if (!(data & DP_AUX_CH_CTL_SEND_BUSY)) {
 		/* just want to clear the sticky bits */
 		vgpu_vreg(vgpu, offset) = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	port = &display->ports[port_index];
 	dpcd = port->dpcd;
 
-	/* पढ़ो out message from DATA1 रेजिस्टर */
+	/* read out message from DATA1 register */
 	msg = vgpu_vreg(vgpu, offset + 4);
 	addr = (msg >> 8) & 0xffff;
 	ctrl = (msg >> 24) & 0xff;
 	len = msg & 0xff;
 	op = ctrl >> 4;
 
-	अगर (op == GVT_AUX_NATIVE_WRITE) अणु
-		पूर्णांक t;
+	if (op == GVT_AUX_NATIVE_WRITE) {
+		int t;
 		u8 buf[16];
 
-		अगर ((addr + len + 1) >= DPCD_SIZE) अणु
+		if ((addr + len + 1) >= DPCD_SIZE) {
 			/*
 			 * Write request exceeds what we supported,
 			 * DCPD spec: When a Source Device is writing a DPCD
 			 * address not supported by the Sink Device, the Sink
-			 * Device shall reply with AUX NACK and ै Mै  equal to
+			 * Device shall reply with AUX NACK and “M” equal to
 			 * zero.
 			 */
 
-			/* NAK the ग_लिखो */
+			/* NAK the write */
 			vgpu_vreg(vgpu, offset + 4) = AUX_NATIVE_REPLY_NAK;
-			dp_aux_ch_ctl_trans_करोne(vgpu, data, offset, 2, true);
-			वापस 0;
-		पूर्ण
+			dp_aux_ch_ctl_trans_done(vgpu, data, offset, 2, true);
+			return 0;
+		}
 
 		/*
-		 * Write request क्रमmat: Headr (command + address + size) occupies
+		 * Write request format: Headr (command + address + size) occupies
 		 * 4 bytes, followed by (len + 1) bytes of data. See details at
-		 * पूर्णांकel_dp_aux_transfer().
+		 * intel_dp_aux_transfer().
 		 */
-		अगर ((len + 1 + 4) > AUX_BURST_SIZE) अणु
+		if ((len + 1 + 4) > AUX_BURST_SIZE) {
 			gvt_vgpu_err("dp_aux_header: len %d is too large\n", len);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		/* unpack data from vreg to buf */
-		क्रम (t = 0; t < 4; t++) अणु
+		for (t = 0; t < 4; t++) {
 			u32 r = vgpu_vreg(vgpu, offset + 8 + t * 4);
 
 			buf[t * 4] = (r >> 24) & 0xff;
 			buf[t * 4 + 1] = (r >> 16) & 0xff;
 			buf[t * 4 + 2] = (r >> 8) & 0xff;
 			buf[t * 4 + 3] = r & 0xff;
-		पूर्ण
+		}
 
-		/* ग_लिखो to भव DPCD */
-		अगर (dpcd && dpcd->data_valid) अणु
-			क्रम (t = 0; t <= len; t++) अणु
-				पूर्णांक p = addr + t;
+		/* write to virtual DPCD */
+		if (dpcd && dpcd->data_valid) {
+			for (t = 0; t <= len; t++) {
+				int p = addr + t;
 
 				dpcd->data[p] = buf[t];
-				/* check क्रम link training */
-				अगर (p == DPCD_TRAINING_PATTERN_SET)
+				/* check for link training */
+				if (p == DPCD_TRAINING_PATTERN_SET)
 					dp_aux_ch_ctl_link_training(dpcd,
 							buf[t]);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		/* ACK the ग_लिखो */
+		/* ACK the write */
 		vgpu_vreg(vgpu, offset + 4) = 0;
-		dp_aux_ch_ctl_trans_करोne(vgpu, data, offset, 1,
+		dp_aux_ch_ctl_trans_done(vgpu, data, offset, 1,
 				dpcd && dpcd->data_valid);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (op == GVT_AUX_NATIVE_READ) अणु
-		पूर्णांक idx, i, ret = 0;
+	if (op == GVT_AUX_NATIVE_READ) {
+		int idx, i, ret = 0;
 
-		अगर ((addr + len + 1) >= DPCD_SIZE) अणु
+		if ((addr + len + 1) >= DPCD_SIZE) {
 			/*
-			 * पढ़ो request exceeds what we supported
+			 * read request exceeds what we supported
 			 * DPCD spec: A Sink Device receiving a Native AUX CH
-			 * पढ़ो request क्रम an unsupported DPCD address must
-			 * reply with an AUX ACK and पढ़ो data set equal to
+			 * read request for an unsupported DPCD address must
+			 * reply with an AUX ACK and read data set equal to
 			 * zero instead of replying with AUX NACK.
 			 */
 
@@ -1279,136 +1278,136 @@ out:
 			vgpu_vreg(vgpu, offset + 16) = 0;
 			vgpu_vreg(vgpu, offset + 20) = 0;
 
-			dp_aux_ch_ctl_trans_करोne(vgpu, data, offset, len + 2,
+			dp_aux_ch_ctl_trans_done(vgpu, data, offset, len + 2,
 					true);
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		क्रम (idx = 1; idx <= 5; idx++) अणु
-			/* clear the data रेजिस्टरs */
+		for (idx = 1; idx <= 5; idx++) {
+			/* clear the data registers */
 			vgpu_vreg(vgpu, offset + 4 * idx) = 0;
-		पूर्ण
+		}
 
 		/*
-		 * Read reply क्रमmat: ACK (1 byte) plus (len + 1) bytes of data.
+		 * Read reply format: ACK (1 byte) plus (len + 1) bytes of data.
 		 */
-		अगर ((len + 2) > AUX_BURST_SIZE) अणु
+		if ((len + 2) > AUX_BURST_SIZE) {
 			gvt_vgpu_err("dp_aux_header: len %d is too large\n", len);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		/* पढ़ो from भव DPCD to vreg */
+		/* read from virtual DPCD to vreg */
 		/* first 4 bytes: [ACK][addr][addr+1][addr+2] */
-		अगर (dpcd && dpcd->data_valid) अणु
-			क्रम (i = 1; i <= (len + 1); i++) अणु
-				पूर्णांक t;
+		if (dpcd && dpcd->data_valid) {
+			for (i = 1; i <= (len + 1); i++) {
+				int t;
 
 				t = dpcd->data[addr + i - 1];
 				t <<= (24 - 8 * (i % 4));
 				ret |= t;
 
-				अगर ((i % 4 == 3) || (i == (len + 1))) अणु
+				if ((i % 4 == 3) || (i == (len + 1))) {
 					vgpu_vreg(vgpu, offset +
 							(i / 4 + 1) * 4) = ret;
 					ret = 0;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-		dp_aux_ch_ctl_trans_करोne(vgpu, data, offset, len + 2,
+				}
+			}
+		}
+		dp_aux_ch_ctl_trans_done(vgpu, data, offset, len + 2,
 				dpcd && dpcd->data_valid);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* i2c transaction starts */
-	पूर्णांकel_gvt_i2c_handle_aux_ch_ग_लिखो(vgpu, port_index, offset, p_data);
+	intel_gvt_i2c_handle_aux_ch_write(vgpu, port_index, offset, p_data);
 
-	अगर (data & DP_AUX_CH_CTL_INTERRUPT)
-		trigger_aux_channel_पूर्णांकerrupt(vgpu, offset);
-	वापस 0;
-पूर्ण
+	if (data & DP_AUX_CH_CTL_INTERRUPT)
+		trigger_aux_channel_interrupt(vgpu, offset);
+	return 0;
+}
 
-अटल पूर्णांक mbctl_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int mbctl_write(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
 	*(u32 *)p_data &= (~GEN6_MBCTL_ENABLE_BOOT_FETCH);
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
-	वापस 0;
-पूर्ण
+	write_vreg(vgpu, offset, p_data, bytes);
+	return 0;
+}
 
-अटल पूर्णांक vga_control_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int vga_control_mmio_write(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
 	bool vga_disable;
 
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
+	write_vreg(vgpu, offset, p_data, bytes);
 	vga_disable = vgpu_vreg(vgpu, offset) & VGA_DISP_DISABLE;
 
 	gvt_dbg_core("vgpu%d: %s VGA mode\n", vgpu->id,
 			vga_disable ? "Disable" : "Enable");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 पढ़ो_भव_sbi_रेजिस्टर(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक sbi_offset)
-अणु
-	काष्ठा पूर्णांकel_vgpu_display *display = &vgpu->display;
-	पूर्णांक num = display->sbi.number;
-	पूर्णांक i;
+static u32 read_virtual_sbi_register(struct intel_vgpu *vgpu,
+		unsigned int sbi_offset)
+{
+	struct intel_vgpu_display *display = &vgpu->display;
+	int num = display->sbi.number;
+	int i;
 
-	क्रम (i = 0; i < num; ++i)
-		अगर (display->sbi.रेजिस्टरs[i].offset == sbi_offset)
-			अवरोध;
+	for (i = 0; i < num; ++i)
+		if (display->sbi.registers[i].offset == sbi_offset)
+			break;
 
-	अगर (i == num)
-		वापस 0;
+	if (i == num)
+		return 0;
 
-	वापस display->sbi.रेजिस्टरs[i].value;
-पूर्ण
+	return display->sbi.registers[i].value;
+}
 
-अटल व्योम ग_लिखो_भव_sbi_रेजिस्टर(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक offset, u32 value)
-अणु
-	काष्ठा पूर्णांकel_vgpu_display *display = &vgpu->display;
-	पूर्णांक num = display->sbi.number;
-	पूर्णांक i;
+static void write_virtual_sbi_register(struct intel_vgpu *vgpu,
+		unsigned int offset, u32 value)
+{
+	struct intel_vgpu_display *display = &vgpu->display;
+	int num = display->sbi.number;
+	int i;
 
-	क्रम (i = 0; i < num; ++i) अणु
-		अगर (display->sbi.रेजिस्टरs[i].offset == offset)
-			अवरोध;
-	पूर्ण
+	for (i = 0; i < num; ++i) {
+		if (display->sbi.registers[i].offset == offset)
+			break;
+	}
 
-	अगर (i == num) अणु
-		अगर (num == SBI_REG_MAX) अणु
+	if (i == num) {
+		if (num == SBI_REG_MAX) {
 			gvt_vgpu_err("SBI caching meets maximum limits\n");
-			वापस;
-		पूर्ण
+			return;
+		}
 		display->sbi.number++;
-	पूर्ण
+	}
 
-	display->sbi.रेजिस्टरs[i].offset = offset;
-	display->sbi.रेजिस्टरs[i].value = value;
-पूर्ण
+	display->sbi.registers[i].offset = offset;
+	display->sbi.registers[i].value = value;
+}
 
-अटल पूर्णांक sbi_data_mmio_पढ़ो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	अगर (((vgpu_vreg_t(vgpu, SBI_CTL_STAT) & SBI_OPCODE_MASK) >>
-				SBI_OPCODE_SHIFT) == SBI_CMD_CRRD) अणु
-		अचिन्हित पूर्णांक sbi_offset = (vgpu_vreg_t(vgpu, SBI_ADDR) &
+static int sbi_data_mmio_read(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
+	if (((vgpu_vreg_t(vgpu, SBI_CTL_STAT) & SBI_OPCODE_MASK) >>
+				SBI_OPCODE_SHIFT) == SBI_CMD_CRRD) {
+		unsigned int sbi_offset = (vgpu_vreg_t(vgpu, SBI_ADDR) &
 				SBI_ADDR_OFFSET_MASK) >> SBI_ADDR_OFFSET_SHIFT;
-		vgpu_vreg(vgpu, offset) = पढ़ो_भव_sbi_रेजिस्टर(vgpu,
+		vgpu_vreg(vgpu, offset) = read_virtual_sbi_register(vgpu,
 				sbi_offset);
-	पूर्ण
-	पढ़ो_vreg(vgpu, offset, p_data, bytes);
-	वापस 0;
-पूर्ण
+	}
+	read_vreg(vgpu, offset, p_data, bytes);
+	return 0;
+}
 
-अटल पूर्णांक sbi_ctl_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int sbi_ctl_mmio_write(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
 	u32 data;
 
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
+	write_vreg(vgpu, offset, p_data, bytes);
 	data = vgpu_vreg(vgpu, offset);
 
 	data &= ~(SBI_STAT_MASK << SBI_STAT_SHIFT);
@@ -1419,368 +1418,368 @@ out:
 
 	vgpu_vreg(vgpu, offset) = data;
 
-	अगर (((vgpu_vreg_t(vgpu, SBI_CTL_STAT) & SBI_OPCODE_MASK) >>
-				SBI_OPCODE_SHIFT) == SBI_CMD_CRWR) अणु
-		अचिन्हित पूर्णांक sbi_offset = (vgpu_vreg_t(vgpu, SBI_ADDR) &
+	if (((vgpu_vreg_t(vgpu, SBI_CTL_STAT) & SBI_OPCODE_MASK) >>
+				SBI_OPCODE_SHIFT) == SBI_CMD_CRWR) {
+		unsigned int sbi_offset = (vgpu_vreg_t(vgpu, SBI_ADDR) &
 				SBI_ADDR_OFFSET_MASK) >> SBI_ADDR_OFFSET_SHIFT;
 
-		ग_लिखो_भव_sbi_रेजिस्टर(vgpu, sbi_offset,
+		write_virtual_sbi_register(vgpu, sbi_offset,
 					   vgpu_vreg_t(vgpu, SBI_DATA));
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-#घोषणा _vgtअगर_reg(x) \
-	(VGT_PVINFO_PAGE + दुरत्व(काष्ठा vgt_अगर, x))
+#define _vgtif_reg(x) \
+	(VGT_PVINFO_PAGE + offsetof(struct vgt_if, x))
 
-अटल पूर्णांक pvinfo_mmio_पढ़ो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	bool invalid_पढ़ो = false;
+static int pvinfo_mmio_read(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
+	bool invalid_read = false;
 
-	पढ़ो_vreg(vgpu, offset, p_data, bytes);
+	read_vreg(vgpu, offset, p_data, bytes);
 
-	चयन (offset) अणु
-	हाल _vgtअगर_reg(magic) ... _vgtअगर_reg(vgt_id):
-		अगर (offset + bytes > _vgtअगर_reg(vgt_id) + 4)
-			invalid_पढ़ो = true;
-		अवरोध;
-	हाल _vgtअगर_reg(avail_rs.mappable_gmadr.base) ...
-		_vgtअगर_reg(avail_rs.fence_num):
-		अगर (offset + bytes >
-			_vgtअगर_reg(avail_rs.fence_num) + 4)
-			invalid_पढ़ो = true;
-		अवरोध;
-	हाल 0x78010:	/* vgt_caps */
-	हाल 0x7881c:
-		अवरोध;
-	शेष:
-		invalid_पढ़ो = true;
-		अवरोध;
-	पूर्ण
-	अगर (invalid_पढ़ो)
+	switch (offset) {
+	case _vgtif_reg(magic) ... _vgtif_reg(vgt_id):
+		if (offset + bytes > _vgtif_reg(vgt_id) + 4)
+			invalid_read = true;
+		break;
+	case _vgtif_reg(avail_rs.mappable_gmadr.base) ...
+		_vgtif_reg(avail_rs.fence_num):
+		if (offset + bytes >
+			_vgtif_reg(avail_rs.fence_num) + 4)
+			invalid_read = true;
+		break;
+	case 0x78010:	/* vgt_caps */
+	case 0x7881c:
+		break;
+	default:
+		invalid_read = true;
+		break;
+	}
+	if (invalid_read)
 		gvt_vgpu_err("invalid pvinfo read: [%x:%x] = %x\n",
 				offset, bytes, *(u32 *)p_data);
-	vgpu->pv_notअगरied = true;
-	वापस 0;
-पूर्ण
+	vgpu->pv_notified = true;
+	return 0;
+}
 
-अटल पूर्णांक handle_g2v_notअगरication(काष्ठा पूर्णांकel_vgpu *vgpu, पूर्णांक notअगरication)
-अणु
-	क्रमागत पूर्णांकel_gvt_gtt_type root_entry_type = GTT_TYPE_PPGTT_ROOT_L4_ENTRY;
-	काष्ठा पूर्णांकel_vgpu_mm *mm;
+static int handle_g2v_notification(struct intel_vgpu *vgpu, int notification)
+{
+	enum intel_gvt_gtt_type root_entry_type = GTT_TYPE_PPGTT_ROOT_L4_ENTRY;
+	struct intel_vgpu_mm *mm;
 	u64 *pdps;
 
-	pdps = (u64 *)&vgpu_vreg64_t(vgpu, vgtअगर_reg(pdp[0]));
+	pdps = (u64 *)&vgpu_vreg64_t(vgpu, vgtif_reg(pdp[0]));
 
-	चयन (notअगरication) अणु
-	हाल VGT_G2V_PPGTT_L3_PAGE_TABLE_CREATE:
+	switch (notification) {
+	case VGT_G2V_PPGTT_L3_PAGE_TABLE_CREATE:
 		root_entry_type = GTT_TYPE_PPGTT_ROOT_L3_ENTRY;
 		fallthrough;
-	हाल VGT_G2V_PPGTT_L4_PAGE_TABLE_CREATE:
-		mm = पूर्णांकel_vgpu_get_ppgtt_mm(vgpu, root_entry_type, pdps);
-		वापस PTR_ERR_OR_ZERO(mm);
-	हाल VGT_G2V_PPGTT_L3_PAGE_TABLE_DESTROY:
-	हाल VGT_G2V_PPGTT_L4_PAGE_TABLE_DESTROY:
-		वापस पूर्णांकel_vgpu_put_ppgtt_mm(vgpu, pdps);
-	हाल VGT_G2V_EXECLIST_CONTEXT_CREATE:
-	हाल VGT_G2V_EXECLIST_CONTEXT_DESTROY:
-	हाल 1:	/* Remove this in guest driver. */
-		अवरोध;
-	शेष:
-		gvt_vgpu_err("Invalid PV notification %d\n", notअगरication);
-	पूर्ण
-	वापस 0;
-पूर्ण
+	case VGT_G2V_PPGTT_L4_PAGE_TABLE_CREATE:
+		mm = intel_vgpu_get_ppgtt_mm(vgpu, root_entry_type, pdps);
+		return PTR_ERR_OR_ZERO(mm);
+	case VGT_G2V_PPGTT_L3_PAGE_TABLE_DESTROY:
+	case VGT_G2V_PPGTT_L4_PAGE_TABLE_DESTROY:
+		return intel_vgpu_put_ppgtt_mm(vgpu, pdps);
+	case VGT_G2V_EXECLIST_CONTEXT_CREATE:
+	case VGT_G2V_EXECLIST_CONTEXT_DESTROY:
+	case 1:	/* Remove this in guest driver. */
+		break;
+	default:
+		gvt_vgpu_err("Invalid PV notification %d\n", notification);
+	}
+	return 0;
+}
 
-अटल पूर्णांक send_display_पढ़ोy_uevent(काष्ठा पूर्णांकel_vgpu *vgpu, पूर्णांक पढ़ोy)
-अणु
-	काष्ठा kobject *kobj = &vgpu->gvt->gt->i915->drm.primary->kdev->kobj;
-	अक्षर *env[3] = अणुशून्य, शून्य, शून्यपूर्ण;
-	अक्षर vmid_str[20];
-	अक्षर display_पढ़ोy_str[20];
+static int send_display_ready_uevent(struct intel_vgpu *vgpu, int ready)
+{
+	struct kobject *kobj = &vgpu->gvt->gt->i915->drm.primary->kdev->kobj;
+	char *env[3] = {NULL, NULL, NULL};
+	char vmid_str[20];
+	char display_ready_str[20];
 
-	snम_लिखो(display_पढ़ोy_str, 20, "GVT_DISPLAY_READY=%d", पढ़ोy);
-	env[0] = display_पढ़ोy_str;
+	snprintf(display_ready_str, 20, "GVT_DISPLAY_READY=%d", ready);
+	env[0] = display_ready_str;
 
-	snम_लिखो(vmid_str, 20, "VMID=%d", vgpu->id);
+	snprintf(vmid_str, 20, "VMID=%d", vgpu->id);
 	env[1] = vmid_str;
 
-	वापस kobject_uevent_env(kobj, KOBJ_ADD, env);
-पूर्ण
+	return kobject_uevent_env(kobj, KOBJ_ADD, env);
+}
 
-अटल पूर्णांक pvinfo_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int pvinfo_mmio_write(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
 	u32 data = *(u32 *)p_data;
-	bool invalid_ग_लिखो = false;
+	bool invalid_write = false;
 
-	चयन (offset) अणु
-	हाल _vgtअगर_reg(display_पढ़ोy):
-		send_display_पढ़ोy_uevent(vgpu, data ? 1 : 0);
-		अवरोध;
-	हाल _vgtअगर_reg(g2v_notअगरy):
-		handle_g2v_notअगरication(vgpu, data);
-		अवरोध;
-	/* add xhot and yhot to handled list to aव्योम error log */
-	हाल _vgtअगर_reg(cursor_x_hot):
-	हाल _vgtअगर_reg(cursor_y_hot):
-	हाल _vgtअगर_reg(pdp[0].lo):
-	हाल _vgtअगर_reg(pdp[0].hi):
-	हाल _vgtअगर_reg(pdp[1].lo):
-	हाल _vgtअगर_reg(pdp[1].hi):
-	हाल _vgtअगर_reg(pdp[2].lo):
-	हाल _vgtअगर_reg(pdp[2].hi):
-	हाल _vgtअगर_reg(pdp[3].lo):
-	हाल _vgtअगर_reg(pdp[3].hi):
-	हाल _vgtअगर_reg(execlist_context_descriptor_lo):
-	हाल _vgtअगर_reg(execlist_context_descriptor_hi):
-		अवरोध;
-	हाल _vgtअगर_reg(rsv5[0])..._vgtअगर_reg(rsv5[3]):
-		invalid_ग_लिखो = true;
+	switch (offset) {
+	case _vgtif_reg(display_ready):
+		send_display_ready_uevent(vgpu, data ? 1 : 0);
+		break;
+	case _vgtif_reg(g2v_notify):
+		handle_g2v_notification(vgpu, data);
+		break;
+	/* add xhot and yhot to handled list to avoid error log */
+	case _vgtif_reg(cursor_x_hot):
+	case _vgtif_reg(cursor_y_hot):
+	case _vgtif_reg(pdp[0].lo):
+	case _vgtif_reg(pdp[0].hi):
+	case _vgtif_reg(pdp[1].lo):
+	case _vgtif_reg(pdp[1].hi):
+	case _vgtif_reg(pdp[2].lo):
+	case _vgtif_reg(pdp[2].hi):
+	case _vgtif_reg(pdp[3].lo):
+	case _vgtif_reg(pdp[3].hi):
+	case _vgtif_reg(execlist_context_descriptor_lo):
+	case _vgtif_reg(execlist_context_descriptor_hi):
+		break;
+	case _vgtif_reg(rsv5[0])..._vgtif_reg(rsv5[3]):
+		invalid_write = true;
 		enter_failsafe_mode(vgpu, GVT_FAILSAFE_INSUFFICIENT_RESOURCE);
-		अवरोध;
-	शेष:
-		invalid_ग_लिखो = true;
+		break;
+	default:
+		invalid_write = true;
 		gvt_vgpu_err("invalid pvinfo write offset %x bytes %x data %x\n",
 				offset, bytes, data);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (!invalid_ग_लिखो)
-		ग_लिखो_vreg(vgpu, offset, p_data, bytes);
+	if (!invalid_write)
+		write_vreg(vgpu, offset, p_data, bytes);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक pf_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	काष्ठा drm_i915_निजी *i915 = vgpu->gvt->gt->i915;
+static int pf_write(struct intel_vgpu *vgpu,
+		unsigned int offset, void *p_data, unsigned int bytes)
+{
+	struct drm_i915_private *i915 = vgpu->gvt->gt->i915;
 	u32 val = *(u32 *)p_data;
 
-	अगर ((offset == _PS_1A_CTRL || offset == _PS_2A_CTRL ||
+	if ((offset == _PS_1A_CTRL || offset == _PS_2A_CTRL ||
 	   offset == _PS_1B_CTRL || offset == _PS_2B_CTRL ||
-	   offset == _PS_1C_CTRL) && (val & PS_PLANE_SEL_MASK) != 0) अणु
+	   offset == _PS_1C_CTRL) && (val & PS_PLANE_SEL_MASK) != 0) {
 		drm_WARN_ONCE(&i915->drm, true,
 			      "VM(%d): guest is trying to scaling a plane\n",
 			      vgpu->id);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस पूर्णांकel_vgpu_शेष_mmio_ग_लिखो(vgpu, offset, p_data, bytes);
-पूर्ण
+	return intel_vgpu_default_mmio_write(vgpu, offset, p_data, bytes);
+}
 
-अटल पूर्णांक घातer_well_ctl_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
+static int power_well_ctl_mmio_write(struct intel_vgpu *vgpu,
+		unsigned int offset, void *p_data, unsigned int bytes)
+{
+	write_vreg(vgpu, offset, p_data, bytes);
 
-	अगर (vgpu_vreg(vgpu, offset) &
+	if (vgpu_vreg(vgpu, offset) &
 	    HSW_PWR_WELL_CTL_REQ(HSW_PW_CTL_IDX_GLOBAL))
 		vgpu_vreg(vgpu, offset) |=
 			HSW_PWR_WELL_CTL_STATE(HSW_PW_CTL_IDX_GLOBAL);
-	अन्यथा
+	else
 		vgpu_vreg(vgpu, offset) &=
 			~HSW_PWR_WELL_CTL_STATE(HSW_PW_CTL_IDX_GLOBAL);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gen9_dbuf_ctl_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
+static int gen9_dbuf_ctl_mmio_write(struct intel_vgpu *vgpu,
+		unsigned int offset, void *p_data, unsigned int bytes)
+{
+	write_vreg(vgpu, offset, p_data, bytes);
 
-	अगर (vgpu_vreg(vgpu, offset) & DBUF_POWER_REQUEST)
+	if (vgpu_vreg(vgpu, offset) & DBUF_POWER_REQUEST)
 		vgpu_vreg(vgpu, offset) |= DBUF_POWER_STATE;
-	अन्यथा
+	else
 		vgpu_vreg(vgpu, offset) &= ~DBUF_POWER_STATE;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक fpga_dbg_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
-	अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
+static int fpga_dbg_mmio_write(struct intel_vgpu *vgpu,
+	unsigned int offset, void *p_data, unsigned int bytes)
+{
+	write_vreg(vgpu, offset, p_data, bytes);
 
-	अगर (vgpu_vreg(vgpu, offset) & FPGA_DBG_RM_NOCLAIM)
+	if (vgpu_vreg(vgpu, offset) & FPGA_DBG_RM_NOCLAIM)
 		vgpu_vreg(vgpu, offset) &= ~FPGA_DBG_RM_NOCLAIM;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dma_ctrl_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	काष्ठा drm_i915_निजी *i915 = vgpu->gvt->gt->i915;
+static int dma_ctrl_write(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
+	struct drm_i915_private *i915 = vgpu->gvt->gt->i915;
 	u32 mode;
 
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
+	write_vreg(vgpu, offset, p_data, bytes);
 	mode = vgpu_vreg(vgpu, offset);
 
-	अगर (GFX_MODE_BIT_SET_IN_MASK(mode, START_DMA)) अणु
+	if (GFX_MODE_BIT_SET_IN_MASK(mode, START_DMA)) {
 		drm_WARN_ONCE(&i915->drm, 1,
 				"VM(%d): iGVT-g doesn't support GuC\n",
 				vgpu->id);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gen9_trtte_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	काष्ठा drm_i915_निजी *i915 = vgpu->gvt->gt->i915;
+static int gen9_trtte_write(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
+	struct drm_i915_private *i915 = vgpu->gvt->gt->i915;
 	u32 trtte = *(u32 *)p_data;
 
-	अगर ((trtte & 1) && (trtte & (1 << 1)) == 0) अणु
+	if ((trtte & 1) && (trtte & (1 << 1)) == 0) {
 		drm_WARN(&i915->drm, 1,
 				"VM(%d): Use physical address for TRTT!\n",
 				vgpu->id);
-		वापस -EINVAL;
-	पूर्ण
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
+		return -EINVAL;
+	}
+	write_vreg(vgpu, offset, p_data, bytes);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक gen9_trtt_chicken_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
-	वापस 0;
-पूर्ण
+static int gen9_trtt_chicken_write(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
+	write_vreg(vgpu, offset, p_data, bytes);
+	return 0;
+}
 
-अटल पूर्णांक dpll_status_पढ़ो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int dpll_status_read(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
 	u32 v = 0;
 
-	अगर (vgpu_vreg(vgpu, 0x46010) & (1 << 31))
+	if (vgpu_vreg(vgpu, 0x46010) & (1 << 31))
 		v |= (1 << 0);
 
-	अगर (vgpu_vreg(vgpu, 0x46014) & (1 << 31))
+	if (vgpu_vreg(vgpu, 0x46014) & (1 << 31))
 		v |= (1 << 8);
 
-	अगर (vgpu_vreg(vgpu, 0x46040) & (1 << 31))
+	if (vgpu_vreg(vgpu, 0x46040) & (1 << 31))
 		v |= (1 << 16);
 
-	अगर (vgpu_vreg(vgpu, 0x46060) & (1 << 31))
+	if (vgpu_vreg(vgpu, 0x46060) & (1 << 31))
 		v |= (1 << 24);
 
 	vgpu_vreg(vgpu, offset) = v;
 
-	वापस पूर्णांकel_vgpu_शेष_mmio_पढ़ो(vgpu, offset, p_data, bytes);
-पूर्ण
+	return intel_vgpu_default_mmio_read(vgpu, offset, p_data, bytes);
+}
 
-अटल पूर्णांक mailbox_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int mailbox_write(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
 	u32 value = *(u32 *)p_data;
 	u32 cmd = value & 0xff;
 	u32 *data0 = &vgpu_vreg_t(vgpu, GEN6_PCODE_DATA);
 
-	चयन (cmd) अणु
-	हाल GEN9_PCODE_READ_MEM_LATENCY:
-		अगर (IS_SKYLAKE(vgpu->gvt->gt->i915) ||
+	switch (cmd) {
+	case GEN9_PCODE_READ_MEM_LATENCY:
+		if (IS_SKYLAKE(vgpu->gvt->gt->i915) ||
 		    IS_KABYLAKE(vgpu->gvt->gt->i915) ||
 		    IS_COFFEELAKE(vgpu->gvt->gt->i915) ||
-		    IS_COMETLAKE(vgpu->gvt->gt->i915)) अणु
+		    IS_COMETLAKE(vgpu->gvt->gt->i915)) {
 			/**
 			 * "Read memory latency" command on gen9.
-			 * Below memory latency values are पढ़ो
-			 * from skylake platक्रमm.
+			 * Below memory latency values are read
+			 * from skylake platform.
 			 */
-			अगर (!*data0)
+			if (!*data0)
 				*data0 = 0x1e1a1100;
-			अन्यथा
+			else
 				*data0 = 0x61514b3d;
-		पूर्ण अन्यथा अगर (IS_BROXTON(vgpu->gvt->gt->i915)) अणु
+		} else if (IS_BROXTON(vgpu->gvt->gt->i915)) {
 			/**
 			 * "Read memory latency" command on gen9.
-			 * Below memory latency values are पढ़ो
+			 * Below memory latency values are read
 			 * from Broxton MRB.
 			 */
-			अगर (!*data0)
+			if (!*data0)
 				*data0 = 0x16080707;
-			अन्यथा
+			else
 				*data0 = 0x16161616;
-		पूर्ण
-		अवरोध;
-	हाल SKL_PCODE_CDCLK_CONTROL:
-		अगर (IS_SKYLAKE(vgpu->gvt->gt->i915) ||
+		}
+		break;
+	case SKL_PCODE_CDCLK_CONTROL:
+		if (IS_SKYLAKE(vgpu->gvt->gt->i915) ||
 		    IS_KABYLAKE(vgpu->gvt->gt->i915) ||
 		    IS_COFFEELAKE(vgpu->gvt->gt->i915) ||
 		    IS_COMETLAKE(vgpu->gvt->gt->i915))
 			*data0 = SKL_CDCLK_READY_FOR_CHANGE;
-		अवरोध;
-	हाल GEN6_PCODE_READ_RC6VIDS:
+		break;
+	case GEN6_PCODE_READ_RC6VIDS:
 		*data0 |= 0x1;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	gvt_dbg_core("VM(%d) write %x to mailbox, return data0 %x\n",
 		     vgpu->id, value, *data0);
 	/**
-	 * PCODE_READY clear means पढ़ोy क्रम pcode पढ़ो/ग_लिखो,
+	 * PCODE_READY clear means ready for pcode read/write,
 	 * PCODE_ERROR_MASK clear means no error happened. In GVT-g we
-	 * always emulate as pcode पढ़ो/ग_लिखो success and पढ़ोy क्रम access
-	 * anyसमय, since we करोn't touch real physical रेजिस्टरs here.
+	 * always emulate as pcode read/write success and ready for access
+	 * anytime, since we don't touch real physical registers here.
 	 */
 	value &= ~(GEN6_PCODE_READY | GEN6_PCODE_ERROR_MASK);
-	वापस पूर्णांकel_vgpu_शेष_mmio_ग_लिखो(vgpu, offset, &value, bytes);
-पूर्ण
+	return intel_vgpu_default_mmio_write(vgpu, offset, &value, bytes);
+}
 
-अटल पूर्णांक hws_pga_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int hws_pga_write(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
 	u32 value = *(u32 *)p_data;
-	स्थिर काष्ठा पूर्णांकel_engine_cs *engine =
-		पूर्णांकel_gvt_render_mmio_to_engine(vgpu->gvt, offset);
+	const struct intel_engine_cs *engine =
+		intel_gvt_render_mmio_to_engine(vgpu->gvt, offset);
 
-	अगर (value != 0 &&
-	    !पूर्णांकel_gvt_ggtt_validate_range(vgpu, value, I915_GTT_PAGE_SIZE)) अणु
+	if (value != 0 &&
+	    !intel_gvt_ggtt_validate_range(vgpu, value, I915_GTT_PAGE_SIZE)) {
 		gvt_vgpu_err("write invalid HWSP address, reg:0x%x, value:0x%x\n",
 			      offset, value);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/*
-	 * Need to emulate all the HWSP रेजिस्टर ग_लिखो to ensure host can
-	 * update the VM CSB status correctly. Here listed रेजिस्टरs can
-	 * support BDW, SKL or other platक्रमms with same HWSP रेजिस्टरs.
+	 * Need to emulate all the HWSP register write to ensure host can
+	 * update the VM CSB status correctly. Here listed registers can
+	 * support BDW, SKL or other platforms with same HWSP registers.
 	 */
-	अगर (unlikely(!engine)) अणु
+	if (unlikely(!engine)) {
 		gvt_vgpu_err("access unknown hardware status page register:0x%x\n",
 			     offset);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	vgpu->hws_pga[engine->id] = value;
 	gvt_dbg_mmio("VM(%d) write: 0x%x to HWSP: 0x%x\n",
 		     vgpu->id, value, offset);
 
-	वापस पूर्णांकel_vgpu_शेष_mmio_ग_लिखो(vgpu, offset, &value, bytes);
-पूर्ण
+	return intel_vgpu_default_mmio_write(vgpu, offset, &value, bytes);
+}
 
-अटल पूर्णांक skl_घातer_well_ctl_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int skl_power_well_ctl_write(struct intel_vgpu *vgpu,
+		unsigned int offset, void *p_data, unsigned int bytes)
+{
 	u32 v = *(u32 *)p_data;
 
-	अगर (IS_BROXTON(vgpu->gvt->gt->i915))
+	if (IS_BROXTON(vgpu->gvt->gt->i915))
 		v &= (1 << 31) | (1 << 29);
-	अन्यथा
+	else
 		v &= (1 << 31) | (1 << 29) | (1 << 9) |
 			(1 << 7) | (1 << 5) | (1 << 3) | (1 << 1);
 	v |= (v >> 1);
 
-	वापस पूर्णांकel_vgpu_शेष_mmio_ग_लिखो(vgpu, offset, &v, bytes);
-पूर्ण
+	return intel_vgpu_default_mmio_write(vgpu, offset, &v, bytes);
+}
 
-अटल पूर्णांक skl_lcpll_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int skl_lcpll_write(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
 	u32 v = *(u32 *)p_data;
 
 	/* other bits are MBZ. */
@@ -1789,131 +1788,131 @@ out:
 
 	vgpu_vreg(vgpu, offset) = v;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bxt_de_pll_enable_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int bxt_de_pll_enable_write(struct intel_vgpu *vgpu,
+		unsigned int offset, void *p_data, unsigned int bytes)
+{
 	u32 v = *(u32 *)p_data;
 
-	अगर (v & BXT_DE_PLL_PLL_ENABLE)
+	if (v & BXT_DE_PLL_PLL_ENABLE)
 		v |= BXT_DE_PLL_LOCK;
 
 	vgpu_vreg(vgpu, offset) = v;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bxt_port_pll_enable_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int bxt_port_pll_enable_write(struct intel_vgpu *vgpu,
+		unsigned int offset, void *p_data, unsigned int bytes)
+{
 	u32 v = *(u32 *)p_data;
 
-	अगर (v & PORT_PLL_ENABLE)
+	if (v & PORT_PLL_ENABLE)
 		v |= PORT_PLL_LOCK;
 
 	vgpu_vreg(vgpu, offset) = v;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bxt_phy_ctl_family_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int bxt_phy_ctl_family_write(struct intel_vgpu *vgpu,
+		unsigned int offset, void *p_data, unsigned int bytes)
+{
 	u32 v = *(u32 *)p_data;
 	u32 data = v & COMMON_RESET_DIS ? BXT_PHY_LANE_ENABLED : 0;
 
-	चयन (offset) अणु
-	हाल _PHY_CTL_FAMILY_EDP:
+	switch (offset) {
+	case _PHY_CTL_FAMILY_EDP:
 		vgpu_vreg(vgpu, _BXT_PHY_CTL_DDI_A) = data;
-		अवरोध;
-	हाल _PHY_CTL_FAMILY_DDI:
+		break;
+	case _PHY_CTL_FAMILY_DDI:
 		vgpu_vreg(vgpu, _BXT_PHY_CTL_DDI_B) = data;
 		vgpu_vreg(vgpu, _BXT_PHY_CTL_DDI_C) = data;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	vgpu_vreg(vgpu, offset) = v;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bxt_port_tx_dw3_पढ़ो(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int bxt_port_tx_dw3_read(struct intel_vgpu *vgpu,
+		unsigned int offset, void *p_data, unsigned int bytes)
+{
 	u32 v = vgpu_vreg(vgpu, offset);
 
 	v &= ~UNIQUE_TRANGE_EN_METHOD;
 
 	vgpu_vreg(vgpu, offset) = v;
 
-	वापस पूर्णांकel_vgpu_शेष_mmio_पढ़ो(vgpu, offset, p_data, bytes);
-पूर्ण
+	return intel_vgpu_default_mmio_read(vgpu, offset, p_data, bytes);
+}
 
-अटल पूर्णांक bxt_pcs_dw12_grp_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int bxt_pcs_dw12_grp_write(struct intel_vgpu *vgpu,
+		unsigned int offset, void *p_data, unsigned int bytes)
+{
 	u32 v = *(u32 *)p_data;
 
-	अगर (offset == _PORT_PCS_DW12_GRP_A || offset == _PORT_PCS_DW12_GRP_B) अणु
+	if (offset == _PORT_PCS_DW12_GRP_A || offset == _PORT_PCS_DW12_GRP_B) {
 		vgpu_vreg(vgpu, offset - 0x600) = v;
 		vgpu_vreg(vgpu, offset - 0x800) = v;
-	पूर्ण अन्यथा अणु
+	} else {
 		vgpu_vreg(vgpu, offset - 0x400) = v;
 		vgpu_vreg(vgpu, offset - 0x600) = v;
-	पूर्ण
+	}
 
 	vgpu_vreg(vgpu, offset) = v;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bxt_gt_disp_pwron_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int bxt_gt_disp_pwron_write(struct intel_vgpu *vgpu,
+		unsigned int offset, void *p_data, unsigned int bytes)
+{
 	u32 v = *(u32 *)p_data;
 
-	अगर (v & BIT(0)) अणु
+	if (v & BIT(0)) {
 		vgpu_vreg_t(vgpu, BXT_PORT_CL1CM_DW0(DPIO_PHY0)) &=
 			~PHY_RESERVED;
 		vgpu_vreg_t(vgpu, BXT_PORT_CL1CM_DW0(DPIO_PHY0)) |=
 			PHY_POWER_GOOD;
-	पूर्ण
+	}
 
-	अगर (v & BIT(1)) अणु
+	if (v & BIT(1)) {
 		vgpu_vreg_t(vgpu, BXT_PORT_CL1CM_DW0(DPIO_PHY1)) &=
 			~PHY_RESERVED;
 		vgpu_vreg_t(vgpu, BXT_PORT_CL1CM_DW0(DPIO_PHY1)) |=
 			PHY_POWER_GOOD;
-	पूर्ण
+	}
 
 
 	vgpu_vreg(vgpu, offset) = v;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक edp_psr_imr_iir_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int edp_psr_imr_iir_write(struct intel_vgpu *vgpu,
+		unsigned int offset, void *p_data, unsigned int bytes)
+{
 	vgpu_vreg(vgpu, offset) = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * FixMe:
  * If guest fills non-priv batch buffer on ApolloLake/Broxton as Mesa i965 did:
- * 717e7539124d (i965: Use a WC map and स_नकल क्रम the batch instead of pग_लिखो.)
+ * 717e7539124d (i965: Use a WC map and memcpy for the batch instead of pwrite.)
  * Due to the missing flush of bb filled by VM vCPU, host GPU hangs on executing
  * these MI_BATCH_BUFFER.
- * Temporarily workaround this by setting SNOOP bit क्रम PAT3 used by PPGTT
+ * Temporarily workaround this by setting SNOOP bit for PAT3 used by PPGTT
  * PML4 PTE: PAT(0) PCD(1) PWT(1).
- * The perक्रमmance is still expected to be low, will need further improvement.
+ * The performance is still expected to be low, will need further improvement.
  */
-अटल पूर्णांक bxt_ppat_low_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-			      व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int bxt_ppat_low_write(struct intel_vgpu *vgpu, unsigned int offset,
+			      void *p_data, unsigned int bytes)
+{
 	u64 pat =
 		GEN8_PPAT(0, CHV_PPAT_SNOOP) |
 		GEN8_PPAT(1, 0) |
@@ -1926,340 +1925,340 @@ out:
 
 	vgpu_vreg(vgpu, offset) = lower_32_bits(pat);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक guc_status_पढ़ो(काष्ठा पूर्णांकel_vgpu *vgpu,
-			   अचिन्हित पूर्णांक offset, व्योम *p_data,
-			   अचिन्हित पूर्णांक bytes)
-अणु
-	/* keep MIA_IN_RESET beक्रमe clearing */
-	पढ़ो_vreg(vgpu, offset, p_data, bytes);
+static int guc_status_read(struct intel_vgpu *vgpu,
+			   unsigned int offset, void *p_data,
+			   unsigned int bytes)
+{
+	/* keep MIA_IN_RESET before clearing */
+	read_vreg(vgpu, offset, p_data, bytes);
 	vgpu_vreg(vgpu, offset) &= ~GS_MIA_IN_RESET;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक mmio_पढ़ो_from_hw(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	काष्ठा पूर्णांकel_gvt *gvt = vgpu->gvt;
-	स्थिर काष्ठा पूर्णांकel_engine_cs *engine =
-		पूर्णांकel_gvt_render_mmio_to_engine(gvt, offset);
+static int mmio_read_from_hw(struct intel_vgpu *vgpu,
+		unsigned int offset, void *p_data, unsigned int bytes)
+{
+	struct intel_gvt *gvt = vgpu->gvt;
+	const struct intel_engine_cs *engine =
+		intel_gvt_render_mmio_to_engine(gvt, offset);
 
 	/**
-	 * Read HW reg in following हाल
+	 * Read HW reg in following case
 	 * a. the offset isn't a ring mmio
 	 * b. the offset's ring is running on hw.
-	 * c. the offset is ring समय stamp mmio
+	 * c. the offset is ring time stamp mmio
 	 */
 
-	अगर (!engine ||
+	if (!engine ||
 	    vgpu == gvt->scheduler.engine_owner[engine->id] ||
 	    offset == i915_mmio_reg_offset(RING_TIMESTAMP(engine->mmio_base)) ||
-	    offset == i915_mmio_reg_offset(RING_TIMESTAMP_UDW(engine->mmio_base))) अणु
+	    offset == i915_mmio_reg_offset(RING_TIMESTAMP_UDW(engine->mmio_base))) {
 		mmio_hw_access_pre(gvt->gt);
 		vgpu_vreg(vgpu, offset) =
-			पूर्णांकel_uncore_पढ़ो(gvt->gt->uncore, _MMIO(offset));
+			intel_uncore_read(gvt->gt->uncore, _MMIO(offset));
 		mmio_hw_access_post(gvt->gt);
-	पूर्ण
+	}
 
-	वापस पूर्णांकel_vgpu_शेष_mmio_पढ़ो(vgpu, offset, p_data, bytes);
-पूर्ण
+	return intel_vgpu_default_mmio_read(vgpu, offset, p_data, bytes);
+}
 
-अटल पूर्णांक elsp_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	काष्ठा drm_i915_निजी *i915 = vgpu->gvt->gt->i915;
-	स्थिर काष्ठा पूर्णांकel_engine_cs *engine = पूर्णांकel_gvt_render_mmio_to_engine(vgpu->gvt, offset);
-	काष्ठा पूर्णांकel_vgpu_execlist *execlist;
+static int elsp_mmio_write(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
+	struct drm_i915_private *i915 = vgpu->gvt->gt->i915;
+	const struct intel_engine_cs *engine = intel_gvt_render_mmio_to_engine(vgpu->gvt, offset);
+	struct intel_vgpu_execlist *execlist;
 	u32 data = *(u32 *)p_data;
-	पूर्णांक ret = 0;
+	int ret = 0;
 
-	अगर (drm_WARN_ON(&i915->drm, !engine))
-		वापस -EINVAL;
+	if (drm_WARN_ON(&i915->drm, !engine))
+		return -EINVAL;
 
 	execlist = &vgpu->submission.execlist[engine->id];
 
 	execlist->elsp_dwords.data[3 - execlist->elsp_dwords.index] = data;
-	अगर (execlist->elsp_dwords.index == 3) अणु
-		ret = पूर्णांकel_vgpu_submit_execlist(vgpu, engine);
-		अगर(ret)
+	if (execlist->elsp_dwords.index == 3) {
+		ret = intel_vgpu_submit_execlist(vgpu, engine);
+		if(ret)
 			gvt_vgpu_err("fail submit workload on ring %s\n",
 				     engine->name);
-	पूर्ण
+	}
 
 	++execlist->elsp_dwords.index;
 	execlist->elsp_dwords.index &= 0x3;
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक ring_mode_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int ring_mode_mmio_write(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
 	u32 data = *(u32 *)p_data;
-	स्थिर काष्ठा पूर्णांकel_engine_cs *engine =
-		पूर्णांकel_gvt_render_mmio_to_engine(vgpu->gvt, offset);
+	const struct intel_engine_cs *engine =
+		intel_gvt_render_mmio_to_engine(vgpu->gvt, offset);
 	bool enable_execlist;
-	पूर्णांक ret;
+	int ret;
 
 	(*(u32 *)p_data) &= ~_MASKED_BIT_ENABLE(1);
-	अगर (IS_COFFEELAKE(vgpu->gvt->gt->i915) ||
+	if (IS_COFFEELAKE(vgpu->gvt->gt->i915) ||
 	    IS_COMETLAKE(vgpu->gvt->gt->i915))
 		(*(u32 *)p_data) &= ~_MASKED_BIT_ENABLE(2);
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
+	write_vreg(vgpu, offset, p_data, bytes);
 
-	अगर (IS_MASKED_BITS_ENABLED(data, 1)) अणु
+	if (IS_MASKED_BITS_ENABLED(data, 1)) {
 		enter_failsafe_mode(vgpu, GVT_FAILSAFE_UNSUPPORTED_GUEST);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर ((IS_COFFEELAKE(vgpu->gvt->gt->i915) ||
+	if ((IS_COFFEELAKE(vgpu->gvt->gt->i915) ||
 	     IS_COMETLAKE(vgpu->gvt->gt->i915)) &&
-	    IS_MASKED_BITS_ENABLED(data, 2)) अणु
+	    IS_MASKED_BITS_ENABLED(data, 2)) {
 		enter_failsafe_mode(vgpu, GVT_FAILSAFE_UNSUPPORTED_GUEST);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	/* when PPGTT mode enabled, we will check अगर guest has called
-	 * pvinfo, अगर not, we will treat this guest as non-gvtg-aware
+	/* when PPGTT mode enabled, we will check if guest has called
+	 * pvinfo, if not, we will treat this guest as non-gvtg-aware
 	 * guest, and stop emulating its cfg space, mmio, gtt, etc.
 	 */
-	अगर ((IS_MASKED_BITS_ENABLED(data, GFX_PPGTT_ENABLE) ||
+	if ((IS_MASKED_BITS_ENABLED(data, GFX_PPGTT_ENABLE) ||
 	    IS_MASKED_BITS_ENABLED(data, GFX_RUN_LIST_ENABLE)) &&
-	    !vgpu->pv_notअगरied) अणु
+	    !vgpu->pv_notified) {
 		enter_failsafe_mode(vgpu, GVT_FAILSAFE_UNSUPPORTED_GUEST);
-		वापस 0;
-	पूर्ण
-	अगर (IS_MASKED_BITS_ENABLED(data, GFX_RUN_LIST_ENABLE) ||
-	    IS_MASKED_BITS_DISABLED(data, GFX_RUN_LIST_ENABLE)) अणु
+		return 0;
+	}
+	if (IS_MASKED_BITS_ENABLED(data, GFX_RUN_LIST_ENABLE) ||
+	    IS_MASKED_BITS_DISABLED(data, GFX_RUN_LIST_ENABLE)) {
 		enable_execlist = !!(data & GFX_RUN_LIST_ENABLE);
 
 		gvt_dbg_core("EXECLIST %s on ring %s\n",
 			     (enable_execlist ? "enabling" : "disabling"),
 			     engine->name);
 
-		अगर (!enable_execlist)
-			वापस 0;
+		if (!enable_execlist)
+			return 0;
 
-		ret = पूर्णांकel_vgpu_select_submission_ops(vgpu,
+		ret = intel_vgpu_select_submission_ops(vgpu,
 						       engine->mask,
 						       INTEL_VGPU_EXECLIST_SUBMISSION);
-		अगर (ret)
-			वापस ret;
+		if (ret)
+			return ret;
 
-		पूर्णांकel_vgpu_start_schedule(vgpu);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		intel_vgpu_start_schedule(vgpu);
+	}
+	return 0;
+}
 
-अटल पूर्णांक gvt_reg_tlb_control_handler(काष्ठा पूर्णांकel_vgpu *vgpu,
-		अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	अचिन्हित पूर्णांक id = 0;
+static int gvt_reg_tlb_control_handler(struct intel_vgpu *vgpu,
+		unsigned int offset, void *p_data, unsigned int bytes)
+{
+	unsigned int id = 0;
 
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
+	write_vreg(vgpu, offset, p_data, bytes);
 	vgpu_vreg(vgpu, offset) = 0;
 
-	चयन (offset) अणु
-	हाल 0x4260:
+	switch (offset) {
+	case 0x4260:
 		id = RCS0;
-		अवरोध;
-	हाल 0x4264:
+		break;
+	case 0x4264:
 		id = VCS0;
-		अवरोध;
-	हाल 0x4268:
+		break;
+	case 0x4268:
 		id = VCS1;
-		अवरोध;
-	हाल 0x426c:
+		break;
+	case 0x426c:
 		id = BCS0;
-		अवरोध;
-	हाल 0x4270:
+		break;
+	case 0x4270:
 		id = VECS0;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	set_bit(id, (व्योम *)vgpu->submission.tlb_handle_pending);
+		break;
+	default:
+		return -EINVAL;
+	}
+	set_bit(id, (void *)vgpu->submission.tlb_handle_pending);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ring_reset_ctl_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
-	अचिन्हित पूर्णांक offset, व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+static int ring_reset_ctl_write(struct intel_vgpu *vgpu,
+	unsigned int offset, void *p_data, unsigned int bytes)
+{
 	u32 data;
 
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
+	write_vreg(vgpu, offset, p_data, bytes);
 	data = vgpu_vreg(vgpu, offset);
 
-	अगर (IS_MASKED_BITS_ENABLED(data, RESET_CTL_REQUEST_RESET))
+	if (IS_MASKED_BITS_ENABLED(data, RESET_CTL_REQUEST_RESET))
 		data |= RESET_CTL_READY_TO_RESET;
-	अन्यथा अगर (data & _MASKED_BIT_DISABLE(RESET_CTL_REQUEST_RESET))
+	else if (data & _MASKED_BIT_DISABLE(RESET_CTL_REQUEST_RESET))
 		data &= ~RESET_CTL_READY_TO_RESET;
 
 	vgpu_vreg(vgpu, offset) = data;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक csfe_chicken1_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu,
-				    अचिन्हित पूर्णांक offset, व्योम *p_data,
-				    अचिन्हित पूर्णांक bytes)
-अणु
+static int csfe_chicken1_mmio_write(struct intel_vgpu *vgpu,
+				    unsigned int offset, void *p_data,
+				    unsigned int bytes)
+{
 	u32 data = *(u32 *)p_data;
 
 	(*(u32 *)p_data) &= ~_MASKED_BIT_ENABLE(0x18);
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
+	write_vreg(vgpu, offset, p_data, bytes);
 
-	अगर (IS_MASKED_BITS_ENABLED(data, 0x10) ||
+	if (IS_MASKED_BITS_ENABLED(data, 0x10) ||
 	    IS_MASKED_BITS_ENABLED(data, 0x8))
 		enter_failsafe_mode(vgpu, GVT_FAILSAFE_UNSUPPORTED_GUEST);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा MMIO_F(reg, s, f, am, rm, d, r, w) करो अणु \
+#define MMIO_F(reg, s, f, am, rm, d, r, w) do { \
 	ret = new_mmio_info(gvt, i915_mmio_reg_offset(reg), \
 		f, s, am, rm, d, r, w); \
-	अगर (ret) \
-		वापस ret; \
-पूर्ण जबतक (0)
+	if (ret) \
+		return ret; \
+} while (0)
 
-#घोषणा MMIO_D(reg, d) \
-	MMIO_F(reg, 4, 0, 0, 0, d, शून्य, शून्य)
+#define MMIO_D(reg, d) \
+	MMIO_F(reg, 4, 0, 0, 0, d, NULL, NULL)
 
-#घोषणा MMIO_DH(reg, d, r, w) \
+#define MMIO_DH(reg, d, r, w) \
 	MMIO_F(reg, 4, 0, 0, 0, d, r, w)
 
-#घोषणा MMIO_DFH(reg, d, f, r, w) \
+#define MMIO_DFH(reg, d, f, r, w) \
 	MMIO_F(reg, 4, f, 0, 0, d, r, w)
 
-#घोषणा MMIO_GM(reg, d, r, w) \
+#define MMIO_GM(reg, d, r, w) \
 	MMIO_F(reg, 4, F_GMADR, 0xFFFFF000, 0, d, r, w)
 
-#घोषणा MMIO_GM_RDR(reg, d, r, w) \
+#define MMIO_GM_RDR(reg, d, r, w) \
 	MMIO_F(reg, 4, F_GMADR | F_CMD_ACCESS, 0xFFFFF000, 0, d, r, w)
 
-#घोषणा MMIO_RO(reg, d, f, rm, r, w) \
+#define MMIO_RO(reg, d, f, rm, r, w) \
 	MMIO_F(reg, 4, F_RO | f, 0, rm, d, r, w)
 
-#घोषणा MMIO_RING_F(prefix, s, f, am, rm, d, r, w) करो अणु \
+#define MMIO_RING_F(prefix, s, f, am, rm, d, r, w) do { \
 	MMIO_F(prefix(RENDER_RING_BASE), s, f, am, rm, d, r, w); \
 	MMIO_F(prefix(BLT_RING_BASE), s, f, am, rm, d, r, w); \
 	MMIO_F(prefix(GEN6_BSD_RING_BASE), s, f, am, rm, d, r, w); \
 	MMIO_F(prefix(VEBOX_RING_BASE), s, f, am, rm, d, r, w); \
-	अगर (HAS_ENGINE(gvt->gt, VCS1)) \
+	if (HAS_ENGINE(gvt->gt, VCS1)) \
 		MMIO_F(prefix(GEN8_BSD2_RING_BASE), s, f, am, rm, d, r, w); \
-पूर्ण जबतक (0)
+} while (0)
 
-#घोषणा MMIO_RING_D(prefix, d) \
-	MMIO_RING_F(prefix, 4, 0, 0, 0, d, शून्य, शून्य)
+#define MMIO_RING_D(prefix, d) \
+	MMIO_RING_F(prefix, 4, 0, 0, 0, d, NULL, NULL)
 
-#घोषणा MMIO_RING_DFH(prefix, d, f, r, w) \
+#define MMIO_RING_DFH(prefix, d, f, r, w) \
 	MMIO_RING_F(prefix, 4, f, 0, 0, d, r, w)
 
-#घोषणा MMIO_RING_GM(prefix, d, r, w) \
+#define MMIO_RING_GM(prefix, d, r, w) \
 	MMIO_RING_F(prefix, 4, F_GMADR, 0xFFFF0000, 0, d, r, w)
 
-#घोषणा MMIO_RING_GM_RDR(prefix, d, r, w) \
+#define MMIO_RING_GM_RDR(prefix, d, r, w) \
 	MMIO_RING_F(prefix, 4, F_GMADR | F_CMD_ACCESS, 0xFFFF0000, 0, d, r, w)
 
-#घोषणा MMIO_RING_RO(prefix, d, f, rm, r, w) \
+#define MMIO_RING_RO(prefix, d, f, rm, r, w) \
 	MMIO_RING_F(prefix, 4, F_RO | f, 0, rm, d, r, w)
 
-अटल पूर्णांक init_generic_mmio_info(काष्ठा पूर्णांकel_gvt *gvt)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = gvt->gt->i915;
-	पूर्णांक ret;
+static int init_generic_mmio_info(struct intel_gvt *gvt)
+{
+	struct drm_i915_private *dev_priv = gvt->gt->i915;
+	int ret;
 
-	MMIO_RING_DFH(RING_IMR, D_ALL, 0, शून्य,
-		पूर्णांकel_vgpu_reg_imr_handler);
+	MMIO_RING_DFH(RING_IMR, D_ALL, 0, NULL,
+		intel_vgpu_reg_imr_handler);
 
-	MMIO_DFH(SDEIMR, D_ALL, 0, शून्य, पूर्णांकel_vgpu_reg_imr_handler);
-	MMIO_DFH(SDEIER, D_ALL, 0, शून्य, पूर्णांकel_vgpu_reg_ier_handler);
-	MMIO_DFH(SDEIIR, D_ALL, 0, शून्य, पूर्णांकel_vgpu_reg_iir_handler);
+	MMIO_DFH(SDEIMR, D_ALL, 0, NULL, intel_vgpu_reg_imr_handler);
+	MMIO_DFH(SDEIER, D_ALL, 0, NULL, intel_vgpu_reg_ier_handler);
+	MMIO_DFH(SDEIIR, D_ALL, 0, NULL, intel_vgpu_reg_iir_handler);
 	MMIO_D(SDEISR, D_ALL);
 
-	MMIO_RING_DFH(RING_HWSTAM, D_ALL, 0, शून्य, शून्य);
+	MMIO_RING_DFH(RING_HWSTAM, D_ALL, 0, NULL, NULL);
 
 
-	MMIO_DH(GEN8_GAMW_ECO_DEV_RW_IA, D_BDW_PLUS, शून्य,
-		gamw_echo_dev_rw_ia_ग_लिखो);
+	MMIO_DH(GEN8_GAMW_ECO_DEV_RW_IA, D_BDW_PLUS, NULL,
+		gamw_echo_dev_rw_ia_write);
 
-	MMIO_GM_RDR(BSD_HWS_PGA_GEN7, D_ALL, शून्य, शून्य);
-	MMIO_GM_RDR(BLT_HWS_PGA_GEN7, D_ALL, शून्य, शून्य);
-	MMIO_GM_RDR(VEBOX_HWS_PGA_GEN7, D_ALL, शून्य, शून्य);
+	MMIO_GM_RDR(BSD_HWS_PGA_GEN7, D_ALL, NULL, NULL);
+	MMIO_GM_RDR(BLT_HWS_PGA_GEN7, D_ALL, NULL, NULL);
+	MMIO_GM_RDR(VEBOX_HWS_PGA_GEN7, D_ALL, NULL, NULL);
 
-#घोषणा RING_REG(base) _MMIO((base) + 0x28)
-	MMIO_RING_DFH(RING_REG, D_ALL, F_CMD_ACCESS, शून्य, शून्य);
-#अघोषित RING_REG
+#define RING_REG(base) _MMIO((base) + 0x28)
+	MMIO_RING_DFH(RING_REG, D_ALL, F_CMD_ACCESS, NULL, NULL);
+#undef RING_REG
 
-#घोषणा RING_REG(base) _MMIO((base) + 0x134)
-	MMIO_RING_DFH(RING_REG, D_ALL, F_CMD_ACCESS, शून्य, शून्य);
-#अघोषित RING_REG
+#define RING_REG(base) _MMIO((base) + 0x134)
+	MMIO_RING_DFH(RING_REG, D_ALL, F_CMD_ACCESS, NULL, NULL);
+#undef RING_REG
 
-#घोषणा RING_REG(base) _MMIO((base) + 0x6c)
-	MMIO_RING_DFH(RING_REG, D_ALL, 0, mmio_पढ़ो_from_hw, शून्य);
-#अघोषित RING_REG
-	MMIO_DH(GEN7_SC_INSTDONE, D_BDW_PLUS, mmio_पढ़ो_from_hw, शून्य);
+#define RING_REG(base) _MMIO((base) + 0x6c)
+	MMIO_RING_DFH(RING_REG, D_ALL, 0, mmio_read_from_hw, NULL);
+#undef RING_REG
+	MMIO_DH(GEN7_SC_INSTDONE, D_BDW_PLUS, mmio_read_from_hw, NULL);
 
-	MMIO_GM_RDR(_MMIO(0x2148), D_ALL, शून्य, शून्य);
-	MMIO_GM_RDR(CCID(RENDER_RING_BASE), D_ALL, शून्य, शून्य);
-	MMIO_GM_RDR(_MMIO(0x12198), D_ALL, शून्य, शून्य);
+	MMIO_GM_RDR(_MMIO(0x2148), D_ALL, NULL, NULL);
+	MMIO_GM_RDR(CCID(RENDER_RING_BASE), D_ALL, NULL, NULL);
+	MMIO_GM_RDR(_MMIO(0x12198), D_ALL, NULL, NULL);
 	MMIO_D(GEN7_CXT_SIZE, D_ALL);
 
-	MMIO_RING_DFH(RING_TAIL, D_ALL, 0, शून्य, शून्य);
-	MMIO_RING_DFH(RING_HEAD, D_ALL, 0, शून्य, शून्य);
-	MMIO_RING_DFH(RING_CTL, D_ALL, 0, शून्य, शून्य);
-	MMIO_RING_DFH(RING_ACTHD, D_ALL, 0, mmio_पढ़ो_from_hw, शून्य);
-	MMIO_RING_GM(RING_START, D_ALL, शून्य, शून्य);
+	MMIO_RING_DFH(RING_TAIL, D_ALL, 0, NULL, NULL);
+	MMIO_RING_DFH(RING_HEAD, D_ALL, 0, NULL, NULL);
+	MMIO_RING_DFH(RING_CTL, D_ALL, 0, NULL, NULL);
+	MMIO_RING_DFH(RING_ACTHD, D_ALL, 0, mmio_read_from_hw, NULL);
+	MMIO_RING_GM(RING_START, D_ALL, NULL, NULL);
 
 	/* RING MODE */
-#घोषणा RING_REG(base) _MMIO((base) + 0x29c)
+#define RING_REG(base) _MMIO((base) + 0x29c)
 	MMIO_RING_DFH(RING_REG, D_ALL,
-		F_MODE_MASK | F_CMD_ACCESS | F_CMD_WRITE_PATCH, शून्य,
-		ring_mode_mmio_ग_लिखो);
-#अघोषित RING_REG
+		F_MODE_MASK | F_CMD_ACCESS | F_CMD_WRITE_PATCH, NULL,
+		ring_mode_mmio_write);
+#undef RING_REG
 
 	MMIO_RING_DFH(RING_MI_MODE, D_ALL, F_MODE_MASK | F_CMD_ACCESS,
-		शून्य, शून्य);
+		NULL, NULL);
 	MMIO_RING_DFH(RING_INSTPM, D_ALL, F_MODE_MASK | F_CMD_ACCESS,
-			शून्य, शून्य);
+			NULL, NULL);
 	MMIO_RING_DFH(RING_TIMESTAMP, D_ALL, F_CMD_ACCESS,
-			mmio_पढ़ो_from_hw, शून्य);
+			mmio_read_from_hw, NULL);
 	MMIO_RING_DFH(RING_TIMESTAMP_UDW, D_ALL, F_CMD_ACCESS,
-			mmio_पढ़ो_from_hw, शून्य);
+			mmio_read_from_hw, NULL);
 
-	MMIO_DFH(GEN7_GT_MODE, D_ALL, F_MODE_MASK | F_CMD_ACCESS, शून्य, शून्य);
+	MMIO_DFH(GEN7_GT_MODE, D_ALL, F_MODE_MASK | F_CMD_ACCESS, NULL, NULL);
 	MMIO_DFH(CACHE_MODE_0_GEN7, D_ALL, F_MODE_MASK | F_CMD_ACCESS,
-		शून्य, शून्य);
-	MMIO_DFH(CACHE_MODE_1, D_ALL, F_MODE_MASK | F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(CACHE_MODE_0, D_ALL, F_MODE_MASK | F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0x2124), D_ALL, F_MODE_MASK | F_CMD_ACCESS, शून्य, शून्य);
+		NULL, NULL);
+	MMIO_DFH(CACHE_MODE_1, D_ALL, F_MODE_MASK | F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(CACHE_MODE_0, D_ALL, F_MODE_MASK | F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0x2124), D_ALL, F_MODE_MASK | F_CMD_ACCESS, NULL, NULL);
 
-	MMIO_DFH(_MMIO(0x20dc), D_ALL, F_MODE_MASK | F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_3D_CHICKEN3, D_ALL, F_MODE_MASK | F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0x2088), D_ALL, F_MODE_MASK | F_CMD_ACCESS, शून्य, शून्य);
+	MMIO_DFH(_MMIO(0x20dc), D_ALL, F_MODE_MASK | F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_3D_CHICKEN3, D_ALL, F_MODE_MASK | F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0x2088), D_ALL, F_MODE_MASK | F_CMD_ACCESS, NULL, NULL);
 	MMIO_DFH(FF_SLICE_CS_CHICKEN2, D_ALL,
-		 F_MODE_MASK | F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0x2470), D_ALL, F_MODE_MASK | F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(GAM_ECOCHK, D_ALL, F_CMD_ACCESS, शून्य, शून्य);
+		 F_MODE_MASK | F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0x2470), D_ALL, F_MODE_MASK | F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(GAM_ECOCHK, D_ALL, F_CMD_ACCESS, NULL, NULL);
 	MMIO_DFH(GEN7_COMMON_SLICE_CHICKEN1, D_ALL, F_MODE_MASK | F_CMD_ACCESS,
-		शून्य, शून्य);
+		NULL, NULL);
 	MMIO_DFH(COMMON_SLICE_CHICKEN2, D_ALL, F_MODE_MASK | F_CMD_ACCESS,
-		 शून्य, शून्य);
-	MMIO_DFH(_MMIO(0x9030), D_ALL, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0x20a0), D_ALL, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0x2420), D_ALL, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0x2430), D_ALL, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0x2434), D_ALL, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0x2438), D_ALL, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0x243c), D_ALL, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0x7018), D_ALL, F_MODE_MASK | F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(HALF_SLICE_CHICKEN3, D_ALL, F_MODE_MASK | F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(GEN7_HALF_SLICE_CHICKEN1, D_ALL, F_MODE_MASK | F_CMD_ACCESS, शून्य, शून्य);
+		 NULL, NULL);
+	MMIO_DFH(_MMIO(0x9030), D_ALL, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0x20a0), D_ALL, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0x2420), D_ALL, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0x2430), D_ALL, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0x2434), D_ALL, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0x2438), D_ALL, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0x243c), D_ALL, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0x7018), D_ALL, F_MODE_MASK | F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(HALF_SLICE_CHICKEN3, D_ALL, F_MODE_MASK | F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(GEN7_HALF_SLICE_CHICKEN1, D_ALL, F_MODE_MASK | F_CMD_ACCESS, NULL, NULL);
 
 	/* display */
-	MMIO_F(_MMIO(0x60220), 0x20, 0, 0, 0, D_ALL, शून्य, शून्य);
+	MMIO_F(_MMIO(0x60220), 0x20, 0, 0, 0, D_ALL, NULL, NULL);
 	MMIO_D(_MMIO(0x602a0), D_ALL);
 
 	MMIO_D(_MMIO(0x65050), D_ALL);
@@ -2273,10 +2272,10 @@ out:
 	MMIO_D(PIPEDSL(PIPE_C), D_ALL);
 	MMIO_D(PIPEDSL(_PIPE_EDP), D_ALL);
 
-	MMIO_DH(PIPECONF(PIPE_A), D_ALL, शून्य, pipeconf_mmio_ग_लिखो);
-	MMIO_DH(PIPECONF(PIPE_B), D_ALL, शून्य, pipeconf_mmio_ग_लिखो);
-	MMIO_DH(PIPECONF(PIPE_C), D_ALL, शून्य, pipeconf_mmio_ग_लिखो);
-	MMIO_DH(PIPECONF(_PIPE_EDP), D_ALL, शून्य, pipeconf_mmio_ग_लिखो);
+	MMIO_DH(PIPECONF(PIPE_A), D_ALL, NULL, pipeconf_mmio_write);
+	MMIO_DH(PIPECONF(PIPE_B), D_ALL, NULL, pipeconf_mmio_write);
+	MMIO_DH(PIPECONF(PIPE_C), D_ALL, NULL, pipeconf_mmio_write);
+	MMIO_DH(PIPECONF(_PIPE_EDP), D_ALL, NULL, pipeconf_mmio_write);
 
 	MMIO_D(PIPESTAT(PIPE_A), D_ALL);
 	MMIO_D(PIPESTAT(PIPE_B), D_ALL);
@@ -2323,33 +2322,33 @@ out:
 	MMIO_D(DSPSTRIDE(PIPE_A), D_ALL);
 	MMIO_D(DSPPOS(PIPE_A), D_ALL);
 	MMIO_D(DSPSIZE(PIPE_A), D_ALL);
-	MMIO_DH(DSPSURF(PIPE_A), D_ALL, शून्य, pri_surf_mmio_ग_लिखो);
+	MMIO_DH(DSPSURF(PIPE_A), D_ALL, NULL, pri_surf_mmio_write);
 	MMIO_D(DSPOFFSET(PIPE_A), D_ALL);
 	MMIO_D(DSPSURFLIVE(PIPE_A), D_ALL);
-	MMIO_DH(REG_50080(PIPE_A, PLANE_PRIMARY), D_ALL, शून्य,
-		reg50080_mmio_ग_लिखो);
+	MMIO_DH(REG_50080(PIPE_A, PLANE_PRIMARY), D_ALL, NULL,
+		reg50080_mmio_write);
 
 	MMIO_D(DSPCNTR(PIPE_B), D_ALL);
 	MMIO_D(DSPADDR(PIPE_B), D_ALL);
 	MMIO_D(DSPSTRIDE(PIPE_B), D_ALL);
 	MMIO_D(DSPPOS(PIPE_B), D_ALL);
 	MMIO_D(DSPSIZE(PIPE_B), D_ALL);
-	MMIO_DH(DSPSURF(PIPE_B), D_ALL, शून्य, pri_surf_mmio_ग_लिखो);
+	MMIO_DH(DSPSURF(PIPE_B), D_ALL, NULL, pri_surf_mmio_write);
 	MMIO_D(DSPOFFSET(PIPE_B), D_ALL);
 	MMIO_D(DSPSURFLIVE(PIPE_B), D_ALL);
-	MMIO_DH(REG_50080(PIPE_B, PLANE_PRIMARY), D_ALL, शून्य,
-		reg50080_mmio_ग_लिखो);
+	MMIO_DH(REG_50080(PIPE_B, PLANE_PRIMARY), D_ALL, NULL,
+		reg50080_mmio_write);
 
 	MMIO_D(DSPCNTR(PIPE_C), D_ALL);
 	MMIO_D(DSPADDR(PIPE_C), D_ALL);
 	MMIO_D(DSPSTRIDE(PIPE_C), D_ALL);
 	MMIO_D(DSPPOS(PIPE_C), D_ALL);
 	MMIO_D(DSPSIZE(PIPE_C), D_ALL);
-	MMIO_DH(DSPSURF(PIPE_C), D_ALL, शून्य, pri_surf_mmio_ग_लिखो);
+	MMIO_DH(DSPSURF(PIPE_C), D_ALL, NULL, pri_surf_mmio_write);
 	MMIO_D(DSPOFFSET(PIPE_C), D_ALL);
 	MMIO_D(DSPSURFLIVE(PIPE_C), D_ALL);
-	MMIO_DH(REG_50080(PIPE_C, PLANE_PRIMARY), D_ALL, शून्य,
-		reg50080_mmio_ग_लिखो);
+	MMIO_DH(REG_50080(PIPE_C, PLANE_PRIMARY), D_ALL, NULL,
+		reg50080_mmio_write);
 
 	MMIO_D(SPRCTL(PIPE_A), D_ALL);
 	MMIO_D(SPRLINOFF(PIPE_A), D_ALL);
@@ -2358,13 +2357,13 @@ out:
 	MMIO_D(SPRSIZE(PIPE_A), D_ALL);
 	MMIO_D(SPRKEYVAL(PIPE_A), D_ALL);
 	MMIO_D(SPRKEYMSK(PIPE_A), D_ALL);
-	MMIO_DH(SPRSURF(PIPE_A), D_ALL, शून्य, spr_surf_mmio_ग_लिखो);
+	MMIO_DH(SPRSURF(PIPE_A), D_ALL, NULL, spr_surf_mmio_write);
 	MMIO_D(SPRKEYMAX(PIPE_A), D_ALL);
 	MMIO_D(SPROFFSET(PIPE_A), D_ALL);
 	MMIO_D(SPRSCALE(PIPE_A), D_ALL);
 	MMIO_D(SPRSURFLIVE(PIPE_A), D_ALL);
-	MMIO_DH(REG_50080(PIPE_A, PLANE_SPRITE0), D_ALL, शून्य,
-		reg50080_mmio_ग_लिखो);
+	MMIO_DH(REG_50080(PIPE_A, PLANE_SPRITE0), D_ALL, NULL,
+		reg50080_mmio_write);
 
 	MMIO_D(SPRCTL(PIPE_B), D_ALL);
 	MMIO_D(SPRLINOFF(PIPE_B), D_ALL);
@@ -2373,13 +2372,13 @@ out:
 	MMIO_D(SPRSIZE(PIPE_B), D_ALL);
 	MMIO_D(SPRKEYVAL(PIPE_B), D_ALL);
 	MMIO_D(SPRKEYMSK(PIPE_B), D_ALL);
-	MMIO_DH(SPRSURF(PIPE_B), D_ALL, शून्य, spr_surf_mmio_ग_लिखो);
+	MMIO_DH(SPRSURF(PIPE_B), D_ALL, NULL, spr_surf_mmio_write);
 	MMIO_D(SPRKEYMAX(PIPE_B), D_ALL);
 	MMIO_D(SPROFFSET(PIPE_B), D_ALL);
 	MMIO_D(SPRSCALE(PIPE_B), D_ALL);
 	MMIO_D(SPRSURFLIVE(PIPE_B), D_ALL);
-	MMIO_DH(REG_50080(PIPE_B, PLANE_SPRITE0), D_ALL, शून्य,
-		reg50080_mmio_ग_लिखो);
+	MMIO_DH(REG_50080(PIPE_B, PLANE_SPRITE0), D_ALL, NULL,
+		reg50080_mmio_write);
 
 	MMIO_D(SPRCTL(PIPE_C), D_ALL);
 	MMIO_D(SPRLINOFF(PIPE_C), D_ALL);
@@ -2388,13 +2387,13 @@ out:
 	MMIO_D(SPRSIZE(PIPE_C), D_ALL);
 	MMIO_D(SPRKEYVAL(PIPE_C), D_ALL);
 	MMIO_D(SPRKEYMSK(PIPE_C), D_ALL);
-	MMIO_DH(SPRSURF(PIPE_C), D_ALL, शून्य, spr_surf_mmio_ग_लिखो);
+	MMIO_DH(SPRSURF(PIPE_C), D_ALL, NULL, spr_surf_mmio_write);
 	MMIO_D(SPRKEYMAX(PIPE_C), D_ALL);
 	MMIO_D(SPROFFSET(PIPE_C), D_ALL);
 	MMIO_D(SPRSCALE(PIPE_C), D_ALL);
 	MMIO_D(SPRSURFLIVE(PIPE_C), D_ALL);
-	MMIO_DH(REG_50080(PIPE_C, PLANE_SPRITE0), D_ALL, शून्य,
-		reg50080_mmio_ग_लिखो);
+	MMIO_DH(REG_50080(PIPE_C, PLANE_SPRITE0), D_ALL, NULL,
+		reg50080_mmio_write);
 
 	MMIO_D(HTOTAL(TRANSCODER_A), D_ALL);
 	MMIO_D(HBLANK(TRANSCODER_A), D_ALL);
@@ -2506,32 +2505,32 @@ out:
 
 	MMIO_D(_MMIO(0x48268), D_ALL);
 
-	MMIO_F(PCH_GMBUS0, 4 * 4, 0, 0, 0, D_ALL, gmbus_mmio_पढ़ो,
-		gmbus_mmio_ग_लिखो);
-	MMIO_F(PCH_GPIO_BASE, 6 * 4, F_UNALIGN, 0, 0, D_ALL, शून्य, शून्य);
-	MMIO_F(_MMIO(0xe4f00), 0x28, 0, 0, 0, D_ALL, शून्य, शून्य);
+	MMIO_F(PCH_GMBUS0, 4 * 4, 0, 0, 0, D_ALL, gmbus_mmio_read,
+		gmbus_mmio_write);
+	MMIO_F(PCH_GPIO_BASE, 6 * 4, F_UNALIGN, 0, 0, D_ALL, NULL, NULL);
+	MMIO_F(_MMIO(0xe4f00), 0x28, 0, 0, 0, D_ALL, NULL, NULL);
 
-	MMIO_F(_MMIO(_PCH_DPB_AUX_CH_CTL), 6 * 4, 0, 0, 0, D_PRE_SKL, शून्य,
-		dp_aux_ch_ctl_mmio_ग_लिखो);
-	MMIO_F(_MMIO(_PCH_DPC_AUX_CH_CTL), 6 * 4, 0, 0, 0, D_PRE_SKL, शून्य,
-		dp_aux_ch_ctl_mmio_ग_लिखो);
-	MMIO_F(_MMIO(_PCH_DPD_AUX_CH_CTL), 6 * 4, 0, 0, 0, D_PRE_SKL, शून्य,
-		dp_aux_ch_ctl_mmio_ग_लिखो);
+	MMIO_F(_MMIO(_PCH_DPB_AUX_CH_CTL), 6 * 4, 0, 0, 0, D_PRE_SKL, NULL,
+		dp_aux_ch_ctl_mmio_write);
+	MMIO_F(_MMIO(_PCH_DPC_AUX_CH_CTL), 6 * 4, 0, 0, 0, D_PRE_SKL, NULL,
+		dp_aux_ch_ctl_mmio_write);
+	MMIO_F(_MMIO(_PCH_DPD_AUX_CH_CTL), 6 * 4, 0, 0, 0, D_PRE_SKL, NULL,
+		dp_aux_ch_ctl_mmio_write);
 
-	MMIO_DH(PCH_ADPA, D_PRE_SKL, शून्य, pch_adpa_mmio_ग_लिखो);
+	MMIO_DH(PCH_ADPA, D_PRE_SKL, NULL, pch_adpa_mmio_write);
 
-	MMIO_DH(_MMIO(_PCH_TRANSACONF), D_ALL, शून्य, transconf_mmio_ग_लिखो);
-	MMIO_DH(_MMIO(_PCH_TRANSBCONF), D_ALL, शून्य, transconf_mmio_ग_लिखो);
+	MMIO_DH(_MMIO(_PCH_TRANSACONF), D_ALL, NULL, transconf_mmio_write);
+	MMIO_DH(_MMIO(_PCH_TRANSBCONF), D_ALL, NULL, transconf_mmio_write);
 
-	MMIO_DH(FDI_RX_IIR(PIPE_A), D_ALL, शून्य, fdi_rx_iir_mmio_ग_लिखो);
-	MMIO_DH(FDI_RX_IIR(PIPE_B), D_ALL, शून्य, fdi_rx_iir_mmio_ग_लिखो);
-	MMIO_DH(FDI_RX_IIR(PIPE_C), D_ALL, शून्य, fdi_rx_iir_mmio_ग_लिखो);
-	MMIO_DH(FDI_RX_IMR(PIPE_A), D_ALL, शून्य, update_fdi_rx_iir_status);
-	MMIO_DH(FDI_RX_IMR(PIPE_B), D_ALL, शून्य, update_fdi_rx_iir_status);
-	MMIO_DH(FDI_RX_IMR(PIPE_C), D_ALL, शून्य, update_fdi_rx_iir_status);
-	MMIO_DH(FDI_RX_CTL(PIPE_A), D_ALL, शून्य, update_fdi_rx_iir_status);
-	MMIO_DH(FDI_RX_CTL(PIPE_B), D_ALL, शून्य, update_fdi_rx_iir_status);
-	MMIO_DH(FDI_RX_CTL(PIPE_C), D_ALL, शून्य, update_fdi_rx_iir_status);
+	MMIO_DH(FDI_RX_IIR(PIPE_A), D_ALL, NULL, fdi_rx_iir_mmio_write);
+	MMIO_DH(FDI_RX_IIR(PIPE_B), D_ALL, NULL, fdi_rx_iir_mmio_write);
+	MMIO_DH(FDI_RX_IIR(PIPE_C), D_ALL, NULL, fdi_rx_iir_mmio_write);
+	MMIO_DH(FDI_RX_IMR(PIPE_A), D_ALL, NULL, update_fdi_rx_iir_status);
+	MMIO_DH(FDI_RX_IMR(PIPE_B), D_ALL, NULL, update_fdi_rx_iir_status);
+	MMIO_DH(FDI_RX_IMR(PIPE_C), D_ALL, NULL, update_fdi_rx_iir_status);
+	MMIO_DH(FDI_RX_CTL(PIPE_A), D_ALL, NULL, update_fdi_rx_iir_status);
+	MMIO_DH(FDI_RX_CTL(PIPE_B), D_ALL, NULL, update_fdi_rx_iir_status);
+	MMIO_DH(FDI_RX_CTL(PIPE_C), D_ALL, NULL, update_fdi_rx_iir_status);
 
 	MMIO_D(_MMIO(_PCH_TRANS_HTOTAL_A), D_ALL);
 	MMIO_D(_MMIO(_PCH_TRANS_HBLANK_A), D_ALL);
@@ -2581,7 +2580,7 @@ out:
 	MMIO_D(_MMIO(_FDI_RXB_TUSIZE1), D_ALL);
 	MMIO_D(_MMIO(_FDI_RXB_TUSIZE2), D_ALL);
 
-	MMIO_DH(PCH_PP_CONTROL, D_ALL, शून्य, pch_pp_control_mmio_ग_लिखो);
+	MMIO_DH(PCH_PP_CONTROL, D_ALL, NULL, pch_pp_control_mmio_write);
 	MMIO_D(PCH_PP_DIVISOR, D_ALL);
 	MMIO_D(PCH_PP_STATUS,  D_ALL);
 	MMIO_D(PCH_LVDS, D_ALL);
@@ -2600,21 +2599,21 @@ out:
 	MMIO_D(PCH_PP_ON_DELAYS, D_ALL);
 	MMIO_D(PCH_PP_OFF_DELAYS, D_ALL);
 
-	MMIO_DH(_MMIO(0xe651c), D_ALL, dpy_reg_mmio_पढ़ो, शून्य);
-	MMIO_DH(_MMIO(0xe661c), D_ALL, dpy_reg_mmio_पढ़ो, शून्य);
-	MMIO_DH(_MMIO(0xe671c), D_ALL, dpy_reg_mmio_पढ़ो, शून्य);
-	MMIO_DH(_MMIO(0xe681c), D_ALL, dpy_reg_mmio_पढ़ो, शून्य);
-	MMIO_DH(_MMIO(0xe6c04), D_ALL, dpy_reg_mmio_पढ़ो, शून्य);
-	MMIO_DH(_MMIO(0xe6e1c), D_ALL, dpy_reg_mmio_पढ़ो, शून्य);
+	MMIO_DH(_MMIO(0xe651c), D_ALL, dpy_reg_mmio_read, NULL);
+	MMIO_DH(_MMIO(0xe661c), D_ALL, dpy_reg_mmio_read, NULL);
+	MMIO_DH(_MMIO(0xe671c), D_ALL, dpy_reg_mmio_read, NULL);
+	MMIO_DH(_MMIO(0xe681c), D_ALL, dpy_reg_mmio_read, NULL);
+	MMIO_DH(_MMIO(0xe6c04), D_ALL, dpy_reg_mmio_read, NULL);
+	MMIO_DH(_MMIO(0xe6e1c), D_ALL, dpy_reg_mmio_read, NULL);
 
 	MMIO_RO(PCH_PORT_HOTPLUG, D_ALL, 0,
 		PORTA_HOTPLUG_STATUS_MASK
 		| PORTB_HOTPLUG_STATUS_MASK
 		| PORTC_HOTPLUG_STATUS_MASK
 		| PORTD_HOTPLUG_STATUS_MASK,
-		शून्य, शून्य);
+		NULL, NULL);
 
-	MMIO_DH(LCPLL_CTL, D_ALL, शून्य, lcpll_ctl_mmio_ग_लिखो);
+	MMIO_DH(LCPLL_CTL, D_ALL, NULL, lcpll_ctl_mmio_write);
 	MMIO_D(FUSE_STRAP, D_ALL);
 	MMIO_D(DIGITAL_PORT_HOTPLUG_CNTRL, D_ALL);
 
@@ -2626,7 +2625,7 @@ out:
 	MMIO_D(ILK_DSPCLK_GATE_D, D_ALL);
 
 	MMIO_D(SOUTH_CHICKEN1, D_ALL);
-	MMIO_DH(SOUTH_CHICKEN2, D_ALL, शून्य, south_chicken2_mmio_ग_लिखो);
+	MMIO_DH(SOUTH_CHICKEN2, D_ALL, NULL, south_chicken2_mmio_write);
 	MMIO_D(_MMIO(_TRANSA_CHICKEN1), D_ALL);
 	MMIO_D(_MMIO(_TRANSB_CHICKEN1), D_ALL);
 	MMIO_D(SOUTH_DSPCLK_GATE_D, D_ALL);
@@ -2650,9 +2649,9 @@ out:
 	MMIO_D(PIPE_CSC_COEFF_RV_GV(PIPE_A), D_ALL);
 	MMIO_D(PIPE_CSC_COEFF_BV(PIPE_A), D_ALL);
 	MMIO_D(PIPE_CSC_MODE(PIPE_A), D_ALL);
-	MMIO_D(PIPE_CSC_PRखातापूर्णF_HI(PIPE_A), D_ALL);
-	MMIO_D(PIPE_CSC_PRखातापूर्णF_ME(PIPE_A), D_ALL);
-	MMIO_D(PIPE_CSC_PRखातापूर्णF_LO(PIPE_A), D_ALL);
+	MMIO_D(PIPE_CSC_PREOFF_HI(PIPE_A), D_ALL);
+	MMIO_D(PIPE_CSC_PREOFF_ME(PIPE_A), D_ALL);
+	MMIO_D(PIPE_CSC_PREOFF_LO(PIPE_A), D_ALL);
 	MMIO_D(PIPE_CSC_POSTOFF_HI(PIPE_A), D_ALL);
 	MMIO_D(PIPE_CSC_POSTOFF_ME(PIPE_A), D_ALL);
 	MMIO_D(PIPE_CSC_POSTOFF_LO(PIPE_A), D_ALL);
@@ -2664,9 +2663,9 @@ out:
 	MMIO_D(PIPE_CSC_COEFF_RV_GV(PIPE_B), D_ALL);
 	MMIO_D(PIPE_CSC_COEFF_BV(PIPE_B), D_ALL);
 	MMIO_D(PIPE_CSC_MODE(PIPE_B), D_ALL);
-	MMIO_D(PIPE_CSC_PRखातापूर्णF_HI(PIPE_B), D_ALL);
-	MMIO_D(PIPE_CSC_PRखातापूर्णF_ME(PIPE_B), D_ALL);
-	MMIO_D(PIPE_CSC_PRखातापूर्णF_LO(PIPE_B), D_ALL);
+	MMIO_D(PIPE_CSC_PREOFF_HI(PIPE_B), D_ALL);
+	MMIO_D(PIPE_CSC_PREOFF_ME(PIPE_B), D_ALL);
+	MMIO_D(PIPE_CSC_PREOFF_LO(PIPE_B), D_ALL);
 	MMIO_D(PIPE_CSC_POSTOFF_HI(PIPE_B), D_ALL);
 	MMIO_D(PIPE_CSC_POSTOFF_ME(PIPE_B), D_ALL);
 	MMIO_D(PIPE_CSC_POSTOFF_LO(PIPE_B), D_ALL);
@@ -2678,36 +2677,36 @@ out:
 	MMIO_D(PIPE_CSC_COEFF_RV_GV(PIPE_C), D_ALL);
 	MMIO_D(PIPE_CSC_COEFF_BV(PIPE_C), D_ALL);
 	MMIO_D(PIPE_CSC_MODE(PIPE_C), D_ALL);
-	MMIO_D(PIPE_CSC_PRखातापूर्णF_HI(PIPE_C), D_ALL);
-	MMIO_D(PIPE_CSC_PRखातापूर्णF_ME(PIPE_C), D_ALL);
-	MMIO_D(PIPE_CSC_PRखातापूर्णF_LO(PIPE_C), D_ALL);
+	MMIO_D(PIPE_CSC_PREOFF_HI(PIPE_C), D_ALL);
+	MMIO_D(PIPE_CSC_PREOFF_ME(PIPE_C), D_ALL);
+	MMIO_D(PIPE_CSC_PREOFF_LO(PIPE_C), D_ALL);
 	MMIO_D(PIPE_CSC_POSTOFF_HI(PIPE_C), D_ALL);
 	MMIO_D(PIPE_CSC_POSTOFF_ME(PIPE_C), D_ALL);
 	MMIO_D(PIPE_CSC_POSTOFF_LO(PIPE_C), D_ALL);
 
 	MMIO_D(PREC_PAL_INDEX(PIPE_A), D_ALL);
 	MMIO_D(PREC_PAL_DATA(PIPE_A), D_ALL);
-	MMIO_F(PREC_PAL_GC_MAX(PIPE_A, 0), 4 * 3, 0, 0, 0, D_ALL, शून्य, शून्य);
+	MMIO_F(PREC_PAL_GC_MAX(PIPE_A, 0), 4 * 3, 0, 0, 0, D_ALL, NULL, NULL);
 
 	MMIO_D(PREC_PAL_INDEX(PIPE_B), D_ALL);
 	MMIO_D(PREC_PAL_DATA(PIPE_B), D_ALL);
-	MMIO_F(PREC_PAL_GC_MAX(PIPE_B, 0), 4 * 3, 0, 0, 0, D_ALL, शून्य, शून्य);
+	MMIO_F(PREC_PAL_GC_MAX(PIPE_B, 0), 4 * 3, 0, 0, 0, D_ALL, NULL, NULL);
 
 	MMIO_D(PREC_PAL_INDEX(PIPE_C), D_ALL);
 	MMIO_D(PREC_PAL_DATA(PIPE_C), D_ALL);
-	MMIO_F(PREC_PAL_GC_MAX(PIPE_C, 0), 4 * 3, 0, 0, 0, D_ALL, शून्य, शून्य);
+	MMIO_F(PREC_PAL_GC_MAX(PIPE_C, 0), 4 * 3, 0, 0, 0, D_ALL, NULL, NULL);
 
 	MMIO_D(_MMIO(0x60110), D_ALL);
 	MMIO_D(_MMIO(0x61110), D_ALL);
-	MMIO_F(_MMIO(0x70400), 0x40, 0, 0, 0, D_ALL, शून्य, शून्य);
-	MMIO_F(_MMIO(0x71400), 0x40, 0, 0, 0, D_ALL, शून्य, शून्य);
-	MMIO_F(_MMIO(0x72400), 0x40, 0, 0, 0, D_ALL, शून्य, शून्य);
-	MMIO_F(_MMIO(0x70440), 0xc, 0, 0, 0, D_PRE_SKL, शून्य, शून्य);
-	MMIO_F(_MMIO(0x71440), 0xc, 0, 0, 0, D_PRE_SKL, शून्य, शून्य);
-	MMIO_F(_MMIO(0x72440), 0xc, 0, 0, 0, D_PRE_SKL, शून्य, शून्य);
-	MMIO_F(_MMIO(0x7044c), 0xc, 0, 0, 0, D_PRE_SKL, शून्य, शून्य);
-	MMIO_F(_MMIO(0x7144c), 0xc, 0, 0, 0, D_PRE_SKL, शून्य, शून्य);
-	MMIO_F(_MMIO(0x7244c), 0xc, 0, 0, 0, D_PRE_SKL, शून्य, शून्य);
+	MMIO_F(_MMIO(0x70400), 0x40, 0, 0, 0, D_ALL, NULL, NULL);
+	MMIO_F(_MMIO(0x71400), 0x40, 0, 0, 0, D_ALL, NULL, NULL);
+	MMIO_F(_MMIO(0x72400), 0x40, 0, 0, 0, D_ALL, NULL, NULL);
+	MMIO_F(_MMIO(0x70440), 0xc, 0, 0, 0, D_PRE_SKL, NULL, NULL);
+	MMIO_F(_MMIO(0x71440), 0xc, 0, 0, 0, D_PRE_SKL, NULL, NULL);
+	MMIO_F(_MMIO(0x72440), 0xc, 0, 0, 0, D_PRE_SKL, NULL, NULL);
+	MMIO_F(_MMIO(0x7044c), 0xc, 0, 0, 0, D_PRE_SKL, NULL, NULL);
+	MMIO_F(_MMIO(0x7144c), 0xc, 0, 0, 0, D_PRE_SKL, NULL, NULL);
+	MMIO_F(_MMIO(0x7244c), 0xc, 0, 0, 0, D_PRE_SKL, NULL, NULL);
 
 	MMIO_D(WM_LINETIME(PIPE_A), D_ALL);
 	MMIO_D(WM_LINETIME(PIPE_B), D_ALL);
@@ -2731,9 +2730,9 @@ out:
 	MMIO_D(_MMIO(0x49180), D_ALL);
 	MMIO_D(_MMIO(0x49280), D_ALL);
 
-	MMIO_F(_MMIO(0x49090), 0x14, 0, 0, 0, D_ALL, शून्य, शून्य);
-	MMIO_F(_MMIO(0x49190), 0x14, 0, 0, 0, D_ALL, शून्य, शून्य);
-	MMIO_F(_MMIO(0x49290), 0x14, 0, 0, 0, D_ALL, शून्य, शून्य);
+	MMIO_F(_MMIO(0x49090), 0x14, 0, 0, 0, D_ALL, NULL, NULL);
+	MMIO_F(_MMIO(0x49190), 0x14, 0, 0, 0, D_ALL, NULL, NULL);
+	MMIO_F(_MMIO(0x49290), 0x14, 0, 0, 0, D_ALL, NULL, NULL);
 
 	MMIO_D(GAMMA_MODE(PIPE_A), D_ALL);
 	MMIO_D(GAMMA_MODE(PIPE_B), D_ALL);
@@ -2747,64 +2746,64 @@ out:
 	MMIO_D(HSW_TVIDEO_DIP_CTL(TRANSCODER_B), D_ALL);
 	MMIO_D(HSW_TVIDEO_DIP_CTL(TRANSCODER_C), D_ALL);
 
-	MMIO_DH(SFUSE_STRAP, D_ALL, शून्य, शून्य);
+	MMIO_DH(SFUSE_STRAP, D_ALL, NULL, NULL);
 	MMIO_D(SBI_ADDR, D_ALL);
-	MMIO_DH(SBI_DATA, D_ALL, sbi_data_mmio_पढ़ो, शून्य);
-	MMIO_DH(SBI_CTL_STAT, D_ALL, शून्य, sbi_ctl_mmio_ग_लिखो);
+	MMIO_DH(SBI_DATA, D_ALL, sbi_data_mmio_read, NULL);
+	MMIO_DH(SBI_CTL_STAT, D_ALL, NULL, sbi_ctl_mmio_write);
 	MMIO_D(PIXCLK_GATE, D_ALL);
 
-	MMIO_F(_MMIO(_DPA_AUX_CH_CTL), 6 * 4, 0, 0, 0, D_ALL, शून्य,
-		dp_aux_ch_ctl_mmio_ग_लिखो);
+	MMIO_F(_MMIO(_DPA_AUX_CH_CTL), 6 * 4, 0, 0, 0, D_ALL, NULL,
+		dp_aux_ch_ctl_mmio_write);
 
-	MMIO_DH(DDI_BUF_CTL(PORT_A), D_ALL, शून्य, ddi_buf_ctl_mmio_ग_लिखो);
-	MMIO_DH(DDI_BUF_CTL(PORT_B), D_ALL, शून्य, ddi_buf_ctl_mmio_ग_लिखो);
-	MMIO_DH(DDI_BUF_CTL(PORT_C), D_ALL, शून्य, ddi_buf_ctl_mmio_ग_लिखो);
-	MMIO_DH(DDI_BUF_CTL(PORT_D), D_ALL, शून्य, ddi_buf_ctl_mmio_ग_लिखो);
-	MMIO_DH(DDI_BUF_CTL(PORT_E), D_ALL, शून्य, ddi_buf_ctl_mmio_ग_लिखो);
+	MMIO_DH(DDI_BUF_CTL(PORT_A), D_ALL, NULL, ddi_buf_ctl_mmio_write);
+	MMIO_DH(DDI_BUF_CTL(PORT_B), D_ALL, NULL, ddi_buf_ctl_mmio_write);
+	MMIO_DH(DDI_BUF_CTL(PORT_C), D_ALL, NULL, ddi_buf_ctl_mmio_write);
+	MMIO_DH(DDI_BUF_CTL(PORT_D), D_ALL, NULL, ddi_buf_ctl_mmio_write);
+	MMIO_DH(DDI_BUF_CTL(PORT_E), D_ALL, NULL, ddi_buf_ctl_mmio_write);
 
-	MMIO_DH(DP_TP_CTL(PORT_A), D_ALL, शून्य, dp_tp_ctl_mmio_ग_लिखो);
-	MMIO_DH(DP_TP_CTL(PORT_B), D_ALL, शून्य, dp_tp_ctl_mmio_ग_लिखो);
-	MMIO_DH(DP_TP_CTL(PORT_C), D_ALL, शून्य, dp_tp_ctl_mmio_ग_लिखो);
-	MMIO_DH(DP_TP_CTL(PORT_D), D_ALL, शून्य, dp_tp_ctl_mmio_ग_लिखो);
-	MMIO_DH(DP_TP_CTL(PORT_E), D_ALL, शून्य, dp_tp_ctl_mmio_ग_लिखो);
+	MMIO_DH(DP_TP_CTL(PORT_A), D_ALL, NULL, dp_tp_ctl_mmio_write);
+	MMIO_DH(DP_TP_CTL(PORT_B), D_ALL, NULL, dp_tp_ctl_mmio_write);
+	MMIO_DH(DP_TP_CTL(PORT_C), D_ALL, NULL, dp_tp_ctl_mmio_write);
+	MMIO_DH(DP_TP_CTL(PORT_D), D_ALL, NULL, dp_tp_ctl_mmio_write);
+	MMIO_DH(DP_TP_CTL(PORT_E), D_ALL, NULL, dp_tp_ctl_mmio_write);
 
-	MMIO_DH(DP_TP_STATUS(PORT_A), D_ALL, शून्य, dp_tp_status_mmio_ग_लिखो);
-	MMIO_DH(DP_TP_STATUS(PORT_B), D_ALL, शून्य, dp_tp_status_mmio_ग_लिखो);
-	MMIO_DH(DP_TP_STATUS(PORT_C), D_ALL, शून्य, dp_tp_status_mmio_ग_लिखो);
-	MMIO_DH(DP_TP_STATUS(PORT_D), D_ALL, शून्य, dp_tp_status_mmio_ग_लिखो);
-	MMIO_DH(DP_TP_STATUS(PORT_E), D_ALL, शून्य, शून्य);
+	MMIO_DH(DP_TP_STATUS(PORT_A), D_ALL, NULL, dp_tp_status_mmio_write);
+	MMIO_DH(DP_TP_STATUS(PORT_B), D_ALL, NULL, dp_tp_status_mmio_write);
+	MMIO_DH(DP_TP_STATUS(PORT_C), D_ALL, NULL, dp_tp_status_mmio_write);
+	MMIO_DH(DP_TP_STATUS(PORT_D), D_ALL, NULL, dp_tp_status_mmio_write);
+	MMIO_DH(DP_TP_STATUS(PORT_E), D_ALL, NULL, NULL);
 
-	MMIO_F(_MMIO(_DDI_BUF_TRANS_A), 0x50, 0, 0, 0, D_ALL, शून्य, शून्य);
-	MMIO_F(_MMIO(0x64e60), 0x50, 0, 0, 0, D_ALL, शून्य, शून्य);
-	MMIO_F(_MMIO(0x64eC0), 0x50, 0, 0, 0, D_ALL, शून्य, शून्य);
-	MMIO_F(_MMIO(0x64f20), 0x50, 0, 0, 0, D_ALL, शून्य, शून्य);
-	MMIO_F(_MMIO(0x64f80), 0x50, 0, 0, 0, D_ALL, शून्य, शून्य);
+	MMIO_F(_MMIO(_DDI_BUF_TRANS_A), 0x50, 0, 0, 0, D_ALL, NULL, NULL);
+	MMIO_F(_MMIO(0x64e60), 0x50, 0, 0, 0, D_ALL, NULL, NULL);
+	MMIO_F(_MMIO(0x64eC0), 0x50, 0, 0, 0, D_ALL, NULL, NULL);
+	MMIO_F(_MMIO(0x64f20), 0x50, 0, 0, 0, D_ALL, NULL, NULL);
+	MMIO_F(_MMIO(0x64f80), 0x50, 0, 0, 0, D_ALL, NULL, NULL);
 
 	MMIO_D(HSW_AUD_CFG(PIPE_A), D_ALL);
 	MMIO_D(HSW_AUD_PIN_ELD_CP_VLD, D_ALL);
 	MMIO_D(HSW_AUD_MISC_CTRL(PIPE_A), D_ALL);
 
-	MMIO_DH(_MMIO(_TRANS_DDI_FUNC_CTL_A), D_ALL, शून्य, शून्य);
-	MMIO_DH(_MMIO(_TRANS_DDI_FUNC_CTL_B), D_ALL, शून्य, शून्य);
-	MMIO_DH(_MMIO(_TRANS_DDI_FUNC_CTL_C), D_ALL, शून्य, शून्य);
-	MMIO_DH(_MMIO(_TRANS_DDI_FUNC_CTL_EDP), D_ALL, शून्य, शून्य);
+	MMIO_DH(_MMIO(_TRANS_DDI_FUNC_CTL_A), D_ALL, NULL, NULL);
+	MMIO_DH(_MMIO(_TRANS_DDI_FUNC_CTL_B), D_ALL, NULL, NULL);
+	MMIO_DH(_MMIO(_TRANS_DDI_FUNC_CTL_C), D_ALL, NULL, NULL);
+	MMIO_DH(_MMIO(_TRANS_DDI_FUNC_CTL_EDP), D_ALL, NULL, NULL);
 
 	MMIO_D(_MMIO(_TRANSA_MSA_MISC), D_ALL);
 	MMIO_D(_MMIO(_TRANSB_MSA_MISC), D_ALL);
 	MMIO_D(_MMIO(_TRANSC_MSA_MISC), D_ALL);
 	MMIO_D(_MMIO(_TRANS_EDP_MSA_MISC), D_ALL);
 
-	MMIO_DH(FORCEWAKE, D_ALL, शून्य, शून्य);
+	MMIO_DH(FORCEWAKE, D_ALL, NULL, NULL);
 	MMIO_D(FORCEWAKE_ACK, D_ALL);
 	MMIO_D(GEN6_GT_CORE_STATUS, D_ALL);
 	MMIO_D(GEN6_GT_THREAD_STATUS_REG, D_ALL);
-	MMIO_DFH(GTFIFODBG, D_ALL, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(GTFIFOCTL, D_ALL, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DH(FORCEWAKE_MT, D_PRE_SKL, शून्य, mul_क्रमce_wake_ग_लिखो);
-	MMIO_DH(FORCEWAKE_ACK_HSW, D_BDW, शून्य, शून्य);
+	MMIO_DFH(GTFIFODBG, D_ALL, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(GTFIFOCTL, D_ALL, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DH(FORCEWAKE_MT, D_PRE_SKL, NULL, mul_force_wake_write);
+	MMIO_DH(FORCEWAKE_ACK_HSW, D_BDW, NULL, NULL);
 	MMIO_D(ECOBUS, D_ALL);
-	MMIO_DH(GEN6_RC_CONTROL, D_ALL, शून्य, शून्य);
-	MMIO_DH(GEN6_RC_STATE, D_ALL, शून्य, शून्य);
+	MMIO_DH(GEN6_RC_CONTROL, D_ALL, NULL, NULL);
+	MMIO_DH(GEN6_RC_STATE, D_ALL, NULL, NULL);
 	MMIO_D(GEN6_RPNSWREQ, D_ALL);
 	MMIO_D(GEN6_RC_VIDEO_FREQ, D_ALL);
 	MMIO_D(GEN6_RP_DOWN_TIMEOUT, D_ALL);
@@ -2833,32 +2832,32 @@ out:
 	MMIO_D(GEN6_RC6p_THRESHOLD, D_ALL);
 	MMIO_D(GEN6_RC6pp_THRESHOLD, D_ALL);
 	MMIO_D(GEN6_PMINTRMSK, D_ALL);
-	MMIO_DH(HSW_PWR_WELL_CTL1, D_BDW, शून्य, घातer_well_ctl_mmio_ग_लिखो);
-	MMIO_DH(HSW_PWR_WELL_CTL2, D_BDW, शून्य, घातer_well_ctl_mmio_ग_लिखो);
-	MMIO_DH(HSW_PWR_WELL_CTL3, D_BDW, शून्य, घातer_well_ctl_mmio_ग_लिखो);
-	MMIO_DH(HSW_PWR_WELL_CTL4, D_BDW, शून्य, घातer_well_ctl_mmio_ग_लिखो);
-	MMIO_DH(HSW_PWR_WELL_CTL5, D_BDW, शून्य, घातer_well_ctl_mmio_ग_लिखो);
-	MMIO_DH(HSW_PWR_WELL_CTL6, D_BDW, शून्य, घातer_well_ctl_mmio_ग_लिखो);
+	MMIO_DH(HSW_PWR_WELL_CTL1, D_BDW, NULL, power_well_ctl_mmio_write);
+	MMIO_DH(HSW_PWR_WELL_CTL2, D_BDW, NULL, power_well_ctl_mmio_write);
+	MMIO_DH(HSW_PWR_WELL_CTL3, D_BDW, NULL, power_well_ctl_mmio_write);
+	MMIO_DH(HSW_PWR_WELL_CTL4, D_BDW, NULL, power_well_ctl_mmio_write);
+	MMIO_DH(HSW_PWR_WELL_CTL5, D_BDW, NULL, power_well_ctl_mmio_write);
+	MMIO_DH(HSW_PWR_WELL_CTL6, D_BDW, NULL, power_well_ctl_mmio_write);
 
 	MMIO_D(RSTDBYCTL, D_ALL);
 
-	MMIO_DH(GEN6_GDRST, D_ALL, शून्य, gdrst_mmio_ग_लिखो);
-	MMIO_F(FENCE_REG_GEN6_LO(0), 0x80, 0, 0, 0, D_ALL, fence_mmio_पढ़ो, fence_mmio_ग_लिखो);
-	MMIO_DH(CPU_VGACNTRL, D_ALL, शून्य, vga_control_mmio_ग_लिखो);
+	MMIO_DH(GEN6_GDRST, D_ALL, NULL, gdrst_mmio_write);
+	MMIO_F(FENCE_REG_GEN6_LO(0), 0x80, 0, 0, 0, D_ALL, fence_mmio_read, fence_mmio_write);
+	MMIO_DH(CPU_VGACNTRL, D_ALL, NULL, vga_control_mmio_write);
 
 	MMIO_D(TILECTL, D_ALL);
 
 	MMIO_D(GEN6_UCGCTL1, D_ALL);
 	MMIO_D(GEN6_UCGCTL2, D_ALL);
 
-	MMIO_F(_MMIO(0x4f000), 0x90, 0, 0, 0, D_ALL, शून्य, शून्य);
+	MMIO_F(_MMIO(0x4f000), 0x90, 0, 0, 0, D_ALL, NULL, NULL);
 
 	MMIO_D(GEN6_PCODE_DATA, D_ALL);
 	MMIO_D(_MMIO(0x13812c), D_ALL);
-	MMIO_DH(GEN7_ERR_INT, D_ALL, शून्य, शून्य);
+	MMIO_DH(GEN7_ERR_INT, D_ALL, NULL, NULL);
 	MMIO_D(HSW_EDRAM_CAP, D_ALL);
 	MMIO_D(HSW_IDICR, D_ALL);
-	MMIO_DH(GFX_FLSH_CNTL_GEN6, D_ALL, शून्य, शून्य);
+	MMIO_DH(GFX_FLSH_CNTL_GEN6, D_ALL, NULL, NULL);
 
 	MMIO_D(_MMIO(0x3c), D_ALL);
 	MMIO_D(_MMIO(0x860), D_ALL);
@@ -2874,10 +2873,10 @@ out:
 	MMIO_D(_MMIO(0x7180), D_ALL);
 	MMIO_D(_MMIO(0x7408), D_ALL);
 	MMIO_D(_MMIO(0x7c00), D_ALL);
-	MMIO_DH(GEN6_MBCTL, D_ALL, शून्य, mbctl_ग_लिखो);
+	MMIO_DH(GEN6_MBCTL, D_ALL, NULL, mbctl_write);
 	MMIO_D(_MMIO(0x911c), D_ALL);
 	MMIO_D(_MMIO(0x9120), D_ALL);
-	MMIO_DFH(GEN7_UCGCTL4, D_ALL, F_CMD_ACCESS, शून्य, शून्य);
+	MMIO_DFH(GEN7_UCGCTL4, D_ALL, F_CMD_ACCESS, NULL, NULL);
 
 	MMIO_D(GAB_CTL, D_ALL);
 	MMIO_D(_MMIO(0x48800), D_ALL);
@@ -2924,163 +2923,163 @@ out:
 	MMIO_D(_MMIO(0xfd024), D_ALL);
 	MMIO_D(_MMIO(0xfd034), D_ALL);
 
-	MMIO_DH(FPGA_DBG, D_ALL, शून्य, fpga_dbg_mmio_ग_लिखो);
+	MMIO_DH(FPGA_DBG, D_ALL, NULL, fpga_dbg_mmio_write);
 	MMIO_D(_MMIO(0x2054), D_ALL);
 	MMIO_D(_MMIO(0x12054), D_ALL);
 	MMIO_D(_MMIO(0x22054), D_ALL);
 	MMIO_D(_MMIO(0x1a054), D_ALL);
 
 	MMIO_D(_MMIO(0x44070), D_ALL);
-	MMIO_DFH(_MMIO(0x215c), D_BDW_PLUS, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0x2178), D_ALL, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0x217c), D_ALL, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0x12178), D_ALL, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0x1217c), D_ALL, F_CMD_ACCESS, शून्य, शून्य);
+	MMIO_DFH(_MMIO(0x215c), D_BDW_PLUS, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0x2178), D_ALL, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0x217c), D_ALL, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0x12178), D_ALL, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0x1217c), D_ALL, F_CMD_ACCESS, NULL, NULL);
 
-	MMIO_F(_MMIO(0x2290), 8, F_CMD_ACCESS, 0, 0, D_BDW_PLUS, शून्य, शून्य);
+	MMIO_F(_MMIO(0x2290), 8, F_CMD_ACCESS, 0, 0, D_BDW_PLUS, NULL, NULL);
 	MMIO_D(_MMIO(0x2b00), D_BDW_PLUS);
 	MMIO_D(_MMIO(0x2360), D_BDW_PLUS);
-	MMIO_F(_MMIO(0x5200), 32, F_CMD_ACCESS, 0, 0, D_ALL, शून्य, शून्य);
-	MMIO_F(_MMIO(0x5240), 32, F_CMD_ACCESS, 0, 0, D_ALL, शून्य, शून्य);
-	MMIO_F(_MMIO(0x5280), 16, F_CMD_ACCESS, 0, 0, D_ALL, शून्य, शून्य);
+	MMIO_F(_MMIO(0x5200), 32, F_CMD_ACCESS, 0, 0, D_ALL, NULL, NULL);
+	MMIO_F(_MMIO(0x5240), 32, F_CMD_ACCESS, 0, 0, D_ALL, NULL, NULL);
+	MMIO_F(_MMIO(0x5280), 16, F_CMD_ACCESS, 0, 0, D_ALL, NULL, NULL);
 
-	MMIO_DFH(_MMIO(0x1c17c), D_BDW_PLUS, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0x1c178), D_BDW_PLUS, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(BCS_SWCTRL, D_ALL, F_CMD_ACCESS, शून्य, शून्य);
+	MMIO_DFH(_MMIO(0x1c17c), D_BDW_PLUS, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0x1c178), D_BDW_PLUS, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(BCS_SWCTRL, D_ALL, F_CMD_ACCESS, NULL, NULL);
 
-	MMIO_F(HS_INVOCATION_COUNT, 8, F_CMD_ACCESS, 0, 0, D_ALL, शून्य, शून्य);
-	MMIO_F(DS_INVOCATION_COUNT, 8, F_CMD_ACCESS, 0, 0, D_ALL, शून्य, शून्य);
-	MMIO_F(IA_VERTICES_COUNT, 8, F_CMD_ACCESS, 0, 0, D_ALL, शून्य, शून्य);
-	MMIO_F(IA_PRIMITIVES_COUNT, 8, F_CMD_ACCESS, 0, 0, D_ALL, शून्य, शून्य);
-	MMIO_F(VS_INVOCATION_COUNT, 8, F_CMD_ACCESS, 0, 0, D_ALL, शून्य, शून्य);
-	MMIO_F(GS_INVOCATION_COUNT, 8, F_CMD_ACCESS, 0, 0, D_ALL, शून्य, शून्य);
-	MMIO_F(GS_PRIMITIVES_COUNT, 8, F_CMD_ACCESS, 0, 0, D_ALL, शून्य, शून्य);
-	MMIO_F(CL_INVOCATION_COUNT, 8, F_CMD_ACCESS, 0, 0, D_ALL, शून्य, शून्य);
-	MMIO_F(CL_PRIMITIVES_COUNT, 8, F_CMD_ACCESS, 0, 0, D_ALL, शून्य, शून्य);
-	MMIO_F(PS_INVOCATION_COUNT, 8, F_CMD_ACCESS, 0, 0, D_ALL, शून्य, शून्य);
-	MMIO_F(PS_DEPTH_COUNT, 8, F_CMD_ACCESS, 0, 0, D_ALL, शून्य, शून्य);
-	MMIO_DH(_MMIO(0x4260), D_BDW_PLUS, शून्य, gvt_reg_tlb_control_handler);
-	MMIO_DH(_MMIO(0x4264), D_BDW_PLUS, शून्य, gvt_reg_tlb_control_handler);
-	MMIO_DH(_MMIO(0x4268), D_BDW_PLUS, शून्य, gvt_reg_tlb_control_handler);
-	MMIO_DH(_MMIO(0x426c), D_BDW_PLUS, शून्य, gvt_reg_tlb_control_handler);
-	MMIO_DH(_MMIO(0x4270), D_BDW_PLUS, शून्य, gvt_reg_tlb_control_handler);
-	MMIO_DFH(_MMIO(0x4094), D_BDW_PLUS, F_CMD_ACCESS, शून्य, शून्य);
+	MMIO_F(HS_INVOCATION_COUNT, 8, F_CMD_ACCESS, 0, 0, D_ALL, NULL, NULL);
+	MMIO_F(DS_INVOCATION_COUNT, 8, F_CMD_ACCESS, 0, 0, D_ALL, NULL, NULL);
+	MMIO_F(IA_VERTICES_COUNT, 8, F_CMD_ACCESS, 0, 0, D_ALL, NULL, NULL);
+	MMIO_F(IA_PRIMITIVES_COUNT, 8, F_CMD_ACCESS, 0, 0, D_ALL, NULL, NULL);
+	MMIO_F(VS_INVOCATION_COUNT, 8, F_CMD_ACCESS, 0, 0, D_ALL, NULL, NULL);
+	MMIO_F(GS_INVOCATION_COUNT, 8, F_CMD_ACCESS, 0, 0, D_ALL, NULL, NULL);
+	MMIO_F(GS_PRIMITIVES_COUNT, 8, F_CMD_ACCESS, 0, 0, D_ALL, NULL, NULL);
+	MMIO_F(CL_INVOCATION_COUNT, 8, F_CMD_ACCESS, 0, 0, D_ALL, NULL, NULL);
+	MMIO_F(CL_PRIMITIVES_COUNT, 8, F_CMD_ACCESS, 0, 0, D_ALL, NULL, NULL);
+	MMIO_F(PS_INVOCATION_COUNT, 8, F_CMD_ACCESS, 0, 0, D_ALL, NULL, NULL);
+	MMIO_F(PS_DEPTH_COUNT, 8, F_CMD_ACCESS, 0, 0, D_ALL, NULL, NULL);
+	MMIO_DH(_MMIO(0x4260), D_BDW_PLUS, NULL, gvt_reg_tlb_control_handler);
+	MMIO_DH(_MMIO(0x4264), D_BDW_PLUS, NULL, gvt_reg_tlb_control_handler);
+	MMIO_DH(_MMIO(0x4268), D_BDW_PLUS, NULL, gvt_reg_tlb_control_handler);
+	MMIO_DH(_MMIO(0x426c), D_BDW_PLUS, NULL, gvt_reg_tlb_control_handler);
+	MMIO_DH(_MMIO(0x4270), D_BDW_PLUS, NULL, gvt_reg_tlb_control_handler);
+	MMIO_DFH(_MMIO(0x4094), D_BDW_PLUS, F_CMD_ACCESS, NULL, NULL);
 
-	MMIO_DFH(ARB_MODE, D_ALL, F_MODE_MASK | F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_RING_GM(RING_BBADDR, D_ALL, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0x2220), D_ALL, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0x12220), D_ALL, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0x22220), D_ALL, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_RING_DFH(RING_SYNC_1, D_ALL, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_RING_DFH(RING_SYNC_0, D_ALL, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0x22178), D_BDW_PLUS, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0x1a178), D_BDW_PLUS, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0x1a17c), D_BDW_PLUS, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0x2217c), D_BDW_PLUS, F_CMD_ACCESS, शून्य, शून्य);
+	MMIO_DFH(ARB_MODE, D_ALL, F_MODE_MASK | F_CMD_ACCESS, NULL, NULL);
+	MMIO_RING_GM(RING_BBADDR, D_ALL, NULL, NULL);
+	MMIO_DFH(_MMIO(0x2220), D_ALL, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0x12220), D_ALL, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0x22220), D_ALL, F_CMD_ACCESS, NULL, NULL);
+	MMIO_RING_DFH(RING_SYNC_1, D_ALL, F_CMD_ACCESS, NULL, NULL);
+	MMIO_RING_DFH(RING_SYNC_0, D_ALL, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0x22178), D_BDW_PLUS, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0x1a178), D_BDW_PLUS, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0x1a17c), D_BDW_PLUS, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0x2217c), D_BDW_PLUS, F_CMD_ACCESS, NULL, NULL);
 
-	MMIO_DH(EDP_PSR_IMR, D_BDW_PLUS, शून्य, edp_psr_imr_iir_ग_लिखो);
-	MMIO_DH(EDP_PSR_IIR, D_BDW_PLUS, शून्य, edp_psr_imr_iir_ग_लिखो);
-	MMIO_DH(GUC_STATUS, D_ALL, guc_status_पढ़ो, शून्य);
+	MMIO_DH(EDP_PSR_IMR, D_BDW_PLUS, NULL, edp_psr_imr_iir_write);
+	MMIO_DH(EDP_PSR_IIR, D_BDW_PLUS, NULL, edp_psr_imr_iir_write);
+	MMIO_DH(GUC_STATUS, D_ALL, guc_status_read, NULL);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक init_bdw_mmio_info(काष्ठा पूर्णांकel_gvt *gvt)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = gvt->gt->i915;
-	पूर्णांक ret;
+static int init_bdw_mmio_info(struct intel_gvt *gvt)
+{
+	struct drm_i915_private *dev_priv = gvt->gt->i915;
+	int ret;
 
-	MMIO_DH(GEN8_GT_IMR(0), D_BDW_PLUS, शून्य, पूर्णांकel_vgpu_reg_imr_handler);
-	MMIO_DH(GEN8_GT_IER(0), D_BDW_PLUS, शून्य, पूर्णांकel_vgpu_reg_ier_handler);
-	MMIO_DH(GEN8_GT_IIR(0), D_BDW_PLUS, शून्य, पूर्णांकel_vgpu_reg_iir_handler);
+	MMIO_DH(GEN8_GT_IMR(0), D_BDW_PLUS, NULL, intel_vgpu_reg_imr_handler);
+	MMIO_DH(GEN8_GT_IER(0), D_BDW_PLUS, NULL, intel_vgpu_reg_ier_handler);
+	MMIO_DH(GEN8_GT_IIR(0), D_BDW_PLUS, NULL, intel_vgpu_reg_iir_handler);
 	MMIO_D(GEN8_GT_ISR(0), D_BDW_PLUS);
 
-	MMIO_DH(GEN8_GT_IMR(1), D_BDW_PLUS, शून्य, पूर्णांकel_vgpu_reg_imr_handler);
-	MMIO_DH(GEN8_GT_IER(1), D_BDW_PLUS, शून्य, पूर्णांकel_vgpu_reg_ier_handler);
-	MMIO_DH(GEN8_GT_IIR(1), D_BDW_PLUS, शून्य, पूर्णांकel_vgpu_reg_iir_handler);
+	MMIO_DH(GEN8_GT_IMR(1), D_BDW_PLUS, NULL, intel_vgpu_reg_imr_handler);
+	MMIO_DH(GEN8_GT_IER(1), D_BDW_PLUS, NULL, intel_vgpu_reg_ier_handler);
+	MMIO_DH(GEN8_GT_IIR(1), D_BDW_PLUS, NULL, intel_vgpu_reg_iir_handler);
 	MMIO_D(GEN8_GT_ISR(1), D_BDW_PLUS);
 
-	MMIO_DH(GEN8_GT_IMR(2), D_BDW_PLUS, शून्य, पूर्णांकel_vgpu_reg_imr_handler);
-	MMIO_DH(GEN8_GT_IER(2), D_BDW_PLUS, शून्य, पूर्णांकel_vgpu_reg_ier_handler);
-	MMIO_DH(GEN8_GT_IIR(2), D_BDW_PLUS, शून्य, पूर्णांकel_vgpu_reg_iir_handler);
+	MMIO_DH(GEN8_GT_IMR(2), D_BDW_PLUS, NULL, intel_vgpu_reg_imr_handler);
+	MMIO_DH(GEN8_GT_IER(2), D_BDW_PLUS, NULL, intel_vgpu_reg_ier_handler);
+	MMIO_DH(GEN8_GT_IIR(2), D_BDW_PLUS, NULL, intel_vgpu_reg_iir_handler);
 	MMIO_D(GEN8_GT_ISR(2), D_BDW_PLUS);
 
-	MMIO_DH(GEN8_GT_IMR(3), D_BDW_PLUS, शून्य, पूर्णांकel_vgpu_reg_imr_handler);
-	MMIO_DH(GEN8_GT_IER(3), D_BDW_PLUS, शून्य, पूर्णांकel_vgpu_reg_ier_handler);
-	MMIO_DH(GEN8_GT_IIR(3), D_BDW_PLUS, शून्य, पूर्णांकel_vgpu_reg_iir_handler);
+	MMIO_DH(GEN8_GT_IMR(3), D_BDW_PLUS, NULL, intel_vgpu_reg_imr_handler);
+	MMIO_DH(GEN8_GT_IER(3), D_BDW_PLUS, NULL, intel_vgpu_reg_ier_handler);
+	MMIO_DH(GEN8_GT_IIR(3), D_BDW_PLUS, NULL, intel_vgpu_reg_iir_handler);
 	MMIO_D(GEN8_GT_ISR(3), D_BDW_PLUS);
 
-	MMIO_DH(GEN8_DE_PIPE_IMR(PIPE_A), D_BDW_PLUS, शून्य,
-		पूर्णांकel_vgpu_reg_imr_handler);
-	MMIO_DH(GEN8_DE_PIPE_IER(PIPE_A), D_BDW_PLUS, शून्य,
-		पूर्णांकel_vgpu_reg_ier_handler);
-	MMIO_DH(GEN8_DE_PIPE_IIR(PIPE_A), D_BDW_PLUS, शून्य,
-		पूर्णांकel_vgpu_reg_iir_handler);
+	MMIO_DH(GEN8_DE_PIPE_IMR(PIPE_A), D_BDW_PLUS, NULL,
+		intel_vgpu_reg_imr_handler);
+	MMIO_DH(GEN8_DE_PIPE_IER(PIPE_A), D_BDW_PLUS, NULL,
+		intel_vgpu_reg_ier_handler);
+	MMIO_DH(GEN8_DE_PIPE_IIR(PIPE_A), D_BDW_PLUS, NULL,
+		intel_vgpu_reg_iir_handler);
 	MMIO_D(GEN8_DE_PIPE_ISR(PIPE_A), D_BDW_PLUS);
 
-	MMIO_DH(GEN8_DE_PIPE_IMR(PIPE_B), D_BDW_PLUS, शून्य,
-		पूर्णांकel_vgpu_reg_imr_handler);
-	MMIO_DH(GEN8_DE_PIPE_IER(PIPE_B), D_BDW_PLUS, शून्य,
-		पूर्णांकel_vgpu_reg_ier_handler);
-	MMIO_DH(GEN8_DE_PIPE_IIR(PIPE_B), D_BDW_PLUS, शून्य,
-		पूर्णांकel_vgpu_reg_iir_handler);
+	MMIO_DH(GEN8_DE_PIPE_IMR(PIPE_B), D_BDW_PLUS, NULL,
+		intel_vgpu_reg_imr_handler);
+	MMIO_DH(GEN8_DE_PIPE_IER(PIPE_B), D_BDW_PLUS, NULL,
+		intel_vgpu_reg_ier_handler);
+	MMIO_DH(GEN8_DE_PIPE_IIR(PIPE_B), D_BDW_PLUS, NULL,
+		intel_vgpu_reg_iir_handler);
 	MMIO_D(GEN8_DE_PIPE_ISR(PIPE_B), D_BDW_PLUS);
 
-	MMIO_DH(GEN8_DE_PIPE_IMR(PIPE_C), D_BDW_PLUS, शून्य,
-		पूर्णांकel_vgpu_reg_imr_handler);
-	MMIO_DH(GEN8_DE_PIPE_IER(PIPE_C), D_BDW_PLUS, शून्य,
-		पूर्णांकel_vgpu_reg_ier_handler);
-	MMIO_DH(GEN8_DE_PIPE_IIR(PIPE_C), D_BDW_PLUS, शून्य,
-		पूर्णांकel_vgpu_reg_iir_handler);
+	MMIO_DH(GEN8_DE_PIPE_IMR(PIPE_C), D_BDW_PLUS, NULL,
+		intel_vgpu_reg_imr_handler);
+	MMIO_DH(GEN8_DE_PIPE_IER(PIPE_C), D_BDW_PLUS, NULL,
+		intel_vgpu_reg_ier_handler);
+	MMIO_DH(GEN8_DE_PIPE_IIR(PIPE_C), D_BDW_PLUS, NULL,
+		intel_vgpu_reg_iir_handler);
 	MMIO_D(GEN8_DE_PIPE_ISR(PIPE_C), D_BDW_PLUS);
 
-	MMIO_DH(GEN8_DE_PORT_IMR, D_BDW_PLUS, शून्य, पूर्णांकel_vgpu_reg_imr_handler);
-	MMIO_DH(GEN8_DE_PORT_IER, D_BDW_PLUS, शून्य, पूर्णांकel_vgpu_reg_ier_handler);
-	MMIO_DH(GEN8_DE_PORT_IIR, D_BDW_PLUS, शून्य, पूर्णांकel_vgpu_reg_iir_handler);
+	MMIO_DH(GEN8_DE_PORT_IMR, D_BDW_PLUS, NULL, intel_vgpu_reg_imr_handler);
+	MMIO_DH(GEN8_DE_PORT_IER, D_BDW_PLUS, NULL, intel_vgpu_reg_ier_handler);
+	MMIO_DH(GEN8_DE_PORT_IIR, D_BDW_PLUS, NULL, intel_vgpu_reg_iir_handler);
 	MMIO_D(GEN8_DE_PORT_ISR, D_BDW_PLUS);
 
-	MMIO_DH(GEN8_DE_MISC_IMR, D_BDW_PLUS, शून्य, पूर्णांकel_vgpu_reg_imr_handler);
-	MMIO_DH(GEN8_DE_MISC_IER, D_BDW_PLUS, शून्य, पूर्णांकel_vgpu_reg_ier_handler);
-	MMIO_DH(GEN8_DE_MISC_IIR, D_BDW_PLUS, शून्य, पूर्णांकel_vgpu_reg_iir_handler);
+	MMIO_DH(GEN8_DE_MISC_IMR, D_BDW_PLUS, NULL, intel_vgpu_reg_imr_handler);
+	MMIO_DH(GEN8_DE_MISC_IER, D_BDW_PLUS, NULL, intel_vgpu_reg_ier_handler);
+	MMIO_DH(GEN8_DE_MISC_IIR, D_BDW_PLUS, NULL, intel_vgpu_reg_iir_handler);
 	MMIO_D(GEN8_DE_MISC_ISR, D_BDW_PLUS);
 
-	MMIO_DH(GEN8_PCU_IMR, D_BDW_PLUS, शून्य, पूर्णांकel_vgpu_reg_imr_handler);
-	MMIO_DH(GEN8_PCU_IER, D_BDW_PLUS, शून्य, पूर्णांकel_vgpu_reg_ier_handler);
-	MMIO_DH(GEN8_PCU_IIR, D_BDW_PLUS, शून्य, पूर्णांकel_vgpu_reg_iir_handler);
+	MMIO_DH(GEN8_PCU_IMR, D_BDW_PLUS, NULL, intel_vgpu_reg_imr_handler);
+	MMIO_DH(GEN8_PCU_IER, D_BDW_PLUS, NULL, intel_vgpu_reg_ier_handler);
+	MMIO_DH(GEN8_PCU_IIR, D_BDW_PLUS, NULL, intel_vgpu_reg_iir_handler);
 	MMIO_D(GEN8_PCU_ISR, D_BDW_PLUS);
 
-	MMIO_DH(GEN8_MASTER_IRQ, D_BDW_PLUS, शून्य,
-		पूर्णांकel_vgpu_reg_master_irq_handler);
+	MMIO_DH(GEN8_MASTER_IRQ, D_BDW_PLUS, NULL,
+		intel_vgpu_reg_master_irq_handler);
 
 	MMIO_RING_DFH(RING_ACTHD_UDW, D_BDW_PLUS, 0,
-		mmio_पढ़ो_from_hw, शून्य);
+		mmio_read_from_hw, NULL);
 
-#घोषणा RING_REG(base) _MMIO((base) + 0xd0)
+#define RING_REG(base) _MMIO((base) + 0xd0)
 	MMIO_RING_F(RING_REG, 4, F_RO, 0,
-		~_MASKED_BIT_ENABLE(RESET_CTL_REQUEST_RESET), D_BDW_PLUS, शून्य,
-		ring_reset_ctl_ग_लिखो);
-#अघोषित RING_REG
+		~_MASKED_BIT_ENABLE(RESET_CTL_REQUEST_RESET), D_BDW_PLUS, NULL,
+		ring_reset_ctl_write);
+#undef RING_REG
 
-#घोषणा RING_REG(base) _MMIO((base) + 0x230)
-	MMIO_RING_DFH(RING_REG, D_BDW_PLUS, 0, शून्य, elsp_mmio_ग_लिखो);
-#अघोषित RING_REG
+#define RING_REG(base) _MMIO((base) + 0x230)
+	MMIO_RING_DFH(RING_REG, D_BDW_PLUS, 0, NULL, elsp_mmio_write);
+#undef RING_REG
 
-#घोषणा RING_REG(base) _MMIO((base) + 0x234)
+#define RING_REG(base) _MMIO((base) + 0x234)
 	MMIO_RING_F(RING_REG, 8, F_RO, 0, ~0, D_BDW_PLUS,
-		शून्य, शून्य);
-#अघोषित RING_REG
+		NULL, NULL);
+#undef RING_REG
 
-#घोषणा RING_REG(base) _MMIO((base) + 0x244)
-	MMIO_RING_DFH(RING_REG, D_BDW_PLUS, F_CMD_ACCESS, शून्य, शून्य);
-#अघोषित RING_REG
+#define RING_REG(base) _MMIO((base) + 0x244)
+	MMIO_RING_DFH(RING_REG, D_BDW_PLUS, F_CMD_ACCESS, NULL, NULL);
+#undef RING_REG
 
-#घोषणा RING_REG(base) _MMIO((base) + 0x370)
-	MMIO_RING_F(RING_REG, 48, F_RO, 0, ~0, D_BDW_PLUS, शून्य, शून्य);
-#अघोषित RING_REG
+#define RING_REG(base) _MMIO((base) + 0x370)
+	MMIO_RING_F(RING_REG, 48, F_RO, 0, ~0, D_BDW_PLUS, NULL, NULL);
+#undef RING_REG
 
-#घोषणा RING_REG(base) _MMIO((base) + 0x3a0)
-	MMIO_RING_DFH(RING_REG, D_BDW_PLUS, F_MODE_MASK, शून्य, शून्य);
-#अघोषित RING_REG
+#define RING_REG(base) _MMIO((base) + 0x3a0)
+	MMIO_RING_DFH(RING_REG, D_BDW_PLUS, F_MODE_MASK, NULL, NULL);
+#undef RING_REG
 
 	MMIO_D(PIPEMISC(PIPE_A), D_BDW_PLUS);
 	MMIO_D(PIPEMISC(PIPE_B), D_BDW_PLUS);
@@ -3090,20 +3089,20 @@ out:
 	MMIO_D(GEN7_MISCCPCTL, D_BDW_PLUS);
 	MMIO_D(_MMIO(0x1c054), D_BDW_PLUS);
 
-	MMIO_DH(GEN6_PCODE_MAILBOX, D_BDW_PLUS, शून्य, mailbox_ग_लिखो);
+	MMIO_DH(GEN6_PCODE_MAILBOX, D_BDW_PLUS, NULL, mailbox_write);
 
 	MMIO_D(GEN8_PRIVATE_PAT_LO, D_BDW_PLUS & ~D_BXT);
 	MMIO_D(GEN8_PRIVATE_PAT_HI, D_BDW_PLUS);
 
 	MMIO_D(GAMTARBMODE, D_BDW_PLUS);
 
-#घोषणा RING_REG(base) _MMIO((base) + 0x270)
-	MMIO_RING_F(RING_REG, 32, F_CMD_ACCESS, 0, 0, D_BDW_PLUS, शून्य, शून्य);
-#अघोषित RING_REG
+#define RING_REG(base) _MMIO((base) + 0x270)
+	MMIO_RING_F(RING_REG, 32, F_CMD_ACCESS, 0, 0, D_BDW_PLUS, NULL, NULL);
+#undef RING_REG
 
-	MMIO_RING_GM(RING_HWS_PGA, D_BDW_PLUS, शून्य, hws_pga_ग_लिखो);
+	MMIO_RING_GM(RING_HWS_PGA, D_BDW_PLUS, NULL, hws_pga_write);
 
-	MMIO_DFH(HDC_CHICKEN0, D_BDW_PLUS, F_MODE_MASK | F_CMD_ACCESS, शून्य, शून्य);
+	MMIO_DFH(HDC_CHICKEN0, D_BDW_PLUS, F_MODE_MASK | F_CMD_ACCESS, NULL, NULL);
 
 	MMIO_D(CHICKEN_PIPESL_1(PIPE_A), D_BDW_PLUS);
 	MMIO_D(CHICKEN_PIPESL_1(PIPE_B), D_BDW_PLUS);
@@ -3124,28 +3123,28 @@ out:
 
 	MMIO_D(_MMIO(0xfdc), D_BDW_PLUS);
 	MMIO_DFH(GEN8_ROW_CHICKEN, D_BDW_PLUS, F_MODE_MASK | F_CMD_ACCESS,
-		शून्य, शून्य);
+		NULL, NULL);
 	MMIO_DFH(GEN7_ROW_CHICKEN2, D_BDW_PLUS, F_MODE_MASK | F_CMD_ACCESS,
-		शून्य, शून्य);
-	MMIO_DFH(GEN8_UCGCTL6, D_BDW_PLUS, F_CMD_ACCESS, शून्य, शून्य);
+		NULL, NULL);
+	MMIO_DFH(GEN8_UCGCTL6, D_BDW_PLUS, F_CMD_ACCESS, NULL, NULL);
 
-	MMIO_DFH(_MMIO(0xb1f0), D_BDW, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0xb1c0), D_BDW, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(GEN8_L3SQCREG4, D_BDW_PLUS, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0xb100), D_BDW, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0xb10c), D_BDW, F_CMD_ACCESS, शून्य, शून्य);
+	MMIO_DFH(_MMIO(0xb1f0), D_BDW, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0xb1c0), D_BDW, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(GEN8_L3SQCREG4, D_BDW_PLUS, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0xb100), D_BDW, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0xb10c), D_BDW, F_CMD_ACCESS, NULL, NULL);
 	MMIO_D(_MMIO(0xb110), D_BDW);
 
 	MMIO_F(_MMIO(0x24d0), 48, F_CMD_ACCESS | F_CMD_WRITE_PATCH, 0, 0,
-		D_BDW_PLUS, शून्य, क्रमce_nonpriv_ग_लिखो);
+		D_BDW_PLUS, NULL, force_nonpriv_write);
 
 	MMIO_D(_MMIO(0x44484), D_BDW_PLUS);
 	MMIO_D(_MMIO(0x4448c), D_BDW_PLUS);
 
-	MMIO_DFH(_MMIO(0x83a4), D_BDW, F_CMD_ACCESS, शून्य, शून्य);
+	MMIO_DFH(_MMIO(0x83a4), D_BDW, F_CMD_ACCESS, NULL, NULL);
 	MMIO_D(GEN8_L3_LRA_1_GPGPU, D_BDW_PLUS);
 
-	MMIO_DFH(_MMIO(0x8430), D_BDW, F_CMD_ACCESS, शून्य, शून्य);
+	MMIO_DFH(_MMIO(0x8430), D_BDW, F_CMD_ACCESS, NULL, NULL);
 
 	MMIO_D(_MMIO(0x110000), D_BDW_PLUS);
 
@@ -3154,61 +3153,61 @@ out:
 	MMIO_D(_MMIO(0x6e570), D_BDW_PLUS);
 	MMIO_D(_MMIO(0x65f10), D_BDW_PLUS);
 
-	MMIO_DFH(_MMIO(0xe194), D_BDW_PLUS, F_MODE_MASK | F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0xe188), D_BDW_PLUS, F_MODE_MASK | F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(HALF_SLICE_CHICKEN2, D_BDW_PLUS, F_MODE_MASK | F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0x2580), D_BDW_PLUS, F_MODE_MASK | F_CMD_ACCESS, शून्य, शून्य);
+	MMIO_DFH(_MMIO(0xe194), D_BDW_PLUS, F_MODE_MASK | F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0xe188), D_BDW_PLUS, F_MODE_MASK | F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(HALF_SLICE_CHICKEN2, D_BDW_PLUS, F_MODE_MASK | F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0x2580), D_BDW_PLUS, F_MODE_MASK | F_CMD_ACCESS, NULL, NULL);
 
-	MMIO_DFH(_MMIO(0x2248), D_BDW, F_CMD_ACCESS, शून्य, शून्य);
+	MMIO_DFH(_MMIO(0x2248), D_BDW, F_CMD_ACCESS, NULL, NULL);
 
-	MMIO_DFH(_MMIO(0xe220), D_BDW_PLUS, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0xe230), D_BDW_PLUS, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0xe240), D_BDW_PLUS, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0xe260), D_BDW_PLUS, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0xe270), D_BDW_PLUS, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0xe280), D_BDW_PLUS, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0xe2a0), D_BDW_PLUS, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0xe2b0), D_BDW_PLUS, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0xe2c0), D_BDW_PLUS, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0x21f0), D_BDW_PLUS, F_CMD_ACCESS, शून्य, शून्य);
-	वापस 0;
-पूर्ण
+	MMIO_DFH(_MMIO(0xe220), D_BDW_PLUS, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0xe230), D_BDW_PLUS, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0xe240), D_BDW_PLUS, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0xe260), D_BDW_PLUS, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0xe270), D_BDW_PLUS, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0xe280), D_BDW_PLUS, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0xe2a0), D_BDW_PLUS, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0xe2b0), D_BDW_PLUS, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0xe2c0), D_BDW_PLUS, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0x21f0), D_BDW_PLUS, F_CMD_ACCESS, NULL, NULL);
+	return 0;
+}
 
-अटल पूर्णांक init_skl_mmio_info(काष्ठा पूर्णांकel_gvt *gvt)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = gvt->gt->i915;
-	पूर्णांक ret;
+static int init_skl_mmio_info(struct intel_gvt *gvt)
+{
+	struct drm_i915_private *dev_priv = gvt->gt->i915;
+	int ret;
 
-	MMIO_DH(FORCEWAKE_RENDER_GEN9, D_SKL_PLUS, शून्य, mul_क्रमce_wake_ग_लिखो);
-	MMIO_DH(FORCEWAKE_ACK_RENDER_GEN9, D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(FORCEWAKE_GT_GEN9, D_SKL_PLUS, शून्य, mul_क्रमce_wake_ग_लिखो);
-	MMIO_DH(FORCEWAKE_ACK_GT_GEN9, D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(FORCEWAKE_MEDIA_GEN9, D_SKL_PLUS, शून्य, mul_क्रमce_wake_ग_लिखो);
-	MMIO_DH(FORCEWAKE_ACK_MEDIA_GEN9, D_SKL_PLUS, शून्य, शून्य);
+	MMIO_DH(FORCEWAKE_RENDER_GEN9, D_SKL_PLUS, NULL, mul_force_wake_write);
+	MMIO_DH(FORCEWAKE_ACK_RENDER_GEN9, D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(FORCEWAKE_GT_GEN9, D_SKL_PLUS, NULL, mul_force_wake_write);
+	MMIO_DH(FORCEWAKE_ACK_GT_GEN9, D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(FORCEWAKE_MEDIA_GEN9, D_SKL_PLUS, NULL, mul_force_wake_write);
+	MMIO_DH(FORCEWAKE_ACK_MEDIA_GEN9, D_SKL_PLUS, NULL, NULL);
 
-	MMIO_F(DP_AUX_CH_CTL(AUX_CH_B), 6 * 4, 0, 0, 0, D_SKL_PLUS, शून्य,
-						dp_aux_ch_ctl_mmio_ग_लिखो);
-	MMIO_F(DP_AUX_CH_CTL(AUX_CH_C), 6 * 4, 0, 0, 0, D_SKL_PLUS, शून्य,
-						dp_aux_ch_ctl_mmio_ग_लिखो);
-	MMIO_F(DP_AUX_CH_CTL(AUX_CH_D), 6 * 4, 0, 0, 0, D_SKL_PLUS, शून्य,
-						dp_aux_ch_ctl_mmio_ग_लिखो);
+	MMIO_F(DP_AUX_CH_CTL(AUX_CH_B), 6 * 4, 0, 0, 0, D_SKL_PLUS, NULL,
+						dp_aux_ch_ctl_mmio_write);
+	MMIO_F(DP_AUX_CH_CTL(AUX_CH_C), 6 * 4, 0, 0, 0, D_SKL_PLUS, NULL,
+						dp_aux_ch_ctl_mmio_write);
+	MMIO_F(DP_AUX_CH_CTL(AUX_CH_D), 6 * 4, 0, 0, 0, D_SKL_PLUS, NULL,
+						dp_aux_ch_ctl_mmio_write);
 
 	MMIO_D(HSW_PWR_WELL_CTL1, D_SKL_PLUS);
-	MMIO_DH(HSW_PWR_WELL_CTL2, D_SKL_PLUS, शून्य, skl_घातer_well_ctl_ग_लिखो);
+	MMIO_DH(HSW_PWR_WELL_CTL2, D_SKL_PLUS, NULL, skl_power_well_ctl_write);
 
-	MMIO_DH(DBUF_CTL_S(0), D_SKL_PLUS, शून्य, gen9_dbuf_ctl_mmio_ग_लिखो);
+	MMIO_DH(DBUF_CTL_S(0), D_SKL_PLUS, NULL, gen9_dbuf_ctl_mmio_write);
 
 	MMIO_D(GEN9_PG_ENABLE, D_SKL_PLUS);
 	MMIO_D(GEN9_MEDIA_PG_IDLE_HYSTERESIS, D_SKL_PLUS);
 	MMIO_D(GEN9_RENDER_PG_IDLE_HYSTERESIS, D_SKL_PLUS);
-	MMIO_DFH(GEN9_GAMT_ECO_REG_RW_IA, D_SKL_PLUS, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(MMCD_MISC_CTRL, D_SKL_PLUS, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DH(CHICKEN_PAR1_1, D_SKL_PLUS, शून्य, शून्य);
+	MMIO_DFH(GEN9_GAMT_ECO_REG_RW_IA, D_SKL_PLUS, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(MMCD_MISC_CTRL, D_SKL_PLUS, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DH(CHICKEN_PAR1_1, D_SKL_PLUS, NULL, NULL);
 	MMIO_D(DC_STATE_EN, D_SKL_PLUS);
 	MMIO_D(DC_STATE_DEBUG, D_SKL_PLUS);
 	MMIO_D(CDCLK_CTL, D_SKL_PLUS);
-	MMIO_DH(LCPLL1_CTL, D_SKL_PLUS, शून्य, skl_lcpll_ग_लिखो);
-	MMIO_DH(LCPLL2_CTL, D_SKL_PLUS, शून्य, skl_lcpll_ग_लिखो);
+	MMIO_DH(LCPLL1_CTL, D_SKL_PLUS, NULL, skl_lcpll_write);
+	MMIO_DH(LCPLL2_CTL, D_SKL_PLUS, NULL, skl_lcpll_write);
 	MMIO_D(_MMIO(_DPLL1_CFGCR1), D_SKL_PLUS);
 	MMIO_D(_MMIO(_DPLL2_CFGCR1), D_SKL_PLUS);
 	MMIO_D(_MMIO(_DPLL3_CFGCR1), D_SKL_PLUS);
@@ -3217,124 +3216,124 @@ out:
 	MMIO_D(_MMIO(_DPLL3_CFGCR2), D_SKL_PLUS);
 	MMIO_D(DPLL_CTRL1, D_SKL_PLUS);
 	MMIO_D(DPLL_CTRL2, D_SKL_PLUS);
-	MMIO_DH(DPLL_STATUS, D_SKL_PLUS, dpll_status_पढ़ो, शून्य);
+	MMIO_DH(DPLL_STATUS, D_SKL_PLUS, dpll_status_read, NULL);
 
-	MMIO_DH(SKL_PS_WIN_POS(PIPE_A, 0), D_SKL_PLUS, शून्य, pf_ग_लिखो);
-	MMIO_DH(SKL_PS_WIN_POS(PIPE_A, 1), D_SKL_PLUS, शून्य, pf_ग_लिखो);
-	MMIO_DH(SKL_PS_WIN_POS(PIPE_B, 0), D_SKL_PLUS, शून्य, pf_ग_लिखो);
-	MMIO_DH(SKL_PS_WIN_POS(PIPE_B, 1), D_SKL_PLUS, शून्य, pf_ग_लिखो);
-	MMIO_DH(SKL_PS_WIN_POS(PIPE_C, 0), D_SKL_PLUS, शून्य, pf_ग_लिखो);
-	MMIO_DH(SKL_PS_WIN_POS(PIPE_C, 1), D_SKL_PLUS, शून्य, pf_ग_लिखो);
+	MMIO_DH(SKL_PS_WIN_POS(PIPE_A, 0), D_SKL_PLUS, NULL, pf_write);
+	MMIO_DH(SKL_PS_WIN_POS(PIPE_A, 1), D_SKL_PLUS, NULL, pf_write);
+	MMIO_DH(SKL_PS_WIN_POS(PIPE_B, 0), D_SKL_PLUS, NULL, pf_write);
+	MMIO_DH(SKL_PS_WIN_POS(PIPE_B, 1), D_SKL_PLUS, NULL, pf_write);
+	MMIO_DH(SKL_PS_WIN_POS(PIPE_C, 0), D_SKL_PLUS, NULL, pf_write);
+	MMIO_DH(SKL_PS_WIN_POS(PIPE_C, 1), D_SKL_PLUS, NULL, pf_write);
 
-	MMIO_DH(SKL_PS_WIN_SZ(PIPE_A, 0), D_SKL_PLUS, शून्य, pf_ग_लिखो);
-	MMIO_DH(SKL_PS_WIN_SZ(PIPE_A, 1), D_SKL_PLUS, शून्य, pf_ग_लिखो);
-	MMIO_DH(SKL_PS_WIN_SZ(PIPE_B, 0), D_SKL_PLUS, शून्य, pf_ग_लिखो);
-	MMIO_DH(SKL_PS_WIN_SZ(PIPE_B, 1), D_SKL_PLUS, शून्य, pf_ग_लिखो);
-	MMIO_DH(SKL_PS_WIN_SZ(PIPE_C, 0), D_SKL_PLUS, शून्य, pf_ग_लिखो);
-	MMIO_DH(SKL_PS_WIN_SZ(PIPE_C, 1), D_SKL_PLUS, शून्य, pf_ग_लिखो);
+	MMIO_DH(SKL_PS_WIN_SZ(PIPE_A, 0), D_SKL_PLUS, NULL, pf_write);
+	MMIO_DH(SKL_PS_WIN_SZ(PIPE_A, 1), D_SKL_PLUS, NULL, pf_write);
+	MMIO_DH(SKL_PS_WIN_SZ(PIPE_B, 0), D_SKL_PLUS, NULL, pf_write);
+	MMIO_DH(SKL_PS_WIN_SZ(PIPE_B, 1), D_SKL_PLUS, NULL, pf_write);
+	MMIO_DH(SKL_PS_WIN_SZ(PIPE_C, 0), D_SKL_PLUS, NULL, pf_write);
+	MMIO_DH(SKL_PS_WIN_SZ(PIPE_C, 1), D_SKL_PLUS, NULL, pf_write);
 
-	MMIO_DH(SKL_PS_CTRL(PIPE_A, 0), D_SKL_PLUS, शून्य, pf_ग_लिखो);
-	MMIO_DH(SKL_PS_CTRL(PIPE_A, 1), D_SKL_PLUS, शून्य, pf_ग_लिखो);
-	MMIO_DH(SKL_PS_CTRL(PIPE_B, 0), D_SKL_PLUS, शून्य, pf_ग_लिखो);
-	MMIO_DH(SKL_PS_CTRL(PIPE_B, 1), D_SKL_PLUS, शून्य, pf_ग_लिखो);
-	MMIO_DH(SKL_PS_CTRL(PIPE_C, 0), D_SKL_PLUS, शून्य, pf_ग_लिखो);
-	MMIO_DH(SKL_PS_CTRL(PIPE_C, 1), D_SKL_PLUS, शून्य, pf_ग_लिखो);
+	MMIO_DH(SKL_PS_CTRL(PIPE_A, 0), D_SKL_PLUS, NULL, pf_write);
+	MMIO_DH(SKL_PS_CTRL(PIPE_A, 1), D_SKL_PLUS, NULL, pf_write);
+	MMIO_DH(SKL_PS_CTRL(PIPE_B, 0), D_SKL_PLUS, NULL, pf_write);
+	MMIO_DH(SKL_PS_CTRL(PIPE_B, 1), D_SKL_PLUS, NULL, pf_write);
+	MMIO_DH(SKL_PS_CTRL(PIPE_C, 0), D_SKL_PLUS, NULL, pf_write);
+	MMIO_DH(SKL_PS_CTRL(PIPE_C, 1), D_SKL_PLUS, NULL, pf_write);
 
-	MMIO_DH(PLANE_BUF_CFG(PIPE_A, 0), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(PLANE_BUF_CFG(PIPE_A, 1), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(PLANE_BUF_CFG(PIPE_A, 2), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(PLANE_BUF_CFG(PIPE_A, 3), D_SKL_PLUS, शून्य, शून्य);
+	MMIO_DH(PLANE_BUF_CFG(PIPE_A, 0), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(PLANE_BUF_CFG(PIPE_A, 1), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(PLANE_BUF_CFG(PIPE_A, 2), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(PLANE_BUF_CFG(PIPE_A, 3), D_SKL_PLUS, NULL, NULL);
 
-	MMIO_DH(PLANE_BUF_CFG(PIPE_B, 0), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(PLANE_BUF_CFG(PIPE_B, 1), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(PLANE_BUF_CFG(PIPE_B, 2), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(PLANE_BUF_CFG(PIPE_B, 3), D_SKL_PLUS, शून्य, शून्य);
+	MMIO_DH(PLANE_BUF_CFG(PIPE_B, 0), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(PLANE_BUF_CFG(PIPE_B, 1), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(PLANE_BUF_CFG(PIPE_B, 2), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(PLANE_BUF_CFG(PIPE_B, 3), D_SKL_PLUS, NULL, NULL);
 
-	MMIO_DH(PLANE_BUF_CFG(PIPE_C, 0), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(PLANE_BUF_CFG(PIPE_C, 1), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(PLANE_BUF_CFG(PIPE_C, 2), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(PLANE_BUF_CFG(PIPE_C, 3), D_SKL_PLUS, शून्य, शून्य);
+	MMIO_DH(PLANE_BUF_CFG(PIPE_C, 0), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(PLANE_BUF_CFG(PIPE_C, 1), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(PLANE_BUF_CFG(PIPE_C, 2), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(PLANE_BUF_CFG(PIPE_C, 3), D_SKL_PLUS, NULL, NULL);
 
-	MMIO_DH(CUR_BUF_CFG(PIPE_A), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(CUR_BUF_CFG(PIPE_B), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(CUR_BUF_CFG(PIPE_C), D_SKL_PLUS, शून्य, शून्य);
+	MMIO_DH(CUR_BUF_CFG(PIPE_A), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(CUR_BUF_CFG(PIPE_B), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(CUR_BUF_CFG(PIPE_C), D_SKL_PLUS, NULL, NULL);
 
-	MMIO_F(PLANE_WM(PIPE_A, 0, 0), 4 * 8, 0, 0, 0, D_SKL_PLUS, शून्य, शून्य);
-	MMIO_F(PLANE_WM(PIPE_A, 1, 0), 4 * 8, 0, 0, 0, D_SKL_PLUS, शून्य, शून्य);
-	MMIO_F(PLANE_WM(PIPE_A, 2, 0), 4 * 8, 0, 0, 0, D_SKL_PLUS, शून्य, शून्य);
+	MMIO_F(PLANE_WM(PIPE_A, 0, 0), 4 * 8, 0, 0, 0, D_SKL_PLUS, NULL, NULL);
+	MMIO_F(PLANE_WM(PIPE_A, 1, 0), 4 * 8, 0, 0, 0, D_SKL_PLUS, NULL, NULL);
+	MMIO_F(PLANE_WM(PIPE_A, 2, 0), 4 * 8, 0, 0, 0, D_SKL_PLUS, NULL, NULL);
 
-	MMIO_F(PLANE_WM(PIPE_B, 0, 0), 4 * 8, 0, 0, 0, D_SKL_PLUS, शून्य, शून्य);
-	MMIO_F(PLANE_WM(PIPE_B, 1, 0), 4 * 8, 0, 0, 0, D_SKL_PLUS, शून्य, शून्य);
-	MMIO_F(PLANE_WM(PIPE_B, 2, 0), 4 * 8, 0, 0, 0, D_SKL_PLUS, शून्य, शून्य);
+	MMIO_F(PLANE_WM(PIPE_B, 0, 0), 4 * 8, 0, 0, 0, D_SKL_PLUS, NULL, NULL);
+	MMIO_F(PLANE_WM(PIPE_B, 1, 0), 4 * 8, 0, 0, 0, D_SKL_PLUS, NULL, NULL);
+	MMIO_F(PLANE_WM(PIPE_B, 2, 0), 4 * 8, 0, 0, 0, D_SKL_PLUS, NULL, NULL);
 
-	MMIO_F(PLANE_WM(PIPE_C, 0, 0), 4 * 8, 0, 0, 0, D_SKL_PLUS, शून्य, शून्य);
-	MMIO_F(PLANE_WM(PIPE_C, 1, 0), 4 * 8, 0, 0, 0, D_SKL_PLUS, शून्य, शून्य);
-	MMIO_F(PLANE_WM(PIPE_C, 2, 0), 4 * 8, 0, 0, 0, D_SKL_PLUS, शून्य, शून्य);
+	MMIO_F(PLANE_WM(PIPE_C, 0, 0), 4 * 8, 0, 0, 0, D_SKL_PLUS, NULL, NULL);
+	MMIO_F(PLANE_WM(PIPE_C, 1, 0), 4 * 8, 0, 0, 0, D_SKL_PLUS, NULL, NULL);
+	MMIO_F(PLANE_WM(PIPE_C, 2, 0), 4 * 8, 0, 0, 0, D_SKL_PLUS, NULL, NULL);
 
-	MMIO_F(CUR_WM(PIPE_A, 0), 4 * 8, 0, 0, 0, D_SKL_PLUS, शून्य, शून्य);
-	MMIO_F(CUR_WM(PIPE_B, 0), 4 * 8, 0, 0, 0, D_SKL_PLUS, शून्य, शून्य);
-	MMIO_F(CUR_WM(PIPE_C, 0), 4 * 8, 0, 0, 0, D_SKL_PLUS, शून्य, शून्य);
+	MMIO_F(CUR_WM(PIPE_A, 0), 4 * 8, 0, 0, 0, D_SKL_PLUS, NULL, NULL);
+	MMIO_F(CUR_WM(PIPE_B, 0), 4 * 8, 0, 0, 0, D_SKL_PLUS, NULL, NULL);
+	MMIO_F(CUR_WM(PIPE_C, 0), 4 * 8, 0, 0, 0, D_SKL_PLUS, NULL, NULL);
 
-	MMIO_DH(PLANE_WM_TRANS(PIPE_A, 0), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(PLANE_WM_TRANS(PIPE_A, 1), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(PLANE_WM_TRANS(PIPE_A, 2), D_SKL_PLUS, शून्य, शून्य);
+	MMIO_DH(PLANE_WM_TRANS(PIPE_A, 0), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(PLANE_WM_TRANS(PIPE_A, 1), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(PLANE_WM_TRANS(PIPE_A, 2), D_SKL_PLUS, NULL, NULL);
 
-	MMIO_DH(PLANE_WM_TRANS(PIPE_B, 0), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(PLANE_WM_TRANS(PIPE_B, 1), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(PLANE_WM_TRANS(PIPE_B, 2), D_SKL_PLUS, शून्य, शून्य);
+	MMIO_DH(PLANE_WM_TRANS(PIPE_B, 0), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(PLANE_WM_TRANS(PIPE_B, 1), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(PLANE_WM_TRANS(PIPE_B, 2), D_SKL_PLUS, NULL, NULL);
 
-	MMIO_DH(PLANE_WM_TRANS(PIPE_C, 0), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(PLANE_WM_TRANS(PIPE_C, 1), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(PLANE_WM_TRANS(PIPE_C, 2), D_SKL_PLUS, शून्य, शून्य);
+	MMIO_DH(PLANE_WM_TRANS(PIPE_C, 0), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(PLANE_WM_TRANS(PIPE_C, 1), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(PLANE_WM_TRANS(PIPE_C, 2), D_SKL_PLUS, NULL, NULL);
 
-	MMIO_DH(CUR_WM_TRANS(PIPE_A), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(CUR_WM_TRANS(PIPE_B), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(CUR_WM_TRANS(PIPE_C), D_SKL_PLUS, शून्य, शून्य);
+	MMIO_DH(CUR_WM_TRANS(PIPE_A), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(CUR_WM_TRANS(PIPE_B), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(CUR_WM_TRANS(PIPE_C), D_SKL_PLUS, NULL, NULL);
 
-	MMIO_DH(PLANE_NV12_BUF_CFG(PIPE_A, 0), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(PLANE_NV12_BUF_CFG(PIPE_A, 1), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(PLANE_NV12_BUF_CFG(PIPE_A, 2), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(PLANE_NV12_BUF_CFG(PIPE_A, 3), D_SKL_PLUS, शून्य, शून्य);
+	MMIO_DH(PLANE_NV12_BUF_CFG(PIPE_A, 0), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(PLANE_NV12_BUF_CFG(PIPE_A, 1), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(PLANE_NV12_BUF_CFG(PIPE_A, 2), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(PLANE_NV12_BUF_CFG(PIPE_A, 3), D_SKL_PLUS, NULL, NULL);
 
-	MMIO_DH(PLANE_NV12_BUF_CFG(PIPE_B, 0), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(PLANE_NV12_BUF_CFG(PIPE_B, 1), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(PLANE_NV12_BUF_CFG(PIPE_B, 2), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(PLANE_NV12_BUF_CFG(PIPE_B, 3), D_SKL_PLUS, शून्य, शून्य);
+	MMIO_DH(PLANE_NV12_BUF_CFG(PIPE_B, 0), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(PLANE_NV12_BUF_CFG(PIPE_B, 1), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(PLANE_NV12_BUF_CFG(PIPE_B, 2), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(PLANE_NV12_BUF_CFG(PIPE_B, 3), D_SKL_PLUS, NULL, NULL);
 
-	MMIO_DH(PLANE_NV12_BUF_CFG(PIPE_C, 0), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(PLANE_NV12_BUF_CFG(PIPE_C, 1), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(PLANE_NV12_BUF_CFG(PIPE_C, 2), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(PLANE_NV12_BUF_CFG(PIPE_C, 3), D_SKL_PLUS, शून्य, शून्य);
+	MMIO_DH(PLANE_NV12_BUF_CFG(PIPE_C, 0), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(PLANE_NV12_BUF_CFG(PIPE_C, 1), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(PLANE_NV12_BUF_CFG(PIPE_C, 2), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(PLANE_NV12_BUF_CFG(PIPE_C, 3), D_SKL_PLUS, NULL, NULL);
 
-	MMIO_DH(_MMIO(_REG_701C0(PIPE_A, 1)), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(_MMIO(_REG_701C0(PIPE_A, 2)), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(_MMIO(_REG_701C0(PIPE_A, 3)), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(_MMIO(_REG_701C0(PIPE_A, 4)), D_SKL_PLUS, शून्य, शून्य);
+	MMIO_DH(_MMIO(_REG_701C0(PIPE_A, 1)), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(_MMIO(_REG_701C0(PIPE_A, 2)), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(_MMIO(_REG_701C0(PIPE_A, 3)), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(_MMIO(_REG_701C0(PIPE_A, 4)), D_SKL_PLUS, NULL, NULL);
 
-	MMIO_DH(_MMIO(_REG_701C0(PIPE_B, 1)), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(_MMIO(_REG_701C0(PIPE_B, 2)), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(_MMIO(_REG_701C0(PIPE_B, 3)), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(_MMIO(_REG_701C0(PIPE_B, 4)), D_SKL_PLUS, शून्य, शून्य);
+	MMIO_DH(_MMIO(_REG_701C0(PIPE_B, 1)), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(_MMIO(_REG_701C0(PIPE_B, 2)), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(_MMIO(_REG_701C0(PIPE_B, 3)), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(_MMIO(_REG_701C0(PIPE_B, 4)), D_SKL_PLUS, NULL, NULL);
 
-	MMIO_DH(_MMIO(_REG_701C0(PIPE_C, 1)), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(_MMIO(_REG_701C0(PIPE_C, 2)), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(_MMIO(_REG_701C0(PIPE_C, 3)), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(_MMIO(_REG_701C0(PIPE_C, 4)), D_SKL_PLUS, शून्य, शून्य);
+	MMIO_DH(_MMIO(_REG_701C0(PIPE_C, 1)), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(_MMIO(_REG_701C0(PIPE_C, 2)), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(_MMIO(_REG_701C0(PIPE_C, 3)), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(_MMIO(_REG_701C0(PIPE_C, 4)), D_SKL_PLUS, NULL, NULL);
 
-	MMIO_DH(_MMIO(_REG_701C4(PIPE_A, 1)), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(_MMIO(_REG_701C4(PIPE_A, 2)), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(_MMIO(_REG_701C4(PIPE_A, 3)), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(_MMIO(_REG_701C4(PIPE_A, 4)), D_SKL_PLUS, शून्य, शून्य);
+	MMIO_DH(_MMIO(_REG_701C4(PIPE_A, 1)), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(_MMIO(_REG_701C4(PIPE_A, 2)), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(_MMIO(_REG_701C4(PIPE_A, 3)), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(_MMIO(_REG_701C4(PIPE_A, 4)), D_SKL_PLUS, NULL, NULL);
 
-	MMIO_DH(_MMIO(_REG_701C4(PIPE_B, 1)), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(_MMIO(_REG_701C4(PIPE_B, 2)), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(_MMIO(_REG_701C4(PIPE_B, 3)), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(_MMIO(_REG_701C4(PIPE_B, 4)), D_SKL_PLUS, शून्य, शून्य);
+	MMIO_DH(_MMIO(_REG_701C4(PIPE_B, 1)), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(_MMIO(_REG_701C4(PIPE_B, 2)), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(_MMIO(_REG_701C4(PIPE_B, 3)), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(_MMIO(_REG_701C4(PIPE_B, 4)), D_SKL_PLUS, NULL, NULL);
 
-	MMIO_DH(_MMIO(_REG_701C4(PIPE_C, 1)), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(_MMIO(_REG_701C4(PIPE_C, 2)), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(_MMIO(_REG_701C4(PIPE_C, 3)), D_SKL_PLUS, शून्य, शून्य);
-	MMIO_DH(_MMIO(_REG_701C4(PIPE_C, 4)), D_SKL_PLUS, शून्य, शून्य);
+	MMIO_DH(_MMIO(_REG_701C4(PIPE_C, 1)), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(_MMIO(_REG_701C4(PIPE_C, 2)), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(_MMIO(_REG_701C4(PIPE_C, 3)), D_SKL_PLUS, NULL, NULL);
+	MMIO_DH(_MMIO(_REG_701C4(PIPE_C, 4)), D_SKL_PLUS, NULL, NULL);
 
 	MMIO_D(_MMIO(_PLANE_CTL_3_A), D_SKL_PLUS);
 	MMIO_D(_MMIO(_PLANE_CTL_3_B), D_SKL_PLUS);
@@ -3347,42 +3346,42 @@ out:
 	MMIO_D(CSR_HTP_SKL, D_SKL_PLUS);
 	MMIO_D(CSR_LAST_WRITE, D_SKL_PLUS);
 
-	MMIO_DFH(BDW_SCRATCH1, D_SKL_PLUS, F_CMD_ACCESS, शून्य, शून्य);
+	MMIO_DFH(BDW_SCRATCH1, D_SKL_PLUS, F_CMD_ACCESS, NULL, NULL);
 
 	MMIO_D(SKL_DFSM, D_SKL_PLUS);
 	MMIO_D(DISPIO_CR_TX_BMU_CR0, D_SKL_PLUS);
 
 	MMIO_F(GEN9_GFX_MOCS(0), 0x7f8, F_CMD_ACCESS, 0, 0, D_SKL_PLUS,
-		शून्य, शून्य);
+		NULL, NULL);
 	MMIO_F(GEN7_L3CNTLREG2, 0x80, F_CMD_ACCESS, 0, 0, D_SKL_PLUS,
-		शून्य, शून्य);
+		NULL, NULL);
 
 	MMIO_D(RPM_CONFIG0, D_SKL_PLUS);
 	MMIO_D(_MMIO(0xd08), D_SKL_PLUS);
 	MMIO_D(RC6_LOCATION, D_SKL_PLUS);
 	MMIO_DFH(GEN7_FF_SLICE_CS_CHICKEN1, D_SKL_PLUS,
-		 F_MODE_MASK | F_CMD_ACCESS, शून्य, शून्य);
+		 F_MODE_MASK | F_CMD_ACCESS, NULL, NULL);
 	MMIO_DFH(GEN9_CS_DEBUG_MODE1, D_SKL_PLUS, F_MODE_MASK | F_CMD_ACCESS,
-		शून्य, शून्य);
+		NULL, NULL);
 
 	/* TRTT */
-	MMIO_DFH(TRVATTL3PTRDW(0), D_SKL_PLUS, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(TRVATTL3PTRDW(1), D_SKL_PLUS, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(TRVATTL3PTRDW(2), D_SKL_PLUS, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(TRVATTL3PTRDW(3), D_SKL_PLUS, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(TRVADR, D_SKL_PLUS, F_CMD_ACCESS, शून्य, शून्य);
+	MMIO_DFH(TRVATTL3PTRDW(0), D_SKL_PLUS, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(TRVATTL3PTRDW(1), D_SKL_PLUS, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(TRVATTL3PTRDW(2), D_SKL_PLUS, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(TRVATTL3PTRDW(3), D_SKL_PLUS, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(TRVADR, D_SKL_PLUS, F_CMD_ACCESS, NULL, NULL);
 	MMIO_DFH(TRTTE, D_SKL_PLUS, F_CMD_ACCESS | F_PM_SAVE,
-		 शून्य, gen9_trtte_ग_लिखो);
+		 NULL, gen9_trtte_write);
 	MMIO_DFH(_MMIO(0x4dfc), D_SKL_PLUS, F_PM_SAVE,
-		 शून्य, gen9_trtt_chicken_ग_लिखो);
+		 NULL, gen9_trtt_chicken_write);
 
 	MMIO_D(_MMIO(0x46430), D_SKL_PLUS);
 
 	MMIO_D(_MMIO(0x46520), D_SKL_PLUS);
 
 	MMIO_D(_MMIO(0xc403c), D_SKL_PLUS);
-	MMIO_DFH(GEN8_GARBCNTL, D_SKL_PLUS, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DH(DMA_CTRL, D_SKL_PLUS, शून्य, dma_ctrl_ग_लिखो);
+	MMIO_DFH(GEN8_GARBCNTL, D_SKL_PLUS, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DH(DMA_CTRL, D_SKL_PLUS, NULL, dma_ctrl_write);
 
 	MMIO_D(_MMIO(0x65900), D_SKL_PLUS);
 	MMIO_D(GEN6_STOLEN_RESERVED, D_SKL_PLUS);
@@ -3410,27 +3409,27 @@ out:
 	MMIO_D(_MMIO(_PLANE_KEYMSK_1(PIPE_C)), D_SKL_PLUS);
 
 	MMIO_D(_MMIO(0x44500), D_SKL_PLUS);
-#घोषणा CSFE_CHICKEN1_REG(base) _MMIO((base) + 0xD4)
+#define CSFE_CHICKEN1_REG(base) _MMIO((base) + 0xD4)
 	MMIO_RING_DFH(CSFE_CHICKEN1_REG, D_SKL_PLUS, F_MODE_MASK | F_CMD_ACCESS,
-		      शून्य, csfe_chicken1_mmio_ग_लिखो);
-#अघोषित CSFE_CHICKEN1_REG
+		      NULL, csfe_chicken1_mmio_write);
+#undef CSFE_CHICKEN1_REG
 	MMIO_DFH(GEN8_HDC_CHICKEN1, D_SKL_PLUS, F_MODE_MASK | F_CMD_ACCESS,
-		 शून्य, शून्य);
+		 NULL, NULL);
 	MMIO_DFH(GEN9_WM_CHICKEN3, D_SKL_PLUS, F_MODE_MASK | F_CMD_ACCESS,
-		 शून्य, शून्य);
+		 NULL, NULL);
 
-	MMIO_DFH(GAMT_CHKN_BIT_REG, D_KBL | D_CFL, F_CMD_ACCESS, शून्य, शून्य);
+	MMIO_DFH(GAMT_CHKN_BIT_REG, D_KBL | D_CFL, F_CMD_ACCESS, NULL, NULL);
 	MMIO_D(GEN9_CTX_PREEMPT_REG, D_SKL_PLUS & ~D_BXT);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक init_bxt_mmio_info(काष्ठा पूर्णांकel_gvt *gvt)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = gvt->gt->i915;
-	पूर्णांक ret;
+static int init_bxt_mmio_info(struct intel_gvt *gvt)
+{
+	struct drm_i915_private *dev_priv = gvt->gt->i915;
+	int ret;
 
-	MMIO_F(_MMIO(0x80000), 0x3000, 0, 0, 0, D_BXT, शून्य, शून्य);
+	MMIO_F(_MMIO(0x80000), 0x3000, 0, 0, 0, D_BXT, NULL, NULL);
 
 	MMIO_D(GEN7_SAMPLER_INSTDONE, D_BXT);
 	MMIO_D(GEN7_ROW_INSTDONE, D_BXT);
@@ -3453,23 +3452,23 @@ out:
 	MMIO_RING_D(RING_BBSTATE, D_BXT);
 	MMIO_RING_D(RING_IPEIR, D_BXT);
 
-	MMIO_F(SOFT_SCRATCH(0), 16 * 4, 0, 0, 0, D_BXT, शून्य, शून्य);
+	MMIO_F(SOFT_SCRATCH(0), 16 * 4, 0, 0, 0, D_BXT, NULL, NULL);
 
-	MMIO_DH(BXT_P_CR_GT_DISP_PWRON, D_BXT, शून्य, bxt_gt_disp_pwron_ग_लिखो);
+	MMIO_DH(BXT_P_CR_GT_DISP_PWRON, D_BXT, NULL, bxt_gt_disp_pwron_write);
 	MMIO_D(BXT_RP_STATE_CAP, D_BXT);
 	MMIO_DH(BXT_PHY_CTL_FAMILY(DPIO_PHY0), D_BXT,
-		शून्य, bxt_phy_ctl_family_ग_लिखो);
+		NULL, bxt_phy_ctl_family_write);
 	MMIO_DH(BXT_PHY_CTL_FAMILY(DPIO_PHY1), D_BXT,
-		शून्य, bxt_phy_ctl_family_ग_लिखो);
+		NULL, bxt_phy_ctl_family_write);
 	MMIO_D(BXT_PHY_CTL(PORT_A), D_BXT);
 	MMIO_D(BXT_PHY_CTL(PORT_B), D_BXT);
 	MMIO_D(BXT_PHY_CTL(PORT_C), D_BXT);
 	MMIO_DH(BXT_PORT_PLL_ENABLE(PORT_A), D_BXT,
-		शून्य, bxt_port_pll_enable_ग_लिखो);
+		NULL, bxt_port_pll_enable_write);
 	MMIO_DH(BXT_PORT_PLL_ENABLE(PORT_B), D_BXT,
-		शून्य, bxt_port_pll_enable_ग_लिखो);
-	MMIO_DH(BXT_PORT_PLL_ENABLE(PORT_C), D_BXT, शून्य,
-		bxt_port_pll_enable_ग_लिखो);
+		NULL, bxt_port_pll_enable_write);
+	MMIO_DH(BXT_PORT_PLL_ENABLE(PORT_C), D_BXT, NULL,
+		bxt_port_pll_enable_write);
 
 	MMIO_D(BXT_PORT_CL1CM_DW0(DPIO_PHY0), D_BXT);
 	MMIO_D(BXT_PORT_CL1CM_DW9(DPIO_PHY0), D_BXT);
@@ -3498,11 +3497,11 @@ out:
 	MMIO_D(BXT_PORT_PCS_DW12_LN01(DPIO_PHY0, DPIO_CH0), D_BXT);
 	MMIO_D(BXT_PORT_PCS_DW12_LN23(DPIO_PHY0, DPIO_CH0), D_BXT);
 	MMIO_DH(BXT_PORT_PCS_DW12_GRP(DPIO_PHY0, DPIO_CH0), D_BXT,
-		शून्य, bxt_pcs_dw12_grp_ग_लिखो);
+		NULL, bxt_pcs_dw12_grp_write);
 	MMIO_D(BXT_PORT_TX_DW2_LN0(DPIO_PHY0, DPIO_CH0), D_BXT);
 	MMIO_D(BXT_PORT_TX_DW2_GRP(DPIO_PHY0, DPIO_CH0), D_BXT);
 	MMIO_DH(BXT_PORT_TX_DW3_LN0(DPIO_PHY0, DPIO_CH0), D_BXT,
-		bxt_port_tx_dw3_पढ़ो, शून्य);
+		bxt_port_tx_dw3_read, NULL);
 	MMIO_D(BXT_PORT_TX_DW3_GRP(DPIO_PHY0, DPIO_CH0), D_BXT);
 	MMIO_D(BXT_PORT_TX_DW4_LN0(DPIO_PHY0, DPIO_CH0), D_BXT);
 	MMIO_D(BXT_PORT_TX_DW4_GRP(DPIO_PHY0, DPIO_CH0), D_BXT);
@@ -3526,11 +3525,11 @@ out:
 	MMIO_D(BXT_PORT_PCS_DW12_LN01(DPIO_PHY0, DPIO_CH1), D_BXT);
 	MMIO_D(BXT_PORT_PCS_DW12_LN23(DPIO_PHY0, DPIO_CH1), D_BXT);
 	MMIO_DH(BXT_PORT_PCS_DW12_GRP(DPIO_PHY0, DPIO_CH1), D_BXT,
-		शून्य, bxt_pcs_dw12_grp_ग_लिखो);
+		NULL, bxt_pcs_dw12_grp_write);
 	MMIO_D(BXT_PORT_TX_DW2_LN0(DPIO_PHY0, DPIO_CH1), D_BXT);
 	MMIO_D(BXT_PORT_TX_DW2_GRP(DPIO_PHY0, DPIO_CH1), D_BXT);
 	MMIO_DH(BXT_PORT_TX_DW3_LN0(DPIO_PHY0, DPIO_CH1), D_BXT,
-		bxt_port_tx_dw3_पढ़ो, शून्य);
+		bxt_port_tx_dw3_read, NULL);
 	MMIO_D(BXT_PORT_TX_DW3_GRP(DPIO_PHY0, DPIO_CH1), D_BXT);
 	MMIO_D(BXT_PORT_TX_DW4_LN0(DPIO_PHY0, DPIO_CH1), D_BXT);
 	MMIO_D(BXT_PORT_TX_DW4_GRP(DPIO_PHY0, DPIO_CH1), D_BXT);
@@ -3554,11 +3553,11 @@ out:
 	MMIO_D(BXT_PORT_PCS_DW12_LN01(DPIO_PHY1, DPIO_CH0), D_BXT);
 	MMIO_D(BXT_PORT_PCS_DW12_LN23(DPIO_PHY1, DPIO_CH0), D_BXT);
 	MMIO_DH(BXT_PORT_PCS_DW12_GRP(DPIO_PHY1, DPIO_CH0), D_BXT,
-		शून्य, bxt_pcs_dw12_grp_ग_लिखो);
+		NULL, bxt_pcs_dw12_grp_write);
 	MMIO_D(BXT_PORT_TX_DW2_LN0(DPIO_PHY1, DPIO_CH0), D_BXT);
 	MMIO_D(BXT_PORT_TX_DW2_GRP(DPIO_PHY1, DPIO_CH0), D_BXT);
 	MMIO_DH(BXT_PORT_TX_DW3_LN0(DPIO_PHY1, DPIO_CH0), D_BXT,
-		bxt_port_tx_dw3_पढ़ो, शून्य);
+		bxt_port_tx_dw3_read, NULL);
 	MMIO_D(BXT_PORT_TX_DW3_GRP(DPIO_PHY1, DPIO_CH0), D_BXT);
 	MMIO_D(BXT_PORT_TX_DW4_LN0(DPIO_PHY1, DPIO_CH0), D_BXT);
 	MMIO_D(BXT_PORT_TX_DW4_GRP(DPIO_PHY1, DPIO_CH0), D_BXT);
@@ -3576,7 +3575,7 @@ out:
 	MMIO_D(BXT_PORT_PLL(DPIO_PHY1, DPIO_CH0, 10), D_BXT);
 
 	MMIO_D(BXT_DE_PLL_CTL, D_BXT);
-	MMIO_DH(BXT_DE_PLL_ENABLE, D_BXT, शून्य, bxt_de_pll_enable_ग_लिखो);
+	MMIO_DH(BXT_DE_PLL_ENABLE, D_BXT, NULL, bxt_de_pll_enable_write);
 	MMIO_D(BXT_DSI_PLL_CTL, D_BXT);
 	MMIO_D(BXT_DSI_PLL_ENABLE, D_BXT);
 
@@ -3593,369 +3592,369 @@ out:
 	MMIO_D(GEN8_PUSHBUS_ENABLE, D_BXT);
 	MMIO_D(GEN8_PUSHBUS_SHIFT, D_BXT);
 	MMIO_D(GEN6_GFXPAUSE, D_BXT);
-	MMIO_DFH(GEN8_L3SQCREG1, D_BXT, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(GEN8_L3CNTLREG, D_BXT, F_CMD_ACCESS, शून्य, शून्य);
-	MMIO_DFH(_MMIO(0x20D8), D_BXT, F_CMD_ACCESS, शून्य, शून्य);
+	MMIO_DFH(GEN8_L3SQCREG1, D_BXT, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(GEN8_L3CNTLREG, D_BXT, F_CMD_ACCESS, NULL, NULL);
+	MMIO_DFH(_MMIO(0x20D8), D_BXT, F_CMD_ACCESS, NULL, NULL);
 	MMIO_F(GEN8_RING_CS_GPR(RENDER_RING_BASE, 0), 0x40, F_CMD_ACCESS,
-	       0, 0, D_BXT, शून्य, शून्य);
+	       0, 0, D_BXT, NULL, NULL);
 	MMIO_F(GEN8_RING_CS_GPR(GEN6_BSD_RING_BASE, 0), 0x40, F_CMD_ACCESS,
-	       0, 0, D_BXT, शून्य, शून्य);
+	       0, 0, D_BXT, NULL, NULL);
 	MMIO_F(GEN8_RING_CS_GPR(BLT_RING_BASE, 0), 0x40, F_CMD_ACCESS,
-	       0, 0, D_BXT, शून्य, शून्य);
+	       0, 0, D_BXT, NULL, NULL);
 	MMIO_F(GEN8_RING_CS_GPR(VEBOX_RING_BASE, 0), 0x40, F_CMD_ACCESS,
-	       0, 0, D_BXT, शून्य, शून्य);
+	       0, 0, D_BXT, NULL, NULL);
 
-	MMIO_DFH(GEN9_CTX_PREEMPT_REG, D_BXT, F_CMD_ACCESS, शून्य, शून्य);
+	MMIO_DFH(GEN9_CTX_PREEMPT_REG, D_BXT, F_CMD_ACCESS, NULL, NULL);
 
-	MMIO_DH(GEN8_PRIVATE_PAT_LO, D_BXT, शून्य, bxt_ppat_low_ग_लिखो);
+	MMIO_DH(GEN8_PRIVATE_PAT_LO, D_BXT, NULL, bxt_ppat_low_write);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा gvt_mmio_block *find_mmio_block(काष्ठा पूर्णांकel_gvt *gvt,
-					      अचिन्हित पूर्णांक offset)
-अणु
-	अचिन्हित दीर्घ device = पूर्णांकel_gvt_get_device_type(gvt);
-	काष्ठा gvt_mmio_block *block = gvt->mmio.mmio_block;
-	पूर्णांक num = gvt->mmio.num_mmio_block;
-	पूर्णांक i;
+static struct gvt_mmio_block *find_mmio_block(struct intel_gvt *gvt,
+					      unsigned int offset)
+{
+	unsigned long device = intel_gvt_get_device_type(gvt);
+	struct gvt_mmio_block *block = gvt->mmio.mmio_block;
+	int num = gvt->mmio.num_mmio_block;
+	int i;
 
-	क्रम (i = 0; i < num; i++, block++) अणु
-		अगर (!(device & block->device))
-			जारी;
-		अगर (offset >= i915_mmio_reg_offset(block->offset) &&
+	for (i = 0; i < num; i++, block++) {
+		if (!(device & block->device))
+			continue;
+		if (offset >= i915_mmio_reg_offset(block->offset) &&
 		    offset < i915_mmio_reg_offset(block->offset) + block->size)
-			वापस block;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+			return block;
+	}
+	return NULL;
+}
 
 /**
- * पूर्णांकel_gvt_clean_mmio_info - clean up MMIO inक्रमmation table क्रम GVT device
+ * intel_gvt_clean_mmio_info - clean up MMIO information table for GVT device
  * @gvt: GVT device
  *
  * This function is called at the driver unloading stage, to clean up the MMIO
- * inक्रमmation table of GVT device
+ * information table of GVT device
  *
  */
-व्योम पूर्णांकel_gvt_clean_mmio_info(काष्ठा पूर्णांकel_gvt *gvt)
-अणु
-	काष्ठा hlist_node *पंचांगp;
-	काष्ठा पूर्णांकel_gvt_mmio_info *e;
-	पूर्णांक i;
+void intel_gvt_clean_mmio_info(struct intel_gvt *gvt)
+{
+	struct hlist_node *tmp;
+	struct intel_gvt_mmio_info *e;
+	int i;
 
-	hash_क्रम_each_safe(gvt->mmio.mmio_info_table, i, पंचांगp, e, node)
-		kमुक्त(e);
+	hash_for_each_safe(gvt->mmio.mmio_info_table, i, tmp, e, node)
+		kfree(e);
 
-	vमुक्त(gvt->mmio.mmio_attribute);
-	gvt->mmio.mmio_attribute = शून्य;
-पूर्ण
+	vfree(gvt->mmio.mmio_attribute);
+	gvt->mmio.mmio_attribute = NULL;
+}
 
-/* Special MMIO blocks. रेजिस्टरs in MMIO block ranges should not be command
+/* Special MMIO blocks. registers in MMIO block ranges should not be command
  * accessible (should have no F_CMD_ACCESS flag).
  * otherwise, need to update cmd_reg_handler in cmd_parser.c
  */
-अटल काष्ठा gvt_mmio_block mmio_blocks[] = अणु
-	अणुD_SKL_PLUS, _MMIO(CSR_MMIO_START_RANGE), 0x3000, शून्य, शून्यपूर्ण,
-	अणुD_ALL, _MMIO(MCHBAR_MIRROR_BASE_SNB), 0x40000, शून्य, शून्यपूर्ण,
-	अणुD_ALL, _MMIO(VGT_PVINFO_PAGE), VGT_PVINFO_SIZE,
-		pvinfo_mmio_पढ़ो, pvinfo_mmio_ग_लिखोपूर्ण,
-	अणुD_ALL, LGC_PALETTE(PIPE_A, 0), 1024, शून्य, शून्यपूर्ण,
-	अणुD_ALL, LGC_PALETTE(PIPE_B, 0), 1024, शून्य, शून्यपूर्ण,
-	अणुD_ALL, LGC_PALETTE(PIPE_C, 0), 1024, शून्य, शून्यपूर्ण,
-पूर्ण;
+static struct gvt_mmio_block mmio_blocks[] = {
+	{D_SKL_PLUS, _MMIO(CSR_MMIO_START_RANGE), 0x3000, NULL, NULL},
+	{D_ALL, _MMIO(MCHBAR_MIRROR_BASE_SNB), 0x40000, NULL, NULL},
+	{D_ALL, _MMIO(VGT_PVINFO_PAGE), VGT_PVINFO_SIZE,
+		pvinfo_mmio_read, pvinfo_mmio_write},
+	{D_ALL, LGC_PALETTE(PIPE_A, 0), 1024, NULL, NULL},
+	{D_ALL, LGC_PALETTE(PIPE_B, 0), 1024, NULL, NULL},
+	{D_ALL, LGC_PALETTE(PIPE_C, 0), 1024, NULL, NULL},
+};
 
 /**
- * पूर्णांकel_gvt_setup_mmio_info - setup MMIO inक्रमmation table क्रम GVT device
+ * intel_gvt_setup_mmio_info - setup MMIO information table for GVT device
  * @gvt: GVT device
  *
  * This function is called at the initialization stage, to setup the MMIO
- * inक्रमmation table क्रम GVT device
+ * information table for GVT device
  *
  * Returns:
- * zero on success, negative अगर failed.
+ * zero on success, negative if failed.
  */
-पूर्णांक पूर्णांकel_gvt_setup_mmio_info(काष्ठा पूर्णांकel_gvt *gvt)
-अणु
-	काष्ठा पूर्णांकel_gvt_device_info *info = &gvt->device_info;
-	काष्ठा drm_i915_निजी *i915 = gvt->gt->i915;
-	पूर्णांक size = info->mmio_size / 4 * माप(*gvt->mmio.mmio_attribute);
-	पूर्णांक ret;
+int intel_gvt_setup_mmio_info(struct intel_gvt *gvt)
+{
+	struct intel_gvt_device_info *info = &gvt->device_info;
+	struct drm_i915_private *i915 = gvt->gt->i915;
+	int size = info->mmio_size / 4 * sizeof(*gvt->mmio.mmio_attribute);
+	int ret;
 
 	gvt->mmio.mmio_attribute = vzalloc(size);
-	अगर (!gvt->mmio.mmio_attribute)
-		वापस -ENOMEM;
+	if (!gvt->mmio.mmio_attribute)
+		return -ENOMEM;
 
 	ret = init_generic_mmio_info(gvt);
-	अगर (ret)
-		जाओ err;
+	if (ret)
+		goto err;
 
-	अगर (IS_BROADWELL(i915)) अणु
+	if (IS_BROADWELL(i915)) {
 		ret = init_bdw_mmio_info(gvt);
-		अगर (ret)
-			जाओ err;
-	पूर्ण अन्यथा अगर (IS_SKYLAKE(i915) ||
+		if (ret)
+			goto err;
+	} else if (IS_SKYLAKE(i915) ||
 		   IS_KABYLAKE(i915) ||
 		   IS_COFFEELAKE(i915) ||
-		   IS_COMETLAKE(i915)) अणु
+		   IS_COMETLAKE(i915)) {
 		ret = init_bdw_mmio_info(gvt);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 		ret = init_skl_mmio_info(gvt);
-		अगर (ret)
-			जाओ err;
-	पूर्ण अन्यथा अगर (IS_BROXTON(i915)) अणु
+		if (ret)
+			goto err;
+	} else if (IS_BROXTON(i915)) {
 		ret = init_bdw_mmio_info(gvt);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 		ret = init_skl_mmio_info(gvt);
-		अगर (ret)
-			जाओ err;
+		if (ret)
+			goto err;
 		ret = init_bxt_mmio_info(gvt);
-		अगर (ret)
-			जाओ err;
-	पूर्ण
+		if (ret)
+			goto err;
+	}
 
 	gvt->mmio.mmio_block = mmio_blocks;
 	gvt->mmio.num_mmio_block = ARRAY_SIZE(mmio_blocks);
 
-	वापस 0;
+	return 0;
 err:
-	पूर्णांकel_gvt_clean_mmio_info(gvt);
-	वापस ret;
-पूर्ण
+	intel_gvt_clean_mmio_info(gvt);
+	return ret;
+}
 
 /**
- * पूर्णांकel_gvt_क्रम_each_tracked_mmio - iterate each tracked mmio
+ * intel_gvt_for_each_tracked_mmio - iterate each tracked mmio
  * @gvt: a GVT device
  * @handler: the handler
- * @data: निजी data given to handler
+ * @data: private data given to handler
  *
  * Returns:
- * Zero on success, negative error code अगर failed.
+ * Zero on success, negative error code if failed.
  */
-पूर्णांक पूर्णांकel_gvt_क्रम_each_tracked_mmio(काष्ठा पूर्णांकel_gvt *gvt,
-	पूर्णांक (*handler)(काष्ठा पूर्णांकel_gvt *gvt, u32 offset, व्योम *data),
-	व्योम *data)
-अणु
-	काष्ठा gvt_mmio_block *block = gvt->mmio.mmio_block;
-	काष्ठा पूर्णांकel_gvt_mmio_info *e;
-	पूर्णांक i, j, ret;
+int intel_gvt_for_each_tracked_mmio(struct intel_gvt *gvt,
+	int (*handler)(struct intel_gvt *gvt, u32 offset, void *data),
+	void *data)
+{
+	struct gvt_mmio_block *block = gvt->mmio.mmio_block;
+	struct intel_gvt_mmio_info *e;
+	int i, j, ret;
 
-	hash_क्रम_each(gvt->mmio.mmio_info_table, i, e, node) अणु
+	hash_for_each(gvt->mmio.mmio_info_table, i, e, node) {
 		ret = handler(gvt, e->offset, data);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	क्रम (i = 0; i < gvt->mmio.num_mmio_block; i++, block++) अणु
-		/* pvinfo data करोesn't come from hw mmio */
-		अगर (i915_mmio_reg_offset(block->offset) == VGT_PVINFO_PAGE)
-			जारी;
+	for (i = 0; i < gvt->mmio.num_mmio_block; i++, block++) {
+		/* pvinfo data doesn't come from hw mmio */
+		if (i915_mmio_reg_offset(block->offset) == VGT_PVINFO_PAGE)
+			continue;
 
-		क्रम (j = 0; j < block->size; j += 4) अणु
+		for (j = 0; j < block->size; j += 4) {
 			ret = handler(gvt,
 				      i915_mmio_reg_offset(block->offset) + j,
 				      data);
-			अगर (ret)
-				वापस ret;
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			if (ret)
+				return ret;
+		}
+	}
+	return 0;
+}
 
 /**
- * पूर्णांकel_vgpu_शेष_mmio_पढ़ो - शेष MMIO पढ़ो handler
+ * intel_vgpu_default_mmio_read - default MMIO read handler
  * @vgpu: a vGPU
  * @offset: access offset
- * @p_data: data वापस buffer
+ * @p_data: data return buffer
  * @bytes: access data length
  *
  * Returns:
- * Zero on success, negative error code अगर failed.
+ * Zero on success, negative error code if failed.
  */
-पूर्णांक पूर्णांकel_vgpu_शेष_mmio_पढ़ो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	पढ़ो_vreg(vgpu, offset, p_data, bytes);
-	वापस 0;
-पूर्ण
+int intel_vgpu_default_mmio_read(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
+	read_vreg(vgpu, offset, p_data, bytes);
+	return 0;
+}
 
 /**
- * पूर्णांकel_t_शेष_mmio_ग_लिखो - शेष MMIO ग_लिखो handler
+ * intel_t_default_mmio_write - default MMIO write handler
  * @vgpu: a vGPU
  * @offset: access offset
- * @p_data: ग_लिखो data buffer
+ * @p_data: write data buffer
  * @bytes: access data length
  *
  * Returns:
- * Zero on success, negative error code अगर failed.
+ * Zero on success, negative error code if failed.
  */
-पूर्णांक पूर्णांकel_vgpu_शेष_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
-	वापस 0;
-पूर्ण
+int intel_vgpu_default_mmio_write(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
+	write_vreg(vgpu, offset, p_data, bytes);
+	return 0;
+}
 
 /**
- * पूर्णांकel_vgpu_mask_mmio_ग_लिखो - ग_लिखो mask रेजिस्टर
+ * intel_vgpu_mask_mmio_write - write mask register
  * @vgpu: a vGPU
  * @offset: access offset
- * @p_data: ग_लिखो data buffer
+ * @p_data: write data buffer
  * @bytes: access data length
  *
  * Returns:
- * Zero on success, negative error code अगर failed.
+ * Zero on success, negative error code if failed.
  */
-पूर्णांक पूर्णांकel_vgpu_mask_mmio_ग_लिखो(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-		व्योम *p_data, अचिन्हित पूर्णांक bytes)
-अणु
+int intel_vgpu_mask_mmio_write(struct intel_vgpu *vgpu, unsigned int offset,
+		void *p_data, unsigned int bytes)
+{
 	u32 mask, old_vreg;
 
 	old_vreg = vgpu_vreg(vgpu, offset);
-	ग_लिखो_vreg(vgpu, offset, p_data, bytes);
+	write_vreg(vgpu, offset, p_data, bytes);
 	mask = vgpu_vreg(vgpu, offset) >> 16;
 	vgpu_vreg(vgpu, offset) = (old_vreg & ~mask) |
 				(vgpu_vreg(vgpu, offset) & mask);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
- * पूर्णांकel_gvt_in_क्रमce_nonpriv_whitelist - अगर a mmio is in whitelist to be
- * क्रमce-nopriv रेजिस्टर
+ * intel_gvt_in_force_nonpriv_whitelist - if a mmio is in whitelist to be
+ * force-nopriv register
  *
  * @gvt: a GVT device
- * @offset: रेजिस्टर offset
+ * @offset: register offset
  *
  * Returns:
- * True अगर the रेजिस्टर is in क्रमce-nonpriv whitelist;
- * False अगर outside;
+ * True if the register is in force-nonpriv whitelist;
+ * False if outside;
  */
-bool पूर्णांकel_gvt_in_क्रमce_nonpriv_whitelist(काष्ठा पूर्णांकel_gvt *gvt,
-					  अचिन्हित पूर्णांक offset)
-अणु
-	वापस in_whitelist(offset);
-पूर्ण
+bool intel_gvt_in_force_nonpriv_whitelist(struct intel_gvt *gvt,
+					  unsigned int offset)
+{
+	return in_whitelist(offset);
+}
 
 /**
- * पूर्णांकel_vgpu_mmio_reg_rw - emulate tracked mmio रेजिस्टरs
+ * intel_vgpu_mmio_reg_rw - emulate tracked mmio registers
  * @vgpu: a vGPU
- * @offset: रेजिस्टर offset
+ * @offset: register offset
  * @pdata: data buffer
  * @bytes: data length
- * @is_पढ़ो: पढ़ो or ग_लिखो
+ * @is_read: read or write
  *
  * Returns:
- * Zero on success, negative error code अगर failed.
+ * Zero on success, negative error code if failed.
  */
-पूर्णांक पूर्णांकel_vgpu_mmio_reg_rw(काष्ठा पूर्णांकel_vgpu *vgpu, अचिन्हित पूर्णांक offset,
-			   व्योम *pdata, अचिन्हित पूर्णांक bytes, bool is_पढ़ो)
-अणु
-	काष्ठा drm_i915_निजी *i915 = vgpu->gvt->gt->i915;
-	काष्ठा पूर्णांकel_gvt *gvt = vgpu->gvt;
-	काष्ठा पूर्णांकel_gvt_mmio_info *mmio_info;
-	काष्ठा gvt_mmio_block *mmio_block;
+int intel_vgpu_mmio_reg_rw(struct intel_vgpu *vgpu, unsigned int offset,
+			   void *pdata, unsigned int bytes, bool is_read)
+{
+	struct drm_i915_private *i915 = vgpu->gvt->gt->i915;
+	struct intel_gvt *gvt = vgpu->gvt;
+	struct intel_gvt_mmio_info *mmio_info;
+	struct gvt_mmio_block *mmio_block;
 	gvt_mmio_func func;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (drm_WARN_ON(&i915->drm, bytes > 8))
-		वापस -EINVAL;
+	if (drm_WARN_ON(&i915->drm, bytes > 8))
+		return -EINVAL;
 
 	/*
 	 * Handle special MMIO blocks.
 	 */
 	mmio_block = find_mmio_block(gvt, offset);
-	अगर (mmio_block) अणु
-		func = is_पढ़ो ? mmio_block->पढ़ो : mmio_block->ग_लिखो;
-		अगर (func)
-			वापस func(vgpu, offset, pdata, bytes);
-		जाओ शेष_rw;
-	पूर्ण
+	if (mmio_block) {
+		func = is_read ? mmio_block->read : mmio_block->write;
+		if (func)
+			return func(vgpu, offset, pdata, bytes);
+		goto default_rw;
+	}
 
 	/*
 	 * Normal tracked MMIOs.
 	 */
-	mmio_info = पूर्णांकel_gvt_find_mmio_info(gvt, offset);
-	अगर (!mmio_info) अणु
+	mmio_info = intel_gvt_find_mmio_info(gvt, offset);
+	if (!mmio_info) {
 		gvt_dbg_mmio("untracked MMIO %08x len %d\n", offset, bytes);
-		जाओ शेष_rw;
-	पूर्ण
+		goto default_rw;
+	}
 
-	अगर (is_पढ़ो)
-		वापस mmio_info->पढ़ो(vgpu, offset, pdata, bytes);
-	अन्यथा अणु
+	if (is_read)
+		return mmio_info->read(vgpu, offset, pdata, bytes);
+	else {
 		u64 ro_mask = mmio_info->ro_mask;
 		u32 old_vreg = 0;
 		u64 data = 0;
 
-		अगर (पूर्णांकel_gvt_mmio_has_mode_mask(gvt, mmio_info->offset)) अणु
+		if (intel_gvt_mmio_has_mode_mask(gvt, mmio_info->offset)) {
 			old_vreg = vgpu_vreg(vgpu, offset);
-		पूर्ण
+		}
 
-		अगर (likely(!ro_mask))
-			ret = mmio_info->ग_लिखो(vgpu, offset, pdata, bytes);
-		अन्यथा अगर (!~ro_mask) अणु
+		if (likely(!ro_mask))
+			ret = mmio_info->write(vgpu, offset, pdata, bytes);
+		else if (!~ro_mask) {
 			gvt_vgpu_err("try to write RO reg %x\n", offset);
-			वापस 0;
-		पूर्ण अन्यथा अणु
-			/* keep the RO bits in the भव रेजिस्टर */
-			स_नकल(&data, pdata, bytes);
+			return 0;
+		} else {
+			/* keep the RO bits in the virtual register */
+			memcpy(&data, pdata, bytes);
 			data &= ~ro_mask;
 			data |= vgpu_vreg(vgpu, offset) & ro_mask;
-			ret = mmio_info->ग_लिखो(vgpu, offset, &data, bytes);
-		पूर्ण
+			ret = mmio_info->write(vgpu, offset, &data, bytes);
+		}
 
-		/* higher 16bits of mode ctl regs are mask bits क्रम change */
-		अगर (पूर्णांकel_gvt_mmio_has_mode_mask(gvt, mmio_info->offset)) अणु
+		/* higher 16bits of mode ctl regs are mask bits for change */
+		if (intel_gvt_mmio_has_mode_mask(gvt, mmio_info->offset)) {
 			u32 mask = vgpu_vreg(vgpu, offset) >> 16;
 
 			vgpu_vreg(vgpu, offset) = (old_vreg & ~mask)
 					| (vgpu_vreg(vgpu, offset) & mask);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस ret;
+	return ret;
 
-शेष_rw:
-	वापस is_पढ़ो ?
-		पूर्णांकel_vgpu_शेष_mmio_पढ़ो(vgpu, offset, pdata, bytes) :
-		पूर्णांकel_vgpu_शेष_mmio_ग_लिखो(vgpu, offset, pdata, bytes);
-पूर्ण
+default_rw:
+	return is_read ?
+		intel_vgpu_default_mmio_read(vgpu, offset, pdata, bytes) :
+		intel_vgpu_default_mmio_write(vgpu, offset, pdata, bytes);
+}
 
-व्योम पूर्णांकel_gvt_restore_fence(काष्ठा पूर्णांकel_gvt *gvt)
-अणु
-	काष्ठा पूर्णांकel_vgpu *vgpu;
-	पूर्णांक i, id;
+void intel_gvt_restore_fence(struct intel_gvt *gvt)
+{
+	struct intel_vgpu *vgpu;
+	int i, id;
 
-	idr_क्रम_each_entry(&(gvt)->vgpu_idr, vgpu, id) अणु
+	idr_for_each_entry(&(gvt)->vgpu_idr, vgpu, id) {
 		mmio_hw_access_pre(gvt->gt);
-		क्रम (i = 0; i < vgpu_fence_sz(vgpu); i++)
-			पूर्णांकel_vgpu_ग_लिखो_fence(vgpu, i, vgpu_vreg64(vgpu, fence_num_to_offset(i)));
+		for (i = 0; i < vgpu_fence_sz(vgpu); i++)
+			intel_vgpu_write_fence(vgpu, i, vgpu_vreg64(vgpu, fence_num_to_offset(i)));
 		mmio_hw_access_post(gvt->gt);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक mmio_pm_restore_handler(काष्ठा पूर्णांकel_gvt *gvt, u32 offset, व्योम *data)
-अणु
-	काष्ठा पूर्णांकel_vgpu *vgpu = data;
-	काष्ठा drm_i915_निजी *dev_priv = gvt->gt->i915;
+static int mmio_pm_restore_handler(struct intel_gvt *gvt, u32 offset, void *data)
+{
+	struct intel_vgpu *vgpu = data;
+	struct drm_i915_private *dev_priv = gvt->gt->i915;
 
-	अगर (gvt->mmio.mmio_attribute[offset >> 2] & F_PM_SAVE)
-		पूर्णांकel_uncore_ग_लिखो(&dev_priv->uncore, _MMIO(offset), vgpu_vreg(vgpu, offset));
+	if (gvt->mmio.mmio_attribute[offset >> 2] & F_PM_SAVE)
+		intel_uncore_write(&dev_priv->uncore, _MMIO(offset), vgpu_vreg(vgpu, offset));
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम पूर्णांकel_gvt_restore_mmio(काष्ठा पूर्णांकel_gvt *gvt)
-अणु
-	काष्ठा पूर्णांकel_vgpu *vgpu;
-	पूर्णांक id;
+void intel_gvt_restore_mmio(struct intel_gvt *gvt)
+{
+	struct intel_vgpu *vgpu;
+	int id;
 
-	idr_क्रम_each_entry(&(gvt)->vgpu_idr, vgpu, id) अणु
+	idr_for_each_entry(&(gvt)->vgpu_idr, vgpu, id) {
 		mmio_hw_access_pre(gvt->gt);
-		पूर्णांकel_gvt_क्रम_each_tracked_mmio(gvt, mmio_pm_restore_handler, vgpu);
+		intel_gvt_for_each_tracked_mmio(gvt, mmio_pm_restore_handler, vgpu);
 		mmio_hw_access_post(gvt->gt);
-	पूर्ण
-पूर्ण
+	}
+}

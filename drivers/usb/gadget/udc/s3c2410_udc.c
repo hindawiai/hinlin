@@ -1,147 +1,146 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 /*
  * linux/drivers/usb/gadget/s3c2410_udc.c
  *
  * Samsung S3C24xx series on-chip full speed USB device controllers
  *
- * Copyright (C) 2004-2007 Herbert Pथघtzl - Arnaud Patard
+ * Copyright (C) 2004-2007 Herbert Pötzl - Arnaud Patard
  *	Additional cleanups by Ben Dooks <ben-linux@fluff.org>
  */
 
-#घोषणा pr_fmt(fmt) "s3c2410_udc: " fmt
+#define pr_fmt(fmt) "s3c2410_udc: " fmt
 
-#समावेश <linux/module.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/ioport.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/init.h>
-#समावेश <linux/समयr.h>
-#समावेश <linux/list.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/clk.h>
-#समावेश <linux/gpपन.स>
-#समावेश <linux/prefetch.h>
-#समावेश <linux/पन.स>
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/delay.h>
+#include <linux/ioport.h>
+#include <linux/sched.h>
+#include <linux/slab.h>
+#include <linux/errno.h>
+#include <linux/init.h>
+#include <linux/timer.h>
+#include <linux/list.h>
+#include <linux/interrupt.h>
+#include <linux/platform_device.h>
+#include <linux/clk.h>
+#include <linux/gpio.h>
+#include <linux/prefetch.h>
+#include <linux/io.h>
 
-#समावेश <linux/debugfs.h>
-#समावेश <linux/seq_file.h>
+#include <linux/debugfs.h>
+#include <linux/seq_file.h>
 
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/gadget.h>
+#include <linux/usb.h>
+#include <linux/usb/gadget.h>
 
-#समावेश <यंत्र/byteorder.h>
-#समावेश <यंत्र/irq.h>
-#समावेश <यंत्र/unaligned.h>
+#include <asm/byteorder.h>
+#include <asm/irq.h>
+#include <asm/unaligned.h>
 
-#समावेश <linux/platक्रमm_data/usb-s3c2410_udc.h>
+#include <linux/platform_data/usb-s3c2410_udc.h>
 
-#समावेश "s3c2410_udc.h"
-#समावेश "s3c2410_udc_regs.h"
+#include "s3c2410_udc.h"
+#include "s3c2410_udc_regs.h"
 
-#घोषणा DRIVER_DESC	"S3C2410 USB Device Controller Gadget"
-#घोषणा DRIVER_AUTHOR	"Herbert Pथघtzl <herbert@13thfloor.at>, " \
+#define DRIVER_DESC	"S3C2410 USB Device Controller Gadget"
+#define DRIVER_AUTHOR	"Herbert Pötzl <herbert@13thfloor.at>, " \
 			"Arnaud Patard <arnaud.patard@rtp-net.org>"
 
-अटल स्थिर अक्षर		gadget_name[] = "s3c2410_udc";
-अटल स्थिर अक्षर		driver_desc[] = DRIVER_DESC;
+static const char		gadget_name[] = "s3c2410_udc";
+static const char		driver_desc[] = DRIVER_DESC;
 
-अटल काष्ठा s3c2410_udc	*the_controller;
-अटल काष्ठा clk		*udc_घड़ी;
-अटल काष्ठा clk		*usb_bus_घड़ी;
-अटल व्योम __iomem		*base_addr;
-अटल पूर्णांक			irq_usbd;
-अटल काष्ठा dentry		*s3c2410_udc_debugfs_root;
+static struct s3c2410_udc	*the_controller;
+static struct clk		*udc_clock;
+static struct clk		*usb_bus_clock;
+static void __iomem		*base_addr;
+static int			irq_usbd;
+static struct dentry		*s3c2410_udc_debugfs_root;
 
-अटल अंतरभूत u32 udc_पढ़ो(u32 reg)
-अणु
-	वापस पढ़ोb(base_addr + reg);
-पूर्ण
+static inline u32 udc_read(u32 reg)
+{
+	return readb(base_addr + reg);
+}
 
-अटल अंतरभूत व्योम udc_ग_लिखो(u32 value, u32 reg)
-अणु
-	ग_लिखोb(value, base_addr + reg);
-पूर्ण
+static inline void udc_write(u32 value, u32 reg)
+{
+	writeb(value, base_addr + reg);
+}
 
-अटल अंतरभूत व्योम udc_ग_लिखोb(व्योम __iomem *base, u32 value, u32 reg)
-अणु
-	ग_लिखोb(value, base + reg);
-पूर्ण
+static inline void udc_writeb(void __iomem *base, u32 value, u32 reg)
+{
+	writeb(value, base + reg);
+}
 
-अटल काष्ठा s3c2410_udc_mach_info *udc_info;
+static struct s3c2410_udc_mach_info *udc_info;
 
 /*************************** DEBUG FUNCTION ***************************/
-#घोषणा DEBUG_NORMAL	1
-#घोषणा DEBUG_VERBOSE	2
+#define DEBUG_NORMAL	1
+#define DEBUG_VERBOSE	2
 
-#अगर_घोषित CONFIG_USB_S3C2410_DEBUG
-#घोषणा USB_S3C2410_DEBUG_LEVEL 0
+#ifdef CONFIG_USB_S3C2410_DEBUG
+#define USB_S3C2410_DEBUG_LEVEL 0
 
-अटल uपूर्णांक32_t s3c2410_ticks = 0;
+static uint32_t s3c2410_ticks = 0;
 
-__म_लिखो(2, 3)
-अटल व्योम dprपूर्णांकk(पूर्णांक level, स्थिर अक्षर *fmt, ...)
-अणु
-	अटल दीर्घ prevticks;
-	अटल पूर्णांक invocation;
-	काष्ठा va_क्रमmat vaf;
-	बहु_सूची args;
+__printf(2, 3)
+static void dprintk(int level, const char *fmt, ...)
+{
+	static long prevticks;
+	static int invocation;
+	struct va_format vaf;
+	va_list args;
 
-	अगर (level > USB_S3C2410_DEBUG_LEVEL)
-		वापस;
+	if (level > USB_S3C2410_DEBUG_LEVEL)
+		return;
 
-	बहु_शुरू(args, fmt);
+	va_start(args, fmt);
 
 	vaf.fmt = fmt;
 	vaf.va = &args;
 
-	अगर (s3c2410_ticks != prevticks) अणु
+	if (s3c2410_ticks != prevticks) {
 		prevticks = s3c2410_ticks;
 		invocation = 0;
-	पूर्ण
+	}
 
 	pr_debug("%1lu.%02d USB: %pV", prevticks, invocation++, &vaf);
 
-	बहु_पूर्ण(args);
-पूर्ण
-#अन्यथा
-__म_लिखो(2, 3)
-अटल व्योम dprपूर्णांकk(पूर्णांक level, स्थिर अक्षर *fmt, ...)
-अणु
-पूर्ण
-#पूर्ण_अगर
+	va_end(args);
+}
+#else
+__printf(2, 3)
+static void dprintk(int level, const char *fmt, ...)
+{
+}
+#endif
 
-अटल पूर्णांक s3c2410_udc_debugfs_show(काष्ठा seq_file *m, व्योम *p)
-अणु
-	u32 addr_reg, pwr_reg, ep_पूर्णांक_reg, usb_पूर्णांक_reg;
-	u32 ep_पूर्णांक_en_reg, usb_पूर्णांक_en_reg, ep0_csr;
+static int s3c2410_udc_debugfs_show(struct seq_file *m, void *p)
+{
+	u32 addr_reg, pwr_reg, ep_int_reg, usb_int_reg;
+	u32 ep_int_en_reg, usb_int_en_reg, ep0_csr;
 	u32 ep1_i_csr1, ep1_i_csr2, ep1_o_csr1, ep1_o_csr2;
 	u32 ep2_i_csr1, ep2_i_csr2, ep2_o_csr1, ep2_o_csr2;
 
-	addr_reg       = udc_पढ़ो(S3C2410_UDC_FUNC_ADDR_REG);
-	pwr_reg        = udc_पढ़ो(S3C2410_UDC_PWR_REG);
-	ep_पूर्णांक_reg     = udc_पढ़ो(S3C2410_UDC_EP_INT_REG);
-	usb_पूर्णांक_reg    = udc_पढ़ो(S3C2410_UDC_USB_INT_REG);
-	ep_पूर्णांक_en_reg  = udc_पढ़ो(S3C2410_UDC_EP_INT_EN_REG);
-	usb_पूर्णांक_en_reg = udc_पढ़ो(S3C2410_UDC_USB_INT_EN_REG);
-	udc_ग_लिखो(0, S3C2410_UDC_INDEX_REG);
-	ep0_csr        = udc_पढ़ो(S3C2410_UDC_IN_CSR1_REG);
-	udc_ग_लिखो(1, S3C2410_UDC_INDEX_REG);
-	ep1_i_csr1     = udc_पढ़ो(S3C2410_UDC_IN_CSR1_REG);
-	ep1_i_csr2     = udc_पढ़ो(S3C2410_UDC_IN_CSR2_REG);
-	ep1_o_csr1     = udc_पढ़ो(S3C2410_UDC_IN_CSR1_REG);
-	ep1_o_csr2     = udc_पढ़ो(S3C2410_UDC_IN_CSR2_REG);
-	udc_ग_लिखो(2, S3C2410_UDC_INDEX_REG);
-	ep2_i_csr1     = udc_पढ़ो(S3C2410_UDC_IN_CSR1_REG);
-	ep2_i_csr2     = udc_पढ़ो(S3C2410_UDC_IN_CSR2_REG);
-	ep2_o_csr1     = udc_पढ़ो(S3C2410_UDC_IN_CSR1_REG);
-	ep2_o_csr2     = udc_पढ़ो(S3C2410_UDC_IN_CSR2_REG);
+	addr_reg       = udc_read(S3C2410_UDC_FUNC_ADDR_REG);
+	pwr_reg        = udc_read(S3C2410_UDC_PWR_REG);
+	ep_int_reg     = udc_read(S3C2410_UDC_EP_INT_REG);
+	usb_int_reg    = udc_read(S3C2410_UDC_USB_INT_REG);
+	ep_int_en_reg  = udc_read(S3C2410_UDC_EP_INT_EN_REG);
+	usb_int_en_reg = udc_read(S3C2410_UDC_USB_INT_EN_REG);
+	udc_write(0, S3C2410_UDC_INDEX_REG);
+	ep0_csr        = udc_read(S3C2410_UDC_IN_CSR1_REG);
+	udc_write(1, S3C2410_UDC_INDEX_REG);
+	ep1_i_csr1     = udc_read(S3C2410_UDC_IN_CSR1_REG);
+	ep1_i_csr2     = udc_read(S3C2410_UDC_IN_CSR2_REG);
+	ep1_o_csr1     = udc_read(S3C2410_UDC_IN_CSR1_REG);
+	ep1_o_csr2     = udc_read(S3C2410_UDC_IN_CSR2_REG);
+	udc_write(2, S3C2410_UDC_INDEX_REG);
+	ep2_i_csr1     = udc_read(S3C2410_UDC_IN_CSR1_REG);
+	ep2_i_csr2     = udc_read(S3C2410_UDC_IN_CSR2_REG);
+	ep2_o_csr1     = udc_read(S3C2410_UDC_IN_CSR1_REG);
+	ep2_o_csr2     = udc_read(S3C2410_UDC_IN_CSR2_REG);
 
-	seq_म_लिखो(m, "FUNC_ADDR_REG  : 0x%04X\n"
+	seq_printf(m, "FUNC_ADDR_REG  : 0x%04X\n"
 		 "PWR_REG        : 0x%04X\n"
 		 "EP_INT_REG     : 0x%04X\n"
 		 "USB_INT_REG    : 0x%04X\n"
@@ -156,547 +155,547 @@ __म_लिखो(2, 3)
 		 "EP2_I_CSR2     : 0x%04X\n"
 		 "EP2_O_CSR1     : 0x%04X\n"
 		 "EP2_O_CSR2     : 0x%04X\n",
-			addr_reg, pwr_reg, ep_पूर्णांक_reg, usb_पूर्णांक_reg,
-			ep_पूर्णांक_en_reg, usb_पूर्णांक_en_reg, ep0_csr,
+			addr_reg, pwr_reg, ep_int_reg, usb_int_reg,
+			ep_int_en_reg, usb_int_en_reg, ep0_csr,
 			ep1_i_csr1, ep1_i_csr2, ep1_o_csr1, ep1_o_csr2,
 			ep2_i_csr1, ep2_i_csr2, ep2_o_csr1, ep2_o_csr2
 		);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 DEFINE_SHOW_ATTRIBUTE(s3c2410_udc_debugfs);
 
 /* io macros */
 
-अटल अंतरभूत व्योम s3c2410_udc_clear_ep0_opr(व्योम __iomem *base)
-अणु
-	udc_ग_लिखोb(base, S3C2410_UDC_INDEX_EP0, S3C2410_UDC_INDEX_REG);
-	udc_ग_लिखोb(base, S3C2410_UDC_EP0_CSR_SOPKTRDY,
+static inline void s3c2410_udc_clear_ep0_opr(void __iomem *base)
+{
+	udc_writeb(base, S3C2410_UDC_INDEX_EP0, S3C2410_UDC_INDEX_REG);
+	udc_writeb(base, S3C2410_UDC_EP0_CSR_SOPKTRDY,
 			S3C2410_UDC_EP0_CSR_REG);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम s3c2410_udc_clear_ep0_sst(व्योम __iomem *base)
-अणु
-	udc_ग_लिखोb(base, S3C2410_UDC_INDEX_EP0, S3C2410_UDC_INDEX_REG);
-	ग_लिखोb(0x00, base + S3C2410_UDC_EP0_CSR_REG);
-पूर्ण
+static inline void s3c2410_udc_clear_ep0_sst(void __iomem *base)
+{
+	udc_writeb(base, S3C2410_UDC_INDEX_EP0, S3C2410_UDC_INDEX_REG);
+	writeb(0x00, base + S3C2410_UDC_EP0_CSR_REG);
+}
 
-अटल अंतरभूत व्योम s3c2410_udc_clear_ep0_se(व्योम __iomem *base)
-अणु
-	udc_ग_लिखोb(base, S3C2410_UDC_INDEX_EP0, S3C2410_UDC_INDEX_REG);
-	udc_ग_लिखोb(base, S3C2410_UDC_EP0_CSR_SSE, S3C2410_UDC_EP0_CSR_REG);
-पूर्ण
+static inline void s3c2410_udc_clear_ep0_se(void __iomem *base)
+{
+	udc_writeb(base, S3C2410_UDC_INDEX_EP0, S3C2410_UDC_INDEX_REG);
+	udc_writeb(base, S3C2410_UDC_EP0_CSR_SSE, S3C2410_UDC_EP0_CSR_REG);
+}
 
-अटल अंतरभूत व्योम s3c2410_udc_set_ep0_ipr(व्योम __iomem *base)
-अणु
-	udc_ग_लिखोb(base, S3C2410_UDC_INDEX_EP0, S3C2410_UDC_INDEX_REG);
-	udc_ग_लिखोb(base, S3C2410_UDC_EP0_CSR_IPKRDY, S3C2410_UDC_EP0_CSR_REG);
-पूर्ण
+static inline void s3c2410_udc_set_ep0_ipr(void __iomem *base)
+{
+	udc_writeb(base, S3C2410_UDC_INDEX_EP0, S3C2410_UDC_INDEX_REG);
+	udc_writeb(base, S3C2410_UDC_EP0_CSR_IPKRDY, S3C2410_UDC_EP0_CSR_REG);
+}
 
-अटल अंतरभूत व्योम s3c2410_udc_set_ep0_de(व्योम __iomem *base)
-अणु
-	udc_ग_लिखोb(base, S3C2410_UDC_INDEX_EP0, S3C2410_UDC_INDEX_REG);
-	udc_ग_लिखोb(base, S3C2410_UDC_EP0_CSR_DE, S3C2410_UDC_EP0_CSR_REG);
-पूर्ण
+static inline void s3c2410_udc_set_ep0_de(void __iomem *base)
+{
+	udc_writeb(base, S3C2410_UDC_INDEX_EP0, S3C2410_UDC_INDEX_REG);
+	udc_writeb(base, S3C2410_UDC_EP0_CSR_DE, S3C2410_UDC_EP0_CSR_REG);
+}
 
-अंतरभूत व्योम s3c2410_udc_set_ep0_ss(व्योम __iomem *b)
-अणु
-	udc_ग_लिखोb(b, S3C2410_UDC_INDEX_EP0, S3C2410_UDC_INDEX_REG);
-	udc_ग_लिखोb(b, S3C2410_UDC_EP0_CSR_SENDSTL, S3C2410_UDC_EP0_CSR_REG);
-पूर्ण
+inline void s3c2410_udc_set_ep0_ss(void __iomem *b)
+{
+	udc_writeb(b, S3C2410_UDC_INDEX_EP0, S3C2410_UDC_INDEX_REG);
+	udc_writeb(b, S3C2410_UDC_EP0_CSR_SENDSTL, S3C2410_UDC_EP0_CSR_REG);
+}
 
-अटल अंतरभूत व्योम s3c2410_udc_set_ep0_de_out(व्योम __iomem *base)
-अणु
-	udc_ग_लिखोb(base, S3C2410_UDC_INDEX_EP0, S3C2410_UDC_INDEX_REG);
+static inline void s3c2410_udc_set_ep0_de_out(void __iomem *base)
+{
+	udc_writeb(base, S3C2410_UDC_INDEX_EP0, S3C2410_UDC_INDEX_REG);
 
-	udc_ग_लिखोb(base, (S3C2410_UDC_EP0_CSR_SOPKTRDY
+	udc_writeb(base, (S3C2410_UDC_EP0_CSR_SOPKTRDY
 				| S3C2410_UDC_EP0_CSR_DE),
 			S3C2410_UDC_EP0_CSR_REG);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम s3c2410_udc_set_ep0_de_in(व्योम __iomem *base)
-अणु
-	udc_ग_लिखोb(base, S3C2410_UDC_INDEX_EP0, S3C2410_UDC_INDEX_REG);
-	udc_ग_लिखोb(base, (S3C2410_UDC_EP0_CSR_IPKRDY
+static inline void s3c2410_udc_set_ep0_de_in(void __iomem *base)
+{
+	udc_writeb(base, S3C2410_UDC_INDEX_EP0, S3C2410_UDC_INDEX_REG);
+	udc_writeb(base, (S3C2410_UDC_EP0_CSR_IPKRDY
 			| S3C2410_UDC_EP0_CSR_DE),
 		S3C2410_UDC_EP0_CSR_REG);
-पूर्ण
+}
 
 /*------------------------- I/O ----------------------------------*/
 
 /*
- *	s3c2410_udc_करोne
+ *	s3c2410_udc_done
  */
-अटल व्योम s3c2410_udc_करोne(काष्ठा s3c2410_ep *ep,
-		काष्ठा s3c2410_request *req, पूर्णांक status)
-अणु
-	अचिन्हित halted = ep->halted;
+static void s3c2410_udc_done(struct s3c2410_ep *ep,
+		struct s3c2410_request *req, int status)
+{
+	unsigned halted = ep->halted;
 
 	list_del_init(&req->queue);
 
-	अगर (likely(req->req.status == -EINPROGRESS))
+	if (likely(req->req.status == -EINPROGRESS))
 		req->req.status = status;
-	अन्यथा
+	else
 		status = req->req.status;
 
 	ep->halted = 1;
 	usb_gadget_giveback_request(&ep->ep, &req->req);
 	ep->halted = halted;
-पूर्ण
+}
 
-अटल व्योम s3c2410_udc_nuke(काष्ठा s3c2410_udc *udc,
-		काष्ठा s3c2410_ep *ep, पूर्णांक status)
-अणु
-	जबतक (!list_empty(&ep->queue)) अणु
-		काष्ठा s3c2410_request *req;
-		req = list_entry(ep->queue.next, काष्ठा s3c2410_request,
+static void s3c2410_udc_nuke(struct s3c2410_udc *udc,
+		struct s3c2410_ep *ep, int status)
+{
+	while (!list_empty(&ep->queue)) {
+		struct s3c2410_request *req;
+		req = list_entry(ep->queue.next, struct s3c2410_request,
 				queue);
-		s3c2410_udc_करोne(ep, req, status);
-	पूर्ण
-पूर्ण
+		s3c2410_udc_done(ep, req, status);
+	}
+}
 
-अटल अंतरभूत पूर्णांक s3c2410_udc_fअगरo_count_out(व्योम)
-अणु
-	पूर्णांक पंचांगp;
+static inline int s3c2410_udc_fifo_count_out(void)
+{
+	int tmp;
 
-	पंचांगp = udc_पढ़ो(S3C2410_UDC_OUT_FIFO_CNT2_REG) << 8;
-	पंचांगp |= udc_पढ़ो(S3C2410_UDC_OUT_FIFO_CNT1_REG);
-	वापस पंचांगp;
-पूर्ण
+	tmp = udc_read(S3C2410_UDC_OUT_FIFO_CNT2_REG) << 8;
+	tmp |= udc_read(S3C2410_UDC_OUT_FIFO_CNT1_REG);
+	return tmp;
+}
 
 /*
- *	s3c2410_udc_ग_लिखो_packet
+ *	s3c2410_udc_write_packet
  */
-अटल अंतरभूत पूर्णांक s3c2410_udc_ग_लिखो_packet(पूर्णांक fअगरo,
-		काष्ठा s3c2410_request *req,
-		अचिन्हित max)
-अणु
-	अचिन्हित len = min(req->req.length - req->req.actual, max);
+static inline int s3c2410_udc_write_packet(int fifo,
+		struct s3c2410_request *req,
+		unsigned max)
+{
+	unsigned len = min(req->req.length - req->req.actual, max);
 	u8 *buf = req->req.buf + req->req.actual;
 
 	prefetch(buf);
 
-	dprपूर्णांकk(DEBUG_VERBOSE, "%s %d %d %d %d\n", __func__,
+	dprintk(DEBUG_VERBOSE, "%s %d %d %d %d\n", __func__,
 		req->req.actual, req->req.length, len, req->req.actual + len);
 
 	req->req.actual += len;
 
 	udelay(5);
-	ग_लिखोsb(base_addr + fअगरo, buf, len);
-	वापस len;
-पूर्ण
+	writesb(base_addr + fifo, buf, len);
+	return len;
+}
 
 /*
- *	s3c2410_udc_ग_लिखो_fअगरo
+ *	s3c2410_udc_write_fifo
  *
- * वापस:  0 = still running, 1 = completed, negative = त्रुटि_सं
+ * return:  0 = still running, 1 = completed, negative = errno
  */
-अटल पूर्णांक s3c2410_udc_ग_लिखो_fअगरo(काष्ठा s3c2410_ep *ep,
-		काष्ठा s3c2410_request *req)
-अणु
-	अचिन्हित	count;
-	पूर्णांक		is_last;
+static int s3c2410_udc_write_fifo(struct s3c2410_ep *ep,
+		struct s3c2410_request *req)
+{
+	unsigned	count;
+	int		is_last;
 	u32		idx;
-	पूर्णांक		fअगरo_reg;
+	int		fifo_reg;
 	u32		ep_csr;
 
-	idx = ep->bEndpoपूर्णांकAddress & 0x7F;
-	चयन (idx) अणु
-	शेष:
+	idx = ep->bEndpointAddress & 0x7F;
+	switch (idx) {
+	default:
 		idx = 0;
 		fallthrough;
-	हाल 0:
-		fअगरo_reg = S3C2410_UDC_EP0_FIFO_REG;
-		अवरोध;
-	हाल 1:
-		fअगरo_reg = S3C2410_UDC_EP1_FIFO_REG;
-		अवरोध;
-	हाल 2:
-		fअगरo_reg = S3C2410_UDC_EP2_FIFO_REG;
-		अवरोध;
-	हाल 3:
-		fअगरo_reg = S3C2410_UDC_EP3_FIFO_REG;
-		अवरोध;
-	हाल 4:
-		fअगरo_reg = S3C2410_UDC_EP4_FIFO_REG;
-		अवरोध;
-	पूर्ण
+	case 0:
+		fifo_reg = S3C2410_UDC_EP0_FIFO_REG;
+		break;
+	case 1:
+		fifo_reg = S3C2410_UDC_EP1_FIFO_REG;
+		break;
+	case 2:
+		fifo_reg = S3C2410_UDC_EP2_FIFO_REG;
+		break;
+	case 3:
+		fifo_reg = S3C2410_UDC_EP3_FIFO_REG;
+		break;
+	case 4:
+		fifo_reg = S3C2410_UDC_EP4_FIFO_REG;
+		break;
+	}
 
-	count = s3c2410_udc_ग_लिखो_packet(fअगरo_reg, req, ep->ep.maxpacket);
+	count = s3c2410_udc_write_packet(fifo_reg, req, ep->ep.maxpacket);
 
-	/* last packet is often लघु (someबार a zlp) */
-	अगर (count != ep->ep.maxpacket)
+	/* last packet is often short (sometimes a zlp) */
+	if (count != ep->ep.maxpacket)
 		is_last = 1;
-	अन्यथा अगर (req->req.length != req->req.actual || req->req.zero)
+	else if (req->req.length != req->req.actual || req->req.zero)
 		is_last = 0;
-	अन्यथा
+	else
 		is_last = 2;
 
-	/* Only ep0 debug messages are पूर्णांकeresting */
-	अगर (idx == 0)
-		dprपूर्णांकk(DEBUG_NORMAL,
+	/* Only ep0 debug messages are interesting */
+	if (idx == 0)
+		dprintk(DEBUG_NORMAL,
 			"Written ep%d %d.%d of %d b [last %d,z %d]\n",
 			idx, count, req->req.actual, req->req.length,
 			is_last, req->req.zero);
 
-	अगर (is_last) अणु
+	if (is_last) {
 		/* The order is important. It prevents sending 2 packets
-		 * at the same समय */
+		 * at the same time */
 
-		अगर (idx == 0) अणु
-			/* Reset संकेत => no need to say 'data sent' */
-			अगर (!(udc_पढ़ो(S3C2410_UDC_USB_INT_REG)
+		if (idx == 0) {
+			/* Reset signal => no need to say 'data sent' */
+			if (!(udc_read(S3C2410_UDC_USB_INT_REG)
 					& S3C2410_UDC_USBINT_RESET))
 				s3c2410_udc_set_ep0_de_in(base_addr);
 			ep->dev->ep0state = EP0_IDLE;
-		पूर्ण अन्यथा अणु
-			udc_ग_लिखो(idx, S3C2410_UDC_INDEX_REG);
-			ep_csr = udc_पढ़ो(S3C2410_UDC_IN_CSR1_REG);
-			udc_ग_लिखो(idx, S3C2410_UDC_INDEX_REG);
-			udc_ग_लिखो(ep_csr | S3C2410_UDC_ICSR1_PKTRDY,
+		} else {
+			udc_write(idx, S3C2410_UDC_INDEX_REG);
+			ep_csr = udc_read(S3C2410_UDC_IN_CSR1_REG);
+			udc_write(idx, S3C2410_UDC_INDEX_REG);
+			udc_write(ep_csr | S3C2410_UDC_ICSR1_PKTRDY,
 					S3C2410_UDC_IN_CSR1_REG);
-		पूर्ण
+		}
 
-		s3c2410_udc_करोne(ep, req, 0);
+		s3c2410_udc_done(ep, req, 0);
 		is_last = 1;
-	पूर्ण अन्यथा अणु
-		अगर (idx == 0) अणु
-			/* Reset संकेत => no need to say 'data sent' */
-			अगर (!(udc_पढ़ो(S3C2410_UDC_USB_INT_REG)
+	} else {
+		if (idx == 0) {
+			/* Reset signal => no need to say 'data sent' */
+			if (!(udc_read(S3C2410_UDC_USB_INT_REG)
 					& S3C2410_UDC_USBINT_RESET))
 				s3c2410_udc_set_ep0_ipr(base_addr);
-		पूर्ण अन्यथा अणु
-			udc_ग_लिखो(idx, S3C2410_UDC_INDEX_REG);
-			ep_csr = udc_पढ़ो(S3C2410_UDC_IN_CSR1_REG);
-			udc_ग_लिखो(idx, S3C2410_UDC_INDEX_REG);
-			udc_ग_लिखो(ep_csr | S3C2410_UDC_ICSR1_PKTRDY,
+		} else {
+			udc_write(idx, S3C2410_UDC_INDEX_REG);
+			ep_csr = udc_read(S3C2410_UDC_IN_CSR1_REG);
+			udc_write(idx, S3C2410_UDC_INDEX_REG);
+			udc_write(ep_csr | S3C2410_UDC_ICSR1_PKTRDY,
 					S3C2410_UDC_IN_CSR1_REG);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस is_last;
-पूर्ण
+	return is_last;
+}
 
-अटल अंतरभूत पूर्णांक s3c2410_udc_पढ़ो_packet(पूर्णांक fअगरo, u8 *buf,
-		काष्ठा s3c2410_request *req, अचिन्हित avail)
-अणु
-	अचिन्हित len;
+static inline int s3c2410_udc_read_packet(int fifo, u8 *buf,
+		struct s3c2410_request *req, unsigned avail)
+{
+	unsigned len;
 
 	len = min(req->req.length - req->req.actual, avail);
 	req->req.actual += len;
 
-	पढ़ोsb(fअगरo + base_addr, buf, len);
-	वापस len;
-पूर्ण
+	readsb(fifo + base_addr, buf, len);
+	return len;
+}
 
 /*
- * वापस:  0 = still running, 1 = queue empty, negative = त्रुटि_सं
+ * return:  0 = still running, 1 = queue empty, negative = errno
  */
-अटल पूर्णांक s3c2410_udc_पढ़ो_fअगरo(काष्ठा s3c2410_ep *ep,
-				 काष्ठा s3c2410_request *req)
-अणु
+static int s3c2410_udc_read_fifo(struct s3c2410_ep *ep,
+				 struct s3c2410_request *req)
+{
 	u8		*buf;
 	u32		ep_csr;
-	अचिन्हित	bufferspace;
-	पूर्णांक		is_last = 1;
-	अचिन्हित	avail;
-	पूर्णांक		fअगरo_count = 0;
+	unsigned	bufferspace;
+	int		is_last = 1;
+	unsigned	avail;
+	int		fifo_count = 0;
 	u32		idx;
-	पूर्णांक		fअगरo_reg;
+	int		fifo_reg;
 
-	idx = ep->bEndpoपूर्णांकAddress & 0x7F;
+	idx = ep->bEndpointAddress & 0x7F;
 
-	चयन (idx) अणु
-	शेष:
+	switch (idx) {
+	default:
 		idx = 0;
 		fallthrough;
-	हाल 0:
-		fअगरo_reg = S3C2410_UDC_EP0_FIFO_REG;
-		अवरोध;
-	हाल 1:
-		fअगरo_reg = S3C2410_UDC_EP1_FIFO_REG;
-		अवरोध;
-	हाल 2:
-		fअगरo_reg = S3C2410_UDC_EP2_FIFO_REG;
-		अवरोध;
-	हाल 3:
-		fअगरo_reg = S3C2410_UDC_EP3_FIFO_REG;
-		अवरोध;
-	हाल 4:
-		fअगरo_reg = S3C2410_UDC_EP4_FIFO_REG;
-		अवरोध;
-	पूर्ण
+	case 0:
+		fifo_reg = S3C2410_UDC_EP0_FIFO_REG;
+		break;
+	case 1:
+		fifo_reg = S3C2410_UDC_EP1_FIFO_REG;
+		break;
+	case 2:
+		fifo_reg = S3C2410_UDC_EP2_FIFO_REG;
+		break;
+	case 3:
+		fifo_reg = S3C2410_UDC_EP3_FIFO_REG;
+		break;
+	case 4:
+		fifo_reg = S3C2410_UDC_EP4_FIFO_REG;
+		break;
+	}
 
-	अगर (!req->req.length)
-		वापस 1;
+	if (!req->req.length)
+		return 1;
 
 	buf = req->req.buf + req->req.actual;
 	bufferspace = req->req.length - req->req.actual;
-	अगर (!bufferspace) अणु
-		dprपूर्णांकk(DEBUG_NORMAL, "%s: buffer full!\n", __func__);
-		वापस -1;
-	पूर्ण
+	if (!bufferspace) {
+		dprintk(DEBUG_NORMAL, "%s: buffer full!\n", __func__);
+		return -1;
+	}
 
-	udc_ग_लिखो(idx, S3C2410_UDC_INDEX_REG);
+	udc_write(idx, S3C2410_UDC_INDEX_REG);
 
-	fअगरo_count = s3c2410_udc_fअगरo_count_out();
-	dprपूर्णांकk(DEBUG_NORMAL, "%s fifo count : %d\n", __func__, fअगरo_count);
+	fifo_count = s3c2410_udc_fifo_count_out();
+	dprintk(DEBUG_NORMAL, "%s fifo count : %d\n", __func__, fifo_count);
 
-	अगर (fअगरo_count > ep->ep.maxpacket)
+	if (fifo_count > ep->ep.maxpacket)
 		avail = ep->ep.maxpacket;
-	अन्यथा
-		avail = fअगरo_count;
+	else
+		avail = fifo_count;
 
-	fअगरo_count = s3c2410_udc_पढ़ो_packet(fअगरo_reg, buf, req, avail);
+	fifo_count = s3c2410_udc_read_packet(fifo_reg, buf, req, avail);
 
-	/* checking this with ep0 is not accurate as we alपढ़ोy
-	 * पढ़ो a control request
+	/* checking this with ep0 is not accurate as we already
+	 * read a control request
 	 **/
-	अगर (idx != 0 && fअगरo_count < ep->ep.maxpacket) अणु
+	if (idx != 0 && fifo_count < ep->ep.maxpacket) {
 		is_last = 1;
 		/* overflowed this request?  flush extra data */
-		अगर (fअगरo_count != avail)
+		if (fifo_count != avail)
 			req->req.status = -EOVERFLOW;
-	पूर्ण अन्यथा अणु
+	} else {
 		is_last = (req->req.length <= req->req.actual) ? 1 : 0;
-	पूर्ण
+	}
 
-	udc_ग_लिखो(idx, S3C2410_UDC_INDEX_REG);
-	fअगरo_count = s3c2410_udc_fअगरo_count_out();
+	udc_write(idx, S3C2410_UDC_INDEX_REG);
+	fifo_count = s3c2410_udc_fifo_count_out();
 
-	/* Only ep0 debug messages are पूर्णांकeresting */
-	अगर (idx == 0)
-		dprपूर्णांकk(DEBUG_VERBOSE, "%s fifo count : %d [last %d]\n",
-			__func__, fअगरo_count, is_last);
+	/* Only ep0 debug messages are interesting */
+	if (idx == 0)
+		dprintk(DEBUG_VERBOSE, "%s fifo count : %d [last %d]\n",
+			__func__, fifo_count, is_last);
 
-	अगर (is_last) अणु
-		अगर (idx == 0) अणु
+	if (is_last) {
+		if (idx == 0) {
 			s3c2410_udc_set_ep0_de_out(base_addr);
 			ep->dev->ep0state = EP0_IDLE;
-		पूर्ण अन्यथा अणु
-			udc_ग_लिखो(idx, S3C2410_UDC_INDEX_REG);
-			ep_csr = udc_पढ़ो(S3C2410_UDC_OUT_CSR1_REG);
-			udc_ग_लिखो(idx, S3C2410_UDC_INDEX_REG);
-			udc_ग_लिखो(ep_csr & ~S3C2410_UDC_OCSR1_PKTRDY,
+		} else {
+			udc_write(idx, S3C2410_UDC_INDEX_REG);
+			ep_csr = udc_read(S3C2410_UDC_OUT_CSR1_REG);
+			udc_write(idx, S3C2410_UDC_INDEX_REG);
+			udc_write(ep_csr & ~S3C2410_UDC_OCSR1_PKTRDY,
 					S3C2410_UDC_OUT_CSR1_REG);
-		पूर्ण
+		}
 
-		s3c2410_udc_करोne(ep, req, 0);
-	पूर्ण अन्यथा अणु
-		अगर (idx == 0) अणु
+		s3c2410_udc_done(ep, req, 0);
+	} else {
+		if (idx == 0) {
 			s3c2410_udc_clear_ep0_opr(base_addr);
-		पूर्ण अन्यथा अणु
-			udc_ग_लिखो(idx, S3C2410_UDC_INDEX_REG);
-			ep_csr = udc_पढ़ो(S3C2410_UDC_OUT_CSR1_REG);
-			udc_ग_लिखो(idx, S3C2410_UDC_INDEX_REG);
-			udc_ग_लिखो(ep_csr & ~S3C2410_UDC_OCSR1_PKTRDY,
+		} else {
+			udc_write(idx, S3C2410_UDC_INDEX_REG);
+			ep_csr = udc_read(S3C2410_UDC_OUT_CSR1_REG);
+			udc_write(idx, S3C2410_UDC_INDEX_REG);
+			udc_write(ep_csr & ~S3C2410_UDC_OCSR1_PKTRDY,
 					S3C2410_UDC_OUT_CSR1_REG);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस is_last;
-पूर्ण
+	return is_last;
+}
 
-अटल पूर्णांक s3c2410_udc_पढ़ो_fअगरo_crq(काष्ठा usb_ctrlrequest *crq)
-अणु
-	अचिन्हित अक्षर *outbuf = (अचिन्हित अक्षर *)crq;
-	पूर्णांक bytes_पढ़ो = 0;
+static int s3c2410_udc_read_fifo_crq(struct usb_ctrlrequest *crq)
+{
+	unsigned char *outbuf = (unsigned char *)crq;
+	int bytes_read = 0;
 
-	udc_ग_लिखो(0, S3C2410_UDC_INDEX_REG);
+	udc_write(0, S3C2410_UDC_INDEX_REG);
 
-	bytes_पढ़ो = s3c2410_udc_fअगरo_count_out();
+	bytes_read = s3c2410_udc_fifo_count_out();
 
-	dprपूर्णांकk(DEBUG_NORMAL, "%s: fifo_count=%d\n", __func__, bytes_पढ़ो);
+	dprintk(DEBUG_NORMAL, "%s: fifo_count=%d\n", __func__, bytes_read);
 
-	अगर (bytes_पढ़ो > माप(काष्ठा usb_ctrlrequest))
-		bytes_पढ़ो = माप(काष्ठा usb_ctrlrequest);
+	if (bytes_read > sizeof(struct usb_ctrlrequest))
+		bytes_read = sizeof(struct usb_ctrlrequest);
 
-	पढ़ोsb(S3C2410_UDC_EP0_FIFO_REG + base_addr, outbuf, bytes_पढ़ो);
+	readsb(S3C2410_UDC_EP0_FIFO_REG + base_addr, outbuf, bytes_read);
 
-	dprपूर्णांकk(DEBUG_VERBOSE, "%s: len=%d %02x:%02x {%x,%x,%x}\n", __func__,
-		bytes_पढ़ो, crq->bRequest, crq->bRequestType,
+	dprintk(DEBUG_VERBOSE, "%s: len=%d %02x:%02x {%x,%x,%x}\n", __func__,
+		bytes_read, crq->bRequest, crq->bRequestType,
 		crq->wValue, crq->wIndex, crq->wLength);
 
-	वापस bytes_पढ़ो;
-पूर्ण
+	return bytes_read;
+}
 
-अटल पूर्णांक s3c2410_udc_get_status(काष्ठा s3c2410_udc *dev,
-		काष्ठा usb_ctrlrequest *crq)
-अणु
+static int s3c2410_udc_get_status(struct s3c2410_udc *dev,
+		struct usb_ctrlrequest *crq)
+{
 	u16 status = 0;
 	u8 ep_num = crq->wIndex & 0x7F;
-	u8 is_in = crq->wIndex & USB_सूची_IN;
+	u8 is_in = crq->wIndex & USB_DIR_IN;
 
-	चयन (crq->bRequestType & USB_RECIP_MASK) अणु
-	हाल USB_RECIP_INTERFACE:
-		अवरोध;
+	switch (crq->bRequestType & USB_RECIP_MASK) {
+	case USB_RECIP_INTERFACE:
+		break;
 
-	हाल USB_RECIP_DEVICE:
+	case USB_RECIP_DEVICE:
 		status = dev->devstatus;
-		अवरोध;
+		break;
 
-	हाल USB_RECIP_ENDPOINT:
-		अगर (ep_num > 4 || crq->wLength > 2)
-			वापस 1;
+	case USB_RECIP_ENDPOINT:
+		if (ep_num > 4 || crq->wLength > 2)
+			return 1;
 
-		अगर (ep_num == 0) अणु
-			udc_ग_लिखो(0, S3C2410_UDC_INDEX_REG);
-			status = udc_पढ़ो(S3C2410_UDC_IN_CSR1_REG);
+		if (ep_num == 0) {
+			udc_write(0, S3C2410_UDC_INDEX_REG);
+			status = udc_read(S3C2410_UDC_IN_CSR1_REG);
 			status = status & S3C2410_UDC_EP0_CSR_SENDSTL;
-		पूर्ण अन्यथा अणु
-			udc_ग_लिखो(ep_num, S3C2410_UDC_INDEX_REG);
-			अगर (is_in) अणु
-				status = udc_पढ़ो(S3C2410_UDC_IN_CSR1_REG);
+		} else {
+			udc_write(ep_num, S3C2410_UDC_INDEX_REG);
+			if (is_in) {
+				status = udc_read(S3C2410_UDC_IN_CSR1_REG);
 				status = status & S3C2410_UDC_ICSR1_SENDSTL;
-			पूर्ण अन्यथा अणु
-				status = udc_पढ़ो(S3C2410_UDC_OUT_CSR1_REG);
+			} else {
+				status = udc_read(S3C2410_UDC_OUT_CSR1_REG);
 				status = status & S3C2410_UDC_OCSR1_SENDSTL;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		status = status ? 1 : 0;
-		अवरोध;
+		break;
 
-	शेष:
-		वापस 1;
-	पूर्ण
+	default:
+		return 1;
+	}
 
 	/* Seems to be needed to get it working. ouch :( */
 	udelay(5);
-	udc_ग_लिखो(status & 0xFF, S3C2410_UDC_EP0_FIFO_REG);
-	udc_ग_लिखो(status >> 8, S3C2410_UDC_EP0_FIFO_REG);
+	udc_write(status & 0xFF, S3C2410_UDC_EP0_FIFO_REG);
+	udc_write(status >> 8, S3C2410_UDC_EP0_FIFO_REG);
 	s3c2410_udc_set_ep0_de_in(base_addr);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 /*------------------------- usb state machine -------------------------------*/
-अटल पूर्णांक s3c2410_udc_set_halt(काष्ठा usb_ep *_ep, पूर्णांक value);
+static int s3c2410_udc_set_halt(struct usb_ep *_ep, int value);
 
-अटल व्योम s3c2410_udc_handle_ep0_idle(काष्ठा s3c2410_udc *dev,
-					काष्ठा s3c2410_ep *ep,
-					काष्ठा usb_ctrlrequest *crq,
+static void s3c2410_udc_handle_ep0_idle(struct s3c2410_udc *dev,
+					struct s3c2410_ep *ep,
+					struct usb_ctrlrequest *crq,
 					u32 ep0csr)
-अणु
-	पूर्णांक len, ret, पंचांगp;
+{
+	int len, ret, tmp;
 
 	/* start control request? */
-	अगर (!(ep0csr & S3C2410_UDC_EP0_CSR_OPKRDY))
-		वापस;
+	if (!(ep0csr & S3C2410_UDC_EP0_CSR_OPKRDY))
+		return;
 
 	s3c2410_udc_nuke(dev, ep, -EPROTO);
 
-	len = s3c2410_udc_पढ़ो_fअगरo_crq(crq);
-	अगर (len != माप(*crq)) अणु
-		dprपूर्णांकk(DEBUG_NORMAL, "setup begin: fifo READ ERROR"
+	len = s3c2410_udc_read_fifo_crq(crq);
+	if (len != sizeof(*crq)) {
+		dprintk(DEBUG_NORMAL, "setup begin: fifo READ ERROR"
 			" wanted %d bytes got %d. Stalling out...\n",
-			माप(*crq), len);
+			sizeof(*crq), len);
 		s3c2410_udc_set_ep0_ss(base_addr);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	dprपूर्णांकk(DEBUG_NORMAL, "bRequest = %d bRequestType %d wLength = %d\n",
+	dprintk(DEBUG_NORMAL, "bRequest = %d bRequestType %d wLength = %d\n",
 		crq->bRequest, crq->bRequestType, crq->wLength);
 
-	/* cope with स्वतःmagic क्रम some standard requests. */
+	/* cope with automagic for some standard requests. */
 	dev->req_std = (crq->bRequestType & USB_TYPE_MASK)
 		== USB_TYPE_STANDARD;
 	dev->req_config = 0;
 	dev->req_pending = 1;
 
-	चयन (crq->bRequest) अणु
-	हाल USB_REQ_SET_CONFIGURATION:
-		dprपूर्णांकk(DEBUG_NORMAL, "USB_REQ_SET_CONFIGURATION ...\n");
+	switch (crq->bRequest) {
+	case USB_REQ_SET_CONFIGURATION:
+		dprintk(DEBUG_NORMAL, "USB_REQ_SET_CONFIGURATION ...\n");
 
-		अगर (crq->bRequestType == USB_RECIP_DEVICE) अणु
+		if (crq->bRequestType == USB_RECIP_DEVICE) {
 			dev->req_config = 1;
 			s3c2410_udc_set_ep0_de_out(base_addr);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल USB_REQ_SET_INTERFACE:
-		dprपूर्णांकk(DEBUG_NORMAL, "USB_REQ_SET_INTERFACE ...\n");
+	case USB_REQ_SET_INTERFACE:
+		dprintk(DEBUG_NORMAL, "USB_REQ_SET_INTERFACE ...\n");
 
-		अगर (crq->bRequestType == USB_RECIP_INTERFACE) अणु
+		if (crq->bRequestType == USB_RECIP_INTERFACE) {
 			dev->req_config = 1;
 			s3c2410_udc_set_ep0_de_out(base_addr);
-		पूर्ण
-		अवरोध;
+		}
+		break;
 
-	हाल USB_REQ_SET_ADDRESS:
-		dprपूर्णांकk(DEBUG_NORMAL, "USB_REQ_SET_ADDRESS ...\n");
+	case USB_REQ_SET_ADDRESS:
+		dprintk(DEBUG_NORMAL, "USB_REQ_SET_ADDRESS ...\n");
 
-		अगर (crq->bRequestType == USB_RECIP_DEVICE) अणु
-			पंचांगp = crq->wValue & 0x7F;
-			dev->address = पंचांगp;
-			udc_ग_लिखो((पंचांगp | S3C2410_UDC_FUNCADDR_UPDATE),
+		if (crq->bRequestType == USB_RECIP_DEVICE) {
+			tmp = crq->wValue & 0x7F;
+			dev->address = tmp;
+			udc_write((tmp | S3C2410_UDC_FUNCADDR_UPDATE),
 					S3C2410_UDC_FUNC_ADDR_REG);
 			s3c2410_udc_set_ep0_de_out(base_addr);
-			वापस;
-		पूर्ण
-		अवरोध;
+			return;
+		}
+		break;
 
-	हाल USB_REQ_GET_STATUS:
-		dprपूर्णांकk(DEBUG_NORMAL, "USB_REQ_GET_STATUS ...\n");
+	case USB_REQ_GET_STATUS:
+		dprintk(DEBUG_NORMAL, "USB_REQ_GET_STATUS ...\n");
 		s3c2410_udc_clear_ep0_opr(base_addr);
 
-		अगर (dev->req_std) अणु
-			अगर (!s3c2410_udc_get_status(dev, crq))
-				वापस;
-		पूर्ण
-		अवरोध;
+		if (dev->req_std) {
+			if (!s3c2410_udc_get_status(dev, crq))
+				return;
+		}
+		break;
 
-	हाल USB_REQ_CLEAR_FEATURE:
+	case USB_REQ_CLEAR_FEATURE:
 		s3c2410_udc_clear_ep0_opr(base_addr);
 
-		अगर (crq->bRequestType != USB_RECIP_ENDPOINT)
-			अवरोध;
+		if (crq->bRequestType != USB_RECIP_ENDPOINT)
+			break;
 
-		अगर (crq->wValue != USB_ENDPOINT_HALT || crq->wLength != 0)
-			अवरोध;
+		if (crq->wValue != USB_ENDPOINT_HALT || crq->wLength != 0)
+			break;
 
 		s3c2410_udc_set_halt(&dev->ep[crq->wIndex & 0x7f].ep, 0);
 		s3c2410_udc_set_ep0_de_out(base_addr);
-		वापस;
+		return;
 
-	हाल USB_REQ_SET_FEATURE:
+	case USB_REQ_SET_FEATURE:
 		s3c2410_udc_clear_ep0_opr(base_addr);
 
-		अगर (crq->bRequestType != USB_RECIP_ENDPOINT)
-			अवरोध;
+		if (crq->bRequestType != USB_RECIP_ENDPOINT)
+			break;
 
-		अगर (crq->wValue != USB_ENDPOINT_HALT || crq->wLength != 0)
-			अवरोध;
+		if (crq->wValue != USB_ENDPOINT_HALT || crq->wLength != 0)
+			break;
 
 		s3c2410_udc_set_halt(&dev->ep[crq->wIndex & 0x7f].ep, 1);
 		s3c2410_udc_set_ep0_de_out(base_addr);
-		वापस;
+		return;
 
-	शेष:
+	default:
 		s3c2410_udc_clear_ep0_opr(base_addr);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (crq->bRequestType & USB_सूची_IN)
+	if (crq->bRequestType & USB_DIR_IN)
 		dev->ep0state = EP0_IN_DATA_PHASE;
-	अन्यथा
+	else
 		dev->ep0state = EP0_OUT_DATA_PHASE;
 
-	अगर (!dev->driver)
-		वापस;
+	if (!dev->driver)
+		return;
 
 	/* deliver the request to the gadget driver */
 	ret = dev->driver->setup(&dev->gadget, crq);
-	अगर (ret < 0) अणु
-		अगर (dev->req_config) अणु
-			dprपूर्णांकk(DEBUG_NORMAL, "config change %02x fail %d?\n",
+	if (ret < 0) {
+		if (dev->req_config) {
+			dprintk(DEBUG_NORMAL, "config change %02x fail %d?\n",
 				crq->bRequest, ret);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		अगर (ret == -EOPNOTSUPP)
-			dprपूर्णांकk(DEBUG_NORMAL, "Operation not supported\n");
-		अन्यथा
-			dprपूर्णांकk(DEBUG_NORMAL,
+		if (ret == -EOPNOTSUPP)
+			dprintk(DEBUG_NORMAL, "Operation not supported\n");
+		else
+			dprintk(DEBUG_NORMAL,
 				"dev->driver->setup failed. (%d)\n", ret);
 
 		udelay(5);
@@ -704,864 +703,864 @@ DEFINE_SHOW_ATTRIBUTE(s3c2410_udc_debugfs);
 		s3c2410_udc_set_ep0_de_out(base_addr);
 		dev->ep0state = EP0_IDLE;
 		/* deferred i/o == no response yet */
-	पूर्ण अन्यथा अगर (dev->req_pending) अणु
-		dprपूर्णांकk(DEBUG_VERBOSE, "dev->req_pending... what now?\n");
+	} else if (dev->req_pending) {
+		dprintk(DEBUG_VERBOSE, "dev->req_pending... what now?\n");
 		dev->req_pending = 0;
-	पूर्ण
+	}
 
-	dprपूर्णांकk(DEBUG_VERBOSE, "ep0state %s\n", ep0states[dev->ep0state]);
-पूर्ण
+	dprintk(DEBUG_VERBOSE, "ep0state %s\n", ep0states[dev->ep0state]);
+}
 
-अटल व्योम s3c2410_udc_handle_ep0(काष्ठा s3c2410_udc *dev)
-अणु
+static void s3c2410_udc_handle_ep0(struct s3c2410_udc *dev)
+{
 	u32			ep0csr;
-	काष्ठा s3c2410_ep	*ep = &dev->ep[0];
-	काष्ठा s3c2410_request	*req;
-	काष्ठा usb_ctrlrequest	crq;
+	struct s3c2410_ep	*ep = &dev->ep[0];
+	struct s3c2410_request	*req;
+	struct usb_ctrlrequest	crq;
 
-	अगर (list_empty(&ep->queue))
-		req = शून्य;
-	अन्यथा
-		req = list_entry(ep->queue.next, काष्ठा s3c2410_request, queue);
+	if (list_empty(&ep->queue))
+		req = NULL;
+	else
+		req = list_entry(ep->queue.next, struct s3c2410_request, queue);
 
 	/* We make the assumption that S3C2410_UDC_IN_CSR1_REG equal to
 	 * S3C2410_UDC_EP0_CSR_REG when index is zero */
 
-	udc_ग_लिखो(0, S3C2410_UDC_INDEX_REG);
-	ep0csr = udc_पढ़ो(S3C2410_UDC_IN_CSR1_REG);
+	udc_write(0, S3C2410_UDC_INDEX_REG);
+	ep0csr = udc_read(S3C2410_UDC_IN_CSR1_REG);
 
-	dprपूर्णांकk(DEBUG_NORMAL, "ep0csr %x ep0state %s\n",
+	dprintk(DEBUG_NORMAL, "ep0csr %x ep0state %s\n",
 		ep0csr, ep0states[dev->ep0state]);
 
 	/* clear stall status */
-	अगर (ep0csr & S3C2410_UDC_EP0_CSR_SENTSTL) अणु
+	if (ep0csr & S3C2410_UDC_EP0_CSR_SENTSTL) {
 		s3c2410_udc_nuke(dev, ep, -EPIPE);
-		dprपूर्णांकk(DEBUG_NORMAL, "... clear SENT_STALL ...\n");
+		dprintk(DEBUG_NORMAL, "... clear SENT_STALL ...\n");
 		s3c2410_udc_clear_ep0_sst(base_addr);
 		dev->ep0state = EP0_IDLE;
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* clear setup end */
-	अगर (ep0csr & S3C2410_UDC_EP0_CSR_SE) अणु
-		dprपूर्णांकk(DEBUG_NORMAL, "... serviced SETUP_END ...\n");
+	if (ep0csr & S3C2410_UDC_EP0_CSR_SE) {
+		dprintk(DEBUG_NORMAL, "... serviced SETUP_END ...\n");
 		s3c2410_udc_nuke(dev, ep, 0);
 		s3c2410_udc_clear_ep0_se(base_addr);
 		dev->ep0state = EP0_IDLE;
-	पूर्ण
+	}
 
-	चयन (dev->ep0state) अणु
-	हाल EP0_IDLE:
+	switch (dev->ep0state) {
+	case EP0_IDLE:
 		s3c2410_udc_handle_ep0_idle(dev, ep, &crq, ep0csr);
-		अवरोध;
+		break;
 
-	हाल EP0_IN_DATA_PHASE:			/* GET_DESCRIPTOR etc */
-		dprपूर्णांकk(DEBUG_NORMAL, "EP0_IN_DATA_PHASE ... what now?\n");
-		अगर (!(ep0csr & S3C2410_UDC_EP0_CSR_IPKRDY) && req)
-			s3c2410_udc_ग_लिखो_fअगरo(ep, req);
-		अवरोध;
+	case EP0_IN_DATA_PHASE:			/* GET_DESCRIPTOR etc */
+		dprintk(DEBUG_NORMAL, "EP0_IN_DATA_PHASE ... what now?\n");
+		if (!(ep0csr & S3C2410_UDC_EP0_CSR_IPKRDY) && req)
+			s3c2410_udc_write_fifo(ep, req);
+		break;
 
-	हाल EP0_OUT_DATA_PHASE:		/* SET_DESCRIPTOR etc */
-		dprपूर्णांकk(DEBUG_NORMAL, "EP0_OUT_DATA_PHASE ... what now?\n");
-		अगर ((ep0csr & S3C2410_UDC_EP0_CSR_OPKRDY) && req)
-			s3c2410_udc_पढ़ो_fअगरo(ep, req);
-		अवरोध;
+	case EP0_OUT_DATA_PHASE:		/* SET_DESCRIPTOR etc */
+		dprintk(DEBUG_NORMAL, "EP0_OUT_DATA_PHASE ... what now?\n");
+		if ((ep0csr & S3C2410_UDC_EP0_CSR_OPKRDY) && req)
+			s3c2410_udc_read_fifo(ep, req);
+		break;
 
-	हाल EP0_END_XFER:
-		dprपूर्णांकk(DEBUG_NORMAL, "EP0_END_XFER ... what now?\n");
+	case EP0_END_XFER:
+		dprintk(DEBUG_NORMAL, "EP0_END_XFER ... what now?\n");
 		dev->ep0state = EP0_IDLE;
-		अवरोध;
+		break;
 
-	हाल EP0_STALL:
-		dprपूर्णांकk(DEBUG_NORMAL, "EP0_STALL ... what now?\n");
+	case EP0_STALL:
+		dprintk(DEBUG_NORMAL, "EP0_STALL ... what now?\n");
 		dev->ep0state = EP0_IDLE;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
 /*
- *	handle_ep - Manage I/O endpoपूर्णांकs
+ *	handle_ep - Manage I/O endpoints
  */
 
-अटल व्योम s3c2410_udc_handle_ep(काष्ठा s3c2410_ep *ep)
-अणु
-	काष्ठा s3c2410_request	*req;
-	पूर्णांक			is_in = ep->bEndpoपूर्णांकAddress & USB_सूची_IN;
+static void s3c2410_udc_handle_ep(struct s3c2410_ep *ep)
+{
+	struct s3c2410_request	*req;
+	int			is_in = ep->bEndpointAddress & USB_DIR_IN;
 	u32			ep_csr1;
 	u32			idx;
 
-	अगर (likely(!list_empty(&ep->queue)))
+	if (likely(!list_empty(&ep->queue)))
 		req = list_entry(ep->queue.next,
-				काष्ठा s3c2410_request, queue);
-	अन्यथा
-		req = शून्य;
+				struct s3c2410_request, queue);
+	else
+		req = NULL;
 
-	idx = ep->bEndpoपूर्णांकAddress & 0x7F;
+	idx = ep->bEndpointAddress & 0x7F;
 
-	अगर (is_in) अणु
-		udc_ग_लिखो(idx, S3C2410_UDC_INDEX_REG);
-		ep_csr1 = udc_पढ़ो(S3C2410_UDC_IN_CSR1_REG);
-		dprपूर्णांकk(DEBUG_VERBOSE, "ep%01d write csr:%02x %d\n",
+	if (is_in) {
+		udc_write(idx, S3C2410_UDC_INDEX_REG);
+		ep_csr1 = udc_read(S3C2410_UDC_IN_CSR1_REG);
+		dprintk(DEBUG_VERBOSE, "ep%01d write csr:%02x %d\n",
 			idx, ep_csr1, req ? 1 : 0);
 
-		अगर (ep_csr1 & S3C2410_UDC_ICSR1_SENTSTL) अणु
-			dprपूर्णांकk(DEBUG_VERBOSE, "st\n");
-			udc_ग_लिखो(idx, S3C2410_UDC_INDEX_REG);
-			udc_ग_लिखो(ep_csr1 & ~S3C2410_UDC_ICSR1_SENTSTL,
+		if (ep_csr1 & S3C2410_UDC_ICSR1_SENTSTL) {
+			dprintk(DEBUG_VERBOSE, "st\n");
+			udc_write(idx, S3C2410_UDC_INDEX_REG);
+			udc_write(ep_csr1 & ~S3C2410_UDC_ICSR1_SENTSTL,
 					S3C2410_UDC_IN_CSR1_REG);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		अगर (!(ep_csr1 & S3C2410_UDC_ICSR1_PKTRDY) && req)
-			s3c2410_udc_ग_लिखो_fअगरo(ep, req);
-	पूर्ण अन्यथा अणु
-		udc_ग_लिखो(idx, S3C2410_UDC_INDEX_REG);
-		ep_csr1 = udc_पढ़ो(S3C2410_UDC_OUT_CSR1_REG);
-		dprपूर्णांकk(DEBUG_VERBOSE, "ep%01d rd csr:%02x\n", idx, ep_csr1);
+		if (!(ep_csr1 & S3C2410_UDC_ICSR1_PKTRDY) && req)
+			s3c2410_udc_write_fifo(ep, req);
+	} else {
+		udc_write(idx, S3C2410_UDC_INDEX_REG);
+		ep_csr1 = udc_read(S3C2410_UDC_OUT_CSR1_REG);
+		dprintk(DEBUG_VERBOSE, "ep%01d rd csr:%02x\n", idx, ep_csr1);
 
-		अगर (ep_csr1 & S3C2410_UDC_OCSR1_SENTSTL) अणु
-			udc_ग_लिखो(idx, S3C2410_UDC_INDEX_REG);
-			udc_ग_लिखो(ep_csr1 & ~S3C2410_UDC_OCSR1_SENTSTL,
+		if (ep_csr1 & S3C2410_UDC_OCSR1_SENTSTL) {
+			udc_write(idx, S3C2410_UDC_INDEX_REG);
+			udc_write(ep_csr1 & ~S3C2410_UDC_OCSR1_SENTSTL,
 					S3C2410_UDC_OUT_CSR1_REG);
-			वापस;
-		पूर्ण
+			return;
+		}
 
-		अगर ((ep_csr1 & S3C2410_UDC_OCSR1_PKTRDY) && req)
-			s3c2410_udc_पढ़ो_fअगरo(ep, req);
-	पूर्ण
-पूर्ण
+		if ((ep_csr1 & S3C2410_UDC_OCSR1_PKTRDY) && req)
+			s3c2410_udc_read_fifo(ep, req);
+	}
+}
 
 /*
- *	s3c2410_udc_irq - पूर्णांकerrupt handler
+ *	s3c2410_udc_irq - interrupt handler
  */
-अटल irqवापस_t s3c2410_udc_irq(पूर्णांक dummy, व्योम *_dev)
-अणु
-	काष्ठा s3c2410_udc *dev = _dev;
-	पूर्णांक usb_status;
-	पूर्णांक usbd_status;
-	पूर्णांक pwr_reg;
-	पूर्णांक ep0csr;
-	पूर्णांक i;
+static irqreturn_t s3c2410_udc_irq(int dummy, void *_dev)
+{
+	struct s3c2410_udc *dev = _dev;
+	int usb_status;
+	int usbd_status;
+	int pwr_reg;
+	int ep0csr;
+	int i;
 	u32 idx, idx2;
-	अचिन्हित दीर्घ flags;
+	unsigned long flags;
 
 	spin_lock_irqsave(&dev->lock, flags);
 
 	/* Driver connected ? */
-	अगर (!dev->driver) अणु
-		/* Clear पूर्णांकerrupts */
-		udc_ग_लिखो(udc_पढ़ो(S3C2410_UDC_USB_INT_REG),
+	if (!dev->driver) {
+		/* Clear interrupts */
+		udc_write(udc_read(S3C2410_UDC_USB_INT_REG),
 				S3C2410_UDC_USB_INT_REG);
-		udc_ग_लिखो(udc_पढ़ो(S3C2410_UDC_EP_INT_REG),
+		udc_write(udc_read(S3C2410_UDC_EP_INT_REG),
 				S3C2410_UDC_EP_INT_REG);
-	पूर्ण
+	}
 
 	/* Save index */
-	idx = udc_पढ़ो(S3C2410_UDC_INDEX_REG);
+	idx = udc_read(S3C2410_UDC_INDEX_REG);
 
-	/* Read status रेजिस्टरs */
-	usb_status = udc_पढ़ो(S3C2410_UDC_USB_INT_REG);
-	usbd_status = udc_पढ़ो(S3C2410_UDC_EP_INT_REG);
-	pwr_reg = udc_पढ़ो(S3C2410_UDC_PWR_REG);
+	/* Read status registers */
+	usb_status = udc_read(S3C2410_UDC_USB_INT_REG);
+	usbd_status = udc_read(S3C2410_UDC_EP_INT_REG);
+	pwr_reg = udc_read(S3C2410_UDC_PWR_REG);
 
-	udc_ग_लिखोb(base_addr, S3C2410_UDC_INDEX_EP0, S3C2410_UDC_INDEX_REG);
-	ep0csr = udc_पढ़ो(S3C2410_UDC_IN_CSR1_REG);
+	udc_writeb(base_addr, S3C2410_UDC_INDEX_EP0, S3C2410_UDC_INDEX_REG);
+	ep0csr = udc_read(S3C2410_UDC_IN_CSR1_REG);
 
-	dprपूर्णांकk(DEBUG_NORMAL, "usbs=%02x, usbds=%02x, pwr=%02x ep0csr=%02x\n",
+	dprintk(DEBUG_NORMAL, "usbs=%02x, usbds=%02x, pwr=%02x ep0csr=%02x\n",
 		usb_status, usbd_status, pwr_reg, ep0csr);
 
 	/*
-	 * Now, handle पूर्णांकerrupts. There's two types :
-	 * - Reset, Resume, Suspend coming -> usb_पूर्णांक_reg
-	 * - EP -> ep_पूर्णांक_reg
+	 * Now, handle interrupts. There's two types :
+	 * - Reset, Resume, Suspend coming -> usb_int_reg
+	 * - EP -> ep_int_reg
 	 */
 
 	/* RESET */
-	अगर (usb_status & S3C2410_UDC_USBINT_RESET) अणु
+	if (usb_status & S3C2410_UDC_USBINT_RESET) {
 		/* two kind of reset :
 		 * - reset start -> pwr reg = 8
 		 * - reset end   -> pwr reg = 0
 		 **/
-		dprपूर्णांकk(DEBUG_NORMAL, "USB reset csr %x pwr %x\n",
+		dprintk(DEBUG_NORMAL, "USB reset csr %x pwr %x\n",
 			ep0csr, pwr_reg);
 
 		dev->gadget.speed = USB_SPEED_UNKNOWN;
-		udc_ग_लिखो(0x00, S3C2410_UDC_INDEX_REG);
-		udc_ग_लिखो((dev->ep[0].ep.maxpacket & 0x7ff) >> 3,
+		udc_write(0x00, S3C2410_UDC_INDEX_REG);
+		udc_write((dev->ep[0].ep.maxpacket & 0x7ff) >> 3,
 				S3C2410_UDC_MAXP_REG);
 		dev->address = 0;
 
 		dev->ep0state = EP0_IDLE;
 		dev->gadget.speed = USB_SPEED_FULL;
 
-		/* clear पूर्णांकerrupt */
-		udc_ग_लिखो(S3C2410_UDC_USBINT_RESET,
+		/* clear interrupt */
+		udc_write(S3C2410_UDC_USBINT_RESET,
 				S3C2410_UDC_USB_INT_REG);
 
-		udc_ग_लिखो(idx, S3C2410_UDC_INDEX_REG);
+		udc_write(idx, S3C2410_UDC_INDEX_REG);
 		spin_unlock_irqrestore(&dev->lock, flags);
-		वापस IRQ_HANDLED;
-	पूर्ण
+		return IRQ_HANDLED;
+	}
 
 	/* RESUME */
-	अगर (usb_status & S3C2410_UDC_USBINT_RESUME) अणु
-		dprपूर्णांकk(DEBUG_NORMAL, "USB resume\n");
+	if (usb_status & S3C2410_UDC_USBINT_RESUME) {
+		dprintk(DEBUG_NORMAL, "USB resume\n");
 
-		/* clear पूर्णांकerrupt */
-		udc_ग_लिखो(S3C2410_UDC_USBINT_RESUME,
+		/* clear interrupt */
+		udc_write(S3C2410_UDC_USBINT_RESUME,
 				S3C2410_UDC_USB_INT_REG);
 
-		अगर (dev->gadget.speed != USB_SPEED_UNKNOWN
+		if (dev->gadget.speed != USB_SPEED_UNKNOWN
 				&& dev->driver
 				&& dev->driver->resume)
 			dev->driver->resume(&dev->gadget);
-	पूर्ण
+	}
 
 	/* SUSPEND */
-	अगर (usb_status & S3C2410_UDC_USBINT_SUSPEND) अणु
-		dprपूर्णांकk(DEBUG_NORMAL, "USB suspend\n");
+	if (usb_status & S3C2410_UDC_USBINT_SUSPEND) {
+		dprintk(DEBUG_NORMAL, "USB suspend\n");
 
-		/* clear पूर्णांकerrupt */
-		udc_ग_लिखो(S3C2410_UDC_USBINT_SUSPEND,
+		/* clear interrupt */
+		udc_write(S3C2410_UDC_USBINT_SUSPEND,
 				S3C2410_UDC_USB_INT_REG);
 
-		अगर (dev->gadget.speed != USB_SPEED_UNKNOWN
+		if (dev->gadget.speed != USB_SPEED_UNKNOWN
 				&& dev->driver
 				&& dev->driver->suspend)
 			dev->driver->suspend(&dev->gadget);
 
 		dev->ep0state = EP0_IDLE;
-	पूर्ण
+	}
 
 	/* EP */
 	/* control traffic */
-	/* check on ep0csr != 0 is not a good idea as clearing in_pkt_पढ़ोy
-	 * generate an पूर्णांकerrupt
+	/* check on ep0csr != 0 is not a good idea as clearing in_pkt_ready
+	 * generate an interrupt
 	 */
-	अगर (usbd_status & S3C2410_UDC_INT_EP0) अणु
-		dprपूर्णांकk(DEBUG_VERBOSE, "USB ep0 irq\n");
-		/* Clear the पूर्णांकerrupt bit by setting it to 1 */
-		udc_ग_लिखो(S3C2410_UDC_INT_EP0, S3C2410_UDC_EP_INT_REG);
+	if (usbd_status & S3C2410_UDC_INT_EP0) {
+		dprintk(DEBUG_VERBOSE, "USB ep0 irq\n");
+		/* Clear the interrupt bit by setting it to 1 */
+		udc_write(S3C2410_UDC_INT_EP0, S3C2410_UDC_EP_INT_REG);
 		s3c2410_udc_handle_ep0(dev);
-	पूर्ण
+	}
 
-	/* endpoपूर्णांक data transfers */
-	क्रम (i = 1; i < S3C2410_ENDPOINTS; i++) अणु
-		u32 पंचांगp = 1 << i;
-		अगर (usbd_status & पंचांगp) अणु
-			dprपूर्णांकk(DEBUG_VERBOSE, "USB ep%d irq\n", i);
+	/* endpoint data transfers */
+	for (i = 1; i < S3C2410_ENDPOINTS; i++) {
+		u32 tmp = 1 << i;
+		if (usbd_status & tmp) {
+			dprintk(DEBUG_VERBOSE, "USB ep%d irq\n", i);
 
-			/* Clear the पूर्णांकerrupt bit by setting it to 1 */
-			udc_ग_लिखो(पंचांगp, S3C2410_UDC_EP_INT_REG);
+			/* Clear the interrupt bit by setting it to 1 */
+			udc_write(tmp, S3C2410_UDC_EP_INT_REG);
 			s3c2410_udc_handle_ep(&dev->ep[i]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* what अन्यथा causes this पूर्णांकerrupt? a receive! who is it? */
-	अगर (!usb_status && !usbd_status && !pwr_reg && !ep0csr) अणु
-		क्रम (i = 1; i < S3C2410_ENDPOINTS; i++) अणु
-			idx2 = udc_पढ़ो(S3C2410_UDC_INDEX_REG);
-			udc_ग_लिखो(i, S3C2410_UDC_INDEX_REG);
+	/* what else causes this interrupt? a receive! who is it? */
+	if (!usb_status && !usbd_status && !pwr_reg && !ep0csr) {
+		for (i = 1; i < S3C2410_ENDPOINTS; i++) {
+			idx2 = udc_read(S3C2410_UDC_INDEX_REG);
+			udc_write(i, S3C2410_UDC_INDEX_REG);
 
-			अगर (udc_पढ़ो(S3C2410_UDC_OUT_CSR1_REG) & 0x1)
+			if (udc_read(S3C2410_UDC_OUT_CSR1_REG) & 0x1)
 				s3c2410_udc_handle_ep(&dev->ep[i]);
 
 			/* restore index */
-			udc_ग_लिखो(idx2, S3C2410_UDC_INDEX_REG);
-		पूर्ण
-	पूर्ण
+			udc_write(idx2, S3C2410_UDC_INDEX_REG);
+		}
+	}
 
-	dprपूर्णांकk(DEBUG_VERBOSE, "irq: %d s3c2410_udc_done.\n", irq_usbd);
+	dprintk(DEBUG_VERBOSE, "irq: %d s3c2410_udc_done.\n", irq_usbd);
 
 	/* Restore old index */
-	udc_ग_लिखो(idx, S3C2410_UDC_INDEX_REG);
+	udc_write(idx, S3C2410_UDC_INDEX_REG);
 
 	spin_unlock_irqrestore(&dev->lock, flags);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 /*------------------------- s3c2410_ep_ops ----------------------------------*/
 
-अटल अंतरभूत काष्ठा s3c2410_ep *to_s3c2410_ep(काष्ठा usb_ep *ep)
-अणु
-	वापस container_of(ep, काष्ठा s3c2410_ep, ep);
-पूर्ण
+static inline struct s3c2410_ep *to_s3c2410_ep(struct usb_ep *ep)
+{
+	return container_of(ep, struct s3c2410_ep, ep);
+}
 
-अटल अंतरभूत काष्ठा s3c2410_udc *to_s3c2410_udc(काष्ठा usb_gadget *gadget)
-अणु
-	वापस container_of(gadget, काष्ठा s3c2410_udc, gadget);
-पूर्ण
+static inline struct s3c2410_udc *to_s3c2410_udc(struct usb_gadget *gadget)
+{
+	return container_of(gadget, struct s3c2410_udc, gadget);
+}
 
-अटल अंतरभूत काष्ठा s3c2410_request *to_s3c2410_req(काष्ठा usb_request *req)
-अणु
-	वापस container_of(req, काष्ठा s3c2410_request, req);
-पूर्ण
+static inline struct s3c2410_request *to_s3c2410_req(struct usb_request *req)
+{
+	return container_of(req, struct s3c2410_request, req);
+}
 
 /*
  *	s3c2410_udc_ep_enable
  */
-अटल पूर्णांक s3c2410_udc_ep_enable(काष्ठा usb_ep *_ep,
-				 स्थिर काष्ठा usb_endpoपूर्णांक_descriptor *desc)
-अणु
-	काष्ठा s3c2410_udc	*dev;
-	काष्ठा s3c2410_ep	*ep;
-	u32			max, पंचांगp;
-	अचिन्हित दीर्घ		flags;
+static int s3c2410_udc_ep_enable(struct usb_ep *_ep,
+				 const struct usb_endpoint_descriptor *desc)
+{
+	struct s3c2410_udc	*dev;
+	struct s3c2410_ep	*ep;
+	u32			max, tmp;
+	unsigned long		flags;
 	u32			csr1, csr2;
-	u32			पूर्णांक_en_reg;
+	u32			int_en_reg;
 
 	ep = to_s3c2410_ep(_ep);
 
-	अगर (!_ep || !desc
+	if (!_ep || !desc
 			|| _ep->name == ep0name
 			|| desc->bDescriptorType != USB_DT_ENDPOINT)
-		वापस -EINVAL;
+		return -EINVAL;
 
 	dev = ep->dev;
-	अगर (!dev->driver || dev->gadget.speed == USB_SPEED_UNKNOWN)
-		वापस -ESHUTDOWN;
+	if (!dev->driver || dev->gadget.speed == USB_SPEED_UNKNOWN)
+		return -ESHUTDOWN;
 
-	max = usb_endpoपूर्णांक_maxp(desc);
+	max = usb_endpoint_maxp(desc);
 
 	local_irq_save(flags);
 	_ep->maxpacket = max;
 	ep->ep.desc = desc;
 	ep->halted = 0;
-	ep->bEndpoपूर्णांकAddress = desc->bEndpoपूर्णांकAddress;
+	ep->bEndpointAddress = desc->bEndpointAddress;
 
 	/* set max packet */
-	udc_ग_लिखो(ep->num, S3C2410_UDC_INDEX_REG);
-	udc_ग_लिखो(max >> 3, S3C2410_UDC_MAXP_REG);
+	udc_write(ep->num, S3C2410_UDC_INDEX_REG);
+	udc_write(max >> 3, S3C2410_UDC_MAXP_REG);
 
-	/* set type, direction, address; reset fअगरo counters */
-	अगर (desc->bEndpoपूर्णांकAddress & USB_सूची_IN) अणु
+	/* set type, direction, address; reset fifo counters */
+	if (desc->bEndpointAddress & USB_DIR_IN) {
 		csr1 = S3C2410_UDC_ICSR1_FFLUSH|S3C2410_UDC_ICSR1_CLRDT;
 		csr2 = S3C2410_UDC_ICSR2_MODEIN|S3C2410_UDC_ICSR2_DMAIEN;
 
-		udc_ग_लिखो(ep->num, S3C2410_UDC_INDEX_REG);
-		udc_ग_लिखो(csr1, S3C2410_UDC_IN_CSR1_REG);
-		udc_ग_लिखो(ep->num, S3C2410_UDC_INDEX_REG);
-		udc_ग_लिखो(csr2, S3C2410_UDC_IN_CSR2_REG);
-	पूर्ण अन्यथा अणु
-		/* करोn't flush in fअगरo or it will cause endpoपूर्णांक पूर्णांकerrupt */
+		udc_write(ep->num, S3C2410_UDC_INDEX_REG);
+		udc_write(csr1, S3C2410_UDC_IN_CSR1_REG);
+		udc_write(ep->num, S3C2410_UDC_INDEX_REG);
+		udc_write(csr2, S3C2410_UDC_IN_CSR2_REG);
+	} else {
+		/* don't flush in fifo or it will cause endpoint interrupt */
 		csr1 = S3C2410_UDC_ICSR1_CLRDT;
 		csr2 = S3C2410_UDC_ICSR2_DMAIEN;
 
-		udc_ग_लिखो(ep->num, S3C2410_UDC_INDEX_REG);
-		udc_ग_लिखो(csr1, S3C2410_UDC_IN_CSR1_REG);
-		udc_ग_लिखो(ep->num, S3C2410_UDC_INDEX_REG);
-		udc_ग_लिखो(csr2, S3C2410_UDC_IN_CSR2_REG);
+		udc_write(ep->num, S3C2410_UDC_INDEX_REG);
+		udc_write(csr1, S3C2410_UDC_IN_CSR1_REG);
+		udc_write(ep->num, S3C2410_UDC_INDEX_REG);
+		udc_write(csr2, S3C2410_UDC_IN_CSR2_REG);
 
 		csr1 = S3C2410_UDC_OCSR1_FFLUSH | S3C2410_UDC_OCSR1_CLRDT;
 		csr2 = S3C2410_UDC_OCSR2_DMAIEN;
 
-		udc_ग_लिखो(ep->num, S3C2410_UDC_INDEX_REG);
-		udc_ग_लिखो(csr1, S3C2410_UDC_OUT_CSR1_REG);
-		udc_ग_लिखो(ep->num, S3C2410_UDC_INDEX_REG);
-		udc_ग_लिखो(csr2, S3C2410_UDC_OUT_CSR2_REG);
-	पूर्ण
+		udc_write(ep->num, S3C2410_UDC_INDEX_REG);
+		udc_write(csr1, S3C2410_UDC_OUT_CSR1_REG);
+		udc_write(ep->num, S3C2410_UDC_INDEX_REG);
+		udc_write(csr2, S3C2410_UDC_OUT_CSR2_REG);
+	}
 
 	/* enable irqs */
-	पूर्णांक_en_reg = udc_पढ़ो(S3C2410_UDC_EP_INT_EN_REG);
-	udc_ग_लिखो(पूर्णांक_en_reg | (1 << ep->num), S3C2410_UDC_EP_INT_EN_REG);
+	int_en_reg = udc_read(S3C2410_UDC_EP_INT_EN_REG);
+	udc_write(int_en_reg | (1 << ep->num), S3C2410_UDC_EP_INT_EN_REG);
 
-	/* prपूर्णांक some debug message */
-	पंचांगp = desc->bEndpoपूर्णांकAddress;
-	dprपूर्णांकk(DEBUG_NORMAL, "enable %s(%d) ep%x%s-blk max %02x\n",
-		 _ep->name, ep->num, पंचांगp,
-		 desc->bEndpoपूर्णांकAddress & USB_सूची_IN ? "in" : "out", max);
+	/* print some debug message */
+	tmp = desc->bEndpointAddress;
+	dprintk(DEBUG_NORMAL, "enable %s(%d) ep%x%s-blk max %02x\n",
+		 _ep->name, ep->num, tmp,
+		 desc->bEndpointAddress & USB_DIR_IN ? "in" : "out", max);
 
 	local_irq_restore(flags);
 	s3c2410_udc_set_halt(_ep, 0);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * s3c2410_udc_ep_disable
  */
-अटल पूर्णांक s3c2410_udc_ep_disable(काष्ठा usb_ep *_ep)
-अणु
-	काष्ठा s3c2410_ep *ep = to_s3c2410_ep(_ep);
-	अचिन्हित दीर्घ flags;
-	u32 पूर्णांक_en_reg;
+static int s3c2410_udc_ep_disable(struct usb_ep *_ep)
+{
+	struct s3c2410_ep *ep = to_s3c2410_ep(_ep);
+	unsigned long flags;
+	u32 int_en_reg;
 
-	अगर (!_ep || !ep->ep.desc) अणु
-		dprपूर्णांकk(DEBUG_NORMAL, "%s not enabled\n",
-			_ep ? ep->ep.name : शून्य);
-		वापस -EINVAL;
-	पूर्ण
+	if (!_ep || !ep->ep.desc) {
+		dprintk(DEBUG_NORMAL, "%s not enabled\n",
+			_ep ? ep->ep.name : NULL);
+		return -EINVAL;
+	}
 
 	local_irq_save(flags);
 
-	dprपूर्णांकk(DEBUG_NORMAL, "ep_disable: %s\n", _ep->name);
+	dprintk(DEBUG_NORMAL, "ep_disable: %s\n", _ep->name);
 
-	ep->ep.desc = शून्य;
+	ep->ep.desc = NULL;
 	ep->halted = 1;
 
 	s3c2410_udc_nuke(ep->dev, ep, -ESHUTDOWN);
 
 	/* disable irqs */
-	पूर्णांक_en_reg = udc_पढ़ो(S3C2410_UDC_EP_INT_EN_REG);
-	udc_ग_लिखो(पूर्णांक_en_reg & ~(1<<ep->num), S3C2410_UDC_EP_INT_EN_REG);
+	int_en_reg = udc_read(S3C2410_UDC_EP_INT_EN_REG);
+	udc_write(int_en_reg & ~(1<<ep->num), S3C2410_UDC_EP_INT_EN_REG);
 
 	local_irq_restore(flags);
 
-	dprपूर्णांकk(DEBUG_NORMAL, "%s disabled\n", _ep->name);
+	dprintk(DEBUG_NORMAL, "%s disabled\n", _ep->name);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * s3c2410_udc_alloc_request
  */
-अटल काष्ठा usb_request *
-s3c2410_udc_alloc_request(काष्ठा usb_ep *_ep, gfp_t mem_flags)
-अणु
-	काष्ठा s3c2410_request *req;
+static struct usb_request *
+s3c2410_udc_alloc_request(struct usb_ep *_ep, gfp_t mem_flags)
+{
+	struct s3c2410_request *req;
 
-	dprपूर्णांकk(DEBUG_VERBOSE, "%s(%p,%d)\n", __func__, _ep, mem_flags);
+	dprintk(DEBUG_VERBOSE, "%s(%p,%d)\n", __func__, _ep, mem_flags);
 
-	अगर (!_ep)
-		वापस शून्य;
+	if (!_ep)
+		return NULL;
 
-	req = kzalloc(माप(काष्ठा s3c2410_request), mem_flags);
-	अगर (!req)
-		वापस शून्य;
+	req = kzalloc(sizeof(struct s3c2410_request), mem_flags);
+	if (!req)
+		return NULL;
 
 	INIT_LIST_HEAD(&req->queue);
-	वापस &req->req;
-पूर्ण
+	return &req->req;
+}
 
 /*
- * s3c2410_udc_मुक्त_request
+ * s3c2410_udc_free_request
  */
-अटल व्योम
-s3c2410_udc_मुक्त_request(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
-अणु
-	काष्ठा s3c2410_ep	*ep = to_s3c2410_ep(_ep);
-	काष्ठा s3c2410_request	*req = to_s3c2410_req(_req);
+static void
+s3c2410_udc_free_request(struct usb_ep *_ep, struct usb_request *_req)
+{
+	struct s3c2410_ep	*ep = to_s3c2410_ep(_ep);
+	struct s3c2410_request	*req = to_s3c2410_req(_req);
 
-	dprपूर्णांकk(DEBUG_VERBOSE, "%s(%p,%p)\n", __func__, _ep, _req);
+	dprintk(DEBUG_VERBOSE, "%s(%p,%p)\n", __func__, _ep, _req);
 
-	अगर (!ep || !_req || (!ep->ep.desc && _ep->name != ep0name))
-		वापस;
+	if (!ep || !_req || (!ep->ep.desc && _ep->name != ep0name))
+		return;
 
 	WARN_ON(!list_empty(&req->queue));
-	kमुक्त(req);
-पूर्ण
+	kfree(req);
+}
 
 /*
  *	s3c2410_udc_queue
  */
-अटल पूर्णांक s3c2410_udc_queue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req,
+static int s3c2410_udc_queue(struct usb_ep *_ep, struct usb_request *_req,
 		gfp_t gfp_flags)
-अणु
-	काष्ठा s3c2410_request	*req = to_s3c2410_req(_req);
-	काष्ठा s3c2410_ep	*ep = to_s3c2410_ep(_ep);
-	काष्ठा s3c2410_udc	*dev;
+{
+	struct s3c2410_request	*req = to_s3c2410_req(_req);
+	struct s3c2410_ep	*ep = to_s3c2410_ep(_ep);
+	struct s3c2410_udc	*dev;
 	u32			ep_csr = 0;
-	पूर्णांक			fअगरo_count = 0;
-	अचिन्हित दीर्घ		flags;
+	int			fifo_count = 0;
+	unsigned long		flags;
 
-	अगर (unlikely(!_ep || (!ep->ep.desc && ep->ep.name != ep0name))) अणु
-		dprपूर्णांकk(DEBUG_NORMAL, "%s: invalid args\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+	if (unlikely(!_ep || (!ep->ep.desc && ep->ep.name != ep0name))) {
+		dprintk(DEBUG_NORMAL, "%s: invalid args\n", __func__);
+		return -EINVAL;
+	}
 
 	dev = ep->dev;
-	अगर (unlikely(!dev->driver
-			|| dev->gadget.speed == USB_SPEED_UNKNOWN)) अणु
-		वापस -ESHUTDOWN;
-	पूर्ण
+	if (unlikely(!dev->driver
+			|| dev->gadget.speed == USB_SPEED_UNKNOWN)) {
+		return -ESHUTDOWN;
+	}
 
 	local_irq_save(flags);
 
-	अगर (unlikely(!_req || !_req->complete
-			|| !_req->buf || !list_empty(&req->queue))) अणु
-		अगर (!_req)
-			dprपूर्णांकk(DEBUG_NORMAL, "%s: 1 X X X\n", __func__);
-		अन्यथा अणु
-			dprपूर्णांकk(DEBUG_NORMAL, "%s: 0 %01d %01d %01d\n",
+	if (unlikely(!_req || !_req->complete
+			|| !_req->buf || !list_empty(&req->queue))) {
+		if (!_req)
+			dprintk(DEBUG_NORMAL, "%s: 1 X X X\n", __func__);
+		else {
+			dprintk(DEBUG_NORMAL, "%s: 0 %01d %01d %01d\n",
 				__func__, !_req->complete, !_req->buf,
 				!list_empty(&req->queue));
-		पूर्ण
+		}
 
 		local_irq_restore(flags);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	_req->status = -EINPROGRESS;
 	_req->actual = 0;
 
-	dprपूर्णांकk(DEBUG_VERBOSE, "%s: ep%x len %d\n",
-		 __func__, ep->bEndpoपूर्णांकAddress, _req->length);
+	dprintk(DEBUG_VERBOSE, "%s: ep%x len %d\n",
+		 __func__, ep->bEndpointAddress, _req->length);
 
-	अगर (ep->bEndpoपूर्णांकAddress) अणु
-		udc_ग_लिखो(ep->bEndpoपूर्णांकAddress & 0x7F, S3C2410_UDC_INDEX_REG);
+	if (ep->bEndpointAddress) {
+		udc_write(ep->bEndpointAddress & 0x7F, S3C2410_UDC_INDEX_REG);
 
-		ep_csr = udc_पढ़ो((ep->bEndpoपूर्णांकAddress & USB_सूची_IN)
+		ep_csr = udc_read((ep->bEndpointAddress & USB_DIR_IN)
 				? S3C2410_UDC_IN_CSR1_REG
 				: S3C2410_UDC_OUT_CSR1_REG);
-		fअगरo_count = s3c2410_udc_fअगरo_count_out();
-	पूर्ण अन्यथा अणु
-		udc_ग_लिखो(0, S3C2410_UDC_INDEX_REG);
-		ep_csr = udc_पढ़ो(S3C2410_UDC_IN_CSR1_REG);
-		fअगरo_count = s3c2410_udc_fअगरo_count_out();
-	पूर्ण
+		fifo_count = s3c2410_udc_fifo_count_out();
+	} else {
+		udc_write(0, S3C2410_UDC_INDEX_REG);
+		ep_csr = udc_read(S3C2410_UDC_IN_CSR1_REG);
+		fifo_count = s3c2410_udc_fifo_count_out();
+	}
 
 	/* kickstart this i/o queue? */
-	अगर (list_empty(&ep->queue) && !ep->halted) अणु
-		अगर (ep->bEndpoपूर्णांकAddress == 0 /* ep0 */) अणु
-			चयन (dev->ep0state) अणु
-			हाल EP0_IN_DATA_PHASE:
-				अगर (!(ep_csr&S3C2410_UDC_EP0_CSR_IPKRDY)
-						&& s3c2410_udc_ग_लिखो_fअगरo(ep,
-							req)) अणु
+	if (list_empty(&ep->queue) && !ep->halted) {
+		if (ep->bEndpointAddress == 0 /* ep0 */) {
+			switch (dev->ep0state) {
+			case EP0_IN_DATA_PHASE:
+				if (!(ep_csr&S3C2410_UDC_EP0_CSR_IPKRDY)
+						&& s3c2410_udc_write_fifo(ep,
+							req)) {
 					dev->ep0state = EP0_IDLE;
-					req = शून्य;
-				पूर्ण
-				अवरोध;
+					req = NULL;
+				}
+				break;
 
-			हाल EP0_OUT_DATA_PHASE:
-				अगर ((!_req->length)
+			case EP0_OUT_DATA_PHASE:
+				if ((!_req->length)
 					|| ((ep_csr & S3C2410_UDC_OCSR1_PKTRDY)
-						&& s3c2410_udc_पढ़ो_fअगरo(ep,
-							req))) अणु
+						&& s3c2410_udc_read_fifo(ep,
+							req))) {
 					dev->ep0state = EP0_IDLE;
-					req = शून्य;
-				पूर्ण
-				अवरोध;
+					req = NULL;
+				}
+				break;
 
-			शेष:
+			default:
 				local_irq_restore(flags);
-				वापस -EL2HLT;
-			पूर्ण
-		पूर्ण अन्यथा अगर ((ep->bEndpoपूर्णांकAddress & USB_सूची_IN) != 0
+				return -EL2HLT;
+			}
+		} else if ((ep->bEndpointAddress & USB_DIR_IN) != 0
 				&& (!(ep_csr&S3C2410_UDC_OCSR1_PKTRDY))
-				&& s3c2410_udc_ग_लिखो_fअगरo(ep, req)) अणु
-			req = शून्य;
-		पूर्ण अन्यथा अगर ((ep_csr & S3C2410_UDC_OCSR1_PKTRDY)
-				&& fअगरo_count
-				&& s3c2410_udc_पढ़ो_fअगरo(ep, req)) अणु
-			req = शून्य;
-		पूर्ण
-	पूर्ण
+				&& s3c2410_udc_write_fifo(ep, req)) {
+			req = NULL;
+		} else if ((ep_csr & S3C2410_UDC_OCSR1_PKTRDY)
+				&& fifo_count
+				&& s3c2410_udc_read_fifo(ep, req)) {
+			req = NULL;
+		}
+	}
 
 	/* pio or dma irq handler advances the queue. */
-	अगर (likely(req))
+	if (likely(req))
 		list_add_tail(&req->queue, &ep->queue);
 
 	local_irq_restore(flags);
 
-	dprपूर्णांकk(DEBUG_VERBOSE, "%s ok\n", __func__);
-	वापस 0;
-पूर्ण
+	dprintk(DEBUG_VERBOSE, "%s ok\n", __func__);
+	return 0;
+}
 
 /*
  *	s3c2410_udc_dequeue
  */
-अटल पूर्णांक s3c2410_udc_dequeue(काष्ठा usb_ep *_ep, काष्ठा usb_request *_req)
-अणु
-	काष्ठा s3c2410_ep	*ep = to_s3c2410_ep(_ep);
-	पूर्णांक			retval = -EINVAL;
-	अचिन्हित दीर्घ		flags;
-	काष्ठा s3c2410_request	*req = शून्य;
+static int s3c2410_udc_dequeue(struct usb_ep *_ep, struct usb_request *_req)
+{
+	struct s3c2410_ep	*ep = to_s3c2410_ep(_ep);
+	int			retval = -EINVAL;
+	unsigned long		flags;
+	struct s3c2410_request	*req = NULL;
 
-	dprपूर्णांकk(DEBUG_VERBOSE, "%s(%p,%p)\n", __func__, _ep, _req);
+	dprintk(DEBUG_VERBOSE, "%s(%p,%p)\n", __func__, _ep, _req);
 
-	अगर (!the_controller->driver)
-		वापस -ESHUTDOWN;
+	if (!the_controller->driver)
+		return -ESHUTDOWN;
 
-	अगर (!_ep || !_req)
-		वापस retval;
+	if (!_ep || !_req)
+		return retval;
 
 	local_irq_save(flags);
 
-	list_क्रम_each_entry(req, &ep->queue, queue) अणु
-		अगर (&req->req == _req) अणु
+	list_for_each_entry(req, &ep->queue, queue) {
+		if (&req->req == _req) {
 			list_del_init(&req->queue);
 			_req->status = -ECONNRESET;
 			retval = 0;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	अगर (retval == 0) अणु
-		dprपूर्णांकk(DEBUG_VERBOSE,
+	if (retval == 0) {
+		dprintk(DEBUG_VERBOSE,
 			"dequeued req %p from %s, len %d buf %p\n",
 			req, _ep->name, _req->length, _req->buf);
 
-		s3c2410_udc_करोne(ep, req, -ECONNRESET);
-	पूर्ण
+		s3c2410_udc_done(ep, req, -ECONNRESET);
+	}
 
 	local_irq_restore(flags);
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /*
  * s3c2410_udc_set_halt
  */
-अटल पूर्णांक s3c2410_udc_set_halt(काष्ठा usb_ep *_ep, पूर्णांक value)
-अणु
-	काष्ठा s3c2410_ep	*ep = to_s3c2410_ep(_ep);
+static int s3c2410_udc_set_halt(struct usb_ep *_ep, int value)
+{
+	struct s3c2410_ep	*ep = to_s3c2410_ep(_ep);
 	u32			ep_csr = 0;
-	अचिन्हित दीर्घ		flags;
+	unsigned long		flags;
 	u32			idx;
 
-	अगर (unlikely(!_ep || (!ep->ep.desc && ep->ep.name != ep0name))) अणु
-		dprपूर्णांकk(DEBUG_NORMAL, "%s: inval 2\n", __func__);
-		वापस -EINVAL;
-	पूर्ण
+	if (unlikely(!_ep || (!ep->ep.desc && ep->ep.name != ep0name))) {
+		dprintk(DEBUG_NORMAL, "%s: inval 2\n", __func__);
+		return -EINVAL;
+	}
 
 	local_irq_save(flags);
 
-	idx = ep->bEndpoपूर्णांकAddress & 0x7F;
+	idx = ep->bEndpointAddress & 0x7F;
 
-	अगर (idx == 0) अणु
+	if (idx == 0) {
 		s3c2410_udc_set_ep0_ss(base_addr);
 		s3c2410_udc_set_ep0_de_out(base_addr);
-	पूर्ण अन्यथा अणु
-		udc_ग_लिखो(idx, S3C2410_UDC_INDEX_REG);
-		ep_csr = udc_पढ़ो((ep->bEndpoपूर्णांकAddress & USB_सूची_IN)
+	} else {
+		udc_write(idx, S3C2410_UDC_INDEX_REG);
+		ep_csr = udc_read((ep->bEndpointAddress & USB_DIR_IN)
 				? S3C2410_UDC_IN_CSR1_REG
 				: S3C2410_UDC_OUT_CSR1_REG);
 
-		अगर ((ep->bEndpoपूर्णांकAddress & USB_सूची_IN) != 0) अणु
-			अगर (value)
-				udc_ग_लिखो(ep_csr | S3C2410_UDC_ICSR1_SENDSTL,
+		if ((ep->bEndpointAddress & USB_DIR_IN) != 0) {
+			if (value)
+				udc_write(ep_csr | S3C2410_UDC_ICSR1_SENDSTL,
 					S3C2410_UDC_IN_CSR1_REG);
-			अन्यथा अणु
+			else {
 				ep_csr &= ~S3C2410_UDC_ICSR1_SENDSTL;
-				udc_ग_लिखो(ep_csr, S3C2410_UDC_IN_CSR1_REG);
+				udc_write(ep_csr, S3C2410_UDC_IN_CSR1_REG);
 				ep_csr |= S3C2410_UDC_ICSR1_CLRDT;
-				udc_ग_लिखो(ep_csr, S3C2410_UDC_IN_CSR1_REG);
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (value)
-				udc_ग_लिखो(ep_csr | S3C2410_UDC_OCSR1_SENDSTL,
+				udc_write(ep_csr, S3C2410_UDC_IN_CSR1_REG);
+			}
+		} else {
+			if (value)
+				udc_write(ep_csr | S3C2410_UDC_OCSR1_SENDSTL,
 					S3C2410_UDC_OUT_CSR1_REG);
-			अन्यथा अणु
+			else {
 				ep_csr &= ~S3C2410_UDC_OCSR1_SENDSTL;
-				udc_ग_लिखो(ep_csr, S3C2410_UDC_OUT_CSR1_REG);
+				udc_write(ep_csr, S3C2410_UDC_OUT_CSR1_REG);
 				ep_csr |= S3C2410_UDC_OCSR1_CLRDT;
-				udc_ग_लिखो(ep_csr, S3C2410_UDC_OUT_CSR1_REG);
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				udc_write(ep_csr, S3C2410_UDC_OUT_CSR1_REG);
+			}
+		}
+	}
 
 	ep->halted = value ? 1 : 0;
 	local_irq_restore(flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा usb_ep_ops s3c2410_ep_ops = अणु
+static const struct usb_ep_ops s3c2410_ep_ops = {
 	.enable		= s3c2410_udc_ep_enable,
 	.disable	= s3c2410_udc_ep_disable,
 
 	.alloc_request	= s3c2410_udc_alloc_request,
-	.मुक्त_request	= s3c2410_udc_मुक्त_request,
+	.free_request	= s3c2410_udc_free_request,
 
 	.queue		= s3c2410_udc_queue,
 	.dequeue	= s3c2410_udc_dequeue,
 
 	.set_halt	= s3c2410_udc_set_halt,
-पूर्ण;
+};
 
 /*------------------------- usb_gadget_ops ----------------------------------*/
 
 /*
  *	s3c2410_udc_get_frame
  */
-अटल पूर्णांक s3c2410_udc_get_frame(काष्ठा usb_gadget *_gadget)
-अणु
-	पूर्णांक पंचांगp;
+static int s3c2410_udc_get_frame(struct usb_gadget *_gadget)
+{
+	int tmp;
 
-	dprपूर्णांकk(DEBUG_VERBOSE, "%s()\n", __func__);
+	dprintk(DEBUG_VERBOSE, "%s()\n", __func__);
 
-	पंचांगp = udc_पढ़ो(S3C2410_UDC_FRAME_NUM2_REG) << 8;
-	पंचांगp |= udc_पढ़ो(S3C2410_UDC_FRAME_NUM1_REG);
-	वापस पंचांगp;
-पूर्ण
+	tmp = udc_read(S3C2410_UDC_FRAME_NUM2_REG) << 8;
+	tmp |= udc_read(S3C2410_UDC_FRAME_NUM1_REG);
+	return tmp;
+}
 
 /*
  *	s3c2410_udc_wakeup
  */
-अटल पूर्णांक s3c2410_udc_wakeup(काष्ठा usb_gadget *_gadget)
-अणु
-	dprपूर्णांकk(DEBUG_NORMAL, "%s()\n", __func__);
-	वापस 0;
-पूर्ण
+static int s3c2410_udc_wakeup(struct usb_gadget *_gadget)
+{
+	dprintk(DEBUG_NORMAL, "%s()\n", __func__);
+	return 0;
+}
 
 /*
- *	s3c2410_udc_set_selfघातered
+ *	s3c2410_udc_set_selfpowered
  */
-अटल पूर्णांक s3c2410_udc_set_selfघातered(काष्ठा usb_gadget *gadget, पूर्णांक value)
-अणु
-	काष्ठा s3c2410_udc *udc = to_s3c2410_udc(gadget);
+static int s3c2410_udc_set_selfpowered(struct usb_gadget *gadget, int value)
+{
+	struct s3c2410_udc *udc = to_s3c2410_udc(gadget);
 
-	dprपूर्णांकk(DEBUG_NORMAL, "%s()\n", __func__);
+	dprintk(DEBUG_NORMAL, "%s()\n", __func__);
 
-	gadget->is_selfघातered = (value != 0);
-	अगर (value)
+	gadget->is_selfpowered = (value != 0);
+	if (value)
 		udc->devstatus |= (1 << USB_DEVICE_SELF_POWERED);
-	अन्यथा
+	else
 		udc->devstatus &= ~(1 << USB_DEVICE_SELF_POWERED);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम s3c2410_udc_disable(काष्ठा s3c2410_udc *dev);
-अटल व्योम s3c2410_udc_enable(काष्ठा s3c2410_udc *dev);
+static void s3c2410_udc_disable(struct s3c2410_udc *dev);
+static void s3c2410_udc_enable(struct s3c2410_udc *dev);
 
-अटल पूर्णांक s3c2410_udc_set_pullup(काष्ठा s3c2410_udc *udc, पूर्णांक is_on)
-अणु
-	dprपूर्णांकk(DEBUG_NORMAL, "%s()\n", __func__);
+static int s3c2410_udc_set_pullup(struct s3c2410_udc *udc, int is_on)
+{
+	dprintk(DEBUG_NORMAL, "%s()\n", __func__);
 
-	अगर (udc_info && (udc_info->udc_command ||
-		gpio_is_valid(udc_info->pullup_pin))) अणु
+	if (udc_info && (udc_info->udc_command ||
+		gpio_is_valid(udc_info->pullup_pin))) {
 
-		अगर (is_on)
+		if (is_on)
 			s3c2410_udc_enable(udc);
-		अन्यथा अणु
-			अगर (udc->gadget.speed != USB_SPEED_UNKNOWN) अणु
-				अगर (udc->driver && udc->driver->disconnect)
+		else {
+			if (udc->gadget.speed != USB_SPEED_UNKNOWN) {
+				if (udc->driver && udc->driver->disconnect)
 					udc->driver->disconnect(&udc->gadget);
 
-			पूर्ण
+			}
 			s3c2410_udc_disable(udc);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		वापस -EOPNOTSUPP;
-	पूर्ण
+		}
+	} else {
+		return -EOPNOTSUPP;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s3c2410_udc_vbus_session(काष्ठा usb_gadget *gadget, पूर्णांक is_active)
-अणु
-	काष्ठा s3c2410_udc *udc = to_s3c2410_udc(gadget);
+static int s3c2410_udc_vbus_session(struct usb_gadget *gadget, int is_active)
+{
+	struct s3c2410_udc *udc = to_s3c2410_udc(gadget);
 
-	dprपूर्णांकk(DEBUG_NORMAL, "%s()\n", __func__);
+	dprintk(DEBUG_NORMAL, "%s()\n", __func__);
 
 	udc->vbus = (is_active != 0);
 	s3c2410_udc_set_pullup(udc, is_active);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s3c2410_udc_pullup(काष्ठा usb_gadget *gadget, पूर्णांक is_on)
-अणु
-	काष्ठा s3c2410_udc *udc = to_s3c2410_udc(gadget);
+static int s3c2410_udc_pullup(struct usb_gadget *gadget, int is_on)
+{
+	struct s3c2410_udc *udc = to_s3c2410_udc(gadget);
 
-	dprपूर्णांकk(DEBUG_NORMAL, "%s()\n", __func__);
+	dprintk(DEBUG_NORMAL, "%s()\n", __func__);
 
 	s3c2410_udc_set_pullup(udc, is_on);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल irqवापस_t s3c2410_udc_vbus_irq(पूर्णांक irq, व्योम *_dev)
-अणु
-	काष्ठा s3c2410_udc	*dev = _dev;
-	अचिन्हित पूर्णांक		value;
+static irqreturn_t s3c2410_udc_vbus_irq(int irq, void *_dev)
+{
+	struct s3c2410_udc	*dev = _dev;
+	unsigned int		value;
 
-	dprपूर्णांकk(DEBUG_NORMAL, "%s()\n", __func__);
+	dprintk(DEBUG_NORMAL, "%s()\n", __func__);
 
 	value = gpio_get_value(udc_info->vbus_pin) ? 1 : 0;
-	अगर (udc_info->vbus_pin_inverted)
+	if (udc_info->vbus_pin_inverted)
 		value = !value;
 
-	अगर (value != dev->vbus)
+	if (value != dev->vbus)
 		s3c2410_udc_vbus_session(&dev->gadget, value);
 
-	वापस IRQ_HANDLED;
-पूर्ण
+	return IRQ_HANDLED;
+}
 
-अटल पूर्णांक s3c2410_vbus_draw(काष्ठा usb_gadget *_gadget, अचिन्हित ma)
-अणु
-	dprपूर्णांकk(DEBUG_NORMAL, "%s()\n", __func__);
+static int s3c2410_vbus_draw(struct usb_gadget *_gadget, unsigned ma)
+{
+	dprintk(DEBUG_NORMAL, "%s()\n", __func__);
 
-	अगर (udc_info && udc_info->vbus_draw) अणु
+	if (udc_info && udc_info->vbus_draw) {
 		udc_info->vbus_draw(ma);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	वापस -ENOTSUPP;
-पूर्ण
+	return -ENOTSUPP;
+}
 
-अटल पूर्णांक s3c2410_udc_start(काष्ठा usb_gadget *g,
-		काष्ठा usb_gadget_driver *driver);
-अटल पूर्णांक s3c2410_udc_stop(काष्ठा usb_gadget *g);
+static int s3c2410_udc_start(struct usb_gadget *g,
+		struct usb_gadget_driver *driver);
+static int s3c2410_udc_stop(struct usb_gadget *g);
 
-अटल स्थिर काष्ठा usb_gadget_ops s3c2410_ops = अणु
+static const struct usb_gadget_ops s3c2410_ops = {
 	.get_frame		= s3c2410_udc_get_frame,
 	.wakeup			= s3c2410_udc_wakeup,
-	.set_selfघातered	= s3c2410_udc_set_selfघातered,
+	.set_selfpowered	= s3c2410_udc_set_selfpowered,
 	.pullup			= s3c2410_udc_pullup,
 	.vbus_session		= s3c2410_udc_vbus_session,
 	.vbus_draw		= s3c2410_vbus_draw,
 	.udc_start		= s3c2410_udc_start,
 	.udc_stop		= s3c2410_udc_stop,
-पूर्ण;
+};
 
-अटल व्योम s3c2410_udc_command(क्रमागत s3c2410_udc_cmd_e cmd)
-अणु
-	अगर (!udc_info)
-		वापस;
+static void s3c2410_udc_command(enum s3c2410_udc_cmd_e cmd)
+{
+	if (!udc_info)
+		return;
 
-	अगर (udc_info->udc_command) अणु
+	if (udc_info->udc_command) {
 		udc_info->udc_command(cmd);
-	पूर्ण अन्यथा अगर (gpio_is_valid(udc_info->pullup_pin)) अणु
-		पूर्णांक value;
+	} else if (gpio_is_valid(udc_info->pullup_pin)) {
+		int value;
 
-		चयन (cmd) अणु
-		हाल S3C2410_UDC_P_ENABLE:
+		switch (cmd) {
+		case S3C2410_UDC_P_ENABLE:
 			value = 1;
-			अवरोध;
-		हाल S3C2410_UDC_P_DISABLE:
+			break;
+		case S3C2410_UDC_P_DISABLE:
 			value = 0;
-			अवरोध;
-		शेष:
-			वापस;
-		पूर्ण
+			break;
+		default:
+			return;
+		}
 		value ^= udc_info->pullup_pin_inverted;
 
 		gpio_set_value(udc_info->pullup_pin, value);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*------------------------- gadget driver handling---------------------------*/
 /*
  * s3c2410_udc_disable
  */
-अटल व्योम s3c2410_udc_disable(काष्ठा s3c2410_udc *dev)
-अणु
-	dprपूर्णांकk(DEBUG_NORMAL, "%s()\n", __func__);
+static void s3c2410_udc_disable(struct s3c2410_udc *dev)
+{
+	dprintk(DEBUG_NORMAL, "%s()\n", __func__);
 
-	/* Disable all पूर्णांकerrupts */
-	udc_ग_लिखो(0x00, S3C2410_UDC_USB_INT_EN_REG);
-	udc_ग_लिखो(0x00, S3C2410_UDC_EP_INT_EN_REG);
+	/* Disable all interrupts */
+	udc_write(0x00, S3C2410_UDC_USB_INT_EN_REG);
+	udc_write(0x00, S3C2410_UDC_EP_INT_EN_REG);
 
-	/* Clear the पूर्णांकerrupt रेजिस्टरs */
-	udc_ग_लिखो(S3C2410_UDC_USBINT_RESET
+	/* Clear the interrupt registers */
+	udc_write(S3C2410_UDC_USBINT_RESET
 				| S3C2410_UDC_USBINT_RESUME
 				| S3C2410_UDC_USBINT_SUSPEND,
 			S3C2410_UDC_USB_INT_REG);
 
-	udc_ग_लिखो(0x1F, S3C2410_UDC_EP_INT_REG);
+	udc_write(0x1F, S3C2410_UDC_EP_INT_REG);
 
 	/* Good bye, cruel world */
 	s3c2410_udc_command(S3C2410_UDC_P_DISABLE);
 
 	/* Set speed to unknown */
 	dev->gadget.speed = USB_SPEED_UNKNOWN;
-पूर्ण
+}
 
 /*
  * s3c2410_udc_reinit
  */
-अटल व्योम s3c2410_udc_reinit(काष्ठा s3c2410_udc *dev)
-अणु
+static void s3c2410_udc_reinit(struct s3c2410_udc *dev)
+{
 	u32 i;
 
 	/* device/ep0 records init */
@@ -1569,59 +1568,59 @@ s3c2410_udc_मुक्त_request(काष्ठा usb_ep *_ep, काष्
 	INIT_LIST_HEAD(&dev->gadget.ep0->ep_list);
 	dev->ep0state = EP0_IDLE;
 
-	क्रम (i = 0; i < S3C2410_ENDPOINTS; i++) अणु
-		काष्ठा s3c2410_ep *ep = &dev->ep[i];
+	for (i = 0; i < S3C2410_ENDPOINTS; i++) {
+		struct s3c2410_ep *ep = &dev->ep[i];
 
-		अगर (i != 0)
+		if (i != 0)
 			list_add_tail(&ep->ep.ep_list, &dev->gadget.ep_list);
 
 		ep->dev = dev;
-		ep->ep.desc = शून्य;
+		ep->ep.desc = NULL;
 		ep->halted = 0;
 		INIT_LIST_HEAD(&ep->queue);
 		usb_ep_set_maxpacket_limit(&ep->ep, ep->ep.maxpacket);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
  * s3c2410_udc_enable
  */
-अटल व्योम s3c2410_udc_enable(काष्ठा s3c2410_udc *dev)
-अणु
-	पूर्णांक i;
+static void s3c2410_udc_enable(struct s3c2410_udc *dev)
+{
+	int i;
 
-	dprपूर्णांकk(DEBUG_NORMAL, "s3c2410_udc_enable called\n");
+	dprintk(DEBUG_NORMAL, "s3c2410_udc_enable called\n");
 
 	/* dev->gadget.speed = USB_SPEED_UNKNOWN; */
 	dev->gadget.speed = USB_SPEED_FULL;
 
-	/* Set MAXP क्रम all endpoपूर्णांकs */
-	क्रम (i = 0; i < S3C2410_ENDPOINTS; i++) अणु
-		udc_ग_लिखो(i, S3C2410_UDC_INDEX_REG);
-		udc_ग_लिखो((dev->ep[i].ep.maxpacket & 0x7ff) >> 3,
+	/* Set MAXP for all endpoints */
+	for (i = 0; i < S3C2410_ENDPOINTS; i++) {
+		udc_write(i, S3C2410_UDC_INDEX_REG);
+		udc_write((dev->ep[i].ep.maxpacket & 0x7ff) >> 3,
 				S3C2410_UDC_MAXP_REG);
-	पूर्ण
+	}
 
-	/* Set शेष घातer state */
-	udc_ग_लिखो(DEFAULT_POWER_STATE, S3C2410_UDC_PWR_REG);
+	/* Set default power state */
+	udc_write(DEFAULT_POWER_STATE, S3C2410_UDC_PWR_REG);
 
-	/* Enable reset and suspend पूर्णांकerrupt पूर्णांकerrupts */
-	udc_ग_लिखो(S3C2410_UDC_USBINT_RESET | S3C2410_UDC_USBINT_SUSPEND,
+	/* Enable reset and suspend interrupt interrupts */
+	udc_write(S3C2410_UDC_USBINT_RESET | S3C2410_UDC_USBINT_SUSPEND,
 			S3C2410_UDC_USB_INT_EN_REG);
 
-	/* Enable ep0 पूर्णांकerrupt */
-	udc_ग_लिखो(S3C2410_UDC_INT_EP0, S3C2410_UDC_EP_INT_EN_REG);
+	/* Enable ep0 interrupt */
+	udc_write(S3C2410_UDC_INT_EP0, S3C2410_UDC_EP_INT_EN_REG);
 
-	/* समय to say "hello, world" */
+	/* time to say "hello, world" */
 	s3c2410_udc_command(S3C2410_UDC_P_ENABLE);
-पूर्ण
+}
 
-अटल पूर्णांक s3c2410_udc_start(काष्ठा usb_gadget *g,
-		काष्ठा usb_gadget_driver *driver)
-अणु
-	काष्ठा s3c2410_udc *udc = to_s3c2410(g);
+static int s3c2410_udc_start(struct usb_gadget *g,
+		struct usb_gadget_driver *driver)
+{
+	struct s3c2410_udc *udc = to_s3c2410(g);
 
-	dprपूर्णांकk(DEBUG_NORMAL, "%s() '%s'\n", __func__, driver->driver.name);
+	dprintk(DEBUG_NORMAL, "%s() '%s'\n", __func__, driver->driver.name);
 
 	/* Hook the driver */
 	udc->driver = driver;
@@ -1629,220 +1628,220 @@ s3c2410_udc_मुक्त_request(काष्ठा usb_ep *_ep, काष्
 	/* Enable udc */
 	s3c2410_udc_enable(udc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s3c2410_udc_stop(काष्ठा usb_gadget *g)
-अणु
-	काष्ठा s3c2410_udc *udc = to_s3c2410(g);
+static int s3c2410_udc_stop(struct usb_gadget *g)
+{
+	struct s3c2410_udc *udc = to_s3c2410(g);
 
-	udc->driver = शून्य;
+	udc->driver = NULL;
 
 	/* Disable udc */
 	s3c2410_udc_disable(udc);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*---------------------------------------------------------------------------*/
-अटल काष्ठा s3c2410_udc memory = अणु
-	.gadget = अणु
+static struct s3c2410_udc memory = {
+	.gadget = {
 		.ops		= &s3c2410_ops,
 		.ep0		= &memory.ep[0].ep,
 		.name		= gadget_name,
-		.dev = अणु
+		.dev = {
 			.init_name	= "gadget",
-		पूर्ण,
-	पूर्ण,
+		},
+	},
 
-	/* control endpoपूर्णांक */
-	.ep[0] = अणु
+	/* control endpoint */
+	.ep[0] = {
 		.num		= 0,
-		.ep = अणु
+		.ep = {
 			.name		= ep0name,
 			.ops		= &s3c2410_ep_ops,
 			.maxpacket	= EP0_FIFO_SIZE,
 			.caps		= USB_EP_CAPS(USB_EP_CAPS_TYPE_CONTROL,
-						USB_EP_CAPS_सूची_ALL),
-		पूर्ण,
+						USB_EP_CAPS_DIR_ALL),
+		},
 		.dev		= &memory,
-	पूर्ण,
+	},
 
-	/* first group of endpoपूर्णांकs */
-	.ep[1] = अणु
+	/* first group of endpoints */
+	.ep[1] = {
 		.num		= 1,
-		.ep = अणु
+		.ep = {
 			.name		= "ep1-bulk",
 			.ops		= &s3c2410_ep_ops,
 			.maxpacket	= EP_FIFO_SIZE,
 			.caps		= USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK,
-						USB_EP_CAPS_सूची_ALL),
-		पूर्ण,
+						USB_EP_CAPS_DIR_ALL),
+		},
 		.dev		= &memory,
-		.fअगरo_size	= EP_FIFO_SIZE,
-		.bEndpoपूर्णांकAddress = 1,
+		.fifo_size	= EP_FIFO_SIZE,
+		.bEndpointAddress = 1,
 		.bmAttributes	= USB_ENDPOINT_XFER_BULK,
-	पूर्ण,
-	.ep[2] = अणु
+	},
+	.ep[2] = {
 		.num		= 2,
-		.ep = अणु
+		.ep = {
 			.name		= "ep2-bulk",
 			.ops		= &s3c2410_ep_ops,
 			.maxpacket	= EP_FIFO_SIZE,
 			.caps		= USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK,
-						USB_EP_CAPS_सूची_ALL),
-		पूर्ण,
+						USB_EP_CAPS_DIR_ALL),
+		},
 		.dev		= &memory,
-		.fअगरo_size	= EP_FIFO_SIZE,
-		.bEndpoपूर्णांकAddress = 2,
+		.fifo_size	= EP_FIFO_SIZE,
+		.bEndpointAddress = 2,
 		.bmAttributes	= USB_ENDPOINT_XFER_BULK,
-	पूर्ण,
-	.ep[3] = अणु
+	},
+	.ep[3] = {
 		.num		= 3,
-		.ep = अणु
+		.ep = {
 			.name		= "ep3-bulk",
 			.ops		= &s3c2410_ep_ops,
 			.maxpacket	= EP_FIFO_SIZE,
 			.caps		= USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK,
-						USB_EP_CAPS_सूची_ALL),
-		पूर्ण,
+						USB_EP_CAPS_DIR_ALL),
+		},
 		.dev		= &memory,
-		.fअगरo_size	= EP_FIFO_SIZE,
-		.bEndpoपूर्णांकAddress = 3,
+		.fifo_size	= EP_FIFO_SIZE,
+		.bEndpointAddress = 3,
 		.bmAttributes	= USB_ENDPOINT_XFER_BULK,
-	पूर्ण,
-	.ep[4] = अणु
+	},
+	.ep[4] = {
 		.num		= 4,
-		.ep = अणु
+		.ep = {
 			.name		= "ep4-bulk",
 			.ops		= &s3c2410_ep_ops,
 			.maxpacket	= EP_FIFO_SIZE,
 			.caps		= USB_EP_CAPS(USB_EP_CAPS_TYPE_BULK,
-						USB_EP_CAPS_सूची_ALL),
-		पूर्ण,
+						USB_EP_CAPS_DIR_ALL),
+		},
 		.dev		= &memory,
-		.fअगरo_size	= EP_FIFO_SIZE,
-		.bEndpoपूर्णांकAddress = 4,
+		.fifo_size	= EP_FIFO_SIZE,
+		.bEndpointAddress = 4,
 		.bmAttributes	= USB_ENDPOINT_XFER_BULK,
-	पूर्ण
+	}
 
-पूर्ण;
+};
 
 /*
- *	probe - binds to the platक्रमm device
+ *	probe - binds to the platform device
  */
-अटल पूर्णांक s3c2410_udc_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा s3c2410_udc *udc = &memory;
-	काष्ठा device *dev = &pdev->dev;
-	पूर्णांक retval;
-	पूर्णांक irq;
+static int s3c2410_udc_probe(struct platform_device *pdev)
+{
+	struct s3c2410_udc *udc = &memory;
+	struct device *dev = &pdev->dev;
+	int retval;
+	int irq;
 
 	dev_dbg(dev, "%s()\n", __func__);
 
-	usb_bus_घड़ी = clk_get(शून्य, "usb-bus-gadget");
-	अगर (IS_ERR(usb_bus_घड़ी)) अणु
+	usb_bus_clock = clk_get(NULL, "usb-bus-gadget");
+	if (IS_ERR(usb_bus_clock)) {
 		dev_err(dev, "failed to get usb bus clock source\n");
-		वापस PTR_ERR(usb_bus_घड़ी);
-	पूर्ण
+		return PTR_ERR(usb_bus_clock);
+	}
 
-	clk_prepare_enable(usb_bus_घड़ी);
+	clk_prepare_enable(usb_bus_clock);
 
-	udc_घड़ी = clk_get(शून्य, "usb-device");
-	अगर (IS_ERR(udc_घड़ी)) अणु
+	udc_clock = clk_get(NULL, "usb-device");
+	if (IS_ERR(udc_clock)) {
 		dev_err(dev, "failed to get udc clock source\n");
-		retval = PTR_ERR(udc_घड़ी);
-		जाओ err_usb_bus_clk;
-	पूर्ण
+		retval = PTR_ERR(udc_clock);
+		goto err_usb_bus_clk;
+	}
 
-	clk_prepare_enable(udc_घड़ी);
+	clk_prepare_enable(udc_clock);
 
 	mdelay(10);
 
 	dev_dbg(dev, "got and enabled clocks\n");
 
-	अगर (म_भेदन(pdev->name, "s3c2440", 7) == 0) अणु
+	if (strncmp(pdev->name, "s3c2440", 7) == 0) {
 		dev_info(dev, "S3C2440: increasing FIFO to 128 bytes\n");
-		memory.ep[1].fअगरo_size = S3C2440_EP_FIFO_SIZE;
-		memory.ep[2].fअगरo_size = S3C2440_EP_FIFO_SIZE;
-		memory.ep[3].fअगरo_size = S3C2440_EP_FIFO_SIZE;
-		memory.ep[4].fअगरo_size = S3C2440_EP_FIFO_SIZE;
-	पूर्ण
+		memory.ep[1].fifo_size = S3C2440_EP_FIFO_SIZE;
+		memory.ep[2].fifo_size = S3C2440_EP_FIFO_SIZE;
+		memory.ep[3].fifo_size = S3C2440_EP_FIFO_SIZE;
+		memory.ep[4].fifo_size = S3C2440_EP_FIFO_SIZE;
+	}
 
 	spin_lock_init(&udc->lock);
 	udc_info = dev_get_platdata(&pdev->dev);
 
-	base_addr = devm_platक्रमm_ioremap_resource(pdev, 0);
-	अगर (IS_ERR(base_addr)) अणु
+	base_addr = devm_platform_ioremap_resource(pdev, 0);
+	if (IS_ERR(base_addr)) {
 		retval = PTR_ERR(base_addr);
-		जाओ err_udc_clk;
-	पूर्ण
+		goto err_udc_clk;
+	}
 
 	the_controller = udc;
-	platक्रमm_set_drvdata(pdev, udc);
+	platform_set_drvdata(pdev, udc);
 
 	s3c2410_udc_disable(udc);
 	s3c2410_udc_reinit(udc);
 
-	irq_usbd = platक्रमm_get_irq(pdev, 0);
+	irq_usbd = platform_get_irq(pdev, 0);
 
 	/* irq setup after old hardware state is cleaned up */
 	retval = request_irq(irq_usbd, s3c2410_udc_irq,
 			     0, gadget_name, udc);
 
-	अगर (retval != 0) अणु
+	if (retval != 0) {
 		dev_err(dev, "cannot get irq %i, err %d\n", irq_usbd, retval);
 		retval = -EBUSY;
-		जाओ err_udc_clk;
-	पूर्ण
+		goto err_udc_clk;
+	}
 
 	dev_dbg(dev, "got irq %i\n", irq_usbd);
 
-	अगर (udc_info && udc_info->vbus_pin > 0) अणु
+	if (udc_info && udc_info->vbus_pin > 0) {
 		retval = gpio_request(udc_info->vbus_pin, "udc vbus");
-		अगर (retval < 0) अणु
+		if (retval < 0) {
 			dev_err(dev, "cannot claim vbus pin\n");
-			जाओ err_पूर्णांक;
-		पूर्ण
+			goto err_int;
+		}
 
 		irq = gpio_to_irq(udc_info->vbus_pin);
-		अगर (irq < 0) अणु
+		if (irq < 0) {
 			dev_err(dev, "no irq for gpio vbus pin\n");
 			retval = irq;
-			जाओ err_gpio_claim;
-		पूर्ण
+			goto err_gpio_claim;
+		}
 
 		retval = request_irq(irq, s3c2410_udc_vbus_irq,
 				     IRQF_TRIGGER_RISING
 				     | IRQF_TRIGGER_FALLING | IRQF_SHARED,
 				     gadget_name, udc);
 
-		अगर (retval != 0) अणु
+		if (retval != 0) {
 			dev_err(dev, "can't get vbus irq %d, err %d\n",
 				irq, retval);
 			retval = -EBUSY;
-			जाओ err_gpio_claim;
-		पूर्ण
+			goto err_gpio_claim;
+		}
 
 		dev_dbg(dev, "got irq %i\n", irq);
-	पूर्ण अन्यथा अणु
+	} else {
 		udc->vbus = 1;
-	पूर्ण
+	}
 
-	अगर (udc_info && !udc_info->udc_command &&
-		gpio_is_valid(udc_info->pullup_pin)) अणु
+	if (udc_info && !udc_info->udc_command &&
+		gpio_is_valid(udc_info->pullup_pin)) {
 
 		retval = gpio_request_one(udc_info->pullup_pin,
 				udc_info->vbus_pin_inverted ?
 				GPIOF_OUT_INIT_HIGH : GPIOF_OUT_INIT_LOW,
 				"udc pullup");
-		अगर (retval)
-			जाओ err_vbus_irq;
-	पूर्ण
+		if (retval)
+			goto err_vbus_irq;
+	}
 
 	retval = usb_add_gadget_udc(&pdev->dev, &udc->gadget);
-	अगर (retval)
-		जाओ err_add_udc;
+	if (retval)
+		goto err_add_udc;
 
 	udc->regs_info = debugfs_create_file("registers", S_IRUGO,
 					     s3c2410_udc_debugfs_root, udc,
@@ -1850,141 +1849,141 @@ s3c2410_udc_मुक्त_request(काष्ठा usb_ep *_ep, काष्
 
 	dev_dbg(dev, "probe ok\n");
 
-	वापस 0;
+	return 0;
 
 err_add_udc:
-	अगर (udc_info && !udc_info->udc_command &&
+	if (udc_info && !udc_info->udc_command &&
 			gpio_is_valid(udc_info->pullup_pin))
-		gpio_मुक्त(udc_info->pullup_pin);
+		gpio_free(udc_info->pullup_pin);
 err_vbus_irq:
-	अगर (udc_info && udc_info->vbus_pin > 0)
-		मुक्त_irq(gpio_to_irq(udc_info->vbus_pin), udc);
+	if (udc_info && udc_info->vbus_pin > 0)
+		free_irq(gpio_to_irq(udc_info->vbus_pin), udc);
 err_gpio_claim:
-	अगर (udc_info && udc_info->vbus_pin > 0)
-		gpio_मुक्त(udc_info->vbus_pin);
-err_पूर्णांक:
-	मुक्त_irq(irq_usbd, udc);
+	if (udc_info && udc_info->vbus_pin > 0)
+		gpio_free(udc_info->vbus_pin);
+err_int:
+	free_irq(irq_usbd, udc);
 err_udc_clk:
-	clk_disable_unprepare(udc_घड़ी);
-	clk_put(udc_घड़ी);
-	udc_घड़ी = शून्य;
+	clk_disable_unprepare(udc_clock);
+	clk_put(udc_clock);
+	udc_clock = NULL;
 err_usb_bus_clk:
-	clk_disable_unprepare(usb_bus_घड़ी);
-	clk_put(usb_bus_घड़ी);
-	usb_bus_घड़ी = शून्य;
+	clk_disable_unprepare(usb_bus_clock);
+	clk_put(usb_bus_clock);
+	usb_bus_clock = NULL;
 
-	वापस retval;
-पूर्ण
+	return retval;
+}
 
 /*
- *	s3c2410_udc_हटाओ
+ *	s3c2410_udc_remove
  */
-अटल पूर्णांक s3c2410_udc_हटाओ(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा s3c2410_udc *udc = platक्रमm_get_drvdata(pdev);
-	अचिन्हित पूर्णांक irq;
+static int s3c2410_udc_remove(struct platform_device *pdev)
+{
+	struct s3c2410_udc *udc = platform_get_drvdata(pdev);
+	unsigned int irq;
 
 	dev_dbg(&pdev->dev, "%s()\n", __func__);
 
-	अगर (udc->driver)
-		वापस -EBUSY;
+	if (udc->driver)
+		return -EBUSY;
 
 	usb_del_gadget_udc(&udc->gadget);
-	debugfs_हटाओ(udc->regs_info);
+	debugfs_remove(udc->regs_info);
 
-	अगर (udc_info && !udc_info->udc_command &&
+	if (udc_info && !udc_info->udc_command &&
 		gpio_is_valid(udc_info->pullup_pin))
-		gpio_मुक्त(udc_info->pullup_pin);
+		gpio_free(udc_info->pullup_pin);
 
-	अगर (udc_info && udc_info->vbus_pin > 0) अणु
+	if (udc_info && udc_info->vbus_pin > 0) {
 		irq = gpio_to_irq(udc_info->vbus_pin);
-		मुक्त_irq(irq, udc);
-	पूर्ण
+		free_irq(irq, udc);
+	}
 
-	मुक्त_irq(irq_usbd, udc);
+	free_irq(irq_usbd, udc);
 
-	अगर (!IS_ERR(udc_घड़ी) && udc_घड़ी != शून्य) अणु
-		clk_disable_unprepare(udc_घड़ी);
-		clk_put(udc_घड़ी);
-		udc_घड़ी = शून्य;
-	पूर्ण
+	if (!IS_ERR(udc_clock) && udc_clock != NULL) {
+		clk_disable_unprepare(udc_clock);
+		clk_put(udc_clock);
+		udc_clock = NULL;
+	}
 
-	अगर (!IS_ERR(usb_bus_घड़ी) && usb_bus_घड़ी != शून्य) अणु
-		clk_disable_unprepare(usb_bus_घड़ी);
-		clk_put(usb_bus_घड़ी);
-		usb_bus_घड़ी = शून्य;
-	पूर्ण
+	if (!IS_ERR(usb_bus_clock) && usb_bus_clock != NULL) {
+		clk_disable_unprepare(usb_bus_clock);
+		clk_put(usb_bus_clock);
+		usb_bus_clock = NULL;
+	}
 
 	dev_dbg(&pdev->dev, "%s: remove ok\n", __func__);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#अगर_घोषित CONFIG_PM
-अटल पूर्णांक
-s3c2410_udc_suspend(काष्ठा platक्रमm_device *pdev, pm_message_t message)
-अणु
+#ifdef CONFIG_PM
+static int
+s3c2410_udc_suspend(struct platform_device *pdev, pm_message_t message)
+{
 	s3c2410_udc_command(S3C2410_UDC_P_DISABLE);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक s3c2410_udc_resume(काष्ठा platक्रमm_device *pdev)
-अणु
+static int s3c2410_udc_resume(struct platform_device *pdev)
+{
 	s3c2410_udc_command(S3C2410_UDC_P_ENABLE);
 
-	वापस 0;
-पूर्ण
-#अन्यथा
-#घोषणा s3c2410_udc_suspend	शून्य
-#घोषणा s3c2410_udc_resume	शून्य
-#पूर्ण_अगर
+	return 0;
+}
+#else
+#define s3c2410_udc_suspend	NULL
+#define s3c2410_udc_resume	NULL
+#endif
 
-अटल स्थिर काष्ठा platक्रमm_device_id s3c_udc_ids[] = अणु
-	अणु "s3c2410-usbgadget", पूर्ण,
-	अणु "s3c2440-usbgadget", पूर्ण,
-	अणु पूर्ण
-पूर्ण;
-MODULE_DEVICE_TABLE(platक्रमm, s3c_udc_ids);
+static const struct platform_device_id s3c_udc_ids[] = {
+	{ "s3c2410-usbgadget", },
+	{ "s3c2440-usbgadget", },
+	{ }
+};
+MODULE_DEVICE_TABLE(platform, s3c_udc_ids);
 
-अटल काष्ठा platक्रमm_driver udc_driver_24x0 = अणु
-	.driver		= अणु
+static struct platform_driver udc_driver_24x0 = {
+	.driver		= {
 		.name	= "s3c24x0-usbgadget",
-	पूर्ण,
+	},
 	.probe		= s3c2410_udc_probe,
-	.हटाओ		= s3c2410_udc_हटाओ,
+	.remove		= s3c2410_udc_remove,
 	.suspend	= s3c2410_udc_suspend,
 	.resume		= s3c2410_udc_resume,
 	.id_table	= s3c_udc_ids,
-पूर्ण;
+};
 
-अटल पूर्णांक __init udc_init(व्योम)
-अणु
-	पूर्णांक retval;
+static int __init udc_init(void)
+{
+	int retval;
 
-	dprपूर्णांकk(DEBUG_NORMAL, "%s\n", gadget_name);
+	dprintk(DEBUG_NORMAL, "%s\n", gadget_name);
 
 	s3c2410_udc_debugfs_root = debugfs_create_dir(gadget_name,
 						      usb_debug_root);
 
-	retval = platक्रमm_driver_रेजिस्टर(&udc_driver_24x0);
-	अगर (retval)
-		जाओ err;
+	retval = platform_driver_register(&udc_driver_24x0);
+	if (retval)
+		goto err;
 
-	वापस 0;
+	return 0;
 
 err:
-	debugfs_हटाओ(s3c2410_udc_debugfs_root);
-	वापस retval;
-पूर्ण
+	debugfs_remove(s3c2410_udc_debugfs_root);
+	return retval;
+}
 
-अटल व्योम __निकास udc_निकास(व्योम)
-अणु
-	platक्रमm_driver_unरेजिस्टर(&udc_driver_24x0);
-	debugfs_हटाओ_recursive(s3c2410_udc_debugfs_root);
-पूर्ण
+static void __exit udc_exit(void)
+{
+	platform_driver_unregister(&udc_driver_24x0);
+	debugfs_remove_recursive(s3c2410_udc_debugfs_root);
+}
 
 module_init(udc_init);
-module_निकास(udc_निकास);
+module_exit(udc_exit);
 
 MODULE_AUTHOR(DRIVER_AUTHOR);
 MODULE_DESCRIPTION(DRIVER_DESC);

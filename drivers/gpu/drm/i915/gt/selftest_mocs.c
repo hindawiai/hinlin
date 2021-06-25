@@ -1,434 +1,433 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#समावेश "gt/intel_engine_pm.h"
-#समावेश "gt/intel_gpu_commands.h"
-#समावेश "i915_selftest.h"
+#include "gt/intel_engine_pm.h"
+#include "gt/intel_gpu_commands.h"
+#include "i915_selftest.h"
 
-#समावेश "gem/selftests/mock_context.h"
-#समावेश "selftests/igt_reset.h"
-#समावेश "selftests/igt_spinner.h"
+#include "gem/selftests/mock_context.h"
+#include "selftests/igt_reset.h"
+#include "selftests/igt_spinner.h"
 
-काष्ठा live_mocs अणु
-	काष्ठा drm_i915_mocs_table table;
-	काष्ठा drm_i915_mocs_table *mocs;
-	काष्ठा drm_i915_mocs_table *l3cc;
-	काष्ठा i915_vma *scratch;
-	व्योम *vaddr;
-पूर्ण;
+struct live_mocs {
+	struct drm_i915_mocs_table table;
+	struct drm_i915_mocs_table *mocs;
+	struct drm_i915_mocs_table *l3cc;
+	struct i915_vma *scratch;
+	void *vaddr;
+};
 
-अटल काष्ठा पूर्णांकel_context *mocs_context_create(काष्ठा पूर्णांकel_engine_cs *engine)
-अणु
-	काष्ठा पूर्णांकel_context *ce;
+static struct intel_context *mocs_context_create(struct intel_engine_cs *engine)
+{
+	struct intel_context *ce;
 
-	ce = पूर्णांकel_context_create(engine);
-	अगर (IS_ERR(ce))
-		वापस ce;
+	ce = intel_context_create(engine);
+	if (IS_ERR(ce))
+		return ce;
 
-	/* We build large requests to पढ़ो the रेजिस्टरs from the ring */
-	ce->ring = __पूर्णांकel_context_ring_size(SZ_16K);
+	/* We build large requests to read the registers from the ring */
+	ce->ring = __intel_context_ring_size(SZ_16K);
 
-	वापस ce;
-पूर्ण
+	return ce;
+}
 
-अटल पूर्णांक request_add_sync(काष्ठा i915_request *rq, पूर्णांक err)
-अणु
+static int request_add_sync(struct i915_request *rq, int err)
+{
 	i915_request_get(rq);
 	i915_request_add(rq);
-	अगर (i915_request_रुको(rq, 0, HZ / 5) < 0)
+	if (i915_request_wait(rq, 0, HZ / 5) < 0)
 		err = -ETIME;
 	i915_request_put(rq);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक request_add_spin(काष्ठा i915_request *rq, काष्ठा igt_spinner *spin)
-अणु
-	पूर्णांक err = 0;
+static int request_add_spin(struct i915_request *rq, struct igt_spinner *spin)
+{
+	int err = 0;
 
 	i915_request_get(rq);
 	i915_request_add(rq);
-	अगर (spin && !igt_रुको_क्रम_spinner(spin, rq))
+	if (spin && !igt_wait_for_spinner(spin, rq))
 		err = -ETIME;
 	i915_request_put(rq);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक live_mocs_init(काष्ठा live_mocs *arg, काष्ठा पूर्णांकel_gt *gt)
-अणु
-	अचिन्हित पूर्णांक flags;
-	पूर्णांक err;
+static int live_mocs_init(struct live_mocs *arg, struct intel_gt *gt)
+{
+	unsigned int flags;
+	int err;
 
-	स_रखो(arg, 0, माप(*arg));
+	memset(arg, 0, sizeof(*arg));
 
 	flags = get_mocs_settings(gt->i915, &arg->table);
-	अगर (!flags)
-		वापस -EINVAL;
+	if (!flags)
+		return -EINVAL;
 
-	अगर (flags & HAS_RENDER_L3CC)
+	if (flags & HAS_RENDER_L3CC)
 		arg->l3cc = &arg->table;
 
-	अगर (flags & (HAS_GLOBAL_MOCS | HAS_ENGINE_MOCS))
+	if (flags & (HAS_GLOBAL_MOCS | HAS_ENGINE_MOCS))
 		arg->mocs = &arg->table;
 
 	arg->scratch =
-		__vm_create_scratch_क्रम_पढ़ो_pinned(&gt->ggtt->vm, PAGE_SIZE);
-	अगर (IS_ERR(arg->scratch))
-		वापस PTR_ERR(arg->scratch);
+		__vm_create_scratch_for_read_pinned(&gt->ggtt->vm, PAGE_SIZE);
+	if (IS_ERR(arg->scratch))
+		return PTR_ERR(arg->scratch);
 
 	arg->vaddr = i915_gem_object_pin_map_unlocked(arg->scratch->obj, I915_MAP_WB);
-	अगर (IS_ERR(arg->vaddr)) अणु
+	if (IS_ERR(arg->vaddr)) {
 		err = PTR_ERR(arg->vaddr);
-		जाओ err_scratch;
-	पूर्ण
+		goto err_scratch;
+	}
 
-	वापस 0;
+	return 0;
 
 err_scratch:
 	i915_vma_unpin_and_release(&arg->scratch, 0);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम live_mocs_fini(काष्ठा live_mocs *arg)
-अणु
+static void live_mocs_fini(struct live_mocs *arg)
+{
 	i915_vma_unpin_and_release(&arg->scratch, I915_VMA_RELEASE_MAP);
-पूर्ण
+}
 
-अटल पूर्णांक पढ़ो_regs(काष्ठा i915_request *rq,
-		     u32 addr, अचिन्हित पूर्णांक count,
+static int read_regs(struct i915_request *rq,
+		     u32 addr, unsigned int count,
 		     u32 *offset)
-अणु
-	अचिन्हित पूर्णांक i;
+{
+	unsigned int i;
 	u32 *cs;
 
-	GEM_BUG_ON(!IS_ALIGNED(*offset, माप(u32)));
+	GEM_BUG_ON(!IS_ALIGNED(*offset, sizeof(u32)));
 
-	cs = पूर्णांकel_ring_begin(rq, 4 * count);
-	अगर (IS_ERR(cs))
-		वापस PTR_ERR(cs);
+	cs = intel_ring_begin(rq, 4 * count);
+	if (IS_ERR(cs))
+		return PTR_ERR(cs);
 
-	क्रम (i = 0; i < count; i++) अणु
+	for (i = 0; i < count; i++) {
 		*cs++ = MI_STORE_REGISTER_MEM_GEN8 | MI_USE_GGTT;
 		*cs++ = addr;
 		*cs++ = *offset;
 		*cs++ = 0;
 
-		addr += माप(u32);
-		*offset += माप(u32);
-	पूर्ण
+		addr += sizeof(u32);
+		*offset += sizeof(u32);
+	}
 
-	पूर्णांकel_ring_advance(rq, cs);
+	intel_ring_advance(rq, cs);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक पढ़ो_mocs_table(काष्ठा i915_request *rq,
-			   स्थिर काष्ठा drm_i915_mocs_table *table,
+static int read_mocs_table(struct i915_request *rq,
+			   const struct drm_i915_mocs_table *table,
 			   u32 *offset)
-अणु
+{
 	u32 addr;
 
-	अगर (!table)
-		वापस 0;
+	if (!table)
+		return 0;
 
-	अगर (HAS_GLOBAL_MOCS_REGISTERS(rq->engine->i915))
+	if (HAS_GLOBAL_MOCS_REGISTERS(rq->engine->i915))
 		addr = global_mocs_offset();
-	अन्यथा
+	else
 		addr = mocs_offset(rq->engine);
 
-	वापस पढ़ो_regs(rq, addr, table->n_entries, offset);
-पूर्ण
+	return read_regs(rq, addr, table->n_entries, offset);
+}
 
-अटल पूर्णांक पढ़ो_l3cc_table(काष्ठा i915_request *rq,
-			   स्थिर काष्ठा drm_i915_mocs_table *table,
+static int read_l3cc_table(struct i915_request *rq,
+			   const struct drm_i915_mocs_table *table,
 			   u32 *offset)
-अणु
+{
 	u32 addr = i915_mmio_reg_offset(GEN9_LNCFCMOCS(0));
 
-	अगर (!table)
-		वापस 0;
+	if (!table)
+		return 0;
 
-	वापस पढ़ो_regs(rq, addr, (table->n_entries + 1) / 2, offset);
-पूर्ण
+	return read_regs(rq, addr, (table->n_entries + 1) / 2, offset);
+}
 
-अटल पूर्णांक check_mocs_table(काष्ठा पूर्णांकel_engine_cs *engine,
-			    स्थिर काष्ठा drm_i915_mocs_table *table,
+static int check_mocs_table(struct intel_engine_cs *engine,
+			    const struct drm_i915_mocs_table *table,
 			    u32 **vaddr)
-अणु
-	अचिन्हित पूर्णांक i;
+{
+	unsigned int i;
 	u32 expect;
 
-	अगर (!table)
-		वापस 0;
+	if (!table)
+		return 0;
 
-	क्रम_each_mocs(expect, table, i) अणु
-		अगर (**vaddr != expect) अणु
+	for_each_mocs(expect, table, i) {
+		if (**vaddr != expect) {
 			pr_err("%s: Invalid MOCS[%d] entry, found %08x, expected %08x\n",
 			       engine->name, i, **vaddr, expect);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		++*vaddr;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool mcr_range(काष्ठा drm_i915_निजी *i915, u32 offset)
-अणु
+static bool mcr_range(struct drm_i915_private *i915, u32 offset)
+{
 	/*
 	 * Registers in this range are affected by the MCR selector
-	 * which only controls CPU initiated MMIO. Routing करोes not
-	 * work क्रम CS access so we cannot verअगरy them on this path.
+	 * which only controls CPU initiated MMIO. Routing does not
+	 * work for CS access so we cannot verify them on this path.
 	 */
-	वापस INTEL_GEN(i915) >= 8 && offset >= 0xb000 && offset <= 0xb4ff;
-पूर्ण
+	return INTEL_GEN(i915) >= 8 && offset >= 0xb000 && offset <= 0xb4ff;
+}
 
-अटल पूर्णांक check_l3cc_table(काष्ठा पूर्णांकel_engine_cs *engine,
-			    स्थिर काष्ठा drm_i915_mocs_table *table,
+static int check_l3cc_table(struct intel_engine_cs *engine,
+			    const struct drm_i915_mocs_table *table,
 			    u32 **vaddr)
-अणु
-	/* Can we पढ़ो the MCR range 0xb00 directly? See पूर्णांकel_workarounds! */
+{
+	/* Can we read the MCR range 0xb00 directly? See intel_workarounds! */
 	u32 reg = i915_mmio_reg_offset(GEN9_LNCFCMOCS(0));
-	अचिन्हित पूर्णांक i;
+	unsigned int i;
 	u32 expect;
 
-	अगर (!table)
-		वापस 0;
+	if (!table)
+		return 0;
 
-	क्रम_each_l3cc(expect, table, i) अणु
-		अगर (!mcr_range(engine->i915, reg) && **vaddr != expect) अणु
+	for_each_l3cc(expect, table, i) {
+		if (!mcr_range(engine->i915, reg) && **vaddr != expect) {
 			pr_err("%s: Invalid L3CC[%d] entry, found %08x, expected %08x\n",
 			       engine->name, i, **vaddr, expect);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		++*vaddr;
 		reg += 4;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक check_mocs_engine(काष्ठा live_mocs *arg,
-			     काष्ठा पूर्णांकel_context *ce)
-अणु
-	काष्ठा i915_vma *vma = arg->scratch;
-	काष्ठा i915_request *rq;
+static int check_mocs_engine(struct live_mocs *arg,
+			     struct intel_context *ce)
+{
+	struct i915_vma *vma = arg->scratch;
+	struct i915_request *rq;
 	u32 offset;
 	u32 *vaddr;
-	पूर्णांक err;
+	int err;
 
-	स_रखो32(arg->vaddr, STACK_MAGIC, PAGE_SIZE / माप(u32));
+	memset32(arg->vaddr, STACK_MAGIC, PAGE_SIZE / sizeof(u32));
 
-	rq = पूर्णांकel_context_create_request(ce);
-	अगर (IS_ERR(rq))
-		वापस PTR_ERR(rq);
+	rq = intel_context_create_request(ce);
+	if (IS_ERR(rq))
+		return PTR_ERR(rq);
 
 	i915_vma_lock(vma);
-	err = i915_request_aरुको_object(rq, vma->obj, true);
-	अगर (!err)
+	err = i915_request_await_object(rq, vma->obj, true);
+	if (!err)
 		err = i915_vma_move_to_active(vma, rq, EXEC_OBJECT_WRITE);
 	i915_vma_unlock(vma);
 
 	/* Read the mocs tables back using SRM */
 	offset = i915_ggtt_offset(vma);
-	अगर (!err)
-		err = पढ़ो_mocs_table(rq, arg->mocs, &offset);
-	अगर (!err && ce->engine->class == RENDER_CLASS)
-		err = पढ़ो_l3cc_table(rq, arg->l3cc, &offset);
+	if (!err)
+		err = read_mocs_table(rq, arg->mocs, &offset);
+	if (!err && ce->engine->class == RENDER_CLASS)
+		err = read_l3cc_table(rq, arg->l3cc, &offset);
 	offset -= i915_ggtt_offset(vma);
 	GEM_BUG_ON(offset > PAGE_SIZE);
 
 	err = request_add_sync(rq, err);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	/* Compare the results against the expected tables */
 	vaddr = arg->vaddr;
-	अगर (!err)
+	if (!err)
 		err = check_mocs_table(ce->engine, arg->mocs, &vaddr);
-	अगर (!err && ce->engine->class == RENDER_CLASS)
+	if (!err && ce->engine->class == RENDER_CLASS)
 		err = check_l3cc_table(ce->engine, arg->l3cc, &vaddr);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	GEM_BUG_ON(arg->vaddr + offset != vaddr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक live_mocs_kernel(व्योम *arg)
-अणु
-	काष्ठा पूर्णांकel_gt *gt = arg;
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	क्रमागत पूर्णांकel_engine_id id;
-	काष्ठा live_mocs mocs;
-	पूर्णांक err;
+static int live_mocs_kernel(void *arg)
+{
+	struct intel_gt *gt = arg;
+	struct intel_engine_cs *engine;
+	enum intel_engine_id id;
+	struct live_mocs mocs;
+	int err;
 
-	/* Basic check the प्रणाली is configured with the expected mocs table */
+	/* Basic check the system is configured with the expected mocs table */
 
 	err = live_mocs_init(&mocs, gt);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	क्रम_each_engine(engine, gt, id) अणु
-		पूर्णांकel_engine_pm_get(engine);
+	for_each_engine(engine, gt, id) {
+		intel_engine_pm_get(engine);
 		err = check_mocs_engine(&mocs, engine->kernel_context);
-		पूर्णांकel_engine_pm_put(engine);
-		अगर (err)
-			अवरोध;
-	पूर्ण
+		intel_engine_pm_put(engine);
+		if (err)
+			break;
+	}
 
 	live_mocs_fini(&mocs);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक live_mocs_clean(व्योम *arg)
-अणु
-	काष्ठा पूर्णांकel_gt *gt = arg;
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	क्रमागत पूर्णांकel_engine_id id;
-	काष्ठा live_mocs mocs;
-	पूर्णांक err;
+static int live_mocs_clean(void *arg)
+{
+	struct intel_gt *gt = arg;
+	struct intel_engine_cs *engine;
+	enum intel_engine_id id;
+	struct live_mocs mocs;
+	int err;
 
 	/* Every new context should see the same mocs table */
 
 	err = live_mocs_init(&mocs, gt);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
-	क्रम_each_engine(engine, gt, id) अणु
-		काष्ठा पूर्णांकel_context *ce;
+	for_each_engine(engine, gt, id) {
+		struct intel_context *ce;
 
 		ce = mocs_context_create(engine);
-		अगर (IS_ERR(ce)) अणु
+		if (IS_ERR(ce)) {
 			err = PTR_ERR(ce);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		err = check_mocs_engine(&mocs, ce);
-		पूर्णांकel_context_put(ce);
-		अगर (err)
-			अवरोध;
-	पूर्ण
+		intel_context_put(ce);
+		if (err)
+			break;
+	}
 
 	live_mocs_fini(&mocs);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक active_engine_reset(काष्ठा पूर्णांकel_context *ce,
-			       स्थिर अक्षर *reason)
-अणु
-	काष्ठा igt_spinner spin;
-	काष्ठा i915_request *rq;
-	पूर्णांक err;
+static int active_engine_reset(struct intel_context *ce,
+			       const char *reason)
+{
+	struct igt_spinner spin;
+	struct i915_request *rq;
+	int err;
 
 	err = igt_spinner_init(&spin, ce->engine->gt);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	rq = igt_spinner_create_request(&spin, ce, MI_NOOP);
-	अगर (IS_ERR(rq)) अणु
+	if (IS_ERR(rq)) {
 		igt_spinner_fini(&spin);
-		वापस PTR_ERR(rq);
-	पूर्ण
+		return PTR_ERR(rq);
+	}
 
 	err = request_add_spin(rq, &spin);
-	अगर (err == 0)
-		err = पूर्णांकel_engine_reset(ce->engine, reason);
+	if (err == 0)
+		err = intel_engine_reset(ce->engine, reason);
 
 	igt_spinner_end(&spin);
 	igt_spinner_fini(&spin);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक __live_mocs_reset(काष्ठा live_mocs *mocs,
-			     काष्ठा पूर्णांकel_context *ce)
-अणु
-	काष्ठा पूर्णांकel_gt *gt = ce->engine->gt;
-	पूर्णांक err;
+static int __live_mocs_reset(struct live_mocs *mocs,
+			     struct intel_context *ce)
+{
+	struct intel_gt *gt = ce->engine->gt;
+	int err;
 
-	अगर (पूर्णांकel_has_reset_engine(gt)) अणु
-		err = पूर्णांकel_engine_reset(ce->engine, "mocs");
-		अगर (err)
-			वापस err;
+	if (intel_has_reset_engine(gt)) {
+		err = intel_engine_reset(ce->engine, "mocs");
+		if (err)
+			return err;
 
 		err = check_mocs_engine(mocs, ce);
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		err = active_engine_reset(ce, "mocs");
-		अगर (err)
-			वापस err;
+		if (err)
+			return err;
 
 		err = check_mocs_engine(mocs, ce);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	अगर (पूर्णांकel_has_gpu_reset(gt)) अणु
-		पूर्णांकel_gt_reset(gt, ce->engine->mask, "mocs");
+	if (intel_has_gpu_reset(gt)) {
+		intel_gt_reset(gt, ce->engine->mask, "mocs");
 
 		err = check_mocs_engine(mocs, ce);
-		अगर (err)
-			वापस err;
-	पूर्ण
+		if (err)
+			return err;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक live_mocs_reset(व्योम *arg)
-अणु
-	काष्ठा पूर्णांकel_gt *gt = arg;
-	काष्ठा पूर्णांकel_engine_cs *engine;
-	क्रमागत पूर्णांकel_engine_id id;
-	काष्ठा live_mocs mocs;
-	पूर्णांक err = 0;
+static int live_mocs_reset(void *arg)
+{
+	struct intel_gt *gt = arg;
+	struct intel_engine_cs *engine;
+	enum intel_engine_id id;
+	struct live_mocs mocs;
+	int err = 0;
 
 	/* Check the mocs setup is retained over per-engine and global resets */
 
 	err = live_mocs_init(&mocs, gt);
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	igt_global_reset_lock(gt);
-	क्रम_each_engine(engine, gt, id) अणु
-		काष्ठा पूर्णांकel_context *ce;
+	for_each_engine(engine, gt, id) {
+		struct intel_context *ce;
 
 		ce = mocs_context_create(engine);
-		अगर (IS_ERR(ce)) अणु
+		if (IS_ERR(ce)) {
 			err = PTR_ERR(ce);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
-		पूर्णांकel_engine_pm_get(engine);
+		intel_engine_pm_get(engine);
 		err = __live_mocs_reset(&mocs, ce);
-		पूर्णांकel_engine_pm_put(engine);
+		intel_engine_pm_put(engine);
 
-		पूर्णांकel_context_put(ce);
-		अगर (err)
-			अवरोध;
-	पूर्ण
+		intel_context_put(ce);
+		if (err)
+			break;
+	}
 	igt_global_reset_unlock(gt);
 
 	live_mocs_fini(&mocs);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-पूर्णांक पूर्णांकel_mocs_live_selftests(काष्ठा drm_i915_निजी *i915)
-अणु
-	अटल स्थिर काष्ठा i915_subtest tests[] = अणु
+int intel_mocs_live_selftests(struct drm_i915_private *i915)
+{
+	static const struct i915_subtest tests[] = {
 		SUBTEST(live_mocs_kernel),
 		SUBTEST(live_mocs_clean),
 		SUBTEST(live_mocs_reset),
-	पूर्ण;
-	काष्ठा drm_i915_mocs_table table;
+	};
+	struct drm_i915_mocs_table table;
 
-	अगर (!get_mocs_settings(i915, &table))
-		वापस 0;
+	if (!get_mocs_settings(i915, &table))
+		return 0;
 
-	वापस पूर्णांकel_gt_live_subtests(tests, &i915->gt);
-पूर्ण
+	return intel_gt_live_subtests(tests, &i915->gt);
+}

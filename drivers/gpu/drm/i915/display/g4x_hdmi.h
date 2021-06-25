@@ -1,20 +1,19 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2020 Intel Corporation
+ * Copyright © 2020 Intel Corporation
  */
 
-#अगर_अघोषित _G4X_HDMI_H_
-#घोषणा _G4X_HDMI_H_
+#ifndef _G4X_HDMI_H_
+#define _G4X_HDMI_H_
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-#समावेश "i915_reg.h"
+#include "i915_reg.h"
 
-क्रमागत port;
-काष्ठा drm_i915_निजी;
+enum port;
+struct drm_i915_private;
 
-व्योम g4x_hdmi_init(काष्ठा drm_i915_निजी *dev_priv,
-		   i915_reg_t hdmi_reg, क्रमागत port port);
+void g4x_hdmi_init(struct drm_i915_private *dev_priv,
+		   i915_reg_t hdmi_reg, enum port port);
 
-#पूर्ण_अगर
+#endif

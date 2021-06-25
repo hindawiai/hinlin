@@ -1,565 +1,564 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * Driver क्रम Digigram miXart soundcards
+ * Driver for Digigram miXart soundcards
  *
- * मुख्य file with alsa callbacks
+ * main file with alsa callbacks
  *
  * Copyright (c) 2003 by Digigram <alsa@digigram.com>
  */
 
 
-#समावेश <linux/init.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/pci.h>
-#समावेश <linux/dma-mapping.h>
-#समावेश <linux/module.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
+#include <linux/init.h>
+#include <linux/interrupt.h>
+#include <linux/pci.h>
+#include <linux/dma-mapping.h>
+#include <linux/module.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
 
-#समावेश <sound/core.h>
-#समावेश <sound/initval.h>
-#समावेश <sound/info.h>
-#समावेश <sound/control.h>
-#समावेश <sound/pcm.h>
-#समावेश <sound/pcm_params.h>
-#समावेश "mixart.h"
-#समावेश "mixart_hwdep.h"
-#समावेश "mixart_core.h"
-#समावेश "mixart_mixer.h"
+#include <sound/core.h>
+#include <sound/initval.h>
+#include <sound/info.h>
+#include <sound/control.h>
+#include <sound/pcm.h>
+#include <sound/pcm_params.h>
+#include "mixart.h"
+#include "mixart_hwdep.h"
+#include "mixart_core.h"
+#include "mixart_mixer.h"
 
-#घोषणा CARD_NAME "miXart"
+#define CARD_NAME "miXart"
 
 MODULE_AUTHOR("Digigram <alsa@digigram.com>");
 MODULE_DESCRIPTION("Digigram " CARD_NAME);
 MODULE_LICENSE("GPL");
 
-अटल पूर्णांक index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;             /* Index 0-MAX */
-अटल अक्षर *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;              /* ID क्रम this card */
-अटल bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;     /* Enable this card */
+static int index[SNDRV_CARDS] = SNDRV_DEFAULT_IDX;             /* Index 0-MAX */
+static char *id[SNDRV_CARDS] = SNDRV_DEFAULT_STR;              /* ID for this card */
+static bool enable[SNDRV_CARDS] = SNDRV_DEFAULT_ENABLE_PNP;     /* Enable this card */
 
-module_param_array(index, पूर्णांक, शून्य, 0444);
+module_param_array(index, int, NULL, 0444);
 MODULE_PARM_DESC(index, "Index value for Digigram " CARD_NAME " soundcard.");
-module_param_array(id, अक्षरp, शून्य, 0444);
+module_param_array(id, charp, NULL, 0444);
 MODULE_PARM_DESC(id, "ID string for Digigram " CARD_NAME " soundcard.");
-module_param_array(enable, bool, शून्य, 0444);
+module_param_array(enable, bool, NULL, 0444);
 MODULE_PARM_DESC(enable, "Enable Digigram " CARD_NAME " soundcard.");
 
 /*
  */
 
-अटल स्थिर काष्ठा pci_device_id snd_mixart_ids[] = अणु
-	अणु PCI_VDEVICE(MOTOROLA, 0x0003), 0, पूर्ण, /* MC8240 */
-	अणु 0, पूर्ण
-पूर्ण;
+static const struct pci_device_id snd_mixart_ids[] = {
+	{ PCI_VDEVICE(MOTOROLA, 0x0003), 0, }, /* MC8240 */
+	{ 0, }
+};
 
 MODULE_DEVICE_TABLE(pci, snd_mixart_ids);
 
 
-अटल पूर्णांक mixart_set_pipe_state(काष्ठा mixart_mgr *mgr,
-				 काष्ठा mixart_pipe *pipe, पूर्णांक start)
-अणु
-	काष्ठा mixart_group_state_req group_state;
-	काष्ठा mixart_group_state_resp group_state_resp;
-	काष्ठा mixart_msg request;
-	पूर्णांक err;
-	u32 प्रणाली_msg_uid;
+static int mixart_set_pipe_state(struct mixart_mgr *mgr,
+				 struct mixart_pipe *pipe, int start)
+{
+	struct mixart_group_state_req group_state;
+	struct mixart_group_state_resp group_state_resp;
+	struct mixart_msg request;
+	int err;
+	u32 system_msg_uid;
 
-	चयन(pipe->status) अणु
-	हाल PIPE_RUNNING:
-	हाल PIPE_CLOCK_SET:
-		अगर(start) वापस 0; /* alपढ़ोy started */
-		अवरोध;
-	हाल PIPE_STOPPED:
-		अगर(!start) वापस 0; /* alपढ़ोy stopped */
-		अवरोध;
-	शेष:
+	switch(pipe->status) {
+	case PIPE_RUNNING:
+	case PIPE_CLOCK_SET:
+		if(start) return 0; /* already started */
+		break;
+	case PIPE_STOPPED:
+		if(!start) return 0; /* already stopped */
+		break;
+	default:
 		dev_err(&mgr->pci->dev,
 			"error mixart_set_pipe_state called with wrong pipe->status!\n");
-		वापस -EINVAL;      /* function called with wrong pipe status */
-	पूर्ण
+		return -EINVAL;      /* function called with wrong pipe status */
+	}
 
-	प्रणाली_msg_uid = 0x12345678; /* the event ! (take care: the MSB and two LSB's have to be 0) */
+	system_msg_uid = 0x12345678; /* the event ! (take care: the MSB and two LSB's have to be 0) */
 
-	/* रुको on the last MSG_SYSTEM_SEND_SYNCHRO_CMD command to be really finished */
+	/* wait on the last MSG_SYSTEM_SEND_SYNCHRO_CMD command to be really finished */
 
 	request.message_id = MSG_SYSTEM_WAIT_SYNCHRO_CMD;
-	request.uid = (काष्ठा mixart_uid)अणु0,0पूर्ण;
-	request.data = &प्रणाली_msg_uid;
-	request.size = माप(प्रणाली_msg_uid);
+	request.uid = (struct mixart_uid){0,0};
+	request.data = &system_msg_uid;
+	request.size = sizeof(system_msg_uid);
 
-	err = snd_mixart_send_msg_रुको_notअगर(mgr, &request, प्रणाली_msg_uid);
-	अगर(err) अणु
+	err = snd_mixart_send_msg_wait_notif(mgr, &request, system_msg_uid);
+	if(err) {
 		dev_err(&mgr->pci->dev,
 			"error : MSG_SYSTEM_WAIT_SYNCHRO_CMD was not notified !\n");
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
 	/* start or stop the pipe (1 pipe) */
 
-	स_रखो(&group_state, 0, माप(group_state));
+	memset(&group_state, 0, sizeof(group_state));
 	group_state.pipe_count = 1;
 	group_state.pipe_uid[0] = pipe->group_uid;
 
-	अगर(start)
+	if(start)
 		request.message_id = MSG_STREAM_START_STREAM_GRP_PACKET;
-	अन्यथा
+	else
 		request.message_id = MSG_STREAM_STOP_STREAM_GRP_PACKET;
 
-	request.uid = pipe->group_uid; /*(काष्ठा mixart_uid)अणु0,0पूर्ण;*/
+	request.uid = pipe->group_uid; /*(struct mixart_uid){0,0};*/
 	request.data = &group_state;
-	request.size = माप(group_state);
+	request.size = sizeof(group_state);
 
-	err = snd_mixart_send_msg(mgr, &request, माप(group_state_resp), &group_state_resp);
-	अगर (err < 0 || group_state_resp.txx_status != 0) अणु
+	err = snd_mixart_send_msg(mgr, &request, sizeof(group_state_resp), &group_state_resp);
+	if (err < 0 || group_state_resp.txx_status != 0) {
 		dev_err(&mgr->pci->dev,
 			"error MSG_STREAM_ST***_STREAM_GRP_PACKET err=%x stat=%x !\n",
 			err, group_state_resp.txx_status);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर(start) अणु
+	if(start) {
 		u32 stat = 0;
 
-		group_state.pipe_count = 0; /* in हाल of start same command once again with pipe_count=0 */
+		group_state.pipe_count = 0; /* in case of start same command once again with pipe_count=0 */
 
-		err = snd_mixart_send_msg(mgr, &request, माप(group_state_resp), &group_state_resp);
-		अगर (err < 0 || group_state_resp.txx_status != 0) अणु
+		err = snd_mixart_send_msg(mgr, &request, sizeof(group_state_resp), &group_state_resp);
+		if (err < 0 || group_state_resp.txx_status != 0) {
 			dev_err(&mgr->pci->dev,
 				"error MSG_STREAM_START_STREAM_GRP_PACKET err=%x stat=%x !\n",
 				err, group_state_resp.txx_status);
- 			वापस -EINVAL;
-		पूर्ण
+ 			return -EINVAL;
+		}
 
-		/* in हाल of start send a synchro top */
+		/* in case of start send a synchro top */
 
 		request.message_id = MSG_SYSTEM_SEND_SYNCHRO_CMD;
-		request.uid = (काष्ठा mixart_uid)अणु0,0पूर्ण;
-		request.data = शून्य;
+		request.uid = (struct mixart_uid){0,0};
+		request.data = NULL;
 		request.size = 0;
 
-		err = snd_mixart_send_msg(mgr, &request, माप(stat), &stat);
-		अगर (err < 0 || stat != 0) अणु
+		err = snd_mixart_send_msg(mgr, &request, sizeof(stat), &stat);
+		if (err < 0 || stat != 0) {
 			dev_err(&mgr->pci->dev,
 				"error MSG_SYSTEM_SEND_SYNCHRO_CMD err=%x stat=%x !\n",
 				err, stat);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		pipe->status = PIPE_RUNNING;
-	पूर्ण
-	अन्यथा /* !start */
+	}
+	else /* !start */
 		pipe->status = PIPE_STOPPED;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक mixart_set_घड़ी(काष्ठा mixart_mgr *mgr,
-			    काष्ठा mixart_pipe *pipe, अचिन्हित पूर्णांक rate)
-अणु
-	काष्ठा mixart_msg request;
-	काष्ठा mixart_घड़ी_properties घड़ी_properties;
-	काष्ठा mixart_घड़ी_properties_resp घड़ी_prop_resp;
-	पूर्णांक err;
+static int mixart_set_clock(struct mixart_mgr *mgr,
+			    struct mixart_pipe *pipe, unsigned int rate)
+{
+	struct mixart_msg request;
+	struct mixart_clock_properties clock_properties;
+	struct mixart_clock_properties_resp clock_prop_resp;
+	int err;
 
-	चयन(pipe->status) अणु
-	हाल PIPE_CLOCK_SET:
-		अवरोध;
-	हाल PIPE_RUNNING:
-		अगर(rate != 0)
-			अवरोध;
+	switch(pipe->status) {
+	case PIPE_CLOCK_SET:
+		break;
+	case PIPE_RUNNING:
+		if(rate != 0)
+			break;
 		fallthrough;
-	शेष:
-		अगर(rate == 0)
-			वापस 0; /* nothing to करो */
-		अन्यथा अणु
+	default:
+		if(rate == 0)
+			return 0; /* nothing to do */
+		else {
 			dev_err(&mgr->pci->dev,
 				"error mixart_set_clock(%d) called with wrong pipe->status !\n",
 				rate);
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
-	स_रखो(&घड़ी_properties, 0, माप(घड़ी_properties));
-	घड़ी_properties.घड़ी_generic_type = (rate != 0) ? CGT_INTERNAL_CLOCK : CGT_NO_CLOCK;
-	घड़ी_properties.घड़ी_mode = CM_STANDALONE;
-	घड़ी_properties.frequency = rate;
-	घड़ी_properties.nb_callers = 1; /* only one entry in uid_caller ! */
-	घड़ी_properties.uid_caller[0] = pipe->group_uid;
+	memset(&clock_properties, 0, sizeof(clock_properties));
+	clock_properties.clock_generic_type = (rate != 0) ? CGT_INTERNAL_CLOCK : CGT_NO_CLOCK;
+	clock_properties.clock_mode = CM_STANDALONE;
+	clock_properties.frequency = rate;
+	clock_properties.nb_callers = 1; /* only one entry in uid_caller ! */
+	clock_properties.uid_caller[0] = pipe->group_uid;
 
 	dev_dbg(&mgr->pci->dev, "mixart_set_clock to %d kHz\n", rate);
 
 	request.message_id = MSG_CLOCK_SET_PROPERTIES;
 	request.uid = mgr->uid_console_manager;
-	request.data = &घड़ी_properties;
-	request.size = माप(घड़ी_properties);
+	request.data = &clock_properties;
+	request.size = sizeof(clock_properties);
 
-	err = snd_mixart_send_msg(mgr, &request, माप(घड़ी_prop_resp), &घड़ी_prop_resp);
-	अगर (err < 0 || घड़ी_prop_resp.status != 0 || घड़ी_prop_resp.घड़ी_mode != CM_STANDALONE) अणु
+	err = snd_mixart_send_msg(mgr, &request, sizeof(clock_prop_resp), &clock_prop_resp);
+	if (err < 0 || clock_prop_resp.status != 0 || clock_prop_resp.clock_mode != CM_STANDALONE) {
 		dev_err(&mgr->pci->dev,
 			"error MSG_CLOCK_SET_PROPERTIES err=%x stat=%x mod=%x !\n",
-			err, घड़ी_prop_resp.status, घड़ी_prop_resp.घड़ी_mode);
-		वापस -EINVAL;
-	पूर्ण
+			err, clock_prop_resp.status, clock_prop_resp.clock_mode);
+		return -EINVAL;
+	}
 
-	अगर(rate)  pipe->status = PIPE_CLOCK_SET;
-	अन्यथा      pipe->status = PIPE_RUNNING;
+	if(rate)  pipe->status = PIPE_CLOCK_SET;
+	else      pipe->status = PIPE_RUNNING;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
- *  Allocate or reference output pipe क्रम analog IOs (pcmp0/1)
+ *  Allocate or reference output pipe for analog IOs (pcmp0/1)
  */
-काष्ठा mixart_pipe *
-snd_mixart_add_ref_pipe(काष्ठा snd_mixart *chip, पूर्णांक pcm_number, पूर्णांक capture,
-			पूर्णांक monitoring)
-अणु
-	पूर्णांक stream_count;
-	काष्ठा mixart_pipe *pipe;
-	काष्ठा mixart_msg request;
+struct mixart_pipe *
+snd_mixart_add_ref_pipe(struct snd_mixart *chip, int pcm_number, int capture,
+			int monitoring)
+{
+	int stream_count;
+	struct mixart_pipe *pipe;
+	struct mixart_msg request;
 
-	अगर(capture) अणु
-		अगर (pcm_number == MIXART_PCM_ANALOG) अणु
-			pipe = &(chip->pipe_in_ana);  /* analog inमाला_दो */
-		पूर्ण अन्यथा अणु
-			pipe = &(chip->pipe_in_dig); /* digital inमाला_दो */
-		पूर्ण
+	if(capture) {
+		if (pcm_number == MIXART_PCM_ANALOG) {
+			pipe = &(chip->pipe_in_ana);  /* analog inputs */
+		} else {
+			pipe = &(chip->pipe_in_dig); /* digital inputs */
+		}
 		request.message_id = MSG_STREAM_ADD_OUTPUT_GROUP;
 		stream_count = MIXART_CAPTURE_STREAMS;
-	पूर्ण अन्यथा अणु
-		अगर (pcm_number == MIXART_PCM_ANALOG) अणु
-			pipe = &(chip->pipe_out_ana);  /* analog outमाला_दो */
-		पूर्ण अन्यथा अणु
-			pipe = &(chip->pipe_out_dig);  /* digital outमाला_दो */
-		पूर्ण
+	} else {
+		if (pcm_number == MIXART_PCM_ANALOG) {
+			pipe = &(chip->pipe_out_ana);  /* analog outputs */
+		} else {
+			pipe = &(chip->pipe_out_dig);  /* digital outputs */
+		}
 		request.message_id = MSG_STREAM_ADD_INPUT_GROUP;
 		stream_count = MIXART_PLAYBACK_STREAMS;
-	पूर्ण
+	}
 
-	/* a new stream is खोलोed and there are alपढ़ोy all streams in use */
-	अगर( (monitoring == 0) && (pipe->references >= stream_count) ) अणु
-		वापस शून्य;
-	पूर्ण
+	/* a new stream is opened and there are already all streams in use */
+	if( (monitoring == 0) && (pipe->references >= stream_count) ) {
+		return NULL;
+	}
 
 	/* pipe is not yet defined */
-	अगर( pipe->status == PIPE_UNDEFINED ) अणु
-		पूर्णांक err, i;
-		काष्ठा अणु
-			काष्ठा mixart_streaming_group_req sgroup_req;
-			काष्ठा mixart_streaming_group sgroup_resp;
-		पूर्ण *buf;
+	if( pipe->status == PIPE_UNDEFINED ) {
+		int err, i;
+		struct {
+			struct mixart_streaming_group_req sgroup_req;
+			struct mixart_streaming_group sgroup_resp;
+		} *buf;
 
 		dev_dbg(chip->card->dev,
 			"add_ref_pipe audio chip(%d) pcm(%d)\n",
 			chip->chip_idx, pcm_number);
 
-		buf = kदो_स्मृति(माप(*buf), GFP_KERNEL);
-		अगर (!buf)
-			वापस शून्य;
+		buf = kmalloc(sizeof(*buf), GFP_KERNEL);
+		if (!buf)
+			return NULL;
 
-		request.uid = (काष्ठा mixart_uid)अणु0,0पूर्ण;      /* should be StreamManagerUID, but zero is OK अगर there is only one ! */
+		request.uid = (struct mixart_uid){0,0};      /* should be StreamManagerUID, but zero is OK if there is only one ! */
 		request.data = &buf->sgroup_req;
-		request.size = माप(buf->sgroup_req);
+		request.size = sizeof(buf->sgroup_req);
 
-		स_रखो(&buf->sgroup_req, 0, माप(buf->sgroup_req));
+		memset(&buf->sgroup_req, 0, sizeof(buf->sgroup_req));
 
 		buf->sgroup_req.stream_count = stream_count;
 		buf->sgroup_req.channel_count = 2;
 		buf->sgroup_req.latency = 256;
 		buf->sgroup_req.connector = pipe->uid_left_connector;  /* the left connector */
 
-		क्रम (i=0; i<stream_count; i++) अणु
-			पूर्णांक j;
-			काष्ठा mixart_flowinfo *flowinfo;
-			काष्ठा mixart_bufferinfo *bufferinfo;
+		for (i=0; i<stream_count; i++) {
+			int j;
+			struct mixart_flowinfo *flowinfo;
+			struct mixart_bufferinfo *bufferinfo;
 			
-			/* we करोn't yet know the क्रमmat, so config 16 bit pcm audio क्रम instance */
+			/* we don't yet know the format, so config 16 bit pcm audio for instance */
 			buf->sgroup_req.stream_info[i].size_max_byte_frame = 1024;
 			buf->sgroup_req.stream_info[i].size_max_sample_frame = 256;
 			buf->sgroup_req.stream_info[i].nb_bytes_max_per_sample = MIXART_FLOAT_P__4_0_TO_HEX; /* is 4.0f */
 
 			/* find the right bufferinfo_array */
 			j = (chip->chip_idx * MIXART_MAX_STREAM_PER_CARD) + (pcm_number * (MIXART_PLAYBACK_STREAMS + MIXART_CAPTURE_STREAMS)) + i;
-			अगर(capture) j += MIXART_PLAYBACK_STREAMS; /* in the array capture is behind playback */
+			if(capture) j += MIXART_PLAYBACK_STREAMS; /* in the array capture is behind playback */
 
 			buf->sgroup_req.flow_entry[i] = j;
 
-			flowinfo = (काष्ठा mixart_flowinfo *)chip->mgr->flowinfo.area;
-			flowinfo[j].bufferinfo_array_phy_address = (u32)chip->mgr->bufferinfo.addr + (j * माप(काष्ठा mixart_bufferinfo));
+			flowinfo = (struct mixart_flowinfo *)chip->mgr->flowinfo.area;
+			flowinfo[j].bufferinfo_array_phy_address = (u32)chip->mgr->bufferinfo.addr + (j * sizeof(struct mixart_bufferinfo));
 			flowinfo[j].bufferinfo_count = 1;               /* 1 will set the miXart to ring-buffer mode ! */
 
-			bufferinfo = (काष्ठा mixart_bufferinfo *)chip->mgr->bufferinfo.area;
+			bufferinfo = (struct mixart_bufferinfo *)chip->mgr->bufferinfo.area;
 			bufferinfo[j].buffer_address = 0;               /* buffer is not yet allocated */
 			bufferinfo[j].available_length = 0;             /* buffer is not yet allocated */
 
-			/* स्थिरruct the identअगरier of the stream buffer received in the पूर्णांकerrupts ! */
+			/* construct the identifier of the stream buffer received in the interrupts ! */
 			bufferinfo[j].buffer_id = (chip->chip_idx << MIXART_NOTIFY_CARD_OFFSET) + (pcm_number << MIXART_NOTIFY_PCM_OFFSET ) + i;
-			अगर(capture) अणु
+			if(capture) {
 				bufferinfo[j].buffer_id |= MIXART_NOTIFY_CAPT_MASK;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		err = snd_mixart_send_msg(chip->mgr, &request, माप(buf->sgroup_resp), &buf->sgroup_resp);
-		अगर((err < 0) || (buf->sgroup_resp.status != 0)) अणु
+		err = snd_mixart_send_msg(chip->mgr, &request, sizeof(buf->sgroup_resp), &buf->sgroup_resp);
+		if((err < 0) || (buf->sgroup_resp.status != 0)) {
 			dev_err(chip->card->dev,
 				"error MSG_STREAM_ADD_**PUT_GROUP err=%x stat=%x !\n",
 				err, buf->sgroup_resp.status);
-			kमुक्त(buf);
-			वापस शून्य;
-		पूर्ण
+			kfree(buf);
+			return NULL;
+		}
 
-		pipe->group_uid = buf->sgroup_resp.group;     /* id of the pipe, as वापसed by embedded */
+		pipe->group_uid = buf->sgroup_resp.group;     /* id of the pipe, as returned by embedded */
 		pipe->stream_count = buf->sgroup_resp.stream_count;
 		/* pipe->stream_uid[i] = buf->sgroup_resp.stream[i].stream_uid; */
 
 		pipe->status = PIPE_STOPPED;
-		kमुक्त(buf);
-	पूर्ण
+		kfree(buf);
+	}
 
-	अगर(monitoring)	pipe->monitoring = 1;
-	अन्यथा		pipe->references++;
+	if(monitoring)	pipe->monitoring = 1;
+	else		pipe->references++;
 
-	वापस pipe;
-पूर्ण
+	return pipe;
+}
 
 
-पूर्णांक snd_mixart_समाप्त_ref_pipe(काष्ठा mixart_mgr *mgr,
-			     काष्ठा mixart_pipe *pipe, पूर्णांक monitoring)
-अणु
-	पूर्णांक err = 0;
+int snd_mixart_kill_ref_pipe(struct mixart_mgr *mgr,
+			     struct mixart_pipe *pipe, int monitoring)
+{
+	int err = 0;
 
-	अगर(pipe->status == PIPE_UNDEFINED)
-		वापस 0;
+	if(pipe->status == PIPE_UNDEFINED)
+		return 0;
 
-	अगर(monitoring)
+	if(monitoring)
 		pipe->monitoring = 0;
-	अन्यथा
+	else
 		pipe->references--;
 
-	अगर((pipe->references <= 0) && (pipe->monitoring == 0)) अणु
+	if((pipe->references <= 0) && (pipe->monitoring == 0)) {
 
-		काष्ठा mixart_msg request;
-		काष्ठा mixart_delete_group_resp delete_resp;
+		struct mixart_msg request;
+		struct mixart_delete_group_resp delete_resp;
 
-		/* release the घड़ी */
-		err = mixart_set_घड़ी( mgr, pipe, 0);
-		अगर( err < 0 ) अणु
+		/* release the clock */
+		err = mixart_set_clock( mgr, pipe, 0);
+		if( err < 0 ) {
 			dev_err(&mgr->pci->dev,
 				"mixart_set_clock(0) return error!\n");
-		पूर्ण
+		}
 
 		/* stop the pipe */
 		err = mixart_set_pipe_state(mgr, pipe, 0);
-		अगर( err < 0 ) अणु
+		if( err < 0 ) {
 			dev_err(&mgr->pci->dev, "error stopping pipe!\n");
-		पूर्ण
+		}
 
 		request.message_id = MSG_STREAM_DELETE_GROUP;
-		request.uid = (काष्ठा mixart_uid)अणु0,0पूर्ण;
+		request.uid = (struct mixart_uid){0,0};
 		request.data = &pipe->group_uid;            /* the streaming group ! */
-		request.size = माप(pipe->group_uid);
+		request.size = sizeof(pipe->group_uid);
 
 		/* delete the pipe */
-		err = snd_mixart_send_msg(mgr, &request, माप(delete_resp), &delete_resp);
-		अगर ((err < 0) || (delete_resp.status != 0)) अणु
+		err = snd_mixart_send_msg(mgr, &request, sizeof(delete_resp), &delete_resp);
+		if ((err < 0) || (delete_resp.status != 0)) {
 			dev_err(&mgr->pci->dev,
 				"error MSG_STREAM_DELETE_GROUP err(%x), status(%x)\n",
 				err, delete_resp.status);
-		पूर्ण
+		}
 
-		pipe->group_uid = (काष्ठा mixart_uid)अणु0,0पूर्ण;
+		pipe->group_uid = (struct mixart_uid){0,0};
 		pipe->stream_count = 0;
 		pipe->status = PIPE_UNDEFINED;
-	पूर्ण
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक mixart_set_stream_state(काष्ठा mixart_stream *stream, पूर्णांक start)
-अणु
-	काष्ठा snd_mixart *chip;
-	काष्ठा mixart_stream_state_req stream_state_req;
-	काष्ठा mixart_msg request;
+static int mixart_set_stream_state(struct mixart_stream *stream, int start)
+{
+	struct snd_mixart *chip;
+	struct mixart_stream_state_req stream_state_req;
+	struct mixart_msg request;
 
-	अगर(!stream->substream)
-		वापस -EINVAL;
+	if(!stream->substream)
+		return -EINVAL;
 
-	स_रखो(&stream_state_req, 0, माप(stream_state_req));
+	memset(&stream_state_req, 0, sizeof(stream_state_req));
 	stream_state_req.stream_count = 1;
 	stream_state_req.stream_info.stream_desc.uid_pipe = stream->pipe->group_uid;
 	stream_state_req.stream_info.stream_desc.stream_idx = stream->substream->number;
 
-	अगर (stream->substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+	if (stream->substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		request.message_id = start ? MSG_STREAM_START_INPUT_STAGE_PACKET : MSG_STREAM_STOP_INPUT_STAGE_PACKET;
-	अन्यथा
+	else
 		request.message_id = start ? MSG_STREAM_START_OUTPUT_STAGE_PACKET : MSG_STREAM_STOP_OUTPUT_STAGE_PACKET;
 
-	request.uid = (काष्ठा mixart_uid)अणु0,0पूर्ण;
+	request.uid = (struct mixart_uid){0,0};
 	request.data = &stream_state_req;
-	request.size = माप(stream_state_req);
+	request.size = sizeof(stream_state_req);
 
-	stream->असल_period_elapsed = 0;            /* reset stream pos      */
+	stream->abs_period_elapsed = 0;            /* reset stream pos      */
 	stream->buf_periods = 0;
 	stream->buf_period_frag = 0;
 
 	chip = snd_pcm_substream_chip(stream->substream);
 
-	वापस snd_mixart_send_msg_nonblock(chip->mgr, &request);
-पूर्ण
+	return snd_mixart_send_msg_nonblock(chip->mgr, &request);
+}
 
 /*
  *  Trigger callback
  */
 
-अटल पूर्णांक snd_mixart_trigger(काष्ठा snd_pcm_substream *subs, पूर्णांक cmd)
-अणु
-	काष्ठा mixart_stream *stream = subs->runसमय->निजी_data;
+static int snd_mixart_trigger(struct snd_pcm_substream *subs, int cmd)
+{
+	struct mixart_stream *stream = subs->runtime->private_data;
 
-	चयन (cmd) अणु
-	हाल SNDRV_PCM_TRIGGER_START:
+	switch (cmd) {
+	case SNDRV_PCM_TRIGGER_START:
 
 		dev_dbg(subs->pcm->card->dev, "SNDRV_PCM_TRIGGER_START\n");
 
 		/* START_STREAM */
-		अगर( mixart_set_stream_state(stream, 1) )
-			वापस -EINVAL;
+		if( mixart_set_stream_state(stream, 1) )
+			return -EINVAL;
 
 		stream->status = MIXART_STREAM_STATUS_RUNNING;
 
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_STOP:
+		break;
+	case SNDRV_PCM_TRIGGER_STOP:
 
 		/* STOP_STREAM */
-		अगर( mixart_set_stream_state(stream, 0) )
-			वापस -EINVAL;
+		if( mixart_set_stream_state(stream, 0) )
+			return -EINVAL;
 
 		stream->status = MIXART_STREAM_STATUS_OPEN;
 
 		dev_dbg(subs->pcm->card->dev, "SNDRV_PCM_TRIGGER_STOP\n");
 
-		अवरोध;
+		break;
 
-	हाल SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
 		/* TODO */
 		stream->status = MIXART_STREAM_STATUS_PAUSE;
 		dev_dbg(subs->pcm->card->dev, "SNDRV_PCM_PAUSE_PUSH\n");
-		अवरोध;
-	हाल SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+		break;
+	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
 		/* TODO */
 		stream->status = MIXART_STREAM_STATUS_RUNNING;
 		dev_dbg(subs->pcm->card->dev, "SNDRV_PCM_PAUSE_RELEASE\n");
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
 
-अटल पूर्णांक mixart_sync_nonblock_events(काष्ठा mixart_mgr *mgr)
-अणु
-	अचिन्हित दीर्घ समयout = jअगरfies + HZ;
-	जबतक (atomic_पढ़ो(&mgr->msg_processed) > 0) अणु
-		अगर (समय_after(jअगरfies, समयout)) अणु
+static int mixart_sync_nonblock_events(struct mixart_mgr *mgr)
+{
+	unsigned long timeout = jiffies + HZ;
+	while (atomic_read(&mgr->msg_processed) > 0) {
+		if (time_after(jiffies, timeout)) {
 			dev_err(&mgr->pci->dev,
 				"mixart: cannot process nonblock events!\n");
-			वापस -EBUSY;
-		पूर्ण
-		schedule_समयout_unपूर्णांकerruptible(1);
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -EBUSY;
+		}
+		schedule_timeout_uninterruptible(1);
+	}
+	return 0;
+}
 
 /*
- *  prepare callback क्रम all pcms
+ *  prepare callback for all pcms
  */
-अटल पूर्णांक snd_mixart_prepare(काष्ठा snd_pcm_substream *subs)
-अणु
-	काष्ठा snd_mixart *chip = snd_pcm_substream_chip(subs);
-	काष्ठा mixart_stream *stream = subs->runसमय->निजी_data;
+static int snd_mixart_prepare(struct snd_pcm_substream *subs)
+{
+	struct snd_mixart *chip = snd_pcm_substream_chip(subs);
+	struct mixart_stream *stream = subs->runtime->private_data;
 
-	/* TODO de faथईon non bloquante, rथऊappliquer les hw_params (rate, bits, codec) */
+	/* TODO de façon non bloquante, réappliquer les hw_params (rate, bits, codec) */
 
 	dev_dbg(chip->card->dev, "snd_mixart_prepare\n");
 
 	mixart_sync_nonblock_events(chip->mgr);
 
 	/* only the first stream can choose the sample rate */
-	/* the further खोलोed streams will be limited to its frequency (see खोलो) */
-	अगर(chip->mgr->ref_count_rate == 1)
-		chip->mgr->sample_rate = subs->runसमय->rate;
+	/* the further opened streams will be limited to its frequency (see open) */
+	if(chip->mgr->ref_count_rate == 1)
+		chip->mgr->sample_rate = subs->runtime->rate;
 
-	/* set the घड़ी only once (first stream) on the same pipe */
-	अगर(stream->pipe->references == 1) अणु
-		अगर( mixart_set_घड़ी(chip->mgr, stream->pipe, subs->runसमय->rate) )
-			वापस -EINVAL;
-	पूर्ण
+	/* set the clock only once (first stream) on the same pipe */
+	if(stream->pipe->references == 1) {
+		if( mixart_set_clock(chip->mgr, stream->pipe, subs->runtime->rate) )
+			return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल पूर्णांक mixart_set_क्रमmat(काष्ठा mixart_stream *stream, snd_pcm_क्रमmat_t क्रमmat)
-अणु
-	पूर्णांक err;
-	काष्ठा snd_mixart *chip;
-	काष्ठा mixart_msg request;
-	काष्ठा mixart_stream_param_desc stream_param;
-	काष्ठा mixart_वापस_uid resp;
+static int mixart_set_format(struct mixart_stream *stream, snd_pcm_format_t format)
+{
+	int err;
+	struct snd_mixart *chip;
+	struct mixart_msg request;
+	struct mixart_stream_param_desc stream_param;
+	struct mixart_return_uid resp;
 
 	chip = snd_pcm_substream_chip(stream->substream);
 
-	स_रखो(&stream_param, 0, माप(stream_param));
+	memset(&stream_param, 0, sizeof(stream_param));
 
 	stream_param.coding_type = CT_LINEAR;
 	stream_param.number_of_channel = stream->channels;
 
 	stream_param.sampling_freq = chip->mgr->sample_rate;
-	अगर(stream_param.sampling_freq == 0)
-		stream_param.sampling_freq = 44100; /* अगर frequency not yet defined, use some शेष */
+	if(stream_param.sampling_freq == 0)
+		stream_param.sampling_freq = 44100; /* if frequency not yet defined, use some default */
 
-	चयन(क्रमmat)अणु
-	हाल SNDRV_PCM_FORMAT_U8:
+	switch(format){
+	case SNDRV_PCM_FORMAT_U8:
 		stream_param.sample_type = ST_INTEGER_8;
 		stream_param.sample_size = 8;
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S16_LE:
+		break;
+	case SNDRV_PCM_FORMAT_S16_LE:
 		stream_param.sample_type = ST_INTEGER_16LE;
 		stream_param.sample_size = 16;
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S16_BE:
+		break;
+	case SNDRV_PCM_FORMAT_S16_BE:
 		stream_param.sample_type = ST_INTEGER_16BE;
 		stream_param.sample_size = 16;
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S24_3LE:
+		break;
+	case SNDRV_PCM_FORMAT_S24_3LE:
 		stream_param.sample_type = ST_INTEGER_24LE;
 		stream_param.sample_size = 24;
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_S24_3BE:
+		break;
+	case SNDRV_PCM_FORMAT_S24_3BE:
 		stream_param.sample_type = ST_INTEGER_24BE;
 		stream_param.sample_size = 24;
-		अवरोध;
-	हाल SNDRV_PCM_FORMAT_FLOAT_LE:
+		break;
+	case SNDRV_PCM_FORMAT_FLOAT_LE:
 		stream_param.sample_type = ST_FLOATING_POINT_32LE;
 		stream_param.sample_size = 32;
-		अवरोध;
-	हाल  SNDRV_PCM_FORMAT_FLOAT_BE:
+		break;
+	case  SNDRV_PCM_FORMAT_FLOAT_BE:
 		stream_param.sample_type = ST_FLOATING_POINT_32BE;
 		stream_param.sample_size = 32;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		dev_err(chip->card->dev,
 			"error mixart_set_format() : unknown format\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	dev_dbg(chip->card->dev,
 		"set SNDRV_PCM_FORMAT sample_type(%d) sample_size(%d) freq(%d) channels(%d)\n",
 		   stream_param.sample_type, stream_param.sample_size, stream_param.sampling_freq, stream->channels);
 
-	/* TODO: what अन्यथा to configure ? */
+	/* TODO: what else to configure ? */
 	/* stream_param.samples_per_frame = 2; */
 	/* stream_param.bytes_per_frame = 4; */
 	/* stream_param.bytes_per_sample = 2; */
@@ -570,101 +569,101 @@ snd_mixart_add_ref_pipe(काष्ठा snd_mixart *chip, पूर्णा�
 	stream_param.stream_desc[0].stream_idx = stream->substream->number;
 
 	request.message_id = MSG_STREAM_SET_INPUT_STAGE_PARAM;
-	request.uid = (काष्ठा mixart_uid)अणु0,0पूर्ण;
+	request.uid = (struct mixart_uid){0,0};
 	request.data = &stream_param;
-	request.size = माप(stream_param);
+	request.size = sizeof(stream_param);
 
-	err = snd_mixart_send_msg(chip->mgr, &request, माप(resp), &resp);
-	अगर((err < 0) || resp.error_code) अणु
+	err = snd_mixart_send_msg(chip->mgr, &request, sizeof(resp), &resp);
+	if((err < 0) || resp.error_code) {
 		dev_err(chip->card->dev,
 			"MSG_STREAM_SET_INPUT_STAGE_PARAM err=%x; resp=%x\n",
 			err, resp.error_code);
-		वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -EINVAL;
+	}
+	return 0;
+}
 
 
 /*
- *  HW_PARAMS callback क्रम all pcms
+ *  HW_PARAMS callback for all pcms
  */
-अटल पूर्णांक snd_mixart_hw_params(काष्ठा snd_pcm_substream *subs,
-                                काष्ठा snd_pcm_hw_params *hw)
-अणु
-	काष्ठा snd_mixart *chip = snd_pcm_substream_chip(subs);
-	काष्ठा mixart_mgr *mgr = chip->mgr;
-	काष्ठा mixart_stream *stream = subs->runसमय->निजी_data;
-	snd_pcm_क्रमmat_t क्रमmat;
-	पूर्णांक err;
-	पूर्णांक channels;
+static int snd_mixart_hw_params(struct snd_pcm_substream *subs,
+                                struct snd_pcm_hw_params *hw)
+{
+	struct snd_mixart *chip = snd_pcm_substream_chip(subs);
+	struct mixart_mgr *mgr = chip->mgr;
+	struct mixart_stream *stream = subs->runtime->private_data;
+	snd_pcm_format_t format;
+	int err;
+	int channels;
 
 	/* set up channels */
 	channels = params_channels(hw);
 
-	/*  set up क्रमmat क्रम the stream */
-	क्रमmat = params_क्रमmat(hw);
+	/*  set up format for the stream */
+	format = params_format(hw);
 
 	mutex_lock(&mgr->setup_mutex);
 
 	/* update the stream levels */
-	अगर( stream->pcm_number <= MIXART_PCM_DIGITAL ) अणु
-		पूर्णांक is_aes = stream->pcm_number > MIXART_PCM_ANALOG;
-		अगर( subs->stream == SNDRV_PCM_STREAM_PLAYBACK )
+	if( stream->pcm_number <= MIXART_PCM_DIGITAL ) {
+		int is_aes = stream->pcm_number > MIXART_PCM_ANALOG;
+		if( subs->stream == SNDRV_PCM_STREAM_PLAYBACK )
 			mixart_update_playback_stream_level(chip, is_aes, subs->number);
-		अन्यथा
+		else
 			mixart_update_capture_stream_level( chip, is_aes);
-	पूर्ण
+	}
 
 	stream->channels = channels;
 
-	/* set the क्रमmat to the board */
-	err = mixart_set_क्रमmat(stream, क्रमmat);
-	अगर(err < 0) अणु
+	/* set the format to the board */
+	err = mixart_set_format(stream, format);
+	if(err < 0) {
 		mutex_unlock(&mgr->setup_mutex);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	अगर (subs->runसमय->buffer_changed) अणु
-		काष्ठा mixart_bufferinfo *bufferinfo;
-		पूर्णांक i = (chip->chip_idx * MIXART_MAX_STREAM_PER_CARD) + (stream->pcm_number * (MIXART_PLAYBACK_STREAMS+MIXART_CAPTURE_STREAMS)) + subs->number;
-		अगर( subs->stream == SNDRV_PCM_STREAM_CAPTURE ) अणु
+	if (subs->runtime->buffer_changed) {
+		struct mixart_bufferinfo *bufferinfo;
+		int i = (chip->chip_idx * MIXART_MAX_STREAM_PER_CARD) + (stream->pcm_number * (MIXART_PLAYBACK_STREAMS+MIXART_CAPTURE_STREAMS)) + subs->number;
+		if( subs->stream == SNDRV_PCM_STREAM_CAPTURE ) {
 			i += MIXART_PLAYBACK_STREAMS; /* in array capture is behind playback */
-		पूर्ण
+		}
 		
-		bufferinfo = (काष्ठा mixart_bufferinfo *)chip->mgr->bufferinfo.area;
-		bufferinfo[i].buffer_address = subs->runसमय->dma_addr;
-		bufferinfo[i].available_length = subs->runसमय->dma_bytes;
-		/* bufferinfo[i].buffer_id  is alपढ़ोy defined */
+		bufferinfo = (struct mixart_bufferinfo *)chip->mgr->bufferinfo.area;
+		bufferinfo[i].buffer_address = subs->runtime->dma_addr;
+		bufferinfo[i].available_length = subs->runtime->dma_bytes;
+		/* bufferinfo[i].buffer_id  is already defined */
 
 		dev_dbg(chip->card->dev,
 			"snd_mixart_hw_params(pcm %d) : dma_addr(%x) dma_bytes(%x) subs-number(%d)\n",
 			i, bufferinfo[i].buffer_address,
 				bufferinfo[i].available_length,
 				subs->number);
-	पूर्ण
+	}
 	mutex_unlock(&mgr->setup_mutex);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_mixart_hw_मुक्त(काष्ठा snd_pcm_substream *subs)
-अणु
-	काष्ठा snd_mixart *chip = snd_pcm_substream_chip(subs);
+static int snd_mixart_hw_free(struct snd_pcm_substream *subs)
+{
+	struct snd_mixart *chip = snd_pcm_substream_chip(subs);
 	mixart_sync_nonblock_events(chip->mgr);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 
 /*
- *  TODO CONFIGURATION SPACE क्रम all pcms, mono pcm must update channels_max
+ *  TODO CONFIGURATION SPACE for all pcms, mono pcm must update channels_max
  */
-अटल स्थिर काष्ठा snd_pcm_hardware snd_mixart_analog_caps =
-अणु
+static const struct snd_pcm_hardware snd_mixart_analog_caps =
+{
 	.info             = ( SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_INTERLEAVED |
 			      SNDRV_PCM_INFO_MMAP_VALID |
 			      SNDRV_PCM_INFO_PAUSE),
-	.क्रमmats	  = ( SNDRV_PCM_FMTBIT_U8 |
+	.formats	  = ( SNDRV_PCM_FMTBIT_U8 |
 			      SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S16_BE |
 			      SNDRV_PCM_FMTBIT_S24_3LE | SNDRV_PCM_FMTBIT_S24_3BE |
 			      SNDRV_PCM_FMTBIT_FLOAT_LE | SNDRV_PCM_FMTBIT_FLOAT_BE ),
@@ -678,14 +677,14 @@ snd_mixart_add_ref_pipe(काष्ठा snd_mixart *chip, पूर्णा�
 	.period_bytes_max = (16*1024),
 	.periods_min      = 2,
 	.periods_max      = (32*1024/256),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा snd_pcm_hardware snd_mixart_digital_caps =
-अणु
+static const struct snd_pcm_hardware snd_mixart_digital_caps =
+{
 	.info             = ( SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_INTERLEAVED |
 			      SNDRV_PCM_INFO_MMAP_VALID |
 			      SNDRV_PCM_INFO_PAUSE),
-	.क्रमmats	  = ( SNDRV_PCM_FMTBIT_U8 |
+	.formats	  = ( SNDRV_PCM_FMTBIT_U8 |
 			      SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S16_BE |
 			      SNDRV_PCM_FMTBIT_S24_3LE | SNDRV_PCM_FMTBIT_S24_3BE |
 			      SNDRV_PCM_FMTBIT_FLOAT_LE | SNDRV_PCM_FMTBIT_FLOAT_BE ),
@@ -699,30 +698,30 @@ snd_mixart_add_ref_pipe(काष्ठा snd_mixart *chip, पूर्णा�
 	.period_bytes_max = (16*1024),
 	.periods_min      = 2,
 	.periods_max      = (32*1024/256),
-पूर्ण;
+};
 
 
-अटल पूर्णांक snd_mixart_playback_खोलो(काष्ठा snd_pcm_substream *subs)
-अणु
-	काष्ठा snd_mixart            *chip = snd_pcm_substream_chip(subs);
-	काष्ठा mixart_mgr        *mgr = chip->mgr;
-	काष्ठा snd_pcm_runसमय *runसमय = subs->runसमय;
-	काष्ठा snd_pcm *pcm = subs->pcm;
-	काष्ठा mixart_stream     *stream;
-	काष्ठा mixart_pipe       *pipe;
-	पूर्णांक err = 0;
-	पूर्णांक pcm_number;
+static int snd_mixart_playback_open(struct snd_pcm_substream *subs)
+{
+	struct snd_mixart            *chip = snd_pcm_substream_chip(subs);
+	struct mixart_mgr        *mgr = chip->mgr;
+	struct snd_pcm_runtime *runtime = subs->runtime;
+	struct snd_pcm *pcm = subs->pcm;
+	struct mixart_stream     *stream;
+	struct mixart_pipe       *pipe;
+	int err = 0;
+	int pcm_number;
 
 	mutex_lock(&mgr->setup_mutex);
 
-	अगर ( pcm == chip->pcm ) अणु
+	if ( pcm == chip->pcm ) {
 		pcm_number = MIXART_PCM_ANALOG;
-		runसमय->hw = snd_mixart_analog_caps;
-	पूर्ण अन्यथा अणु
+		runtime->hw = snd_mixart_analog_caps;
+	} else {
 		snd_BUG_ON(pcm != chip->pcm_dig);
 		pcm_number = MIXART_PCM_DIGITAL;
-		runसमय->hw = snd_mixart_digital_caps;
-	पूर्ण
+		runtime->hw = snd_mixart_digital_caps;
+	}
 	dev_dbg(chip->card->dev,
 		"snd_mixart_playback_open C%d/P%d/Sub%d\n",
 		chip->chip_idx, pcm_number, subs->number);
@@ -730,31 +729,31 @@ snd_mixart_add_ref_pipe(काष्ठा snd_mixart *chip, पूर्णा�
 	/* get stream info */
 	stream = &(chip->playback_stream[pcm_number][subs->number]);
 
-	अगर (stream->status != MIXART_STREAM_STATUS_FREE)अणु
+	if (stream->status != MIXART_STREAM_STATUS_FREE){
 		/* streams in use */
 		dev_err(chip->card->dev,
 			"snd_mixart_playback_open C%d/P%d/Sub%d in use\n",
 			chip->chip_idx, pcm_number, subs->number);
 		err = -EBUSY;
-		जाओ _निकास_खोलो;
-	पूर्ण
+		goto _exit_open;
+	}
 
-	/* get pipe poपूर्णांकer (out pipe) */
+	/* get pipe pointer (out pipe) */
 	pipe = snd_mixart_add_ref_pipe(chip, pcm_number, 0, 0);
 
-	अगर (pipe == शून्य) अणु
+	if (pipe == NULL) {
 		err = -EINVAL;
-		जाओ _निकास_खोलो;
-	पूर्ण
+		goto _exit_open;
+	}
 
-	/* start the pipe अगर necessary */
+	/* start the pipe if necessary */
 	err = mixart_set_pipe_state(chip->mgr, pipe, 1);
-	अगर( err < 0 ) अणु
+	if( err < 0 ) {
 		dev_err(chip->card->dev, "error starting pipe!\n");
-		snd_mixart_समाप्त_ref_pipe(chip->mgr, pipe, 0);
+		snd_mixart_kill_ref_pipe(chip->mgr, pipe, 0);
 		err = -EINVAL;
-		जाओ _निकास_खोलो;
-	पूर्ण
+		goto _exit_open;
+	}
 
 	stream->pipe        = pipe;
 	stream->pcm_number  = pcm_number;
@@ -762,48 +761,48 @@ snd_mixart_add_ref_pipe(काष्ठा snd_mixart *chip, पूर्णा�
 	stream->substream   = subs;
 	stream->channels    = 0; /* not configured yet */
 
-	runसमय->निजी_data = stream;
+	runtime->private_data = stream;
 
-	snd_pcm_hw_स्थिरraपूर्णांक_step(runसमय, 0, SNDRV_PCM_HW_PARAM_PERIOD_BYTES, 32);
-	snd_pcm_hw_स्थिरraपूर्णांक_step(runसमय, 0, SNDRV_PCM_HW_PARAM_BUFFER_SIZE, 64);
+	snd_pcm_hw_constraint_step(runtime, 0, SNDRV_PCM_HW_PARAM_PERIOD_BYTES, 32);
+	snd_pcm_hw_constraint_step(runtime, 0, SNDRV_PCM_HW_PARAM_BUFFER_SIZE, 64);
 
-	/* अगर a sample rate is alपढ़ोy used, another stream cannot change */
-	अगर(mgr->ref_count_rate++) अणु
-		अगर(mgr->sample_rate) अणु
-			runसमय->hw.rate_min = runसमय->hw.rate_max = mgr->sample_rate;
-		पूर्ण
-	पूर्ण
+	/* if a sample rate is already used, another stream cannot change */
+	if(mgr->ref_count_rate++) {
+		if(mgr->sample_rate) {
+			runtime->hw.rate_min = runtime->hw.rate_max = mgr->sample_rate;
+		}
+	}
 
- _निकास_खोलो:
+ _exit_open:
 	mutex_unlock(&mgr->setup_mutex);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
-अटल पूर्णांक snd_mixart_capture_खोलो(काष्ठा snd_pcm_substream *subs)
-अणु
-	काष्ठा snd_mixart            *chip = snd_pcm_substream_chip(subs);
-	काष्ठा mixart_mgr        *mgr = chip->mgr;
-	काष्ठा snd_pcm_runसमय *runसमय = subs->runसमय;
-	काष्ठा snd_pcm *pcm = subs->pcm;
-	काष्ठा mixart_stream     *stream;
-	काष्ठा mixart_pipe       *pipe;
-	पूर्णांक err = 0;
-	पूर्णांक pcm_number;
+static int snd_mixart_capture_open(struct snd_pcm_substream *subs)
+{
+	struct snd_mixart            *chip = snd_pcm_substream_chip(subs);
+	struct mixart_mgr        *mgr = chip->mgr;
+	struct snd_pcm_runtime *runtime = subs->runtime;
+	struct snd_pcm *pcm = subs->pcm;
+	struct mixart_stream     *stream;
+	struct mixart_pipe       *pipe;
+	int err = 0;
+	int pcm_number;
 
 	mutex_lock(&mgr->setup_mutex);
 
-	अगर ( pcm == chip->pcm ) अणु
+	if ( pcm == chip->pcm ) {
 		pcm_number = MIXART_PCM_ANALOG;
-		runसमय->hw = snd_mixart_analog_caps;
-	पूर्ण अन्यथा अणु
+		runtime->hw = snd_mixart_analog_caps;
+	} else {
 		snd_BUG_ON(pcm != chip->pcm_dig);
 		pcm_number = MIXART_PCM_DIGITAL;
-		runसमय->hw = snd_mixart_digital_caps;
-	पूर्ण
+		runtime->hw = snd_mixart_digital_caps;
+	}
 
-	runसमय->hw.channels_min = 2; /* क्रम instance, no mono */
+	runtime->hw.channels_min = 2; /* for instance, no mono */
 
 	dev_dbg(chip->card->dev, "snd_mixart_capture_open C%d/P%d/Sub%d\n",
 		chip->chip_idx, pcm_number, subs->number);
@@ -811,31 +810,31 @@ snd_mixart_add_ref_pipe(काष्ठा snd_mixart *chip, पूर्णा�
 	/* get stream info */
 	stream = &(chip->capture_stream[pcm_number]);
 
-	अगर (stream->status != MIXART_STREAM_STATUS_FREE)अणु
+	if (stream->status != MIXART_STREAM_STATUS_FREE){
 		/* streams in use */
 		dev_err(chip->card->dev,
 			"snd_mixart_capture_open C%d/P%d/Sub%d in use\n",
 			chip->chip_idx, pcm_number, subs->number);
 		err = -EBUSY;
-		जाओ _निकास_खोलो;
-	पूर्ण
+		goto _exit_open;
+	}
 
-	/* get pipe poपूर्णांकer (in pipe) */
+	/* get pipe pointer (in pipe) */
 	pipe = snd_mixart_add_ref_pipe(chip, pcm_number, 1, 0);
 
-	अगर (pipe == शून्य) अणु
+	if (pipe == NULL) {
 		err = -EINVAL;
-		जाओ _निकास_खोलो;
-	पूर्ण
+		goto _exit_open;
+	}
 
-	/* start the pipe अगर necessary */
+	/* start the pipe if necessary */
 	err = mixart_set_pipe_state(chip->mgr, pipe, 1);
-	अगर( err < 0 ) अणु
+	if( err < 0 ) {
 		dev_err(chip->card->dev, "error starting pipe!\n");
-		snd_mixart_समाप्त_ref_pipe(chip->mgr, pipe, 0);
+		snd_mixart_kill_ref_pipe(chip->mgr, pipe, 0);
 		err = -EINVAL;
-		जाओ _निकास_खोलो;
-	पूर्ण
+		goto _exit_open;
+	}
 
 	stream->pipe        = pipe;
 	stream->pcm_number  = pcm_number;
@@ -843,31 +842,31 @@ snd_mixart_add_ref_pipe(काष्ठा snd_mixart *chip, पूर्णा�
 	stream->substream   = subs;
 	stream->channels    = 0; /* not configured yet */
 
-	runसमय->निजी_data = stream;
+	runtime->private_data = stream;
 
-	snd_pcm_hw_स्थिरraपूर्णांक_step(runसमय, 0, SNDRV_PCM_HW_PARAM_PERIOD_BYTES, 32);
-	snd_pcm_hw_स्थिरraपूर्णांक_step(runसमय, 0, SNDRV_PCM_HW_PARAM_BUFFER_SIZE, 64);
+	snd_pcm_hw_constraint_step(runtime, 0, SNDRV_PCM_HW_PARAM_PERIOD_BYTES, 32);
+	snd_pcm_hw_constraint_step(runtime, 0, SNDRV_PCM_HW_PARAM_BUFFER_SIZE, 64);
 
-	/* अगर a sample rate is alपढ़ोy used, another stream cannot change */
-	अगर(mgr->ref_count_rate++) अणु
-		अगर(mgr->sample_rate) अणु
-			runसमय->hw.rate_min = runसमय->hw.rate_max = mgr->sample_rate;
-		पूर्ण
-	पूर्ण
+	/* if a sample rate is already used, another stream cannot change */
+	if(mgr->ref_count_rate++) {
+		if(mgr->sample_rate) {
+			runtime->hw.rate_min = runtime->hw.rate_max = mgr->sample_rate;
+		}
+	}
 
- _निकास_खोलो:
+ _exit_open:
 	mutex_unlock(&mgr->setup_mutex);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 
 
-अटल पूर्णांक snd_mixart_बंद(काष्ठा snd_pcm_substream *subs)
-अणु
-	काष्ठा snd_mixart *chip = snd_pcm_substream_chip(subs);
-	काष्ठा mixart_mgr *mgr = chip->mgr;
-	काष्ठा mixart_stream *stream = subs->runसमय->निजी_data;
+static int snd_mixart_close(struct snd_pcm_substream *subs)
+{
+	struct snd_mixart *chip = snd_pcm_substream_chip(subs);
+	struct mixart_mgr *mgr = chip->mgr;
+	struct mixart_stream *stream = subs->runtime->private_data;
 
 	mutex_lock(&mgr->setup_mutex);
 
@@ -875,431 +874,431 @@ snd_mixart_add_ref_pipe(काष्ठा snd_mixart *chip, पूर्णा�
 		chip->chip_idx, stream->pcm_number, subs->number);
 
 	/* sample rate released */
-	अगर(--mgr->ref_count_rate == 0) अणु
+	if(--mgr->ref_count_rate == 0) {
 		mgr->sample_rate = 0;
-	पूर्ण
+	}
 
 	/* delete pipe */
-	अगर (snd_mixart_समाप्त_ref_pipe(mgr, stream->pipe, 0 ) < 0) अणु
+	if (snd_mixart_kill_ref_pipe(mgr, stream->pipe, 0 ) < 0) {
 
 		dev_err(chip->card->dev,
 			"error snd_mixart_kill_ref_pipe C%dP%d\n",
 			chip->chip_idx, stream->pcm_number);
-	पूर्ण
+	}
 
-	stream->pipe      = शून्य;
+	stream->pipe      = NULL;
 	stream->status    = MIXART_STREAM_STATUS_FREE;
-	stream->substream = शून्य;
+	stream->substream = NULL;
 
 	mutex_unlock(&mgr->setup_mutex);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
-अटल snd_pcm_uframes_t snd_mixart_stream_poपूर्णांकer(काष्ठा snd_pcm_substream *subs)
-अणु
-	काष्ठा snd_pcm_runसमय *runसमय = subs->runसमय;
-	काष्ठा mixart_stream   *stream  = runसमय->निजी_data;
+static snd_pcm_uframes_t snd_mixart_stream_pointer(struct snd_pcm_substream *subs)
+{
+	struct snd_pcm_runtime *runtime = subs->runtime;
+	struct mixart_stream   *stream  = runtime->private_data;
 
-	वापस (snd_pcm_uframes_t)((stream->buf_periods * runसमय->period_size) + stream->buf_period_frag);
-पूर्ण
+	return (snd_pcm_uframes_t)((stream->buf_periods * runtime->period_size) + stream->buf_period_frag);
+}
 
 
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_mixart_playback_ops = अणु
-	.खोलो      = snd_mixart_playback_खोलो,
-	.बंद     = snd_mixart_बंद,
+static const struct snd_pcm_ops snd_mixart_playback_ops = {
+	.open      = snd_mixart_playback_open,
+	.close     = snd_mixart_close,
 	.prepare   = snd_mixart_prepare,
 	.hw_params = snd_mixart_hw_params,
-	.hw_मुक्त   = snd_mixart_hw_मुक्त,
+	.hw_free   = snd_mixart_hw_free,
 	.trigger   = snd_mixart_trigger,
-	.poपूर्णांकer   = snd_mixart_stream_poपूर्णांकer,
-पूर्ण;
+	.pointer   = snd_mixart_stream_pointer,
+};
 
-अटल स्थिर काष्ठा snd_pcm_ops snd_mixart_capture_ops = अणु
-	.खोलो      = snd_mixart_capture_खोलो,
-	.बंद     = snd_mixart_बंद,
+static const struct snd_pcm_ops snd_mixart_capture_ops = {
+	.open      = snd_mixart_capture_open,
+	.close     = snd_mixart_close,
 	.prepare   = snd_mixart_prepare,
 	.hw_params = snd_mixart_hw_params,
-	.hw_मुक्त   = snd_mixart_hw_मुक्त,
+	.hw_free   = snd_mixart_hw_free,
 	.trigger   = snd_mixart_trigger,
-	.poपूर्णांकer   = snd_mixart_stream_poपूर्णांकer,
-पूर्ण;
+	.pointer   = snd_mixart_stream_pointer,
+};
 
-अटल व्योम pपुनः_स्मृतिate_buffers(काष्ठा snd_mixart *chip, काष्ठा snd_pcm *pcm)
-अणु
-#अगर 0
-	काष्ठा snd_pcm_substream *subs;
-	पूर्णांक stream;
+static void preallocate_buffers(struct snd_mixart *chip, struct snd_pcm *pcm)
+{
+#if 0
+	struct snd_pcm_substream *subs;
+	int stream;
 
-	क्रम (stream = 0; stream < 2; stream++) अणु
-		पूर्णांक idx = 0;
-		क्रम (subs = pcm->streams[stream].substream; subs; subs = subs->next, idx++)
+	for (stream = 0; stream < 2; stream++) {
+		int idx = 0;
+		for (subs = pcm->streams[stream].substream; subs; subs = subs->next, idx++)
 			/* set up the unique device id with the chip index */
 			subs->dma_device.id = subs->pcm->device << 16 |
 				subs->stream << 8 | (subs->number + 1) |
 				(chip->chip_idx + 1) << 24;
-	पूर्ण
-#पूर्ण_अगर
+	}
+#endif
 	snd_pcm_set_managed_buffer_all(pcm, SNDRV_DMA_TYPE_DEV,
 				       &chip->mgr->pci->dev,
 				       32*1024, 32*1024);
-पूर्ण
+}
 
 /*
  */
-अटल पूर्णांक snd_mixart_pcm_analog(काष्ठा snd_mixart *chip)
-अणु
-	पूर्णांक err;
-	काष्ठा snd_pcm *pcm;
-	अक्षर name[32];
+static int snd_mixart_pcm_analog(struct snd_mixart *chip)
+{
+	int err;
+	struct snd_pcm *pcm;
+	char name[32];
 
-	प्र_लिखो(name, "miXart analog %d", chip->chip_idx);
-	अगर ((err = snd_pcm_new(chip->card, name, MIXART_PCM_ANALOG,
+	sprintf(name, "miXart analog %d", chip->chip_idx);
+	if ((err = snd_pcm_new(chip->card, name, MIXART_PCM_ANALOG,
 			       MIXART_PLAYBACK_STREAMS,
-			       MIXART_CAPTURE_STREAMS, &pcm)) < 0) अणु
+			       MIXART_CAPTURE_STREAMS, &pcm)) < 0) {
 		dev_err(chip->card->dev,
 			"cannot create the analog pcm %d\n", chip->chip_idx);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	pcm->निजी_data = chip;
+	pcm->private_data = chip;
 
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &snd_mixart_playback_ops);
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &snd_mixart_capture_ops);
 
 	pcm->info_flags = 0;
 	pcm->nonatomic = true;
-	म_नकल(pcm->name, name);
+	strcpy(pcm->name, name);
 
-	pपुनः_स्मृतिate_buffers(chip, pcm);
+	preallocate_buffers(chip, pcm);
 
 	chip->pcm = pcm;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 
 /*
  */
-अटल पूर्णांक snd_mixart_pcm_digital(काष्ठा snd_mixart *chip)
-अणु
-	पूर्णांक err;
-	काष्ठा snd_pcm *pcm;
-	अक्षर name[32];
+static int snd_mixart_pcm_digital(struct snd_mixart *chip)
+{
+	int err;
+	struct snd_pcm *pcm;
+	char name[32];
 
-	प्र_लिखो(name, "miXart AES/EBU %d", chip->chip_idx);
-	अगर ((err = snd_pcm_new(chip->card, name, MIXART_PCM_DIGITAL,
+	sprintf(name, "miXart AES/EBU %d", chip->chip_idx);
+	if ((err = snd_pcm_new(chip->card, name, MIXART_PCM_DIGITAL,
 			       MIXART_PLAYBACK_STREAMS,
-			       MIXART_CAPTURE_STREAMS, &pcm)) < 0) अणु
+			       MIXART_CAPTURE_STREAMS, &pcm)) < 0) {
 		dev_err(chip->card->dev,
 			"cannot create the digital pcm %d\n", chip->chip_idx);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 
-	pcm->निजी_data = chip;
+	pcm->private_data = chip;
 
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_PLAYBACK, &snd_mixart_playback_ops);
 	snd_pcm_set_ops(pcm, SNDRV_PCM_STREAM_CAPTURE, &snd_mixart_capture_ops);
 
 	pcm->info_flags = 0;
 	pcm->nonatomic = true;
-	म_नकल(pcm->name, name);
+	strcpy(pcm->name, name);
 
-	pपुनः_स्मृतिate_buffers(chip, pcm);
+	preallocate_buffers(chip, pcm);
 
 	chip->pcm_dig = pcm;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_mixart_chip_मुक्त(काष्ठा snd_mixart *chip)
-अणु
-	kमुक्त(chip);
-	वापस 0;
-पूर्ण
+static int snd_mixart_chip_free(struct snd_mixart *chip)
+{
+	kfree(chip);
+	return 0;
+}
 
-अटल पूर्णांक snd_mixart_chip_dev_मुक्त(काष्ठा snd_device *device)
-अणु
-	काष्ठा snd_mixart *chip = device->device_data;
-	वापस snd_mixart_chip_मुक्त(chip);
-पूर्ण
+static int snd_mixart_chip_dev_free(struct snd_device *device)
+{
+	struct snd_mixart *chip = device->device_data;
+	return snd_mixart_chip_free(chip);
+}
 
 
 /*
  */
-अटल पूर्णांक snd_mixart_create(काष्ठा mixart_mgr *mgr, काष्ठा snd_card *card, पूर्णांक idx)
-अणु
-	पूर्णांक err;
-	काष्ठा snd_mixart *chip;
-	अटल स्थिर काष्ठा snd_device_ops ops = अणु
-		.dev_मुक्त = snd_mixart_chip_dev_मुक्त,
-	पूर्ण;
+static int snd_mixart_create(struct mixart_mgr *mgr, struct snd_card *card, int idx)
+{
+	int err;
+	struct snd_mixart *chip;
+	static const struct snd_device_ops ops = {
+		.dev_free = snd_mixart_chip_dev_free,
+	};
 
-	chip = kzalloc(माप(*chip), GFP_KERNEL);
-	अगर (!chip)
-		वापस -ENOMEM;
+	chip = kzalloc(sizeof(*chip), GFP_KERNEL);
+	if (!chip)
+		return -ENOMEM;
 
 	chip->card = card;
 	chip->chip_idx = idx;
 	chip->mgr = mgr;
 	card->sync_irq = mgr->irq;
 
-	अगर ((err = snd_device_new(card, SNDRV_DEV_LOWLEVEL, chip, &ops)) < 0) अणु
-		snd_mixart_chip_मुक्त(chip);
-		वापस err;
-	पूर्ण
+	if ((err = snd_device_new(card, SNDRV_DEV_LOWLEVEL, chip, &ops)) < 0) {
+		snd_mixart_chip_free(chip);
+		return err;
+	}
 
 	mgr->chip[idx] = chip;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक snd_mixart_create_pcm(काष्ठा snd_mixart* chip)
-अणु
-	पूर्णांक err;
+int snd_mixart_create_pcm(struct snd_mixart* chip)
+{
+	int err;
 
 	err = snd_mixart_pcm_analog(chip);
-	अगर (err < 0)
-		वापस err;
+	if (err < 0)
+		return err;
 
-	अगर(chip->mgr->board_type == MIXART_DAUGHTER_TYPE_AES) अणु
+	if(chip->mgr->board_type == MIXART_DAUGHTER_TYPE_AES) {
 
 		err = snd_mixart_pcm_digital(chip);
-		अगर (err < 0)
-			वापस err;
-	पूर्ण
-	वापस err;
-पूर्ण
+		if (err < 0)
+			return err;
+	}
+	return err;
+}
 
 
 /*
- * release all the cards asचिन्हित to a manager instance
+ * release all the cards assigned to a manager instance
  */
-अटल पूर्णांक snd_mixart_मुक्त(काष्ठा mixart_mgr *mgr)
-अणु
-	अचिन्हित पूर्णांक i;
+static int snd_mixart_free(struct mixart_mgr *mgr)
+{
+	unsigned int i;
 
-	क्रम (i = 0; i < mgr->num_cards; i++) अणु
-		अगर (mgr->chip[i])
-			snd_card_मुक्त(mgr->chip[i]->card);
-	पूर्ण
+	for (i = 0; i < mgr->num_cards; i++) {
+		if (mgr->chip[i])
+			snd_card_free(mgr->chip[i]->card);
+	}
 
 	/* stop mailbox */
-	snd_mixart_निकास_mailbox(mgr);
+	snd_mixart_exit_mailbox(mgr);
 
 	/* release irq  */
-	अगर (mgr->irq >= 0)
-		मुक्त_irq(mgr->irq, mgr);
+	if (mgr->irq >= 0)
+		free_irq(mgr->irq, mgr);
 
-	/* reset board अगर some firmware was loaded */
-	अगर(mgr->dsp_loaded) अणु
+	/* reset board if some firmware was loaded */
+	if(mgr->dsp_loaded) {
 		snd_mixart_reset_board(mgr);
 		dev_dbg(&mgr->pci->dev, "reset miXart !\n");
-	पूर्ण
+	}
 
 	/* release the i/o ports */
-	क्रम (i = 0; i < 2; ++i)
+	for (i = 0; i < 2; ++i)
 		iounmap(mgr->mem[i].virt);
 
 	pci_release_regions(mgr->pci);
 
-	/* मुक्त flowarray */
-	अगर(mgr->flowinfo.area) अणु
-		snd_dma_मुक्त_pages(&mgr->flowinfo);
-		mgr->flowinfo.area = शून्य;
-	पूर्ण
-	/* मुक्त bufferarray */
-	अगर(mgr->bufferinfo.area) अणु
-		snd_dma_मुक्त_pages(&mgr->bufferinfo);
-		mgr->bufferinfo.area = शून्य;
-	पूर्ण
+	/* free flowarray */
+	if(mgr->flowinfo.area) {
+		snd_dma_free_pages(&mgr->flowinfo);
+		mgr->flowinfo.area = NULL;
+	}
+	/* free bufferarray */
+	if(mgr->bufferinfo.area) {
+		snd_dma_free_pages(&mgr->bufferinfo);
+		mgr->bufferinfo.area = NULL;
+	}
 
 	pci_disable_device(mgr->pci);
-	kमुक्त(mgr);
-	वापस 0;
-पूर्ण
+	kfree(mgr);
+	return 0;
+}
 
 /*
- * proc पूर्णांकerface
+ * proc interface
  */
 
 /*
-  mixart_BA0 proc पूर्णांकerface क्रम BAR 0 - पढ़ो callback
+  mixart_BA0 proc interface for BAR 0 - read callback
  */
-अटल sमाप_प्रकार snd_mixart_BA0_पढ़ो(काष्ठा snd_info_entry *entry,
-				   व्योम *file_निजी_data,
-				   काष्ठा file *file, अक्षर __user *buf,
-				   माप_प्रकार count, loff_t pos)
-अणु
-	काष्ठा mixart_mgr *mgr = entry->निजी_data;
+static ssize_t snd_mixart_BA0_read(struct snd_info_entry *entry,
+				   void *file_private_data,
+				   struct file *file, char __user *buf,
+				   size_t count, loff_t pos)
+{
+	struct mixart_mgr *mgr = entry->private_data;
 
-	count = count & ~3; /* make sure the पढ़ो size is a multiple of 4 bytes */
-	अगर (copy_to_user_fromio(buf, MIXART_MEM(mgr, pos), count))
-		वापस -EFAULT;
-	वापस count;
-पूर्ण
+	count = count & ~3; /* make sure the read size is a multiple of 4 bytes */
+	if (copy_to_user_fromio(buf, MIXART_MEM(mgr, pos), count))
+		return -EFAULT;
+	return count;
+}
 
 /*
-  mixart_BA1 proc पूर्णांकerface क्रम BAR 1 - पढ़ो callback
+  mixart_BA1 proc interface for BAR 1 - read callback
  */
-अटल sमाप_प्रकार snd_mixart_BA1_पढ़ो(काष्ठा snd_info_entry *entry,
-				   व्योम *file_निजी_data,
-				   काष्ठा file *file, अक्षर __user *buf,
-				   माप_प्रकार count, loff_t pos)
-अणु
-	काष्ठा mixart_mgr *mgr = entry->निजी_data;
+static ssize_t snd_mixart_BA1_read(struct snd_info_entry *entry,
+				   void *file_private_data,
+				   struct file *file, char __user *buf,
+				   size_t count, loff_t pos)
+{
+	struct mixart_mgr *mgr = entry->private_data;
 
-	count = count & ~3; /* make sure the पढ़ो size is a multiple of 4 bytes */
-	अगर (copy_to_user_fromio(buf, MIXART_REG(mgr, pos), count))
-		वापस -EFAULT;
-	वापस count;
-पूर्ण
+	count = count & ~3; /* make sure the read size is a multiple of 4 bytes */
+	if (copy_to_user_fromio(buf, MIXART_REG(mgr, pos), count))
+		return -EFAULT;
+	return count;
+}
 
-अटल स्थिर काष्ठा snd_info_entry_ops snd_mixart_proc_ops_BA0 = अणु
-	.पढ़ो   = snd_mixart_BA0_पढ़ो,
-पूर्ण;
+static const struct snd_info_entry_ops snd_mixart_proc_ops_BA0 = {
+	.read   = snd_mixart_BA0_read,
+};
 
-अटल स्थिर काष्ठा snd_info_entry_ops snd_mixart_proc_ops_BA1 = अणु
-	.पढ़ो   = snd_mixart_BA1_पढ़ो,
-पूर्ण;
+static const struct snd_info_entry_ops snd_mixart_proc_ops_BA1 = {
+	.read   = snd_mixart_BA1_read,
+};
 
 
-अटल व्योम snd_mixart_proc_पढ़ो(काष्ठा snd_info_entry *entry, 
-                                 काष्ठा snd_info_buffer *buffer)
-अणु
-	काष्ठा snd_mixart *chip = entry->निजी_data;        
+static void snd_mixart_proc_read(struct snd_info_entry *entry, 
+                                 struct snd_info_buffer *buffer)
+{
+	struct snd_mixart *chip = entry->private_data;        
 	u32 ref; 
 
-	snd_iम_लिखो(buffer, "Digigram miXart (alsa card %d)\n\n", chip->chip_idx);
+	snd_iprintf(buffer, "Digigram miXart (alsa card %d)\n\n", chip->chip_idx);
 
 	/* stats available when embedded OS is running */
-	अगर (chip->mgr->dsp_loaded & ( 1 << MIXART_MOTHERBOARD_ELF_INDEX)) अणु
-		snd_iम_लिखो(buffer, "- hardware -\n");
-		चयन (chip->mgr->board_type ) अणु
-		हाल MIXART_DAUGHTER_TYPE_NONE     : snd_iम_लिखो(buffer, "\tmiXart8 (no daughter board)\n\n"); अवरोध;
-		हाल MIXART_DAUGHTER_TYPE_AES      : snd_iम_लिखो(buffer, "\tmiXart8 AES/EBU\n\n"); अवरोध;
-		हाल MIXART_DAUGHTER_TYPE_COBRANET : snd_iम_लिखो(buffer, "\tmiXart8 Cobranet\n\n"); अवरोध;
-		शेष:                             snd_iम_लिखो(buffer, "\tUNKNOWN!\n\n"); अवरोध;
-		पूर्ण
+	if (chip->mgr->dsp_loaded & ( 1 << MIXART_MOTHERBOARD_ELF_INDEX)) {
+		snd_iprintf(buffer, "- hardware -\n");
+		switch (chip->mgr->board_type ) {
+		case MIXART_DAUGHTER_TYPE_NONE     : snd_iprintf(buffer, "\tmiXart8 (no daughter board)\n\n"); break;
+		case MIXART_DAUGHTER_TYPE_AES      : snd_iprintf(buffer, "\tmiXart8 AES/EBU\n\n"); break;
+		case MIXART_DAUGHTER_TYPE_COBRANET : snd_iprintf(buffer, "\tmiXart8 Cobranet\n\n"); break;
+		default:                             snd_iprintf(buffer, "\tUNKNOWN!\n\n"); break;
+		}
 
-		snd_iम_लिखो(buffer, "- system load -\n");	 
+		snd_iprintf(buffer, "- system load -\n");	 
 
 		/* get perf reference */
 
-		ref = पढ़ोl_be( MIXART_MEM( chip->mgr, MIXART_PSEUDOREG_PERF_SYSTEM_LOAD_OFFSET));
+		ref = readl_be( MIXART_MEM( chip->mgr, MIXART_PSEUDOREG_PERF_SYSTEM_LOAD_OFFSET));
 
-		अगर (ref) अणु
-			u32 mailbox   = 100 * पढ़ोl_be( MIXART_MEM( chip->mgr, MIXART_PSEUDOREG_PERF_MAILBX_LOAD_OFFSET)) / ref;
-			u32 streaming = 100 * पढ़ोl_be( MIXART_MEM( chip->mgr, MIXART_PSEUDOREG_PERF_STREAM_LOAD_OFFSET)) / ref;
-			u32 पूर्णांकerr    = 100 * पढ़ोl_be( MIXART_MEM( chip->mgr, MIXART_PSEUDOREG_PERF_INTERR_LOAD_OFFSET)) / ref;
+		if (ref) {
+			u32 mailbox   = 100 * readl_be( MIXART_MEM( chip->mgr, MIXART_PSEUDOREG_PERF_MAILBX_LOAD_OFFSET)) / ref;
+			u32 streaming = 100 * readl_be( MIXART_MEM( chip->mgr, MIXART_PSEUDOREG_PERF_STREAM_LOAD_OFFSET)) / ref;
+			u32 interr    = 100 * readl_be( MIXART_MEM( chip->mgr, MIXART_PSEUDOREG_PERF_INTERR_LOAD_OFFSET)) / ref;
 
-			snd_iम_लिखो(buffer, "\tstreaming          : %d\n", streaming);
-			snd_iम_लिखो(buffer, "\tmailbox            : %d\n", mailbox);
-			snd_iम_लिखो(buffer, "\tinterrupts handling : %d\n\n", पूर्णांकerr);
-		पूर्ण
-	पूर्ण /* endअगर elf loaded */
-पूर्ण
+			snd_iprintf(buffer, "\tstreaming          : %d\n", streaming);
+			snd_iprintf(buffer, "\tmailbox            : %d\n", mailbox);
+			snd_iprintf(buffer, "\tinterrupts handling : %d\n\n", interr);
+		}
+	} /* endif elf loaded */
+}
 
-अटल व्योम snd_mixart_proc_init(काष्ठा snd_mixart *chip)
-अणु
-	काष्ठा snd_info_entry *entry;
+static void snd_mixart_proc_init(struct snd_mixart *chip)
+{
+	struct snd_info_entry *entry;
 
-	/* text पूर्णांकerface to पढ़ो perf and temp meters */
+	/* text interface to read perf and temp meters */
 	snd_card_ro_proc_new(chip->card, "board_info", chip,
-			     snd_mixart_proc_पढ़ो);
+			     snd_mixart_proc_read);
 
-	अगर (! snd_card_proc_new(chip->card, "mixart_BA0", &entry)) अणु
+	if (! snd_card_proc_new(chip->card, "mixart_BA0", &entry)) {
 		entry->content = SNDRV_INFO_CONTENT_DATA;
-		entry->निजी_data = chip->mgr;	
+		entry->private_data = chip->mgr;	
 		entry->c.ops = &snd_mixart_proc_ops_BA0;
 		entry->size = MIXART_BA0_SIZE;
-	पूर्ण
-	अगर (! snd_card_proc_new(chip->card, "mixart_BA1", &entry)) अणु
+	}
+	if (! snd_card_proc_new(chip->card, "mixart_BA1", &entry)) {
 		entry->content = SNDRV_INFO_CONTENT_DATA;
-		entry->निजी_data = chip->mgr;
+		entry->private_data = chip->mgr;
 		entry->c.ops = &snd_mixart_proc_ops_BA1;
 		entry->size = MIXART_BA1_SIZE;
-	पूर्ण
-पूर्ण
-/* end of proc पूर्णांकerface */
+	}
+}
+/* end of proc interface */
 
 
 /*
  *    probe function - creates the card manager
  */
-अटल पूर्णांक snd_mixart_probe(काष्ठा pci_dev *pci,
-			    स्थिर काष्ठा pci_device_id *pci_id)
-अणु
-	अटल पूर्णांक dev;
-	काष्ठा mixart_mgr *mgr;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
-	माप_प्रकार size;
+static int snd_mixart_probe(struct pci_dev *pci,
+			    const struct pci_device_id *pci_id)
+{
+	static int dev;
+	struct mixart_mgr *mgr;
+	unsigned int i;
+	int err;
+	size_t size;
 
 	/*
 	 */
-	अगर (dev >= SNDRV_CARDS)
-		वापस -ENODEV;
-	अगर (! enable[dev]) अणु
+	if (dev >= SNDRV_CARDS)
+		return -ENODEV;
+	if (! enable[dev]) {
 		dev++;
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	/* enable PCI device */
-	अगर ((err = pci_enable_device(pci)) < 0)
-		वापस err;
+	if ((err = pci_enable_device(pci)) < 0)
+		return err;
 	pci_set_master(pci);
 
-	/* check अगर we can restrict PCI DMA transfers to 32 bits */
-	अगर (dma_set_mask(&pci->dev, DMA_BIT_MASK(32)) < 0) अणु
+	/* check if we can restrict PCI DMA transfers to 32 bits */
+	if (dma_set_mask(&pci->dev, DMA_BIT_MASK(32)) < 0) {
 		dev_err(&pci->dev,
 			"architecture does not support 32bit PCI busmaster DMA\n");
 		pci_disable_device(pci);
-		वापस -ENXIO;
-	पूर्ण
+		return -ENXIO;
+	}
 
 	/*
 	 */
-	mgr = kzalloc(माप(*mgr), GFP_KERNEL);
-	अगर (! mgr) अणु
+	mgr = kzalloc(sizeof(*mgr), GFP_KERNEL);
+	if (! mgr) {
 		pci_disable_device(pci);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 
 	mgr->pci = pci;
 	mgr->irq = -1;
 
 	/* resource assignment */
-	अगर ((err = pci_request_regions(pci, CARD_NAME)) < 0) अणु
-		kमुक्त(mgr);
+	if ((err = pci_request_regions(pci, CARD_NAME)) < 0) {
+		kfree(mgr);
 		pci_disable_device(pci);
-		वापस err;
-	पूर्ण
-	क्रम (i = 0; i < 2; i++) अणु
+		return err;
+	}
+	for (i = 0; i < 2; i++) {
 		mgr->mem[i].phys = pci_resource_start(pci, i);
 		mgr->mem[i].virt = pci_ioremap_bar(pci, i);
-		अगर (!mgr->mem[i].virt) अणु
+		if (!mgr->mem[i].virt) {
 			dev_err(&pci->dev, "unable to remap resource 0x%lx\n",
 			       mgr->mem[i].phys);
-			snd_mixart_मुक्त(mgr);
-			वापस -EBUSY;
-		पूर्ण
-	पूर्ण
+			snd_mixart_free(mgr);
+			return -EBUSY;
+		}
+	}
 
-	अगर (request_thपढ़ोed_irq(pci->irq, snd_mixart_पूर्णांकerrupt,
-				 snd_mixart_thपढ़ोed_irq, IRQF_SHARED,
-				 KBUILD_MODNAME, mgr)) अणु
+	if (request_threaded_irq(pci->irq, snd_mixart_interrupt,
+				 snd_mixart_threaded_irq, IRQF_SHARED,
+				 KBUILD_MODNAME, mgr)) {
 		dev_err(&pci->dev, "unable to grab IRQ %d\n", pci->irq);
-		snd_mixart_मुक्त(mgr);
-		वापस -EBUSY;
-	पूर्ण
+		snd_mixart_free(mgr);
+		return -EBUSY;
+	}
 	mgr->irq = pci->irq;
 
 	/* init mailbox  */
-	mgr->msg_fअगरo_पढ़ोptr = 0;
-	mgr->msg_fअगरo_ग_लिखोptr = 0;
+	mgr->msg_fifo_readptr = 0;
+	mgr->msg_fifo_writeptr = 0;
 
 	mutex_init(&mgr->lock);
 	mutex_init(&mgr->msg_lock);
-	init_रुकोqueue_head(&mgr->msg_sleep);
+	init_waitqueue_head(&mgr->msg_sleep);
 	atomic_set(&mgr->msg_processed, 0);
 
 	/* init setup mutex*/
@@ -1307,96 +1306,96 @@ snd_mixart_add_ref_pipe(काष्ठा snd_mixart *chip, पूर्णा�
 
 	/* card assignment */
 	mgr->num_cards = MIXART_MAX_CARDS; /* 4  FIXME: configurable? */
-	क्रम (i = 0; i < mgr->num_cards; i++) अणु
-		काष्ठा snd_card *card;
-		अक्षर पंचांगpid[16];
-		पूर्णांक idx;
+	for (i = 0; i < mgr->num_cards; i++) {
+		struct snd_card *card;
+		char tmpid[16];
+		int idx;
 
-		अगर (index[dev] < 0)
+		if (index[dev] < 0)
 			idx = index[dev];
-		अन्यथा
+		else
 			idx = index[dev] + i;
-		snम_लिखो(पंचांगpid, माप(पंचांगpid), "%s-%d", id[dev] ? id[dev] : "MIXART", i);
-		err = snd_card_new(&pci->dev, idx, पंचांगpid, THIS_MODULE,
+		snprintf(tmpid, sizeof(tmpid), "%s-%d", id[dev] ? id[dev] : "MIXART", i);
+		err = snd_card_new(&pci->dev, idx, tmpid, THIS_MODULE,
 				   0, &card);
 
-		अगर (err < 0) अणु
+		if (err < 0) {
 			dev_err(&pci->dev, "cannot allocate the card %d\n", i);
-			snd_mixart_मुक्त(mgr);
-			वापस err;
-		पूर्ण
+			snd_mixart_free(mgr);
+			return err;
+		}
 
-		म_नकल(card->driver, CARD_NAME);
-		snम_लिखो(card->लघुname, माप(card->लघुname),
+		strcpy(card->driver, CARD_NAME);
+		snprintf(card->shortname, sizeof(card->shortname),
 			 "Digigram miXart [PCM #%d]", i);
-		snम_लिखो(card->दीर्घname, माप(card->दीर्घname),
+		snprintf(card->longname, sizeof(card->longname),
 			"Digigram miXart at 0x%lx & 0x%lx, irq %i [PCM #%d]",
 			mgr->mem[0].phys, mgr->mem[1].phys, mgr->irq, i);
 
-		अगर ((err = snd_mixart_create(mgr, card, i)) < 0) अणु
-			snd_card_मुक्त(card);
-			snd_mixart_मुक्त(mgr);
-			वापस err;
-		पूर्ण
+		if ((err = snd_mixart_create(mgr, card, i)) < 0) {
+			snd_card_free(card);
+			snd_mixart_free(mgr);
+			return err;
+		}
 
-		अगर(i==0) अणु
-			/* init proc पूर्णांकerface only क्रम chip0 */
+		if(i==0) {
+			/* init proc interface only for chip0 */
 			snd_mixart_proc_init(mgr->chip[i]);
-		पूर्ण
+		}
 
-		अगर ((err = snd_card_रेजिस्टर(card)) < 0) अणु
-			snd_mixart_मुक्त(mgr);
-			वापस err;
-		पूर्ण
-	पूर्ण
+		if ((err = snd_card_register(card)) < 0) {
+			snd_mixart_free(mgr);
+			return err;
+		}
+	}
 
 	/* init firmware status (mgr->dsp_loaded reset in hwdep_new) */
 	mgr->board_type = MIXART_DAUGHTER_TYPE_NONE;
 
 	/* create array of streaminfo */
 	size = PAGE_ALIGN( (MIXART_MAX_STREAM_PER_CARD * MIXART_MAX_CARDS *
-			    माप(काष्ठा mixart_flowinfo)) );
-	अगर (snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV, &pci->dev,
-				size, &mgr->flowinfo) < 0) अणु
-		snd_mixart_मुक्त(mgr);
-		वापस -ENOMEM;
-	पूर्ण
+			    sizeof(struct mixart_flowinfo)) );
+	if (snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV, &pci->dev,
+				size, &mgr->flowinfo) < 0) {
+		snd_mixart_free(mgr);
+		return -ENOMEM;
+	}
 	/* init streaminfo_array */
-	स_रखो(mgr->flowinfo.area, 0, size);
+	memset(mgr->flowinfo.area, 0, size);
 
 	/* create array of bufferinfo */
 	size = PAGE_ALIGN( (MIXART_MAX_STREAM_PER_CARD * MIXART_MAX_CARDS *
-			    माप(काष्ठा mixart_bufferinfo)) );
-	अगर (snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV, &pci->dev,
-				size, &mgr->bufferinfo) < 0) अणु
-		snd_mixart_मुक्त(mgr);
-		वापस -ENOMEM;
-	पूर्ण
+			    sizeof(struct mixart_bufferinfo)) );
+	if (snd_dma_alloc_pages(SNDRV_DMA_TYPE_DEV, &pci->dev,
+				size, &mgr->bufferinfo) < 0) {
+		snd_mixart_free(mgr);
+		return -ENOMEM;
+	}
 	/* init bufferinfo_array */
-	स_रखो(mgr->bufferinfo.area, 0, size);
+	memset(mgr->bufferinfo.area, 0, size);
 
 	/* set up firmware */
 	err = snd_mixart_setup_firmware(mgr);
-	अगर (err < 0) अणु
-		snd_mixart_मुक्त(mgr);
-		वापस err;
-	पूर्ण
+	if (err < 0) {
+		snd_mixart_free(mgr);
+		return err;
+	}
 
 	pci_set_drvdata(pci, mgr);
 	dev++;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम snd_mixart_हटाओ(काष्ठा pci_dev *pci)
-अणु
-	snd_mixart_मुक्त(pci_get_drvdata(pci));
-पूर्ण
+static void snd_mixart_remove(struct pci_dev *pci)
+{
+	snd_mixart_free(pci_get_drvdata(pci));
+}
 
-अटल काष्ठा pci_driver mixart_driver = अणु
+static struct pci_driver mixart_driver = {
 	.name = KBUILD_MODNAME,
 	.id_table = snd_mixart_ids,
 	.probe = snd_mixart_probe,
-	.हटाओ = snd_mixart_हटाओ,
-पूर्ण;
+	.remove = snd_mixart_remove,
+};
 
 module_pci_driver(mixart_driver);

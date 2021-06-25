@@ -1,31 +1,30 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Topro TP6800/6810 webcam driver.
  *
- * Copyright (C) 2011 Jean-Franथईois Moine (http://moinejf.मुक्त.fr)
+ * Copyright (C) 2011 Jean-François Moine (http://moinejf.free.fr)
  * Copyright (C) 2009 Anders Blomdell (anders.blomdell@control.lth.se)
  * Copyright (C) 2008 Thomas Champagne (lafeuil@gmail.com)
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश "gspca.h"
+#include "gspca.h"
 
 MODULE_DESCRIPTION("Topro TP6800/6810 gspca webcam driver");
 MODULE_AUTHOR("Jean-Francois Moine <http://moinejf.free.fr>, Anders Blomdell <anders.blomdell@control.lth.se>");
 MODULE_LICENSE("GPL");
 
-अटल पूर्णांक क्रमce_sensor = -1;
+static int force_sensor = -1;
 
 /* JPEG header */
-अटल स्थिर u8 jpeg_head[] = अणु
+static const u8 jpeg_head[] = {
 	0xff, 0xd8,			/* jpeg */
 
 /* quantization table quality 50% */
 	0xff, 0xdb, 0x00, 0x84,		/* DQT */
 0,
-#घोषणा JPEG_QT0_OFFSET 7
+#define JPEG_QT0_OFFSET 7
 	0x10, 0x0b, 0x0c, 0x0e, 0x0c, 0x0a, 0x10, 0x0e,
 	0x0d, 0x0e, 0x12, 0x11, 0x10, 0x13, 0x18, 0x28,
 	0x1a, 0x18, 0x16, 0x16, 0x18, 0x31, 0x23, 0x25,
@@ -35,7 +34,7 @@ MODULE_LICENSE("GPL");
 	0x5f, 0x62, 0x67, 0x68, 0x67, 0x3e, 0x4d, 0x71,
 	0x79, 0x70, 0x64, 0x78, 0x5c, 0x65, 0x67, 0x63,
 1,
-#घोषणा JPEG_QT1_OFFSET 72
+#define JPEG_QT1_OFFSET 72
 	0x11, 0x12, 0x12, 0x18, 0x15, 0x18, 0x2f, 0x1a,
 	0x1a, 0x2f, 0x63, 0x42, 0x38, 0x42, 0x63, 0x63,
 	0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63,
@@ -93,7 +92,7 @@ MODULE_LICENSE("GPL");
 	0xe8, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8,
 	0xff, 0xc0, 0x00, 0x11,		/* SOF0 (start of frame 0 */
 	0x08,				/* data precision */
-#घोषणा JPEG_HEIGHT_OFFSET 493
+#define JPEG_HEIGHT_OFFSET 493
 	0x01, 0xe0,			/* height */
 	0x02, 0x80,			/* width */
 	0x03,				/* component number */
@@ -105,331 +104,331 @@ MODULE_LICENSE("GPL");
 
 	0xff, 0xda, 0x00, 0x0c,		/* SOS (start of scan) */
 	0x03, 0x01, 0x00, 0x02, 0x11, 0x03, 0x11, 0x00, 0x3f, 0x00
-#घोषणा JPEG_HDR_SZ 521
-पूर्ण;
+#define JPEG_HDR_SZ 521
+};
 
-काष्ठा sd अणु
-	काष्ठा gspca_dev gspca_dev;	/* !! must be the first item */
-	काष्ठा v4l2_ctrl *jpegqual;
-	काष्ठा v4l2_ctrl *sharpness;
-	काष्ठा v4l2_ctrl *gamma;
-	काष्ठा v4l2_ctrl *blue;
-	काष्ठा v4l2_ctrl *red;
+struct sd {
+	struct gspca_dev gspca_dev;	/* !! must be the first item */
+	struct v4l2_ctrl *jpegqual;
+	struct v4l2_ctrl *sharpness;
+	struct v4l2_ctrl *gamma;
+	struct v4l2_ctrl *blue;
+	struct v4l2_ctrl *red;
 
 	u8 framerate;
 	u8 quality;		/* webcam current JPEG quality (0..16) */
-	s8 ag_cnt;		/* स्वतःgain / start counter क्रम tp6810 */
-#घोषणा AG_CNT_START 13		/* check gain every N frames */
+	s8 ag_cnt;		/* autogain / start counter for tp6810 */
+#define AG_CNT_START 13		/* check gain every N frames */
 
 	u8 bridge;
 	u8 sensor;
 
 	u8 jpeg_hdr[JPEG_HDR_SZ];
-पूर्ण;
+};
 
-क्रमागत bridges अणु
+enum bridges {
 	BRIDGE_TP6800,
 	BRIDGE_TP6810,
-पूर्ण;
+};
 
-क्रमागत sensors अणु
+enum sensors {
 	SENSOR_CX0342,
 	SENSOR_SOI763A,		/* ~= ov7630 / ov7648 */
 	NSENSORS
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा v4l2_pix_क्रमmat vga_mode[] = अणु
-	अणु320, 240, V4L2_PIX_FMT_JPEG, V4L2_FIELD_NONE,
+static const struct v4l2_pix_format vga_mode[] = {
+	{320, 240, V4L2_PIX_FMT_JPEG, V4L2_FIELD_NONE,
 		.bytesperline = 320,
 		.sizeimage = 320 * 240 * 4 / 8 + 590,
-		.colorspace = V4L2_COLORSPACE_JPEGपूर्ण,
-	अणु640, 480, V4L2_PIX_FMT_JPEG, V4L2_FIELD_NONE,
+		.colorspace = V4L2_COLORSPACE_JPEG},
+	{640, 480, V4L2_PIX_FMT_JPEG, V4L2_FIELD_NONE,
 		.bytesperline = 640,
 		.sizeimage = 640 * 480 * 3 / 8 + 590,
-		.colorspace = V4L2_COLORSPACE_JPEGपूर्ण
-पूर्ण;
+		.colorspace = V4L2_COLORSPACE_JPEG}
+};
 
 /*
  * JPEG quality
  * index: webcam compression
  * value: JPEG quality in %
  */
-अटल स्थिर u8 jpeg_q[17] = अणु
+static const u8 jpeg_q[17] = {
 	88, 77, 67, 57, 55, 55, 45, 45, 36, 36, 30, 30, 26, 26, 22, 22, 94
-पूर्ण;
+};
 
-#घोषणा BULK_OUT_SIZE		0x20
-#अगर BULK_OUT_SIZE > USB_BUF_SZ
-#त्रुटि "USB buffer too small"
-#पूर्ण_अगर
+#define BULK_OUT_SIZE		0x20
+#if BULK_OUT_SIZE > USB_BUF_SZ
+#error "USB buffer too small"
+#endif
 
-#घोषणा DEFAULT_FRAME_RATE 30
+#define DEFAULT_FRAME_RATE 30
 
-अटल स्थिर u8 rates[] = अणु30, 20, 15, 10, 7, 5पूर्ण;
-अटल स्थिर काष्ठा framerates framerates[] = अणु
-	अणु
+static const u8 rates[] = {30, 20, 15, 10, 7, 5};
+static const struct framerates framerates[] = {
+	{
 		.rates = rates,
 		.nrates = ARRAY_SIZE(rates)
-	पूर्ण,
-	अणु
+	},
+	{
 		.rates = rates,
 		.nrates = ARRAY_SIZE(rates)
-	पूर्ण
-पूर्ण;
-अटल स्थिर u8 rates_6810[] = अणु30, 15, 10, 7, 5पूर्ण;
-अटल स्थिर काष्ठा framerates framerates_6810[] = अणु
-	अणु
+	}
+};
+static const u8 rates_6810[] = {30, 15, 10, 7, 5};
+static const struct framerates framerates_6810[] = {
+	{
 		.rates = rates_6810,
 		.nrates = ARRAY_SIZE(rates_6810)
-	पूर्ण,
-	अणु
+	},
+	{
 		.rates = rates_6810,
 		.nrates = ARRAY_SIZE(rates_6810)
-	पूर्ण
-पूर्ण;
+	}
+};
 
 /*
  * webcam quality in %
  * the last value is the ultra fine quality
  */
 
-/* TP6800 रेजिस्टर offsets */
-#घोषणा TP6800_R10_SIF_TYPE		0x10
-#घोषणा TP6800_R11_SIF_CONTROL		0x11
-#घोषणा TP6800_R12_SIF_ADDR_S		0x12
-#घोषणा TP6800_R13_SIF_TX_DATA		0x13
-#घोषणा TP6800_R14_SIF_RX_DATA		0x14
-#घोषणा TP6800_R15_GPIO_PU		0x15
-#घोषणा TP6800_R16_GPIO_PD		0x16
-#घोषणा TP6800_R17_GPIO_IO		0x17
-#घोषणा TP6800_R18_GPIO_DATA		0x18
-#घोषणा TP6800_R19_SIF_ADDR_S2		0x19
-#घोषणा TP6800_R1A_SIF_TX_DATA2		0x1a
-#घोषणा TP6800_R1B_SIF_RX_DATA2		0x1b
-#घोषणा TP6800_R21_ENDP_1_CTL		0x21
-#घोषणा TP6800_R2F_TIMING_CFG		0x2f
-#घोषणा TP6800_R30_SENSOR_CFG		0x30
-#घोषणा TP6800_R31_PIXEL_START		0x31
-#घोषणा TP6800_R32_PIXEL_END_L		0x32
-#घोषणा TP6800_R33_PIXEL_END_H		0x33
-#घोषणा TP6800_R34_LINE_START		0x34
-#घोषणा TP6800_R35_LINE_END_L		0x35
-#घोषणा TP6800_R36_LINE_END_H		0x36
-#घोषणा TP6800_R37_FRONT_DARK_ST	0x37
-#घोषणा TP6800_R38_FRONT_DARK_END	0x38
-#घोषणा TP6800_R39_REAR_DARK_ST_L	0x39
-#घोषणा TP6800_R3A_REAR_DARK_ST_H	0x3a
-#घोषणा TP6800_R3B_REAR_DARK_END_L	0x3b
-#घोषणा TP6800_R3C_REAR_DARK_END_H	0x3c
-#घोषणा TP6800_R3D_HORIZ_DARK_LINE_L	0x3d
-#घोषणा TP6800_R3E_HORIZ_DARK_LINE_H	0x3e
-#घोषणा TP6800_R3F_FRAME_RATE		0x3f
-#घोषणा TP6800_R50			0x50
-#घोषणा TP6800_R51			0x51
-#घोषणा TP6800_R52			0x52
-#घोषणा TP6800_R53			0x53
-#घोषणा TP6800_R54_DARK_CFG		0x54
-#घोषणा TP6800_R55_GAMMA_R		0x55
-#घोषणा TP6800_R56_GAMMA_G		0x56
-#घोषणा TP6800_R57_GAMMA_B		0x57
-#घोषणा TP6800_R5C_EDGE_THRLD		0x5c
-#घोषणा TP6800_R5D_DEMOSAIC_CFG		0x5d
-#घोषणा TP6800_R78_FORMAT		0x78
-#घोषणा TP6800_R79_QUALITY		0x79
-#घोषणा TP6800_R7A_BLK_THRLD		0x7a
+/* TP6800 register offsets */
+#define TP6800_R10_SIF_TYPE		0x10
+#define TP6800_R11_SIF_CONTROL		0x11
+#define TP6800_R12_SIF_ADDR_S		0x12
+#define TP6800_R13_SIF_TX_DATA		0x13
+#define TP6800_R14_SIF_RX_DATA		0x14
+#define TP6800_R15_GPIO_PU		0x15
+#define TP6800_R16_GPIO_PD		0x16
+#define TP6800_R17_GPIO_IO		0x17
+#define TP6800_R18_GPIO_DATA		0x18
+#define TP6800_R19_SIF_ADDR_S2		0x19
+#define TP6800_R1A_SIF_TX_DATA2		0x1a
+#define TP6800_R1B_SIF_RX_DATA2		0x1b
+#define TP6800_R21_ENDP_1_CTL		0x21
+#define TP6800_R2F_TIMING_CFG		0x2f
+#define TP6800_R30_SENSOR_CFG		0x30
+#define TP6800_R31_PIXEL_START		0x31
+#define TP6800_R32_PIXEL_END_L		0x32
+#define TP6800_R33_PIXEL_END_H		0x33
+#define TP6800_R34_LINE_START		0x34
+#define TP6800_R35_LINE_END_L		0x35
+#define TP6800_R36_LINE_END_H		0x36
+#define TP6800_R37_FRONT_DARK_ST	0x37
+#define TP6800_R38_FRONT_DARK_END	0x38
+#define TP6800_R39_REAR_DARK_ST_L	0x39
+#define TP6800_R3A_REAR_DARK_ST_H	0x3a
+#define TP6800_R3B_REAR_DARK_END_L	0x3b
+#define TP6800_R3C_REAR_DARK_END_H	0x3c
+#define TP6800_R3D_HORIZ_DARK_LINE_L	0x3d
+#define TP6800_R3E_HORIZ_DARK_LINE_H	0x3e
+#define TP6800_R3F_FRAME_RATE		0x3f
+#define TP6800_R50			0x50
+#define TP6800_R51			0x51
+#define TP6800_R52			0x52
+#define TP6800_R53			0x53
+#define TP6800_R54_DARK_CFG		0x54
+#define TP6800_R55_GAMMA_R		0x55
+#define TP6800_R56_GAMMA_G		0x56
+#define TP6800_R57_GAMMA_B		0x57
+#define TP6800_R5C_EDGE_THRLD		0x5c
+#define TP6800_R5D_DEMOSAIC_CFG		0x5d
+#define TP6800_R78_FORMAT		0x78
+#define TP6800_R79_QUALITY		0x79
+#define TP6800_R7A_BLK_THRLD		0x7a
 
-/* CX0342 रेजिस्टर offsets */
+/* CX0342 register offsets */
 
-#घोषणा CX0342_SENSOR_ID		0x00
-#घोषणा CX0342_VERSION_NO		0x01
-#घोषणा CX0342_ORG_X_L			0x02
-#घोषणा CX0342_ORG_X_H			0x03
-#घोषणा CX0342_ORG_Y_L			0x04
-#घोषणा CX0342_ORG_Y_H			0x05
-#घोषणा CX0342_STOP_X_L			0x06
-#घोषणा CX0342_STOP_X_H			0x07
-#घोषणा CX0342_STOP_Y_L			0x08
-#घोषणा CX0342_STOP_Y_H			0x09
-#घोषणा CX0342_FRAME_WIDTH_L		0x0a
-#घोषणा CX0342_FRAME_WIDTH_H		0x0b
-#घोषणा CX0342_FRAME_HEIGH_L		0x0c
-#घोषणा CX0342_FRAME_HEIGH_H		0x0d
-#घोषणा CX0342_EXPO_LINE_L		0x10
-#घोषणा CX0342_EXPO_LINE_H		0x11
-#घोषणा CX0342_EXPO_CLK_L		0x12
-#घोषणा CX0342_EXPO_CLK_H		0x13
-#घोषणा CX0342_RAW_GRGAIN_L		0x14
-#घोषणा CX0342_RAW_GRGAIN_H		0x15
-#घोषणा CX0342_RAW_GBGAIN_L		0x16
-#घोषणा CX0342_RAW_GBGAIN_H		0x17
-#घोषणा CX0342_RAW_RGAIN_L		0x18
-#घोषणा CX0342_RAW_RGAIN_H		0x19
-#घोषणा CX0342_RAW_BGAIN_L		0x1a
-#घोषणा CX0342_RAW_BGAIN_H		0x1b
-#घोषणा CX0342_GLOBAL_GAIN		0x1c
-#घोषणा CX0342_SYS_CTRL_0		0x20
-#घोषणा CX0342_SYS_CTRL_1		0x21
-#घोषणा CX0342_SYS_CTRL_2		0x22
-#घोषणा CX0342_BYPASS_MODE		0x23
-#घोषणा CX0342_SYS_CTRL_3		0x24
-#घोषणा CX0342_TIMING_EN		0x25
-#घोषणा CX0342_OUTPUT_CTRL		0x26
-#घोषणा CX0342_AUTO_ADC_CALIB		0x27
-#घोषणा CX0342_SYS_CTRL_4		0x28
-#घोषणा CX0342_ADCGN			0x30
-#घोषणा CX0342_SLPCR			0x31
-#घोषणा CX0342_SLPFN_LO			0x32
-#घोषणा CX0342_ADC_CTL			0x33
-#घोषणा CX0342_LVRST_BLBIAS		0x34
-#घोषणा CX0342_VTHSEL			0x35
-#घोषणा CX0342_RAMP_RIV			0x36
-#घोषणा CX0342_LDOSEL			0x37
-#घोषणा CX0342_CLOCK_GEN		0x40
-#घोषणा CX0342_SOFT_RESET		0x41
-#घोषणा CX0342_PLL			0x42
-#घोषणा CX0342_DR_ENH_PULSE_OFFSET_L	0x43
-#घोषणा CX0342_DR_ENH_PULSE_OFFSET_H	0x44
-#घोषणा CX0342_DR_ENH_PULSE_POS_L	0x45
-#घोषणा CX0342_DR_ENH_PULSE_POS_H	0x46
-#घोषणा CX0342_DR_ENH_PULSE_WIDTH	0x47
-#घोषणा CX0342_AS_CURRENT_CNT_L		0x48
-#घोषणा CX0342_AS_CURRENT_CNT_H		0x49
-#घोषणा CX0342_AS_PREVIOUS_CNT_L	0x4a
-#घोषणा CX0342_AS_PREVIOUS_CNT_H	0x4b
-#घोषणा CX0342_SPV_VALUE_L		0x4c
-#घोषणा CX0342_SPV_VALUE_H		0x4d
-#घोषणा CX0342_GPXLTHD_L		0x50
-#घोषणा CX0342_GPXLTHD_H		0x51
-#घोषणा CX0342_RBPXLTHD_L		0x52
-#घोषणा CX0342_RBPXLTHD_H		0x53
-#घोषणा CX0342_PLANETHD_L		0x54
-#घोषणा CX0342_PLANETHD_H		0x55
-#घोषणा CX0342_ROWDARK_TH		0x56
-#घोषणा CX0342_ROWDARK_TOL		0x57
-#घोषणा CX0342_RB_GAP_L			0x58
-#घोषणा CX0342_RB_GAP_H			0x59
-#घोषणा CX0342_G_GAP_L			0x5a
-#घोषणा CX0342_G_GAP_H			0x5b
-#घोषणा CX0342_AUTO_ROW_DARK		0x60
-#घोषणा CX0342_MANUAL_DARK_VALUE	0x61
-#घोषणा CX0342_GB_DARK_OFFSET		0x62
-#घोषणा CX0342_GR_DARK_OFFSET		0x63
-#घोषणा CX0342_RED_DARK_OFFSET		0x64
-#घोषणा CX0342_BLUE_DARK_OFFSET		0x65
-#घोषणा CX0342_DATA_SCALING_MULTI	0x66
-#घोषणा CX0342_AUTOD_Q_FRAME		0x67
-#घोषणा CX0342_AUTOD_ALLOW_VARI		0x68
-#घोषणा CX0342_AUTO_DARK_VALUE_L	0x69
-#घोषणा CX0342_AUTO_DARK_VALUE_H	0x6a
-#घोषणा CX0342_IO_CTRL_0		0x70
-#घोषणा CX0342_IO_CTRL_1		0x71
-#घोषणा CX0342_IO_CTRL_2		0x72
-#घोषणा CX0342_IDLE_CTRL		0x73
-#घोषणा CX0342_TEST_MODE		0x74
-#घोषणा CX0342_FRAME_FIX_DATA_TEST	0x75
-#घोषणा CX0342_FRAME_CNT_TEST		0x76
-#घोषणा CX0342_RST_OVERFLOW_L		0x80
-#घोषणा CX0342_RST_OVERFLOW_H		0x81
-#घोषणा CX0342_RST_UNDERFLOW_L		0x82
-#घोषणा CX0342_RST_UNDERFLOW_H		0x83
-#घोषणा CX0342_DATA_OVERFLOW_L		0x84
-#घोषणा CX0342_DATA_OVERFLOW_H		0x85
-#घोषणा CX0342_DATA_UNDERFLOW_L		0x86
-#घोषणा CX0342_DATA_UNDERFLOW_H		0x87
-#घोषणा CX0342_CHANNEL_0_0_L_irst	0x90
-#घोषणा CX0342_CHANNEL_0_0_H_irst	0x91
-#घोषणा CX0342_CHANNEL_0_1_L_irst	0x92
-#घोषणा CX0342_CHANNEL_0_1_H_irst	0x93
-#घोषणा CX0342_CHANNEL_0_2_L_irst	0x94
-#घोषणा CX0342_CHANNEL_0_2_H_irst	0x95
-#घोषणा CX0342_CHANNEL_0_3_L_irst	0x96
-#घोषणा CX0342_CHANNEL_0_3_H_irst	0x97
-#घोषणा CX0342_CHANNEL_0_4_L_irst	0x98
-#घोषणा CX0342_CHANNEL_0_4_H_irst	0x99
-#घोषणा CX0342_CHANNEL_0_5_L_irst	0x9a
-#घोषणा CX0342_CHANNEL_0_5_H_irst	0x9b
-#घोषणा CX0342_CHANNEL_0_6_L_irst	0x9c
-#घोषणा CX0342_CHANNEL_0_6_H_irst	0x9d
-#घोषणा CX0342_CHANNEL_0_7_L_irst	0x9e
-#घोषणा CX0342_CHANNEL_0_7_H_irst	0x9f
-#घोषणा CX0342_CHANNEL_1_0_L_itx	0xa0
-#घोषणा CX0342_CHANNEL_1_0_H_itx	0xa1
-#घोषणा CX0342_CHANNEL_1_1_L_itx	0xa2
-#घोषणा CX0342_CHANNEL_1_1_H_itx	0xa3
-#घोषणा CX0342_CHANNEL_1_2_L_itx	0xa4
-#घोषणा CX0342_CHANNEL_1_2_H_itx	0xa5
-#घोषणा CX0342_CHANNEL_1_3_L_itx	0xa6
-#घोषणा CX0342_CHANNEL_1_3_H_itx	0xa7
-#घोषणा CX0342_CHANNEL_1_4_L_itx	0xa8
-#घोषणा CX0342_CHANNEL_1_4_H_itx	0xa9
-#घोषणा CX0342_CHANNEL_1_5_L_itx	0xaa
-#घोषणा CX0342_CHANNEL_1_5_H_itx	0xab
-#घोषणा CX0342_CHANNEL_1_6_L_itx	0xac
-#घोषणा CX0342_CHANNEL_1_6_H_itx	0xad
-#घोषणा CX0342_CHANNEL_1_7_L_itx	0xae
-#घोषणा CX0342_CHANNEL_1_7_H_itx	0xaf
-#घोषणा CX0342_CHANNEL_2_0_L_iwl	0xb0
-#घोषणा CX0342_CHANNEL_2_0_H_iwl	0xb1
-#घोषणा CX0342_CHANNEL_2_1_L_iwl	0xb2
-#घोषणा CX0342_CHANNEL_2_1_H_iwl	0xb3
-#घोषणा CX0342_CHANNEL_2_2_L_iwl	0xb4
-#घोषणा CX0342_CHANNEL_2_2_H_iwl	0xb5
-#घोषणा CX0342_CHANNEL_2_3_L_iwl	0xb6
-#घोषणा CX0342_CHANNEL_2_3_H_iwl	0xb7
-#घोषणा CX0342_CHANNEL_2_4_L_iwl	0xb8
-#घोषणा CX0342_CHANNEL_2_4_H_iwl	0xb9
-#घोषणा CX0342_CHANNEL_2_5_L_iwl	0xba
-#घोषणा CX0342_CHANNEL_2_5_H_iwl	0xbb
-#घोषणा CX0342_CHANNEL_2_6_L_iwl	0xbc
-#घोषणा CX0342_CHANNEL_2_6_H_iwl	0xbd
-#घोषणा CX0342_CHANNEL_2_7_L_iwl	0xbe
-#घोषणा CX0342_CHANNEL_2_7_H_iwl	0xbf
-#घोषणा CX0342_CHANNEL_3_0_L_ensp	0xc0
-#घोषणा CX0342_CHANNEL_3_0_H_ensp	0xc1
-#घोषणा CX0342_CHANNEL_3_1_L_ensp	0xc2
-#घोषणा CX0342_CHANNEL_3_1_H_ensp	0xc3
-#घोषणा CX0342_CHANNEL_3_2_L_ensp	0xc4
-#घोषणा CX0342_CHANNEL_3_2_H_ensp	0xc5
-#घोषणा CX0342_CHANNEL_3_3_L_ensp	0xc6
-#घोषणा CX0342_CHANNEL_3_3_H_ensp	0xc7
-#घोषणा CX0342_CHANNEL_3_4_L_ensp	0xc8
-#घोषणा CX0342_CHANNEL_3_4_H_ensp	0xc9
-#घोषणा CX0342_CHANNEL_3_5_L_ensp	0xca
-#घोषणा CX0342_CHANNEL_3_5_H_ensp	0xcb
-#घोषणा CX0342_CHANNEL_3_6_L_ensp	0xcc
-#घोषणा CX0342_CHANNEL_3_6_H_ensp	0xcd
-#घोषणा CX0342_CHANNEL_3_7_L_ensp	0xce
-#घोषणा CX0342_CHANNEL_3_7_H_ensp	0xcf
-#घोषणा CX0342_CHANNEL_4_0_L_sela	0xd0
-#घोषणा CX0342_CHANNEL_4_0_H_sela	0xd1
-#घोषणा CX0342_CHANNEL_4_1_L_sela	0xd2
-#घोषणा CX0342_CHANNEL_4_1_H_sela	0xd3
-#घोषणा CX0342_CHANNEL_5_0_L_पूर्णांकla	0xe0
-#घोषणा CX0342_CHANNEL_5_0_H_पूर्णांकla	0xe1
-#घोषणा CX0342_CHANNEL_5_1_L_पूर्णांकla	0xe2
-#घोषणा CX0342_CHANNEL_5_1_H_पूर्णांकla	0xe3
-#घोषणा CX0342_CHANNEL_5_2_L_पूर्णांकla	0xe4
-#घोषणा CX0342_CHANNEL_5_2_H_पूर्णांकla	0xe5
-#घोषणा CX0342_CHANNEL_5_3_L_पूर्णांकla	0xe6
-#घोषणा CX0342_CHANNEL_5_3_H_पूर्णांकla	0xe7
-#घोषणा CX0342_CHANNEL_6_0_L_xa_sel_pos 0xf0
-#घोषणा CX0342_CHANNEL_6_0_H_xa_sel_pos 0xf1
-#घोषणा CX0342_CHANNEL_7_1_L_cds_pos	0xf2
-#घोषणा CX0342_CHANNEL_7_1_H_cds_pos	0xf3
-#घोषणा CX0342_SENSOR_HEIGHT_L		0xfb
-#घोषणा CX0342_SENSOR_HEIGHT_H		0xfc
-#घोषणा CX0342_SENSOR_WIDTH_L		0xfd
-#घोषणा CX0342_SENSOR_WIDTH_H		0xfe
-#घोषणा CX0342_VSYNC_HSYNC_READ		0xff
+#define CX0342_SENSOR_ID		0x00
+#define CX0342_VERSION_NO		0x01
+#define CX0342_ORG_X_L			0x02
+#define CX0342_ORG_X_H			0x03
+#define CX0342_ORG_Y_L			0x04
+#define CX0342_ORG_Y_H			0x05
+#define CX0342_STOP_X_L			0x06
+#define CX0342_STOP_X_H			0x07
+#define CX0342_STOP_Y_L			0x08
+#define CX0342_STOP_Y_H			0x09
+#define CX0342_FRAME_WIDTH_L		0x0a
+#define CX0342_FRAME_WIDTH_H		0x0b
+#define CX0342_FRAME_HEIGH_L		0x0c
+#define CX0342_FRAME_HEIGH_H		0x0d
+#define CX0342_EXPO_LINE_L		0x10
+#define CX0342_EXPO_LINE_H		0x11
+#define CX0342_EXPO_CLK_L		0x12
+#define CX0342_EXPO_CLK_H		0x13
+#define CX0342_RAW_GRGAIN_L		0x14
+#define CX0342_RAW_GRGAIN_H		0x15
+#define CX0342_RAW_GBGAIN_L		0x16
+#define CX0342_RAW_GBGAIN_H		0x17
+#define CX0342_RAW_RGAIN_L		0x18
+#define CX0342_RAW_RGAIN_H		0x19
+#define CX0342_RAW_BGAIN_L		0x1a
+#define CX0342_RAW_BGAIN_H		0x1b
+#define CX0342_GLOBAL_GAIN		0x1c
+#define CX0342_SYS_CTRL_0		0x20
+#define CX0342_SYS_CTRL_1		0x21
+#define CX0342_SYS_CTRL_2		0x22
+#define CX0342_BYPASS_MODE		0x23
+#define CX0342_SYS_CTRL_3		0x24
+#define CX0342_TIMING_EN		0x25
+#define CX0342_OUTPUT_CTRL		0x26
+#define CX0342_AUTO_ADC_CALIB		0x27
+#define CX0342_SYS_CTRL_4		0x28
+#define CX0342_ADCGN			0x30
+#define CX0342_SLPCR			0x31
+#define CX0342_SLPFN_LO			0x32
+#define CX0342_ADC_CTL			0x33
+#define CX0342_LVRST_BLBIAS		0x34
+#define CX0342_VTHSEL			0x35
+#define CX0342_RAMP_RIV			0x36
+#define CX0342_LDOSEL			0x37
+#define CX0342_CLOCK_GEN		0x40
+#define CX0342_SOFT_RESET		0x41
+#define CX0342_PLL			0x42
+#define CX0342_DR_ENH_PULSE_OFFSET_L	0x43
+#define CX0342_DR_ENH_PULSE_OFFSET_H	0x44
+#define CX0342_DR_ENH_PULSE_POS_L	0x45
+#define CX0342_DR_ENH_PULSE_POS_H	0x46
+#define CX0342_DR_ENH_PULSE_WIDTH	0x47
+#define CX0342_AS_CURRENT_CNT_L		0x48
+#define CX0342_AS_CURRENT_CNT_H		0x49
+#define CX0342_AS_PREVIOUS_CNT_L	0x4a
+#define CX0342_AS_PREVIOUS_CNT_H	0x4b
+#define CX0342_SPV_VALUE_L		0x4c
+#define CX0342_SPV_VALUE_H		0x4d
+#define CX0342_GPXLTHD_L		0x50
+#define CX0342_GPXLTHD_H		0x51
+#define CX0342_RBPXLTHD_L		0x52
+#define CX0342_RBPXLTHD_H		0x53
+#define CX0342_PLANETHD_L		0x54
+#define CX0342_PLANETHD_H		0x55
+#define CX0342_ROWDARK_TH		0x56
+#define CX0342_ROWDARK_TOL		0x57
+#define CX0342_RB_GAP_L			0x58
+#define CX0342_RB_GAP_H			0x59
+#define CX0342_G_GAP_L			0x5a
+#define CX0342_G_GAP_H			0x5b
+#define CX0342_AUTO_ROW_DARK		0x60
+#define CX0342_MANUAL_DARK_VALUE	0x61
+#define CX0342_GB_DARK_OFFSET		0x62
+#define CX0342_GR_DARK_OFFSET		0x63
+#define CX0342_RED_DARK_OFFSET		0x64
+#define CX0342_BLUE_DARK_OFFSET		0x65
+#define CX0342_DATA_SCALING_MULTI	0x66
+#define CX0342_AUTOD_Q_FRAME		0x67
+#define CX0342_AUTOD_ALLOW_VARI		0x68
+#define CX0342_AUTO_DARK_VALUE_L	0x69
+#define CX0342_AUTO_DARK_VALUE_H	0x6a
+#define CX0342_IO_CTRL_0		0x70
+#define CX0342_IO_CTRL_1		0x71
+#define CX0342_IO_CTRL_2		0x72
+#define CX0342_IDLE_CTRL		0x73
+#define CX0342_TEST_MODE		0x74
+#define CX0342_FRAME_FIX_DATA_TEST	0x75
+#define CX0342_FRAME_CNT_TEST		0x76
+#define CX0342_RST_OVERFLOW_L		0x80
+#define CX0342_RST_OVERFLOW_H		0x81
+#define CX0342_RST_UNDERFLOW_L		0x82
+#define CX0342_RST_UNDERFLOW_H		0x83
+#define CX0342_DATA_OVERFLOW_L		0x84
+#define CX0342_DATA_OVERFLOW_H		0x85
+#define CX0342_DATA_UNDERFLOW_L		0x86
+#define CX0342_DATA_UNDERFLOW_H		0x87
+#define CX0342_CHANNEL_0_0_L_irst	0x90
+#define CX0342_CHANNEL_0_0_H_irst	0x91
+#define CX0342_CHANNEL_0_1_L_irst	0x92
+#define CX0342_CHANNEL_0_1_H_irst	0x93
+#define CX0342_CHANNEL_0_2_L_irst	0x94
+#define CX0342_CHANNEL_0_2_H_irst	0x95
+#define CX0342_CHANNEL_0_3_L_irst	0x96
+#define CX0342_CHANNEL_0_3_H_irst	0x97
+#define CX0342_CHANNEL_0_4_L_irst	0x98
+#define CX0342_CHANNEL_0_4_H_irst	0x99
+#define CX0342_CHANNEL_0_5_L_irst	0x9a
+#define CX0342_CHANNEL_0_5_H_irst	0x9b
+#define CX0342_CHANNEL_0_6_L_irst	0x9c
+#define CX0342_CHANNEL_0_6_H_irst	0x9d
+#define CX0342_CHANNEL_0_7_L_irst	0x9e
+#define CX0342_CHANNEL_0_7_H_irst	0x9f
+#define CX0342_CHANNEL_1_0_L_itx	0xa0
+#define CX0342_CHANNEL_1_0_H_itx	0xa1
+#define CX0342_CHANNEL_1_1_L_itx	0xa2
+#define CX0342_CHANNEL_1_1_H_itx	0xa3
+#define CX0342_CHANNEL_1_2_L_itx	0xa4
+#define CX0342_CHANNEL_1_2_H_itx	0xa5
+#define CX0342_CHANNEL_1_3_L_itx	0xa6
+#define CX0342_CHANNEL_1_3_H_itx	0xa7
+#define CX0342_CHANNEL_1_4_L_itx	0xa8
+#define CX0342_CHANNEL_1_4_H_itx	0xa9
+#define CX0342_CHANNEL_1_5_L_itx	0xaa
+#define CX0342_CHANNEL_1_5_H_itx	0xab
+#define CX0342_CHANNEL_1_6_L_itx	0xac
+#define CX0342_CHANNEL_1_6_H_itx	0xad
+#define CX0342_CHANNEL_1_7_L_itx	0xae
+#define CX0342_CHANNEL_1_7_H_itx	0xaf
+#define CX0342_CHANNEL_2_0_L_iwl	0xb0
+#define CX0342_CHANNEL_2_0_H_iwl	0xb1
+#define CX0342_CHANNEL_2_1_L_iwl	0xb2
+#define CX0342_CHANNEL_2_1_H_iwl	0xb3
+#define CX0342_CHANNEL_2_2_L_iwl	0xb4
+#define CX0342_CHANNEL_2_2_H_iwl	0xb5
+#define CX0342_CHANNEL_2_3_L_iwl	0xb6
+#define CX0342_CHANNEL_2_3_H_iwl	0xb7
+#define CX0342_CHANNEL_2_4_L_iwl	0xb8
+#define CX0342_CHANNEL_2_4_H_iwl	0xb9
+#define CX0342_CHANNEL_2_5_L_iwl	0xba
+#define CX0342_CHANNEL_2_5_H_iwl	0xbb
+#define CX0342_CHANNEL_2_6_L_iwl	0xbc
+#define CX0342_CHANNEL_2_6_H_iwl	0xbd
+#define CX0342_CHANNEL_2_7_L_iwl	0xbe
+#define CX0342_CHANNEL_2_7_H_iwl	0xbf
+#define CX0342_CHANNEL_3_0_L_ensp	0xc0
+#define CX0342_CHANNEL_3_0_H_ensp	0xc1
+#define CX0342_CHANNEL_3_1_L_ensp	0xc2
+#define CX0342_CHANNEL_3_1_H_ensp	0xc3
+#define CX0342_CHANNEL_3_2_L_ensp	0xc4
+#define CX0342_CHANNEL_3_2_H_ensp	0xc5
+#define CX0342_CHANNEL_3_3_L_ensp	0xc6
+#define CX0342_CHANNEL_3_3_H_ensp	0xc7
+#define CX0342_CHANNEL_3_4_L_ensp	0xc8
+#define CX0342_CHANNEL_3_4_H_ensp	0xc9
+#define CX0342_CHANNEL_3_5_L_ensp	0xca
+#define CX0342_CHANNEL_3_5_H_ensp	0xcb
+#define CX0342_CHANNEL_3_6_L_ensp	0xcc
+#define CX0342_CHANNEL_3_6_H_ensp	0xcd
+#define CX0342_CHANNEL_3_7_L_ensp	0xce
+#define CX0342_CHANNEL_3_7_H_ensp	0xcf
+#define CX0342_CHANNEL_4_0_L_sela	0xd0
+#define CX0342_CHANNEL_4_0_H_sela	0xd1
+#define CX0342_CHANNEL_4_1_L_sela	0xd2
+#define CX0342_CHANNEL_4_1_H_sela	0xd3
+#define CX0342_CHANNEL_5_0_L_intla	0xe0
+#define CX0342_CHANNEL_5_0_H_intla	0xe1
+#define CX0342_CHANNEL_5_1_L_intla	0xe2
+#define CX0342_CHANNEL_5_1_H_intla	0xe3
+#define CX0342_CHANNEL_5_2_L_intla	0xe4
+#define CX0342_CHANNEL_5_2_H_intla	0xe5
+#define CX0342_CHANNEL_5_3_L_intla	0xe6
+#define CX0342_CHANNEL_5_3_H_intla	0xe7
+#define CX0342_CHANNEL_6_0_L_xa_sel_pos 0xf0
+#define CX0342_CHANNEL_6_0_H_xa_sel_pos 0xf1
+#define CX0342_CHANNEL_7_1_L_cds_pos	0xf2
+#define CX0342_CHANNEL_7_1_H_cds_pos	0xf3
+#define CX0342_SENSOR_HEIGHT_L		0xfb
+#define CX0342_SENSOR_HEIGHT_H		0xfc
+#define CX0342_SENSOR_WIDTH_L		0xfd
+#define CX0342_SENSOR_WIDTH_H		0xfe
+#define CX0342_VSYNC_HSYNC_READ		0xff
 
-काष्ठा cmd अणु
+struct cmd {
 	u8 reg;
 	u8 val;
-पूर्ण;
+};
 
-अटल स्थिर u8 DQT[17][130] = अणु
+static const u8 DQT[17][130] = {
 	/* Define quantization table (thanks to Thomas Kaiser) */
-	अणु			/* Quality 0 */
+	{			/* Quality 0 */
 	 0x00,
 	 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
 	 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
@@ -448,8 +447,8 @@ MODULE_LICENSE("GPL");
 	 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18,
 	 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18,
 	 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18,
-	 पूर्ण,
-	अणु			/* Quality 1 */
+	 },
+	{			/* Quality 1 */
 	 0x00,
 	 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
 	 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
@@ -468,8 +467,8 @@ MODULE_LICENSE("GPL");
 	 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31,
 	 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31,
 	 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31,
-	 पूर्ण,
-	अणु			/* Quality 2 */
+	 },
+	{			/* Quality 2 */
 	 0x00,
 	 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
 	 0x04, 0x04, 0x06, 0x06, 0x06, 0x04, 0x04, 0x04,
@@ -488,8 +487,8 @@ MODULE_LICENSE("GPL");
 	 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a,
 	 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a,
 	 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a, 0x4a,
-	 पूर्ण,
-	अणु			/* Quality 3 */
+	 },
+	{			/* Quality 3 */
 	 0x00,
 	 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
 	 0x04, 0x04, 0x08, 0x08, 0x08, 0x04, 0x04, 0x04,
@@ -508,8 +507,8 @@ MODULE_LICENSE("GPL");
 	 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63,
 	 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63,
 	 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63,
-	 पूर्ण,
-	अणु			/* Quality 4 */
+	 },
+	{			/* Quality 4 */
 	 0x00,
 	 0x04, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05, 0x05,
 	 0x05, 0x05, 0x0a, 0x0a, 0x0a, 0x05, 0x05, 0x05,
@@ -528,8 +527,8 @@ MODULE_LICENSE("GPL");
 	 0x7b, 0x7b, 0x7b, 0x7b, 0x7b, 0x7b, 0x7b, 0x7b,
 	 0x7b, 0x7b, 0x7b, 0x7b, 0x7b, 0x7b, 0x7b, 0x7b,
 	 0x7b, 0x7b, 0x7b, 0x7b, 0x7b, 0x7b, 0x7b, 0x7b,
-	 पूर्ण,
-	अणु			/* Quality 5 */
+	 },
+	{			/* Quality 5 */
 	 0x00,
 	 0x04, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06, 0x06,
 	 0x06, 0x06, 0x0c, 0x0c, 0x0c, 0x06, 0x06, 0x06,
@@ -548,8 +547,8 @@ MODULE_LICENSE("GPL");
 	 0x94, 0x94, 0x94, 0x94, 0x94, 0x94, 0x94, 0x94,
 	 0x94, 0x94, 0x94, 0x94, 0x94, 0x94, 0x94, 0x94,
 	 0x94, 0x94, 0x94, 0x94, 0x94, 0x94, 0x94, 0x94,
-	 पूर्ण,
-	अणु			/* Quality 6 */
+	 },
+	{			/* Quality 6 */
 	 0x00,
 	 0x05, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
 	 0x07, 0x07, 0x0e, 0x0e, 0x0e, 0x07, 0x07, 0x07,
@@ -568,8 +567,8 @@ MODULE_LICENSE("GPL");
 	 0xad, 0xad, 0xad, 0xad, 0xad, 0xad, 0xad, 0xad,
 	 0xad, 0xad, 0xad, 0xad, 0xad, 0xad, 0xad, 0xad,
 	 0xad, 0xad, 0xad, 0xad, 0xad, 0xad, 0xad, 0xad,
-	 पूर्ण,
-	अणु			/* Quality 7 */
+	 },
+	{			/* Quality 7 */
 	 0x00,
 	 0x05, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08,
 	 0x08, 0x08, 0x10, 0x10, 0x10, 0x08, 0x08, 0x08,
@@ -588,8 +587,8 @@ MODULE_LICENSE("GPL");
 	 0xc6, 0xc6, 0xc6, 0xc6, 0xc6, 0xc6, 0xc6, 0xc6,
 	 0xc6, 0xc6, 0xc6, 0xc6, 0xc6, 0xc6, 0xc6, 0xc6,
 	 0xc6, 0xc6, 0xc6, 0xc6, 0xc6, 0xc6, 0xc6, 0xc6,
-	 पूर्ण,
-	अणु			/* Quality 8 */
+	 },
+	{			/* Quality 8 */
 	 0x00,
 	 0x06, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a, 0x0a,
 	 0x0a, 0x0a, 0x14, 0x14, 0x14, 0x0a, 0x0a, 0x0a,
@@ -608,8 +607,8 @@ MODULE_LICENSE("GPL");
 	 0xf7, 0xf7, 0xf7, 0xf7, 0xf7, 0xf7, 0xf7, 0xf7,
 	 0xf7, 0xf7, 0xf7, 0xf7, 0xf7, 0xf7, 0xf7, 0xf7,
 	 0xf7, 0xf7, 0xf7, 0xf7, 0xf7, 0xf7, 0xf7, 0xf7,
-	 पूर्ण,
-	अणु			/* Quality 9 */
+	 },
+	{			/* Quality 9 */
 	 0x00,
 	 0x06, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c, 0x0c,
 	 0x0c, 0x0c, 0x18, 0x18, 0x18, 0x0c, 0x0c, 0x0c,
@@ -628,8 +627,8 @@ MODULE_LICENSE("GPL");
 	 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	 पूर्ण,
-	अणु			/* Quality 10 */
+	 },
+	{			/* Quality 10 */
 	 0x00,
 	 0x07, 0x0e, 0x0e, 0x0e, 0x0e, 0x0e, 0x0e, 0x0e,
 	 0x0e, 0x0e, 0x1c, 0x1c, 0x1c, 0x0e, 0x0e, 0x0e,
@@ -648,8 +647,8 @@ MODULE_LICENSE("GPL");
 	 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	 पूर्ण,
-	अणु			/* Quality 11 */
+	 },
+	{			/* Quality 11 */
 	 0x00,
 	 0x07, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
 	 0x10, 0x10, 0x20, 0x20, 0x20, 0x10, 0x10, 0x10,
@@ -668,8 +667,8 @@ MODULE_LICENSE("GPL");
 	 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	 पूर्ण,
-	अणु			/* Quality 12 */
+	 },
+	{			/* Quality 12 */
 	 0x00,
 	 0x08, 0x14, 0x14, 0x14, 0x14, 0x14, 0x14, 0x14,
 	 0x14, 0x14, 0x28, 0x28, 0x28, 0x14, 0x14, 0x14,
@@ -688,8 +687,8 @@ MODULE_LICENSE("GPL");
 	 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	 पूर्ण,
-	अणु			/* Quality 13 */
+	 },
+	{			/* Quality 13 */
 	 0x00,
 	 0x08, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18,
 	 0x18, 0x18, 0x30, 0x30, 0x30, 0x18, 0x18, 0x18,
@@ -708,8 +707,8 @@ MODULE_LICENSE("GPL");
 	 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	 पूर्ण,
-	अणु			/* Quality 14 */
+	 },
+	{			/* Quality 14 */
 	 0x00,
 	 0x0a, 0x1c, 0x1c, 0x1c, 0x1c, 0x1c, 0x1c, 0x1c,
 	 0x1c, 0x1c, 0x38, 0x38, 0x38, 0x1c, 0x1c, 0x1c,
@@ -728,8 +727,8 @@ MODULE_LICENSE("GPL");
 	 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	 पूर्ण,
-	अणु			/* Quality 15 */
+	 },
+	{			/* Quality 15 */
 	 0x00,
 	 0x0a, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
 	 0x20, 0x20, 0x40, 0x40, 0x40, 0x20, 0x20, 0x20,
@@ -748,8 +747,8 @@ MODULE_LICENSE("GPL");
 	 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 	 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-	 पूर्ण,
-	अणु			/* Quality 16-31 */
+	 },
+	{			/* Quality 16-31 */
 	 0x00,
 	 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
 	 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
@@ -768,341 +767,341 @@ MODULE_LICENSE("GPL");
 	 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
 	 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
 	 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04, 0x04,
-	 पूर्ण
-पूर्ण;
+	 }
+};
 
-अटल स्थिर काष्ठा cmd tp6810_cx_init_common[] = अणु
-	अणु0x1c, 0x00पूर्ण,
-	अणुTP6800_R10_SIF_TYPE, 0x00पूर्ण,
-	अणु0x4e, 0x00पूर्ण,
-	अणु0x4f, 0x00पूर्ण,
-	अणुTP6800_R50, 0xffपूर्ण,
-	अणुTP6800_R51, 0x03पूर्ण,
-	अणु0x00, 0x07पूर्ण,
-	अणुTP6800_R79_QUALITY, 0x03पूर्ण,
-	अणुTP6800_R2F_TIMING_CFG, 0x37पूर्ण,
-	अणुTP6800_R30_SENSOR_CFG, 0x10पूर्ण,
-	अणुTP6800_R21_ENDP_1_CTL, 0x00पूर्ण,
-	अणुTP6800_R52, 0x40पूर्ण,
-	अणुTP6800_R53, 0x40पूर्ण,
-	अणुTP6800_R54_DARK_CFG, 0x40पूर्ण,
-	अणुTP6800_R30_SENSOR_CFG, 0x18पूर्ण,
-	अणु0x4b, 0x00पूर्ण,
-	अणुTP6800_R3F_FRAME_RATE, 0x83पूर्ण,
-	अणुTP6800_R79_QUALITY, 0x05पूर्ण,
-	अणुTP6800_R21_ENDP_1_CTL, 0x00पूर्ण,
-	अणु0x7c, 0x04पूर्ण,
-	अणु0x25, 0x14पूर्ण,
-	अणु0x26, 0x0fपूर्ण,
-	अणु0x7b, 0x10पूर्ण,
-पूर्ण;
+static const struct cmd tp6810_cx_init_common[] = {
+	{0x1c, 0x00},
+	{TP6800_R10_SIF_TYPE, 0x00},
+	{0x4e, 0x00},
+	{0x4f, 0x00},
+	{TP6800_R50, 0xff},
+	{TP6800_R51, 0x03},
+	{0x00, 0x07},
+	{TP6800_R79_QUALITY, 0x03},
+	{TP6800_R2F_TIMING_CFG, 0x37},
+	{TP6800_R30_SENSOR_CFG, 0x10},
+	{TP6800_R21_ENDP_1_CTL, 0x00},
+	{TP6800_R52, 0x40},
+	{TP6800_R53, 0x40},
+	{TP6800_R54_DARK_CFG, 0x40},
+	{TP6800_R30_SENSOR_CFG, 0x18},
+	{0x4b, 0x00},
+	{TP6800_R3F_FRAME_RATE, 0x83},
+	{TP6800_R79_QUALITY, 0x05},
+	{TP6800_R21_ENDP_1_CTL, 0x00},
+	{0x7c, 0x04},
+	{0x25, 0x14},
+	{0x26, 0x0f},
+	{0x7b, 0x10},
+};
 
-अटल स्थिर काष्ठा cmd tp6810_ov_init_common[] = अणु
-	अणु0x1c, 0x00पूर्ण,
-	अणुTP6800_R10_SIF_TYPE, 0x00पूर्ण,
-	अणु0x4e, 0x00पूर्ण,
-	अणु0x4f, 0x00पूर्ण,
-	अणुTP6800_R50, 0xffपूर्ण,
-	अणुTP6800_R51, 0x03पूर्ण,
-	अणु0x00, 0x07पूर्ण,
-	अणुTP6800_R52, 0x40पूर्ण,
-	अणुTP6800_R53, 0x40पूर्ण,
-	अणुTP6800_R54_DARK_CFG, 0x40पूर्ण,
-	अणुTP6800_R79_QUALITY, 0x03पूर्ण,
-	अणुTP6800_R2F_TIMING_CFG, 0x17पूर्ण,
-	अणुTP6800_R30_SENSOR_CFG, 0x18पूर्ण,
-	अणुTP6800_R21_ENDP_1_CTL, 0x00पूर्ण,
-	अणुTP6800_R3F_FRAME_RATE, 0x86पूर्ण,
-	अणु0x25, 0x18पूर्ण,
-	अणु0x26, 0x0fपूर्ण,
-	अणु0x7b, 0x90पूर्ण,
-पूर्ण;
+static const struct cmd tp6810_ov_init_common[] = {
+	{0x1c, 0x00},
+	{TP6800_R10_SIF_TYPE, 0x00},
+	{0x4e, 0x00},
+	{0x4f, 0x00},
+	{TP6800_R50, 0xff},
+	{TP6800_R51, 0x03},
+	{0x00, 0x07},
+	{TP6800_R52, 0x40},
+	{TP6800_R53, 0x40},
+	{TP6800_R54_DARK_CFG, 0x40},
+	{TP6800_R79_QUALITY, 0x03},
+	{TP6800_R2F_TIMING_CFG, 0x17},
+	{TP6800_R30_SENSOR_CFG, 0x18},
+	{TP6800_R21_ENDP_1_CTL, 0x00},
+	{TP6800_R3F_FRAME_RATE, 0x86},
+	{0x25, 0x18},
+	{0x26, 0x0f},
+	{0x7b, 0x90},
+};
 
-अटल स्थिर काष्ठा cmd tp6810_bridge_start[] = अणु
-	अणु0x59, 0x88पूर्ण,
-	अणु0x5a, 0x0fपूर्ण,
-	अणु0x5b, 0x4eपूर्ण,
-	अणुTP6800_R5C_EDGE_THRLD, 0x63पूर्ण,
-	अणुTP6800_R5D_DEMOSAIC_CFG, 0x00पूर्ण,
-	अणु0x03, 0x7fपूर्ण,
-	अणु0x04, 0x80पूर्ण,
-	अणु0x06, 0x00पूर्ण,
-	अणु0x00, 0x00पूर्ण,
-पूर्ण;
+static const struct cmd tp6810_bridge_start[] = {
+	{0x59, 0x88},
+	{0x5a, 0x0f},
+	{0x5b, 0x4e},
+	{TP6800_R5C_EDGE_THRLD, 0x63},
+	{TP6800_R5D_DEMOSAIC_CFG, 0x00},
+	{0x03, 0x7f},
+	{0x04, 0x80},
+	{0x06, 0x00},
+	{0x00, 0x00},
+};
 
-अटल स्थिर काष्ठा cmd tp6810_late_start[] = अणु
-	अणु0x7d, 0x01पूर्ण,
-	अणु0xb0, 0x04पूर्ण,
-	अणु0xb1, 0x04पूर्ण,
-	अणु0xb2, 0x04पूर्ण,
-	अणु0xb3, 0x04पूर्ण,
-	अणु0xb4, 0x04पूर्ण,
-	अणु0xb5, 0x04पूर्ण,
-	अणु0xb6, 0x08पूर्ण,
-	अणु0xb7, 0x08पूर्ण,
-	अणु0xb8, 0x04पूर्ण,
-	अणु0xb9, 0x04पूर्ण,
-	अणु0xba, 0x04पूर्ण,
-	अणु0xbb, 0x04पूर्ण,
-	अणु0xbc, 0x04पूर्ण,
-	अणु0xbd, 0x08पूर्ण,
-	अणु0xbe, 0x08पूर्ण,
-	अणु0xbf, 0x08पूर्ण,
-	अणु0xc0, 0x04पूर्ण,
-	अणु0xc1, 0x04पूर्ण,
-	अणु0xc2, 0x08पूर्ण,
-	अणु0xc3, 0x08पूर्ण,
-	अणु0xc4, 0x08पूर्ण,
-	अणु0xc5, 0x08पूर्ण,
-	अणु0xc6, 0x08पूर्ण,
-	अणु0xc7, 0x13पूर्ण,
-	अणु0xc8, 0x04पूर्ण,
-	अणु0xc9, 0x08पूर्ण,
-	अणु0xca, 0x08पूर्ण,
-	अणु0xcb, 0x08पूर्ण,
-	अणु0xcc, 0x08पूर्ण,
-	अणु0xcd, 0x08पूर्ण,
-	अणु0xce, 0x13पूर्ण,
-	अणु0xcf, 0x13पूर्ण,
-	अणु0xd0, 0x08पूर्ण,
-	अणु0xd1, 0x08पूर्ण,
-	अणु0xd2, 0x08पूर्ण,
-	अणु0xd3, 0x08पूर्ण,
-	अणु0xd4, 0x08पूर्ण,
-	अणु0xd5, 0x13पूर्ण,
-	अणु0xd6, 0x13पूर्ण,
-	अणु0xd7, 0x13पूर्ण,
-	अणु0xd8, 0x08पूर्ण,
-	अणु0xd9, 0x08पूर्ण,
-	अणु0xda, 0x08पूर्ण,
-	अणु0xdb, 0x08पूर्ण,
-	अणु0xdc, 0x13पूर्ण,
-	अणु0xdd, 0x13पूर्ण,
-	अणु0xde, 0x13पूर्ण,
-	अणु0xdf, 0x13पूर्ण,
-	अणु0xe0, 0x08पूर्ण,
-	अणु0xe1, 0x08पूर्ण,
-	अणु0xe2, 0x08पूर्ण,
-	अणु0xe3, 0x13पूर्ण,
-	अणु0xe4, 0x13पूर्ण,
-	अणु0xe5, 0x13पूर्ण,
-	अणु0xe6, 0x13पूर्ण,
-	अणु0xe7, 0x13पूर्ण,
-	अणु0xe8, 0x08पूर्ण,
-	अणु0xe9, 0x08पूर्ण,
-	अणु0xea, 0x13पूर्ण,
-	अणु0xeb, 0x13पूर्ण,
-	अणु0xec, 0x13पूर्ण,
-	अणु0xed, 0x13पूर्ण,
-	अणु0xee, 0x13पूर्ण,
-	अणु0xef, 0x13पूर्ण,
-	अणु0x7d, 0x02पूर्ण,
+static const struct cmd tp6810_late_start[] = {
+	{0x7d, 0x01},
+	{0xb0, 0x04},
+	{0xb1, 0x04},
+	{0xb2, 0x04},
+	{0xb3, 0x04},
+	{0xb4, 0x04},
+	{0xb5, 0x04},
+	{0xb6, 0x08},
+	{0xb7, 0x08},
+	{0xb8, 0x04},
+	{0xb9, 0x04},
+	{0xba, 0x04},
+	{0xbb, 0x04},
+	{0xbc, 0x04},
+	{0xbd, 0x08},
+	{0xbe, 0x08},
+	{0xbf, 0x08},
+	{0xc0, 0x04},
+	{0xc1, 0x04},
+	{0xc2, 0x08},
+	{0xc3, 0x08},
+	{0xc4, 0x08},
+	{0xc5, 0x08},
+	{0xc6, 0x08},
+	{0xc7, 0x13},
+	{0xc8, 0x04},
+	{0xc9, 0x08},
+	{0xca, 0x08},
+	{0xcb, 0x08},
+	{0xcc, 0x08},
+	{0xcd, 0x08},
+	{0xce, 0x13},
+	{0xcf, 0x13},
+	{0xd0, 0x08},
+	{0xd1, 0x08},
+	{0xd2, 0x08},
+	{0xd3, 0x08},
+	{0xd4, 0x08},
+	{0xd5, 0x13},
+	{0xd6, 0x13},
+	{0xd7, 0x13},
+	{0xd8, 0x08},
+	{0xd9, 0x08},
+	{0xda, 0x08},
+	{0xdb, 0x08},
+	{0xdc, 0x13},
+	{0xdd, 0x13},
+	{0xde, 0x13},
+	{0xdf, 0x13},
+	{0xe0, 0x08},
+	{0xe1, 0x08},
+	{0xe2, 0x08},
+	{0xe3, 0x13},
+	{0xe4, 0x13},
+	{0xe5, 0x13},
+	{0xe6, 0x13},
+	{0xe7, 0x13},
+	{0xe8, 0x08},
+	{0xe9, 0x08},
+	{0xea, 0x13},
+	{0xeb, 0x13},
+	{0xec, 0x13},
+	{0xed, 0x13},
+	{0xee, 0x13},
+	{0xef, 0x13},
+	{0x7d, 0x02},
 
 	/* later after isoc start */
-	अणु0x7d, 0x08पूर्ण,
-	अणु0x7d, 0x00पूर्ण,
-पूर्ण;
+	{0x7d, 0x08},
+	{0x7d, 0x00},
+};
 
-अटल स्थिर काष्ठा cmd cx0342_timing_seq[] = अणु
-	अणुCX0342_CHANNEL_0_1_L_irst, 0x20पूर्ण,
-	अणुCX0342_CHANNEL_0_2_L_irst, 0x24पूर्ण,
-	अणुCX0342_CHANNEL_0_2_H_irst, 0x00पूर्ण,
-	अणुCX0342_CHANNEL_0_3_L_irst, 0x2fपूर्ण,
-	अणुCX0342_CHANNEL_0_3_H_irst, 0x00पूर्ण,
-	अणुCX0342_CHANNEL_1_0_L_itx, 0x02पूर्ण,
-	अणुCX0342_CHANNEL_1_0_H_itx, 0x00पूर्ण,
-	अणुCX0342_CHANNEL_1_1_L_itx, 0x20पूर्ण,
-	अणुCX0342_CHANNEL_1_1_H_itx, 0x00पूर्ण,
-	अणुCX0342_CHANNEL_1_2_L_itx, 0xe4पूर्ण,
-	अणुCX0342_CHANNEL_1_2_H_itx, 0x00पूर्ण,
-	अणुCX0342_CHANNEL_1_3_L_itx, 0xeeपूर्ण,
-	अणुCX0342_CHANNEL_1_3_H_itx, 0x00पूर्ण,
-	अणुCX0342_CHANNEL_2_0_L_iwl, 0x30पूर्ण,
-	अणुCX0342_CHANNEL_2_0_H_iwl, 0x00पूर्ण,
-	अणुCX0342_CHANNEL_3_0_L_ensp, 0x34पूर्ण,
-	अणुCX0342_CHANNEL_3_1_L_ensp, 0xe2पूर्ण,
-	अणुCX0342_CHANNEL_3_1_H_ensp, 0x00पूर्ण,
-	अणुCX0342_CHANNEL_3_2_L_ensp, 0xf6पूर्ण,
-	अणुCX0342_CHANNEL_3_2_H_ensp, 0x00पूर्ण,
-	अणुCX0342_CHANNEL_3_3_L_ensp, 0xf4पूर्ण,
-	अणुCX0342_CHANNEL_3_3_H_ensp, 0x02पूर्ण,
-	अणुCX0342_CHANNEL_4_0_L_sela, 0x26पूर्ण,
-	अणुCX0342_CHANNEL_4_0_H_sela, 0x00पूर्ण,
-	अणुCX0342_CHANNEL_4_1_L_sela, 0xe2पूर्ण,
-	अणुCX0342_CHANNEL_4_1_H_sela, 0x00पूर्ण,
-	अणुCX0342_CHANNEL_5_0_L_पूर्णांकla, 0x26पूर्ण,
-	अणुCX0342_CHANNEL_5_1_L_पूर्णांकla, 0x29पूर्ण,
-	अणुCX0342_CHANNEL_5_2_L_पूर्णांकla, 0xf0पूर्ण,
-	अणुCX0342_CHANNEL_5_2_H_पूर्णांकla, 0x00पूर्ण,
-	अणुCX0342_CHANNEL_5_3_L_पूर्णांकla, 0xf3पूर्ण,
-	अणुCX0342_CHANNEL_5_3_H_पूर्णांकla, 0x00पूर्ण,
-	अणुCX0342_CHANNEL_6_0_L_xa_sel_pos, 0x24पूर्ण,
-	अणुCX0342_CHANNEL_7_1_L_cds_pos, 0x02पूर्ण,
-	अणुCX0342_TIMING_EN, 0x01पूर्ण,
-पूर्ण;
+static const struct cmd cx0342_timing_seq[] = {
+	{CX0342_CHANNEL_0_1_L_irst, 0x20},
+	{CX0342_CHANNEL_0_2_L_irst, 0x24},
+	{CX0342_CHANNEL_0_2_H_irst, 0x00},
+	{CX0342_CHANNEL_0_3_L_irst, 0x2f},
+	{CX0342_CHANNEL_0_3_H_irst, 0x00},
+	{CX0342_CHANNEL_1_0_L_itx, 0x02},
+	{CX0342_CHANNEL_1_0_H_itx, 0x00},
+	{CX0342_CHANNEL_1_1_L_itx, 0x20},
+	{CX0342_CHANNEL_1_1_H_itx, 0x00},
+	{CX0342_CHANNEL_1_2_L_itx, 0xe4},
+	{CX0342_CHANNEL_1_2_H_itx, 0x00},
+	{CX0342_CHANNEL_1_3_L_itx, 0xee},
+	{CX0342_CHANNEL_1_3_H_itx, 0x00},
+	{CX0342_CHANNEL_2_0_L_iwl, 0x30},
+	{CX0342_CHANNEL_2_0_H_iwl, 0x00},
+	{CX0342_CHANNEL_3_0_L_ensp, 0x34},
+	{CX0342_CHANNEL_3_1_L_ensp, 0xe2},
+	{CX0342_CHANNEL_3_1_H_ensp, 0x00},
+	{CX0342_CHANNEL_3_2_L_ensp, 0xf6},
+	{CX0342_CHANNEL_3_2_H_ensp, 0x00},
+	{CX0342_CHANNEL_3_3_L_ensp, 0xf4},
+	{CX0342_CHANNEL_3_3_H_ensp, 0x02},
+	{CX0342_CHANNEL_4_0_L_sela, 0x26},
+	{CX0342_CHANNEL_4_0_H_sela, 0x00},
+	{CX0342_CHANNEL_4_1_L_sela, 0xe2},
+	{CX0342_CHANNEL_4_1_H_sela, 0x00},
+	{CX0342_CHANNEL_5_0_L_intla, 0x26},
+	{CX0342_CHANNEL_5_1_L_intla, 0x29},
+	{CX0342_CHANNEL_5_2_L_intla, 0xf0},
+	{CX0342_CHANNEL_5_2_H_intla, 0x00},
+	{CX0342_CHANNEL_5_3_L_intla, 0xf3},
+	{CX0342_CHANNEL_5_3_H_intla, 0x00},
+	{CX0342_CHANNEL_6_0_L_xa_sel_pos, 0x24},
+	{CX0342_CHANNEL_7_1_L_cds_pos, 0x02},
+	{CX0342_TIMING_EN, 0x01},
+};
 
 /* define the JPEG header */
-अटल व्योम jpeg_define(u8 *jpeg_hdr,
-			पूर्णांक height,
-			पूर्णांक width)
-अणु
-	स_नकल(jpeg_hdr, jpeg_head, माप jpeg_head);
+static void jpeg_define(u8 *jpeg_hdr,
+			int height,
+			int width)
+{
+	memcpy(jpeg_hdr, jpeg_head, sizeof jpeg_head);
 	jpeg_hdr[JPEG_HEIGHT_OFFSET + 0] = height >> 8;
 	jpeg_hdr[JPEG_HEIGHT_OFFSET + 1] = height;
 	jpeg_hdr[JPEG_HEIGHT_OFFSET + 2] = width >> 8;
 	jpeg_hdr[JPEG_HEIGHT_OFFSET + 3] = width;
-पूर्ण
+}
 
-/* set the JPEG quality क्रम sensor soi763a */
-अटल व्योम jpeg_set_qual(u8 *jpeg_hdr,
-			  पूर्णांक quality)
-अणु
-	पूर्णांक i, sc;
+/* set the JPEG quality for sensor soi763a */
+static void jpeg_set_qual(u8 *jpeg_hdr,
+			  int quality)
+{
+	int i, sc;
 
-	अगर (quality <= 0)
+	if (quality <= 0)
 		sc = 5000;
-	अन्यथा अगर (quality < 50)
+	else if (quality < 50)
 		sc = 5000 / quality;
-	अन्यथा
+	else
 		sc = 200 - quality * 2;
-	क्रम (i = 0; i < 64; i++) अणु
+	for (i = 0; i < 64; i++) {
 		jpeg_hdr[JPEG_QT0_OFFSET + i] =
 			(jpeg_head[JPEG_QT0_OFFSET + i] * sc + 50) / 100;
 		jpeg_hdr[JPEG_QT1_OFFSET + i] =
 			(jpeg_head[JPEG_QT1_OFFSET + i] * sc + 50) / 100;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम reg_w(काष्ठा gspca_dev *gspca_dev, u8 index, u8 value)
-अणु
-	काष्ठा usb_device *dev = gspca_dev->dev;
-	पूर्णांक ret;
+static void reg_w(struct gspca_dev *gspca_dev, u8 index, u8 value)
+{
+	struct usb_device *dev = gspca_dev->dev;
+	int ret;
 
-	अगर (gspca_dev->usb_err < 0)
-		वापस;
+	if (gspca_dev->usb_err < 0)
+		return;
 	ret = usb_control_msg(dev, usb_sndctrlpipe(dev, 0),
 			0x0e,
-			USB_सूची_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
-			value, index, शून्य, 0, 500);
-	अगर (ret < 0) अणु
+			USB_DIR_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+			value, index, NULL, 0, 500);
+	if (ret < 0) {
 		pr_err("reg_w err %d\n", ret);
 		gspca_dev->usb_err = ret;
-	पूर्ण
-पूर्ण
+	}
+}
 
-/* the वापसed value is in gspca_dev->usb_buf */
-अटल व्योम reg_r(काष्ठा gspca_dev *gspca_dev, u8 index)
-अणु
-	काष्ठा usb_device *dev = gspca_dev->dev;
-	पूर्णांक ret;
+/* the returned value is in gspca_dev->usb_buf */
+static void reg_r(struct gspca_dev *gspca_dev, u8 index)
+{
+	struct usb_device *dev = gspca_dev->dev;
+	int ret;
 
-	अगर (gspca_dev->usb_err < 0)
-		वापस;
+	if (gspca_dev->usb_err < 0)
+		return;
 	ret = usb_control_msg(dev, usb_rcvctrlpipe(dev, 0),
 			0x0d,
-			USB_सूची_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
+			USB_DIR_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE,
 			0, index, gspca_dev->usb_buf, 1, 500);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		pr_err("reg_r err %d\n", ret);
 		gspca_dev->usb_err = ret;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम reg_w_buf(काष्ठा gspca_dev *gspca_dev,
-			स्थिर काष्ठा cmd *p, पूर्णांक l)
-अणु
-	करो अणु
+static void reg_w_buf(struct gspca_dev *gspca_dev,
+			const struct cmd *p, int l)
+{
+	do {
 		reg_w(gspca_dev, p->reg, p->val);
 		p++;
-	पूर्ण जबतक (--l > 0);
-पूर्ण
+	} while (--l > 0);
+}
 
-अटल पूर्णांक i2c_w(काष्ठा gspca_dev *gspca_dev, u8 index, u8 value)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+static int i2c_w(struct gspca_dev *gspca_dev, u8 index, u8 value)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
 
 	reg_w(gspca_dev, TP6800_R11_SIF_CONTROL, 0x00);
 	reg_w(gspca_dev, TP6800_R19_SIF_ADDR_S2, index);
 	reg_w(gspca_dev, TP6800_R13_SIF_TX_DATA, value);
 	reg_w(gspca_dev, TP6800_R11_SIF_CONTROL, 0x01);
-	अगर (sd->bridge == BRIDGE_TP6800)
-		वापस 0;
+	if (sd->bridge == BRIDGE_TP6800)
+		return 0;
 	msleep(5);
 	reg_r(gspca_dev, TP6800_R11_SIF_CONTROL);
-	अगर (gspca_dev->usb_buf[0] == 0)
-		वापस 0;
+	if (gspca_dev->usb_buf[0] == 0)
+		return 0;
 	reg_w(gspca_dev, TP6800_R11_SIF_CONTROL, 0x00);
-	वापस -1;				/* error */
-पूर्ण
+	return -1;				/* error */
+}
 
-अटल व्योम i2c_w_buf(काष्ठा gspca_dev *gspca_dev,
-			स्थिर काष्ठा cmd *p, पूर्णांक l)
-अणु
-	करो अणु
+static void i2c_w_buf(struct gspca_dev *gspca_dev,
+			const struct cmd *p, int l)
+{
+	do {
 		i2c_w(gspca_dev, p->reg, p->val);
 		p++;
-	पूर्ण जबतक (--l > 0);
-पूर्ण
+	} while (--l > 0);
+}
 
-अटल पूर्णांक i2c_r(काष्ठा gspca_dev *gspca_dev, u8 index, पूर्णांक len)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
-	पूर्णांक v;
+static int i2c_r(struct gspca_dev *gspca_dev, u8 index, int len)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
+	int v;
 
 	reg_w(gspca_dev, TP6800_R19_SIF_ADDR_S2, index);
 	reg_w(gspca_dev, TP6800_R11_SIF_CONTROL, 0x02);
 	msleep(5);
 	reg_r(gspca_dev, TP6800_R14_SIF_RX_DATA);
 	v = gspca_dev->usb_buf[0];
-	अगर (sd->bridge == BRIDGE_TP6800)
-		वापस v;
-	अगर (len > 1) अणु
+	if (sd->bridge == BRIDGE_TP6800)
+		return v;
+	if (len > 1) {
 		reg_r(gspca_dev, TP6800_R1B_SIF_RX_DATA2);
 		v |= (gspca_dev->usb_buf[0] << 8);
-	पूर्ण
+	}
 	reg_r(gspca_dev, TP6800_R11_SIF_CONTROL);
-	अगर (gspca_dev->usb_buf[0] == 0)
-		वापस v;
+	if (gspca_dev->usb_buf[0] == 0)
+		return v;
 	reg_w(gspca_dev, TP6800_R11_SIF_CONTROL, 0x00);
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-अटल व्योम bulk_w(काष्ठा gspca_dev *gspca_dev,
+static void bulk_w(struct gspca_dev *gspca_dev,
 		  u8 tag,
-		  स्थिर u8 *data,
-		  पूर्णांक length)
-अणु
-	काष्ठा usb_device *dev = gspca_dev->dev;
-	पूर्णांक count, actual_count, ret;
+		  const u8 *data,
+		  int length)
+{
+	struct usb_device *dev = gspca_dev->dev;
+	int count, actual_count, ret;
 
-	अगर (gspca_dev->usb_err < 0)
-		वापस;
-	क्रम (;;) अणु
+	if (gspca_dev->usb_err < 0)
+		return;
+	for (;;) {
 		count = length > BULK_OUT_SIZE - 1
 				? BULK_OUT_SIZE - 1 : length;
 		gspca_dev->usb_buf[0] = tag;
-		स_नकल(&gspca_dev->usb_buf[1], data, count);
+		memcpy(&gspca_dev->usb_buf[1], data, count);
 		ret = usb_bulk_msg(dev,
 				   usb_sndbulkpipe(dev, 3),
 				   gspca_dev->usb_buf, count + 1,
 				   &actual_count, 500);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			pr_err("bulk write error %d tag=%02x\n",
 				ret, tag);
 			gspca_dev->usb_err = ret;
-			वापस;
-		पूर्ण
+			return;
+		}
 		length -= count;
-		अगर (length <= 0)
-			अवरोध;
+		if (length <= 0)
+			break;
 		data += count;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक probe_6810(काष्ठा gspca_dev *gspca_dev)
-अणु
+static int probe_6810(struct gspca_dev *gspca_dev)
+{
 	u8 gpio;
-	पूर्णांक ret;
+	int ret;
 
 	reg_r(gspca_dev, TP6800_R18_GPIO_DATA);
 	gpio = gspca_dev->usb_buf[0];
@@ -1112,14 +1111,14 @@ MODULE_LICENSE("GPL");
 	reg_w(gspca_dev, TP6800_R10_SIF_TYPE, 0x04);	/* i2c 16 bits */
 	reg_w(gspca_dev, TP6800_R12_SIF_ADDR_S, 0x21);	/* ov??? */
 	reg_w(gspca_dev, TP6800_R1A_SIF_TX_DATA2, 0x00);
-	अगर (i2c_w(gspca_dev, 0x00, 0x00) >= 0)
-		वापस SENSOR_SOI763A;
+	if (i2c_w(gspca_dev, 0x00, 0x00) >= 0)
+		return SENSOR_SOI763A;
 
 	reg_w(gspca_dev, TP6800_R18_GPIO_DATA, gpio | 0x20);
 	reg_w(gspca_dev, TP6800_R10_SIF_TYPE, 0x00);	/* i2c 8 bits */
 	reg_w(gspca_dev, TP6800_R12_SIF_ADDR_S, 0x7f);	/* (unknown i2c) */
-	अगर (i2c_w(gspca_dev, 0x00, 0x00) >= 0)
-		वापस -2;
+	if (i2c_w(gspca_dev, 0x00, 0x00) >= 0)
+		return -2;
 
 	reg_w(gspca_dev, TP6800_R18_GPIO_DATA, gpio | 0x20);
 	reg_w(gspca_dev, TP6800_R18_GPIO_DATA, gpio);
@@ -1127,20 +1126,20 @@ MODULE_LICENSE("GPL");
 	reg_w(gspca_dev, TP6800_R10_SIF_TYPE, 0x00);	/* i2c 8 bits */
 	reg_w(gspca_dev, TP6800_R12_SIF_ADDR_S, 0x11);	/* tas??? / hv??? */
 	ret = i2c_r(gspca_dev, 0x00, 1);
-	अगर (ret > 0)
-		वापस -3;
+	if (ret > 0)
+		return -3;
 
 	reg_w(gspca_dev, TP6800_R18_GPIO_DATA, gpio | 0x20);
 	reg_w(gspca_dev, TP6800_R18_GPIO_DATA, gpio);
 	reg_w(gspca_dev, TP6800_R18_GPIO_DATA, gpio | 0x20);
 	reg_w(gspca_dev, TP6800_R12_SIF_ADDR_S, 0x6e);	/* po??? */
 	ret = i2c_r(gspca_dev, 0x00, 1);
-	अगर (ret > 0)
-		वापस -4;
+	if (ret > 0)
+		return -4;
 
 	ret = i2c_r(gspca_dev, 0x01, 1);
-	अगर (ret > 0)
-		वापस -5;
+	if (ret > 0)
+		return -5;
 
 	reg_w(gspca_dev, TP6800_R18_GPIO_DATA, gpio | 0x20);
 	reg_w(gspca_dev, TP6800_R18_GPIO_DATA, gpio);
@@ -1148,24 +1147,24 @@ MODULE_LICENSE("GPL");
 	reg_w(gspca_dev, TP6800_R10_SIF_TYPE, 0x04);	/* i2c 16 bits */
 	reg_w(gspca_dev, TP6800_R12_SIF_ADDR_S, 0x5d);	/* mi/mt??? */
 	ret = i2c_r(gspca_dev, 0x00, 2);
-	अगर (ret > 0)
-		वापस -6;
+	if (ret > 0)
+		return -6;
 
 	reg_w(gspca_dev, TP6800_R18_GPIO_DATA, gpio | 0x20);
 	reg_w(gspca_dev, TP6800_R18_GPIO_DATA, gpio);
 	reg_w(gspca_dev, TP6800_R18_GPIO_DATA, gpio | 0x20);
 	reg_w(gspca_dev, TP6800_R12_SIF_ADDR_S, 0x5c);	/* mi/mt??? */
 	ret = i2c_r(gspca_dev, 0x36, 2);
-	अगर (ret > 0)
-		वापस -7;
+	if (ret > 0)
+		return -7;
 
 	reg_w(gspca_dev, TP6800_R18_GPIO_DATA, gpio);
 	reg_w(gspca_dev, TP6800_R18_GPIO_DATA, gpio | 0x20);
 	reg_w(gspca_dev, TP6800_R18_GPIO_DATA, gpio);
 	reg_w(gspca_dev, TP6800_R12_SIF_ADDR_S, 0x61);	/* (unknown i2c) */
 	reg_w(gspca_dev, TP6800_R1A_SIF_TX_DATA2, 0x10);
-	अगर (i2c_w(gspca_dev, 0xff, 0x00) >= 0)
-		वापस -8;
+	if (i2c_w(gspca_dev, 0xff, 0x00) >= 0)
+		return -8;
 
 	reg_w(gspca_dev, TP6800_R18_GPIO_DATA, gpio | 0x20);
 	reg_w(gspca_dev, TP6800_R18_GPIO_DATA, gpio);
@@ -1173,62 +1172,62 @@ MODULE_LICENSE("GPL");
 	reg_w(gspca_dev, TP6800_R10_SIF_TYPE, 0x00);	/* i2c 8 bits */
 	reg_w(gspca_dev, TP6800_R12_SIF_ADDR_S, 0x20);	/* cx0342 */
 	ret = i2c_r(gspca_dev, 0x00, 1);
-	अगर (ret > 0)
-		वापस SENSOR_CX0342;
-	वापस -9;
-पूर्ण
+	if (ret > 0)
+		return SENSOR_CX0342;
+	return -9;
+}
 
-अटल व्योम cx0342_6810_init(काष्ठा gspca_dev *gspca_dev)
-अणु
-	अटल स्थिर काष्ठा cmd reg_init_1[] = अणु
-		अणुTP6800_R2F_TIMING_CFG, 0x2fपूर्ण,
-		अणु0x25, 0x02पूर्ण,
-		अणुTP6800_R21_ENDP_1_CTL, 0x00पूर्ण,
-		अणुTP6800_R3F_FRAME_RATE, 0x80पूर्ण,
-		अणुTP6800_R2F_TIMING_CFG, 0x2fपूर्ण,
-		अणुTP6800_R18_GPIO_DATA, 0xe1पूर्ण,
-		अणुTP6800_R18_GPIO_DATA, 0xc1पूर्ण,
-		अणुTP6800_R18_GPIO_DATA, 0xe1पूर्ण,
-		अणुTP6800_R11_SIF_CONTROL, 0x00पूर्ण,
-	पूर्ण;
-	अटल स्थिर काष्ठा cmd reg_init_2[] = अणु
-		अणुTP6800_R78_FORMAT, 0x48पूर्ण,
-		अणुTP6800_R11_SIF_CONTROL, 0x00पूर्ण,
-	पूर्ण;
-	अटल स्थिर काष्ठा cmd sensor_init[] = अणु
-		अणुCX0342_OUTPUT_CTRL, 0x07पूर्ण,
-		अणुCX0342_BYPASS_MODE, 0x58पूर्ण,
-		अणुCX0342_GPXLTHD_L, 0x28पूर्ण,
-		अणुCX0342_RBPXLTHD_L, 0x28पूर्ण,
-		अणुCX0342_PLANETHD_L, 0x50पूर्ण,
-		अणुCX0342_PLANETHD_H, 0x03पूर्ण,
-		अणुCX0342_RB_GAP_L, 0xffपूर्ण,
-		अणुCX0342_RB_GAP_H, 0x07पूर्ण,
-		अणुCX0342_G_GAP_L, 0xffपूर्ण,
-		अणुCX0342_G_GAP_H, 0x07पूर्ण,
-		अणुCX0342_RST_OVERFLOW_L, 0x5cपूर्ण,
-		अणुCX0342_RST_OVERFLOW_H, 0x01पूर्ण,
-		अणुCX0342_DATA_OVERFLOW_L, 0xfcपूर्ण,
-		अणुCX0342_DATA_OVERFLOW_H, 0x03पूर्ण,
-		अणुCX0342_DATA_UNDERFLOW_L, 0x00पूर्ण,
-		अणुCX0342_DATA_UNDERFLOW_H, 0x00पूर्ण,
-		अणुCX0342_SYS_CTRL_0, 0x40पूर्ण,
-		अणुCX0342_GLOBAL_GAIN, 0x01पूर्ण,
-		अणुCX0342_CLOCK_GEN, 0x00पूर्ण,
-		अणुCX0342_SYS_CTRL_0, 0x02पूर्ण,
-		अणुCX0342_IDLE_CTRL, 0x05पूर्ण,
-		अणुCX0342_ADCGN, 0x00पूर्ण,
-		अणुCX0342_ADC_CTL, 0x00पूर्ण,
-		अणुCX0342_LVRST_BLBIAS, 0x01पूर्ण,
-		अणुCX0342_VTHSEL, 0x0bपूर्ण,
-		अणुCX0342_RAMP_RIV, 0x0bपूर्ण,
-		अणुCX0342_LDOSEL, 0x07पूर्ण,
-		अणुCX0342_SPV_VALUE_L, 0x40पूर्ण,
-		अणुCX0342_SPV_VALUE_H, 0x02पूर्ण,
+static void cx0342_6810_init(struct gspca_dev *gspca_dev)
+{
+	static const struct cmd reg_init_1[] = {
+		{TP6800_R2F_TIMING_CFG, 0x2f},
+		{0x25, 0x02},
+		{TP6800_R21_ENDP_1_CTL, 0x00},
+		{TP6800_R3F_FRAME_RATE, 0x80},
+		{TP6800_R2F_TIMING_CFG, 0x2f},
+		{TP6800_R18_GPIO_DATA, 0xe1},
+		{TP6800_R18_GPIO_DATA, 0xc1},
+		{TP6800_R18_GPIO_DATA, 0xe1},
+		{TP6800_R11_SIF_CONTROL, 0x00},
+	};
+	static const struct cmd reg_init_2[] = {
+		{TP6800_R78_FORMAT, 0x48},
+		{TP6800_R11_SIF_CONTROL, 0x00},
+	};
+	static const struct cmd sensor_init[] = {
+		{CX0342_OUTPUT_CTRL, 0x07},
+		{CX0342_BYPASS_MODE, 0x58},
+		{CX0342_GPXLTHD_L, 0x28},
+		{CX0342_RBPXLTHD_L, 0x28},
+		{CX0342_PLANETHD_L, 0x50},
+		{CX0342_PLANETHD_H, 0x03},
+		{CX0342_RB_GAP_L, 0xff},
+		{CX0342_RB_GAP_H, 0x07},
+		{CX0342_G_GAP_L, 0xff},
+		{CX0342_G_GAP_H, 0x07},
+		{CX0342_RST_OVERFLOW_L, 0x5c},
+		{CX0342_RST_OVERFLOW_H, 0x01},
+		{CX0342_DATA_OVERFLOW_L, 0xfc},
+		{CX0342_DATA_OVERFLOW_H, 0x03},
+		{CX0342_DATA_UNDERFLOW_L, 0x00},
+		{CX0342_DATA_UNDERFLOW_H, 0x00},
+		{CX0342_SYS_CTRL_0, 0x40},
+		{CX0342_GLOBAL_GAIN, 0x01},
+		{CX0342_CLOCK_GEN, 0x00},
+		{CX0342_SYS_CTRL_0, 0x02},
+		{CX0342_IDLE_CTRL, 0x05},
+		{CX0342_ADCGN, 0x00},
+		{CX0342_ADC_CTL, 0x00},
+		{CX0342_LVRST_BLBIAS, 0x01},
+		{CX0342_VTHSEL, 0x0b},
+		{CX0342_RAMP_RIV, 0x0b},
+		{CX0342_LDOSEL, 0x07},
+		{CX0342_SPV_VALUE_L, 0x40},
+		{CX0342_SPV_VALUE_H, 0x02},
 
-		अणुCX0342_AUTO_ADC_CALIB, 0x81पूर्ण,
-		अणुCX0342_TIMING_EN, 0x01पूर्ण,
-	पूर्ण;
+		{CX0342_AUTO_ADC_CALIB, 0x81},
+		{CX0342_TIMING_EN, 0x01},
+	};
 
 	reg_w_buf(gspca_dev, reg_init_1, ARRAY_SIZE(reg_init_1));
 	reg_w_buf(gspca_dev, tp6810_cx_init_common,
@@ -1238,152 +1237,152 @@ MODULE_LICENSE("GPL");
 	reg_w(gspca_dev, TP6800_R12_SIF_ADDR_S, 0x20);	/* cx0342 I2C addr */
 	i2c_w_buf(gspca_dev, sensor_init, ARRAY_SIZE(sensor_init));
 	i2c_w_buf(gspca_dev, cx0342_timing_seq, ARRAY_SIZE(cx0342_timing_seq));
-पूर्ण
+}
 
-अटल व्योम soi763a_6810_init(काष्ठा gspca_dev *gspca_dev)
-अणु
-	अटल स्थिर काष्ठा cmd reg_init_1[] = अणु
-		अणुTP6800_R2F_TIMING_CFG, 0x2fपूर्ण,
-		अणुTP6800_R18_GPIO_DATA, 0xe1पूर्ण,
-		अणु0x25, 0x02पूर्ण,
-		अणुTP6800_R21_ENDP_1_CTL, 0x00पूर्ण,
-		अणुTP6800_R3F_FRAME_RATE, 0x80पूर्ण,
-		अणुTP6800_R2F_TIMING_CFG, 0x2fपूर्ण,
-		अणुTP6800_R18_GPIO_DATA, 0xc1पूर्ण,
-	पूर्ण;
-	अटल स्थिर काष्ठा cmd reg_init_2[] = अणु
-		अणुTP6800_R78_FORMAT, 0x54पूर्ण,
-	पूर्ण;
-	अटल स्थिर काष्ठा cmd sensor_init[] = अणु
-		अणु0x00, 0x00पूर्ण,
-		अणु0x01, 0x80पूर्ण,
-		अणु0x02, 0x80पूर्ण,
-		अणु0x03, 0x90पूर्ण,
-		अणु0x04, 0x20पूर्ण,
-		अणु0x05, 0x20पूर्ण,
-		अणु0x06, 0x80पूर्ण,
-		अणु0x07, 0x00पूर्ण,
-		अणु0x08, 0xffपूर्ण,
-		अणु0x09, 0xffपूर्ण,
-		अणु0x0a, 0x76पूर्ण,		/* 7630 = soi673a */
-		अणु0x0b, 0x30पूर्ण,
-		अणु0x0c, 0x20पूर्ण,
-		अणु0x0d, 0x20पूर्ण,
-		अणु0x0e, 0xffपूर्ण,
-		अणु0x0f, 0xffपूर्ण,
-		अणु0x10, 0x41पूर्ण,
-		अणु0x15, 0x14पूर्ण,
-		अणु0x11, 0x40पूर्ण,
-		अणु0x12, 0x48पूर्ण,
-		अणु0x13, 0x80पूर्ण,
-		अणु0x14, 0x80पूर्ण,
-		अणु0x16, 0x03पूर्ण,
-		अणु0x28, 0xb0पूर्ण,
-		अणु0x71, 0x20पूर्ण,
-		अणु0x75, 0x8eपूर्ण,
-		अणु0x17, 0x1bपूर्ण,
-		अणु0x18, 0xbdपूर्ण,
-		अणु0x19, 0x05पूर्ण,
-		अणु0x1a, 0xf6पूर्ण,
-		अणु0x1b, 0x04पूर्ण,
-		अणु0x1c, 0x7fपूर्ण,		/* omnivision */
-		अणु0x1d, 0xa2पूर्ण,
-		अणु0x1e, 0x00पूर्ण,
-		अणु0x1f, 0x00पूर्ण,
-		अणु0x20, 0x45पूर्ण,
-		अणु0x21, 0x80पूर्ण,
-		अणु0x22, 0x80पूर्ण,
-		अणु0x23, 0xeeपूर्ण,
-		अणु0x24, 0x50पूर्ण,
-		अणु0x25, 0x7aपूर्ण,
-		अणु0x26, 0xa0पूर्ण,
-		अणु0x27, 0x9aपूर्ण,
-		अणु0x29, 0x30पूर्ण,
-		अणु0x2a, 0x80पूर्ण,
-		अणु0x2b, 0x00पूर्ण,
-		अणु0x2c, 0xacपूर्ण,
-		अणु0x2d, 0x05पूर्ण,
-		अणु0x2e, 0x80पूर्ण,
-		अणु0x2f, 0x3cपूर्ण,
-		अणु0x30, 0x22पूर्ण,
-		अणु0x31, 0x00पूर्ण,
-		अणु0x32, 0x86पूर्ण,
-		अणु0x33, 0x08पूर्ण,
-		अणु0x34, 0xffपूर्ण,
-		अणु0x35, 0xffपूर्ण,
-		अणु0x36, 0xffपूर्ण,
-		अणु0x37, 0xffपूर्ण,
-		अणु0x38, 0xffपूर्ण,
-		अणु0x39, 0xffपूर्ण,
-		अणु0x3a, 0xfeपूर्ण,
-		अणु0x3b, 0xfeपूर्ण,
-		अणु0x3c, 0xfeपूर्ण,
-		अणु0x3d, 0xfeपूर्ण,
-		अणु0x3e, 0xfeपूर्ण,
-		अणु0x3f, 0x71पूर्ण,
-		अणु0x40, 0xffपूर्ण,
-		अणु0x41, 0xffपूर्ण,
-		अणु0x42, 0xffपूर्ण,
-		अणु0x43, 0xffपूर्ण,
-		अणु0x44, 0xffपूर्ण,
-		अणु0x45, 0xffपूर्ण,
-		अणु0x46, 0xffपूर्ण,
-		अणु0x47, 0xffपूर्ण,
-		अणु0x48, 0xffपूर्ण,
-		अणु0x49, 0xffपूर्ण,
-		अणु0x4a, 0xfeपूर्ण,
-		अणु0x4b, 0xffपूर्ण,
-		अणु0x4c, 0x00पूर्ण,
-		अणु0x4d, 0x00पूर्ण,
-		अणु0x4e, 0xffपूर्ण,
-		अणु0x4f, 0xffपूर्ण,
-		अणु0x50, 0xffपूर्ण,
-		अणु0x51, 0xffपूर्ण,
-		अणु0x52, 0xffपूर्ण,
-		अणु0x53, 0xffपूर्ण,
-		अणु0x54, 0xffपूर्ण,
-		अणु0x55, 0xffपूर्ण,
-		अणु0x56, 0xffपूर्ण,
-		अणु0x57, 0xffपूर्ण,
-		अणु0x58, 0xffपूर्ण,
-		अणु0x59, 0xffपूर्ण,
-		अणु0x5a, 0xffपूर्ण,
-		अणु0x5b, 0xfeपूर्ण,
-		अणु0x5c, 0xffपूर्ण,
-		अणु0x5d, 0x8fपूर्ण,
-		अणु0x5e, 0xffपूर्ण,
-		अणु0x5f, 0x8fपूर्ण,
-		अणु0x60, 0xa2पूर्ण,
-		अणु0x61, 0x4aपूर्ण,
-		अणु0x62, 0xf3पूर्ण,
-		अणु0x63, 0x75पूर्ण,
-		अणु0x64, 0xf0पूर्ण,
-		अणु0x65, 0x00पूर्ण,
-		अणु0x66, 0x55पूर्ण,
-		अणु0x67, 0x92पूर्ण,
-		अणु0x68, 0xa0पूर्ण,
-		अणु0x69, 0x4aपूर्ण,
-		अणु0x6a, 0x22पूर्ण,
-		अणु0x6b, 0x00पूर्ण,
-		अणु0x6c, 0x33पूर्ण,
-		अणु0x6d, 0x44पूर्ण,
-		अणु0x6e, 0x22पूर्ण,
-		अणु0x6f, 0x84पूर्ण,
-		अणु0x70, 0x0bपूर्ण,
-		अणु0x72, 0x10पूर्ण,
-		अणु0x73, 0x50पूर्ण,
-		अणु0x74, 0x21पूर्ण,
-		अणु0x76, 0x00पूर्ण,
-		अणु0x77, 0xa5पूर्ण,
-		अणु0x78, 0x80पूर्ण,
-		अणु0x79, 0x80पूर्ण,
-		अणु0x7a, 0x80पूर्ण,
-		अणु0x7b, 0xe2पूर्ण,
-		अणु0x7c, 0x00पूर्ण,
-		अणु0x7d, 0xf7पूर्ण,
-		अणु0x7e, 0x00पूर्ण,
-		अणु0x7f, 0x00पूर्ण,
-	पूर्ण;
+static void soi763a_6810_init(struct gspca_dev *gspca_dev)
+{
+	static const struct cmd reg_init_1[] = {
+		{TP6800_R2F_TIMING_CFG, 0x2f},
+		{TP6800_R18_GPIO_DATA, 0xe1},
+		{0x25, 0x02},
+		{TP6800_R21_ENDP_1_CTL, 0x00},
+		{TP6800_R3F_FRAME_RATE, 0x80},
+		{TP6800_R2F_TIMING_CFG, 0x2f},
+		{TP6800_R18_GPIO_DATA, 0xc1},
+	};
+	static const struct cmd reg_init_2[] = {
+		{TP6800_R78_FORMAT, 0x54},
+	};
+	static const struct cmd sensor_init[] = {
+		{0x00, 0x00},
+		{0x01, 0x80},
+		{0x02, 0x80},
+		{0x03, 0x90},
+		{0x04, 0x20},
+		{0x05, 0x20},
+		{0x06, 0x80},
+		{0x07, 0x00},
+		{0x08, 0xff},
+		{0x09, 0xff},
+		{0x0a, 0x76},		/* 7630 = soi673a */
+		{0x0b, 0x30},
+		{0x0c, 0x20},
+		{0x0d, 0x20},
+		{0x0e, 0xff},
+		{0x0f, 0xff},
+		{0x10, 0x41},
+		{0x15, 0x14},
+		{0x11, 0x40},
+		{0x12, 0x48},
+		{0x13, 0x80},
+		{0x14, 0x80},
+		{0x16, 0x03},
+		{0x28, 0xb0},
+		{0x71, 0x20},
+		{0x75, 0x8e},
+		{0x17, 0x1b},
+		{0x18, 0xbd},
+		{0x19, 0x05},
+		{0x1a, 0xf6},
+		{0x1b, 0x04},
+		{0x1c, 0x7f},		/* omnivision */
+		{0x1d, 0xa2},
+		{0x1e, 0x00},
+		{0x1f, 0x00},
+		{0x20, 0x45},
+		{0x21, 0x80},
+		{0x22, 0x80},
+		{0x23, 0xee},
+		{0x24, 0x50},
+		{0x25, 0x7a},
+		{0x26, 0xa0},
+		{0x27, 0x9a},
+		{0x29, 0x30},
+		{0x2a, 0x80},
+		{0x2b, 0x00},
+		{0x2c, 0xac},
+		{0x2d, 0x05},
+		{0x2e, 0x80},
+		{0x2f, 0x3c},
+		{0x30, 0x22},
+		{0x31, 0x00},
+		{0x32, 0x86},
+		{0x33, 0x08},
+		{0x34, 0xff},
+		{0x35, 0xff},
+		{0x36, 0xff},
+		{0x37, 0xff},
+		{0x38, 0xff},
+		{0x39, 0xff},
+		{0x3a, 0xfe},
+		{0x3b, 0xfe},
+		{0x3c, 0xfe},
+		{0x3d, 0xfe},
+		{0x3e, 0xfe},
+		{0x3f, 0x71},
+		{0x40, 0xff},
+		{0x41, 0xff},
+		{0x42, 0xff},
+		{0x43, 0xff},
+		{0x44, 0xff},
+		{0x45, 0xff},
+		{0x46, 0xff},
+		{0x47, 0xff},
+		{0x48, 0xff},
+		{0x49, 0xff},
+		{0x4a, 0xfe},
+		{0x4b, 0xff},
+		{0x4c, 0x00},
+		{0x4d, 0x00},
+		{0x4e, 0xff},
+		{0x4f, 0xff},
+		{0x50, 0xff},
+		{0x51, 0xff},
+		{0x52, 0xff},
+		{0x53, 0xff},
+		{0x54, 0xff},
+		{0x55, 0xff},
+		{0x56, 0xff},
+		{0x57, 0xff},
+		{0x58, 0xff},
+		{0x59, 0xff},
+		{0x5a, 0xff},
+		{0x5b, 0xfe},
+		{0x5c, 0xff},
+		{0x5d, 0x8f},
+		{0x5e, 0xff},
+		{0x5f, 0x8f},
+		{0x60, 0xa2},
+		{0x61, 0x4a},
+		{0x62, 0xf3},
+		{0x63, 0x75},
+		{0x64, 0xf0},
+		{0x65, 0x00},
+		{0x66, 0x55},
+		{0x67, 0x92},
+		{0x68, 0xa0},
+		{0x69, 0x4a},
+		{0x6a, 0x22},
+		{0x6b, 0x00},
+		{0x6c, 0x33},
+		{0x6d, 0x44},
+		{0x6e, 0x22},
+		{0x6f, 0x84},
+		{0x70, 0x0b},
+		{0x72, 0x10},
+		{0x73, 0x50},
+		{0x74, 0x21},
+		{0x76, 0x00},
+		{0x77, 0xa5},
+		{0x78, 0x80},
+		{0x79, 0x80},
+		{0x7a, 0x80},
+		{0x7b, 0xe2},
+		{0x7c, 0x00},
+		{0x7d, 0xf7},
+		{0x7e, 0x00},
+		{0x7f, 0x00},
+	};
 
 	reg_w_buf(gspca_dev, reg_init_1, ARRAY_SIZE(reg_init_1));
 	reg_w_buf(gspca_dev, tp6810_ov_init_common,
@@ -1393,108 +1392,108 @@ MODULE_LICENSE("GPL");
 	i2c_w(gspca_dev, 0x12, 0x80);		/* sensor reset */
 	msleep(10);
 	i2c_w_buf(gspca_dev, sensor_init, ARRAY_SIZE(sensor_init));
-पूर्ण
+}
 
 /* set the gain and exposure */
-अटल व्योम setexposure(काष्ठा gspca_dev *gspca_dev, s32 expo, s32 gain,
+static void setexposure(struct gspca_dev *gspca_dev, s32 expo, s32 gain,
 							s32 blue, s32 red)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+{
+	struct sd *sd = (struct sd *) gspca_dev;
 
-	अगर (sd->sensor == SENSOR_CX0342) अणु
+	if (sd->sensor == SENSOR_CX0342) {
 		expo = (expo << 2) - 1;
 		i2c_w(gspca_dev, CX0342_EXPO_LINE_L, expo);
 		i2c_w(gspca_dev, CX0342_EXPO_LINE_H, expo >> 8);
-		अगर (sd->bridge == BRIDGE_TP6800)
+		if (sd->bridge == BRIDGE_TP6800)
 			i2c_w(gspca_dev, CX0342_RAW_GBGAIN_H,
 						gain >> 8);
 		i2c_w(gspca_dev, CX0342_RAW_GBGAIN_L, gain);
-		अगर (sd->bridge == BRIDGE_TP6800)
+		if (sd->bridge == BRIDGE_TP6800)
 			i2c_w(gspca_dev, CX0342_RAW_GRGAIN_H,
 					gain >> 8);
 		i2c_w(gspca_dev, CX0342_RAW_GRGAIN_L, gain);
-		अगर (sd->sensor == SENSOR_CX0342) अणु
-			अगर (sd->bridge == BRIDGE_TP6800)
+		if (sd->sensor == SENSOR_CX0342) {
+			if (sd->bridge == BRIDGE_TP6800)
 				i2c_w(gspca_dev, CX0342_RAW_BGAIN_H,
 						blue >> 8);
 			i2c_w(gspca_dev, CX0342_RAW_BGAIN_L, blue);
-			अगर (sd->bridge == BRIDGE_TP6800)
+			if (sd->bridge == BRIDGE_TP6800)
 				i2c_w(gspca_dev, CX0342_RAW_RGAIN_H,
 						red >> 8);
 			i2c_w(gspca_dev, CX0342_RAW_RGAIN_L, red);
-		पूर्ण
+		}
 		i2c_w(gspca_dev, CX0342_SYS_CTRL_0,
 				sd->bridge == BRIDGE_TP6800 ? 0x80 : 0x81);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* soi763a */
-	i2c_w(gspca_dev, 0x10,		/* AEC_H (exposure समय) */
+	i2c_w(gspca_dev, 0x10,		/* AEC_H (exposure time) */
 			 expo);
 /*	i2c_w(gspca_dev, 0x76, 0x02);	 * AEC_L ([1:0] */
 	i2c_w(gspca_dev, 0x00,		/* gain */
 			 gain);
-पूर्ण
+}
 
 /* set the JPEG quantization tables */
-अटल व्योम set_dqt(काष्ठा gspca_dev *gspca_dev, u8 q)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+static void set_dqt(struct gspca_dev *gspca_dev, u8 q)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
 
 	/* update the jpeg quantization tables */
 	gspca_dbg(gspca_dev, D_STREAM, "q %d -> %d\n", sd->quality, q);
 	sd->quality = q;
-	अगर (q > 16)
+	if (q > 16)
 		q = 16;
-	अगर (sd->sensor == SENSOR_SOI763A)
+	if (sd->sensor == SENSOR_SOI763A)
 		jpeg_set_qual(sd->jpeg_hdr, jpeg_q[q]);
-	अन्यथा
-		स_नकल(&sd->jpeg_hdr[JPEG_QT0_OFFSET - 1],
-			DQT[q], माप DQT[0]);
-पूर्ण
+	else
+		memcpy(&sd->jpeg_hdr[JPEG_QT0_OFFSET - 1],
+			DQT[q], sizeof DQT[0]);
+}
 
 /* set the JPEG compression quality factor */
-अटल व्योम setquality(काष्ठा gspca_dev *gspca_dev, s32 q)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+static void setquality(struct gspca_dev *gspca_dev, s32 q)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
 
-	अगर (q != 16)
+	if (q != 16)
 		q = 15 - q;
 
 	reg_w(gspca_dev, TP6800_R7A_BLK_THRLD, 0x00);
 	reg_w(gspca_dev, TP6800_R79_QUALITY, 0x04);
 	reg_w(gspca_dev, TP6800_R79_QUALITY, q);
 
-	/* स्वतः quality */
-	अगर (q == 15 && sd->bridge == BRIDGE_TP6810) अणु
+	/* auto quality */
+	if (q == 15 && sd->bridge == BRIDGE_TP6810) {
 		msleep(4);
 		reg_w(gspca_dev, TP6800_R7A_BLK_THRLD, 0x19);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल स्थिर u8 color_null[18] = अणु
+static const u8 color_null[18] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-पूर्ण;
-अटल स्थिर u8 color_gain[NSENSORS][18] = अणु
+};
+static const u8 color_gain[NSENSORS][18] = {
 [SENSOR_CX0342] =
-	अणु0x4c, 0x00, 0xa9, 0x00, 0x31, 0x00,	/* Y R/G/B (LE values) */
+	{0x4c, 0x00, 0xa9, 0x00, 0x31, 0x00,	/* Y R/G/B (LE values) */
 	 0xb6, 0x03, 0x6c, 0x03, 0xe0, 0x00,	/* U R/G/B */
-	 0xdf, 0x00, 0x46, 0x03, 0xdc, 0x03पूर्ण,	/* V R/G/B */
+	 0xdf, 0x00, 0x46, 0x03, 0xdc, 0x03},	/* V R/G/B */
 [SENSOR_SOI763A] =
-	अणु0x4c, 0x00, 0x95, 0x00, 0x1d, 0x00,	/* Y R/G/B (LE values) */
+	{0x4c, 0x00, 0x95, 0x00, 0x1d, 0x00,	/* Y R/G/B (LE values) */
 	 0xb6, 0x03, 0x6c, 0x03, 0xd7, 0x00,	/* U R/G/B */
-	 0xd5, 0x00, 0x46, 0x03, 0xdc, 0x03पूर्ण,	/* V R/G/B */
-पूर्ण;
+	 0xd5, 0x00, 0x46, 0x03, 0xdc, 0x03},	/* V R/G/B */
+};
 
-अटल व्योम setgamma(काष्ठा gspca_dev *gspca_dev, s32 gamma)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
-#घोषणा NGAMMA 6
-	अटल स्थिर u8 gamma_tb[NGAMMA][3][1024] = अणु
-	    अणु				/* gamma 0 - from tp6800 + soi763a */
-		अणु0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+static void setgamma(struct gspca_dev *gspca_dev, s32 gamma)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
+#define NGAMMA 6
+	static const u8 gamma_tb[NGAMMA][3][1024] = {
+	    {				/* gamma 0 - from tp6800 + soi763a */
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00,
@@ -1621,8 +1620,8 @@ MODULE_LICENSE("GPL");
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
-		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfbपूर्ण,
-		अणु0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00,
@@ -1749,8 +1748,8 @@ MODULE_LICENSE("GPL");
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
-		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfbपूर्ण,
-		अणु0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00,
@@ -1877,10 +1876,10 @@ MODULE_LICENSE("GPL");
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
-		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfbपूर्ण
-	    पूर्ण,
-	    अणु				/* gamma 1 - from tp6810 + soi763a */
-		अणु0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb}
+	    },
+	    {				/* gamma 1 - from tp6810 + soi763a */
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		 0x01, 0x02, 0x03, 0x05, 0x07, 0x08, 0x09, 0x0a,
@@ -2007,8 +2006,8 @@ MODULE_LICENSE("GPL");
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण,
-		अणु0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03,
@@ -2135,8 +2134,8 @@ MODULE_LICENSE("GPL");
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण,
-		अणु0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -2263,10 +2262,10 @@ MODULE_LICENSE("GPL");
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण
-	    पूर्ण,
-	    अणु							/* gamma 2 */
-		अणु0x00, 0x01, 0x02, 0x05, 0x07, 0x08, 0x0a, 0x0c,
+		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+	    },
+	    {							/* gamma 2 */
+		{0x00, 0x01, 0x02, 0x05, 0x07, 0x08, 0x0a, 0x0c,
 		 0x0d, 0x0e, 0x10, 0x12, 0x14, 0x15, 0x16, 0x17,
 		 0x18, 0x1a, 0x1b, 0x1c, 0x1e, 0x1f, 0x20, 0x22,
 		 0x23, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2b, 0x2c,
@@ -2393,8 +2392,8 @@ MODULE_LICENSE("GPL");
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
-		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfbपूर्ण,
-		अणु0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x05,
+		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb},
+		{0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x05,
 		 0x07, 0x08, 0x09, 0x0a, 0x0d, 0x0e, 0x10, 0x11,
 		 0x12, 0x14, 0x15, 0x16, 0x16, 0x17, 0x18, 0x1a,
 		 0x1b, 0x1c, 0x1e, 0x1f, 0x20, 0x20, 0x22, 0x23,
@@ -2521,8 +2520,8 @@ MODULE_LICENSE("GPL");
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
-		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfbपूर्ण,
-		अणु0x00, 0x00, 0x00, 0x01, 0x02, 0x05, 0x07, 0x08,
+		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb},
+		{0x00, 0x00, 0x00, 0x01, 0x02, 0x05, 0x07, 0x08,
 		 0x09, 0x0a, 0x0c, 0x0e, 0x10, 0x11, 0x12, 0x14,
 		 0x15, 0x16, 0x17, 0x18, 0x1a, 0x1b, 0x1c, 0x1e,
 		 0x1f, 0x20, 0x20, 0x22, 0x23, 0x25, 0x26, 0x27,
@@ -2649,10 +2648,10 @@ MODULE_LICENSE("GPL");
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
-		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfbपूर्ण
-	    पूर्ण,
-	    अणु				/* gamma 3 - from tp6810 + cx0342 */
-		अणु0x08, 0x09, 0x0c, 0x0d, 0x10, 0x11, 0x14, 0x15,
+		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb}
+	    },
+	    {				/* gamma 3 - from tp6810 + cx0342 */
+		{0x08, 0x09, 0x0c, 0x0d, 0x10, 0x11, 0x14, 0x15,
 		 0x17, 0x18, 0x1a, 0x1c, 0x1e, 0x1f, 0x20, 0x23,
 		 0x25, 0x26, 0x27, 0x28, 0x2b, 0x2c, 0x2d, 0x2f,
 		 0x30, 0x31, 0x33, 0x34, 0x35, 0x37, 0x38, 0x39,
@@ -2779,8 +2778,8 @@ MODULE_LICENSE("GPL");
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण,
-		अणु0x03, 0x05, 0x07, 0x09, 0x0a, 0x0c, 0x0d, 0x10,
+		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		{0x03, 0x05, 0x07, 0x09, 0x0a, 0x0c, 0x0d, 0x10,
 		 0x11, 0x12, 0x14, 0x15, 0x17, 0x18, 0x1a, 0x1b,
 		 0x1c, 0x1e, 0x1f, 0x20, 0x22, 0x23, 0x25, 0x26,
 		 0x27, 0x28, 0x29, 0x2b, 0x2c, 0x2c, 0x2d, 0x2f,
@@ -2907,8 +2906,8 @@ MODULE_LICENSE("GPL");
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण,
-		अणु0x07, 0x08, 0x0a, 0x0c, 0x0e, 0x10, 0x12, 0x14,
+		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		{0x07, 0x08, 0x0a, 0x0c, 0x0e, 0x10, 0x12, 0x14,
 		 0x16, 0x17, 0x18, 0x1b, 0x1c, 0x1e, 0x1f, 0x20,
 		 0x23, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2b, 0x2d,
 		 0x2f, 0x30, 0x31, 0x33, 0x34, 0x35, 0x37, 0x38,
@@ -3035,10 +3034,10 @@ MODULE_LICENSE("GPL");
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण
-	    पूर्ण,
-	    अणु				/* gamma 4 - from tp6800 + soi763a */
-		अणु0x11, 0x14, 0x15, 0x17, 0x1a, 0x1b, 0x1e, 0x1f,
+		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}
+	    },
+	    {				/* gamma 4 - from tp6800 + soi763a */
+		{0x11, 0x14, 0x15, 0x17, 0x1a, 0x1b, 0x1e, 0x1f,
 		 0x22, 0x23, 0x25, 0x27, 0x28, 0x2b, 0x2c, 0x2d,
 		 0x2f, 0x31, 0x33, 0x34, 0x35, 0x38, 0x39, 0x3a,
 		 0x3b, 0x3c, 0x3d, 0x40, 0x42, 0x43, 0x44, 0x45,
@@ -3165,8 +3164,8 @@ MODULE_LICENSE("GPL");
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
-		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfbपूर्ण,
-		अणु0x08, 0x0a, 0x0c, 0x0e, 0x10, 0x11, 0x14, 0x15,
+		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb},
+		{0x08, 0x0a, 0x0c, 0x0e, 0x10, 0x11, 0x14, 0x15,
 		 0x16, 0x17, 0x1a, 0x1b, 0x1c, 0x1e, 0x1f, 0x20,
 		 0x23, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2b, 0x2c,
 		 0x2d, 0x2f, 0x30, 0x31, 0x33, 0x34, 0x34, 0x35,
@@ -3293,8 +3292,8 @@ MODULE_LICENSE("GPL");
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
-		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfbपूर्ण,
-		अणु0x0d, 0x10, 0x11, 0x14, 0x15, 0x17, 0x18, 0x1b,
+		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb},
+		{0x0d, 0x10, 0x11, 0x14, 0x15, 0x17, 0x18, 0x1b,
 		 0x1c, 0x1e, 0x20, 0x22, 0x23, 0x26, 0x27, 0x28,
 		 0x29, 0x2b, 0x2d, 0x2f, 0x30, 0x31, 0x33, 0x34,
 		 0x35, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d,
@@ -3421,10 +3420,10 @@ MODULE_LICENSE("GPL");
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
 		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb,
-		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfbपूर्ण
-	    पूर्ण,
-	    अणु							/* gamma 5 */
-		अणु0x16, 0x18, 0x19, 0x1b, 0x1d, 0x1e, 0x20, 0x21,
+		 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb, 0xfb}
+	    },
+	    {							/* gamma 5 */
+		{0x16, 0x18, 0x19, 0x1b, 0x1d, 0x1e, 0x20, 0x21,
 		 0x23, 0x24, 0x25, 0x27, 0x28, 0x2a, 0x2b, 0x2c,
 		 0x2d, 0x2f, 0x30, 0x31, 0x32, 0x34, 0x35, 0x36,
 		 0x37, 0x38, 0x39, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f,
@@ -3551,8 +3550,8 @@ MODULE_LICENSE("GPL");
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण,
-		अणु0x0f, 0x11, 0x12, 0x14, 0x15, 0x16, 0x18, 0x19,
+		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		{0x0f, 0x11, 0x12, 0x14, 0x15, 0x16, 0x18, 0x19,
 		 0x1a, 0x1b, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22,
 		 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b,
 		 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x31, 0x32,
@@ -3679,8 +3678,8 @@ MODULE_LICENSE("GPL");
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण,
-		अणु0x13, 0x15, 0x16, 0x18, 0x19, 0x1b, 0x1c, 0x1e,
+		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+		{0x13, 0x15, 0x16, 0x18, 0x19, 0x1b, 0x1c, 0x1e,
 		 0x1f, 0x20, 0x22, 0x23, 0x24, 0x26, 0x27, 0x28,
 		 0x29, 0x2a, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31,
 		 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39,
@@ -3807,72 +3806,72 @@ MODULE_LICENSE("GPL");
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xffपूर्ण,
-	    पूर्ण,
-	पूर्ण;
+		 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+	    },
+	};
 
 	reg_w(gspca_dev, TP6800_R21_ENDP_1_CTL, 0x00);
-	अगर (sd->bridge == BRIDGE_TP6810)
+	if (sd->bridge == BRIDGE_TP6810)
 		reg_w(gspca_dev, 0x02, 0x28);
 /*	msleep(50); */
 	bulk_w(gspca_dev, 0x00, gamma_tb[gamma][0], 1024);
 	bulk_w(gspca_dev, 0x01, gamma_tb[gamma][1], 1024);
 	bulk_w(gspca_dev, 0x02, gamma_tb[gamma][2], 1024);
-	अगर (sd->bridge == BRIDGE_TP6810) अणु
-		पूर्णांक i;
+	if (sd->bridge == BRIDGE_TP6810) {
+		int i;
 
 		reg_w(gspca_dev, 0x02, 0x2b);
 		reg_w(gspca_dev, 0x02, 0x28);
-		क्रम (i = 0; i < 6; i++)
+		for (i = 0; i < 6; i++)
 			reg_w(gspca_dev, TP6800_R55_GAMMA_R,
 				gamma_tb[gamma][0][i]);
 		reg_w(gspca_dev, 0x02, 0x2b);
 		reg_w(gspca_dev, 0x02, 0x28);
-		क्रम (i = 0; i < 6; i++)
+		for (i = 0; i < 6; i++)
 			reg_w(gspca_dev, TP6800_R56_GAMMA_G,
 				gamma_tb[gamma][1][i]);
 		reg_w(gspca_dev, 0x02, 0x2b);
 		reg_w(gspca_dev, 0x02, 0x28);
-		क्रम (i = 0; i < 6; i++)
+		for (i = 0; i < 6; i++)
 			reg_w(gspca_dev, TP6800_R57_GAMMA_B,
 				gamma_tb[gamma][2][i]);
 		reg_w(gspca_dev, 0x02, 0x28);
-	पूर्ण
+	}
 	reg_w(gspca_dev, TP6800_R21_ENDP_1_CTL, 0x03);
 /*	msleep(50); */
-पूर्ण
+}
 
-अटल व्योम setsharpness(काष्ठा gspca_dev *gspca_dev, s32 val)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+static void setsharpness(struct gspca_dev *gspca_dev, s32 val)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
 
-	अगर (sd->bridge == BRIDGE_TP6800) अणु
+	if (sd->bridge == BRIDGE_TP6800) {
 		val |= 0x08;		/* grid compensation enable */
-		अगर (gspca_dev->pixfmt.width == 640)
+		if (gspca_dev->pixfmt.width == 640)
 			reg_w(gspca_dev, TP6800_R78_FORMAT, 0x00); /* vga */
-		अन्यथा
-			val |= 0x04;		/* scaling करोwn enable */
+		else
+			val |= 0x04;		/* scaling down enable */
 		reg_w(gspca_dev, TP6800_R5D_DEMOSAIC_CFG, val);
-	पूर्ण अन्यथा अणु
+	} else {
 		val = (val << 5) | 0x08;
 		reg_w(gspca_dev, 0x59, val);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम setस्वतःgain(काष्ठा gspca_dev *gspca_dev, s32 val)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+static void setautogain(struct gspca_dev *gspca_dev, s32 val)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
 
 	sd->ag_cnt = val ? AG_CNT_START : -1;
-पूर्ण
+}
 
-/* set the resolution क्रम sensor cx0342 */
-अटल व्योम set_resolution(काष्ठा gspca_dev *gspca_dev)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+/* set the resolution for sensor cx0342 */
+static void set_resolution(struct gspca_dev *gspca_dev)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
 
 	reg_w(gspca_dev, TP6800_R21_ENDP_1_CTL, 0x00);
-	अगर (gspca_dev->pixfmt.width == 320) अणु
+	if (gspca_dev->pixfmt.width == 320) {
 		reg_w(gspca_dev, TP6800_R3F_FRAME_RATE, 0x06);
 		msleep(100);
 		i2c_w(gspca_dev, CX0342_AUTO_ADC_CALIB, 0x01);
@@ -3882,7 +3881,7 @@ MODULE_LICENSE("GPL");
 		reg_w(gspca_dev, TP6800_R5D_DEMOSAIC_CFG, 0x0d);
 		i2c_w(gspca_dev, CX0342_EXPO_LINE_L, 0x37);
 		i2c_w(gspca_dev, CX0342_EXPO_LINE_H, 0x01);
-	पूर्ण अन्यथा अणु
+	} else {
 		reg_w(gspca_dev, TP6800_R3F_FRAME_RATE, 0x05);
 		msleep(100);
 		i2c_w(gspca_dev, CX0342_AUTO_ADC_CALIB, 0x01);
@@ -3892,116 +3891,116 @@ MODULE_LICENSE("GPL");
 		reg_w(gspca_dev, TP6800_R5D_DEMOSAIC_CFG, 0x09);
 		i2c_w(gspca_dev, CX0342_EXPO_LINE_L, 0xcf);
 		i2c_w(gspca_dev, CX0342_EXPO_LINE_H, 0x00);
-	पूर्ण
+	}
 	i2c_w(gspca_dev, CX0342_SYS_CTRL_0, 0x01);
 	bulk_w(gspca_dev, 0x03, color_gain[SENSOR_CX0342],
 				ARRAY_SIZE(color_gain[0]));
 	setgamma(gspca_dev, v4l2_ctrl_g_ctrl(sd->gamma));
-	अगर (sd->sensor == SENSOR_SOI763A)
+	if (sd->sensor == SENSOR_SOI763A)
 		setquality(gspca_dev, v4l2_ctrl_g_ctrl(sd->jpegqual));
-पूर्ण
+}
 
 /* convert the frame rate to a tp68x0 value */
-अटल पूर्णांक get_fr_idx(काष्ठा gspca_dev *gspca_dev)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
-	पूर्णांक i;
+static int get_fr_idx(struct gspca_dev *gspca_dev)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
+	int i;
 
-	अगर (sd->bridge == BRIDGE_TP6800) अणु
-		क्रम (i = 0; i < ARRAY_SIZE(rates) - 1; i++) अणु
-			अगर (sd->framerate >= rates[i])
-				अवरोध;
-		पूर्ण
+	if (sd->bridge == BRIDGE_TP6800) {
+		for (i = 0; i < ARRAY_SIZE(rates) - 1; i++) {
+			if (sd->framerate >= rates[i])
+				break;
+		}
 		i = 6 - i;		/* 1 = 5fps .. 6 = 30fps */
 
-		/* 640x480 * 30 fps करोes not work */
-		अगर (i == 6			/* अगर 30 fps */
+		/* 640x480 * 30 fps does not work */
+		if (i == 6			/* if 30 fps */
 		 && gspca_dev->pixfmt.width == 640)
 			i = 0x05;		/* 15 fps */
-	पूर्ण अन्यथा अणु
-		क्रम (i = 0; i < ARRAY_SIZE(rates_6810) - 1; i++) अणु
-			अगर (sd->framerate >= rates_6810[i])
-				अवरोध;
-		पूर्ण
+	} else {
+		for (i = 0; i < ARRAY_SIZE(rates_6810) - 1; i++) {
+			if (sd->framerate >= rates_6810[i])
+				break;
+		}
 		i = 7 - i;		/* 3 = 5fps .. 7 = 30fps */
 
-		/* 640x480 * 30 fps करोes not work */
-		अगर (i == 7			/* अगर 30 fps */
+		/* 640x480 * 30 fps does not work */
+		if (i == 7			/* if 30 fps */
 		 && gspca_dev->pixfmt.width == 640)
 			i = 6;			/* 15 fps */
-		i |= 0x80;			/* घड़ी * 1 */
-	पूर्ण
-	वापस i;
-पूर्ण
+		i |= 0x80;			/* clock * 1 */
+	}
+	return i;
+}
 
-अटल व्योम setframerate(काष्ठा gspca_dev *gspca_dev, s32 val)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+static void setframerate(struct gspca_dev *gspca_dev, s32 val)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
 	u8 fr_idx;
 
 	fr_idx = get_fr_idx(gspca_dev);
 
-	अगर (sd->bridge == BRIDGE_TP6810) अणु
+	if (sd->bridge == BRIDGE_TP6810) {
 		reg_r(gspca_dev, 0x7b);
 		reg_w(gspca_dev, 0x7b,
 			sd->sensor == SENSOR_CX0342 ? 0x10 : 0x90);
-		अगर (val >= 128)
+		if (val >= 128)
 			fr_idx = 0xf0;		/* lower frame rate */
-	पूर्ण
+	}
 
 	reg_w(gspca_dev, TP6800_R3F_FRAME_RATE, fr_idx);
 
-	अगर (sd->sensor == SENSOR_CX0342)
+	if (sd->sensor == SENSOR_CX0342)
 		i2c_w(gspca_dev, CX0342_AUTO_ADC_CALIB, 0x01);
-पूर्ण
+}
 
-अटल व्योम setrgain(काष्ठा gspca_dev *gspca_dev, s32 rgain)
-अणु
+static void setrgain(struct gspca_dev *gspca_dev, s32 rgain)
+{
 	i2c_w(gspca_dev, CX0342_RAW_RGAIN_H, rgain >> 8);
 	i2c_w(gspca_dev, CX0342_RAW_RGAIN_L, rgain);
 	i2c_w(gspca_dev, CX0342_SYS_CTRL_0, 0x80);
-पूर्ण
+}
 
-अटल पूर्णांक sd_setgain(काष्ठा gspca_dev *gspca_dev)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+static int sd_setgain(struct gspca_dev *gspca_dev)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
 	s32 val = gspca_dev->gain->val;
 
-	अगर (sd->sensor == SENSOR_CX0342) अणु
+	if (sd->sensor == SENSOR_CX0342) {
 		s32 old = gspca_dev->gain->cur.val ?
 					gspca_dev->gain->cur.val : 1;
 
 		sd->blue->val = sd->blue->val * val / old;
-		अगर (sd->blue->val > 4095)
+		if (sd->blue->val > 4095)
 			sd->blue->val = 4095;
 		sd->red->val = sd->red->val * val / old;
-		अगर (sd->red->val > 4095)
+		if (sd->red->val > 4095)
 			sd->red->val = 4095;
-	पूर्ण
-	अगर (gspca_dev->streaming) अणु
-		अगर (sd->sensor == SENSOR_CX0342)
+	}
+	if (gspca_dev->streaming) {
+		if (sd->sensor == SENSOR_CX0342)
 			setexposure(gspca_dev, gspca_dev->exposure->val,
 					gspca_dev->gain->val,
 					sd->blue->val, sd->red->val);
-		अन्यथा
+		else
 			setexposure(gspca_dev, gspca_dev->exposure->val,
 					gspca_dev->gain->val, 0, 0);
-	पूर्ण
-	वापस gspca_dev->usb_err;
-पूर्ण
+	}
+	return gspca_dev->usb_err;
+}
 
-अटल व्योम setbgain(काष्ठा gspca_dev *gspca_dev, s32 bgain)
-अणु
+static void setbgain(struct gspca_dev *gspca_dev, s32 bgain)
+{
 	i2c_w(gspca_dev, CX0342_RAW_BGAIN_H, bgain >> 8);
 	i2c_w(gspca_dev, CX0342_RAW_BGAIN_L, bgain);
 	i2c_w(gspca_dev, CX0342_SYS_CTRL_0, 0x80);
-पूर्ण
+}
 
-/* this function is called at probe समय */
-अटल पूर्णांक sd_config(काष्ठा gspca_dev *gspca_dev,
-		     स्थिर काष्ठा usb_device_id *id)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+/* this function is called at probe time */
+static int sd_config(struct gspca_dev *gspca_dev,
+		     const struct usb_device_id *id)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
 
 	sd->bridge = id->driver_info;
 
@@ -4011,33 +4010,33 @@ MODULE_LICENSE("GPL");
 			framerates : framerates_6810;
 
 	sd->framerate = DEFAULT_FRAME_RATE;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* this function is called at probe and resume समय */
-अटल पूर्णांक sd_init(काष्ठा gspca_dev *gspca_dev)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
-	अटल स्थिर काष्ठा cmd tp6800_preinit[] = अणु
-		अणुTP6800_R10_SIF_TYPE, 0x01पूर्ण,	/* sअगर */
-		अणुTP6800_R11_SIF_CONTROL, 0x01पूर्ण,
-		अणुTP6800_R15_GPIO_PU, 0x9fपूर्ण,
-		अणुTP6800_R16_GPIO_PD, 0x9fपूर्ण,
-		अणुTP6800_R17_GPIO_IO, 0x80पूर्ण,
-		अणुTP6800_R18_GPIO_DATA, 0x40पूर्ण,	/* LED off */
-	पूर्ण;
-	अटल स्थिर काष्ठा cmd tp6810_preinit[] = अणु
-		अणुTP6800_R2F_TIMING_CFG, 0x2fपूर्ण,
-		अणुTP6800_R15_GPIO_PU, 0x6fपूर्ण,
-		अणुTP6800_R16_GPIO_PD, 0x40पूर्ण,
-		अणुTP6800_R17_GPIO_IO, 0x9fपूर्ण,
-		अणुTP6800_R18_GPIO_DATA, 0xc1पूर्ण,	/* LED off */
-	पूर्ण;
+/* this function is called at probe and resume time */
+static int sd_init(struct gspca_dev *gspca_dev)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
+	static const struct cmd tp6800_preinit[] = {
+		{TP6800_R10_SIF_TYPE, 0x01},	/* sif */
+		{TP6800_R11_SIF_CONTROL, 0x01},
+		{TP6800_R15_GPIO_PU, 0x9f},
+		{TP6800_R16_GPIO_PD, 0x9f},
+		{TP6800_R17_GPIO_IO, 0x80},
+		{TP6800_R18_GPIO_DATA, 0x40},	/* LED off */
+	};
+	static const struct cmd tp6810_preinit[] = {
+		{TP6800_R2F_TIMING_CFG, 0x2f},
+		{TP6800_R15_GPIO_PU, 0x6f},
+		{TP6800_R16_GPIO_PD, 0x40},
+		{TP6800_R17_GPIO_IO, 0x9f},
+		{TP6800_R18_GPIO_DATA, 0xc1},	/* LED off */
+	};
 
-	अगर (sd->bridge == BRIDGE_TP6800)
+	if (sd->bridge == BRIDGE_TP6800)
 		reg_w_buf(gspca_dev, tp6800_preinit,
 				ARRAY_SIZE(tp6800_preinit));
-	अन्यथा
+	else
 		reg_w_buf(gspca_dev, tp6810_preinit,
 				ARRAY_SIZE(tp6810_preinit));
 	msleep(15);
@@ -4046,186 +4045,186 @@ MODULE_LICENSE("GPL");
 /* values:
  *	0x80: snapshot button
  *	0x40: LED
- *	0x20: (bridge / sensor) reset क्रम tp6810 ?
+ *	0x20: (bridge / sensor) reset for tp6810 ?
  *	0x07: sensor type ?
  */
 
 	/* guess the sensor type */
-	अगर (क्रमce_sensor >= 0) अणु
-		sd->sensor = क्रमce_sensor;
-	पूर्ण अन्यथा अणु
-		अगर (sd->bridge == BRIDGE_TP6800) अणु
+	if (force_sensor >= 0) {
+		sd->sensor = force_sensor;
+	} else {
+		if (sd->bridge == BRIDGE_TP6800) {
 /*fixme: not sure this is working*/
-			चयन (gspca_dev->usb_buf[0] & 0x07) अणु
-			हाल 0:
+			switch (gspca_dev->usb_buf[0] & 0x07) {
+			case 0:
 				sd->sensor = SENSOR_SOI763A;
-				अवरोध;
-			हाल 1:
+				break;
+			case 1:
 				sd->sensor = SENSOR_CX0342;
-				अवरोध;
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			पूर्णांक sensor;
+				break;
+			}
+		} else {
+			int sensor;
 
 			sensor = probe_6810(gspca_dev);
-			अगर (sensor < 0) अणु
+			if (sensor < 0) {
 				pr_warn("Unknown sensor %d - forced to soi763a\n",
 					-sensor);
 				sensor = SENSOR_SOI763A;
-			पूर्ण
+			}
 			sd->sensor = sensor;
-		पूर्ण
-	पूर्ण
-	अगर (sd->sensor == SENSOR_SOI763A) अणु
+		}
+	}
+	if (sd->sensor == SENSOR_SOI763A) {
 		pr_info("Sensor soi763a\n");
-		अगर (sd->bridge == BRIDGE_TP6810) अणु
+		if (sd->bridge == BRIDGE_TP6810) {
 			soi763a_6810_init(gspca_dev);
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		pr_info("Sensor cx0342\n");
-		अगर (sd->bridge == BRIDGE_TP6810) अणु
+		if (sd->bridge == BRIDGE_TP6810) {
 			cx0342_6810_init(gspca_dev);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	set_dqt(gspca_dev, 0);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-/* This function is called beक्रमe choosing the alt setting */
-अटल पूर्णांक sd_isoc_init(काष्ठा gspca_dev *gspca_dev)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
-	अटल स्थिर काष्ठा cmd cx_sensor_init[] = अणु
-		अणुCX0342_AUTO_ADC_CALIB, 0x81पूर्ण,
-		अणुCX0342_EXPO_LINE_L, 0x37पूर्ण,
-		अणुCX0342_EXPO_LINE_H, 0x01पूर्ण,
-		अणुCX0342_RAW_GRGAIN_L, 0x00पूर्ण,
-		अणुCX0342_RAW_GBGAIN_L, 0x00पूर्ण,
-		अणुCX0342_RAW_RGAIN_L, 0x00पूर्ण,
-		अणुCX0342_RAW_BGAIN_L, 0x00पूर्ण,
-		अणुCX0342_SYS_CTRL_0, 0x81पूर्ण,
-	पूर्ण;
-	अटल स्थिर काष्ठा cmd cx_bridge_init[] = अणु
-		अणु0x4d, 0x00पूर्ण,
-		अणु0x4c, 0xffपूर्ण,
-		अणु0x4e, 0xffपूर्ण,
-		अणु0x4f, 0x00पूर्ण,
-	पूर्ण;
-	अटल स्थिर काष्ठा cmd ov_sensor_init[] = अणु
-		अणु0x10, 0x75पूर्ण,		/* exposure */
-		अणु0x76, 0x03पूर्ण,
-		अणु0x00, 0x00पूर्ण,		/* gain */
-	पूर्ण;
-	अटल स्थिर काष्ठा cmd ov_bridge_init[] = अणु
-		अणु0x7b, 0x90पूर्ण,
-		अणुTP6800_R3F_FRAME_RATE, 0x87पूर्ण,
-	पूर्ण;
+/* This function is called before choosing the alt setting */
+static int sd_isoc_init(struct gspca_dev *gspca_dev)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
+	static const struct cmd cx_sensor_init[] = {
+		{CX0342_AUTO_ADC_CALIB, 0x81},
+		{CX0342_EXPO_LINE_L, 0x37},
+		{CX0342_EXPO_LINE_H, 0x01},
+		{CX0342_RAW_GRGAIN_L, 0x00},
+		{CX0342_RAW_GBGAIN_L, 0x00},
+		{CX0342_RAW_RGAIN_L, 0x00},
+		{CX0342_RAW_BGAIN_L, 0x00},
+		{CX0342_SYS_CTRL_0, 0x81},
+	};
+	static const struct cmd cx_bridge_init[] = {
+		{0x4d, 0x00},
+		{0x4c, 0xff},
+		{0x4e, 0xff},
+		{0x4f, 0x00},
+	};
+	static const struct cmd ov_sensor_init[] = {
+		{0x10, 0x75},		/* exposure */
+		{0x76, 0x03},
+		{0x00, 0x00},		/* gain */
+	};
+	static const struct cmd ov_bridge_init[] = {
+		{0x7b, 0x90},
+		{TP6800_R3F_FRAME_RATE, 0x87},
+	};
 
-	अगर (sd->bridge == BRIDGE_TP6800)
-		वापस 0;
-	अगर (sd->sensor == SENSOR_CX0342) अणु
+	if (sd->bridge == BRIDGE_TP6800)
+		return 0;
+	if (sd->sensor == SENSOR_CX0342) {
 		reg_w(gspca_dev, TP6800_R12_SIF_ADDR_S, 0x20);
 		reg_w(gspca_dev, TP6800_R3F_FRAME_RATE, 0x87);
 		i2c_w_buf(gspca_dev, cx_sensor_init,
 				ARRAY_SIZE(cx_sensor_init));
 		reg_w_buf(gspca_dev, cx_bridge_init,
 				ARRAY_SIZE(cx_bridge_init));
-		bulk_w(gspca_dev, 0x03, color_null, माप color_null);
+		bulk_w(gspca_dev, 0x03, color_null, sizeof color_null);
 		reg_w(gspca_dev, 0x59, 0x40);
-	पूर्ण अन्यथा अणु
+	} else {
 		reg_w(gspca_dev, TP6800_R12_SIF_ADDR_S, 0x21);
 		i2c_w_buf(gspca_dev, ov_sensor_init,
 				ARRAY_SIZE(ov_sensor_init));
 		reg_r(gspca_dev, 0x7b);
 		reg_w_buf(gspca_dev, ov_bridge_init,
 				ARRAY_SIZE(ov_bridge_init));
-	पूर्ण
+	}
 	reg_w(gspca_dev, TP6800_R78_FORMAT,
 			gspca_dev->curr_mode ? 0x00 : 0x01);
-	वापस gspca_dev->usb_err;
-पूर्ण
+	return gspca_dev->usb_err;
+}
 
-अटल व्योम set_led(काष्ठा gspca_dev *gspca_dev, पूर्णांक on)
-अणु
+static void set_led(struct gspca_dev *gspca_dev, int on)
+{
 	u8 data;
 
 	reg_r(gspca_dev, TP6800_R18_GPIO_DATA);
 	data = gspca_dev->usb_buf[0];
-	अगर (on)
+	if (on)
 		data &= ~0x40;
-	अन्यथा
+	else
 		data |= 0x40;
 	reg_w(gspca_dev, TP6800_R18_GPIO_DATA, data);
-पूर्ण
+}
 
-अटल व्योम cx0342_6800_start(काष्ठा gspca_dev *gspca_dev)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
-	अटल स्थिर काष्ठा cmd reg_init[] = अणु
+static void cx0342_6800_start(struct gspca_dev *gspca_dev)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
+	static const struct cmd reg_init[] = {
 		/* fixme: is this useful? */
-		अणुTP6800_R17_GPIO_IO, 0x9fपूर्ण,
-		अणुTP6800_R16_GPIO_PD, 0x40पूर्ण,
-		अणुTP6800_R10_SIF_TYPE, 0x00पूर्ण,	/* i2c 8 bits */
-		अणुTP6800_R50, 0x00पूर्ण,
-		अणुTP6800_R51, 0x00पूर्ण,
-		अणुTP6800_R52, 0xffपूर्ण,
-		अणुTP6800_R53, 0x03पूर्ण,
-		अणुTP6800_R54_DARK_CFG, 0x07पूर्ण,
-		अणुTP6800_R5C_EDGE_THRLD, 0x40पूर्ण,
-		अणुTP6800_R7A_BLK_THRLD, 0x40पूर्ण,
-		अणुTP6800_R2F_TIMING_CFG, 0x17पूर्ण,
-		अणुTP6800_R30_SENSOR_CFG, 0x18पूर्ण,	/* G1B..RG0 */
-		अणुTP6800_R37_FRONT_DARK_ST, 0x00पूर्ण,
-		अणुTP6800_R38_FRONT_DARK_END, 0x00पूर्ण,
-		अणुTP6800_R39_REAR_DARK_ST_L, 0x00पूर्ण,
-		अणुTP6800_R3A_REAR_DARK_ST_H, 0x00पूर्ण,
-		अणुTP6800_R3B_REAR_DARK_END_L, 0x00पूर्ण,
-		अणुTP6800_R3C_REAR_DARK_END_H, 0x00पूर्ण,
-		अणुTP6800_R3D_HORIZ_DARK_LINE_L, 0x00पूर्ण,
-		अणुTP6800_R3E_HORIZ_DARK_LINE_H, 0x00पूर्ण,
-		अणुTP6800_R21_ENDP_1_CTL, 0x03पूर्ण,
+		{TP6800_R17_GPIO_IO, 0x9f},
+		{TP6800_R16_GPIO_PD, 0x40},
+		{TP6800_R10_SIF_TYPE, 0x00},	/* i2c 8 bits */
+		{TP6800_R50, 0x00},
+		{TP6800_R51, 0x00},
+		{TP6800_R52, 0xff},
+		{TP6800_R53, 0x03},
+		{TP6800_R54_DARK_CFG, 0x07},
+		{TP6800_R5C_EDGE_THRLD, 0x40},
+		{TP6800_R7A_BLK_THRLD, 0x40},
+		{TP6800_R2F_TIMING_CFG, 0x17},
+		{TP6800_R30_SENSOR_CFG, 0x18},	/* G1B..RG0 */
+		{TP6800_R37_FRONT_DARK_ST, 0x00},
+		{TP6800_R38_FRONT_DARK_END, 0x00},
+		{TP6800_R39_REAR_DARK_ST_L, 0x00},
+		{TP6800_R3A_REAR_DARK_ST_H, 0x00},
+		{TP6800_R3B_REAR_DARK_END_L, 0x00},
+		{TP6800_R3C_REAR_DARK_END_H, 0x00},
+		{TP6800_R3D_HORIZ_DARK_LINE_L, 0x00},
+		{TP6800_R3E_HORIZ_DARK_LINE_H, 0x00},
+		{TP6800_R21_ENDP_1_CTL, 0x03},
 
-		अणुTP6800_R31_PIXEL_START, 0x0bपूर्ण,
-		अणुTP6800_R32_PIXEL_END_L, 0x8aपूर्ण,
-		अणुTP6800_R33_PIXEL_END_H, 0x02पूर्ण,
-		अणुTP6800_R34_LINE_START, 0x0eपूर्ण,
-		अणुTP6800_R35_LINE_END_L, 0xf4पूर्ण,
-		अणुTP6800_R36_LINE_END_H, 0x01पूर्ण,
-		अणुTP6800_R78_FORMAT, 0x00पूर्ण,
-		अणुTP6800_R12_SIF_ADDR_S, 0x20पूर्ण,	/* cx0342 i2c addr */
-	पूर्ण;
-	अटल स्थिर काष्ठा cmd sensor_init[] = अणु
-		अणुCX0342_OUTPUT_CTRL, 0x07पूर्ण,
-		अणुCX0342_BYPASS_MODE, 0x58पूर्ण,
-		अणुCX0342_GPXLTHD_L, 0x16पूर्ण,
-		अणुCX0342_RBPXLTHD_L, 0x16पूर्ण,
-		अणुCX0342_PLANETHD_L, 0xc0पूर्ण,
-		अणुCX0342_PLANETHD_H, 0x03पूर्ण,
-		अणुCX0342_RB_GAP_L, 0xffपूर्ण,
-		अणुCX0342_RB_GAP_H, 0x07पूर्ण,
-		अणुCX0342_G_GAP_L, 0xffपूर्ण,
-		अणुCX0342_G_GAP_H, 0x07पूर्ण,
-		अणुCX0342_RST_OVERFLOW_L, 0x5cपूर्ण,
-		अणुCX0342_RST_OVERFLOW_H, 0x01पूर्ण,
-		अणुCX0342_DATA_OVERFLOW_L, 0xfcपूर्ण,
-		अणुCX0342_DATA_OVERFLOW_H, 0x03पूर्ण,
-		अणुCX0342_DATA_UNDERFLOW_L, 0x00पूर्ण,
-		अणुCX0342_DATA_UNDERFLOW_H, 0x00पूर्ण,
-		अणुCX0342_SYS_CTRL_0, 0x40पूर्ण,
-		अणुCX0342_GLOBAL_GAIN, 0x01पूर्ण,
-		अणुCX0342_CLOCK_GEN, 0x00पूर्ण,
-		अणुCX0342_SYS_CTRL_0, 0x02पूर्ण,
-		अणुCX0342_IDLE_CTRL, 0x05पूर्ण,
-		अणुCX0342_ADCGN, 0x00पूर्ण,
-		अणुCX0342_ADC_CTL, 0x00पूर्ण,
-		अणुCX0342_LVRST_BLBIAS, 0x01पूर्ण,
-		अणुCX0342_VTHSEL, 0x0bपूर्ण,
-		अणुCX0342_RAMP_RIV, 0x0bपूर्ण,
-		अणुCX0342_LDOSEL, 0x07पूर्ण,
-		अणुCX0342_SPV_VALUE_L, 0x40पूर्ण,
-		अणुCX0342_SPV_VALUE_H, 0x02पूर्ण,
-	पूर्ण;
+		{TP6800_R31_PIXEL_START, 0x0b},
+		{TP6800_R32_PIXEL_END_L, 0x8a},
+		{TP6800_R33_PIXEL_END_H, 0x02},
+		{TP6800_R34_LINE_START, 0x0e},
+		{TP6800_R35_LINE_END_L, 0xf4},
+		{TP6800_R36_LINE_END_H, 0x01},
+		{TP6800_R78_FORMAT, 0x00},
+		{TP6800_R12_SIF_ADDR_S, 0x20},	/* cx0342 i2c addr */
+	};
+	static const struct cmd sensor_init[] = {
+		{CX0342_OUTPUT_CTRL, 0x07},
+		{CX0342_BYPASS_MODE, 0x58},
+		{CX0342_GPXLTHD_L, 0x16},
+		{CX0342_RBPXLTHD_L, 0x16},
+		{CX0342_PLANETHD_L, 0xc0},
+		{CX0342_PLANETHD_H, 0x03},
+		{CX0342_RB_GAP_L, 0xff},
+		{CX0342_RB_GAP_H, 0x07},
+		{CX0342_G_GAP_L, 0xff},
+		{CX0342_G_GAP_H, 0x07},
+		{CX0342_RST_OVERFLOW_L, 0x5c},
+		{CX0342_RST_OVERFLOW_H, 0x01},
+		{CX0342_DATA_OVERFLOW_L, 0xfc},
+		{CX0342_DATA_OVERFLOW_H, 0x03},
+		{CX0342_DATA_UNDERFLOW_L, 0x00},
+		{CX0342_DATA_UNDERFLOW_H, 0x00},
+		{CX0342_SYS_CTRL_0, 0x40},
+		{CX0342_GLOBAL_GAIN, 0x01},
+		{CX0342_CLOCK_GEN, 0x00},
+		{CX0342_SYS_CTRL_0, 0x02},
+		{CX0342_IDLE_CTRL, 0x05},
+		{CX0342_ADCGN, 0x00},
+		{CX0342_ADC_CTL, 0x00},
+		{CX0342_LVRST_BLBIAS, 0x01},
+		{CX0342_VTHSEL, 0x0b},
+		{CX0342_RAMP_RIV, 0x0b},
+		{CX0342_LDOSEL, 0x07},
+		{CX0342_SPV_VALUE_L, 0x40},
+		{CX0342_SPV_VALUE_H, 0x02},
+	};
 
 	reg_w_buf(gspca_dev, reg_init, ARRAY_SIZE(reg_init));
 	i2c_w_buf(gspca_dev, sensor_init, ARRAY_SIZE(sensor_init));
@@ -4234,85 +4233,85 @@ MODULE_LICENSE("GPL");
 	reg_w(gspca_dev, TP6800_R54_DARK_CFG, 0x00);
 	i2c_w(gspca_dev, CX0342_EXPO_LINE_H, 0x00);
 	i2c_w(gspca_dev, CX0342_SYS_CTRL_0, 0x01);
-	अगर (sd->sensor == SENSOR_CX0342)
+	if (sd->sensor == SENSOR_CX0342)
 		setexposure(gspca_dev, v4l2_ctrl_g_ctrl(gspca_dev->exposure),
 			v4l2_ctrl_g_ctrl(gspca_dev->gain),
 			v4l2_ctrl_g_ctrl(sd->blue),
 			v4l2_ctrl_g_ctrl(sd->red));
-	अन्यथा
+	else
 		setexposure(gspca_dev, v4l2_ctrl_g_ctrl(gspca_dev->exposure),
 			v4l2_ctrl_g_ctrl(gspca_dev->gain), 0, 0);
 	set_led(gspca_dev, 1);
 	set_resolution(gspca_dev);
-पूर्ण
+}
 
-अटल व्योम cx0342_6810_start(काष्ठा gspca_dev *gspca_dev)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
-	अटल स्थिर काष्ठा cmd sensor_init_2[] = अणु
-		अणुCX0342_EXPO_LINE_L, 0x6fपूर्ण,
-		अणुCX0342_EXPO_LINE_H, 0x02पूर्ण,
-		अणुCX0342_RAW_GRGAIN_L, 0x00पूर्ण,
-		अणुCX0342_RAW_GBGAIN_L, 0x00पूर्ण,
-		अणुCX0342_RAW_RGAIN_L, 0x00पूर्ण,
-		अणुCX0342_RAW_BGAIN_L, 0x00पूर्ण,
-		अणुCX0342_SYS_CTRL_0, 0x81पूर्ण,
-	पूर्ण;
-	अटल स्थिर काष्ठा cmd bridge_init_2[] = अणु
-		अणु0x4d, 0x00पूर्ण,
-		अणु0x4c, 0xffपूर्ण,
-		अणु0x4e, 0xffपूर्ण,
-		अणु0x4f, 0x00पूर्ण,
-		अणुTP6800_R7A_BLK_THRLD, 0x00पूर्ण,
-		अणुTP6800_R79_QUALITY, 0x04पूर्ण,
-		अणुTP6800_R79_QUALITY, 0x01पूर्ण,
-	पूर्ण;
-	अटल स्थिर काष्ठा cmd bridge_init_3[] = अणु
-		अणुTP6800_R31_PIXEL_START, 0x08पूर्ण,
-		अणुTP6800_R32_PIXEL_END_L, 0x87पूर्ण,
-		अणुTP6800_R33_PIXEL_END_H, 0x02पूर्ण,
-		अणुTP6800_R34_LINE_START, 0x0eपूर्ण,
-		अणुTP6800_R35_LINE_END_L, 0xf4पूर्ण,
-		अणुTP6800_R36_LINE_END_H, 0x01पूर्ण,
-	पूर्ण;
-	अटल स्थिर काष्ठा cmd sensor_init_3[] = अणु
-		अणुCX0342_AUTO_ADC_CALIB, 0x81पूर्ण,
-		अणुCX0342_EXPO_LINE_L, 0x6fपूर्ण,
-		अणुCX0342_EXPO_LINE_H, 0x02पूर्ण,
-		अणुCX0342_RAW_GRGAIN_L, 0x00पूर्ण,
-		अणुCX0342_RAW_GBGAIN_L, 0x00पूर्ण,
-		अणुCX0342_RAW_RGAIN_L, 0x00पूर्ण,
-		अणुCX0342_RAW_BGAIN_L, 0x00पूर्ण,
-		अणुCX0342_SYS_CTRL_0, 0x81पूर्ण,
-	पूर्ण;
-	अटल स्थिर काष्ठा cmd bridge_init_5[] = अणु
-		अणु0x4d, 0x00पूर्ण,
-		अणु0x4c, 0xffपूर्ण,
-		अणु0x4e, 0xffपूर्ण,
-		अणु0x4f, 0x00पूर्ण,
-	पूर्ण;
-	अटल स्थिर काष्ठा cmd sensor_init_4[] = अणु
-		अणुCX0342_EXPO_LINE_L, 0xd3पूर्ण,
-		अणुCX0342_EXPO_LINE_H, 0x01पूर्ण,
+static void cx0342_6810_start(struct gspca_dev *gspca_dev)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
+	static const struct cmd sensor_init_2[] = {
+		{CX0342_EXPO_LINE_L, 0x6f},
+		{CX0342_EXPO_LINE_H, 0x02},
+		{CX0342_RAW_GRGAIN_L, 0x00},
+		{CX0342_RAW_GBGAIN_L, 0x00},
+		{CX0342_RAW_RGAIN_L, 0x00},
+		{CX0342_RAW_BGAIN_L, 0x00},
+		{CX0342_SYS_CTRL_0, 0x81},
+	};
+	static const struct cmd bridge_init_2[] = {
+		{0x4d, 0x00},
+		{0x4c, 0xff},
+		{0x4e, 0xff},
+		{0x4f, 0x00},
+		{TP6800_R7A_BLK_THRLD, 0x00},
+		{TP6800_R79_QUALITY, 0x04},
+		{TP6800_R79_QUALITY, 0x01},
+	};
+	static const struct cmd bridge_init_3[] = {
+		{TP6800_R31_PIXEL_START, 0x08},
+		{TP6800_R32_PIXEL_END_L, 0x87},
+		{TP6800_R33_PIXEL_END_H, 0x02},
+		{TP6800_R34_LINE_START, 0x0e},
+		{TP6800_R35_LINE_END_L, 0xf4},
+		{TP6800_R36_LINE_END_H, 0x01},
+	};
+	static const struct cmd sensor_init_3[] = {
+		{CX0342_AUTO_ADC_CALIB, 0x81},
+		{CX0342_EXPO_LINE_L, 0x6f},
+		{CX0342_EXPO_LINE_H, 0x02},
+		{CX0342_RAW_GRGAIN_L, 0x00},
+		{CX0342_RAW_GBGAIN_L, 0x00},
+		{CX0342_RAW_RGAIN_L, 0x00},
+		{CX0342_RAW_BGAIN_L, 0x00},
+		{CX0342_SYS_CTRL_0, 0x81},
+	};
+	static const struct cmd bridge_init_5[] = {
+		{0x4d, 0x00},
+		{0x4c, 0xff},
+		{0x4e, 0xff},
+		{0x4f, 0x00},
+	};
+	static const struct cmd sensor_init_4[] = {
+		{CX0342_EXPO_LINE_L, 0xd3},
+		{CX0342_EXPO_LINE_H, 0x01},
 /*fixme: gains, but 00..80 only*/
-		अणुCX0342_RAW_GRGAIN_L, 0x40पूर्ण,
-		अणुCX0342_RAW_GBGAIN_L, 0x40पूर्ण,
-		अणुCX0342_RAW_RGAIN_L, 0x40पूर्ण,
-		अणुCX0342_RAW_BGAIN_L, 0x40पूर्ण,
-		अणुCX0342_SYS_CTRL_0, 0x81पूर्ण,
-	पूर्ण;
-	अटल स्थिर काष्ठा cmd sensor_init_5[] = अणु
-		अणुCX0342_IDLE_CTRL, 0x05पूर्ण,
-		अणुCX0342_ADCGN, 0x00पूर्ण,
-		अणुCX0342_ADC_CTL, 0x00पूर्ण,
-		अणुCX0342_LVRST_BLBIAS, 0x01पूर्ण,
-		अणुCX0342_VTHSEL, 0x0bपूर्ण,
-		अणुCX0342_RAMP_RIV, 0x0bपूर्ण,
-		अणुCX0342_LDOSEL, 0x07पूर्ण,
-		अणुCX0342_SPV_VALUE_L, 0x40पूर्ण,
-		अणुCX0342_SPV_VALUE_H, 0x02पूर्ण,
-		अणुCX0342_AUTO_ADC_CALIB, 0x81पूर्ण,
-	पूर्ण;
+		{CX0342_RAW_GRGAIN_L, 0x40},
+		{CX0342_RAW_GBGAIN_L, 0x40},
+		{CX0342_RAW_RGAIN_L, 0x40},
+		{CX0342_RAW_BGAIN_L, 0x40},
+		{CX0342_SYS_CTRL_0, 0x81},
+	};
+	static const struct cmd sensor_init_5[] = {
+		{CX0342_IDLE_CTRL, 0x05},
+		{CX0342_ADCGN, 0x00},
+		{CX0342_ADC_CTL, 0x00},
+		{CX0342_LVRST_BLBIAS, 0x01},
+		{CX0342_VTHSEL, 0x0b},
+		{CX0342_RAMP_RIV, 0x0b},
+		{CX0342_LDOSEL, 0x07},
+		{CX0342_SPV_VALUE_L, 0x40},
+		{CX0342_SPV_VALUE_H, 0x02},
+		{CX0342_AUTO_ADC_CALIB, 0x81},
+	};
 
 	reg_w(gspca_dev, 0x22, gspca_dev->alt);
 	i2c_w_buf(gspca_dev, sensor_init_2, ARRAY_SIZE(sensor_init_2));
@@ -4320,15 +4319,15 @@ MODULE_LICENSE("GPL");
 	reg_w_buf(gspca_dev, tp6810_cx_init_common,
 			ARRAY_SIZE(tp6810_cx_init_common));
 	reg_w_buf(gspca_dev, bridge_init_3, ARRAY_SIZE(bridge_init_3));
-	अगर (gspca_dev->curr_mode) अणु
+	if (gspca_dev->curr_mode) {
 		reg_w(gspca_dev, 0x4a, 0x7f);
 		reg_w(gspca_dev, 0x07, 0x05);
 		reg_w(gspca_dev, TP6800_R78_FORMAT, 0x00);	/* vga */
-	पूर्ण अन्यथा अणु
+	} else {
 		reg_w(gspca_dev, 0x4a, 0xff);
 		reg_w(gspca_dev, 0x07, 0x85);
 		reg_w(gspca_dev, TP6800_R78_FORMAT, 0x01);	/* qvga */
-	पूर्ण
+	}
 	setgamma(gspca_dev, v4l2_ctrl_g_ctrl(sd->gamma));
 	reg_w_buf(gspca_dev, tp6810_bridge_start,
 			ARRAY_SIZE(tp6810_bridge_start));
@@ -4344,99 +4343,99 @@ MODULE_LICENSE("GPL");
 
 	set_led(gspca_dev, 1);
 /*	setquality(gspca_dev, v4l2_ctrl_g_ctrl(sd->jpegqual)); */
-पूर्ण
+}
 
-अटल व्योम soi763a_6800_start(काष्ठा gspca_dev *gspca_dev)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
-	अटल स्थिर काष्ठा cmd reg_init[] = अणु
-		अणुTP6800_R79_QUALITY, 0x04पूर्ण,
-		अणुTP6800_R79_QUALITY, 0x01पूर्ण,
-		अणुTP6800_R10_SIF_TYPE, 0x00पूर्ण,	/* i2c 8 bits */
+static void soi763a_6800_start(struct gspca_dev *gspca_dev)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
+	static const struct cmd reg_init[] = {
+		{TP6800_R79_QUALITY, 0x04},
+		{TP6800_R79_QUALITY, 0x01},
+		{TP6800_R10_SIF_TYPE, 0x00},	/* i2c 8 bits */
 
-		अणुTP6800_R50, 0x00पूर्ण,
-		अणुTP6800_R51, 0x00पूर्ण,
-		अणुTP6800_R52, 0xffपूर्ण,
-		अणुTP6800_R53, 0x03पूर्ण,
-		अणुTP6800_R54_DARK_CFG, 0x07पूर्ण,
-		अणुTP6800_R5C_EDGE_THRLD, 0x40पूर्ण,
+		{TP6800_R50, 0x00},
+		{TP6800_R51, 0x00},
+		{TP6800_R52, 0xff},
+		{TP6800_R53, 0x03},
+		{TP6800_R54_DARK_CFG, 0x07},
+		{TP6800_R5C_EDGE_THRLD, 0x40},
 
-		अणुTP6800_R79_QUALITY, 0x03पूर्ण,
-		अणुTP6800_R7A_BLK_THRLD, 0x40पूर्ण,
+		{TP6800_R79_QUALITY, 0x03},
+		{TP6800_R7A_BLK_THRLD, 0x40},
 
-		अणुTP6800_R2F_TIMING_CFG, 0x46पूर्ण,
-		अणुTP6800_R30_SENSOR_CFG, 0x10पूर्ण,	/* BG1..G0R */
-		अणुTP6800_R37_FRONT_DARK_ST, 0x00पूर्ण,
-		अणुTP6800_R38_FRONT_DARK_END, 0x00पूर्ण,
-		अणुTP6800_R39_REAR_DARK_ST_L, 0x00पूर्ण,
-		अणुTP6800_R3A_REAR_DARK_ST_H, 0x00पूर्ण,
-		अणुTP6800_R3B_REAR_DARK_END_L, 0x00पूर्ण,
-		अणुTP6800_R3C_REAR_DARK_END_H, 0x00पूर्ण,
-		अणुTP6800_R3D_HORIZ_DARK_LINE_L, 0x00पूर्ण,
-		अणुTP6800_R3E_HORIZ_DARK_LINE_H, 0x00पूर्ण,
-		अणुTP6800_R21_ENDP_1_CTL, 0x03पूर्ण,
+		{TP6800_R2F_TIMING_CFG, 0x46},
+		{TP6800_R30_SENSOR_CFG, 0x10},	/* BG1..G0R */
+		{TP6800_R37_FRONT_DARK_ST, 0x00},
+		{TP6800_R38_FRONT_DARK_END, 0x00},
+		{TP6800_R39_REAR_DARK_ST_L, 0x00},
+		{TP6800_R3A_REAR_DARK_ST_H, 0x00},
+		{TP6800_R3B_REAR_DARK_END_L, 0x00},
+		{TP6800_R3C_REAR_DARK_END_H, 0x00},
+		{TP6800_R3D_HORIZ_DARK_LINE_L, 0x00},
+		{TP6800_R3E_HORIZ_DARK_LINE_H, 0x00},
+		{TP6800_R21_ENDP_1_CTL, 0x03},
 
-		अणुTP6800_R3F_FRAME_RATE, 0x04पूर्ण,	/* 15 fps */
-		अणुTP6800_R5D_DEMOSAIC_CFG, 0x0eपूर्ण, /* scale करोwn - medium edge */
+		{TP6800_R3F_FRAME_RATE, 0x04},	/* 15 fps */
+		{TP6800_R5D_DEMOSAIC_CFG, 0x0e}, /* scale down - medium edge */
 
-		अणुTP6800_R31_PIXEL_START, 0x1bपूर्ण,
-		अणुTP6800_R32_PIXEL_END_L, 0x9aपूर्ण,
-		अणुTP6800_R33_PIXEL_END_H, 0x02पूर्ण,
-		अणुTP6800_R34_LINE_START, 0x0fपूर्ण,
-		अणुTP6800_R35_LINE_END_L, 0xf4पूर्ण,
-		अणुTP6800_R36_LINE_END_H, 0x01पूर्ण,
-		अणुTP6800_R78_FORMAT, 0x01पूर्ण,	/* qvga */
-		अणुTP6800_R12_SIF_ADDR_S, 0x21पूर्ण,	/* soi763a i2c addr */
-		अणुTP6800_R1A_SIF_TX_DATA2, 0x00पूर्ण,
-	पूर्ण;
-	अटल स्थिर काष्ठा cmd sensor_init[] = अणु
-		अणु0x12, 0x48पूर्ण,		/* mirror - RGB */
-		अणु0x13, 0xa0पूर्ण,		/* घड़ी - no AGC nor AEC */
-		अणु0x03, 0xa4पूर्ण,		/* saturation */
-		अणु0x04, 0x30पूर्ण,		/* hue */
-		अणु0x05, 0x88पूर्ण,		/* contrast */
-		अणु0x06, 0x60पूर्ण,		/* brightness */
-		अणु0x10, 0x41पूर्ण,		/* AEC */
-		अणु0x11, 0x40पूर्ण,		/* घड़ी rate */
-		अणु0x13, 0xa0पूर्ण,
-		अणु0x14, 0x00पूर्ण,		/* 640x480 */
-		अणु0x15, 0x14पूर्ण,
-		अणु0x1f, 0x41पूर्ण,
-		अणु0x20, 0x80पूर्ण,
-		अणु0x23, 0xeeपूर्ण,
-		अणु0x24, 0x50पूर्ण,
-		अणु0x25, 0x7aपूर्ण,
-		अणु0x26, 0x00पूर्ण,
-		अणु0x27, 0xe2पूर्ण,
-		अणु0x28, 0xb0पूर्ण,
-		अणु0x2a, 0x00पूर्ण,
-		अणु0x2b, 0x00पूर्ण,
-		अणु0x2d, 0x81पूर्ण,
-		अणु0x2f, 0x9dपूर्ण,
-		अणु0x60, 0x80पूर्ण,
-		अणु0x61, 0x00पूर्ण,
-		अणु0x62, 0x88पूर्ण,
-		अणु0x63, 0x11पूर्ण,
-		अणु0x64, 0x89पूर्ण,
-		अणु0x65, 0x00पूर्ण,
-		अणु0x67, 0x94पूर्ण,
-		अणु0x68, 0x7aपूर्ण,
-		अणु0x69, 0x0fपूर्ण,
-		अणु0x6c, 0x80पूर्ण,
-		अणु0x6d, 0x80पूर्ण,
-		अणु0x6e, 0x80पूर्ण,
-		अणु0x6f, 0xffपूर्ण,
-		अणु0x71, 0x20पूर्ण,
-		अणु0x74, 0x20पूर्ण,
-		अणु0x75, 0x86पूर्ण,
-		अणु0x77, 0xb5पूर्ण,
-		अणु0x17, 0x18पूर्ण,		/* H href start */
-		अणु0x18, 0xbfपूर्ण,		/* H href end */
-		अणु0x19, 0x03पूर्ण,		/* V start */
-		अणु0x1a, 0xf8पूर्ण,		/* V end */
-		अणु0x01, 0x80पूर्ण,		/* blue gain */
-		अणु0x02, 0x80पूर्ण,		/* red gain */
-	पूर्ण;
+		{TP6800_R31_PIXEL_START, 0x1b},
+		{TP6800_R32_PIXEL_END_L, 0x9a},
+		{TP6800_R33_PIXEL_END_H, 0x02},
+		{TP6800_R34_LINE_START, 0x0f},
+		{TP6800_R35_LINE_END_L, 0xf4},
+		{TP6800_R36_LINE_END_H, 0x01},
+		{TP6800_R78_FORMAT, 0x01},	/* qvga */
+		{TP6800_R12_SIF_ADDR_S, 0x21},	/* soi763a i2c addr */
+		{TP6800_R1A_SIF_TX_DATA2, 0x00},
+	};
+	static const struct cmd sensor_init[] = {
+		{0x12, 0x48},		/* mirror - RGB */
+		{0x13, 0xa0},		/* clock - no AGC nor AEC */
+		{0x03, 0xa4},		/* saturation */
+		{0x04, 0x30},		/* hue */
+		{0x05, 0x88},		/* contrast */
+		{0x06, 0x60},		/* brightness */
+		{0x10, 0x41},		/* AEC */
+		{0x11, 0x40},		/* clock rate */
+		{0x13, 0xa0},
+		{0x14, 0x00},		/* 640x480 */
+		{0x15, 0x14},
+		{0x1f, 0x41},
+		{0x20, 0x80},
+		{0x23, 0xee},
+		{0x24, 0x50},
+		{0x25, 0x7a},
+		{0x26, 0x00},
+		{0x27, 0xe2},
+		{0x28, 0xb0},
+		{0x2a, 0x00},
+		{0x2b, 0x00},
+		{0x2d, 0x81},
+		{0x2f, 0x9d},
+		{0x60, 0x80},
+		{0x61, 0x00},
+		{0x62, 0x88},
+		{0x63, 0x11},
+		{0x64, 0x89},
+		{0x65, 0x00},
+		{0x67, 0x94},
+		{0x68, 0x7a},
+		{0x69, 0x0f},
+		{0x6c, 0x80},
+		{0x6d, 0x80},
+		{0x6e, 0x80},
+		{0x6f, 0xff},
+		{0x71, 0x20},
+		{0x74, 0x20},
+		{0x75, 0x86},
+		{0x77, 0xb5},
+		{0x17, 0x18},		/* H href start */
+		{0x18, 0xbf},		/* H href end */
+		{0x19, 0x03},		/* V start */
+		{0x1a, 0xf8},		/* V end */
+		{0x01, 0x80},		/* blue gain */
+		{0x02, 0x80},		/* red gain */
+	};
 
 	reg_w_buf(gspca_dev, reg_init, ARRAY_SIZE(reg_init));
 
@@ -4454,74 +4453,74 @@ MODULE_LICENSE("GPL");
 				ARRAY_SIZE(color_gain[0]));
 
 	set_led(gspca_dev, 1);
-	अगर (sd->sensor == SENSOR_CX0342)
+	if (sd->sensor == SENSOR_CX0342)
 		setexposure(gspca_dev, v4l2_ctrl_g_ctrl(gspca_dev->exposure),
 			v4l2_ctrl_g_ctrl(gspca_dev->gain),
 			v4l2_ctrl_g_ctrl(sd->blue),
 			v4l2_ctrl_g_ctrl(sd->red));
-	अन्यथा
+	else
 		setexposure(gspca_dev, v4l2_ctrl_g_ctrl(gspca_dev->exposure),
 			v4l2_ctrl_g_ctrl(gspca_dev->gain), 0, 0);
-	अगर (sd->sensor == SENSOR_SOI763A)
+	if (sd->sensor == SENSOR_SOI763A)
 		setquality(gspca_dev, v4l2_ctrl_g_ctrl(sd->jpegqual));
 	setgamma(gspca_dev, v4l2_ctrl_g_ctrl(sd->gamma));
-पूर्ण
+}
 
-अटल व्योम soi763a_6810_start(काष्ठा gspca_dev *gspca_dev)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
-	अटल स्थिर काष्ठा cmd bridge_init_2[] = अणु
-		अणुTP6800_R7A_BLK_THRLD, 0x00पूर्ण,
-		अणुTP6800_R79_QUALITY, 0x04पूर्ण,
-		अणुTP6800_R79_QUALITY, 0x01पूर्ण,
-	पूर्ण;
-	अटल स्थिर काष्ठा cmd bridge_init_3[] = अणु
-		अणुTP6800_R31_PIXEL_START, 0x20पूर्ण,
-		अणुTP6800_R32_PIXEL_END_L, 0x9fपूर्ण,
-		अणुTP6800_R33_PIXEL_END_H, 0x02पूर्ण,
-		अणुTP6800_R34_LINE_START, 0x13पूर्ण,
-		अणुTP6800_R35_LINE_END_L, 0xf8पूर्ण,
-		अणुTP6800_R36_LINE_END_H, 0x01पूर्ण,
-	पूर्ण;
-	अटल स्थिर काष्ठा cmd bridge_init_6[] = अणु
-		अणु0x08, 0xffपूर्ण,
-		अणु0x09, 0xffपूर्ण,
-		अणु0x0a, 0x5fपूर्ण,
-		अणु0x0b, 0x80पूर्ण,
-	पूर्ण;
+static void soi763a_6810_start(struct gspca_dev *gspca_dev)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
+	static const struct cmd bridge_init_2[] = {
+		{TP6800_R7A_BLK_THRLD, 0x00},
+		{TP6800_R79_QUALITY, 0x04},
+		{TP6800_R79_QUALITY, 0x01},
+	};
+	static const struct cmd bridge_init_3[] = {
+		{TP6800_R31_PIXEL_START, 0x20},
+		{TP6800_R32_PIXEL_END_L, 0x9f},
+		{TP6800_R33_PIXEL_END_H, 0x02},
+		{TP6800_R34_LINE_START, 0x13},
+		{TP6800_R35_LINE_END_L, 0xf8},
+		{TP6800_R36_LINE_END_H, 0x01},
+	};
+	static const struct cmd bridge_init_6[] = {
+		{0x08, 0xff},
+		{0x09, 0xff},
+		{0x0a, 0x5f},
+		{0x0b, 0x80},
+	};
 
 	reg_w(gspca_dev, 0x22, gspca_dev->alt);
-	bulk_w(gspca_dev, 0x03, color_null, माप color_null);
+	bulk_w(gspca_dev, 0x03, color_null, sizeof color_null);
 	reg_w(gspca_dev, 0x59, 0x40);
-	अगर (sd->sensor == SENSOR_CX0342)
+	if (sd->sensor == SENSOR_CX0342)
 		setexposure(gspca_dev, v4l2_ctrl_g_ctrl(gspca_dev->exposure),
 			v4l2_ctrl_g_ctrl(gspca_dev->gain),
 			v4l2_ctrl_g_ctrl(sd->blue),
 			v4l2_ctrl_g_ctrl(sd->red));
-	अन्यथा
+	else
 		setexposure(gspca_dev, v4l2_ctrl_g_ctrl(gspca_dev->exposure),
 			v4l2_ctrl_g_ctrl(gspca_dev->gain), 0, 0);
 	reg_w_buf(gspca_dev, bridge_init_2, ARRAY_SIZE(bridge_init_2));
 	reg_w_buf(gspca_dev, tp6810_ov_init_common,
 			ARRAY_SIZE(tp6810_ov_init_common));
 	reg_w_buf(gspca_dev, bridge_init_3, ARRAY_SIZE(bridge_init_3));
-	अगर (gspca_dev->curr_mode) अणु
+	if (gspca_dev->curr_mode) {
 		reg_w(gspca_dev, 0x4a, 0x7f);
 		reg_w(gspca_dev, 0x07, 0x05);
 		reg_w(gspca_dev, TP6800_R78_FORMAT, 0x00);	/* vga */
-	पूर्ण अन्यथा अणु
+	} else {
 		reg_w(gspca_dev, 0x4a, 0xff);
 		reg_w(gspca_dev, 0x07, 0x85);
 		reg_w(gspca_dev, TP6800_R78_FORMAT, 0x01);	/* qvga */
-	पूर्ण
+	}
 	setgamma(gspca_dev, v4l2_ctrl_g_ctrl(sd->gamma));
 	reg_w_buf(gspca_dev, tp6810_bridge_start,
 			ARRAY_SIZE(tp6810_bridge_start));
 
-	अगर (gspca_dev->curr_mode) अणु
+	if (gspca_dev->curr_mode) {
 		reg_w(gspca_dev, 0x4f, 0x00);
 		reg_w(gspca_dev, 0x4e, 0x7c);
-	पूर्ण
+	}
 
 	reg_w(gspca_dev, 0x00, 0x00);
 
@@ -4530,78 +4529,78 @@ MODULE_LICENSE("GPL");
 				ARRAY_SIZE(color_gain[0]));
 	set_led(gspca_dev, 1);
 	reg_w(gspca_dev, TP6800_R3F_FRAME_RATE, 0xf0);
-	अगर (sd->sensor == SENSOR_CX0342)
+	if (sd->sensor == SENSOR_CX0342)
 		setexposure(gspca_dev, v4l2_ctrl_g_ctrl(gspca_dev->exposure),
 			v4l2_ctrl_g_ctrl(gspca_dev->gain),
 			v4l2_ctrl_g_ctrl(sd->blue),
 			v4l2_ctrl_g_ctrl(sd->red));
-	अन्यथा
+	else
 		setexposure(gspca_dev, v4l2_ctrl_g_ctrl(gspca_dev->exposure),
 			v4l2_ctrl_g_ctrl(gspca_dev->gain), 0, 0);
 	reg_w_buf(gspca_dev, bridge_init_6, ARRAY_SIZE(bridge_init_6));
-पूर्ण
+}
 
 /* -- start the camera -- */
-अटल पूर्णांक sd_start(काष्ठा gspca_dev *gspca_dev)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+static int sd_start(struct gspca_dev *gspca_dev)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
 
 	jpeg_define(sd->jpeg_hdr, gspca_dev->pixfmt.height,
 			gspca_dev->pixfmt.width);
 	set_dqt(gspca_dev, sd->quality);
-	अगर (sd->bridge == BRIDGE_TP6800) अणु
-		अगर (sd->sensor == SENSOR_CX0342)
+	if (sd->bridge == BRIDGE_TP6800) {
+		if (sd->sensor == SENSOR_CX0342)
 			cx0342_6800_start(gspca_dev);
-		अन्यथा
+		else
 			soi763a_6800_start(gspca_dev);
-	पूर्ण अन्यथा अणु
-		अगर (sd->sensor == SENSOR_CX0342)
+	} else {
+		if (sd->sensor == SENSOR_CX0342)
 			cx0342_6810_start(gspca_dev);
-		अन्यथा
+		else
 			soi763a_6810_start(gspca_dev);
 		reg_w_buf(gspca_dev, tp6810_late_start,
 				ARRAY_SIZE(tp6810_late_start));
 		reg_w(gspca_dev, 0x80, 0x03);
 		reg_w(gspca_dev, 0x82, gspca_dev->curr_mode ? 0x0a : 0x0e);
 
-		अगर (sd->sensor == SENSOR_CX0342)
+		if (sd->sensor == SENSOR_CX0342)
 			setexposure(gspca_dev,
 				v4l2_ctrl_g_ctrl(gspca_dev->exposure),
 				v4l2_ctrl_g_ctrl(gspca_dev->gain),
 				v4l2_ctrl_g_ctrl(sd->blue),
 				v4l2_ctrl_g_ctrl(sd->red));
-		अन्यथा
+		else
 			setexposure(gspca_dev,
 				v4l2_ctrl_g_ctrl(gspca_dev->exposure),
 				v4l2_ctrl_g_ctrl(gspca_dev->gain), 0, 0);
-		अगर (sd->sensor == SENSOR_SOI763A)
+		if (sd->sensor == SENSOR_SOI763A)
 			setquality(gspca_dev,
 				   v4l2_ctrl_g_ctrl(sd->jpegqual));
-		अगर (sd->bridge == BRIDGE_TP6810)
-			setस्वतःgain(gspca_dev,
-				    v4l2_ctrl_g_ctrl(gspca_dev->स्वतःgain));
-	पूर्ण
+		if (sd->bridge == BRIDGE_TP6810)
+			setautogain(gspca_dev,
+				    v4l2_ctrl_g_ctrl(gspca_dev->autogain));
+	}
 
 	setframerate(gspca_dev, v4l2_ctrl_g_ctrl(gspca_dev->exposure));
 
-	वापस gspca_dev->usb_err;
-पूर्ण
+	return gspca_dev->usb_err;
+}
 
-अटल व्योम sd_stopN(काष्ठा gspca_dev *gspca_dev)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+static void sd_stopN(struct gspca_dev *gspca_dev)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
 
-	अगर (sd->bridge == BRIDGE_TP6800)
+	if (sd->bridge == BRIDGE_TP6800)
 		reg_w(gspca_dev, TP6800_R2F_TIMING_CFG, 0x03);
 	set_led(gspca_dev, 0);
 	reg_w(gspca_dev, TP6800_R21_ENDP_1_CTL, 0x00);
-पूर्ण
+}
 
-अटल व्योम sd_pkt_scan(काष्ठा gspca_dev *gspca_dev,
+static void sd_pkt_scan(struct gspca_dev *gspca_dev,
 			u8 *data,
-			पूर्णांक len)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+			int len)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
 
 	/* the start of frame contains:
 	 *	ff d8
@@ -4610,125 +4609,125 @@ MODULE_LICENSE("GPL");
 	 *	height / 8
 	 *	quality
 	 */
-	अगर (sd->bridge == BRIDGE_TP6810) अणु
-		अगर (*data != 0x5a) अणु
-/*fixme: करोn't discard the whole frame..*/
-			अगर (*data == 0xaa || *data == 0x00)
-				वापस;
-			अगर (*data > 0xc0) अणु
+	if (sd->bridge == BRIDGE_TP6810) {
+		if (*data != 0x5a) {
+/*fixme: don't discard the whole frame..*/
+			if (*data == 0xaa || *data == 0x00)
+				return;
+			if (*data > 0xc0) {
 				gspca_dbg(gspca_dev, D_FRAM, "bad frame\n");
 				gspca_dev->last_packet_type = DISCARD_PACKET;
-				वापस;
-			पूर्ण
-		पूर्ण
+				return;
+			}
+		}
 		data++;
 		len--;
-		अगर (len < 2) अणु
+		if (len < 2) {
 			gspca_dev->last_packet_type = DISCARD_PACKET;
-			वापस;
-		पूर्ण
-		अगर (*data == 0xff && data[1] == 0xd8) अणु
-/*fixme: there may be inक्रमmation in the 4 high bits*/
-			अगर (len < 7) अणु
+			return;
+		}
+		if (*data == 0xff && data[1] == 0xd8) {
+/*fixme: there may be information in the 4 high bits*/
+			if (len < 7) {
 				gspca_dev->last_packet_type = DISCARD_PACKET;
-				वापस;
-			पूर्ण
-			अगर ((data[6] & 0x0f) != sd->quality)
+				return;
+			}
+			if ((data[6] & 0x0f) != sd->quality)
 				set_dqt(gspca_dev, data[6] & 0x0f);
 			gspca_frame_add(gspca_dev, FIRST_PACKET,
 					sd->jpeg_hdr, JPEG_HDR_SZ);
 			gspca_frame_add(gspca_dev, INTER_PACKET,
 					data + 7, len - 7);
-		पूर्ण अन्यथा अगर (data[len - 2] == 0xff && data[len - 1] == 0xd9) अणु
+		} else if (data[len - 2] == 0xff && data[len - 1] == 0xd9) {
 			gspca_frame_add(gspca_dev, LAST_PACKET,
 					data, len);
-		पूर्ण अन्यथा अणु
+		} else {
 			gspca_frame_add(gspca_dev, INTER_PACKET,
 					data, len);
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 
-	चयन (*data) अणु
-	हाल 0x55:
+	switch (*data) {
+	case 0x55:
 		gspca_frame_add(gspca_dev, LAST_PACKET, data, 0);
 
-		अगर (len < 8
+		if (len < 8
 		 || data[1] != 0xff || data[2] != 0xd8
-		 || data[3] != 0xff || data[4] != 0xfe) अणु
+		 || data[3] != 0xff || data[4] != 0xfe) {
 
 			/* Have only seen this with corrupt frames */
 			gspca_dev->last_packet_type = DISCARD_PACKET;
-			वापस;
-		पूर्ण
-		अगर (data[7] != sd->quality)
+			return;
+		}
+		if (data[7] != sd->quality)
 			set_dqt(gspca_dev, data[7]);
 		gspca_frame_add(gspca_dev, FIRST_PACKET,
 				sd->jpeg_hdr, JPEG_HDR_SZ);
 		gspca_frame_add(gspca_dev, INTER_PACKET,
 				data + 8, len - 8);
-		अवरोध;
-	हाल 0xaa:
+		break;
+	case 0xaa:
 		gspca_dev->last_packet_type = DISCARD_PACKET;
-		अवरोध;
-	हाल 0xcc:
-		अगर (len >= 3 && (data[1] != 0xff || data[2] != 0xd8))
+		break;
+	case 0xcc:
+		if (len >= 3 && (data[1] != 0xff || data[2] != 0xd8))
 			gspca_frame_add(gspca_dev, INTER_PACKET,
 					data + 1, len - 1);
-		अन्यथा
+		else
 			gspca_dev->last_packet_type = DISCARD_PACKET;
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम sd_dq_callback(काष्ठा gspca_dev *gspca_dev)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
-	पूर्णांक ret, alen;
-	पूर्णांक luma, expo;
+static void sd_dq_callback(struct gspca_dev *gspca_dev)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
+	int ret, alen;
+	int luma, expo;
 
-	अगर (sd->ag_cnt < 0)
-		वापस;
-	अगर (--sd->ag_cnt > 5)
-		वापस;
-	चयन (sd->ag_cnt) अणु
-/*	हाल 5: */
-	शेष:
+	if (sd->ag_cnt < 0)
+		return;
+	if (--sd->ag_cnt > 5)
+		return;
+	switch (sd->ag_cnt) {
+/*	case 5: */
+	default:
 		reg_w(gspca_dev, 0x7d, 0x00);
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		reg_w(gspca_dev, 0x27, 0xb0);
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		reg_w(gspca_dev, 0x0c, 0x01);
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		ret = usb_bulk_msg(gspca_dev->dev,
 				usb_rcvbulkpipe(gspca_dev->dev, 0x02),
 				gspca_dev->usb_buf,
 				32,
 				&alen,
 				500);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			pr_err("bulk err %d\n", ret);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		/* values not used (unknown) */
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		reg_w(gspca_dev, 0x27, 0xd0);
-		अवरोध;
-	हाल 0:
+		break;
+	case 0:
 		ret = usb_bulk_msg(gspca_dev->dev,
 				usb_rcvbulkpipe(gspca_dev->dev, 0x02),
 				gspca_dev->usb_buf,
 				32,
 				&alen,
 				500);
-		अगर (ret < 0) अणु
+		if (ret < 0) {
 			pr_err("bulk err %d\n", ret);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		luma = ((gspca_dev->usb_buf[8] << 8) + gspca_dev->usb_buf[7] +
 			(gspca_dev->usb_buf[11] << 8) + gspca_dev->usb_buf[10] +
 			(gspca_dev->usb_buf[14] << 8) + gspca_dev->usb_buf[13] +
@@ -4738,164 +4737,164 @@ MODULE_LICENSE("GPL");
 			(gspca_dev->usb_buf[26] << 8) + gspca_dev->usb_buf[25] +
 			(gspca_dev->usb_buf[29] << 8) + gspca_dev->usb_buf[28])
 				/ 8;
-		अगर (gspca_dev->pixfmt.width == 640)
+		if (gspca_dev->pixfmt.width == 640)
 			luma /= 4;
 		reg_w(gspca_dev, 0x7d, 0x00);
 
 		expo = v4l2_ctrl_g_ctrl(gspca_dev->exposure);
-		ret = gspca_expo_स्वतःgain(gspca_dev, luma,
+		ret = gspca_expo_autogain(gspca_dev, luma,
 				60,	/* desired luma */
 				6,	/* dead zone */
 				2,	/* gain knee */
 				70);	/* expo knee */
 		sd->ag_cnt = AG_CNT_START;
-		अगर (sd->bridge == BRIDGE_TP6810) अणु
-			पूर्णांक new_expo = v4l2_ctrl_g_ctrl(gspca_dev->exposure);
+		if (sd->bridge == BRIDGE_TP6810) {
+			int new_expo = v4l2_ctrl_g_ctrl(gspca_dev->exposure);
 
-			अगर ((expo >= 128 && new_expo < 128)
+			if ((expo >= 128 && new_expo < 128)
 			 || (expo < 128 && new_expo >= 128))
 				setframerate(gspca_dev, new_expo);
-		पूर्ण
-		अवरोध;
-	पूर्ण
-पूर्ण
+		}
+		break;
+	}
+}
 
 /* get stream parameters (framerate) */
-अटल व्योम sd_get_streamparm(काष्ठा gspca_dev *gspca_dev,
-			     काष्ठा v4l2_streamparm *parm)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
-	काष्ठा v4l2_captureparm *cp = &parm->parm.capture;
-	काष्ठा v4l2_fract *tpf = &cp->समयperframe;
-	पूर्णांक fr, i;
+static void sd_get_streamparm(struct gspca_dev *gspca_dev,
+			     struct v4l2_streamparm *parm)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
+	struct v4l2_captureparm *cp = &parm->parm.capture;
+	struct v4l2_fract *tpf = &cp->timeperframe;
+	int fr, i;
 
 	tpf->numerator = 1;
 	i = get_fr_idx(gspca_dev);
-	अगर (i & 0x80) अणु
-		अगर (sd->bridge == BRIDGE_TP6800)
+	if (i & 0x80) {
+		if (sd->bridge == BRIDGE_TP6800)
 			fr = rates[6 - (i & 0x07)];
-		अन्यथा
+		else
 			fr = rates_6810[7 - (i & 0x07)];
-	पूर्ण अन्यथा अणु
+	} else {
 		fr = rates[6 - i];
-	पूर्ण
+	}
 	tpf->denominator = fr;
-पूर्ण
+}
 
 /* set stream parameters (framerate) */
-अटल व्योम sd_set_streamparm(काष्ठा gspca_dev *gspca_dev,
-			     काष्ठा v4l2_streamparm *parm)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
-	काष्ठा v4l2_captureparm *cp = &parm->parm.capture;
-	काष्ठा v4l2_fract *tpf = &cp->समयperframe;
-	पूर्णांक fr, i;
+static void sd_set_streamparm(struct gspca_dev *gspca_dev,
+			     struct v4l2_streamparm *parm)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
+	struct v4l2_captureparm *cp = &parm->parm.capture;
+	struct v4l2_fract *tpf = &cp->timeperframe;
+	int fr, i;
 
-	अगर (tpf->numerator == 0 || tpf->denominator == 0)
+	if (tpf->numerator == 0 || tpf->denominator == 0)
 		sd->framerate = DEFAULT_FRAME_RATE;
-	अन्यथा
+	else
 		sd->framerate = tpf->denominator / tpf->numerator;
 
-	अगर (gspca_dev->streaming)
+	if (gspca_dev->streaming)
 		setframerate(gspca_dev, v4l2_ctrl_g_ctrl(gspca_dev->exposure));
 
 	/* Return the actual framerate */
 	i = get_fr_idx(gspca_dev);
-	अगर (i & 0x80)
+	if (i & 0x80)
 		fr = rates_6810[7 - (i & 0x07)];
-	अन्यथा
+	else
 		fr = rates[6 - i];
 	tpf->numerator = 1;
 	tpf->denominator = fr;
-पूर्ण
+}
 
-अटल पूर्णांक sd_set_jcomp(काष्ठा gspca_dev *gspca_dev,
-			स्थिर काष्ठा v4l2_jpegcompression *jcomp)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+static int sd_set_jcomp(struct gspca_dev *gspca_dev,
+			const struct v4l2_jpegcompression *jcomp)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
 
-	अगर (sd->sensor != SENSOR_SOI763A)
-		वापस -ENOTTY;
+	if (sd->sensor != SENSOR_SOI763A)
+		return -ENOTTY;
 	v4l2_ctrl_s_ctrl(sd->jpegqual, jcomp->quality);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sd_get_jcomp(काष्ठा gspca_dev *gspca_dev,
-			काष्ठा v4l2_jpegcompression *jcomp)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *) gspca_dev;
+static int sd_get_jcomp(struct gspca_dev *gspca_dev,
+			struct v4l2_jpegcompression *jcomp)
+{
+	struct sd *sd = (struct sd *) gspca_dev;
 
-	अगर (sd->sensor != SENSOR_SOI763A)
-		वापस -ENOTTY;
-	स_रखो(jcomp, 0, माप *jcomp);
+	if (sd->sensor != SENSOR_SOI763A)
+		return -ENOTTY;
+	memset(jcomp, 0, sizeof *jcomp);
 	jcomp->quality = v4l2_ctrl_g_ctrl(sd->jpegqual);
 	jcomp->jpeg_markers = V4L2_JPEG_MARKER_DHT
 			| V4L2_JPEG_MARKER_DQT;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक sd_s_ctrl(काष्ठा v4l2_ctrl *ctrl)
-अणु
-	काष्ठा gspca_dev *gspca_dev =
-		container_of(ctrl->handler, काष्ठा gspca_dev, ctrl_handler);
-	काष्ठा sd *sd = (काष्ठा sd *)gspca_dev;
+static int sd_s_ctrl(struct v4l2_ctrl *ctrl)
+{
+	struct gspca_dev *gspca_dev =
+		container_of(ctrl->handler, struct gspca_dev, ctrl_handler);
+	struct sd *sd = (struct sd *)gspca_dev;
 
 	gspca_dev->usb_err = 0;
 
-	अगर (!gspca_dev->streaming)
-		वापस 0;
+	if (!gspca_dev->streaming)
+		return 0;
 
-	चयन (ctrl->id) अणु
-	हाल V4L2_CID_SHARPNESS:
+	switch (ctrl->id) {
+	case V4L2_CID_SHARPNESS:
 		setsharpness(gspca_dev, ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_GAMMA:
+		break;
+	case V4L2_CID_GAMMA:
 		setgamma(gspca_dev, ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_BLUE_BALANCE:
+		break;
+	case V4L2_CID_BLUE_BALANCE:
 		setbgain(gspca_dev, ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_RED_BALANCE:
+		break;
+	case V4L2_CID_RED_BALANCE:
 		setrgain(gspca_dev, ctrl->val);
-		अवरोध;
-	हाल V4L2_CID_EXPOSURE:
+		break;
+	case V4L2_CID_EXPOSURE:
 		sd_setgain(gspca_dev);
-		अवरोध;
-	हाल V4L2_CID_AUTOGAIN:
-		अगर (ctrl->val)
-			अवरोध;
+		break;
+	case V4L2_CID_AUTOGAIN:
+		if (ctrl->val)
+			break;
 		sd_setgain(gspca_dev);
-		अवरोध;
-	हाल V4L2_CID_JPEG_COMPRESSION_QUALITY:
+		break;
+	case V4L2_CID_JPEG_COMPRESSION_QUALITY:
 		jpeg_set_qual(sd->jpeg_hdr, ctrl->val);
-		अवरोध;
-	पूर्ण
-	वापस gspca_dev->usb_err;
-पूर्ण
+		break;
+	}
+	return gspca_dev->usb_err;
+}
 
-अटल स्थिर काष्ठा v4l2_ctrl_ops sd_ctrl_ops = अणु
+static const struct v4l2_ctrl_ops sd_ctrl_ops = {
 	.s_ctrl = sd_s_ctrl,
-पूर्ण;
+};
 
-अटल पूर्णांक sd_init_controls(काष्ठा gspca_dev *gspca_dev)
-अणु
-	काष्ठा sd *sd = (काष्ठा sd *)gspca_dev;
-	काष्ठा v4l2_ctrl_handler *hdl = &gspca_dev->ctrl_handler;
+static int sd_init_controls(struct gspca_dev *gspca_dev)
+{
+	struct sd *sd = (struct sd *)gspca_dev;
+	struct v4l2_ctrl_handler *hdl = &gspca_dev->ctrl_handler;
 
 	gspca_dev->vdev.ctrl_handler = hdl;
 	v4l2_ctrl_handler_init(hdl, 4);
 	gspca_dev->exposure = v4l2_ctrl_new_std(hdl, &sd_ctrl_ops,
 			V4L2_CID_EXPOSURE, 1, 0xdc, 1, 0x4e);
-	अगर (sd->sensor == SENSOR_CX0342) अणु
+	if (sd->sensor == SENSOR_CX0342) {
 		sd->red = v4l2_ctrl_new_std(hdl, &sd_ctrl_ops,
 			V4L2_CID_RED_BALANCE, 0, 4095, 1, 256);
 		sd->blue = v4l2_ctrl_new_std(hdl, &sd_ctrl_ops,
 			V4L2_CID_BLUE_BALANCE, 0, 4095, 1, 256);
-	पूर्ण
-	अगर (sd->sensor == SENSOR_SOI763A)
+	}
+	if (sd->sensor == SENSOR_SOI763A)
 		gspca_dev->gain = v4l2_ctrl_new_std(hdl, &sd_ctrl_ops,
 			V4L2_CID_GAIN, 0, 15, 1, 3);
-	अन्यथा
+	else
 		gspca_dev->gain = v4l2_ctrl_new_std(hdl, &sd_ctrl_ops,
 			V4L2_CID_GAIN, 0, 4095, 1, 256);
 	sd->sharpness = v4l2_ctrl_new_std(hdl, &sd_ctrl_ops,
@@ -4904,26 +4903,26 @@ MODULE_LICENSE("GPL");
 			V4L2_CID_GAMMA, 0, NGAMMA - 1, 1,
 			(sd->sensor == SENSOR_SOI763A &&
 			 sd->bridge == BRIDGE_TP6800) ? 0 : 1);
-	अगर (sd->bridge == BRIDGE_TP6810)
-		gspca_dev->स्वतःgain = v4l2_ctrl_new_std(hdl, &sd_ctrl_ops,
+	if (sd->bridge == BRIDGE_TP6810)
+		gspca_dev->autogain = v4l2_ctrl_new_std(hdl, &sd_ctrl_ops,
 			V4L2_CID_AUTOGAIN, 0, 1, 1, 1);
-	अगर (sd->sensor == SENSOR_SOI763A)
+	if (sd->sensor == SENSOR_SOI763A)
 		sd->jpegqual = v4l2_ctrl_new_std(hdl, &sd_ctrl_ops,
 			V4L2_CID_JPEG_COMPRESSION_QUALITY,
 			0, 15, 1, (sd->bridge == BRIDGE_TP6810) ? 0 : 13);
 
-	अगर (hdl->error) अणु
+	if (hdl->error) {
 		pr_err("Could not initialize controls\n");
-		वापस hdl->error;
-	पूर्ण
-	अगर (gspca_dev->स्वतःgain)
-		v4l2_ctrl_स्वतः_cluster(3, &gspca_dev->स्वतःgain, 0, false);
-	अन्यथा
+		return hdl->error;
+	}
+	if (gspca_dev->autogain)
+		v4l2_ctrl_auto_cluster(3, &gspca_dev->autogain, 0, false);
+	else
 		v4l2_ctrl_cluster(2, &gspca_dev->exposure);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा sd_desc sd_desc = अणु
+static const struct sd_desc sd_desc = {
 	.name = KBUILD_MODNAME,
 	.config = sd_config,
 	.init = sd_init,
@@ -4937,37 +4936,37 @@ MODULE_LICENSE("GPL");
 	.set_streamparm = sd_set_streamparm,
 	.get_jcomp = sd_get_jcomp,
 	.set_jcomp = sd_set_jcomp,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा usb_device_id device_table[] = अणु
-	अणुUSB_DEVICE(0x06a2, 0x0003), .driver_info = BRIDGE_TP6800पूर्ण,
-	अणुUSB_DEVICE(0x06a2, 0x6810), .driver_info = BRIDGE_TP6810पूर्ण,
-	अणुपूर्ण			/* Terminating entry */
-पूर्ण;
+static const struct usb_device_id device_table[] = {
+	{USB_DEVICE(0x06a2, 0x0003), .driver_info = BRIDGE_TP6800},
+	{USB_DEVICE(0x06a2, 0x6810), .driver_info = BRIDGE_TP6810},
+	{}			/* Terminating entry */
+};
 
 MODULE_DEVICE_TABLE(usb, device_table);
 
-अटल पूर्णांक sd_probe(काष्ठा usb_पूर्णांकerface *पूर्णांकerface,
-		    स्थिर काष्ठा usb_device_id *id)
-अणु
-	वापस gspca_dev_probe(पूर्णांकerface, id, &sd_desc, माप(काष्ठा sd),
+static int sd_probe(struct usb_interface *interface,
+		    const struct usb_device_id *id)
+{
+	return gspca_dev_probe(interface, id, &sd_desc, sizeof(struct sd),
 			       THIS_MODULE);
-पूर्ण
+}
 
-अटल काष्ठा usb_driver sd_driver = अणु
+static struct usb_driver sd_driver = {
 	.name = KBUILD_MODNAME,
 	.id_table = device_table,
 	.probe = sd_probe,
 	.disconnect = gspca_disconnect,
-#अगर_घोषित CONFIG_PM
+#ifdef CONFIG_PM
 	.suspend = gspca_suspend,
 	.resume = gspca_resume,
 	.reset_resume = gspca_resume,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
 module_usb_driver(sd_driver);
 
-module_param(क्रमce_sensor, पूर्णांक, 0644);
-MODULE_PARM_DESC(क्रमce_sensor,
+module_param(force_sensor, int, 0644);
+MODULE_PARM_DESC(force_sensor,
 	"Force sensor. 0: cx0342, 1: soi763a");

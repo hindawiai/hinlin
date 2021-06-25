@@ -1,100 +1,99 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * (C) 2007 by Sebastian Claथen <sebastian.classen@मुक्तnet.ag>
- * (C) 2007-2010 by Jan Engelhardt <jengelh@meकरोzas.de>
+ * (C) 2007 by Sebastian Claßen <sebastian.classen@freenet.ag>
+ * (C) 2007-2010 by Jan Engelhardt <jengelh@medozas.de>
  *
  * Extracted from xt_TEE.c
  */
-#समावेश <linux/ip.h>
-#समावेश <linux/module.h>
-#समावेश <linux/percpu.h>
-#समावेश <linux/route.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/netfilter.h>
-#समावेश <net/checksum.h>
-#समावेश <net/icmp.h>
-#समावेश <net/ip.h>
-#समावेश <net/route.h>
-#समावेश <net/netfilter/ipv4/nf_dup_ipv4.h>
-#अगर IS_ENABLED(CONFIG_NF_CONNTRACK)
-#समावेश <net/netfilter/nf_conntrack.h>
-#पूर्ण_अगर
+#include <linux/ip.h>
+#include <linux/module.h>
+#include <linux/percpu.h>
+#include <linux/route.h>
+#include <linux/skbuff.h>
+#include <linux/netfilter.h>
+#include <net/checksum.h>
+#include <net/icmp.h>
+#include <net/ip.h>
+#include <net/route.h>
+#include <net/netfilter/ipv4/nf_dup_ipv4.h>
+#if IS_ENABLED(CONFIG_NF_CONNTRACK)
+#include <net/netfilter/nf_conntrack.h>
+#endif
 
-अटल bool nf_dup_ipv4_route(काष्ठा net *net, काष्ठा sk_buff *skb,
-			      स्थिर काष्ठा in_addr *gw, पूर्णांक oअगर)
-अणु
-	स्थिर काष्ठा iphdr *iph = ip_hdr(skb);
-	काष्ठा rtable *rt;
-	काष्ठा flowi4 fl4;
+static bool nf_dup_ipv4_route(struct net *net, struct sk_buff *skb,
+			      const struct in_addr *gw, int oif)
+{
+	const struct iphdr *iph = ip_hdr(skb);
+	struct rtable *rt;
+	struct flowi4 fl4;
 
-	स_रखो(&fl4, 0, माप(fl4));
-	अगर (oअगर != -1)
-		fl4.flowi4_oअगर = oअगर;
+	memset(&fl4, 0, sizeof(fl4));
+	if (oif != -1)
+		fl4.flowi4_oif = oif;
 
 	fl4.daddr = gw->s_addr;
 	fl4.flowi4_tos = RT_TOS(iph->tos);
 	fl4.flowi4_scope = RT_SCOPE_UNIVERSE;
 	fl4.flowi4_flags = FLOWI_FLAG_KNOWN_NH;
 	rt = ip_route_output_key(net, &fl4);
-	अगर (IS_ERR(rt))
-		वापस false;
+	if (IS_ERR(rt))
+		return false;
 
 	skb_dst_drop(skb);
 	skb_dst_set(skb, &rt->dst);
 	skb->dev      = rt->dst.dev;
 	skb->protocol = htons(ETH_P_IP);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम nf_dup_ipv4(काष्ठा net *net, काष्ठा sk_buff *skb, अचिन्हित पूर्णांक hooknum,
-		 स्थिर काष्ठा in_addr *gw, पूर्णांक oअगर)
-अणु
-	काष्ठा iphdr *iph;
+void nf_dup_ipv4(struct net *net, struct sk_buff *skb, unsigned int hooknum,
+		 const struct in_addr *gw, int oif)
+{
+	struct iphdr *iph;
 
-	अगर (this_cpu_पढ़ो(nf_skb_duplicated))
-		वापस;
+	if (this_cpu_read(nf_skb_duplicated))
+		return;
 	/*
-	 * Copy the skb, and route the copy. Will later वापस %XT_CONTINUE क्रम
-	 * the original skb, which should जारी on its way as अगर nothing has
+	 * Copy the skb, and route the copy. Will later return %XT_CONTINUE for
+	 * the original skb, which should continue on its way as if nothing has
 	 * happened. The copy should be independently delivered to the gateway.
 	 */
 	skb = pskb_copy(skb, GFP_ATOMIC);
-	अगर (skb == शून्य)
-		वापस;
+	if (skb == NULL)
+		return;
 
-#अगर IS_ENABLED(CONFIG_NF_CONNTRACK)
-	/* Aव्योम counting cloned packets towards the original connection. */
+#if IS_ENABLED(CONFIG_NF_CONNTRACK)
+	/* Avoid counting cloned packets towards the original connection. */
 	nf_reset_ct(skb);
-	nf_ct_set(skb, शून्य, IP_CT_UNTRACKED);
-#पूर्ण_अगर
+	nf_ct_set(skb, NULL, IP_CT_UNTRACKED);
+#endif
 	/*
 	 * If we are in PREROUTING/INPUT, decrease the TTL to mitigate potential
 	 * loops between two hosts.
 	 *
-	 * Set %IP_DF so that the original source is notअगरied of a potentially
-	 * decreased MTU on the clone route. IPv6 करोes this too.
+	 * Set %IP_DF so that the original source is notified of a potentially
+	 * decreased MTU on the clone route. IPv6 does this too.
 	 *
 	 * IP header checksum will be recalculated at ip_local_out.
 	 */
 	iph = ip_hdr(skb);
 	iph->frag_off |= htons(IP_DF);
-	अगर (hooknum == NF_INET_PRE_ROUTING ||
+	if (hooknum == NF_INET_PRE_ROUTING ||
 	    hooknum == NF_INET_LOCAL_IN)
 		--iph->ttl;
 
-	अगर (nf_dup_ipv4_route(net, skb, gw, oअगर)) अणु
-		__this_cpu_ग_लिखो(nf_skb_duplicated, true);
+	if (nf_dup_ipv4_route(net, skb, gw, oif)) {
+		__this_cpu_write(nf_skb_duplicated, true);
 		ip_local_out(net, skb->sk, skb);
-		__this_cpu_ग_लिखो(nf_skb_duplicated, false);
-	पूर्ण अन्यथा अणु
-		kमुक्त_skb(skb);
-	पूर्ण
-पूर्ण
+		__this_cpu_write(nf_skb_duplicated, false);
+	} else {
+		kfree_skb(skb);
+	}
+}
 EXPORT_SYMBOL_GPL(nf_dup_ipv4);
 
-MODULE_AUTHOR("Sebastian Claथen <sebastian.classen@freenet.ag>");
+MODULE_AUTHOR("Sebastian Claßen <sebastian.classen@freenet.ag>");
 MODULE_AUTHOR("Jan Engelhardt <jengelh@medozas.de>");
 MODULE_DESCRIPTION("nf_dup_ipv4: Duplicate IPv4 packet");
 MODULE_LICENSE("GPL");

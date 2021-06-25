@@ -1,116 +1,115 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
- * Copyright तऊ 2020 Intel Corporation
+ * Copyright © 2020 Intel Corporation
  *
  */
 
-#समावेश "i915_drv.h"
-#समावेश "intel_display_types.h"
-#समावेश "intel_vrr.h"
+#include "i915_drv.h"
+#include "intel_display_types.h"
+#include "intel_vrr.h"
 
-bool पूर्णांकel_vrr_is_capable(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा पूर्णांकel_dp *पूर्णांकel_dp;
-	स्थिर काष्ठा drm_display_info *info = &connector->display_info;
-	काष्ठा drm_i915_निजी *i915 = to_i915(connector->dev);
+bool intel_vrr_is_capable(struct drm_connector *connector)
+{
+	struct intel_dp *intel_dp;
+	const struct drm_display_info *info = &connector->display_info;
+	struct drm_i915_private *i915 = to_i915(connector->dev);
 
-	अगर (connector->connector_type != DRM_MODE_CONNECTOR_eDP &&
+	if (connector->connector_type != DRM_MODE_CONNECTOR_eDP &&
 	    connector->connector_type != DRM_MODE_CONNECTOR_DisplayPort)
-		वापस false;
+		return false;
 
-	पूर्णांकel_dp = पूर्णांकel_attached_dp(to_पूर्णांकel_connector(connector));
+	intel_dp = intel_attached_dp(to_intel_connector(connector));
 	/*
-	 * DP Sink is capable of VRR video timings अगर
+	 * DP Sink is capable of VRR video timings if
 	 * Ignore MSA bit is set in DPCD.
-	 * EDID monitor range also should be atleast 10 क्रम reasonable
+	 * EDID monitor range also should be atleast 10 for reasonable
 	 * Adaptive Sync or Variable Refresh Rate end user experience.
 	 */
-	वापस HAS_VRR(i915) &&
-		drm_dp_sink_can_करो_video_without_timing_msa(पूर्णांकel_dp->dpcd) &&
+	return HAS_VRR(i915) &&
+		drm_dp_sink_can_do_video_without_timing_msa(intel_dp->dpcd) &&
 		info->monitor_range.max_vfreq - info->monitor_range.min_vfreq > 10;
-पूर्ण
+}
 
-व्योम
-पूर्णांकel_vrr_check_modeset(काष्ठा पूर्णांकel_atomic_state *state)
-अणु
-	पूर्णांक i;
-	काष्ठा पूर्णांकel_crtc_state *old_crtc_state, *new_crtc_state;
-	काष्ठा पूर्णांकel_crtc *crtc;
+void
+intel_vrr_check_modeset(struct intel_atomic_state *state)
+{
+	int i;
+	struct intel_crtc_state *old_crtc_state, *new_crtc_state;
+	struct intel_crtc *crtc;
 
-	क्रम_each_oldnew_पूर्णांकel_crtc_in_state(state, crtc, old_crtc_state,
-					    new_crtc_state, i) अणु
-		अगर (new_crtc_state->uapi.vrr_enabled !=
+	for_each_oldnew_intel_crtc_in_state(state, crtc, old_crtc_state,
+					    new_crtc_state, i) {
+		if (new_crtc_state->uapi.vrr_enabled !=
 		    old_crtc_state->uapi.vrr_enabled)
 			new_crtc_state->uapi.mode_changed = true;
-	पूर्ण
-पूर्ण
+	}
+}
 
 /*
- * Without VRR रेजिस्टरs get latched at:
+ * Without VRR registers get latched at:
  *  vblank_start
  *
- * With VRR the earliest रेजिस्टरs can get latched is:
- *  पूर्णांकel_vrr_vmin_vblank_start(), which अगर we want to मुख्यtain
+ * With VRR the earliest registers can get latched is:
+ *  intel_vrr_vmin_vblank_start(), which if we want to maintain
  *  the correct min vtotal is >=vblank_start+1
  *
- * The latest poपूर्णांक रेजिस्टरs can get latched is the vmax decision boundary:
- *  पूर्णांकel_vrr_vmax_vblank_start()
+ * The latest point registers can get latched is the vmax decision boundary:
+ *  intel_vrr_vmax_vblank_start()
  *
- * Between those two poपूर्णांकs the vblank निकास starts (and hence रेजिस्टरs get
+ * Between those two points the vblank exit starts (and hence registers get
  * latched) ASAP after a push is sent.
  *
  * framestart_delay is programmable 0-3.
  */
-अटल पूर्णांक पूर्णांकel_vrr_vblank_निकास_length(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
-	काष्ठा पूर्णांकel_crtc *crtc = to_पूर्णांकel_crtc(crtc_state->uapi.crtc);
-	काष्ठा drm_i915_निजी *i915 = to_i915(crtc->base.dev);
+static int intel_vrr_vblank_exit_length(const struct intel_crtc_state *crtc_state)
+{
+	struct intel_crtc *crtc = to_intel_crtc(crtc_state->uapi.crtc);
+	struct drm_i915_private *i915 = to_i915(crtc->base.dev);
 
-	/* The hw imposes the extra scanline beक्रमe frame start */
-	वापस crtc_state->vrr.pipeline_full + i915->framestart_delay + 1;
-पूर्ण
+	/* The hw imposes the extra scanline before frame start */
+	return crtc_state->vrr.pipeline_full + i915->framestart_delay + 1;
+}
 
-पूर्णांक पूर्णांकel_vrr_vmin_vblank_start(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
+int intel_vrr_vmin_vblank_start(const struct intel_crtc_state *crtc_state)
+{
 	/* Min vblank actually determined by flipline that is always >=vmin+1 */
-	वापस crtc_state->vrr.vmin + 1 - पूर्णांकel_vrr_vblank_निकास_length(crtc_state);
-पूर्ण
+	return crtc_state->vrr.vmin + 1 - intel_vrr_vblank_exit_length(crtc_state);
+}
 
-पूर्णांक पूर्णांकel_vrr_vmax_vblank_start(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
-	वापस crtc_state->vrr.vmax - पूर्णांकel_vrr_vblank_निकास_length(crtc_state);
-पूर्ण
+int intel_vrr_vmax_vblank_start(const struct intel_crtc_state *crtc_state)
+{
+	return crtc_state->vrr.vmax - intel_vrr_vblank_exit_length(crtc_state);
+}
 
-व्योम
-पूर्णांकel_vrr_compute_config(काष्ठा पूर्णांकel_crtc_state *crtc_state,
-			 काष्ठा drm_connector_state *conn_state)
-अणु
-	काष्ठा पूर्णांकel_connector *connector =
-		to_पूर्णांकel_connector(conn_state->connector);
-	काष्ठा drm_display_mode *adjusted_mode = &crtc_state->hw.adjusted_mode;
-	स्थिर काष्ठा drm_display_info *info = &connector->base.display_info;
-	पूर्णांक vmin, vmax;
+void
+intel_vrr_compute_config(struct intel_crtc_state *crtc_state,
+			 struct drm_connector_state *conn_state)
+{
+	struct intel_connector *connector =
+		to_intel_connector(conn_state->connector);
+	struct drm_display_mode *adjusted_mode = &crtc_state->hw.adjusted_mode;
+	const struct drm_display_info *info = &connector->base.display_info;
+	int vmin, vmax;
 
-	अगर (!पूर्णांकel_vrr_is_capable(&connector->base))
-		वापस;
+	if (!intel_vrr_is_capable(&connector->base))
+		return;
 
-	अगर (adjusted_mode->flags & DRM_MODE_FLAG_INTERLACE)
-		वापस;
+	if (adjusted_mode->flags & DRM_MODE_FLAG_INTERLACE)
+		return;
 
-	अगर (!crtc_state->uapi.vrr_enabled)
-		वापस;
+	if (!crtc_state->uapi.vrr_enabled)
+		return;
 
-	vmin = DIV_ROUND_UP(adjusted_mode->crtc_घड़ी * 1000,
+	vmin = DIV_ROUND_UP(adjusted_mode->crtc_clock * 1000,
 			    adjusted_mode->crtc_htotal * info->monitor_range.max_vfreq);
-	vmax = adjusted_mode->crtc_घड़ी * 1000 /
+	vmax = adjusted_mode->crtc_clock * 1000 /
 		(adjusted_mode->crtc_htotal * info->monitor_range.min_vfreq);
 
-	vmin = max_t(पूर्णांक, vmin, adjusted_mode->crtc_vtotal);
-	vmax = max_t(पूर्णांक, vmax, adjusted_mode->crtc_vtotal);
+	vmin = max_t(int, vmin, adjusted_mode->crtc_vtotal);
+	vmax = max_t(int, vmax, adjusted_mode->crtc_vtotal);
 
-	अगर (vmin >= vmax)
-		वापस;
+	if (vmin >= vmax)
+		return;
 
 	/*
 	 * flipline determines the min vblank length the hardware will
@@ -125,11 +124,11 @@ bool पूर्णांकel_vrr_is_capable(काष्ठा drm_connector 
 
 	/*
 	 * FIXME: s/4/framestart_delay+1/ to get consistent
-	 * earliest/latest poपूर्णांकs क्रम रेजिस्टर latching regardless
+	 * earliest/latest points for register latching regardless
 	 * of the framestart_delay used?
 	 *
 	 * FIXME: this really needs the extra scanline to provide consistent
-	 * behaviour क्रम all framestart_delay values. Otherwise with
+	 * behaviour for all framestart_delay values. Otherwise with
 	 * framestart_delay==3 we will end up extending the min vblank by
 	 * one extra line.
 	 */
@@ -137,74 +136,74 @@ bool पूर्णांकel_vrr_is_capable(काष्ठा drm_connector 
 		min(255, crtc_state->vrr.vmin - adjusted_mode->crtc_vdisplay - 4 - 1);
 
 	crtc_state->mode_flags |= I915_MODE_FLAG_VRR;
-पूर्ण
+}
 
-व्योम पूर्णांकel_vrr_enable(काष्ठा पूर्णांकel_encoder *encoder,
-		      स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(encoder->base.dev);
-	क्रमागत transcoder cpu_transcoder = crtc_state->cpu_transcoder;
+void intel_vrr_enable(struct intel_encoder *encoder,
+		      const struct intel_crtc_state *crtc_state)
+{
+	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
+	enum transcoder cpu_transcoder = crtc_state->cpu_transcoder;
 	u32 trans_vrr_ctl;
 
-	अगर (!crtc_state->vrr.enable)
-		वापस;
+	if (!crtc_state->vrr.enable)
+		return;
 
 	trans_vrr_ctl = VRR_CTL_VRR_ENABLE |
 		VRR_CTL_IGN_MAX_SHIFT | VRR_CTL_FLIP_LINE_EN |
 		VRR_CTL_PIPELINE_FULL(crtc_state->vrr.pipeline_full) |
 		VRR_CTL_PIPELINE_FULL_OVERRIDE;
 
-	पूर्णांकel_de_ग_लिखो(dev_priv, TRANS_VRR_VMIN(cpu_transcoder), crtc_state->vrr.vmin - 1);
-	पूर्णांकel_de_ग_लिखो(dev_priv, TRANS_VRR_VMAX(cpu_transcoder), crtc_state->vrr.vmax - 1);
-	पूर्णांकel_de_ग_लिखो(dev_priv, TRANS_VRR_CTL(cpu_transcoder), trans_vrr_ctl);
-	पूर्णांकel_de_ग_लिखो(dev_priv, TRANS_VRR_FLIPLINE(cpu_transcoder), crtc_state->vrr.flipline - 1);
-	पूर्णांकel_de_ग_लिखो(dev_priv, TRANS_PUSH(cpu_transcoder), TRANS_PUSH_EN);
-पूर्ण
+	intel_de_write(dev_priv, TRANS_VRR_VMIN(cpu_transcoder), crtc_state->vrr.vmin - 1);
+	intel_de_write(dev_priv, TRANS_VRR_VMAX(cpu_transcoder), crtc_state->vrr.vmax - 1);
+	intel_de_write(dev_priv, TRANS_VRR_CTL(cpu_transcoder), trans_vrr_ctl);
+	intel_de_write(dev_priv, TRANS_VRR_FLIPLINE(cpu_transcoder), crtc_state->vrr.flipline - 1);
+	intel_de_write(dev_priv, TRANS_PUSH(cpu_transcoder), TRANS_PUSH_EN);
+}
 
-व्योम पूर्णांकel_vrr_send_push(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
-	काष्ठा पूर्णांकel_crtc *crtc = to_पूर्णांकel_crtc(crtc_state->uapi.crtc);
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
-	क्रमागत transcoder cpu_transcoder = crtc_state->cpu_transcoder;
+void intel_vrr_send_push(const struct intel_crtc_state *crtc_state)
+{
+	struct intel_crtc *crtc = to_intel_crtc(crtc_state->uapi.crtc);
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	enum transcoder cpu_transcoder = crtc_state->cpu_transcoder;
 
-	अगर (!crtc_state->vrr.enable)
-		वापस;
+	if (!crtc_state->vrr.enable)
+		return;
 
-	पूर्णांकel_de_ग_लिखो(dev_priv, TRANS_PUSH(cpu_transcoder),
+	intel_de_write(dev_priv, TRANS_PUSH(cpu_transcoder),
 		       TRANS_PUSH_EN | TRANS_PUSH_SEND);
-पूर्ण
+}
 
-व्योम पूर्णांकel_vrr_disable(स्थिर काष्ठा पूर्णांकel_crtc_state *old_crtc_state)
-अणु
-	काष्ठा पूर्णांकel_crtc *crtc = to_पूर्णांकel_crtc(old_crtc_state->uapi.crtc);
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
-	क्रमागत transcoder cpu_transcoder = old_crtc_state->cpu_transcoder;
+void intel_vrr_disable(const struct intel_crtc_state *old_crtc_state)
+{
+	struct intel_crtc *crtc = to_intel_crtc(old_crtc_state->uapi.crtc);
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	enum transcoder cpu_transcoder = old_crtc_state->cpu_transcoder;
 
-	अगर (!old_crtc_state->vrr.enable)
-		वापस;
+	if (!old_crtc_state->vrr.enable)
+		return;
 
-	पूर्णांकel_de_ग_लिखो(dev_priv, TRANS_VRR_CTL(cpu_transcoder), 0);
-	पूर्णांकel_de_ग_लिखो(dev_priv, TRANS_PUSH(cpu_transcoder), 0);
-पूर्ण
+	intel_de_write(dev_priv, TRANS_VRR_CTL(cpu_transcoder), 0);
+	intel_de_write(dev_priv, TRANS_PUSH(cpu_transcoder), 0);
+}
 
-व्योम पूर्णांकel_vrr_get_config(काष्ठा पूर्णांकel_crtc *crtc,
-			  काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc->base.dev);
-	क्रमागत transcoder cpu_transcoder = crtc_state->cpu_transcoder;
+void intel_vrr_get_config(struct intel_crtc *crtc,
+			  struct intel_crtc_state *crtc_state)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
+	enum transcoder cpu_transcoder = crtc_state->cpu_transcoder;
 	u32 trans_vrr_ctl;
 
-	trans_vrr_ctl = पूर्णांकel_de_पढ़ो(dev_priv, TRANS_VRR_CTL(cpu_transcoder));
+	trans_vrr_ctl = intel_de_read(dev_priv, TRANS_VRR_CTL(cpu_transcoder));
 	crtc_state->vrr.enable = trans_vrr_ctl & VRR_CTL_VRR_ENABLE;
-	अगर (!crtc_state->vrr.enable)
-		वापस;
+	if (!crtc_state->vrr.enable)
+		return;
 
-	अगर (trans_vrr_ctl & VRR_CTL_PIPELINE_FULL_OVERRIDE)
+	if (trans_vrr_ctl & VRR_CTL_PIPELINE_FULL_OVERRIDE)
 		crtc_state->vrr.pipeline_full = REG_FIELD_GET(VRR_CTL_PIPELINE_FULL_MASK, trans_vrr_ctl);
-	अगर (trans_vrr_ctl & VRR_CTL_FLIP_LINE_EN)
-		crtc_state->vrr.flipline = पूर्णांकel_de_पढ़ो(dev_priv, TRANS_VRR_FLIPLINE(cpu_transcoder)) + 1;
-	crtc_state->vrr.vmax = पूर्णांकel_de_पढ़ो(dev_priv, TRANS_VRR_VMAX(cpu_transcoder)) + 1;
-	crtc_state->vrr.vmin = पूर्णांकel_de_पढ़ो(dev_priv, TRANS_VRR_VMIN(cpu_transcoder)) + 1;
+	if (trans_vrr_ctl & VRR_CTL_FLIP_LINE_EN)
+		crtc_state->vrr.flipline = intel_de_read(dev_priv, TRANS_VRR_FLIPLINE(cpu_transcoder)) + 1;
+	crtc_state->vrr.vmax = intel_de_read(dev_priv, TRANS_VRR_VMAX(cpu_transcoder)) + 1;
+	crtc_state->vrr.vmin = intel_de_read(dev_priv, TRANS_VRR_VMIN(cpu_transcoder)) + 1;
 
 	crtc_state->mode_flags |= I915_MODE_FLAG_VRR;
-पूर्ण
+}

@@ -1,14 +1,13 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Renesas Electronics uPD78F0730 USB to serial converter driver
  *
  * Copyright (C) 2014,2016 Maksim Salau <maksim.salau@gmail.com>
  *
  * Protocol of the adaptor is described in the application note U19660EJ1V0AN00
- * NञPD78F0730 8-bit Single-Chip Microcontroller
+ * μPD78F0730 8-bit Single-Chip Microcontroller
  * USB-to-Serial Conversion Software
- * <https://www.renesas.com/en-eu/करोc/DocumentServer/026/U19660EJ1V0AN00.pdf>
+ * <https://www.renesas.com/en-eu/doc/DocumentServer/026/U19660EJ1V0AN00.pdf>
  *
  * The adaptor functionality is limited to the following:
  * - data bits: 7 or 8
@@ -16,300 +15,300 @@
  * - parity: even, odd or none
  * - flow control: none
  * - baud rates: 0, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 153600
- * - संकेतs: DTR, RTS and BREAK
+ * - signals: DTR, RTS and BREAK
  */
 
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/tty.h>
-#समावेश <linux/usb.h>
-#समावेश <linux/usb/serial.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/tty.h>
+#include <linux/usb.h>
+#include <linux/usb/serial.h>
 
-#घोषणा DRIVER_DESC "Renesas uPD78F0730 USB to serial converter driver"
+#define DRIVER_DESC "Renesas uPD78F0730 USB to serial converter driver"
 
-#घोषणा DRIVER_AUTHOR "Maksim Salau <maksim.salau@gmail.com>"
+#define DRIVER_AUTHOR "Maksim Salau <maksim.salau@gmail.com>"
 
-अटल स्थिर काष्ठा usb_device_id id_table[] = अणु
-	अणु USB_DEVICE(0x0409, 0x0063) पूर्ण, /* V850ESJX3-STICK */
-	अणु USB_DEVICE(0x045B, 0x0212) पूर्ण, /* YRPBRL78G13, YRPBRL78G14 */
-	अणु USB_DEVICE(0x064B, 0x7825) पूर्ण, /* Analog Devices EVAL-ADXL362Z-DB */
-	अणुपूर्ण
-पूर्ण;
+static const struct usb_device_id id_table[] = {
+	{ USB_DEVICE(0x0409, 0x0063) }, /* V850ESJX3-STICK */
+	{ USB_DEVICE(0x045B, 0x0212) }, /* YRPBRL78G13, YRPBRL78G14 */
+	{ USB_DEVICE(0x064B, 0x7825) }, /* Analog Devices EVAL-ADXL362Z-DB */
+	{}
+};
 
 MODULE_DEVICE_TABLE(usb, id_table);
 
 /*
- * Each adaptor is associated with a निजी काष्ठाure, that holds the current
- * state of control संकेतs (DTR, RTS and BREAK).
+ * Each adaptor is associated with a private structure, that holds the current
+ * state of control signals (DTR, RTS and BREAK).
  */
-काष्ठा upd78f0730_port_निजी अणु
-	काष्ठा mutex	lock;		/* mutex to protect line_संकेतs */
-	u8		line_संकेतs;
-पूर्ण;
+struct upd78f0730_port_private {
+	struct mutex	lock;		/* mutex to protect line_signals */
+	u8		line_signals;
+};
 
 /* Op-codes of control commands */
-#घोषणा UPD78F0730_CMD_LINE_CONTROL	0x00
-#घोषणा UPD78F0730_CMD_SET_DTR_RTS	0x01
-#घोषणा UPD78F0730_CMD_SET_XON_XOFF_CHR	0x02
-#घोषणा UPD78F0730_CMD_OPEN_CLOSE	0x03
-#घोषणा UPD78F0730_CMD_SET_ERR_CHR	0x04
+#define UPD78F0730_CMD_LINE_CONTROL	0x00
+#define UPD78F0730_CMD_SET_DTR_RTS	0x01
+#define UPD78F0730_CMD_SET_XON_XOFF_CHR	0x02
+#define UPD78F0730_CMD_OPEN_CLOSE	0x03
+#define UPD78F0730_CMD_SET_ERR_CHR	0x04
 
 /* Data sizes in UPD78F0730_CMD_LINE_CONTROL command */
-#घोषणा UPD78F0730_DATA_SIZE_7_BITS	0x00
-#घोषणा UPD78F0730_DATA_SIZE_8_BITS	0x01
-#घोषणा UPD78F0730_DATA_SIZE_MASK	0x01
+#define UPD78F0730_DATA_SIZE_7_BITS	0x00
+#define UPD78F0730_DATA_SIZE_8_BITS	0x01
+#define UPD78F0730_DATA_SIZE_MASK	0x01
 
 /* Stop-bit modes in UPD78F0730_CMD_LINE_CONTROL command */
-#घोषणा UPD78F0730_STOP_BIT_1_BIT	0x00
-#घोषणा UPD78F0730_STOP_BIT_2_BIT	0x02
-#घोषणा UPD78F0730_STOP_BIT_MASK	0x02
+#define UPD78F0730_STOP_BIT_1_BIT	0x00
+#define UPD78F0730_STOP_BIT_2_BIT	0x02
+#define UPD78F0730_STOP_BIT_MASK	0x02
 
 /* Parity modes in UPD78F0730_CMD_LINE_CONTROL command */
-#घोषणा UPD78F0730_PARITY_NONE	0x00
-#घोषणा UPD78F0730_PARITY_EVEN	0x04
-#घोषणा UPD78F0730_PARITY_ODD	0x08
-#घोषणा UPD78F0730_PARITY_MASK	0x0C
+#define UPD78F0730_PARITY_NONE	0x00
+#define UPD78F0730_PARITY_EVEN	0x04
+#define UPD78F0730_PARITY_ODD	0x08
+#define UPD78F0730_PARITY_MASK	0x0C
 
 /* Flow control modes in UPD78F0730_CMD_LINE_CONTROL command */
-#घोषणा UPD78F0730_FLOW_CONTROL_NONE	0x00
-#घोषणा UPD78F0730_FLOW_CONTROL_HW	0x10
-#घोषणा UPD78F0730_FLOW_CONTROL_SW	0x20
-#घोषणा UPD78F0730_FLOW_CONTROL_MASK	0x30
+#define UPD78F0730_FLOW_CONTROL_NONE	0x00
+#define UPD78F0730_FLOW_CONTROL_HW	0x10
+#define UPD78F0730_FLOW_CONTROL_SW	0x20
+#define UPD78F0730_FLOW_CONTROL_MASK	0x30
 
-/* Control संकेत bits in UPD78F0730_CMD_SET_DTR_RTS command */
-#घोषणा UPD78F0730_RTS		0x01
-#घोषणा UPD78F0730_DTR		0x02
-#घोषणा UPD78F0730_BREAK	0x04
+/* Control signal bits in UPD78F0730_CMD_SET_DTR_RTS command */
+#define UPD78F0730_RTS		0x01
+#define UPD78F0730_DTR		0x02
+#define UPD78F0730_BREAK	0x04
 
 /* Port modes in UPD78F0730_CMD_OPEN_CLOSE command */
-#घोषणा UPD78F0730_PORT_CLOSE	0x00
-#घोषणा UPD78F0730_PORT_OPEN	0x01
+#define UPD78F0730_PORT_CLOSE	0x00
+#define UPD78F0730_PORT_OPEN	0x01
 
-/* Error अक्षरacter substitution modes in UPD78F0730_CMD_SET_ERR_CHR command */
-#घोषणा UPD78F0730_ERR_CHR_DISABLED	0x00
-#घोषणा UPD78F0730_ERR_CHR_ENABLED	0x01
+/* Error character substitution modes in UPD78F0730_CMD_SET_ERR_CHR command */
+#define UPD78F0730_ERR_CHR_DISABLED	0x00
+#define UPD78F0730_ERR_CHR_ENABLED	0x01
 
 /*
- * Declaration of command काष्ठाures
+ * Declaration of command structures
  */
 
 /* UPD78F0730_CMD_LINE_CONTROL command */
-काष्ठा upd78f0730_line_control अणु
+struct upd78f0730_line_control {
 	u8	opcode;
 	__le32	baud_rate;
 	u8	params;
-पूर्ण __packed;
+} __packed;
 
 /* UPD78F0730_CMD_SET_DTR_RTS command */
-काष्ठा upd78f0730_set_dtr_rts अणु
+struct upd78f0730_set_dtr_rts {
 	u8 opcode;
 	u8 params;
-पूर्ण;
+};
 
 /* UPD78F0730_CMD_SET_XON_OFF_CHR command */
-काष्ठा upd78f0730_set_xon_xoff_chr अणु
+struct upd78f0730_set_xon_xoff_chr {
 	u8 opcode;
 	u8 xon;
 	u8 xoff;
-पूर्ण;
+};
 
 /* UPD78F0730_CMD_OPEN_CLOSE command */
-काष्ठा upd78f0730_खोलो_बंद अणु
+struct upd78f0730_open_close {
 	u8 opcode;
 	u8 state;
-पूर्ण;
+};
 
 /* UPD78F0730_CMD_SET_ERR_CHR command */
-काष्ठा upd78f0730_set_err_chr अणु
+struct upd78f0730_set_err_chr {
 	u8 opcode;
 	u8 state;
-	u8 err_अक्षर;
-पूर्ण;
+	u8 err_char;
+};
 
-अटल पूर्णांक upd78f0730_send_ctl(काष्ठा usb_serial_port *port,
-			स्थिर व्योम *data, पूर्णांक size)
-अणु
-	काष्ठा usb_device *usbdev = port->serial->dev;
-	व्योम *buf;
-	पूर्णांक res;
+static int upd78f0730_send_ctl(struct usb_serial_port *port,
+			const void *data, int size)
+{
+	struct usb_device *usbdev = port->serial->dev;
+	void *buf;
+	int res;
 
-	अगर (size <= 0 || !data)
-		वापस -EINVAL;
+	if (size <= 0 || !data)
+		return -EINVAL;
 
 	buf = kmemdup(data, size, GFP_KERNEL);
-	अगर (!buf)
-		वापस -ENOMEM;
+	if (!buf)
+		return -ENOMEM;
 
 	res = usb_control_msg(usbdev, usb_sndctrlpipe(usbdev, 0), 0x00,
-			USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_सूची_OUT,
+			USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_DIR_OUT,
 			0x0000, 0x0000, buf, size, USB_CTRL_SET_TIMEOUT);
 
-	kमुक्त(buf);
+	kfree(buf);
 
-	अगर (res < 0) अणु
-		काष्ठा device *dev = &port->dev;
+	if (res < 0) {
+		struct device *dev = &port->dev;
 
 		dev_err(dev, "failed to send control request %02x: %d\n",
 			*(u8 *)data, res);
 
-		वापस res;
-	पूर्ण
+		return res;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक upd78f0730_port_probe(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा upd78f0730_port_निजी *निजी;
+static int upd78f0730_port_probe(struct usb_serial_port *port)
+{
+	struct upd78f0730_port_private *private;
 
-	निजी = kzalloc(माप(*निजी), GFP_KERNEL);
-	अगर (!निजी)
-		वापस -ENOMEM;
+	private = kzalloc(sizeof(*private), GFP_KERNEL);
+	if (!private)
+		return -ENOMEM;
 
-	mutex_init(&निजी->lock);
-	usb_set_serial_port_data(port, निजी);
+	mutex_init(&private->lock);
+	usb_set_serial_port_data(port, private);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम upd78f0730_port_हटाओ(काष्ठा usb_serial_port *port)
-अणु
-	काष्ठा upd78f0730_port_निजी *निजी;
+static void upd78f0730_port_remove(struct usb_serial_port *port)
+{
+	struct upd78f0730_port_private *private;
 
-	निजी = usb_get_serial_port_data(port);
-	mutex_destroy(&निजी->lock);
-	kमुक्त(निजी);
-पूर्ण
+	private = usb_get_serial_port_data(port);
+	mutex_destroy(&private->lock);
+	kfree(private);
+}
 
-अटल पूर्णांक upd78f0730_tiocmget(काष्ठा tty_काष्ठा *tty)
-अणु
-	काष्ठा upd78f0730_port_निजी *निजी;
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	पूर्णांक संकेतs;
-	पूर्णांक res;
+static int upd78f0730_tiocmget(struct tty_struct *tty)
+{
+	struct upd78f0730_port_private *private;
+	struct usb_serial_port *port = tty->driver_data;
+	int signals;
+	int res;
 
-	निजी = usb_get_serial_port_data(port);
+	private = usb_get_serial_port_data(port);
 
-	mutex_lock(&निजी->lock);
-	संकेतs = निजी->line_संकेतs;
-	mutex_unlock(&निजी->lock);
+	mutex_lock(&private->lock);
+	signals = private->line_signals;
+	mutex_unlock(&private->lock);
 
-	res = ((संकेतs & UPD78F0730_DTR) ? TIOCM_DTR : 0) |
-		((संकेतs & UPD78F0730_RTS) ? TIOCM_RTS : 0);
+	res = ((signals & UPD78F0730_DTR) ? TIOCM_DTR : 0) |
+		((signals & UPD78F0730_RTS) ? TIOCM_RTS : 0);
 
 	dev_dbg(&port->dev, "%s - res = %x\n", __func__, res);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल पूर्णांक upd78f0730_tiocmset(काष्ठा tty_काष्ठा *tty,
-			अचिन्हित पूर्णांक set, अचिन्हित पूर्णांक clear)
-अणु
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा upd78f0730_port_निजी *निजी;
-	काष्ठा upd78f0730_set_dtr_rts request;
-	काष्ठा device *dev = &port->dev;
-	पूर्णांक res;
+static int upd78f0730_tiocmset(struct tty_struct *tty,
+			unsigned int set, unsigned int clear)
+{
+	struct usb_serial_port *port = tty->driver_data;
+	struct upd78f0730_port_private *private;
+	struct upd78f0730_set_dtr_rts request;
+	struct device *dev = &port->dev;
+	int res;
 
-	निजी = usb_get_serial_port_data(port);
+	private = usb_get_serial_port_data(port);
 
-	mutex_lock(&निजी->lock);
-	अगर (set & TIOCM_DTR) अणु
-		निजी->line_संकेतs |= UPD78F0730_DTR;
+	mutex_lock(&private->lock);
+	if (set & TIOCM_DTR) {
+		private->line_signals |= UPD78F0730_DTR;
 		dev_dbg(dev, "%s - set DTR\n", __func__);
-	पूर्ण
-	अगर (set & TIOCM_RTS) अणु
-		निजी->line_संकेतs |= UPD78F0730_RTS;
+	}
+	if (set & TIOCM_RTS) {
+		private->line_signals |= UPD78F0730_RTS;
 		dev_dbg(dev, "%s - set RTS\n", __func__);
-	पूर्ण
-	अगर (clear & TIOCM_DTR) अणु
-		निजी->line_संकेतs &= ~UPD78F0730_DTR;
+	}
+	if (clear & TIOCM_DTR) {
+		private->line_signals &= ~UPD78F0730_DTR;
 		dev_dbg(dev, "%s - clear DTR\n", __func__);
-	पूर्ण
-	अगर (clear & TIOCM_RTS) अणु
-		निजी->line_संकेतs &= ~UPD78F0730_RTS;
+	}
+	if (clear & TIOCM_RTS) {
+		private->line_signals &= ~UPD78F0730_RTS;
 		dev_dbg(dev, "%s - clear RTS\n", __func__);
-	पूर्ण
+	}
 	request.opcode = UPD78F0730_CMD_SET_DTR_RTS;
-	request.params = निजी->line_संकेतs;
+	request.params = private->line_signals;
 
-	res = upd78f0730_send_ctl(port, &request, माप(request));
-	mutex_unlock(&निजी->lock);
+	res = upd78f0730_send_ctl(port, &request, sizeof(request));
+	mutex_unlock(&private->lock);
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-अटल व्योम upd78f0730_अवरोध_ctl(काष्ठा tty_काष्ठा *tty, पूर्णांक अवरोध_state)
-अणु
-	काष्ठा upd78f0730_port_निजी *निजी;
-	काष्ठा usb_serial_port *port = tty->driver_data;
-	काष्ठा upd78f0730_set_dtr_rts request;
-	काष्ठा device *dev = &port->dev;
+static void upd78f0730_break_ctl(struct tty_struct *tty, int break_state)
+{
+	struct upd78f0730_port_private *private;
+	struct usb_serial_port *port = tty->driver_data;
+	struct upd78f0730_set_dtr_rts request;
+	struct device *dev = &port->dev;
 
-	निजी = usb_get_serial_port_data(port);
+	private = usb_get_serial_port_data(port);
 
-	mutex_lock(&निजी->lock);
-	अगर (अवरोध_state) अणु
-		निजी->line_संकेतs |= UPD78F0730_BREAK;
+	mutex_lock(&private->lock);
+	if (break_state) {
+		private->line_signals |= UPD78F0730_BREAK;
 		dev_dbg(dev, "%s - set BREAK\n", __func__);
-	पूर्ण अन्यथा अणु
-		निजी->line_संकेतs &= ~UPD78F0730_BREAK;
+	} else {
+		private->line_signals &= ~UPD78F0730_BREAK;
 		dev_dbg(dev, "%s - clear BREAK\n", __func__);
-	पूर्ण
+	}
 	request.opcode = UPD78F0730_CMD_SET_DTR_RTS;
-	request.params = निजी->line_संकेतs;
+	request.params = private->line_signals;
 
-	upd78f0730_send_ctl(port, &request, माप(request));
-	mutex_unlock(&निजी->lock);
-पूर्ण
+	upd78f0730_send_ctl(port, &request, sizeof(request));
+	mutex_unlock(&private->lock);
+}
 
-अटल व्योम upd78f0730_dtr_rts(काष्ठा usb_serial_port *port, पूर्णांक on)
-अणु
-	काष्ठा tty_काष्ठा *tty = port->port.tty;
-	अचिन्हित पूर्णांक set = 0;
-	अचिन्हित पूर्णांक clear = 0;
+static void upd78f0730_dtr_rts(struct usb_serial_port *port, int on)
+{
+	struct tty_struct *tty = port->port.tty;
+	unsigned int set = 0;
+	unsigned int clear = 0;
 
-	अगर (on)
+	if (on)
 		set = TIOCM_DTR | TIOCM_RTS;
-	अन्यथा
+	else
 		clear = TIOCM_DTR | TIOCM_RTS;
 
 	upd78f0730_tiocmset(tty, set, clear);
-पूर्ण
+}
 
-अटल speed_t upd78f0730_get_baud_rate(काष्ठा tty_काष्ठा *tty)
-अणु
-	स्थिर speed_t baud_rate = tty_get_baud_rate(tty);
-	अटल स्थिर speed_t supported[] = अणु
+static speed_t upd78f0730_get_baud_rate(struct tty_struct *tty)
+{
+	const speed_t baud_rate = tty_get_baud_rate(tty);
+	static const speed_t supported[] = {
 		0, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 153600
-	पूर्ण;
-	पूर्णांक i;
+	};
+	int i;
 
-	क्रम (i = ARRAY_SIZE(supported) - 1; i >= 0; i--) अणु
-		अगर (baud_rate == supported[i])
-			वापस baud_rate;
-	पूर्ण
+	for (i = ARRAY_SIZE(supported) - 1; i >= 0; i--) {
+		if (baud_rate == supported[i])
+			return baud_rate;
+	}
 
-	/* If the baud rate is not supported, चयन to the शेष one */
+	/* If the baud rate is not supported, switch to the default one */
 	tty_encode_baud_rate(tty, 9600, 9600);
 
-	वापस tty_get_baud_rate(tty);
-पूर्ण
+	return tty_get_baud_rate(tty);
+}
 
-अटल व्योम upd78f0730_set_termios(काष्ठा tty_काष्ठा *tty,
-				काष्ठा usb_serial_port *port,
-				काष्ठा ktermios *old_termios)
-अणु
-	काष्ठा device *dev = &port->dev;
-	काष्ठा upd78f0730_line_control request;
+static void upd78f0730_set_termios(struct tty_struct *tty,
+				struct usb_serial_port *port,
+				struct ktermios *old_termios)
+{
+	struct device *dev = &port->dev;
+	struct upd78f0730_line_control request;
 	speed_t baud_rate;
 
-	अगर (old_termios && !tty_termios_hw_change(&tty->termios, old_termios))
-		वापस;
+	if (old_termios && !tty_termios_hw_change(&tty->termios, old_termios))
+		return;
 
-	अगर (C_BAUD(tty) == B0)
+	if (C_BAUD(tty) == B0)
 		upd78f0730_dtr_rts(port, 0);
-	अन्यथा अगर (old_termios && (old_termios->c_cflag & CBAUD) == B0)
+	else if (old_termios && (old_termios->c_cflag & CBAUD) == B0)
 		upd78f0730_dtr_rts(port, 1);
 
 	baud_rate = upd78f0730_get_baud_rate(tty);
@@ -318,113 +317,113 @@ MODULE_DEVICE_TABLE(usb, id_table);
 	request.params = 0;
 	dev_dbg(dev, "%s - baud rate = %d\n", __func__, baud_rate);
 
-	चयन (C_CSIZE(tty)) अणु
-	हाल CS7:
+	switch (C_CSIZE(tty)) {
+	case CS7:
 		request.params |= UPD78F0730_DATA_SIZE_7_BITS;
 		dev_dbg(dev, "%s - 7 data bits\n", __func__);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		tty->termios.c_cflag &= ~CSIZE;
 		tty->termios.c_cflag |= CS8;
 		dev_warn(dev, "data size is not supported, using 8 bits\n");
 		fallthrough;
-	हाल CS8:
+	case CS8:
 		request.params |= UPD78F0730_DATA_SIZE_8_BITS;
 		dev_dbg(dev, "%s - 8 data bits\n", __func__);
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर (C_PARENB(tty)) अणु
-		अगर (C_PARODD(tty)) अणु
+	if (C_PARENB(tty)) {
+		if (C_PARODD(tty)) {
 			request.params |= UPD78F0730_PARITY_ODD;
 			dev_dbg(dev, "%s - odd parity\n", __func__);
-		पूर्ण अन्यथा अणु
+		} else {
 			request.params |= UPD78F0730_PARITY_EVEN;
 			dev_dbg(dev, "%s - even parity\n", __func__);
-		पूर्ण
+		}
 
-		अगर (C_CMSPAR(tty)) अणु
+		if (C_CMSPAR(tty)) {
 			tty->termios.c_cflag &= ~CMSPAR;
 			dev_warn(dev, "MARK/SPACE parity is not supported\n");
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		request.params |= UPD78F0730_PARITY_NONE;
 		dev_dbg(dev, "%s - no parity\n", __func__);
-	पूर्ण
+	}
 
-	अगर (C_CSTOPB(tty)) अणु
+	if (C_CSTOPB(tty)) {
 		request.params |= UPD78F0730_STOP_BIT_2_BIT;
 		dev_dbg(dev, "%s - 2 stop bits\n", __func__);
-	पूर्ण अन्यथा अणु
+	} else {
 		request.params |= UPD78F0730_STOP_BIT_1_BIT;
 		dev_dbg(dev, "%s - 1 stop bit\n", __func__);
-	पूर्ण
+	}
 
-	अगर (C_CRTSCTS(tty)) अणु
+	if (C_CRTSCTS(tty)) {
 		tty->termios.c_cflag &= ~CRTSCTS;
 		dev_warn(dev, "RTSCTS flow control is not supported\n");
-	पूर्ण
-	अगर (I_IXOFF(tty) || I_IXON(tty)) अणु
-		tty->termios.c_अगरlag &= ~(IXOFF | IXON);
+	}
+	if (I_IXOFF(tty) || I_IXON(tty)) {
+		tty->termios.c_iflag &= ~(IXOFF | IXON);
 		dev_warn(dev, "XON/XOFF flow control is not supported\n");
-	पूर्ण
+	}
 	request.params |= UPD78F0730_FLOW_CONTROL_NONE;
 	dev_dbg(dev, "%s - no flow control\n", __func__);
 
-	upd78f0730_send_ctl(port, &request, माप(request));
-पूर्ण
+	upd78f0730_send_ctl(port, &request, sizeof(request));
+}
 
-अटल पूर्णांक upd78f0730_खोलो(काष्ठा tty_काष्ठा *tty, काष्ठा usb_serial_port *port)
-अणु
-	अटल स्थिर काष्ठा upd78f0730_खोलो_बंद request = अणु
+static int upd78f0730_open(struct tty_struct *tty, struct usb_serial_port *port)
+{
+	static const struct upd78f0730_open_close request = {
 		.opcode = UPD78F0730_CMD_OPEN_CLOSE,
 		.state = UPD78F0730_PORT_OPEN
-	पूर्ण;
-	पूर्णांक res;
+	};
+	int res;
 
-	res = upd78f0730_send_ctl(port, &request, माप(request));
-	अगर (res)
-		वापस res;
+	res = upd78f0730_send_ctl(port, &request, sizeof(request));
+	if (res)
+		return res;
 
-	अगर (tty)
-		upd78f0730_set_termios(tty, port, शून्य);
+	if (tty)
+		upd78f0730_set_termios(tty, port, NULL);
 
-	वापस usb_serial_generic_खोलो(tty, port);
-पूर्ण
+	return usb_serial_generic_open(tty, port);
+}
 
-अटल व्योम upd78f0730_बंद(काष्ठा usb_serial_port *port)
-अणु
-	अटल स्थिर काष्ठा upd78f0730_खोलो_बंद request = अणु
+static void upd78f0730_close(struct usb_serial_port *port)
+{
+	static const struct upd78f0730_open_close request = {
 		.opcode = UPD78F0730_CMD_OPEN_CLOSE,
 		.state = UPD78F0730_PORT_CLOSE
-	पूर्ण;
+	};
 
-	usb_serial_generic_बंद(port);
-	upd78f0730_send_ctl(port, &request, माप(request));
-पूर्ण
+	usb_serial_generic_close(port);
+	upd78f0730_send_ctl(port, &request, sizeof(request));
+}
 
-अटल काष्ठा usb_serial_driver upd78f0730_device = अणु
-	.driver	 = अणु
+static struct usb_serial_driver upd78f0730_device = {
+	.driver	 = {
 		.owner	= THIS_MODULE,
 		.name	= "upd78f0730",
-	पूर्ण,
+	},
 	.id_table	= id_table,
 	.num_ports	= 1,
 	.port_probe	= upd78f0730_port_probe,
-	.port_हटाओ	= upd78f0730_port_हटाओ,
-	.खोलो		= upd78f0730_खोलो,
-	.बंद		= upd78f0730_बंद,
+	.port_remove	= upd78f0730_port_remove,
+	.open		= upd78f0730_open,
+	.close		= upd78f0730_close,
 	.set_termios	= upd78f0730_set_termios,
 	.tiocmget	= upd78f0730_tiocmget,
 	.tiocmset	= upd78f0730_tiocmset,
 	.dtr_rts	= upd78f0730_dtr_rts,
-	.अवरोध_ctl	= upd78f0730_अवरोध_ctl,
-पूर्ण;
+	.break_ctl	= upd78f0730_break_ctl,
+};
 
-अटल काष्ठा usb_serial_driver * स्थिर serial_drivers[] = अणु
+static struct usb_serial_driver * const serial_drivers[] = {
 	&upd78f0730_device,
-	शून्य
-पूर्ण;
+	NULL
+};
 
 module_usb_serial_driver(serial_drivers, id_table);
 

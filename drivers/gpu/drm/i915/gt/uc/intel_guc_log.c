@@ -1,148 +1,147 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
- * Copyright तऊ 2014-2019 Intel Corporation
+ * Copyright © 2014-2019 Intel Corporation
  */
 
-#समावेश <linux/debugfs.h>
+#include <linux/debugfs.h>
 
-#समावेश "gt/intel_gt.h"
-#समावेश "i915_drv.h"
-#समावेश "i915_memcpy.h"
-#समावेश "intel_guc_log.h"
+#include "gt/intel_gt.h"
+#include "i915_drv.h"
+#include "i915_memcpy.h"
+#include "intel_guc_log.h"
 
-अटल व्योम guc_log_capture_logs(काष्ठा पूर्णांकel_guc_log *log);
+static void guc_log_capture_logs(struct intel_guc_log *log);
 
 /**
  * DOC: GuC firmware log
  *
  * Firmware log is enabled by setting i915.guc_log_level to the positive level.
- * Log data is prपूर्णांकed out via पढ़ोing debugfs i915_guc_log_dump. Reading from
- * i915_guc_load_status will prपूर्णांक out firmware loading status and scratch
- * रेजिस्टरs value.
+ * Log data is printed out via reading debugfs i915_guc_log_dump. Reading from
+ * i915_guc_load_status will print out firmware loading status and scratch
+ * registers value.
  */
 
-अटल पूर्णांक guc_action_flush_log_complete(काष्ठा पूर्णांकel_guc *guc)
-अणु
-	u32 action[] = अणु
-		INTEL_GUC_ACTION_LOG_BUFFER_खाता_FLUSH_COMPLETE
-	पूर्ण;
+static int guc_action_flush_log_complete(struct intel_guc *guc)
+{
+	u32 action[] = {
+		INTEL_GUC_ACTION_LOG_BUFFER_FILE_FLUSH_COMPLETE
+	};
 
-	वापस पूर्णांकel_guc_send(guc, action, ARRAY_SIZE(action));
-पूर्ण
+	return intel_guc_send(guc, action, ARRAY_SIZE(action));
+}
 
-अटल पूर्णांक guc_action_flush_log(काष्ठा पूर्णांकel_guc *guc)
-अणु
-	u32 action[] = अणु
+static int guc_action_flush_log(struct intel_guc *guc)
+{
+	u32 action[] = {
 		INTEL_GUC_ACTION_FORCE_LOG_BUFFER_FLUSH,
 		0
-	पूर्ण;
+	};
 
-	वापस पूर्णांकel_guc_send(guc, action, ARRAY_SIZE(action));
-पूर्ण
+	return intel_guc_send(guc, action, ARRAY_SIZE(action));
+}
 
-अटल पूर्णांक guc_action_control_log(काष्ठा पूर्णांकel_guc *guc, bool enable,
-				  bool शेष_logging, u32 verbosity)
-अणु
-	u32 action[] = अणु
+static int guc_action_control_log(struct intel_guc *guc, bool enable,
+				  bool default_logging, u32 verbosity)
+{
+	u32 action[] = {
 		INTEL_GUC_ACTION_UK_LOG_ENABLE_LOGGING,
 		(enable ? GUC_LOG_CONTROL_LOGGING_ENABLED : 0) |
 		(verbosity << GUC_LOG_CONTROL_VERBOSITY_SHIFT) |
-		(शेष_logging ? GUC_LOG_CONTROL_DEFAULT_LOGGING : 0)
-	पूर्ण;
+		(default_logging ? GUC_LOG_CONTROL_DEFAULT_LOGGING : 0)
+	};
 
 	GEM_BUG_ON(verbosity > GUC_LOG_VERBOSITY_MAX);
 
-	वापस पूर्णांकel_guc_send(guc, action, ARRAY_SIZE(action));
-पूर्ण
+	return intel_guc_send(guc, action, ARRAY_SIZE(action));
+}
 
-अटल व्योम guc_log_enable_flush_events(काष्ठा पूर्णांकel_guc_log *log)
-अणु
-	पूर्णांकel_guc_enable_msg(log_to_guc(log),
+static void guc_log_enable_flush_events(struct intel_guc_log *log)
+{
+	intel_guc_enable_msg(log_to_guc(log),
 			     INTEL_GUC_RECV_MSG_FLUSH_LOG_BUFFER |
 			     INTEL_GUC_RECV_MSG_CRASH_DUMP_POSTED);
-पूर्ण
+}
 
-अटल व्योम guc_log_disable_flush_events(काष्ठा पूर्णांकel_guc_log *log)
-अणु
-	पूर्णांकel_guc_disable_msg(log_to_guc(log),
+static void guc_log_disable_flush_events(struct intel_guc_log *log)
+{
+	intel_guc_disable_msg(log_to_guc(log),
 			      INTEL_GUC_RECV_MSG_FLUSH_LOG_BUFFER |
 			      INTEL_GUC_RECV_MSG_CRASH_DUMP_POSTED);
-पूर्ण
+}
 
 /*
- * Sub buffer चयन callback. Called whenever relay has to चयन to a new
- * sub buffer, relay stays on the same sub buffer अगर 0 is वापसed.
+ * Sub buffer switch callback. Called whenever relay has to switch to a new
+ * sub buffer, relay stays on the same sub buffer if 0 is returned.
  */
-अटल पूर्णांक subbuf_start_callback(काष्ठा rchan_buf *buf,
-				 व्योम *subbuf,
-				 व्योम *prev_subbuf,
-				 माप_प्रकार prev_padding)
-अणु
+static int subbuf_start_callback(struct rchan_buf *buf,
+				 void *subbuf,
+				 void *prev_subbuf,
+				 size_t prev_padding)
+{
 	/*
-	 * Use no-overग_लिखो mode by शेष, where relay will stop accepting
-	 * new data अगर there are no empty sub buffers left.
-	 * There is no strict synchronization enक्रमced by relay between Consumer
-	 * and Producer. In overग_लिखो mode, there is a possibility of getting
+	 * Use no-overwrite mode by default, where relay will stop accepting
+	 * new data if there are no empty sub buffers left.
+	 * There is no strict synchronization enforced by relay between Consumer
+	 * and Producer. In overwrite mode, there is a possibility of getting
 	 * inconsistent/garbled data, the producer could be writing on to the
-	 * same sub buffer from which Consumer is पढ़ोing. This can't be aव्योमed
+	 * same sub buffer from which Consumer is reading. This can't be avoided
 	 * unless Consumer is fast enough and can always run in tandem with
 	 * Producer.
 	 */
-	अगर (relay_buf_full(buf))
-		वापस 0;
+	if (relay_buf_full(buf))
+		return 0;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
  * file_create() callback. Creates relay file in debugfs.
  */
-अटल काष्ठा dentry *create_buf_file_callback(स्थिर अक्षर *filename,
-					       काष्ठा dentry *parent,
+static struct dentry *create_buf_file_callback(const char *filename,
+					       struct dentry *parent,
 					       umode_t mode,
-					       काष्ठा rchan_buf *buf,
-					       पूर्णांक *is_global)
-अणु
-	काष्ठा dentry *buf_file;
+					       struct rchan_buf *buf,
+					       int *is_global)
+{
+	struct dentry *buf_file;
 
 	/*
-	 * This to enable the use of a single buffer क्रम the relay channel and
+	 * This to enable the use of a single buffer for the relay channel and
 	 * correspondingly have a single file exposed to User, through which
 	 * it can collect the logs in order without any post-processing.
-	 * Need to set 'is_global' even अगर parent is शून्य क्रम early logging.
+	 * Need to set 'is_global' even if parent is NULL for early logging.
 	 */
 	*is_global = 1;
 
-	अगर (!parent)
-		वापस शून्य;
+	if (!parent)
+		return NULL;
 
 	buf_file = debugfs_create_file(filename, mode,
 				       parent, buf, &relay_file_operations);
-	अगर (IS_ERR(buf_file))
-		वापस शून्य;
+	if (IS_ERR(buf_file))
+		return NULL;
 
-	वापस buf_file;
-पूर्ण
+	return buf_file;
+}
 
 /*
- * file_हटाओ() शेष callback. Removes relay file in debugfs.
+ * file_remove() default callback. Removes relay file in debugfs.
  */
-अटल पूर्णांक हटाओ_buf_file_callback(काष्ठा dentry *dentry)
-अणु
-	debugfs_हटाओ(dentry);
-	वापस 0;
-पूर्ण
+static int remove_buf_file_callback(struct dentry *dentry)
+{
+	debugfs_remove(dentry);
+	return 0;
+}
 
 /* relay channel callbacks */
-अटल स्थिर काष्ठा rchan_callbacks relay_callbacks = अणु
+static const struct rchan_callbacks relay_callbacks = {
 	.subbuf_start = subbuf_start_callback,
 	.create_buf_file = create_buf_file_callback,
-	.हटाओ_buf_file = हटाओ_buf_file_callback,
-पूर्ण;
+	.remove_buf_file = remove_buf_file_callback,
+};
 
-अटल व्योम guc_move_to_next_buf(काष्ठा पूर्णांकel_guc_log *log)
-अणु
+static void guc_move_to_next_buf(struct intel_guc_log *log)
+{
 	/*
 	 * Make sure the updates made in the sub buffer are visible when
 	 * Consumer sees the following update to offset inside the sub buffer.
@@ -154,109 +153,109 @@
 
 	/* Switch to the next sub buffer */
 	relay_flush(log->relay.channel);
-पूर्ण
+}
 
-अटल व्योम *guc_get_ग_लिखो_buffer(काष्ठा पूर्णांकel_guc_log *log)
-अणु
+static void *guc_get_write_buffer(struct intel_guc_log *log)
+{
 	/*
-	 * Just get the base address of a new sub buffer and copy data पूर्णांकo it
-	 * ourselves. शून्य will be वापसed in no-overग_लिखो mode, अगर all sub
-	 * buffers are full. Could have used the relay_ग_लिखो() to indirectly
+	 * Just get the base address of a new sub buffer and copy data into it
+	 * ourselves. NULL will be returned in no-overwrite mode, if all sub
+	 * buffers are full. Could have used the relay_write() to indirectly
 	 * copy the data, but that would have been bit convoluted, as we need to
-	 * ग_लिखो to only certain locations inside a sub buffer which cannot be
-	 * करोne without using relay_reserve() aदीर्घ with relay_ग_लिखो(). So its
+	 * write to only certain locations inside a sub buffer which cannot be
+	 * done without using relay_reserve() along with relay_write(). So its
 	 * better to use relay_reserve() alone.
 	 */
-	वापस relay_reserve(log->relay.channel, 0);
-पूर्ण
+	return relay_reserve(log->relay.channel, 0);
+}
 
-अटल bool guc_check_log_buf_overflow(काष्ठा पूर्णांकel_guc_log *log,
-				       क्रमागत guc_log_buffer_type type,
-				       अचिन्हित पूर्णांक full_cnt)
-अणु
-	अचिन्हित पूर्णांक prev_full_cnt = log->stats[type].sampled_overflow;
+static bool guc_check_log_buf_overflow(struct intel_guc_log *log,
+				       enum guc_log_buffer_type type,
+				       unsigned int full_cnt)
+{
+	unsigned int prev_full_cnt = log->stats[type].sampled_overflow;
 	bool overflow = false;
 
-	अगर (full_cnt != prev_full_cnt) अणु
+	if (full_cnt != prev_full_cnt) {
 		overflow = true;
 
 		log->stats[type].overflow = full_cnt;
 		log->stats[type].sampled_overflow += full_cnt - prev_full_cnt;
 
-		अगर (full_cnt < prev_full_cnt) अणु
+		if (full_cnt < prev_full_cnt) {
 			/* buffer_full_cnt is a 4 bit counter */
 			log->stats[type].sampled_overflow += 16;
-		पूर्ण
+		}
 
 		dev_notice_ratelimited(guc_to_gt(log_to_guc(log))->i915->drm.dev,
 				       "GuC log buffer overflow\n");
-	पूर्ण
+	}
 
-	वापस overflow;
-पूर्ण
+	return overflow;
+}
 
-अटल अचिन्हित पूर्णांक guc_get_log_buffer_size(क्रमागत guc_log_buffer_type type)
-अणु
-	चयन (type) अणु
-	हाल GUC_ISR_LOG_BUFFER:
-		वापस ISR_BUFFER_SIZE;
-	हाल GUC_DPC_LOG_BUFFER:
-		वापस DPC_BUFFER_SIZE;
-	हाल GUC_CRASH_DUMP_LOG_BUFFER:
-		वापस CRASH_BUFFER_SIZE;
-	शेष:
+static unsigned int guc_get_log_buffer_size(enum guc_log_buffer_type type)
+{
+	switch (type) {
+	case GUC_ISR_LOG_BUFFER:
+		return ISR_BUFFER_SIZE;
+	case GUC_DPC_LOG_BUFFER:
+		return DPC_BUFFER_SIZE;
+	case GUC_CRASH_DUMP_LOG_BUFFER:
+		return CRASH_BUFFER_SIZE;
+	default:
 		MISSING_CASE(type);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम guc_पढ़ो_update_log_buffer(काष्ठा पूर्णांकel_guc_log *log)
-अणु
-	अचिन्हित पूर्णांक buffer_size, पढ़ो_offset, ग_लिखो_offset, bytes_to_copy, full_cnt;
-	काष्ठा guc_log_buffer_state *log_buf_state, *log_buf_snapshot_state;
-	काष्ठा guc_log_buffer_state log_buf_state_local;
-	क्रमागत guc_log_buffer_type type;
-	व्योम *src_data, *dst_data;
+static void guc_read_update_log_buffer(struct intel_guc_log *log)
+{
+	unsigned int buffer_size, read_offset, write_offset, bytes_to_copy, full_cnt;
+	struct guc_log_buffer_state *log_buf_state, *log_buf_snapshot_state;
+	struct guc_log_buffer_state log_buf_state_local;
+	enum guc_log_buffer_type type;
+	void *src_data, *dst_data;
 	bool new_overflow;
 
 	mutex_lock(&log->relay.lock);
 
-	अगर (WARN_ON(!पूर्णांकel_guc_log_relay_created(log)))
-		जाओ out_unlock;
+	if (WARN_ON(!intel_guc_log_relay_created(log)))
+		goto out_unlock;
 
-	/* Get the poपूर्णांकer to shared GuC log buffer */
+	/* Get the pointer to shared GuC log buffer */
 	log_buf_state = src_data = log->relay.buf_addr;
 
-	/* Get the poपूर्णांकer to local buffer to store the logs */
-	log_buf_snapshot_state = dst_data = guc_get_ग_लिखो_buffer(log);
+	/* Get the pointer to local buffer to store the logs */
+	log_buf_snapshot_state = dst_data = guc_get_write_buffer(log);
 
-	अगर (unlikely(!log_buf_snapshot_state)) अणु
+	if (unlikely(!log_buf_snapshot_state)) {
 		/*
-		 * Used rate limited to aव्योम deluge of messages, logs might be
+		 * Used rate limited to avoid deluge of messages, logs might be
 		 * getting consumed by User at a slow rate.
 		 */
 		DRM_ERROR_RATELIMITED("no sub-buffer to capture logs\n");
 		log->relay.full_count++;
 
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	/* Actual logs are present from the 2nd page */
 	src_data += PAGE_SIZE;
 	dst_data += PAGE_SIZE;
 
-	क्रम (type = GUC_ISR_LOG_BUFFER; type < GUC_MAX_LOG_BUFFER; type++) अणु
+	for (type = GUC_ISR_LOG_BUFFER; type < GUC_MAX_LOG_BUFFER; type++) {
 		/*
-		 * Make a copy of the state काष्ठाure, inside GuC log buffer
-		 * (which is uncached mapped), on the stack to aव्योम पढ़ोing
-		 * from it multiple बार.
+		 * Make a copy of the state structure, inside GuC log buffer
+		 * (which is uncached mapped), on the stack to avoid reading
+		 * from it multiple times.
 		 */
-		स_नकल(&log_buf_state_local, log_buf_state,
-		       माप(काष्ठा guc_log_buffer_state));
+		memcpy(&log_buf_state_local, log_buf_state,
+		       sizeof(struct guc_log_buffer_state));
 		buffer_size = guc_get_log_buffer_size(type);
-		पढ़ो_offset = log_buf_state_local.पढ़ो_ptr;
-		ग_लिखो_offset = log_buf_state_local.sampled_ग_लिखो_ptr;
+		read_offset = log_buf_state_local.read_ptr;
+		write_offset = log_buf_state_local.sampled_write_ptr;
 		full_cnt = log_buf_state_local.buffer_full_cnt;
 
 		/* Bookkeeping stuff */
@@ -264,111 +263,111 @@
 		new_overflow = guc_check_log_buf_overflow(log, type, full_cnt);
 
 		/* Update the state of shared log buffer */
-		log_buf_state->पढ़ो_ptr = ग_लिखो_offset;
+		log_buf_state->read_ptr = write_offset;
 		log_buf_state->flush_to_file = 0;
 		log_buf_state++;
 
-		/* First copy the state काष्ठाure in snapshot buffer */
-		स_नकल(log_buf_snapshot_state, &log_buf_state_local,
-		       माप(काष्ठा guc_log_buffer_state));
+		/* First copy the state structure in snapshot buffer */
+		memcpy(log_buf_snapshot_state, &log_buf_state_local,
+		       sizeof(struct guc_log_buffer_state));
 
 		/*
-		 * The ग_लिखो poपूर्णांकer could have been updated by GuC firmware,
-		 * after sending the flush पूर्णांकerrupt to Host, क्रम consistency
-		 * set ग_लिखो poपूर्णांकer value to same value of sampled_ग_लिखो_ptr
+		 * The write pointer could have been updated by GuC firmware,
+		 * after sending the flush interrupt to Host, for consistency
+		 * set write pointer value to same value of sampled_write_ptr
 		 * in the snapshot buffer.
 		 */
-		log_buf_snapshot_state->ग_लिखो_ptr = ग_लिखो_offset;
+		log_buf_snapshot_state->write_ptr = write_offset;
 		log_buf_snapshot_state++;
 
 		/* Now copy the actual logs. */
-		अगर (unlikely(new_overflow)) अणु
-			/* copy the whole buffer in हाल of overflow */
-			पढ़ो_offset = 0;
-			ग_लिखो_offset = buffer_size;
-		पूर्ण अन्यथा अगर (unlikely((पढ़ो_offset > buffer_size) ||
-				    (ग_लिखो_offset > buffer_size))) अणु
+		if (unlikely(new_overflow)) {
+			/* copy the whole buffer in case of overflow */
+			read_offset = 0;
+			write_offset = buffer_size;
+		} else if (unlikely((read_offset > buffer_size) ||
+				    (write_offset > buffer_size))) {
 			DRM_ERROR("invalid log buffer state\n");
 			/* copy whole buffer as offsets are unreliable */
-			पढ़ो_offset = 0;
-			ग_लिखो_offset = buffer_size;
-		पूर्ण
+			read_offset = 0;
+			write_offset = buffer_size;
+		}
 
 		/* Just copy the newly written data */
-		अगर (पढ़ो_offset > ग_लिखो_offset) अणु
-			i915_स_नकल_from_wc(dst_data, src_data, ग_लिखो_offset);
-			bytes_to_copy = buffer_size - पढ़ो_offset;
-		पूर्ण अन्यथा अणु
-			bytes_to_copy = ग_लिखो_offset - पढ़ो_offset;
-		पूर्ण
-		i915_स_नकल_from_wc(dst_data + पढ़ो_offset,
-				    src_data + पढ़ो_offset, bytes_to_copy);
+		if (read_offset > write_offset) {
+			i915_memcpy_from_wc(dst_data, src_data, write_offset);
+			bytes_to_copy = buffer_size - read_offset;
+		} else {
+			bytes_to_copy = write_offset - read_offset;
+		}
+		i915_memcpy_from_wc(dst_data + read_offset,
+				    src_data + read_offset, bytes_to_copy);
 
 		src_data += buffer_size;
 		dst_data += buffer_size;
-	पूर्ण
+	}
 
 	guc_move_to_next_buf(log);
 
 out_unlock:
 	mutex_unlock(&log->relay.lock);
-पूर्ण
+}
 
-अटल व्योम capture_logs_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा पूर्णांकel_guc_log *log =
-		container_of(work, काष्ठा पूर्णांकel_guc_log, relay.flush_work);
+static void capture_logs_work(struct work_struct *work)
+{
+	struct intel_guc_log *log =
+		container_of(work, struct intel_guc_log, relay.flush_work);
 
 	guc_log_capture_logs(log);
-पूर्ण
+}
 
-अटल पूर्णांक guc_log_map(काष्ठा पूर्णांकel_guc_log *log)
-अणु
-	व्योम *vaddr;
+static int guc_log_map(struct intel_guc_log *log)
+{
+	void *vaddr;
 
-	lockdep_निश्चित_held(&log->relay.lock);
+	lockdep_assert_held(&log->relay.lock);
 
-	अगर (!log->vma)
-		वापस -ENODEV;
+	if (!log->vma)
+		return -ENODEV;
 
 	/*
-	 * Create a WC (Uncached क्रम पढ़ो) vदो_स्मृति mapping of log
+	 * Create a WC (Uncached for read) vmalloc mapping of log
 	 * buffer pages, so that we can directly get the data
 	 * (up-to-date) from memory.
 	 */
 	vaddr = i915_gem_object_pin_map_unlocked(log->vma->obj, I915_MAP_WC);
-	अगर (IS_ERR(vaddr))
-		वापस PTR_ERR(vaddr);
+	if (IS_ERR(vaddr))
+		return PTR_ERR(vaddr);
 
 	log->relay.buf_addr = vaddr;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम guc_log_unmap(काष्ठा पूर्णांकel_guc_log *log)
-अणु
-	lockdep_निश्चित_held(&log->relay.lock);
+static void guc_log_unmap(struct intel_guc_log *log)
+{
+	lockdep_assert_held(&log->relay.lock);
 
 	i915_gem_object_unpin_map(log->vma->obj);
-	log->relay.buf_addr = शून्य;
-पूर्ण
+	log->relay.buf_addr = NULL;
+}
 
-व्योम पूर्णांकel_guc_log_init_early(काष्ठा पूर्णांकel_guc_log *log)
-अणु
+void intel_guc_log_init_early(struct intel_guc_log *log)
+{
 	mutex_init(&log->relay.lock);
 	INIT_WORK(&log->relay.flush_work, capture_logs_work);
 	log->relay.started = false;
-पूर्ण
+}
 
-अटल पूर्णांक guc_log_relay_create(काष्ठा पूर्णांकel_guc_log *log)
-अणु
-	काष्ठा पूर्णांकel_guc *guc = log_to_guc(log);
-	काष्ठा drm_i915_निजी *dev_priv = guc_to_gt(guc)->i915;
-	काष्ठा rchan *guc_log_relay_chan;
-	माप_प्रकार n_subbufs, subbuf_size;
-	पूर्णांक ret;
+static int guc_log_relay_create(struct intel_guc_log *log)
+{
+	struct intel_guc *guc = log_to_guc(log);
+	struct drm_i915_private *dev_priv = guc_to_gt(guc)->i915;
+	struct rchan *guc_log_relay_chan;
+	size_t n_subbufs, subbuf_size;
+	int ret;
 
-	lockdep_निश्चित_held(&log->relay.lock);
+	lockdep_assert_held(&log->relay.lock);
 	GEM_BUG_ON(!log->vma);
 
 	 /* Keep the size of sub buffers same as shared log buffer */
@@ -376,85 +375,85 @@ out_unlock:
 
 	/*
 	 * Store up to 8 snapshots, which is large enough to buffer sufficient
-	 * boot समय logs and provides enough leeway to User, in terms of
-	 * latency, क्रम consuming the logs from relay. Also करोesn't take
+	 * boot time logs and provides enough leeway to User, in terms of
+	 * latency, for consuming the logs from relay. Also doesn't take
 	 * up too much memory.
 	 */
 	n_subbufs = 8;
 
-	guc_log_relay_chan = relay_खोलो("guc_log",
+	guc_log_relay_chan = relay_open("guc_log",
 					dev_priv->drm.primary->debugfs_root,
 					subbuf_size, n_subbufs,
 					&relay_callbacks, dev_priv);
-	अगर (!guc_log_relay_chan) अणु
+	if (!guc_log_relay_chan) {
 		DRM_ERROR("Couldn't create relay chan for GuC logging\n");
 
 		ret = -ENOMEM;
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	GEM_BUG_ON(guc_log_relay_chan->subbuf_size < subbuf_size);
 	log->relay.channel = guc_log_relay_chan;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम guc_log_relay_destroy(काष्ठा पूर्णांकel_guc_log *log)
-अणु
-	lockdep_निश्चित_held(&log->relay.lock);
+static void guc_log_relay_destroy(struct intel_guc_log *log)
+{
+	lockdep_assert_held(&log->relay.lock);
 
-	relay_बंद(log->relay.channel);
-	log->relay.channel = शून्य;
-पूर्ण
+	relay_close(log->relay.channel);
+	log->relay.channel = NULL;
+}
 
-अटल व्योम guc_log_capture_logs(काष्ठा पूर्णांकel_guc_log *log)
-अणु
-	काष्ठा पूर्णांकel_guc *guc = log_to_guc(log);
-	काष्ठा drm_i915_निजी *dev_priv = guc_to_gt(guc)->i915;
-	पूर्णांकel_wakeref_t wakeref;
+static void guc_log_capture_logs(struct intel_guc_log *log)
+{
+	struct intel_guc *guc = log_to_guc(log);
+	struct drm_i915_private *dev_priv = guc_to_gt(guc)->i915;
+	intel_wakeref_t wakeref;
 
-	guc_पढ़ो_update_log_buffer(log);
+	guc_read_update_log_buffer(log);
 
 	/*
 	 * Generally device is expected to be active only at this
-	 * समय, so get/put should be really quick.
+	 * time, so get/put should be really quick.
 	 */
-	with_पूर्णांकel_runसमय_pm(&dev_priv->runसमय_pm, wakeref)
+	with_intel_runtime_pm(&dev_priv->runtime_pm, wakeref)
 		guc_action_flush_log_complete(guc);
-पूर्ण
+}
 
-अटल u32 __get_शेष_log_level(काष्ठा पूर्णांकel_guc_log *log)
-अणु
-	काष्ठा पूर्णांकel_guc *guc = log_to_guc(log);
-	काष्ठा drm_i915_निजी *i915 = guc_to_gt(guc)->i915;
+static u32 __get_default_log_level(struct intel_guc_log *log)
+{
+	struct intel_guc *guc = log_to_guc(log);
+	struct drm_i915_private *i915 = guc_to_gt(guc)->i915;
 
 	/* A negative value means "use platform/config default" */
-	अगर (i915->params.guc_log_level < 0) अणु
-		वापस (IS_ENABLED(CONFIG_DRM_I915_DEBUG) ||
+	if (i915->params.guc_log_level < 0) {
+		return (IS_ENABLED(CONFIG_DRM_I915_DEBUG) ||
 			IS_ENABLED(CONFIG_DRM_I915_DEBUG_GEM)) ?
 			GUC_LOG_LEVEL_MAX : GUC_LOG_LEVEL_NON_VERBOSE;
-	पूर्ण
+	}
 
-	अगर (i915->params.guc_log_level > GUC_LOG_LEVEL_MAX) अणु
+	if (i915->params.guc_log_level > GUC_LOG_LEVEL_MAX) {
 		DRM_WARN("Incompatible option detected: %s=%d, %s!\n",
 			 "guc_log_level", i915->params.guc_log_level,
 			 "verbosity too high");
-		वापस (IS_ENABLED(CONFIG_DRM_I915_DEBUG) ||
+		return (IS_ENABLED(CONFIG_DRM_I915_DEBUG) ||
 			IS_ENABLED(CONFIG_DRM_I915_DEBUG_GEM)) ?
 			GUC_LOG_LEVEL_MAX : GUC_LOG_LEVEL_DISABLED;
-	पूर्ण
+	}
 
 	GEM_BUG_ON(i915->params.guc_log_level < GUC_LOG_LEVEL_DISABLED);
 	GEM_BUG_ON(i915->params.guc_log_level > GUC_LOG_LEVEL_MAX);
-	वापस i915->params.guc_log_level;
-पूर्ण
+	return i915->params.guc_log_level;
+}
 
-पूर्णांक पूर्णांकel_guc_log_create(काष्ठा पूर्णांकel_guc_log *log)
-अणु
-	काष्ठा पूर्णांकel_guc *guc = log_to_guc(log);
-	काष्ठा i915_vma *vma;
+int intel_guc_log_create(struct intel_guc_log *log)
+{
+	struct intel_guc *guc = log_to_guc(log);
+	struct i915_vma *vma;
 	u32 guc_log_size;
-	पूर्णांक ret;
+	int ret;
 
 	GEM_BUG_ON(log->vma);
 
@@ -480,38 +479,38 @@ out_unlock:
 	guc_log_size = PAGE_SIZE + CRASH_BUFFER_SIZE + DPC_BUFFER_SIZE +
 			ISR_BUFFER_SIZE;
 
-	vma = पूर्णांकel_guc_allocate_vma(guc, guc_log_size);
-	अगर (IS_ERR(vma)) अणु
+	vma = intel_guc_allocate_vma(guc, guc_log_size);
+	if (IS_ERR(vma)) {
 		ret = PTR_ERR(vma);
-		जाओ err;
-	पूर्ण
+		goto err;
+	}
 
 	log->vma = vma;
 
-	log->level = __get_शेष_log_level(log);
+	log->level = __get_default_log_level(log);
 	DRM_DEBUG_DRIVER("guc_log_level=%d (%s, verbose:%s, verbosity:%d)\n",
 			 log->level, enableddisabled(log->level),
 			 yesno(GUC_LOG_LEVEL_IS_VERBOSE(log->level)),
 			 GUC_LOG_LEVEL_TO_VERBOSITY(log->level));
 
-	वापस 0;
+	return 0;
 
 err:
 	DRM_ERROR("Failed to allocate GuC log buffer. %d\n", ret);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-व्योम पूर्णांकel_guc_log_destroy(काष्ठा पूर्णांकel_guc_log *log)
-अणु
+void intel_guc_log_destroy(struct intel_guc_log *log)
+{
 	i915_vma_unpin_and_release(&log->vma, 0);
-पूर्ण
+}
 
-पूर्णांक पूर्णांकel_guc_log_set_level(काष्ठा पूर्णांकel_guc_log *log, u32 level)
-अणु
-	काष्ठा पूर्णांकel_guc *guc = log_to_guc(log);
-	काष्ठा drm_i915_निजी *dev_priv = guc_to_gt(guc)->i915;
-	पूर्णांकel_wakeref_t wakeref;
-	पूर्णांक ret = 0;
+int intel_guc_log_set_level(struct intel_guc_log *log, u32 level)
+{
+	struct intel_guc *guc = log_to_guc(log);
+	struct drm_i915_private *dev_priv = guc_to_gt(guc)->i915;
+	intel_wakeref_t wakeref;
+	int ret = 0;
 
 	BUILD_BUG_ON(GUC_LOG_VERBOSITY_MIN != 0);
 	GEM_BUG_ON(!log->vma);
@@ -520,246 +519,246 @@ err:
 	 * GuC is recognizing log levels starting from 0 to max, we're using 0
 	 * as indication that logging should be disabled.
 	 */
-	अगर (level < GUC_LOG_LEVEL_DISABLED || level > GUC_LOG_LEVEL_MAX)
-		वापस -EINVAL;
+	if (level < GUC_LOG_LEVEL_DISABLED || level > GUC_LOG_LEVEL_MAX)
+		return -EINVAL;
 
-	mutex_lock(&dev_priv->drm.काष्ठा_mutex);
+	mutex_lock(&dev_priv->drm.struct_mutex);
 
-	अगर (log->level == level)
-		जाओ out_unlock;
+	if (log->level == level)
+		goto out_unlock;
 
-	with_पूर्णांकel_runसमय_pm(&dev_priv->runसमय_pm, wakeref)
+	with_intel_runtime_pm(&dev_priv->runtime_pm, wakeref)
 		ret = guc_action_control_log(guc,
 					     GUC_LOG_LEVEL_IS_VERBOSE(level),
 					     GUC_LOG_LEVEL_IS_ENABLED(level),
 					     GUC_LOG_LEVEL_TO_VERBOSITY(level));
-	अगर (ret) अणु
+	if (ret) {
 		DRM_DEBUG_DRIVER("guc_log_control action failed %d\n", ret);
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	log->level = level;
 
 out_unlock:
-	mutex_unlock(&dev_priv->drm.काष्ठा_mutex);
+	mutex_unlock(&dev_priv->drm.struct_mutex);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-bool पूर्णांकel_guc_log_relay_created(स्थिर काष्ठा पूर्णांकel_guc_log *log)
-अणु
-	वापस log->relay.buf_addr;
-पूर्ण
+bool intel_guc_log_relay_created(const struct intel_guc_log *log)
+{
+	return log->relay.buf_addr;
+}
 
-पूर्णांक पूर्णांकel_guc_log_relay_खोलो(काष्ठा पूर्णांकel_guc_log *log)
-अणु
-	पूर्णांक ret;
+int intel_guc_log_relay_open(struct intel_guc_log *log)
+{
+	int ret;
 
-	अगर (!log->vma)
-		वापस -ENODEV;
+	if (!log->vma)
+		return -ENODEV;
 
 	mutex_lock(&log->relay.lock);
 
-	अगर (पूर्णांकel_guc_log_relay_created(log)) अणु
+	if (intel_guc_log_relay_created(log)) {
 		ret = -EEXIST;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	/*
-	 * We require SSE 4.1 क्रम fast पढ़ोs from the GuC log buffer and
+	 * We require SSE 4.1 for fast reads from the GuC log buffer and
 	 * it should be present on the chipsets supporting GuC based
 	 * submisssions.
 	 */
-	अगर (!i915_has_स_नकल_from_wc()) अणु
+	if (!i915_has_memcpy_from_wc()) {
 		ret = -ENXIO;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
 	ret = guc_log_relay_create(log);
-	अगर (ret)
-		जाओ out_unlock;
+	if (ret)
+		goto out_unlock;
 
 	ret = guc_log_map(log);
-	अगर (ret)
-		जाओ out_relay;
+	if (ret)
+		goto out_relay;
 
 	mutex_unlock(&log->relay.lock);
 
-	वापस 0;
+	return 0;
 
 out_relay:
 	guc_log_relay_destroy(log);
 out_unlock:
 	mutex_unlock(&log->relay.lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-पूर्णांक पूर्णांकel_guc_log_relay_start(काष्ठा पूर्णांकel_guc_log *log)
-अणु
-	अगर (log->relay.started)
-		वापस -EEXIST;
+int intel_guc_log_relay_start(struct intel_guc_log *log)
+{
+	if (log->relay.started)
+		return -EEXIST;
 
 	guc_log_enable_flush_events(log);
 
 	/*
 	 * When GuC is logging without us relaying to userspace, we're ignoring
-	 * the flush notअगरication. This means that we need to unconditionally
-	 * flush on relay enabling, since GuC only notअगरies us once.
+	 * the flush notification. This means that we need to unconditionally
+	 * flush on relay enabling, since GuC only notifies us once.
 	 */
-	queue_work(प्रणाली_highpri_wq, &log->relay.flush_work);
+	queue_work(system_highpri_wq, &log->relay.flush_work);
 
 	log->relay.started = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम पूर्णांकel_guc_log_relay_flush(काष्ठा पूर्णांकel_guc_log *log)
-अणु
-	काष्ठा पूर्णांकel_guc *guc = log_to_guc(log);
-	पूर्णांकel_wakeref_t wakeref;
+void intel_guc_log_relay_flush(struct intel_guc_log *log)
+{
+	struct intel_guc *guc = log_to_guc(log);
+	intel_wakeref_t wakeref;
 
-	अगर (!log->relay.started)
-		वापस;
+	if (!log->relay.started)
+		return;
 
 	/*
-	 * Beक्रमe initiating the क्रमceful flush, रुको क्रम any pending/ongoing
-	 * flush to complete otherwise क्रमceful flush may not actually happen.
+	 * Before initiating the forceful flush, wait for any pending/ongoing
+	 * flush to complete otherwise forceful flush may not actually happen.
 	 */
 	flush_work(&log->relay.flush_work);
 
-	with_पूर्णांकel_runसमय_pm(guc_to_gt(guc)->uncore->rpm, wakeref)
+	with_intel_runtime_pm(guc_to_gt(guc)->uncore->rpm, wakeref)
 		guc_action_flush_log(guc);
 
 	/* GuC would have updated log buffer by now, so capture it */
 	guc_log_capture_logs(log);
-पूर्ण
+}
 
 /*
- * Stops the relay log. Called from पूर्णांकel_guc_log_relay_बंद(), so no
- * possibility of race with start/flush since relay_ग_लिखो cannot race
- * relay_बंद.
+ * Stops the relay log. Called from intel_guc_log_relay_close(), so no
+ * possibility of race with start/flush since relay_write cannot race
+ * relay_close.
  */
-अटल व्योम guc_log_relay_stop(काष्ठा पूर्णांकel_guc_log *log)
-अणु
-	काष्ठा पूर्णांकel_guc *guc = log_to_guc(log);
-	काष्ठा drm_i915_निजी *i915 = guc_to_gt(guc)->i915;
+static void guc_log_relay_stop(struct intel_guc_log *log)
+{
+	struct intel_guc *guc = log_to_guc(log);
+	struct drm_i915_private *i915 = guc_to_gt(guc)->i915;
 
-	अगर (!log->relay.started)
-		वापस;
+	if (!log->relay.started)
+		return;
 
 	guc_log_disable_flush_events(log);
-	पूर्णांकel_synchronize_irq(i915);
+	intel_synchronize_irq(i915);
 
 	flush_work(&log->relay.flush_work);
 
 	log->relay.started = false;
-पूर्ण
+}
 
-व्योम पूर्णांकel_guc_log_relay_बंद(काष्ठा पूर्णांकel_guc_log *log)
-अणु
+void intel_guc_log_relay_close(struct intel_guc_log *log)
+{
 	guc_log_relay_stop(log);
 
 	mutex_lock(&log->relay.lock);
-	GEM_BUG_ON(!पूर्णांकel_guc_log_relay_created(log));
+	GEM_BUG_ON(!intel_guc_log_relay_created(log));
 	guc_log_unmap(log);
 	guc_log_relay_destroy(log);
 	mutex_unlock(&log->relay.lock);
-पूर्ण
+}
 
-व्योम पूर्णांकel_guc_log_handle_flush_event(काष्ठा पूर्णांकel_guc_log *log)
-अणु
-	queue_work(प्रणाली_highpri_wq, &log->relay.flush_work);
-पूर्ण
+void intel_guc_log_handle_flush_event(struct intel_guc_log *log)
+{
+	queue_work(system_highpri_wq, &log->relay.flush_work);
+}
 
-अटल स्थिर अक्षर *
-stringअगरy_guc_log_type(क्रमागत guc_log_buffer_type type)
-अणु
-	चयन (type) अणु
-	हाल GUC_ISR_LOG_BUFFER:
-		वापस "ISR";
-	हाल GUC_DPC_LOG_BUFFER:
-		वापस "DPC";
-	हाल GUC_CRASH_DUMP_LOG_BUFFER:
-		वापस "CRASH";
-	शेष:
+static const char *
+stringify_guc_log_type(enum guc_log_buffer_type type)
+{
+	switch (type) {
+	case GUC_ISR_LOG_BUFFER:
+		return "ISR";
+	case GUC_DPC_LOG_BUFFER:
+		return "DPC";
+	case GUC_CRASH_DUMP_LOG_BUFFER:
+		return "CRASH";
+	default:
 		MISSING_CASE(type);
-	पूर्ण
+	}
 
-	वापस "";
-पूर्ण
+	return "";
+}
 
 /**
- * पूर्णांकel_guc_log_info - dump inक्रमmation about GuC log relay
+ * intel_guc_log_info - dump information about GuC log relay
  * @log: the GuC log
- * @p: the &drm_prपूर्णांकer
+ * @p: the &drm_printer
  *
- * Pretty prपूर्णांकer क्रम GuC log info
+ * Pretty printer for GuC log info
  */
-व्योम पूर्णांकel_guc_log_info(काष्ठा पूर्णांकel_guc_log *log, काष्ठा drm_prपूर्णांकer *p)
-अणु
-	क्रमागत guc_log_buffer_type type;
+void intel_guc_log_info(struct intel_guc_log *log, struct drm_printer *p)
+{
+	enum guc_log_buffer_type type;
 
-	अगर (!पूर्णांकel_guc_log_relay_created(log)) अणु
-		drm_माला_दो(p, "GuC log relay not created\n");
-		वापस;
-	पूर्ण
+	if (!intel_guc_log_relay_created(log)) {
+		drm_puts(p, "GuC log relay not created\n");
+		return;
+	}
 
-	drm_माला_दो(p, "GuC logging stats:\n");
+	drm_puts(p, "GuC logging stats:\n");
 
-	drm_म_लिखो(p, "\tRelay full count: %u\n", log->relay.full_count);
+	drm_printf(p, "\tRelay full count: %u\n", log->relay.full_count);
 
-	क्रम (type = GUC_ISR_LOG_BUFFER; type < GUC_MAX_LOG_BUFFER; type++) अणु
-		drm_म_लिखो(p, "\t%s:\tflush count %10u, overflow count %10u\n",
-			   stringअगरy_guc_log_type(type),
+	for (type = GUC_ISR_LOG_BUFFER; type < GUC_MAX_LOG_BUFFER; type++) {
+		drm_printf(p, "\t%s:\tflush count %10u, overflow count %10u\n",
+			   stringify_guc_log_type(type),
 			   log->stats[type].flush,
 			   log->stats[type].sampled_overflow);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /**
- * पूर्णांकel_guc_log_dump - dump the contents of the GuC log
+ * intel_guc_log_dump - dump the contents of the GuC log
  * @log: the GuC log
- * @p: the &drm_prपूर्णांकer
+ * @p: the &drm_printer
  * @dump_load_err: dump the log saved on GuC load error
  *
- * Pretty prपूर्णांकer क्रम the GuC log
+ * Pretty printer for the GuC log
  */
-पूर्णांक पूर्णांकel_guc_log_dump(काष्ठा पूर्णांकel_guc_log *log, काष्ठा drm_prपूर्णांकer *p,
+int intel_guc_log_dump(struct intel_guc_log *log, struct drm_printer *p,
 		       bool dump_load_err)
-अणु
-	काष्ठा पूर्णांकel_guc *guc = log_to_guc(log);
-	काष्ठा पूर्णांकel_uc *uc = container_of(guc, काष्ठा पूर्णांकel_uc, guc);
-	काष्ठा drm_i915_gem_object *obj = शून्य;
+{
+	struct intel_guc *guc = log_to_guc(log);
+	struct intel_uc *uc = container_of(guc, struct intel_uc, guc);
+	struct drm_i915_gem_object *obj = NULL;
 	u32 *map;
-	पूर्णांक i = 0;
+	int i = 0;
 
-	अगर (!पूर्णांकel_guc_is_supported(guc))
-		वापस -ENODEV;
+	if (!intel_guc_is_supported(guc))
+		return -ENODEV;
 
-	अगर (dump_load_err)
+	if (dump_load_err)
 		obj = uc->load_err_log;
-	अन्यथा अगर (guc->log.vma)
+	else if (guc->log.vma)
 		obj = guc->log.vma->obj;
 
-	अगर (!obj)
-		वापस 0;
+	if (!obj)
+		return 0;
 
 	map = i915_gem_object_pin_map_unlocked(obj, I915_MAP_WC);
-	अगर (IS_ERR(map)) अणु
+	if (IS_ERR(map)) {
 		DRM_DEBUG("Failed to pin object\n");
-		drm_माला_दो(p, "(log data unaccessible)\n");
-		वापस PTR_ERR(map);
-	पूर्ण
+		drm_puts(p, "(log data unaccessible)\n");
+		return PTR_ERR(map);
+	}
 
-	क्रम (i = 0; i < obj->base.size / माप(u32); i += 4)
-		drm_म_लिखो(p, "0x%08x 0x%08x 0x%08x 0x%08x\n",
+	for (i = 0; i < obj->base.size / sizeof(u32); i += 4)
+		drm_printf(p, "0x%08x 0x%08x 0x%08x 0x%08x\n",
 			   *(map + i), *(map + i + 1),
 			   *(map + i + 2), *(map + i + 3));
 
-	drm_माला_दो(p, "\n");
+	drm_puts(p, "\n");
 
 	i915_gem_object_unpin_map(obj);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

@@ -1,170 +1,169 @@
-<शैली गुरु>
 /*
  * JFFS2 -- Journalling Flash File System, Version 2.
  *
- * Copyright तऊ 2006  NEC Corporation
+ * Copyright © 2006  NEC Corporation
  *
  * Created by KaiGai Kohei <kaigai@ak.jp.nec.com>
  *
- * For licensing inक्रमmation, see the file 'LICENCE' in this directory.
+ * For licensing information, see the file 'LICENCE' in this directory.
  *
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#घोषणा JFFS2_XATTR_IS_CORRUPTED	1
+#define JFFS2_XATTR_IS_CORRUPTED	1
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/fs.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/pagemap.h>
-#समावेश <linux/highस्मृति.स>
-#समावेश <linux/crc32.h>
-#समावेश <linux/jffs2.h>
-#समावेश <linux/xattr.h>
-#समावेश <linux/posix_acl_xattr.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश "nodelist.h"
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/fs.h>
+#include <linux/time.h>
+#include <linux/pagemap.h>
+#include <linux/highmem.h>
+#include <linux/crc32.h>
+#include <linux/jffs2.h>
+#include <linux/xattr.h>
+#include <linux/posix_acl_xattr.h>
+#include <linux/mtd/mtd.h>
+#include "nodelist.h"
 /* -------- xdatum related functions ----------------
  * xattr_datum_hashkey(xprefix, xname, xvalue, xsize)
- *   is used to calcurate xdatum hashkey. The reminder of hashkey पूर्णांकo XATTRINDEX_HASHSIZE is
+ *   is used to calcurate xdatum hashkey. The reminder of hashkey into XATTRINDEX_HASHSIZE is
  *   the index of the xattr name/value pair cache (c->xattrindex).
  * is_xattr_datum_unchecked(c, xd)
- *   वापसs 1, अगर xdatum contains any unchecked raw nodes. अगर all raw nodes are not
- *   unchecked, it वापसs 0.
+ *   returns 1, if xdatum contains any unchecked raw nodes. if all raw nodes are not
+ *   unchecked, it returns 0.
  * unload_xattr_datum(c, xd)
  *   is used to release xattr name/value pair and detach from c->xattrindex.
  * reclaim_xattr_datum(c)
  *   is used to reclaim xattr name/value pairs on the xattr name/value pair cache when
  *   memory usage by cache is over c->xdatum_mem_threshold. Currently, this threshold
  *   is hard coded as 32KiB.
- * करो_verअगरy_xattr_datum(c, xd)
- *   is used to load the xdatum inक्रमmations without name/value pair from the medium.
- *   It's necessary once, because those inक्रमmations are not collected during mounting
+ * do_verify_xattr_datum(c, xd)
+ *   is used to load the xdatum informations without name/value pair from the medium.
+ *   It's necessary once, because those informations are not collected during mounting
  *   process when EBS is enabled.
- *   0 will be वापसed, अगर success. An negative वापस value means recoverable error, and
- *   positive वापस value means unrecoverable error. Thus, caller must हटाओ this xdatum
- *   and xref when it वापसed positive value.
- * करो_load_xattr_datum(c, xd)
+ *   0 will be returned, if success. An negative return value means recoverable error, and
+ *   positive return value means unrecoverable error. Thus, caller must remove this xdatum
+ *   and xref when it returned positive value.
+ * do_load_xattr_datum(c, xd)
  *   is used to load name/value pair from the medium.
- *   The meanings of वापस value is same as करो_verअगरy_xattr_datum().
+ *   The meanings of return value is same as do_verify_xattr_datum().
  * load_xattr_datum(c, xd)
- *   is used to be as a wrapper of करो_verअगरy_xattr_datum() and करो_load_xattr_datum().
- *   If xd need to call करो_verअगरy_xattr_datum() at first, it's called beक्रमe calling
- *   करो_load_xattr_datum(). The meanings of वापस value is same as करो_verअगरy_xattr_datum().
+ *   is used to be as a wrapper of do_verify_xattr_datum() and do_load_xattr_datum().
+ *   If xd need to call do_verify_xattr_datum() at first, it's called before calling
+ *   do_load_xattr_datum(). The meanings of return value is same as do_verify_xattr_datum().
  * save_xattr_datum(c, xd)
- *   is used to ग_लिखो xdatum to medium. xd->version will be incremented.
+ *   is used to write xdatum to medium. xd->version will be incremented.
  * create_xattr_datum(c, xprefix, xname, xvalue, xsize)
- *   is used to create new xdatum and ग_लिखो to medium.
+ *   is used to create new xdatum and write to medium.
  * unrefer_xattr_datum(c, xd)
  *   is used to delete a xdatum. When nobody refers this xdatum, JFFS2_XFLAGS_DEAD
  *   is set on xd->flags and chained xattr_dead_list or release it immediately.
- *   In the first हाल, the garbage collector release it later.
+ *   In the first case, the garbage collector release it later.
  * -------------------------------------------------- */
-अटल uपूर्णांक32_t xattr_datum_hashkey(पूर्णांक xprefix, स्थिर अक्षर *xname, स्थिर अक्षर *xvalue, पूर्णांक xsize)
-अणु
-	पूर्णांक name_len = म_माप(xname);
+static uint32_t xattr_datum_hashkey(int xprefix, const char *xname, const char *xvalue, int xsize)
+{
+	int name_len = strlen(xname);
 
-	वापस crc32(xprefix, xname, name_len) ^ crc32(xprefix, xvalue, xsize);
-पूर्ण
+	return crc32(xprefix, xname, name_len) ^ crc32(xprefix, xvalue, xsize);
+}
 
-अटल पूर्णांक is_xattr_datum_unchecked(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_xattr_datum *xd)
-अणु
-	काष्ठा jffs2_raw_node_ref *raw;
-	पूर्णांक rc = 0;
+static int is_xattr_datum_unchecked(struct jffs2_sb_info *c, struct jffs2_xattr_datum *xd)
+{
+	struct jffs2_raw_node_ref *raw;
+	int rc = 0;
 
 	spin_lock(&c->erase_completion_lock);
-	क्रम (raw=xd->node; raw != (व्योम *)xd; raw=raw->next_in_ino) अणु
-		अगर (ref_flags(raw) == REF_UNCHECKED) अणु
+	for (raw=xd->node; raw != (void *)xd; raw=raw->next_in_ino) {
+		if (ref_flags(raw) == REF_UNCHECKED) {
 			rc = 1;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	spin_unlock(&c->erase_completion_lock);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल व्योम unload_xattr_datum(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_xattr_datum *xd)
-अणु
-	/* must be called under करोwn_ग_लिखो(xattr_sem) */
+static void unload_xattr_datum(struct jffs2_sb_info *c, struct jffs2_xattr_datum *xd)
+{
+	/* must be called under down_write(xattr_sem) */
 	D1(dbg_xattr("%s: xid=%u, version=%u\n", __func__, xd->xid, xd->version));
-	अगर (xd->xname) अणु
+	if (xd->xname) {
 		c->xdatum_mem_usage -= (xd->name_len + 1 + xd->value_len);
-		kमुक्त(xd->xname);
-	पूर्ण
+		kfree(xd->xname);
+	}
 
 	list_del_init(&xd->xindex);
 	xd->hashkey = 0;
-	xd->xname = शून्य;
-	xd->xvalue = शून्य;
-पूर्ण
+	xd->xname = NULL;
+	xd->xvalue = NULL;
+}
 
-अटल व्योम reclaim_xattr_datum(काष्ठा jffs2_sb_info *c)
-अणु
-	/* must be called under करोwn_ग_लिखो(xattr_sem) */
-	काष्ठा jffs2_xattr_datum *xd, *_xd;
-	uपूर्णांक32_t target, beक्रमe;
-	अटल पूर्णांक index = 0;
-	पूर्णांक count;
+static void reclaim_xattr_datum(struct jffs2_sb_info *c)
+{
+	/* must be called under down_write(xattr_sem) */
+	struct jffs2_xattr_datum *xd, *_xd;
+	uint32_t target, before;
+	static int index = 0;
+	int count;
 
-	अगर (c->xdatum_mem_threshold > c->xdatum_mem_usage)
-		वापस;
+	if (c->xdatum_mem_threshold > c->xdatum_mem_usage)
+		return;
 
-	beक्रमe = c->xdatum_mem_usage;
+	before = c->xdatum_mem_usage;
 	target = c->xdatum_mem_usage * 4 / 5; /* 20% reduction */
-	क्रम (count = 0; count < XATTRINDEX_HASHSIZE; count++) अणु
-		list_क्रम_each_entry_safe(xd, _xd, &c->xattrindex[index], xindex) अणु
-			अगर (xd->flags & JFFS2_XFLAGS_HOT) अणु
+	for (count = 0; count < XATTRINDEX_HASHSIZE; count++) {
+		list_for_each_entry_safe(xd, _xd, &c->xattrindex[index], xindex) {
+			if (xd->flags & JFFS2_XFLAGS_HOT) {
 				xd->flags &= ~JFFS2_XFLAGS_HOT;
-			पूर्ण अन्यथा अगर (!(xd->flags & JFFS2_XFLAGS_BIND)) अणु
+			} else if (!(xd->flags & JFFS2_XFLAGS_BIND)) {
 				unload_xattr_datum(c, xd);
-			पूर्ण
-			अगर (c->xdatum_mem_usage <= target)
-				जाओ out;
-		पूर्ण
+			}
+			if (c->xdatum_mem_usage <= target)
+				goto out;
+		}
 		index = (index+1) % XATTRINDEX_HASHSIZE;
-	पूर्ण
+	}
  out:
 	JFFS2_NOTICE("xdatum_mem_usage from %u byte to %u byte (%u byte reclaimed)\n",
-		     beक्रमe, c->xdatum_mem_usage, beक्रमe - c->xdatum_mem_usage);
-पूर्ण
+		     before, c->xdatum_mem_usage, before - c->xdatum_mem_usage);
+}
 
-अटल पूर्णांक करो_verअगरy_xattr_datum(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_xattr_datum *xd)
-अणु
-	/* must be called under करोwn_ग_लिखो(xattr_sem) */
-	काष्ठा jffs2_eraseblock *jeb;
-	काष्ठा jffs2_raw_node_ref *raw;
-	काष्ठा jffs2_raw_xattr rx;
-	माप_प्रकार पढ़ोlen;
-	uपूर्णांक32_t crc, offset, totlen;
-	पूर्णांक rc;
+static int do_verify_xattr_datum(struct jffs2_sb_info *c, struct jffs2_xattr_datum *xd)
+{
+	/* must be called under down_write(xattr_sem) */
+	struct jffs2_eraseblock *jeb;
+	struct jffs2_raw_node_ref *raw;
+	struct jffs2_raw_xattr rx;
+	size_t readlen;
+	uint32_t crc, offset, totlen;
+	int rc;
 
 	spin_lock(&c->erase_completion_lock);
 	offset = ref_offset(xd->node);
-	अगर (ref_flags(xd->node) == REF_PRISTINE)
-		जाओ complete;
+	if (ref_flags(xd->node) == REF_PRISTINE)
+		goto complete;
 	spin_unlock(&c->erase_completion_lock);
 
-	rc = jffs2_flash_पढ़ो(c, offset, माप(rx), &पढ़ोlen, (अक्षर *)&rx);
-	अगर (rc || पढ़ोlen != माप(rx)) अणु
+	rc = jffs2_flash_read(c, offset, sizeof(rx), &readlen, (char *)&rx);
+	if (rc || readlen != sizeof(rx)) {
 		JFFS2_WARNING("jffs2_flash_read()=%d, req=%zu, read=%zu at %#08x\n",
-			      rc, माप(rx), पढ़ोlen, offset);
-		वापस rc ? rc : -EIO;
-	पूर्ण
-	crc = crc32(0, &rx, माप(rx) - 4);
-	अगर (crc != je32_to_cpu(rx.node_crc)) अणु
+			      rc, sizeof(rx), readlen, offset);
+		return rc ? rc : -EIO;
+	}
+	crc = crc32(0, &rx, sizeof(rx) - 4);
+	if (crc != je32_to_cpu(rx.node_crc)) {
 		JFFS2_ERROR("node CRC failed at %#08x, read=%#08x, calc=%#08x\n",
 			    offset, je32_to_cpu(rx.hdr_crc), crc);
 		xd->flags |= JFFS2_XFLAGS_INVALID;
-		वापस JFFS2_XATTR_IS_CORRUPTED;
-	पूर्ण
-	totlen = PAD(माप(rx) + rx.name_len + 1 + je16_to_cpu(rx.value_len));
-	अगर (je16_to_cpu(rx.magic) != JFFS2_MAGIC_BITMASK
+		return JFFS2_XATTR_IS_CORRUPTED;
+	}
+	totlen = PAD(sizeof(rx) + rx.name_len + 1 + je16_to_cpu(rx.value_len));
+	if (je16_to_cpu(rx.magic) != JFFS2_MAGIC_BITMASK
 	    || je16_to_cpu(rx.nodetype) != JFFS2_NODETYPE_XATTR
 	    || je32_to_cpu(rx.totlen) != totlen
 	    || je32_to_cpu(rx.xid) != xd->xid
-	    || je32_to_cpu(rx.version) != xd->version) अणु
+	    || je32_to_cpu(rx.version) != xd->version) {
 		JFFS2_ERROR("inconsistent xdatum at %#08x, magic=%#04x/%#04x, "
 			    "nodetype=%#04x/%#04x, totlen=%u/%u, xid=%u/%u, version=%u/%u\n",
 			    offset, je16_to_cpu(rx.magic), JFFS2_MAGIC_BITMASK,
@@ -173,8 +172,8 @@
 			    je32_to_cpu(rx.xid), xd->xid,
 			    je32_to_cpu(rx.version), xd->version);
 		xd->flags |= JFFS2_XFLAGS_INVALID;
-		वापस JFFS2_XATTR_IS_CORRUPTED;
-	पूर्ण
+		return JFFS2_XATTR_IS_CORRUPTED;
+	}
 	xd->xprefix = rx.xprefix;
 	xd->name_len = rx.name_len;
 	xd->value_len = je16_to_cpu(rx.value_len);
@@ -182,15 +181,15 @@
 
 	spin_lock(&c->erase_completion_lock);
  complete:
-	क्रम (raw=xd->node; raw != (व्योम *)xd; raw=raw->next_in_ino) अणु
+	for (raw=xd->node; raw != (void *)xd; raw=raw->next_in_ino) {
 		jeb = &c->blocks[ref_offset(raw) / c->sector_size];
 		totlen = PAD(ref_totlen(c, jeb, raw));
-		अगर (ref_flags(raw) == REF_UNCHECKED) अणु
+		if (ref_flags(raw) == REF_UNCHECKED) {
 			c->unchecked_size -= totlen; c->used_size += totlen;
 			jeb->unchecked_size -= totlen; jeb->used_size += totlen;
-		पूर्ण
+		}
 		raw->flash_offset = ref_offset(raw) | ((xd->node==raw) ? REF_PRISTINE : REF_NORMAL);
-	पूर्ण
+	}
 	spin_unlock(&c->erase_completion_lock);
 
 	/* unchecked xdatum is chained with c->xattr_unchecked */
@@ -199,45 +198,45 @@
 	dbg_xattr("success on verifying xdatum (xid=%u, version=%u)\n",
 		  xd->xid, xd->version);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक करो_load_xattr_datum(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_xattr_datum *xd)
-अणु
-	/* must be called under करोwn_ग_लिखो(xattr_sem) */
-	अक्षर *data;
-	माप_प्रकार पढ़ोlen;
-	uपूर्णांक32_t crc, length;
-	पूर्णांक i, ret, retry = 0;
+static int do_load_xattr_datum(struct jffs2_sb_info *c, struct jffs2_xattr_datum *xd)
+{
+	/* must be called under down_write(xattr_sem) */
+	char *data;
+	size_t readlen;
+	uint32_t crc, length;
+	int i, ret, retry = 0;
 
 	BUG_ON(ref_flags(xd->node) != REF_PRISTINE);
 	BUG_ON(!list_empty(&xd->xindex));
  retry:
 	length = xd->name_len + 1 + xd->value_len;
-	data = kदो_स्मृति(length, GFP_KERNEL);
-	अगर (!data)
-		वापस -ENOMEM;
+	data = kmalloc(length, GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
 
-	ret = jffs2_flash_पढ़ो(c, ref_offset(xd->node)+माप(काष्ठा jffs2_raw_xattr),
-			       length, &पढ़ोlen, data);
+	ret = jffs2_flash_read(c, ref_offset(xd->node)+sizeof(struct jffs2_raw_xattr),
+			       length, &readlen, data);
 
-	अगर (ret || length!=पढ़ोlen) अणु
+	if (ret || length!=readlen) {
 		JFFS2_WARNING("jffs2_flash_read() returned %d, request=%d, readlen=%zu, at %#08x\n",
-			      ret, length, पढ़ोlen, ref_offset(xd->node));
-		kमुक्त(data);
-		वापस ret ? ret : -EIO;
-	पूर्ण
+			      ret, length, readlen, ref_offset(xd->node));
+		kfree(data);
+		return ret ? ret : -EIO;
+	}
 
 	data[xd->name_len] = '\0';
 	crc = crc32(0, data, length);
-	अगर (crc != xd->data_crc) अणु
+	if (crc != xd->data_crc) {
 		JFFS2_WARNING("node CRC failed (JFFS2_NODETYPE_XATTR)"
 			      " at %#08x, read: 0x%08x calculated: 0x%08x\n",
 			      ref_offset(xd->node), xd->data_crc, crc);
-		kमुक्त(data);
+		kfree(data);
 		xd->flags |= JFFS2_XFLAGS_INVALID;
-		वापस JFFS2_XATTR_IS_CORRUPTED;
-	पूर्ण
+		return JFFS2_XATTR_IS_CORRUPTED;
+	}
 
 	xd->flags |= JFFS2_XFLAGS_HOT;
 	xd->xname = data;
@@ -248,64 +247,64 @@
 	xd->hashkey = xattr_datum_hashkey(xd->xprefix, xd->xname, xd->xvalue, xd->value_len);
 	i = xd->hashkey % XATTRINDEX_HASHSIZE;
 	list_add(&xd->xindex, &c->xattrindex[i]);
-	अगर (!retry) अणु
+	if (!retry) {
 		retry = 1;
 		reclaim_xattr_datum(c);
-		अगर (!xd->xname)
-			जाओ retry;
-	पूर्ण
+		if (!xd->xname)
+			goto retry;
+	}
 
 	dbg_xattr("success on loading xdatum (xid=%u, xprefix=%u, xname='%s')\n",
 		  xd->xid, xd->xprefix, xd->xname);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक load_xattr_datum(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_xattr_datum *xd)
-अणु
-	/* must be called under करोwn_ग_लिखो(xattr_sem);
+static int load_xattr_datum(struct jffs2_sb_info *c, struct jffs2_xattr_datum *xd)
+{
+	/* must be called under down_write(xattr_sem);
 	 * rc < 0 : recoverable error, try again
 	 * rc = 0 : success
 	 * rc > 0 : Unrecoverable error, this node should be deleted.
 	 */
-	पूर्णांक rc = 0;
+	int rc = 0;
 
 	BUG_ON(xd->flags & JFFS2_XFLAGS_DEAD);
-	अगर (xd->xname)
-		वापस 0;
-	अगर (xd->flags & JFFS2_XFLAGS_INVALID)
-		वापस JFFS2_XATTR_IS_CORRUPTED;
-	अगर (unlikely(is_xattr_datum_unchecked(c, xd)))
-		rc = करो_verअगरy_xattr_datum(c, xd);
-	अगर (!rc)
-		rc = करो_load_xattr_datum(c, xd);
-	वापस rc;
-पूर्ण
+	if (xd->xname)
+		return 0;
+	if (xd->flags & JFFS2_XFLAGS_INVALID)
+		return JFFS2_XATTR_IS_CORRUPTED;
+	if (unlikely(is_xattr_datum_unchecked(c, xd)))
+		rc = do_verify_xattr_datum(c, xd);
+	if (!rc)
+		rc = do_load_xattr_datum(c, xd);
+	return rc;
+}
 
-अटल पूर्णांक save_xattr_datum(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_xattr_datum *xd)
-अणु
-	/* must be called under करोwn_ग_लिखो(xattr_sem) */
-	काष्ठा jffs2_raw_xattr rx;
-	काष्ठा kvec vecs[2];
-	माप_प्रकार length;
-	पूर्णांक rc, totlen;
-	uपूर्णांक32_t phys_ofs = ग_लिखो_ofs(c);
+static int save_xattr_datum(struct jffs2_sb_info *c, struct jffs2_xattr_datum *xd)
+{
+	/* must be called under down_write(xattr_sem) */
+	struct jffs2_raw_xattr rx;
+	struct kvec vecs[2];
+	size_t length;
+	int rc, totlen;
+	uint32_t phys_ofs = write_ofs(c);
 
 	BUG_ON(!xd->xname);
 	BUG_ON(xd->flags & (JFFS2_XFLAGS_DEAD|JFFS2_XFLAGS_INVALID));
 
 	vecs[0].iov_base = &rx;
-	vecs[0].iov_len = माप(rx);
+	vecs[0].iov_len = sizeof(rx);
 	vecs[1].iov_base = xd->xname;
 	vecs[1].iov_len = xd->name_len + 1 + xd->value_len;
 	totlen = vecs[0].iov_len + vecs[1].iov_len;
 
 	/* Setup raw-xattr */
-	स_रखो(&rx, 0, माप(rx));
+	memset(&rx, 0, sizeof(rx));
 	rx.magic = cpu_to_je16(JFFS2_MAGIC_BITMASK);
 	rx.nodetype = cpu_to_je16(JFFS2_NODETYPE_XATTR);
 	rx.totlen = cpu_to_je32(PAD(totlen));
-	rx.hdr_crc = cpu_to_je32(crc32(0, &rx, माप(काष्ठा jffs2_unknown_node) - 4));
+	rx.hdr_crc = cpu_to_je32(crc32(0, &rx, sizeof(struct jffs2_unknown_node) - 4));
 
 	rx.xid = cpu_to_je32(xd->xid);
 	rx.version = cpu_to_je32(++xd->version);
@@ -313,65 +312,65 @@
 	rx.name_len = xd->name_len;
 	rx.value_len = cpu_to_je16(xd->value_len);
 	rx.data_crc = cpu_to_je32(crc32(0, vecs[1].iov_base, vecs[1].iov_len));
-	rx.node_crc = cpu_to_je32(crc32(0, &rx, माप(काष्ठा jffs2_raw_xattr) - 4));
+	rx.node_crc = cpu_to_je32(crc32(0, &rx, sizeof(struct jffs2_raw_xattr) - 4));
 
-	rc = jffs2_flash_ग_लिखोv(c, vecs, 2, phys_ofs, &length, 0);
-	अगर (rc || totlen != length) अणु
+	rc = jffs2_flash_writev(c, vecs, 2, phys_ofs, &length, 0);
+	if (rc || totlen != length) {
 		JFFS2_WARNING("jffs2_flash_writev()=%d, req=%u, wrote=%zu, at %#08x\n",
 			      rc, totlen, length, phys_ofs);
 		rc = rc ? rc : -EIO;
-		अगर (length)
-			jffs2_add_physical_node_ref(c, phys_ofs | REF_OBSOLETE, PAD(totlen), शून्य);
+		if (length)
+			jffs2_add_physical_node_ref(c, phys_ofs | REF_OBSOLETE, PAD(totlen), NULL);
 
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 	/* success */
-	jffs2_add_physical_node_ref(c, phys_ofs | REF_PRISTINE, PAD(totlen), (व्योम *)xd);
+	jffs2_add_physical_node_ref(c, phys_ofs | REF_PRISTINE, PAD(totlen), (void *)xd);
 
 	dbg_xattr("success on saving xdatum (xid=%u, version=%u, xprefix=%u, xname='%s')\n",
 		  xd->xid, xd->version, xd->xprefix, xd->xname);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा jffs2_xattr_datum *create_xattr_datum(काष्ठा jffs2_sb_info *c,
-						    पूर्णांक xprefix, स्थिर अक्षर *xname,
-						    स्थिर अक्षर *xvalue, पूर्णांक xsize)
-अणु
-	/* must be called under करोwn_ग_लिखो(xattr_sem) */
-	काष्ठा jffs2_xattr_datum *xd;
-	uपूर्णांक32_t hashkey, name_len;
-	अक्षर *data;
-	पूर्णांक i, rc;
+static struct jffs2_xattr_datum *create_xattr_datum(struct jffs2_sb_info *c,
+						    int xprefix, const char *xname,
+						    const char *xvalue, int xsize)
+{
+	/* must be called under down_write(xattr_sem) */
+	struct jffs2_xattr_datum *xd;
+	uint32_t hashkey, name_len;
+	char *data;
+	int i, rc;
 
 	/* Search xattr_datum has same xname/xvalue by index */
 	hashkey = xattr_datum_hashkey(xprefix, xname, xvalue, xsize);
 	i = hashkey % XATTRINDEX_HASHSIZE;
-	list_क्रम_each_entry(xd, &c->xattrindex[i], xindex) अणु
-		अगर (xd->hashkey==hashkey
+	list_for_each_entry(xd, &c->xattrindex[i], xindex) {
+		if (xd->hashkey==hashkey
 		    && xd->xprefix==xprefix
 		    && xd->value_len==xsize
-		    && !म_भेद(xd->xname, xname)
-		    && !स_भेद(xd->xvalue, xvalue, xsize)) अणु
+		    && !strcmp(xd->xname, xname)
+		    && !memcmp(xd->xvalue, xvalue, xsize)) {
 			atomic_inc(&xd->refcnt);
-			वापस xd;
-		पूर्ण
-	पूर्ण
+			return xd;
+		}
+	}
 
 	/* Not found, Create NEW XATTR-Cache */
-	name_len = म_माप(xname);
+	name_len = strlen(xname);
 
 	xd = jffs2_alloc_xattr_datum();
-	अगर (!xd)
-		वापस ERR_PTR(-ENOMEM);
+	if (!xd)
+		return ERR_PTR(-ENOMEM);
 
-	data = kदो_स्मृति(name_len + 1 + xsize, GFP_KERNEL);
-	अगर (!data) अणु
-		jffs2_मुक्त_xattr_datum(xd);
-		वापस ERR_PTR(-ENOMEM);
-	पूर्ण
-	म_नकल(data, xname);
-	स_नकल(data + name_len + 1, xvalue, xsize);
+	data = kmalloc(name_len + 1 + xsize, GFP_KERNEL);
+	if (!data) {
+		jffs2_free_xattr_datum(xd);
+		return ERR_PTR(-ENOMEM);
+	}
+	strcpy(data, xname);
+	memcpy(data + name_len + 1, xvalue, xsize);
 
 	atomic_set(&xd->refcnt, 1);
 	xd->xid = ++c->highest_xid;
@@ -386,11 +385,11 @@
 	xd->data_crc = crc32(0, data, xd->name_len + 1 + xd->value_len);
 
 	rc = save_xattr_datum(c, xd);
-	अगर (rc) अणु
-		kमुक्त(xd->xname);
-		jffs2_मुक्त_xattr_datum(xd);
-		वापस ERR_PTR(rc);
-	पूर्ण
+	if (rc) {
+		kfree(xd->xname);
+		jffs2_free_xattr_datum(xd);
+		return ERR_PTR(rc);
+	}
 
 	/* Insert Hash Index */
 	i = hashkey % XATTRINDEX_HASHSIZE;
@@ -399,185 +398,185 @@
 	c->xdatum_mem_usage += (xd->name_len + 1 + xd->value_len);
 	reclaim_xattr_datum(c);
 
-	वापस xd;
-पूर्ण
+	return xd;
+}
 
-अटल व्योम unrefer_xattr_datum(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_xattr_datum *xd)
-अणु
-	/* must be called under करोwn_ग_लिखो(xattr_sem) */
-	अगर (atomic_dec_and_lock(&xd->refcnt, &c->erase_completion_lock)) अणु
+static void unrefer_xattr_datum(struct jffs2_sb_info *c, struct jffs2_xattr_datum *xd)
+{
+	/* must be called under down_write(xattr_sem) */
+	if (atomic_dec_and_lock(&xd->refcnt, &c->erase_completion_lock)) {
 		unload_xattr_datum(c, xd);
 		xd->flags |= JFFS2_XFLAGS_DEAD;
-		अगर (xd->node == (व्योम *)xd) अणु
+		if (xd->node == (void *)xd) {
 			BUG_ON(!(xd->flags & JFFS2_XFLAGS_INVALID));
-			jffs2_मुक्त_xattr_datum(xd);
-		पूर्ण अन्यथा अणु
+			jffs2_free_xattr_datum(xd);
+		} else {
 			list_add(&xd->xindex, &c->xattr_dead_list);
-		पूर्ण
+		}
 		spin_unlock(&c->erase_completion_lock);
 
 		dbg_xattr("xdatum(xid=%u, version=%u) was removed.\n",
 			  xd->xid, xd->version);
-	पूर्ण
-पूर्ण
+	}
+}
 
 /* -------- xref related functions ------------------
- * verअगरy_xattr_ref(c, ref)
- *   is used to load xref inक्रमmation from medium. Because summary data करोes not
- *   contain xid/ino, it's necessary to verअगरy once जबतक mounting process.
+ * verify_xattr_ref(c, ref)
+ *   is used to load xref information from medium. Because summary data does not
+ *   contain xid/ino, it's necessary to verify once while mounting process.
  * save_xattr_ref(c, ref)
- *   is used to ग_लिखो xref to medium. If delete marker is marked, it ग_लिखो
- *   a delete marker of xref पूर्णांकo medium.
+ *   is used to write xref to medium. If delete marker is marked, it write
+ *   a delete marker of xref into medium.
  * create_xattr_ref(c, ic, xd)
- *   is used to create a new xref and ग_लिखो to medium.
+ *   is used to create a new xref and write to medium.
  * delete_xattr_ref(c, ref)
  *   is used to delete jffs2_xattr_ref. It marks xref XREF_DELETE_MARKER,
  *   and allows GC to reclaim those physical nodes.
  * jffs2_xattr_delete_inode(c, ic)
- *   is called to हटाओ xrefs related to obsolete inode when inode is unlinked.
- * jffs2_xattr_मुक्त_inode(c, ic)
+ *   is called to remove xrefs related to obsolete inode when inode is unlinked.
+ * jffs2_xattr_free_inode(c, ic)
  *   is called to release xattr related objects when unmounting. 
  * check_xattr_ref_inode(c, ic)
- *   is used to confirm inode करोes not have duplicate xattr name/value pair.
- * jffs2_xattr_करो_crccheck_inode(c, ic)
- *   is used to क्रमce xattr data पूर्णांकegrity check during the initial gc scan.
+ *   is used to confirm inode does not have duplicate xattr name/value pair.
+ * jffs2_xattr_do_crccheck_inode(c, ic)
+ *   is used to force xattr data integrity check during the initial gc scan.
  * -------------------------------------------------- */
-अटल पूर्णांक verअगरy_xattr_ref(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_xattr_ref *ref)
-अणु
-	काष्ठा jffs2_eraseblock *jeb;
-	काष्ठा jffs2_raw_node_ref *raw;
-	काष्ठा jffs2_raw_xref rr;
-	माप_प्रकार पढ़ोlen;
-	uपूर्णांक32_t crc, offset, totlen;
-	पूर्णांक rc;
+static int verify_xattr_ref(struct jffs2_sb_info *c, struct jffs2_xattr_ref *ref)
+{
+	struct jffs2_eraseblock *jeb;
+	struct jffs2_raw_node_ref *raw;
+	struct jffs2_raw_xref rr;
+	size_t readlen;
+	uint32_t crc, offset, totlen;
+	int rc;
 
 	spin_lock(&c->erase_completion_lock);
-	अगर (ref_flags(ref->node) != REF_UNCHECKED)
-		जाओ complete;
+	if (ref_flags(ref->node) != REF_UNCHECKED)
+		goto complete;
 	offset = ref_offset(ref->node);
 	spin_unlock(&c->erase_completion_lock);
 
-	rc = jffs2_flash_पढ़ो(c, offset, माप(rr), &पढ़ोlen, (अक्षर *)&rr);
-	अगर (rc || माप(rr) != पढ़ोlen) अणु
+	rc = jffs2_flash_read(c, offset, sizeof(rr), &readlen, (char *)&rr);
+	if (rc || sizeof(rr) != readlen) {
 		JFFS2_WARNING("jffs2_flash_read()=%d, req=%zu, read=%zu, at %#08x\n",
-			      rc, माप(rr), पढ़ोlen, offset);
-		वापस rc ? rc : -EIO;
-	पूर्ण
+			      rc, sizeof(rr), readlen, offset);
+		return rc ? rc : -EIO;
+	}
 	/* obsolete node */
-	crc = crc32(0, &rr, माप(rr) - 4);
-	अगर (crc != je32_to_cpu(rr.node_crc)) अणु
+	crc = crc32(0, &rr, sizeof(rr) - 4);
+	if (crc != je32_to_cpu(rr.node_crc)) {
 		JFFS2_ERROR("node CRC failed at %#08x, read=%#08x, calc=%#08x\n",
 			    offset, je32_to_cpu(rr.node_crc), crc);
-		वापस JFFS2_XATTR_IS_CORRUPTED;
-	पूर्ण
-	अगर (je16_to_cpu(rr.magic) != JFFS2_MAGIC_BITMASK
+		return JFFS2_XATTR_IS_CORRUPTED;
+	}
+	if (je16_to_cpu(rr.magic) != JFFS2_MAGIC_BITMASK
 	    || je16_to_cpu(rr.nodetype) != JFFS2_NODETYPE_XREF
-	    || je32_to_cpu(rr.totlen) != PAD(माप(rr))) अणु
+	    || je32_to_cpu(rr.totlen) != PAD(sizeof(rr))) {
 		JFFS2_ERROR("inconsistent xref at %#08x, magic=%#04x/%#04x, "
 			    "nodetype=%#04x/%#04x, totlen=%u/%zu\n",
 			    offset, je16_to_cpu(rr.magic), JFFS2_MAGIC_BITMASK,
 			    je16_to_cpu(rr.nodetype), JFFS2_NODETYPE_XREF,
-			    je32_to_cpu(rr.totlen), PAD(माप(rr)));
-		वापस JFFS2_XATTR_IS_CORRUPTED;
-	पूर्ण
+			    je32_to_cpu(rr.totlen), PAD(sizeof(rr)));
+		return JFFS2_XATTR_IS_CORRUPTED;
+	}
 	ref->ino = je32_to_cpu(rr.ino);
 	ref->xid = je32_to_cpu(rr.xid);
 	ref->xseqno = je32_to_cpu(rr.xseqno);
-	अगर (ref->xseqno > c->highest_xseqno)
+	if (ref->xseqno > c->highest_xseqno)
 		c->highest_xseqno = (ref->xseqno & ~XREF_DELETE_MARKER);
 
 	spin_lock(&c->erase_completion_lock);
  complete:
-	क्रम (raw=ref->node; raw != (व्योम *)ref; raw=raw->next_in_ino) अणु
+	for (raw=ref->node; raw != (void *)ref; raw=raw->next_in_ino) {
 		jeb = &c->blocks[ref_offset(raw) / c->sector_size];
 		totlen = PAD(ref_totlen(c, jeb, raw));
-		अगर (ref_flags(raw) == REF_UNCHECKED) अणु
+		if (ref_flags(raw) == REF_UNCHECKED) {
 			c->unchecked_size -= totlen; c->used_size += totlen;
 			jeb->unchecked_size -= totlen; jeb->used_size += totlen;
-		पूर्ण
+		}
 		raw->flash_offset = ref_offset(raw) | ((ref->node==raw) ? REF_PRISTINE : REF_NORMAL);
-	पूर्ण
+	}
 	spin_unlock(&c->erase_completion_lock);
 
 	dbg_xattr("success on verifying xref (ino=%u, xid=%u) at %#08x\n",
 		  ref->ino, ref->xid, ref_offset(ref->node));
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक save_xattr_ref(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_xattr_ref *ref)
-अणु
-	/* must be called under करोwn_ग_लिखो(xattr_sem) */
-	काष्ठा jffs2_raw_xref rr;
-	माप_प्रकार length;
-	uपूर्णांक32_t xseqno, phys_ofs = ग_लिखो_ofs(c);
-	पूर्णांक ret;
+static int save_xattr_ref(struct jffs2_sb_info *c, struct jffs2_xattr_ref *ref)
+{
+	/* must be called under down_write(xattr_sem) */
+	struct jffs2_raw_xref rr;
+	size_t length;
+	uint32_t xseqno, phys_ofs = write_ofs(c);
+	int ret;
 
 	rr.magic = cpu_to_je16(JFFS2_MAGIC_BITMASK);
 	rr.nodetype = cpu_to_je16(JFFS2_NODETYPE_XREF);
-	rr.totlen = cpu_to_je32(PAD(माप(rr)));
-	rr.hdr_crc = cpu_to_je32(crc32(0, &rr, माप(काष्ठा jffs2_unknown_node) - 4));
+	rr.totlen = cpu_to_je32(PAD(sizeof(rr)));
+	rr.hdr_crc = cpu_to_je32(crc32(0, &rr, sizeof(struct jffs2_unknown_node) - 4));
 
 	xseqno = (c->highest_xseqno += 2);
-	अगर (is_xattr_ref_dead(ref)) अणु
+	if (is_xattr_ref_dead(ref)) {
 		xseqno |= XREF_DELETE_MARKER;
 		rr.ino = cpu_to_je32(ref->ino);
 		rr.xid = cpu_to_je32(ref->xid);
-	पूर्ण अन्यथा अणु
+	} else {
 		rr.ino = cpu_to_je32(ref->ic->ino);
 		rr.xid = cpu_to_je32(ref->xd->xid);
-	पूर्ण
+	}
 	rr.xseqno = cpu_to_je32(xseqno);
-	rr.node_crc = cpu_to_je32(crc32(0, &rr, माप(rr) - 4));
+	rr.node_crc = cpu_to_je32(crc32(0, &rr, sizeof(rr) - 4));
 
-	ret = jffs2_flash_ग_लिखो(c, phys_ofs, माप(rr), &length, (अक्षर *)&rr);
-	अगर (ret || माप(rr) != length) अणु
+	ret = jffs2_flash_write(c, phys_ofs, sizeof(rr), &length, (char *)&rr);
+	if (ret || sizeof(rr) != length) {
 		JFFS2_WARNING("jffs2_flash_write() returned %d, request=%zu, retlen=%zu, at %#08x\n",
-			      ret, माप(rr), length, phys_ofs);
+			      ret, sizeof(rr), length, phys_ofs);
 		ret = ret ? ret : -EIO;
-		अगर (length)
-			jffs2_add_physical_node_ref(c, phys_ofs | REF_OBSOLETE, PAD(माप(rr)), शून्य);
+		if (length)
+			jffs2_add_physical_node_ref(c, phys_ofs | REF_OBSOLETE, PAD(sizeof(rr)), NULL);
 
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 	/* success */
 	ref->xseqno = xseqno;
-	jffs2_add_physical_node_ref(c, phys_ofs | REF_PRISTINE, PAD(माप(rr)), (व्योम *)ref);
+	jffs2_add_physical_node_ref(c, phys_ofs | REF_PRISTINE, PAD(sizeof(rr)), (void *)ref);
 
 	dbg_xattr("success on saving xref (ino=%u, xid=%u)\n", ref->ic->ino, ref->xd->xid);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा jffs2_xattr_ref *create_xattr_ref(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_inode_cache *ic,
-						काष्ठा jffs2_xattr_datum *xd)
-अणु
-	/* must be called under करोwn_ग_लिखो(xattr_sem) */
-	काष्ठा jffs2_xattr_ref *ref;
-	पूर्णांक ret;
+static struct jffs2_xattr_ref *create_xattr_ref(struct jffs2_sb_info *c, struct jffs2_inode_cache *ic,
+						struct jffs2_xattr_datum *xd)
+{
+	/* must be called under down_write(xattr_sem) */
+	struct jffs2_xattr_ref *ref;
+	int ret;
 
 	ref = jffs2_alloc_xattr_ref();
-	अगर (!ref)
-		वापस ERR_PTR(-ENOMEM);
+	if (!ref)
+		return ERR_PTR(-ENOMEM);
 	ref->ic = ic;
 	ref->xd = xd;
 
 	ret = save_xattr_ref(c, ref);
-	अगर (ret) अणु
-		jffs2_मुक्त_xattr_ref(ref);
-		वापस ERR_PTR(ret);
-	पूर्ण
+	if (ret) {
+		jffs2_free_xattr_ref(ref);
+		return ERR_PTR(ret);
+	}
 
 	/* Chain to inode */
 	ref->next = ic->xref;
 	ic->xref = ref;
 
-	वापस ref; /* success */
-पूर्ण
+	return ref; /* success */
+}
 
-अटल व्योम delete_xattr_ref(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_xattr_ref *ref)
-अणु
-	/* must be called under करोwn_ग_लिखो(xattr_sem) */
-	काष्ठा jffs2_xattr_datum *xd;
+static void delete_xattr_ref(struct jffs2_sb_info *c, struct jffs2_xattr_ref *ref)
+{
+	/* must be called under down_write(xattr_sem) */
+	struct jffs2_xattr_datum *xd;
 
 	xd = ref->xd;
 	ref->xseqno |= XREF_DELETE_MARKER;
@@ -592,757 +591,757 @@
 		  ref->ino, ref->xid, ref->xseqno);
 
 	unrefer_xattr_datum(c, xd);
-पूर्ण
+}
 
-व्योम jffs2_xattr_delete_inode(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_inode_cache *ic)
-अणु
+void jffs2_xattr_delete_inode(struct jffs2_sb_info *c, struct jffs2_inode_cache *ic)
+{
 	/* It's called from jffs2_evict_inode() on inode removing.
-	   When an inode with XATTR is हटाओd, those XATTRs must be हटाओd. */
-	काष्ठा jffs2_xattr_ref *ref, *_ref;
+	   When an inode with XATTR is removed, those XATTRs must be removed. */
+	struct jffs2_xattr_ref *ref, *_ref;
 
-	अगर (!ic || ic->pino_nlink > 0)
-		वापस;
+	if (!ic || ic->pino_nlink > 0)
+		return;
 
-	करोwn_ग_लिखो(&c->xattr_sem);
-	क्रम (ref = ic->xref; ref; ref = _ref) अणु
+	down_write(&c->xattr_sem);
+	for (ref = ic->xref; ref; ref = _ref) {
 		_ref = ref->next;
 		delete_xattr_ref(c, ref);
-	पूर्ण
-	ic->xref = शून्य;
-	up_ग_लिखो(&c->xattr_sem);
-पूर्ण
+	}
+	ic->xref = NULL;
+	up_write(&c->xattr_sem);
+}
 
-व्योम jffs2_xattr_मुक्त_inode(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_inode_cache *ic)
-अणु
-	/* It's called from jffs2_मुक्त_ino_caches() until unmounting FS. */
-	काष्ठा jffs2_xattr_datum *xd;
-	काष्ठा jffs2_xattr_ref *ref, *_ref;
+void jffs2_xattr_free_inode(struct jffs2_sb_info *c, struct jffs2_inode_cache *ic)
+{
+	/* It's called from jffs2_free_ino_caches() until unmounting FS. */
+	struct jffs2_xattr_datum *xd;
+	struct jffs2_xattr_ref *ref, *_ref;
 
-	करोwn_ग_लिखो(&c->xattr_sem);
-	क्रम (ref = ic->xref; ref; ref = _ref) अणु
+	down_write(&c->xattr_sem);
+	for (ref = ic->xref; ref; ref = _ref) {
 		_ref = ref->next;
 		xd = ref->xd;
-		अगर (atomic_dec_and_test(&xd->refcnt)) अणु
+		if (atomic_dec_and_test(&xd->refcnt)) {
 			unload_xattr_datum(c, xd);
-			jffs2_मुक्त_xattr_datum(xd);
-		पूर्ण
-		jffs2_मुक्त_xattr_ref(ref);
-	पूर्ण
-	ic->xref = शून्य;
-	up_ग_लिखो(&c->xattr_sem);
-पूर्ण
+			jffs2_free_xattr_datum(xd);
+		}
+		jffs2_free_xattr_ref(ref);
+	}
+	ic->xref = NULL;
+	up_write(&c->xattr_sem);
+}
 
-अटल पूर्णांक check_xattr_ref_inode(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_inode_cache *ic)
-अणु
-	/* success of check_xattr_ref_inode() means that inode (ic) करोse not have
+static int check_xattr_ref_inode(struct jffs2_sb_info *c, struct jffs2_inode_cache *ic)
+{
+	/* success of check_xattr_ref_inode() means that inode (ic) dose not have
 	 * duplicate name/value pairs. If duplicate name/value pair would be found,
-	 * one will be हटाओd.
+	 * one will be removed.
 	 */
-	काष्ठा jffs2_xattr_ref *ref, *cmp, **pref, **pcmp;
-	पूर्णांक rc = 0;
+	struct jffs2_xattr_ref *ref, *cmp, **pref, **pcmp;
+	int rc = 0;
 
-	अगर (likely(ic->flags & INO_FLAGS_XATTR_CHECKED))
-		वापस 0;
-	करोwn_ग_लिखो(&c->xattr_sem);
+	if (likely(ic->flags & INO_FLAGS_XATTR_CHECKED))
+		return 0;
+	down_write(&c->xattr_sem);
  retry:
 	rc = 0;
-	क्रम (ref=ic->xref, pref=&ic->xref; ref; pref=&ref->next, ref=ref->next) अणु
-		अगर (!ref->xd->xname) अणु
+	for (ref=ic->xref, pref=&ic->xref; ref; pref=&ref->next, ref=ref->next) {
+		if (!ref->xd->xname) {
 			rc = load_xattr_datum(c, ref->xd);
-			अगर (unlikely(rc > 0)) अणु
+			if (unlikely(rc > 0)) {
 				*pref = ref->next;
 				delete_xattr_ref(c, ref);
-				जाओ retry;
-			पूर्ण अन्यथा अगर (unlikely(rc < 0))
-				जाओ out;
-		पूर्ण
-		क्रम (cmp=ref->next, pcmp=&ref->next; cmp; pcmp=&cmp->next, cmp=cmp->next) अणु
-			अगर (!cmp->xd->xname) अणु
+				goto retry;
+			} else if (unlikely(rc < 0))
+				goto out;
+		}
+		for (cmp=ref->next, pcmp=&ref->next; cmp; pcmp=&cmp->next, cmp=cmp->next) {
+			if (!cmp->xd->xname) {
 				ref->xd->flags |= JFFS2_XFLAGS_BIND;
 				rc = load_xattr_datum(c, cmp->xd);
 				ref->xd->flags &= ~JFFS2_XFLAGS_BIND;
-				अगर (unlikely(rc > 0)) अणु
+				if (unlikely(rc > 0)) {
 					*pcmp = cmp->next;
 					delete_xattr_ref(c, cmp);
-					जाओ retry;
-				पूर्ण अन्यथा अगर (unlikely(rc < 0))
-					जाओ out;
-			पूर्ण
-			अगर (ref->xd->xprefix == cmp->xd->xprefix
-			    && !म_भेद(ref->xd->xname, cmp->xd->xname)) अणु
-				अगर (ref->xseqno > cmp->xseqno) अणु
+					goto retry;
+				} else if (unlikely(rc < 0))
+					goto out;
+			}
+			if (ref->xd->xprefix == cmp->xd->xprefix
+			    && !strcmp(ref->xd->xname, cmp->xd->xname)) {
+				if (ref->xseqno > cmp->xseqno) {
 					*pcmp = cmp->next;
 					delete_xattr_ref(c, cmp);
-				पूर्ण अन्यथा अणु
+				} else {
 					*pref = ref->next;
 					delete_xattr_ref(c, ref);
-				पूर्ण
-				जाओ retry;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				}
+				goto retry;
+			}
+		}
+	}
 	ic->flags |= INO_FLAGS_XATTR_CHECKED;
  out:
-	up_ग_लिखो(&c->xattr_sem);
+	up_write(&c->xattr_sem);
 
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-व्योम jffs2_xattr_करो_crccheck_inode(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_inode_cache *ic)
-अणु
+void jffs2_xattr_do_crccheck_inode(struct jffs2_sb_info *c, struct jffs2_inode_cache *ic)
+{
 	check_xattr_ref_inode(c, ic);
-पूर्ण
+}
 
-/* -------- xattr subप्रणाली functions ---------------
- * jffs2_init_xattr_subप्रणाली(c)
+/* -------- xattr subsystem functions ---------------
+ * jffs2_init_xattr_subsystem(c)
  *   is used to initialize semaphore and list_head, and some variables.
  * jffs2_find_xattr_datum(c, xid)
- *   is used to lookup xdatum जबतक scanning process.
- * jffs2_clear_xattr_subप्रणाली(c)
+ *   is used to lookup xdatum while scanning process.
+ * jffs2_clear_xattr_subsystem(c)
  *   is used to release any xattr related objects.
- * jffs2_build_xattr_subप्रणाली(c)
- *   is used to associate xdatum and xref जबतक super block building process.
+ * jffs2_build_xattr_subsystem(c)
+ *   is used to associate xdatum and xref while super block building process.
  * jffs2_setup_xattr_datum(c, xid, version)
- *   is used to insert xdatum जबतक scanning process.
+ *   is used to insert xdatum while scanning process.
  * -------------------------------------------------- */
-व्योम jffs2_init_xattr_subप्रणाली(काष्ठा jffs2_sb_info *c)
-अणु
-	पूर्णांक i;
+void jffs2_init_xattr_subsystem(struct jffs2_sb_info *c)
+{
+	int i;
 
-	क्रम (i=0; i < XATTRINDEX_HASHSIZE; i++)
+	for (i=0; i < XATTRINDEX_HASHSIZE; i++)
 		INIT_LIST_HEAD(&c->xattrindex[i]);
 	INIT_LIST_HEAD(&c->xattr_unchecked);
 	INIT_LIST_HEAD(&c->xattr_dead_list);
-	c->xref_dead_list = शून्य;
-	c->xref_temp = शून्य;
+	c->xref_dead_list = NULL;
+	c->xref_temp = NULL;
 
 	init_rwsem(&c->xattr_sem);
 	c->highest_xid = 0;
 	c->highest_xseqno = 0;
 	c->xdatum_mem_usage = 0;
 	c->xdatum_mem_threshold = 32 * 1024;	/* Default 32KB */
-पूर्ण
+}
 
-अटल काष्ठा jffs2_xattr_datum *jffs2_find_xattr_datum(काष्ठा jffs2_sb_info *c, uपूर्णांक32_t xid)
-अणु
-	काष्ठा jffs2_xattr_datum *xd;
-	पूर्णांक i = xid % XATTRINDEX_HASHSIZE;
+static struct jffs2_xattr_datum *jffs2_find_xattr_datum(struct jffs2_sb_info *c, uint32_t xid)
+{
+	struct jffs2_xattr_datum *xd;
+	int i = xid % XATTRINDEX_HASHSIZE;
 
 	/* It's only used in scanning/building process. */
 	BUG_ON(!(c->flags & (JFFS2_SB_FLAG_SCANNING|JFFS2_SB_FLAG_BUILDING)));
 
-	list_क्रम_each_entry(xd, &c->xattrindex[i], xindex) अणु
-		अगर (xd->xid==xid)
-			वापस xd;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	list_for_each_entry(xd, &c->xattrindex[i], xindex) {
+		if (xd->xid==xid)
+			return xd;
+	}
+	return NULL;
+}
 
-व्योम jffs2_clear_xattr_subप्रणाली(काष्ठा jffs2_sb_info *c)
-अणु
-	काष्ठा jffs2_xattr_datum *xd, *_xd;
-	काष्ठा jffs2_xattr_ref *ref, *_ref;
-	पूर्णांक i;
+void jffs2_clear_xattr_subsystem(struct jffs2_sb_info *c)
+{
+	struct jffs2_xattr_datum *xd, *_xd;
+	struct jffs2_xattr_ref *ref, *_ref;
+	int i;
 
-	क्रम (ref=c->xref_temp; ref; ref = _ref) अणु
+	for (ref=c->xref_temp; ref; ref = _ref) {
 		_ref = ref->next;
-		jffs2_मुक्त_xattr_ref(ref);
-	पूर्ण
+		jffs2_free_xattr_ref(ref);
+	}
 
-	क्रम (ref=c->xref_dead_list; ref; ref = _ref) अणु
+	for (ref=c->xref_dead_list; ref; ref = _ref) {
 		_ref = ref->next;
-		jffs2_मुक्त_xattr_ref(ref);
-	पूर्ण
+		jffs2_free_xattr_ref(ref);
+	}
 
-	क्रम (i=0; i < XATTRINDEX_HASHSIZE; i++) अणु
-		list_क्रम_each_entry_safe(xd, _xd, &c->xattrindex[i], xindex) अणु
+	for (i=0; i < XATTRINDEX_HASHSIZE; i++) {
+		list_for_each_entry_safe(xd, _xd, &c->xattrindex[i], xindex) {
 			list_del(&xd->xindex);
-			kमुक्त(xd->xname);
-			jffs2_मुक्त_xattr_datum(xd);
-		पूर्ण
-	पूर्ण
+			kfree(xd->xname);
+			jffs2_free_xattr_datum(xd);
+		}
+	}
 
-	list_क्रम_each_entry_safe(xd, _xd, &c->xattr_dead_list, xindex) अणु
+	list_for_each_entry_safe(xd, _xd, &c->xattr_dead_list, xindex) {
 		list_del(&xd->xindex);
-		jffs2_मुक्त_xattr_datum(xd);
-	पूर्ण
-	list_क्रम_each_entry_safe(xd, _xd, &c->xattr_unchecked, xindex) अणु
+		jffs2_free_xattr_datum(xd);
+	}
+	list_for_each_entry_safe(xd, _xd, &c->xattr_unchecked, xindex) {
 		list_del(&xd->xindex);
-		jffs2_मुक्त_xattr_datum(xd);
-	पूर्ण
-पूर्ण
+		jffs2_free_xattr_datum(xd);
+	}
+}
 
-#घोषणा XREF_TMPHASH_SIZE	(128)
-व्योम jffs2_build_xattr_subप्रणाली(काष्ठा jffs2_sb_info *c)
-अणु
-	काष्ठा jffs2_xattr_ref *ref, *_ref;
-	काष्ठा jffs2_xattr_ref *xref_पंचांगphash[XREF_TMPHASH_SIZE];
-	काष्ठा jffs2_xattr_datum *xd, *_xd;
-	काष्ठा jffs2_inode_cache *ic;
-	काष्ठा jffs2_raw_node_ref *raw;
-	पूर्णांक i, xdatum_count = 0, xdatum_unchecked_count = 0, xref_count = 0;
-	पूर्णांक xdatum_orphan_count = 0, xref_orphan_count = 0, xref_dead_count = 0;
+#define XREF_TMPHASH_SIZE	(128)
+void jffs2_build_xattr_subsystem(struct jffs2_sb_info *c)
+{
+	struct jffs2_xattr_ref *ref, *_ref;
+	struct jffs2_xattr_ref *xref_tmphash[XREF_TMPHASH_SIZE];
+	struct jffs2_xattr_datum *xd, *_xd;
+	struct jffs2_inode_cache *ic;
+	struct jffs2_raw_node_ref *raw;
+	int i, xdatum_count = 0, xdatum_unchecked_count = 0, xref_count = 0;
+	int xdatum_orphan_count = 0, xref_orphan_count = 0, xref_dead_count = 0;
 
 	BUG_ON(!(c->flags & JFFS2_SB_FLAG_BUILDING));
 
 	/* Phase.1 : Merge same xref */
-	क्रम (i=0; i < XREF_TMPHASH_SIZE; i++)
-		xref_पंचांगphash[i] = शून्य;
-	क्रम (ref=c->xref_temp; ref; ref=_ref) अणु
-		काष्ठा jffs2_xattr_ref *पंचांगp;
+	for (i=0; i < XREF_TMPHASH_SIZE; i++)
+		xref_tmphash[i] = NULL;
+	for (ref=c->xref_temp; ref; ref=_ref) {
+		struct jffs2_xattr_ref *tmp;
 
 		_ref = ref->next;
-		अगर (ref_flags(ref->node) != REF_PRISTINE) अणु
-			अगर (verअगरy_xattr_ref(c, ref)) अणु
-				BUG_ON(ref->node->next_in_ino != (व्योम *)ref);
-				ref->node->next_in_ino = शून्य;
+		if (ref_flags(ref->node) != REF_PRISTINE) {
+			if (verify_xattr_ref(c, ref)) {
+				BUG_ON(ref->node->next_in_ino != (void *)ref);
+				ref->node->next_in_ino = NULL;
 				jffs2_mark_node_obsolete(c, ref->node);
-				jffs2_मुक्त_xattr_ref(ref);
-				जारी;
-			पूर्ण
-		पूर्ण
+				jffs2_free_xattr_ref(ref);
+				continue;
+			}
+		}
 
 		i = (ref->ino ^ ref->xid) % XREF_TMPHASH_SIZE;
-		क्रम (पंचांगp=xref_पंचांगphash[i]; पंचांगp; पंचांगp=पंचांगp->next) अणु
-			अगर (पंचांगp->ino == ref->ino && पंचांगp->xid == ref->xid)
-				अवरोध;
-		पूर्ण
-		अगर (पंचांगp) अणु
+		for (tmp=xref_tmphash[i]; tmp; tmp=tmp->next) {
+			if (tmp->ino == ref->ino && tmp->xid == ref->xid)
+				break;
+		}
+		if (tmp) {
 			raw = ref->node;
-			अगर (ref->xseqno > पंचांगp->xseqno) अणु
-				पंचांगp->xseqno = ref->xseqno;
-				raw->next_in_ino = पंचांगp->node;
-				पंचांगp->node = raw;
-			पूर्ण अन्यथा अणु
-				raw->next_in_ino = पंचांगp->node->next_in_ino;
-				पंचांगp->node->next_in_ino = raw;
-			पूर्ण
-			jffs2_मुक्त_xattr_ref(ref);
-			जारी;
-		पूर्ण अन्यथा अणु
-			ref->next = xref_पंचांगphash[i];
-			xref_पंचांगphash[i] = ref;
-		पूर्ण
-	पूर्ण
-	c->xref_temp = शून्य;
+			if (ref->xseqno > tmp->xseqno) {
+				tmp->xseqno = ref->xseqno;
+				raw->next_in_ino = tmp->node;
+				tmp->node = raw;
+			} else {
+				raw->next_in_ino = tmp->node->next_in_ino;
+				tmp->node->next_in_ino = raw;
+			}
+			jffs2_free_xattr_ref(ref);
+			continue;
+		} else {
+			ref->next = xref_tmphash[i];
+			xref_tmphash[i] = ref;
+		}
+	}
+	c->xref_temp = NULL;
 
 	/* Phase.2 : Bind xref with inode_cache and xattr_datum */
-	क्रम (i=0; i < XREF_TMPHASH_SIZE; i++) अणु
-		क्रम (ref=xref_पंचांगphash[i]; ref; ref=_ref) अणु
+	for (i=0; i < XREF_TMPHASH_SIZE; i++) {
+		for (ref=xref_tmphash[i]; ref; ref=_ref) {
 			xref_count++;
 			_ref = ref->next;
-			अगर (is_xattr_ref_dead(ref)) अणु
+			if (is_xattr_ref_dead(ref)) {
 				ref->next = c->xref_dead_list;
 				c->xref_dead_list = ref;
 				xref_dead_count++;
-				जारी;
-			पूर्ण
-			/* At this poपूर्णांक, ref->xid and ref->ino contain XID and inode number.
+				continue;
+			}
+			/* At this point, ref->xid and ref->ino contain XID and inode number.
 			   ref->xd and ref->ic are not valid yet. */
 			xd = jffs2_find_xattr_datum(c, ref->xid);
 			ic = jffs2_get_ino_cache(c, ref->ino);
-			अगर (!xd || !ic || !ic->pino_nlink) अणु
+			if (!xd || !ic || !ic->pino_nlink) {
 				dbg_xattr("xref(ino=%u, xid=%u, xseqno=%u) is orphan.\n",
 					  ref->ino, ref->xid, ref->xseqno);
 				ref->xseqno |= XREF_DELETE_MARKER;
 				ref->next = c->xref_dead_list;
 				c->xref_dead_list = ref;
 				xref_orphan_count++;
-				जारी;
-			पूर्ण
+				continue;
+			}
 			ref->xd = xd;
 			ref->ic = ic;
 			atomic_inc(&xd->refcnt);
 			ref->next = ic->xref;
 			ic->xref = ref;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* Phase.3 : Link unchecked xdatum to xattr_unchecked list */
-	क्रम (i=0; i < XATTRINDEX_HASHSIZE; i++) अणु
-		list_क्रम_each_entry_safe(xd, _xd, &c->xattrindex[i], xindex) अणु
+	for (i=0; i < XATTRINDEX_HASHSIZE; i++) {
+		list_for_each_entry_safe(xd, _xd, &c->xattrindex[i], xindex) {
 			xdatum_count++;
 			list_del_init(&xd->xindex);
-			अगर (!atomic_पढ़ो(&xd->refcnt)) अणु
+			if (!atomic_read(&xd->refcnt)) {
 				dbg_xattr("xdatum(xid=%u, version=%u) is orphan.\n",
 					  xd->xid, xd->version);
 				xd->flags |= JFFS2_XFLAGS_DEAD;
 				list_add(&xd->xindex, &c->xattr_unchecked);
 				xdatum_orphan_count++;
-				जारी;
-			पूर्ण
-			अगर (is_xattr_datum_unchecked(c, xd)) अणु
+				continue;
+			}
+			if (is_xattr_datum_unchecked(c, xd)) {
 				dbg_xattr("unchecked xdatum(xid=%u, version=%u)\n",
 					  xd->xid, xd->version);
 				list_add(&xd->xindex, &c->xattr_unchecked);
 				xdatum_unchecked_count++;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 	/* build complete */
 	JFFS2_NOTICE("complete building xattr subsystem, %u of xdatum"
 		     " (%u unchecked, %u orphan) and "
 		     "%u of xref (%u dead, %u orphan) found.\n",
 		     xdatum_count, xdatum_unchecked_count, xdatum_orphan_count,
 		     xref_count, xref_dead_count, xref_orphan_count);
-पूर्ण
+}
 
-काष्ठा jffs2_xattr_datum *jffs2_setup_xattr_datum(काष्ठा jffs2_sb_info *c,
-						  uपूर्णांक32_t xid, uपूर्णांक32_t version)
-अणु
-	काष्ठा jffs2_xattr_datum *xd;
+struct jffs2_xattr_datum *jffs2_setup_xattr_datum(struct jffs2_sb_info *c,
+						  uint32_t xid, uint32_t version)
+{
+	struct jffs2_xattr_datum *xd;
 
 	xd = jffs2_find_xattr_datum(c, xid);
-	अगर (!xd) अणु
+	if (!xd) {
 		xd = jffs2_alloc_xattr_datum();
-		अगर (!xd)
-			वापस ERR_PTR(-ENOMEM);
+		if (!xd)
+			return ERR_PTR(-ENOMEM);
 		xd->xid = xid;
 		xd->version = version;
-		अगर (xd->xid > c->highest_xid)
+		if (xd->xid > c->highest_xid)
 			c->highest_xid = xd->xid;
 		list_add_tail(&xd->xindex, &c->xattrindex[xid % XATTRINDEX_HASHSIZE]);
-	पूर्ण
-	वापस xd;
-पूर्ण
+	}
+	return xd;
+}
 
-/* -------- xattr subप्रणाली functions ---------------
+/* -------- xattr subsystem functions ---------------
  * xprefix_to_handler(xprefix)
- *   is used to translate xprefix पूर्णांकo xattr_handler.
+ *   is used to translate xprefix into xattr_handler.
  * jffs2_listxattr(dentry, buffer, size)
  *   is an implementation of listxattr handler on jffs2.
- * करो_jffs2_getxattr(inode, xprefix, xname, buffer, size)
+ * do_jffs2_getxattr(inode, xprefix, xname, buffer, size)
  *   is an implementation of getxattr handler on jffs2.
- * करो_jffs2_setxattr(inode, xprefix, xname, buffer, size, flags)
+ * do_jffs2_setxattr(inode, xprefix, xname, buffer, size, flags)
  *   is an implementation of setxattr handler on jffs2.
  * -------------------------------------------------- */
-स्थिर काष्ठा xattr_handler *jffs2_xattr_handlers[] = अणु
+const struct xattr_handler *jffs2_xattr_handlers[] = {
 	&jffs2_user_xattr_handler,
-#अगर_घोषित CONFIG_JFFS2_FS_SECURITY
+#ifdef CONFIG_JFFS2_FS_SECURITY
 	&jffs2_security_xattr_handler,
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_JFFS2_FS_POSIX_ACL
+#endif
+#ifdef CONFIG_JFFS2_FS_POSIX_ACL
 	&posix_acl_access_xattr_handler,
-	&posix_acl_शेष_xattr_handler,
-#पूर्ण_अगर
+	&posix_acl_default_xattr_handler,
+#endif
 	&jffs2_trusted_xattr_handler,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा xattr_handler *xprefix_to_handler(पूर्णांक xprefix) अणु
-	स्थिर काष्ठा xattr_handler *ret;
+static const struct xattr_handler *xprefix_to_handler(int xprefix) {
+	const struct xattr_handler *ret;
 
-	चयन (xprefix) अणु
-	हाल JFFS2_XPREFIX_USER:
+	switch (xprefix) {
+	case JFFS2_XPREFIX_USER:
 		ret = &jffs2_user_xattr_handler;
-		अवरोध;
-#अगर_घोषित CONFIG_JFFS2_FS_SECURITY
-	हाल JFFS2_XPREFIX_SECURITY:
+		break;
+#ifdef CONFIG_JFFS2_FS_SECURITY
+	case JFFS2_XPREFIX_SECURITY:
 		ret = &jffs2_security_xattr_handler;
-		अवरोध;
-#पूर्ण_अगर
-#अगर_घोषित CONFIG_JFFS2_FS_POSIX_ACL
-	हाल JFFS2_XPREFIX_ACL_ACCESS:
+		break;
+#endif
+#ifdef CONFIG_JFFS2_FS_POSIX_ACL
+	case JFFS2_XPREFIX_ACL_ACCESS:
 		ret = &posix_acl_access_xattr_handler;
-		अवरोध;
-	हाल JFFS2_XPREFIX_ACL_DEFAULT:
-		ret = &posix_acl_शेष_xattr_handler;
-		अवरोध;
-#पूर्ण_अगर
-	हाल JFFS2_XPREFIX_TRUSTED:
+		break;
+	case JFFS2_XPREFIX_ACL_DEFAULT:
+		ret = &posix_acl_default_xattr_handler;
+		break;
+#endif
+	case JFFS2_XPREFIX_TRUSTED:
 		ret = &jffs2_trusted_xattr_handler;
-		अवरोध;
-	शेष:
-		ret = शून्य;
-		अवरोध;
-	पूर्ण
-	वापस ret;
-पूर्ण
+		break;
+	default:
+		ret = NULL;
+		break;
+	}
+	return ret;
+}
 
-sमाप_प्रकार jffs2_listxattr(काष्ठा dentry *dentry, अक्षर *buffer, माप_प्रकार size)
-अणु
-	काष्ठा inode *inode = d_inode(dentry);
-	काष्ठा jffs2_inode_info *f = JFFS2_INODE_INFO(inode);
-	काष्ठा jffs2_sb_info *c = JFFS2_SB_INFO(inode->i_sb);
-	काष्ठा jffs2_inode_cache *ic = f->inocache;
-	काष्ठा jffs2_xattr_ref *ref, **pref;
-	काष्ठा jffs2_xattr_datum *xd;
-	स्थिर काष्ठा xattr_handler *xhandle;
-	स्थिर अक्षर *prefix;
-	sमाप_प्रकार prefix_len, len, rc;
-	पूर्णांक retry = 0;
+ssize_t jffs2_listxattr(struct dentry *dentry, char *buffer, size_t size)
+{
+	struct inode *inode = d_inode(dentry);
+	struct jffs2_inode_info *f = JFFS2_INODE_INFO(inode);
+	struct jffs2_sb_info *c = JFFS2_SB_INFO(inode->i_sb);
+	struct jffs2_inode_cache *ic = f->inocache;
+	struct jffs2_xattr_ref *ref, **pref;
+	struct jffs2_xattr_datum *xd;
+	const struct xattr_handler *xhandle;
+	const char *prefix;
+	ssize_t prefix_len, len, rc;
+	int retry = 0;
 
 	rc = check_xattr_ref_inode(c, ic);
-	अगर (unlikely(rc))
-		वापस rc;
+	if (unlikely(rc))
+		return rc;
 
-	करोwn_पढ़ो(&c->xattr_sem);
+	down_read(&c->xattr_sem);
  retry:
 	len = 0;
-	क्रम (ref=ic->xref, pref=&ic->xref; ref; pref=&ref->next, ref=ref->next) अणु
+	for (ref=ic->xref, pref=&ic->xref; ref; pref=&ref->next, ref=ref->next) {
 		BUG_ON(ref->ic != ic);
 		xd = ref->xd;
-		अगर (!xd->xname) अणु
+		if (!xd->xname) {
 			/* xdatum is unchached */
-			अगर (!retry) अणु
+			if (!retry) {
 				retry = 1;
-				up_पढ़ो(&c->xattr_sem);
-				करोwn_ग_लिखो(&c->xattr_sem);
-				जाओ retry;
-			पूर्ण अन्यथा अणु
+				up_read(&c->xattr_sem);
+				down_write(&c->xattr_sem);
+				goto retry;
+			} else {
 				rc = load_xattr_datum(c, xd);
-				अगर (unlikely(rc > 0)) अणु
+				if (unlikely(rc > 0)) {
 					*pref = ref->next;
 					delete_xattr_ref(c, ref);
-					जाओ retry;
-				पूर्ण अन्यथा अगर (unlikely(rc < 0))
-					जाओ out;
-			पूर्ण
-		पूर्ण
+					goto retry;
+				} else if (unlikely(rc < 0))
+					goto out;
+			}
+		}
 		xhandle = xprefix_to_handler(xd->xprefix);
-		अगर (!xhandle || (xhandle->list && !xhandle->list(dentry)))
-			जारी;
+		if (!xhandle || (xhandle->list && !xhandle->list(dentry)))
+			continue;
 		prefix = xhandle->prefix ?: xhandle->name;
-		prefix_len = म_माप(prefix);
+		prefix_len = strlen(prefix);
 		rc = prefix_len + xd->name_len + 1;
 
-		अगर (buffer) अणु
-			अगर (rc > size - len) अणु
-				rc = -दुस्फल;
-				जाओ out;
-			पूर्ण
-			स_नकल(buffer, prefix, prefix_len);
+		if (buffer) {
+			if (rc > size - len) {
+				rc = -ERANGE;
+				goto out;
+			}
+			memcpy(buffer, prefix, prefix_len);
 			buffer += prefix_len;
-			स_नकल(buffer, xd->xname, xd->name_len);
+			memcpy(buffer, xd->xname, xd->name_len);
 			buffer += xd->name_len;
 			*buffer++ = 0;
-		पूर्ण
+		}
 		len += rc;
-	पूर्ण
+	}
 	rc = len;
  out:
-	अगर (!retry) अणु
-		up_पढ़ो(&c->xattr_sem);
-	पूर्ण अन्यथा अणु
-		up_ग_लिखो(&c->xattr_sem);
-	पूर्ण
-	वापस rc;
-पूर्ण
+	if (!retry) {
+		up_read(&c->xattr_sem);
+	} else {
+		up_write(&c->xattr_sem);
+	}
+	return rc;
+}
 
-पूर्णांक करो_jffs2_getxattr(काष्ठा inode *inode, पूर्णांक xprefix, स्थिर अक्षर *xname,
-		      अक्षर *buffer, माप_प्रकार size)
-अणु
-	काष्ठा jffs2_inode_info *f = JFFS2_INODE_INFO(inode);
-	काष्ठा jffs2_sb_info *c = JFFS2_SB_INFO(inode->i_sb);
-	काष्ठा jffs2_inode_cache *ic = f->inocache;
-	काष्ठा jffs2_xattr_datum *xd;
-	काष्ठा jffs2_xattr_ref *ref, **pref;
-	पूर्णांक rc, retry = 0;
+int do_jffs2_getxattr(struct inode *inode, int xprefix, const char *xname,
+		      char *buffer, size_t size)
+{
+	struct jffs2_inode_info *f = JFFS2_INODE_INFO(inode);
+	struct jffs2_sb_info *c = JFFS2_SB_INFO(inode->i_sb);
+	struct jffs2_inode_cache *ic = f->inocache;
+	struct jffs2_xattr_datum *xd;
+	struct jffs2_xattr_ref *ref, **pref;
+	int rc, retry = 0;
 
 	rc = check_xattr_ref_inode(c, ic);
-	अगर (unlikely(rc))
-		वापस rc;
+	if (unlikely(rc))
+		return rc;
 
-	करोwn_पढ़ो(&c->xattr_sem);
+	down_read(&c->xattr_sem);
  retry:
-	क्रम (ref=ic->xref, pref=&ic->xref; ref; pref=&ref->next, ref=ref->next) अणु
+	for (ref=ic->xref, pref=&ic->xref; ref; pref=&ref->next, ref=ref->next) {
 		BUG_ON(ref->ic!=ic);
 
 		xd = ref->xd;
-		अगर (xd->xprefix != xprefix)
-			जारी;
-		अगर (!xd->xname) अणु
+		if (xd->xprefix != xprefix)
+			continue;
+		if (!xd->xname) {
 			/* xdatum is unchached */
-			अगर (!retry) अणु
+			if (!retry) {
 				retry = 1;
-				up_पढ़ो(&c->xattr_sem);
-				करोwn_ग_लिखो(&c->xattr_sem);
-				जाओ retry;
-			पूर्ण अन्यथा अणु
+				up_read(&c->xattr_sem);
+				down_write(&c->xattr_sem);
+				goto retry;
+			} else {
 				rc = load_xattr_datum(c, xd);
-				अगर (unlikely(rc > 0)) अणु
+				if (unlikely(rc > 0)) {
 					*pref = ref->next;
 					delete_xattr_ref(c, ref);
-					जाओ retry;
-				पूर्ण अन्यथा अगर (unlikely(rc < 0)) अणु
-					जाओ out;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-		अगर (!म_भेद(xname, xd->xname)) अणु
+					goto retry;
+				} else if (unlikely(rc < 0)) {
+					goto out;
+				}
+			}
+		}
+		if (!strcmp(xname, xd->xname)) {
 			rc = xd->value_len;
-			अगर (buffer) अणु
-				अगर (size < rc) अणु
-					rc = -दुस्फल;
-				पूर्ण अन्यथा अणु
-					स_नकल(buffer, xd->xvalue, rc);
-				पूर्ण
-			पूर्ण
-			जाओ out;
-		पूर्ण
-	पूर्ण
+			if (buffer) {
+				if (size < rc) {
+					rc = -ERANGE;
+				} else {
+					memcpy(buffer, xd->xvalue, rc);
+				}
+			}
+			goto out;
+		}
+	}
 	rc = -ENODATA;
  out:
-	अगर (!retry) अणु
-		up_पढ़ो(&c->xattr_sem);
-	पूर्ण अन्यथा अणु
-		up_ग_लिखो(&c->xattr_sem);
-	पूर्ण
-	वापस rc;
-पूर्ण
+	if (!retry) {
+		up_read(&c->xattr_sem);
+	} else {
+		up_write(&c->xattr_sem);
+	}
+	return rc;
+}
 
-पूर्णांक करो_jffs2_setxattr(काष्ठा inode *inode, पूर्णांक xprefix, स्थिर अक्षर *xname,
-		      स्थिर अक्षर *buffer, माप_प्रकार size, पूर्णांक flags)
-अणु
-	काष्ठा jffs2_inode_info *f = JFFS2_INODE_INFO(inode);
-	काष्ठा jffs2_sb_info *c = JFFS2_SB_INFO(inode->i_sb);
-	काष्ठा jffs2_inode_cache *ic = f->inocache;
-	काष्ठा jffs2_xattr_datum *xd;
-	काष्ठा jffs2_xattr_ref *ref, *newref, **pref;
-	uपूर्णांक32_t length, request;
-	पूर्णांक rc;
+int do_jffs2_setxattr(struct inode *inode, int xprefix, const char *xname,
+		      const char *buffer, size_t size, int flags)
+{
+	struct jffs2_inode_info *f = JFFS2_INODE_INFO(inode);
+	struct jffs2_sb_info *c = JFFS2_SB_INFO(inode->i_sb);
+	struct jffs2_inode_cache *ic = f->inocache;
+	struct jffs2_xattr_datum *xd;
+	struct jffs2_xattr_ref *ref, *newref, **pref;
+	uint32_t length, request;
+	int rc;
 
 	rc = check_xattr_ref_inode(c, ic);
-	अगर (unlikely(rc))
-		वापस rc;
+	if (unlikely(rc))
+		return rc;
 
-	request = PAD(माप(काष्ठा jffs2_raw_xattr) + म_माप(xname) + 1 + size);
+	request = PAD(sizeof(struct jffs2_raw_xattr) + strlen(xname) + 1 + size);
 	rc = jffs2_reserve_space(c, request, &length,
 				 ALLOC_NORMAL, JFFS2_SUMMARY_XATTR_SIZE);
-	अगर (rc) अणु
+	if (rc) {
 		JFFS2_WARNING("jffs2_reserve_space()=%d, request=%u\n", rc, request);
-		वापस rc;
-	पूर्ण
+		return rc;
+	}
 
 	/* Find existing xattr */
-	करोwn_ग_लिखो(&c->xattr_sem);
+	down_write(&c->xattr_sem);
  retry:
-	क्रम (ref=ic->xref, pref=&ic->xref; ref; pref=&ref->next, ref=ref->next) अणु
+	for (ref=ic->xref, pref=&ic->xref; ref; pref=&ref->next, ref=ref->next) {
 		xd = ref->xd;
-		अगर (xd->xprefix != xprefix)
-			जारी;
-		अगर (!xd->xname) अणु
+		if (xd->xprefix != xprefix)
+			continue;
+		if (!xd->xname) {
 			rc = load_xattr_datum(c, xd);
-			अगर (unlikely(rc > 0)) अणु
+			if (unlikely(rc > 0)) {
 				*pref = ref->next;
 				delete_xattr_ref(c, ref);
-				जाओ retry;
-			पूर्ण अन्यथा अगर (unlikely(rc < 0))
-				जाओ out;
-		पूर्ण
-		अगर (!म_भेद(xd->xname, xname)) अणु
-			अगर (flags & XATTR_CREATE) अणु
+				goto retry;
+			} else if (unlikely(rc < 0))
+				goto out;
+		}
+		if (!strcmp(xd->xname, xname)) {
+			if (flags & XATTR_CREATE) {
 				rc = -EEXIST;
-				जाओ out;
-			पूर्ण
-			अगर (!buffer) अणु
+				goto out;
+			}
+			if (!buffer) {
 				ref->ino = ic->ino;
 				ref->xid = xd->xid;
 				ref->xseqno |= XREF_DELETE_MARKER;
 				rc = save_xattr_ref(c, ref);
-				अगर (!rc) अणु
+				if (!rc) {
 					*pref = ref->next;
 					spin_lock(&c->erase_completion_lock);
 					ref->next = c->xref_dead_list;
 					c->xref_dead_list = ref;
 					spin_unlock(&c->erase_completion_lock);
 					unrefer_xattr_datum(c, xd);
-				पूर्ण अन्यथा अणु
+				} else {
 					ref->ic = ic;
 					ref->xd = xd;
 					ref->xseqno &= ~XREF_DELETE_MARKER;
-				पूर्ण
-				जाओ out;
-			पूर्ण
-			जाओ found;
-		पूर्ण
-	पूर्ण
+				}
+				goto out;
+			}
+			goto found;
+		}
+	}
 	/* not found */
-	अगर (flags & XATTR_REPLACE) अणु
+	if (flags & XATTR_REPLACE) {
 		rc = -ENODATA;
-		जाओ out;
-	पूर्ण
-	अगर (!buffer) अणु
+		goto out;
+	}
+	if (!buffer) {
 		rc = -ENODATA;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
  found:
 	xd = create_xattr_datum(c, xprefix, xname, buffer, size);
-	अगर (IS_ERR(xd)) अणु
+	if (IS_ERR(xd)) {
 		rc = PTR_ERR(xd);
-		जाओ out;
-	पूर्ण
-	up_ग_लिखो(&c->xattr_sem);
+		goto out;
+	}
+	up_write(&c->xattr_sem);
 	jffs2_complete_reservation(c);
 
 	/* create xattr_ref */
-	request = PAD(माप(काष्ठा jffs2_raw_xref));
+	request = PAD(sizeof(struct jffs2_raw_xref));
 	rc = jffs2_reserve_space(c, request, &length,
 				 ALLOC_NORMAL, JFFS2_SUMMARY_XREF_SIZE);
-	करोwn_ग_लिखो(&c->xattr_sem);
-	अगर (rc) अणु
+	down_write(&c->xattr_sem);
+	if (rc) {
 		JFFS2_WARNING("jffs2_reserve_space()=%d, request=%u\n", rc, request);
 		unrefer_xattr_datum(c, xd);
-		up_ग_लिखो(&c->xattr_sem);
-		वापस rc;
-	पूर्ण
-	अगर (ref)
+		up_write(&c->xattr_sem);
+		return rc;
+	}
+	if (ref)
 		*pref = ref->next;
 	newref = create_xattr_ref(c, ic, xd);
-	अगर (IS_ERR(newref)) अणु
-		अगर (ref) अणु
+	if (IS_ERR(newref)) {
+		if (ref) {
 			ref->next = ic->xref;
 			ic->xref = ref;
-		पूर्ण
+		}
 		rc = PTR_ERR(newref);
 		unrefer_xattr_datum(c, xd);
-	पूर्ण अन्यथा अगर (ref) अणु
+	} else if (ref) {
 		delete_xattr_ref(c, ref);
-	पूर्ण
+	}
  out:
-	up_ग_लिखो(&c->xattr_sem);
+	up_write(&c->xattr_sem);
 	jffs2_complete_reservation(c);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /* -------- garbage collector functions -------------
  * jffs2_garbage_collect_xattr_datum(c, xd, raw)
- *   is used to move xdatum पूर्णांकo new node.
+ *   is used to move xdatum into new node.
  * jffs2_garbage_collect_xattr_ref(c, ref, raw)
- *   is used to move xref पूर्णांकo new node.
- * jffs2_verअगरy_xattr(c)
- *   is used to call करो_verअगरy_xattr_datum() beक्रमe garbage collecting.
+ *   is used to move xref into new node.
+ * jffs2_verify_xattr(c)
+ *   is used to call do_verify_xattr_datum() before garbage collecting.
  * jffs2_release_xattr_datum(c, xd)
  *   is used to release an in-memory object of xdatum.
  * jffs2_release_xattr_ref(c, ref)
  *   is used to release an in-memory object of xref.
  * -------------------------------------------------- */
-पूर्णांक jffs2_garbage_collect_xattr_datum(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_xattr_datum *xd,
-				      काष्ठा jffs2_raw_node_ref *raw)
-अणु
-	uपूर्णांक32_t totlen, length, old_ofs;
-	पूर्णांक rc = 0;
+int jffs2_garbage_collect_xattr_datum(struct jffs2_sb_info *c, struct jffs2_xattr_datum *xd,
+				      struct jffs2_raw_node_ref *raw)
+{
+	uint32_t totlen, length, old_ofs;
+	int rc = 0;
 
-	करोwn_ग_लिखो(&c->xattr_sem);
-	अगर (xd->node != raw)
-		जाओ out;
-	अगर (xd->flags & (JFFS2_XFLAGS_DEAD|JFFS2_XFLAGS_INVALID))
-		जाओ out;
+	down_write(&c->xattr_sem);
+	if (xd->node != raw)
+		goto out;
+	if (xd->flags & (JFFS2_XFLAGS_DEAD|JFFS2_XFLAGS_INVALID))
+		goto out;
 
 	rc = load_xattr_datum(c, xd);
-	अगर (unlikely(rc)) अणु
+	if (unlikely(rc)) {
 		rc = (rc > 0) ? 0 : rc;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	old_ofs = ref_offset(xd->node);
-	totlen = PAD(माप(काष्ठा jffs2_raw_xattr)
+	totlen = PAD(sizeof(struct jffs2_raw_xattr)
 			+ xd->name_len + 1 + xd->value_len);
 	rc = jffs2_reserve_space_gc(c, totlen, &length, JFFS2_SUMMARY_XATTR_SIZE);
-	अगर (rc) अणु
+	if (rc) {
 		JFFS2_WARNING("jffs2_reserve_space_gc()=%d, request=%u\n", rc, totlen);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	rc = save_xattr_datum(c, xd);
-	अगर (!rc)
+	if (!rc)
 		dbg_xattr("xdatum (xid=%u, version=%u) GC'ed from %#08x to %08x\n",
 			  xd->xid, xd->version, old_ofs, ref_offset(xd->node));
  out:
-	अगर (!rc)
+	if (!rc)
 		jffs2_mark_node_obsolete(c, raw);
-	up_ग_लिखो(&c->xattr_sem);
-	वापस rc;
-पूर्ण
+	up_write(&c->xattr_sem);
+	return rc;
+}
 
-पूर्णांक jffs2_garbage_collect_xattr_ref(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_xattr_ref *ref,
-				    काष्ठा jffs2_raw_node_ref *raw)
-अणु
-	uपूर्णांक32_t totlen, length, old_ofs;
-	पूर्णांक rc = 0;
+int jffs2_garbage_collect_xattr_ref(struct jffs2_sb_info *c, struct jffs2_xattr_ref *ref,
+				    struct jffs2_raw_node_ref *raw)
+{
+	uint32_t totlen, length, old_ofs;
+	int rc = 0;
 
-	करोwn_ग_लिखो(&c->xattr_sem);
+	down_write(&c->xattr_sem);
 	BUG_ON(!ref->node);
 
-	अगर (ref->node != raw)
-		जाओ out;
-	अगर (is_xattr_ref_dead(ref) && (raw->next_in_ino == (व्योम *)ref))
-		जाओ out;
+	if (ref->node != raw)
+		goto out;
+	if (is_xattr_ref_dead(ref) && (raw->next_in_ino == (void *)ref))
+		goto out;
 
 	old_ofs = ref_offset(ref->node);
 	totlen = ref_totlen(c, c->gcblock, ref->node);
 
 	rc = jffs2_reserve_space_gc(c, totlen, &length, JFFS2_SUMMARY_XREF_SIZE);
-	अगर (rc) अणु
+	if (rc) {
 		JFFS2_WARNING("%s: jffs2_reserve_space_gc() = %d, request = %u\n",
 			      __func__, rc, totlen);
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	rc = save_xattr_ref(c, ref);
-	अगर (!rc)
+	if (!rc)
 		dbg_xattr("xref (ino=%u, xid=%u) GC'ed from %#08x to %08x\n",
 			  ref->ic->ino, ref->xd->xid, old_ofs, ref_offset(ref->node));
  out:
-	अगर (!rc)
+	if (!rc)
 		jffs2_mark_node_obsolete(c, raw);
-	up_ग_लिखो(&c->xattr_sem);
-	वापस rc;
-पूर्ण
+	up_write(&c->xattr_sem);
+	return rc;
+}
 
-पूर्णांक jffs2_verअगरy_xattr(काष्ठा jffs2_sb_info *c)
-अणु
-	काष्ठा jffs2_xattr_datum *xd, *_xd;
-	काष्ठा jffs2_eraseblock *jeb;
-	काष्ठा jffs2_raw_node_ref *raw;
-	uपूर्णांक32_t totlen;
-	पूर्णांक rc;
+int jffs2_verify_xattr(struct jffs2_sb_info *c)
+{
+	struct jffs2_xattr_datum *xd, *_xd;
+	struct jffs2_eraseblock *jeb;
+	struct jffs2_raw_node_ref *raw;
+	uint32_t totlen;
+	int rc;
 
-	करोwn_ग_लिखो(&c->xattr_sem);
-	list_क्रम_each_entry_safe(xd, _xd, &c->xattr_unchecked, xindex) अणु
-		rc = करो_verअगरy_xattr_datum(c, xd);
-		अगर (rc < 0)
-			जारी;
+	down_write(&c->xattr_sem);
+	list_for_each_entry_safe(xd, _xd, &c->xattr_unchecked, xindex) {
+		rc = do_verify_xattr_datum(c, xd);
+		if (rc < 0)
+			continue;
 		list_del_init(&xd->xindex);
 		spin_lock(&c->erase_completion_lock);
-		क्रम (raw=xd->node; raw != (व्योम *)xd; raw=raw->next_in_ino) अणु
-			अगर (ref_flags(raw) != REF_UNCHECKED)
-				जारी;
+		for (raw=xd->node; raw != (void *)xd; raw=raw->next_in_ino) {
+			if (ref_flags(raw) != REF_UNCHECKED)
+				continue;
 			jeb = &c->blocks[ref_offset(raw) / c->sector_size];
 			totlen = PAD(ref_totlen(c, jeb, raw));
 			c->unchecked_size -= totlen; c->used_size += totlen;
 			jeb->unchecked_size -= totlen; jeb->used_size += totlen;
 			raw->flash_offset = ref_offset(raw)
-				| ((xd->node == (व्योम *)raw) ? REF_PRISTINE : REF_NORMAL);
-		पूर्ण
-		अगर (xd->flags & JFFS2_XFLAGS_DEAD)
+				| ((xd->node == (void *)raw) ? REF_PRISTINE : REF_NORMAL);
+		}
+		if (xd->flags & JFFS2_XFLAGS_DEAD)
 			list_add(&xd->xindex, &c->xattr_dead_list);
 		spin_unlock(&c->erase_completion_lock);
-	पूर्ण
-	up_ग_लिखो(&c->xattr_sem);
-	वापस list_empty(&c->xattr_unchecked) ? 1 : 0;
-पूर्ण
+	}
+	up_write(&c->xattr_sem);
+	return list_empty(&c->xattr_unchecked) ? 1 : 0;
+}
 
-व्योम jffs2_release_xattr_datum(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_xattr_datum *xd)
-अणु
+void jffs2_release_xattr_datum(struct jffs2_sb_info *c, struct jffs2_xattr_datum *xd)
+{
 	/* must be called under spin_lock(&c->erase_completion_lock) */
-	अगर (atomic_पढ़ो(&xd->refcnt) || xd->node != (व्योम *)xd)
-		वापस;
+	if (atomic_read(&xd->refcnt) || xd->node != (void *)xd)
+		return;
 
 	list_del(&xd->xindex);
-	jffs2_मुक्त_xattr_datum(xd);
-पूर्ण
+	jffs2_free_xattr_datum(xd);
+}
 
-व्योम jffs2_release_xattr_ref(काष्ठा jffs2_sb_info *c, काष्ठा jffs2_xattr_ref *ref)
-अणु
+void jffs2_release_xattr_ref(struct jffs2_sb_info *c, struct jffs2_xattr_ref *ref)
+{
 	/* must be called under spin_lock(&c->erase_completion_lock) */
-	काष्ठा jffs2_xattr_ref *पंचांगp, **pपंचांगp;
+	struct jffs2_xattr_ref *tmp, **ptmp;
 
-	अगर (ref->node != (व्योम *)ref)
-		वापस;
+	if (ref->node != (void *)ref)
+		return;
 
-	क्रम (पंचांगp=c->xref_dead_list, pपंचांगp=&c->xref_dead_list; पंचांगp; pपंचांगp=&पंचांगp->next, पंचांगp=पंचांगp->next) अणु
-		अगर (ref == पंचांगp) अणु
-			*pपंचांगp = पंचांगp->next;
-			अवरोध;
-		पूर्ण
-	पूर्ण
-	jffs2_मुक्त_xattr_ref(ref);
-पूर्ण
+	for (tmp=c->xref_dead_list, ptmp=&c->xref_dead_list; tmp; ptmp=&tmp->next, tmp=tmp->next) {
+		if (ref == tmp) {
+			*ptmp = tmp->next;
+			break;
+		}
+	}
+	jffs2_free_xattr_ref(ref);
+}

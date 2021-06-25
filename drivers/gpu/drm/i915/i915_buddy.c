@@ -1,114 +1,113 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#समावेश <linux/kmemleak.h>
-#समावेश <linux/slab.h>
+#include <linux/kmemleak.h>
+#include <linux/slab.h>
 
-#समावेश "i915_buddy.h"
+#include "i915_buddy.h"
 
-#समावेश "i915_gem.h"
-#समावेश "i915_globals.h"
-#समावेश "i915_utils.h"
+#include "i915_gem.h"
+#include "i915_globals.h"
+#include "i915_utils.h"
 
-अटल काष्ठा i915_global_block अणु
-	काष्ठा i915_global base;
-	काष्ठा kmem_cache *slab_blocks;
-पूर्ण global;
+static struct i915_global_block {
+	struct i915_global base;
+	struct kmem_cache *slab_blocks;
+} global;
 
-अटल व्योम i915_global_buddy_shrink(व्योम)
-अणु
+static void i915_global_buddy_shrink(void)
+{
 	kmem_cache_shrink(global.slab_blocks);
-पूर्ण
+}
 
-अटल व्योम i915_global_buddy_निकास(व्योम)
-अणु
+static void i915_global_buddy_exit(void)
+{
 	kmem_cache_destroy(global.slab_blocks);
-पूर्ण
+}
 
-अटल काष्ठा i915_global_block global = अणु अणु
+static struct i915_global_block global = { {
 	.shrink = i915_global_buddy_shrink,
-	.निकास = i915_global_buddy_निकास,
-पूर्ण पूर्ण;
+	.exit = i915_global_buddy_exit,
+} };
 
-पूर्णांक __init i915_global_buddy_init(व्योम)
-अणु
+int __init i915_global_buddy_init(void)
+{
 	global.slab_blocks = KMEM_CACHE(i915_buddy_block, SLAB_HWCACHE_ALIGN);
-	अगर (!global.slab_blocks)
-		वापस -ENOMEM;
+	if (!global.slab_blocks)
+		return -ENOMEM;
 
-	i915_global_रेजिस्टर(&global.base);
-	वापस 0;
-पूर्ण
+	i915_global_register(&global.base);
+	return 0;
+}
 
-अटल काष्ठा i915_buddy_block *i915_block_alloc(काष्ठा i915_buddy_block *parent,
-						 अचिन्हित पूर्णांक order,
+static struct i915_buddy_block *i915_block_alloc(struct i915_buddy_block *parent,
+						 unsigned int order,
 						 u64 offset)
-अणु
-	काष्ठा i915_buddy_block *block;
+{
+	struct i915_buddy_block *block;
 
 	GEM_BUG_ON(order > I915_BUDDY_MAX_ORDER);
 
 	block = kmem_cache_zalloc(global.slab_blocks, GFP_KERNEL);
-	अगर (!block)
-		वापस शून्य;
+	if (!block)
+		return NULL;
 
 	block->header = offset;
 	block->header |= order;
 	block->parent = parent;
 
 	GEM_BUG_ON(block->header & I915_BUDDY_HEADER_UNUSED);
-	वापस block;
-पूर्ण
+	return block;
+}
 
-अटल व्योम i915_block_मुक्त(काष्ठा i915_buddy_block *block)
-अणु
-	kmem_cache_मुक्त(global.slab_blocks, block);
-पूर्ण
+static void i915_block_free(struct i915_buddy_block *block)
+{
+	kmem_cache_free(global.slab_blocks, block);
+}
 
-अटल व्योम mark_allocated(काष्ठा i915_buddy_block *block)
-अणु
+static void mark_allocated(struct i915_buddy_block *block)
+{
 	block->header &= ~I915_BUDDY_HEADER_STATE;
 	block->header |= I915_BUDDY_ALLOCATED;
 
 	list_del(&block->link);
-पूर्ण
+}
 
-अटल व्योम mark_मुक्त(काष्ठा i915_buddy_mm *mm,
-		      काष्ठा i915_buddy_block *block)
-अणु
+static void mark_free(struct i915_buddy_mm *mm,
+		      struct i915_buddy_block *block)
+{
 	block->header &= ~I915_BUDDY_HEADER_STATE;
 	block->header |= I915_BUDDY_FREE;
 
 	list_add(&block->link,
-		 &mm->मुक्त_list[i915_buddy_block_order(block)]);
-पूर्ण
+		 &mm->free_list[i915_buddy_block_order(block)]);
+}
 
-अटल व्योम mark_split(काष्ठा i915_buddy_block *block)
-अणु
+static void mark_split(struct i915_buddy_block *block)
+{
 	block->header &= ~I915_BUDDY_HEADER_STATE;
 	block->header |= I915_BUDDY_SPLIT;
 
 	list_del(&block->link);
-पूर्ण
+}
 
-पूर्णांक i915_buddy_init(काष्ठा i915_buddy_mm *mm, u64 size, u64 chunk_size)
-अणु
-	अचिन्हित पूर्णांक i;
+int i915_buddy_init(struct i915_buddy_mm *mm, u64 size, u64 chunk_size)
+{
+	unsigned int i;
 	u64 offset;
 
-	अगर (size < chunk_size)
-		वापस -EINVAL;
+	if (size < chunk_size)
+		return -EINVAL;
 
-	अगर (chunk_size < PAGE_SIZE)
-		वापस -EINVAL;
+	if (chunk_size < PAGE_SIZE)
+		return -EINVAL;
 
-	अगर (!is_घातer_of_2(chunk_size))
-		वापस -EINVAL;
+	if (!is_power_of_2(chunk_size))
+		return -EINVAL;
 
-	size = round_करोwn(size, chunk_size);
+	size = round_down(size, chunk_size);
 
 	mm->size = size;
 	mm->chunk_size = chunk_size;
@@ -116,43 +115,43 @@
 
 	GEM_BUG_ON(mm->max_order > I915_BUDDY_MAX_ORDER);
 
-	mm->मुक्त_list = kदो_स्मृति_array(mm->max_order + 1,
-				      माप(काष्ठा list_head),
+	mm->free_list = kmalloc_array(mm->max_order + 1,
+				      sizeof(struct list_head),
 				      GFP_KERNEL);
-	अगर (!mm->मुक्त_list)
-		वापस -ENOMEM;
+	if (!mm->free_list)
+		return -ENOMEM;
 
-	क्रम (i = 0; i <= mm->max_order; ++i)
-		INIT_LIST_HEAD(&mm->मुक्त_list[i]);
+	for (i = 0; i <= mm->max_order; ++i)
+		INIT_LIST_HEAD(&mm->free_list[i]);
 
 	mm->n_roots = hweight64(size);
 
-	mm->roots = kदो_स्मृति_array(mm->n_roots,
-				  माप(काष्ठा i915_buddy_block *),
+	mm->roots = kmalloc_array(mm->n_roots,
+				  sizeof(struct i915_buddy_block *),
 				  GFP_KERNEL);
-	अगर (!mm->roots)
-		जाओ out_मुक्त_list;
+	if (!mm->roots)
+		goto out_free_list;
 
 	offset = 0;
 	i = 0;
 
 	/*
-	 * Split पूर्णांकo घातer-of-two blocks, in हाल we are given a size that is
-	 * not itself a घातer-of-two.
+	 * Split into power-of-two blocks, in case we are given a size that is
+	 * not itself a power-of-two.
 	 */
-	करो अणु
-		काष्ठा i915_buddy_block *root;
-		अचिन्हित पूर्णांक order;
+	do {
+		struct i915_buddy_block *root;
+		unsigned int order;
 		u64 root_size;
 
-		root_size = roundकरोwn_घात_of_two(size);
+		root_size = rounddown_pow_of_two(size);
 		order = ilog2(root_size) - ilog2(chunk_size);
 
-		root = i915_block_alloc(शून्य, order, offset);
-		अगर (!root)
-			जाओ out_मुक्त_roots;
+		root = i915_block_alloc(NULL, order, offset);
+		if (!root)
+			goto out_free_roots;
 
-		mark_मुक्त(mm, root);
+		mark_free(mm, root);
 
 		GEM_BUG_ON(i > mm->max_order);
 		GEM_BUG_ON(i915_buddy_block_size(mm, root) < chunk_size);
@@ -162,275 +161,275 @@
 		offset += root_size;
 		size -= root_size;
 		i++;
-	पूर्ण जबतक (size);
+	} while (size);
 
-	वापस 0;
+	return 0;
 
-out_मुक्त_roots:
-	जबतक (i--)
-		i915_block_मुक्त(mm->roots[i]);
-	kमुक्त(mm->roots);
-out_मुक्त_list:
-	kमुक्त(mm->मुक्त_list);
-	वापस -ENOMEM;
-पूर्ण
+out_free_roots:
+	while (i--)
+		i915_block_free(mm->roots[i]);
+	kfree(mm->roots);
+out_free_list:
+	kfree(mm->free_list);
+	return -ENOMEM;
+}
 
-व्योम i915_buddy_fini(काष्ठा i915_buddy_mm *mm)
-अणु
-	पूर्णांक i;
+void i915_buddy_fini(struct i915_buddy_mm *mm)
+{
+	int i;
 
-	क्रम (i = 0; i < mm->n_roots; ++i) अणु
-		GEM_WARN_ON(!i915_buddy_block_is_मुक्त(mm->roots[i]));
-		i915_block_मुक्त(mm->roots[i]);
-	पूर्ण
+	for (i = 0; i < mm->n_roots; ++i) {
+		GEM_WARN_ON(!i915_buddy_block_is_free(mm->roots[i]));
+		i915_block_free(mm->roots[i]);
+	}
 
-	kमुक्त(mm->roots);
-	kमुक्त(mm->मुक्त_list);
-पूर्ण
+	kfree(mm->roots);
+	kfree(mm->free_list);
+}
 
-अटल पूर्णांक split_block(काष्ठा i915_buddy_mm *mm,
-		       काष्ठा i915_buddy_block *block)
-अणु
-	अचिन्हित पूर्णांक block_order = i915_buddy_block_order(block) - 1;
+static int split_block(struct i915_buddy_mm *mm,
+		       struct i915_buddy_block *block)
+{
+	unsigned int block_order = i915_buddy_block_order(block) - 1;
 	u64 offset = i915_buddy_block_offset(block);
 
-	GEM_BUG_ON(!i915_buddy_block_is_मुक्त(block));
+	GEM_BUG_ON(!i915_buddy_block_is_free(block));
 	GEM_BUG_ON(!i915_buddy_block_order(block));
 
 	block->left = i915_block_alloc(block, block_order, offset);
-	अगर (!block->left)
-		वापस -ENOMEM;
+	if (!block->left)
+		return -ENOMEM;
 
 	block->right = i915_block_alloc(block, block_order,
 					offset + (mm->chunk_size << block_order));
-	अगर (!block->right) अणु
-		i915_block_मुक्त(block->left);
-		वापस -ENOMEM;
-	पूर्ण
+	if (!block->right) {
+		i915_block_free(block->left);
+		return -ENOMEM;
+	}
 
-	mark_मुक्त(mm, block->left);
-	mark_मुक्त(mm, block->right);
+	mark_free(mm, block->left);
+	mark_free(mm, block->right);
 
 	mark_split(block);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा i915_buddy_block *
-get_buddy(काष्ठा i915_buddy_block *block)
-अणु
-	काष्ठा i915_buddy_block *parent;
+static struct i915_buddy_block *
+get_buddy(struct i915_buddy_block *block)
+{
+	struct i915_buddy_block *parent;
 
 	parent = block->parent;
-	अगर (!parent)
-		वापस शून्य;
+	if (!parent)
+		return NULL;
 
-	अगर (parent->left == block)
-		वापस parent->right;
+	if (parent->left == block)
+		return parent->right;
 
-	वापस parent->left;
-पूर्ण
+	return parent->left;
+}
 
-अटल व्योम __i915_buddy_मुक्त(काष्ठा i915_buddy_mm *mm,
-			      काष्ठा i915_buddy_block *block)
-अणु
-	काष्ठा i915_buddy_block *parent;
+static void __i915_buddy_free(struct i915_buddy_mm *mm,
+			      struct i915_buddy_block *block)
+{
+	struct i915_buddy_block *parent;
 
-	जबतक ((parent = block->parent)) अणु
-		काष्ठा i915_buddy_block *buddy;
+	while ((parent = block->parent)) {
+		struct i915_buddy_block *buddy;
 
 		buddy = get_buddy(block);
 
-		अगर (!i915_buddy_block_is_मुक्त(buddy))
-			अवरोध;
+		if (!i915_buddy_block_is_free(buddy))
+			break;
 
 		list_del(&buddy->link);
 
-		i915_block_मुक्त(block);
-		i915_block_मुक्त(buddy);
+		i915_block_free(block);
+		i915_block_free(buddy);
 
 		block = parent;
-	पूर्ण
+	}
 
-	mark_मुक्त(mm, block);
-पूर्ण
+	mark_free(mm, block);
+}
 
-व्योम i915_buddy_मुक्त(काष्ठा i915_buddy_mm *mm,
-		     काष्ठा i915_buddy_block *block)
-अणु
+void i915_buddy_free(struct i915_buddy_mm *mm,
+		     struct i915_buddy_block *block)
+{
 	GEM_BUG_ON(!i915_buddy_block_is_allocated(block));
-	__i915_buddy_मुक्त(mm, block);
-पूर्ण
+	__i915_buddy_free(mm, block);
+}
 
-व्योम i915_buddy_मुक्त_list(काष्ठा i915_buddy_mm *mm, काष्ठा list_head *objects)
-अणु
-	काष्ठा i915_buddy_block *block, *on;
+void i915_buddy_free_list(struct i915_buddy_mm *mm, struct list_head *objects)
+{
+	struct i915_buddy_block *block, *on;
 
-	list_क्रम_each_entry_safe(block, on, objects, link) अणु
-		i915_buddy_मुक्त(mm, block);
+	list_for_each_entry_safe(block, on, objects, link) {
+		i915_buddy_free(mm, block);
 		cond_resched();
-	पूर्ण
+	}
 	INIT_LIST_HEAD(objects);
-पूर्ण
+}
 
 /*
- * Allocate घातer-of-two block. The order value here translates to:
+ * Allocate power-of-two block. The order value here translates to:
  *
  *   0 = 2^0 * mm->chunk_size
  *   1 = 2^1 * mm->chunk_size
  *   2 = 2^2 * mm->chunk_size
  *   ...
  */
-काष्ठा i915_buddy_block *
-i915_buddy_alloc(काष्ठा i915_buddy_mm *mm, अचिन्हित पूर्णांक order)
-अणु
-	काष्ठा i915_buddy_block *block = शून्य;
-	अचिन्हित पूर्णांक i;
-	पूर्णांक err;
+struct i915_buddy_block *
+i915_buddy_alloc(struct i915_buddy_mm *mm, unsigned int order)
+{
+	struct i915_buddy_block *block = NULL;
+	unsigned int i;
+	int err;
 
-	क्रम (i = order; i <= mm->max_order; ++i) अणु
-		block = list_first_entry_or_null(&mm->मुक्त_list[i],
-						 काष्ठा i915_buddy_block,
+	for (i = order; i <= mm->max_order; ++i) {
+		block = list_first_entry_or_null(&mm->free_list[i],
+						 struct i915_buddy_block,
 						 link);
-		अगर (block)
-			अवरोध;
-	पूर्ण
+		if (block)
+			break;
+	}
 
-	अगर (!block)
-		वापस ERR_PTR(-ENOSPC);
+	if (!block)
+		return ERR_PTR(-ENOSPC);
 
-	GEM_BUG_ON(!i915_buddy_block_is_मुक्त(block));
+	GEM_BUG_ON(!i915_buddy_block_is_free(block));
 
-	जबतक (i != order) अणु
+	while (i != order) {
 		err = split_block(mm, block);
-		अगर (unlikely(err))
-			जाओ out_मुक्त;
+		if (unlikely(err))
+			goto out_free;
 
 		/* Go low */
 		block = block->left;
 		i--;
-	पूर्ण
+	}
 
 	mark_allocated(block);
 	kmemleak_update_trace(block);
-	वापस block;
+	return block;
 
-out_मुक्त:
-	अगर (i != order)
-		__i915_buddy_मुक्त(mm, block);
-	वापस ERR_PTR(err);
-पूर्ण
+out_free:
+	if (i != order)
+		__i915_buddy_free(mm, block);
+	return ERR_PTR(err);
+}
 
-अटल अंतरभूत bool overlaps(u64 s1, u64 e1, u64 s2, u64 e2)
-अणु
-	वापस s1 <= e2 && e1 >= s2;
-पूर्ण
+static inline bool overlaps(u64 s1, u64 e1, u64 s2, u64 e2)
+{
+	return s1 <= e2 && e1 >= s2;
+}
 
-अटल अंतरभूत bool contains(u64 s1, u64 e1, u64 s2, u64 e2)
-अणु
-	वापस s1 <= s2 && e1 >= e2;
-पूर्ण
+static inline bool contains(u64 s1, u64 e1, u64 s2, u64 e2)
+{
+	return s1 <= s2 && e1 >= e2;
+}
 
 /*
  * Allocate range. Note that it's safe to chain together multiple alloc_ranges
  * with the same blocks list.
  *
- * Intended क्रम pre-allocating portions of the address space, क्रम example to
- * reserve a block क्रम the initial framebuffer or similar, hence the expectation
- * here is that i915_buddy_alloc() is still the मुख्य vehicle क्रम
- * allocations, so अगर that's not the हाल then the drm_mm range allocator is
+ * Intended for pre-allocating portions of the address space, for example to
+ * reserve a block for the initial framebuffer or similar, hence the expectation
+ * here is that i915_buddy_alloc() is still the main vehicle for
+ * allocations, so if that's not the case then the drm_mm range allocator is
  * probably a much better fit, and so you should probably go use that instead.
  */
-पूर्णांक i915_buddy_alloc_range(काष्ठा i915_buddy_mm *mm,
-			   काष्ठा list_head *blocks,
+int i915_buddy_alloc_range(struct i915_buddy_mm *mm,
+			   struct list_head *blocks,
 			   u64 start, u64 size)
-अणु
-	काष्ठा i915_buddy_block *block;
-	काष्ठा i915_buddy_block *buddy;
+{
+	struct i915_buddy_block *block;
+	struct i915_buddy_block *buddy;
 	LIST_HEAD(allocated);
 	LIST_HEAD(dfs);
 	u64 end;
-	पूर्णांक err;
-	पूर्णांक i;
+	int err;
+	int i;
 
-	अगर (size < mm->chunk_size)
-		वापस -EINVAL;
+	if (size < mm->chunk_size)
+		return -EINVAL;
 
-	अगर (!IS_ALIGNED(size | start, mm->chunk_size))
-		वापस -EINVAL;
+	if (!IS_ALIGNED(size | start, mm->chunk_size))
+		return -EINVAL;
 
-	अगर (range_overflows(start, size, mm->size))
-		वापस -EINVAL;
+	if (range_overflows(start, size, mm->size))
+		return -EINVAL;
 
-	क्रम (i = 0; i < mm->n_roots; ++i)
-		list_add_tail(&mm->roots[i]->पंचांगp_link, &dfs);
+	for (i = 0; i < mm->n_roots; ++i)
+		list_add_tail(&mm->roots[i]->tmp_link, &dfs);
 
 	end = start + size - 1;
 
-	करो अणु
+	do {
 		u64 block_start;
 		u64 block_end;
 
 		block = list_first_entry_or_null(&dfs,
-						 काष्ठा i915_buddy_block,
-						 पंचांगp_link);
-		अगर (!block)
-			अवरोध;
+						 struct i915_buddy_block,
+						 tmp_link);
+		if (!block)
+			break;
 
-		list_del(&block->पंचांगp_link);
+		list_del(&block->tmp_link);
 
 		block_start = i915_buddy_block_offset(block);
 		block_end = block_start + i915_buddy_block_size(mm, block) - 1;
 
-		अगर (!overlaps(start, end, block_start, block_end))
-			जारी;
+		if (!overlaps(start, end, block_start, block_end))
+			continue;
 
-		अगर (i915_buddy_block_is_allocated(block)) अणु
+		if (i915_buddy_block_is_allocated(block)) {
 			err = -ENOSPC;
-			जाओ err_मुक्त;
-		पूर्ण
+			goto err_free;
+		}
 
-		अगर (contains(start, end, block_start, block_end)) अणु
-			अगर (!i915_buddy_block_is_मुक्त(block)) अणु
+		if (contains(start, end, block_start, block_end)) {
+			if (!i915_buddy_block_is_free(block)) {
 				err = -ENOSPC;
-				जाओ err_मुक्त;
-			पूर्ण
+				goto err_free;
+			}
 
 			mark_allocated(block);
 			list_add_tail(&block->link, &allocated);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (!i915_buddy_block_is_split(block)) अणु
+		if (!i915_buddy_block_is_split(block)) {
 			err = split_block(mm, block);
-			अगर (unlikely(err))
-				जाओ err_unकरो;
-		पूर्ण
+			if (unlikely(err))
+				goto err_undo;
+		}
 
-		list_add(&block->right->पंचांगp_link, &dfs);
-		list_add(&block->left->पंचांगp_link, &dfs);
-	पूर्ण जबतक (1);
+		list_add(&block->right->tmp_link, &dfs);
+		list_add(&block->left->tmp_link, &dfs);
+	} while (1);
 
 	list_splice_tail(&allocated, blocks);
-	वापस 0;
+	return 0;
 
-err_unकरो:
+err_undo:
 	/*
-	 * We really करोn't want to leave around a bunch of split blocks, since
-	 * bigger is better, so make sure we merge everything back beक्रमe we
-	 * मुक्त the allocated blocks.
+	 * We really don't want to leave around a bunch of split blocks, since
+	 * bigger is better, so make sure we merge everything back before we
+	 * free the allocated blocks.
 	 */
 	buddy = get_buddy(block);
-	अगर (buddy &&
-	    (i915_buddy_block_is_मुक्त(block) &&
-	     i915_buddy_block_is_मुक्त(buddy)))
-		__i915_buddy_मुक्त(mm, block);
+	if (buddy &&
+	    (i915_buddy_block_is_free(block) &&
+	     i915_buddy_block_is_free(buddy)))
+		__i915_buddy_free(mm, block);
 
-err_मुक्त:
-	i915_buddy_मुक्त_list(mm, &allocated);
-	वापस err;
-पूर्ण
+err_free:
+	i915_buddy_free_list(mm, &allocated);
+	return err;
+}
 
-#अगर IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
-#समावेश "selftests/i915_buddy.c"
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)
+#include "selftests/i915_buddy.c"
+#endif

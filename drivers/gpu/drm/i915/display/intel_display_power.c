@@ -1,1167 +1,1166 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#समावेश "display/intel_crt.h"
+#include "display/intel_crt.h"
 
-#समावेश "i915_drv.h"
-#समावेश "i915_irq.h"
-#समावेश "intel_cdclk.h"
-#समावेश "intel_combo_phy.h"
-#समावेश "intel_csr.h"
-#समावेश "intel_display_power.h"
-#समावेश "intel_display_types.h"
-#समावेश "intel_dpio_phy.h"
-#समावेश "intel_hotplug.h"
-#समावेश "intel_pm.h"
-#समावेश "intel_pps.h"
-#समावेश "intel_sideband.h"
-#समावेश "intel_tc.h"
-#समावेश "intel_vga.h"
+#include "i915_drv.h"
+#include "i915_irq.h"
+#include "intel_cdclk.h"
+#include "intel_combo_phy.h"
+#include "intel_csr.h"
+#include "intel_display_power.h"
+#include "intel_display_types.h"
+#include "intel_dpio_phy.h"
+#include "intel_hotplug.h"
+#include "intel_pm.h"
+#include "intel_pps.h"
+#include "intel_sideband.h"
+#include "intel_tc.h"
+#include "intel_vga.h"
 
-bool पूर्णांकel_display_घातer_well_is_enabled(काष्ठा drm_i915_निजी *dev_priv,
-					 क्रमागत i915_घातer_well_id घातer_well_id);
+bool intel_display_power_well_is_enabled(struct drm_i915_private *dev_priv,
+					 enum i915_power_well_id power_well_id);
 
-स्थिर अक्षर *
-पूर्णांकel_display_घातer_करोमुख्य_str(क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य)
-अणु
-	चयन (करोमुख्य) अणु
-	हाल POWER_DOMAIN_DISPLAY_CORE:
-		वापस "DISPLAY_CORE";
-	हाल POWER_DOMAIN_PIPE_A:
-		वापस "PIPE_A";
-	हाल POWER_DOMAIN_PIPE_B:
-		वापस "PIPE_B";
-	हाल POWER_DOMAIN_PIPE_C:
-		वापस "PIPE_C";
-	हाल POWER_DOMAIN_PIPE_D:
-		वापस "PIPE_D";
-	हाल POWER_DOMAIN_PIPE_A_PANEL_FITTER:
-		वापस "PIPE_A_PANEL_FITTER";
-	हाल POWER_DOMAIN_PIPE_B_PANEL_FITTER:
-		वापस "PIPE_B_PANEL_FITTER";
-	हाल POWER_DOMAIN_PIPE_C_PANEL_FITTER:
-		वापस "PIPE_C_PANEL_FITTER";
-	हाल POWER_DOMAIN_PIPE_D_PANEL_FITTER:
-		वापस "PIPE_D_PANEL_FITTER";
-	हाल POWER_DOMAIN_TRANSCODER_A:
-		वापस "TRANSCODER_A";
-	हाल POWER_DOMAIN_TRANSCODER_B:
-		वापस "TRANSCODER_B";
-	हाल POWER_DOMAIN_TRANSCODER_C:
-		वापस "TRANSCODER_C";
-	हाल POWER_DOMAIN_TRANSCODER_D:
-		वापस "TRANSCODER_D";
-	हाल POWER_DOMAIN_TRANSCODER_EDP:
-		वापस "TRANSCODER_EDP";
-	हाल POWER_DOMAIN_TRANSCODER_VDSC_PW2:
-		वापस "TRANSCODER_VDSC_PW2";
-	हाल POWER_DOMAIN_TRANSCODER_DSI_A:
-		वापस "TRANSCODER_DSI_A";
-	हाल POWER_DOMAIN_TRANSCODER_DSI_C:
-		वापस "TRANSCODER_DSI_C";
-	हाल POWER_DOMAIN_PORT_DDI_A_LANES:
-		वापस "PORT_DDI_A_LANES";
-	हाल POWER_DOMAIN_PORT_DDI_B_LANES:
-		वापस "PORT_DDI_B_LANES";
-	हाल POWER_DOMAIN_PORT_DDI_C_LANES:
-		वापस "PORT_DDI_C_LANES";
-	हाल POWER_DOMAIN_PORT_DDI_D_LANES:
-		वापस "PORT_DDI_D_LANES";
-	हाल POWER_DOMAIN_PORT_DDI_E_LANES:
-		वापस "PORT_DDI_E_LANES";
-	हाल POWER_DOMAIN_PORT_DDI_F_LANES:
-		वापस "PORT_DDI_F_LANES";
-	हाल POWER_DOMAIN_PORT_DDI_G_LANES:
-		वापस "PORT_DDI_G_LANES";
-	हाल POWER_DOMAIN_PORT_DDI_H_LANES:
-		वापस "PORT_DDI_H_LANES";
-	हाल POWER_DOMAIN_PORT_DDI_I_LANES:
-		वापस "PORT_DDI_I_LANES";
-	हाल POWER_DOMAIN_PORT_DDI_A_IO:
-		वापस "PORT_DDI_A_IO";
-	हाल POWER_DOMAIN_PORT_DDI_B_IO:
-		वापस "PORT_DDI_B_IO";
-	हाल POWER_DOMAIN_PORT_DDI_C_IO:
-		वापस "PORT_DDI_C_IO";
-	हाल POWER_DOMAIN_PORT_DDI_D_IO:
-		वापस "PORT_DDI_D_IO";
-	हाल POWER_DOMAIN_PORT_DDI_E_IO:
-		वापस "PORT_DDI_E_IO";
-	हाल POWER_DOMAIN_PORT_DDI_F_IO:
-		वापस "PORT_DDI_F_IO";
-	हाल POWER_DOMAIN_PORT_DDI_G_IO:
-		वापस "PORT_DDI_G_IO";
-	हाल POWER_DOMAIN_PORT_DDI_H_IO:
-		वापस "PORT_DDI_H_IO";
-	हाल POWER_DOMAIN_PORT_DDI_I_IO:
-		वापस "PORT_DDI_I_IO";
-	हाल POWER_DOMAIN_PORT_DSI:
-		वापस "PORT_DSI";
-	हाल POWER_DOMAIN_PORT_CRT:
-		वापस "PORT_CRT";
-	हाल POWER_DOMAIN_PORT_OTHER:
-		वापस "PORT_OTHER";
-	हाल POWER_DOMAIN_VGA:
-		वापस "VGA";
-	हाल POWER_DOMAIN_AUDIO:
-		वापस "AUDIO";
-	हाल POWER_DOMAIN_AUX_A:
-		वापस "AUX_A";
-	हाल POWER_DOMAIN_AUX_B:
-		वापस "AUX_B";
-	हाल POWER_DOMAIN_AUX_C:
-		वापस "AUX_C";
-	हाल POWER_DOMAIN_AUX_D:
-		वापस "AUX_D";
-	हाल POWER_DOMAIN_AUX_E:
-		वापस "AUX_E";
-	हाल POWER_DOMAIN_AUX_F:
-		वापस "AUX_F";
-	हाल POWER_DOMAIN_AUX_G:
-		वापस "AUX_G";
-	हाल POWER_DOMAIN_AUX_H:
-		वापस "AUX_H";
-	हाल POWER_DOMAIN_AUX_I:
-		वापस "AUX_I";
-	हाल POWER_DOMAIN_AUX_IO_A:
-		वापस "AUX_IO_A";
-	हाल POWER_DOMAIN_AUX_C_TBT:
-		वापस "AUX_C_TBT";
-	हाल POWER_DOMAIN_AUX_D_TBT:
-		वापस "AUX_D_TBT";
-	हाल POWER_DOMAIN_AUX_E_TBT:
-		वापस "AUX_E_TBT";
-	हाल POWER_DOMAIN_AUX_F_TBT:
-		वापस "AUX_F_TBT";
-	हाल POWER_DOMAIN_AUX_G_TBT:
-		वापस "AUX_G_TBT";
-	हाल POWER_DOMAIN_AUX_H_TBT:
-		वापस "AUX_H_TBT";
-	हाल POWER_DOMAIN_AUX_I_TBT:
-		वापस "AUX_I_TBT";
-	हाल POWER_DOMAIN_GMBUS:
-		वापस "GMBUS";
-	हाल POWER_DOMAIN_INIT:
-		वापस "INIT";
-	हाल POWER_DOMAIN_MODESET:
-		वापस "MODESET";
-	हाल POWER_DOMAIN_GT_IRQ:
-		वापस "GT_IRQ";
-	हाल POWER_DOMAIN_DPLL_DC_OFF:
-		वापस "DPLL_DC_OFF";
-	हाल POWER_DOMAIN_TC_COLD_OFF:
-		वापस "TC_COLD_OFF";
-	शेष:
-		MISSING_CASE(करोमुख्य);
-		वापस "?";
-	पूर्ण
-पूर्ण
+const char *
+intel_display_power_domain_str(enum intel_display_power_domain domain)
+{
+	switch (domain) {
+	case POWER_DOMAIN_DISPLAY_CORE:
+		return "DISPLAY_CORE";
+	case POWER_DOMAIN_PIPE_A:
+		return "PIPE_A";
+	case POWER_DOMAIN_PIPE_B:
+		return "PIPE_B";
+	case POWER_DOMAIN_PIPE_C:
+		return "PIPE_C";
+	case POWER_DOMAIN_PIPE_D:
+		return "PIPE_D";
+	case POWER_DOMAIN_PIPE_A_PANEL_FITTER:
+		return "PIPE_A_PANEL_FITTER";
+	case POWER_DOMAIN_PIPE_B_PANEL_FITTER:
+		return "PIPE_B_PANEL_FITTER";
+	case POWER_DOMAIN_PIPE_C_PANEL_FITTER:
+		return "PIPE_C_PANEL_FITTER";
+	case POWER_DOMAIN_PIPE_D_PANEL_FITTER:
+		return "PIPE_D_PANEL_FITTER";
+	case POWER_DOMAIN_TRANSCODER_A:
+		return "TRANSCODER_A";
+	case POWER_DOMAIN_TRANSCODER_B:
+		return "TRANSCODER_B";
+	case POWER_DOMAIN_TRANSCODER_C:
+		return "TRANSCODER_C";
+	case POWER_DOMAIN_TRANSCODER_D:
+		return "TRANSCODER_D";
+	case POWER_DOMAIN_TRANSCODER_EDP:
+		return "TRANSCODER_EDP";
+	case POWER_DOMAIN_TRANSCODER_VDSC_PW2:
+		return "TRANSCODER_VDSC_PW2";
+	case POWER_DOMAIN_TRANSCODER_DSI_A:
+		return "TRANSCODER_DSI_A";
+	case POWER_DOMAIN_TRANSCODER_DSI_C:
+		return "TRANSCODER_DSI_C";
+	case POWER_DOMAIN_PORT_DDI_A_LANES:
+		return "PORT_DDI_A_LANES";
+	case POWER_DOMAIN_PORT_DDI_B_LANES:
+		return "PORT_DDI_B_LANES";
+	case POWER_DOMAIN_PORT_DDI_C_LANES:
+		return "PORT_DDI_C_LANES";
+	case POWER_DOMAIN_PORT_DDI_D_LANES:
+		return "PORT_DDI_D_LANES";
+	case POWER_DOMAIN_PORT_DDI_E_LANES:
+		return "PORT_DDI_E_LANES";
+	case POWER_DOMAIN_PORT_DDI_F_LANES:
+		return "PORT_DDI_F_LANES";
+	case POWER_DOMAIN_PORT_DDI_G_LANES:
+		return "PORT_DDI_G_LANES";
+	case POWER_DOMAIN_PORT_DDI_H_LANES:
+		return "PORT_DDI_H_LANES";
+	case POWER_DOMAIN_PORT_DDI_I_LANES:
+		return "PORT_DDI_I_LANES";
+	case POWER_DOMAIN_PORT_DDI_A_IO:
+		return "PORT_DDI_A_IO";
+	case POWER_DOMAIN_PORT_DDI_B_IO:
+		return "PORT_DDI_B_IO";
+	case POWER_DOMAIN_PORT_DDI_C_IO:
+		return "PORT_DDI_C_IO";
+	case POWER_DOMAIN_PORT_DDI_D_IO:
+		return "PORT_DDI_D_IO";
+	case POWER_DOMAIN_PORT_DDI_E_IO:
+		return "PORT_DDI_E_IO";
+	case POWER_DOMAIN_PORT_DDI_F_IO:
+		return "PORT_DDI_F_IO";
+	case POWER_DOMAIN_PORT_DDI_G_IO:
+		return "PORT_DDI_G_IO";
+	case POWER_DOMAIN_PORT_DDI_H_IO:
+		return "PORT_DDI_H_IO";
+	case POWER_DOMAIN_PORT_DDI_I_IO:
+		return "PORT_DDI_I_IO";
+	case POWER_DOMAIN_PORT_DSI:
+		return "PORT_DSI";
+	case POWER_DOMAIN_PORT_CRT:
+		return "PORT_CRT";
+	case POWER_DOMAIN_PORT_OTHER:
+		return "PORT_OTHER";
+	case POWER_DOMAIN_VGA:
+		return "VGA";
+	case POWER_DOMAIN_AUDIO:
+		return "AUDIO";
+	case POWER_DOMAIN_AUX_A:
+		return "AUX_A";
+	case POWER_DOMAIN_AUX_B:
+		return "AUX_B";
+	case POWER_DOMAIN_AUX_C:
+		return "AUX_C";
+	case POWER_DOMAIN_AUX_D:
+		return "AUX_D";
+	case POWER_DOMAIN_AUX_E:
+		return "AUX_E";
+	case POWER_DOMAIN_AUX_F:
+		return "AUX_F";
+	case POWER_DOMAIN_AUX_G:
+		return "AUX_G";
+	case POWER_DOMAIN_AUX_H:
+		return "AUX_H";
+	case POWER_DOMAIN_AUX_I:
+		return "AUX_I";
+	case POWER_DOMAIN_AUX_IO_A:
+		return "AUX_IO_A";
+	case POWER_DOMAIN_AUX_C_TBT:
+		return "AUX_C_TBT";
+	case POWER_DOMAIN_AUX_D_TBT:
+		return "AUX_D_TBT";
+	case POWER_DOMAIN_AUX_E_TBT:
+		return "AUX_E_TBT";
+	case POWER_DOMAIN_AUX_F_TBT:
+		return "AUX_F_TBT";
+	case POWER_DOMAIN_AUX_G_TBT:
+		return "AUX_G_TBT";
+	case POWER_DOMAIN_AUX_H_TBT:
+		return "AUX_H_TBT";
+	case POWER_DOMAIN_AUX_I_TBT:
+		return "AUX_I_TBT";
+	case POWER_DOMAIN_GMBUS:
+		return "GMBUS";
+	case POWER_DOMAIN_INIT:
+		return "INIT";
+	case POWER_DOMAIN_MODESET:
+		return "MODESET";
+	case POWER_DOMAIN_GT_IRQ:
+		return "GT_IRQ";
+	case POWER_DOMAIN_DPLL_DC_OFF:
+		return "DPLL_DC_OFF";
+	case POWER_DOMAIN_TC_COLD_OFF:
+		return "TC_COLD_OFF";
+	default:
+		MISSING_CASE(domain);
+		return "?";
+	}
+}
 
-अटल व्योम पूर्णांकel_घातer_well_enable(काष्ठा drm_i915_निजी *dev_priv,
-				    काष्ठा i915_घातer_well *घातer_well)
-अणु
-	drm_dbg_kms(&dev_priv->drm, "enabling %s\n", घातer_well->desc->name);
-	घातer_well->desc->ops->enable(dev_priv, घातer_well);
-	घातer_well->hw_enabled = true;
-पूर्ण
+static void intel_power_well_enable(struct drm_i915_private *dev_priv,
+				    struct i915_power_well *power_well)
+{
+	drm_dbg_kms(&dev_priv->drm, "enabling %s\n", power_well->desc->name);
+	power_well->desc->ops->enable(dev_priv, power_well);
+	power_well->hw_enabled = true;
+}
 
-अटल व्योम पूर्णांकel_घातer_well_disable(काष्ठा drm_i915_निजी *dev_priv,
-				     काष्ठा i915_घातer_well *घातer_well)
-अणु
-	drm_dbg_kms(&dev_priv->drm, "disabling %s\n", घातer_well->desc->name);
-	घातer_well->hw_enabled = false;
-	घातer_well->desc->ops->disable(dev_priv, घातer_well);
-पूर्ण
+static void intel_power_well_disable(struct drm_i915_private *dev_priv,
+				     struct i915_power_well *power_well)
+{
+	drm_dbg_kms(&dev_priv->drm, "disabling %s\n", power_well->desc->name);
+	power_well->hw_enabled = false;
+	power_well->desc->ops->disable(dev_priv, power_well);
+}
 
-अटल व्योम पूर्णांकel_घातer_well_get(काष्ठा drm_i915_निजी *dev_priv,
-				 काष्ठा i915_घातer_well *घातer_well)
-अणु
-	अगर (!घातer_well->count++)
-		पूर्णांकel_घातer_well_enable(dev_priv, घातer_well);
-पूर्ण
+static void intel_power_well_get(struct drm_i915_private *dev_priv,
+				 struct i915_power_well *power_well)
+{
+	if (!power_well->count++)
+		intel_power_well_enable(dev_priv, power_well);
+}
 
-अटल व्योम पूर्णांकel_घातer_well_put(काष्ठा drm_i915_निजी *dev_priv,
-				 काष्ठा i915_घातer_well *घातer_well)
-अणु
-	drm_WARN(&dev_priv->drm, !घातer_well->count,
+static void intel_power_well_put(struct drm_i915_private *dev_priv,
+				 struct i915_power_well *power_well)
+{
+	drm_WARN(&dev_priv->drm, !power_well->count,
 		 "Use count on power well %s is already zero",
-		 घातer_well->desc->name);
+		 power_well->desc->name);
 
-	अगर (!--घातer_well->count)
-		पूर्णांकel_घातer_well_disable(dev_priv, घातer_well);
-पूर्ण
+	if (!--power_well->count)
+		intel_power_well_disable(dev_priv, power_well);
+}
 
 /**
- * __पूर्णांकel_display_घातer_is_enabled - unlocked check क्रम a घातer करोमुख्य
+ * __intel_display_power_is_enabled - unlocked check for a power domain
  * @dev_priv: i915 device instance
- * @करोमुख्य: घातer करोमुख्य to check
+ * @domain: power domain to check
  *
- * This is the unlocked version of पूर्णांकel_display_घातer_is_enabled() and should
+ * This is the unlocked version of intel_display_power_is_enabled() and should
  * only be used from error capture and recovery code where deadlocks are
  * possible.
  *
  * Returns:
- * True when the घातer करोमुख्य is enabled, false otherwise.
+ * True when the power domain is enabled, false otherwise.
  */
-bool __पूर्णांकel_display_घातer_is_enabled(काष्ठा drm_i915_निजी *dev_priv,
-				      क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य)
-अणु
-	काष्ठा i915_घातer_well *घातer_well;
+bool __intel_display_power_is_enabled(struct drm_i915_private *dev_priv,
+				      enum intel_display_power_domain domain)
+{
+	struct i915_power_well *power_well;
 	bool is_enabled;
 
-	अगर (dev_priv->runसमय_pm.suspended)
-		वापस false;
+	if (dev_priv->runtime_pm.suspended)
+		return false;
 
 	is_enabled = true;
 
-	क्रम_each_घातer_करोमुख्य_well_reverse(dev_priv, घातer_well, BIT_ULL(करोमुख्य)) अणु
-		अगर (घातer_well->desc->always_on)
-			जारी;
+	for_each_power_domain_well_reverse(dev_priv, power_well, BIT_ULL(domain)) {
+		if (power_well->desc->always_on)
+			continue;
 
-		अगर (!घातer_well->hw_enabled) अणु
+		if (!power_well->hw_enabled) {
 			is_enabled = false;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	वापस is_enabled;
-पूर्ण
+	return is_enabled;
+}
 
 /**
- * पूर्णांकel_display_घातer_is_enabled - check क्रम a घातer करोमुख्य
+ * intel_display_power_is_enabled - check for a power domain
  * @dev_priv: i915 device instance
- * @करोमुख्य: घातer करोमुख्य to check
+ * @domain: power domain to check
  *
- * This function can be used to check the hw घातer करोमुख्य state. It is mostly
- * used in hardware state पढ़ोout functions. Everywhere अन्यथा code should rely
- * upon explicit घातer करोमुख्य reference counting to ensure that the hardware
- * block is घातered up beक्रमe accessing it.
+ * This function can be used to check the hw power domain state. It is mostly
+ * used in hardware state readout functions. Everywhere else code should rely
+ * upon explicit power domain reference counting to ensure that the hardware
+ * block is powered up before accessing it.
  *
  * Callers must hold the relevant modesetting locks to ensure that concurrent
- * thपढ़ोs can't disable the घातer well जबतक the caller tries to पढ़ो a few
- * रेजिस्टरs.
+ * threads can't disable the power well while the caller tries to read a few
+ * registers.
  *
  * Returns:
- * True when the घातer करोमुख्य is enabled, false otherwise.
+ * True when the power domain is enabled, false otherwise.
  */
-bool पूर्णांकel_display_घातer_is_enabled(काष्ठा drm_i915_निजी *dev_priv,
-				    क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs;
+bool intel_display_power_is_enabled(struct drm_i915_private *dev_priv,
+				    enum intel_display_power_domain domain)
+{
+	struct i915_power_domains *power_domains;
 	bool ret;
 
-	घातer_करोमुख्यs = &dev_priv->घातer_करोमुख्यs;
+	power_domains = &dev_priv->power_domains;
 
-	mutex_lock(&घातer_करोमुख्यs->lock);
-	ret = __पूर्णांकel_display_घातer_is_enabled(dev_priv, करोमुख्य);
-	mutex_unlock(&घातer_करोमुख्यs->lock);
+	mutex_lock(&power_domains->lock);
+	ret = __intel_display_power_is_enabled(dev_priv, domain);
+	mutex_unlock(&power_domains->lock);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
 /*
  * Starting with Haswell, we have a "Power Down Well" that can be turned off
- * when not needed anymore. We have 4 रेजिस्टरs that can request the घातer well
- * to be enabled, and it will only be disabled अगर none of the रेजिस्टरs is
+ * when not needed anymore. We have 4 registers that can request the power well
+ * to be enabled, and it will only be disabled if none of the registers is
  * requesting it to be enabled.
  */
-अटल व्योम hsw_घातer_well_post_enable(काष्ठा drm_i915_निजी *dev_priv,
+static void hsw_power_well_post_enable(struct drm_i915_private *dev_priv,
 				       u8 irq_pipe_mask, bool has_vga)
-अणु
-	अगर (has_vga)
-		पूर्णांकel_vga_reset_io_mem(dev_priv);
+{
+	if (has_vga)
+		intel_vga_reset_io_mem(dev_priv);
 
-	अगर (irq_pipe_mask)
-		gen8_irq_घातer_well_post_enable(dev_priv, irq_pipe_mask);
-पूर्ण
+	if (irq_pipe_mask)
+		gen8_irq_power_well_post_enable(dev_priv, irq_pipe_mask);
+}
 
-अटल व्योम hsw_घातer_well_pre_disable(काष्ठा drm_i915_निजी *dev_priv,
+static void hsw_power_well_pre_disable(struct drm_i915_private *dev_priv,
 				       u8 irq_pipe_mask)
-अणु
-	अगर (irq_pipe_mask)
-		gen8_irq_घातer_well_pre_disable(dev_priv, irq_pipe_mask);
-पूर्ण
+{
+	if (irq_pipe_mask)
+		gen8_irq_power_well_pre_disable(dev_priv, irq_pipe_mask);
+}
 
-#घोषणा ICL_AUX_PW_TO_CH(pw_idx)	\
+#define ICL_AUX_PW_TO_CH(pw_idx)	\
 	((pw_idx) - ICL_PW_CTL_IDX_AUX_A + AUX_CH_A)
 
-#घोषणा ICL_TBT_AUX_PW_TO_CH(pw_idx)	\
+#define ICL_TBT_AUX_PW_TO_CH(pw_idx)	\
 	((pw_idx) - ICL_PW_CTL_IDX_AUX_TBT1 + AUX_CH_C)
 
-अटल क्रमागत aux_ch icl_tc_phy_aux_ch(काष्ठा drm_i915_निजी *dev_priv,
-				     काष्ठा i915_घातer_well *घातer_well)
-अणु
-	पूर्णांक pw_idx = घातer_well->desc->hsw.idx;
+static enum aux_ch icl_tc_phy_aux_ch(struct drm_i915_private *dev_priv,
+				     struct i915_power_well *power_well)
+{
+	int pw_idx = power_well->desc->hsw.idx;
 
-	वापस घातer_well->desc->hsw.is_tc_tbt ? ICL_TBT_AUX_PW_TO_CH(pw_idx) :
+	return power_well->desc->hsw.is_tc_tbt ? ICL_TBT_AUX_PW_TO_CH(pw_idx) :
 						 ICL_AUX_PW_TO_CH(pw_idx);
-पूर्ण
+}
 
-अटल काष्ठा पूर्णांकel_digital_port *
-aux_ch_to_digital_port(काष्ठा drm_i915_निजी *dev_priv,
-		       क्रमागत aux_ch aux_ch)
-अणु
-	काष्ठा पूर्णांकel_digital_port *dig_port = शून्य;
-	काष्ठा पूर्णांकel_encoder *encoder;
+static struct intel_digital_port *
+aux_ch_to_digital_port(struct drm_i915_private *dev_priv,
+		       enum aux_ch aux_ch)
+{
+	struct intel_digital_port *dig_port = NULL;
+	struct intel_encoder *encoder;
 
-	क्रम_each_पूर्णांकel_encoder(&dev_priv->drm, encoder) अणु
+	for_each_intel_encoder(&dev_priv->drm, encoder) {
 		/* We'll check the MST primary port */
-		अगर (encoder->type == INTEL_OUTPUT_DP_MST)
-			जारी;
+		if (encoder->type == INTEL_OUTPUT_DP_MST)
+			continue;
 
 		dig_port = enc_to_dig_port(encoder);
-		अगर (!dig_port)
-			जारी;
+		if (!dig_port)
+			continue;
 
-		अगर (dig_port->aux_ch != aux_ch) अणु
-			dig_port = शून्य;
-			जारी;
-		पूर्ण
+		if (dig_port->aux_ch != aux_ch) {
+			dig_port = NULL;
+			continue;
+		}
 
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	वापस dig_port;
-पूर्ण
+	return dig_port;
+}
 
-अटल व्योम hsw_रुको_क्रम_घातer_well_enable(काष्ठा drm_i915_निजी *dev_priv,
-					   काष्ठा i915_घातer_well *घातer_well,
-					   bool समयout_expected)
-अणु
-	स्थिर काष्ठा i915_घातer_well_regs *regs = घातer_well->desc->hsw.regs;
-	पूर्णांक pw_idx = घातer_well->desc->hsw.idx;
+static void hsw_wait_for_power_well_enable(struct drm_i915_private *dev_priv,
+					   struct i915_power_well *power_well,
+					   bool timeout_expected)
+{
+	const struct i915_power_well_regs *regs = power_well->desc->hsw.regs;
+	int pw_idx = power_well->desc->hsw.idx;
 
-	/* Timeout क्रम PW1:10 us, AUX:not specअगरied, other PWs:20 us. */
-	अगर (पूर्णांकel_de_रुको_क्रम_set(dev_priv, regs->driver,
-				  HSW_PWR_WELL_CTL_STATE(pw_idx), 1)) अणु
+	/* Timeout for PW1:10 us, AUX:not specified, other PWs:20 us. */
+	if (intel_de_wait_for_set(dev_priv, regs->driver,
+				  HSW_PWR_WELL_CTL_STATE(pw_idx), 1)) {
 		drm_dbg_kms(&dev_priv->drm, "%s power well enable timeout\n",
-			    घातer_well->desc->name);
+			    power_well->desc->name);
 
-		drm_WARN_ON(&dev_priv->drm, !समयout_expected);
+		drm_WARN_ON(&dev_priv->drm, !timeout_expected);
 
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल u32 hsw_घातer_well_requesters(काष्ठा drm_i915_निजी *dev_priv,
-				     स्थिर काष्ठा i915_घातer_well_regs *regs,
-				     पूर्णांक pw_idx)
-अणु
+static u32 hsw_power_well_requesters(struct drm_i915_private *dev_priv,
+				     const struct i915_power_well_regs *regs,
+				     int pw_idx)
+{
 	u32 req_mask = HSW_PWR_WELL_CTL_REQ(pw_idx);
 	u32 ret;
 
-	ret = पूर्णांकel_de_पढ़ो(dev_priv, regs->bios) & req_mask ? 1 : 0;
-	ret |= पूर्णांकel_de_पढ़ो(dev_priv, regs->driver) & req_mask ? 2 : 0;
-	अगर (regs->kvmr.reg)
-		ret |= पूर्णांकel_de_पढ़ो(dev_priv, regs->kvmr) & req_mask ? 4 : 0;
-	ret |= पूर्णांकel_de_पढ़ो(dev_priv, regs->debug) & req_mask ? 8 : 0;
+	ret = intel_de_read(dev_priv, regs->bios) & req_mask ? 1 : 0;
+	ret |= intel_de_read(dev_priv, regs->driver) & req_mask ? 2 : 0;
+	if (regs->kvmr.reg)
+		ret |= intel_de_read(dev_priv, regs->kvmr) & req_mask ? 4 : 0;
+	ret |= intel_de_read(dev_priv, regs->debug) & req_mask ? 8 : 0;
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम hsw_रुको_क्रम_घातer_well_disable(काष्ठा drm_i915_निजी *dev_priv,
-					    काष्ठा i915_घातer_well *घातer_well)
-अणु
-	स्थिर काष्ठा i915_घातer_well_regs *regs = घातer_well->desc->hsw.regs;
-	पूर्णांक pw_idx = घातer_well->desc->hsw.idx;
+static void hsw_wait_for_power_well_disable(struct drm_i915_private *dev_priv,
+					    struct i915_power_well *power_well)
+{
+	const struct i915_power_well_regs *regs = power_well->desc->hsw.regs;
+	int pw_idx = power_well->desc->hsw.idx;
 	bool disabled;
 	u32 reqs;
 
 	/*
-	 * Bspec करोesn't require रुकोing क्रम PWs to get disabled, but still करो
-	 * this क्रम paranoia. The known हालs where a PW will be क्रमced on:
-	 * - a KVMR request on any घातer well via the KVMR request रेजिस्टर
-	 * - a DMC request on PW1 and MISC_IO घातer wells via the BIOS and
-	 *   DEBUG request रेजिस्टरs
-	 * Skip the रुको in हाल any of the request bits are set and prपूर्णांक a
+	 * Bspec doesn't require waiting for PWs to get disabled, but still do
+	 * this for paranoia. The known cases where a PW will be forced on:
+	 * - a KVMR request on any power well via the KVMR request register
+	 * - a DMC request on PW1 and MISC_IO power wells via the BIOS and
+	 *   DEBUG request registers
+	 * Skip the wait in case any of the request bits are set and print a
 	 * diagnostic message.
 	 */
-	रुको_क्रम((disabled = !(पूर्णांकel_de_पढ़ो(dev_priv, regs->driver) &
+	wait_for((disabled = !(intel_de_read(dev_priv, regs->driver) &
 			       HSW_PWR_WELL_CTL_STATE(pw_idx))) ||
-		 (reqs = hsw_घातer_well_requesters(dev_priv, regs, pw_idx)), 1);
-	अगर (disabled)
-		वापस;
+		 (reqs = hsw_power_well_requesters(dev_priv, regs, pw_idx)), 1);
+	if (disabled)
+		return;
 
 	drm_dbg_kms(&dev_priv->drm,
 		    "%s forced on (bios:%d driver:%d kvmr:%d debug:%d)\n",
-		    घातer_well->desc->name,
+		    power_well->desc->name,
 		    !!(reqs & 1), !!(reqs & 2), !!(reqs & 4), !!(reqs & 8));
-पूर्ण
+}
 
-अटल व्योम gen9_रुको_क्रम_घातer_well_fuses(काष्ठा drm_i915_निजी *dev_priv,
-					   क्रमागत skl_घातer_gate pg)
-अणु
-	/* Timeout 5us क्रम PG#0, क्रम other PGs 1us */
+static void gen9_wait_for_power_well_fuses(struct drm_i915_private *dev_priv,
+					   enum skl_power_gate pg)
+{
+	/* Timeout 5us for PG#0, for other PGs 1us */
 	drm_WARN_ON(&dev_priv->drm,
-		    पूर्णांकel_de_रुको_क्रम_set(dev_priv, SKL_FUSE_STATUS,
+		    intel_de_wait_for_set(dev_priv, SKL_FUSE_STATUS,
 					  SKL_FUSE_PG_DIST_STATUS(pg), 1));
-पूर्ण
+}
 
-अटल व्योम hsw_घातer_well_enable(काष्ठा drm_i915_निजी *dev_priv,
-				  काष्ठा i915_घातer_well *घातer_well)
-अणु
-	स्थिर काष्ठा i915_घातer_well_regs *regs = घातer_well->desc->hsw.regs;
-	पूर्णांक pw_idx = घातer_well->desc->hsw.idx;
+static void hsw_power_well_enable(struct drm_i915_private *dev_priv,
+				  struct i915_power_well *power_well)
+{
+	const struct i915_power_well_regs *regs = power_well->desc->hsw.regs;
+	int pw_idx = power_well->desc->hsw.idx;
 	u32 val;
 
-	अगर (घातer_well->desc->hsw.has_fuses) अणु
-		क्रमागत skl_घातer_gate pg;
+	if (power_well->desc->hsw.has_fuses) {
+		enum skl_power_gate pg;
 
 		pg = DISPLAY_VER(dev_priv) >= 11 ? ICL_PW_CTL_IDX_TO_PG(pw_idx) :
 						 SKL_PW_CTL_IDX_TO_PG(pw_idx);
 		/*
-		 * For PW1 we have to रुको both क्रम the PW0/PG0 fuse state
-		 * beक्रमe enabling the घातer well and PW1/PG1's own fuse
-		 * state after the enabling. For all other घातer wells with
-		 * fuses we only have to रुको क्रम that PW/PG's fuse state
+		 * For PW1 we have to wait both for the PW0/PG0 fuse state
+		 * before enabling the power well and PW1/PG1's own fuse
+		 * state after the enabling. For all other power wells with
+		 * fuses we only have to wait for that PW/PG's fuse state
 		 * after the enabling.
 		 */
-		अगर (pg == SKL_PG1)
-			gen9_रुको_क्रम_घातer_well_fuses(dev_priv, SKL_PG0);
-	पूर्ण
+		if (pg == SKL_PG1)
+			gen9_wait_for_power_well_fuses(dev_priv, SKL_PG0);
+	}
 
-	val = पूर्णांकel_de_पढ़ो(dev_priv, regs->driver);
-	पूर्णांकel_de_ग_लिखो(dev_priv, regs->driver,
+	val = intel_de_read(dev_priv, regs->driver);
+	intel_de_write(dev_priv, regs->driver,
 		       val | HSW_PWR_WELL_CTL_REQ(pw_idx));
 
-	hsw_रुको_क्रम_घातer_well_enable(dev_priv, घातer_well, false);
+	hsw_wait_for_power_well_enable(dev_priv, power_well, false);
 
 	/* Display WA #1178: cnl */
-	अगर (IS_CANNONLAKE(dev_priv) &&
+	if (IS_CANNONLAKE(dev_priv) &&
 	    pw_idx >= GLK_PW_CTL_IDX_AUX_B &&
-	    pw_idx <= CNL_PW_CTL_IDX_AUX_F) अणु
+	    pw_idx <= CNL_PW_CTL_IDX_AUX_F) {
 		u32 val;
 
-		val = पूर्णांकel_de_पढ़ो(dev_priv, CNL_AUX_ANAOVRD1(pw_idx));
+		val = intel_de_read(dev_priv, CNL_AUX_ANAOVRD1(pw_idx));
 		val |= CNL_AUX_ANAOVRD1_ENABLE | CNL_AUX_ANAOVRD1_LDO_BYPASS;
-		पूर्णांकel_de_ग_लिखो(dev_priv, CNL_AUX_ANAOVRD1(pw_idx), val);
-	पूर्ण
+		intel_de_write(dev_priv, CNL_AUX_ANAOVRD1(pw_idx), val);
+	}
 
-	अगर (घातer_well->desc->hsw.has_fuses) अणु
-		क्रमागत skl_घातer_gate pg;
+	if (power_well->desc->hsw.has_fuses) {
+		enum skl_power_gate pg;
 
 		pg = DISPLAY_VER(dev_priv) >= 11 ? ICL_PW_CTL_IDX_TO_PG(pw_idx) :
 						 SKL_PW_CTL_IDX_TO_PG(pw_idx);
-		gen9_रुको_क्रम_घातer_well_fuses(dev_priv, pg);
-	पूर्ण
+		gen9_wait_for_power_well_fuses(dev_priv, pg);
+	}
 
-	hsw_घातer_well_post_enable(dev_priv,
-				   घातer_well->desc->hsw.irq_pipe_mask,
-				   घातer_well->desc->hsw.has_vga);
-पूर्ण
+	hsw_power_well_post_enable(dev_priv,
+				   power_well->desc->hsw.irq_pipe_mask,
+				   power_well->desc->hsw.has_vga);
+}
 
-अटल व्योम hsw_घातer_well_disable(काष्ठा drm_i915_निजी *dev_priv,
-				   काष्ठा i915_घातer_well *घातer_well)
-अणु
-	स्थिर काष्ठा i915_घातer_well_regs *regs = घातer_well->desc->hsw.regs;
-	पूर्णांक pw_idx = घातer_well->desc->hsw.idx;
+static void hsw_power_well_disable(struct drm_i915_private *dev_priv,
+				   struct i915_power_well *power_well)
+{
+	const struct i915_power_well_regs *regs = power_well->desc->hsw.regs;
+	int pw_idx = power_well->desc->hsw.idx;
 	u32 val;
 
-	hsw_घातer_well_pre_disable(dev_priv,
-				   घातer_well->desc->hsw.irq_pipe_mask);
+	hsw_power_well_pre_disable(dev_priv,
+				   power_well->desc->hsw.irq_pipe_mask);
 
-	val = पूर्णांकel_de_पढ़ो(dev_priv, regs->driver);
-	पूर्णांकel_de_ग_लिखो(dev_priv, regs->driver,
+	val = intel_de_read(dev_priv, regs->driver);
+	intel_de_write(dev_priv, regs->driver,
 		       val & ~HSW_PWR_WELL_CTL_REQ(pw_idx));
-	hsw_रुको_क्रम_घातer_well_disable(dev_priv, घातer_well);
-पूर्ण
+	hsw_wait_for_power_well_disable(dev_priv, power_well);
+}
 
-#घोषणा ICL_AUX_PW_TO_PHY(pw_idx)	((pw_idx) - ICL_PW_CTL_IDX_AUX_A)
+#define ICL_AUX_PW_TO_PHY(pw_idx)	((pw_idx) - ICL_PW_CTL_IDX_AUX_A)
 
-अटल व्योम
-icl_combo_phy_aux_घातer_well_enable(काष्ठा drm_i915_निजी *dev_priv,
-				    काष्ठा i915_घातer_well *घातer_well)
-अणु
-	स्थिर काष्ठा i915_घातer_well_regs *regs = घातer_well->desc->hsw.regs;
-	पूर्णांक pw_idx = घातer_well->desc->hsw.idx;
-	क्रमागत phy phy = ICL_AUX_PW_TO_PHY(pw_idx);
+static void
+icl_combo_phy_aux_power_well_enable(struct drm_i915_private *dev_priv,
+				    struct i915_power_well *power_well)
+{
+	const struct i915_power_well_regs *regs = power_well->desc->hsw.regs;
+	int pw_idx = power_well->desc->hsw.idx;
+	enum phy phy = ICL_AUX_PW_TO_PHY(pw_idx);
 	u32 val;
 
 	drm_WARN_ON(&dev_priv->drm, !IS_ICELAKE(dev_priv));
 
-	val = पूर्णांकel_de_पढ़ो(dev_priv, regs->driver);
-	पूर्णांकel_de_ग_लिखो(dev_priv, regs->driver,
+	val = intel_de_read(dev_priv, regs->driver);
+	intel_de_write(dev_priv, regs->driver,
 		       val | HSW_PWR_WELL_CTL_REQ(pw_idx));
 
-	अगर (DISPLAY_VER(dev_priv) < 12) अणु
-		val = पूर्णांकel_de_पढ़ो(dev_priv, ICL_PORT_CL_DW12(phy));
-		पूर्णांकel_de_ग_लिखो(dev_priv, ICL_PORT_CL_DW12(phy),
+	if (DISPLAY_VER(dev_priv) < 12) {
+		val = intel_de_read(dev_priv, ICL_PORT_CL_DW12(phy));
+		intel_de_write(dev_priv, ICL_PORT_CL_DW12(phy),
 			       val | ICL_LANE_ENABLE_AUX);
-	पूर्ण
+	}
 
-	hsw_रुको_क्रम_घातer_well_enable(dev_priv, घातer_well, false);
+	hsw_wait_for_power_well_enable(dev_priv, power_well, false);
 
 	/* Display WA #1178: icl */
-	अगर (pw_idx >= ICL_PW_CTL_IDX_AUX_A && pw_idx <= ICL_PW_CTL_IDX_AUX_B &&
-	    !पूर्णांकel_bios_is_port_edp(dev_priv, (क्रमागत port)phy)) अणु
-		val = पूर्णांकel_de_पढ़ो(dev_priv, ICL_AUX_ANAOVRD1(pw_idx));
+	if (pw_idx >= ICL_PW_CTL_IDX_AUX_A && pw_idx <= ICL_PW_CTL_IDX_AUX_B &&
+	    !intel_bios_is_port_edp(dev_priv, (enum port)phy)) {
+		val = intel_de_read(dev_priv, ICL_AUX_ANAOVRD1(pw_idx));
 		val |= ICL_AUX_ANAOVRD1_ENABLE | ICL_AUX_ANAOVRD1_LDO_BYPASS;
-		पूर्णांकel_de_ग_लिखो(dev_priv, ICL_AUX_ANAOVRD1(pw_idx), val);
-	पूर्ण
-पूर्ण
+		intel_de_write(dev_priv, ICL_AUX_ANAOVRD1(pw_idx), val);
+	}
+}
 
-अटल व्योम
-icl_combo_phy_aux_घातer_well_disable(काष्ठा drm_i915_निजी *dev_priv,
-				     काष्ठा i915_घातer_well *घातer_well)
-अणु
-	स्थिर काष्ठा i915_घातer_well_regs *regs = घातer_well->desc->hsw.regs;
-	पूर्णांक pw_idx = घातer_well->desc->hsw.idx;
-	क्रमागत phy phy = ICL_AUX_PW_TO_PHY(pw_idx);
+static void
+icl_combo_phy_aux_power_well_disable(struct drm_i915_private *dev_priv,
+				     struct i915_power_well *power_well)
+{
+	const struct i915_power_well_regs *regs = power_well->desc->hsw.regs;
+	int pw_idx = power_well->desc->hsw.idx;
+	enum phy phy = ICL_AUX_PW_TO_PHY(pw_idx);
 	u32 val;
 
 	drm_WARN_ON(&dev_priv->drm, !IS_ICELAKE(dev_priv));
 
-	val = पूर्णांकel_de_पढ़ो(dev_priv, ICL_PORT_CL_DW12(phy));
-	पूर्णांकel_de_ग_लिखो(dev_priv, ICL_PORT_CL_DW12(phy),
+	val = intel_de_read(dev_priv, ICL_PORT_CL_DW12(phy));
+	intel_de_write(dev_priv, ICL_PORT_CL_DW12(phy),
 		       val & ~ICL_LANE_ENABLE_AUX);
 
-	val = पूर्णांकel_de_पढ़ो(dev_priv, regs->driver);
-	पूर्णांकel_de_ग_लिखो(dev_priv, regs->driver,
+	val = intel_de_read(dev_priv, regs->driver);
+	intel_de_write(dev_priv, regs->driver,
 		       val & ~HSW_PWR_WELL_CTL_REQ(pw_idx));
 
-	hsw_रुको_क्रम_घातer_well_disable(dev_priv, घातer_well);
-पूर्ण
+	hsw_wait_for_power_well_disable(dev_priv, power_well);
+}
 
-#अगर IS_ENABLED(CONFIG_DRM_I915_DEBUG_RUNTIME_PM)
+#if IS_ENABLED(CONFIG_DRM_I915_DEBUG_RUNTIME_PM)
 
-अटल u64 async_put_करोमुख्यs_mask(काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs);
+static u64 async_put_domains_mask(struct i915_power_domains *power_domains);
 
-अटल पूर्णांक घातer_well_async_ref_count(काष्ठा drm_i915_निजी *dev_priv,
-				      काष्ठा i915_घातer_well *घातer_well)
-अणु
-	पूर्णांक refs = hweight64(घातer_well->desc->करोमुख्यs &
-			     async_put_करोमुख्यs_mask(&dev_priv->घातer_करोमुख्यs));
+static int power_well_async_ref_count(struct drm_i915_private *dev_priv,
+				      struct i915_power_well *power_well)
+{
+	int refs = hweight64(power_well->desc->domains &
+			     async_put_domains_mask(&dev_priv->power_domains));
 
-	drm_WARN_ON(&dev_priv->drm, refs > घातer_well->count);
+	drm_WARN_ON(&dev_priv->drm, refs > power_well->count);
 
-	वापस refs;
-पूर्ण
+	return refs;
+}
 
-अटल व्योम icl_tc_port_निश्चित_ref_held(काष्ठा drm_i915_निजी *dev_priv,
-					काष्ठा i915_घातer_well *घातer_well,
-					काष्ठा पूर्णांकel_digital_port *dig_port)
-अणु
-	/* Bypass the check अगर all references are released asynchronously */
-	अगर (घातer_well_async_ref_count(dev_priv, घातer_well) ==
-	    घातer_well->count)
-		वापस;
+static void icl_tc_port_assert_ref_held(struct drm_i915_private *dev_priv,
+					struct i915_power_well *power_well,
+					struct intel_digital_port *dig_port)
+{
+	/* Bypass the check if all references are released asynchronously */
+	if (power_well_async_ref_count(dev_priv, power_well) ==
+	    power_well->count)
+		return;
 
-	अगर (drm_WARN_ON(&dev_priv->drm, !dig_port))
-		वापस;
+	if (drm_WARN_ON(&dev_priv->drm, !dig_port))
+		return;
 
-	अगर (IS_DISPLAY_VER(dev_priv, 11) && dig_port->tc_legacy_port)
-		वापस;
+	if (IS_DISPLAY_VER(dev_priv, 11) && dig_port->tc_legacy_port)
+		return;
 
-	drm_WARN_ON(&dev_priv->drm, !पूर्णांकel_tc_port_ref_held(dig_port));
-पूर्ण
+	drm_WARN_ON(&dev_priv->drm, !intel_tc_port_ref_held(dig_port));
+}
 
-#अन्यथा
+#else
 
-अटल व्योम icl_tc_port_निश्चित_ref_held(काष्ठा drm_i915_निजी *dev_priv,
-					काष्ठा i915_घातer_well *घातer_well,
-					काष्ठा पूर्णांकel_digital_port *dig_port)
-अणु
-पूर्ण
+static void icl_tc_port_assert_ref_held(struct drm_i915_private *dev_priv,
+					struct i915_power_well *power_well,
+					struct intel_digital_port *dig_port)
+{
+}
 
-#पूर्ण_अगर
+#endif
 
-#घोषणा TGL_AUX_PW_TO_TC_PORT(pw_idx)	((pw_idx) - TGL_PW_CTL_IDX_AUX_TC1)
+#define TGL_AUX_PW_TO_TC_PORT(pw_idx)	((pw_idx) - TGL_PW_CTL_IDX_AUX_TC1)
 
-अटल व्योम icl_tc_cold_निकास(काष्ठा drm_i915_निजी *i915)
-अणु
-	पूर्णांक ret, tries = 0;
+static void icl_tc_cold_exit(struct drm_i915_private *i915)
+{
+	int ret, tries = 0;
 
-	जबतक (1) अणु
-		ret = sandybridge_pcode_ग_लिखो_समयout(i915,
+	while (1) {
+		ret = sandybridge_pcode_write_timeout(i915,
 						      ICL_PCODE_EXIT_TCCOLD,
 						      0, 250, 1);
-		अगर (ret != -EAGAIN || ++tries == 3)
-			अवरोध;
+		if (ret != -EAGAIN || ++tries == 3)
+			break;
 		msleep(1);
-	पूर्ण
+	}
 
-	/* Spec states that TC cold निकास can take up to 1ms to complete */
-	अगर (!ret)
+	/* Spec states that TC cold exit can take up to 1ms to complete */
+	if (!ret)
 		msleep(1);
 
-	/* TODO: turn failure पूर्णांकo a error as soon i915 CI updates ICL IFWI */
+	/* TODO: turn failure into a error as soon i915 CI updates ICL IFWI */
 	drm_dbg_kms(&i915->drm, "TC cold block %s\n", ret ? "failed" :
 		    "succeeded");
-पूर्ण
+}
 
-अटल व्योम
-icl_tc_phy_aux_घातer_well_enable(काष्ठा drm_i915_निजी *dev_priv,
-				 काष्ठा i915_घातer_well *घातer_well)
-अणु
-	क्रमागत aux_ch aux_ch = icl_tc_phy_aux_ch(dev_priv, घातer_well);
-	काष्ठा पूर्णांकel_digital_port *dig_port = aux_ch_to_digital_port(dev_priv, aux_ch);
-	स्थिर काष्ठा i915_घातer_well_regs *regs = घातer_well->desc->hsw.regs;
-	bool is_tbt = घातer_well->desc->hsw.is_tc_tbt;
-	bool समयout_expected;
+static void
+icl_tc_phy_aux_power_well_enable(struct drm_i915_private *dev_priv,
+				 struct i915_power_well *power_well)
+{
+	enum aux_ch aux_ch = icl_tc_phy_aux_ch(dev_priv, power_well);
+	struct intel_digital_port *dig_port = aux_ch_to_digital_port(dev_priv, aux_ch);
+	const struct i915_power_well_regs *regs = power_well->desc->hsw.regs;
+	bool is_tbt = power_well->desc->hsw.is_tc_tbt;
+	bool timeout_expected;
 	u32 val;
 
-	icl_tc_port_निश्चित_ref_held(dev_priv, घातer_well, dig_port);
+	icl_tc_port_assert_ref_held(dev_priv, power_well, dig_port);
 
-	val = पूर्णांकel_de_पढ़ो(dev_priv, DP_AUX_CH_CTL(aux_ch));
+	val = intel_de_read(dev_priv, DP_AUX_CH_CTL(aux_ch));
 	val &= ~DP_AUX_CH_CTL_TBT_IO;
-	अगर (is_tbt)
+	if (is_tbt)
 		val |= DP_AUX_CH_CTL_TBT_IO;
-	पूर्णांकel_de_ग_लिखो(dev_priv, DP_AUX_CH_CTL(aux_ch), val);
+	intel_de_write(dev_priv, DP_AUX_CH_CTL(aux_ch), val);
 
-	val = पूर्णांकel_de_पढ़ो(dev_priv, regs->driver);
-	पूर्णांकel_de_ग_लिखो(dev_priv, regs->driver,
-		       val | HSW_PWR_WELL_CTL_REQ(घातer_well->desc->hsw.idx));
+	val = intel_de_read(dev_priv, regs->driver);
+	intel_de_write(dev_priv, regs->driver,
+		       val | HSW_PWR_WELL_CTL_REQ(power_well->desc->hsw.idx));
 
 	/*
-	 * An AUX समयout is expected अगर the TBT DP tunnel is करोwn,
+	 * An AUX timeout is expected if the TBT DP tunnel is down,
 	 * or need to enable AUX on a legacy TypeC port as part of the TC-cold
-	 * निकास sequence.
+	 * exit sequence.
 	 */
-	समयout_expected = is_tbt;
-	अगर (IS_DISPLAY_VER(dev_priv, 11) && dig_port->tc_legacy_port) अणु
-		icl_tc_cold_निकास(dev_priv);
-		समयout_expected = true;
-	पूर्ण
+	timeout_expected = is_tbt;
+	if (IS_DISPLAY_VER(dev_priv, 11) && dig_port->tc_legacy_port) {
+		icl_tc_cold_exit(dev_priv);
+		timeout_expected = true;
+	}
 
-	hsw_रुको_क्रम_घातer_well_enable(dev_priv, घातer_well, समयout_expected);
+	hsw_wait_for_power_well_enable(dev_priv, power_well, timeout_expected);
 
-	अगर (DISPLAY_VER(dev_priv) >= 12 && !is_tbt) अणु
-		क्रमागत tc_port tc_port;
+	if (DISPLAY_VER(dev_priv) >= 12 && !is_tbt) {
+		enum tc_port tc_port;
 
-		tc_port = TGL_AUX_PW_TO_TC_PORT(घातer_well->desc->hsw.idx);
-		पूर्णांकel_de_ग_लिखो(dev_priv, HIP_INDEX_REG(tc_port),
+		tc_port = TGL_AUX_PW_TO_TC_PORT(power_well->desc->hsw.idx);
+		intel_de_write(dev_priv, HIP_INDEX_REG(tc_port),
 			       HIP_INDEX_VAL(tc_port, 0x2));
 
-		अगर (पूर्णांकel_de_रुको_क्रम_set(dev_priv, DKL_CMN_UC_DW_27(tc_port),
+		if (intel_de_wait_for_set(dev_priv, DKL_CMN_UC_DW_27(tc_port),
 					  DKL_CMN_UC_DW27_UC_HEALTH, 1))
 			drm_warn(&dev_priv->drm,
 				 "Timeout waiting TC uC health\n");
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम
-icl_tc_phy_aux_घातer_well_disable(काष्ठा drm_i915_निजी *dev_priv,
-				  काष्ठा i915_घातer_well *घातer_well)
-अणु
-	क्रमागत aux_ch aux_ch = icl_tc_phy_aux_ch(dev_priv, घातer_well);
-	काष्ठा पूर्णांकel_digital_port *dig_port = aux_ch_to_digital_port(dev_priv, aux_ch);
+static void
+icl_tc_phy_aux_power_well_disable(struct drm_i915_private *dev_priv,
+				  struct i915_power_well *power_well)
+{
+	enum aux_ch aux_ch = icl_tc_phy_aux_ch(dev_priv, power_well);
+	struct intel_digital_port *dig_port = aux_ch_to_digital_port(dev_priv, aux_ch);
 
-	icl_tc_port_निश्चित_ref_held(dev_priv, घातer_well, dig_port);
+	icl_tc_port_assert_ref_held(dev_priv, power_well, dig_port);
 
-	hsw_घातer_well_disable(dev_priv, घातer_well);
-पूर्ण
+	hsw_power_well_disable(dev_priv, power_well);
+}
 
-अटल व्योम
-icl_aux_घातer_well_enable(काष्ठा drm_i915_निजी *dev_priv,
-			  काष्ठा i915_घातer_well *घातer_well)
-अणु
-	पूर्णांक pw_idx = घातer_well->desc->hsw.idx;
-	क्रमागत phy phy = ICL_AUX_PW_TO_PHY(pw_idx);  /* non-TBT only */
-	bool is_tbt = घातer_well->desc->hsw.is_tc_tbt;
+static void
+icl_aux_power_well_enable(struct drm_i915_private *dev_priv,
+			  struct i915_power_well *power_well)
+{
+	int pw_idx = power_well->desc->hsw.idx;
+	enum phy phy = ICL_AUX_PW_TO_PHY(pw_idx);  /* non-TBT only */
+	bool is_tbt = power_well->desc->hsw.is_tc_tbt;
 
-	अगर (is_tbt || पूर्णांकel_phy_is_tc(dev_priv, phy))
-		वापस icl_tc_phy_aux_घातer_well_enable(dev_priv, घातer_well);
-	अन्यथा अगर (IS_ICELAKE(dev_priv))
-		वापस icl_combo_phy_aux_घातer_well_enable(dev_priv,
-							   घातer_well);
-	अन्यथा
-		वापस hsw_घातer_well_enable(dev_priv, घातer_well);
-पूर्ण
+	if (is_tbt || intel_phy_is_tc(dev_priv, phy))
+		return icl_tc_phy_aux_power_well_enable(dev_priv, power_well);
+	else if (IS_ICELAKE(dev_priv))
+		return icl_combo_phy_aux_power_well_enable(dev_priv,
+							   power_well);
+	else
+		return hsw_power_well_enable(dev_priv, power_well);
+}
 
-अटल व्योम
-icl_aux_घातer_well_disable(काष्ठा drm_i915_निजी *dev_priv,
-			   काष्ठा i915_घातer_well *घातer_well)
-अणु
-	पूर्णांक pw_idx = घातer_well->desc->hsw.idx;
-	क्रमागत phy phy = ICL_AUX_PW_TO_PHY(pw_idx);  /* non-TBT only */
-	bool is_tbt = घातer_well->desc->hsw.is_tc_tbt;
+static void
+icl_aux_power_well_disable(struct drm_i915_private *dev_priv,
+			   struct i915_power_well *power_well)
+{
+	int pw_idx = power_well->desc->hsw.idx;
+	enum phy phy = ICL_AUX_PW_TO_PHY(pw_idx);  /* non-TBT only */
+	bool is_tbt = power_well->desc->hsw.is_tc_tbt;
 
-	अगर (is_tbt || पूर्णांकel_phy_is_tc(dev_priv, phy))
-		वापस icl_tc_phy_aux_घातer_well_disable(dev_priv, घातer_well);
-	अन्यथा अगर (IS_ICELAKE(dev_priv))
-		वापस icl_combo_phy_aux_घातer_well_disable(dev_priv,
-							    घातer_well);
-	अन्यथा
-		वापस hsw_घातer_well_disable(dev_priv, घातer_well);
-पूर्ण
+	if (is_tbt || intel_phy_is_tc(dev_priv, phy))
+		return icl_tc_phy_aux_power_well_disable(dev_priv, power_well);
+	else if (IS_ICELAKE(dev_priv))
+		return icl_combo_phy_aux_power_well_disable(dev_priv,
+							    power_well);
+	else
+		return hsw_power_well_disable(dev_priv, power_well);
+}
 
 /*
- * We should only use the घातer well अगर we explicitly asked the hardware to
- * enable it, so check अगर it's enabled and also check if we've requested it to
+ * We should only use the power well if we explicitly asked the hardware to
+ * enable it, so check if it's enabled and also check if we've requested it to
  * be enabled.
  */
-अटल bool hsw_घातer_well_enabled(काष्ठा drm_i915_निजी *dev_priv,
-				   काष्ठा i915_घातer_well *घातer_well)
-अणु
-	स्थिर काष्ठा i915_घातer_well_regs *regs = घातer_well->desc->hsw.regs;
-	क्रमागत i915_घातer_well_id id = घातer_well->desc->id;
-	पूर्णांक pw_idx = घातer_well->desc->hsw.idx;
+static bool hsw_power_well_enabled(struct drm_i915_private *dev_priv,
+				   struct i915_power_well *power_well)
+{
+	const struct i915_power_well_regs *regs = power_well->desc->hsw.regs;
+	enum i915_power_well_id id = power_well->desc->id;
+	int pw_idx = power_well->desc->hsw.idx;
 	u32 mask = HSW_PWR_WELL_CTL_REQ(pw_idx) |
 		   HSW_PWR_WELL_CTL_STATE(pw_idx);
 	u32 val;
 
-	val = पूर्णांकel_de_पढ़ो(dev_priv, regs->driver);
+	val = intel_de_read(dev_priv, regs->driver);
 
 	/*
-	 * On GEN9 big core due to a DMC bug the driver's request bits क्रम PW1
-	 * and the MISC_IO PW will be not restored, so check instead क्रम the
-	 * BIOS's own request bits, which are क्रमced-on क्रम these घातer wells
-	 * when निकासing DC5/6.
+	 * On GEN9 big core due to a DMC bug the driver's request bits for PW1
+	 * and the MISC_IO PW will be not restored, so check instead for the
+	 * BIOS's own request bits, which are forced-on for these power wells
+	 * when exiting DC5/6.
 	 */
-	अगर (IS_DISPLAY_VER(dev_priv, 9) && !IS_GEN9_LP(dev_priv) &&
+	if (IS_DISPLAY_VER(dev_priv, 9) && !IS_GEN9_LP(dev_priv) &&
 	    (id == SKL_DISP_PW_1 || id == SKL_DISP_PW_MISC_IO))
-		val |= पूर्णांकel_de_पढ़ो(dev_priv, regs->bios);
+		val |= intel_de_read(dev_priv, regs->bios);
 
-	वापस (val & mask) == mask;
-पूर्ण
+	return (val & mask) == mask;
+}
 
-अटल व्योम निश्चित_can_enable_dc9(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void assert_can_enable_dc9(struct drm_i915_private *dev_priv)
+{
 	drm_WARN_ONCE(&dev_priv->drm,
-		      (पूर्णांकel_de_पढ़ो(dev_priv, DC_STATE_EN) & DC_STATE_EN_DC9),
+		      (intel_de_read(dev_priv, DC_STATE_EN) & DC_STATE_EN_DC9),
 		      "DC9 already programmed to be enabled.\n");
 	drm_WARN_ONCE(&dev_priv->drm,
-		      पूर्णांकel_de_पढ़ो(dev_priv, DC_STATE_EN) &
+		      intel_de_read(dev_priv, DC_STATE_EN) &
 		      DC_STATE_EN_UPTO_DC5,
 		      "DC5 still not disabled to enable DC9.\n");
 	drm_WARN_ONCE(&dev_priv->drm,
-		      पूर्णांकel_de_पढ़ो(dev_priv, HSW_PWR_WELL_CTL2) &
+		      intel_de_read(dev_priv, HSW_PWR_WELL_CTL2) &
 		      HSW_PWR_WELL_CTL_REQ(SKL_PW_CTL_IDX_PW_2),
 		      "Power well 2 on.\n");
-	drm_WARN_ONCE(&dev_priv->drm, पूर्णांकel_irqs_enabled(dev_priv),
+	drm_WARN_ONCE(&dev_priv->drm, intel_irqs_enabled(dev_priv),
 		      "Interrupts not disabled yet.\n");
 
 	 /*
-	  * TODO: check क्रम the following to verअगरy the conditions to enter DC9
+	  * TODO: check for the following to verify the conditions to enter DC9
 	  * state are satisfied:
-	  * 1] Check relevant display engine रेजिस्टरs to verअगरy अगर mode set
+	  * 1] Check relevant display engine registers to verify if mode set
 	  * disable sequence was followed.
-	  * 2] Check अगर display uninitialize sequence is initialized.
+	  * 2] Check if display uninitialize sequence is initialized.
 	  */
-पूर्ण
+}
 
-अटल व्योम निश्चित_can_disable_dc9(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	drm_WARN_ONCE(&dev_priv->drm, पूर्णांकel_irqs_enabled(dev_priv),
+static void assert_can_disable_dc9(struct drm_i915_private *dev_priv)
+{
+	drm_WARN_ONCE(&dev_priv->drm, intel_irqs_enabled(dev_priv),
 		      "Interrupts not disabled yet.\n");
 	drm_WARN_ONCE(&dev_priv->drm,
-		      पूर्णांकel_de_पढ़ो(dev_priv, DC_STATE_EN) &
+		      intel_de_read(dev_priv, DC_STATE_EN) &
 		      DC_STATE_EN_UPTO_DC5,
 		      "DC5 still not disabled.\n");
 
 	 /*
-	  * TODO: check क्रम the following to verअगरy DC9 state was indeed
-	  * entered beक्रमe programming to disable it:
-	  * 1] Check relevant display engine रेजिस्टरs to verअगरy अगर mode
+	  * TODO: check for the following to verify DC9 state was indeed
+	  * entered before programming to disable it:
+	  * 1] Check relevant display engine registers to verify if mode
 	  *  set disable sequence was followed.
-	  * 2] Check अगर display uninitialize sequence is initialized.
+	  * 2] Check if display uninitialize sequence is initialized.
 	  */
-पूर्ण
+}
 
-अटल व्योम gen9_ग_लिखो_dc_state(काष्ठा drm_i915_निजी *dev_priv,
+static void gen9_write_dc_state(struct drm_i915_private *dev_priv,
 				u32 state)
-अणु
-	पूर्णांक reग_लिखोs = 0;
-	पूर्णांक reपढ़ोs = 0;
+{
+	int rewrites = 0;
+	int rereads = 0;
 	u32 v;
 
-	पूर्णांकel_de_ग_लिखो(dev_priv, DC_STATE_EN, state);
+	intel_de_write(dev_priv, DC_STATE_EN, state);
 
-	/* It has been observed that disabling the dc6 state someबार
-	 * करोesn't stick and dmc keeps वापसing old value. Make sure
-	 * the ग_लिखो really sticks enough बार and also क्रमce reग_लिखो until
+	/* It has been observed that disabling the dc6 state sometimes
+	 * doesn't stick and dmc keeps returning old value. Make sure
+	 * the write really sticks enough times and also force rewrite until
 	 * we are confident that state is exactly what we want.
 	 */
-	करो  अणु
-		v = पूर्णांकel_de_पढ़ो(dev_priv, DC_STATE_EN);
+	do  {
+		v = intel_de_read(dev_priv, DC_STATE_EN);
 
-		अगर (v != state) अणु
-			पूर्णांकel_de_ग_लिखो(dev_priv, DC_STATE_EN, state);
-			reग_लिखोs++;
-			reपढ़ोs = 0;
-		पूर्ण अन्यथा अगर (reपढ़ोs++ > 5) अणु
-			अवरोध;
-		पूर्ण
+		if (v != state) {
+			intel_de_write(dev_priv, DC_STATE_EN, state);
+			rewrites++;
+			rereads = 0;
+		} else if (rereads++ > 5) {
+			break;
+		}
 
-	पूर्ण जबतक (reग_लिखोs < 100);
+	} while (rewrites < 100);
 
-	अगर (v != state)
+	if (v != state)
 		drm_err(&dev_priv->drm,
 			"Writing dc state to 0x%x failed, now 0x%x\n",
 			state, v);
 
-	/* Most of the बार we need one retry, aव्योम spam */
-	अगर (reग_लिखोs > 1)
+	/* Most of the times we need one retry, avoid spam */
+	if (rewrites > 1)
 		drm_dbg_kms(&dev_priv->drm,
 			    "Rewrote dc state to 0x%x %d times\n",
-			    state, reग_लिखोs);
-पूर्ण
+			    state, rewrites);
+}
 
-अटल u32 gen9_dc_mask(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static u32 gen9_dc_mask(struct drm_i915_private *dev_priv)
+{
 	u32 mask;
 
 	mask = DC_STATE_EN_UPTO_DC5;
 
-	अगर (DISPLAY_VER(dev_priv) >= 12)
+	if (DISPLAY_VER(dev_priv) >= 12)
 		mask |= DC_STATE_EN_DC3CO | DC_STATE_EN_UPTO_DC6
 					  | DC_STATE_EN_DC9;
-	अन्यथा अगर (IS_DISPLAY_VER(dev_priv, 11))
+	else if (IS_DISPLAY_VER(dev_priv, 11))
 		mask |= DC_STATE_EN_UPTO_DC6 | DC_STATE_EN_DC9;
-	अन्यथा अगर (IS_GEN9_LP(dev_priv))
+	else if (IS_GEN9_LP(dev_priv))
 		mask |= DC_STATE_EN_DC9;
-	अन्यथा
+	else
 		mask |= DC_STATE_EN_UPTO_DC6;
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल व्योम gen9_sanitize_dc_state(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void gen9_sanitize_dc_state(struct drm_i915_private *dev_priv)
+{
 	u32 val;
 
-	val = पूर्णांकel_de_पढ़ो(dev_priv, DC_STATE_EN) & gen9_dc_mask(dev_priv);
+	val = intel_de_read(dev_priv, DC_STATE_EN) & gen9_dc_mask(dev_priv);
 
 	drm_dbg_kms(&dev_priv->drm,
 		    "Resetting DC state tracking from %02x to %02x\n",
 		    dev_priv->csr.dc_state, val);
 	dev_priv->csr.dc_state = val;
-पूर्ण
+}
 
 /**
- * gen9_set_dc_state - set target display C घातer state
+ * gen9_set_dc_state - set target display C power state
  * @dev_priv: i915 device instance
- * @state: target DC घातer state
+ * @state: target DC power state
  * - DC_STATE_DISABLE
  * - DC_STATE_EN_UPTO_DC5
  * - DC_STATE_EN_UPTO_DC6
  * - DC_STATE_EN_DC9
  *
- * Signal to DMC firmware/HW the target DC घातer state passed in @state.
- * DMC/HW can turn off inभागidual display घड़ीs and घातer rails when entering
- * a deeper DC घातer state (higher in number) and turns these back when निकासing
- * that state to a shallower घातer state (lower in number). The HW will decide
- * when to actually enter a given state on an on-demand basis, क्रम instance
+ * Signal to DMC firmware/HW the target DC power state passed in @state.
+ * DMC/HW can turn off individual display clocks and power rails when entering
+ * a deeper DC power state (higher in number) and turns these back when exiting
+ * that state to a shallower power state (lower in number). The HW will decide
+ * when to actually enter a given state on an on-demand basis, for instance
  * depending on the active state of display pipes. The state of display
- * रेजिस्टरs backed by affected घातer rails are saved/restored as needed.
+ * registers backed by affected power rails are saved/restored as needed.
  *
- * Based on the above enabling a deeper DC घातer state is asynchronous wrt.
- * enabling it. Disabling a deeper घातer state is synchronous: क्रम instance
+ * Based on the above enabling a deeper DC power state is asynchronous wrt.
+ * enabling it. Disabling a deeper power state is synchronous: for instance
  * setting %DC_STATE_DISABLE won't complete until all HW resources are turned
- * back on and रेजिस्टर state is restored. This is guaranteed by the MMIO ग_लिखो
+ * back on and register state is restored. This is guaranteed by the MMIO write
  * to DC_STATE_EN blocking until the state is restored.
  */
-अटल व्योम gen9_set_dc_state(काष्ठा drm_i915_निजी *dev_priv, u32 state)
-अणु
+static void gen9_set_dc_state(struct drm_i915_private *dev_priv, u32 state)
+{
 	u32 val;
 	u32 mask;
 
-	अगर (drm_WARN_ON_ONCE(&dev_priv->drm,
+	if (drm_WARN_ON_ONCE(&dev_priv->drm,
 			     state & ~dev_priv->csr.allowed_dc_mask))
 		state &= dev_priv->csr.allowed_dc_mask;
 
-	val = पूर्णांकel_de_पढ़ो(dev_priv, DC_STATE_EN);
+	val = intel_de_read(dev_priv, DC_STATE_EN);
 	mask = gen9_dc_mask(dev_priv);
 	drm_dbg_kms(&dev_priv->drm, "Setting DC state from %02x to %02x\n",
 		    val & mask, state);
 
-	/* Check अगर DMC is ignoring our DC state requests */
-	अगर ((val & mask) != dev_priv->csr.dc_state)
+	/* Check if DMC is ignoring our DC state requests */
+	if ((val & mask) != dev_priv->csr.dc_state)
 		drm_err(&dev_priv->drm, "DC state mismatch (0x%x -> 0x%x)\n",
 			dev_priv->csr.dc_state, val & mask);
 
 	val &= ~mask;
 	val |= state;
 
-	gen9_ग_लिखो_dc_state(dev_priv, val);
+	gen9_write_dc_state(dev_priv, val);
 
 	dev_priv->csr.dc_state = val & mask;
-पूर्ण
+}
 
-अटल u32
-sanitize_target_dc_state(काष्ठा drm_i915_निजी *dev_priv,
+static u32
+sanitize_target_dc_state(struct drm_i915_private *dev_priv,
 			 u32 target_dc_state)
-अणु
-	u32 states[] = अणु
+{
+	u32 states[] = {
 		DC_STATE_EN_UPTO_DC6,
 		DC_STATE_EN_UPTO_DC5,
 		DC_STATE_EN_DC3CO,
 		DC_STATE_DISABLE,
-	पूर्ण;
-	पूर्णांक i;
+	};
+	int i;
 
-	क्रम (i = 0; i < ARRAY_SIZE(states) - 1; i++) अणु
-		अगर (target_dc_state != states[i])
-			जारी;
+	for (i = 0; i < ARRAY_SIZE(states) - 1; i++) {
+		if (target_dc_state != states[i])
+			continue;
 
-		अगर (dev_priv->csr.allowed_dc_mask & target_dc_state)
-			अवरोध;
+		if (dev_priv->csr.allowed_dc_mask & target_dc_state)
+			break;
 
 		target_dc_state = states[i + 1];
-	पूर्ण
+	}
 
-	वापस target_dc_state;
-पूर्ण
+	return target_dc_state;
+}
 
-अटल व्योम tgl_enable_dc3co(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void tgl_enable_dc3co(struct drm_i915_private *dev_priv)
+{
 	drm_dbg_kms(&dev_priv->drm, "Enabling DC3CO\n");
 	gen9_set_dc_state(dev_priv, DC_STATE_EN_DC3CO);
-पूर्ण
+}
 
-अटल व्योम tgl_disable_dc3co(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void tgl_disable_dc3co(struct drm_i915_private *dev_priv)
+{
 	u32 val;
 
 	drm_dbg_kms(&dev_priv->drm, "Disabling DC3CO\n");
-	val = पूर्णांकel_de_पढ़ो(dev_priv, DC_STATE_EN);
+	val = intel_de_read(dev_priv, DC_STATE_EN);
 	val &= ~DC_STATE_DC3CO_STATUS;
-	पूर्णांकel_de_ग_लिखो(dev_priv, DC_STATE_EN, val);
+	intel_de_write(dev_priv, DC_STATE_EN, val);
 	gen9_set_dc_state(dev_priv, DC_STATE_DISABLE);
 	/*
-	 * Delay of 200us DC3CO Exit समय B.Spec 49196
+	 * Delay of 200us DC3CO Exit time B.Spec 49196
 	 */
 	usleep_range(200, 210);
-पूर्ण
+}
 
-अटल व्योम bxt_enable_dc9(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	निश्चित_can_enable_dc9(dev_priv);
+static void bxt_enable_dc9(struct drm_i915_private *dev_priv)
+{
+	assert_can_enable_dc9(dev_priv);
 
 	drm_dbg_kms(&dev_priv->drm, "Enabling DC9\n");
 	/*
 	 * Power sequencer reset is not needed on
-	 * platक्रमms with South Display Engine on PCH,
-	 * because PPS रेजिस्टरs are always on.
+	 * platforms with South Display Engine on PCH,
+	 * because PPS registers are always on.
 	 */
-	अगर (!HAS_PCH_SPLIT(dev_priv))
-		पूर्णांकel_pps_reset_all(dev_priv);
+	if (!HAS_PCH_SPLIT(dev_priv))
+		intel_pps_reset_all(dev_priv);
 	gen9_set_dc_state(dev_priv, DC_STATE_EN_DC9);
-पूर्ण
+}
 
-अटल व्योम bxt_disable_dc9(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	निश्चित_can_disable_dc9(dev_priv);
+static void bxt_disable_dc9(struct drm_i915_private *dev_priv)
+{
+	assert_can_disable_dc9(dev_priv);
 
 	drm_dbg_kms(&dev_priv->drm, "Disabling DC9\n");
 
 	gen9_set_dc_state(dev_priv, DC_STATE_DISABLE);
 
-	पूर्णांकel_pps_unlock_regs_wa(dev_priv);
-पूर्ण
+	intel_pps_unlock_regs_wa(dev_priv);
+}
 
-अटल व्योम निश्चित_csr_loaded(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void assert_csr_loaded(struct drm_i915_private *dev_priv)
+{
 	drm_WARN_ONCE(&dev_priv->drm,
-		      !पूर्णांकel_de_पढ़ो(dev_priv, CSR_PROGRAM(0)),
+		      !intel_de_read(dev_priv, CSR_PROGRAM(0)),
 		      "CSR program storage start is NULL\n");
-	drm_WARN_ONCE(&dev_priv->drm, !पूर्णांकel_de_पढ़ो(dev_priv, CSR_SSP_BASE),
+	drm_WARN_ONCE(&dev_priv->drm, !intel_de_read(dev_priv, CSR_SSP_BASE),
 		      "CSR SSP Base Not fine\n");
-	drm_WARN_ONCE(&dev_priv->drm, !पूर्णांकel_de_पढ़ो(dev_priv, CSR_HTP_SKL),
+	drm_WARN_ONCE(&dev_priv->drm, !intel_de_read(dev_priv, CSR_HTP_SKL),
 		      "CSR HTP Not fine\n");
-पूर्ण
+}
 
-अटल काष्ठा i915_घातer_well *
-lookup_घातer_well(काष्ठा drm_i915_निजी *dev_priv,
-		  क्रमागत i915_घातer_well_id घातer_well_id)
-अणु
-	काष्ठा i915_घातer_well *घातer_well;
+static struct i915_power_well *
+lookup_power_well(struct drm_i915_private *dev_priv,
+		  enum i915_power_well_id power_well_id)
+{
+	struct i915_power_well *power_well;
 
-	क्रम_each_घातer_well(dev_priv, घातer_well)
-		अगर (घातer_well->desc->id == घातer_well_id)
-			वापस घातer_well;
+	for_each_power_well(dev_priv, power_well)
+		if (power_well->desc->id == power_well_id)
+			return power_well;
 
 	/*
 	 * It's not feasible to add error checking code to the callers since
 	 * this condition really shouldn't happen and it doesn't even make sense
-	 * to पात things like display initialization sequences. Just वापस
-	 * the first घातer well and hope the WARN माला_लो reported so we can fix
+	 * to abort things like display initialization sequences. Just return
+	 * the first power well and hope the WARN gets reported so we can fix
 	 * our driver.
 	 */
 	drm_WARN(&dev_priv->drm, 1,
 		 "Power well %d not defined for this platform\n",
-		 घातer_well_id);
-	वापस &dev_priv->घातer_करोमुख्यs.घातer_wells[0];
-पूर्ण
+		 power_well_id);
+	return &dev_priv->power_domains.power_wells[0];
+}
 
 /**
- * पूर्णांकel_display_घातer_set_target_dc_state - Set target dc state.
+ * intel_display_power_set_target_dc_state - Set target dc state.
  * @dev_priv: i915 device
  * @state: state which needs to be set as target_dc_state.
  *
- * This function set the "DC off" घातer well target_dc_state,
- * based upon this target_dc_stste, "DC off" घातer well will
+ * This function set the "DC off" power well target_dc_state,
+ * based upon this target_dc_stste, "DC off" power well will
  * enable desired DC state.
  */
-व्योम पूर्णांकel_display_घातer_set_target_dc_state(काष्ठा drm_i915_निजी *dev_priv,
+void intel_display_power_set_target_dc_state(struct drm_i915_private *dev_priv,
 					     u32 state)
-अणु
-	काष्ठा i915_घातer_well *घातer_well;
+{
+	struct i915_power_well *power_well;
 	bool dc_off_enabled;
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &dev_priv->घातer_करोमुख्यs;
+	struct i915_power_domains *power_domains = &dev_priv->power_domains;
 
-	mutex_lock(&घातer_करोमुख्यs->lock);
-	घातer_well = lookup_घातer_well(dev_priv, SKL_DISP_DC_OFF);
+	mutex_lock(&power_domains->lock);
+	power_well = lookup_power_well(dev_priv, SKL_DISP_DC_OFF);
 
-	अगर (drm_WARN_ON(&dev_priv->drm, !घातer_well))
-		जाओ unlock;
+	if (drm_WARN_ON(&dev_priv->drm, !power_well))
+		goto unlock;
 
 	state = sanitize_target_dc_state(dev_priv, state);
 
-	अगर (state == dev_priv->csr.target_dc_state)
-		जाओ unlock;
+	if (state == dev_priv->csr.target_dc_state)
+		goto unlock;
 
-	dc_off_enabled = घातer_well->desc->ops->is_enabled(dev_priv,
-							   घातer_well);
+	dc_off_enabled = power_well->desc->ops->is_enabled(dev_priv,
+							   power_well);
 	/*
-	 * If DC off घातer well is disabled, need to enable and disable the
-	 * DC off घातer well to effect target DC state.
+	 * If DC off power well is disabled, need to enable and disable the
+	 * DC off power well to effect target DC state.
 	 */
-	अगर (!dc_off_enabled)
-		घातer_well->desc->ops->enable(dev_priv, घातer_well);
+	if (!dc_off_enabled)
+		power_well->desc->ops->enable(dev_priv, power_well);
 
 	dev_priv->csr.target_dc_state = state;
 
-	अगर (!dc_off_enabled)
-		घातer_well->desc->ops->disable(dev_priv, घातer_well);
+	if (!dc_off_enabled)
+		power_well->desc->ops->disable(dev_priv, power_well);
 
 unlock:
-	mutex_unlock(&घातer_करोमुख्यs->lock);
-पूर्ण
+	mutex_unlock(&power_domains->lock);
+}
 
-अटल व्योम निश्चित_can_enable_dc5(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	क्रमागत i915_घातer_well_id high_pg;
+static void assert_can_enable_dc5(struct drm_i915_private *dev_priv)
+{
+	enum i915_power_well_id high_pg;
 
-	/* Power wells at this level and above must be disabled क्रम DC5 entry */
-	अगर (DISPLAY_VER(dev_priv) >= 12)
+	/* Power wells at this level and above must be disabled for DC5 entry */
+	if (DISPLAY_VER(dev_priv) >= 12)
 		high_pg = ICL_DISP_PW_3;
-	अन्यथा
+	else
 		high_pg = SKL_DISP_PW_2;
 
 	drm_WARN_ONCE(&dev_priv->drm,
-		      पूर्णांकel_display_घातer_well_is_enabled(dev_priv, high_pg),
+		      intel_display_power_well_is_enabled(dev_priv, high_pg),
 		      "Power wells above platform's DC5 limit still enabled.\n");
 
 	drm_WARN_ONCE(&dev_priv->drm,
-		      (पूर्णांकel_de_पढ़ो(dev_priv, DC_STATE_EN) &
+		      (intel_de_read(dev_priv, DC_STATE_EN) &
 		       DC_STATE_EN_UPTO_DC5),
 		      "DC5 already programmed to be enabled.\n");
-	निश्चित_rpm_wakelock_held(&dev_priv->runसमय_pm);
+	assert_rpm_wakelock_held(&dev_priv->runtime_pm);
 
-	निश्चित_csr_loaded(dev_priv);
-पूर्ण
+	assert_csr_loaded(dev_priv);
+}
 
-अटल व्योम gen9_enable_dc5(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	निश्चित_can_enable_dc5(dev_priv);
+static void gen9_enable_dc5(struct drm_i915_private *dev_priv)
+{
+	assert_can_enable_dc5(dev_priv);
 
 	drm_dbg_kms(&dev_priv->drm, "Enabling DC5\n");
 
 	/* Wa Display #1183: skl,kbl,cfl */
-	अगर (IS_GEN9_BC(dev_priv))
-		पूर्णांकel_de_ग_लिखो(dev_priv, GEN8_CHICKEN_DCPR_1,
-			       पूर्णांकel_de_पढ़ो(dev_priv, GEN8_CHICKEN_DCPR_1) | SKL_SELECT_ALTERNATE_DC_EXIT);
+	if (IS_GEN9_BC(dev_priv))
+		intel_de_write(dev_priv, GEN8_CHICKEN_DCPR_1,
+			       intel_de_read(dev_priv, GEN8_CHICKEN_DCPR_1) | SKL_SELECT_ALTERNATE_DC_EXIT);
 
 	gen9_set_dc_state(dev_priv, DC_STATE_EN_UPTO_DC5);
-पूर्ण
+}
 
-अटल व्योम निश्चित_can_enable_dc6(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void assert_can_enable_dc6(struct drm_i915_private *dev_priv)
+{
 	drm_WARN_ONCE(&dev_priv->drm,
-		      पूर्णांकel_de_पढ़ो(dev_priv, UTIL_PIN_CTL) & UTIL_PIN_ENABLE,
+		      intel_de_read(dev_priv, UTIL_PIN_CTL) & UTIL_PIN_ENABLE,
 		      "Backlight is not disabled.\n");
 	drm_WARN_ONCE(&dev_priv->drm,
-		      (पूर्णांकel_de_पढ़ो(dev_priv, DC_STATE_EN) &
+		      (intel_de_read(dev_priv, DC_STATE_EN) &
 		       DC_STATE_EN_UPTO_DC6),
 		      "DC6 already programmed to be enabled.\n");
 
-	निश्चित_csr_loaded(dev_priv);
-पूर्ण
+	assert_csr_loaded(dev_priv);
+}
 
-अटल व्योम skl_enable_dc6(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	निश्चित_can_enable_dc6(dev_priv);
+static void skl_enable_dc6(struct drm_i915_private *dev_priv)
+{
+	assert_can_enable_dc6(dev_priv);
 
 	drm_dbg_kms(&dev_priv->drm, "Enabling DC6\n");
 
 	/* Wa Display #1183: skl,kbl,cfl */
-	अगर (IS_GEN9_BC(dev_priv))
-		पूर्णांकel_de_ग_लिखो(dev_priv, GEN8_CHICKEN_DCPR_1,
-			       पूर्णांकel_de_पढ़ो(dev_priv, GEN8_CHICKEN_DCPR_1) | SKL_SELECT_ALTERNATE_DC_EXIT);
+	if (IS_GEN9_BC(dev_priv))
+		intel_de_write(dev_priv, GEN8_CHICKEN_DCPR_1,
+			       intel_de_read(dev_priv, GEN8_CHICKEN_DCPR_1) | SKL_SELECT_ALTERNATE_DC_EXIT);
 
 	gen9_set_dc_state(dev_priv, DC_STATE_EN_UPTO_DC6);
-पूर्ण
+}
 
-अटल व्योम hsw_घातer_well_sync_hw(काष्ठा drm_i915_निजी *dev_priv,
-				   काष्ठा i915_घातer_well *घातer_well)
-अणु
-	स्थिर काष्ठा i915_घातer_well_regs *regs = घातer_well->desc->hsw.regs;
-	पूर्णांक pw_idx = घातer_well->desc->hsw.idx;
+static void hsw_power_well_sync_hw(struct drm_i915_private *dev_priv,
+				   struct i915_power_well *power_well)
+{
+	const struct i915_power_well_regs *regs = power_well->desc->hsw.regs;
+	int pw_idx = power_well->desc->hsw.idx;
 	u32 mask = HSW_PWR_WELL_CTL_REQ(pw_idx);
-	u32 bios_req = पूर्णांकel_de_पढ़ो(dev_priv, regs->bios);
+	u32 bios_req = intel_de_read(dev_priv, regs->bios);
 
-	/* Take over the request bit अगर set by BIOS. */
-	अगर (bios_req & mask) अणु
-		u32 drv_req = पूर्णांकel_de_पढ़ो(dev_priv, regs->driver);
+	/* Take over the request bit if set by BIOS. */
+	if (bios_req & mask) {
+		u32 drv_req = intel_de_read(dev_priv, regs->driver);
 
-		अगर (!(drv_req & mask))
-			पूर्णांकel_de_ग_लिखो(dev_priv, regs->driver, drv_req | mask);
-		पूर्णांकel_de_ग_लिखो(dev_priv, regs->bios, bios_req & ~mask);
-	पूर्ण
-पूर्ण
+		if (!(drv_req & mask))
+			intel_de_write(dev_priv, regs->driver, drv_req | mask);
+		intel_de_write(dev_priv, regs->bios, bios_req & ~mask);
+	}
+}
 
-अटल व्योम bxt_dpio_cmn_घातer_well_enable(काष्ठा drm_i915_निजी *dev_priv,
-					   काष्ठा i915_घातer_well *घातer_well)
-अणु
-	bxt_ddi_phy_init(dev_priv, घातer_well->desc->bxt.phy);
-पूर्ण
+static void bxt_dpio_cmn_power_well_enable(struct drm_i915_private *dev_priv,
+					   struct i915_power_well *power_well)
+{
+	bxt_ddi_phy_init(dev_priv, power_well->desc->bxt.phy);
+}
 
-अटल व्योम bxt_dpio_cmn_घातer_well_disable(काष्ठा drm_i915_निजी *dev_priv,
-					    काष्ठा i915_घातer_well *घातer_well)
-अणु
-	bxt_ddi_phy_uninit(dev_priv, घातer_well->desc->bxt.phy);
-पूर्ण
+static void bxt_dpio_cmn_power_well_disable(struct drm_i915_private *dev_priv,
+					    struct i915_power_well *power_well)
+{
+	bxt_ddi_phy_uninit(dev_priv, power_well->desc->bxt.phy);
+}
 
-अटल bool bxt_dpio_cmn_घातer_well_enabled(काष्ठा drm_i915_निजी *dev_priv,
-					    काष्ठा i915_घातer_well *घातer_well)
-अणु
-	वापस bxt_ddi_phy_is_enabled(dev_priv, घातer_well->desc->bxt.phy);
-पूर्ण
+static bool bxt_dpio_cmn_power_well_enabled(struct drm_i915_private *dev_priv,
+					    struct i915_power_well *power_well)
+{
+	return bxt_ddi_phy_is_enabled(dev_priv, power_well->desc->bxt.phy);
+}
 
-अटल व्योम bxt_verअगरy_ddi_phy_घातer_wells(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा i915_घातer_well *घातer_well;
+static void bxt_verify_ddi_phy_power_wells(struct drm_i915_private *dev_priv)
+{
+	struct i915_power_well *power_well;
 
-	घातer_well = lookup_घातer_well(dev_priv, BXT_DISP_PW_DPIO_CMN_A);
-	अगर (घातer_well->count > 0)
-		bxt_ddi_phy_verअगरy_state(dev_priv, घातer_well->desc->bxt.phy);
+	power_well = lookup_power_well(dev_priv, BXT_DISP_PW_DPIO_CMN_A);
+	if (power_well->count > 0)
+		bxt_ddi_phy_verify_state(dev_priv, power_well->desc->bxt.phy);
 
-	घातer_well = lookup_घातer_well(dev_priv, VLV_DISP_PW_DPIO_CMN_BC);
-	अगर (घातer_well->count > 0)
-		bxt_ddi_phy_verअगरy_state(dev_priv, घातer_well->desc->bxt.phy);
+	power_well = lookup_power_well(dev_priv, VLV_DISP_PW_DPIO_CMN_BC);
+	if (power_well->count > 0)
+		bxt_ddi_phy_verify_state(dev_priv, power_well->desc->bxt.phy);
 
-	अगर (IS_GEMINILAKE(dev_priv)) अणु
-		घातer_well = lookup_घातer_well(dev_priv,
+	if (IS_GEMINILAKE(dev_priv)) {
+		power_well = lookup_power_well(dev_priv,
 					       GLK_DISP_PW_DPIO_CMN_C);
-		अगर (घातer_well->count > 0)
-			bxt_ddi_phy_verअगरy_state(dev_priv,
-						 घातer_well->desc->bxt.phy);
-	पूर्ण
-पूर्ण
+		if (power_well->count > 0)
+			bxt_ddi_phy_verify_state(dev_priv,
+						 power_well->desc->bxt.phy);
+	}
+}
 
-अटल bool gen9_dc_off_घातer_well_enabled(काष्ठा drm_i915_निजी *dev_priv,
-					   काष्ठा i915_घातer_well *घातer_well)
-अणु
-	वापस ((पूर्णांकel_de_पढ़ो(dev_priv, DC_STATE_EN) & DC_STATE_EN_DC3CO) == 0 &&
-		(पूर्णांकel_de_पढ़ो(dev_priv, DC_STATE_EN) & DC_STATE_EN_UPTO_DC5_DC6_MASK) == 0);
-पूर्ण
+static bool gen9_dc_off_power_well_enabled(struct drm_i915_private *dev_priv,
+					   struct i915_power_well *power_well)
+{
+	return ((intel_de_read(dev_priv, DC_STATE_EN) & DC_STATE_EN_DC3CO) == 0 &&
+		(intel_de_read(dev_priv, DC_STATE_EN) & DC_STATE_EN_UPTO_DC5_DC6_MASK) == 0);
+}
 
-अटल व्योम gen9_निश्चित_dbuf_enabled(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	u8 hw_enabled_dbuf_slices = पूर्णांकel_enabled_dbuf_slices_mask(dev_priv);
+static void gen9_assert_dbuf_enabled(struct drm_i915_private *dev_priv)
+{
+	u8 hw_enabled_dbuf_slices = intel_enabled_dbuf_slices_mask(dev_priv);
 	u8 enabled_dbuf_slices = dev_priv->dbuf.enabled_slices;
 
 	drm_WARN(&dev_priv->drm,
@@ -1169,116 +1168,116 @@ unlock:
 		 "Unexpected DBuf power power state (0x%08x, expected 0x%08x)\n",
 		 hw_enabled_dbuf_slices,
 		 enabled_dbuf_slices);
-पूर्ण
+}
 
-अटल व्योम gen9_disable_dc_states(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा पूर्णांकel_cdclk_config cdclk_config = अणुपूर्ण;
+static void gen9_disable_dc_states(struct drm_i915_private *dev_priv)
+{
+	struct intel_cdclk_config cdclk_config = {};
 
-	अगर (dev_priv->csr.target_dc_state == DC_STATE_EN_DC3CO) अणु
+	if (dev_priv->csr.target_dc_state == DC_STATE_EN_DC3CO) {
 		tgl_disable_dc3co(dev_priv);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	gen9_set_dc_state(dev_priv, DC_STATE_DISABLE);
 
 	dev_priv->display.get_cdclk(dev_priv, &cdclk_config);
-	/* Can't read out voltage_level so can't use पूर्णांकel_cdclk_changed() */
+	/* Can't read out voltage_level so can't use intel_cdclk_changed() */
 	drm_WARN_ON(&dev_priv->drm,
-		    पूर्णांकel_cdclk_needs_modeset(&dev_priv->cdclk.hw,
+		    intel_cdclk_needs_modeset(&dev_priv->cdclk.hw,
 					      &cdclk_config));
 
-	gen9_निश्चित_dbuf_enabled(dev_priv);
+	gen9_assert_dbuf_enabled(dev_priv);
 
-	अगर (IS_GEN9_LP(dev_priv))
-		bxt_verअगरy_ddi_phy_घातer_wells(dev_priv);
+	if (IS_GEN9_LP(dev_priv))
+		bxt_verify_ddi_phy_power_wells(dev_priv);
 
-	अगर (DISPLAY_VER(dev_priv) >= 11)
+	if (DISPLAY_VER(dev_priv) >= 11)
 		/*
-		 * DMC retains HW context only क्रम port A, the other combo
-		 * PHY's HW context क्रम port B is lost after DC transitions,
+		 * DMC retains HW context only for port A, the other combo
+		 * PHY's HW context for port B is lost after DC transitions,
 		 * so we need to restore it manually.
 		 */
-		पूर्णांकel_combo_phy_init(dev_priv);
-पूर्ण
+		intel_combo_phy_init(dev_priv);
+}
 
-अटल व्योम gen9_dc_off_घातer_well_enable(काष्ठा drm_i915_निजी *dev_priv,
-					  काष्ठा i915_घातer_well *घातer_well)
-अणु
+static void gen9_dc_off_power_well_enable(struct drm_i915_private *dev_priv,
+					  struct i915_power_well *power_well)
+{
 	gen9_disable_dc_states(dev_priv);
-पूर्ण
+}
 
-अटल व्योम gen9_dc_off_घातer_well_disable(काष्ठा drm_i915_निजी *dev_priv,
-					   काष्ठा i915_घातer_well *घातer_well)
-अणु
-	अगर (!dev_priv->csr.dmc_payload)
-		वापस;
+static void gen9_dc_off_power_well_disable(struct drm_i915_private *dev_priv,
+					   struct i915_power_well *power_well)
+{
+	if (!dev_priv->csr.dmc_payload)
+		return;
 
-	चयन (dev_priv->csr.target_dc_state) अणु
-	हाल DC_STATE_EN_DC3CO:
+	switch (dev_priv->csr.target_dc_state) {
+	case DC_STATE_EN_DC3CO:
 		tgl_enable_dc3co(dev_priv);
-		अवरोध;
-	हाल DC_STATE_EN_UPTO_DC6:
+		break;
+	case DC_STATE_EN_UPTO_DC6:
 		skl_enable_dc6(dev_priv);
-		अवरोध;
-	हाल DC_STATE_EN_UPTO_DC5:
+		break;
+	case DC_STATE_EN_UPTO_DC5:
 		gen9_enable_dc5(dev_priv);
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	}
+}
 
-अटल व्योम i9xx_घातer_well_sync_hw_noop(काष्ठा drm_i915_निजी *dev_priv,
-					 काष्ठा i915_घातer_well *घातer_well)
-अणु
-पूर्ण
+static void i9xx_power_well_sync_hw_noop(struct drm_i915_private *dev_priv,
+					 struct i915_power_well *power_well)
+{
+}
 
-अटल व्योम i9xx_always_on_घातer_well_noop(काष्ठा drm_i915_निजी *dev_priv,
-					   काष्ठा i915_घातer_well *घातer_well)
-अणु
-पूर्ण
+static void i9xx_always_on_power_well_noop(struct drm_i915_private *dev_priv,
+					   struct i915_power_well *power_well)
+{
+}
 
-अटल bool i9xx_always_on_घातer_well_enabled(काष्ठा drm_i915_निजी *dev_priv,
-					     काष्ठा i915_घातer_well *घातer_well)
-अणु
-	वापस true;
-पूर्ण
+static bool i9xx_always_on_power_well_enabled(struct drm_i915_private *dev_priv,
+					     struct i915_power_well *power_well)
+{
+	return true;
+}
 
-अटल व्योम i830_pipes_घातer_well_enable(काष्ठा drm_i915_निजी *dev_priv,
-					 काष्ठा i915_घातer_well *घातer_well)
-अणु
-	अगर ((पूर्णांकel_de_पढ़ो(dev_priv, PIPECONF(PIPE_A)) & PIPECONF_ENABLE) == 0)
+static void i830_pipes_power_well_enable(struct drm_i915_private *dev_priv,
+					 struct i915_power_well *power_well)
+{
+	if ((intel_de_read(dev_priv, PIPECONF(PIPE_A)) & PIPECONF_ENABLE) == 0)
 		i830_enable_pipe(dev_priv, PIPE_A);
-	अगर ((पूर्णांकel_de_पढ़ो(dev_priv, PIPECONF(PIPE_B)) & PIPECONF_ENABLE) == 0)
+	if ((intel_de_read(dev_priv, PIPECONF(PIPE_B)) & PIPECONF_ENABLE) == 0)
 		i830_enable_pipe(dev_priv, PIPE_B);
-पूर्ण
+}
 
-अटल व्योम i830_pipes_घातer_well_disable(काष्ठा drm_i915_निजी *dev_priv,
-					  काष्ठा i915_घातer_well *घातer_well)
-अणु
+static void i830_pipes_power_well_disable(struct drm_i915_private *dev_priv,
+					  struct i915_power_well *power_well)
+{
 	i830_disable_pipe(dev_priv, PIPE_B);
 	i830_disable_pipe(dev_priv, PIPE_A);
-पूर्ण
+}
 
-अटल bool i830_pipes_घातer_well_enabled(काष्ठा drm_i915_निजी *dev_priv,
-					  काष्ठा i915_घातer_well *घातer_well)
-अणु
-	वापस पूर्णांकel_de_पढ़ो(dev_priv, PIPECONF(PIPE_A)) & PIPECONF_ENABLE &&
-		पूर्णांकel_de_पढ़ो(dev_priv, PIPECONF(PIPE_B)) & PIPECONF_ENABLE;
-पूर्ण
+static bool i830_pipes_power_well_enabled(struct drm_i915_private *dev_priv,
+					  struct i915_power_well *power_well)
+{
+	return intel_de_read(dev_priv, PIPECONF(PIPE_A)) & PIPECONF_ENABLE &&
+		intel_de_read(dev_priv, PIPECONF(PIPE_B)) & PIPECONF_ENABLE;
+}
 
-अटल व्योम i830_pipes_घातer_well_sync_hw(काष्ठा drm_i915_निजी *dev_priv,
-					  काष्ठा i915_घातer_well *घातer_well)
-अणु
-	अगर (घातer_well->count > 0)
-		i830_pipes_घातer_well_enable(dev_priv, घातer_well);
-	अन्यथा
-		i830_pipes_घातer_well_disable(dev_priv, घातer_well);
-पूर्ण
+static void i830_pipes_power_well_sync_hw(struct drm_i915_private *dev_priv,
+					  struct i915_power_well *power_well)
+{
+	if (power_well->count > 0)
+		i830_pipes_power_well_enable(dev_priv, power_well);
+	else
+		i830_pipes_power_well_disable(dev_priv, power_well);
+}
 
-अटल व्योम vlv_set_घातer_well(काष्ठा drm_i915_निजी *dev_priv,
-			       काष्ठा i915_घातer_well *घातer_well, bool enable)
-अणु
-	पूर्णांक pw_idx = घातer_well->desc->vlv.idx;
+static void vlv_set_power_well(struct drm_i915_private *dev_priv,
+			       struct i915_power_well *power_well, bool enable)
+{
+	int pw_idx = power_well->desc->vlv.idx;
 	u32 mask;
 	u32 state;
 	u32 ctrl;
@@ -1289,45 +1288,45 @@ unlock:
 
 	vlv_punit_get(dev_priv);
 
-#घोषणा COND \
-	((vlv_punit_पढ़ो(dev_priv, PUNIT_REG_PWRGT_STATUS) & mask) == state)
+#define COND \
+	((vlv_punit_read(dev_priv, PUNIT_REG_PWRGT_STATUS) & mask) == state)
 
-	अगर (COND)
-		जाओ out;
+	if (COND)
+		goto out;
 
-	ctrl = vlv_punit_पढ़ो(dev_priv, PUNIT_REG_PWRGT_CTRL);
+	ctrl = vlv_punit_read(dev_priv, PUNIT_REG_PWRGT_CTRL);
 	ctrl &= ~mask;
 	ctrl |= state;
-	vlv_punit_ग_लिखो(dev_priv, PUNIT_REG_PWRGT_CTRL, ctrl);
+	vlv_punit_write(dev_priv, PUNIT_REG_PWRGT_CTRL, ctrl);
 
-	अगर (रुको_क्रम(COND, 100))
+	if (wait_for(COND, 100))
 		drm_err(&dev_priv->drm,
 			"timeout setting power well state %08x (%08x)\n",
 			state,
-			vlv_punit_पढ़ो(dev_priv, PUNIT_REG_PWRGT_CTRL));
+			vlv_punit_read(dev_priv, PUNIT_REG_PWRGT_CTRL));
 
-#अघोषित COND
+#undef COND
 
 out:
 	vlv_punit_put(dev_priv);
-पूर्ण
+}
 
-अटल व्योम vlv_घातer_well_enable(काष्ठा drm_i915_निजी *dev_priv,
-				  काष्ठा i915_घातer_well *घातer_well)
-अणु
-	vlv_set_घातer_well(dev_priv, घातer_well, true);
-पूर्ण
+static void vlv_power_well_enable(struct drm_i915_private *dev_priv,
+				  struct i915_power_well *power_well)
+{
+	vlv_set_power_well(dev_priv, power_well, true);
+}
 
-अटल व्योम vlv_घातer_well_disable(काष्ठा drm_i915_निजी *dev_priv,
-				   काष्ठा i915_घातer_well *घातer_well)
-अणु
-	vlv_set_घातer_well(dev_priv, घातer_well, false);
-पूर्ण
+static void vlv_power_well_disable(struct drm_i915_private *dev_priv,
+				   struct i915_power_well *power_well)
+{
+	vlv_set_power_well(dev_priv, power_well, false);
+}
 
-अटल bool vlv_घातer_well_enabled(काष्ठा drm_i915_निजी *dev_priv,
-				   काष्ठा i915_घातer_well *घातer_well)
-अणु
-	पूर्णांक pw_idx = घातer_well->desc->vlv.idx;
+static bool vlv_power_well_enabled(struct drm_i915_private *dev_priv,
+				   struct i915_power_well *power_well)
+{
+	int pw_idx = power_well->desc->vlv.idx;
 	bool enabled = false;
 	u32 mask;
 	u32 state;
@@ -1338,198 +1337,198 @@ out:
 
 	vlv_punit_get(dev_priv);
 
-	state = vlv_punit_पढ़ो(dev_priv, PUNIT_REG_PWRGT_STATUS) & mask;
+	state = vlv_punit_read(dev_priv, PUNIT_REG_PWRGT_STATUS) & mask;
 	/*
-	 * We only ever set the घातer-on and घातer-gate states, anything
-	 * अन्यथा is unexpected.
+	 * We only ever set the power-on and power-gate states, anything
+	 * else is unexpected.
 	 */
 	drm_WARN_ON(&dev_priv->drm, state != PUNIT_PWRGT_PWR_ON(pw_idx) &&
 		    state != PUNIT_PWRGT_PWR_GATE(pw_idx));
-	अगर (state == ctrl)
+	if (state == ctrl)
 		enabled = true;
 
 	/*
-	 * A transient state at this poपूर्णांक would mean some unexpected party
-	 * is poking at the घातer controls too.
+	 * A transient state at this point would mean some unexpected party
+	 * is poking at the power controls too.
 	 */
-	ctrl = vlv_punit_पढ़ो(dev_priv, PUNIT_REG_PWRGT_CTRL) & mask;
+	ctrl = vlv_punit_read(dev_priv, PUNIT_REG_PWRGT_CTRL) & mask;
 	drm_WARN_ON(&dev_priv->drm, ctrl != state);
 
 	vlv_punit_put(dev_priv);
 
-	वापस enabled;
-पूर्ण
+	return enabled;
+}
 
-अटल व्योम vlv_init_display_घड़ी_gating(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void vlv_init_display_clock_gating(struct drm_i915_private *dev_priv)
+{
 	u32 val;
 
 	/*
 	 * On driver load, a pipe may be active and driving a DSI display.
-	 * Preserve DPOUNIT_CLOCK_GATE_DISABLE to aव्योम the pipe getting stuck
-	 * (and never recovering) in this हाल. पूर्णांकel_dsi_post_disable() will
+	 * Preserve DPOUNIT_CLOCK_GATE_DISABLE to avoid the pipe getting stuck
+	 * (and never recovering) in this case. intel_dsi_post_disable() will
 	 * clear it when we turn off the display.
 	 */
-	val = पूर्णांकel_de_पढ़ो(dev_priv, DSPCLK_GATE_D);
+	val = intel_de_read(dev_priv, DSPCLK_GATE_D);
 	val &= DPOUNIT_CLOCK_GATE_DISABLE;
 	val |= VRHUNIT_CLOCK_GATE_DISABLE;
-	पूर्णांकel_de_ग_लिखो(dev_priv, DSPCLK_GATE_D, val);
+	intel_de_write(dev_priv, DSPCLK_GATE_D, val);
 
 	/*
 	 * Disable trickle feed and enable pnd deadline calculation
 	 */
-	पूर्णांकel_de_ग_लिखो(dev_priv, MI_ARB_VLV,
+	intel_de_write(dev_priv, MI_ARB_VLV,
 		       MI_ARB_DISPLAY_TRICKLE_FEED_DISABLE);
-	पूर्णांकel_de_ग_लिखो(dev_priv, CBR1_VLV, 0);
+	intel_de_write(dev_priv, CBR1_VLV, 0);
 
 	drm_WARN_ON(&dev_priv->drm, RUNTIME_INFO(dev_priv)->rawclk_freq == 0);
-	पूर्णांकel_de_ग_लिखो(dev_priv, RAWCLK_FREQ_VLV,
+	intel_de_write(dev_priv, RAWCLK_FREQ_VLV,
 		       DIV_ROUND_CLOSEST(RUNTIME_INFO(dev_priv)->rawclk_freq,
 					 1000));
-पूर्ण
+}
 
-अटल व्योम vlv_display_घातer_well_init(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा पूर्णांकel_encoder *encoder;
-	क्रमागत pipe pipe;
+static void vlv_display_power_well_init(struct drm_i915_private *dev_priv)
+{
+	struct intel_encoder *encoder;
+	enum pipe pipe;
 
 	/*
-	 * Enable the CRI घड़ी source so we can get at the
-	 * display and the reference घड़ी क्रम VGA
+	 * Enable the CRI clock source so we can get at the
+	 * display and the reference clock for VGA
 	 * hotplug / manual detection. Supposedly DSI also
-	 * needs the ref घड़ी up and running.
+	 * needs the ref clock up and running.
 	 *
-	 * CHV DPLL B/C have some issues अगर VGA mode is enabled.
+	 * CHV DPLL B/C have some issues if VGA mode is enabled.
 	 */
-	क्रम_each_pipe(dev_priv, pipe) अणु
-		u32 val = पूर्णांकel_de_पढ़ो(dev_priv, DPLL(pipe));
+	for_each_pipe(dev_priv, pipe) {
+		u32 val = intel_de_read(dev_priv, DPLL(pipe));
 
 		val |= DPLL_REF_CLK_ENABLE_VLV | DPLL_VGA_MODE_DIS;
-		अगर (pipe != PIPE_A)
+		if (pipe != PIPE_A)
 			val |= DPLL_INTEGRATED_CRI_CLK_VLV;
 
-		पूर्णांकel_de_ग_लिखो(dev_priv, DPLL(pipe), val);
-	पूर्ण
+		intel_de_write(dev_priv, DPLL(pipe), val);
+	}
 
-	vlv_init_display_घड़ी_gating(dev_priv);
+	vlv_init_display_clock_gating(dev_priv);
 
 	spin_lock_irq(&dev_priv->irq_lock);
 	valleyview_enable_display_irqs(dev_priv);
 	spin_unlock_irq(&dev_priv->irq_lock);
 
 	/*
-	 * During driver initialization/resume we can aव्योम restoring the
+	 * During driver initialization/resume we can avoid restoring the
 	 * part of the HW/SW state that will be inited anyway explicitly.
 	 */
-	अगर (dev_priv->घातer_करोमुख्यs.initializing)
-		वापस;
+	if (dev_priv->power_domains.initializing)
+		return;
 
-	पूर्णांकel_hpd_init(dev_priv);
-	पूर्णांकel_hpd_poll_disable(dev_priv);
+	intel_hpd_init(dev_priv);
+	intel_hpd_poll_disable(dev_priv);
 
-	/* Re-enable the ADPA, अगर we have one */
-	क्रम_each_पूर्णांकel_encoder(&dev_priv->drm, encoder) अणु
-		अगर (encoder->type == INTEL_OUTPUT_ANALOG)
-			पूर्णांकel_crt_reset(&encoder->base);
-	पूर्ण
+	/* Re-enable the ADPA, if we have one */
+	for_each_intel_encoder(&dev_priv->drm, encoder) {
+		if (encoder->type == INTEL_OUTPUT_ANALOG)
+			intel_crt_reset(&encoder->base);
+	}
 
-	पूर्णांकel_vga_redisable_घातer_on(dev_priv);
+	intel_vga_redisable_power_on(dev_priv);
 
-	पूर्णांकel_pps_unlock_regs_wa(dev_priv);
-पूर्ण
+	intel_pps_unlock_regs_wa(dev_priv);
+}
 
-अटल व्योम vlv_display_घातer_well_deinit(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void vlv_display_power_well_deinit(struct drm_i915_private *dev_priv)
+{
 	spin_lock_irq(&dev_priv->irq_lock);
 	valleyview_disable_display_irqs(dev_priv);
 	spin_unlock_irq(&dev_priv->irq_lock);
 
-	/* make sure we're करोne processing display irqs */
-	पूर्णांकel_synchronize_irq(dev_priv);
+	/* make sure we're done processing display irqs */
+	intel_synchronize_irq(dev_priv);
 
-	पूर्णांकel_pps_reset_all(dev_priv);
+	intel_pps_reset_all(dev_priv);
 
 	/* Prevent us from re-enabling polling on accident in late suspend */
-	अगर (!dev_priv->drm.dev->घातer.is_suspended)
-		पूर्णांकel_hpd_poll_enable(dev_priv);
-पूर्ण
+	if (!dev_priv->drm.dev->power.is_suspended)
+		intel_hpd_poll_enable(dev_priv);
+}
 
-अटल व्योम vlv_display_घातer_well_enable(काष्ठा drm_i915_निजी *dev_priv,
-					  काष्ठा i915_घातer_well *घातer_well)
-अणु
-	vlv_set_घातer_well(dev_priv, घातer_well, true);
+static void vlv_display_power_well_enable(struct drm_i915_private *dev_priv,
+					  struct i915_power_well *power_well)
+{
+	vlv_set_power_well(dev_priv, power_well, true);
 
-	vlv_display_घातer_well_init(dev_priv);
-पूर्ण
+	vlv_display_power_well_init(dev_priv);
+}
 
-अटल व्योम vlv_display_घातer_well_disable(काष्ठा drm_i915_निजी *dev_priv,
-					   काष्ठा i915_घातer_well *घातer_well)
-अणु
-	vlv_display_घातer_well_deinit(dev_priv);
+static void vlv_display_power_well_disable(struct drm_i915_private *dev_priv,
+					   struct i915_power_well *power_well)
+{
+	vlv_display_power_well_deinit(dev_priv);
 
-	vlv_set_घातer_well(dev_priv, घातer_well, false);
-पूर्ण
+	vlv_set_power_well(dev_priv, power_well, false);
+}
 
-अटल व्योम vlv_dpio_cmn_घातer_well_enable(काष्ठा drm_i915_निजी *dev_priv,
-					   काष्ठा i915_घातer_well *घातer_well)
-अणु
-	/* since ref/cri घड़ी was enabled */
-	udelay(1); /* >10ns क्रम cmnreset, >0ns क्रम sidereset */
+static void vlv_dpio_cmn_power_well_enable(struct drm_i915_private *dev_priv,
+					   struct i915_power_well *power_well)
+{
+	/* since ref/cri clock was enabled */
+	udelay(1); /* >10ns for cmnreset, >0ns for sidereset */
 
-	vlv_set_घातer_well(dev_priv, घातer_well, true);
+	vlv_set_power_well(dev_priv, power_well, true);
 
 	/*
-	 * From VLV2A0_DP_eDP_DPIO_driver_vbios_notes_10.करोcx -
-	 *  6.	De-निश्चित cmn_reset/side_reset. Same as VLV X0.
+	 * From VLV2A0_DP_eDP_DPIO_driver_vbios_notes_10.docx -
+	 *  6.	De-assert cmn_reset/side_reset. Same as VLV X0.
 	 *   a.	GUnit 0x2110 bit[0] set to 1 (def 0)
 	 *   b.	The other bits such as sfr settings / modesel may all
 	 *	be set to 0.
 	 *
-	 * This should only be करोne on init and resume from S3 with
+	 * This should only be done on init and resume from S3 with
 	 * both PLLs disabled, or we risk losing DPIO and PLL
 	 * synchronization.
 	 */
-	पूर्णांकel_de_ग_लिखो(dev_priv, DPIO_CTL,
-		       पूर्णांकel_de_पढ़ो(dev_priv, DPIO_CTL) | DPIO_CMNRST);
-पूर्ण
+	intel_de_write(dev_priv, DPIO_CTL,
+		       intel_de_read(dev_priv, DPIO_CTL) | DPIO_CMNRST);
+}
 
-अटल व्योम vlv_dpio_cmn_घातer_well_disable(काष्ठा drm_i915_निजी *dev_priv,
-					    काष्ठा i915_घातer_well *घातer_well)
-अणु
-	क्रमागत pipe pipe;
+static void vlv_dpio_cmn_power_well_disable(struct drm_i915_private *dev_priv,
+					    struct i915_power_well *power_well)
+{
+	enum pipe pipe;
 
-	क्रम_each_pipe(dev_priv, pipe)
-		निश्चित_pll_disabled(dev_priv, pipe);
+	for_each_pipe(dev_priv, pipe)
+		assert_pll_disabled(dev_priv, pipe);
 
 	/* Assert common reset */
-	पूर्णांकel_de_ग_लिखो(dev_priv, DPIO_CTL,
-		       पूर्णांकel_de_पढ़ो(dev_priv, DPIO_CTL) & ~DPIO_CMNRST);
+	intel_de_write(dev_priv, DPIO_CTL,
+		       intel_de_read(dev_priv, DPIO_CTL) & ~DPIO_CMNRST);
 
-	vlv_set_घातer_well(dev_priv, घातer_well, false);
-पूर्ण
+	vlv_set_power_well(dev_priv, power_well, false);
+}
 
-#घोषणा POWER_DOMAIN_MASK (GENMASK_ULL(POWER_DOMAIN_NUM - 1, 0))
+#define POWER_DOMAIN_MASK (GENMASK_ULL(POWER_DOMAIN_NUM - 1, 0))
 
-#घोषणा BITS_SET(val, bits) (((val) & (bits)) == (bits))
+#define BITS_SET(val, bits) (((val) & (bits)) == (bits))
 
-अटल व्योम निश्चित_chv_phy_status(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा i915_घातer_well *cmn_bc =
-		lookup_घातer_well(dev_priv, VLV_DISP_PW_DPIO_CMN_BC);
-	काष्ठा i915_घातer_well *cmn_d =
-		lookup_घातer_well(dev_priv, CHV_DISP_PW_DPIO_CMN_D);
+static void assert_chv_phy_status(struct drm_i915_private *dev_priv)
+{
+	struct i915_power_well *cmn_bc =
+		lookup_power_well(dev_priv, VLV_DISP_PW_DPIO_CMN_BC);
+	struct i915_power_well *cmn_d =
+		lookup_power_well(dev_priv, CHV_DISP_PW_DPIO_CMN_D);
 	u32 phy_control = dev_priv->chv_phy_control;
 	u32 phy_status = 0;
 	u32 phy_status_mask = 0xffffffff;
 
 	/*
 	 * The BIOS can leave the PHY is some weird state
-	 * where it करोesn't fully घातer करोwn some parts.
-	 * Disable the निश्चितs until the PHY has been fully
-	 * reset (ie. the घातer well has been disabled at
+	 * where it doesn't fully power down some parts.
+	 * Disable the asserts until the PHY has been fully
+	 * reset (ie. the power well has been disabled at
 	 * least once).
 	 */
-	अगर (!dev_priv->chv_phy_निश्चित[DPIO_PHY0])
+	if (!dev_priv->chv_phy_assert[DPIO_PHY0])
 		phy_status_mask &= ~(PHY_STATUS_CMN_LDO(DPIO_PHY0, DPIO_CH0) |
 				     PHY_STATUS_SPLINE_LDO(DPIO_PHY0, DPIO_CH0, 0) |
 				     PHY_STATUS_SPLINE_LDO(DPIO_PHY0, DPIO_CH0, 1) |
@@ -1537,238 +1536,238 @@ out:
 				     PHY_STATUS_SPLINE_LDO(DPIO_PHY0, DPIO_CH1, 0) |
 				     PHY_STATUS_SPLINE_LDO(DPIO_PHY0, DPIO_CH1, 1));
 
-	अगर (!dev_priv->chv_phy_निश्चित[DPIO_PHY1])
+	if (!dev_priv->chv_phy_assert[DPIO_PHY1])
 		phy_status_mask &= ~(PHY_STATUS_CMN_LDO(DPIO_PHY1, DPIO_CH0) |
 				     PHY_STATUS_SPLINE_LDO(DPIO_PHY1, DPIO_CH0, 0) |
 				     PHY_STATUS_SPLINE_LDO(DPIO_PHY1, DPIO_CH0, 1));
 
-	अगर (cmn_bc->desc->ops->is_enabled(dev_priv, cmn_bc)) अणु
+	if (cmn_bc->desc->ops->is_enabled(dev_priv, cmn_bc)) {
 		phy_status |= PHY_POWERGOOD(DPIO_PHY0);
 
 		/* this assumes override is only used to enable lanes */
-		अगर ((phy_control & PHY_CH_POWER_DOWN_OVRD_EN(DPIO_PHY0, DPIO_CH0)) == 0)
+		if ((phy_control & PHY_CH_POWER_DOWN_OVRD_EN(DPIO_PHY0, DPIO_CH0)) == 0)
 			phy_control |= PHY_CH_POWER_DOWN_OVRD(0xf, DPIO_PHY0, DPIO_CH0);
 
-		अगर ((phy_control & PHY_CH_POWER_DOWN_OVRD_EN(DPIO_PHY0, DPIO_CH1)) == 0)
+		if ((phy_control & PHY_CH_POWER_DOWN_OVRD_EN(DPIO_PHY0, DPIO_CH1)) == 0)
 			phy_control |= PHY_CH_POWER_DOWN_OVRD(0xf, DPIO_PHY0, DPIO_CH1);
 
 		/* CL1 is on whenever anything is on in either channel */
-		अगर (BITS_SET(phy_control,
+		if (BITS_SET(phy_control,
 			     PHY_CH_POWER_DOWN_OVRD(0xf, DPIO_PHY0, DPIO_CH0) |
 			     PHY_CH_POWER_DOWN_OVRD(0xf, DPIO_PHY0, DPIO_CH1)))
 			phy_status |= PHY_STATUS_CMN_LDO(DPIO_PHY0, DPIO_CH0);
 
 		/*
-		 * The DPLLB check accounts क्रम the pipe B + port A usage
-		 * with CL2 घातered up but all the lanes in the second channel
-		 * घातered करोwn.
+		 * The DPLLB check accounts for the pipe B + port A usage
+		 * with CL2 powered up but all the lanes in the second channel
+		 * powered down.
 		 */
-		अगर (BITS_SET(phy_control,
+		if (BITS_SET(phy_control,
 			     PHY_CH_POWER_DOWN_OVRD(0xf, DPIO_PHY0, DPIO_CH1)) &&
-		    (पूर्णांकel_de_पढ़ो(dev_priv, DPLL(PIPE_B)) & DPLL_VCO_ENABLE) == 0)
+		    (intel_de_read(dev_priv, DPLL(PIPE_B)) & DPLL_VCO_ENABLE) == 0)
 			phy_status |= PHY_STATUS_CMN_LDO(DPIO_PHY0, DPIO_CH1);
 
-		अगर (BITS_SET(phy_control,
+		if (BITS_SET(phy_control,
 			     PHY_CH_POWER_DOWN_OVRD(0x3, DPIO_PHY0, DPIO_CH0)))
 			phy_status |= PHY_STATUS_SPLINE_LDO(DPIO_PHY0, DPIO_CH0, 0);
-		अगर (BITS_SET(phy_control,
+		if (BITS_SET(phy_control,
 			     PHY_CH_POWER_DOWN_OVRD(0xc, DPIO_PHY0, DPIO_CH0)))
 			phy_status |= PHY_STATUS_SPLINE_LDO(DPIO_PHY0, DPIO_CH0, 1);
 
-		अगर (BITS_SET(phy_control,
+		if (BITS_SET(phy_control,
 			     PHY_CH_POWER_DOWN_OVRD(0x3, DPIO_PHY0, DPIO_CH1)))
 			phy_status |= PHY_STATUS_SPLINE_LDO(DPIO_PHY0, DPIO_CH1, 0);
-		अगर (BITS_SET(phy_control,
+		if (BITS_SET(phy_control,
 			     PHY_CH_POWER_DOWN_OVRD(0xc, DPIO_PHY0, DPIO_CH1)))
 			phy_status |= PHY_STATUS_SPLINE_LDO(DPIO_PHY0, DPIO_CH1, 1);
-	पूर्ण
+	}
 
-	अगर (cmn_d->desc->ops->is_enabled(dev_priv, cmn_d)) अणु
+	if (cmn_d->desc->ops->is_enabled(dev_priv, cmn_d)) {
 		phy_status |= PHY_POWERGOOD(DPIO_PHY1);
 
 		/* this assumes override is only used to enable lanes */
-		अगर ((phy_control & PHY_CH_POWER_DOWN_OVRD_EN(DPIO_PHY1, DPIO_CH0)) == 0)
+		if ((phy_control & PHY_CH_POWER_DOWN_OVRD_EN(DPIO_PHY1, DPIO_CH0)) == 0)
 			phy_control |= PHY_CH_POWER_DOWN_OVRD(0xf, DPIO_PHY1, DPIO_CH0);
 
-		अगर (BITS_SET(phy_control,
+		if (BITS_SET(phy_control,
 			     PHY_CH_POWER_DOWN_OVRD(0xf, DPIO_PHY1, DPIO_CH0)))
 			phy_status |= PHY_STATUS_CMN_LDO(DPIO_PHY1, DPIO_CH0);
 
-		अगर (BITS_SET(phy_control,
+		if (BITS_SET(phy_control,
 			     PHY_CH_POWER_DOWN_OVRD(0x3, DPIO_PHY1, DPIO_CH0)))
 			phy_status |= PHY_STATUS_SPLINE_LDO(DPIO_PHY1, DPIO_CH0, 0);
-		अगर (BITS_SET(phy_control,
+		if (BITS_SET(phy_control,
 			     PHY_CH_POWER_DOWN_OVRD(0xc, DPIO_PHY1, DPIO_CH0)))
 			phy_status |= PHY_STATUS_SPLINE_LDO(DPIO_PHY1, DPIO_CH0, 1);
-	पूर्ण
+	}
 
 	phy_status &= phy_status_mask;
 
 	/*
 	 * The PHY may be busy with some initial calibration and whatnot,
-	 * so the घातer state can take a जबतक to actually change.
+	 * so the power state can take a while to actually change.
 	 */
-	अगर (पूर्णांकel_de_रुको_क्रम_रेजिस्टर(dev_priv, DISPLAY_PHY_STATUS,
+	if (intel_de_wait_for_register(dev_priv, DISPLAY_PHY_STATUS,
 				       phy_status_mask, phy_status, 10))
 		drm_err(&dev_priv->drm,
 			"Unexpected PHY_STATUS 0x%08x, expected 0x%08x (PHY_CONTROL=0x%08x)\n",
-			पूर्णांकel_de_पढ़ो(dev_priv, DISPLAY_PHY_STATUS) & phy_status_mask,
+			intel_de_read(dev_priv, DISPLAY_PHY_STATUS) & phy_status_mask,
 			phy_status, dev_priv->chv_phy_control);
-पूर्ण
+}
 
-#अघोषित BITS_SET
+#undef BITS_SET
 
-अटल व्योम chv_dpio_cmn_घातer_well_enable(काष्ठा drm_i915_निजी *dev_priv,
-					   काष्ठा i915_घातer_well *घातer_well)
-अणु
-	क्रमागत dpio_phy phy;
-	क्रमागत pipe pipe;
-	u32 पंचांगp;
+static void chv_dpio_cmn_power_well_enable(struct drm_i915_private *dev_priv,
+					   struct i915_power_well *power_well)
+{
+	enum dpio_phy phy;
+	enum pipe pipe;
+	u32 tmp;
 
 	drm_WARN_ON_ONCE(&dev_priv->drm,
-			 घातer_well->desc->id != VLV_DISP_PW_DPIO_CMN_BC &&
-			 घातer_well->desc->id != CHV_DISP_PW_DPIO_CMN_D);
+			 power_well->desc->id != VLV_DISP_PW_DPIO_CMN_BC &&
+			 power_well->desc->id != CHV_DISP_PW_DPIO_CMN_D);
 
-	अगर (घातer_well->desc->id == VLV_DISP_PW_DPIO_CMN_BC) अणु
+	if (power_well->desc->id == VLV_DISP_PW_DPIO_CMN_BC) {
 		pipe = PIPE_A;
 		phy = DPIO_PHY0;
-	पूर्ण अन्यथा अणु
+	} else {
 		pipe = PIPE_C;
 		phy = DPIO_PHY1;
-	पूर्ण
+	}
 
-	/* since ref/cri घड़ी was enabled */
-	udelay(1); /* >10ns क्रम cmnreset, >0ns क्रम sidereset */
-	vlv_set_घातer_well(dev_priv, घातer_well, true);
+	/* since ref/cri clock was enabled */
+	udelay(1); /* >10ns for cmnreset, >0ns for sidereset */
+	vlv_set_power_well(dev_priv, power_well, true);
 
-	/* Poll क्रम phypwrgood संकेत */
-	अगर (पूर्णांकel_de_रुको_क्रम_set(dev_priv, DISPLAY_PHY_STATUS,
+	/* Poll for phypwrgood signal */
+	if (intel_de_wait_for_set(dev_priv, DISPLAY_PHY_STATUS,
 				  PHY_POWERGOOD(phy), 1))
 		drm_err(&dev_priv->drm, "Display PHY %d is not power up\n",
 			phy);
 
 	vlv_dpio_get(dev_priv);
 
-	/* Enable dynamic घातer करोwn */
-	पंचांगp = vlv_dpio_पढ़ो(dev_priv, pipe, CHV_CMN_DW28);
-	पंचांगp |= DPIO_DYNPWRDOWNEN_CH0 | DPIO_CL1POWERDOWNEN |
+	/* Enable dynamic power down */
+	tmp = vlv_dpio_read(dev_priv, pipe, CHV_CMN_DW28);
+	tmp |= DPIO_DYNPWRDOWNEN_CH0 | DPIO_CL1POWERDOWNEN |
 		DPIO_SUS_CLK_CONFIG_GATE_CLKREQ;
-	vlv_dpio_ग_लिखो(dev_priv, pipe, CHV_CMN_DW28, पंचांगp);
+	vlv_dpio_write(dev_priv, pipe, CHV_CMN_DW28, tmp);
 
-	अगर (घातer_well->desc->id == VLV_DISP_PW_DPIO_CMN_BC) अणु
-		पंचांगp = vlv_dpio_पढ़ो(dev_priv, pipe, _CHV_CMN_DW6_CH1);
-		पंचांगp |= DPIO_DYNPWRDOWNEN_CH1;
-		vlv_dpio_ग_लिखो(dev_priv, pipe, _CHV_CMN_DW6_CH1, पंचांगp);
-	पूर्ण अन्यथा अणु
+	if (power_well->desc->id == VLV_DISP_PW_DPIO_CMN_BC) {
+		tmp = vlv_dpio_read(dev_priv, pipe, _CHV_CMN_DW6_CH1);
+		tmp |= DPIO_DYNPWRDOWNEN_CH1;
+		vlv_dpio_write(dev_priv, pipe, _CHV_CMN_DW6_CH1, tmp);
+	} else {
 		/*
-		 * Force the non-existing CL2 off. BXT करोes this
-		 * too, so maybe it saves some घातer even though
-		 * CL2 करोesn't exist?
+		 * Force the non-existing CL2 off. BXT does this
+		 * too, so maybe it saves some power even though
+		 * CL2 doesn't exist?
 		 */
-		पंचांगp = vlv_dpio_पढ़ो(dev_priv, pipe, CHV_CMN_DW30);
-		पंचांगp |= DPIO_CL2_LDOFUSE_PWRENB;
-		vlv_dpio_ग_लिखो(dev_priv, pipe, CHV_CMN_DW30, पंचांगp);
-	पूर्ण
+		tmp = vlv_dpio_read(dev_priv, pipe, CHV_CMN_DW30);
+		tmp |= DPIO_CL2_LDOFUSE_PWRENB;
+		vlv_dpio_write(dev_priv, pipe, CHV_CMN_DW30, tmp);
+	}
 
 	vlv_dpio_put(dev_priv);
 
 	dev_priv->chv_phy_control |= PHY_COM_LANE_RESET_DEASSERT(phy);
-	पूर्णांकel_de_ग_लिखो(dev_priv, DISPLAY_PHY_CONTROL,
+	intel_de_write(dev_priv, DISPLAY_PHY_CONTROL,
 		       dev_priv->chv_phy_control);
 
 	drm_dbg_kms(&dev_priv->drm,
 		    "Enabled DPIO PHY%d (PHY_CONTROL=0x%08x)\n",
 		    phy, dev_priv->chv_phy_control);
 
-	निश्चित_chv_phy_status(dev_priv);
-पूर्ण
+	assert_chv_phy_status(dev_priv);
+}
 
-अटल व्योम chv_dpio_cmn_घातer_well_disable(काष्ठा drm_i915_निजी *dev_priv,
-					    काष्ठा i915_घातer_well *घातer_well)
-अणु
-	क्रमागत dpio_phy phy;
+static void chv_dpio_cmn_power_well_disable(struct drm_i915_private *dev_priv,
+					    struct i915_power_well *power_well)
+{
+	enum dpio_phy phy;
 
 	drm_WARN_ON_ONCE(&dev_priv->drm,
-			 घातer_well->desc->id != VLV_DISP_PW_DPIO_CMN_BC &&
-			 घातer_well->desc->id != CHV_DISP_PW_DPIO_CMN_D);
+			 power_well->desc->id != VLV_DISP_PW_DPIO_CMN_BC &&
+			 power_well->desc->id != CHV_DISP_PW_DPIO_CMN_D);
 
-	अगर (घातer_well->desc->id == VLV_DISP_PW_DPIO_CMN_BC) अणु
+	if (power_well->desc->id == VLV_DISP_PW_DPIO_CMN_BC) {
 		phy = DPIO_PHY0;
-		निश्चित_pll_disabled(dev_priv, PIPE_A);
-		निश्चित_pll_disabled(dev_priv, PIPE_B);
-	पूर्ण अन्यथा अणु
+		assert_pll_disabled(dev_priv, PIPE_A);
+		assert_pll_disabled(dev_priv, PIPE_B);
+	} else {
 		phy = DPIO_PHY1;
-		निश्चित_pll_disabled(dev_priv, PIPE_C);
-	पूर्ण
+		assert_pll_disabled(dev_priv, PIPE_C);
+	}
 
 	dev_priv->chv_phy_control &= ~PHY_COM_LANE_RESET_DEASSERT(phy);
-	पूर्णांकel_de_ग_लिखो(dev_priv, DISPLAY_PHY_CONTROL,
+	intel_de_write(dev_priv, DISPLAY_PHY_CONTROL,
 		       dev_priv->chv_phy_control);
 
-	vlv_set_घातer_well(dev_priv, घातer_well, false);
+	vlv_set_power_well(dev_priv, power_well, false);
 
 	drm_dbg_kms(&dev_priv->drm,
 		    "Disabled DPIO PHY%d (PHY_CONTROL=0x%08x)\n",
 		    phy, dev_priv->chv_phy_control);
 
-	/* PHY is fully reset now, so we can enable the PHY state निश्चितs */
-	dev_priv->chv_phy_निश्चित[phy] = true;
+	/* PHY is fully reset now, so we can enable the PHY state asserts */
+	dev_priv->chv_phy_assert[phy] = true;
 
-	निश्चित_chv_phy_status(dev_priv);
-पूर्ण
+	assert_chv_phy_status(dev_priv);
+}
 
-अटल व्योम निश्चित_chv_phy_घातergate(काष्ठा drm_i915_निजी *dev_priv, क्रमागत dpio_phy phy,
-				     क्रमागत dpio_channel ch, bool override, अचिन्हित पूर्णांक mask)
-अणु
-	क्रमागत pipe pipe = phy == DPIO_PHY0 ? PIPE_A : PIPE_C;
+static void assert_chv_phy_powergate(struct drm_i915_private *dev_priv, enum dpio_phy phy,
+				     enum dpio_channel ch, bool override, unsigned int mask)
+{
+	enum pipe pipe = phy == DPIO_PHY0 ? PIPE_A : PIPE_C;
 	u32 reg, val, expected, actual;
 
 	/*
 	 * The BIOS can leave the PHY is some weird state
-	 * where it करोesn't fully घातer करोwn some parts.
-	 * Disable the निश्चितs until the PHY has been fully
-	 * reset (ie. the घातer well has been disabled at
+	 * where it doesn't fully power down some parts.
+	 * Disable the asserts until the PHY has been fully
+	 * reset (ie. the power well has been disabled at
 	 * least once).
 	 */
-	अगर (!dev_priv->chv_phy_निश्चित[phy])
-		वापस;
+	if (!dev_priv->chv_phy_assert[phy])
+		return;
 
-	अगर (ch == DPIO_CH0)
+	if (ch == DPIO_CH0)
 		reg = _CHV_CMN_DW0_CH0;
-	अन्यथा
+	else
 		reg = _CHV_CMN_DW6_CH1;
 
 	vlv_dpio_get(dev_priv);
-	val = vlv_dpio_पढ़ो(dev_priv, pipe, reg);
+	val = vlv_dpio_read(dev_priv, pipe, reg);
 	vlv_dpio_put(dev_priv);
 
 	/*
 	 * This assumes !override is only used when the port is disabled.
-	 * All lanes should घातer करोwn even without the override when
+	 * All lanes should power down even without the override when
 	 * the port is disabled.
 	 */
-	अगर (!override || mask == 0xf) अणु
+	if (!override || mask == 0xf) {
 		expected = DPIO_ALLDL_POWERDOWN | DPIO_ANYDL_POWERDOWN;
 		/*
 		 * If CH1 common lane is not active anymore
-		 * (eg. क्रम pipe B DPLL) the entire channel will
-		 * shut करोwn, which causes the common lane रेजिस्टरs
-		 * to पढ़ो as 0. That means we can't actually check
-		 * the lane घातer करोwn status bits, but as the entire
-		 * रेजिस्टर पढ़ोs as 0 it's a good indication that the
-		 * channel is indeed entirely घातered करोwn.
+		 * (eg. for pipe B DPLL) the entire channel will
+		 * shut down, which causes the common lane registers
+		 * to read as 0. That means we can't actually check
+		 * the lane power down status bits, but as the entire
+		 * register reads as 0 it's a good indication that the
+		 * channel is indeed entirely powered down.
 		 */
-		अगर (ch == DPIO_CH1 && val == 0)
+		if (ch == DPIO_CH1 && val == 0)
 			expected = 0;
-	पूर्ण अन्यथा अगर (mask != 0x0) अणु
+	} else if (mask != 0x0) {
 		expected = DPIO_ANYDL_POWERDOWN;
-	पूर्ण अन्यथा अणु
+	} else {
 		expected = 0;
-	पूर्ण
+	}
 
-	अगर (ch == DPIO_CH0)
+	if (ch == DPIO_CH0)
 		actual = val >> DPIO_ANYDL_POWERDOWN_SHIFT_CH0;
-	अन्यथा
+	else
 		actual = val >> DPIO_ANYDL_POWERDOWN_SHIFT_CH1;
 	actual &= DPIO_ALLDL_POWERDOWN | DPIO_ANYDL_POWERDOWN;
 
@@ -1779,108 +1778,108 @@ out:
 		 !!(expected & DPIO_ALLDL_POWERDOWN),
 		 !!(expected & DPIO_ANYDL_POWERDOWN),
 		 reg, val);
-पूर्ण
+}
 
-bool chv_phy_घातergate_ch(काष्ठा drm_i915_निजी *dev_priv, क्रमागत dpio_phy phy,
-			  क्रमागत dpio_channel ch, bool override)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &dev_priv->घातer_करोमुख्यs;
+bool chv_phy_powergate_ch(struct drm_i915_private *dev_priv, enum dpio_phy phy,
+			  enum dpio_channel ch, bool override)
+{
+	struct i915_power_domains *power_domains = &dev_priv->power_domains;
 	bool was_override;
 
-	mutex_lock(&घातer_करोमुख्यs->lock);
+	mutex_lock(&power_domains->lock);
 
 	was_override = dev_priv->chv_phy_control & PHY_CH_POWER_DOWN_OVRD_EN(phy, ch);
 
-	अगर (override == was_override)
-		जाओ out;
+	if (override == was_override)
+		goto out;
 
-	अगर (override)
+	if (override)
 		dev_priv->chv_phy_control |= PHY_CH_POWER_DOWN_OVRD_EN(phy, ch);
-	अन्यथा
+	else
 		dev_priv->chv_phy_control &= ~PHY_CH_POWER_DOWN_OVRD_EN(phy, ch);
 
-	पूर्णांकel_de_ग_लिखो(dev_priv, DISPLAY_PHY_CONTROL,
+	intel_de_write(dev_priv, DISPLAY_PHY_CONTROL,
 		       dev_priv->chv_phy_control);
 
 	drm_dbg_kms(&dev_priv->drm,
 		    "Power gating DPIO PHY%d CH%d (DPIO_PHY_CONTROL=0x%08x)\n",
 		    phy, ch, dev_priv->chv_phy_control);
 
-	निश्चित_chv_phy_status(dev_priv);
+	assert_chv_phy_status(dev_priv);
 
 out:
-	mutex_unlock(&घातer_करोमुख्यs->lock);
+	mutex_unlock(&power_domains->lock);
 
-	वापस was_override;
-पूर्ण
+	return was_override;
+}
 
-व्योम chv_phy_घातergate_lanes(काष्ठा पूर्णांकel_encoder *encoder,
-			     bool override, अचिन्हित पूर्णांक mask)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(encoder->base.dev);
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &dev_priv->घातer_करोमुख्यs;
-	क्रमागत dpio_phy phy = vlv_dig_port_to_phy(enc_to_dig_port(encoder));
-	क्रमागत dpio_channel ch = vlv_dig_port_to_channel(enc_to_dig_port(encoder));
+void chv_phy_powergate_lanes(struct intel_encoder *encoder,
+			     bool override, unsigned int mask)
+{
+	struct drm_i915_private *dev_priv = to_i915(encoder->base.dev);
+	struct i915_power_domains *power_domains = &dev_priv->power_domains;
+	enum dpio_phy phy = vlv_dig_port_to_phy(enc_to_dig_port(encoder));
+	enum dpio_channel ch = vlv_dig_port_to_channel(enc_to_dig_port(encoder));
 
-	mutex_lock(&घातer_करोमुख्यs->lock);
+	mutex_lock(&power_domains->lock);
 
 	dev_priv->chv_phy_control &= ~PHY_CH_POWER_DOWN_OVRD(0xf, phy, ch);
 	dev_priv->chv_phy_control |= PHY_CH_POWER_DOWN_OVRD(mask, phy, ch);
 
-	अगर (override)
+	if (override)
 		dev_priv->chv_phy_control |= PHY_CH_POWER_DOWN_OVRD_EN(phy, ch);
-	अन्यथा
+	else
 		dev_priv->chv_phy_control &= ~PHY_CH_POWER_DOWN_OVRD_EN(phy, ch);
 
-	पूर्णांकel_de_ग_लिखो(dev_priv, DISPLAY_PHY_CONTROL,
+	intel_de_write(dev_priv, DISPLAY_PHY_CONTROL,
 		       dev_priv->chv_phy_control);
 
 	drm_dbg_kms(&dev_priv->drm,
 		    "Power gating DPIO PHY%d CH%d lanes 0x%x (PHY_CONTROL=0x%08x)\n",
 		    phy, ch, mask, dev_priv->chv_phy_control);
 
-	निश्चित_chv_phy_status(dev_priv);
+	assert_chv_phy_status(dev_priv);
 
-	निश्चित_chv_phy_घातergate(dev_priv, phy, ch, override, mask);
+	assert_chv_phy_powergate(dev_priv, phy, ch, override, mask);
 
-	mutex_unlock(&घातer_करोमुख्यs->lock);
-पूर्ण
+	mutex_unlock(&power_domains->lock);
+}
 
-अटल bool chv_pipe_घातer_well_enabled(काष्ठा drm_i915_निजी *dev_priv,
-					काष्ठा i915_घातer_well *घातer_well)
-अणु
-	क्रमागत pipe pipe = PIPE_A;
+static bool chv_pipe_power_well_enabled(struct drm_i915_private *dev_priv,
+					struct i915_power_well *power_well)
+{
+	enum pipe pipe = PIPE_A;
 	bool enabled;
 	u32 state, ctrl;
 
 	vlv_punit_get(dev_priv);
 
-	state = vlv_punit_पढ़ो(dev_priv, PUNIT_REG_DSPSSPM) & DP_SSS_MASK(pipe);
+	state = vlv_punit_read(dev_priv, PUNIT_REG_DSPSSPM) & DP_SSS_MASK(pipe);
 	/*
-	 * We only ever set the घातer-on and घातer-gate states, anything
-	 * अन्यथा is unexpected.
+	 * We only ever set the power-on and power-gate states, anything
+	 * else is unexpected.
 	 */
 	drm_WARN_ON(&dev_priv->drm, state != DP_SSS_PWR_ON(pipe) &&
 		    state != DP_SSS_PWR_GATE(pipe));
 	enabled = state == DP_SSS_PWR_ON(pipe);
 
 	/*
-	 * A transient state at this poपूर्णांक would mean some unexpected party
-	 * is poking at the घातer controls too.
+	 * A transient state at this point would mean some unexpected party
+	 * is poking at the power controls too.
 	 */
-	ctrl = vlv_punit_पढ़ो(dev_priv, PUNIT_REG_DSPSSPM) & DP_SSC_MASK(pipe);
+	ctrl = vlv_punit_read(dev_priv, PUNIT_REG_DSPSSPM) & DP_SSC_MASK(pipe);
 	drm_WARN_ON(&dev_priv->drm, ctrl << 16 != state);
 
 	vlv_punit_put(dev_priv);
 
-	वापस enabled;
-पूर्ण
+	return enabled;
+}
 
-अटल व्योम chv_set_pipe_घातer_well(काष्ठा drm_i915_निजी *dev_priv,
-				    काष्ठा i915_घातer_well *घातer_well,
+static void chv_set_pipe_power_well(struct drm_i915_private *dev_priv,
+				    struct i915_power_well *power_well,
 				    bool enable)
-अणु
-	क्रमागत pipe pipe = PIPE_A;
+{
+	enum pipe pipe = PIPE_A;
 	u32 state;
 	u32 ctrl;
 
@@ -1888,589 +1887,589 @@ out:
 
 	vlv_punit_get(dev_priv);
 
-#घोषणा COND \
-	((vlv_punit_पढ़ो(dev_priv, PUNIT_REG_DSPSSPM) & DP_SSS_MASK(pipe)) == state)
+#define COND \
+	((vlv_punit_read(dev_priv, PUNIT_REG_DSPSSPM) & DP_SSS_MASK(pipe)) == state)
 
-	अगर (COND)
-		जाओ out;
+	if (COND)
+		goto out;
 
-	ctrl = vlv_punit_पढ़ो(dev_priv, PUNIT_REG_DSPSSPM);
+	ctrl = vlv_punit_read(dev_priv, PUNIT_REG_DSPSSPM);
 	ctrl &= ~DP_SSC_MASK(pipe);
 	ctrl |= enable ? DP_SSC_PWR_ON(pipe) : DP_SSC_PWR_GATE(pipe);
-	vlv_punit_ग_लिखो(dev_priv, PUNIT_REG_DSPSSPM, ctrl);
+	vlv_punit_write(dev_priv, PUNIT_REG_DSPSSPM, ctrl);
 
-	अगर (रुको_क्रम(COND, 100))
+	if (wait_for(COND, 100))
 		drm_err(&dev_priv->drm,
 			"timeout setting power well state %08x (%08x)\n",
 			state,
-			vlv_punit_पढ़ो(dev_priv, PUNIT_REG_DSPSSPM));
+			vlv_punit_read(dev_priv, PUNIT_REG_DSPSSPM));
 
-#अघोषित COND
+#undef COND
 
 out:
 	vlv_punit_put(dev_priv);
-पूर्ण
+}
 
-अटल व्योम chv_pipe_घातer_well_sync_hw(काष्ठा drm_i915_निजी *dev_priv,
-					काष्ठा i915_घातer_well *घातer_well)
-अणु
-	पूर्णांकel_de_ग_लिखो(dev_priv, DISPLAY_PHY_CONTROL,
+static void chv_pipe_power_well_sync_hw(struct drm_i915_private *dev_priv,
+					struct i915_power_well *power_well)
+{
+	intel_de_write(dev_priv, DISPLAY_PHY_CONTROL,
 		       dev_priv->chv_phy_control);
-पूर्ण
+}
 
-अटल व्योम chv_pipe_घातer_well_enable(काष्ठा drm_i915_निजी *dev_priv,
-				       काष्ठा i915_घातer_well *घातer_well)
-अणु
-	chv_set_pipe_घातer_well(dev_priv, घातer_well, true);
+static void chv_pipe_power_well_enable(struct drm_i915_private *dev_priv,
+				       struct i915_power_well *power_well)
+{
+	chv_set_pipe_power_well(dev_priv, power_well, true);
 
-	vlv_display_घातer_well_init(dev_priv);
-पूर्ण
+	vlv_display_power_well_init(dev_priv);
+}
 
-अटल व्योम chv_pipe_घातer_well_disable(काष्ठा drm_i915_निजी *dev_priv,
-					काष्ठा i915_घातer_well *घातer_well)
-अणु
-	vlv_display_घातer_well_deinit(dev_priv);
+static void chv_pipe_power_well_disable(struct drm_i915_private *dev_priv,
+					struct i915_power_well *power_well)
+{
+	vlv_display_power_well_deinit(dev_priv);
 
-	chv_set_pipe_घातer_well(dev_priv, घातer_well, false);
-पूर्ण
+	chv_set_pipe_power_well(dev_priv, power_well, false);
+}
 
-अटल u64 __async_put_करोमुख्यs_mask(काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs)
-अणु
-	वापस घातer_करोमुख्यs->async_put_करोमुख्यs[0] |
-	       घातer_करोमुख्यs->async_put_करोमुख्यs[1];
-पूर्ण
+static u64 __async_put_domains_mask(struct i915_power_domains *power_domains)
+{
+	return power_domains->async_put_domains[0] |
+	       power_domains->async_put_domains[1];
+}
 
-#अगर IS_ENABLED(CONFIG_DRM_I915_DEBUG_RUNTIME_PM)
+#if IS_ENABLED(CONFIG_DRM_I915_DEBUG_RUNTIME_PM)
 
-अटल bool
-निश्चित_async_put_करोमुख्य_masks_disjoपूर्णांक(काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs)
-अणु
-	काष्ठा drm_i915_निजी *i915 = container_of(घातer_करोमुख्यs,
-						     काष्ठा drm_i915_निजी,
-						     घातer_करोमुख्यs);
-	वापस !drm_WARN_ON(&i915->drm, घातer_करोमुख्यs->async_put_करोमुख्यs[0] &
-			    घातer_करोमुख्यs->async_put_करोमुख्यs[1]);
-पूर्ण
+static bool
+assert_async_put_domain_masks_disjoint(struct i915_power_domains *power_domains)
+{
+	struct drm_i915_private *i915 = container_of(power_domains,
+						     struct drm_i915_private,
+						     power_domains);
+	return !drm_WARN_ON(&i915->drm, power_domains->async_put_domains[0] &
+			    power_domains->async_put_domains[1]);
+}
 
-अटल bool
-__async_put_करोमुख्यs_state_ok(काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs)
-अणु
-	काष्ठा drm_i915_निजी *i915 = container_of(घातer_करोमुख्यs,
-						     काष्ठा drm_i915_निजी,
-						     घातer_करोमुख्यs);
-	क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य;
+static bool
+__async_put_domains_state_ok(struct i915_power_domains *power_domains)
+{
+	struct drm_i915_private *i915 = container_of(power_domains,
+						     struct drm_i915_private,
+						     power_domains);
+	enum intel_display_power_domain domain;
 	bool err = false;
 
-	err |= !निश्चित_async_put_करोमुख्य_masks_disjoपूर्णांक(घातer_करोमुख्यs);
-	err |= drm_WARN_ON(&i915->drm, !!घातer_करोमुख्यs->async_put_wakeref !=
-			   !!__async_put_करोमुख्यs_mask(घातer_करोमुख्यs));
+	err |= !assert_async_put_domain_masks_disjoint(power_domains);
+	err |= drm_WARN_ON(&i915->drm, !!power_domains->async_put_wakeref !=
+			   !!__async_put_domains_mask(power_domains));
 
-	क्रम_each_घातer_करोमुख्य(करोमुख्य, __async_put_करोमुख्यs_mask(घातer_करोमुख्यs))
+	for_each_power_domain(domain, __async_put_domains_mask(power_domains))
 		err |= drm_WARN_ON(&i915->drm,
-				   घातer_करोमुख्यs->करोमुख्य_use_count[करोमुख्य] != 1);
+				   power_domains->domain_use_count[domain] != 1);
 
-	वापस !err;
-पूर्ण
+	return !err;
+}
 
-अटल व्योम prपूर्णांक_घातer_करोमुख्यs(काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs,
-				स्थिर अक्षर *prefix, u64 mask)
-अणु
-	काष्ठा drm_i915_निजी *i915 = container_of(घातer_करोमुख्यs,
-						     काष्ठा drm_i915_निजी,
-						     घातer_करोमुख्यs);
-	क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य;
+static void print_power_domains(struct i915_power_domains *power_domains,
+				const char *prefix, u64 mask)
+{
+	struct drm_i915_private *i915 = container_of(power_domains,
+						     struct drm_i915_private,
+						     power_domains);
+	enum intel_display_power_domain domain;
 
 	drm_dbg(&i915->drm, "%s (%lu):\n", prefix, hweight64(mask));
-	क्रम_each_घातer_करोमुख्य(करोमुख्य, mask)
+	for_each_power_domain(domain, mask)
 		drm_dbg(&i915->drm, "%s use_count %d\n",
-			पूर्णांकel_display_घातer_करोमुख्य_str(करोमुख्य),
-			घातer_करोमुख्यs->करोमुख्य_use_count[करोमुख्य]);
-पूर्ण
+			intel_display_power_domain_str(domain),
+			power_domains->domain_use_count[domain]);
+}
 
-अटल व्योम
-prपूर्णांक_async_put_करोमुख्यs_state(काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs)
-अणु
-	काष्ठा drm_i915_निजी *i915 = container_of(घातer_करोमुख्यs,
-						     काष्ठा drm_i915_निजी,
-						     घातer_करोमुख्यs);
+static void
+print_async_put_domains_state(struct i915_power_domains *power_domains)
+{
+	struct drm_i915_private *i915 = container_of(power_domains,
+						     struct drm_i915_private,
+						     power_domains);
 
 	drm_dbg(&i915->drm, "async_put_wakeref %u\n",
-		घातer_करोमुख्यs->async_put_wakeref);
+		power_domains->async_put_wakeref);
 
-	prपूर्णांक_घातer_करोमुख्यs(घातer_करोमुख्यs, "async_put_domains[0]",
-			    घातer_करोमुख्यs->async_put_करोमुख्यs[0]);
-	prपूर्णांक_घातer_करोमुख्यs(घातer_करोमुख्यs, "async_put_domains[1]",
-			    घातer_करोमुख्यs->async_put_करोमुख्यs[1]);
-पूर्ण
+	print_power_domains(power_domains, "async_put_domains[0]",
+			    power_domains->async_put_domains[0]);
+	print_power_domains(power_domains, "async_put_domains[1]",
+			    power_domains->async_put_domains[1]);
+}
 
-अटल व्योम
-verअगरy_async_put_करोमुख्यs_state(काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs)
-अणु
-	अगर (!__async_put_करोमुख्यs_state_ok(घातer_करोमुख्यs))
-		prपूर्णांक_async_put_करोमुख्यs_state(घातer_करोमुख्यs);
-पूर्ण
+static void
+verify_async_put_domains_state(struct i915_power_domains *power_domains)
+{
+	if (!__async_put_domains_state_ok(power_domains))
+		print_async_put_domains_state(power_domains);
+}
 
-#अन्यथा
+#else
 
-अटल व्योम
-निश्चित_async_put_करोमुख्य_masks_disjoपूर्णांक(काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs)
-अणु
-पूर्ण
+static void
+assert_async_put_domain_masks_disjoint(struct i915_power_domains *power_domains)
+{
+}
 
-अटल व्योम
-verअगरy_async_put_करोमुख्यs_state(काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs)
-अणु
-पूर्ण
+static void
+verify_async_put_domains_state(struct i915_power_domains *power_domains)
+{
+}
 
-#पूर्ण_अगर /* CONFIG_DRM_I915_DEBUG_RUNTIME_PM */
+#endif /* CONFIG_DRM_I915_DEBUG_RUNTIME_PM */
 
-अटल u64 async_put_करोमुख्यs_mask(काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs)
-अणु
-	निश्चित_async_put_करोमुख्य_masks_disjoपूर्णांक(घातer_करोमुख्यs);
+static u64 async_put_domains_mask(struct i915_power_domains *power_domains)
+{
+	assert_async_put_domain_masks_disjoint(power_domains);
 
-	वापस __async_put_करोमुख्यs_mask(घातer_करोमुख्यs);
-पूर्ण
+	return __async_put_domains_mask(power_domains);
+}
 
-अटल व्योम
-async_put_करोमुख्यs_clear_करोमुख्य(काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs,
-			       क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य)
-अणु
-	निश्चित_async_put_करोमुख्य_masks_disjoपूर्णांक(घातer_करोमुख्यs);
+static void
+async_put_domains_clear_domain(struct i915_power_domains *power_domains,
+			       enum intel_display_power_domain domain)
+{
+	assert_async_put_domain_masks_disjoint(power_domains);
 
-	घातer_करोमुख्यs->async_put_करोमुख्यs[0] &= ~BIT_ULL(करोमुख्य);
-	घातer_करोमुख्यs->async_put_करोमुख्यs[1] &= ~BIT_ULL(करोमुख्य);
-पूर्ण
+	power_domains->async_put_domains[0] &= ~BIT_ULL(domain);
+	power_domains->async_put_domains[1] &= ~BIT_ULL(domain);
+}
 
-अटल bool
-पूर्णांकel_display_घातer_grab_async_put_ref(काष्ठा drm_i915_निजी *dev_priv,
-				       क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &dev_priv->घातer_करोमुख्यs;
+static bool
+intel_display_power_grab_async_put_ref(struct drm_i915_private *dev_priv,
+				       enum intel_display_power_domain domain)
+{
+	struct i915_power_domains *power_domains = &dev_priv->power_domains;
 	bool ret = false;
 
-	अगर (!(async_put_करोमुख्यs_mask(घातer_करोमुख्यs) & BIT_ULL(करोमुख्य)))
-		जाओ out_verअगरy;
+	if (!(async_put_domains_mask(power_domains) & BIT_ULL(domain)))
+		goto out_verify;
 
-	async_put_करोमुख्यs_clear_करोमुख्य(घातer_करोमुख्यs, करोमुख्य);
+	async_put_domains_clear_domain(power_domains, domain);
 
 	ret = true;
 
-	अगर (async_put_करोमुख्यs_mask(घातer_करोमुख्यs))
-		जाओ out_verअगरy;
+	if (async_put_domains_mask(power_domains))
+		goto out_verify;
 
-	cancel_delayed_work(&घातer_करोमुख्यs->async_put_work);
-	पूर्णांकel_runसमय_pm_put_raw(&dev_priv->runसमय_pm,
-				 fetch_and_zero(&घातer_करोमुख्यs->async_put_wakeref));
-out_verअगरy:
-	verअगरy_async_put_करोमुख्यs_state(घातer_करोमुख्यs);
+	cancel_delayed_work(&power_domains->async_put_work);
+	intel_runtime_pm_put_raw(&dev_priv->runtime_pm,
+				 fetch_and_zero(&power_domains->async_put_wakeref));
+out_verify:
+	verify_async_put_domains_state(power_domains);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम
-__पूर्णांकel_display_घातer_get_करोमुख्य(काष्ठा drm_i915_निजी *dev_priv,
-				 क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &dev_priv->घातer_करोमुख्यs;
-	काष्ठा i915_घातer_well *घातer_well;
+static void
+__intel_display_power_get_domain(struct drm_i915_private *dev_priv,
+				 enum intel_display_power_domain domain)
+{
+	struct i915_power_domains *power_domains = &dev_priv->power_domains;
+	struct i915_power_well *power_well;
 
-	अगर (पूर्णांकel_display_घातer_grab_async_put_ref(dev_priv, करोमुख्य))
-		वापस;
+	if (intel_display_power_grab_async_put_ref(dev_priv, domain))
+		return;
 
-	क्रम_each_घातer_करोमुख्य_well(dev_priv, घातer_well, BIT_ULL(करोमुख्य))
-		पूर्णांकel_घातer_well_get(dev_priv, घातer_well);
+	for_each_power_domain_well(dev_priv, power_well, BIT_ULL(domain))
+		intel_power_well_get(dev_priv, power_well);
 
-	घातer_करोमुख्यs->करोमुख्य_use_count[करोमुख्य]++;
-पूर्ण
-
-/**
- * पूर्णांकel_display_घातer_get - grab a घातer करोमुख्य reference
- * @dev_priv: i915 device instance
- * @करोमुख्य: घातer करोमुख्य to reference
- *
- * This function grअसल a घातer करोमुख्य reference क्रम @करोमुख्य and ensures that the
- * घातer करोमुख्य and all its parents are घातered up. Thereक्रमe users should only
- * grab a reference to the innermost घातer करोमुख्य they need.
- *
- * Any घातer करोमुख्य reference obtained by this function must have a symmetric
- * call to पूर्णांकel_display_घातer_put() to release the reference again.
- */
-पूर्णांकel_wakeref_t पूर्णांकel_display_घातer_get(काष्ठा drm_i915_निजी *dev_priv,
-					क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &dev_priv->घातer_करोमुख्यs;
-	पूर्णांकel_wakeref_t wakeref = पूर्णांकel_runसमय_pm_get(&dev_priv->runसमय_pm);
-
-	mutex_lock(&घातer_करोमुख्यs->lock);
-	__पूर्णांकel_display_घातer_get_करोमुख्य(dev_priv, करोमुख्य);
-	mutex_unlock(&घातer_करोमुख्यs->lock);
-
-	वापस wakeref;
-पूर्ण
+	power_domains->domain_use_count[domain]++;
+}
 
 /**
- * पूर्णांकel_display_घातer_get_अगर_enabled - grab a reference क्रम an enabled display घातer करोमुख्य
+ * intel_display_power_get - grab a power domain reference
  * @dev_priv: i915 device instance
- * @करोमुख्य: घातer करोमुख्य to reference
+ * @domain: power domain to reference
  *
- * This function grअसल a घातer करोमुख्य reference क्रम @करोमुख्य and ensures that the
- * घातer करोमुख्य and all its parents are घातered up. Thereक्रमe users should only
- * grab a reference to the innermost घातer करोमुख्य they need.
+ * This function grabs a power domain reference for @domain and ensures that the
+ * power domain and all its parents are powered up. Therefore users should only
+ * grab a reference to the innermost power domain they need.
  *
- * Any घातer करोमुख्य reference obtained by this function must have a symmetric
- * call to पूर्णांकel_display_घातer_put() to release the reference again.
+ * Any power domain reference obtained by this function must have a symmetric
+ * call to intel_display_power_put() to release the reference again.
  */
-पूर्णांकel_wakeref_t
-पूर्णांकel_display_घातer_get_अगर_enabled(काष्ठा drm_i915_निजी *dev_priv,
-				   क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &dev_priv->घातer_करोमुख्यs;
-	पूर्णांकel_wakeref_t wakeref;
+intel_wakeref_t intel_display_power_get(struct drm_i915_private *dev_priv,
+					enum intel_display_power_domain domain)
+{
+	struct i915_power_domains *power_domains = &dev_priv->power_domains;
+	intel_wakeref_t wakeref = intel_runtime_pm_get(&dev_priv->runtime_pm);
+
+	mutex_lock(&power_domains->lock);
+	__intel_display_power_get_domain(dev_priv, domain);
+	mutex_unlock(&power_domains->lock);
+
+	return wakeref;
+}
+
+/**
+ * intel_display_power_get_if_enabled - grab a reference for an enabled display power domain
+ * @dev_priv: i915 device instance
+ * @domain: power domain to reference
+ *
+ * This function grabs a power domain reference for @domain and ensures that the
+ * power domain and all its parents are powered up. Therefore users should only
+ * grab a reference to the innermost power domain they need.
+ *
+ * Any power domain reference obtained by this function must have a symmetric
+ * call to intel_display_power_put() to release the reference again.
+ */
+intel_wakeref_t
+intel_display_power_get_if_enabled(struct drm_i915_private *dev_priv,
+				   enum intel_display_power_domain domain)
+{
+	struct i915_power_domains *power_domains = &dev_priv->power_domains;
+	intel_wakeref_t wakeref;
 	bool is_enabled;
 
-	wakeref = पूर्णांकel_runसमय_pm_get_अगर_in_use(&dev_priv->runसमय_pm);
-	अगर (!wakeref)
-		वापस false;
+	wakeref = intel_runtime_pm_get_if_in_use(&dev_priv->runtime_pm);
+	if (!wakeref)
+		return false;
 
-	mutex_lock(&घातer_करोमुख्यs->lock);
+	mutex_lock(&power_domains->lock);
 
-	अगर (__पूर्णांकel_display_घातer_is_enabled(dev_priv, करोमुख्य)) अणु
-		__पूर्णांकel_display_घातer_get_करोमुख्य(dev_priv, करोमुख्य);
+	if (__intel_display_power_is_enabled(dev_priv, domain)) {
+		__intel_display_power_get_domain(dev_priv, domain);
 		is_enabled = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		is_enabled = false;
-	पूर्ण
+	}
 
-	mutex_unlock(&घातer_करोमुख्यs->lock);
+	mutex_unlock(&power_domains->lock);
 
-	अगर (!is_enabled) अणु
-		पूर्णांकel_runसमय_pm_put(&dev_priv->runसमय_pm, wakeref);
+	if (!is_enabled) {
+		intel_runtime_pm_put(&dev_priv->runtime_pm, wakeref);
 		wakeref = 0;
-	पूर्ण
+	}
 
-	वापस wakeref;
-पूर्ण
+	return wakeref;
+}
 
-अटल व्योम
-__पूर्णांकel_display_घातer_put_करोमुख्य(काष्ठा drm_i915_निजी *dev_priv,
-				 क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs;
-	काष्ठा i915_घातer_well *घातer_well;
-	स्थिर अक्षर *name = पूर्णांकel_display_घातer_करोमुख्य_str(करोमुख्य);
+static void
+__intel_display_power_put_domain(struct drm_i915_private *dev_priv,
+				 enum intel_display_power_domain domain)
+{
+	struct i915_power_domains *power_domains;
+	struct i915_power_well *power_well;
+	const char *name = intel_display_power_domain_str(domain);
 
-	घातer_करोमुख्यs = &dev_priv->घातer_करोमुख्यs;
+	power_domains = &dev_priv->power_domains;
 
-	drm_WARN(&dev_priv->drm, !घातer_करोमुख्यs->करोमुख्य_use_count[करोमुख्य],
+	drm_WARN(&dev_priv->drm, !power_domains->domain_use_count[domain],
 		 "Use count on domain %s is already zero\n",
 		 name);
 	drm_WARN(&dev_priv->drm,
-		 async_put_करोमुख्यs_mask(घातer_करोमुख्यs) & BIT_ULL(करोमुख्य),
+		 async_put_domains_mask(power_domains) & BIT_ULL(domain),
 		 "Async disabling of domain %s is pending\n",
 		 name);
 
-	घातer_करोमुख्यs->करोमुख्य_use_count[करोमुख्य]--;
+	power_domains->domain_use_count[domain]--;
 
-	क्रम_each_घातer_करोमुख्य_well_reverse(dev_priv, घातer_well, BIT_ULL(करोमुख्य))
-		पूर्णांकel_घातer_well_put(dev_priv, घातer_well);
-पूर्ण
+	for_each_power_domain_well_reverse(dev_priv, power_well, BIT_ULL(domain))
+		intel_power_well_put(dev_priv, power_well);
+}
 
-अटल व्योम __पूर्णांकel_display_घातer_put(काष्ठा drm_i915_निजी *dev_priv,
-				      क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &dev_priv->घातer_करोमुख्यs;
+static void __intel_display_power_put(struct drm_i915_private *dev_priv,
+				      enum intel_display_power_domain domain)
+{
+	struct i915_power_domains *power_domains = &dev_priv->power_domains;
 
-	mutex_lock(&घातer_करोमुख्यs->lock);
-	__पूर्णांकel_display_घातer_put_करोमुख्य(dev_priv, करोमुख्य);
-	mutex_unlock(&घातer_करोमुख्यs->lock);
-पूर्ण
+	mutex_lock(&power_domains->lock);
+	__intel_display_power_put_domain(dev_priv, domain);
+	mutex_unlock(&power_domains->lock);
+}
 
-अटल व्योम
-queue_async_put_करोमुख्यs_work(काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs,
-			     पूर्णांकel_wakeref_t wakeref)
-अणु
-	काष्ठा drm_i915_निजी *i915 = container_of(घातer_करोमुख्यs,
-						     काष्ठा drm_i915_निजी,
-						     घातer_करोमुख्यs);
-	drm_WARN_ON(&i915->drm, घातer_करोमुख्यs->async_put_wakeref);
-	घातer_करोमुख्यs->async_put_wakeref = wakeref;
-	drm_WARN_ON(&i915->drm, !queue_delayed_work(प्रणाली_unbound_wq,
-						    &घातer_करोमुख्यs->async_put_work,
-						    msecs_to_jअगरfies(100)));
-पूर्ण
+static void
+queue_async_put_domains_work(struct i915_power_domains *power_domains,
+			     intel_wakeref_t wakeref)
+{
+	struct drm_i915_private *i915 = container_of(power_domains,
+						     struct drm_i915_private,
+						     power_domains);
+	drm_WARN_ON(&i915->drm, power_domains->async_put_wakeref);
+	power_domains->async_put_wakeref = wakeref;
+	drm_WARN_ON(&i915->drm, !queue_delayed_work(system_unbound_wq,
+						    &power_domains->async_put_work,
+						    msecs_to_jiffies(100)));
+}
 
-अटल व्योम
-release_async_put_करोमुख्यs(काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs, u64 mask)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv =
-		container_of(घातer_करोमुख्यs, काष्ठा drm_i915_निजी,
-			     घातer_करोमुख्यs);
-	काष्ठा पूर्णांकel_runसमय_pm *rpm = &dev_priv->runसमय_pm;
-	क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य;
-	पूर्णांकel_wakeref_t wakeref;
+static void
+release_async_put_domains(struct i915_power_domains *power_domains, u64 mask)
+{
+	struct drm_i915_private *dev_priv =
+		container_of(power_domains, struct drm_i915_private,
+			     power_domains);
+	struct intel_runtime_pm *rpm = &dev_priv->runtime_pm;
+	enum intel_display_power_domain domain;
+	intel_wakeref_t wakeref;
 
 	/*
-	 * The caller must hold alपढ़ोy raw wakeref, upgrade that to a proper
+	 * The caller must hold already raw wakeref, upgrade that to a proper
 	 * wakeref to make the state checker happy about the HW access during
-	 * घातer well disabling.
+	 * power well disabling.
 	 */
-	निश्चित_rpm_raw_wakeref_held(rpm);
-	wakeref = पूर्णांकel_runसमय_pm_get(rpm);
+	assert_rpm_raw_wakeref_held(rpm);
+	wakeref = intel_runtime_pm_get(rpm);
 
-	क्रम_each_घातer_करोमुख्य(करोमुख्य, mask) अणु
-		/* Clear beक्रमe put, so put's sanity check is happy. */
-		async_put_करोमुख्यs_clear_करोमुख्य(घातer_करोमुख्यs, करोमुख्य);
-		__पूर्णांकel_display_घातer_put_करोमुख्य(dev_priv, करोमुख्य);
-	पूर्ण
+	for_each_power_domain(domain, mask) {
+		/* Clear before put, so put's sanity check is happy. */
+		async_put_domains_clear_domain(power_domains, domain);
+		__intel_display_power_put_domain(dev_priv, domain);
+	}
 
-	पूर्णांकel_runसमय_pm_put(rpm, wakeref);
-पूर्ण
+	intel_runtime_pm_put(rpm, wakeref);
+}
 
-अटल व्योम
-पूर्णांकel_display_घातer_put_async_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv =
-		container_of(work, काष्ठा drm_i915_निजी,
-			     घातer_करोमुख्यs.async_put_work.work);
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &dev_priv->घातer_करोमुख्यs;
-	काष्ठा पूर्णांकel_runसमय_pm *rpm = &dev_priv->runसमय_pm;
-	पूर्णांकel_wakeref_t new_work_wakeref = पूर्णांकel_runसमय_pm_get_raw(rpm);
-	पूर्णांकel_wakeref_t old_work_wakeref = 0;
+static void
+intel_display_power_put_async_work(struct work_struct *work)
+{
+	struct drm_i915_private *dev_priv =
+		container_of(work, struct drm_i915_private,
+			     power_domains.async_put_work.work);
+	struct i915_power_domains *power_domains = &dev_priv->power_domains;
+	struct intel_runtime_pm *rpm = &dev_priv->runtime_pm;
+	intel_wakeref_t new_work_wakeref = intel_runtime_pm_get_raw(rpm);
+	intel_wakeref_t old_work_wakeref = 0;
 
-	mutex_lock(&घातer_करोमुख्यs->lock);
+	mutex_lock(&power_domains->lock);
 
 	/*
-	 * Bail out अगर all the करोमुख्य refs pending to be released were grabbed
-	 * by subsequent माला_लो or a flush_work.
+	 * Bail out if all the domain refs pending to be released were grabbed
+	 * by subsequent gets or a flush_work.
 	 */
-	old_work_wakeref = fetch_and_zero(&घातer_करोमुख्यs->async_put_wakeref);
-	अगर (!old_work_wakeref)
-		जाओ out_verअगरy;
+	old_work_wakeref = fetch_and_zero(&power_domains->async_put_wakeref);
+	if (!old_work_wakeref)
+		goto out_verify;
 
-	release_async_put_करोमुख्यs(घातer_करोमुख्यs,
-				  घातer_करोमुख्यs->async_put_करोमुख्यs[0]);
+	release_async_put_domains(power_domains,
+				  power_domains->async_put_domains[0]);
 
-	/* Requeue the work अगर more करोमुख्यs were async put meanजबतक. */
-	अगर (घातer_करोमुख्यs->async_put_करोमुख्यs[1]) अणु
-		घातer_करोमुख्यs->async_put_करोमुख्यs[0] =
-			fetch_and_zero(&घातer_करोमुख्यs->async_put_करोमुख्यs[1]);
-		queue_async_put_करोमुख्यs_work(घातer_करोमुख्यs,
+	/* Requeue the work if more domains were async put meanwhile. */
+	if (power_domains->async_put_domains[1]) {
+		power_domains->async_put_domains[0] =
+			fetch_and_zero(&power_domains->async_put_domains[1]);
+		queue_async_put_domains_work(power_domains,
 					     fetch_and_zero(&new_work_wakeref));
-	पूर्ण
+	}
 
-out_verअगरy:
-	verअगरy_async_put_करोमुख्यs_state(घातer_करोमुख्यs);
+out_verify:
+	verify_async_put_domains_state(power_domains);
 
-	mutex_unlock(&घातer_करोमुख्यs->lock);
+	mutex_unlock(&power_domains->lock);
 
-	अगर (old_work_wakeref)
-		पूर्णांकel_runसमय_pm_put_raw(rpm, old_work_wakeref);
-	अगर (new_work_wakeref)
-		पूर्णांकel_runसमय_pm_put_raw(rpm, new_work_wakeref);
-पूर्ण
+	if (old_work_wakeref)
+		intel_runtime_pm_put_raw(rpm, old_work_wakeref);
+	if (new_work_wakeref)
+		intel_runtime_pm_put_raw(rpm, new_work_wakeref);
+}
 
 /**
- * पूर्णांकel_display_घातer_put_async - release a घातer करोमुख्य reference asynchronously
+ * intel_display_power_put_async - release a power domain reference asynchronously
  * @i915: i915 device instance
- * @करोमुख्य: घातer करोमुख्य to reference
- * @wakeref: wakeref acquired क्रम the reference that is being released
+ * @domain: power domain to reference
+ * @wakeref: wakeref acquired for the reference that is being released
  *
- * This function drops the घातer करोमुख्य reference obtained by
- * पूर्णांकel_display_घातer_get*() and schedules a work to घातer करोwn the
- * corresponding hardware block अगर this is the last reference.
+ * This function drops the power domain reference obtained by
+ * intel_display_power_get*() and schedules a work to power down the
+ * corresponding hardware block if this is the last reference.
  */
-व्योम __पूर्णांकel_display_घातer_put_async(काष्ठा drm_i915_निजी *i915,
-				     क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य,
-				     पूर्णांकel_wakeref_t wakeref)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &i915->घातer_करोमुख्यs;
-	काष्ठा पूर्णांकel_runसमय_pm *rpm = &i915->runसमय_pm;
-	पूर्णांकel_wakeref_t work_wakeref = पूर्णांकel_runसमय_pm_get_raw(rpm);
+void __intel_display_power_put_async(struct drm_i915_private *i915,
+				     enum intel_display_power_domain domain,
+				     intel_wakeref_t wakeref)
+{
+	struct i915_power_domains *power_domains = &i915->power_domains;
+	struct intel_runtime_pm *rpm = &i915->runtime_pm;
+	intel_wakeref_t work_wakeref = intel_runtime_pm_get_raw(rpm);
 
-	mutex_lock(&घातer_करोमुख्यs->lock);
+	mutex_lock(&power_domains->lock);
 
-	अगर (घातer_करोमुख्यs->करोमुख्य_use_count[करोमुख्य] > 1) अणु
-		__पूर्णांकel_display_घातer_put_करोमुख्य(i915, करोमुख्य);
+	if (power_domains->domain_use_count[domain] > 1) {
+		__intel_display_power_put_domain(i915, domain);
 
-		जाओ out_verअगरy;
-	पूर्ण
+		goto out_verify;
+	}
 
-	drm_WARN_ON(&i915->drm, घातer_करोमुख्यs->करोमुख्य_use_count[करोमुख्य] != 1);
+	drm_WARN_ON(&i915->drm, power_domains->domain_use_count[domain] != 1);
 
 	/* Let a pending work requeue itself or queue a new one. */
-	अगर (घातer_करोमुख्यs->async_put_wakeref) अणु
-		घातer_करोमुख्यs->async_put_करोमुख्यs[1] |= BIT_ULL(करोमुख्य);
-	पूर्ण अन्यथा अणु
-		घातer_करोमुख्यs->async_put_करोमुख्यs[0] |= BIT_ULL(करोमुख्य);
-		queue_async_put_करोमुख्यs_work(घातer_करोमुख्यs,
+	if (power_domains->async_put_wakeref) {
+		power_domains->async_put_domains[1] |= BIT_ULL(domain);
+	} else {
+		power_domains->async_put_domains[0] |= BIT_ULL(domain);
+		queue_async_put_domains_work(power_domains,
 					     fetch_and_zero(&work_wakeref));
-	पूर्ण
+	}
 
-out_verअगरy:
-	verअगरy_async_put_करोमुख्यs_state(घातer_करोमुख्यs);
+out_verify:
+	verify_async_put_domains_state(power_domains);
 
-	mutex_unlock(&घातer_करोमुख्यs->lock);
+	mutex_unlock(&power_domains->lock);
 
-	अगर (work_wakeref)
-		पूर्णांकel_runसमय_pm_put_raw(rpm, work_wakeref);
+	if (work_wakeref)
+		intel_runtime_pm_put_raw(rpm, work_wakeref);
 
-	पूर्णांकel_runसमय_pm_put(rpm, wakeref);
-पूर्ण
+	intel_runtime_pm_put(rpm, wakeref);
+}
 
 /**
- * पूर्णांकel_display_घातer_flush_work - flushes the async display घातer disabling work
+ * intel_display_power_flush_work - flushes the async display power disabling work
  * @i915: i915 device instance
  *
  * Flushes any pending work that was scheduled by a preceding
- * पूर्णांकel_display_घातer_put_async() call, completing the disabling of the
- * corresponding घातer करोमुख्यs.
+ * intel_display_power_put_async() call, completing the disabling of the
+ * corresponding power domains.
  *
  * Note that the work handler function may still be running after this
- * function वापसs; to ensure that the work handler isn't running use
- * पूर्णांकel_display_घातer_flush_work_sync() instead.
+ * function returns; to ensure that the work handler isn't running use
+ * intel_display_power_flush_work_sync() instead.
  */
-व्योम पूर्णांकel_display_घातer_flush_work(काष्ठा drm_i915_निजी *i915)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &i915->घातer_करोमुख्यs;
-	पूर्णांकel_wakeref_t work_wakeref;
+void intel_display_power_flush_work(struct drm_i915_private *i915)
+{
+	struct i915_power_domains *power_domains = &i915->power_domains;
+	intel_wakeref_t work_wakeref;
 
-	mutex_lock(&घातer_करोमुख्यs->lock);
+	mutex_lock(&power_domains->lock);
 
-	work_wakeref = fetch_and_zero(&घातer_करोमुख्यs->async_put_wakeref);
-	अगर (!work_wakeref)
-		जाओ out_verअगरy;
+	work_wakeref = fetch_and_zero(&power_domains->async_put_wakeref);
+	if (!work_wakeref)
+		goto out_verify;
 
-	release_async_put_करोमुख्यs(घातer_करोमुख्यs,
-				  async_put_करोमुख्यs_mask(घातer_करोमुख्यs));
-	cancel_delayed_work(&घातer_करोमुख्यs->async_put_work);
+	release_async_put_domains(power_domains,
+				  async_put_domains_mask(power_domains));
+	cancel_delayed_work(&power_domains->async_put_work);
 
-out_verअगरy:
-	verअगरy_async_put_करोमुख्यs_state(घातer_करोमुख्यs);
+out_verify:
+	verify_async_put_domains_state(power_domains);
 
-	mutex_unlock(&घातer_करोमुख्यs->lock);
+	mutex_unlock(&power_domains->lock);
 
-	अगर (work_wakeref)
-		पूर्णांकel_runसमय_pm_put_raw(&i915->runसमय_pm, work_wakeref);
-पूर्ण
+	if (work_wakeref)
+		intel_runtime_pm_put_raw(&i915->runtime_pm, work_wakeref);
+}
 
 /**
- * पूर्णांकel_display_घातer_flush_work_sync - flushes and syncs the async display घातer disabling work
+ * intel_display_power_flush_work_sync - flushes and syncs the async display power disabling work
  * @i915: i915 device instance
  *
- * Like पूर्णांकel_display_घातer_flush_work(), but also ensure that the work
- * handler function is not running any more when this function वापसs.
+ * Like intel_display_power_flush_work(), but also ensure that the work
+ * handler function is not running any more when this function returns.
  */
-अटल व्योम
-पूर्णांकel_display_घातer_flush_work_sync(काष्ठा drm_i915_निजी *i915)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &i915->घातer_करोमुख्यs;
+static void
+intel_display_power_flush_work_sync(struct drm_i915_private *i915)
+{
+	struct i915_power_domains *power_domains = &i915->power_domains;
 
-	पूर्णांकel_display_घातer_flush_work(i915);
-	cancel_delayed_work_sync(&घातer_करोमुख्यs->async_put_work);
+	intel_display_power_flush_work(i915);
+	cancel_delayed_work_sync(&power_domains->async_put_work);
 
-	verअगरy_async_put_करोमुख्यs_state(घातer_करोमुख्यs);
+	verify_async_put_domains_state(power_domains);
 
-	drm_WARN_ON(&i915->drm, घातer_करोमुख्यs->async_put_wakeref);
-पूर्ण
+	drm_WARN_ON(&i915->drm, power_domains->async_put_wakeref);
+}
 
-#अगर IS_ENABLED(CONFIG_DRM_I915_DEBUG_RUNTIME_PM)
+#if IS_ENABLED(CONFIG_DRM_I915_DEBUG_RUNTIME_PM)
 /**
- * पूर्णांकel_display_घातer_put - release a घातer करोमुख्य reference
+ * intel_display_power_put - release a power domain reference
  * @dev_priv: i915 device instance
- * @करोमुख्य: घातer करोमुख्य to reference
- * @wakeref: wakeref acquired क्रम the reference that is being released
+ * @domain: power domain to reference
+ * @wakeref: wakeref acquired for the reference that is being released
  *
- * This function drops the घातer करोमुख्य reference obtained by
- * पूर्णांकel_display_घातer_get() and might घातer करोwn the corresponding hardware
- * block right away अगर this is the last reference.
+ * This function drops the power domain reference obtained by
+ * intel_display_power_get() and might power down the corresponding hardware
+ * block right away if this is the last reference.
  */
-व्योम पूर्णांकel_display_घातer_put(काष्ठा drm_i915_निजी *dev_priv,
-			     क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य,
-			     पूर्णांकel_wakeref_t wakeref)
-अणु
-	__पूर्णांकel_display_घातer_put(dev_priv, करोमुख्य);
-	पूर्णांकel_runसमय_pm_put(&dev_priv->runसमय_pm, wakeref);
-पूर्ण
-#अन्यथा
+void intel_display_power_put(struct drm_i915_private *dev_priv,
+			     enum intel_display_power_domain domain,
+			     intel_wakeref_t wakeref)
+{
+	__intel_display_power_put(dev_priv, domain);
+	intel_runtime_pm_put(&dev_priv->runtime_pm, wakeref);
+}
+#else
 /**
- * पूर्णांकel_display_घातer_put_unchecked - release an unchecked घातer करोमुख्य reference
+ * intel_display_power_put_unchecked - release an unchecked power domain reference
  * @dev_priv: i915 device instance
- * @करोमुख्य: घातer करोमुख्य to reference
+ * @domain: power domain to reference
  *
- * This function drops the घातer करोमुख्य reference obtained by
- * पूर्णांकel_display_घातer_get() and might घातer करोwn the corresponding hardware
- * block right away अगर this is the last reference.
+ * This function drops the power domain reference obtained by
+ * intel_display_power_get() and might power down the corresponding hardware
+ * block right away if this is the last reference.
  *
- * This function is only क्रम the घातer करोमुख्य code's पूर्णांकernal use to suppress wakeref
+ * This function is only for the power domain code's internal use to suppress wakeref
  * tracking when the correspondig debug kconfig option is disabled, should not
  * be used otherwise.
  */
-व्योम पूर्णांकel_display_घातer_put_unchecked(काष्ठा drm_i915_निजी *dev_priv,
-				       क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य)
-अणु
-	__पूर्णांकel_display_घातer_put(dev_priv, करोमुख्य);
-	पूर्णांकel_runसमय_pm_put_unchecked(&dev_priv->runसमय_pm);
-पूर्ण
-#पूर्ण_अगर
+void intel_display_power_put_unchecked(struct drm_i915_private *dev_priv,
+				       enum intel_display_power_domain domain)
+{
+	__intel_display_power_put(dev_priv, domain);
+	intel_runtime_pm_put_unchecked(&dev_priv->runtime_pm);
+}
+#endif
 
-व्योम
-पूर्णांकel_display_घातer_get_in_set(काष्ठा drm_i915_निजी *i915,
-			       काष्ठा पूर्णांकel_display_घातer_करोमुख्य_set *घातer_करोमुख्य_set,
-			       क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य)
-अणु
-	पूर्णांकel_wakeref_t __maybe_unused wf;
+void
+intel_display_power_get_in_set(struct drm_i915_private *i915,
+			       struct intel_display_power_domain_set *power_domain_set,
+			       enum intel_display_power_domain domain)
+{
+	intel_wakeref_t __maybe_unused wf;
 
-	drm_WARN_ON(&i915->drm, घातer_करोमुख्य_set->mask & BIT_ULL(करोमुख्य));
+	drm_WARN_ON(&i915->drm, power_domain_set->mask & BIT_ULL(domain));
 
-	wf = पूर्णांकel_display_घातer_get(i915, करोमुख्य);
-#अगर IS_ENABLED(CONFIG_DRM_I915_DEBUG_RUNTIME_PM)
-	घातer_करोमुख्य_set->wakerefs[करोमुख्य] = wf;
-#पूर्ण_अगर
-	घातer_करोमुख्य_set->mask |= BIT_ULL(करोमुख्य);
-पूर्ण
+	wf = intel_display_power_get(i915, domain);
+#if IS_ENABLED(CONFIG_DRM_I915_DEBUG_RUNTIME_PM)
+	power_domain_set->wakerefs[domain] = wf;
+#endif
+	power_domain_set->mask |= BIT_ULL(domain);
+}
 
 bool
-पूर्णांकel_display_घातer_get_in_set_अगर_enabled(काष्ठा drm_i915_निजी *i915,
-					  काष्ठा पूर्णांकel_display_घातer_करोमुख्य_set *घातer_करोमुख्य_set,
-					  क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य)
-अणु
-	पूर्णांकel_wakeref_t wf;
+intel_display_power_get_in_set_if_enabled(struct drm_i915_private *i915,
+					  struct intel_display_power_domain_set *power_domain_set,
+					  enum intel_display_power_domain domain)
+{
+	intel_wakeref_t wf;
 
-	drm_WARN_ON(&i915->drm, घातer_करोमुख्य_set->mask & BIT_ULL(करोमुख्य));
+	drm_WARN_ON(&i915->drm, power_domain_set->mask & BIT_ULL(domain));
 
-	wf = पूर्णांकel_display_घातer_get_अगर_enabled(i915, करोमुख्य);
-	अगर (!wf)
-		वापस false;
+	wf = intel_display_power_get_if_enabled(i915, domain);
+	if (!wf)
+		return false;
 
-#अगर IS_ENABLED(CONFIG_DRM_I915_DEBUG_RUNTIME_PM)
-	घातer_करोमुख्य_set->wakerefs[करोमुख्य] = wf;
-#पूर्ण_अगर
-	घातer_करोमुख्य_set->mask |= BIT_ULL(करोमुख्य);
+#if IS_ENABLED(CONFIG_DRM_I915_DEBUG_RUNTIME_PM)
+	power_domain_set->wakerefs[domain] = wf;
+#endif
+	power_domain_set->mask |= BIT_ULL(domain);
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम
-पूर्णांकel_display_घातer_put_mask_in_set(काष्ठा drm_i915_निजी *i915,
-				    काष्ठा पूर्णांकel_display_घातer_करोमुख्य_set *घातer_करोमुख्य_set,
+void
+intel_display_power_put_mask_in_set(struct drm_i915_private *i915,
+				    struct intel_display_power_domain_set *power_domain_set,
 				    u64 mask)
-अणु
-	क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य;
+{
+	enum intel_display_power_domain domain;
 
-	drm_WARN_ON(&i915->drm, mask & ~घातer_करोमुख्य_set->mask);
+	drm_WARN_ON(&i915->drm, mask & ~power_domain_set->mask);
 
-	क्रम_each_घातer_करोमुख्य(करोमुख्य, mask) अणु
-		पूर्णांकel_wakeref_t __maybe_unused wf = -1;
+	for_each_power_domain(domain, mask) {
+		intel_wakeref_t __maybe_unused wf = -1;
 
-#अगर IS_ENABLED(CONFIG_DRM_I915_DEBUG_RUNTIME_PM)
-		wf = fetch_and_zero(&घातer_करोमुख्य_set->wakerefs[करोमुख्य]);
-#पूर्ण_अगर
-		पूर्णांकel_display_घातer_put(i915, करोमुख्य, wf);
-		घातer_करोमुख्य_set->mask &= ~BIT_ULL(करोमुख्य);
-	पूर्ण
-पूर्ण
+#if IS_ENABLED(CONFIG_DRM_I915_DEBUG_RUNTIME_PM)
+		wf = fetch_and_zero(&power_domain_set->wakerefs[domain]);
+#endif
+		intel_display_power_put(i915, domain, wf);
+		power_domain_set->mask &= ~BIT_ULL(domain);
+	}
+}
 
-#घोषणा I830_PIPES_POWER_DOMAINS (		\
+#define I830_PIPES_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_PIPE_A) |		\
 	BIT_ULL(POWER_DOMAIN_PIPE_B) |		\
 	BIT_ULL(POWER_DOMAIN_PIPE_A_PANEL_FITTER) |	\
@@ -2479,7 +2478,7 @@ bool
 	BIT_ULL(POWER_DOMAIN_TRANSCODER_B) |	\
 	BIT_ULL(POWER_DOMAIN_INIT))
 
-#घोषणा VLV_DISPLAY_POWER_DOMAINS (		\
+#define VLV_DISPLAY_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_DISPLAY_CORE) |	\
 	BIT_ULL(POWER_DOMAIN_PIPE_A) |		\
 	BIT_ULL(POWER_DOMAIN_PIPE_B) |		\
@@ -2498,7 +2497,7 @@ bool
 	BIT_ULL(POWER_DOMAIN_GMBUS) |		\
 	BIT_ULL(POWER_DOMAIN_INIT))
 
-#घोषणा VLV_DPIO_CMN_BC_POWER_DOMAINS (		\
+#define VLV_DPIO_CMN_BC_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_B_LANES) |	\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_C_LANES) |	\
 	BIT_ULL(POWER_DOMAIN_PORT_CRT) |		\
@@ -2506,27 +2505,27 @@ bool
 	BIT_ULL(POWER_DOMAIN_AUX_C) |		\
 	BIT_ULL(POWER_DOMAIN_INIT))
 
-#घोषणा VLV_DPIO_TX_B_LANES_01_POWER_DOMAINS (	\
+#define VLV_DPIO_TX_B_LANES_01_POWER_DOMAINS (	\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_B_LANES) |	\
 	BIT_ULL(POWER_DOMAIN_AUX_B) |		\
 	BIT_ULL(POWER_DOMAIN_INIT))
 
-#घोषणा VLV_DPIO_TX_B_LANES_23_POWER_DOMAINS (	\
+#define VLV_DPIO_TX_B_LANES_23_POWER_DOMAINS (	\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_B_LANES) |	\
 	BIT_ULL(POWER_DOMAIN_AUX_B) |		\
 	BIT_ULL(POWER_DOMAIN_INIT))
 
-#घोषणा VLV_DPIO_TX_C_LANES_01_POWER_DOMAINS (	\
+#define VLV_DPIO_TX_C_LANES_01_POWER_DOMAINS (	\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_C_LANES) |	\
 	BIT_ULL(POWER_DOMAIN_AUX_C) |		\
 	BIT_ULL(POWER_DOMAIN_INIT))
 
-#घोषणा VLV_DPIO_TX_C_LANES_23_POWER_DOMAINS (	\
+#define VLV_DPIO_TX_C_LANES_23_POWER_DOMAINS (	\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_C_LANES) |	\
 	BIT_ULL(POWER_DOMAIN_AUX_C) |		\
 	BIT_ULL(POWER_DOMAIN_INIT))
 
-#घोषणा CHV_DISPLAY_POWER_DOMAINS (		\
+#define CHV_DISPLAY_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_DISPLAY_CORE) |	\
 	BIT_ULL(POWER_DOMAIN_PIPE_A) |		\
 	BIT_ULL(POWER_DOMAIN_PIPE_B) |		\
@@ -2549,19 +2548,19 @@ bool
 	BIT_ULL(POWER_DOMAIN_GMBUS) |		\
 	BIT_ULL(POWER_DOMAIN_INIT))
 
-#घोषणा CHV_DPIO_CMN_BC_POWER_DOMAINS (		\
+#define CHV_DPIO_CMN_BC_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_B_LANES) |	\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_C_LANES) |	\
 	BIT_ULL(POWER_DOMAIN_AUX_B) |		\
 	BIT_ULL(POWER_DOMAIN_AUX_C) |		\
 	BIT_ULL(POWER_DOMAIN_INIT))
 
-#घोषणा CHV_DPIO_CMN_D_POWER_DOMAINS (		\
+#define CHV_DPIO_CMN_D_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_D_LANES) |	\
 	BIT_ULL(POWER_DOMAIN_AUX_D) |		\
 	BIT_ULL(POWER_DOMAIN_INIT))
 
-#घोषणा HSW_DISPLAY_POWER_DOMAINS (			\
+#define HSW_DISPLAY_POWER_DOMAINS (			\
 	BIT_ULL(POWER_DOMAIN_PIPE_B) |			\
 	BIT_ULL(POWER_DOMAIN_PIPE_C) |			\
 	BIT_ULL(POWER_DOMAIN_PIPE_A_PANEL_FITTER) |		\
@@ -2578,7 +2577,7 @@ bool
 	BIT_ULL(POWER_DOMAIN_AUDIO) |			\
 	BIT_ULL(POWER_DOMAIN_INIT))
 
-#घोषणा BDW_DISPLAY_POWER_DOMAINS (			\
+#define BDW_DISPLAY_POWER_DOMAINS (			\
 	BIT_ULL(POWER_DOMAIN_PIPE_B) |			\
 	BIT_ULL(POWER_DOMAIN_PIPE_C) |			\
 	BIT_ULL(POWER_DOMAIN_PIPE_B_PANEL_FITTER) |		\
@@ -2594,7 +2593,7 @@ bool
 	BIT_ULL(POWER_DOMAIN_AUDIO) |			\
 	BIT_ULL(POWER_DOMAIN_INIT))
 
-#घोषणा SKL_DISPLAY_POWERWELL_2_POWER_DOMAINS (		\
+#define SKL_DISPLAY_POWERWELL_2_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_TRANSCODER_A) |		\
 	BIT_ULL(POWER_DOMAIN_PIPE_B) |			\
 	BIT_ULL(POWER_DOMAIN_TRANSCODER_B) |		\
@@ -2612,27 +2611,27 @@ bool
 	BIT_ULL(POWER_DOMAIN_AUDIO) |			\
 	BIT_ULL(POWER_DOMAIN_VGA) |				\
 	BIT_ULL(POWER_DOMAIN_INIT))
-#घोषणा SKL_DISPLAY_DDI_IO_A_E_POWER_DOMAINS (		\
+#define SKL_DISPLAY_DDI_IO_A_E_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_A_IO) |		\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_E_IO) |		\
 	BIT_ULL(POWER_DOMAIN_INIT))
-#घोषणा SKL_DISPLAY_DDI_IO_B_POWER_DOMAINS (		\
+#define SKL_DISPLAY_DDI_IO_B_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_B_IO) |		\
 	BIT_ULL(POWER_DOMAIN_INIT))
-#घोषणा SKL_DISPLAY_DDI_IO_C_POWER_DOMAINS (		\
+#define SKL_DISPLAY_DDI_IO_C_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_C_IO) |		\
 	BIT_ULL(POWER_DOMAIN_INIT))
-#घोषणा SKL_DISPLAY_DDI_IO_D_POWER_DOMAINS (		\
+#define SKL_DISPLAY_DDI_IO_D_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_D_IO) |		\
 	BIT_ULL(POWER_DOMAIN_INIT))
-#घोषणा SKL_DISPLAY_DC_OFF_POWER_DOMAINS (		\
+#define SKL_DISPLAY_DC_OFF_POWER_DOMAINS (		\
 	SKL_DISPLAY_POWERWELL_2_POWER_DOMAINS |		\
 	BIT_ULL(POWER_DOMAIN_GT_IRQ) |			\
 	BIT_ULL(POWER_DOMAIN_MODESET) |			\
 	BIT_ULL(POWER_DOMAIN_AUX_A) |			\
 	BIT_ULL(POWER_DOMAIN_INIT))
 
-#घोषणा BXT_DISPLAY_POWERWELL_2_POWER_DOMAINS (		\
+#define BXT_DISPLAY_POWERWELL_2_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_TRANSCODER_A) |		\
 	BIT_ULL(POWER_DOMAIN_PIPE_B) |			\
 	BIT_ULL(POWER_DOMAIN_TRANSCODER_B) |		\
@@ -2647,25 +2646,25 @@ bool
 	BIT_ULL(POWER_DOMAIN_AUDIO) |			\
 	BIT_ULL(POWER_DOMAIN_VGA) |				\
 	BIT_ULL(POWER_DOMAIN_INIT))
-#घोषणा BXT_DISPLAY_DC_OFF_POWER_DOMAINS (		\
+#define BXT_DISPLAY_DC_OFF_POWER_DOMAINS (		\
 	BXT_DISPLAY_POWERWELL_2_POWER_DOMAINS |		\
 	BIT_ULL(POWER_DOMAIN_GT_IRQ) |			\
 	BIT_ULL(POWER_DOMAIN_MODESET) |			\
 	BIT_ULL(POWER_DOMAIN_AUX_A) |			\
 	BIT_ULL(POWER_DOMAIN_GMBUS) |			\
 	BIT_ULL(POWER_DOMAIN_INIT))
-#घोषणा BXT_DPIO_CMN_A_POWER_DOMAINS (			\
+#define BXT_DPIO_CMN_A_POWER_DOMAINS (			\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_A_LANES) |		\
 	BIT_ULL(POWER_DOMAIN_AUX_A) |			\
 	BIT_ULL(POWER_DOMAIN_INIT))
-#घोषणा BXT_DPIO_CMN_BC_POWER_DOMAINS (			\
+#define BXT_DPIO_CMN_BC_POWER_DOMAINS (			\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_B_LANES) |		\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_C_LANES) |		\
 	BIT_ULL(POWER_DOMAIN_AUX_B) |			\
 	BIT_ULL(POWER_DOMAIN_AUX_C) |			\
 	BIT_ULL(POWER_DOMAIN_INIT))
 
-#घोषणा GLK_DISPLAY_POWERWELL_2_POWER_DOMAINS (		\
+#define GLK_DISPLAY_POWERWELL_2_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_TRANSCODER_A) |		\
 	BIT_ULL(POWER_DOMAIN_PIPE_B) |			\
 	BIT_ULL(POWER_DOMAIN_TRANSCODER_B) |		\
@@ -2680,35 +2679,35 @@ bool
 	BIT_ULL(POWER_DOMAIN_AUDIO) |			\
 	BIT_ULL(POWER_DOMAIN_VGA) |				\
 	BIT_ULL(POWER_DOMAIN_INIT))
-#घोषणा GLK_DISPLAY_DDI_IO_A_POWER_DOMAINS (		\
+#define GLK_DISPLAY_DDI_IO_A_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_A_IO))
-#घोषणा GLK_DISPLAY_DDI_IO_B_POWER_DOMAINS (		\
+#define GLK_DISPLAY_DDI_IO_B_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_B_IO))
-#घोषणा GLK_DISPLAY_DDI_IO_C_POWER_DOMAINS (		\
+#define GLK_DISPLAY_DDI_IO_C_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_C_IO))
-#घोषणा GLK_DPIO_CMN_A_POWER_DOMAINS (			\
+#define GLK_DPIO_CMN_A_POWER_DOMAINS (			\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_A_LANES) |		\
 	BIT_ULL(POWER_DOMAIN_AUX_A) |			\
 	BIT_ULL(POWER_DOMAIN_INIT))
-#घोषणा GLK_DPIO_CMN_B_POWER_DOMAINS (			\
+#define GLK_DPIO_CMN_B_POWER_DOMAINS (			\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_B_LANES) |		\
 	BIT_ULL(POWER_DOMAIN_AUX_B) |			\
 	BIT_ULL(POWER_DOMAIN_INIT))
-#घोषणा GLK_DPIO_CMN_C_POWER_DOMAINS (			\
+#define GLK_DPIO_CMN_C_POWER_DOMAINS (			\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_C_LANES) |		\
 	BIT_ULL(POWER_DOMAIN_AUX_C) |			\
 	BIT_ULL(POWER_DOMAIN_INIT))
-#घोषणा GLK_DISPLAY_AUX_A_POWER_DOMAINS (		\
+#define GLK_DISPLAY_AUX_A_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_AUX_A) |		\
 	BIT_ULL(POWER_DOMAIN_AUX_IO_A) |		\
 	BIT_ULL(POWER_DOMAIN_INIT))
-#घोषणा GLK_DISPLAY_AUX_B_POWER_DOMAINS (		\
+#define GLK_DISPLAY_AUX_B_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_AUX_B) |		\
 	BIT_ULL(POWER_DOMAIN_INIT))
-#घोषणा GLK_DISPLAY_AUX_C_POWER_DOMAINS (		\
+#define GLK_DISPLAY_AUX_C_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_AUX_C) |		\
 	BIT_ULL(POWER_DOMAIN_INIT))
-#घोषणा GLK_DISPLAY_DC_OFF_POWER_DOMAINS (		\
+#define GLK_DISPLAY_DC_OFF_POWER_DOMAINS (		\
 	GLK_DISPLAY_POWERWELL_2_POWER_DOMAINS |		\
 	BIT_ULL(POWER_DOMAIN_GT_IRQ) |			\
 	BIT_ULL(POWER_DOMAIN_MODESET) |			\
@@ -2716,7 +2715,7 @@ bool
 	BIT_ULL(POWER_DOMAIN_GMBUS) |			\
 	BIT_ULL(POWER_DOMAIN_INIT))
 
-#घोषणा CNL_DISPLAY_POWERWELL_2_POWER_DOMAINS (		\
+#define CNL_DISPLAY_POWERWELL_2_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_TRANSCODER_A) |		\
 	BIT_ULL(POWER_DOMAIN_PIPE_B) |			\
 	BIT_ULL(POWER_DOMAIN_TRANSCODER_B) |		\
@@ -2735,38 +2734,38 @@ bool
 	BIT_ULL(POWER_DOMAIN_AUDIO) |			\
 	BIT_ULL(POWER_DOMAIN_VGA) |				\
 	BIT_ULL(POWER_DOMAIN_INIT))
-#घोषणा CNL_DISPLAY_DDI_A_IO_POWER_DOMAINS (		\
+#define CNL_DISPLAY_DDI_A_IO_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_A_IO) |		\
 	BIT_ULL(POWER_DOMAIN_INIT))
-#घोषणा CNL_DISPLAY_DDI_B_IO_POWER_DOMAINS (		\
+#define CNL_DISPLAY_DDI_B_IO_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_B_IO) |		\
 	BIT_ULL(POWER_DOMAIN_INIT))
-#घोषणा CNL_DISPLAY_DDI_C_IO_POWER_DOMAINS (		\
+#define CNL_DISPLAY_DDI_C_IO_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_C_IO) |		\
 	BIT_ULL(POWER_DOMAIN_INIT))
-#घोषणा CNL_DISPLAY_DDI_D_IO_POWER_DOMAINS (		\
+#define CNL_DISPLAY_DDI_D_IO_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_D_IO) |		\
 	BIT_ULL(POWER_DOMAIN_INIT))
-#घोषणा CNL_DISPLAY_AUX_A_POWER_DOMAINS (		\
+#define CNL_DISPLAY_AUX_A_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_AUX_A) |			\
 	BIT_ULL(POWER_DOMAIN_AUX_IO_A) |		\
 	BIT_ULL(POWER_DOMAIN_INIT))
-#घोषणा CNL_DISPLAY_AUX_B_POWER_DOMAINS (		\
+#define CNL_DISPLAY_AUX_B_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_AUX_B) |			\
 	BIT_ULL(POWER_DOMAIN_INIT))
-#घोषणा CNL_DISPLAY_AUX_C_POWER_DOMAINS (		\
+#define CNL_DISPLAY_AUX_C_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_AUX_C) |			\
 	BIT_ULL(POWER_DOMAIN_INIT))
-#घोषणा CNL_DISPLAY_AUX_D_POWER_DOMAINS (		\
+#define CNL_DISPLAY_AUX_D_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_AUX_D) |			\
 	BIT_ULL(POWER_DOMAIN_INIT))
-#घोषणा CNL_DISPLAY_AUX_F_POWER_DOMAINS (		\
+#define CNL_DISPLAY_AUX_F_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_AUX_F) |			\
 	BIT_ULL(POWER_DOMAIN_INIT))
-#घोषणा CNL_DISPLAY_DDI_F_IO_POWER_DOMAINS (		\
+#define CNL_DISPLAY_DDI_F_IO_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_F_IO) |		\
 	BIT_ULL(POWER_DOMAIN_INIT))
-#घोषणा CNL_DISPLAY_DC_OFF_POWER_DOMAINS (		\
+#define CNL_DISPLAY_DC_OFF_POWER_DOMAINS (		\
 	CNL_DISPLAY_POWERWELL_2_POWER_DOMAINS |		\
 	BIT_ULL(POWER_DOMAIN_GT_IRQ) |			\
 	BIT_ULL(POWER_DOMAIN_MODESET) |			\
@@ -2774,12 +2773,12 @@ bool
 	BIT_ULL(POWER_DOMAIN_INIT))
 
 /*
- * ICL PW_0/PG_0 करोमुख्यs (HW/DMC control):
+ * ICL PW_0/PG_0 domains (HW/DMC control):
  * - PCI
- * - घड़ीs except port PLL
- * - central घातer except FBC
- * - shared functions except pipe पूर्णांकerrupts, pipe MBUS, DBUF रेजिस्टरs
- * ICL PW_1/PG_1 करोमुख्यs (HW/DMC control):
+ * - clocks except port PLL
+ * - central power except FBC
+ * - shared functions except pipe interrupts, pipe MBUS, DBUF registers
+ * ICL PW_1/PG_1 domains (HW/DMC control):
  * - DBUF function
  * - PIPE_A and its planes, except VGA
  * - transcoder EDP + PSR
@@ -2787,12 +2786,12 @@ bool
  * - DDI_A
  * - FBC
  */
-#घोषणा ICL_PW_4_POWER_DOMAINS (			\
+#define ICL_PW_4_POWER_DOMAINS (			\
 	BIT_ULL(POWER_DOMAIN_PIPE_C) |			\
 	BIT_ULL(POWER_DOMAIN_PIPE_C_PANEL_FITTER) |	\
 	BIT_ULL(POWER_DOMAIN_INIT))
 	/* VDSC/joining */
-#घोषणा ICL_PW_3_POWER_DOMAINS (			\
+#define ICL_PW_3_POWER_DOMAINS (			\
 	ICL_PW_4_POWER_DOMAINS |			\
 	BIT_ULL(POWER_DOMAIN_PIPE_B) |			\
 	BIT_ULL(POWER_DOMAIN_TRANSCODER_A) |		\
@@ -2820,69 +2819,69 @@ bool
 	 * - transcoder WD
 	 * - KVMR (HW control)
 	 */
-#घोषणा ICL_PW_2_POWER_DOMAINS (			\
+#define ICL_PW_2_POWER_DOMAINS (			\
 	ICL_PW_3_POWER_DOMAINS |			\
 	BIT_ULL(POWER_DOMAIN_TRANSCODER_VDSC_PW2) |		\
 	BIT_ULL(POWER_DOMAIN_INIT))
 	/*
 	 * - KVMR (HW control)
 	 */
-#घोषणा ICL_DISPLAY_DC_OFF_POWER_DOMAINS (		\
+#define ICL_DISPLAY_DC_OFF_POWER_DOMAINS (		\
 	ICL_PW_2_POWER_DOMAINS |			\
 	BIT_ULL(POWER_DOMAIN_MODESET) |			\
 	BIT_ULL(POWER_DOMAIN_AUX_A) |			\
 	BIT_ULL(POWER_DOMAIN_DPLL_DC_OFF) |			\
 	BIT_ULL(POWER_DOMAIN_INIT))
 
-#घोषणा ICL_DDI_IO_A_POWER_DOMAINS (			\
+#define ICL_DDI_IO_A_POWER_DOMAINS (			\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_A_IO))
-#घोषणा ICL_DDI_IO_B_POWER_DOMAINS (			\
+#define ICL_DDI_IO_B_POWER_DOMAINS (			\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_B_IO))
-#घोषणा ICL_DDI_IO_C_POWER_DOMAINS (			\
+#define ICL_DDI_IO_C_POWER_DOMAINS (			\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_C_IO))
-#घोषणा ICL_DDI_IO_D_POWER_DOMAINS (			\
+#define ICL_DDI_IO_D_POWER_DOMAINS (			\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_D_IO))
-#घोषणा ICL_DDI_IO_E_POWER_DOMAINS (			\
+#define ICL_DDI_IO_E_POWER_DOMAINS (			\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_E_IO))
-#घोषणा ICL_DDI_IO_F_POWER_DOMAINS (			\
+#define ICL_DDI_IO_F_POWER_DOMAINS (			\
 	BIT_ULL(POWER_DOMAIN_PORT_DDI_F_IO))
 
-#घोषणा ICL_AUX_A_IO_POWER_DOMAINS (			\
+#define ICL_AUX_A_IO_POWER_DOMAINS (			\
 	BIT_ULL(POWER_DOMAIN_AUX_IO_A) |		\
 	BIT_ULL(POWER_DOMAIN_AUX_A))
-#घोषणा ICL_AUX_B_IO_POWER_DOMAINS (			\
+#define ICL_AUX_B_IO_POWER_DOMAINS (			\
 	BIT_ULL(POWER_DOMAIN_AUX_B))
-#घोषणा ICL_AUX_C_TC1_IO_POWER_DOMAINS (		\
+#define ICL_AUX_C_TC1_IO_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_AUX_C))
-#घोषणा ICL_AUX_D_TC2_IO_POWER_DOMAINS (		\
+#define ICL_AUX_D_TC2_IO_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_AUX_D))
-#घोषणा ICL_AUX_E_TC3_IO_POWER_DOMAINS (		\
+#define ICL_AUX_E_TC3_IO_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_AUX_E))
-#घोषणा ICL_AUX_F_TC4_IO_POWER_DOMAINS (		\
+#define ICL_AUX_F_TC4_IO_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_AUX_F))
-#घोषणा ICL_AUX_C_TBT1_IO_POWER_DOMAINS (		\
+#define ICL_AUX_C_TBT1_IO_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_AUX_C_TBT))
-#घोषणा ICL_AUX_D_TBT2_IO_POWER_DOMAINS (		\
+#define ICL_AUX_D_TBT2_IO_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_AUX_D_TBT))
-#घोषणा ICL_AUX_E_TBT3_IO_POWER_DOMAINS (		\
+#define ICL_AUX_E_TBT3_IO_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_AUX_E_TBT))
-#घोषणा ICL_AUX_F_TBT4_IO_POWER_DOMAINS (		\
+#define ICL_AUX_F_TBT4_IO_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_AUX_F_TBT))
 
-#घोषणा TGL_PW_5_POWER_DOMAINS (			\
+#define TGL_PW_5_POWER_DOMAINS (			\
 	BIT_ULL(POWER_DOMAIN_PIPE_D) |			\
 	BIT_ULL(POWER_DOMAIN_TRANSCODER_D) |		\
 	BIT_ULL(POWER_DOMAIN_PIPE_D_PANEL_FITTER) |     \
 	BIT_ULL(POWER_DOMAIN_INIT))
 
-#घोषणा TGL_PW_4_POWER_DOMAINS (			\
+#define TGL_PW_4_POWER_DOMAINS (			\
 	TGL_PW_5_POWER_DOMAINS |			\
 	BIT_ULL(POWER_DOMAIN_PIPE_C) |			\
 	BIT_ULL(POWER_DOMAIN_TRANSCODER_C) |		\
 	BIT_ULL(POWER_DOMAIN_PIPE_C_PANEL_FITTER) |	\
 	BIT_ULL(POWER_DOMAIN_INIT))
 
-#घोषणा TGL_PW_3_POWER_DOMAINS (			\
+#define TGL_PW_3_POWER_DOMAINS (			\
 	TGL_PW_4_POWER_DOMAINS |			\
 	BIT_ULL(POWER_DOMAIN_PIPE_B) |			\
 	BIT_ULL(POWER_DOMAIN_TRANSCODER_B) |		\
@@ -2909,12 +2908,12 @@ bool
 	BIT_ULL(POWER_DOMAIN_AUDIO) |			\
 	BIT_ULL(POWER_DOMAIN_INIT))
 
-#घोषणा TGL_PW_2_POWER_DOMAINS (			\
+#define TGL_PW_2_POWER_DOMAINS (			\
 	TGL_PW_3_POWER_DOMAINS |			\
 	BIT_ULL(POWER_DOMAIN_TRANSCODER_VDSC_PW2) |	\
 	BIT_ULL(POWER_DOMAIN_INIT))
 
-#घोषणा TGL_DISPLAY_DC_OFF_POWER_DOMAINS (		\
+#define TGL_DISPLAY_DC_OFF_POWER_DOMAINS (		\
 	TGL_PW_3_POWER_DOMAINS |			\
 	BIT_ULL(POWER_DOMAIN_MODESET) |			\
 	BIT_ULL(POWER_DOMAIN_AUX_A) |			\
@@ -2922,36 +2921,36 @@ bool
 	BIT_ULL(POWER_DOMAIN_AUX_C) |			\
 	BIT_ULL(POWER_DOMAIN_INIT))
 
-#घोषणा TGL_DDI_IO_TC1_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_PORT_DDI_IO_TC1)
-#घोषणा TGL_DDI_IO_TC2_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_PORT_DDI_IO_TC2)
-#घोषणा TGL_DDI_IO_TC3_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_PORT_DDI_IO_TC3)
-#घोषणा TGL_DDI_IO_TC4_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_PORT_DDI_IO_TC4)
-#घोषणा TGL_DDI_IO_TC5_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_PORT_DDI_IO_TC5)
-#घोषणा TGL_DDI_IO_TC6_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_PORT_DDI_IO_TC6)
+#define TGL_DDI_IO_TC1_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_PORT_DDI_IO_TC1)
+#define TGL_DDI_IO_TC2_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_PORT_DDI_IO_TC2)
+#define TGL_DDI_IO_TC3_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_PORT_DDI_IO_TC3)
+#define TGL_DDI_IO_TC4_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_PORT_DDI_IO_TC4)
+#define TGL_DDI_IO_TC5_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_PORT_DDI_IO_TC5)
+#define TGL_DDI_IO_TC6_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_PORT_DDI_IO_TC6)
 
-#घोषणा TGL_AUX_A_IO_POWER_DOMAINS (		\
+#define TGL_AUX_A_IO_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_AUX_IO_A) |	\
 	BIT_ULL(POWER_DOMAIN_AUX_A))
-#घोषणा TGL_AUX_B_IO_POWER_DOMAINS (		\
+#define TGL_AUX_B_IO_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_AUX_B))
-#घोषणा TGL_AUX_C_IO_POWER_DOMAINS (		\
+#define TGL_AUX_C_IO_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_AUX_C))
 
-#घोषणा TGL_AUX_IO_USBC1_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_AUX_USBC1)
-#घोषणा TGL_AUX_IO_USBC2_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_AUX_USBC2)
-#घोषणा TGL_AUX_IO_USBC3_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_AUX_USBC3)
-#घोषणा TGL_AUX_IO_USBC4_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_AUX_USBC4)
-#घोषणा TGL_AUX_IO_USBC5_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_AUX_USBC5)
-#घोषणा TGL_AUX_IO_USBC6_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_AUX_USBC6)
+#define TGL_AUX_IO_USBC1_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_AUX_USBC1)
+#define TGL_AUX_IO_USBC2_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_AUX_USBC2)
+#define TGL_AUX_IO_USBC3_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_AUX_USBC3)
+#define TGL_AUX_IO_USBC4_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_AUX_USBC4)
+#define TGL_AUX_IO_USBC5_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_AUX_USBC5)
+#define TGL_AUX_IO_USBC6_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_AUX_USBC6)
 
-#घोषणा TGL_AUX_IO_TBT1_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_AUX_TBT1)
-#घोषणा TGL_AUX_IO_TBT2_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_AUX_TBT2)
-#घोषणा TGL_AUX_IO_TBT3_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_AUX_TBT3)
-#घोषणा TGL_AUX_IO_TBT4_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_AUX_TBT4)
-#घोषणा TGL_AUX_IO_TBT5_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_AUX_TBT5)
-#घोषणा TGL_AUX_IO_TBT6_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_AUX_TBT6)
+#define TGL_AUX_IO_TBT1_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_AUX_TBT1)
+#define TGL_AUX_IO_TBT2_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_AUX_TBT2)
+#define TGL_AUX_IO_TBT3_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_AUX_TBT3)
+#define TGL_AUX_IO_TBT4_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_AUX_TBT4)
+#define TGL_AUX_IO_TBT5_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_AUX_TBT5)
+#define TGL_AUX_IO_TBT6_POWER_DOMAINS	BIT_ULL(POWER_DOMAIN_AUX_TBT6)
 
-#घोषणा TGL_TC_COLD_OFF_POWER_DOMAINS (		\
+#define TGL_TC_COLD_OFF_POWER_DOMAINS (		\
 	BIT_ULL(POWER_DOMAIN_AUX_USBC1)	|	\
 	BIT_ULL(POWER_DOMAIN_AUX_USBC2)	|	\
 	BIT_ULL(POWER_DOMAIN_AUX_USBC3)	|	\
@@ -2966,13 +2965,13 @@ bool
 	BIT_ULL(POWER_DOMAIN_AUX_TBT6) |	\
 	BIT_ULL(POWER_DOMAIN_TC_COLD_OFF))
 
-#घोषणा RKL_PW_4_POWER_DOMAINS (			\
+#define RKL_PW_4_POWER_DOMAINS (			\
 	BIT_ULL(POWER_DOMAIN_PIPE_C) |			\
 	BIT_ULL(POWER_DOMAIN_PIPE_C_PANEL_FITTER) |	\
 	BIT_ULL(POWER_DOMAIN_TRANSCODER_C) |		\
 	BIT_ULL(POWER_DOMAIN_INIT))
 
-#घोषणा RKL_PW_3_POWER_DOMAINS (			\
+#define RKL_PW_3_POWER_DOMAINS (			\
 	RKL_PW_4_POWER_DOMAINS |			\
 	BIT_ULL(POWER_DOMAIN_PIPE_B) |			\
 	BIT_ULL(POWER_DOMAIN_PIPE_B_PANEL_FITTER) |	\
@@ -2988,1675 +2987,1675 @@ bool
 /*
  * There is no PW_2/PG_2 on RKL.
  *
- * RKL PW_1/PG_1 करोमुख्यs (under HW/DMC control):
- * - DBUF function (note: रेजिस्टरs are in PW0)
+ * RKL PW_1/PG_1 domains (under HW/DMC control):
+ * - DBUF function (note: registers are in PW0)
  * - PIPE_A and its planes and VDSC/joining, except VGA
  * - transcoder A
  * - DDI_A and DDI_B
  * - FBC
  *
- * RKL PW_0/PG_0 करोमुख्यs (under HW/DMC control):
+ * RKL PW_0/PG_0 domains (under HW/DMC control):
  * - PCI
- * - घड़ीs except port PLL
+ * - clocks except port PLL
  * - shared functions:
- *     * पूर्णांकerrupts except pipe पूर्णांकerrupts
+ *     * interrupts except pipe interrupts
  *     * MBus except PIPE_MBUS_DBOX_CTL
- *     * DBUF रेजिस्टरs
- * - central घातer except FBC
+ *     * DBUF registers
+ * - central power except FBC
  * - top-level GTC (DDI-level GTC is in the well associated with the DDI)
  */
 
-#घोषणा RKL_DISPLAY_DC_OFF_POWER_DOMAINS (		\
+#define RKL_DISPLAY_DC_OFF_POWER_DOMAINS (		\
 	RKL_PW_3_POWER_DOMAINS |			\
 	BIT_ULL(POWER_DOMAIN_MODESET) |			\
 	BIT_ULL(POWER_DOMAIN_AUX_A) |			\
 	BIT_ULL(POWER_DOMAIN_AUX_B) |			\
 	BIT_ULL(POWER_DOMAIN_INIT))
 
-अटल स्थिर काष्ठा i915_घातer_well_ops i9xx_always_on_घातer_well_ops = अणु
-	.sync_hw = i9xx_घातer_well_sync_hw_noop,
-	.enable = i9xx_always_on_घातer_well_noop,
-	.disable = i9xx_always_on_घातer_well_noop,
-	.is_enabled = i9xx_always_on_घातer_well_enabled,
-पूर्ण;
+static const struct i915_power_well_ops i9xx_always_on_power_well_ops = {
+	.sync_hw = i9xx_power_well_sync_hw_noop,
+	.enable = i9xx_always_on_power_well_noop,
+	.disable = i9xx_always_on_power_well_noop,
+	.is_enabled = i9xx_always_on_power_well_enabled,
+};
 
-अटल स्थिर काष्ठा i915_घातer_well_ops chv_pipe_घातer_well_ops = अणु
-	.sync_hw = chv_pipe_घातer_well_sync_hw,
-	.enable = chv_pipe_घातer_well_enable,
-	.disable = chv_pipe_घातer_well_disable,
-	.is_enabled = chv_pipe_घातer_well_enabled,
-पूर्ण;
+static const struct i915_power_well_ops chv_pipe_power_well_ops = {
+	.sync_hw = chv_pipe_power_well_sync_hw,
+	.enable = chv_pipe_power_well_enable,
+	.disable = chv_pipe_power_well_disable,
+	.is_enabled = chv_pipe_power_well_enabled,
+};
 
-अटल स्थिर काष्ठा i915_घातer_well_ops chv_dpio_cmn_घातer_well_ops = अणु
-	.sync_hw = i9xx_घातer_well_sync_hw_noop,
-	.enable = chv_dpio_cmn_घातer_well_enable,
-	.disable = chv_dpio_cmn_घातer_well_disable,
-	.is_enabled = vlv_घातer_well_enabled,
-पूर्ण;
+static const struct i915_power_well_ops chv_dpio_cmn_power_well_ops = {
+	.sync_hw = i9xx_power_well_sync_hw_noop,
+	.enable = chv_dpio_cmn_power_well_enable,
+	.disable = chv_dpio_cmn_power_well_disable,
+	.is_enabled = vlv_power_well_enabled,
+};
 
-अटल स्थिर काष्ठा i915_घातer_well_desc i9xx_always_on_घातer_well[] = अणु
-	अणु
+static const struct i915_power_well_desc i9xx_always_on_power_well[] = {
+	{
 		.name = "always-on",
 		.always_on = true,
-		.करोमुख्यs = POWER_DOMAIN_MASK,
-		.ops = &i9xx_always_on_घातer_well_ops,
+		.domains = POWER_DOMAIN_MASK,
+		.ops = &i9xx_always_on_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा i915_घातer_well_ops i830_pipes_घातer_well_ops = अणु
-	.sync_hw = i830_pipes_घातer_well_sync_hw,
-	.enable = i830_pipes_घातer_well_enable,
-	.disable = i830_pipes_घातer_well_disable,
-	.is_enabled = i830_pipes_घातer_well_enabled,
-पूर्ण;
+static const struct i915_power_well_ops i830_pipes_power_well_ops = {
+	.sync_hw = i830_pipes_power_well_sync_hw,
+	.enable = i830_pipes_power_well_enable,
+	.disable = i830_pipes_power_well_disable,
+	.is_enabled = i830_pipes_power_well_enabled,
+};
 
-अटल स्थिर काष्ठा i915_घातer_well_desc i830_घातer_wells[] = अणु
-	अणु
+static const struct i915_power_well_desc i830_power_wells[] = {
+	{
 		.name = "always-on",
 		.always_on = true,
-		.करोमुख्यs = POWER_DOMAIN_MASK,
-		.ops = &i9xx_always_on_घातer_well_ops,
+		.domains = POWER_DOMAIN_MASK,
+		.ops = &i9xx_always_on_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "pipes",
-		.करोमुख्यs = I830_PIPES_POWER_DOMAINS,
-		.ops = &i830_pipes_घातer_well_ops,
+		.domains = I830_PIPES_POWER_DOMAINS,
+		.ops = &i830_pipes_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा i915_घातer_well_ops hsw_घातer_well_ops = अणु
-	.sync_hw = hsw_घातer_well_sync_hw,
-	.enable = hsw_घातer_well_enable,
-	.disable = hsw_घातer_well_disable,
-	.is_enabled = hsw_घातer_well_enabled,
-पूर्ण;
+static const struct i915_power_well_ops hsw_power_well_ops = {
+	.sync_hw = hsw_power_well_sync_hw,
+	.enable = hsw_power_well_enable,
+	.disable = hsw_power_well_disable,
+	.is_enabled = hsw_power_well_enabled,
+};
 
-अटल स्थिर काष्ठा i915_घातer_well_ops gen9_dc_off_घातer_well_ops = अणु
-	.sync_hw = i9xx_घातer_well_sync_hw_noop,
-	.enable = gen9_dc_off_घातer_well_enable,
-	.disable = gen9_dc_off_घातer_well_disable,
-	.is_enabled = gen9_dc_off_घातer_well_enabled,
-पूर्ण;
+static const struct i915_power_well_ops gen9_dc_off_power_well_ops = {
+	.sync_hw = i9xx_power_well_sync_hw_noop,
+	.enable = gen9_dc_off_power_well_enable,
+	.disable = gen9_dc_off_power_well_disable,
+	.is_enabled = gen9_dc_off_power_well_enabled,
+};
 
-अटल स्थिर काष्ठा i915_घातer_well_ops bxt_dpio_cmn_घातer_well_ops = अणु
-	.sync_hw = i9xx_घातer_well_sync_hw_noop,
-	.enable = bxt_dpio_cmn_घातer_well_enable,
-	.disable = bxt_dpio_cmn_घातer_well_disable,
-	.is_enabled = bxt_dpio_cmn_घातer_well_enabled,
-पूर्ण;
+static const struct i915_power_well_ops bxt_dpio_cmn_power_well_ops = {
+	.sync_hw = i9xx_power_well_sync_hw_noop,
+	.enable = bxt_dpio_cmn_power_well_enable,
+	.disable = bxt_dpio_cmn_power_well_disable,
+	.is_enabled = bxt_dpio_cmn_power_well_enabled,
+};
 
-अटल स्थिर काष्ठा i915_घातer_well_regs hsw_घातer_well_regs = अणु
+static const struct i915_power_well_regs hsw_power_well_regs = {
 	.bios	= HSW_PWR_WELL_CTL1,
 	.driver	= HSW_PWR_WELL_CTL2,
 	.kvmr	= HSW_PWR_WELL_CTL3,
 	.debug	= HSW_PWR_WELL_CTL4,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा i915_घातer_well_desc hsw_घातer_wells[] = अणु
-	अणु
+static const struct i915_power_well_desc hsw_power_wells[] = {
+	{
 		.name = "always-on",
 		.always_on = true,
-		.करोमुख्यs = POWER_DOMAIN_MASK,
-		.ops = &i9xx_always_on_घातer_well_ops,
+		.domains = POWER_DOMAIN_MASK,
+		.ops = &i9xx_always_on_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "display",
-		.करोमुख्यs = HSW_DISPLAY_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = HSW_DISPLAY_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = HSW_DISP_PW_GLOBAL,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = HSW_PW_CTL_IDX_GLOBAL,
 			.hsw.has_vga = true,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल स्थिर काष्ठा i915_घातer_well_desc bdw_घातer_wells[] = अणु
-	अणु
+static const struct i915_power_well_desc bdw_power_wells[] = {
+	{
 		.name = "always-on",
 		.always_on = true,
-		.करोमुख्यs = POWER_DOMAIN_MASK,
-		.ops = &i9xx_always_on_घातer_well_ops,
+		.domains = POWER_DOMAIN_MASK,
+		.ops = &i9xx_always_on_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "display",
-		.करोमुख्यs = BDW_DISPLAY_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = BDW_DISPLAY_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = HSW_DISP_PW_GLOBAL,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = HSW_PW_CTL_IDX_GLOBAL,
 			.hsw.irq_pipe_mask = BIT(PIPE_B) | BIT(PIPE_C),
 			.hsw.has_vga = true,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल स्थिर काष्ठा i915_घातer_well_ops vlv_display_घातer_well_ops = अणु
-	.sync_hw = i9xx_घातer_well_sync_hw_noop,
-	.enable = vlv_display_घातer_well_enable,
-	.disable = vlv_display_घातer_well_disable,
-	.is_enabled = vlv_घातer_well_enabled,
-पूर्ण;
+static const struct i915_power_well_ops vlv_display_power_well_ops = {
+	.sync_hw = i9xx_power_well_sync_hw_noop,
+	.enable = vlv_display_power_well_enable,
+	.disable = vlv_display_power_well_disable,
+	.is_enabled = vlv_power_well_enabled,
+};
 
-अटल स्थिर काष्ठा i915_घातer_well_ops vlv_dpio_cmn_घातer_well_ops = अणु
-	.sync_hw = i9xx_घातer_well_sync_hw_noop,
-	.enable = vlv_dpio_cmn_घातer_well_enable,
-	.disable = vlv_dpio_cmn_घातer_well_disable,
-	.is_enabled = vlv_घातer_well_enabled,
-पूर्ण;
+static const struct i915_power_well_ops vlv_dpio_cmn_power_well_ops = {
+	.sync_hw = i9xx_power_well_sync_hw_noop,
+	.enable = vlv_dpio_cmn_power_well_enable,
+	.disable = vlv_dpio_cmn_power_well_disable,
+	.is_enabled = vlv_power_well_enabled,
+};
 
-अटल स्थिर काष्ठा i915_घातer_well_ops vlv_dpio_घातer_well_ops = अणु
-	.sync_hw = i9xx_घातer_well_sync_hw_noop,
-	.enable = vlv_घातer_well_enable,
-	.disable = vlv_घातer_well_disable,
-	.is_enabled = vlv_घातer_well_enabled,
-पूर्ण;
+static const struct i915_power_well_ops vlv_dpio_power_well_ops = {
+	.sync_hw = i9xx_power_well_sync_hw_noop,
+	.enable = vlv_power_well_enable,
+	.disable = vlv_power_well_disable,
+	.is_enabled = vlv_power_well_enabled,
+};
 
-अटल स्थिर काष्ठा i915_घातer_well_desc vlv_घातer_wells[] = अणु
-	अणु
+static const struct i915_power_well_desc vlv_power_wells[] = {
+	{
 		.name = "always-on",
 		.always_on = true,
-		.करोमुख्यs = POWER_DOMAIN_MASK,
-		.ops = &i9xx_always_on_घातer_well_ops,
+		.domains = POWER_DOMAIN_MASK,
+		.ops = &i9xx_always_on_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "display",
-		.करोमुख्यs = VLV_DISPLAY_POWER_DOMAINS,
-		.ops = &vlv_display_घातer_well_ops,
+		.domains = VLV_DISPLAY_POWER_DOMAINS,
+		.ops = &vlv_display_power_well_ops,
 		.id = VLV_DISP_PW_DISP2D,
-		अणु
+		{
 			.vlv.idx = PUNIT_PWGT_IDX_DISP2D,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "dpio-tx-b-01",
-		.करोमुख्यs = VLV_DPIO_TX_B_LANES_01_POWER_DOMAINS |
+		.domains = VLV_DPIO_TX_B_LANES_01_POWER_DOMAINS |
 			   VLV_DPIO_TX_B_LANES_23_POWER_DOMAINS |
 			   VLV_DPIO_TX_C_LANES_01_POWER_DOMAINS |
 			   VLV_DPIO_TX_C_LANES_23_POWER_DOMAINS,
-		.ops = &vlv_dpio_घातer_well_ops,
+		.ops = &vlv_dpio_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
+		{
 			.vlv.idx = PUNIT_PWGT_IDX_DPIO_TX_B_LANES_01,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "dpio-tx-b-23",
-		.करोमुख्यs = VLV_DPIO_TX_B_LANES_01_POWER_DOMAINS |
+		.domains = VLV_DPIO_TX_B_LANES_01_POWER_DOMAINS |
 			   VLV_DPIO_TX_B_LANES_23_POWER_DOMAINS |
 			   VLV_DPIO_TX_C_LANES_01_POWER_DOMAINS |
 			   VLV_DPIO_TX_C_LANES_23_POWER_DOMAINS,
-		.ops = &vlv_dpio_घातer_well_ops,
+		.ops = &vlv_dpio_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
+		{
 			.vlv.idx = PUNIT_PWGT_IDX_DPIO_TX_B_LANES_23,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "dpio-tx-c-01",
-		.करोमुख्यs = VLV_DPIO_TX_B_LANES_01_POWER_DOMAINS |
+		.domains = VLV_DPIO_TX_B_LANES_01_POWER_DOMAINS |
 			   VLV_DPIO_TX_B_LANES_23_POWER_DOMAINS |
 			   VLV_DPIO_TX_C_LANES_01_POWER_DOMAINS |
 			   VLV_DPIO_TX_C_LANES_23_POWER_DOMAINS,
-		.ops = &vlv_dpio_घातer_well_ops,
+		.ops = &vlv_dpio_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
+		{
 			.vlv.idx = PUNIT_PWGT_IDX_DPIO_TX_C_LANES_01,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "dpio-tx-c-23",
-		.करोमुख्यs = VLV_DPIO_TX_B_LANES_01_POWER_DOMAINS |
+		.domains = VLV_DPIO_TX_B_LANES_01_POWER_DOMAINS |
 			   VLV_DPIO_TX_B_LANES_23_POWER_DOMAINS |
 			   VLV_DPIO_TX_C_LANES_01_POWER_DOMAINS |
 			   VLV_DPIO_TX_C_LANES_23_POWER_DOMAINS,
-		.ops = &vlv_dpio_घातer_well_ops,
+		.ops = &vlv_dpio_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
+		{
 			.vlv.idx = PUNIT_PWGT_IDX_DPIO_TX_C_LANES_23,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "dpio-common",
-		.करोमुख्यs = VLV_DPIO_CMN_BC_POWER_DOMAINS,
-		.ops = &vlv_dpio_cmn_घातer_well_ops,
+		.domains = VLV_DPIO_CMN_BC_POWER_DOMAINS,
+		.ops = &vlv_dpio_cmn_power_well_ops,
 		.id = VLV_DISP_PW_DPIO_CMN_BC,
-		अणु
+		{
 			.vlv.idx = PUNIT_PWGT_IDX_DPIO_CMN_BC,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल स्थिर काष्ठा i915_घातer_well_desc chv_घातer_wells[] = अणु
-	अणु
+static const struct i915_power_well_desc chv_power_wells[] = {
+	{
 		.name = "always-on",
 		.always_on = true,
-		.करोमुख्यs = POWER_DOMAIN_MASK,
-		.ops = &i9xx_always_on_घातer_well_ops,
+		.domains = POWER_DOMAIN_MASK,
+		.ops = &i9xx_always_on_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "display",
 		/*
-		 * Pipe A घातer well is the new disp2d well. Pipe B and C
-		 * घातer wells करोn't actually exist. Pipe A घातer well is
-		 * required क्रम any pipe to work.
+		 * Pipe A power well is the new disp2d well. Pipe B and C
+		 * power wells don't actually exist. Pipe A power well is
+		 * required for any pipe to work.
 		 */
-		.करोमुख्यs = CHV_DISPLAY_POWER_DOMAINS,
-		.ops = &chv_pipe_घातer_well_ops,
+		.domains = CHV_DISPLAY_POWER_DOMAINS,
+		.ops = &chv_pipe_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "dpio-common-bc",
-		.करोमुख्यs = CHV_DPIO_CMN_BC_POWER_DOMAINS,
-		.ops = &chv_dpio_cmn_घातer_well_ops,
+		.domains = CHV_DPIO_CMN_BC_POWER_DOMAINS,
+		.ops = &chv_dpio_cmn_power_well_ops,
 		.id = VLV_DISP_PW_DPIO_CMN_BC,
-		अणु
+		{
 			.vlv.idx = PUNIT_PWGT_IDX_DPIO_CMN_BC,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "dpio-common-d",
-		.करोमुख्यs = CHV_DPIO_CMN_D_POWER_DOMAINS,
-		.ops = &chv_dpio_cmn_घातer_well_ops,
+		.domains = CHV_DPIO_CMN_D_POWER_DOMAINS,
+		.ops = &chv_dpio_cmn_power_well_ops,
 		.id = CHV_DISP_PW_DPIO_CMN_D,
-		अणु
+		{
 			.vlv.idx = PUNIT_PWGT_IDX_DPIO_CMN_D,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-bool पूर्णांकel_display_घातer_well_is_enabled(काष्ठा drm_i915_निजी *dev_priv,
-					 क्रमागत i915_घातer_well_id घातer_well_id)
-अणु
-	काष्ठा i915_घातer_well *घातer_well;
+bool intel_display_power_well_is_enabled(struct drm_i915_private *dev_priv,
+					 enum i915_power_well_id power_well_id)
+{
+	struct i915_power_well *power_well;
 	bool ret;
 
-	घातer_well = lookup_घातer_well(dev_priv, घातer_well_id);
-	ret = घातer_well->desc->ops->is_enabled(dev_priv, घातer_well);
+	power_well = lookup_power_well(dev_priv, power_well_id);
+	ret = power_well->desc->ops->is_enabled(dev_priv, power_well);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल स्थिर काष्ठा i915_घातer_well_desc skl_घातer_wells[] = अणु
-	अणु
+static const struct i915_power_well_desc skl_power_wells[] = {
+	{
 		.name = "always-on",
 		.always_on = true,
-		.करोमुख्यs = POWER_DOMAIN_MASK,
-		.ops = &i9xx_always_on_घातer_well_ops,
+		.domains = POWER_DOMAIN_MASK,
+		.ops = &i9xx_always_on_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "power well 1",
 		/* Handled by the DMC firmware */
 		.always_on = true,
-		.करोमुख्यs = 0,
-		.ops = &hsw_घातer_well_ops,
+		.domains = 0,
+		.ops = &hsw_power_well_ops,
 		.id = SKL_DISP_PW_1,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = SKL_PW_CTL_IDX_PW_1,
 			.hsw.has_fuses = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "MISC IO power well",
 		/* Handled by the DMC firmware */
 		.always_on = true,
-		.करोमुख्यs = 0,
-		.ops = &hsw_घातer_well_ops,
+		.domains = 0,
+		.ops = &hsw_power_well_ops,
 		.id = SKL_DISP_PW_MISC_IO,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = SKL_PW_CTL_IDX_MISC_IO,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DC off",
-		.करोमुख्यs = SKL_DISPLAY_DC_OFF_POWER_DOMAINS,
-		.ops = &gen9_dc_off_घातer_well_ops,
+		.domains = SKL_DISPLAY_DC_OFF_POWER_DOMAINS,
+		.ops = &gen9_dc_off_power_well_ops,
 		.id = SKL_DISP_DC_OFF,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "power well 2",
-		.करोमुख्यs = SKL_DISPLAY_POWERWELL_2_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = SKL_DISPLAY_POWERWELL_2_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = SKL_DISP_PW_2,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = SKL_PW_CTL_IDX_PW_2,
 			.hsw.irq_pipe_mask = BIT(PIPE_B) | BIT(PIPE_C),
 			.hsw.has_vga = true,
 			.hsw.has_fuses = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DDI A/E IO power well",
-		.करोमुख्यs = SKL_DISPLAY_DDI_IO_A_E_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = SKL_DISPLAY_DDI_IO_A_E_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = SKL_PW_CTL_IDX_DDI_A_E,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DDI B IO power well",
-		.करोमुख्यs = SKL_DISPLAY_DDI_IO_B_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = SKL_DISPLAY_DDI_IO_B_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = SKL_PW_CTL_IDX_DDI_B,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DDI C IO power well",
-		.करोमुख्यs = SKL_DISPLAY_DDI_IO_C_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = SKL_DISPLAY_DDI_IO_C_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = SKL_PW_CTL_IDX_DDI_C,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DDI D IO power well",
-		.करोमुख्यs = SKL_DISPLAY_DDI_IO_D_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = SKL_DISPLAY_DDI_IO_D_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = SKL_PW_CTL_IDX_DDI_D,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल स्थिर काष्ठा i915_घातer_well_desc bxt_घातer_wells[] = अणु
-	अणु
+static const struct i915_power_well_desc bxt_power_wells[] = {
+	{
 		.name = "always-on",
 		.always_on = true,
-		.करोमुख्यs = POWER_DOMAIN_MASK,
-		.ops = &i9xx_always_on_घातer_well_ops,
+		.domains = POWER_DOMAIN_MASK,
+		.ops = &i9xx_always_on_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "power well 1",
 		/* Handled by the DMC firmware */
 		.always_on = true,
-		.करोमुख्यs = 0,
-		.ops = &hsw_घातer_well_ops,
+		.domains = 0,
+		.ops = &hsw_power_well_ops,
 		.id = SKL_DISP_PW_1,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = SKL_PW_CTL_IDX_PW_1,
 			.hsw.has_fuses = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DC off",
-		.करोमुख्यs = BXT_DISPLAY_DC_OFF_POWER_DOMAINS,
-		.ops = &gen9_dc_off_घातer_well_ops,
+		.domains = BXT_DISPLAY_DC_OFF_POWER_DOMAINS,
+		.ops = &gen9_dc_off_power_well_ops,
 		.id = SKL_DISP_DC_OFF,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "power well 2",
-		.करोमुख्यs = BXT_DISPLAY_POWERWELL_2_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = BXT_DISPLAY_POWERWELL_2_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = SKL_DISP_PW_2,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = SKL_PW_CTL_IDX_PW_2,
 			.hsw.irq_pipe_mask = BIT(PIPE_B) | BIT(PIPE_C),
 			.hsw.has_vga = true,
 			.hsw.has_fuses = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "dpio-common-a",
-		.करोमुख्यs = BXT_DPIO_CMN_A_POWER_DOMAINS,
-		.ops = &bxt_dpio_cmn_घातer_well_ops,
+		.domains = BXT_DPIO_CMN_A_POWER_DOMAINS,
+		.ops = &bxt_dpio_cmn_power_well_ops,
 		.id = BXT_DISP_PW_DPIO_CMN_A,
-		अणु
+		{
 			.bxt.phy = DPIO_PHY1,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "dpio-common-bc",
-		.करोमुख्यs = BXT_DPIO_CMN_BC_POWER_DOMAINS,
-		.ops = &bxt_dpio_cmn_घातer_well_ops,
+		.domains = BXT_DPIO_CMN_BC_POWER_DOMAINS,
+		.ops = &bxt_dpio_cmn_power_well_ops,
 		.id = VLV_DISP_PW_DPIO_CMN_BC,
-		अणु
+		{
 			.bxt.phy = DPIO_PHY0,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल स्थिर काष्ठा i915_घातer_well_desc glk_घातer_wells[] = अणु
-	अणु
+static const struct i915_power_well_desc glk_power_wells[] = {
+	{
 		.name = "always-on",
 		.always_on = true,
-		.करोमुख्यs = POWER_DOMAIN_MASK,
-		.ops = &i9xx_always_on_घातer_well_ops,
+		.domains = POWER_DOMAIN_MASK,
+		.ops = &i9xx_always_on_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "power well 1",
 		/* Handled by the DMC firmware */
 		.always_on = true,
-		.करोमुख्यs = 0,
-		.ops = &hsw_घातer_well_ops,
+		.domains = 0,
+		.ops = &hsw_power_well_ops,
 		.id = SKL_DISP_PW_1,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = SKL_PW_CTL_IDX_PW_1,
 			.hsw.has_fuses = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DC off",
-		.करोमुख्यs = GLK_DISPLAY_DC_OFF_POWER_DOMAINS,
-		.ops = &gen9_dc_off_घातer_well_ops,
+		.domains = GLK_DISPLAY_DC_OFF_POWER_DOMAINS,
+		.ops = &gen9_dc_off_power_well_ops,
 		.id = SKL_DISP_DC_OFF,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "power well 2",
-		.करोमुख्यs = GLK_DISPLAY_POWERWELL_2_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = GLK_DISPLAY_POWERWELL_2_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = SKL_DISP_PW_2,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = SKL_PW_CTL_IDX_PW_2,
 			.hsw.irq_pipe_mask = BIT(PIPE_B) | BIT(PIPE_C),
 			.hsw.has_vga = true,
 			.hsw.has_fuses = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "dpio-common-a",
-		.करोमुख्यs = GLK_DPIO_CMN_A_POWER_DOMAINS,
-		.ops = &bxt_dpio_cmn_घातer_well_ops,
+		.domains = GLK_DPIO_CMN_A_POWER_DOMAINS,
+		.ops = &bxt_dpio_cmn_power_well_ops,
 		.id = BXT_DISP_PW_DPIO_CMN_A,
-		अणु
+		{
 			.bxt.phy = DPIO_PHY1,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "dpio-common-b",
-		.करोमुख्यs = GLK_DPIO_CMN_B_POWER_DOMAINS,
-		.ops = &bxt_dpio_cmn_घातer_well_ops,
+		.domains = GLK_DPIO_CMN_B_POWER_DOMAINS,
+		.ops = &bxt_dpio_cmn_power_well_ops,
 		.id = VLV_DISP_PW_DPIO_CMN_BC,
-		अणु
+		{
 			.bxt.phy = DPIO_PHY0,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "dpio-common-c",
-		.करोमुख्यs = GLK_DPIO_CMN_C_POWER_DOMAINS,
-		.ops = &bxt_dpio_cmn_घातer_well_ops,
+		.domains = GLK_DPIO_CMN_C_POWER_DOMAINS,
+		.ops = &bxt_dpio_cmn_power_well_ops,
 		.id = GLK_DISP_PW_DPIO_CMN_C,
-		अणु
+		{
 			.bxt.phy = DPIO_PHY2,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX A",
-		.करोमुख्यs = GLK_DISPLAY_AUX_A_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = GLK_DISPLAY_AUX_A_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = GLK_PW_CTL_IDX_AUX_A,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX B",
-		.करोमुख्यs = GLK_DISPLAY_AUX_B_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = GLK_DISPLAY_AUX_B_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = GLK_PW_CTL_IDX_AUX_B,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX C",
-		.करोमुख्यs = GLK_DISPLAY_AUX_C_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = GLK_DISPLAY_AUX_C_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = GLK_PW_CTL_IDX_AUX_C,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DDI A IO power well",
-		.करोमुख्यs = GLK_DISPLAY_DDI_IO_A_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = GLK_DISPLAY_DDI_IO_A_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = GLK_PW_CTL_IDX_DDI_A,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DDI B IO power well",
-		.करोमुख्यs = GLK_DISPLAY_DDI_IO_B_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = GLK_DISPLAY_DDI_IO_B_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = SKL_PW_CTL_IDX_DDI_B,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DDI C IO power well",
-		.करोमुख्यs = GLK_DISPLAY_DDI_IO_C_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = GLK_DISPLAY_DDI_IO_C_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = SKL_PW_CTL_IDX_DDI_C,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल स्थिर काष्ठा i915_घातer_well_desc cnl_घातer_wells[] = अणु
-	अणु
+static const struct i915_power_well_desc cnl_power_wells[] = {
+	{
 		.name = "always-on",
 		.always_on = true,
-		.करोमुख्यs = POWER_DOMAIN_MASK,
-		.ops = &i9xx_always_on_घातer_well_ops,
+		.domains = POWER_DOMAIN_MASK,
+		.ops = &i9xx_always_on_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "power well 1",
 		/* Handled by the DMC firmware */
 		.always_on = true,
-		.करोमुख्यs = 0,
-		.ops = &hsw_घातer_well_ops,
+		.domains = 0,
+		.ops = &hsw_power_well_ops,
 		.id = SKL_DISP_PW_1,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = SKL_PW_CTL_IDX_PW_1,
 			.hsw.has_fuses = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX A",
-		.करोमुख्यs = CNL_DISPLAY_AUX_A_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = CNL_DISPLAY_AUX_A_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = GLK_PW_CTL_IDX_AUX_A,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX B",
-		.करोमुख्यs = CNL_DISPLAY_AUX_B_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = CNL_DISPLAY_AUX_B_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = GLK_PW_CTL_IDX_AUX_B,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX C",
-		.करोमुख्यs = CNL_DISPLAY_AUX_C_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = CNL_DISPLAY_AUX_C_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = GLK_PW_CTL_IDX_AUX_C,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX D",
-		.करोमुख्यs = CNL_DISPLAY_AUX_D_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = CNL_DISPLAY_AUX_D_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = CNL_PW_CTL_IDX_AUX_D,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DC off",
-		.करोमुख्यs = CNL_DISPLAY_DC_OFF_POWER_DOMAINS,
-		.ops = &gen9_dc_off_घातer_well_ops,
+		.domains = CNL_DISPLAY_DC_OFF_POWER_DOMAINS,
+		.ops = &gen9_dc_off_power_well_ops,
 		.id = SKL_DISP_DC_OFF,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "power well 2",
-		.करोमुख्यs = CNL_DISPLAY_POWERWELL_2_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = CNL_DISPLAY_POWERWELL_2_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = SKL_DISP_PW_2,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = SKL_PW_CTL_IDX_PW_2,
 			.hsw.irq_pipe_mask = BIT(PIPE_B) | BIT(PIPE_C),
 			.hsw.has_vga = true,
 			.hsw.has_fuses = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DDI A IO power well",
-		.करोमुख्यs = CNL_DISPLAY_DDI_A_IO_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = CNL_DISPLAY_DDI_A_IO_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = GLK_PW_CTL_IDX_DDI_A,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DDI B IO power well",
-		.करोमुख्यs = CNL_DISPLAY_DDI_B_IO_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = CNL_DISPLAY_DDI_B_IO_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = SKL_PW_CTL_IDX_DDI_B,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DDI C IO power well",
-		.करोमुख्यs = CNL_DISPLAY_DDI_C_IO_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = CNL_DISPLAY_DDI_C_IO_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = SKL_PW_CTL_IDX_DDI_C,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DDI D IO power well",
-		.करोमुख्यs = CNL_DISPLAY_DDI_D_IO_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = CNL_DISPLAY_DDI_D_IO_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = SKL_PW_CTL_IDX_DDI_D,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DDI F IO power well",
-		.करोमुख्यs = CNL_DISPLAY_DDI_F_IO_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = CNL_DISPLAY_DDI_F_IO_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = CNL_DISP_PW_DDI_F_IO,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = CNL_PW_CTL_IDX_DDI_F,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX F",
-		.करोमुख्यs = CNL_DISPLAY_AUX_F_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = CNL_DISPLAY_AUX_F_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = CNL_DISP_PW_DDI_F_AUX,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = CNL_PW_CTL_IDX_AUX_F,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल स्थिर काष्ठा i915_घातer_well_ops icl_aux_घातer_well_ops = अणु
-	.sync_hw = hsw_घातer_well_sync_hw,
-	.enable = icl_aux_घातer_well_enable,
-	.disable = icl_aux_घातer_well_disable,
-	.is_enabled = hsw_घातer_well_enabled,
-पूर्ण;
+static const struct i915_power_well_ops icl_aux_power_well_ops = {
+	.sync_hw = hsw_power_well_sync_hw,
+	.enable = icl_aux_power_well_enable,
+	.disable = icl_aux_power_well_disable,
+	.is_enabled = hsw_power_well_enabled,
+};
 
-अटल स्थिर काष्ठा i915_घातer_well_regs icl_aux_घातer_well_regs = अणु
+static const struct i915_power_well_regs icl_aux_power_well_regs = {
 	.bios	= ICL_PWR_WELL_CTL_AUX1,
 	.driver	= ICL_PWR_WELL_CTL_AUX2,
 	.debug	= ICL_PWR_WELL_CTL_AUX4,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा i915_घातer_well_regs icl_ddi_घातer_well_regs = अणु
+static const struct i915_power_well_regs icl_ddi_power_well_regs = {
 	.bios	= ICL_PWR_WELL_CTL_DDI1,
 	.driver	= ICL_PWR_WELL_CTL_DDI2,
 	.debug	= ICL_PWR_WELL_CTL_DDI4,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा i915_घातer_well_desc icl_घातer_wells[] = अणु
-	अणु
+static const struct i915_power_well_desc icl_power_wells[] = {
+	{
 		.name = "always-on",
 		.always_on = true,
-		.करोमुख्यs = POWER_DOMAIN_MASK,
-		.ops = &i9xx_always_on_घातer_well_ops,
+		.domains = POWER_DOMAIN_MASK,
+		.ops = &i9xx_always_on_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "power well 1",
 		/* Handled by the DMC firmware */
 		.always_on = true,
-		.करोमुख्यs = 0,
-		.ops = &hsw_घातer_well_ops,
+		.domains = 0,
+		.ops = &hsw_power_well_ops,
 		.id = SKL_DISP_PW_1,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_PW_1,
 			.hsw.has_fuses = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DC off",
-		.करोमुख्यs = ICL_DISPLAY_DC_OFF_POWER_DOMAINS,
-		.ops = &gen9_dc_off_घातer_well_ops,
+		.domains = ICL_DISPLAY_DC_OFF_POWER_DOMAINS,
+		.ops = &gen9_dc_off_power_well_ops,
 		.id = SKL_DISP_DC_OFF,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "power well 2",
-		.करोमुख्यs = ICL_PW_2_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = ICL_PW_2_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = SKL_DISP_PW_2,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_PW_2,
 			.hsw.has_fuses = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "power well 3",
-		.करोमुख्यs = ICL_PW_3_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = ICL_PW_3_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = ICL_DISP_PW_3,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_PW_3,
 			.hsw.irq_pipe_mask = BIT(PIPE_B),
 			.hsw.has_vga = true,
 			.hsw.has_fuses = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DDI A IO",
-		.करोमुख्यs = ICL_DDI_IO_A_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = ICL_DDI_IO_A_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_ddi_घातer_well_regs,
+		{
+			.hsw.regs = &icl_ddi_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_DDI_A,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DDI B IO",
-		.करोमुख्यs = ICL_DDI_IO_B_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = ICL_DDI_IO_B_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_ddi_घातer_well_regs,
+		{
+			.hsw.regs = &icl_ddi_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_DDI_B,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DDI C IO",
-		.करोमुख्यs = ICL_DDI_IO_C_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = ICL_DDI_IO_C_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_ddi_घातer_well_regs,
+		{
+			.hsw.regs = &icl_ddi_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_DDI_C,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DDI D IO",
-		.करोमुख्यs = ICL_DDI_IO_D_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = ICL_DDI_IO_D_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_ddi_घातer_well_regs,
+		{
+			.hsw.regs = &icl_ddi_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_DDI_D,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DDI E IO",
-		.करोमुख्यs = ICL_DDI_IO_E_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = ICL_DDI_IO_E_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_ddi_घातer_well_regs,
+		{
+			.hsw.regs = &icl_ddi_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_DDI_E,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DDI F IO",
-		.करोमुख्यs = ICL_DDI_IO_F_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = ICL_DDI_IO_F_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_ddi_घातer_well_regs,
+		{
+			.hsw.regs = &icl_ddi_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_DDI_F,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX A",
-		.करोमुख्यs = ICL_AUX_A_IO_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = ICL_AUX_A_IO_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_AUX_A,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX B",
-		.करोमुख्यs = ICL_AUX_B_IO_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = ICL_AUX_B_IO_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_AUX_B,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX C TC1",
-		.करोमुख्यs = ICL_AUX_C_TC1_IO_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = ICL_AUX_C_TC1_IO_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_AUX_C,
 			.hsw.is_tc_tbt = false,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX D TC2",
-		.करोमुख्यs = ICL_AUX_D_TC2_IO_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = ICL_AUX_D_TC2_IO_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_AUX_D,
 			.hsw.is_tc_tbt = false,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX E TC3",
-		.करोमुख्यs = ICL_AUX_E_TC3_IO_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = ICL_AUX_E_TC3_IO_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_AUX_E,
 			.hsw.is_tc_tbt = false,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX F TC4",
-		.करोमुख्यs = ICL_AUX_F_TC4_IO_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = ICL_AUX_F_TC4_IO_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_AUX_F,
 			.hsw.is_tc_tbt = false,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX C TBT1",
-		.करोमुख्यs = ICL_AUX_C_TBT1_IO_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = ICL_AUX_C_TBT1_IO_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_AUX_TBT1,
 			.hsw.is_tc_tbt = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX D TBT2",
-		.करोमुख्यs = ICL_AUX_D_TBT2_IO_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = ICL_AUX_D_TBT2_IO_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_AUX_TBT2,
 			.hsw.is_tc_tbt = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX E TBT3",
-		.करोमुख्यs = ICL_AUX_E_TBT3_IO_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = ICL_AUX_E_TBT3_IO_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_AUX_TBT3,
 			.hsw.is_tc_tbt = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX F TBT4",
-		.करोमुख्यs = ICL_AUX_F_TBT4_IO_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = ICL_AUX_F_TBT4_IO_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_AUX_TBT4,
 			.hsw.is_tc_tbt = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "power well 4",
-		.करोमुख्यs = ICL_PW_4_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = ICL_PW_4_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_PW_4,
 			.hsw.has_fuses = true,
 			.hsw.irq_pipe_mask = BIT(PIPE_C),
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल व्योम
-tgl_tc_cold_request(काष्ठा drm_i915_निजी *i915, bool block)
-अणु
+static void
+tgl_tc_cold_request(struct drm_i915_private *i915, bool block)
+{
 	u8 tries = 0;
-	पूर्णांक ret;
+	int ret;
 
-	जबतक (1) अणु
+	while (1) {
 		u32 low_val;
 		u32 high_val = 0;
 
-		अगर (block)
+		if (block)
 			low_val = TGL_PCODE_EXIT_TCCOLD_DATA_L_BLOCK_REQ;
-		अन्यथा
+		else
 			low_val = TGL_PCODE_EXIT_TCCOLD_DATA_L_UNBLOCK_REQ;
 
 		/*
-		 * Spec states that we should समयout the request after 200us
-		 * but the function below will समयout after 500us
+		 * Spec states that we should timeout the request after 200us
+		 * but the function below will timeout after 500us
 		 */
-		ret = sandybridge_pcode_पढ़ो(i915, TGL_PCODE_TCCOLD, &low_val,
+		ret = sandybridge_pcode_read(i915, TGL_PCODE_TCCOLD, &low_val,
 					     &high_val);
-		अगर (ret == 0) अणु
-			अगर (block &&
+		if (ret == 0) {
+			if (block &&
 			    (low_val & TGL_PCODE_EXIT_TCCOLD_DATA_L_EXIT_FAILED))
 				ret = -EIO;
-			अन्यथा
-				अवरोध;
-		पूर्ण
+			else
+				break;
+		}
 
-		अगर (++tries == 3)
-			अवरोध;
+		if (++tries == 3)
+			break;
 
 		msleep(1);
-	पूर्ण
+	}
 
-	अगर (ret)
+	if (ret)
 		drm_err(&i915->drm, "TC cold %sblock failed\n",
 			block ? "" : "un");
-	अन्यथा
+	else
 		drm_dbg_kms(&i915->drm, "TC cold %sblock succeeded\n",
 			    block ? "" : "un");
-पूर्ण
+}
 
-अटल व्योम
-tgl_tc_cold_off_घातer_well_enable(काष्ठा drm_i915_निजी *i915,
-				  काष्ठा i915_घातer_well *घातer_well)
-अणु
+static void
+tgl_tc_cold_off_power_well_enable(struct drm_i915_private *i915,
+				  struct i915_power_well *power_well)
+{
 	tgl_tc_cold_request(i915, true);
-पूर्ण
+}
 
-अटल व्योम
-tgl_tc_cold_off_घातer_well_disable(काष्ठा drm_i915_निजी *i915,
-				   काष्ठा i915_घातer_well *घातer_well)
-अणु
+static void
+tgl_tc_cold_off_power_well_disable(struct drm_i915_private *i915,
+				   struct i915_power_well *power_well)
+{
 	tgl_tc_cold_request(i915, false);
-पूर्ण
+}
 
-अटल व्योम
-tgl_tc_cold_off_घातer_well_sync_hw(काष्ठा drm_i915_निजी *i915,
-				   काष्ठा i915_घातer_well *घातer_well)
-अणु
-	अगर (घातer_well->count > 0)
-		tgl_tc_cold_off_घातer_well_enable(i915, घातer_well);
-	अन्यथा
-		tgl_tc_cold_off_घातer_well_disable(i915, घातer_well);
-पूर्ण
+static void
+tgl_tc_cold_off_power_well_sync_hw(struct drm_i915_private *i915,
+				   struct i915_power_well *power_well)
+{
+	if (power_well->count > 0)
+		tgl_tc_cold_off_power_well_enable(i915, power_well);
+	else
+		tgl_tc_cold_off_power_well_disable(i915, power_well);
+}
 
-अटल bool
-tgl_tc_cold_off_घातer_well_is_enabled(काष्ठा drm_i915_निजी *dev_priv,
-				      काष्ठा i915_घातer_well *घातer_well)
-अणु
+static bool
+tgl_tc_cold_off_power_well_is_enabled(struct drm_i915_private *dev_priv,
+				      struct i915_power_well *power_well)
+{
 	/*
-	 * Not the correctly implementation but there is no way to just पढ़ो it
-	 * from PCODE, so वापसing count to aव्योम state mismatch errors
+	 * Not the correctly implementation but there is no way to just read it
+	 * from PCODE, so returning count to avoid state mismatch errors
 	 */
-	वापस घातer_well->count;
-पूर्ण
+	return power_well->count;
+}
 
-अटल स्थिर काष्ठा i915_घातer_well_ops tgl_tc_cold_off_ops = अणु
-	.sync_hw = tgl_tc_cold_off_घातer_well_sync_hw,
-	.enable = tgl_tc_cold_off_घातer_well_enable,
-	.disable = tgl_tc_cold_off_घातer_well_disable,
-	.is_enabled = tgl_tc_cold_off_घातer_well_is_enabled,
-पूर्ण;
+static const struct i915_power_well_ops tgl_tc_cold_off_ops = {
+	.sync_hw = tgl_tc_cold_off_power_well_sync_hw,
+	.enable = tgl_tc_cold_off_power_well_enable,
+	.disable = tgl_tc_cold_off_power_well_disable,
+	.is_enabled = tgl_tc_cold_off_power_well_is_enabled,
+};
 
-अटल स्थिर काष्ठा i915_घातer_well_desc tgl_घातer_wells[] = अणु
-	अणु
+static const struct i915_power_well_desc tgl_power_wells[] = {
+	{
 		.name = "always-on",
 		.always_on = true,
-		.करोमुख्यs = POWER_DOMAIN_MASK,
-		.ops = &i9xx_always_on_घातer_well_ops,
+		.domains = POWER_DOMAIN_MASK,
+		.ops = &i9xx_always_on_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "power well 1",
 		/* Handled by the DMC firmware */
 		.always_on = true,
-		.करोमुख्यs = 0,
-		.ops = &hsw_घातer_well_ops,
+		.domains = 0,
+		.ops = &hsw_power_well_ops,
 		.id = SKL_DISP_PW_1,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_PW_1,
 			.hsw.has_fuses = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DC off",
-		.करोमुख्यs = TGL_DISPLAY_DC_OFF_POWER_DOMAINS,
-		.ops = &gen9_dc_off_घातer_well_ops,
+		.domains = TGL_DISPLAY_DC_OFF_POWER_DOMAINS,
+		.ops = &gen9_dc_off_power_well_ops,
 		.id = SKL_DISP_DC_OFF,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "power well 2",
-		.करोमुख्यs = TGL_PW_2_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = TGL_PW_2_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = SKL_DISP_PW_2,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_PW_2,
 			.hsw.has_fuses = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "power well 3",
-		.करोमुख्यs = TGL_PW_3_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = TGL_PW_3_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = ICL_DISP_PW_3,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_PW_3,
 			.hsw.irq_pipe_mask = BIT(PIPE_B),
 			.hsw.has_vga = true,
 			.hsw.has_fuses = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DDI A IO",
-		.करोमुख्यs = ICL_DDI_IO_A_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = ICL_DDI_IO_A_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_ddi_घातer_well_regs,
+		{
+			.hsw.regs = &icl_ddi_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_DDI_A,
-		पूर्ण
-	पूर्ण,
-	अणु
+		}
+	},
+	{
 		.name = "DDI B IO",
-		.करोमुख्यs = ICL_DDI_IO_B_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = ICL_DDI_IO_B_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_ddi_घातer_well_regs,
+		{
+			.hsw.regs = &icl_ddi_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_DDI_B,
-		पूर्ण
-	पूर्ण,
-	अणु
+		}
+	},
+	{
 		.name = "DDI C IO",
-		.करोमुख्यs = ICL_DDI_IO_C_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = ICL_DDI_IO_C_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_ddi_घातer_well_regs,
+		{
+			.hsw.regs = &icl_ddi_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_DDI_C,
-		पूर्ण
-	पूर्ण,
-	अणु
+		}
+	},
+	{
 		.name = "DDI IO TC1",
-		.करोमुख्यs = TGL_DDI_IO_TC1_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = TGL_DDI_IO_TC1_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_ddi_घातer_well_regs,
+		{
+			.hsw.regs = &icl_ddi_power_well_regs,
 			.hsw.idx = TGL_PW_CTL_IDX_DDI_TC1,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DDI IO TC2",
-		.करोमुख्यs = TGL_DDI_IO_TC2_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = TGL_DDI_IO_TC2_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_ddi_घातer_well_regs,
+		{
+			.hsw.regs = &icl_ddi_power_well_regs,
 			.hsw.idx = TGL_PW_CTL_IDX_DDI_TC2,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DDI IO TC3",
-		.करोमुख्यs = TGL_DDI_IO_TC3_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = TGL_DDI_IO_TC3_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_ddi_घातer_well_regs,
+		{
+			.hsw.regs = &icl_ddi_power_well_regs,
 			.hsw.idx = TGL_PW_CTL_IDX_DDI_TC3,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DDI IO TC4",
-		.करोमुख्यs = TGL_DDI_IO_TC4_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = TGL_DDI_IO_TC4_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_ddi_घातer_well_regs,
+		{
+			.hsw.regs = &icl_ddi_power_well_regs,
 			.hsw.idx = TGL_PW_CTL_IDX_DDI_TC4,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DDI IO TC5",
-		.करोमुख्यs = TGL_DDI_IO_TC5_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = TGL_DDI_IO_TC5_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_ddi_घातer_well_regs,
+		{
+			.hsw.regs = &icl_ddi_power_well_regs,
 			.hsw.idx = TGL_PW_CTL_IDX_DDI_TC5,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DDI IO TC6",
-		.करोमुख्यs = TGL_DDI_IO_TC6_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = TGL_DDI_IO_TC6_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_ddi_घातer_well_regs,
+		{
+			.hsw.regs = &icl_ddi_power_well_regs,
 			.hsw.idx = TGL_PW_CTL_IDX_DDI_TC6,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "TC cold off",
-		.करोमुख्यs = TGL_TC_COLD_OFF_POWER_DOMAINS,
+		.domains = TGL_TC_COLD_OFF_POWER_DOMAINS,
 		.ops = &tgl_tc_cold_off_ops,
 		.id = TGL_DISP_PW_TC_COLD_OFF,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "AUX A",
-		.करोमुख्यs = TGL_AUX_A_IO_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = TGL_AUX_A_IO_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_AUX_A,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX B",
-		.करोमुख्यs = TGL_AUX_B_IO_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = TGL_AUX_B_IO_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_AUX_B,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX C",
-		.करोमुख्यs = TGL_AUX_C_IO_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = TGL_AUX_C_IO_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_AUX_C,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX USBC1",
-		.करोमुख्यs = TGL_AUX_IO_USBC1_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = TGL_AUX_IO_USBC1_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = TGL_PW_CTL_IDX_AUX_TC1,
 			.hsw.is_tc_tbt = false,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX USBC2",
-		.करोमुख्यs = TGL_AUX_IO_USBC2_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = TGL_AUX_IO_USBC2_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = TGL_PW_CTL_IDX_AUX_TC2,
 			.hsw.is_tc_tbt = false,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX USBC3",
-		.करोमुख्यs = TGL_AUX_IO_USBC3_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = TGL_AUX_IO_USBC3_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = TGL_PW_CTL_IDX_AUX_TC3,
 			.hsw.is_tc_tbt = false,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX USBC4",
-		.करोमुख्यs = TGL_AUX_IO_USBC4_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = TGL_AUX_IO_USBC4_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = TGL_PW_CTL_IDX_AUX_TC4,
 			.hsw.is_tc_tbt = false,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX USBC5",
-		.करोमुख्यs = TGL_AUX_IO_USBC5_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = TGL_AUX_IO_USBC5_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = TGL_PW_CTL_IDX_AUX_TC5,
 			.hsw.is_tc_tbt = false,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX USBC6",
-		.करोमुख्यs = TGL_AUX_IO_USBC6_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = TGL_AUX_IO_USBC6_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = TGL_PW_CTL_IDX_AUX_TC6,
 			.hsw.is_tc_tbt = false,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX TBT1",
-		.करोमुख्यs = TGL_AUX_IO_TBT1_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = TGL_AUX_IO_TBT1_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = TGL_PW_CTL_IDX_AUX_TBT1,
 			.hsw.is_tc_tbt = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX TBT2",
-		.करोमुख्यs = TGL_AUX_IO_TBT2_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = TGL_AUX_IO_TBT2_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = TGL_PW_CTL_IDX_AUX_TBT2,
 			.hsw.is_tc_tbt = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX TBT3",
-		.करोमुख्यs = TGL_AUX_IO_TBT3_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = TGL_AUX_IO_TBT3_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = TGL_PW_CTL_IDX_AUX_TBT3,
 			.hsw.is_tc_tbt = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX TBT4",
-		.करोमुख्यs = TGL_AUX_IO_TBT4_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = TGL_AUX_IO_TBT4_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = TGL_PW_CTL_IDX_AUX_TBT4,
 			.hsw.is_tc_tbt = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX TBT5",
-		.करोमुख्यs = TGL_AUX_IO_TBT5_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = TGL_AUX_IO_TBT5_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = TGL_PW_CTL_IDX_AUX_TBT5,
 			.hsw.is_tc_tbt = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX TBT6",
-		.करोमुख्यs = TGL_AUX_IO_TBT6_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = TGL_AUX_IO_TBT6_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = TGL_PW_CTL_IDX_AUX_TBT6,
 			.hsw.is_tc_tbt = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "power well 4",
-		.करोमुख्यs = TGL_PW_4_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = TGL_PW_4_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_PW_4,
 			.hsw.has_fuses = true,
 			.hsw.irq_pipe_mask = BIT(PIPE_C),
-		पूर्ण
-	पूर्ण,
-	अणु
+		}
+	},
+	{
 		.name = "power well 5",
-		.करोमुख्यs = TGL_PW_5_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = TGL_PW_5_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = TGL_PW_CTL_IDX_PW_5,
 			.hsw.has_fuses = true,
 			.hsw.irq_pipe_mask = BIT(PIPE_D),
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल स्थिर काष्ठा i915_घातer_well_desc rkl_घातer_wells[] = अणु
-	अणु
+static const struct i915_power_well_desc rkl_power_wells[] = {
+	{
 		.name = "always-on",
 		.always_on = true,
-		.करोमुख्यs = POWER_DOMAIN_MASK,
-		.ops = &i9xx_always_on_घातer_well_ops,
+		.domains = POWER_DOMAIN_MASK,
+		.ops = &i9xx_always_on_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "power well 1",
 		/* Handled by the DMC firmware */
 		.always_on = true,
-		.करोमुख्यs = 0,
-		.ops = &hsw_घातer_well_ops,
+		.domains = 0,
+		.ops = &hsw_power_well_ops,
 		.id = SKL_DISP_PW_1,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_PW_1,
 			.hsw.has_fuses = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DC off",
-		.करोमुख्यs = RKL_DISPLAY_DC_OFF_POWER_DOMAINS,
-		.ops = &gen9_dc_off_घातer_well_ops,
+		.domains = RKL_DISPLAY_DC_OFF_POWER_DOMAINS,
+		.ops = &gen9_dc_off_power_well_ops,
 		.id = SKL_DISP_DC_OFF,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "power well 3",
-		.करोमुख्यs = RKL_PW_3_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = RKL_PW_3_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = ICL_DISP_PW_3,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_PW_3,
 			.hsw.irq_pipe_mask = BIT(PIPE_B),
 			.hsw.has_vga = true,
 			.hsw.has_fuses = true,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "power well 4",
-		.करोमुख्यs = RKL_PW_4_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = RKL_PW_4_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &hsw_घातer_well_regs,
+		{
+			.hsw.regs = &hsw_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_PW_4,
 			.hsw.has_fuses = true,
 			.hsw.irq_pipe_mask = BIT(PIPE_C),
-		पूर्ण
-	पूर्ण,
-	अणु
+		}
+	},
+	{
 		.name = "DDI A IO",
-		.करोमुख्यs = ICL_DDI_IO_A_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = ICL_DDI_IO_A_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_ddi_घातer_well_regs,
+		{
+			.hsw.regs = &icl_ddi_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_DDI_A,
-		पूर्ण
-	पूर्ण,
-	अणु
+		}
+	},
+	{
 		.name = "DDI B IO",
-		.करोमुख्यs = ICL_DDI_IO_B_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = ICL_DDI_IO_B_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_ddi_घातer_well_regs,
+		{
+			.hsw.regs = &icl_ddi_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_DDI_B,
-		पूर्ण
-	पूर्ण,
-	अणु
+		}
+	},
+	{
 		.name = "DDI IO TC1",
-		.करोमुख्यs = TGL_DDI_IO_TC1_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = TGL_DDI_IO_TC1_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_ddi_घातer_well_regs,
+		{
+			.hsw.regs = &icl_ddi_power_well_regs,
 			.hsw.idx = TGL_PW_CTL_IDX_DDI_TC1,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "DDI IO TC2",
-		.करोमुख्यs = TGL_DDI_IO_TC2_POWER_DOMAINS,
-		.ops = &hsw_घातer_well_ops,
+		.domains = TGL_DDI_IO_TC2_POWER_DOMAINS,
+		.ops = &hsw_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_ddi_घातer_well_regs,
+		{
+			.hsw.regs = &icl_ddi_power_well_regs,
 			.hsw.idx = TGL_PW_CTL_IDX_DDI_TC2,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX A",
-		.करोमुख्यs = ICL_AUX_A_IO_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = ICL_AUX_A_IO_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_AUX_A,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX B",
-		.करोमुख्यs = ICL_AUX_B_IO_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = ICL_AUX_B_IO_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = ICL_PW_CTL_IDX_AUX_B,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX USBC1",
-		.करोमुख्यs = TGL_AUX_IO_USBC1_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = TGL_AUX_IO_USBC1_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = TGL_PW_CTL_IDX_AUX_TC1,
-		पूर्ण,
-	पूर्ण,
-	अणु
+		},
+	},
+	{
 		.name = "AUX USBC2",
-		.करोमुख्यs = TGL_AUX_IO_USBC2_POWER_DOMAINS,
-		.ops = &icl_aux_घातer_well_ops,
+		.domains = TGL_AUX_IO_USBC2_POWER_DOMAINS,
+		.ops = &icl_aux_power_well_ops,
 		.id = DISP_PW_ID_NONE,
-		अणु
-			.hsw.regs = &icl_aux_घातer_well_regs,
+		{
+			.hsw.regs = &icl_aux_power_well_regs,
 			.hsw.idx = TGL_PW_CTL_IDX_AUX_TC2,
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		},
+	},
+};
 
-अटल पूर्णांक
-sanitize_disable_घातer_well_option(स्थिर काष्ठा drm_i915_निजी *dev_priv,
-				   पूर्णांक disable_घातer_well)
-अणु
-	अगर (disable_घातer_well >= 0)
-		वापस !!disable_घातer_well;
+static int
+sanitize_disable_power_well_option(const struct drm_i915_private *dev_priv,
+				   int disable_power_well)
+{
+	if (disable_power_well >= 0)
+		return !!disable_power_well;
 
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
-अटल u32 get_allowed_dc_mask(स्थिर काष्ठा drm_i915_निजी *dev_priv,
-			       पूर्णांक enable_dc)
-अणु
+static u32 get_allowed_dc_mask(const struct drm_i915_private *dev_priv,
+			       int enable_dc)
+{
 	u32 mask;
-	पूर्णांक requested_dc;
-	पूर्णांक max_dc;
+	int requested_dc;
+	int max_dc;
 
-	अगर (IS_DG1(dev_priv))
+	if (IS_DG1(dev_priv))
 		max_dc = 3;
-	अन्यथा अगर (DISPLAY_VER(dev_priv) >= 12)
+	else if (DISPLAY_VER(dev_priv) >= 12)
 		max_dc = 4;
-	अन्यथा अगर (DISPLAY_VER(dev_priv) >= 11 || IS_CANNONLAKE(dev_priv) || IS_GEN9_BC(dev_priv))
+	else if (DISPLAY_VER(dev_priv) >= 11 || IS_CANNONLAKE(dev_priv) || IS_GEN9_BC(dev_priv))
 		max_dc = 2;
-	अन्यथा अगर (IS_GEN9_LP(dev_priv))
+	else if (IS_GEN9_LP(dev_priv))
 		max_dc = 1;
-	अन्यथा
+	else
 		max_dc = 0;
 
 	/*
 	 * DC9 has a separate HW flow from the rest of the DC states,
-	 * not depending on the DMC firmware. It's needed by प्रणाली
+	 * not depending on the DMC firmware. It's needed by system
 	 * suspend/resume, so allow it unconditionally.
 	 */
 	mask = IS_GEN9_LP(dev_priv) || DISPLAY_VER(dev_priv) >= 11 ?
 	       DC_STATE_EN_DC9 : 0;
 
-	अगर (!dev_priv->params.disable_घातer_well)
+	if (!dev_priv->params.disable_power_well)
 		max_dc = 0;
 
-	अगर (enable_dc >= 0 && enable_dc <= max_dc) अणु
+	if (enable_dc >= 0 && enable_dc <= max_dc) {
 		requested_dc = enable_dc;
-	पूर्ण अन्यथा अगर (enable_dc == -1) अणु
+	} else if (enable_dc == -1) {
 		requested_dc = max_dc;
-	पूर्ण अन्यथा अगर (enable_dc > max_dc && enable_dc <= 4) अणु
+	} else if (enable_dc > max_dc && enable_dc <= 4) {
 		drm_dbg_kms(&dev_priv->drm,
 			    "Adjusting requested max DC state (%d->%d)\n",
 			    enable_dc, max_dc);
 		requested_dc = max_dc;
-	पूर्ण अन्यथा अणु
+	} else {
 		drm_err(&dev_priv->drm,
 			"Unexpected value for enable_dc (%d)\n", enable_dc);
 		requested_dc = max_dc;
-	पूर्ण
+	}
 
-	चयन (requested_dc) अणु
-	हाल 4:
+	switch (requested_dc) {
+	case 4:
 		mask |= DC_STATE_EN_DC3CO | DC_STATE_EN_UPTO_DC6;
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		mask |= DC_STATE_EN_DC3CO | DC_STATE_EN_UPTO_DC5;
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		mask |= DC_STATE_EN_UPTO_DC6;
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		mask |= DC_STATE_EN_UPTO_DC5;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	drm_dbg_kms(&dev_priv->drm, "Allowed DC state mask %02x\n", mask);
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-अटल पूर्णांक
-__set_घातer_wells(काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs,
-		  स्थिर काष्ठा i915_घातer_well_desc *घातer_well_descs,
-		  पूर्णांक घातer_well_descs_sz, u64 skip_mask)
-अणु
-	काष्ठा drm_i915_निजी *i915 = container_of(घातer_करोमुख्यs,
-						     काष्ठा drm_i915_निजी,
-						     घातer_करोमुख्यs);
-	u64 घातer_well_ids = 0;
-	पूर्णांक घातer_well_count = 0;
-	पूर्णांक i, plt_idx = 0;
+static int
+__set_power_wells(struct i915_power_domains *power_domains,
+		  const struct i915_power_well_desc *power_well_descs,
+		  int power_well_descs_sz, u64 skip_mask)
+{
+	struct drm_i915_private *i915 = container_of(power_domains,
+						     struct drm_i915_private,
+						     power_domains);
+	u64 power_well_ids = 0;
+	int power_well_count = 0;
+	int i, plt_idx = 0;
 
-	क्रम (i = 0; i < घातer_well_descs_sz; i++)
-		अगर (!(BIT_ULL(घातer_well_descs[i].id) & skip_mask))
-			घातer_well_count++;
+	for (i = 0; i < power_well_descs_sz; i++)
+		if (!(BIT_ULL(power_well_descs[i].id) & skip_mask))
+			power_well_count++;
 
-	घातer_करोमुख्यs->घातer_well_count = घातer_well_count;
-	घातer_करोमुख्यs->घातer_wells =
-				kसुस्मृति(घातer_well_count,
-					माप(*घातer_करोमुख्यs->घातer_wells),
+	power_domains->power_well_count = power_well_count;
+	power_domains->power_wells =
+				kcalloc(power_well_count,
+					sizeof(*power_domains->power_wells),
 					GFP_KERNEL);
-	अगर (!घातer_करोमुख्यs->घातer_wells)
-		वापस -ENOMEM;
+	if (!power_domains->power_wells)
+		return -ENOMEM;
 
-	क्रम (i = 0; i < घातer_well_descs_sz; i++) अणु
-		क्रमागत i915_घातer_well_id id = घातer_well_descs[i].id;
+	for (i = 0; i < power_well_descs_sz; i++) {
+		enum i915_power_well_id id = power_well_descs[i].id;
 
-		अगर (BIT_ULL(id) & skip_mask)
-			जारी;
+		if (BIT_ULL(id) & skip_mask)
+			continue;
 
-		घातer_करोमुख्यs->घातer_wells[plt_idx++].desc =
-			&घातer_well_descs[i];
+		power_domains->power_wells[plt_idx++].desc =
+			&power_well_descs[i];
 
-		अगर (id == DISP_PW_ID_NONE)
-			जारी;
+		if (id == DISP_PW_ID_NONE)
+			continue;
 
-		drm_WARN_ON(&i915->drm, id >= माप(घातer_well_ids) * 8);
-		drm_WARN_ON(&i915->drm, घातer_well_ids & BIT_ULL(id));
-		घातer_well_ids |= BIT_ULL(id);
-	पूर्ण
+		drm_WARN_ON(&i915->drm, id >= sizeof(power_well_ids) * 8);
+		drm_WARN_ON(&i915->drm, power_well_ids & BIT_ULL(id));
+		power_well_ids |= BIT_ULL(id);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#घोषणा set_घातer_wells_mask(घातer_करोमुख्यs, __घातer_well_descs, skip_mask) \
-	__set_घातer_wells(घातer_करोमुख्यs, __घातer_well_descs, \
-			  ARRAY_SIZE(__घातer_well_descs), skip_mask)
+#define set_power_wells_mask(power_domains, __power_well_descs, skip_mask) \
+	__set_power_wells(power_domains, __power_well_descs, \
+			  ARRAY_SIZE(__power_well_descs), skip_mask)
 
-#घोषणा set_घातer_wells(घातer_करोमुख्यs, __घातer_well_descs) \
-	set_घातer_wells_mask(घातer_करोमुख्यs, __घातer_well_descs, 0)
+#define set_power_wells(power_domains, __power_well_descs) \
+	set_power_wells_mask(power_domains, __power_well_descs, 0)
 
 /**
- * पूर्णांकel_घातer_करोमुख्यs_init - initializes the घातer करोमुख्य काष्ठाures
+ * intel_power_domains_init - initializes the power domain structures
  * @dev_priv: i915 device instance
  *
- * Initializes the घातer करोमुख्य काष्ठाures क्रम @dev_priv depending upon the
- * supported platक्रमm.
+ * Initializes the power domain structures for @dev_priv depending upon the
+ * supported platform.
  */
-पूर्णांक पूर्णांकel_घातer_करोमुख्यs_init(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &dev_priv->घातer_करोमुख्यs;
-	पूर्णांक err;
+int intel_power_domains_init(struct drm_i915_private *dev_priv)
+{
+	struct i915_power_domains *power_domains = &dev_priv->power_domains;
+	int err;
 
-	dev_priv->params.disable_घातer_well =
-		sanitize_disable_घातer_well_option(dev_priv,
-						   dev_priv->params.disable_घातer_well);
+	dev_priv->params.disable_power_well =
+		sanitize_disable_power_well_option(dev_priv,
+						   dev_priv->params.disable_power_well);
 	dev_priv->csr.allowed_dc_mask =
 		get_allowed_dc_mask(dev_priv, dev_priv->params.enable_dc);
 
@@ -4665,106 +4664,106 @@ __set_घातer_wells(काष्ठा i915_घातer_करोमुख�
 
 	BUILD_BUG_ON(POWER_DOMAIN_NUM > 64);
 
-	mutex_init(&घातer_करोमुख्यs->lock);
+	mutex_init(&power_domains->lock);
 
-	INIT_DELAYED_WORK(&घातer_करोमुख्यs->async_put_work,
-			  पूर्णांकel_display_घातer_put_async_work);
+	INIT_DELAYED_WORK(&power_domains->async_put_work,
+			  intel_display_power_put_async_work);
 
 	/*
 	 * The enabling order will be from lower to higher indexed wells,
 	 * the disabling order is reversed.
 	 */
-	अगर (IS_ALDERLAKE_S(dev_priv) || IS_DG1(dev_priv)) अणु
-		err = set_घातer_wells_mask(घातer_करोमुख्यs, tgl_घातer_wells,
+	if (IS_ALDERLAKE_S(dev_priv) || IS_DG1(dev_priv)) {
+		err = set_power_wells_mask(power_domains, tgl_power_wells,
 					   BIT_ULL(TGL_DISP_PW_TC_COLD_OFF));
-	पूर्ण अन्यथा अगर (IS_ROCKETLAKE(dev_priv)) अणु
-		err = set_घातer_wells(घातer_करोमुख्यs, rkl_घातer_wells);
-	पूर्ण अन्यथा अगर (IS_DISPLAY_VER(dev_priv, 12)) अणु
-		err = set_घातer_wells(घातer_करोमुख्यs, tgl_घातer_wells);
-	पूर्ण अन्यथा अगर (IS_DISPLAY_VER(dev_priv, 11)) अणु
-		err = set_घातer_wells(घातer_करोमुख्यs, icl_घातer_wells);
-	पूर्ण अन्यथा अगर (IS_CNL_WITH_PORT_F(dev_priv)) अणु
-		err = set_घातer_wells(घातer_करोमुख्यs, cnl_घातer_wells);
-	पूर्ण अन्यथा अगर (IS_CANNONLAKE(dev_priv)) अणु
-		err = set_घातer_wells_mask(घातer_करोमुख्यs, cnl_घातer_wells,
+	} else if (IS_ROCKETLAKE(dev_priv)) {
+		err = set_power_wells(power_domains, rkl_power_wells);
+	} else if (IS_DISPLAY_VER(dev_priv, 12)) {
+		err = set_power_wells(power_domains, tgl_power_wells);
+	} else if (IS_DISPLAY_VER(dev_priv, 11)) {
+		err = set_power_wells(power_domains, icl_power_wells);
+	} else if (IS_CNL_WITH_PORT_F(dev_priv)) {
+		err = set_power_wells(power_domains, cnl_power_wells);
+	} else if (IS_CANNONLAKE(dev_priv)) {
+		err = set_power_wells_mask(power_domains, cnl_power_wells,
 					   BIT_ULL(CNL_DISP_PW_DDI_F_IO) |
 					   BIT_ULL(CNL_DISP_PW_DDI_F_AUX));
-	पूर्ण अन्यथा अगर (IS_GEMINILAKE(dev_priv)) अणु
-		err = set_घातer_wells(घातer_करोमुख्यs, glk_घातer_wells);
-	पूर्ण अन्यथा अगर (IS_BROXTON(dev_priv)) अणु
-		err = set_घातer_wells(घातer_करोमुख्यs, bxt_घातer_wells);
-	पूर्ण अन्यथा अगर (IS_GEN9_BC(dev_priv)) अणु
-		err = set_घातer_wells(घातer_करोमुख्यs, skl_घातer_wells);
-	पूर्ण अन्यथा अगर (IS_CHERRYVIEW(dev_priv)) अणु
-		err = set_घातer_wells(घातer_करोमुख्यs, chv_घातer_wells);
-	पूर्ण अन्यथा अगर (IS_BROADWELL(dev_priv)) अणु
-		err = set_घातer_wells(घातer_करोमुख्यs, bdw_घातer_wells);
-	पूर्ण अन्यथा अगर (IS_HASWELL(dev_priv)) अणु
-		err = set_घातer_wells(घातer_करोमुख्यs, hsw_घातer_wells);
-	पूर्ण अन्यथा अगर (IS_VALLEYVIEW(dev_priv)) अणु
-		err = set_घातer_wells(घातer_करोमुख्यs, vlv_घातer_wells);
-	पूर्ण अन्यथा अगर (IS_I830(dev_priv)) अणु
-		err = set_घातer_wells(घातer_करोमुख्यs, i830_घातer_wells);
-	पूर्ण अन्यथा अणु
-		err = set_घातer_wells(घातer_करोमुख्यs, i9xx_always_on_घातer_well);
-	पूर्ण
+	} else if (IS_GEMINILAKE(dev_priv)) {
+		err = set_power_wells(power_domains, glk_power_wells);
+	} else if (IS_BROXTON(dev_priv)) {
+		err = set_power_wells(power_domains, bxt_power_wells);
+	} else if (IS_GEN9_BC(dev_priv)) {
+		err = set_power_wells(power_domains, skl_power_wells);
+	} else if (IS_CHERRYVIEW(dev_priv)) {
+		err = set_power_wells(power_domains, chv_power_wells);
+	} else if (IS_BROADWELL(dev_priv)) {
+		err = set_power_wells(power_domains, bdw_power_wells);
+	} else if (IS_HASWELL(dev_priv)) {
+		err = set_power_wells(power_domains, hsw_power_wells);
+	} else if (IS_VALLEYVIEW(dev_priv)) {
+		err = set_power_wells(power_domains, vlv_power_wells);
+	} else if (IS_I830(dev_priv)) {
+		err = set_power_wells(power_domains, i830_power_wells);
+	} else {
+		err = set_power_wells(power_domains, i9xx_always_on_power_well);
+	}
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /**
- * पूर्णांकel_घातer_करोमुख्यs_cleanup - clean up घातer करोमुख्यs resources
+ * intel_power_domains_cleanup - clean up power domains resources
  * @dev_priv: i915 device instance
  *
- * Release any resources acquired by पूर्णांकel_घातer_करोमुख्यs_init()
+ * Release any resources acquired by intel_power_domains_init()
  */
-व्योम पूर्णांकel_घातer_करोमुख्यs_cleanup(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	kमुक्त(dev_priv->घातer_करोमुख्यs.घातer_wells);
-पूर्ण
+void intel_power_domains_cleanup(struct drm_i915_private *dev_priv)
+{
+	kfree(dev_priv->power_domains.power_wells);
+}
 
-अटल व्योम पूर्णांकel_घातer_करोमुख्यs_sync_hw(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &dev_priv->घातer_करोमुख्यs;
-	काष्ठा i915_घातer_well *घातer_well;
+static void intel_power_domains_sync_hw(struct drm_i915_private *dev_priv)
+{
+	struct i915_power_domains *power_domains = &dev_priv->power_domains;
+	struct i915_power_well *power_well;
 
-	mutex_lock(&घातer_करोमुख्यs->lock);
-	क्रम_each_घातer_well(dev_priv, घातer_well) अणु
-		घातer_well->desc->ops->sync_hw(dev_priv, घातer_well);
-		घातer_well->hw_enabled =
-			घातer_well->desc->ops->is_enabled(dev_priv, घातer_well);
-	पूर्ण
-	mutex_unlock(&घातer_करोमुख्यs->lock);
-पूर्ण
+	mutex_lock(&power_domains->lock);
+	for_each_power_well(dev_priv, power_well) {
+		power_well->desc->ops->sync_hw(dev_priv, power_well);
+		power_well->hw_enabled =
+			power_well->desc->ops->is_enabled(dev_priv, power_well);
+	}
+	mutex_unlock(&power_domains->lock);
+}
 
-अटल व्योम gen9_dbuf_slice_set(काष्ठा drm_i915_निजी *dev_priv,
-				क्रमागत dbuf_slice slice, bool enable)
-अणु
+static void gen9_dbuf_slice_set(struct drm_i915_private *dev_priv,
+				enum dbuf_slice slice, bool enable)
+{
 	i915_reg_t reg = DBUF_CTL_S(slice);
 	bool state;
 	u32 val;
 
-	val = पूर्णांकel_de_पढ़ो(dev_priv, reg);
-	अगर (enable)
+	val = intel_de_read(dev_priv, reg);
+	if (enable)
 		val |= DBUF_POWER_REQUEST;
-	अन्यथा
+	else
 		val &= ~DBUF_POWER_REQUEST;
-	पूर्णांकel_de_ग_लिखो(dev_priv, reg, val);
-	पूर्णांकel_de_posting_पढ़ो(dev_priv, reg);
+	intel_de_write(dev_priv, reg, val);
+	intel_de_posting_read(dev_priv, reg);
 	udelay(10);
 
-	state = पूर्णांकel_de_पढ़ो(dev_priv, reg) & DBUF_POWER_STATE;
+	state = intel_de_read(dev_priv, reg) & DBUF_POWER_STATE;
 	drm_WARN(&dev_priv->drm, enable != state,
 		 "DBuf slice %d power %s timeout!\n",
 		 slice, enable ? "enable" : "disable");
-पूर्ण
+}
 
-व्योम gen9_dbuf_slices_update(काष्ठा drm_i915_निजी *dev_priv,
+void gen9_dbuf_slices_update(struct drm_i915_private *dev_priv,
 			     u8 req_slices)
-अणु
-	पूर्णांक num_slices = INTEL_INFO(dev_priv)->num_supported_dbuf_slices;
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &dev_priv->घातer_करोमुख्यs;
-	क्रमागत dbuf_slice slice;
+{
+	int num_slices = INTEL_INFO(dev_priv)->num_supported_dbuf_slices;
+	struct i915_power_domains *power_domains = &dev_priv->power_domains;
+	enum dbuf_slice slice;
 
 	drm_WARN(&dev_priv->drm, req_slices & ~(BIT(num_slices) - 1),
 		 "Invalid set of dbuf slices (0x%x) requested (num dbuf slices %d)\n",
@@ -4774,54 +4773,54 @@ __set_घातer_wells(काष्ठा i915_घातer_करोमुख�
 		    req_slices);
 
 	/*
-	 * Might be running this in parallel to gen9_dc_off_घातer_well_enable
-	 * being called from पूर्णांकel_dp_detect क्रम instance,
-	 * which causes निश्चितion triggered by race condition,
-	 * as gen9_निश्चित_dbuf_enabled might preempt this when रेजिस्टरs
-	 * were alपढ़ोy updated, जबतक dev_priv was not.
+	 * Might be running this in parallel to gen9_dc_off_power_well_enable
+	 * being called from intel_dp_detect for instance,
+	 * which causes assertion triggered by race condition,
+	 * as gen9_assert_dbuf_enabled might preempt this when registers
+	 * were already updated, while dev_priv was not.
 	 */
-	mutex_lock(&घातer_करोमुख्यs->lock);
+	mutex_lock(&power_domains->lock);
 
-	क्रम (slice = DBUF_S1; slice < num_slices; slice++)
+	for (slice = DBUF_S1; slice < num_slices; slice++)
 		gen9_dbuf_slice_set(dev_priv, slice, req_slices & BIT(slice));
 
 	dev_priv->dbuf.enabled_slices = req_slices;
 
-	mutex_unlock(&घातer_करोमुख्यs->lock);
-पूर्ण
+	mutex_unlock(&power_domains->lock);
+}
 
-अटल व्योम gen9_dbuf_enable(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void gen9_dbuf_enable(struct drm_i915_private *dev_priv)
+{
 	dev_priv->dbuf.enabled_slices =
-		पूर्णांकel_enabled_dbuf_slices_mask(dev_priv);
+		intel_enabled_dbuf_slices_mask(dev_priv);
 
 	/*
-	 * Just घातer up at least 1 slice, we will
+	 * Just power up at least 1 slice, we will
 	 * figure out later which slices we have and what we need.
 	 */
 	gen9_dbuf_slices_update(dev_priv, BIT(DBUF_S1) |
 				dev_priv->dbuf.enabled_slices);
-पूर्ण
+}
 
-अटल व्योम gen9_dbuf_disable(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void gen9_dbuf_disable(struct drm_i915_private *dev_priv)
+{
 	gen9_dbuf_slices_update(dev_priv, 0);
-पूर्ण
+}
 
-अटल व्योम gen12_dbuf_slices_config(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	स्थिर पूर्णांक num_slices = INTEL_INFO(dev_priv)->num_supported_dbuf_slices;
-	क्रमागत dbuf_slice slice;
+static void gen12_dbuf_slices_config(struct drm_i915_private *dev_priv)
+{
+	const int num_slices = INTEL_INFO(dev_priv)->num_supported_dbuf_slices;
+	enum dbuf_slice slice;
 
-	क्रम (slice = DBUF_S1; slice < (DBUF_S1 + num_slices); slice++)
-		पूर्णांकel_de_rmw(dev_priv, DBUF_CTL_S(slice),
+	for (slice = DBUF_S1; slice < (DBUF_S1 + num_slices); slice++)
+		intel_de_rmw(dev_priv, DBUF_CTL_S(slice),
 			     DBUF_TRACKER_STATE_SERVICE_MASK,
 			     DBUF_TRACKER_STATE_SERVICE(8));
-पूर्ण
+}
 
-अटल व्योम icl_mbus_init(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	अचिन्हित दीर्घ abox_regs = INTEL_INFO(dev_priv)->abox_mask;
+static void icl_mbus_init(struct drm_i915_private *dev_priv)
+{
+	unsigned long abox_regs = INTEL_INFO(dev_priv)->abox_mask;
 	u32 mask, val, i;
 
 	mask = MBUS_ABOX_BT_CREDIT_POOL1_MASK |
@@ -4834,570 +4833,570 @@ __set_घातer_wells(काष्ठा i915_घातer_करोमुख�
 		MBUS_ABOX_BW_CREDIT(1);
 
 	/*
-	 * gen12 platक्रमms that use abox1 and abox2 क्रम pixel data पढ़ोs still
-	 * expect us to program the abox_ctl0 रेजिस्टर as well, even though
-	 * we करोn't have to program other instance-0 रेजिस्टरs like BW_BUDDY.
+	 * gen12 platforms that use abox1 and abox2 for pixel data reads still
+	 * expect us to program the abox_ctl0 register as well, even though
+	 * we don't have to program other instance-0 registers like BW_BUDDY.
 	 */
-	अगर (IS_DISPLAY_VER(dev_priv, 12))
+	if (IS_DISPLAY_VER(dev_priv, 12))
 		abox_regs |= BIT(0);
 
-	क्रम_each_set_bit(i, &abox_regs, माप(abox_regs))
-		पूर्णांकel_de_rmw(dev_priv, MBUS_ABOX_CTL(i), mask, val);
-पूर्ण
+	for_each_set_bit(i, &abox_regs, sizeof(abox_regs))
+		intel_de_rmw(dev_priv, MBUS_ABOX_CTL(i), mask, val);
+}
 
-अटल व्योम hsw_निश्चित_cdclk(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	u32 val = पूर्णांकel_de_पढ़ो(dev_priv, LCPLL_CTL);
+static void hsw_assert_cdclk(struct drm_i915_private *dev_priv)
+{
+	u32 val = intel_de_read(dev_priv, LCPLL_CTL);
 
 	/*
-	 * The LCPLL रेजिस्टर should be turned on by the BIOS. For now
-	 * let's just check its state and prपूर्णांक errors in हाल
+	 * The LCPLL register should be turned on by the BIOS. For now
+	 * let's just check its state and print errors in case
 	 * something is wrong.  Don't even try to turn it on.
 	 */
 
-	अगर (val & LCPLL_CD_SOURCE_FCLK)
+	if (val & LCPLL_CD_SOURCE_FCLK)
 		drm_err(&dev_priv->drm, "CDCLK source is not LCPLL\n");
 
-	अगर (val & LCPLL_PLL_DISABLE)
+	if (val & LCPLL_PLL_DISABLE)
 		drm_err(&dev_priv->drm, "LCPLL is disabled\n");
 
-	अगर ((val & LCPLL_REF_MASK) != LCPLL_REF_NON_SSC)
+	if ((val & LCPLL_REF_MASK) != LCPLL_REF_NON_SSC)
 		drm_err(&dev_priv->drm, "LCPLL not using non-SSC reference\n");
-पूर्ण
+}
 
-अटल व्योम निश्चित_can_disable_lcpll(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा drm_device *dev = &dev_priv->drm;
-	काष्ठा पूर्णांकel_crtc *crtc;
+static void assert_can_disable_lcpll(struct drm_i915_private *dev_priv)
+{
+	struct drm_device *dev = &dev_priv->drm;
+	struct intel_crtc *crtc;
 
-	क्रम_each_पूर्णांकel_crtc(dev, crtc)
+	for_each_intel_crtc(dev, crtc)
 		I915_STATE_WARN(crtc->active, "CRTC for pipe %c enabled\n",
 				pipe_name(crtc->pipe));
 
-	I915_STATE_WARN(पूर्णांकel_de_पढ़ो(dev_priv, HSW_PWR_WELL_CTL2),
+	I915_STATE_WARN(intel_de_read(dev_priv, HSW_PWR_WELL_CTL2),
 			"Display power well on\n");
-	I915_STATE_WARN(पूर्णांकel_de_पढ़ो(dev_priv, SPLL_CTL) & SPLL_PLL_ENABLE,
+	I915_STATE_WARN(intel_de_read(dev_priv, SPLL_CTL) & SPLL_PLL_ENABLE,
 			"SPLL enabled\n");
-	I915_STATE_WARN(पूर्णांकel_de_पढ़ो(dev_priv, WRPLL_CTL(0)) & WRPLL_PLL_ENABLE,
+	I915_STATE_WARN(intel_de_read(dev_priv, WRPLL_CTL(0)) & WRPLL_PLL_ENABLE,
 			"WRPLL1 enabled\n");
-	I915_STATE_WARN(पूर्णांकel_de_पढ़ो(dev_priv, WRPLL_CTL(1)) & WRPLL_PLL_ENABLE,
+	I915_STATE_WARN(intel_de_read(dev_priv, WRPLL_CTL(1)) & WRPLL_PLL_ENABLE,
 			"WRPLL2 enabled\n");
-	I915_STATE_WARN(पूर्णांकel_de_पढ़ो(dev_priv, PP_STATUS(0)) & PP_ON,
+	I915_STATE_WARN(intel_de_read(dev_priv, PP_STATUS(0)) & PP_ON,
 			"Panel power on\n");
-	I915_STATE_WARN(पूर्णांकel_de_पढ़ो(dev_priv, BLC_PWM_CPU_CTL2) & BLM_PWM_ENABLE,
+	I915_STATE_WARN(intel_de_read(dev_priv, BLC_PWM_CPU_CTL2) & BLM_PWM_ENABLE,
 			"CPU PWM1 enabled\n");
-	अगर (IS_HASWELL(dev_priv))
-		I915_STATE_WARN(पूर्णांकel_de_पढ़ो(dev_priv, HSW_BLC_PWM2_CTL) & BLM_PWM_ENABLE,
+	if (IS_HASWELL(dev_priv))
+		I915_STATE_WARN(intel_de_read(dev_priv, HSW_BLC_PWM2_CTL) & BLM_PWM_ENABLE,
 				"CPU PWM2 enabled\n");
-	I915_STATE_WARN(पूर्णांकel_de_पढ़ो(dev_priv, BLC_PWM_PCH_CTL1) & BLM_PCH_PWM_ENABLE,
+	I915_STATE_WARN(intel_de_read(dev_priv, BLC_PWM_PCH_CTL1) & BLM_PCH_PWM_ENABLE,
 			"PCH PWM1 enabled\n");
-	I915_STATE_WARN(पूर्णांकel_de_पढ़ो(dev_priv, UTIL_PIN_CTL) & UTIL_PIN_ENABLE,
+	I915_STATE_WARN(intel_de_read(dev_priv, UTIL_PIN_CTL) & UTIL_PIN_ENABLE,
 			"Utility pin enabled\n");
-	I915_STATE_WARN(पूर्णांकel_de_पढ़ो(dev_priv, PCH_GTC_CTL) & PCH_GTC_ENABLE,
+	I915_STATE_WARN(intel_de_read(dev_priv, PCH_GTC_CTL) & PCH_GTC_ENABLE,
 			"PCH GTC enabled\n");
 
 	/*
-	 * In theory we can still leave IRQs enabled, as दीर्घ as only the HPD
-	 * पूर्णांकerrupts reमुख्य enabled. We used to check क्रम that, but since it's
-	 * gen-specअगरic and since we only disable LCPLL after we fully disable
-	 * the पूर्णांकerrupts, the check below should be enough.
+	 * In theory we can still leave IRQs enabled, as long as only the HPD
+	 * interrupts remain enabled. We used to check for that, but since it's
+	 * gen-specific and since we only disable LCPLL after we fully disable
+	 * the interrupts, the check below should be enough.
 	 */
-	I915_STATE_WARN(पूर्णांकel_irqs_enabled(dev_priv), "IRQs enabled\n");
-पूर्ण
+	I915_STATE_WARN(intel_irqs_enabled(dev_priv), "IRQs enabled\n");
+}
 
-अटल u32 hsw_पढ़ो_dcomp(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	अगर (IS_HASWELL(dev_priv))
-		वापस पूर्णांकel_de_पढ़ो(dev_priv, D_COMP_HSW);
-	अन्यथा
-		वापस पूर्णांकel_de_पढ़ो(dev_priv, D_COMP_BDW);
-पूर्ण
+static u32 hsw_read_dcomp(struct drm_i915_private *dev_priv)
+{
+	if (IS_HASWELL(dev_priv))
+		return intel_de_read(dev_priv, D_COMP_HSW);
+	else
+		return intel_de_read(dev_priv, D_COMP_BDW);
+}
 
-अटल व्योम hsw_ग_लिखो_dcomp(काष्ठा drm_i915_निजी *dev_priv, u32 val)
-अणु
-	अगर (IS_HASWELL(dev_priv)) अणु
-		अगर (sandybridge_pcode_ग_लिखो(dev_priv,
+static void hsw_write_dcomp(struct drm_i915_private *dev_priv, u32 val)
+{
+	if (IS_HASWELL(dev_priv)) {
+		if (sandybridge_pcode_write(dev_priv,
 					    GEN6_PCODE_WRITE_D_COMP, val))
 			drm_dbg_kms(&dev_priv->drm,
 				    "Failed to write to D_COMP\n");
-	पूर्ण अन्यथा अणु
-		पूर्णांकel_de_ग_लिखो(dev_priv, D_COMP_BDW, val);
-		पूर्णांकel_de_posting_पढ़ो(dev_priv, D_COMP_BDW);
-	पूर्ण
-पूर्ण
+	} else {
+		intel_de_write(dev_priv, D_COMP_BDW, val);
+		intel_de_posting_read(dev_priv, D_COMP_BDW);
+	}
+}
 
 /*
  * This function implements pieces of two sequences from BSpec:
- * - Sequence क्रम display software to disable LCPLL
- * - Sequence क्रम display software to allow package C8+
+ * - Sequence for display software to disable LCPLL
+ * - Sequence for display software to allow package C8+
  * The steps implemented here are just the steps that actually touch the LCPLL
- * रेजिस्टर. Callers should take care of disabling all the display engine
- * functions, करोing the mode unset, fixing पूर्णांकerrupts, etc.
+ * register. Callers should take care of disabling all the display engine
+ * functions, doing the mode unset, fixing interrupts, etc.
  */
-अटल व्योम hsw_disable_lcpll(काष्ठा drm_i915_निजी *dev_priv,
-			      bool चयन_to_fclk, bool allow_घातer_करोwn)
-अणु
+static void hsw_disable_lcpll(struct drm_i915_private *dev_priv,
+			      bool switch_to_fclk, bool allow_power_down)
+{
 	u32 val;
 
-	निश्चित_can_disable_lcpll(dev_priv);
+	assert_can_disable_lcpll(dev_priv);
 
-	val = पूर्णांकel_de_पढ़ो(dev_priv, LCPLL_CTL);
+	val = intel_de_read(dev_priv, LCPLL_CTL);
 
-	अगर (चयन_to_fclk) अणु
+	if (switch_to_fclk) {
 		val |= LCPLL_CD_SOURCE_FCLK;
-		पूर्णांकel_de_ग_लिखो(dev_priv, LCPLL_CTL, val);
+		intel_de_write(dev_priv, LCPLL_CTL, val);
 
-		अगर (रुको_क्रम_us(पूर्णांकel_de_पढ़ो(dev_priv, LCPLL_CTL) &
+		if (wait_for_us(intel_de_read(dev_priv, LCPLL_CTL) &
 				LCPLL_CD_SOURCE_FCLK_DONE, 1))
 			drm_err(&dev_priv->drm, "Switching to FCLK failed\n");
 
-		val = पूर्णांकel_de_पढ़ो(dev_priv, LCPLL_CTL);
-	पूर्ण
+		val = intel_de_read(dev_priv, LCPLL_CTL);
+	}
 
 	val |= LCPLL_PLL_DISABLE;
-	पूर्णांकel_de_ग_लिखो(dev_priv, LCPLL_CTL, val);
-	पूर्णांकel_de_posting_पढ़ो(dev_priv, LCPLL_CTL);
+	intel_de_write(dev_priv, LCPLL_CTL, val);
+	intel_de_posting_read(dev_priv, LCPLL_CTL);
 
-	अगर (पूर्णांकel_de_रुको_क्रम_clear(dev_priv, LCPLL_CTL, LCPLL_PLL_LOCK, 1))
+	if (intel_de_wait_for_clear(dev_priv, LCPLL_CTL, LCPLL_PLL_LOCK, 1))
 		drm_err(&dev_priv->drm, "LCPLL still locked\n");
 
-	val = hsw_पढ़ो_dcomp(dev_priv);
+	val = hsw_read_dcomp(dev_priv);
 	val |= D_COMP_COMP_DISABLE;
-	hsw_ग_लिखो_dcomp(dev_priv, val);
+	hsw_write_dcomp(dev_priv, val);
 	ndelay(100);
 
-	अगर (रुको_क्रम((hsw_पढ़ो_dcomp(dev_priv) &
+	if (wait_for((hsw_read_dcomp(dev_priv) &
 		      D_COMP_RCOMP_IN_PROGRESS) == 0, 1))
 		drm_err(&dev_priv->drm, "D_COMP RCOMP still in progress\n");
 
-	अगर (allow_घातer_करोwn) अणु
-		val = पूर्णांकel_de_पढ़ो(dev_priv, LCPLL_CTL);
+	if (allow_power_down) {
+		val = intel_de_read(dev_priv, LCPLL_CTL);
 		val |= LCPLL_POWER_DOWN_ALLOW;
-		पूर्णांकel_de_ग_लिखो(dev_priv, LCPLL_CTL, val);
-		पूर्णांकel_de_posting_पढ़ो(dev_priv, LCPLL_CTL);
-	पूर्ण
-पूर्ण
+		intel_de_write(dev_priv, LCPLL_CTL, val);
+		intel_de_posting_read(dev_priv, LCPLL_CTL);
+	}
+}
 
 /*
- * Fully restores LCPLL, disallowing घातer करोwn and चयनing back to LCPLL
+ * Fully restores LCPLL, disallowing power down and switching back to LCPLL
  * source.
  */
-अटल व्योम hsw_restore_lcpll(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void hsw_restore_lcpll(struct drm_i915_private *dev_priv)
+{
 	u32 val;
 
-	val = पूर्णांकel_de_पढ़ो(dev_priv, LCPLL_CTL);
+	val = intel_de_read(dev_priv, LCPLL_CTL);
 
-	अगर ((val & (LCPLL_PLL_LOCK | LCPLL_PLL_DISABLE | LCPLL_CD_SOURCE_FCLK |
+	if ((val & (LCPLL_PLL_LOCK | LCPLL_PLL_DISABLE | LCPLL_CD_SOURCE_FCLK |
 		    LCPLL_POWER_DOWN_ALLOW)) == LCPLL_PLL_LOCK)
-		वापस;
+		return;
 
 	/*
-	 * Make sure we're not on PC8 state beक्रमe disabling PC8, otherwise
-	 * we'll hang the machine. To prevent PC8 state, just enable क्रमce_wake.
+	 * Make sure we're not on PC8 state before disabling PC8, otherwise
+	 * we'll hang the machine. To prevent PC8 state, just enable force_wake.
 	 */
-	पूर्णांकel_uncore_क्रमcewake_get(&dev_priv->uncore, FORCEWAKE_ALL);
+	intel_uncore_forcewake_get(&dev_priv->uncore, FORCEWAKE_ALL);
 
-	अगर (val & LCPLL_POWER_DOWN_ALLOW) अणु
+	if (val & LCPLL_POWER_DOWN_ALLOW) {
 		val &= ~LCPLL_POWER_DOWN_ALLOW;
-		पूर्णांकel_de_ग_लिखो(dev_priv, LCPLL_CTL, val);
-		पूर्णांकel_de_posting_पढ़ो(dev_priv, LCPLL_CTL);
-	पूर्ण
+		intel_de_write(dev_priv, LCPLL_CTL, val);
+		intel_de_posting_read(dev_priv, LCPLL_CTL);
+	}
 
-	val = hsw_पढ़ो_dcomp(dev_priv);
+	val = hsw_read_dcomp(dev_priv);
 	val |= D_COMP_COMP_FORCE;
 	val &= ~D_COMP_COMP_DISABLE;
-	hsw_ग_लिखो_dcomp(dev_priv, val);
+	hsw_write_dcomp(dev_priv, val);
 
-	val = पूर्णांकel_de_पढ़ो(dev_priv, LCPLL_CTL);
+	val = intel_de_read(dev_priv, LCPLL_CTL);
 	val &= ~LCPLL_PLL_DISABLE;
-	पूर्णांकel_de_ग_लिखो(dev_priv, LCPLL_CTL, val);
+	intel_de_write(dev_priv, LCPLL_CTL, val);
 
-	अगर (पूर्णांकel_de_रुको_क्रम_set(dev_priv, LCPLL_CTL, LCPLL_PLL_LOCK, 5))
+	if (intel_de_wait_for_set(dev_priv, LCPLL_CTL, LCPLL_PLL_LOCK, 5))
 		drm_err(&dev_priv->drm, "LCPLL not locked yet\n");
 
-	अगर (val & LCPLL_CD_SOURCE_FCLK) अणु
-		val = पूर्णांकel_de_पढ़ो(dev_priv, LCPLL_CTL);
+	if (val & LCPLL_CD_SOURCE_FCLK) {
+		val = intel_de_read(dev_priv, LCPLL_CTL);
 		val &= ~LCPLL_CD_SOURCE_FCLK;
-		पूर्णांकel_de_ग_लिखो(dev_priv, LCPLL_CTL, val);
+		intel_de_write(dev_priv, LCPLL_CTL, val);
 
-		अगर (रुको_क्रम_us((पूर्णांकel_de_पढ़ो(dev_priv, LCPLL_CTL) &
+		if (wait_for_us((intel_de_read(dev_priv, LCPLL_CTL) &
 				 LCPLL_CD_SOURCE_FCLK_DONE) == 0, 1))
 			drm_err(&dev_priv->drm,
 				"Switching back to LCPLL failed\n");
-	पूर्ण
+	}
 
-	पूर्णांकel_uncore_क्रमcewake_put(&dev_priv->uncore, FORCEWAKE_ALL);
+	intel_uncore_forcewake_put(&dev_priv->uncore, FORCEWAKE_ALL);
 
-	पूर्णांकel_update_cdclk(dev_priv);
-	पूर्णांकel_dump_cdclk_config(&dev_priv->cdclk.hw, "Current CDCLK");
-पूर्ण
+	intel_update_cdclk(dev_priv);
+	intel_dump_cdclk_config(&dev_priv->cdclk.hw, "Current CDCLK");
+}
 
 /*
  * Package states C8 and deeper are really deep PC states that can only be
- * reached when all the devices on the प्रणाली allow it, so even अगर the graphics
- * device allows PC8+, it करोesn't mean the प्रणाली will actually get to these
- * states. Our driver only allows PC8+ when going पूर्णांकo runसमय PM.
+ * reached when all the devices on the system allow it, so even if the graphics
+ * device allows PC8+, it doesn't mean the system will actually get to these
+ * states. Our driver only allows PC8+ when going into runtime PM.
  *
- * The requirements क्रम PC8+ are that all the outमाला_दो are disabled, the घातer
- * well is disabled and most पूर्णांकerrupts are disabled, and these are also
- * requirements क्रम runसमय PM. When these conditions are met, we manually करो
- * the other conditions: disable the पूर्णांकerrupts, घड़ीs and चयन LCPLL refclk
- * to Fclk. If we're in PC8+ and we get an non-hotplug पूर्णांकerrupt, we can hard
+ * The requirements for PC8+ are that all the outputs are disabled, the power
+ * well is disabled and most interrupts are disabled, and these are also
+ * requirements for runtime PM. When these conditions are met, we manually do
+ * the other conditions: disable the interrupts, clocks and switch LCPLL refclk
+ * to Fclk. If we're in PC8+ and we get an non-hotplug interrupt, we can hard
  * hang the machine.
  *
  * When we really reach PC8 or deeper states (not just when we allow it) we lose
- * the state of some रेजिस्टरs, so when we come back from PC8+ we need to
- * restore this state. We करोn't get into PC8+ if we're not in RC6, so we don't
- * need to take care of the रेजिस्टरs kept by RC6. Notice that this happens even
- * अगर we करोn't put the device in PCI D3 state (which is what currently happens
- * because of the runसमय PM support).
+ * the state of some registers, so when we come back from PC8+ we need to
+ * restore this state. We don't get into PC8+ if we're not in RC6, so we don't
+ * need to take care of the registers kept by RC6. Notice that this happens even
+ * if we don't put the device in PCI D3 state (which is what currently happens
+ * because of the runtime PM support).
  *
- * For more, पढ़ो "Display Sequences for Package C8" on the hardware
- * करोcumentation.
+ * For more, read "Display Sequences for Package C8" on the hardware
+ * documentation.
  */
-अटल व्योम hsw_enable_pc8(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void hsw_enable_pc8(struct drm_i915_private *dev_priv)
+{
 	u32 val;
 
 	drm_dbg_kms(&dev_priv->drm, "Enabling package C8+\n");
 
-	अगर (HAS_PCH_LPT_LP(dev_priv)) अणु
-		val = पूर्णांकel_de_पढ़ो(dev_priv, SOUTH_DSPCLK_GATE_D);
+	if (HAS_PCH_LPT_LP(dev_priv)) {
+		val = intel_de_read(dev_priv, SOUTH_DSPCLK_GATE_D);
 		val &= ~PCH_LP_PARTITION_LEVEL_DISABLE;
-		पूर्णांकel_de_ग_लिखो(dev_priv, SOUTH_DSPCLK_GATE_D, val);
-	पूर्ण
+		intel_de_write(dev_priv, SOUTH_DSPCLK_GATE_D, val);
+	}
 
 	lpt_disable_clkout_dp(dev_priv);
 	hsw_disable_lcpll(dev_priv, true, true);
-पूर्ण
+}
 
-अटल व्योम hsw_disable_pc8(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void hsw_disable_pc8(struct drm_i915_private *dev_priv)
+{
 	u32 val;
 
 	drm_dbg_kms(&dev_priv->drm, "Disabling package C8+\n");
 
 	hsw_restore_lcpll(dev_priv);
-	पूर्णांकel_init_pch_refclk(dev_priv);
+	intel_init_pch_refclk(dev_priv);
 
-	अगर (HAS_PCH_LPT_LP(dev_priv)) अणु
-		val = पूर्णांकel_de_पढ़ो(dev_priv, SOUTH_DSPCLK_GATE_D);
+	if (HAS_PCH_LPT_LP(dev_priv)) {
+		val = intel_de_read(dev_priv, SOUTH_DSPCLK_GATE_D);
 		val |= PCH_LP_PARTITION_LEVEL_DISABLE;
-		पूर्णांकel_de_ग_लिखो(dev_priv, SOUTH_DSPCLK_GATE_D, val);
-	पूर्ण
-पूर्ण
+		intel_de_write(dev_priv, SOUTH_DSPCLK_GATE_D, val);
+	}
+}
 
-अटल व्योम पूर्णांकel_pch_reset_handshake(काष्ठा drm_i915_निजी *dev_priv,
+static void intel_pch_reset_handshake(struct drm_i915_private *dev_priv,
 				      bool enable)
-अणु
+{
 	i915_reg_t reg;
 	u32 reset_bits, val;
 
-	अगर (IS_IVYBRIDGE(dev_priv)) अणु
+	if (IS_IVYBRIDGE(dev_priv)) {
 		reg = GEN7_MSG_CTL;
 		reset_bits = WAIT_FOR_PCH_FLR_ACK | WAIT_FOR_PCH_RESET_ACK;
-	पूर्ण अन्यथा अणु
+	} else {
 		reg = HSW_NDE_RSTWRN_OPT;
 		reset_bits = RESET_PCH_HANDSHAKE_ENABLE;
-	पूर्ण
+	}
 
-	val = पूर्णांकel_de_पढ़ो(dev_priv, reg);
+	val = intel_de_read(dev_priv, reg);
 
-	अगर (enable)
+	if (enable)
 		val |= reset_bits;
-	अन्यथा
+	else
 		val &= ~reset_bits;
 
-	पूर्णांकel_de_ग_लिखो(dev_priv, reg, val);
-पूर्ण
+	intel_de_write(dev_priv, reg, val);
+}
 
-अटल व्योम skl_display_core_init(काष्ठा drm_i915_निजी *dev_priv,
+static void skl_display_core_init(struct drm_i915_private *dev_priv,
 				  bool resume)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &dev_priv->घातer_करोमुख्यs;
-	काष्ठा i915_घातer_well *well;
+{
+	struct i915_power_domains *power_domains = &dev_priv->power_domains;
+	struct i915_power_well *well;
 
 	gen9_set_dc_state(dev_priv, DC_STATE_DISABLE);
 
 	/* enable PCH reset handshake */
-	पूर्णांकel_pch_reset_handshake(dev_priv, !HAS_PCH_NOP(dev_priv));
+	intel_pch_reset_handshake(dev_priv, !HAS_PCH_NOP(dev_priv));
 
 	/* enable PG1 and Misc I/O */
-	mutex_lock(&घातer_करोमुख्यs->lock);
+	mutex_lock(&power_domains->lock);
 
-	well = lookup_घातer_well(dev_priv, SKL_DISP_PW_1);
-	पूर्णांकel_घातer_well_enable(dev_priv, well);
+	well = lookup_power_well(dev_priv, SKL_DISP_PW_1);
+	intel_power_well_enable(dev_priv, well);
 
-	well = lookup_घातer_well(dev_priv, SKL_DISP_PW_MISC_IO);
-	पूर्णांकel_घातer_well_enable(dev_priv, well);
+	well = lookup_power_well(dev_priv, SKL_DISP_PW_MISC_IO);
+	intel_power_well_enable(dev_priv, well);
 
-	mutex_unlock(&घातer_करोमुख्यs->lock);
+	mutex_unlock(&power_domains->lock);
 
-	पूर्णांकel_cdclk_init_hw(dev_priv);
+	intel_cdclk_init_hw(dev_priv);
 
 	gen9_dbuf_enable(dev_priv);
 
-	अगर (resume && dev_priv->csr.dmc_payload)
-		पूर्णांकel_csr_load_program(dev_priv);
-पूर्ण
+	if (resume && dev_priv->csr.dmc_payload)
+		intel_csr_load_program(dev_priv);
+}
 
-अटल व्योम skl_display_core_uninit(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &dev_priv->घातer_करोमुख्यs;
-	काष्ठा i915_घातer_well *well;
+static void skl_display_core_uninit(struct drm_i915_private *dev_priv)
+{
+	struct i915_power_domains *power_domains = &dev_priv->power_domains;
+	struct i915_power_well *well;
 
 	gen9_disable_dc_states(dev_priv);
 
 	gen9_dbuf_disable(dev_priv);
 
-	पूर्णांकel_cdclk_uninit_hw(dev_priv);
+	intel_cdclk_uninit_hw(dev_priv);
 
-	/* The spec करोesn't call क्रम removing the reset handshake flag */
+	/* The spec doesn't call for removing the reset handshake flag */
 	/* disable PG1 and Misc I/O */
 
-	mutex_lock(&घातer_करोमुख्यs->lock);
+	mutex_lock(&power_domains->lock);
 
 	/*
-	 * BSpec says to keep the MISC IO घातer well enabled here, only
-	 * हटाओ our request क्रम घातer well 1.
-	 * Note that even though the driver's request is हटाओd घातer well 1
+	 * BSpec says to keep the MISC IO power well enabled here, only
+	 * remove our request for power well 1.
+	 * Note that even though the driver's request is removed power well 1
 	 * may stay enabled after this due to DMC's own request on it.
 	 */
-	well = lookup_घातer_well(dev_priv, SKL_DISP_PW_1);
-	पूर्णांकel_घातer_well_disable(dev_priv, well);
+	well = lookup_power_well(dev_priv, SKL_DISP_PW_1);
+	intel_power_well_disable(dev_priv, well);
 
-	mutex_unlock(&घातer_करोमुख्यs->lock);
+	mutex_unlock(&power_domains->lock);
 
 	usleep_range(10, 30);		/* 10 us delay per Bspec */
-पूर्ण
+}
 
-अटल व्योम bxt_display_core_init(काष्ठा drm_i915_निजी *dev_priv, bool resume)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &dev_priv->घातer_करोमुख्यs;
-	काष्ठा i915_घातer_well *well;
+static void bxt_display_core_init(struct drm_i915_private *dev_priv, bool resume)
+{
+	struct i915_power_domains *power_domains = &dev_priv->power_domains;
+	struct i915_power_well *well;
 
 	gen9_set_dc_state(dev_priv, DC_STATE_DISABLE);
 
 	/*
 	 * NDE_RSTWRN_OPT RST PCH Handshake En must always be 0b on BXT
-	 * or अन्यथा the reset will hang because there is no PCH to respond.
+	 * or else the reset will hang because there is no PCH to respond.
 	 * Move the handshake programming to initialization sequence.
 	 * Previously was left up to BIOS.
 	 */
-	पूर्णांकel_pch_reset_handshake(dev_priv, false);
+	intel_pch_reset_handshake(dev_priv, false);
 
 	/* Enable PG1 */
-	mutex_lock(&घातer_करोमुख्यs->lock);
+	mutex_lock(&power_domains->lock);
 
-	well = lookup_घातer_well(dev_priv, SKL_DISP_PW_1);
-	पूर्णांकel_घातer_well_enable(dev_priv, well);
+	well = lookup_power_well(dev_priv, SKL_DISP_PW_1);
+	intel_power_well_enable(dev_priv, well);
 
-	mutex_unlock(&घातer_करोमुख्यs->lock);
+	mutex_unlock(&power_domains->lock);
 
-	पूर्णांकel_cdclk_init_hw(dev_priv);
+	intel_cdclk_init_hw(dev_priv);
 
 	gen9_dbuf_enable(dev_priv);
 
-	अगर (resume && dev_priv->csr.dmc_payload)
-		पूर्णांकel_csr_load_program(dev_priv);
-पूर्ण
+	if (resume && dev_priv->csr.dmc_payload)
+		intel_csr_load_program(dev_priv);
+}
 
-अटल व्योम bxt_display_core_uninit(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &dev_priv->घातer_करोमुख्यs;
-	काष्ठा i915_घातer_well *well;
+static void bxt_display_core_uninit(struct drm_i915_private *dev_priv)
+{
+	struct i915_power_domains *power_domains = &dev_priv->power_domains;
+	struct i915_power_well *well;
 
 	gen9_disable_dc_states(dev_priv);
 
 	gen9_dbuf_disable(dev_priv);
 
-	पूर्णांकel_cdclk_uninit_hw(dev_priv);
+	intel_cdclk_uninit_hw(dev_priv);
 
-	/* The spec करोesn't call क्रम removing the reset handshake flag */
+	/* The spec doesn't call for removing the reset handshake flag */
 
 	/*
 	 * Disable PW1 (PG1).
-	 * Note that even though the driver's request is हटाओd घातer well 1
+	 * Note that even though the driver's request is removed power well 1
 	 * may stay enabled after this due to DMC's own request on it.
 	 */
-	mutex_lock(&घातer_करोमुख्यs->lock);
+	mutex_lock(&power_domains->lock);
 
-	well = lookup_घातer_well(dev_priv, SKL_DISP_PW_1);
-	पूर्णांकel_घातer_well_disable(dev_priv, well);
+	well = lookup_power_well(dev_priv, SKL_DISP_PW_1);
+	intel_power_well_disable(dev_priv, well);
 
-	mutex_unlock(&घातer_करोमुख्यs->lock);
+	mutex_unlock(&power_domains->lock);
 
 	usleep_range(10, 30);		/* 10 us delay per Bspec */
-पूर्ण
+}
 
-अटल व्योम cnl_display_core_init(काष्ठा drm_i915_निजी *dev_priv, bool resume)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &dev_priv->घातer_करोमुख्यs;
-	काष्ठा i915_घातer_well *well;
+static void cnl_display_core_init(struct drm_i915_private *dev_priv, bool resume)
+{
+	struct i915_power_domains *power_domains = &dev_priv->power_domains;
+	struct i915_power_well *well;
 
 	gen9_set_dc_state(dev_priv, DC_STATE_DISABLE);
 
 	/* 1. Enable PCH Reset Handshake */
-	पूर्णांकel_pch_reset_handshake(dev_priv, !HAS_PCH_NOP(dev_priv));
+	intel_pch_reset_handshake(dev_priv, !HAS_PCH_NOP(dev_priv));
 
 	/* 2-3. */
-	पूर्णांकel_combo_phy_init(dev_priv);
+	intel_combo_phy_init(dev_priv);
 
 	/*
 	 * 4. Enable Power Well 1 (PG1).
-	 *    The AUX IO घातer wells will be enabled on demand.
+	 *    The AUX IO power wells will be enabled on demand.
 	 */
-	mutex_lock(&घातer_करोमुख्यs->lock);
-	well = lookup_घातer_well(dev_priv, SKL_DISP_PW_1);
-	पूर्णांकel_घातer_well_enable(dev_priv, well);
-	mutex_unlock(&घातer_करोमुख्यs->lock);
+	mutex_lock(&power_domains->lock);
+	well = lookup_power_well(dev_priv, SKL_DISP_PW_1);
+	intel_power_well_enable(dev_priv, well);
+	mutex_unlock(&power_domains->lock);
 
-	/* 5. Enable CD घड़ी */
-	पूर्णांकel_cdclk_init_hw(dev_priv);
+	/* 5. Enable CD clock */
+	intel_cdclk_init_hw(dev_priv);
 
 	/* 6. Enable DBUF */
 	gen9_dbuf_enable(dev_priv);
 
-	अगर (resume && dev_priv->csr.dmc_payload)
-		पूर्णांकel_csr_load_program(dev_priv);
-पूर्ण
+	if (resume && dev_priv->csr.dmc_payload)
+		intel_csr_load_program(dev_priv);
+}
 
-अटल व्योम cnl_display_core_uninit(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &dev_priv->घातer_करोमुख्यs;
-	काष्ठा i915_घातer_well *well;
+static void cnl_display_core_uninit(struct drm_i915_private *dev_priv)
+{
+	struct i915_power_domains *power_domains = &dev_priv->power_domains;
+	struct i915_power_well *well;
 
 	gen9_disable_dc_states(dev_priv);
 
-	/* 1. Disable all display engine functions -> aपढ़ोy करोne */
+	/* 1. Disable all display engine functions -> aready done */
 
 	/* 2. Disable DBUF */
 	gen9_dbuf_disable(dev_priv);
 
-	/* 3. Disable CD घड़ी */
-	पूर्णांकel_cdclk_uninit_hw(dev_priv);
+	/* 3. Disable CD clock */
+	intel_cdclk_uninit_hw(dev_priv);
 
 	/*
 	 * 4. Disable Power Well 1 (PG1).
-	 *    The AUX IO घातer wells are toggled on demand, so they are alपढ़ोy
-	 *    disabled at this poपूर्णांक.
+	 *    The AUX IO power wells are toggled on demand, so they are already
+	 *    disabled at this point.
 	 */
-	mutex_lock(&घातer_करोमुख्यs->lock);
-	well = lookup_घातer_well(dev_priv, SKL_DISP_PW_1);
-	पूर्णांकel_घातer_well_disable(dev_priv, well);
-	mutex_unlock(&घातer_करोमुख्यs->lock);
+	mutex_lock(&power_domains->lock);
+	well = lookup_power_well(dev_priv, SKL_DISP_PW_1);
+	intel_power_well_disable(dev_priv, well);
+	mutex_unlock(&power_domains->lock);
 
 	usleep_range(10, 30);		/* 10 us delay per Bspec */
 
 	/* 5. */
-	पूर्णांकel_combo_phy_uninit(dev_priv);
-पूर्ण
+	intel_combo_phy_uninit(dev_priv);
+}
 
-काष्ठा buddy_page_mask अणु
+struct buddy_page_mask {
 	u32 page_mask;
 	u8 type;
 	u8 num_channels;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा buddy_page_mask tgl_buddy_page_masks[] = अणु
-	अणु .num_channels = 1, .type = INTEL_DRAM_DDR4,   .page_mask = 0xF पूर्ण,
-	अणु .num_channels = 1, .type = INTEL_DRAM_DDR5,	.page_mask = 0xF पूर्ण,
-	अणु .num_channels = 2, .type = INTEL_DRAM_LPDDR4, .page_mask = 0x1C पूर्ण,
-	अणु .num_channels = 2, .type = INTEL_DRAM_LPDDR5, .page_mask = 0x1C पूर्ण,
-	अणु .num_channels = 2, .type = INTEL_DRAM_DDR4,   .page_mask = 0x1F पूर्ण,
-	अणु .num_channels = 2, .type = INTEL_DRAM_DDR5,   .page_mask = 0x1E पूर्ण,
-	अणु .num_channels = 4, .type = INTEL_DRAM_LPDDR4, .page_mask = 0x38 पूर्ण,
-	अणु .num_channels = 4, .type = INTEL_DRAM_LPDDR5, .page_mask = 0x38 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct buddy_page_mask tgl_buddy_page_masks[] = {
+	{ .num_channels = 1, .type = INTEL_DRAM_DDR4,   .page_mask = 0xF },
+	{ .num_channels = 1, .type = INTEL_DRAM_DDR5,	.page_mask = 0xF },
+	{ .num_channels = 2, .type = INTEL_DRAM_LPDDR4, .page_mask = 0x1C },
+	{ .num_channels = 2, .type = INTEL_DRAM_LPDDR5, .page_mask = 0x1C },
+	{ .num_channels = 2, .type = INTEL_DRAM_DDR4,   .page_mask = 0x1F },
+	{ .num_channels = 2, .type = INTEL_DRAM_DDR5,   .page_mask = 0x1E },
+	{ .num_channels = 4, .type = INTEL_DRAM_LPDDR4, .page_mask = 0x38 },
+	{ .num_channels = 4, .type = INTEL_DRAM_LPDDR5, .page_mask = 0x38 },
+	{}
+};
 
-अटल स्थिर काष्ठा buddy_page_mask wa_1409767108_buddy_page_masks[] = अणु
-	अणु .num_channels = 1, .type = INTEL_DRAM_LPDDR4, .page_mask = 0x1 पूर्ण,
-	अणु .num_channels = 1, .type = INTEL_DRAM_DDR4,   .page_mask = 0x1 पूर्ण,
-	अणु .num_channels = 1, .type = INTEL_DRAM_DDR5,   .page_mask = 0x1 पूर्ण,
-	अणु .num_channels = 1, .type = INTEL_DRAM_LPDDR5, .page_mask = 0x1 पूर्ण,
-	अणु .num_channels = 2, .type = INTEL_DRAM_LPDDR4, .page_mask = 0x3 पूर्ण,
-	अणु .num_channels = 2, .type = INTEL_DRAM_DDR4,   .page_mask = 0x3 पूर्ण,
-	अणु .num_channels = 2, .type = INTEL_DRAM_DDR5,   .page_mask = 0x3 पूर्ण,
-	अणु .num_channels = 2, .type = INTEL_DRAM_LPDDR5, .page_mask = 0x3 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct buddy_page_mask wa_1409767108_buddy_page_masks[] = {
+	{ .num_channels = 1, .type = INTEL_DRAM_LPDDR4, .page_mask = 0x1 },
+	{ .num_channels = 1, .type = INTEL_DRAM_DDR4,   .page_mask = 0x1 },
+	{ .num_channels = 1, .type = INTEL_DRAM_DDR5,   .page_mask = 0x1 },
+	{ .num_channels = 1, .type = INTEL_DRAM_LPDDR5, .page_mask = 0x1 },
+	{ .num_channels = 2, .type = INTEL_DRAM_LPDDR4, .page_mask = 0x3 },
+	{ .num_channels = 2, .type = INTEL_DRAM_DDR4,   .page_mask = 0x3 },
+	{ .num_channels = 2, .type = INTEL_DRAM_DDR5,   .page_mask = 0x3 },
+	{ .num_channels = 2, .type = INTEL_DRAM_LPDDR5, .page_mask = 0x3 },
+	{}
+};
 
-अटल व्योम tgl_bw_buddy_init(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	क्रमागत पूर्णांकel_dram_type type = dev_priv->dram_info.type;
+static void tgl_bw_buddy_init(struct drm_i915_private *dev_priv)
+{
+	enum intel_dram_type type = dev_priv->dram_info.type;
 	u8 num_channels = dev_priv->dram_info.num_channels;
-	स्थिर काष्ठा buddy_page_mask *table;
-	अचिन्हित दीर्घ abox_mask = INTEL_INFO(dev_priv)->abox_mask;
-	पूर्णांक config, i;
+	const struct buddy_page_mask *table;
+	unsigned long abox_mask = INTEL_INFO(dev_priv)->abox_mask;
+	int config, i;
 
-	अगर (IS_ALDERLAKE_S(dev_priv) ||
+	if (IS_ALDERLAKE_S(dev_priv) ||
 	    IS_DG1_REVID(dev_priv, DG1_REVID_A0, DG1_REVID_A0) ||
 	    IS_TGL_DISPLAY_STEP(dev_priv, STEP_A0, STEP_B0))
 		/* Wa_1409767108:tgl,dg1,adl-s */
 		table = wa_1409767108_buddy_page_masks;
-	अन्यथा
+	else
 		table = tgl_buddy_page_masks;
 
-	क्रम (config = 0; table[config].page_mask != 0; config++)
-		अगर (table[config].num_channels == num_channels &&
+	for (config = 0; table[config].page_mask != 0; config++)
+		if (table[config].num_channels == num_channels &&
 		    table[config].type == type)
-			अवरोध;
+			break;
 
-	अगर (table[config].page_mask == 0) अणु
+	if (table[config].page_mask == 0) {
 		drm_dbg(&dev_priv->drm,
 			"Unknown memory configuration; disabling address buddy logic.\n");
-		क्रम_each_set_bit(i, &abox_mask, माप(abox_mask))
-			पूर्णांकel_de_ग_लिखो(dev_priv, BW_BUDDY_CTL(i),
+		for_each_set_bit(i, &abox_mask, sizeof(abox_mask))
+			intel_de_write(dev_priv, BW_BUDDY_CTL(i),
 				       BW_BUDDY_DISABLE);
-	पूर्ण अन्यथा अणु
-		क्रम_each_set_bit(i, &abox_mask, माप(abox_mask)) अणु
-			पूर्णांकel_de_ग_लिखो(dev_priv, BW_BUDDY_PAGE_MASK(i),
+	} else {
+		for_each_set_bit(i, &abox_mask, sizeof(abox_mask)) {
+			intel_de_write(dev_priv, BW_BUDDY_PAGE_MASK(i),
 				       table[config].page_mask);
 
 			/* Wa_22010178259:tgl,rkl */
-			पूर्णांकel_de_rmw(dev_priv, BW_BUDDY_CTL(i),
+			intel_de_rmw(dev_priv, BW_BUDDY_CTL(i),
 				     BW_BUDDY_TLB_REQ_TIMER_MASK,
 				     BW_BUDDY_TLB_REQ_TIMER(0x8));
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम icl_display_core_init(काष्ठा drm_i915_निजी *dev_priv,
+static void icl_display_core_init(struct drm_i915_private *dev_priv,
 				  bool resume)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &dev_priv->घातer_करोमुख्यs;
-	काष्ठा i915_घातer_well *well;
+{
+	struct i915_power_domains *power_domains = &dev_priv->power_domains;
+	struct i915_power_well *well;
 	u32 val;
 
 	gen9_set_dc_state(dev_priv, DC_STATE_DISABLE);
 
 	/* Wa_14011294188:ehl,jsl,tgl,rkl,adl-s */
-	अगर (INTEL_PCH_TYPE(dev_priv) >= PCH_JSP &&
+	if (INTEL_PCH_TYPE(dev_priv) >= PCH_JSP &&
 	    INTEL_PCH_TYPE(dev_priv) < PCH_DG1)
-		पूर्णांकel_de_rmw(dev_priv, SOUTH_DSPCLK_GATE_D, 0,
+		intel_de_rmw(dev_priv, SOUTH_DSPCLK_GATE_D, 0,
 			     PCH_DPMGUNIT_CLOCK_GATE_DISABLE);
 
 	/* 1. Enable PCH reset handshake. */
-	पूर्णांकel_pch_reset_handshake(dev_priv, !HAS_PCH_NOP(dev_priv));
+	intel_pch_reset_handshake(dev_priv, !HAS_PCH_NOP(dev_priv));
 
 	/* 2. Initialize all combo phys */
-	पूर्णांकel_combo_phy_init(dev_priv);
+	intel_combo_phy_init(dev_priv);
 
 	/*
 	 * 3. Enable Power Well 1 (PG1).
-	 *    The AUX IO घातer wells will be enabled on demand.
+	 *    The AUX IO power wells will be enabled on demand.
 	 */
-	mutex_lock(&घातer_करोमुख्यs->lock);
-	well = lookup_घातer_well(dev_priv, SKL_DISP_PW_1);
-	पूर्णांकel_घातer_well_enable(dev_priv, well);
-	mutex_unlock(&घातer_करोमुख्यs->lock);
+	mutex_lock(&power_domains->lock);
+	well = lookup_power_well(dev_priv, SKL_DISP_PW_1);
+	intel_power_well_enable(dev_priv, well);
+	mutex_unlock(&power_domains->lock);
 
 	/* 4. Enable CDCLK. */
-	पूर्णांकel_cdclk_init_hw(dev_priv);
+	intel_cdclk_init_hw(dev_priv);
 
-	अगर (DISPLAY_VER(dev_priv) >= 12)
+	if (DISPLAY_VER(dev_priv) >= 12)
 		gen12_dbuf_slices_config(dev_priv);
 
 	/* 5. Enable DBUF. */
@@ -5406,62 +5405,62 @@ __set_घातer_wells(काष्ठा i915_घातer_करोमुख�
 	/* 6. Setup MBUS. */
 	icl_mbus_init(dev_priv);
 
-	/* 7. Program arbiter BW_BUDDY रेजिस्टरs */
-	अगर (DISPLAY_VER(dev_priv) >= 12)
+	/* 7. Program arbiter BW_BUDDY registers */
+	if (DISPLAY_VER(dev_priv) >= 12)
 		tgl_bw_buddy_init(dev_priv);
 
-	अगर (resume && dev_priv->csr.dmc_payload)
-		पूर्णांकel_csr_load_program(dev_priv);
+	if (resume && dev_priv->csr.dmc_payload)
+		intel_csr_load_program(dev_priv);
 
 	/* Wa_14011508470 */
-	अगर (IS_DISPLAY_VER(dev_priv, 12)) अणु
+	if (IS_DISPLAY_VER(dev_priv, 12)) {
 		val = DCPR_CLEAR_MEMSTAT_DIS | DCPR_SEND_RESP_IMM |
 		      DCPR_MASK_LPMODE | DCPR_MASK_MAXLATENCY_MEMUP_CLR;
-		पूर्णांकel_uncore_rmw(&dev_priv->uncore, GEN11_CHICKEN_DCPR_2, 0, val);
-	पूर्ण
-पूर्ण
+		intel_uncore_rmw(&dev_priv->uncore, GEN11_CHICKEN_DCPR_2, 0, val);
+	}
+}
 
-अटल व्योम icl_display_core_uninit(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &dev_priv->घातer_करोमुख्यs;
-	काष्ठा i915_घातer_well *well;
+static void icl_display_core_uninit(struct drm_i915_private *dev_priv)
+{
+	struct i915_power_domains *power_domains = &dev_priv->power_domains;
+	struct i915_power_well *well;
 
 	gen9_disable_dc_states(dev_priv);
 
-	/* 1. Disable all display engine functions -> aपढ़ोy करोne */
+	/* 1. Disable all display engine functions -> aready done */
 
 	/* 2. Disable DBUF */
 	gen9_dbuf_disable(dev_priv);
 
-	/* 3. Disable CD घड़ी */
-	पूर्णांकel_cdclk_uninit_hw(dev_priv);
+	/* 3. Disable CD clock */
+	intel_cdclk_uninit_hw(dev_priv);
 
 	/*
 	 * 4. Disable Power Well 1 (PG1).
-	 *    The AUX IO घातer wells are toggled on demand, so they are alपढ़ोy
-	 *    disabled at this poपूर्णांक.
+	 *    The AUX IO power wells are toggled on demand, so they are already
+	 *    disabled at this point.
 	 */
-	mutex_lock(&घातer_करोमुख्यs->lock);
-	well = lookup_घातer_well(dev_priv, SKL_DISP_PW_1);
-	पूर्णांकel_घातer_well_disable(dev_priv, well);
-	mutex_unlock(&घातer_करोमुख्यs->lock);
+	mutex_lock(&power_domains->lock);
+	well = lookup_power_well(dev_priv, SKL_DISP_PW_1);
+	intel_power_well_disable(dev_priv, well);
+	mutex_unlock(&power_domains->lock);
 
 	/* 5. */
-	पूर्णांकel_combo_phy_uninit(dev_priv);
-पूर्ण
+	intel_combo_phy_uninit(dev_priv);
+}
 
-अटल व्योम chv_phy_control_init(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा i915_घातer_well *cmn_bc =
-		lookup_घातer_well(dev_priv, VLV_DISP_PW_DPIO_CMN_BC);
-	काष्ठा i915_घातer_well *cmn_d =
-		lookup_घातer_well(dev_priv, CHV_DISP_PW_DPIO_CMN_D);
+static void chv_phy_control_init(struct drm_i915_private *dev_priv)
+{
+	struct i915_power_well *cmn_bc =
+		lookup_power_well(dev_priv, VLV_DISP_PW_DPIO_CMN_BC);
+	struct i915_power_well *cmn_d =
+		lookup_power_well(dev_priv, CHV_DISP_PW_DPIO_CMN_D);
 
 	/*
-	 * DISPLAY_PHY_CONTROL can get corrupted अगर पढ़ो. As a
-	 * workaround never ever पढ़ो DISPLAY_PHY_CONTROL, and
-	 * instead मुख्यtain a shaकरोw copy ourselves. Use the actual
-	 * घातer well state and lane status to reस्थिरruct the
+	 * DISPLAY_PHY_CONTROL can get corrupted if read. As a
+	 * workaround never ever read DISPLAY_PHY_CONTROL, and
+	 * instead maintain a shadow copy ourselves. Use the actual
+	 * power well state and lane status to reconstruct the
 	 * expected initial value.
 	 */
 	dev_priv->chv_phy_control =
@@ -5473,19 +5472,19 @@ __set_घातer_wells(काष्ठा i915_घातer_करोमुख�
 
 	/*
 	 * If all lanes are disabled we leave the override disabled
-	 * with all घातer करोwn bits cleared to match the state we
+	 * with all power down bits cleared to match the state we
 	 * would use after disabling the port. Otherwise enable the
-	 * override and set the lane घातerकरोwn bits accding to the
+	 * override and set the lane powerdown bits accding to the
 	 * current lane status.
 	 */
-	अगर (cmn_bc->desc->ops->is_enabled(dev_priv, cmn_bc)) अणु
-		u32 status = पूर्णांकel_de_पढ़ो(dev_priv, DPLL(PIPE_A));
-		अचिन्हित पूर्णांक mask;
+	if (cmn_bc->desc->ops->is_enabled(dev_priv, cmn_bc)) {
+		u32 status = intel_de_read(dev_priv, DPLL(PIPE_A));
+		unsigned int mask;
 
 		mask = status & DPLL_PORTB_READY_MASK;
-		अगर (mask == 0xf)
+		if (mask == 0xf)
 			mask = 0x0;
-		अन्यथा
+		else
 			dev_priv->chv_phy_control |=
 				PHY_CH_POWER_DOWN_OVRD_EN(DPIO_PHY0, DPIO_CH0);
 
@@ -5493,9 +5492,9 @@ __set_घातer_wells(काष्ठा i915_घातer_करोमुख�
 			PHY_CH_POWER_DOWN_OVRD(mask, DPIO_PHY0, DPIO_CH0);
 
 		mask = (status & DPLL_PORTC_READY_MASK) >> 4;
-		अगर (mask == 0xf)
+		if (mask == 0xf)
 			mask = 0x0;
-		अन्यथा
+		else
 			dev_priv->chv_phy_control |=
 				PHY_CH_POWER_DOWN_OVRD_EN(DPIO_PHY0, DPIO_CH1);
 
@@ -5504,20 +5503,20 @@ __set_घातer_wells(काष्ठा i915_घातer_करोमुख�
 
 		dev_priv->chv_phy_control |= PHY_COM_LANE_RESET_DEASSERT(DPIO_PHY0);
 
-		dev_priv->chv_phy_निश्चित[DPIO_PHY0] = false;
-	पूर्ण अन्यथा अणु
-		dev_priv->chv_phy_निश्चित[DPIO_PHY0] = true;
-	पूर्ण
+		dev_priv->chv_phy_assert[DPIO_PHY0] = false;
+	} else {
+		dev_priv->chv_phy_assert[DPIO_PHY0] = true;
+	}
 
-	अगर (cmn_d->desc->ops->is_enabled(dev_priv, cmn_d)) अणु
-		u32 status = पूर्णांकel_de_पढ़ो(dev_priv, DPIO_PHY_STATUS);
-		अचिन्हित पूर्णांक mask;
+	if (cmn_d->desc->ops->is_enabled(dev_priv, cmn_d)) {
+		u32 status = intel_de_read(dev_priv, DPIO_PHY_STATUS);
+		unsigned int mask;
 
 		mask = status & DPLL_PORTD_READY_MASK;
 
-		अगर (mask == 0xf)
+		if (mask == 0xf)
 			mask = 0x0;
-		अन्यथा
+		else
 			dev_priv->chv_phy_control |=
 				PHY_CH_POWER_DOWN_OVRD_EN(DPIO_PHY1, DPIO_CH0);
 
@@ -5526,447 +5525,447 @@ __set_घातer_wells(काष्ठा i915_घातer_करोमुख�
 
 		dev_priv->chv_phy_control |= PHY_COM_LANE_RESET_DEASSERT(DPIO_PHY1);
 
-		dev_priv->chv_phy_निश्चित[DPIO_PHY1] = false;
-	पूर्ण अन्यथा अणु
-		dev_priv->chv_phy_निश्चित[DPIO_PHY1] = true;
-	पूर्ण
+		dev_priv->chv_phy_assert[DPIO_PHY1] = false;
+	} else {
+		dev_priv->chv_phy_assert[DPIO_PHY1] = true;
+	}
 
 	drm_dbg_kms(&dev_priv->drm, "Initial PHY_CONTROL=0x%08x\n",
 		    dev_priv->chv_phy_control);
 
-	/* Defer application of initial phy_control to enabling the घातerwell */
-पूर्ण
+	/* Defer application of initial phy_control to enabling the powerwell */
+}
 
-अटल व्योम vlv_cmnlane_wa(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा i915_घातer_well *cmn =
-		lookup_घातer_well(dev_priv, VLV_DISP_PW_DPIO_CMN_BC);
-	काष्ठा i915_घातer_well *disp2d =
-		lookup_घातer_well(dev_priv, VLV_DISP_PW_DISP2D);
+static void vlv_cmnlane_wa(struct drm_i915_private *dev_priv)
+{
+	struct i915_power_well *cmn =
+		lookup_power_well(dev_priv, VLV_DISP_PW_DPIO_CMN_BC);
+	struct i915_power_well *disp2d =
+		lookup_power_well(dev_priv, VLV_DISP_PW_DISP2D);
 
-	/* If the display might be alपढ़ोy active skip this */
-	अगर (cmn->desc->ops->is_enabled(dev_priv, cmn) &&
+	/* If the display might be already active skip this */
+	if (cmn->desc->ops->is_enabled(dev_priv, cmn) &&
 	    disp2d->desc->ops->is_enabled(dev_priv, disp2d) &&
-	    पूर्णांकel_de_पढ़ो(dev_priv, DPIO_CTL) & DPIO_CMNRST)
-		वापस;
+	    intel_de_read(dev_priv, DPIO_CTL) & DPIO_CMNRST)
+		return;
 
 	drm_dbg_kms(&dev_priv->drm, "toggling display PHY side reset\n");
 
-	/* cmnlane needs DPLL रेजिस्टरs */
+	/* cmnlane needs DPLL registers */
 	disp2d->desc->ops->enable(dev_priv, disp2d);
 
 	/*
-	 * From VLV2A0_DP_eDP_HDMI_DPIO_driver_vbios_notes_11.करोcx:
-	 * Need to निश्चित and de-निश्चित PHY SB reset by gating the
-	 * common lane घातer, then un-gating it.
+	 * From VLV2A0_DP_eDP_HDMI_DPIO_driver_vbios_notes_11.docx:
+	 * Need to assert and de-assert PHY SB reset by gating the
+	 * common lane power, then un-gating it.
 	 * Simply ungating isn't enough to reset the PHY enough to get
 	 * ports and lanes running.
 	 */
 	cmn->desc->ops->disable(dev_priv, cmn);
-पूर्ण
+}
 
-अटल bool vlv_punit_is_घातer_gated(काष्ठा drm_i915_निजी *dev_priv, u32 reg0)
-अणु
+static bool vlv_punit_is_power_gated(struct drm_i915_private *dev_priv, u32 reg0)
+{
 	bool ret;
 
 	vlv_punit_get(dev_priv);
-	ret = (vlv_punit_पढ़ो(dev_priv, reg0) & SSPM0_SSC_MASK) == SSPM0_SSC_PWR_GATE;
+	ret = (vlv_punit_read(dev_priv, reg0) & SSPM0_SSC_MASK) == SSPM0_SSC_PWR_GATE;
 	vlv_punit_put(dev_priv);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम निश्चित_ved_घातer_gated(काष्ठा drm_i915_निजी *dev_priv)
-अणु
+static void assert_ved_power_gated(struct drm_i915_private *dev_priv)
+{
 	drm_WARN(&dev_priv->drm,
-		 !vlv_punit_is_घातer_gated(dev_priv, PUNIT_REG_VEDSSPM0),
+		 !vlv_punit_is_power_gated(dev_priv, PUNIT_REG_VEDSSPM0),
 		 "VED not power gated\n");
-पूर्ण
+}
 
-अटल व्योम निश्चित_isp_घातer_gated(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	अटल स्थिर काष्ठा pci_device_id isp_ids[] = अणु
-		अणुPCI_DEVICE(PCI_VENDOR_ID_INTEL, 0x0f38)पूर्ण,
-		अणुPCI_DEVICE(PCI_VENDOR_ID_INTEL, 0x22b8)पूर्ण,
-		अणुपूर्ण
-	पूर्ण;
+static void assert_isp_power_gated(struct drm_i915_private *dev_priv)
+{
+	static const struct pci_device_id isp_ids[] = {
+		{PCI_DEVICE(PCI_VENDOR_ID_INTEL, 0x0f38)},
+		{PCI_DEVICE(PCI_VENDOR_ID_INTEL, 0x22b8)},
+		{}
+	};
 
 	drm_WARN(&dev_priv->drm, !pci_dev_present(isp_ids) &&
-		 !vlv_punit_is_घातer_gated(dev_priv, PUNIT_REG_ISPSSPM0),
+		 !vlv_punit_is_power_gated(dev_priv, PUNIT_REG_ISPSSPM0),
 		 "ISP not power gated\n");
-पूर्ण
+}
 
-अटल व्योम पूर्णांकel_घातer_करोमुख्यs_verअगरy_state(काष्ठा drm_i915_निजी *dev_priv);
+static void intel_power_domains_verify_state(struct drm_i915_private *dev_priv);
 
 /**
- * पूर्णांकel_घातer_करोमुख्यs_init_hw - initialize hardware घातer करोमुख्य state
+ * intel_power_domains_init_hw - initialize hardware power domain state
  * @i915: i915 device instance
  * @resume: Called from resume code paths or not
  *
- * This function initializes the hardware घातer करोमुख्य state and enables all
- * घातer wells beदीर्घing to the INIT घातer करोमुख्य. Power wells in other
- * करोमुख्यs (and not in the INIT करोमुख्य) are referenced or disabled by
- * पूर्णांकel_modeset_पढ़ोout_hw_state(). After that the reference count of each
- * घातer well must match its HW enabled state, see
- * पूर्णांकel_घातer_करोमुख्यs_verअगरy_state().
+ * This function initializes the hardware power domain state and enables all
+ * power wells belonging to the INIT power domain. Power wells in other
+ * domains (and not in the INIT domain) are referenced or disabled by
+ * intel_modeset_readout_hw_state(). After that the reference count of each
+ * power well must match its HW enabled state, see
+ * intel_power_domains_verify_state().
  *
- * It will वापस with घातer करोमुख्यs disabled (to be enabled later by
- * पूर्णांकel_घातer_करोमुख्यs_enable()) and must be paired with
- * पूर्णांकel_घातer_करोमुख्यs_driver_हटाओ().
+ * It will return with power domains disabled (to be enabled later by
+ * intel_power_domains_enable()) and must be paired with
+ * intel_power_domains_driver_remove().
  */
-व्योम पूर्णांकel_घातer_करोमुख्यs_init_hw(काष्ठा drm_i915_निजी *i915, bool resume)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &i915->घातer_करोमुख्यs;
+void intel_power_domains_init_hw(struct drm_i915_private *i915, bool resume)
+{
+	struct i915_power_domains *power_domains = &i915->power_domains;
 
-	घातer_करोमुख्यs->initializing = true;
+	power_domains->initializing = true;
 
-	अगर (DISPLAY_VER(i915) >= 11) अणु
+	if (DISPLAY_VER(i915) >= 11) {
 		icl_display_core_init(i915, resume);
-	पूर्ण अन्यथा अगर (IS_CANNONLAKE(i915)) अणु
+	} else if (IS_CANNONLAKE(i915)) {
 		cnl_display_core_init(i915, resume);
-	पूर्ण अन्यथा अगर (IS_GEN9_BC(i915)) अणु
+	} else if (IS_GEN9_BC(i915)) {
 		skl_display_core_init(i915, resume);
-	पूर्ण अन्यथा अगर (IS_GEN9_LP(i915)) अणु
+	} else if (IS_GEN9_LP(i915)) {
 		bxt_display_core_init(i915, resume);
-	पूर्ण अन्यथा अगर (IS_CHERRYVIEW(i915)) अणु
-		mutex_lock(&घातer_करोमुख्यs->lock);
+	} else if (IS_CHERRYVIEW(i915)) {
+		mutex_lock(&power_domains->lock);
 		chv_phy_control_init(i915);
-		mutex_unlock(&घातer_करोमुख्यs->lock);
-		निश्चित_isp_घातer_gated(i915);
-	पूर्ण अन्यथा अगर (IS_VALLEYVIEW(i915)) अणु
-		mutex_lock(&घातer_करोमुख्यs->lock);
+		mutex_unlock(&power_domains->lock);
+		assert_isp_power_gated(i915);
+	} else if (IS_VALLEYVIEW(i915)) {
+		mutex_lock(&power_domains->lock);
 		vlv_cmnlane_wa(i915);
-		mutex_unlock(&घातer_करोमुख्यs->lock);
-		निश्चित_ved_घातer_gated(i915);
-		निश्चित_isp_घातer_gated(i915);
-	पूर्ण अन्यथा अगर (IS_BROADWELL(i915) || IS_HASWELL(i915)) अणु
-		hsw_निश्चित_cdclk(i915);
-		पूर्णांकel_pch_reset_handshake(i915, !HAS_PCH_NOP(i915));
-	पूर्ण अन्यथा अगर (IS_IVYBRIDGE(i915)) अणु
-		पूर्णांकel_pch_reset_handshake(i915, !HAS_PCH_NOP(i915));
-	पूर्ण
+		mutex_unlock(&power_domains->lock);
+		assert_ved_power_gated(i915);
+		assert_isp_power_gated(i915);
+	} else if (IS_BROADWELL(i915) || IS_HASWELL(i915)) {
+		hsw_assert_cdclk(i915);
+		intel_pch_reset_handshake(i915, !HAS_PCH_NOP(i915));
+	} else if (IS_IVYBRIDGE(i915)) {
+		intel_pch_reset_handshake(i915, !HAS_PCH_NOP(i915));
+	}
 
 	/*
-	 * Keep all घातer wells enabled क्रम any dependent HW access during
+	 * Keep all power wells enabled for any dependent HW access during
 	 * initialization and to make sure we keep BIOS enabled display HW
-	 * resources घातered until display HW पढ़ोout is complete. We drop
-	 * this reference in पूर्णांकel_घातer_करोमुख्यs_enable().
+	 * resources powered until display HW readout is complete. We drop
+	 * this reference in intel_power_domains_enable().
 	 */
-	drm_WARN_ON(&i915->drm, घातer_करोमुख्यs->init_wakeref);
-	घातer_करोमुख्यs->init_wakeref =
-		पूर्णांकel_display_घातer_get(i915, POWER_DOMAIN_INIT);
+	drm_WARN_ON(&i915->drm, power_domains->init_wakeref);
+	power_domains->init_wakeref =
+		intel_display_power_get(i915, POWER_DOMAIN_INIT);
 
-	/* Disable घातer support अगर the user asked so. */
-	अगर (!i915->params.disable_घातer_well) अणु
-		drm_WARN_ON(&i915->drm, घातer_करोमुख्यs->disable_wakeref);
-		i915->घातer_करोमुख्यs.disable_wakeref = पूर्णांकel_display_घातer_get(i915,
+	/* Disable power support if the user asked so. */
+	if (!i915->params.disable_power_well) {
+		drm_WARN_ON(&i915->drm, power_domains->disable_wakeref);
+		i915->power_domains.disable_wakeref = intel_display_power_get(i915,
 									      POWER_DOMAIN_INIT);
-	पूर्ण
-	पूर्णांकel_घातer_करोमुख्यs_sync_hw(i915);
+	}
+	intel_power_domains_sync_hw(i915);
 
-	घातer_करोमुख्यs->initializing = false;
-पूर्ण
+	power_domains->initializing = false;
+}
 
 /**
- * पूर्णांकel_घातer_करोमुख्यs_driver_हटाओ - deinitialize hw घातer करोमुख्य state
+ * intel_power_domains_driver_remove - deinitialize hw power domain state
  * @i915: i915 device instance
  *
- * De-initializes the display घातer करोमुख्य HW state. It also ensures that the
- * device stays घातered up so that the driver can be reloaded.
+ * De-initializes the display power domain HW state. It also ensures that the
+ * device stays powered up so that the driver can be reloaded.
  *
- * It must be called with घातer करोमुख्यs alपढ़ोy disabled (after a call to
- * पूर्णांकel_घातer_करोमुख्यs_disable()) and must be paired with
- * पूर्णांकel_घातer_करोमुख्यs_init_hw().
+ * It must be called with power domains already disabled (after a call to
+ * intel_power_domains_disable()) and must be paired with
+ * intel_power_domains_init_hw().
  */
-व्योम पूर्णांकel_घातer_करोमुख्यs_driver_हटाओ(काष्ठा drm_i915_निजी *i915)
-अणु
-	पूर्णांकel_wakeref_t wakeref __maybe_unused =
-		fetch_and_zero(&i915->घातer_करोमुख्यs.init_wakeref);
+void intel_power_domains_driver_remove(struct drm_i915_private *i915)
+{
+	intel_wakeref_t wakeref __maybe_unused =
+		fetch_and_zero(&i915->power_domains.init_wakeref);
 
-	/* Remove the refcount we took to keep घातer well support disabled. */
-	अगर (!i915->params.disable_घातer_well)
-		पूर्णांकel_display_घातer_put(i915, POWER_DOMAIN_INIT,
-					fetch_and_zero(&i915->घातer_करोमुख्यs.disable_wakeref));
+	/* Remove the refcount we took to keep power well support disabled. */
+	if (!i915->params.disable_power_well)
+		intel_display_power_put(i915, POWER_DOMAIN_INIT,
+					fetch_and_zero(&i915->power_domains.disable_wakeref));
 
-	पूर्णांकel_display_घातer_flush_work_sync(i915);
+	intel_display_power_flush_work_sync(i915);
 
-	पूर्णांकel_घातer_करोमुख्यs_verअगरy_state(i915);
+	intel_power_domains_verify_state(i915);
 
-	/* Keep the घातer well enabled, but cancel its rpm wakeref. */
-	पूर्णांकel_runसमय_pm_put(&i915->runसमय_pm, wakeref);
-पूर्ण
+	/* Keep the power well enabled, but cancel its rpm wakeref. */
+	intel_runtime_pm_put(&i915->runtime_pm, wakeref);
+}
 
 /**
- * पूर्णांकel_घातer_करोमुख्यs_enable - enable toggling of display घातer wells
+ * intel_power_domains_enable - enable toggling of display power wells
  * @i915: i915 device instance
  *
- * Enable the ondemand enabling/disabling of the display घातer wells. Note that
- * घातer wells not beदीर्घing to POWER_DOMAIN_INIT are allowed to be toggled
- * only at specअगरic poपूर्णांकs of the display modeset sequence, thus they are not
- * affected by the पूर्णांकel_घातer_करोमुख्यs_enable()/disable() calls. The purpose
- * of these function is to keep the rest of घातer wells enabled until the end
- * of display HW पढ़ोout (which will acquire the घातer references reflecting
+ * Enable the ondemand enabling/disabling of the display power wells. Note that
+ * power wells not belonging to POWER_DOMAIN_INIT are allowed to be toggled
+ * only at specific points of the display modeset sequence, thus they are not
+ * affected by the intel_power_domains_enable()/disable() calls. The purpose
+ * of these function is to keep the rest of power wells enabled until the end
+ * of display HW readout (which will acquire the power references reflecting
  * the current HW state).
  */
-व्योम पूर्णांकel_घातer_करोमुख्यs_enable(काष्ठा drm_i915_निजी *i915)
-अणु
-	पूर्णांकel_wakeref_t wakeref __maybe_unused =
-		fetch_and_zero(&i915->घातer_करोमुख्यs.init_wakeref);
+void intel_power_domains_enable(struct drm_i915_private *i915)
+{
+	intel_wakeref_t wakeref __maybe_unused =
+		fetch_and_zero(&i915->power_domains.init_wakeref);
 
-	पूर्णांकel_display_घातer_put(i915, POWER_DOMAIN_INIT, wakeref);
-	पूर्णांकel_घातer_करोमुख्यs_verअगरy_state(i915);
-पूर्ण
-
-/**
- * पूर्णांकel_घातer_करोमुख्यs_disable - disable toggling of display घातer wells
- * @i915: i915 device instance
- *
- * Disable the ondemand enabling/disabling of the display घातer wells. See
- * पूर्णांकel_घातer_करोमुख्यs_enable() क्रम which घातer wells this call controls.
- */
-व्योम पूर्णांकel_घातer_करोमुख्यs_disable(काष्ठा drm_i915_निजी *i915)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &i915->घातer_करोमुख्यs;
-
-	drm_WARN_ON(&i915->drm, घातer_करोमुख्यs->init_wakeref);
-	घातer_करोमुख्यs->init_wakeref =
-		पूर्णांकel_display_घातer_get(i915, POWER_DOMAIN_INIT);
-
-	पूर्णांकel_घातer_करोमुख्यs_verअगरy_state(i915);
-पूर्ण
+	intel_display_power_put(i915, POWER_DOMAIN_INIT, wakeref);
+	intel_power_domains_verify_state(i915);
+}
 
 /**
- * पूर्णांकel_घातer_करोमुख्यs_suspend - suspend घातer करोमुख्य state
+ * intel_power_domains_disable - disable toggling of display power wells
  * @i915: i915 device instance
- * @suspend_mode: specअगरies the target suspend state (idle, mem, hibernation)
  *
- * This function prepares the hardware घातer करोमुख्य state beक्रमe entering
- * प्रणाली suspend.
- *
- * It must be called with घातer करोमुख्यs alपढ़ोy disabled (after a call to
- * पूर्णांकel_घातer_करोमुख्यs_disable()) and paired with पूर्णांकel_घातer_करोमुख्यs_resume().
+ * Disable the ondemand enabling/disabling of the display power wells. See
+ * intel_power_domains_enable() for which power wells this call controls.
  */
-व्योम पूर्णांकel_घातer_करोमुख्यs_suspend(काष्ठा drm_i915_निजी *i915,
-				 क्रमागत i915_drm_suspend_mode suspend_mode)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &i915->घातer_करोमुख्यs;
-	पूर्णांकel_wakeref_t wakeref __maybe_unused =
-		fetch_and_zero(&घातer_करोमुख्यs->init_wakeref);
+void intel_power_domains_disable(struct drm_i915_private *i915)
+{
+	struct i915_power_domains *power_domains = &i915->power_domains;
 
-	पूर्णांकel_display_घातer_put(i915, POWER_DOMAIN_INIT, wakeref);
+	drm_WARN_ON(&i915->drm, power_domains->init_wakeref);
+	power_domains->init_wakeref =
+		intel_display_power_get(i915, POWER_DOMAIN_INIT);
+
+	intel_power_domains_verify_state(i915);
+}
+
+/**
+ * intel_power_domains_suspend - suspend power domain state
+ * @i915: i915 device instance
+ * @suspend_mode: specifies the target suspend state (idle, mem, hibernation)
+ *
+ * This function prepares the hardware power domain state before entering
+ * system suspend.
+ *
+ * It must be called with power domains already disabled (after a call to
+ * intel_power_domains_disable()) and paired with intel_power_domains_resume().
+ */
+void intel_power_domains_suspend(struct drm_i915_private *i915,
+				 enum i915_drm_suspend_mode suspend_mode)
+{
+	struct i915_power_domains *power_domains = &i915->power_domains;
+	intel_wakeref_t wakeref __maybe_unused =
+		fetch_and_zero(&power_domains->init_wakeref);
+
+	intel_display_power_put(i915, POWER_DOMAIN_INIT, wakeref);
 
 	/*
-	 * In हाल of suspend-to-idle (aka S0ix) on a DMC platक्रमm without DC9
-	 * support करोn't manually deinit the घातer करोमुख्यs. This also means the
-	 * CSR/DMC firmware will stay active, it will घातer करोwn any HW
-	 * resources as required and also enable deeper प्रणाली घातer states
-	 * that would be blocked अगर the firmware was inactive.
+	 * In case of suspend-to-idle (aka S0ix) on a DMC platform without DC9
+	 * support don't manually deinit the power domains. This also means the
+	 * CSR/DMC firmware will stay active, it will power down any HW
+	 * resources as required and also enable deeper system power states
+	 * that would be blocked if the firmware was inactive.
 	 */
-	अगर (!(i915->csr.allowed_dc_mask & DC_STATE_EN_DC9) &&
+	if (!(i915->csr.allowed_dc_mask & DC_STATE_EN_DC9) &&
 	    suspend_mode == I915_DRM_SUSPEND_IDLE &&
-	    i915->csr.dmc_payload) अणु
-		पूर्णांकel_display_घातer_flush_work(i915);
-		पूर्णांकel_घातer_करोमुख्यs_verअगरy_state(i915);
-		वापस;
-	पूर्ण
+	    i915->csr.dmc_payload) {
+		intel_display_power_flush_work(i915);
+		intel_power_domains_verify_state(i915);
+		return;
+	}
 
 	/*
-	 * Even अगर घातer well support was disabled we still want to disable
-	 * घातer wells अगर घातer करोमुख्यs must be deinitialized क्रम suspend.
+	 * Even if power well support was disabled we still want to disable
+	 * power wells if power domains must be deinitialized for suspend.
 	 */
-	अगर (!i915->params.disable_घातer_well)
-		पूर्णांकel_display_घातer_put(i915, POWER_DOMAIN_INIT,
-					fetch_and_zero(&i915->घातer_करोमुख्यs.disable_wakeref));
+	if (!i915->params.disable_power_well)
+		intel_display_power_put(i915, POWER_DOMAIN_INIT,
+					fetch_and_zero(&i915->power_domains.disable_wakeref));
 
-	पूर्णांकel_display_घातer_flush_work(i915);
-	पूर्णांकel_घातer_करोमुख्यs_verअगरy_state(i915);
+	intel_display_power_flush_work(i915);
+	intel_power_domains_verify_state(i915);
 
-	अगर (DISPLAY_VER(i915) >= 11)
+	if (DISPLAY_VER(i915) >= 11)
 		icl_display_core_uninit(i915);
-	अन्यथा अगर (IS_CANNONLAKE(i915))
+	else if (IS_CANNONLAKE(i915))
 		cnl_display_core_uninit(i915);
-	अन्यथा अगर (IS_GEN9_BC(i915))
+	else if (IS_GEN9_BC(i915))
 		skl_display_core_uninit(i915);
-	अन्यथा अगर (IS_GEN9_LP(i915))
+	else if (IS_GEN9_LP(i915))
 		bxt_display_core_uninit(i915);
 
-	घातer_करोमुख्यs->display_core_suspended = true;
-पूर्ण
+	power_domains->display_core_suspended = true;
+}
 
 /**
- * पूर्णांकel_घातer_करोमुख्यs_resume - resume घातer करोमुख्य state
+ * intel_power_domains_resume - resume power domain state
  * @i915: i915 device instance
  *
- * This function resume the hardware घातer करोमुख्य state during प्रणाली resume.
+ * This function resume the hardware power domain state during system resume.
  *
- * It will वापस with घातer करोमुख्य support disabled (to be enabled later by
- * पूर्णांकel_घातer_करोमुख्यs_enable()) and must be paired with
- * पूर्णांकel_घातer_करोमुख्यs_suspend().
+ * It will return with power domain support disabled (to be enabled later by
+ * intel_power_domains_enable()) and must be paired with
+ * intel_power_domains_suspend().
  */
-व्योम पूर्णांकel_घातer_करोमुख्यs_resume(काष्ठा drm_i915_निजी *i915)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &i915->घातer_करोमुख्यs;
+void intel_power_domains_resume(struct drm_i915_private *i915)
+{
+	struct i915_power_domains *power_domains = &i915->power_domains;
 
-	अगर (घातer_करोमुख्यs->display_core_suspended) अणु
-		पूर्णांकel_घातer_करोमुख्यs_init_hw(i915, true);
-		घातer_करोमुख्यs->display_core_suspended = false;
-	पूर्ण अन्यथा अणु
-		drm_WARN_ON(&i915->drm, घातer_करोमुख्यs->init_wakeref);
-		घातer_करोमुख्यs->init_wakeref =
-			पूर्णांकel_display_घातer_get(i915, POWER_DOMAIN_INIT);
-	पूर्ण
+	if (power_domains->display_core_suspended) {
+		intel_power_domains_init_hw(i915, true);
+		power_domains->display_core_suspended = false;
+	} else {
+		drm_WARN_ON(&i915->drm, power_domains->init_wakeref);
+		power_domains->init_wakeref =
+			intel_display_power_get(i915, POWER_DOMAIN_INIT);
+	}
 
-	पूर्णांकel_घातer_करोमुख्यs_verअगरy_state(i915);
-पूर्ण
+	intel_power_domains_verify_state(i915);
+}
 
-#अगर IS_ENABLED(CONFIG_DRM_I915_DEBUG_RUNTIME_PM)
+#if IS_ENABLED(CONFIG_DRM_I915_DEBUG_RUNTIME_PM)
 
-अटल व्योम पूर्णांकel_घातer_करोमुख्यs_dump_info(काष्ठा drm_i915_निजी *i915)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &i915->घातer_करोमुख्यs;
-	काष्ठा i915_घातer_well *घातer_well;
+static void intel_power_domains_dump_info(struct drm_i915_private *i915)
+{
+	struct i915_power_domains *power_domains = &i915->power_domains;
+	struct i915_power_well *power_well;
 
-	क्रम_each_घातer_well(i915, घातer_well) अणु
-		क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य;
+	for_each_power_well(i915, power_well) {
+		enum intel_display_power_domain domain;
 
 		drm_dbg(&i915->drm, "%-25s %d\n",
-			घातer_well->desc->name, घातer_well->count);
+			power_well->desc->name, power_well->count);
 
-		क्रम_each_घातer_करोमुख्य(करोमुख्य, घातer_well->desc->करोमुख्यs)
+		for_each_power_domain(domain, power_well->desc->domains)
 			drm_dbg(&i915->drm, "  %-23s %d\n",
-				पूर्णांकel_display_घातer_करोमुख्य_str(करोमुख्य),
-				घातer_करोमुख्यs->करोमुख्य_use_count[करोमुख्य]);
-	पूर्ण
-पूर्ण
+				intel_display_power_domain_str(domain),
+				power_domains->domain_use_count[domain]);
+	}
+}
 
 /**
- * पूर्णांकel_घातer_करोमुख्यs_verअगरy_state - verअगरy the HW/SW state क्रम all घातer wells
+ * intel_power_domains_verify_state - verify the HW/SW state for all power wells
  * @i915: i915 device instance
  *
- * Verअगरy अगर the reference count of each घातer well matches its HW enabled
- * state and the total refcount of the करोमुख्यs it beदीर्घs to. This must be
- * called after modeset HW state sanitization, which is responsible क्रम
- * acquiring reference counts क्रम any घातer wells in use and disabling the
+ * Verify if the reference count of each power well matches its HW enabled
+ * state and the total refcount of the domains it belongs to. This must be
+ * called after modeset HW state sanitization, which is responsible for
+ * acquiring reference counts for any power wells in use and disabling the
  * ones left on by BIOS but not required by any active output.
  */
-अटल व्योम पूर्णांकel_घातer_करोमुख्यs_verअगरy_state(काष्ठा drm_i915_निजी *i915)
-अणु
-	काष्ठा i915_घातer_करोमुख्यs *घातer_करोमुख्यs = &i915->घातer_करोमुख्यs;
-	काष्ठा i915_घातer_well *घातer_well;
-	bool dump_करोमुख्य_info;
+static void intel_power_domains_verify_state(struct drm_i915_private *i915)
+{
+	struct i915_power_domains *power_domains = &i915->power_domains;
+	struct i915_power_well *power_well;
+	bool dump_domain_info;
 
-	mutex_lock(&घातer_करोमुख्यs->lock);
+	mutex_lock(&power_domains->lock);
 
-	verअगरy_async_put_करोमुख्यs_state(घातer_करोमुख्यs);
+	verify_async_put_domains_state(power_domains);
 
-	dump_करोमुख्य_info = false;
-	क्रम_each_घातer_well(i915, घातer_well) अणु
-		क्रमागत पूर्णांकel_display_घातer_करोमुख्य करोमुख्य;
-		पूर्णांक करोमुख्यs_count;
+	dump_domain_info = false;
+	for_each_power_well(i915, power_well) {
+		enum intel_display_power_domain domain;
+		int domains_count;
 		bool enabled;
 
-		enabled = घातer_well->desc->ops->is_enabled(i915, घातer_well);
-		अगर ((घातer_well->count || घातer_well->desc->always_on) !=
+		enabled = power_well->desc->ops->is_enabled(i915, power_well);
+		if ((power_well->count || power_well->desc->always_on) !=
 		    enabled)
 			drm_err(&i915->drm,
 				"power well %s state mismatch (refcount %d/enabled %d)",
-				घातer_well->desc->name,
-				घातer_well->count, enabled);
+				power_well->desc->name,
+				power_well->count, enabled);
 
-		करोमुख्यs_count = 0;
-		क्रम_each_घातer_करोमुख्य(करोमुख्य, घातer_well->desc->करोमुख्यs)
-			करोमुख्यs_count += घातer_करोमुख्यs->करोमुख्य_use_count[करोमुख्य];
+		domains_count = 0;
+		for_each_power_domain(domain, power_well->desc->domains)
+			domains_count += power_domains->domain_use_count[domain];
 
-		अगर (घातer_well->count != करोमुख्यs_count) अणु
+		if (power_well->count != domains_count) {
 			drm_err(&i915->drm,
 				"power well %s refcount/domain refcount mismatch "
 				"(refcount %d/domains refcount %d)\n",
-				घातer_well->desc->name, घातer_well->count,
-				करोमुख्यs_count);
-			dump_करोमुख्य_info = true;
-		पूर्ण
-	पूर्ण
+				power_well->desc->name, power_well->count,
+				domains_count);
+			dump_domain_info = true;
+		}
+	}
 
-	अगर (dump_करोमुख्य_info) अणु
-		अटल bool dumped;
+	if (dump_domain_info) {
+		static bool dumped;
 
-		अगर (!dumped) अणु
-			पूर्णांकel_घातer_करोमुख्यs_dump_info(i915);
+		if (!dumped) {
+			intel_power_domains_dump_info(i915);
 			dumped = true;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	mutex_unlock(&घातer_करोमुख्यs->lock);
-पूर्ण
+	mutex_unlock(&power_domains->lock);
+}
 
-#अन्यथा
+#else
 
-अटल व्योम पूर्णांकel_घातer_करोमुख्यs_verअगरy_state(काष्ठा drm_i915_निजी *i915)
-अणु
-पूर्ण
+static void intel_power_domains_verify_state(struct drm_i915_private *i915)
+{
+}
 
-#पूर्ण_अगर
+#endif
 
-व्योम पूर्णांकel_display_घातer_suspend_late(काष्ठा drm_i915_निजी *i915)
-अणु
-	अगर (DISPLAY_VER(i915) >= 11 || IS_GEN9_LP(i915)) अणु
+void intel_display_power_suspend_late(struct drm_i915_private *i915)
+{
+	if (DISPLAY_VER(i915) >= 11 || IS_GEN9_LP(i915)) {
 		bxt_enable_dc9(i915);
 		/* Tweaked Wa_14010685332:icp,jsp,mcc */
-		अगर (INTEL_PCH_TYPE(i915) >= PCH_ICP && INTEL_PCH_TYPE(i915) <= PCH_MCC)
-			पूर्णांकel_de_rmw(i915, SOUTH_CHICKEN1,
+		if (INTEL_PCH_TYPE(i915) >= PCH_ICP && INTEL_PCH_TYPE(i915) <= PCH_MCC)
+			intel_de_rmw(i915, SOUTH_CHICKEN1,
 				     SBCLK_RUN_REFCLK_DIS, SBCLK_RUN_REFCLK_DIS);
-	पूर्ण अन्यथा अगर (IS_HASWELL(i915) || IS_BROADWELL(i915)) अणु
+	} else if (IS_HASWELL(i915) || IS_BROADWELL(i915)) {
 		hsw_enable_pc8(i915);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम पूर्णांकel_display_घातer_resume_early(काष्ठा drm_i915_निजी *i915)
-अणु
-	अगर (DISPLAY_VER(i915) >= 11 || IS_GEN9_LP(i915)) अणु
+void intel_display_power_resume_early(struct drm_i915_private *i915)
+{
+	if (DISPLAY_VER(i915) >= 11 || IS_GEN9_LP(i915)) {
 		gen9_sanitize_dc_state(i915);
 		bxt_disable_dc9(i915);
 		/* Tweaked Wa_14010685332:icp,jsp,mcc */
-		अगर (INTEL_PCH_TYPE(i915) >= PCH_ICP && INTEL_PCH_TYPE(i915) <= PCH_MCC)
-			पूर्णांकel_de_rmw(i915, SOUTH_CHICKEN1, SBCLK_RUN_REFCLK_DIS, 0);
+		if (INTEL_PCH_TYPE(i915) >= PCH_ICP && INTEL_PCH_TYPE(i915) <= PCH_MCC)
+			intel_de_rmw(i915, SOUTH_CHICKEN1, SBCLK_RUN_REFCLK_DIS, 0);
 
-	पूर्ण अन्यथा अगर (IS_HASWELL(i915) || IS_BROADWELL(i915)) अणु
+	} else if (IS_HASWELL(i915) || IS_BROADWELL(i915)) {
 		hsw_disable_pc8(i915);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम पूर्णांकel_display_घातer_suspend(काष्ठा drm_i915_निजी *i915)
-अणु
-	अगर (DISPLAY_VER(i915) >= 11) अणु
+void intel_display_power_suspend(struct drm_i915_private *i915)
+{
+	if (DISPLAY_VER(i915) >= 11) {
 		icl_display_core_uninit(i915);
 		bxt_enable_dc9(i915);
-	पूर्ण अन्यथा अगर (IS_GEN9_LP(i915)) अणु
+	} else if (IS_GEN9_LP(i915)) {
 		bxt_display_core_uninit(i915);
 		bxt_enable_dc9(i915);
-	पूर्ण अन्यथा अगर (IS_HASWELL(i915) || IS_BROADWELL(i915)) अणु
+	} else if (IS_HASWELL(i915) || IS_BROADWELL(i915)) {
 		hsw_enable_pc8(i915);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम पूर्णांकel_display_घातer_resume(काष्ठा drm_i915_निजी *i915)
-अणु
-	अगर (DISPLAY_VER(i915) >= 11) अणु
+void intel_display_power_resume(struct drm_i915_private *i915)
+{
+	if (DISPLAY_VER(i915) >= 11) {
 		bxt_disable_dc9(i915);
 		icl_display_core_init(i915, true);
-		अगर (i915->csr.dmc_payload) अणु
-			अगर (i915->csr.allowed_dc_mask &
+		if (i915->csr.dmc_payload) {
+			if (i915->csr.allowed_dc_mask &
 			    DC_STATE_EN_UPTO_DC6)
 				skl_enable_dc6(i915);
-			अन्यथा अगर (i915->csr.allowed_dc_mask &
+			else if (i915->csr.allowed_dc_mask &
 				 DC_STATE_EN_UPTO_DC5)
 				gen9_enable_dc5(i915);
-		पूर्ण
-	पूर्ण अन्यथा अगर (IS_GEN9_LP(i915)) अणु
+		}
+	} else if (IS_GEN9_LP(i915)) {
 		bxt_disable_dc9(i915);
 		bxt_display_core_init(i915, true);
-		अगर (i915->csr.dmc_payload &&
+		if (i915->csr.dmc_payload &&
 		    (i915->csr.allowed_dc_mask & DC_STATE_EN_UPTO_DC5))
 			gen9_enable_dc5(i915);
-	पूर्ण अन्यथा अगर (IS_HASWELL(i915) || IS_BROADWELL(i915)) अणु
+	} else if (IS_HASWELL(i915) || IS_BROADWELL(i915)) {
 		hsw_disable_pc8(i915);
-	पूर्ण
-पूर्ण
+	}
+}

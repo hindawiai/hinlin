@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2012 Intel Corporation
+ * Copyright © 2012 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -26,447 +25,447 @@
  *
  */
 
-#समावेश <linux/device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/स्थिति.स>
-#समावेश <linux/sysfs.h>
+#include <linux/device.h>
+#include <linux/module.h>
+#include <linux/stat.h>
+#include <linux/sysfs.h>
 
-#समावेश "gt/intel_rc6.h"
-#समावेश "gt/intel_rps.h"
-#समावेश "gt/sysfs_engines.h"
+#include "gt/intel_rc6.h"
+#include "gt/intel_rps.h"
+#include "gt/sysfs_engines.h"
 
-#समावेश "i915_drv.h"
-#समावेश "i915_sysfs.h"
-#समावेश "intel_pm.h"
-#समावेश "intel_sideband.h"
+#include "i915_drv.h"
+#include "i915_sysfs.h"
+#include "intel_pm.h"
+#include "intel_sideband.h"
 
-अटल अंतरभूत काष्ठा drm_i915_निजी *kdev_minor_to_i915(काष्ठा device *kdev)
-अणु
-	काष्ठा drm_minor *minor = dev_get_drvdata(kdev);
-	वापस to_i915(minor->dev);
-पूर्ण
+static inline struct drm_i915_private *kdev_minor_to_i915(struct device *kdev)
+{
+	struct drm_minor *minor = dev_get_drvdata(kdev);
+	return to_i915(minor->dev);
+}
 
-#अगर_घोषित CONFIG_PM
-अटल u32 calc_residency(काष्ठा drm_i915_निजी *dev_priv,
+#ifdef CONFIG_PM
+static u32 calc_residency(struct drm_i915_private *dev_priv,
 			  i915_reg_t reg)
-अणु
-	पूर्णांकel_wakeref_t wakeref;
+{
+	intel_wakeref_t wakeref;
 	u64 res = 0;
 
-	with_पूर्णांकel_runसमय_pm(&dev_priv->runसमय_pm, wakeref)
-		res = पूर्णांकel_rc6_residency_us(&dev_priv->gt.rc6, reg);
+	with_intel_runtime_pm(&dev_priv->runtime_pm, wakeref)
+		res = intel_rc6_residency_us(&dev_priv->gt.rc6, reg);
 
-	वापस DIV_ROUND_CLOSEST_ULL(res, 1000);
-पूर्ण
+	return DIV_ROUND_CLOSEST_ULL(res, 1000);
+}
 
-अटल sमाप_प्रकार
-show_rc6_mask(काष्ठा device *kdev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = kdev_minor_to_i915(kdev);
-	अचिन्हित पूर्णांक mask;
+static ssize_t
+show_rc6_mask(struct device *kdev, struct device_attribute *attr, char *buf)
+{
+	struct drm_i915_private *dev_priv = kdev_minor_to_i915(kdev);
+	unsigned int mask;
 
 	mask = 0;
-	अगर (HAS_RC6(dev_priv))
+	if (HAS_RC6(dev_priv))
 		mask |= BIT(0);
-	अगर (HAS_RC6p(dev_priv))
+	if (HAS_RC6p(dev_priv))
 		mask |= BIT(1);
-	अगर (HAS_RC6pp(dev_priv))
+	if (HAS_RC6pp(dev_priv))
 		mask |= BIT(2);
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%x\n", mask);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%x\n", mask);
+}
 
-अटल sमाप_प्रकार
-show_rc6_ms(काष्ठा device *kdev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = kdev_minor_to_i915(kdev);
+static ssize_t
+show_rc6_ms(struct device *kdev, struct device_attribute *attr, char *buf)
+{
+	struct drm_i915_private *dev_priv = kdev_minor_to_i915(kdev);
 	u32 rc6_residency = calc_residency(dev_priv, GEN6_GT_GFX_RC6);
-	वापस snम_लिखो(buf, PAGE_SIZE, "%u\n", rc6_residency);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%u\n", rc6_residency);
+}
 
-अटल sमाप_प्रकार
-show_rc6p_ms(काष्ठा device *kdev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = kdev_minor_to_i915(kdev);
+static ssize_t
+show_rc6p_ms(struct device *kdev, struct device_attribute *attr, char *buf)
+{
+	struct drm_i915_private *dev_priv = kdev_minor_to_i915(kdev);
 	u32 rc6p_residency = calc_residency(dev_priv, GEN6_GT_GFX_RC6p);
-	वापस snम_लिखो(buf, PAGE_SIZE, "%u\n", rc6p_residency);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%u\n", rc6p_residency);
+}
 
-अटल sमाप_प्रकार
-show_rc6pp_ms(काष्ठा device *kdev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = kdev_minor_to_i915(kdev);
+static ssize_t
+show_rc6pp_ms(struct device *kdev, struct device_attribute *attr, char *buf)
+{
+	struct drm_i915_private *dev_priv = kdev_minor_to_i915(kdev);
 	u32 rc6pp_residency = calc_residency(dev_priv, GEN6_GT_GFX_RC6pp);
-	वापस snम_लिखो(buf, PAGE_SIZE, "%u\n", rc6pp_residency);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%u\n", rc6pp_residency);
+}
 
-अटल sमाप_प्रकार
-show_media_rc6_ms(काष्ठा device *kdev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = kdev_minor_to_i915(kdev);
+static ssize_t
+show_media_rc6_ms(struct device *kdev, struct device_attribute *attr, char *buf)
+{
+	struct drm_i915_private *dev_priv = kdev_minor_to_i915(kdev);
 	u32 rc6_residency = calc_residency(dev_priv, VLV_GT_MEDIA_RC6);
-	वापस snम_लिखो(buf, PAGE_SIZE, "%u\n", rc6_residency);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%u\n", rc6_residency);
+}
 
-अटल DEVICE_ATTR(rc6_enable, S_IRUGO, show_rc6_mask, शून्य);
-अटल DEVICE_ATTR(rc6_residency_ms, S_IRUGO, show_rc6_ms, शून्य);
-अटल DEVICE_ATTR(rc6p_residency_ms, S_IRUGO, show_rc6p_ms, शून्य);
-अटल DEVICE_ATTR(rc6pp_residency_ms, S_IRUGO, show_rc6pp_ms, शून्य);
-अटल DEVICE_ATTR(media_rc6_residency_ms, S_IRUGO, show_media_rc6_ms, शून्य);
+static DEVICE_ATTR(rc6_enable, S_IRUGO, show_rc6_mask, NULL);
+static DEVICE_ATTR(rc6_residency_ms, S_IRUGO, show_rc6_ms, NULL);
+static DEVICE_ATTR(rc6p_residency_ms, S_IRUGO, show_rc6p_ms, NULL);
+static DEVICE_ATTR(rc6pp_residency_ms, S_IRUGO, show_rc6pp_ms, NULL);
+static DEVICE_ATTR(media_rc6_residency_ms, S_IRUGO, show_media_rc6_ms, NULL);
 
-अटल काष्ठा attribute *rc6_attrs[] = अणु
+static struct attribute *rc6_attrs[] = {
 	&dev_attr_rc6_enable.attr,
 	&dev_attr_rc6_residency_ms.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group rc6_attr_group = अणु
-	.name = घातer_group_name,
+static const struct attribute_group rc6_attr_group = {
+	.name = power_group_name,
 	.attrs =  rc6_attrs
-पूर्ण;
+};
 
-अटल काष्ठा attribute *rc6p_attrs[] = अणु
+static struct attribute *rc6p_attrs[] = {
 	&dev_attr_rc6p_residency_ms.attr,
 	&dev_attr_rc6pp_residency_ms.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group rc6p_attr_group = अणु
-	.name = घातer_group_name,
+static const struct attribute_group rc6p_attr_group = {
+	.name = power_group_name,
 	.attrs =  rc6p_attrs
-पूर्ण;
+};
 
-अटल काष्ठा attribute *media_rc6_attrs[] = अणु
+static struct attribute *media_rc6_attrs[] = {
 	&dev_attr_media_rc6_residency_ms.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
-अटल स्थिर काष्ठा attribute_group media_rc6_attr_group = अणु
-	.name = घातer_group_name,
+static const struct attribute_group media_rc6_attr_group = {
+	.name = power_group_name,
 	.attrs =  media_rc6_attrs
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif
 
-अटल पूर्णांक l3_access_valid(काष्ठा drm_i915_निजी *i915, loff_t offset)
-अणु
-	अगर (!HAS_L3_DPF(i915))
-		वापस -EPERM;
+static int l3_access_valid(struct drm_i915_private *i915, loff_t offset)
+{
+	if (!HAS_L3_DPF(i915))
+		return -EPERM;
 
-	अगर (!IS_ALIGNED(offset, माप(u32)))
-		वापस -EINVAL;
+	if (!IS_ALIGNED(offset, sizeof(u32)))
+		return -EINVAL;
 
-	अगर (offset >= GEN7_L3LOG_SIZE)
-		वापस -ENXIO;
+	if (offset >= GEN7_L3LOG_SIZE)
+		return -ENXIO;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल sमाप_प्रकार
-i915_l3_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
-	     काष्ठा bin_attribute *attr, अक्षर *buf,
-	     loff_t offset, माप_प्रकार count)
-अणु
-	काष्ठा device *kdev = kobj_to_dev(kobj);
-	काष्ठा drm_i915_निजी *i915 = kdev_minor_to_i915(kdev);
-	पूर्णांक slice = (पूर्णांक)(uपूर्णांकptr_t)attr->निजी;
-	पूर्णांक ret;
+static ssize_t
+i915_l3_read(struct file *filp, struct kobject *kobj,
+	     struct bin_attribute *attr, char *buf,
+	     loff_t offset, size_t count)
+{
+	struct device *kdev = kobj_to_dev(kobj);
+	struct drm_i915_private *i915 = kdev_minor_to_i915(kdev);
+	int slice = (int)(uintptr_t)attr->private;
+	int ret;
 
 	ret = l3_access_valid(i915, offset);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	count = round_करोwn(count, माप(u32));
-	count = min_t(माप_प्रकार, GEN7_L3LOG_SIZE - offset, count);
-	स_रखो(buf, 0, count);
+	count = round_down(count, sizeof(u32));
+	count = min_t(size_t, GEN7_L3LOG_SIZE - offset, count);
+	memset(buf, 0, count);
 
 	spin_lock(&i915->gem.contexts.lock);
-	अगर (i915->l3_parity.remap_info[slice])
-		स_नकल(buf,
-		       i915->l3_parity.remap_info[slice] + offset / माप(u32),
+	if (i915->l3_parity.remap_info[slice])
+		memcpy(buf,
+		       i915->l3_parity.remap_info[slice] + offset / sizeof(u32),
 		       count);
 	spin_unlock(&i915->gem.contexts.lock);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार
-i915_l3_ग_लिखो(काष्ठा file *filp, काष्ठा kobject *kobj,
-	      काष्ठा bin_attribute *attr, अक्षर *buf,
-	      loff_t offset, माप_प्रकार count)
-अणु
-	काष्ठा device *kdev = kobj_to_dev(kobj);
-	काष्ठा drm_i915_निजी *i915 = kdev_minor_to_i915(kdev);
-	पूर्णांक slice = (पूर्णांक)(uपूर्णांकptr_t)attr->निजी;
-	u32 *remap_info, *मुक्तme = शून्य;
-	काष्ठा i915_gem_context *ctx;
-	पूर्णांक ret;
+static ssize_t
+i915_l3_write(struct file *filp, struct kobject *kobj,
+	      struct bin_attribute *attr, char *buf,
+	      loff_t offset, size_t count)
+{
+	struct device *kdev = kobj_to_dev(kobj);
+	struct drm_i915_private *i915 = kdev_minor_to_i915(kdev);
+	int slice = (int)(uintptr_t)attr->private;
+	u32 *remap_info, *freeme = NULL;
+	struct i915_gem_context *ctx;
+	int ret;
 
 	ret = l3_access_valid(i915, offset);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (count < माप(u32))
-		वापस -EINVAL;
+	if (count < sizeof(u32))
+		return -EINVAL;
 
 	remap_info = kzalloc(GEN7_L3LOG_SIZE, GFP_KERNEL);
-	अगर (!remap_info)
-		वापस -ENOMEM;
+	if (!remap_info)
+		return -ENOMEM;
 
 	spin_lock(&i915->gem.contexts.lock);
 
-	अगर (i915->l3_parity.remap_info[slice]) अणु
-		मुक्तme = remap_info;
+	if (i915->l3_parity.remap_info[slice]) {
+		freeme = remap_info;
 		remap_info = i915->l3_parity.remap_info[slice];
-	पूर्ण अन्यथा अणु
+	} else {
 		i915->l3_parity.remap_info[slice] = remap_info;
-	पूर्ण
+	}
 
-	count = round_करोwn(count, माप(u32));
-	स_नकल(remap_info + offset / माप(u32), buf, count);
+	count = round_down(count, sizeof(u32));
+	memcpy(remap_info + offset / sizeof(u32), buf, count);
 
-	/* NB: We defer the remapping until we चयन to the context */
-	list_क्रम_each_entry(ctx, &i915->gem.contexts.list, link)
+	/* NB: We defer the remapping until we switch to the context */
+	list_for_each_entry(ctx, &i915->gem.contexts.list, link)
 		ctx->remap_slice |= BIT(slice);
 
 	spin_unlock(&i915->gem.contexts.lock);
-	kमुक्त(मुक्तme);
+	kfree(freeme);
 
 	/*
 	 * TODO: Ideally we really want a GPU reset here to make sure errors
 	 * aren't propagated. Since I cannot find a stable way to reset the GPU
-	 * at this poपूर्णांक it is left as a TODO.
+	 * at this point it is left as a TODO.
 	*/
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा bin_attribute dpf_attrs = अणु
-	.attr = अणु.name = "l3_parity", .mode = (S_IRUSR | S_IWUSR)पूर्ण,
+static const struct bin_attribute dpf_attrs = {
+	.attr = {.name = "l3_parity", .mode = (S_IRUSR | S_IWUSR)},
 	.size = GEN7_L3LOG_SIZE,
-	.पढ़ो = i915_l3_पढ़ो,
-	.ग_लिखो = i915_l3_ग_लिखो,
-	.mmap = शून्य,
-	.निजी = (व्योम *)0
-पूर्ण;
+	.read = i915_l3_read,
+	.write = i915_l3_write,
+	.mmap = NULL,
+	.private = (void *)0
+};
 
-अटल स्थिर काष्ठा bin_attribute dpf_attrs_1 = अणु
-	.attr = अणु.name = "l3_parity_slice_1", .mode = (S_IRUSR | S_IWUSR)पूर्ण,
+static const struct bin_attribute dpf_attrs_1 = {
+	.attr = {.name = "l3_parity_slice_1", .mode = (S_IRUSR | S_IWUSR)},
 	.size = GEN7_L3LOG_SIZE,
-	.पढ़ो = i915_l3_पढ़ो,
-	.ग_लिखो = i915_l3_ग_लिखो,
-	.mmap = शून्य,
-	.निजी = (व्योम *)1
-पूर्ण;
+	.read = i915_l3_read,
+	.write = i915_l3_write,
+	.mmap = NULL,
+	.private = (void *)1
+};
 
-अटल sमाप_प्रकार gt_act_freq_mhz_show(काष्ठा device *kdev,
-				    काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा drm_i915_निजी *i915 = kdev_minor_to_i915(kdev);
-	काष्ठा पूर्णांकel_rps *rps = &i915->gt.rps;
+static ssize_t gt_act_freq_mhz_show(struct device *kdev,
+				    struct device_attribute *attr, char *buf)
+{
+	struct drm_i915_private *i915 = kdev_minor_to_i915(kdev);
+	struct intel_rps *rps = &i915->gt.rps;
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n",
-			पूर्णांकel_rps_पढ़ो_actual_frequency(rps));
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%d\n",
+			intel_rps_read_actual_frequency(rps));
+}
 
-अटल sमाप_प्रकार gt_cur_freq_mhz_show(काष्ठा device *kdev,
-				    काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा drm_i915_निजी *i915 = kdev_minor_to_i915(kdev);
-	काष्ठा पूर्णांकel_rps *rps = &i915->gt.rps;
+static ssize_t gt_cur_freq_mhz_show(struct device *kdev,
+				    struct device_attribute *attr, char *buf)
+{
+	struct drm_i915_private *i915 = kdev_minor_to_i915(kdev);
+	struct intel_rps *rps = &i915->gt.rps;
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n",
-			पूर्णांकel_gpu_freq(rps, rps->cur_freq));
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%d\n",
+			intel_gpu_freq(rps, rps->cur_freq));
+}
 
-अटल sमाप_प्रकार gt_boost_freq_mhz_show(काष्ठा device *kdev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा drm_i915_निजी *i915 = kdev_minor_to_i915(kdev);
-	काष्ठा पूर्णांकel_rps *rps = &i915->gt.rps;
+static ssize_t gt_boost_freq_mhz_show(struct device *kdev, struct device_attribute *attr, char *buf)
+{
+	struct drm_i915_private *i915 = kdev_minor_to_i915(kdev);
+	struct intel_rps *rps = &i915->gt.rps;
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n",
-			पूर्णांकel_gpu_freq(rps, rps->boost_freq));
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%d\n",
+			intel_gpu_freq(rps, rps->boost_freq));
+}
 
-अटल sमाप_प्रकार gt_boost_freq_mhz_store(काष्ठा device *kdev,
-				       काष्ठा device_attribute *attr,
-				       स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = kdev_minor_to_i915(kdev);
-	काष्ठा पूर्णांकel_rps *rps = &dev_priv->gt.rps;
+static ssize_t gt_boost_freq_mhz_store(struct device *kdev,
+				       struct device_attribute *attr,
+				       const char *buf, size_t count)
+{
+	struct drm_i915_private *dev_priv = kdev_minor_to_i915(kdev);
+	struct intel_rps *rps = &dev_priv->gt.rps;
 	bool boost = false;
-	sमाप_प्रकार ret;
+	ssize_t ret;
 	u32 val;
 
 	ret = kstrtou32(buf, 0, &val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* Validate against (अटल) hardware limits */
-	val = पूर्णांकel_freq_opcode(rps, val);
-	अगर (val < rps->min_freq || val > rps->max_freq)
-		वापस -EINVAL;
+	/* Validate against (static) hardware limits */
+	val = intel_freq_opcode(rps, val);
+	if (val < rps->min_freq || val > rps->max_freq)
+		return -EINVAL;
 
 	mutex_lock(&rps->lock);
-	अगर (val != rps->boost_freq) अणु
+	if (val != rps->boost_freq) {
 		rps->boost_freq = val;
-		boost = atomic_पढ़ो(&rps->num_रुकोers);
-	पूर्ण
+		boost = atomic_read(&rps->num_waiters);
+	}
 	mutex_unlock(&rps->lock);
-	अगर (boost)
+	if (boost)
 		schedule_work(&rps->work);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार vlv_rpe_freq_mhz_show(काष्ठा device *kdev,
-				     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = kdev_minor_to_i915(kdev);
-	काष्ठा पूर्णांकel_rps *rps = &dev_priv->gt.rps;
+static ssize_t vlv_rpe_freq_mhz_show(struct device *kdev,
+				     struct device_attribute *attr, char *buf)
+{
+	struct drm_i915_private *dev_priv = kdev_minor_to_i915(kdev);
+	struct intel_rps *rps = &dev_priv->gt.rps;
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n",
-			पूर्णांकel_gpu_freq(rps, rps->efficient_freq));
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%d\n",
+			intel_gpu_freq(rps, rps->efficient_freq));
+}
 
-अटल sमाप_प्रकार gt_max_freq_mhz_show(काष्ठा device *kdev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = kdev_minor_to_i915(kdev);
-	काष्ठा पूर्णांकel_rps *rps = &dev_priv->gt.rps;
+static ssize_t gt_max_freq_mhz_show(struct device *kdev, struct device_attribute *attr, char *buf)
+{
+	struct drm_i915_private *dev_priv = kdev_minor_to_i915(kdev);
+	struct intel_rps *rps = &dev_priv->gt.rps;
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n",
-			पूर्णांकel_gpu_freq(rps, rps->max_freq_softlimit));
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%d\n",
+			intel_gpu_freq(rps, rps->max_freq_softlimit));
+}
 
-अटल sमाप_प्रकार gt_max_freq_mhz_store(काष्ठा device *kdev,
-				     काष्ठा device_attribute *attr,
-				     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = kdev_minor_to_i915(kdev);
-	काष्ठा पूर्णांकel_rps *rps = &dev_priv->gt.rps;
-	sमाप_प्रकार ret;
+static ssize_t gt_max_freq_mhz_store(struct device *kdev,
+				     struct device_attribute *attr,
+				     const char *buf, size_t count)
+{
+	struct drm_i915_private *dev_priv = kdev_minor_to_i915(kdev);
+	struct intel_rps *rps = &dev_priv->gt.rps;
+	ssize_t ret;
 	u32 val;
 
 	ret = kstrtou32(buf, 0, &val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mutex_lock(&rps->lock);
 
-	val = पूर्णांकel_freq_opcode(rps, val);
-	अगर (val < rps->min_freq ||
+	val = intel_freq_opcode(rps, val);
+	if (val < rps->min_freq ||
 	    val > rps->max_freq ||
-	    val < rps->min_freq_softlimit) अणु
+	    val < rps->min_freq_softlimit) {
 		ret = -EINVAL;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (val > rps->rp0_freq)
+	if (val > rps->rp0_freq)
 		DRM_DEBUG("User requested overclocking to %d\n",
-			  पूर्णांकel_gpu_freq(rps, val));
+			  intel_gpu_freq(rps, val));
 
 	rps->max_freq_softlimit = val;
 
-	val = clamp_t(पूर्णांक, rps->cur_freq,
+	val = clamp_t(int, rps->cur_freq,
 		      rps->min_freq_softlimit,
 		      rps->max_freq_softlimit);
 
 	/*
 	 * We still need *_set_rps to process the new max_delay and
-	 * update the पूर्णांकerrupt limits and PMINTRMSK even though
+	 * update the interrupt limits and PMINTRMSK even though
 	 * frequency request may be unchanged.
 	 */
-	पूर्णांकel_rps_set(rps, val);
+	intel_rps_set(rps, val);
 
 unlock:
 	mutex_unlock(&rps->lock);
 
-	वापस ret ?: count;
-पूर्ण
+	return ret ?: count;
+}
 
-अटल sमाप_प्रकार gt_min_freq_mhz_show(काष्ठा device *kdev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = kdev_minor_to_i915(kdev);
-	काष्ठा पूर्णांकel_rps *rps = &dev_priv->gt.rps;
+static ssize_t gt_min_freq_mhz_show(struct device *kdev, struct device_attribute *attr, char *buf)
+{
+	struct drm_i915_private *dev_priv = kdev_minor_to_i915(kdev);
+	struct intel_rps *rps = &dev_priv->gt.rps;
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n",
-			पूर्णांकel_gpu_freq(rps, rps->min_freq_softlimit));
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%d\n",
+			intel_gpu_freq(rps, rps->min_freq_softlimit));
+}
 
-अटल sमाप_प्रकार gt_min_freq_mhz_store(काष्ठा device *kdev,
-				     काष्ठा device_attribute *attr,
-				     स्थिर अक्षर *buf, माप_प्रकार count)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = kdev_minor_to_i915(kdev);
-	काष्ठा पूर्णांकel_rps *rps = &dev_priv->gt.rps;
-	sमाप_प्रकार ret;
+static ssize_t gt_min_freq_mhz_store(struct device *kdev,
+				     struct device_attribute *attr,
+				     const char *buf, size_t count)
+{
+	struct drm_i915_private *dev_priv = kdev_minor_to_i915(kdev);
+	struct intel_rps *rps = &dev_priv->gt.rps;
+	ssize_t ret;
 	u32 val;
 
 	ret = kstrtou32(buf, 0, &val);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	mutex_lock(&rps->lock);
 
-	val = पूर्णांकel_freq_opcode(rps, val);
-	अगर (val < rps->min_freq ||
+	val = intel_freq_opcode(rps, val);
+	if (val < rps->min_freq ||
 	    val > rps->max_freq ||
-	    val > rps->max_freq_softlimit) अणु
+	    val > rps->max_freq_softlimit) {
 		ret = -EINVAL;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
 	rps->min_freq_softlimit = val;
 
-	val = clamp_t(पूर्णांक, rps->cur_freq,
+	val = clamp_t(int, rps->cur_freq,
 		      rps->min_freq_softlimit,
 		      rps->max_freq_softlimit);
 
 	/*
 	 * We still need *_set_rps to process the new min_delay and
-	 * update the पूर्णांकerrupt limits and PMINTRMSK even though
+	 * update the interrupt limits and PMINTRMSK even though
 	 * frequency request may be unchanged.
 	 */
-	पूर्णांकel_rps_set(rps, val);
+	intel_rps_set(rps, val);
 
 unlock:
 	mutex_unlock(&rps->lock);
 
-	वापस ret ?: count;
-पूर्ण
+	return ret ?: count;
+}
 
-अटल DEVICE_ATTR_RO(gt_act_freq_mhz);
-अटल DEVICE_ATTR_RO(gt_cur_freq_mhz);
-अटल DEVICE_ATTR_RW(gt_boost_freq_mhz);
-अटल DEVICE_ATTR_RW(gt_max_freq_mhz);
-अटल DEVICE_ATTR_RW(gt_min_freq_mhz);
+static DEVICE_ATTR_RO(gt_act_freq_mhz);
+static DEVICE_ATTR_RO(gt_cur_freq_mhz);
+static DEVICE_ATTR_RW(gt_boost_freq_mhz);
+static DEVICE_ATTR_RW(gt_max_freq_mhz);
+static DEVICE_ATTR_RW(gt_min_freq_mhz);
 
-अटल DEVICE_ATTR_RO(vlv_rpe_freq_mhz);
+static DEVICE_ATTR_RO(vlv_rpe_freq_mhz);
 
-अटल sमाप_प्रकार gt_rp_mhz_show(काष्ठा device *kdev, काष्ठा device_attribute *attr, अक्षर *buf);
-अटल DEVICE_ATTR(gt_RP0_freq_mhz, S_IRUGO, gt_rp_mhz_show, शून्य);
-अटल DEVICE_ATTR(gt_RP1_freq_mhz, S_IRUGO, gt_rp_mhz_show, शून्य);
-अटल DEVICE_ATTR(gt_RPn_freq_mhz, S_IRUGO, gt_rp_mhz_show, शून्य);
+static ssize_t gt_rp_mhz_show(struct device *kdev, struct device_attribute *attr, char *buf);
+static DEVICE_ATTR(gt_RP0_freq_mhz, S_IRUGO, gt_rp_mhz_show, NULL);
+static DEVICE_ATTR(gt_RP1_freq_mhz, S_IRUGO, gt_rp_mhz_show, NULL);
+static DEVICE_ATTR(gt_RPn_freq_mhz, S_IRUGO, gt_rp_mhz_show, NULL);
 
-/* For now we have a अटल number of RP states */
-अटल sमाप_प्रकार gt_rp_mhz_show(काष्ठा device *kdev, काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = kdev_minor_to_i915(kdev);
-	काष्ठा पूर्णांकel_rps *rps = &dev_priv->gt.rps;
+/* For now we have a static number of RP states */
+static ssize_t gt_rp_mhz_show(struct device *kdev, struct device_attribute *attr, char *buf)
+{
+	struct drm_i915_private *dev_priv = kdev_minor_to_i915(kdev);
+	struct intel_rps *rps = &dev_priv->gt.rps;
 	u32 val;
 
-	अगर (attr == &dev_attr_gt_RP0_freq_mhz)
-		val = पूर्णांकel_gpu_freq(rps, rps->rp0_freq);
-	अन्यथा अगर (attr == &dev_attr_gt_RP1_freq_mhz)
-		val = पूर्णांकel_gpu_freq(rps, rps->rp1_freq);
-	अन्यथा अगर (attr == &dev_attr_gt_RPn_freq_mhz)
-		val = पूर्णांकel_gpu_freq(rps, rps->min_freq);
-	अन्यथा
+	if (attr == &dev_attr_gt_RP0_freq_mhz)
+		val = intel_gpu_freq(rps, rps->rp0_freq);
+	else if (attr == &dev_attr_gt_RP1_freq_mhz)
+		val = intel_gpu_freq(rps, rps->rp1_freq);
+	else if (attr == &dev_attr_gt_RPn_freq_mhz)
+		val = intel_gpu_freq(rps, rps->min_freq);
+	else
 		BUG();
 
-	वापस snम_लिखो(buf, PAGE_SIZE, "%d\n", val);
-पूर्ण
+	return snprintf(buf, PAGE_SIZE, "%d\n", val);
+}
 
-अटल स्थिर काष्ठा attribute * स्थिर gen6_attrs[] = अणु
+static const struct attribute * const gen6_attrs[] = {
 	&dev_attr_gt_act_freq_mhz.attr,
 	&dev_attr_gt_cur_freq_mhz.attr,
 	&dev_attr_gt_boost_freq_mhz.attr,
@@ -475,10 +474,10 @@ unlock:
 	&dev_attr_gt_RP0_freq_mhz.attr,
 	&dev_attr_gt_RP1_freq_mhz.attr,
 	&dev_attr_gt_RPn_freq_mhz.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-अटल स्थिर काष्ठा attribute * स्थिर vlv_attrs[] = अणु
+static const struct attribute * const vlv_attrs[] = {
 	&dev_attr_gt_act_freq_mhz.attr,
 	&dev_attr_gt_cur_freq_mhz.attr,
 	&dev_attr_gt_boost_freq_mhz.attr,
@@ -488,144 +487,144 @@ unlock:
 	&dev_attr_gt_RP1_freq_mhz.attr,
 	&dev_attr_gt_RPn_freq_mhz.attr,
 	&dev_attr_vlv_rpe_freq_mhz.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-#अगर IS_ENABLED(CONFIG_DRM_I915_CAPTURE_ERROR)
+#if IS_ENABLED(CONFIG_DRM_I915_CAPTURE_ERROR)
 
-अटल sमाप_प्रकार error_state_पढ़ो(काष्ठा file *filp, काष्ठा kobject *kobj,
-				काष्ठा bin_attribute *attr, अक्षर *buf,
-				loff_t off, माप_प्रकार count)
-अणु
+static ssize_t error_state_read(struct file *filp, struct kobject *kobj,
+				struct bin_attribute *attr, char *buf,
+				loff_t off, size_t count)
+{
 
-	काष्ठा device *kdev = kobj_to_dev(kobj);
-	काष्ठा drm_i915_निजी *i915 = kdev_minor_to_i915(kdev);
-	काष्ठा i915_gpu_coredump *gpu;
-	sमाप_प्रकार ret;
+	struct device *kdev = kobj_to_dev(kobj);
+	struct drm_i915_private *i915 = kdev_minor_to_i915(kdev);
+	struct i915_gpu_coredump *gpu;
+	ssize_t ret;
 
 	gpu = i915_first_error_state(i915);
-	अगर (IS_ERR(gpu)) अणु
+	if (IS_ERR(gpu)) {
 		ret = PTR_ERR(gpu);
-	पूर्ण अन्यथा अगर (gpu) अणु
+	} else if (gpu) {
 		ret = i915_gpu_coredump_copy_to_buffer(gpu, buf, off, count);
 		i915_gpu_coredump_put(gpu);
-	पूर्ण अन्यथा अणु
-		स्थिर अक्षर *str = "No error state collected\n";
-		माप_प्रकार len = म_माप(str);
+	} else {
+		const char *str = "No error state collected\n";
+		size_t len = strlen(str);
 
-		ret = min_t(माप_प्रकार, count, len - off);
-		स_नकल(buf, str + off, ret);
-	पूर्ण
+		ret = min_t(size_t, count, len - off);
+		memcpy(buf, str + off, ret);
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार error_state_ग_लिखो(काष्ठा file *file, काष्ठा kobject *kobj,
-				 काष्ठा bin_attribute *attr, अक्षर *buf,
-				 loff_t off, माप_प्रकार count)
-अणु
-	काष्ठा device *kdev = kobj_to_dev(kobj);
-	काष्ठा drm_i915_निजी *dev_priv = kdev_minor_to_i915(kdev);
+static ssize_t error_state_write(struct file *file, struct kobject *kobj,
+				 struct bin_attribute *attr, char *buf,
+				 loff_t off, size_t count)
+{
+	struct device *kdev = kobj_to_dev(kobj);
+	struct drm_i915_private *dev_priv = kdev_minor_to_i915(kdev);
 
 	drm_dbg(&dev_priv->drm, "Resetting error state\n");
 	i915_reset_error_state(dev_priv);
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल स्थिर काष्ठा bin_attribute error_state_attr = अणु
+static const struct bin_attribute error_state_attr = {
 	.attr.name = "error",
 	.attr.mode = S_IRUSR | S_IWUSR,
 	.size = 0,
-	.पढ़ो = error_state_पढ़ो,
-	.ग_लिखो = error_state_ग_लिखो,
-पूर्ण;
+	.read = error_state_read,
+	.write = error_state_write,
+};
 
-अटल व्योम i915_setup_error_capture(काष्ठा device *kdev)
-अणु
-	अगर (sysfs_create_bin_file(&kdev->kobj, &error_state_attr))
+static void i915_setup_error_capture(struct device *kdev)
+{
+	if (sysfs_create_bin_file(&kdev->kobj, &error_state_attr))
 		DRM_ERROR("error_state sysfs setup failed\n");
-पूर्ण
+}
 
-अटल व्योम i915_tearकरोwn_error_capture(काष्ठा device *kdev)
-अणु
-	sysfs_हटाओ_bin_file(&kdev->kobj, &error_state_attr);
-पूर्ण
-#अन्यथा
-अटल व्योम i915_setup_error_capture(काष्ठा device *kdev) अणुपूर्ण
-अटल व्योम i915_tearकरोwn_error_capture(काष्ठा device *kdev) अणुपूर्ण
-#पूर्ण_अगर
+static void i915_teardown_error_capture(struct device *kdev)
+{
+	sysfs_remove_bin_file(&kdev->kobj, &error_state_attr);
+}
+#else
+static void i915_setup_error_capture(struct device *kdev) {}
+static void i915_teardown_error_capture(struct device *kdev) {}
+#endif
 
-व्योम i915_setup_sysfs(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा device *kdev = dev_priv->drm.primary->kdev;
-	पूर्णांक ret;
+void i915_setup_sysfs(struct drm_i915_private *dev_priv)
+{
+	struct device *kdev = dev_priv->drm.primary->kdev;
+	int ret;
 
-#अगर_घोषित CONFIG_PM
-	अगर (HAS_RC6(dev_priv)) अणु
+#ifdef CONFIG_PM
+	if (HAS_RC6(dev_priv)) {
 		ret = sysfs_merge_group(&kdev->kobj,
 					&rc6_attr_group);
-		अगर (ret)
+		if (ret)
 			drm_err(&dev_priv->drm,
 				"RC6 residency sysfs setup failed\n");
-	पूर्ण
-	अगर (HAS_RC6p(dev_priv)) अणु
+	}
+	if (HAS_RC6p(dev_priv)) {
 		ret = sysfs_merge_group(&kdev->kobj,
 					&rc6p_attr_group);
-		अगर (ret)
+		if (ret)
 			drm_err(&dev_priv->drm,
 				"RC6p residency sysfs setup failed\n");
-	पूर्ण
-	अगर (IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv)) अणु
+	}
+	if (IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv)) {
 		ret = sysfs_merge_group(&kdev->kobj,
 					&media_rc6_attr_group);
-		अगर (ret)
+		if (ret)
 			drm_err(&dev_priv->drm,
 				"Media RC6 residency sysfs setup failed\n");
-	पूर्ण
-#पूर्ण_अगर
-	अगर (HAS_L3_DPF(dev_priv)) अणु
+	}
+#endif
+	if (HAS_L3_DPF(dev_priv)) {
 		ret = device_create_bin_file(kdev, &dpf_attrs);
-		अगर (ret)
+		if (ret)
 			drm_err(&dev_priv->drm,
 				"l3 parity sysfs setup failed\n");
 
-		अगर (NUM_L3_SLICES(dev_priv) > 1) अणु
+		if (NUM_L3_SLICES(dev_priv) > 1) {
 			ret = device_create_bin_file(kdev,
 						     &dpf_attrs_1);
-			अगर (ret)
+			if (ret)
 				drm_err(&dev_priv->drm,
 					"l3 parity slice 1 setup failed\n");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	ret = 0;
-	अगर (IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv))
+	if (IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv))
 		ret = sysfs_create_files(&kdev->kobj, vlv_attrs);
-	अन्यथा अगर (INTEL_GEN(dev_priv) >= 6)
+	else if (INTEL_GEN(dev_priv) >= 6)
 		ret = sysfs_create_files(&kdev->kobj, gen6_attrs);
-	अगर (ret)
+	if (ret)
 		drm_err(&dev_priv->drm, "RPS sysfs setup failed\n");
 
 	i915_setup_error_capture(kdev);
 
-	पूर्णांकel_engines_add_sysfs(dev_priv);
-पूर्ण
+	intel_engines_add_sysfs(dev_priv);
+}
 
-व्योम i915_tearकरोwn_sysfs(काष्ठा drm_i915_निजी *dev_priv)
-अणु
-	काष्ठा device *kdev = dev_priv->drm.primary->kdev;
+void i915_teardown_sysfs(struct drm_i915_private *dev_priv)
+{
+	struct device *kdev = dev_priv->drm.primary->kdev;
 
-	i915_tearकरोwn_error_capture(kdev);
+	i915_teardown_error_capture(kdev);
 
-	अगर (IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv))
-		sysfs_हटाओ_files(&kdev->kobj, vlv_attrs);
-	अन्यथा
-		sysfs_हटाओ_files(&kdev->kobj, gen6_attrs);
-	device_हटाओ_bin_file(kdev,  &dpf_attrs_1);
-	device_हटाओ_bin_file(kdev,  &dpf_attrs);
-#अगर_घोषित CONFIG_PM
+	if (IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv))
+		sysfs_remove_files(&kdev->kobj, vlv_attrs);
+	else
+		sysfs_remove_files(&kdev->kobj, gen6_attrs);
+	device_remove_bin_file(kdev,  &dpf_attrs_1);
+	device_remove_bin_file(kdev,  &dpf_attrs);
+#ifdef CONFIG_PM
 	sysfs_unmerge_group(&kdev->kobj, &rc6_attr_group);
 	sysfs_unmerge_group(&kdev->kobj, &rc6p_attr_group);
-#पूर्ण_अगर
-पूर्ण
+#endif
+}

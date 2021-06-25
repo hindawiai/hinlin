@@ -1,36 +1,35 @@
-<शैली गुरु>
 /*
- * SPDX-License-Identअगरier: MIT
+ * SPDX-License-Identifier: MIT
  *
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#अगर_अघोषित IGT_LIVE_TEST_H
-#घोषणा IGT_LIVE_TEST_H
+#ifndef IGT_LIVE_TEST_H
+#define IGT_LIVE_TEST_H
 
-#समावेश "gt/intel_engine.h" /* क्रम I915_NUM_ENGINES */
+#include "gt/intel_engine.h" /* for I915_NUM_ENGINES */
 
-काष्ठा drm_i915_निजी;
+struct drm_i915_private;
 
-काष्ठा igt_live_test अणु
-	काष्ठा drm_i915_निजी *i915;
-	स्थिर अक्षर *func;
-	स्थिर अक्षर *name;
+struct igt_live_test {
+	struct drm_i915_private *i915;
+	const char *func;
+	const char *name;
 
-	अचिन्हित पूर्णांक reset_global;
-	अचिन्हित पूर्णांक reset_engine[I915_NUM_ENGINES];
-पूर्ण;
+	unsigned int reset_global;
+	unsigned int reset_engine[I915_NUM_ENGINES];
+};
 
 /*
- * Flush the GPU state beक्रमe and after the test to ensure that no residual
+ * Flush the GPU state before and after the test to ensure that no residual
  * code is running on the GPU that may affect this test. Also compare the
- * state beक्रमe and after the test and alert अगर it unexpectedly changes,
- * e.g. अगर the GPU was reset.
+ * state before and after the test and alert if it unexpectedly changes,
+ * e.g. if the GPU was reset.
  */
-पूर्णांक igt_live_test_begin(काष्ठा igt_live_test *t,
-			काष्ठा drm_i915_निजी *i915,
-			स्थिर अक्षर *func,
-			स्थिर अक्षर *name);
-पूर्णांक igt_live_test_end(काष्ठा igt_live_test *t);
+int igt_live_test_begin(struct igt_live_test *t,
+			struct drm_i915_private *i915,
+			const char *func,
+			const char *name);
+int igt_live_test_end(struct igt_live_test *t);
 
-#पूर्ण_अगर /* IGT_LIVE_TEST_H */
+#endif /* IGT_LIVE_TEST_H */

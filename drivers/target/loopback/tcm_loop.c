@@ -1,16 +1,15 @@
-<शैली गुरु>
 /*******************************************************************************
  *
- * This file contains the Linux/SCSI LLD भव SCSI initiator driver
- * क्रम emulated SAS initiator ports
+ * This file contains the Linux/SCSI LLD virtual SCSI initiator driver
+ * for emulated SAS initiator ports
  *
- * तऊ Copyright 2011-2013 Datera, Inc.
+ * © Copyright 2011-2013 Datera, Inc.
  *
  * Licensed to the Linux Foundation under the General Public License (GPL) version 2.
  *
- * Author: Nicholas A. Bellinger <nab@risingtideप्रणालीs.com>
+ * Author: Nicholas A. Bellinger <nab@risingtidesystems.com>
  *
- * This program is मुक्त software; you can redistribute it and/or modअगरy
+ * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
  * (at your option) any later version.
@@ -18,294 +17,294 @@
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License क्रम more details.
+ * GNU General Public License for more details.
  ****************************************************************************/
 
-#समावेश <linux/module.h>
-#समावेश <linux/moduleparam.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
-#समावेश <linux/configfs.h>
-#समावेश <scsi/scsi.h>
-#समावेश <scsi/scsi_tcq.h>
-#समावेश <scsi/scsi_host.h>
-#समावेश <scsi/scsi_device.h>
-#समावेश <scsi/scsi_cmnd.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/types.h>
+#include <linux/configfs.h>
+#include <scsi/scsi.h>
+#include <scsi/scsi_tcq.h>
+#include <scsi/scsi_host.h>
+#include <scsi/scsi_device.h>
+#include <scsi/scsi_cmnd.h>
 
-#समावेश <target/target_core_base.h>
-#समावेश <target/target_core_fabric.h>
+#include <target/target_core_base.h>
+#include <target/target_core_fabric.h>
 
-#समावेश "tcm_loop.h"
+#include "tcm_loop.h"
 
-#घोषणा to_tcm_loop_hba(hba)	container_of(hba, काष्ठा tcm_loop_hba, dev)
+#define to_tcm_loop_hba(hba)	container_of(hba, struct tcm_loop_hba, dev)
 
-अटल काष्ठा kmem_cache *tcm_loop_cmd_cache;
+static struct kmem_cache *tcm_loop_cmd_cache;
 
-अटल पूर्णांक tcm_loop_hba_no_cnt;
+static int tcm_loop_hba_no_cnt;
 
-अटल पूर्णांक tcm_loop_queue_status(काष्ठा se_cmd *se_cmd);
+static int tcm_loop_queue_status(struct se_cmd *se_cmd);
 
-अटल अचिन्हित पूर्णांक tcm_loop_nr_hw_queues = 1;
-module_param_named(nr_hw_queues, tcm_loop_nr_hw_queues, uपूर्णांक, 0644);
+static unsigned int tcm_loop_nr_hw_queues = 1;
+module_param_named(nr_hw_queues, tcm_loop_nr_hw_queues, uint, 0644);
 
-अटल अचिन्हित पूर्णांक tcm_loop_can_queue = 1024;
-module_param_named(can_queue, tcm_loop_can_queue, uपूर्णांक, 0644);
+static unsigned int tcm_loop_can_queue = 1024;
+module_param_named(can_queue, tcm_loop_can_queue, uint, 0644);
 
-अटल अचिन्हित पूर्णांक tcm_loop_cmd_per_lun = 1024;
-module_param_named(cmd_per_lun, tcm_loop_cmd_per_lun, uपूर्णांक, 0644);
+static unsigned int tcm_loop_cmd_per_lun = 1024;
+module_param_named(cmd_per_lun, tcm_loop_cmd_per_lun, uint, 0644);
 
 /*
- * Called from काष्ठा target_core_fabric_ops->check_stop_मुक्त()
+ * Called from struct target_core_fabric_ops->check_stop_free()
  */
-अटल पूर्णांक tcm_loop_check_stop_मुक्त(काष्ठा se_cmd *se_cmd)
-अणु
-	वापस transport_generic_मुक्त_cmd(se_cmd, 0);
-पूर्ण
+static int tcm_loop_check_stop_free(struct se_cmd *se_cmd)
+{
+	return transport_generic_free_cmd(se_cmd, 0);
+}
 
-अटल व्योम tcm_loop_release_cmd(काष्ठा se_cmd *se_cmd)
-अणु
-	काष्ठा tcm_loop_cmd *tl_cmd = container_of(se_cmd,
-				काष्ठा tcm_loop_cmd, tl_se_cmd);
-	काष्ठा scsi_cmnd *sc = tl_cmd->sc;
+static void tcm_loop_release_cmd(struct se_cmd *se_cmd)
+{
+	struct tcm_loop_cmd *tl_cmd = container_of(se_cmd,
+				struct tcm_loop_cmd, tl_se_cmd);
+	struct scsi_cmnd *sc = tl_cmd->sc;
 
-	अगर (se_cmd->se_cmd_flags & SCF_SCSI_TMR_CDB)
-		kmem_cache_मुक्त(tcm_loop_cmd_cache, tl_cmd);
-	अन्यथा
-		sc->scsi_करोne(sc);
-पूर्ण
+	if (se_cmd->se_cmd_flags & SCF_SCSI_TMR_CDB)
+		kmem_cache_free(tcm_loop_cmd_cache, tl_cmd);
+	else
+		sc->scsi_done(sc);
+}
 
-अटल पूर्णांक tcm_loop_show_info(काष्ठा seq_file *m, काष्ठा Scsi_Host *host)
-अणु
-	seq_माला_दो(m, "tcm_loop_proc_info()\n");
-	वापस 0;
-पूर्ण
+static int tcm_loop_show_info(struct seq_file *m, struct Scsi_Host *host)
+{
+	seq_puts(m, "tcm_loop_proc_info()\n");
+	return 0;
+}
 
-अटल पूर्णांक tcm_loop_driver_probe(काष्ठा device *);
-अटल पूर्णांक tcm_loop_driver_हटाओ(काष्ठा device *);
+static int tcm_loop_driver_probe(struct device *);
+static int tcm_loop_driver_remove(struct device *);
 
-अटल पूर्णांक pseuकरो_lld_bus_match(काष्ठा device *dev,
-				काष्ठा device_driver *dev_driver)
-अणु
-	वापस 1;
-पूर्ण
+static int pseudo_lld_bus_match(struct device *dev,
+				struct device_driver *dev_driver)
+{
+	return 1;
+}
 
-अटल काष्ठा bus_type tcm_loop_lld_bus = अणु
+static struct bus_type tcm_loop_lld_bus = {
 	.name			= "tcm_loop_bus",
-	.match			= pseuकरो_lld_bus_match,
+	.match			= pseudo_lld_bus_match,
 	.probe			= tcm_loop_driver_probe,
-	.हटाओ			= tcm_loop_driver_हटाओ,
-पूर्ण;
+	.remove			= tcm_loop_driver_remove,
+};
 
-अटल काष्ठा device_driver tcm_loop_driverfs = अणु
+static struct device_driver tcm_loop_driverfs = {
 	.name			= "tcm_loop",
 	.bus			= &tcm_loop_lld_bus,
-पूर्ण;
+};
 /*
- * Used with root_device_रेजिस्टर() in tcm_loop_alloc_core_bus() below
+ * Used with root_device_register() in tcm_loop_alloc_core_bus() below
  */
-अटल काष्ठा device *tcm_loop_primary;
+static struct device *tcm_loop_primary;
 
-अटल व्योम tcm_loop_target_queue_cmd(काष्ठा tcm_loop_cmd *tl_cmd)
-अणु
-	काष्ठा se_cmd *se_cmd = &tl_cmd->tl_se_cmd;
-	काष्ठा scsi_cmnd *sc = tl_cmd->sc;
-	काष्ठा tcm_loop_nexus *tl_nexus;
-	काष्ठा tcm_loop_hba *tl_hba;
-	काष्ठा tcm_loop_tpg *tl_tpg;
-	काष्ठा scatterlist *sgl_bidi = शून्य;
+static void tcm_loop_target_queue_cmd(struct tcm_loop_cmd *tl_cmd)
+{
+	struct se_cmd *se_cmd = &tl_cmd->tl_se_cmd;
+	struct scsi_cmnd *sc = tl_cmd->sc;
+	struct tcm_loop_nexus *tl_nexus;
+	struct tcm_loop_hba *tl_hba;
+	struct tcm_loop_tpg *tl_tpg;
+	struct scatterlist *sgl_bidi = NULL;
 	u32 sgl_bidi_count = 0, transfer_length;
 
-	tl_hba = *(काष्ठा tcm_loop_hba **)shost_priv(sc->device->host);
+	tl_hba = *(struct tcm_loop_hba **)shost_priv(sc->device->host);
 	tl_tpg = &tl_hba->tl_hba_tpgs[sc->device->id];
 
 	/*
 	 * Ensure that this tl_tpg reference from the incoming sc->device->id
-	 * has alपढ़ोy been configured via tcm_loop_make_naa_tpg().
+	 * has already been configured via tcm_loop_make_naa_tpg().
 	 */
-	अगर (!tl_tpg->tl_hba) अणु
+	if (!tl_tpg->tl_hba) {
 		set_host_byte(sc, DID_NO_CONNECT);
-		जाओ out_करोne;
-	पूर्ण
-	अगर (tl_tpg->tl_transport_status == TCM_TRANSPORT_OFFLINE) अणु
+		goto out_done;
+	}
+	if (tl_tpg->tl_transport_status == TCM_TRANSPORT_OFFLINE) {
 		set_host_byte(sc, DID_TRANSPORT_DISRUPTED);
-		जाओ out_करोne;
-	पूर्ण
+		goto out_done;
+	}
 	tl_nexus = tl_tpg->tl_nexus;
-	अगर (!tl_nexus) अणु
-		scmd_prपूर्णांकk(KERN_ERR, sc,
+	if (!tl_nexus) {
+		scmd_printk(KERN_ERR, sc,
 			    "TCM_Loop I_T Nexus does not exist\n");
 		set_host_byte(sc, DID_ERROR);
-		जाओ out_करोne;
-	पूर्ण
+		goto out_done;
+	}
 
 	transfer_length = scsi_transfer_length(sc);
-	अगर (!scsi_prot_sg_count(sc) &&
-	    scsi_get_prot_op(sc) != SCSI_PROT_NORMAL) अणु
+	if (!scsi_prot_sg_count(sc) &&
+	    scsi_get_prot_op(sc) != SCSI_PROT_NORMAL) {
 		se_cmd->prot_pto = true;
 		/*
-		 * loopback transport करोesn't support
+		 * loopback transport doesn't support
 		 * WRITE_GENERATE, READ_STRIP protection
-		 * inक्रमmation operations, go ahead unरक्षित.
+		 * information operations, go ahead unprotected.
 		 */
 		transfer_length = scsi_bufflen(sc);
-	पूर्ण
+	}
 
 	se_cmd->tag = tl_cmd->sc_cmd_tag;
 	target_init_cmd(se_cmd, tl_nexus->se_sess, &tl_cmd->tl_sense_buf[0],
 			tl_cmd->sc->device->lun, transfer_length,
 			TCM_SIMPLE_TAG, sc->sc_data_direction, 0);
 
-	अगर (target_submit_prep(se_cmd, sc->cmnd, scsi_sglist(sc),
+	if (target_submit_prep(se_cmd, sc->cmnd, scsi_sglist(sc),
 			       scsi_sg_count(sc), sgl_bidi, sgl_bidi_count,
 			       scsi_prot_sglist(sc), scsi_prot_sg_count(sc),
 			       GFP_ATOMIC))
-		वापस;
+		return;
 
 	target_queue_submission(se_cmd);
-	वापस;
+	return;
 
-out_करोne:
-	sc->scsi_करोne(sc);
-पूर्ण
+out_done:
+	sc->scsi_done(sc);
+}
 
 /*
- * ->queuecommand can be and usually is called from पूर्णांकerrupt context, so
+ * ->queuecommand can be and usually is called from interrupt context, so
  * defer the actual submission to a workqueue.
  */
-अटल पूर्णांक tcm_loop_queuecommand(काष्ठा Scsi_Host *sh, काष्ठा scsi_cmnd *sc)
-अणु
-	काष्ठा tcm_loop_cmd *tl_cmd = scsi_cmd_priv(sc);
+static int tcm_loop_queuecommand(struct Scsi_Host *sh, struct scsi_cmnd *sc)
+{
+	struct tcm_loop_cmd *tl_cmd = scsi_cmd_priv(sc);
 
 	pr_debug("%s() %d:%d:%d:%llu got CDB: 0x%02x scsi_buf_len: %u\n",
 		 __func__, sc->device->host->host_no, sc->device->id,
 		 sc->device->channel, sc->device->lun, sc->cmnd[0],
 		 scsi_bufflen(sc));
 
-	स_रखो(tl_cmd, 0, माप(*tl_cmd));
+	memset(tl_cmd, 0, sizeof(*tl_cmd));
 	tl_cmd->sc = sc;
 	tl_cmd->sc_cmd_tag = sc->request->tag;
 
 	tcm_loop_target_queue_cmd(tl_cmd);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Called from SCSI EH process context to issue a LUN_RESET TMR
- * to काष्ठा scsi_device
+ * to struct scsi_device
  */
-अटल पूर्णांक tcm_loop_issue_पंचांगr(काष्ठा tcm_loop_tpg *tl_tpg,
-			      u64 lun, पूर्णांक task, क्रमागत tcm_पंचांगreq_table पंचांगr)
-अणु
-	काष्ठा se_cmd *se_cmd;
-	काष्ठा se_session *se_sess;
-	काष्ठा tcm_loop_nexus *tl_nexus;
-	काष्ठा tcm_loop_cmd *tl_cmd;
-	पूर्णांक ret = TMR_FUNCTION_FAILED, rc;
+static int tcm_loop_issue_tmr(struct tcm_loop_tpg *tl_tpg,
+			      u64 lun, int task, enum tcm_tmreq_table tmr)
+{
+	struct se_cmd *se_cmd;
+	struct se_session *se_sess;
+	struct tcm_loop_nexus *tl_nexus;
+	struct tcm_loop_cmd *tl_cmd;
+	int ret = TMR_FUNCTION_FAILED, rc;
 
 	/*
-	 * Locate the tl_nexus and se_sess poपूर्णांकers
+	 * Locate the tl_nexus and se_sess pointers
 	 */
 	tl_nexus = tl_tpg->tl_nexus;
-	अगर (!tl_nexus) अणु
+	if (!tl_nexus) {
 		pr_err("Unable to perform device reset without active I_T Nexus\n");
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	tl_cmd = kmem_cache_zalloc(tcm_loop_cmd_cache, GFP_KERNEL);
-	अगर (!tl_cmd)
-		वापस ret;
+	if (!tl_cmd)
+		return ret;
 
-	init_completion(&tl_cmd->पंचांगr_करोne);
+	init_completion(&tl_cmd->tmr_done);
 
 	se_cmd = &tl_cmd->tl_se_cmd;
 	se_sess = tl_tpg->tl_nexus->se_sess;
 
-	rc = target_submit_पंचांगr(se_cmd, se_sess, tl_cmd->tl_sense_buf, lun,
-			       शून्य, पंचांगr, GFP_KERNEL, task,
+	rc = target_submit_tmr(se_cmd, se_sess, tl_cmd->tl_sense_buf, lun,
+			       NULL, tmr, GFP_KERNEL, task,
 			       TARGET_SCF_ACK_KREF);
-	अगर (rc < 0)
-		जाओ release;
-	रुको_क्रम_completion(&tl_cmd->पंचांगr_करोne);
-	ret = se_cmd->se_पंचांगr_req->response;
+	if (rc < 0)
+		goto release;
+	wait_for_completion(&tl_cmd->tmr_done);
+	ret = se_cmd->se_tmr_req->response;
 	target_put_sess_cmd(se_cmd);
 
 out:
-	वापस ret;
+	return ret;
 
 release:
-	kmem_cache_मुक्त(tcm_loop_cmd_cache, tl_cmd);
-	जाओ out;
-पूर्ण
+	kmem_cache_free(tcm_loop_cmd_cache, tl_cmd);
+	goto out;
+}
 
-अटल पूर्णांक tcm_loop_पात_task(काष्ठा scsi_cmnd *sc)
-अणु
-	काष्ठा tcm_loop_hba *tl_hba;
-	काष्ठा tcm_loop_tpg *tl_tpg;
-	पूर्णांक ret = FAILED;
+static int tcm_loop_abort_task(struct scsi_cmnd *sc)
+{
+	struct tcm_loop_hba *tl_hba;
+	struct tcm_loop_tpg *tl_tpg;
+	int ret = FAILED;
 
 	/*
-	 * Locate the tcm_loop_hba_t poपूर्णांकer
+	 * Locate the tcm_loop_hba_t pointer
 	 */
-	tl_hba = *(काष्ठा tcm_loop_hba **)shost_priv(sc->device->host);
+	tl_hba = *(struct tcm_loop_hba **)shost_priv(sc->device->host);
 	tl_tpg = &tl_hba->tl_hba_tpgs[sc->device->id];
-	ret = tcm_loop_issue_पंचांगr(tl_tpg, sc->device->lun,
+	ret = tcm_loop_issue_tmr(tl_tpg, sc->device->lun,
 				 sc->request->tag, TMR_ABORT_TASK);
-	वापस (ret == TMR_FUNCTION_COMPLETE) ? SUCCESS : FAILED;
-पूर्ण
+	return (ret == TMR_FUNCTION_COMPLETE) ? SUCCESS : FAILED;
+}
 
 /*
  * Called from SCSI EH process context to issue a LUN_RESET TMR
- * to काष्ठा scsi_device
+ * to struct scsi_device
  */
-अटल पूर्णांक tcm_loop_device_reset(काष्ठा scsi_cmnd *sc)
-अणु
-	काष्ठा tcm_loop_hba *tl_hba;
-	काष्ठा tcm_loop_tpg *tl_tpg;
-	पूर्णांक ret = FAILED;
+static int tcm_loop_device_reset(struct scsi_cmnd *sc)
+{
+	struct tcm_loop_hba *tl_hba;
+	struct tcm_loop_tpg *tl_tpg;
+	int ret = FAILED;
 
 	/*
-	 * Locate the tcm_loop_hba_t poपूर्णांकer
+	 * Locate the tcm_loop_hba_t pointer
 	 */
-	tl_hba = *(काष्ठा tcm_loop_hba **)shost_priv(sc->device->host);
+	tl_hba = *(struct tcm_loop_hba **)shost_priv(sc->device->host);
 	tl_tpg = &tl_hba->tl_hba_tpgs[sc->device->id];
 
-	ret = tcm_loop_issue_पंचांगr(tl_tpg, sc->device->lun,
+	ret = tcm_loop_issue_tmr(tl_tpg, sc->device->lun,
 				 0, TMR_LUN_RESET);
-	वापस (ret == TMR_FUNCTION_COMPLETE) ? SUCCESS : FAILED;
-पूर्ण
+	return (ret == TMR_FUNCTION_COMPLETE) ? SUCCESS : FAILED;
+}
 
-अटल पूर्णांक tcm_loop_target_reset(काष्ठा scsi_cmnd *sc)
-अणु
-	काष्ठा tcm_loop_hba *tl_hba;
-	काष्ठा tcm_loop_tpg *tl_tpg;
+static int tcm_loop_target_reset(struct scsi_cmnd *sc)
+{
+	struct tcm_loop_hba *tl_hba;
+	struct tcm_loop_tpg *tl_tpg;
 
 	/*
-	 * Locate the tcm_loop_hba_t poपूर्णांकer
+	 * Locate the tcm_loop_hba_t pointer
 	 */
-	tl_hba = *(काष्ठा tcm_loop_hba **)shost_priv(sc->device->host);
-	अगर (!tl_hba) अणु
+	tl_hba = *(struct tcm_loop_hba **)shost_priv(sc->device->host);
+	if (!tl_hba) {
 		pr_err("Unable to perform device reset without active I_T Nexus\n");
-		वापस FAILED;
-	पूर्ण
+		return FAILED;
+	}
 	/*
-	 * Locate the tl_tpg poपूर्णांकer from TargetID in sc->device->id
+	 * Locate the tl_tpg pointer from TargetID in sc->device->id
 	 */
 	tl_tpg = &tl_hba->tl_hba_tpgs[sc->device->id];
-	अगर (tl_tpg) अणु
+	if (tl_tpg) {
 		tl_tpg->tl_transport_status = TCM_TRANSPORT_ONLINE;
-		वापस SUCCESS;
-	पूर्ण
-	वापस FAILED;
-पूर्ण
+		return SUCCESS;
+	}
+	return FAILED;
+}
 
-अटल काष्ठा scsi_host_ढाँचा tcm_loop_driver_ढाँचा = अणु
+static struct scsi_host_template tcm_loop_driver_template = {
 	.show_info		= tcm_loop_show_info,
 	.proc_name		= "tcm_loopback",
 	.name			= "TCM_Loopback",
 	.queuecommand		= tcm_loop_queuecommand,
 	.change_queue_depth	= scsi_change_queue_depth,
-	.eh_पात_handler = tcm_loop_पात_task,
+	.eh_abort_handler = tcm_loop_abort_task,
 	.eh_device_reset_handler = tcm_loop_device_reset,
 	.eh_target_reset_handler = tcm_loop_target_reset,
 	.this_id		= -1,
@@ -314,31 +313,31 @@ release:
 	.dma_boundary		= PAGE_SIZE - 1,
 	.module			= THIS_MODULE,
 	.track_queue_depth	= 1,
-	.cmd_size		= माप(काष्ठा tcm_loop_cmd),
-पूर्ण;
+	.cmd_size		= sizeof(struct tcm_loop_cmd),
+};
 
-अटल पूर्णांक tcm_loop_driver_probe(काष्ठा device *dev)
-अणु
-	काष्ठा tcm_loop_hba *tl_hba;
-	काष्ठा Scsi_Host *sh;
-	पूर्णांक error, host_prot;
+static int tcm_loop_driver_probe(struct device *dev)
+{
+	struct tcm_loop_hba *tl_hba;
+	struct Scsi_Host *sh;
+	int error, host_prot;
 
 	tl_hba = to_tcm_loop_hba(dev);
 
-	sh = scsi_host_alloc(&tcm_loop_driver_ढाँचा,
-			माप(काष्ठा tcm_loop_hba));
-	अगर (!sh) अणु
+	sh = scsi_host_alloc(&tcm_loop_driver_template,
+			sizeof(struct tcm_loop_hba));
+	if (!sh) {
 		pr_err("Unable to allocate struct scsi_host\n");
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 	tl_hba->sh = sh;
 
 	/*
-	 * Assign the काष्ठा tcm_loop_hba poपूर्णांकer to काष्ठा Scsi_Host->hostdata
+	 * Assign the struct tcm_loop_hba pointer to struct Scsi_Host->hostdata
 	 */
-	*((काष्ठा tcm_loop_hba **)sh->hostdata) = tl_hba;
+	*((struct tcm_loop_hba **)sh->hostdata) = tl_hba;
 	/*
-	 * Setup single ID, Channel and LUN क्रम now..
+	 * Setup single ID, Channel and LUN for now..
 	 */
 	sh->max_id = 2;
 	sh->max_lun = 0;
@@ -356,421 +355,421 @@ release:
 	scsi_host_set_guard(sh, SHOST_DIX_GUARD_CRC);
 
 	error = scsi_add_host(sh, &tl_hba->dev);
-	अगर (error) अणु
+	if (error) {
 		pr_err("%s: scsi_add_host failed\n", __func__);
 		scsi_host_put(sh);
-		वापस -ENODEV;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -ENODEV;
+	}
+	return 0;
+}
 
-अटल पूर्णांक tcm_loop_driver_हटाओ(काष्ठा device *dev)
-अणु
-	काष्ठा tcm_loop_hba *tl_hba;
-	काष्ठा Scsi_Host *sh;
+static int tcm_loop_driver_remove(struct device *dev)
+{
+	struct tcm_loop_hba *tl_hba;
+	struct Scsi_Host *sh;
 
 	tl_hba = to_tcm_loop_hba(dev);
 	sh = tl_hba->sh;
 
-	scsi_हटाओ_host(sh);
+	scsi_remove_host(sh);
 	scsi_host_put(sh);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tcm_loop_release_adapter(काष्ठा device *dev)
-अणु
-	काष्ठा tcm_loop_hba *tl_hba = to_tcm_loop_hba(dev);
+static void tcm_loop_release_adapter(struct device *dev)
+{
+	struct tcm_loop_hba *tl_hba = to_tcm_loop_hba(dev);
 
-	kमुक्त(tl_hba);
-पूर्ण
+	kfree(tl_hba);
+}
 
 /*
  * Called from tcm_loop_make_scsi_hba() in tcm_loop_configfs.c
  */
-अटल पूर्णांक tcm_loop_setup_hba_bus(काष्ठा tcm_loop_hba *tl_hba, पूर्णांक tcm_loop_host_id)
-अणु
-	पूर्णांक ret;
+static int tcm_loop_setup_hba_bus(struct tcm_loop_hba *tl_hba, int tcm_loop_host_id)
+{
+	int ret;
 
 	tl_hba->dev.bus = &tcm_loop_lld_bus;
 	tl_hba->dev.parent = tcm_loop_primary;
 	tl_hba->dev.release = &tcm_loop_release_adapter;
 	dev_set_name(&tl_hba->dev, "tcm_loop_adapter_%d", tcm_loop_host_id);
 
-	ret = device_रेजिस्टर(&tl_hba->dev);
-	अगर (ret) अणु
+	ret = device_register(&tl_hba->dev);
+	if (ret) {
 		pr_err("device_register() failed for tl_hba->dev: %d\n", ret);
-		वापस -ENODEV;
-	पूर्ण
+		return -ENODEV;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * Called from tcm_loop_fabric_init() in tcl_loop_fabric.c to load the emulated
  * tcm_loop SCSI bus.
  */
-अटल पूर्णांक tcm_loop_alloc_core_bus(व्योम)
-अणु
-	पूर्णांक ret;
+static int tcm_loop_alloc_core_bus(void)
+{
+	int ret;
 
-	tcm_loop_primary = root_device_रेजिस्टर("tcm_loop_0");
-	अगर (IS_ERR(tcm_loop_primary)) अणु
+	tcm_loop_primary = root_device_register("tcm_loop_0");
+	if (IS_ERR(tcm_loop_primary)) {
 		pr_err("Unable to allocate tcm_loop_primary\n");
-		वापस PTR_ERR(tcm_loop_primary);
-	पूर्ण
+		return PTR_ERR(tcm_loop_primary);
+	}
 
-	ret = bus_रेजिस्टर(&tcm_loop_lld_bus);
-	अगर (ret) अणु
+	ret = bus_register(&tcm_loop_lld_bus);
+	if (ret) {
 		pr_err("bus_register() failed for tcm_loop_lld_bus\n");
-		जाओ dev_unreg;
-	पूर्ण
+		goto dev_unreg;
+	}
 
-	ret = driver_रेजिस्टर(&tcm_loop_driverfs);
-	अगर (ret) अणु
+	ret = driver_register(&tcm_loop_driverfs);
+	if (ret) {
 		pr_err("driver_register() failed for tcm_loop_driverfs\n");
-		जाओ bus_unreg;
-	पूर्ण
+		goto bus_unreg;
+	}
 
 	pr_debug("Initialized TCM Loop Core Bus\n");
-	वापस ret;
+	return ret;
 
 bus_unreg:
-	bus_unरेजिस्टर(&tcm_loop_lld_bus);
+	bus_unregister(&tcm_loop_lld_bus);
 dev_unreg:
-	root_device_unरेजिस्टर(tcm_loop_primary);
-	वापस ret;
-पूर्ण
+	root_device_unregister(tcm_loop_primary);
+	return ret;
+}
 
-अटल व्योम tcm_loop_release_core_bus(व्योम)
-अणु
-	driver_unरेजिस्टर(&tcm_loop_driverfs);
-	bus_unरेजिस्टर(&tcm_loop_lld_bus);
-	root_device_unरेजिस्टर(tcm_loop_primary);
+static void tcm_loop_release_core_bus(void)
+{
+	driver_unregister(&tcm_loop_driverfs);
+	bus_unregister(&tcm_loop_lld_bus);
+	root_device_unregister(tcm_loop_primary);
 
 	pr_debug("Releasing TCM Loop Core BUS\n");
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा tcm_loop_tpg *tl_tpg(काष्ठा se_portal_group *se_tpg)
-अणु
-	वापस container_of(se_tpg, काष्ठा tcm_loop_tpg, tl_se_tpg);
-पूर्ण
+static inline struct tcm_loop_tpg *tl_tpg(struct se_portal_group *se_tpg)
+{
+	return container_of(se_tpg, struct tcm_loop_tpg, tl_se_tpg);
+}
 
-अटल अक्षर *tcm_loop_get_endpoपूर्णांक_wwn(काष्ठा se_portal_group *se_tpg)
-अणु
+static char *tcm_loop_get_endpoint_wwn(struct se_portal_group *se_tpg)
+{
 	/*
-	 * Return the passed NAA identअगरier क्रम the Target Port
+	 * Return the passed NAA identifier for the Target Port
 	 */
-	वापस &tl_tpg(se_tpg)->tl_hba->tl_wwn_address[0];
-पूर्ण
+	return &tl_tpg(se_tpg)->tl_hba->tl_wwn_address[0];
+}
 
-अटल u16 tcm_loop_get_tag(काष्ठा se_portal_group *se_tpg)
-अणु
+static u16 tcm_loop_get_tag(struct se_portal_group *se_tpg)
+{
 	/*
-	 * This Tag is used when क्रमming SCSI Name identअगरier in EVPD=1 0x83
+	 * This Tag is used when forming SCSI Name identifier in EVPD=1 0x83
 	 * to represent the SCSI Target Port.
 	 */
-	वापस tl_tpg(se_tpg)->tl_tpgt;
-पूर्ण
+	return tl_tpg(se_tpg)->tl_tpgt;
+}
 
 /*
- * Returning (1) here allows क्रम target_core_mod काष्ठा se_node_acl to be generated
+ * Returning (1) here allows for target_core_mod struct se_node_acl to be generated
  * based upon the incoming fabric dependent SCSI Initiator Port
  */
-अटल पूर्णांक tcm_loop_check_demo_mode(काष्ठा se_portal_group *se_tpg)
-अणु
-	वापस 1;
-पूर्ण
+static int tcm_loop_check_demo_mode(struct se_portal_group *se_tpg)
+{
+	return 1;
+}
 
-अटल पूर्णांक tcm_loop_check_demo_mode_cache(काष्ठा se_portal_group *se_tpg)
-अणु
-	वापस 0;
-पूर्ण
-
-/*
- * Allow I_T Nexus full READ-WRITE access without explict Initiator Node ACLs क्रम
- * local भव Linux/SCSI LLD passthrough पूर्णांकo VM hypervisor guest
- */
-अटल पूर्णांक tcm_loop_check_demo_mode_ग_लिखो_protect(काष्ठा se_portal_group *se_tpg)
-अणु
-	वापस 0;
-पूर्ण
+static int tcm_loop_check_demo_mode_cache(struct se_portal_group *se_tpg)
+{
+	return 0;
+}
 
 /*
- * Because TCM_Loop करोes not use explict ACLs and MappedLUNs, this will
- * never be called क्रम TCM_Loop by target_core_fabric_configfs.c code.
- * It has been added here as a nop क्रम target_fabric_tf_ops_check()
+ * Allow I_T Nexus full READ-WRITE access without explict Initiator Node ACLs for
+ * local virtual Linux/SCSI LLD passthrough into VM hypervisor guest
  */
-अटल पूर्णांक tcm_loop_check_prod_mode_ग_लिखो_protect(काष्ठा se_portal_group *se_tpg)
-अणु
-	वापस 0;
-पूर्ण
+static int tcm_loop_check_demo_mode_write_protect(struct se_portal_group *se_tpg)
+{
+	return 0;
+}
 
-अटल पूर्णांक tcm_loop_check_prot_fabric_only(काष्ठा se_portal_group *se_tpg)
-अणु
-	काष्ठा tcm_loop_tpg *tl_tpg = container_of(se_tpg, काष्ठा tcm_loop_tpg,
+/*
+ * Because TCM_Loop does not use explict ACLs and MappedLUNs, this will
+ * never be called for TCM_Loop by target_core_fabric_configfs.c code.
+ * It has been added here as a nop for target_fabric_tf_ops_check()
+ */
+static int tcm_loop_check_prod_mode_write_protect(struct se_portal_group *se_tpg)
+{
+	return 0;
+}
+
+static int tcm_loop_check_prot_fabric_only(struct se_portal_group *se_tpg)
+{
+	struct tcm_loop_tpg *tl_tpg = container_of(se_tpg, struct tcm_loop_tpg,
 						   tl_se_tpg);
-	वापस tl_tpg->tl_fabric_prot_type;
-पूर्ण
+	return tl_tpg->tl_fabric_prot_type;
+}
 
-अटल u32 tcm_loop_get_inst_index(काष्ठा se_portal_group *se_tpg)
-अणु
-	वापस 1;
-पूर्ण
+static u32 tcm_loop_get_inst_index(struct se_portal_group *se_tpg)
+{
+	return 1;
+}
 
-अटल u32 tcm_loop_sess_get_index(काष्ठा se_session *se_sess)
-अणु
-	वापस 1;
-पूर्ण
+static u32 tcm_loop_sess_get_index(struct se_session *se_sess)
+{
+	return 1;
+}
 
-अटल व्योम tcm_loop_set_शेष_node_attributes(काष्ठा se_node_acl *se_acl)
-अणु
-	वापस;
-पूर्ण
+static void tcm_loop_set_default_node_attributes(struct se_node_acl *se_acl)
+{
+	return;
+}
 
-अटल पूर्णांक tcm_loop_get_cmd_state(काष्ठा se_cmd *se_cmd)
-अणु
-	काष्ठा tcm_loop_cmd *tl_cmd = container_of(se_cmd,
-			काष्ठा tcm_loop_cmd, tl_se_cmd);
+static int tcm_loop_get_cmd_state(struct se_cmd *se_cmd)
+{
+	struct tcm_loop_cmd *tl_cmd = container_of(se_cmd,
+			struct tcm_loop_cmd, tl_se_cmd);
 
-	वापस tl_cmd->sc_cmd_state;
-पूर्ण
+	return tl_cmd->sc_cmd_state;
+}
 
-अटल पूर्णांक tcm_loop_ग_लिखो_pending(काष्ठा se_cmd *se_cmd)
-अणु
+static int tcm_loop_write_pending(struct se_cmd *se_cmd)
+{
 	/*
-	 * Since Linux/SCSI has alपढ़ोy sent करोwn a काष्ठा scsi_cmnd
-	 * sc->sc_data_direction of DMA_TO_DEVICE with काष्ठा scatterlist array
-	 * memory, and memory has alपढ़ोy been mapped to काष्ठा se_cmd->t_mem_list
-	 * क्रमmat with transport_generic_map_mem_to_cmd().
+	 * Since Linux/SCSI has already sent down a struct scsi_cmnd
+	 * sc->sc_data_direction of DMA_TO_DEVICE with struct scatterlist array
+	 * memory, and memory has already been mapped to struct se_cmd->t_mem_list
+	 * format with transport_generic_map_mem_to_cmd().
 	 *
-	 * We now tell TCM to add this WRITE CDB directly पूर्णांकo the TCM storage
+	 * We now tell TCM to add this WRITE CDB directly into the TCM storage
 	 * object execution queue.
 	 */
 	target_execute_cmd(se_cmd);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tcm_loop_queue_data_or_status(स्थिर अक्षर *func,
-		काष्ठा se_cmd *se_cmd, u8 scsi_status)
-अणु
-	काष्ठा tcm_loop_cmd *tl_cmd = container_of(se_cmd,
-				काष्ठा tcm_loop_cmd, tl_se_cmd);
-	काष्ठा scsi_cmnd *sc = tl_cmd->sc;
+static int tcm_loop_queue_data_or_status(const char *func,
+		struct se_cmd *se_cmd, u8 scsi_status)
+{
+	struct tcm_loop_cmd *tl_cmd = container_of(se_cmd,
+				struct tcm_loop_cmd, tl_se_cmd);
+	struct scsi_cmnd *sc = tl_cmd->sc;
 
 	pr_debug("%s() called for scsi_cmnd: %p cdb: 0x%02x\n",
 		 func, sc, sc->cmnd[0]);
 
-	अगर (se_cmd->sense_buffer &&
+	if (se_cmd->sense_buffer &&
 	   ((se_cmd->se_cmd_flags & SCF_TRANSPORT_TASK_SENSE) ||
-	    (se_cmd->se_cmd_flags & SCF_EMULATED_TASK_SENSE))) अणु
+	    (se_cmd->se_cmd_flags & SCF_EMULATED_TASK_SENSE))) {
 
-		स_नकल(sc->sense_buffer, se_cmd->sense_buffer,
+		memcpy(sc->sense_buffer, se_cmd->sense_buffer,
 				SCSI_SENSE_BUFFERSIZE);
 		sc->result = SAM_STAT_CHECK_CONDITION;
 		set_driver_byte(sc, DRIVER_SENSE);
-	पूर्ण अन्यथा
+	} else
 		sc->result = scsi_status;
 
 	set_host_byte(sc, DID_OK);
-	अगर ((se_cmd->se_cmd_flags & SCF_OVERFLOW_BIT) ||
+	if ((se_cmd->se_cmd_flags & SCF_OVERFLOW_BIT) ||
 	    (se_cmd->se_cmd_flags & SCF_UNDERFLOW_BIT))
 		scsi_set_resid(sc, se_cmd->residual_count);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tcm_loop_queue_data_in(काष्ठा se_cmd *se_cmd)
-अणु
-	वापस tcm_loop_queue_data_or_status(__func__, se_cmd, SAM_STAT_GOOD);
-पूर्ण
+static int tcm_loop_queue_data_in(struct se_cmd *se_cmd)
+{
+	return tcm_loop_queue_data_or_status(__func__, se_cmd, SAM_STAT_GOOD);
+}
 
-अटल पूर्णांक tcm_loop_queue_status(काष्ठा se_cmd *se_cmd)
-अणु
-	वापस tcm_loop_queue_data_or_status(__func__,
+static int tcm_loop_queue_status(struct se_cmd *se_cmd)
+{
+	return tcm_loop_queue_data_or_status(__func__,
 					     se_cmd, se_cmd->scsi_status);
-पूर्ण
+}
 
-अटल व्योम tcm_loop_queue_पंचांग_rsp(काष्ठा se_cmd *se_cmd)
-अणु
-	काष्ठा tcm_loop_cmd *tl_cmd = container_of(se_cmd,
-				काष्ठा tcm_loop_cmd, tl_se_cmd);
+static void tcm_loop_queue_tm_rsp(struct se_cmd *se_cmd)
+{
+	struct tcm_loop_cmd *tl_cmd = container_of(se_cmd,
+				struct tcm_loop_cmd, tl_se_cmd);
 
-	/* Wake up tcm_loop_issue_पंचांगr(). */
-	complete(&tl_cmd->पंचांगr_करोne);
-पूर्ण
+	/* Wake up tcm_loop_issue_tmr(). */
+	complete(&tl_cmd->tmr_done);
+}
 
-अटल व्योम tcm_loop_पातed_task(काष्ठा se_cmd *se_cmd)
-अणु
-	वापस;
-पूर्ण
+static void tcm_loop_aborted_task(struct se_cmd *se_cmd)
+{
+	return;
+}
 
-अटल अक्षर *tcm_loop_dump_proto_id(काष्ठा tcm_loop_hba *tl_hba)
-अणु
-	चयन (tl_hba->tl_proto_id) अणु
-	हाल SCSI_PROTOCOL_SAS:
-		वापस "SAS";
-	हाल SCSI_PROTOCOL_FCP:
-		वापस "FCP";
-	हाल SCSI_PROTOCOL_ISCSI:
-		वापस "iSCSI";
-	शेष:
-		अवरोध;
-	पूर्ण
+static char *tcm_loop_dump_proto_id(struct tcm_loop_hba *tl_hba)
+{
+	switch (tl_hba->tl_proto_id) {
+	case SCSI_PROTOCOL_SAS:
+		return "SAS";
+	case SCSI_PROTOCOL_FCP:
+		return "FCP";
+	case SCSI_PROTOCOL_ISCSI:
+		return "iSCSI";
+	default:
+		break;
+	}
 
-	वापस "Unknown";
-पूर्ण
+	return "Unknown";
+}
 
-/* Start items क्रम tcm_loop_port_cit */
+/* Start items for tcm_loop_port_cit */
 
-अटल पूर्णांक tcm_loop_port_link(
-	काष्ठा se_portal_group *se_tpg,
-	काष्ठा se_lun *lun)
-अणु
-	काष्ठा tcm_loop_tpg *tl_tpg = container_of(se_tpg,
-				काष्ठा tcm_loop_tpg, tl_se_tpg);
-	काष्ठा tcm_loop_hba *tl_hba = tl_tpg->tl_hba;
+static int tcm_loop_port_link(
+	struct se_portal_group *se_tpg,
+	struct se_lun *lun)
+{
+	struct tcm_loop_tpg *tl_tpg = container_of(se_tpg,
+				struct tcm_loop_tpg, tl_se_tpg);
+	struct tcm_loop_hba *tl_hba = tl_tpg->tl_hba;
 
 	atomic_inc_mb(&tl_tpg->tl_tpg_port_count);
 	/*
-	 * Add Linux/SCSI काष्ठा scsi_device by HCTL
+	 * Add Linux/SCSI struct scsi_device by HCTL
 	 */
 	scsi_add_device(tl_hba->sh, 0, tl_tpg->tl_tpgt, lun->unpacked_lun);
 
 	pr_debug("TCM_Loop_ConfigFS: Port Link Successful\n");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम tcm_loop_port_unlink(
-	काष्ठा se_portal_group *se_tpg,
-	काष्ठा se_lun *se_lun)
-अणु
-	काष्ठा scsi_device *sd;
-	काष्ठा tcm_loop_hba *tl_hba;
-	काष्ठा tcm_loop_tpg *tl_tpg;
+static void tcm_loop_port_unlink(
+	struct se_portal_group *se_tpg,
+	struct se_lun *se_lun)
+{
+	struct scsi_device *sd;
+	struct tcm_loop_hba *tl_hba;
+	struct tcm_loop_tpg *tl_tpg;
 
-	tl_tpg = container_of(se_tpg, काष्ठा tcm_loop_tpg, tl_se_tpg);
+	tl_tpg = container_of(se_tpg, struct tcm_loop_tpg, tl_se_tpg);
 	tl_hba = tl_tpg->tl_hba;
 
 	sd = scsi_device_lookup(tl_hba->sh, 0, tl_tpg->tl_tpgt,
 				se_lun->unpacked_lun);
-	अगर (!sd) अणु
+	if (!sd) {
 		pr_err("Unable to locate struct scsi_device for %d:%d:%llu\n",
 		       0, tl_tpg->tl_tpgt, se_lun->unpacked_lun);
-		वापस;
-	पूर्ण
+		return;
+	}
 	/*
-	 * Remove Linux/SCSI काष्ठा scsi_device by HCTL
+	 * Remove Linux/SCSI struct scsi_device by HCTL
 	 */
-	scsi_हटाओ_device(sd);
+	scsi_remove_device(sd);
 	scsi_device_put(sd);
 
 	atomic_dec_mb(&tl_tpg->tl_tpg_port_count);
 
 	pr_debug("TCM_Loop_ConfigFS: Port Unlink Successful\n");
-पूर्ण
+}
 
-/* End items क्रम tcm_loop_port_cit */
+/* End items for tcm_loop_port_cit */
 
-अटल sमाप_प्रकार tcm_loop_tpg_attrib_fabric_prot_type_show(
-		काष्ठा config_item *item, अक्षर *page)
-अणु
-	काष्ठा se_portal_group *se_tpg = attrib_to_tpg(item);
-	काष्ठा tcm_loop_tpg *tl_tpg = container_of(se_tpg, काष्ठा tcm_loop_tpg,
+static ssize_t tcm_loop_tpg_attrib_fabric_prot_type_show(
+		struct config_item *item, char *page)
+{
+	struct se_portal_group *se_tpg = attrib_to_tpg(item);
+	struct tcm_loop_tpg *tl_tpg = container_of(se_tpg, struct tcm_loop_tpg,
 						   tl_se_tpg);
 
-	वापस प्र_लिखो(page, "%d\n", tl_tpg->tl_fabric_prot_type);
-पूर्ण
+	return sprintf(page, "%d\n", tl_tpg->tl_fabric_prot_type);
+}
 
-अटल sमाप_प्रकार tcm_loop_tpg_attrib_fabric_prot_type_store(
-		काष्ठा config_item *item, स्थिर अक्षर *page, माप_प्रकार count)
-अणु
-	काष्ठा se_portal_group *se_tpg = attrib_to_tpg(item);
-	काष्ठा tcm_loop_tpg *tl_tpg = container_of(se_tpg, काष्ठा tcm_loop_tpg,
+static ssize_t tcm_loop_tpg_attrib_fabric_prot_type_store(
+		struct config_item *item, const char *page, size_t count)
+{
+	struct se_portal_group *se_tpg = attrib_to_tpg(item);
+	struct tcm_loop_tpg *tl_tpg = container_of(se_tpg, struct tcm_loop_tpg,
 						   tl_se_tpg);
-	अचिन्हित दीर्घ val;
-	पूर्णांक ret = kम_से_अदीर्घ(page, 0, &val);
+	unsigned long val;
+	int ret = kstrtoul(page, 0, &val);
 
-	अगर (ret) अणु
+	if (ret) {
 		pr_err("kstrtoul() returned %d for fabric_prot_type\n", ret);
-		वापस ret;
-	पूर्ण
-	अगर (val != 0 && val != 1 && val != 3) अणु
+		return ret;
+	}
+	if (val != 0 && val != 1 && val != 3) {
 		pr_err("Invalid qla2xxx fabric_prot_type: %lu\n", val);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	tl_tpg->tl_fabric_prot_type = val;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
 CONFIGFS_ATTR(tcm_loop_tpg_attrib_, fabric_prot_type);
 
-अटल काष्ठा configfs_attribute *tcm_loop_tpg_attrib_attrs[] = अणु
+static struct configfs_attribute *tcm_loop_tpg_attrib_attrs[] = {
 	&tcm_loop_tpg_attrib_attr_fabric_prot_type,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-/* Start items क्रम tcm_loop_nexus_cit */
+/* Start items for tcm_loop_nexus_cit */
 
-अटल पूर्णांक tcm_loop_alloc_sess_cb(काष्ठा se_portal_group *se_tpg,
-				  काष्ठा se_session *se_sess, व्योम *p)
-अणु
-	काष्ठा tcm_loop_tpg *tl_tpg = container_of(se_tpg,
-					काष्ठा tcm_loop_tpg, tl_se_tpg);
+static int tcm_loop_alloc_sess_cb(struct se_portal_group *se_tpg,
+				  struct se_session *se_sess, void *p)
+{
+	struct tcm_loop_tpg *tl_tpg = container_of(se_tpg,
+					struct tcm_loop_tpg, tl_se_tpg);
 
 	tl_tpg->tl_nexus = p;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tcm_loop_make_nexus(
-	काष्ठा tcm_loop_tpg *tl_tpg,
-	स्थिर अक्षर *name)
-अणु
-	काष्ठा tcm_loop_hba *tl_hba = tl_tpg->tl_hba;
-	काष्ठा tcm_loop_nexus *tl_nexus;
-	पूर्णांक ret;
+static int tcm_loop_make_nexus(
+	struct tcm_loop_tpg *tl_tpg,
+	const char *name)
+{
+	struct tcm_loop_hba *tl_hba = tl_tpg->tl_hba;
+	struct tcm_loop_nexus *tl_nexus;
+	int ret;
 
-	अगर (tl_tpg->tl_nexus) अणु
+	if (tl_tpg->tl_nexus) {
 		pr_debug("tl_tpg->tl_nexus already exists\n");
-		वापस -EEXIST;
-	पूर्ण
+		return -EEXIST;
+	}
 
-	tl_nexus = kzalloc(माप(*tl_nexus), GFP_KERNEL);
-	अगर (!tl_nexus)
-		वापस -ENOMEM;
+	tl_nexus = kzalloc(sizeof(*tl_nexus), GFP_KERNEL);
+	if (!tl_nexus)
+		return -ENOMEM;
 
 	tl_nexus->se_sess = target_setup_session(&tl_tpg->tl_se_tpg, 0, 0,
 					TARGET_PROT_DIN_PASS | TARGET_PROT_DOUT_PASS,
 					name, tl_nexus, tcm_loop_alloc_sess_cb);
-	अगर (IS_ERR(tl_nexus->se_sess)) अणु
+	if (IS_ERR(tl_nexus->se_sess)) {
 		ret = PTR_ERR(tl_nexus->se_sess);
-		kमुक्त(tl_nexus);
-		वापस ret;
-	पूर्ण
+		kfree(tl_nexus);
+		return ret;
+	}
 
 	pr_debug("TCM_Loop_ConfigFS: Established I_T Nexus to emulated %s Initiator Port: %s\n",
 		 tcm_loop_dump_proto_id(tl_hba), name);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक tcm_loop_drop_nexus(
-	काष्ठा tcm_loop_tpg *tpg)
-अणु
-	काष्ठा se_session *se_sess;
-	काष्ठा tcm_loop_nexus *tl_nexus;
+static int tcm_loop_drop_nexus(
+	struct tcm_loop_tpg *tpg)
+{
+	struct se_session *se_sess;
+	struct tcm_loop_nexus *tl_nexus;
 
 	tl_nexus = tpg->tl_nexus;
-	अगर (!tl_nexus)
-		वापस -ENODEV;
+	if (!tl_nexus)
+		return -ENODEV;
 
 	se_sess = tl_nexus->se_sess;
-	अगर (!se_sess)
-		वापस -ENODEV;
+	if (!se_sess)
+		return -ENODEV;
 
-	अगर (atomic_पढ़ो(&tpg->tl_tpg_port_count)) अणु
+	if (atomic_read(&tpg->tl_tpg_port_count)) {
 		pr_err("Unable to remove TCM_Loop I_T Nexus with active TPG port count: %d\n",
-		       atomic_पढ़ो(&tpg->tl_tpg_port_count));
-		वापस -EPERM;
-	पूर्ण
+		       atomic_read(&tpg->tl_tpg_port_count));
+		return -EPERM;
+	}
 
 	pr_debug("TCM_Loop_ConfigFS: Removing I_T Nexus to emulated %s Initiator Port: %s\n",
 		 tcm_loop_dump_proto_id(tpg->tl_hba),
@@ -778,371 +777,371 @@ CONFIGFS_ATTR(tcm_loop_tpg_attrib_, fabric_prot_type);
 	/*
 	 * Release the SCSI I_T Nexus to the emulated Target Port
 	 */
-	target_हटाओ_session(se_sess);
-	tpg->tl_nexus = शून्य;
-	kमुक्त(tl_nexus);
-	वापस 0;
-पूर्ण
+	target_remove_session(se_sess);
+	tpg->tl_nexus = NULL;
+	kfree(tl_nexus);
+	return 0;
+}
 
-/* End items क्रम tcm_loop_nexus_cit */
+/* End items for tcm_loop_nexus_cit */
 
-अटल sमाप_प्रकार tcm_loop_tpg_nexus_show(काष्ठा config_item *item, अक्षर *page)
-अणु
-	काष्ठा se_portal_group *se_tpg = to_tpg(item);
-	काष्ठा tcm_loop_tpg *tl_tpg = container_of(se_tpg,
-			काष्ठा tcm_loop_tpg, tl_se_tpg);
-	काष्ठा tcm_loop_nexus *tl_nexus;
-	sमाप_प्रकार ret;
+static ssize_t tcm_loop_tpg_nexus_show(struct config_item *item, char *page)
+{
+	struct se_portal_group *se_tpg = to_tpg(item);
+	struct tcm_loop_tpg *tl_tpg = container_of(se_tpg,
+			struct tcm_loop_tpg, tl_se_tpg);
+	struct tcm_loop_nexus *tl_nexus;
+	ssize_t ret;
 
 	tl_nexus = tl_tpg->tl_nexus;
-	अगर (!tl_nexus)
-		वापस -ENODEV;
+	if (!tl_nexus)
+		return -ENODEV;
 
-	ret = snम_लिखो(page, PAGE_SIZE, "%s\n",
+	ret = snprintf(page, PAGE_SIZE, "%s\n",
 		tl_nexus->se_sess->se_node_acl->initiatorname);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार tcm_loop_tpg_nexus_store(काष्ठा config_item *item,
-		स्थिर अक्षर *page, माप_प्रकार count)
-अणु
-	काष्ठा se_portal_group *se_tpg = to_tpg(item);
-	काष्ठा tcm_loop_tpg *tl_tpg = container_of(se_tpg,
-			काष्ठा tcm_loop_tpg, tl_se_tpg);
-	काष्ठा tcm_loop_hba *tl_hba = tl_tpg->tl_hba;
-	अचिन्हित अक्षर i_port[TL_WWN_ADDR_LEN], *ptr, *port_ptr;
-	पूर्णांक ret;
+static ssize_t tcm_loop_tpg_nexus_store(struct config_item *item,
+		const char *page, size_t count)
+{
+	struct se_portal_group *se_tpg = to_tpg(item);
+	struct tcm_loop_tpg *tl_tpg = container_of(se_tpg,
+			struct tcm_loop_tpg, tl_se_tpg);
+	struct tcm_loop_hba *tl_hba = tl_tpg->tl_hba;
+	unsigned char i_port[TL_WWN_ADDR_LEN], *ptr, *port_ptr;
+	int ret;
 	/*
-	 * Shutकरोwn the active I_T nexus अगर 'NULL' is passed..
+	 * Shutdown the active I_T nexus if 'NULL' is passed..
 	 */
-	अगर (!म_भेदन(page, "NULL", 4)) अणु
+	if (!strncmp(page, "NULL", 4)) {
 		ret = tcm_loop_drop_nexus(tl_tpg);
-		वापस (!ret) ? count : ret;
-	पूर्ण
+		return (!ret) ? count : ret;
+	}
 	/*
-	 * Otherwise make sure the passed भव Initiator port WWN matches
+	 * Otherwise make sure the passed virtual Initiator port WWN matches
 	 * the fabric protocol_id set in tcm_loop_make_scsi_hba(), and call
 	 * tcm_loop_make_nexus()
 	 */
-	अगर (म_माप(page) >= TL_WWN_ADDR_LEN) अणु
+	if (strlen(page) >= TL_WWN_ADDR_LEN) {
 		pr_err("Emulated NAA Sas Address: %s, exceeds max: %d\n",
 		       page, TL_WWN_ADDR_LEN);
-		वापस -EINVAL;
-	पूर्ण
-	snम_लिखो(&i_port[0], TL_WWN_ADDR_LEN, "%s", page);
+		return -EINVAL;
+	}
+	snprintf(&i_port[0], TL_WWN_ADDR_LEN, "%s", page);
 
-	ptr = म_माला(i_port, "naa.");
-	अगर (ptr) अणु
-		अगर (tl_hba->tl_proto_id != SCSI_PROTOCOL_SAS) अणु
+	ptr = strstr(i_port, "naa.");
+	if (ptr) {
+		if (tl_hba->tl_proto_id != SCSI_PROTOCOL_SAS) {
 			pr_err("Passed SAS Initiator Port %s does not match target port protoid: %s\n",
 			       i_port, tcm_loop_dump_proto_id(tl_hba));
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		port_ptr = &i_port[0];
-		जाओ check_newline;
-	पूर्ण
-	ptr = म_माला(i_port, "fc.");
-	अगर (ptr) अणु
-		अगर (tl_hba->tl_proto_id != SCSI_PROTOCOL_FCP) अणु
+		goto check_newline;
+	}
+	ptr = strstr(i_port, "fc.");
+	if (ptr) {
+		if (tl_hba->tl_proto_id != SCSI_PROTOCOL_FCP) {
 			pr_err("Passed FCP Initiator Port %s does not match target port protoid: %s\n",
 			       i_port, tcm_loop_dump_proto_id(tl_hba));
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		port_ptr = &i_port[3]; /* Skip over "fc." */
-		जाओ check_newline;
-	पूर्ण
-	ptr = म_माला(i_port, "iqn.");
-	अगर (ptr) अणु
-		अगर (tl_hba->tl_proto_id != SCSI_PROTOCOL_ISCSI) अणु
+		goto check_newline;
+	}
+	ptr = strstr(i_port, "iqn.");
+	if (ptr) {
+		if (tl_hba->tl_proto_id != SCSI_PROTOCOL_ISCSI) {
 			pr_err("Passed iSCSI Initiator Port %s does not match target port protoid: %s\n",
 			       i_port, tcm_loop_dump_proto_id(tl_hba));
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 		port_ptr = &i_port[0];
-		जाओ check_newline;
-	पूर्ण
+		goto check_newline;
+	}
 	pr_err("Unable to locate prefix for emulated Initiator Port: %s\n",
 	       i_port);
-	वापस -EINVAL;
+	return -EINVAL;
 	/*
-	 * Clear any trailing newline क्रम the NAA WWN
+	 * Clear any trailing newline for the NAA WWN
 	 */
 check_newline:
-	अगर (i_port[म_माप(i_port)-1] == '\n')
-		i_port[म_माप(i_port)-1] = '\0';
+	if (i_port[strlen(i_port)-1] == '\n')
+		i_port[strlen(i_port)-1] = '\0';
 
 	ret = tcm_loop_make_nexus(tl_tpg, port_ptr);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस count;
-पूर्ण
+	return count;
+}
 
-अटल sमाप_प्रकार tcm_loop_tpg_transport_status_show(काष्ठा config_item *item,
-		अक्षर *page)
-अणु
-	काष्ठा se_portal_group *se_tpg = to_tpg(item);
-	काष्ठा tcm_loop_tpg *tl_tpg = container_of(se_tpg,
-			काष्ठा tcm_loop_tpg, tl_se_tpg);
-	स्थिर अक्षर *status = शून्य;
-	sमाप_प्रकार ret = -EINVAL;
+static ssize_t tcm_loop_tpg_transport_status_show(struct config_item *item,
+		char *page)
+{
+	struct se_portal_group *se_tpg = to_tpg(item);
+	struct tcm_loop_tpg *tl_tpg = container_of(se_tpg,
+			struct tcm_loop_tpg, tl_se_tpg);
+	const char *status = NULL;
+	ssize_t ret = -EINVAL;
 
-	चयन (tl_tpg->tl_transport_status) अणु
-	हाल TCM_TRANSPORT_ONLINE:
+	switch (tl_tpg->tl_transport_status) {
+	case TCM_TRANSPORT_ONLINE:
 		status = "online";
-		अवरोध;
-	हाल TCM_TRANSPORT_OFFLINE:
+		break;
+	case TCM_TRANSPORT_OFFLINE:
 		status = "offline";
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
+		break;
+	default:
+		break;
+	}
 
-	अगर (status)
-		ret = snम_लिखो(page, PAGE_SIZE, "%s\n", status);
+	if (status)
+		ret = snprintf(page, PAGE_SIZE, "%s\n", status);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल sमाप_प्रकार tcm_loop_tpg_transport_status_store(काष्ठा config_item *item,
-		स्थिर अक्षर *page, माप_प्रकार count)
-अणु
-	काष्ठा se_portal_group *se_tpg = to_tpg(item);
-	काष्ठा tcm_loop_tpg *tl_tpg = container_of(se_tpg,
-			काष्ठा tcm_loop_tpg, tl_se_tpg);
+static ssize_t tcm_loop_tpg_transport_status_store(struct config_item *item,
+		const char *page, size_t count)
+{
+	struct se_portal_group *se_tpg = to_tpg(item);
+	struct tcm_loop_tpg *tl_tpg = container_of(se_tpg,
+			struct tcm_loop_tpg, tl_se_tpg);
 
-	अगर (!म_भेदन(page, "online", 6)) अणु
+	if (!strncmp(page, "online", 6)) {
 		tl_tpg->tl_transport_status = TCM_TRANSPORT_ONLINE;
-		वापस count;
-	पूर्ण
-	अगर (!म_भेदन(page, "offline", 7)) अणु
+		return count;
+	}
+	if (!strncmp(page, "offline", 7)) {
 		tl_tpg->tl_transport_status = TCM_TRANSPORT_OFFLINE;
-		अगर (tl_tpg->tl_nexus) अणु
-			काष्ठा se_session *tl_sess = tl_tpg->tl_nexus->se_sess;
+		if (tl_tpg->tl_nexus) {
+			struct se_session *tl_sess = tl_tpg->tl_nexus->se_sess;
 
 			core_allocate_nexus_loss_ua(tl_sess->se_node_acl);
-		पूर्ण
-		वापस count;
-	पूर्ण
-	वापस -EINVAL;
-पूर्ण
+		}
+		return count;
+	}
+	return -EINVAL;
+}
 
-अटल sमाप_प्रकार tcm_loop_tpg_address_show(काष्ठा config_item *item,
-					 अक्षर *page)
-अणु
-	काष्ठा se_portal_group *se_tpg = to_tpg(item);
-	काष्ठा tcm_loop_tpg *tl_tpg = container_of(se_tpg,
-			काष्ठा tcm_loop_tpg, tl_se_tpg);
-	काष्ठा tcm_loop_hba *tl_hba = tl_tpg->tl_hba;
+static ssize_t tcm_loop_tpg_address_show(struct config_item *item,
+					 char *page)
+{
+	struct se_portal_group *se_tpg = to_tpg(item);
+	struct tcm_loop_tpg *tl_tpg = container_of(se_tpg,
+			struct tcm_loop_tpg, tl_se_tpg);
+	struct tcm_loop_hba *tl_hba = tl_tpg->tl_hba;
 
-	वापस snम_लिखो(page, PAGE_SIZE, "%d:0:%d\n",
+	return snprintf(page, PAGE_SIZE, "%d:0:%d\n",
 			tl_hba->sh->host_no, tl_tpg->tl_tpgt);
-पूर्ण
+}
 
 CONFIGFS_ATTR(tcm_loop_tpg_, nexus);
 CONFIGFS_ATTR(tcm_loop_tpg_, transport_status);
 CONFIGFS_ATTR_RO(tcm_loop_tpg_, address);
 
-अटल काष्ठा configfs_attribute *tcm_loop_tpg_attrs[] = अणु
+static struct configfs_attribute *tcm_loop_tpg_attrs[] = {
 	&tcm_loop_tpg_attr_nexus,
 	&tcm_loop_tpg_attr_transport_status,
 	&tcm_loop_tpg_attr_address,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-/* Start items क्रम tcm_loop_naa_cit */
+/* Start items for tcm_loop_naa_cit */
 
-अटल काष्ठा se_portal_group *tcm_loop_make_naa_tpg(काष्ठा se_wwn *wwn,
-						     स्थिर अक्षर *name)
-अणु
-	काष्ठा tcm_loop_hba *tl_hba = container_of(wwn,
-			काष्ठा tcm_loop_hba, tl_hba_wwn);
-	काष्ठा tcm_loop_tpg *tl_tpg;
-	पूर्णांक ret;
-	अचिन्हित दीर्घ tpgt;
+static struct se_portal_group *tcm_loop_make_naa_tpg(struct se_wwn *wwn,
+						     const char *name)
+{
+	struct tcm_loop_hba *tl_hba = container_of(wwn,
+			struct tcm_loop_hba, tl_hba_wwn);
+	struct tcm_loop_tpg *tl_tpg;
+	int ret;
+	unsigned long tpgt;
 
-	अगर (म_माला(name, "tpgt_") != name) अणु
+	if (strstr(name, "tpgt_") != name) {
 		pr_err("Unable to locate \"tpgt_#\" directory group\n");
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
-	अगर (kम_से_अदीर्घ(name+5, 10, &tpgt))
-		वापस ERR_PTR(-EINVAL);
+		return ERR_PTR(-EINVAL);
+	}
+	if (kstrtoul(name+5, 10, &tpgt))
+		return ERR_PTR(-EINVAL);
 
-	अगर (tpgt >= TL_TPGS_PER_HBA) अणु
+	if (tpgt >= TL_TPGS_PER_HBA) {
 		pr_err("Passed tpgt: %lu exceeds TL_TPGS_PER_HBA: %u\n",
 		       tpgt, TL_TPGS_PER_HBA);
-		वापस ERR_PTR(-EINVAL);
-	पूर्ण
+		return ERR_PTR(-EINVAL);
+	}
 	tl_tpg = &tl_hba->tl_hba_tpgs[tpgt];
 	tl_tpg->tl_hba = tl_hba;
 	tl_tpg->tl_tpgt = tpgt;
 	/*
-	 * Register the tl_tpg as a emulated TCM Target Endpoपूर्णांक
+	 * Register the tl_tpg as a emulated TCM Target Endpoint
 	 */
-	ret = core_tpg_रेजिस्टर(wwn, &tl_tpg->tl_se_tpg, tl_hba->tl_proto_id);
-	अगर (ret < 0)
-		वापस ERR_PTR(-ENOMEM);
+	ret = core_tpg_register(wwn, &tl_tpg->tl_se_tpg, tl_hba->tl_proto_id);
+	if (ret < 0)
+		return ERR_PTR(-ENOMEM);
 
 	pr_debug("TCM_Loop_ConfigFS: Allocated Emulated %s Target Port %s,t,0x%04lx\n",
 		 tcm_loop_dump_proto_id(tl_hba),
 		 config_item_name(&wwn->wwn_group.cg_item), tpgt);
-	वापस &tl_tpg->tl_se_tpg;
-पूर्ण
+	return &tl_tpg->tl_se_tpg;
+}
 
-अटल व्योम tcm_loop_drop_naa_tpg(
-	काष्ठा se_portal_group *se_tpg)
-अणु
-	काष्ठा se_wwn *wwn = se_tpg->se_tpg_wwn;
-	काष्ठा tcm_loop_tpg *tl_tpg = container_of(se_tpg,
-				काष्ठा tcm_loop_tpg, tl_se_tpg);
-	काष्ठा tcm_loop_hba *tl_hba;
-	अचिन्हित लघु tpgt;
+static void tcm_loop_drop_naa_tpg(
+	struct se_portal_group *se_tpg)
+{
+	struct se_wwn *wwn = se_tpg->se_tpg_wwn;
+	struct tcm_loop_tpg *tl_tpg = container_of(se_tpg,
+				struct tcm_loop_tpg, tl_se_tpg);
+	struct tcm_loop_hba *tl_hba;
+	unsigned short tpgt;
 
 	tl_hba = tl_tpg->tl_hba;
 	tpgt = tl_tpg->tl_tpgt;
 	/*
-	 * Release the I_T Nexus क्रम the Virtual target link अगर present
+	 * Release the I_T Nexus for the Virtual target link if present
 	 */
 	tcm_loop_drop_nexus(tl_tpg);
 	/*
-	 * Deरेजिस्टर the tl_tpg as a emulated TCM Target Endpoपूर्णांक
+	 * Deregister the tl_tpg as a emulated TCM Target Endpoint
 	 */
-	core_tpg_deरेजिस्टर(se_tpg);
+	core_tpg_deregister(se_tpg);
 
-	tl_tpg->tl_hba = शून्य;
+	tl_tpg->tl_hba = NULL;
 	tl_tpg->tl_tpgt = 0;
 
 	pr_debug("TCM_Loop_ConfigFS: Deallocated Emulated %s Target Port %s,t,0x%04x\n",
 		 tcm_loop_dump_proto_id(tl_hba),
 		 config_item_name(&wwn->wwn_group.cg_item), tpgt);
-पूर्ण
+}
 
-/* End items क्रम tcm_loop_naa_cit */
+/* End items for tcm_loop_naa_cit */
 
-/* Start items क्रम tcm_loop_cit */
+/* Start items for tcm_loop_cit */
 
-अटल काष्ठा se_wwn *tcm_loop_make_scsi_hba(
-	काष्ठा target_fabric_configfs *tf,
-	काष्ठा config_group *group,
-	स्थिर अक्षर *name)
-अणु
-	काष्ठा tcm_loop_hba *tl_hba;
-	काष्ठा Scsi_Host *sh;
-	अक्षर *ptr;
-	पूर्णांक ret, off = 0;
+static struct se_wwn *tcm_loop_make_scsi_hba(
+	struct target_fabric_configfs *tf,
+	struct config_group *group,
+	const char *name)
+{
+	struct tcm_loop_hba *tl_hba;
+	struct Scsi_Host *sh;
+	char *ptr;
+	int ret, off = 0;
 
-	tl_hba = kzalloc(माप(*tl_hba), GFP_KERNEL);
-	अगर (!tl_hba)
-		वापस ERR_PTR(-ENOMEM);
+	tl_hba = kzalloc(sizeof(*tl_hba), GFP_KERNEL);
+	if (!tl_hba)
+		return ERR_PTR(-ENOMEM);
 
 	/*
-	 * Determine the emulated Protocol Identअगरier and Target Port Name
+	 * Determine the emulated Protocol Identifier and Target Port Name
 	 * based on the incoming configfs directory name.
 	 */
-	ptr = म_माला(name, "naa.");
-	अगर (ptr) अणु
+	ptr = strstr(name, "naa.");
+	if (ptr) {
 		tl_hba->tl_proto_id = SCSI_PROTOCOL_SAS;
-		जाओ check_len;
-	पूर्ण
-	ptr = म_माला(name, "fc.");
-	अगर (ptr) अणु
+		goto check_len;
+	}
+	ptr = strstr(name, "fc.");
+	if (ptr) {
 		tl_hba->tl_proto_id = SCSI_PROTOCOL_FCP;
 		off = 3; /* Skip over "fc." */
-		जाओ check_len;
-	पूर्ण
-	ptr = म_माला(name, "iqn.");
-	अगर (!ptr) अणु
+		goto check_len;
+	}
+	ptr = strstr(name, "iqn.");
+	if (!ptr) {
 		pr_err("Unable to locate prefix for emulated Target Port: %s\n",
 		       name);
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	tl_hba->tl_proto_id = SCSI_PROTOCOL_ISCSI;
 
 check_len:
-	अगर (म_माप(name) >= TL_WWN_ADDR_LEN) अणु
+	if (strlen(name) >= TL_WWN_ADDR_LEN) {
 		pr_err("Emulated NAA %s Address: %s, exceeds max: %d\n",
 		       name, tcm_loop_dump_proto_id(tl_hba), TL_WWN_ADDR_LEN);
 		ret = -EINVAL;
-		जाओ out;
-	पूर्ण
-	snम_लिखो(&tl_hba->tl_wwn_address[0], TL_WWN_ADDR_LEN, "%s", &name[off]);
+		goto out;
+	}
+	snprintf(&tl_hba->tl_wwn_address[0], TL_WWN_ADDR_LEN, "%s", &name[off]);
 
 	/*
-	 * Call device_रेजिस्टर(tl_hba->dev) to रेजिस्टर the emulated
-	 * Linux/SCSI LLD of type काष्ठा Scsi_Host at tl_hba->sh after
-	 * device_रेजिस्टर() callbacks in tcm_loop_driver_probe()
+	 * Call device_register(tl_hba->dev) to register the emulated
+	 * Linux/SCSI LLD of type struct Scsi_Host at tl_hba->sh after
+	 * device_register() callbacks in tcm_loop_driver_probe()
 	 */
 	ret = tcm_loop_setup_hba_bus(tl_hba, tcm_loop_hba_no_cnt);
-	अगर (ret)
-		जाओ out;
+	if (ret)
+		goto out;
 
 	sh = tl_hba->sh;
 	tcm_loop_hba_no_cnt++;
 	pr_debug("TCM_Loop_ConfigFS: Allocated emulated Target %s Address: %s at Linux/SCSI Host ID: %d\n",
 		 tcm_loop_dump_proto_id(tl_hba), name, sh->host_no);
-	वापस &tl_hba->tl_hba_wwn;
+	return &tl_hba->tl_hba_wwn;
 out:
-	kमुक्त(tl_hba);
-	वापस ERR_PTR(ret);
-पूर्ण
+	kfree(tl_hba);
+	return ERR_PTR(ret);
+}
 
-अटल व्योम tcm_loop_drop_scsi_hba(
-	काष्ठा se_wwn *wwn)
-अणु
-	काष्ठा tcm_loop_hba *tl_hba = container_of(wwn,
-				काष्ठा tcm_loop_hba, tl_hba_wwn);
+static void tcm_loop_drop_scsi_hba(
+	struct se_wwn *wwn)
+{
+	struct tcm_loop_hba *tl_hba = container_of(wwn,
+				struct tcm_loop_hba, tl_hba_wwn);
 
 	pr_debug("TCM_Loop_ConfigFS: Deallocating emulated Target %s Address: %s at Linux/SCSI Host ID: %d\n",
 		 tcm_loop_dump_proto_id(tl_hba), tl_hba->tl_wwn_address,
 		 tl_hba->sh->host_no);
 	/*
-	 * Call device_unरेजिस्टर() on the original tl_hba->dev.
+	 * Call device_unregister() on the original tl_hba->dev.
 	 * tcm_loop_fabric_scsi.c:tcm_loop_release_adapter() will
 	 * release *tl_hba;
 	 */
-	device_unरेजिस्टर(&tl_hba->dev);
-पूर्ण
+	device_unregister(&tl_hba->dev);
+}
 
-/* Start items क्रम tcm_loop_cit */
-अटल sमाप_प्रकार tcm_loop_wwn_version_show(काष्ठा config_item *item, अक्षर *page)
-अणु
-	वापस प्र_लिखो(page, "TCM Loopback Fabric module %s\n", TCM_LOOP_VERSION);
-पूर्ण
+/* Start items for tcm_loop_cit */
+static ssize_t tcm_loop_wwn_version_show(struct config_item *item, char *page)
+{
+	return sprintf(page, "TCM Loopback Fabric module %s\n", TCM_LOOP_VERSION);
+}
 
 CONFIGFS_ATTR_RO(tcm_loop_wwn_, version);
 
-अटल काष्ठा configfs_attribute *tcm_loop_wwn_attrs[] = अणु
+static struct configfs_attribute *tcm_loop_wwn_attrs[] = {
 	&tcm_loop_wwn_attr_version,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
-/* End items क्रम tcm_loop_cit */
+/* End items for tcm_loop_cit */
 
-अटल स्थिर काष्ठा target_core_fabric_ops loop_ops = अणु
+static const struct target_core_fabric_ops loop_ops = {
 	.module				= THIS_MODULE,
 	.fabric_name			= "loopback",
-	.tpg_get_wwn			= tcm_loop_get_endpoपूर्णांक_wwn,
+	.tpg_get_wwn			= tcm_loop_get_endpoint_wwn,
 	.tpg_get_tag			= tcm_loop_get_tag,
 	.tpg_check_demo_mode		= tcm_loop_check_demo_mode,
 	.tpg_check_demo_mode_cache	= tcm_loop_check_demo_mode_cache,
-	.tpg_check_demo_mode_ग_लिखो_protect =
-				tcm_loop_check_demo_mode_ग_लिखो_protect,
-	.tpg_check_prod_mode_ग_लिखो_protect =
-				tcm_loop_check_prod_mode_ग_लिखो_protect,
+	.tpg_check_demo_mode_write_protect =
+				tcm_loop_check_demo_mode_write_protect,
+	.tpg_check_prod_mode_write_protect =
+				tcm_loop_check_prod_mode_write_protect,
 	.tpg_check_prot_fabric_only	= tcm_loop_check_prot_fabric_only,
 	.tpg_get_inst_index		= tcm_loop_get_inst_index,
-	.check_stop_मुक्त		= tcm_loop_check_stop_मुक्त,
+	.check_stop_free		= tcm_loop_check_stop_free,
 	.release_cmd			= tcm_loop_release_cmd,
 	.sess_get_index			= tcm_loop_sess_get_index,
-	.ग_लिखो_pending			= tcm_loop_ग_लिखो_pending,
-	.set_शेष_node_attributes	= tcm_loop_set_शेष_node_attributes,
+	.write_pending			= tcm_loop_write_pending,
+	.set_default_node_attributes	= tcm_loop_set_default_node_attributes,
 	.get_cmd_state			= tcm_loop_get_cmd_state,
 	.queue_data_in			= tcm_loop_queue_data_in,
 	.queue_status			= tcm_loop_queue_status,
-	.queue_पंचांग_rsp			= tcm_loop_queue_पंचांग_rsp,
-	.पातed_task			= tcm_loop_पातed_task,
+	.queue_tm_rsp			= tcm_loop_queue_tm_rsp,
+	.aborted_task			= tcm_loop_aborted_task,
 	.fabric_make_wwn		= tcm_loop_make_scsi_hba,
 	.fabric_drop_wwn		= tcm_loop_drop_scsi_hba,
 	.fabric_make_tpg		= tcm_loop_make_naa_tpg,
@@ -1152,48 +1151,48 @@ CONFIGFS_ATTR_RO(tcm_loop_wwn_, version);
 	.tfc_wwn_attrs			= tcm_loop_wwn_attrs,
 	.tfc_tpg_base_attrs		= tcm_loop_tpg_attrs,
 	.tfc_tpg_attrib_attrs		= tcm_loop_tpg_attrib_attrs,
-पूर्ण;
+};
 
-अटल पूर्णांक __init tcm_loop_fabric_init(व्योम)
-अणु
-	पूर्णांक ret = -ENOMEM;
+static int __init tcm_loop_fabric_init(void)
+{
+	int ret = -ENOMEM;
 
 	tcm_loop_cmd_cache = kmem_cache_create("tcm_loop_cmd_cache",
-				माप(काष्ठा tcm_loop_cmd),
-				__alignof__(काष्ठा tcm_loop_cmd),
-				0, शून्य);
-	अगर (!tcm_loop_cmd_cache) अणु
+				sizeof(struct tcm_loop_cmd),
+				__alignof__(struct tcm_loop_cmd),
+				0, NULL);
+	if (!tcm_loop_cmd_cache) {
 		pr_debug("kmem_cache_create() for tcm_loop_cmd_cache failed\n");
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	ret = tcm_loop_alloc_core_bus();
-	अगर (ret)
-		जाओ out_destroy_cache;
+	if (ret)
+		goto out_destroy_cache;
 
-	ret = target_रेजिस्टर_ढाँचा(&loop_ops);
-	अगर (ret)
-		जाओ out_release_core_bus;
+	ret = target_register_template(&loop_ops);
+	if (ret)
+		goto out_release_core_bus;
 
-	वापस 0;
+	return 0;
 
 out_release_core_bus:
 	tcm_loop_release_core_bus();
 out_destroy_cache:
 	kmem_cache_destroy(tcm_loop_cmd_cache);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल व्योम __निकास tcm_loop_fabric_निकास(व्योम)
-अणु
-	target_unरेजिस्टर_ढाँचा(&loop_ops);
+static void __exit tcm_loop_fabric_exit(void)
+{
+	target_unregister_template(&loop_ops);
 	tcm_loop_release_core_bus();
 	kmem_cache_destroy(tcm_loop_cmd_cache);
-पूर्ण
+}
 
 MODULE_DESCRIPTION("TCM loopback virtual Linux/SCSI fabric module");
 MODULE_AUTHOR("Nicholas A. Bellinger <nab@risingtidesystems.com>");
 MODULE_LICENSE("GPL");
 module_init(tcm_loop_fabric_init);
-module_निकास(tcm_loop_fabric_निकास);
+module_exit(tcm_loop_fabric_exit);

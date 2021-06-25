@@ -1,14 +1,13 @@
-<शैली गुरु>
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
  * All Rights Reserved.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
- * without limitation the rights to use, copy, modअगरy, merge, publish,
+ * without limitation the rights to use, copy, modify, merge, publish,
  * distribute, sub license, and/or sell copies of the Software, and to
- * permit persons to whom the Software is furnished to करो so, subject to
+ * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -23,169 +22,169 @@
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
  *
- * Authors: Christian Kथघnig <christian.koenig@amd.com>
+ * Authors: Christian König <christian.koenig@amd.com>
  */
 
-#समावेश <linux/firmware.h>
+#include <linux/firmware.h>
 
-#समावेश "radeon.h"
-#समावेश "radeon_asic.h"
-#समावेश "sid.h"
-#समावेश "vce.h"
+#include "radeon.h"
+#include "radeon_asic.h"
+#include "sid.h"
+#include "vce.h"
 
-#घोषणा VCE_V1_0_FW_SIZE	(256 * 1024)
-#घोषणा VCE_V1_0_STACK_SIZE	(64 * 1024)
-#घोषणा VCE_V1_0_DATA_SIZE	(7808 * (RADEON_MAX_VCE_HANDLES + 1))
+#define VCE_V1_0_FW_SIZE	(256 * 1024)
+#define VCE_V1_0_STACK_SIZE	(64 * 1024)
+#define VCE_V1_0_DATA_SIZE	(7808 * (RADEON_MAX_VCE_HANDLES + 1))
 
-काष्ठा vce_v1_0_fw_signature
-अणु
-	पूर्णांक32_t off;
-	uपूर्णांक32_t len;
-	पूर्णांक32_t num;
-	काष्ठा अणु
-		uपूर्णांक32_t chip_id;
-		uपूर्णांक32_t keyselect;
-		uपूर्णांक32_t nonce[4];
-		uपूर्णांक32_t sigval[4];
-	पूर्ण val[8];
-पूर्ण;
+struct vce_v1_0_fw_signature
+{
+	int32_t off;
+	uint32_t len;
+	int32_t num;
+	struct {
+		uint32_t chip_id;
+		uint32_t keyselect;
+		uint32_t nonce[4];
+		uint32_t sigval[4];
+	} val[8];
+};
 
 /**
- * vce_v1_0_get_rptr - get पढ़ो poपूर्णांकer
+ * vce_v1_0_get_rptr - get read pointer
  *
- * @rdev: radeon_device poपूर्णांकer
- * @ring: radeon_ring poपूर्णांकer
+ * @rdev: radeon_device pointer
+ * @ring: radeon_ring pointer
  *
- * Returns the current hardware पढ़ो poपूर्णांकer
+ * Returns the current hardware read pointer
  */
-uपूर्णांक32_t vce_v1_0_get_rptr(काष्ठा radeon_device *rdev,
-			   काष्ठा radeon_ring *ring)
-अणु
-	अगर (ring->idx == TN_RING_TYPE_VCE1_INDEX)
-		वापस RREG32(VCE_RB_RPTR);
-	अन्यथा
-		वापस RREG32(VCE_RB_RPTR2);
-पूर्ण
+uint32_t vce_v1_0_get_rptr(struct radeon_device *rdev,
+			   struct radeon_ring *ring)
+{
+	if (ring->idx == TN_RING_TYPE_VCE1_INDEX)
+		return RREG32(VCE_RB_RPTR);
+	else
+		return RREG32(VCE_RB_RPTR2);
+}
 
 /**
- * vce_v1_0_get_wptr - get ग_लिखो poपूर्णांकer
+ * vce_v1_0_get_wptr - get write pointer
  *
- * @rdev: radeon_device poपूर्णांकer
- * @ring: radeon_ring poपूर्णांकer
+ * @rdev: radeon_device pointer
+ * @ring: radeon_ring pointer
  *
- * Returns the current hardware ग_लिखो poपूर्णांकer
+ * Returns the current hardware write pointer
  */
-uपूर्णांक32_t vce_v1_0_get_wptr(काष्ठा radeon_device *rdev,
-			   काष्ठा radeon_ring *ring)
-अणु
-	अगर (ring->idx == TN_RING_TYPE_VCE1_INDEX)
-		वापस RREG32(VCE_RB_WPTR);
-	अन्यथा
-		वापस RREG32(VCE_RB_WPTR2);
-पूर्ण
+uint32_t vce_v1_0_get_wptr(struct radeon_device *rdev,
+			   struct radeon_ring *ring)
+{
+	if (ring->idx == TN_RING_TYPE_VCE1_INDEX)
+		return RREG32(VCE_RB_WPTR);
+	else
+		return RREG32(VCE_RB_WPTR2);
+}
 
 /**
- * vce_v1_0_set_wptr - set ग_लिखो poपूर्णांकer
+ * vce_v1_0_set_wptr - set write pointer
  *
- * @rdev: radeon_device poपूर्णांकer
- * @ring: radeon_ring poपूर्णांकer
+ * @rdev: radeon_device pointer
+ * @ring: radeon_ring pointer
  *
- * Commits the ग_लिखो poपूर्णांकer to the hardware
+ * Commits the write pointer to the hardware
  */
-व्योम vce_v1_0_set_wptr(काष्ठा radeon_device *rdev,
-		       काष्ठा radeon_ring *ring)
-अणु
-	अगर (ring->idx == TN_RING_TYPE_VCE1_INDEX)
+void vce_v1_0_set_wptr(struct radeon_device *rdev,
+		       struct radeon_ring *ring)
+{
+	if (ring->idx == TN_RING_TYPE_VCE1_INDEX)
 		WREG32(VCE_RB_WPTR, ring->wptr);
-	अन्यथा
+	else
 		WREG32(VCE_RB_WPTR2, ring->wptr);
-पूर्ण
+}
 
-व्योम vce_v1_0_enable_mgcg(काष्ठा radeon_device *rdev, bool enable)
-अणु
-	u32 पंचांगp;
+void vce_v1_0_enable_mgcg(struct radeon_device *rdev, bool enable)
+{
+	u32 tmp;
 
-	अगर (enable && (rdev->cg_flags & RADEON_CG_SUPPORT_VCE_MGCG)) अणु
-		पंचांगp = RREG32(VCE_CLOCK_GATING_A);
-		पंचांगp |= CGC_DYN_CLOCK_MODE;
-		WREG32(VCE_CLOCK_GATING_A, पंचांगp);
+	if (enable && (rdev->cg_flags & RADEON_CG_SUPPORT_VCE_MGCG)) {
+		tmp = RREG32(VCE_CLOCK_GATING_A);
+		tmp |= CGC_DYN_CLOCK_MODE;
+		WREG32(VCE_CLOCK_GATING_A, tmp);
 
-		पंचांगp = RREG32(VCE_UENC_CLOCK_GATING);
-		पंचांगp &= ~0x1ff000;
-		पंचांगp |= 0xff800000;
-		WREG32(VCE_UENC_CLOCK_GATING, पंचांगp);
+		tmp = RREG32(VCE_UENC_CLOCK_GATING);
+		tmp &= ~0x1ff000;
+		tmp |= 0xff800000;
+		WREG32(VCE_UENC_CLOCK_GATING, tmp);
 
-		पंचांगp = RREG32(VCE_UENC_REG_CLOCK_GATING);
-		पंचांगp &= ~0x3ff;
-		WREG32(VCE_UENC_REG_CLOCK_GATING, पंचांगp);
-	पूर्ण अन्यथा अणु
-		पंचांगp = RREG32(VCE_CLOCK_GATING_A);
-		पंचांगp &= ~CGC_DYN_CLOCK_MODE;
-		WREG32(VCE_CLOCK_GATING_A, पंचांगp);
+		tmp = RREG32(VCE_UENC_REG_CLOCK_GATING);
+		tmp &= ~0x3ff;
+		WREG32(VCE_UENC_REG_CLOCK_GATING, tmp);
+	} else {
+		tmp = RREG32(VCE_CLOCK_GATING_A);
+		tmp &= ~CGC_DYN_CLOCK_MODE;
+		WREG32(VCE_CLOCK_GATING_A, tmp);
 
-		पंचांगp = RREG32(VCE_UENC_CLOCK_GATING);
-		पंचांगp |= 0x1ff000;
-		पंचांगp &= ~0xff800000;
-		WREG32(VCE_UENC_CLOCK_GATING, पंचांगp);
+		tmp = RREG32(VCE_UENC_CLOCK_GATING);
+		tmp |= 0x1ff000;
+		tmp &= ~0xff800000;
+		WREG32(VCE_UENC_CLOCK_GATING, tmp);
 
-		पंचांगp = RREG32(VCE_UENC_REG_CLOCK_GATING);
-		पंचांगp |= 0x3ff;
-		WREG32(VCE_UENC_REG_CLOCK_GATING, पंचांगp);
-	पूर्ण
-पूर्ण
+		tmp = RREG32(VCE_UENC_REG_CLOCK_GATING);
+		tmp |= 0x3ff;
+		WREG32(VCE_UENC_REG_CLOCK_GATING, tmp);
+	}
+}
 
-अटल व्योम vce_v1_0_init_cg(काष्ठा radeon_device *rdev)
-अणु
-	u32 पंचांगp;
+static void vce_v1_0_init_cg(struct radeon_device *rdev)
+{
+	u32 tmp;
 
-	पंचांगp = RREG32(VCE_CLOCK_GATING_A);
-	पंचांगp |= CGC_DYN_CLOCK_MODE;
-	WREG32(VCE_CLOCK_GATING_A, पंचांगp);
+	tmp = RREG32(VCE_CLOCK_GATING_A);
+	tmp |= CGC_DYN_CLOCK_MODE;
+	WREG32(VCE_CLOCK_GATING_A, tmp);
 
-	पंचांगp = RREG32(VCE_CLOCK_GATING_B);
-	पंचांगp |= 0x1e;
-	पंचांगp &= ~0xe100e1;
-	WREG32(VCE_CLOCK_GATING_B, पंचांगp);
+	tmp = RREG32(VCE_CLOCK_GATING_B);
+	tmp |= 0x1e;
+	tmp &= ~0xe100e1;
+	WREG32(VCE_CLOCK_GATING_B, tmp);
 
-	पंचांगp = RREG32(VCE_UENC_CLOCK_GATING);
-	पंचांगp &= ~0xff9ff000;
-	WREG32(VCE_UENC_CLOCK_GATING, पंचांगp);
+	tmp = RREG32(VCE_UENC_CLOCK_GATING);
+	tmp &= ~0xff9ff000;
+	WREG32(VCE_UENC_CLOCK_GATING, tmp);
 
-	पंचांगp = RREG32(VCE_UENC_REG_CLOCK_GATING);
-	पंचांगp &= ~0x3ff;
-	WREG32(VCE_UENC_REG_CLOCK_GATING, पंचांगp);
-पूर्ण
+	tmp = RREG32(VCE_UENC_REG_CLOCK_GATING);
+	tmp &= ~0x3ff;
+	WREG32(VCE_UENC_REG_CLOCK_GATING, tmp);
+}
 
-पूर्णांक vce_v1_0_load_fw(काष्ठा radeon_device *rdev, uपूर्णांक32_t *data)
-अणु
-	काष्ठा vce_v1_0_fw_signature *sign = (व्योम*)rdev->vce_fw->data;
-	uपूर्णांक32_t chip_id;
-	पूर्णांक i;
+int vce_v1_0_load_fw(struct radeon_device *rdev, uint32_t *data)
+{
+	struct vce_v1_0_fw_signature *sign = (void*)rdev->vce_fw->data;
+	uint32_t chip_id;
+	int i;
 
-	चयन (rdev->family) अणु
-	हाल CHIP_TAHITI:
+	switch (rdev->family) {
+	case CHIP_TAHITI:
 		chip_id = 0x01000014;
-		अवरोध;
-	हाल CHIP_VERDE:
+		break;
+	case CHIP_VERDE:
 		chip_id = 0x01000015;
-		अवरोध;
-	हाल CHIP_PITCAIRN:
+		break;
+	case CHIP_PITCAIRN:
 		chip_id = 0x01000016;
-		अवरोध;
-	हाल CHIP_ARUBA:
+		break;
+	case CHIP_ARUBA:
 		chip_id = 0x01000017;
-		अवरोध;
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+		break;
+	default:
+		return -EINVAL;
+	}
 
-	क्रम (i = 0; i < le32_to_cpu(sign->num); ++i) अणु
-		अगर (le32_to_cpu(sign->val[i].chip_id) == chip_id)
-			अवरोध;
-	पूर्ण
+	for (i = 0; i < le32_to_cpu(sign->num); ++i) {
+		if (le32_to_cpu(sign->val[i].chip_id) == chip_id)
+			break;
+	}
 
-	अगर (i == le32_to_cpu(sign->num))
-		वापस -EINVAL;
+	if (i == le32_to_cpu(sign->num))
+		return -EINVAL;
 
 	data += (256 - 64) / 4;
 	data[0] = sign->val[i].nonce[0];
@@ -194,8 +193,8 @@ uपूर्णांक32_t vce_v1_0_get_wptr(काष्ठा radeon_device
 	data[3] = sign->val[i].nonce[3];
 	data[4] = cpu_to_le32(le32_to_cpu(sign->len) + 64);
 
-	स_रखो(&data[5], 0, 44);
-	स_नकल(&data[16], &sign[1], rdev->vce_fw->size - माप(*sign));
+	memset(&data[5], 0, 44);
+	memcpy(&data[16], &sign[1], rdev->vce_fw->size - sizeof(*sign));
 
 	data += (le32_to_cpu(sign->len) + 64) / 4;
 	data[0] = sign->val[i].sigval[0];
@@ -205,20 +204,20 @@ uपूर्णांक32_t vce_v1_0_get_wptr(काष्ठा radeon_device
 
 	rdev->vce.keyselect = le32_to_cpu(sign->val[i].keyselect);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अचिन्हित vce_v1_0_bo_size(काष्ठा radeon_device *rdev)
-अणु
+unsigned vce_v1_0_bo_size(struct radeon_device *rdev)
+{
 	WARN_ON(VCE_V1_0_FW_SIZE < rdev->vce_fw->size);
-	वापस VCE_V1_0_FW_SIZE + VCE_V1_0_STACK_SIZE + VCE_V1_0_DATA_SIZE;
-पूर्ण
+	return VCE_V1_0_FW_SIZE + VCE_V1_0_STACK_SIZE + VCE_V1_0_DATA_SIZE;
+}
 
-पूर्णांक vce_v1_0_resume(काष्ठा radeon_device *rdev)
-अणु
-	uपूर्णांक64_t addr = rdev->vce.gpu_addr;
-	uपूर्णांक32_t size;
-	पूर्णांक i;
+int vce_v1_0_resume(struct radeon_device *rdev)
+{
+	uint64_t addr = rdev->vce.gpu_addr;
+	uint32_t size;
+	int i;
 
 	WREG32_P(VCE_CLOCK_GATING_A, 0, ~(1 << 16));
 	WREG32_P(VCE_UENC_CLOCK_GATING, 0x1FF000, ~0xFF9FF000);
@@ -254,43 +253,43 @@ uपूर्णांक32_t vce_v1_0_get_wptr(काष्ठा radeon_device
 
 	WREG32(VCE_LMI_FW_START_KEYSEL, rdev->vce.keyselect);
 
-	क्रम (i = 0; i < 10; ++i) अणु
+	for (i = 0; i < 10; ++i) {
 		mdelay(10);
-		अगर (RREG32(VCE_FW_REG_STATUS) & VCE_FW_REG_STATUS_DONE)
-			अवरोध;
-	पूर्ण
+		if (RREG32(VCE_FW_REG_STATUS) & VCE_FW_REG_STATUS_DONE)
+			break;
+	}
 
-	अगर (i == 10)
-		वापस -ETIMEDOUT;
+	if (i == 10)
+		return -ETIMEDOUT;
 
-	अगर (!(RREG32(VCE_FW_REG_STATUS) & VCE_FW_REG_STATUS_PASS))
-		वापस -EINVAL;
+	if (!(RREG32(VCE_FW_REG_STATUS) & VCE_FW_REG_STATUS_PASS))
+		return -EINVAL;
 
-	क्रम (i = 0; i < 10; ++i) अणु
+	for (i = 0; i < 10; ++i) {
 		mdelay(10);
-		अगर (!(RREG32(VCE_FW_REG_STATUS) & VCE_FW_REG_STATUS_BUSY))
-			अवरोध;
-	पूर्ण
+		if (!(RREG32(VCE_FW_REG_STATUS) & VCE_FW_REG_STATUS_BUSY))
+			break;
+	}
 
-	अगर (i == 10)
-		वापस -ETIMEDOUT;
+	if (i == 10)
+		return -ETIMEDOUT;
 
 	vce_v1_0_init_cg(rdev);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /**
  * vce_v1_0_start - start VCE block
  *
- * @rdev: radeon_device poपूर्णांकer
+ * @rdev: radeon_device pointer
  *
  * Setup and start the VCE block
  */
-पूर्णांक vce_v1_0_start(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा radeon_ring *ring;
-	पूर्णांक i, j, r;
+int vce_v1_0_start(struct radeon_device *rdev)
+{
+	struct radeon_ring *ring;
+	int i, j, r;
 
 	/* set BUSY flag */
 	WREG32_P(VCE_STATUS, 1, ~1);
@@ -323,17 +322,17 @@ uपूर्णांक32_t vce_v1_0_get_wptr(काष्ठा radeon_device
 		 VCE_ECPU_SOFT_RESET |
 		 VCE_FME_SOFT_RESET));
 
-	क्रम (i = 0; i < 10; ++i) अणु
-		uपूर्णांक32_t status;
-		क्रम (j = 0; j < 100; ++j) अणु
+	for (i = 0; i < 10; ++i) {
+		uint32_t status;
+		for (j = 0; j < 100; ++j) {
 			status = RREG32(VCE_STATUS);
-			अगर (status & 2)
-				अवरोध;
+			if (status & 2)
+				break;
 			mdelay(10);
-		पूर्ण
+		}
 		r = 0;
-		अगर (status & 2)
-			अवरोध;
+		if (status & 2)
+			break;
 
 		DRM_ERROR("VCE not responding, trying to reset the ECPU!!!\n");
 		WREG32_P(VCE_SOFT_RESET, VCE_ECPU_SOFT_RESET, ~VCE_ECPU_SOFT_RESET);
@@ -341,45 +340,45 @@ uपूर्णांक32_t vce_v1_0_get_wptr(काष्ठा radeon_device
 		WREG32_P(VCE_SOFT_RESET, 0, ~VCE_ECPU_SOFT_RESET);
 		mdelay(10);
 		r = -1;
-	पूर्ण
+	}
 
 	/* clear BUSY flag */
 	WREG32_P(VCE_STATUS, 0, ~1);
 
-	अगर (r) अणु
+	if (r) {
 		DRM_ERROR("VCE not responding, giving up!!!\n");
-		वापस r;
-	पूर्ण
+		return r;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक vce_v1_0_init(काष्ठा radeon_device *rdev)
-अणु
-	काष्ठा radeon_ring *ring;
-	पूर्णांक r;
+int vce_v1_0_init(struct radeon_device *rdev)
+{
+	struct radeon_ring *ring;
+	int r;
 
 	r = vce_v1_0_start(rdev);
-	अगर (r)
-		वापस r;
+	if (r)
+		return r;
 
 	ring = &rdev->ring[TN_RING_TYPE_VCE1_INDEX];
-	ring->पढ़ोy = true;
+	ring->ready = true;
 	r = radeon_ring_test(rdev, TN_RING_TYPE_VCE1_INDEX, ring);
-	अगर (r) अणु
-		ring->पढ़ोy = false;
-		वापस r;
-	पूर्ण
+	if (r) {
+		ring->ready = false;
+		return r;
+	}
 
 	ring = &rdev->ring[TN_RING_TYPE_VCE2_INDEX];
-	ring->पढ़ोy = true;
+	ring->ready = true;
 	r = radeon_ring_test(rdev, TN_RING_TYPE_VCE2_INDEX, ring);
-	अगर (r) अणु
-		ring->पढ़ोy = false;
-		वापस r;
-	पूर्ण
+	if (r) {
+		ring->ready = false;
+		return r;
+	}
 
 	DRM_INFO("VCE initialized successfully.\n");
 
-	वापस 0;
-पूर्ण
+	return 0;
+}

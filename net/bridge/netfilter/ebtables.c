@@ -1,420 +1,419 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  *  ebtables
  *
  *  Author:
- *  Bart De Schuymer		<bdschuym@panकरोra.be>
+ *  Bart De Schuymer		<bdschuym@pandora.be>
  *
  *  ebtables.c,v 2.0, July, 2002
  *
  *  This code is strongly inspired by the iptables code which is
  *  Copyright (C) 1999 Paul `Rusty' Russell & Michael J. Neuling
  */
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
-#समावेश <linux/kmod.h>
-#समावेश <linux/module.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/netfilter/x_tables.h>
-#समावेश <linux/netfilter_bridge/ebtables.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/mutex.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/uaccess.h>
-#समावेश <linux/smp.h>
-#समावेश <linux/cpumask.h>
-#समावेश <linux/audit.h>
-#समावेश <net/sock.h>
-#समावेश <net/netns/generic.h>
-/* needed क्रम logical [in,out]-dev filtering */
-#समावेश "../br_private.h"
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#include <linux/kmod.h>
+#include <linux/module.h>
+#include <linux/vmalloc.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter_bridge/ebtables.h>
+#include <linux/spinlock.h>
+#include <linux/mutex.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+#include <linux/smp.h>
+#include <linux/cpumask.h>
+#include <linux/audit.h>
+#include <net/sock.h>
+#include <net/netns/generic.h>
+/* needed for logical [in,out]-dev filtering */
+#include "../br_private.h"
 
-/* Each cpu has its own set of counters, so there is no need क्रम ग_लिखो_lock in
+/* Each cpu has its own set of counters, so there is no need for write_lock in
  * the softirq
- * For पढ़ोing or updating the counters, the user context needs to
- * get a ग_लिखो_lock
+ * For reading or updating the counters, the user context needs to
+ * get a write_lock
  */
 
 /* The size of each set of counters is altered to get cache alignment */
-#घोषणा SMP_ALIGN(x) (((x) + SMP_CACHE_BYTES-1) & ~(SMP_CACHE_BYTES-1))
-#घोषणा COUNTER_OFFSET(n) (SMP_ALIGN(n * माप(काष्ठा ebt_counter)))
-#घोषणा COUNTER_BASE(c, n, cpu) ((काष्ठा ebt_counter *)(((अक्षर *)c) + \
+#define SMP_ALIGN(x) (((x) + SMP_CACHE_BYTES-1) & ~(SMP_CACHE_BYTES-1))
+#define COUNTER_OFFSET(n) (SMP_ALIGN(n * sizeof(struct ebt_counter)))
+#define COUNTER_BASE(c, n, cpu) ((struct ebt_counter *)(((char *)c) + \
 				 COUNTER_OFFSET(n) * cpu))
 
-काष्ठा ebt_pernet अणु
-	काष्ठा list_head tables;
-पूर्ण;
+struct ebt_pernet {
+	struct list_head tables;
+};
 
-अटल अचिन्हित पूर्णांक ebt_pernet_id __पढ़ो_mostly;
-अटल DEFINE_MUTEX(ebt_mutex);
+static unsigned int ebt_pernet_id __read_mostly;
+static DEFINE_MUTEX(ebt_mutex);
 
-#अगर_घोषित CONFIG_NETFILTER_XTABLES_COMPAT
-अटल व्योम ebt_standard_compat_from_user(व्योम *dst, स्थिर व्योम *src)
-अणु
-	पूर्णांक v = *(compat_पूर्णांक_t *)src;
+#ifdef CONFIG_NETFILTER_XTABLES_COMPAT
+static void ebt_standard_compat_from_user(void *dst, const void *src)
+{
+	int v = *(compat_int_t *)src;
 
-	अगर (v >= 0)
+	if (v >= 0)
 		v += xt_compat_calc_jump(NFPROTO_BRIDGE, v);
-	स_नकल(dst, &v, माप(v));
-पूर्ण
+	memcpy(dst, &v, sizeof(v));
+}
 
-अटल पूर्णांक ebt_standard_compat_to_user(व्योम __user *dst, स्थिर व्योम *src)
-अणु
-	compat_पूर्णांक_t cv = *(पूर्णांक *)src;
+static int ebt_standard_compat_to_user(void __user *dst, const void *src)
+{
+	compat_int_t cv = *(int *)src;
 
-	अगर (cv >= 0)
+	if (cv >= 0)
 		cv -= xt_compat_calc_jump(NFPROTO_BRIDGE, cv);
-	वापस copy_to_user(dst, &cv, माप(cv)) ? -EFAULT : 0;
-पूर्ण
-#पूर्ण_अगर
+	return copy_to_user(dst, &cv, sizeof(cv)) ? -EFAULT : 0;
+}
+#endif
 
 
-अटल काष्ठा xt_target ebt_standard_target = अणु
+static struct xt_target ebt_standard_target = {
 	.name       = "standard",
 	.revision   = 0,
 	.family     = NFPROTO_BRIDGE,
-	.tarमाला_लोize = माप(पूर्णांक),
-#अगर_घोषित CONFIG_NETFILTER_XTABLES_COMPAT
-	.compatsize = माप(compat_पूर्णांक_t),
+	.targetsize = sizeof(int),
+#ifdef CONFIG_NETFILTER_XTABLES_COMPAT
+	.compatsize = sizeof(compat_int_t),
 	.compat_from_user = ebt_standard_compat_from_user,
 	.compat_to_user =  ebt_standard_compat_to_user,
-#पूर्ण_अगर
-पूर्ण;
+#endif
+};
 
-अटल अंतरभूत पूर्णांक
-ebt_करो_watcher(स्थिर काष्ठा ebt_entry_watcher *w, काष्ठा sk_buff *skb,
-	       काष्ठा xt_action_param *par)
-अणु
+static inline int
+ebt_do_watcher(const struct ebt_entry_watcher *w, struct sk_buff *skb,
+	       struct xt_action_param *par)
+{
 	par->target   = w->u.watcher;
 	par->targinfo = w->data;
 	w->u.watcher->target(skb, par);
-	/* watchers करोn't give a verdict */
-	वापस 0;
-पूर्ण
+	/* watchers don't give a verdict */
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक
-ebt_करो_match(काष्ठा ebt_entry_match *m, स्थिर काष्ठा sk_buff *skb,
-	     काष्ठा xt_action_param *par)
-अणु
+static inline int
+ebt_do_match(struct ebt_entry_match *m, const struct sk_buff *skb,
+	     struct xt_action_param *par)
+{
 	par->match     = m->u.match;
 	par->matchinfo = m->data;
-	वापस !m->u.match->match(skb, par);
-पूर्ण
+	return !m->u.match->match(skb, par);
+}
 
-अटल अंतरभूत पूर्णांक
-ebt_dev_check(स्थिर अक्षर *entry, स्थिर काष्ठा net_device *device)
-अणु
-	पूर्णांक i = 0;
-	स्थिर अक्षर *devname;
+static inline int
+ebt_dev_check(const char *entry, const struct net_device *device)
+{
+	int i = 0;
+	const char *devname;
 
-	अगर (*entry == '\0')
-		वापस 0;
-	अगर (!device)
-		वापस 1;
+	if (*entry == '\0')
+		return 0;
+	if (!device)
+		return 1;
 	devname = device->name;
 	/* 1 is the wildcard token */
-	जबतक (entry[i] != '\0' && entry[i] != 1 && entry[i] == devname[i])
+	while (entry[i] != '\0' && entry[i] != 1 && entry[i] == devname[i])
 		i++;
-	वापस devname[i] != entry[i] && entry[i] != 1;
-पूर्ण
+	return devname[i] != entry[i] && entry[i] != 1;
+}
 
 /* process standard matches */
-अटल अंतरभूत पूर्णांक
-ebt_basic_match(स्थिर काष्ठा ebt_entry *e, स्थिर काष्ठा sk_buff *skb,
-		स्थिर काष्ठा net_device *in, स्थिर काष्ठा net_device *out)
-अणु
-	स्थिर काष्ठा ethhdr *h = eth_hdr(skb);
-	स्थिर काष्ठा net_bridge_port *p;
+static inline int
+ebt_basic_match(const struct ebt_entry *e, const struct sk_buff *skb,
+		const struct net_device *in, const struct net_device *out)
+{
+	const struct ethhdr *h = eth_hdr(skb);
+	const struct net_bridge_port *p;
 	__be16 ethproto;
 
-	अगर (skb_vlan_tag_present(skb))
+	if (skb_vlan_tag_present(skb))
 		ethproto = htons(ETH_P_8021Q);
-	अन्यथा
+	else
 		ethproto = h->h_proto;
 
-	अगर (e->biपंचांगask & EBT_802_3) अणु
-		अगर (NF_INVF(e, EBT_IPROTO, eth_proto_is_802_3(ethproto)))
-			वापस 1;
-	पूर्ण अन्यथा अगर (!(e->biपंचांगask & EBT_NOPROTO) &&
+	if (e->bitmask & EBT_802_3) {
+		if (NF_INVF(e, EBT_IPROTO, eth_proto_is_802_3(ethproto)))
+			return 1;
+	} else if (!(e->bitmask & EBT_NOPROTO) &&
 		   NF_INVF(e, EBT_IPROTO, e->ethproto != ethproto))
-		वापस 1;
+		return 1;
 
-	अगर (NF_INVF(e, EBT_IIN, ebt_dev_check(e->in, in)))
-		वापस 1;
-	अगर (NF_INVF(e, EBT_IOUT, ebt_dev_check(e->out, out)))
-		वापस 1;
-	/* rcu_पढ़ो_lock()ed by nf_hook_thresh */
-	अगर (in && (p = br_port_get_rcu(in)) != शून्य &&
+	if (NF_INVF(e, EBT_IIN, ebt_dev_check(e->in, in)))
+		return 1;
+	if (NF_INVF(e, EBT_IOUT, ebt_dev_check(e->out, out)))
+		return 1;
+	/* rcu_read_lock()ed by nf_hook_thresh */
+	if (in && (p = br_port_get_rcu(in)) != NULL &&
 	    NF_INVF(e, EBT_ILOGICALIN,
 		    ebt_dev_check(e->logical_in, p->br->dev)))
-		वापस 1;
-	अगर (out && (p = br_port_get_rcu(out)) != शून्य &&
+		return 1;
+	if (out && (p = br_port_get_rcu(out)) != NULL &&
 	    NF_INVF(e, EBT_ILOGICALOUT,
 		    ebt_dev_check(e->logical_out, p->br->dev)))
-		वापस 1;
+		return 1;
 
-	अगर (e->biपंचांगask & EBT_SOURCEMAC) अणु
-		अगर (NF_INVF(e, EBT_ISOURCE,
+	if (e->bitmask & EBT_SOURCEMAC) {
+		if (NF_INVF(e, EBT_ISOURCE,
 			    !ether_addr_equal_masked(h->h_source, e->sourcemac,
 						     e->sourcemsk)))
-			वापस 1;
-	पूर्ण
-	अगर (e->biपंचांगask & EBT_DESTMAC) अणु
-		अगर (NF_INVF(e, EBT_IDEST,
-			    !ether_addr_equal_masked(h->h_dest, e->desपंचांगac,
-						     e->desपंचांगsk)))
-			वापस 1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return 1;
+	}
+	if (e->bitmask & EBT_DESTMAC) {
+		if (NF_INVF(e, EBT_IDEST,
+			    !ether_addr_equal_masked(h->h_dest, e->destmac,
+						     e->destmsk)))
+			return 1;
+	}
+	return 0;
+}
 
-अटल अंतरभूत
-काष्ठा ebt_entry *ebt_next_entry(स्थिर काष्ठा ebt_entry *entry)
-अणु
-	वापस (व्योम *)entry + entry->next_offset;
-पूर्ण
+static inline
+struct ebt_entry *ebt_next_entry(const struct ebt_entry *entry)
+{
+	return (void *)entry + entry->next_offset;
+}
 
-अटल अंतरभूत स्थिर काष्ठा ebt_entry_target *
-ebt_get_target_c(स्थिर काष्ठा ebt_entry *e)
-अणु
-	वापस ebt_get_target((काष्ठा ebt_entry *)e);
-पूर्ण
+static inline const struct ebt_entry_target *
+ebt_get_target_c(const struct ebt_entry *e)
+{
+	return ebt_get_target((struct ebt_entry *)e);
+}
 
 /* Do some firewalling */
-अचिन्हित पूर्णांक ebt_करो_table(काष्ठा sk_buff *skb,
-			  स्थिर काष्ठा nf_hook_state *state,
-			  काष्ठा ebt_table *table)
-अणु
-	अचिन्हित पूर्णांक hook = state->hook;
-	पूर्णांक i, nentries;
-	काष्ठा ebt_entry *poपूर्णांक;
-	काष्ठा ebt_counter *counter_base, *cb_base;
-	स्थिर काष्ठा ebt_entry_target *t;
-	पूर्णांक verdict, sp = 0;
-	काष्ठा ebt_chainstack *cs;
-	काष्ठा ebt_entries *chaininfo;
-	स्थिर अक्षर *base;
-	स्थिर काष्ठा ebt_table_info *निजी;
-	काष्ठा xt_action_param acpar;
+unsigned int ebt_do_table(struct sk_buff *skb,
+			  const struct nf_hook_state *state,
+			  struct ebt_table *table)
+{
+	unsigned int hook = state->hook;
+	int i, nentries;
+	struct ebt_entry *point;
+	struct ebt_counter *counter_base, *cb_base;
+	const struct ebt_entry_target *t;
+	int verdict, sp = 0;
+	struct ebt_chainstack *cs;
+	struct ebt_entries *chaininfo;
+	const char *base;
+	const struct ebt_table_info *private;
+	struct xt_action_param acpar;
 
 	acpar.state   = state;
 	acpar.hotdrop = false;
 
-	पढ़ो_lock_bh(&table->lock);
-	निजी = table->निजी;
-	cb_base = COUNTER_BASE(निजी->counters, निजी->nentries,
+	read_lock_bh(&table->lock);
+	private = table->private;
+	cb_base = COUNTER_BASE(private->counters, private->nentries,
 	   smp_processor_id());
-	अगर (निजी->chainstack)
-		cs = निजी->chainstack[smp_processor_id()];
-	अन्यथा
-		cs = शून्य;
-	chaininfo = निजी->hook_entry[hook];
-	nentries = निजी->hook_entry[hook]->nentries;
-	poपूर्णांक = (काष्ठा ebt_entry *)(निजी->hook_entry[hook]->data);
-	counter_base = cb_base + निजी->hook_entry[hook]->counter_offset;
-	/* base क्रम chain jumps */
-	base = निजी->entries;
+	if (private->chainstack)
+		cs = private->chainstack[smp_processor_id()];
+	else
+		cs = NULL;
+	chaininfo = private->hook_entry[hook];
+	nentries = private->hook_entry[hook]->nentries;
+	point = (struct ebt_entry *)(private->hook_entry[hook]->data);
+	counter_base = cb_base + private->hook_entry[hook]->counter_offset;
+	/* base for chain jumps */
+	base = private->entries;
 	i = 0;
-	जबतक (i < nentries) अणु
-		अगर (ebt_basic_match(poपूर्णांक, skb, state->in, state->out))
-			जाओ letsजारी;
+	while (i < nentries) {
+		if (ebt_basic_match(point, skb, state->in, state->out))
+			goto letscontinue;
 
-		अगर (EBT_MATCH_ITERATE(poपूर्णांक, ebt_करो_match, skb, &acpar) != 0)
-			जाओ letsजारी;
-		अगर (acpar.hotdrop) अणु
-			पढ़ो_unlock_bh(&table->lock);
-			वापस NF_DROP;
-		पूर्ण
+		if (EBT_MATCH_ITERATE(point, ebt_do_match, skb, &acpar) != 0)
+			goto letscontinue;
+		if (acpar.hotdrop) {
+			read_unlock_bh(&table->lock);
+			return NF_DROP;
+		}
 
 		ADD_COUNTER(*(counter_base + i), skb->len, 1);
 
-		/* these should only watch: not modअगरy, nor tell us
-		 * what to करो with the packet
+		/* these should only watch: not modify, nor tell us
+		 * what to do with the packet
 		 */
-		EBT_WATCHER_ITERATE(poपूर्णांक, ebt_करो_watcher, skb, &acpar);
+		EBT_WATCHER_ITERATE(point, ebt_do_watcher, skb, &acpar);
 
-		t = ebt_get_target_c(poपूर्णांक);
+		t = ebt_get_target_c(point);
 		/* standard target */
-		अगर (!t->u.target->target)
-			verdict = ((काष्ठा ebt_standard_target *)t)->verdict;
-		अन्यथा अणु
+		if (!t->u.target->target)
+			verdict = ((struct ebt_standard_target *)t)->verdict;
+		else {
 			acpar.target   = t->u.target;
 			acpar.targinfo = t->data;
 			verdict = t->u.target->target(skb, &acpar);
-		पूर्ण
-		अगर (verdict == EBT_ACCEPT) अणु
-			पढ़ो_unlock_bh(&table->lock);
-			वापस NF_ACCEPT;
-		पूर्ण
-		अगर (verdict == EBT_DROP) अणु
-			पढ़ो_unlock_bh(&table->lock);
-			वापस NF_DROP;
-		पूर्ण
-		अगर (verdict == EBT_RETURN) अणु
-letsवापस:
-			अगर (WARN(sp == 0, "RETURN on base chain")) अणु
+		}
+		if (verdict == EBT_ACCEPT) {
+			read_unlock_bh(&table->lock);
+			return NF_ACCEPT;
+		}
+		if (verdict == EBT_DROP) {
+			read_unlock_bh(&table->lock);
+			return NF_DROP;
+		}
+		if (verdict == EBT_RETURN) {
+letsreturn:
+			if (WARN(sp == 0, "RETURN on base chain")) {
 				/* act like this is EBT_CONTINUE */
-				जाओ letsजारी;
-			पूर्ण
+				goto letscontinue;
+			}
 
 			sp--;
 			/* put all the local variables right */
 			i = cs[sp].n;
 			chaininfo = cs[sp].chaininfo;
 			nentries = chaininfo->nentries;
-			poपूर्णांक = cs[sp].e;
+			point = cs[sp].e;
 			counter_base = cb_base +
 			   chaininfo->counter_offset;
-			जारी;
-		पूर्ण
-		अगर (verdict == EBT_CONTINUE)
-			जाओ letsजारी;
+			continue;
+		}
+		if (verdict == EBT_CONTINUE)
+			goto letscontinue;
 
-		अगर (WARN(verdict < 0, "bogus standard verdict\n")) अणु
-			पढ़ो_unlock_bh(&table->lock);
-			वापस NF_DROP;
-		पूर्ण
+		if (WARN(verdict < 0, "bogus standard verdict\n")) {
+			read_unlock_bh(&table->lock);
+			return NF_DROP;
+		}
 
 		/* jump to a udc */
 		cs[sp].n = i + 1;
 		cs[sp].chaininfo = chaininfo;
-		cs[sp].e = ebt_next_entry(poपूर्णांक);
+		cs[sp].e = ebt_next_entry(point);
 		i = 0;
-		chaininfo = (काष्ठा ebt_entries *) (base + verdict);
+		chaininfo = (struct ebt_entries *) (base + verdict);
 
-		अगर (WARN(chaininfo->distinguisher, "jump to non-chain\n")) अणु
-			पढ़ो_unlock_bh(&table->lock);
-			वापस NF_DROP;
-		पूर्ण
+		if (WARN(chaininfo->distinguisher, "jump to non-chain\n")) {
+			read_unlock_bh(&table->lock);
+			return NF_DROP;
+		}
 
 		nentries = chaininfo->nentries;
-		poपूर्णांक = (काष्ठा ebt_entry *)chaininfo->data;
+		point = (struct ebt_entry *)chaininfo->data;
 		counter_base = cb_base + chaininfo->counter_offset;
 		sp++;
-		जारी;
-letsजारी:
-		poपूर्णांक = ebt_next_entry(poपूर्णांक);
+		continue;
+letscontinue:
+		point = ebt_next_entry(point);
 		i++;
-	पूर्ण
+	}
 
 	/* I actually like this :) */
-	अगर (chaininfo->policy == EBT_RETURN)
-		जाओ letsवापस;
-	अगर (chaininfo->policy == EBT_ACCEPT) अणु
-		पढ़ो_unlock_bh(&table->lock);
-		वापस NF_ACCEPT;
-	पूर्ण
-	पढ़ो_unlock_bh(&table->lock);
-	वापस NF_DROP;
-पूर्ण
+	if (chaininfo->policy == EBT_RETURN)
+		goto letsreturn;
+	if (chaininfo->policy == EBT_ACCEPT) {
+		read_unlock_bh(&table->lock);
+		return NF_ACCEPT;
+	}
+	read_unlock_bh(&table->lock);
+	return NF_DROP;
+}
 
-/* If it succeeds, वापसs element and locks mutex */
-अटल अंतरभूत व्योम *
-find_inlist_lock_noload(काष्ठा list_head *head, स्थिर अक्षर *name, पूर्णांक *error,
-			काष्ठा mutex *mutex)
-अणु
-	काष्ठा अणु
-		काष्ठा list_head list;
-		अक्षर name[EBT_FUNCTION_MAXNAMELEN];
-	पूर्ण *e;
+/* If it succeeds, returns element and locks mutex */
+static inline void *
+find_inlist_lock_noload(struct list_head *head, const char *name, int *error,
+			struct mutex *mutex)
+{
+	struct {
+		struct list_head list;
+		char name[EBT_FUNCTION_MAXNAMELEN];
+	} *e;
 
 	mutex_lock(mutex);
-	list_क्रम_each_entry(e, head, list) अणु
-		अगर (म_भेद(e->name, name) == 0)
-			वापस e;
-	पूर्ण
+	list_for_each_entry(e, head, list) {
+		if (strcmp(e->name, name) == 0)
+			return e;
+	}
 	*error = -ENOENT;
 	mutex_unlock(mutex);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल व्योम *
-find_inlist_lock(काष्ठा list_head *head, स्थिर अक्षर *name, स्थिर अक्षर *prefix,
-		 पूर्णांक *error, काष्ठा mutex *mutex)
-अणु
-	वापस try_then_request_module(
+static void *
+find_inlist_lock(struct list_head *head, const char *name, const char *prefix,
+		 int *error, struct mutex *mutex)
+{
+	return try_then_request_module(
 			find_inlist_lock_noload(head, name, error, mutex),
 			"%s%s", prefix, name);
-पूर्ण
+}
 
-अटल अंतरभूत काष्ठा ebt_table *
-find_table_lock(काष्ठा net *net, स्थिर अक्षर *name, पूर्णांक *error,
-		काष्ठा mutex *mutex)
-अणु
-	काष्ठा ebt_pernet *ebt_net = net_generic(net, ebt_pernet_id);
+static inline struct ebt_table *
+find_table_lock(struct net *net, const char *name, int *error,
+		struct mutex *mutex)
+{
+	struct ebt_pernet *ebt_net = net_generic(net, ebt_pernet_id);
 
-	वापस find_inlist_lock(&ebt_net->tables, name,
+	return find_inlist_lock(&ebt_net->tables, name,
 				"ebtable_", error, mutex);
-पूर्ण
+}
 
-अटल अंतरभूत व्योम ebt_मुक्त_table_info(काष्ठा ebt_table_info *info)
-अणु
-	पूर्णांक i;
+static inline void ebt_free_table_info(struct ebt_table_info *info)
+{
+	int i;
 
-	अगर (info->chainstack) अणु
-		क्रम_each_possible_cpu(i)
-			vमुक्त(info->chainstack[i]);
-		vमुक्त(info->chainstack);
-	पूर्ण
-पूर्ण
-अटल अंतरभूत पूर्णांक
-ebt_check_match(काष्ठा ebt_entry_match *m, काष्ठा xt_mtchk_param *par,
-		अचिन्हित पूर्णांक *cnt)
-अणु
-	स्थिर काष्ठा ebt_entry *e = par->entryinfo;
-	काष्ठा xt_match *match;
-	माप_प्रकार left = ((अक्षर *)e + e->watchers_offset) - (अक्षर *)m;
-	पूर्णांक ret;
+	if (info->chainstack) {
+		for_each_possible_cpu(i)
+			vfree(info->chainstack[i]);
+		vfree(info->chainstack);
+	}
+}
+static inline int
+ebt_check_match(struct ebt_entry_match *m, struct xt_mtchk_param *par,
+		unsigned int *cnt)
+{
+	const struct ebt_entry *e = par->entryinfo;
+	struct xt_match *match;
+	size_t left = ((char *)e + e->watchers_offset) - (char *)m;
+	int ret;
 
-	अगर (left < माप(काष्ठा ebt_entry_match) ||
-	    left - माप(काष्ठा ebt_entry_match) < m->match_size)
-		वापस -EINVAL;
+	if (left < sizeof(struct ebt_entry_match) ||
+	    left - sizeof(struct ebt_entry_match) < m->match_size)
+		return -EINVAL;
 
 	match = xt_find_match(NFPROTO_BRIDGE, m->u.name, m->u.revision);
-	अगर (IS_ERR(match) || match->family != NFPROTO_BRIDGE) अणु
-		अगर (!IS_ERR(match))
+	if (IS_ERR(match) || match->family != NFPROTO_BRIDGE) {
+		if (!IS_ERR(match))
 			module_put(match->me);
 		request_module("ebt_%s", m->u.name);
 		match = xt_find_match(NFPROTO_BRIDGE, m->u.name, m->u.revision);
-	पूर्ण
-	अगर (IS_ERR(match))
-		वापस PTR_ERR(match);
+	}
+	if (IS_ERR(match))
+		return PTR_ERR(match);
 	m->u.match = match;
 
 	par->match     = match;
 	par->matchinfo = m->data;
 	ret = xt_check_match(par, m->match_size,
 	      ntohs(e->ethproto), e->invflags & EBT_IPROTO);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		module_put(match->me);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	(*cnt)++;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक
-ebt_check_watcher(काष्ठा ebt_entry_watcher *w, काष्ठा xt_tgchk_param *par,
-		  अचिन्हित पूर्णांक *cnt)
-अणु
-	स्थिर काष्ठा ebt_entry *e = par->entryinfo;
-	काष्ठा xt_target *watcher;
-	माप_प्रकार left = ((अक्षर *)e + e->target_offset) - (अक्षर *)w;
-	पूर्णांक ret;
+static inline int
+ebt_check_watcher(struct ebt_entry_watcher *w, struct xt_tgchk_param *par,
+		  unsigned int *cnt)
+{
+	const struct ebt_entry *e = par->entryinfo;
+	struct xt_target *watcher;
+	size_t left = ((char *)e + e->target_offset) - (char *)w;
+	int ret;
 
-	अगर (left < माप(काष्ठा ebt_entry_watcher) ||
-	   left - माप(काष्ठा ebt_entry_watcher) < w->watcher_size)
-		वापस -EINVAL;
+	if (left < sizeof(struct ebt_entry_watcher) ||
+	   left - sizeof(struct ebt_entry_watcher) < w->watcher_size)
+		return -EINVAL;
 
 	watcher = xt_request_find_target(NFPROTO_BRIDGE, w->u.name, 0);
-	अगर (IS_ERR(watcher))
-		वापस PTR_ERR(watcher);
+	if (IS_ERR(watcher))
+		return PTR_ERR(watcher);
 
-	अगर (watcher->family != NFPROTO_BRIDGE) अणु
+	if (watcher->family != NFPROTO_BRIDGE) {
 		module_put(watcher->me);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
 	w->u.watcher = watcher;
 
@@ -422,447 +421,447 @@ ebt_check_watcher(काष्ठा ebt_entry_watcher *w, काष्ठा xt
 	par->targinfo = w->data;
 	ret = xt_check_target(par, w->watcher_size,
 	      ntohs(e->ethproto), e->invflags & EBT_IPROTO);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		module_put(watcher->me);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
 	(*cnt)++;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ebt_verअगरy_poपूर्णांकers(स्थिर काष्ठा ebt_replace *repl,
-			       काष्ठा ebt_table_info *newinfo)
-अणु
-	अचिन्हित पूर्णांक limit = repl->entries_size;
-	अचिन्हित पूर्णांक valid_hooks = repl->valid_hooks;
-	अचिन्हित पूर्णांक offset = 0;
-	पूर्णांक i;
+static int ebt_verify_pointers(const struct ebt_replace *repl,
+			       struct ebt_table_info *newinfo)
+{
+	unsigned int limit = repl->entries_size;
+	unsigned int valid_hooks = repl->valid_hooks;
+	unsigned int offset = 0;
+	int i;
 
-	क्रम (i = 0; i < NF_BR_NUMHOOKS; i++)
-		newinfo->hook_entry[i] = शून्य;
+	for (i = 0; i < NF_BR_NUMHOOKS; i++)
+		newinfo->hook_entry[i] = NULL;
 
 	newinfo->entries_size = repl->entries_size;
 	newinfo->nentries = repl->nentries;
 
-	जबतक (offset < limit) अणु
-		माप_प्रकार left = limit - offset;
-		काष्ठा ebt_entry *e = (व्योम *)newinfo->entries + offset;
+	while (offset < limit) {
+		size_t left = limit - offset;
+		struct ebt_entry *e = (void *)newinfo->entries + offset;
 
-		अगर (left < माप(अचिन्हित पूर्णांक))
-			अवरोध;
+		if (left < sizeof(unsigned int))
+			break;
 
-		क्रम (i = 0; i < NF_BR_NUMHOOKS; i++) अणु
-			अगर ((valid_hooks & (1 << i)) == 0)
-				जारी;
-			अगर ((अक्षर __user *)repl->hook_entry[i] ==
+		for (i = 0; i < NF_BR_NUMHOOKS; i++) {
+			if ((valid_hooks & (1 << i)) == 0)
+				continue;
+			if ((char __user *)repl->hook_entry[i] ==
 			     repl->entries + offset)
-				अवरोध;
-		पूर्ण
+				break;
+		}
 
-		अगर (i != NF_BR_NUMHOOKS || !(e->biपंचांगask & EBT_ENTRY_OR_ENTRIES)) अणु
-			अगर (e->biपंचांगask != 0) अणु
+		if (i != NF_BR_NUMHOOKS || !(e->bitmask & EBT_ENTRY_OR_ENTRIES)) {
+			if (e->bitmask != 0) {
 				/* we make userspace set this right,
 				 * so there is no misunderstanding
 				 */
-				वापस -EINVAL;
-			पूर्ण
-			अगर (i != NF_BR_NUMHOOKS)
-				newinfo->hook_entry[i] = (काष्ठा ebt_entries *)e;
-			अगर (left < माप(काष्ठा ebt_entries))
-				अवरोध;
-			offset += माप(काष्ठा ebt_entries);
-		पूर्ण अन्यथा अणु
-			अगर (left < माप(काष्ठा ebt_entry))
-				अवरोध;
-			अगर (left < e->next_offset)
-				अवरोध;
-			अगर (e->next_offset < माप(काष्ठा ebt_entry))
-				वापस -EINVAL;
+				return -EINVAL;
+			}
+			if (i != NF_BR_NUMHOOKS)
+				newinfo->hook_entry[i] = (struct ebt_entries *)e;
+			if (left < sizeof(struct ebt_entries))
+				break;
+			offset += sizeof(struct ebt_entries);
+		} else {
+			if (left < sizeof(struct ebt_entry))
+				break;
+			if (left < e->next_offset)
+				break;
+			if (e->next_offset < sizeof(struct ebt_entry))
+				return -EINVAL;
 			offset += e->next_offset;
-		पूर्ण
-	पूर्ण
-	अगर (offset != limit)
-		वापस -EINVAL;
+		}
+	}
+	if (offset != limit)
+		return -EINVAL;
 
-	/* check अगर all valid hooks have a chain */
-	क्रम (i = 0; i < NF_BR_NUMHOOKS; i++) अणु
-		अगर (!newinfo->hook_entry[i] &&
+	/* check if all valid hooks have a chain */
+	for (i = 0; i < NF_BR_NUMHOOKS; i++) {
+		if (!newinfo->hook_entry[i] &&
 		   (valid_hooks & (1 << i)))
-			वापस -EINVAL;
-	पूर्ण
-	वापस 0;
-पूर्ण
+			return -EINVAL;
+	}
+	return 0;
+}
 
 /* this one is very careful, as it is the first function
  * to parse the userspace data
  */
-अटल अंतरभूत पूर्णांक
-ebt_check_entry_size_and_hooks(स्थिर काष्ठा ebt_entry *e,
-			       स्थिर काष्ठा ebt_table_info *newinfo,
-			       अचिन्हित पूर्णांक *n, अचिन्हित पूर्णांक *cnt,
-			       अचिन्हित पूर्णांक *totalcnt, अचिन्हित पूर्णांक *udc_cnt)
-अणु
-	पूर्णांक i;
+static inline int
+ebt_check_entry_size_and_hooks(const struct ebt_entry *e,
+			       const struct ebt_table_info *newinfo,
+			       unsigned int *n, unsigned int *cnt,
+			       unsigned int *totalcnt, unsigned int *udc_cnt)
+{
+	int i;
 
-	क्रम (i = 0; i < NF_BR_NUMHOOKS; i++) अणु
-		अगर ((व्योम *)e == (व्योम *)newinfo->hook_entry[i])
-			अवरोध;
-	पूर्ण
+	for (i = 0; i < NF_BR_NUMHOOKS; i++) {
+		if ((void *)e == (void *)newinfo->hook_entry[i])
+			break;
+	}
 	/* beginning of a new chain
-	 * अगर i == NF_BR_NUMHOOKS it must be a user defined chain
+	 * if i == NF_BR_NUMHOOKS it must be a user defined chain
 	 */
-	अगर (i != NF_BR_NUMHOOKS || !e->biपंचांगask) अणु
-		/* this checks अगर the previous chain has as many entries
+	if (i != NF_BR_NUMHOOKS || !e->bitmask) {
+		/* this checks if the previous chain has as many entries
 		 * as it said it has
 		 */
-		अगर (*n != *cnt)
-			वापस -EINVAL;
+		if (*n != *cnt)
+			return -EINVAL;
 
-		अगर (((काष्ठा ebt_entries *)e)->policy != EBT_DROP &&
-		   ((काष्ठा ebt_entries *)e)->policy != EBT_ACCEPT) अणु
+		if (((struct ebt_entries *)e)->policy != EBT_DROP &&
+		   ((struct ebt_entries *)e)->policy != EBT_ACCEPT) {
 			/* only RETURN from udc */
-			अगर (i != NF_BR_NUMHOOKS ||
-			   ((काष्ठा ebt_entries *)e)->policy != EBT_RETURN)
-				वापस -EINVAL;
-		पूर्ण
-		अगर (i == NF_BR_NUMHOOKS) /* it's a user defined chain */
+			if (i != NF_BR_NUMHOOKS ||
+			   ((struct ebt_entries *)e)->policy != EBT_RETURN)
+				return -EINVAL;
+		}
+		if (i == NF_BR_NUMHOOKS) /* it's a user defined chain */
 			(*udc_cnt)++;
-		अगर (((काष्ठा ebt_entries *)e)->counter_offset != *totalcnt)
-			वापस -EINVAL;
-		*n = ((काष्ठा ebt_entries *)e)->nentries;
+		if (((struct ebt_entries *)e)->counter_offset != *totalcnt)
+			return -EINVAL;
+		*n = ((struct ebt_entries *)e)->nentries;
 		*cnt = 0;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 	/* a plain old entry, heh */
-	अगर (माप(काष्ठा ebt_entry) > e->watchers_offset ||
+	if (sizeof(struct ebt_entry) > e->watchers_offset ||
 	   e->watchers_offset > e->target_offset ||
 	   e->target_offset >= e->next_offset)
-		वापस -EINVAL;
+		return -EINVAL;
 
-	/* this is not checked anywhere अन्यथा */
-	अगर (e->next_offset - e->target_offset < माप(काष्ठा ebt_entry_target))
-		वापस -EINVAL;
+	/* this is not checked anywhere else */
+	if (e->next_offset - e->target_offset < sizeof(struct ebt_entry_target))
+		return -EINVAL;
 
 	(*cnt)++;
 	(*totalcnt)++;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-काष्ठा ebt_cl_stack अणु
-	काष्ठा ebt_chainstack cs;
-	पूर्णांक from;
-	अचिन्हित पूर्णांक hookmask;
-पूर्ण;
+struct ebt_cl_stack {
+	struct ebt_chainstack cs;
+	int from;
+	unsigned int hookmask;
+};
 
-/* We need these positions to check that the jumps to a dअगरferent part of the
+/* We need these positions to check that the jumps to a different part of the
  * entries is a jump to the beginning of a new chain.
  */
-अटल अंतरभूत पूर्णांक
-ebt_get_udc_positions(काष्ठा ebt_entry *e, काष्ठा ebt_table_info *newinfo,
-		      अचिन्हित पूर्णांक *n, काष्ठा ebt_cl_stack *udc)
-अणु
-	पूर्णांक i;
+static inline int
+ebt_get_udc_positions(struct ebt_entry *e, struct ebt_table_info *newinfo,
+		      unsigned int *n, struct ebt_cl_stack *udc)
+{
+	int i;
 
-	/* we're only पूर्णांकerested in chain starts */
-	अगर (e->biपंचांगask)
-		वापस 0;
-	क्रम (i = 0; i < NF_BR_NUMHOOKS; i++) अणु
-		अगर (newinfo->hook_entry[i] == (काष्ठा ebt_entries *)e)
-			अवरोध;
-	पूर्ण
+	/* we're only interested in chain starts */
+	if (e->bitmask)
+		return 0;
+	for (i = 0; i < NF_BR_NUMHOOKS; i++) {
+		if (newinfo->hook_entry[i] == (struct ebt_entries *)e)
+			break;
+	}
 	/* only care about udc */
-	अगर (i != NF_BR_NUMHOOKS)
-		वापस 0;
+	if (i != NF_BR_NUMHOOKS)
+		return 0;
 
-	udc[*n].cs.chaininfo = (काष्ठा ebt_entries *)e;
+	udc[*n].cs.chaininfo = (struct ebt_entries *)e;
 	/* these initialisations are depended on later in check_chainloops() */
 	udc[*n].cs.n = 0;
 	udc[*n].hookmask = 0;
 
 	(*n)++;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक
-ebt_cleanup_match(काष्ठा ebt_entry_match *m, काष्ठा net *net, अचिन्हित पूर्णांक *i)
-अणु
-	काष्ठा xt_mtdtor_param par;
+static inline int
+ebt_cleanup_match(struct ebt_entry_match *m, struct net *net, unsigned int *i)
+{
+	struct xt_mtdtor_param par;
 
-	अगर (i && (*i)-- == 0)
-		वापस 1;
+	if (i && (*i)-- == 0)
+		return 1;
 
 	par.net       = net;
 	par.match     = m->u.match;
 	par.matchinfo = m->data;
 	par.family    = NFPROTO_BRIDGE;
-	अगर (par.match->destroy != शून्य)
+	if (par.match->destroy != NULL)
 		par.match->destroy(&par);
 	module_put(par.match->me);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक
-ebt_cleanup_watcher(काष्ठा ebt_entry_watcher *w, काष्ठा net *net, अचिन्हित पूर्णांक *i)
-अणु
-	काष्ठा xt_tgdtor_param par;
+static inline int
+ebt_cleanup_watcher(struct ebt_entry_watcher *w, struct net *net, unsigned int *i)
+{
+	struct xt_tgdtor_param par;
 
-	अगर (i && (*i)-- == 0)
-		वापस 1;
+	if (i && (*i)-- == 0)
+		return 1;
 
 	par.net      = net;
 	par.target   = w->u.watcher;
 	par.targinfo = w->data;
 	par.family   = NFPROTO_BRIDGE;
-	अगर (par.target->destroy != शून्य)
+	if (par.target->destroy != NULL)
 		par.target->destroy(&par);
 	module_put(par.target->me);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक
-ebt_cleanup_entry(काष्ठा ebt_entry *e, काष्ठा net *net, अचिन्हित पूर्णांक *cnt)
-अणु
-	काष्ठा xt_tgdtor_param par;
-	काष्ठा ebt_entry_target *t;
+static inline int
+ebt_cleanup_entry(struct ebt_entry *e, struct net *net, unsigned int *cnt)
+{
+	struct xt_tgdtor_param par;
+	struct ebt_entry_target *t;
 
-	अगर (e->biपंचांगask == 0)
-		वापस 0;
-	/* we're करोne */
-	अगर (cnt && (*cnt)-- == 0)
-		वापस 1;
-	EBT_WATCHER_ITERATE(e, ebt_cleanup_watcher, net, शून्य);
-	EBT_MATCH_ITERATE(e, ebt_cleanup_match, net, शून्य);
+	if (e->bitmask == 0)
+		return 0;
+	/* we're done */
+	if (cnt && (*cnt)-- == 0)
+		return 1;
+	EBT_WATCHER_ITERATE(e, ebt_cleanup_watcher, net, NULL);
+	EBT_MATCH_ITERATE(e, ebt_cleanup_match, net, NULL);
 	t = ebt_get_target(e);
 
 	par.net      = net;
 	par.target   = t->u.target;
 	par.targinfo = t->data;
 	par.family   = NFPROTO_BRIDGE;
-	अगर (par.target->destroy != शून्य)
+	if (par.target->destroy != NULL)
 		par.target->destroy(&par);
 	module_put(par.target->me);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक
-ebt_check_entry(काष्ठा ebt_entry *e, काष्ठा net *net,
-		स्थिर काष्ठा ebt_table_info *newinfo,
-		स्थिर अक्षर *name, अचिन्हित पूर्णांक *cnt,
-		काष्ठा ebt_cl_stack *cl_s, अचिन्हित पूर्णांक udc_cnt)
-अणु
-	काष्ठा ebt_entry_target *t;
-	काष्ठा xt_target *target;
-	अचिन्हित पूर्णांक i, j, hook = 0, hookmask = 0;
-	माप_प्रकार gap;
-	पूर्णांक ret;
-	काष्ठा xt_mtchk_param mtpar;
-	काष्ठा xt_tgchk_param tgpar;
+static inline int
+ebt_check_entry(struct ebt_entry *e, struct net *net,
+		const struct ebt_table_info *newinfo,
+		const char *name, unsigned int *cnt,
+		struct ebt_cl_stack *cl_s, unsigned int udc_cnt)
+{
+	struct ebt_entry_target *t;
+	struct xt_target *target;
+	unsigned int i, j, hook = 0, hookmask = 0;
+	size_t gap;
+	int ret;
+	struct xt_mtchk_param mtpar;
+	struct xt_tgchk_param tgpar;
 
-	/* करोn't mess with the काष्ठा ebt_entries */
-	अगर (e->biपंचांगask == 0)
-		वापस 0;
+	/* don't mess with the struct ebt_entries */
+	if (e->bitmask == 0)
+		return 0;
 
-	अगर (e->biपंचांगask & ~EBT_F_MASK)
-		वापस -EINVAL;
+	if (e->bitmask & ~EBT_F_MASK)
+		return -EINVAL;
 
-	अगर (e->invflags & ~EBT_INV_MASK)
-		वापस -EINVAL;
+	if (e->invflags & ~EBT_INV_MASK)
+		return -EINVAL;
 
-	अगर ((e->biपंचांगask & EBT_NOPROTO) && (e->biपंचांगask & EBT_802_3))
-		वापस -EINVAL;
+	if ((e->bitmask & EBT_NOPROTO) && (e->bitmask & EBT_802_3))
+		return -EINVAL;
 
-	/* what hook करो we beदीर्घ to? */
-	क्रम (i = 0; i < NF_BR_NUMHOOKS; i++) अणु
-		अगर (!newinfo->hook_entry[i])
-			जारी;
-		अगर ((अक्षर *)newinfo->hook_entry[i] < (अक्षर *)e)
+	/* what hook do we belong to? */
+	for (i = 0; i < NF_BR_NUMHOOKS; i++) {
+		if (!newinfo->hook_entry[i])
+			continue;
+		if ((char *)newinfo->hook_entry[i] < (char *)e)
 			hook = i;
-		अन्यथा
-			अवरोध;
-	पूर्ण
+		else
+			break;
+	}
 	/* (1 << NF_BR_NUMHOOKS) tells the check functions the rule is on
 	 * a base chain
 	 */
-	अगर (i < NF_BR_NUMHOOKS)
+	if (i < NF_BR_NUMHOOKS)
 		hookmask = (1 << hook) | (1 << NF_BR_NUMHOOKS);
-	अन्यथा अणु
-		क्रम (i = 0; i < udc_cnt; i++)
-			अगर ((अक्षर *)(cl_s[i].cs.chaininfo) > (अक्षर *)e)
-				अवरोध;
-		अगर (i == 0)
+	else {
+		for (i = 0; i < udc_cnt; i++)
+			if ((char *)(cl_s[i].cs.chaininfo) > (char *)e)
+				break;
+		if (i == 0)
 			hookmask = (1 << hook) | (1 << NF_BR_NUMHOOKS);
-		अन्यथा
+		else
 			hookmask = cl_s[i - 1].hookmask;
-	पूर्ण
+	}
 	i = 0;
 
-	स_रखो(&mtpar, 0, माप(mtpar));
-	स_रखो(&tgpar, 0, माप(tgpar));
+	memset(&mtpar, 0, sizeof(mtpar));
+	memset(&tgpar, 0, sizeof(tgpar));
 	mtpar.net	= tgpar.net       = net;
 	mtpar.table     = tgpar.table     = name;
 	mtpar.entryinfo = tgpar.entryinfo = e;
 	mtpar.hook_mask = tgpar.hook_mask = hookmask;
 	mtpar.family    = tgpar.family    = NFPROTO_BRIDGE;
 	ret = EBT_MATCH_ITERATE(e, ebt_check_match, &mtpar, &i);
-	अगर (ret != 0)
-		जाओ cleanup_matches;
+	if (ret != 0)
+		goto cleanup_matches;
 	j = 0;
 	ret = EBT_WATCHER_ITERATE(e, ebt_check_watcher, &tgpar, &j);
-	अगर (ret != 0)
-		जाओ cleanup_watchers;
+	if (ret != 0)
+		goto cleanup_watchers;
 	t = ebt_get_target(e);
 	gap = e->next_offset - e->target_offset;
 
 	target = xt_request_find_target(NFPROTO_BRIDGE, t->u.name, 0);
-	अगर (IS_ERR(target)) अणु
+	if (IS_ERR(target)) {
 		ret = PTR_ERR(target);
-		जाओ cleanup_watchers;
-	पूर्ण
+		goto cleanup_watchers;
+	}
 
-	/* Reject UNSPEC, xtables verdicts/वापस values are incompatible */
-	अगर (target->family != NFPROTO_BRIDGE) अणु
+	/* Reject UNSPEC, xtables verdicts/return values are incompatible */
+	if (target->family != NFPROTO_BRIDGE) {
 		module_put(target->me);
 		ret = -ENOENT;
-		जाओ cleanup_watchers;
-	पूर्ण
+		goto cleanup_watchers;
+	}
 
 	t->u.target = target;
-	अगर (t->u.target == &ebt_standard_target) अणु
-		अगर (gap < माप(काष्ठा ebt_standard_target)) अणु
+	if (t->u.target == &ebt_standard_target) {
+		if (gap < sizeof(struct ebt_standard_target)) {
 			ret = -EFAULT;
-			जाओ cleanup_watchers;
-		पूर्ण
-		अगर (((काष्ठा ebt_standard_target *)t)->verdict <
-		   -NUM_STANDARD_TARGETS) अणु
+			goto cleanup_watchers;
+		}
+		if (((struct ebt_standard_target *)t)->verdict <
+		   -NUM_STANDARD_TARGETS) {
 			ret = -EFAULT;
-			जाओ cleanup_watchers;
-		पूर्ण
-	पूर्ण अन्यथा अगर (t->target_size > gap - माप(काष्ठा ebt_entry_target)) अणु
+			goto cleanup_watchers;
+		}
+	} else if (t->target_size > gap - sizeof(struct ebt_entry_target)) {
 		module_put(t->u.target->me);
 		ret = -EFAULT;
-		जाओ cleanup_watchers;
-	पूर्ण
+		goto cleanup_watchers;
+	}
 
 	tgpar.target   = target;
 	tgpar.targinfo = t->data;
 	ret = xt_check_target(&tgpar, t->target_size,
 	      ntohs(e->ethproto), e->invflags & EBT_IPROTO);
-	अगर (ret < 0) अणु
+	if (ret < 0) {
 		module_put(target->me);
-		जाओ cleanup_watchers;
-	पूर्ण
+		goto cleanup_watchers;
+	}
 	(*cnt)++;
-	वापस 0;
+	return 0;
 cleanup_watchers:
 	EBT_WATCHER_ITERATE(e, ebt_cleanup_watcher, net, &j);
 cleanup_matches:
 	EBT_MATCH_ITERATE(e, ebt_cleanup_match, net, &i);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-/* checks क्रम loops and sets the hook mask क्रम udc
- * the hook mask क्रम udc tells us from which base chains the udc can be
+/* checks for loops and sets the hook mask for udc
+ * the hook mask for udc tells us from which base chains the udc can be
  * accessed. This mask is a parameter to the check() functions of the extensions
  */
-अटल पूर्णांक check_chainloops(स्थिर काष्ठा ebt_entries *chain, काष्ठा ebt_cl_stack *cl_s,
-			    अचिन्हित पूर्णांक udc_cnt, अचिन्हित पूर्णांक hooknr, अक्षर *base)
-अणु
-	पूर्णांक i, chain_nr = -1, pos = 0, nentries = chain->nentries, verdict;
-	स्थिर काष्ठा ebt_entry *e = (काष्ठा ebt_entry *)chain->data;
-	स्थिर काष्ठा ebt_entry_target *t;
+static int check_chainloops(const struct ebt_entries *chain, struct ebt_cl_stack *cl_s,
+			    unsigned int udc_cnt, unsigned int hooknr, char *base)
+{
+	int i, chain_nr = -1, pos = 0, nentries = chain->nentries, verdict;
+	const struct ebt_entry *e = (struct ebt_entry *)chain->data;
+	const struct ebt_entry_target *t;
 
-	जबतक (pos < nentries || chain_nr != -1) अणु
+	while (pos < nentries || chain_nr != -1) {
 		/* end of udc, go back one 'recursion' step */
-		अगर (pos == nentries) अणु
-			/* put back values of the समय when this chain was called */
+		if (pos == nentries) {
+			/* put back values of the time when this chain was called */
 			e = cl_s[chain_nr].cs.e;
-			अगर (cl_s[chain_nr].from != -1)
+			if (cl_s[chain_nr].from != -1)
 				nentries =
 				cl_s[cl_s[chain_nr].from].cs.chaininfo->nentries;
-			अन्यथा
+			else
 				nentries = chain->nentries;
 			pos = cl_s[chain_nr].cs.n;
 			/* make sure we won't see a loop that isn't one */
 			cl_s[chain_nr].cs.n = 0;
 			chain_nr = cl_s[chain_nr].from;
-			अगर (pos == nentries)
-				जारी;
-		पूर्ण
+			if (pos == nentries)
+				continue;
+		}
 		t = ebt_get_target_c(e);
-		अगर (म_भेद(t->u.name, EBT_STANDARD_TARGET))
-			जाओ letsजारी;
-		अगर (e->target_offset + माप(काष्ठा ebt_standard_target) >
+		if (strcmp(t->u.name, EBT_STANDARD_TARGET))
+			goto letscontinue;
+		if (e->target_offset + sizeof(struct ebt_standard_target) >
 		   e->next_offset)
-			वापस -1;
+			return -1;
 
-		verdict = ((काष्ठा ebt_standard_target *)t)->verdict;
-		अगर (verdict >= 0) अणु /* jump to another chain */
-			काष्ठा ebt_entries *hlp2 =
-			   (काष्ठा ebt_entries *)(base + verdict);
-			क्रम (i = 0; i < udc_cnt; i++)
-				अगर (hlp2 == cl_s[i].cs.chaininfo)
-					अवरोध;
+		verdict = ((struct ebt_standard_target *)t)->verdict;
+		if (verdict >= 0) { /* jump to another chain */
+			struct ebt_entries *hlp2 =
+			   (struct ebt_entries *)(base + verdict);
+			for (i = 0; i < udc_cnt; i++)
+				if (hlp2 == cl_s[i].cs.chaininfo)
+					break;
 			/* bad destination or loop */
-			अगर (i == udc_cnt)
-				वापस -1;
+			if (i == udc_cnt)
+				return -1;
 
-			अगर (cl_s[i].cs.n)
-				वापस -1;
+			if (cl_s[i].cs.n)
+				return -1;
 
-			अगर (cl_s[i].hookmask & (1 << hooknr))
-				जाओ letsजारी;
+			if (cl_s[i].hookmask & (1 << hooknr))
+				goto letscontinue;
 			/* this can't be 0, so the loop test is correct */
 			cl_s[i].cs.n = pos + 1;
 			pos = 0;
 			cl_s[i].cs.e = ebt_next_entry(e);
-			e = (काष्ठा ebt_entry *)(hlp2->data);
+			e = (struct ebt_entry *)(hlp2->data);
 			nentries = hlp2->nentries;
 			cl_s[i].from = chain_nr;
 			chain_nr = i;
-			/* this udc is accessible from the base chain क्रम hooknr */
+			/* this udc is accessible from the base chain for hooknr */
 			cl_s[i].hookmask |= (1 << hooknr);
-			जारी;
-		पूर्ण
-letsजारी:
+			continue;
+		}
+letscontinue:
 		e = ebt_next_entry(e);
 		pos++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-/* करो the parsing of the table/chains/entries/matches/watchers/tarमाला_लो, heh */
-अटल पूर्णांक translate_table(काष्ठा net *net, स्थिर अक्षर *name,
-			   काष्ठा ebt_table_info *newinfo)
-अणु
-	अचिन्हित पूर्णांक i, j, k, udc_cnt;
-	पूर्णांक ret;
-	काष्ठा ebt_cl_stack *cl_s = शून्य; /* used in the checking क्रम chain loops */
+/* do the parsing of the table/chains/entries/matches/watchers/targets, heh */
+static int translate_table(struct net *net, const char *name,
+			   struct ebt_table_info *newinfo)
+{
+	unsigned int i, j, k, udc_cnt;
+	int ret;
+	struct ebt_cl_stack *cl_s = NULL; /* used in the checking for chain loops */
 
 	i = 0;
-	जबतक (i < NF_BR_NUMHOOKS && !newinfo->hook_entry[i])
+	while (i < NF_BR_NUMHOOKS && !newinfo->hook_entry[i])
 		i++;
-	अगर (i == NF_BR_NUMHOOKS)
-		वापस -EINVAL;
+	if (i == NF_BR_NUMHOOKS)
+		return -EINVAL;
 
-	अगर (newinfo->hook_entry[i] != (काष्ठा ebt_entries *)newinfo->entries)
-		वापस -EINVAL;
+	if (newinfo->hook_entry[i] != (struct ebt_entries *)newinfo->entries)
+		return -EINVAL;
 
 	/* make sure chains are ordered after each other in same order
 	 * as their corresponding hooks
 	 */
-	क्रम (j = i + 1; j < NF_BR_NUMHOOKS; j++) अणु
-		अगर (!newinfo->hook_entry[j])
-			जारी;
-		अगर (newinfo->hook_entry[j] <= newinfo->hook_entry[i])
-			वापस -EINVAL;
+	for (j = i + 1; j < NF_BR_NUMHOOKS; j++) {
+		if (!newinfo->hook_entry[j])
+			continue;
+		if (newinfo->hook_entry[j] <= newinfo->hook_entry[i])
+			return -EINVAL;
 
 		i = j;
-	पूर्ण
+	}
 
-	/* करो some early checkings and initialize some things */
-	i = 0; /* holds the expected nr. of entries क्रम the chain */
-	j = 0; /* holds the up to now counted entries क्रम the chain */
+	/* do some early checkings and initialize some things */
+	i = 0; /* holds the expected nr. of entries for the chain */
+	j = 0; /* holds the up to now counted entries for the chain */
 	k = 0; /* holds the total nr. of entries, should equal
 		* newinfo->nentries afterwards
 		*/
@@ -871,62 +870,62 @@ letsजारी:
 	   ebt_check_entry_size_and_hooks, newinfo,
 	   &i, &j, &k, &udc_cnt);
 
-	अगर (ret != 0)
-		वापस ret;
+	if (ret != 0)
+		return ret;
 
-	अगर (i != j)
-		वापस -EINVAL;
+	if (i != j)
+		return -EINVAL;
 
-	अगर (k != newinfo->nentries)
-		वापस -EINVAL;
+	if (k != newinfo->nentries)
+		return -EINVAL;
 
 	/* get the location of the udc, put them in an array
-	 * जबतक we're at it, allocate the chainstack
+	 * while we're at it, allocate the chainstack
 	 */
-	अगर (udc_cnt) अणु
-		/* this will get मुक्त'd in करो_replace()/ebt_रेजिस्टर_table()
-		 * अगर an error occurs
+	if (udc_cnt) {
+		/* this will get free'd in do_replace()/ebt_register_table()
+		 * if an error occurs
 		 */
 		newinfo->chainstack =
-			vदो_स्मृति(array_size(nr_cpu_ids,
-					   माप(*(newinfo->chainstack))));
-		अगर (!newinfo->chainstack)
-			वापस -ENOMEM;
-		क्रम_each_possible_cpu(i) अणु
+			vmalloc(array_size(nr_cpu_ids,
+					   sizeof(*(newinfo->chainstack))));
+		if (!newinfo->chainstack)
+			return -ENOMEM;
+		for_each_possible_cpu(i) {
 			newinfo->chainstack[i] =
-			  vदो_स्मृति(array_size(udc_cnt, माप(*(newinfo->chainstack[0]))));
-			अगर (!newinfo->chainstack[i]) अणु
-				जबतक (i)
-					vमुक्त(newinfo->chainstack[--i]);
-				vमुक्त(newinfo->chainstack);
-				newinfo->chainstack = शून्य;
-				वापस -ENOMEM;
-			पूर्ण
-		पूर्ण
+			  vmalloc(array_size(udc_cnt, sizeof(*(newinfo->chainstack[0]))));
+			if (!newinfo->chainstack[i]) {
+				while (i)
+					vfree(newinfo->chainstack[--i]);
+				vfree(newinfo->chainstack);
+				newinfo->chainstack = NULL;
+				return -ENOMEM;
+			}
+		}
 
-		cl_s = vदो_स्मृति(array_size(udc_cnt, माप(*cl_s)));
-		अगर (!cl_s)
-			वापस -ENOMEM;
+		cl_s = vmalloc(array_size(udc_cnt, sizeof(*cl_s)));
+		if (!cl_s)
+			return -ENOMEM;
 		i = 0; /* the i'th udc */
 		EBT_ENTRY_ITERATE(newinfo->entries, newinfo->entries_size,
 		   ebt_get_udc_positions, newinfo, &i, cl_s);
 		/* sanity check */
-		अगर (i != udc_cnt) अणु
-			vमुक्त(cl_s);
-			वापस -EFAULT;
-		पूर्ण
-	पूर्ण
+		if (i != udc_cnt) {
+			vfree(cl_s);
+			return -EFAULT;
+		}
+	}
 
-	/* Check क्रम loops */
-	क्रम (i = 0; i < NF_BR_NUMHOOKS; i++)
-		अगर (newinfo->hook_entry[i])
-			अगर (check_chainloops(newinfo->hook_entry[i],
-			   cl_s, udc_cnt, i, newinfo->entries)) अणु
-				vमुक्त(cl_s);
-				वापस -EINVAL;
-			पूर्ण
+	/* Check for loops */
+	for (i = 0; i < NF_BR_NUMHOOKS; i++)
+		if (newinfo->hook_entry[i])
+			if (check_chainloops(newinfo->hook_entry[i],
+			   cl_s, udc_cnt, i, newinfo->entries)) {
+				vfree(cl_s);
+				return -EINVAL;
+			}
 
-	/* we now know the following (aदीर्घ with E=mcतऑ):
+	/* we now know the following (along with E=mc²):
 	 *  - the nr of entries in each chain is right
 	 *  - the size of the allocated space is right
 	 *  - all valid hooks have a corresponding chain
@@ -934,781 +933,781 @@ letsजारी:
 	 *  - wrong data can still be on the level of a single entry
 	 *  - could be there are jumps to places that are not the
 	 *    beginning of a chain. This can only occur in chains that
-	 *    are not accessible from any base chains, so we करोn't care.
+	 *    are not accessible from any base chains, so we don't care.
 	 */
 
-	/* used to know what we need to clean up अगर something goes wrong */
+	/* used to know what we need to clean up if something goes wrong */
 	i = 0;
 	ret = EBT_ENTRY_ITERATE(newinfo->entries, newinfo->entries_size,
 	   ebt_check_entry, net, newinfo, name, &i, cl_s, udc_cnt);
-	अगर (ret != 0) अणु
+	if (ret != 0) {
 		EBT_ENTRY_ITERATE(newinfo->entries, newinfo->entries_size,
 				  ebt_cleanup_entry, net, &i);
-	पूर्ण
-	vमुक्त(cl_s);
-	वापस ret;
-पूर्ण
+	}
+	vfree(cl_s);
+	return ret;
+}
 
-/* called under ग_लिखो_lock */
-अटल व्योम get_counters(स्थिर काष्ठा ebt_counter *oldcounters,
-			 काष्ठा ebt_counter *counters, अचिन्हित पूर्णांक nentries)
-अणु
-	पूर्णांक i, cpu;
-	काष्ठा ebt_counter *counter_base;
+/* called under write_lock */
+static void get_counters(const struct ebt_counter *oldcounters,
+			 struct ebt_counter *counters, unsigned int nentries)
+{
+	int i, cpu;
+	struct ebt_counter *counter_base;
 
 	/* counters of cpu 0 */
-	स_नकल(counters, oldcounters,
-	       माप(काष्ठा ebt_counter) * nentries);
+	memcpy(counters, oldcounters,
+	       sizeof(struct ebt_counter) * nentries);
 
 	/* add other counters to those of cpu 0 */
-	क्रम_each_possible_cpu(cpu) अणु
-		अगर (cpu == 0)
-			जारी;
+	for_each_possible_cpu(cpu) {
+		if (cpu == 0)
+			continue;
 		counter_base = COUNTER_BASE(oldcounters, nentries, cpu);
-		क्रम (i = 0; i < nentries; i++)
+		for (i = 0; i < nentries; i++)
 			ADD_COUNTER(counters[i], counter_base[i].bcnt,
 				    counter_base[i].pcnt);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक करो_replace_finish(काष्ठा net *net, काष्ठा ebt_replace *repl,
-			      काष्ठा ebt_table_info *newinfo)
-अणु
-	पूर्णांक ret;
-	काष्ठा ebt_counter *countersपंचांगp = शून्य;
+static int do_replace_finish(struct net *net, struct ebt_replace *repl,
+			      struct ebt_table_info *newinfo)
+{
+	int ret;
+	struct ebt_counter *counterstmp = NULL;
 	/* used to be able to unlock earlier */
-	काष्ठा ebt_table_info *table;
-	काष्ठा ebt_table *t;
+	struct ebt_table_info *table;
+	struct ebt_table *t;
 
 	/* the user wants counters back
-	 * the check on the size is करोne later, when we have the lock
+	 * the check on the size is done later, when we have the lock
 	 */
-	अगर (repl->num_counters) अणु
-		अचिन्हित दीर्घ size = repl->num_counters * माप(*countersपंचांगp);
-		countersपंचांगp = vदो_स्मृति(size);
-		अगर (!countersपंचांगp)
-			वापस -ENOMEM;
-	पूर्ण
+	if (repl->num_counters) {
+		unsigned long size = repl->num_counters * sizeof(*counterstmp);
+		counterstmp = vmalloc(size);
+		if (!counterstmp)
+			return -ENOMEM;
+	}
 
-	newinfo->chainstack = शून्य;
-	ret = ebt_verअगरy_poपूर्णांकers(repl, newinfo);
-	अगर (ret != 0)
-		जाओ मुक्त_countersपंचांगp;
+	newinfo->chainstack = NULL;
+	ret = ebt_verify_pointers(repl, newinfo);
+	if (ret != 0)
+		goto free_counterstmp;
 
 	ret = translate_table(net, repl->name, newinfo);
 
-	अगर (ret != 0)
-		जाओ मुक्त_countersपंचांगp;
+	if (ret != 0)
+		goto free_counterstmp;
 
 	t = find_table_lock(net, repl->name, &ret, &ebt_mutex);
-	अगर (!t) अणु
+	if (!t) {
 		ret = -ENOENT;
-		जाओ मुक्त_iterate;
-	पूर्ण
+		goto free_iterate;
+	}
 
-	/* the table करोesn't like it */
-	अगर (t->check && (ret = t->check(newinfo, repl->valid_hooks)))
-		जाओ मुक्त_unlock;
+	/* the table doesn't like it */
+	if (t->check && (ret = t->check(newinfo, repl->valid_hooks)))
+		goto free_unlock;
 
-	अगर (repl->num_counters && repl->num_counters != t->निजी->nentries) अणु
+	if (repl->num_counters && repl->num_counters != t->private->nentries) {
 		ret = -EINVAL;
-		जाओ मुक्त_unlock;
-	पूर्ण
+		goto free_unlock;
+	}
 
-	/* we have the mutex lock, so no danger in पढ़ोing this poपूर्णांकer */
-	table = t->निजी;
-	/* make sure the table can only be rmmod'ed अगर it contains no rules */
-	अगर (!table->nentries && newinfo->nentries && !try_module_get(t->me)) अणु
+	/* we have the mutex lock, so no danger in reading this pointer */
+	table = t->private;
+	/* make sure the table can only be rmmod'ed if it contains no rules */
+	if (!table->nentries && newinfo->nentries && !try_module_get(t->me)) {
 		ret = -ENOENT;
-		जाओ मुक्त_unlock;
-	पूर्ण अन्यथा अगर (table->nentries && !newinfo->nentries)
+		goto free_unlock;
+	} else if (table->nentries && !newinfo->nentries)
 		module_put(t->me);
 	/* we need an atomic snapshot of the counters */
-	ग_लिखो_lock_bh(&t->lock);
-	अगर (repl->num_counters)
-		get_counters(t->निजी->counters, countersपंचांगp,
-		   t->निजी->nentries);
+	write_lock_bh(&t->lock);
+	if (repl->num_counters)
+		get_counters(t->private->counters, counterstmp,
+		   t->private->nentries);
 
-	t->निजी = newinfo;
-	ग_लिखो_unlock_bh(&t->lock);
+	t->private = newinfo;
+	write_unlock_bh(&t->lock);
 	mutex_unlock(&ebt_mutex);
-	/* so, a user can change the chains जबतक having messed up her counter
-	 * allocation. Only reason why this is करोne is because this way the lock
-	 * is held only once, जबतक this करोesn't bring the kernel पूर्णांकo a
+	/* so, a user can change the chains while having messed up her counter
+	 * allocation. Only reason why this is done is because this way the lock
+	 * is held only once, while this doesn't bring the kernel into a
 	 * dangerous state.
 	 */
-	अगर (repl->num_counters &&
-	   copy_to_user(repl->counters, countersपंचांगp,
-	   repl->num_counters * माप(काष्ठा ebt_counter))) अणु
-		/* Silent error, can't fail, new table is alपढ़ोy in place */
+	if (repl->num_counters &&
+	   copy_to_user(repl->counters, counterstmp,
+	   repl->num_counters * sizeof(struct ebt_counter))) {
+		/* Silent error, can't fail, new table is already in place */
 		net_warn_ratelimited("ebtables: counters copy to user failed while replacing table\n");
-	पूर्ण
+	}
 
-	/* decrease module count and मुक्त resources */
+	/* decrease module count and free resources */
 	EBT_ENTRY_ITERATE(table->entries, table->entries_size,
-			  ebt_cleanup_entry, net, शून्य);
+			  ebt_cleanup_entry, net, NULL);
 
-	vमुक्त(table->entries);
-	ebt_मुक्त_table_info(table);
-	vमुक्त(table);
-	vमुक्त(countersपंचांगp);
+	vfree(table->entries);
+	ebt_free_table_info(table);
+	vfree(table);
+	vfree(counterstmp);
 
 	audit_log_nfcfg(repl->name, AF_BRIDGE, repl->nentries,
 			AUDIT_XT_OP_REPLACE, GFP_KERNEL);
-	वापस ret;
+	return ret;
 
-मुक्त_unlock:
+free_unlock:
 	mutex_unlock(&ebt_mutex);
-मुक्त_iterate:
+free_iterate:
 	EBT_ENTRY_ITERATE(newinfo->entries, newinfo->entries_size,
-			  ebt_cleanup_entry, net, शून्य);
-मुक्त_countersपंचांगp:
-	vमुक्त(countersपंचांगp);
+			  ebt_cleanup_entry, net, NULL);
+free_counterstmp:
+	vfree(counterstmp);
 	/* can be initialized in translate_table() */
-	ebt_मुक्त_table_info(newinfo);
-	वापस ret;
-पूर्ण
+	ebt_free_table_info(newinfo);
+	return ret;
+}
 
 /* replace the table */
-अटल पूर्णांक करो_replace(काष्ठा net *net, sockptr_t arg, अचिन्हित पूर्णांक len)
-अणु
-	पूर्णांक ret, countersize;
-	काष्ठा ebt_table_info *newinfo;
-	काष्ठा ebt_replace पंचांगp;
+static int do_replace(struct net *net, sockptr_t arg, unsigned int len)
+{
+	int ret, countersize;
+	struct ebt_table_info *newinfo;
+	struct ebt_replace tmp;
 
-	अगर (copy_from_sockptr(&पंचांगp, arg, माप(पंचांगp)) != 0)
-		वापस -EFAULT;
+	if (copy_from_sockptr(&tmp, arg, sizeof(tmp)) != 0)
+		return -EFAULT;
 
-	अगर (len != माप(पंचांगp) + पंचांगp.entries_size)
-		वापस -EINVAL;
+	if (len != sizeof(tmp) + tmp.entries_size)
+		return -EINVAL;
 
-	अगर (पंचांगp.entries_size == 0)
-		वापस -EINVAL;
+	if (tmp.entries_size == 0)
+		return -EINVAL;
 
 	/* overflow check */
-	अगर (पंचांगp.nentries >= ((पूर्णांक_उच्च - माप(काष्ठा ebt_table_info)) /
-			NR_CPUS - SMP_CACHE_BYTES) / माप(काष्ठा ebt_counter))
-		वापस -ENOMEM;
-	अगर (पंचांगp.num_counters >= पूर्णांक_उच्च / माप(काष्ठा ebt_counter))
-		वापस -ENOMEM;
+	if (tmp.nentries >= ((INT_MAX - sizeof(struct ebt_table_info)) /
+			NR_CPUS - SMP_CACHE_BYTES) / sizeof(struct ebt_counter))
+		return -ENOMEM;
+	if (tmp.num_counters >= INT_MAX / sizeof(struct ebt_counter))
+		return -ENOMEM;
 
-	पंचांगp.name[माप(पंचांगp.name) - 1] = 0;
+	tmp.name[sizeof(tmp.name) - 1] = 0;
 
-	countersize = COUNTER_OFFSET(पंचांगp.nentries) * nr_cpu_ids;
-	newinfo = __vदो_स्मृति(माप(*newinfo) + countersize, GFP_KERNEL_ACCOUNT);
-	अगर (!newinfo)
-		वापस -ENOMEM;
+	countersize = COUNTER_OFFSET(tmp.nentries) * nr_cpu_ids;
+	newinfo = __vmalloc(sizeof(*newinfo) + countersize, GFP_KERNEL_ACCOUNT);
+	if (!newinfo)
+		return -ENOMEM;
 
-	अगर (countersize)
-		स_रखो(newinfo->counters, 0, countersize);
+	if (countersize)
+		memset(newinfo->counters, 0, countersize);
 
-	newinfo->entries = __vदो_स्मृति(पंचांगp.entries_size, GFP_KERNEL_ACCOUNT);
-	अगर (!newinfo->entries) अणु
+	newinfo->entries = __vmalloc(tmp.entries_size, GFP_KERNEL_ACCOUNT);
+	if (!newinfo->entries) {
 		ret = -ENOMEM;
-		जाओ मुक्त_newinfo;
-	पूर्ण
-	अगर (copy_from_user(
-	   newinfo->entries, पंचांगp.entries, पंचांगp.entries_size) != 0) अणु
+		goto free_newinfo;
+	}
+	if (copy_from_user(
+	   newinfo->entries, tmp.entries, tmp.entries_size) != 0) {
 		ret = -EFAULT;
-		जाओ मुक्त_entries;
-	पूर्ण
+		goto free_entries;
+	}
 
-	ret = करो_replace_finish(net, &पंचांगp, newinfo);
-	अगर (ret == 0)
-		वापस ret;
-मुक्त_entries:
-	vमुक्त(newinfo->entries);
-मुक्त_newinfo:
-	vमुक्त(newinfo);
-	वापस ret;
-पूर्ण
+	ret = do_replace_finish(net, &tmp, newinfo);
+	if (ret == 0)
+		return ret;
+free_entries:
+	vfree(newinfo->entries);
+free_newinfo:
+	vfree(newinfo);
+	return ret;
+}
 
-अटल व्योम __ebt_unरेजिस्टर_table(काष्ठा net *net, काष्ठा ebt_table *table)
-अणु
+static void __ebt_unregister_table(struct net *net, struct ebt_table *table)
+{
 	mutex_lock(&ebt_mutex);
 	list_del(&table->list);
 	mutex_unlock(&ebt_mutex);
-	audit_log_nfcfg(table->name, AF_BRIDGE, table->निजी->nentries,
+	audit_log_nfcfg(table->name, AF_BRIDGE, table->private->nentries,
 			AUDIT_XT_OP_UNREGISTER, GFP_KERNEL);
-	EBT_ENTRY_ITERATE(table->निजी->entries, table->निजी->entries_size,
-			  ebt_cleanup_entry, net, शून्य);
-	अगर (table->निजी->nentries)
+	EBT_ENTRY_ITERATE(table->private->entries, table->private->entries_size,
+			  ebt_cleanup_entry, net, NULL);
+	if (table->private->nentries)
 		module_put(table->me);
-	vमुक्त(table->निजी->entries);
-	ebt_मुक्त_table_info(table->निजी);
-	vमुक्त(table->निजी);
-	kमुक्त(table->ops);
-	kमुक्त(table);
-पूर्ण
+	vfree(table->private->entries);
+	ebt_free_table_info(table->private);
+	vfree(table->private);
+	kfree(table->ops);
+	kfree(table);
+}
 
-पूर्णांक ebt_रेजिस्टर_table(काष्ठा net *net, स्थिर काष्ठा ebt_table *input_table,
-		       स्थिर काष्ठा nf_hook_ops *ढाँचा_ops)
-अणु
-	काष्ठा ebt_pernet *ebt_net = net_generic(net, ebt_pernet_id);
-	काष्ठा ebt_table_info *newinfo;
-	काष्ठा ebt_table *t, *table;
-	काष्ठा nf_hook_ops *ops;
-	अचिन्हित पूर्णांक num_ops;
-	काष्ठा ebt_replace_kernel *repl;
-	पूर्णांक ret, i, countersize;
-	व्योम *p;
+int ebt_register_table(struct net *net, const struct ebt_table *input_table,
+		       const struct nf_hook_ops *template_ops)
+{
+	struct ebt_pernet *ebt_net = net_generic(net, ebt_pernet_id);
+	struct ebt_table_info *newinfo;
+	struct ebt_table *t, *table;
+	struct nf_hook_ops *ops;
+	unsigned int num_ops;
+	struct ebt_replace_kernel *repl;
+	int ret, i, countersize;
+	void *p;
 
-	अगर (input_table == शून्य || (repl = input_table->table) == शून्य ||
-	    repl->entries == शून्य || repl->entries_size == 0 ||
-	    repl->counters != शून्य || input_table->निजी != शून्य)
-		वापस -EINVAL;
+	if (input_table == NULL || (repl = input_table->table) == NULL ||
+	    repl->entries == NULL || repl->entries_size == 0 ||
+	    repl->counters != NULL || input_table->private != NULL)
+		return -EINVAL;
 
 	/* Don't add one table to multiple lists. */
-	table = kmemdup(input_table, माप(काष्ठा ebt_table), GFP_KERNEL);
-	अगर (!table) अणु
+	table = kmemdup(input_table, sizeof(struct ebt_table), GFP_KERNEL);
+	if (!table) {
 		ret = -ENOMEM;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 
 	countersize = COUNTER_OFFSET(repl->nentries) * nr_cpu_ids;
-	newinfo = vदो_स्मृति(माप(*newinfo) + countersize);
+	newinfo = vmalloc(sizeof(*newinfo) + countersize);
 	ret = -ENOMEM;
-	अगर (!newinfo)
-		जाओ मुक्त_table;
+	if (!newinfo)
+		goto free_table;
 
-	p = vदो_स्मृति(repl->entries_size);
-	अगर (!p)
-		जाओ मुक्त_newinfo;
+	p = vmalloc(repl->entries_size);
+	if (!p)
+		goto free_newinfo;
 
-	स_नकल(p, repl->entries, repl->entries_size);
+	memcpy(p, repl->entries, repl->entries_size);
 	newinfo->entries = p;
 
 	newinfo->entries_size = repl->entries_size;
 	newinfo->nentries = repl->nentries;
 
-	अगर (countersize)
-		स_रखो(newinfo->counters, 0, countersize);
+	if (countersize)
+		memset(newinfo->counters, 0, countersize);
 
 	/* fill in newinfo and parse the entries */
-	newinfo->chainstack = शून्य;
-	क्रम (i = 0; i < NF_BR_NUMHOOKS; i++) अणु
-		अगर ((repl->valid_hooks & (1 << i)) == 0)
-			newinfo->hook_entry[i] = शून्य;
-		अन्यथा
+	newinfo->chainstack = NULL;
+	for (i = 0; i < NF_BR_NUMHOOKS; i++) {
+		if ((repl->valid_hooks & (1 << i)) == 0)
+			newinfo->hook_entry[i] = NULL;
+		else
 			newinfo->hook_entry[i] = p +
-				((अक्षर *)repl->hook_entry[i] - repl->entries);
-	पूर्ण
+				((char *)repl->hook_entry[i] - repl->entries);
+	}
 	ret = translate_table(net, repl->name, newinfo);
-	अगर (ret != 0)
-		जाओ मुक्त_chainstack;
+	if (ret != 0)
+		goto free_chainstack;
 
-	अगर (table->check && table->check(newinfo, table->valid_hooks)) अणु
+	if (table->check && table->check(newinfo, table->valid_hooks)) {
 		ret = -EINVAL;
-		जाओ मुक्त_chainstack;
-	पूर्ण
+		goto free_chainstack;
+	}
 
-	table->निजी = newinfo;
+	table->private = newinfo;
 	rwlock_init(&table->lock);
 	mutex_lock(&ebt_mutex);
-	list_क्रम_each_entry(t, &ebt_net->tables, list) अणु
-		अगर (म_भेद(t->name, table->name) == 0) अणु
+	list_for_each_entry(t, &ebt_net->tables, list) {
+		if (strcmp(t->name, table->name) == 0) {
 			ret = -EEXIST;
-			जाओ मुक्त_unlock;
-		पूर्ण
-	पूर्ण
+			goto free_unlock;
+		}
+	}
 
-	/* Hold a reference count अगर the chains aren't empty */
-	अगर (newinfo->nentries && !try_module_get(table->me)) अणु
+	/* Hold a reference count if the chains aren't empty */
+	if (newinfo->nentries && !try_module_get(table->me)) {
 		ret = -ENOENT;
-		जाओ मुक्त_unlock;
-	पूर्ण
+		goto free_unlock;
+	}
 
 	num_ops = hweight32(table->valid_hooks);
-	अगर (num_ops == 0) अणु
+	if (num_ops == 0) {
 		ret = -EINVAL;
-		जाओ मुक्त_unlock;
-	पूर्ण
+		goto free_unlock;
+	}
 
-	ops = kmemdup(ढाँचा_ops, माप(*ops) * num_ops, GFP_KERNEL);
-	अगर (!ops) अणु
+	ops = kmemdup(template_ops, sizeof(*ops) * num_ops, GFP_KERNEL);
+	if (!ops) {
 		ret = -ENOMEM;
-		अगर (newinfo->nentries)
+		if (newinfo->nentries)
 			module_put(table->me);
-		जाओ मुक्त_unlock;
-	पूर्ण
+		goto free_unlock;
+	}
 
-	क्रम (i = 0; i < num_ops; i++)
+	for (i = 0; i < num_ops; i++)
 		ops[i].priv = table;
 
 	list_add(&table->list, &ebt_net->tables);
 	mutex_unlock(&ebt_mutex);
 
 	table->ops = ops;
-	ret = nf_रेजिस्टर_net_hooks(net, ops, num_ops);
-	अगर (ret)
-		__ebt_unरेजिस्टर_table(net, table);
+	ret = nf_register_net_hooks(net, ops, num_ops);
+	if (ret)
+		__ebt_unregister_table(net, table);
 
 	audit_log_nfcfg(repl->name, AF_BRIDGE, repl->nentries,
 			AUDIT_XT_OP_REGISTER, GFP_KERNEL);
-	वापस ret;
-मुक्त_unlock:
+	return ret;
+free_unlock:
 	mutex_unlock(&ebt_mutex);
-मुक्त_chainstack:
-	ebt_मुक्त_table_info(newinfo);
-	vमुक्त(newinfo->entries);
-मुक्त_newinfo:
-	vमुक्त(newinfo);
-मुक्त_table:
-	kमुक्त(table);
+free_chainstack:
+	ebt_free_table_info(newinfo);
+	vfree(newinfo->entries);
+free_newinfo:
+	vfree(newinfo);
+free_table:
+	kfree(table);
 out:
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल काष्ठा ebt_table *__ebt_find_table(काष्ठा net *net, स्थिर अक्षर *name)
-अणु
-	काष्ठा ebt_pernet *ebt_net = net_generic(net, ebt_pernet_id);
-	काष्ठा ebt_table *t;
+static struct ebt_table *__ebt_find_table(struct net *net, const char *name)
+{
+	struct ebt_pernet *ebt_net = net_generic(net, ebt_pernet_id);
+	struct ebt_table *t;
 
 	mutex_lock(&ebt_mutex);
 
-	list_क्रम_each_entry(t, &ebt_net->tables, list) अणु
-		अगर (म_भेद(t->name, name) == 0) अणु
+	list_for_each_entry(t, &ebt_net->tables, list) {
+		if (strcmp(t->name, name) == 0) {
 			mutex_unlock(&ebt_mutex);
-			वापस t;
-		पूर्ण
-	पूर्ण
+			return t;
+		}
+	}
 
 	mutex_unlock(&ebt_mutex);
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-व्योम ebt_unरेजिस्टर_table_pre_निकास(काष्ठा net *net, स्थिर अक्षर *name)
-अणु
-	काष्ठा ebt_table *table = __ebt_find_table(net, name);
+void ebt_unregister_table_pre_exit(struct net *net, const char *name)
+{
+	struct ebt_table *table = __ebt_find_table(net, name);
 
-	अगर (table)
-		nf_unरेजिस्टर_net_hooks(net, table->ops, hweight32(table->valid_hooks));
-पूर्ण
-EXPORT_SYMBOL(ebt_unरेजिस्टर_table_pre_निकास);
+	if (table)
+		nf_unregister_net_hooks(net, table->ops, hweight32(table->valid_hooks));
+}
+EXPORT_SYMBOL(ebt_unregister_table_pre_exit);
 
-व्योम ebt_unरेजिस्टर_table(काष्ठा net *net, स्थिर अक्षर *name)
-अणु
-	काष्ठा ebt_table *table = __ebt_find_table(net, name);
+void ebt_unregister_table(struct net *net, const char *name)
+{
+	struct ebt_table *table = __ebt_find_table(net, name);
 
-	अगर (table)
-		__ebt_unरेजिस्टर_table(net, table);
-पूर्ण
+	if (table)
+		__ebt_unregister_table(net, table);
+}
 
 /* userspace just supplied us with counters */
-अटल पूर्णांक करो_update_counters(काष्ठा net *net, स्थिर अक्षर *name,
-			      काष्ठा ebt_counter __user *counters,
-			      अचिन्हित पूर्णांक num_counters, अचिन्हित पूर्णांक len)
-अणु
-	पूर्णांक i, ret;
-	काष्ठा ebt_counter *पंचांगp;
-	काष्ठा ebt_table *t;
+static int do_update_counters(struct net *net, const char *name,
+			      struct ebt_counter __user *counters,
+			      unsigned int num_counters, unsigned int len)
+{
+	int i, ret;
+	struct ebt_counter *tmp;
+	struct ebt_table *t;
 
-	अगर (num_counters == 0)
-		वापस -EINVAL;
+	if (num_counters == 0)
+		return -EINVAL;
 
-	पंचांगp = vदो_स्मृति(array_size(num_counters, माप(*पंचांगp)));
-	अगर (!पंचांगp)
-		वापस -ENOMEM;
+	tmp = vmalloc(array_size(num_counters, sizeof(*tmp)));
+	if (!tmp)
+		return -ENOMEM;
 
 	t = find_table_lock(net, name, &ret, &ebt_mutex);
-	अगर (!t)
-		जाओ मुक्त_पंचांगp;
+	if (!t)
+		goto free_tmp;
 
-	अगर (num_counters != t->निजी->nentries) अणु
+	if (num_counters != t->private->nentries) {
 		ret = -EINVAL;
-		जाओ unlock_mutex;
-	पूर्ण
+		goto unlock_mutex;
+	}
 
-	अगर (copy_from_user(पंचांगp, counters, num_counters * माप(*counters))) अणु
+	if (copy_from_user(tmp, counters, num_counters * sizeof(*counters))) {
 		ret = -EFAULT;
-		जाओ unlock_mutex;
-	पूर्ण
+		goto unlock_mutex;
+	}
 
 	/* we want an atomic add of the counters */
-	ग_लिखो_lock_bh(&t->lock);
+	write_lock_bh(&t->lock);
 
 	/* we add to the counters of the first cpu */
-	क्रम (i = 0; i < num_counters; i++)
-		ADD_COUNTER(t->निजी->counters[i], पंचांगp[i].bcnt, पंचांगp[i].pcnt);
+	for (i = 0; i < num_counters; i++)
+		ADD_COUNTER(t->private->counters[i], tmp[i].bcnt, tmp[i].pcnt);
 
-	ग_लिखो_unlock_bh(&t->lock);
+	write_unlock_bh(&t->lock);
 	ret = 0;
 unlock_mutex:
 	mutex_unlock(&ebt_mutex);
-मुक्त_पंचांगp:
-	vमुक्त(पंचांगp);
-	वापस ret;
-पूर्ण
+free_tmp:
+	vfree(tmp);
+	return ret;
+}
 
-अटल पूर्णांक update_counters(काष्ठा net *net, sockptr_t arg, अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा ebt_replace hlp;
+static int update_counters(struct net *net, sockptr_t arg, unsigned int len)
+{
+	struct ebt_replace hlp;
 
-	अगर (copy_from_sockptr(&hlp, arg, माप(hlp)))
-		वापस -EFAULT;
+	if (copy_from_sockptr(&hlp, arg, sizeof(hlp)))
+		return -EFAULT;
 
-	अगर (len != माप(hlp) + hlp.num_counters * माप(काष्ठा ebt_counter))
-		वापस -EINVAL;
+	if (len != sizeof(hlp) + hlp.num_counters * sizeof(struct ebt_counter))
+		return -EINVAL;
 
-	वापस करो_update_counters(net, hlp.name, hlp.counters,
+	return do_update_counters(net, hlp.name, hlp.counters,
 				  hlp.num_counters, len);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक ebt_obj_to_user(अक्षर __user *um, स्थिर अक्षर *_name,
-				  स्थिर अक्षर *data, पूर्णांक entrysize,
-				  पूर्णांक usersize, पूर्णांक datasize, u8 revision)
-अणु
-	अक्षर name[EBT_EXTENSION_MAXNAMELEN] = अणु0पूर्ण;
+static inline int ebt_obj_to_user(char __user *um, const char *_name,
+				  const char *data, int entrysize,
+				  int usersize, int datasize, u8 revision)
+{
+	char name[EBT_EXTENSION_MAXNAMELEN] = {0};
 
-	/* ebtables expects 31 bytes दीर्घ names but xt_match names are 29 bytes
-	 * दीर्घ. Copy 29 bytes and fill reमुख्यing bytes with zeroes.
+	/* ebtables expects 31 bytes long names but xt_match names are 29 bytes
+	 * long. Copy 29 bytes and fill remaining bytes with zeroes.
 	 */
-	strlcpy(name, _name, माप(name));
-	अगर (copy_to_user(um, name, EBT_EXTENSION_MAXNAMELEN) ||
+	strlcpy(name, _name, sizeof(name));
+	if (copy_to_user(um, name, EBT_EXTENSION_MAXNAMELEN) ||
 	    put_user(revision, (u8 __user *)(um + EBT_EXTENSION_MAXNAMELEN)) ||
-	    put_user(datasize, (पूर्णांक __user *)(um + EBT_EXTENSION_MAXNAMELEN + 1)) ||
+	    put_user(datasize, (int __user *)(um + EBT_EXTENSION_MAXNAMELEN + 1)) ||
 	    xt_data_to_user(um + entrysize, data, usersize, datasize,
 			    XT_ALIGN(datasize)))
-		वापस -EFAULT;
+		return -EFAULT;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अंतरभूत पूर्णांक ebt_match_to_user(स्थिर काष्ठा ebt_entry_match *m,
-				    स्थिर अक्षर *base, अक्षर __user *ubase)
-अणु
-	वापस ebt_obj_to_user(ubase + ((अक्षर *)m - base),
-			       m->u.match->name, m->data, माप(*m),
+static inline int ebt_match_to_user(const struct ebt_entry_match *m,
+				    const char *base, char __user *ubase)
+{
+	return ebt_obj_to_user(ubase + ((char *)m - base),
+			       m->u.match->name, m->data, sizeof(*m),
 			       m->u.match->usersize, m->match_size,
 			       m->u.match->revision);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक ebt_watcher_to_user(स्थिर काष्ठा ebt_entry_watcher *w,
-				      स्थिर अक्षर *base, अक्षर __user *ubase)
-अणु
-	वापस ebt_obj_to_user(ubase + ((अक्षर *)w - base),
-			       w->u.watcher->name, w->data, माप(*w),
+static inline int ebt_watcher_to_user(const struct ebt_entry_watcher *w,
+				      const char *base, char __user *ubase)
+{
+	return ebt_obj_to_user(ubase + ((char *)w - base),
+			       w->u.watcher->name, w->data, sizeof(*w),
 			       w->u.watcher->usersize, w->watcher_size,
 			       w->u.watcher->revision);
-पूर्ण
+}
 
-अटल अंतरभूत पूर्णांक ebt_entry_to_user(काष्ठा ebt_entry *e, स्थिर अक्षर *base,
-				    अक्षर __user *ubase)
-अणु
-	पूर्णांक ret;
-	अक्षर __user *hlp;
-	स्थिर काष्ठा ebt_entry_target *t;
+static inline int ebt_entry_to_user(struct ebt_entry *e, const char *base,
+				    char __user *ubase)
+{
+	int ret;
+	char __user *hlp;
+	const struct ebt_entry_target *t;
 
-	अगर (e->biपंचांगask == 0) अणु
-		/* special हाल !EBT_ENTRY_OR_ENTRIES */
-		अगर (copy_to_user(ubase + ((अक्षर *)e - base), e,
-				 माप(काष्ठा ebt_entries)))
-			वापस -EFAULT;
-		वापस 0;
-	पूर्ण
+	if (e->bitmask == 0) {
+		/* special case !EBT_ENTRY_OR_ENTRIES */
+		if (copy_to_user(ubase + ((char *)e - base), e,
+				 sizeof(struct ebt_entries)))
+			return -EFAULT;
+		return 0;
+	}
 
-	अगर (copy_to_user(ubase + ((अक्षर *)e - base), e, माप(*e)))
-		वापस -EFAULT;
+	if (copy_to_user(ubase + ((char *)e - base), e, sizeof(*e)))
+		return -EFAULT;
 
-	hlp = ubase + (((अक्षर *)e + e->target_offset) - base);
+	hlp = ubase + (((char *)e + e->target_offset) - base);
 	t = ebt_get_target_c(e);
 
 	ret = EBT_MATCH_ITERATE(e, ebt_match_to_user, base, ubase);
-	अगर (ret != 0)
-		वापस ret;
+	if (ret != 0)
+		return ret;
 	ret = EBT_WATCHER_ITERATE(e, ebt_watcher_to_user, base, ubase);
-	अगर (ret != 0)
-		वापस ret;
-	ret = ebt_obj_to_user(hlp, t->u.target->name, t->data, माप(*t),
+	if (ret != 0)
+		return ret;
+	ret = ebt_obj_to_user(hlp, t->u.target->name, t->data, sizeof(*t),
 			      t->u.target->usersize, t->target_size,
 			      t->u.target->revision);
-	अगर (ret != 0)
-		वापस ret;
+	if (ret != 0)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक copy_counters_to_user(काष्ठा ebt_table *t,
-				 स्थिर काष्ठा ebt_counter *oldcounters,
-				 व्योम __user *user, अचिन्हित पूर्णांक num_counters,
-				 अचिन्हित पूर्णांक nentries)
-अणु
-	काष्ठा ebt_counter *countersपंचांगp;
-	पूर्णांक ret = 0;
+static int copy_counters_to_user(struct ebt_table *t,
+				 const struct ebt_counter *oldcounters,
+				 void __user *user, unsigned int num_counters,
+				 unsigned int nentries)
+{
+	struct ebt_counter *counterstmp;
+	int ret = 0;
 
 	/* userspace might not need the counters */
-	अगर (num_counters == 0)
-		वापस 0;
+	if (num_counters == 0)
+		return 0;
 
-	अगर (num_counters != nentries)
-		वापस -EINVAL;
+	if (num_counters != nentries)
+		return -EINVAL;
 
-	countersपंचांगp = vदो_स्मृति(array_size(nentries, माप(*countersपंचांगp)));
-	अगर (!countersपंचांगp)
-		वापस -ENOMEM;
+	counterstmp = vmalloc(array_size(nentries, sizeof(*counterstmp)));
+	if (!counterstmp)
+		return -ENOMEM;
 
-	ग_लिखो_lock_bh(&t->lock);
-	get_counters(oldcounters, countersपंचांगp, nentries);
-	ग_लिखो_unlock_bh(&t->lock);
+	write_lock_bh(&t->lock);
+	get_counters(oldcounters, counterstmp, nentries);
+	write_unlock_bh(&t->lock);
 
-	अगर (copy_to_user(user, countersपंचांगp,
-	   nentries * माप(काष्ठा ebt_counter)))
+	if (copy_to_user(user, counterstmp,
+	   nentries * sizeof(struct ebt_counter)))
 		ret = -EFAULT;
-	vमुक्त(countersपंचांगp);
-	वापस ret;
-पूर्ण
+	vfree(counterstmp);
+	return ret;
+}
 
 /* called with ebt_mutex locked */
-अटल पूर्णांक copy_everything_to_user(काष्ठा ebt_table *t, व्योम __user *user,
-				   स्थिर पूर्णांक *len, पूर्णांक cmd)
-अणु
-	काष्ठा ebt_replace पंचांगp;
-	स्थिर काष्ठा ebt_counter *oldcounters;
-	अचिन्हित पूर्णांक entries_size, nentries;
-	पूर्णांक ret;
-	अक्षर *entries;
+static int copy_everything_to_user(struct ebt_table *t, void __user *user,
+				   const int *len, int cmd)
+{
+	struct ebt_replace tmp;
+	const struct ebt_counter *oldcounters;
+	unsigned int entries_size, nentries;
+	int ret;
+	char *entries;
 
-	अगर (cmd == EBT_SO_GET_ENTRIES) अणु
-		entries_size = t->निजी->entries_size;
-		nentries = t->निजी->nentries;
-		entries = t->निजी->entries;
-		oldcounters = t->निजी->counters;
-	पूर्ण अन्यथा अणु
+	if (cmd == EBT_SO_GET_ENTRIES) {
+		entries_size = t->private->entries_size;
+		nentries = t->private->nentries;
+		entries = t->private->entries;
+		oldcounters = t->private->counters;
+	} else {
 		entries_size = t->table->entries_size;
 		nentries = t->table->nentries;
 		entries = t->table->entries;
 		oldcounters = t->table->counters;
-	पूर्ण
+	}
 
-	अगर (copy_from_user(&पंचांगp, user, माप(पंचांगp)))
-		वापस -EFAULT;
+	if (copy_from_user(&tmp, user, sizeof(tmp)))
+		return -EFAULT;
 
-	अगर (*len != माप(काष्ठा ebt_replace) + entries_size +
-	   (पंचांगp.num_counters ? nentries * माप(काष्ठा ebt_counter) : 0))
-		वापस -EINVAL;
+	if (*len != sizeof(struct ebt_replace) + entries_size +
+	   (tmp.num_counters ? nentries * sizeof(struct ebt_counter) : 0))
+		return -EINVAL;
 
-	अगर (पंचांगp.nentries != nentries)
-		वापस -EINVAL;
+	if (tmp.nentries != nentries)
+		return -EINVAL;
 
-	अगर (पंचांगp.entries_size != entries_size)
-		वापस -EINVAL;
+	if (tmp.entries_size != entries_size)
+		return -EINVAL;
 
-	ret = copy_counters_to_user(t, oldcounters, पंचांगp.counters,
-					पंचांगp.num_counters, nentries);
-	अगर (ret)
-		वापस ret;
+	ret = copy_counters_to_user(t, oldcounters, tmp.counters,
+					tmp.num_counters, nentries);
+	if (ret)
+		return ret;
 
 	/* set the match/watcher/target names right */
-	वापस EBT_ENTRY_ITERATE(entries, entries_size,
-	   ebt_entry_to_user, entries, पंचांगp.entries);
-पूर्ण
+	return EBT_ENTRY_ITERATE(entries, entries_size,
+	   ebt_entry_to_user, entries, tmp.entries);
+}
 
-#अगर_घोषित CONFIG_NETFILTER_XTABLES_COMPAT
+#ifdef CONFIG_NETFILTER_XTABLES_COMPAT
 /* 32 bit-userspace compatibility definitions. */
-काष्ठा compat_ebt_replace अणु
-	अक्षर name[EBT_TABLE_MAXNAMELEN];
-	compat_uपूर्णांक_t valid_hooks;
-	compat_uपूर्णांक_t nentries;
-	compat_uपूर्णांक_t entries_size;
+struct compat_ebt_replace {
+	char name[EBT_TABLE_MAXNAMELEN];
+	compat_uint_t valid_hooks;
+	compat_uint_t nentries;
+	compat_uint_t entries_size;
 	/* start of the chains */
 	compat_uptr_t hook_entry[NF_BR_NUMHOOKS];
 	/* nr of counters userspace expects back */
-	compat_uपूर्णांक_t num_counters;
+	compat_uint_t num_counters;
 	/* where the kernel will put the old counters. */
 	compat_uptr_t counters;
 	compat_uptr_t entries;
-पूर्ण;
+};
 
-/* काष्ठा ebt_entry_match, _target and _watcher have same layout */
-काष्ठा compat_ebt_entry_mwt अणु
-	जोड़ अणु
-		काष्ठा अणु
-			अक्षर name[EBT_EXTENSION_MAXNAMELEN];
+/* struct ebt_entry_match, _target and _watcher have same layout */
+struct compat_ebt_entry_mwt {
+	union {
+		struct {
+			char name[EBT_EXTENSION_MAXNAMELEN];
 			u8 revision;
-		पूर्ण;
+		};
 		compat_uptr_t ptr;
-	पूर्ण u;
-	compat_uपूर्णांक_t match_size;
-	compat_uपूर्णांक_t data[] __aligned(__alignof__(काष्ठा compat_ebt_replace));
-पूर्ण;
+	} u;
+	compat_uint_t match_size;
+	compat_uint_t data[] __aligned(__alignof__(struct compat_ebt_replace));
+};
 
-/* account क्रम possible padding between match_size and ->data */
-अटल पूर्णांक ebt_compat_entry_padsize(व्योम)
-अणु
-	BUILD_BUG_ON(माप(काष्ठा ebt_entry_match) <
-			माप(काष्ठा compat_ebt_entry_mwt));
-	वापस (पूर्णांक) माप(काष्ठा ebt_entry_match) -
-			माप(काष्ठा compat_ebt_entry_mwt);
-पूर्ण
+/* account for possible padding between match_size and ->data */
+static int ebt_compat_entry_padsize(void)
+{
+	BUILD_BUG_ON(sizeof(struct ebt_entry_match) <
+			sizeof(struct compat_ebt_entry_mwt));
+	return (int) sizeof(struct ebt_entry_match) -
+			sizeof(struct compat_ebt_entry_mwt);
+}
 
-अटल पूर्णांक ebt_compat_match_offset(स्थिर काष्ठा xt_match *match,
-				   अचिन्हित पूर्णांक userlen)
-अणु
+static int ebt_compat_match_offset(const struct xt_match *match,
+				   unsigned int userlen)
+{
 	/* ebt_among needs special handling. The kernel .matchsize is
-	 * set to -1 at registration समय; at runसमय an EBT_ALIGN()ed
+	 * set to -1 at registration time; at runtime an EBT_ALIGN()ed
 	 * value is expected.
 	 * Example: userspace sends 4500, ebt_among.c wants 4504.
 	 */
-	अगर (unlikely(match->matchsize == -1))
-		वापस XT_ALIGN(userlen) - COMPAT_XT_ALIGN(userlen);
-	वापस xt_compat_match_offset(match);
-पूर्ण
+	if (unlikely(match->matchsize == -1))
+		return XT_ALIGN(userlen) - COMPAT_XT_ALIGN(userlen);
+	return xt_compat_match_offset(match);
+}
 
-अटल पूर्णांक compat_match_to_user(काष्ठा ebt_entry_match *m, व्योम __user **dstptr,
-				अचिन्हित पूर्णांक *size)
-अणु
-	स्थिर काष्ठा xt_match *match = m->u.match;
-	काष्ठा compat_ebt_entry_mwt __user *cm = *dstptr;
-	पूर्णांक off = ebt_compat_match_offset(match, m->match_size);
-	compat_uपूर्णांक_t msize = m->match_size - off;
+static int compat_match_to_user(struct ebt_entry_match *m, void __user **dstptr,
+				unsigned int *size)
+{
+	const struct xt_match *match = m->u.match;
+	struct compat_ebt_entry_mwt __user *cm = *dstptr;
+	int off = ebt_compat_match_offset(match, m->match_size);
+	compat_uint_t msize = m->match_size - off;
 
-	अगर (WARN_ON(off >= m->match_size))
-		वापस -EINVAL;
+	if (WARN_ON(off >= m->match_size))
+		return -EINVAL;
 
-	अगर (copy_to_user(cm->u.name, match->name, म_माप(match->name) + 1) ||
+	if (copy_to_user(cm->u.name, match->name, strlen(match->name) + 1) ||
 	    put_user(match->revision, &cm->u.revision) ||
 	    put_user(msize, &cm->match_size))
-		वापस -EFAULT;
+		return -EFAULT;
 
-	अगर (match->compat_to_user) अणु
-		अगर (match->compat_to_user(cm->data, m->data))
-			वापस -EFAULT;
-	पूर्ण अन्यथा अणु
-		अगर (xt_data_to_user(cm->data, m->data, match->usersize, msize,
+	if (match->compat_to_user) {
+		if (match->compat_to_user(cm->data, m->data))
+			return -EFAULT;
+	} else {
+		if (xt_data_to_user(cm->data, m->data, match->usersize, msize,
 				    COMPAT_XT_ALIGN(msize)))
-			वापस -EFAULT;
-	पूर्ण
+			return -EFAULT;
+	}
 
 	*size -= ebt_compat_entry_padsize() + off;
 	*dstptr = cm->data;
 	*dstptr += msize;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक compat_target_to_user(काष्ठा ebt_entry_target *t,
-				 व्योम __user **dstptr,
-				 अचिन्हित पूर्णांक *size)
-अणु
-	स्थिर काष्ठा xt_target *target = t->u.target;
-	काष्ठा compat_ebt_entry_mwt __user *cm = *dstptr;
-	पूर्णांक off = xt_compat_target_offset(target);
-	compat_uपूर्णांक_t tsize = t->target_size - off;
+static int compat_target_to_user(struct ebt_entry_target *t,
+				 void __user **dstptr,
+				 unsigned int *size)
+{
+	const struct xt_target *target = t->u.target;
+	struct compat_ebt_entry_mwt __user *cm = *dstptr;
+	int off = xt_compat_target_offset(target);
+	compat_uint_t tsize = t->target_size - off;
 
-	अगर (WARN_ON(off >= t->target_size))
-		वापस -EINVAL;
+	if (WARN_ON(off >= t->target_size))
+		return -EINVAL;
 
-	अगर (copy_to_user(cm->u.name, target->name, म_माप(target->name) + 1) ||
+	if (copy_to_user(cm->u.name, target->name, strlen(target->name) + 1) ||
 	    put_user(target->revision, &cm->u.revision) ||
 	    put_user(tsize, &cm->match_size))
-		वापस -EFAULT;
+		return -EFAULT;
 
-	अगर (target->compat_to_user) अणु
-		अगर (target->compat_to_user(cm->data, t->data))
-			वापस -EFAULT;
-	पूर्ण अन्यथा अणु
-		अगर (xt_data_to_user(cm->data, t->data, target->usersize, tsize,
+	if (target->compat_to_user) {
+		if (target->compat_to_user(cm->data, t->data))
+			return -EFAULT;
+	} else {
+		if (xt_data_to_user(cm->data, t->data, target->usersize, tsize,
 				    COMPAT_XT_ALIGN(tsize)))
-			वापस -EFAULT;
-	पूर्ण
+			return -EFAULT;
+	}
 
 	*size -= ebt_compat_entry_padsize() + off;
 	*dstptr = cm->data;
 	*dstptr += tsize;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक compat_watcher_to_user(काष्ठा ebt_entry_watcher *w,
-				  व्योम __user **dstptr,
-				  अचिन्हित पूर्णांक *size)
-अणु
-	वापस compat_target_to_user((काष्ठा ebt_entry_target *)w,
+static int compat_watcher_to_user(struct ebt_entry_watcher *w,
+				  void __user **dstptr,
+				  unsigned int *size)
+{
+	return compat_target_to_user((struct ebt_entry_target *)w,
 							dstptr, size);
-पूर्ण
+}
 
-अटल पूर्णांक compat_copy_entry_to_user(काष्ठा ebt_entry *e, व्योम __user **dstptr,
-				अचिन्हित पूर्णांक *size)
-अणु
-	काष्ठा ebt_entry_target *t;
-	काष्ठा ebt_entry __user *ce;
+static int compat_copy_entry_to_user(struct ebt_entry *e, void __user **dstptr,
+				unsigned int *size)
+{
+	struct ebt_entry_target *t;
+	struct ebt_entry __user *ce;
 	u32 watchers_offset, target_offset, next_offset;
-	compat_uपूर्णांक_t origsize;
-	पूर्णांक ret;
+	compat_uint_t origsize;
+	int ret;
 
-	अगर (e->biपंचांगask == 0) अणु
-		अगर (*size < माप(काष्ठा ebt_entries))
-			वापस -EINVAL;
-		अगर (copy_to_user(*dstptr, e, माप(काष्ठा ebt_entries)))
-			वापस -EFAULT;
+	if (e->bitmask == 0) {
+		if (*size < sizeof(struct ebt_entries))
+			return -EINVAL;
+		if (copy_to_user(*dstptr, e, sizeof(struct ebt_entries)))
+			return -EFAULT;
 
-		*dstptr += माप(काष्ठा ebt_entries);
-		*size -= माप(काष्ठा ebt_entries);
-		वापस 0;
-	पूर्ण
+		*dstptr += sizeof(struct ebt_entries);
+		*size -= sizeof(struct ebt_entries);
+		return 0;
+	}
 
-	अगर (*size < माप(*ce))
-		वापस -EINVAL;
+	if (*size < sizeof(*ce))
+		return -EINVAL;
 
 	ce = *dstptr;
-	अगर (copy_to_user(ce, e, माप(*ce)))
-		वापस -EFAULT;
+	if (copy_to_user(ce, e, sizeof(*ce)))
+		return -EFAULT;
 
 	origsize = *size;
-	*dstptr += माप(*ce);
+	*dstptr += sizeof(*ce);
 
 	ret = EBT_MATCH_ITERATE(e, compat_match_to_user, dstptr, size);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	watchers_offset = e->watchers_offset - (origsize - *size);
 
 	ret = EBT_WATCHER_ITERATE(e, compat_watcher_to_user, dstptr, size);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	target_offset = e->target_offset - (origsize - *size);
 
 	t = ebt_get_target(e);
 
 	ret = compat_target_to_user(t, dstptr, size);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 	next_offset = e->next_offset - (origsize - *size);
 
-	अगर (put_user(watchers_offset, &ce->watchers_offset) ||
+	if (put_user(watchers_offset, &ce->watchers_offset) ||
 	    put_user(target_offset, &ce->target_offset) ||
 	    put_user(next_offset, &ce->next_offset))
-		वापस -EFAULT;
+		return -EFAULT;
 
-	*size -= माप(*ce);
-	वापस 0;
-पूर्ण
+	*size -= sizeof(*ce);
+	return 0;
+}
 
-अटल पूर्णांक compat_calc_match(काष्ठा ebt_entry_match *m, पूर्णांक *off)
-अणु
+static int compat_calc_match(struct ebt_entry_match *m, int *off)
+{
 	*off += ebt_compat_match_offset(m->u.match, m->match_size);
 	*off += ebt_compat_entry_padsize();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक compat_calc_watcher(काष्ठा ebt_entry_watcher *w, पूर्णांक *off)
-अणु
+static int compat_calc_watcher(struct ebt_entry_watcher *w, int *off)
+{
 	*off += xt_compat_target_offset(w->u.watcher);
 	*off += ebt_compat_entry_padsize();
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक compat_calc_entry(स्थिर काष्ठा ebt_entry *e,
-			     स्थिर काष्ठा ebt_table_info *info,
-			     स्थिर व्योम *base,
-			     काष्ठा compat_ebt_replace *newinfo)
-अणु
-	स्थिर काष्ठा ebt_entry_target *t;
-	अचिन्हित पूर्णांक entry_offset;
-	पूर्णांक off, ret, i;
+static int compat_calc_entry(const struct ebt_entry *e,
+			     const struct ebt_table_info *info,
+			     const void *base,
+			     struct compat_ebt_replace *newinfo)
+{
+	const struct ebt_entry_target *t;
+	unsigned int entry_offset;
+	int off, ret, i;
 
-	अगर (e->biपंचांगask == 0)
-		वापस 0;
+	if (e->bitmask == 0)
+		return 0;
 
 	off = 0;
-	entry_offset = (व्योम *)e - base;
+	entry_offset = (void *)e - base;
 
 	EBT_MATCH_ITERATE(e, compat_calc_match, &off);
 	EBT_WATCHER_ITERATE(e, compat_calc_watcher, &off);
@@ -1721,799 +1720,799 @@ unlock_mutex:
 	newinfo->entries_size -= off;
 
 	ret = xt_compat_add_offset(NFPROTO_BRIDGE, entry_offset, off);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	क्रम (i = 0; i < NF_BR_NUMHOOKS; i++) अणु
-		स्थिर व्योम *hookptr = info->hook_entry[i];
-		अगर (info->hook_entry[i] &&
-		    (e < (काष्ठा ebt_entry *)(base - hookptr))) अणु
+	for (i = 0; i < NF_BR_NUMHOOKS; i++) {
+		const void *hookptr = info->hook_entry[i];
+		if (info->hook_entry[i] &&
+		    (e < (struct ebt_entry *)(base - hookptr))) {
 			newinfo->hook_entry[i] -= off;
 			pr_debug("0x%08X -> 0x%08X\n",
 					newinfo->hook_entry[i] + off,
 					newinfo->hook_entry[i]);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक ebt_compat_init_offsets(अचिन्हित पूर्णांक number)
-अणु
-	अगर (number > पूर्णांक_उच्च)
-		वापस -EINVAL;
+static int ebt_compat_init_offsets(unsigned int number)
+{
+	if (number > INT_MAX)
+		return -EINVAL;
 
 	/* also count the base chain policies */
 	number += NF_BR_NUMHOOKS;
 
-	वापस xt_compat_init_offsets(NFPROTO_BRIDGE, number);
-पूर्ण
+	return xt_compat_init_offsets(NFPROTO_BRIDGE, number);
+}
 
-अटल पूर्णांक compat_table_info(स्थिर काष्ठा ebt_table_info *info,
-			     काष्ठा compat_ebt_replace *newinfo)
-अणु
-	अचिन्हित पूर्णांक size = info->entries_size;
-	स्थिर व्योम *entries = info->entries;
-	पूर्णांक ret;
+static int compat_table_info(const struct ebt_table_info *info,
+			     struct compat_ebt_replace *newinfo)
+{
+	unsigned int size = info->entries_size;
+	const void *entries = info->entries;
+	int ret;
 
 	newinfo->entries_size = size;
 	ret = ebt_compat_init_offsets(info->nentries);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	वापस EBT_ENTRY_ITERATE(entries, size, compat_calc_entry, info,
+	return EBT_ENTRY_ITERATE(entries, size, compat_calc_entry, info,
 							entries, newinfo);
-पूर्ण
+}
 
-अटल पूर्णांक compat_copy_everything_to_user(काष्ठा ebt_table *t,
-					  व्योम __user *user, पूर्णांक *len, पूर्णांक cmd)
-अणु
-	काष्ठा compat_ebt_replace repl, पंचांगp;
-	काष्ठा ebt_counter *oldcounters;
-	काष्ठा ebt_table_info tinfo;
-	पूर्णांक ret;
-	व्योम __user *pos;
+static int compat_copy_everything_to_user(struct ebt_table *t,
+					  void __user *user, int *len, int cmd)
+{
+	struct compat_ebt_replace repl, tmp;
+	struct ebt_counter *oldcounters;
+	struct ebt_table_info tinfo;
+	int ret;
+	void __user *pos;
 
-	स_रखो(&tinfo, 0, माप(tinfo));
+	memset(&tinfo, 0, sizeof(tinfo));
 
-	अगर (cmd == EBT_SO_GET_ENTRIES) अणु
-		tinfo.entries_size = t->निजी->entries_size;
-		tinfo.nentries = t->निजी->nentries;
-		tinfo.entries = t->निजी->entries;
-		oldcounters = t->निजी->counters;
-	पूर्ण अन्यथा अणु
+	if (cmd == EBT_SO_GET_ENTRIES) {
+		tinfo.entries_size = t->private->entries_size;
+		tinfo.nentries = t->private->nentries;
+		tinfo.entries = t->private->entries;
+		oldcounters = t->private->counters;
+	} else {
 		tinfo.entries_size = t->table->entries_size;
 		tinfo.nentries = t->table->nentries;
 		tinfo.entries = t->table->entries;
 		oldcounters = t->table->counters;
-	पूर्ण
+	}
 
-	अगर (copy_from_user(&पंचांगp, user, माप(पंचांगp)))
-		वापस -EFAULT;
+	if (copy_from_user(&tmp, user, sizeof(tmp)))
+		return -EFAULT;
 
-	अगर (पंचांगp.nentries != tinfo.nentries ||
-	   (पंचांगp.num_counters && पंचांगp.num_counters != tinfo.nentries))
-		वापस -EINVAL;
+	if (tmp.nentries != tinfo.nentries ||
+	   (tmp.num_counters && tmp.num_counters != tinfo.nentries))
+		return -EINVAL;
 
-	स_नकल(&repl, &पंचांगp, माप(repl));
-	अगर (cmd == EBT_SO_GET_ENTRIES)
-		ret = compat_table_info(t->निजी, &repl);
-	अन्यथा
+	memcpy(&repl, &tmp, sizeof(repl));
+	if (cmd == EBT_SO_GET_ENTRIES)
+		ret = compat_table_info(t->private, &repl);
+	else
 		ret = compat_table_info(&tinfo, &repl);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (*len != माप(पंचांगp) + repl.entries_size +
-	   (पंचांगp.num_counters? tinfo.nentries * माप(काष्ठा ebt_counter): 0)) अणु
+	if (*len != sizeof(tmp) + repl.entries_size +
+	   (tmp.num_counters? tinfo.nentries * sizeof(struct ebt_counter): 0)) {
 		pr_err("wrong size: *len %d, entries_size %u, replsz %d\n",
 				*len, tinfo.entries_size, repl.entries_size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* userspace might not need the counters */
-	ret = copy_counters_to_user(t, oldcounters, compat_ptr(पंचांगp.counters),
-					पंचांगp.num_counters, tinfo.nentries);
-	अगर (ret)
-		वापस ret;
+	ret = copy_counters_to_user(t, oldcounters, compat_ptr(tmp.counters),
+					tmp.num_counters, tinfo.nentries);
+	if (ret)
+		return ret;
 
-	pos = compat_ptr(पंचांगp.entries);
-	वापस EBT_ENTRY_ITERATE(tinfo.entries, tinfo.entries_size,
-			compat_copy_entry_to_user, &pos, &पंचांगp.entries_size);
-पूर्ण
+	pos = compat_ptr(tmp.entries);
+	return EBT_ENTRY_ITERATE(tinfo.entries, tinfo.entries_size,
+			compat_copy_entry_to_user, &pos, &tmp.entries_size);
+}
 
-काष्ठा ebt_entries_buf_state अणु
-	अक्षर *buf_kern_start;	/* kernel buffer to copy (translated) data to */
+struct ebt_entries_buf_state {
+	char *buf_kern_start;	/* kernel buffer to copy (translated) data to */
 	u32 buf_kern_len;	/* total size of kernel buffer */
 	u32 buf_kern_offset;	/* amount of data copied so far */
-	u32 buf_user_offset;	/* पढ़ो position in userspace buffer */
-पूर्ण;
+	u32 buf_user_offset;	/* read position in userspace buffer */
+};
 
-अटल पूर्णांक ebt_buf_count(काष्ठा ebt_entries_buf_state *state, अचिन्हित पूर्णांक sz)
-अणु
+static int ebt_buf_count(struct ebt_entries_buf_state *state, unsigned int sz)
+{
 	state->buf_kern_offset += sz;
-	वापस state->buf_kern_offset >= sz ? 0 : -EINVAL;
-पूर्ण
+	return state->buf_kern_offset >= sz ? 0 : -EINVAL;
+}
 
-अटल पूर्णांक ebt_buf_add(काष्ठा ebt_entries_buf_state *state,
-		       स्थिर व्योम *data, अचिन्हित पूर्णांक sz)
-अणु
-	अगर (state->buf_kern_start == शून्य)
-		जाओ count_only;
+static int ebt_buf_add(struct ebt_entries_buf_state *state,
+		       const void *data, unsigned int sz)
+{
+	if (state->buf_kern_start == NULL)
+		goto count_only;
 
-	अगर (WARN_ON(state->buf_kern_offset + sz > state->buf_kern_len))
-		वापस -EINVAL;
+	if (WARN_ON(state->buf_kern_offset + sz > state->buf_kern_len))
+		return -EINVAL;
 
-	स_नकल(state->buf_kern_start + state->buf_kern_offset, data, sz);
+	memcpy(state->buf_kern_start + state->buf_kern_offset, data, sz);
 
  count_only:
 	state->buf_user_offset += sz;
-	वापस ebt_buf_count(state, sz);
-पूर्ण
+	return ebt_buf_count(state, sz);
+}
 
-अटल पूर्णांक ebt_buf_add_pad(काष्ठा ebt_entries_buf_state *state, अचिन्हित पूर्णांक sz)
-अणु
-	अक्षर *b = state->buf_kern_start;
+static int ebt_buf_add_pad(struct ebt_entries_buf_state *state, unsigned int sz)
+{
+	char *b = state->buf_kern_start;
 
-	अगर (WARN_ON(b && state->buf_kern_offset > state->buf_kern_len))
-		वापस -EINVAL;
+	if (WARN_ON(b && state->buf_kern_offset > state->buf_kern_len))
+		return -EINVAL;
 
-	अगर (b != शून्य && sz > 0)
-		स_रखो(b + state->buf_kern_offset, 0, sz);
-	/* करो not adjust ->buf_user_offset here, we added kernel-side padding */
-	वापस ebt_buf_count(state, sz);
-पूर्ण
+	if (b != NULL && sz > 0)
+		memset(b + state->buf_kern_offset, 0, sz);
+	/* do not adjust ->buf_user_offset here, we added kernel-side padding */
+	return ebt_buf_count(state, sz);
+}
 
-क्रमागत compat_mwt अणु
+enum compat_mwt {
 	EBT_COMPAT_MATCH,
 	EBT_COMPAT_WATCHER,
 	EBT_COMPAT_TARGET,
-पूर्ण;
+};
 
-अटल पूर्णांक compat_mtw_from_user(स्थिर काष्ठा compat_ebt_entry_mwt *mwt,
-				क्रमागत compat_mwt compat_mwt,
-				काष्ठा ebt_entries_buf_state *state,
-				स्थिर अचिन्हित अक्षर *base)
-अणु
-	अक्षर name[EBT_EXTENSION_MAXNAMELEN];
-	काष्ठा xt_match *match;
-	काष्ठा xt_target *wt;
-	व्योम *dst = शून्य;
-	पूर्णांक off, pad = 0;
-	अचिन्हित पूर्णांक size_kern, match_size = mwt->match_size;
+static int compat_mtw_from_user(const struct compat_ebt_entry_mwt *mwt,
+				enum compat_mwt compat_mwt,
+				struct ebt_entries_buf_state *state,
+				const unsigned char *base)
+{
+	char name[EBT_EXTENSION_MAXNAMELEN];
+	struct xt_match *match;
+	struct xt_target *wt;
+	void *dst = NULL;
+	int off, pad = 0;
+	unsigned int size_kern, match_size = mwt->match_size;
 
-	अगर (strscpy(name, mwt->u.name, माप(name)) < 0)
-		वापस -EINVAL;
+	if (strscpy(name, mwt->u.name, sizeof(name)) < 0)
+		return -EINVAL;
 
-	अगर (state->buf_kern_start)
+	if (state->buf_kern_start)
 		dst = state->buf_kern_start + state->buf_kern_offset;
 
-	चयन (compat_mwt) अणु
-	हाल EBT_COMPAT_MATCH:
+	switch (compat_mwt) {
+	case EBT_COMPAT_MATCH:
 		match = xt_request_find_match(NFPROTO_BRIDGE, name,
 					      mwt->u.revision);
-		अगर (IS_ERR(match))
-			वापस PTR_ERR(match);
+		if (IS_ERR(match))
+			return PTR_ERR(match);
 
 		off = ebt_compat_match_offset(match, match_size);
-		अगर (dst) अणु
-			अगर (match->compat_from_user)
+		if (dst) {
+			if (match->compat_from_user)
 				match->compat_from_user(dst, mwt->data);
-			अन्यथा
-				स_नकल(dst, mwt->data, match_size);
-		पूर्ण
+			else
+				memcpy(dst, mwt->data, match_size);
+		}
 
 		size_kern = match->matchsize;
-		अगर (unlikely(size_kern == -1))
+		if (unlikely(size_kern == -1))
 			size_kern = match_size;
 		module_put(match->me);
-		अवरोध;
-	हाल EBT_COMPAT_WATCHER:
-	हाल EBT_COMPAT_TARGET:
+		break;
+	case EBT_COMPAT_WATCHER:
+	case EBT_COMPAT_TARGET:
 		wt = xt_request_find_target(NFPROTO_BRIDGE, name,
 					    mwt->u.revision);
-		अगर (IS_ERR(wt))
-			वापस PTR_ERR(wt);
+		if (IS_ERR(wt))
+			return PTR_ERR(wt);
 		off = xt_compat_target_offset(wt);
 
-		अगर (dst) अणु
-			अगर (wt->compat_from_user)
+		if (dst) {
+			if (wt->compat_from_user)
 				wt->compat_from_user(dst, mwt->data);
-			अन्यथा
-				स_नकल(dst, mwt->data, match_size);
-		पूर्ण
+			else
+				memcpy(dst, mwt->data, match_size);
+		}
 
-		size_kern = wt->tarमाला_लोize;
+		size_kern = wt->targetsize;
 		module_put(wt->me);
-		अवरोध;
+		break;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
+	default:
+		return -EINVAL;
+	}
 
 	state->buf_kern_offset += match_size + off;
 	state->buf_user_offset += match_size;
 	pad = XT_ALIGN(size_kern) - size_kern;
 
-	अगर (pad > 0 && dst) अणु
-		अगर (WARN_ON(state->buf_kern_len <= pad))
-			वापस -EINVAL;
-		अगर (WARN_ON(state->buf_kern_offset - (match_size + off) + size_kern > state->buf_kern_len - pad))
-			वापस -EINVAL;
-		स_रखो(dst + size_kern, 0, pad);
-	पूर्ण
-	वापस off + match_size;
-पूर्ण
+	if (pad > 0 && dst) {
+		if (WARN_ON(state->buf_kern_len <= pad))
+			return -EINVAL;
+		if (WARN_ON(state->buf_kern_offset - (match_size + off) + size_kern > state->buf_kern_len - pad))
+			return -EINVAL;
+		memset(dst + size_kern, 0, pad);
+	}
+	return off + match_size;
+}
 
-/* वापस size of all matches, watchers or target, including necessary
+/* return size of all matches, watchers or target, including necessary
  * alignment and padding.
  */
-अटल पूर्णांक ebt_size_mwt(स्थिर काष्ठा compat_ebt_entry_mwt *match32,
-			अचिन्हित पूर्णांक size_left, क्रमागत compat_mwt type,
-			काष्ठा ebt_entries_buf_state *state, स्थिर व्योम *base)
-अणु
-	स्थिर अक्षर *buf = (स्थिर अक्षर *)match32;
-	पूर्णांक growth = 0;
+static int ebt_size_mwt(const struct compat_ebt_entry_mwt *match32,
+			unsigned int size_left, enum compat_mwt type,
+			struct ebt_entries_buf_state *state, const void *base)
+{
+	const char *buf = (const char *)match32;
+	int growth = 0;
 
-	अगर (size_left == 0)
-		वापस 0;
+	if (size_left == 0)
+		return 0;
 
-	करो अणु
-		काष्ठा ebt_entry_match *match_kern;
-		पूर्णांक ret;
+	do {
+		struct ebt_entry_match *match_kern;
+		int ret;
 
-		अगर (size_left < माप(*match32))
-			वापस -EINVAL;
+		if (size_left < sizeof(*match32))
+			return -EINVAL;
 
-		match_kern = (काष्ठा ebt_entry_match *) state->buf_kern_start;
-		अगर (match_kern) अणु
-			अक्षर *पंचांगp;
-			पंचांगp = state->buf_kern_start + state->buf_kern_offset;
-			match_kern = (काष्ठा ebt_entry_match *) पंचांगp;
-		पूर्ण
-		ret = ebt_buf_add(state, buf, माप(*match32));
-		अगर (ret < 0)
-			वापस ret;
-		size_left -= माप(*match32);
+		match_kern = (struct ebt_entry_match *) state->buf_kern_start;
+		if (match_kern) {
+			char *tmp;
+			tmp = state->buf_kern_start + state->buf_kern_offset;
+			match_kern = (struct ebt_entry_match *) tmp;
+		}
+		ret = ebt_buf_add(state, buf, sizeof(*match32));
+		if (ret < 0)
+			return ret;
+		size_left -= sizeof(*match32);
 
-		/* add padding beक्रमe match->data (अगर any) */
+		/* add padding before match->data (if any) */
 		ret = ebt_buf_add_pad(state, ebt_compat_entry_padsize());
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
-		अगर (match32->match_size > size_left)
-			वापस -EINVAL;
+		if (match32->match_size > size_left)
+			return -EINVAL;
 
 		size_left -= match32->match_size;
 
 		ret = compat_mtw_from_user(match32, type, state, base);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 
-		अगर (WARN_ON(ret < match32->match_size))
-			वापस -EINVAL;
+		if (WARN_ON(ret < match32->match_size))
+			return -EINVAL;
 		growth += ret - match32->match_size;
 		growth += ebt_compat_entry_padsize();
 
-		buf += माप(*match32);
+		buf += sizeof(*match32);
 		buf += match32->match_size;
 
-		अगर (match_kern)
+		if (match_kern)
 			match_kern->match_size = ret;
 
-		match32 = (काष्ठा compat_ebt_entry_mwt *) buf;
-	पूर्ण जबतक (size_left);
+		match32 = (struct compat_ebt_entry_mwt *) buf;
+	} while (size_left);
 
-	वापस growth;
-पूर्ण
+	return growth;
+}
 
-/* called क्रम all ebt_entry काष्ठाures. */
-अटल पूर्णांक size_entry_mwt(स्थिर काष्ठा ebt_entry *entry, स्थिर अचिन्हित अक्षर *base,
-			  अचिन्हित पूर्णांक *total,
-			  काष्ठा ebt_entries_buf_state *state)
-अणु
-	अचिन्हित पूर्णांक i, j, startoff, next_expected_off, new_offset = 0;
-	/* stores match/watchers/tarमाला_लो & offset of next काष्ठा ebt_entry: */
-	अचिन्हित पूर्णांक offsets[4];
-	अचिन्हित पूर्णांक *offsets_update = शून्य;
-	पूर्णांक ret;
-	अक्षर *buf_start;
+/* called for all ebt_entry structures. */
+static int size_entry_mwt(const struct ebt_entry *entry, const unsigned char *base,
+			  unsigned int *total,
+			  struct ebt_entries_buf_state *state)
+{
+	unsigned int i, j, startoff, next_expected_off, new_offset = 0;
+	/* stores match/watchers/targets & offset of next struct ebt_entry: */
+	unsigned int offsets[4];
+	unsigned int *offsets_update = NULL;
+	int ret;
+	char *buf_start;
 
-	अगर (*total < माप(काष्ठा ebt_entries))
-		वापस -EINVAL;
+	if (*total < sizeof(struct ebt_entries))
+		return -EINVAL;
 
-	अगर (!entry->biपंचांगask) अणु
-		*total -= माप(काष्ठा ebt_entries);
-		वापस ebt_buf_add(state, entry, माप(काष्ठा ebt_entries));
-	पूर्ण
-	अगर (*total < माप(*entry) || entry->next_offset < माप(*entry))
-		वापस -EINVAL;
+	if (!entry->bitmask) {
+		*total -= sizeof(struct ebt_entries);
+		return ebt_buf_add(state, entry, sizeof(struct ebt_entries));
+	}
+	if (*total < sizeof(*entry) || entry->next_offset < sizeof(*entry))
+		return -EINVAL;
 
 	startoff = state->buf_user_offset;
-	/* pull in most part of ebt_entry, it करोes not need to be changed. */
+	/* pull in most part of ebt_entry, it does not need to be changed. */
 	ret = ebt_buf_add(state, entry,
-			दुरत्व(काष्ठा ebt_entry, watchers_offset));
-	अगर (ret < 0)
-		वापस ret;
+			offsetof(struct ebt_entry, watchers_offset));
+	if (ret < 0)
+		return ret;
 
-	offsets[0] = माप(काष्ठा ebt_entry); /* matches come first */
-	स_नकल(&offsets[1], &entry->watchers_offset,
-			माप(offsets) - माप(offsets[0]));
+	offsets[0] = sizeof(struct ebt_entry); /* matches come first */
+	memcpy(&offsets[1], &entry->watchers_offset,
+			sizeof(offsets) - sizeof(offsets[0]));
 
-	अगर (state->buf_kern_start) अणु
+	if (state->buf_kern_start) {
 		buf_start = state->buf_kern_start + state->buf_kern_offset;
-		offsets_update = (अचिन्हित पूर्णांक *) buf_start;
-	पूर्ण
+		offsets_update = (unsigned int *) buf_start;
+	}
 	ret = ebt_buf_add(state, &offsets[1],
-			माप(offsets) - माप(offsets[0]));
-	अगर (ret < 0)
-		वापस ret;
-	buf_start = (अक्षर *) entry;
+			sizeof(offsets) - sizeof(offsets[0]));
+	if (ret < 0)
+		return ret;
+	buf_start = (char *) entry;
 	/* 0: matches offset, always follows ebt_entry.
-	 * 1: watchers offset, from ebt_entry काष्ठाure
-	 * 2: target offset, from ebt_entry काष्ठाure
-	 * 3: next ebt_entry offset, from ebt_entry काष्ठाure
+	 * 1: watchers offset, from ebt_entry structure
+	 * 2: target offset, from ebt_entry structure
+	 * 3: next ebt_entry offset, from ebt_entry structure
 	 *
-	 * offsets are relative to beginning of काष्ठा ebt_entry (i.e., 0).
+	 * offsets are relative to beginning of struct ebt_entry (i.e., 0).
 	 */
-	क्रम (i = 0; i < 4 ; ++i) अणु
-		अगर (offsets[i] > *total)
-			वापस -EINVAL;
+	for (i = 0; i < 4 ; ++i) {
+		if (offsets[i] > *total)
+			return -EINVAL;
 
-		अगर (i < 3 && offsets[i] == *total)
-			वापस -EINVAL;
+		if (i < 3 && offsets[i] == *total)
+			return -EINVAL;
 
-		अगर (i == 0)
-			जारी;
-		अगर (offsets[i-1] > offsets[i])
-			वापस -EINVAL;
-	पूर्ण
+		if (i == 0)
+			continue;
+		if (offsets[i-1] > offsets[i])
+			return -EINVAL;
+	}
 
-	क्रम (i = 0, j = 1 ; j < 4 ; j++, i++) अणु
-		काष्ठा compat_ebt_entry_mwt *match32;
-		अचिन्हित पूर्णांक size;
-		अक्षर *buf = buf_start + offsets[i];
+	for (i = 0, j = 1 ; j < 4 ; j++, i++) {
+		struct compat_ebt_entry_mwt *match32;
+		unsigned int size;
+		char *buf = buf_start + offsets[i];
 
-		अगर (offsets[i] > offsets[j])
-			वापस -EINVAL;
+		if (offsets[i] > offsets[j])
+			return -EINVAL;
 
-		match32 = (काष्ठा compat_ebt_entry_mwt *) buf;
+		match32 = (struct compat_ebt_entry_mwt *) buf;
 		size = offsets[j] - offsets[i];
 		ret = ebt_size_mwt(match32, size, i, state, base);
-		अगर (ret < 0)
-			वापस ret;
+		if (ret < 0)
+			return ret;
 		new_offset += ret;
-		अगर (offsets_update && new_offset) अणु
+		if (offsets_update && new_offset) {
 			pr_debug("change offset %d to %d\n",
 				offsets_update[i], offsets[j] + new_offset);
 			offsets_update[i] = offsets[j] + new_offset;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (state->buf_kern_start == शून्य) अणु
-		अचिन्हित पूर्णांक offset = buf_start - (अक्षर *) base;
+	if (state->buf_kern_start == NULL) {
+		unsigned int offset = buf_start - (char *) base;
 
 		ret = xt_compat_add_offset(NFPROTO_BRIDGE, offset, new_offset);
-		अगर (ret < 0)
-			वापस ret;
-	पूर्ण
+		if (ret < 0)
+			return ret;
+	}
 
 	next_expected_off = state->buf_user_offset - startoff;
-	अगर (next_expected_off != entry->next_offset)
-		वापस -EINVAL;
+	if (next_expected_off != entry->next_offset)
+		return -EINVAL;
 
-	अगर (*total < entry->next_offset)
-		वापस -EINVAL;
+	if (*total < entry->next_offset)
+		return -EINVAL;
 	*total -= entry->next_offset;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /* repl->entries_size is the size of the ebt_entry blob in userspace.
- * It might need more memory when copied to a 64 bit kernel in हाल
+ * It might need more memory when copied to a 64 bit kernel in case
  * userspace is 32-bit. So, first task: find out how much memory is needed.
  *
- * Called beक्रमe validation is perक्रमmed.
+ * Called before validation is performed.
  */
-अटल पूर्णांक compat_copy_entries(अचिन्हित अक्षर *data, अचिन्हित पूर्णांक size_user,
-				काष्ठा ebt_entries_buf_state *state)
-अणु
-	अचिन्हित पूर्णांक size_reमुख्यing = size_user;
-	पूर्णांक ret;
+static int compat_copy_entries(unsigned char *data, unsigned int size_user,
+				struct ebt_entries_buf_state *state)
+{
+	unsigned int size_remaining = size_user;
+	int ret;
 
 	ret = EBT_ENTRY_ITERATE(data, size_user, size_entry_mwt, data,
-					&size_reमुख्यing, state);
-	अगर (ret < 0)
-		वापस ret;
+					&size_remaining, state);
+	if (ret < 0)
+		return ret;
 
-	अगर (size_reमुख्यing)
-		वापस -EINVAL;
+	if (size_remaining)
+		return -EINVAL;
 
-	वापस state->buf_kern_offset;
-पूर्ण
+	return state->buf_kern_offset;
+}
 
 
-अटल पूर्णांक compat_copy_ebt_replace_from_user(काष्ठा ebt_replace *repl,
-					     sockptr_t arg, अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा compat_ebt_replace पंचांगp;
-	पूर्णांक i;
+static int compat_copy_ebt_replace_from_user(struct ebt_replace *repl,
+					     sockptr_t arg, unsigned int len)
+{
+	struct compat_ebt_replace tmp;
+	int i;
 
-	अगर (len < माप(पंचांगp))
-		वापस -EINVAL;
+	if (len < sizeof(tmp))
+		return -EINVAL;
 
-	अगर (copy_from_sockptr(&पंचांगp, arg, माप(पंचांगp)))
-		वापस -EFAULT;
+	if (copy_from_sockptr(&tmp, arg, sizeof(tmp)))
+		return -EFAULT;
 
-	अगर (len != माप(पंचांगp) + पंचांगp.entries_size)
-		वापस -EINVAL;
+	if (len != sizeof(tmp) + tmp.entries_size)
+		return -EINVAL;
 
-	अगर (पंचांगp.entries_size == 0)
-		वापस -EINVAL;
+	if (tmp.entries_size == 0)
+		return -EINVAL;
 
-	अगर (पंचांगp.nentries >= ((पूर्णांक_उच्च - माप(काष्ठा ebt_table_info)) /
-			NR_CPUS - SMP_CACHE_BYTES) / माप(काष्ठा ebt_counter))
-		वापस -ENOMEM;
-	अगर (पंचांगp.num_counters >= पूर्णांक_उच्च / माप(काष्ठा ebt_counter))
-		वापस -ENOMEM;
+	if (tmp.nentries >= ((INT_MAX - sizeof(struct ebt_table_info)) /
+			NR_CPUS - SMP_CACHE_BYTES) / sizeof(struct ebt_counter))
+		return -ENOMEM;
+	if (tmp.num_counters >= INT_MAX / sizeof(struct ebt_counter))
+		return -ENOMEM;
 
-	स_नकल(repl, &पंचांगp, दुरत्व(काष्ठा ebt_replace, hook_entry));
+	memcpy(repl, &tmp, offsetof(struct ebt_replace, hook_entry));
 
-	/* starting with hook_entry, 32 vs. 64 bit काष्ठाures are dअगरferent */
-	क्रम (i = 0; i < NF_BR_NUMHOOKS; i++)
-		repl->hook_entry[i] = compat_ptr(पंचांगp.hook_entry[i]);
+	/* starting with hook_entry, 32 vs. 64 bit structures are different */
+	for (i = 0; i < NF_BR_NUMHOOKS; i++)
+		repl->hook_entry[i] = compat_ptr(tmp.hook_entry[i]);
 
-	repl->num_counters = पंचांगp.num_counters;
-	repl->counters = compat_ptr(पंचांगp.counters);
-	repl->entries = compat_ptr(पंचांगp.entries);
-	वापस 0;
-पूर्ण
+	repl->num_counters = tmp.num_counters;
+	repl->counters = compat_ptr(tmp.counters);
+	repl->entries = compat_ptr(tmp.entries);
+	return 0;
+}
 
-अटल पूर्णांक compat_करो_replace(काष्ठा net *net, sockptr_t arg, अचिन्हित पूर्णांक len)
-अणु
-	पूर्णांक ret, i, countersize, size64;
-	काष्ठा ebt_table_info *newinfo;
-	काष्ठा ebt_replace पंचांगp;
-	काष्ठा ebt_entries_buf_state state;
-	व्योम *entries_पंचांगp;
+static int compat_do_replace(struct net *net, sockptr_t arg, unsigned int len)
+{
+	int ret, i, countersize, size64;
+	struct ebt_table_info *newinfo;
+	struct ebt_replace tmp;
+	struct ebt_entries_buf_state state;
+	void *entries_tmp;
 
-	ret = compat_copy_ebt_replace_from_user(&पंचांगp, arg, len);
-	अगर (ret) अणु
-		/* try real handler in हाल userland supplied needed padding */
-		अगर (ret == -EINVAL && करो_replace(net, arg, len) == 0)
+	ret = compat_copy_ebt_replace_from_user(&tmp, arg, len);
+	if (ret) {
+		/* try real handler in case userland supplied needed padding */
+		if (ret == -EINVAL && do_replace(net, arg, len) == 0)
 			ret = 0;
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	countersize = COUNTER_OFFSET(पंचांगp.nentries) * nr_cpu_ids;
-	newinfo = vदो_स्मृति(माप(*newinfo) + countersize);
-	अगर (!newinfo)
-		वापस -ENOMEM;
+	countersize = COUNTER_OFFSET(tmp.nentries) * nr_cpu_ids;
+	newinfo = vmalloc(sizeof(*newinfo) + countersize);
+	if (!newinfo)
+		return -ENOMEM;
 
-	अगर (countersize)
-		स_रखो(newinfo->counters, 0, countersize);
+	if (countersize)
+		memset(newinfo->counters, 0, countersize);
 
-	स_रखो(&state, 0, माप(state));
+	memset(&state, 0, sizeof(state));
 
-	newinfo->entries = vदो_स्मृति(पंचांगp.entries_size);
-	अगर (!newinfo->entries) अणु
+	newinfo->entries = vmalloc(tmp.entries_size);
+	if (!newinfo->entries) {
 		ret = -ENOMEM;
-		जाओ मुक्त_newinfo;
-	पूर्ण
-	अगर (copy_from_user(
-	   newinfo->entries, पंचांगp.entries, पंचांगp.entries_size) != 0) अणु
+		goto free_newinfo;
+	}
+	if (copy_from_user(
+	   newinfo->entries, tmp.entries, tmp.entries_size) != 0) {
 		ret = -EFAULT;
-		जाओ मुक्त_entries;
-	पूर्ण
+		goto free_entries;
+	}
 
-	entries_पंचांगp = newinfo->entries;
+	entries_tmp = newinfo->entries;
 
 	xt_compat_lock(NFPROTO_BRIDGE);
 
-	ret = ebt_compat_init_offsets(पंचांगp.nentries);
-	अगर (ret < 0)
-		जाओ out_unlock;
+	ret = ebt_compat_init_offsets(tmp.nentries);
+	if (ret < 0)
+		goto out_unlock;
 
-	ret = compat_copy_entries(entries_पंचांगp, पंचांगp.entries_size, &state);
-	अगर (ret < 0)
-		जाओ out_unlock;
+	ret = compat_copy_entries(entries_tmp, tmp.entries_size, &state);
+	if (ret < 0)
+		goto out_unlock;
 
 	pr_debug("tmp.entries_size %d, kern off %d, user off %d delta %d\n",
-		पंचांगp.entries_size, state.buf_kern_offset, state.buf_user_offset,
-		xt_compat_calc_jump(NFPROTO_BRIDGE, पंचांगp.entries_size));
+		tmp.entries_size, state.buf_kern_offset, state.buf_user_offset,
+		xt_compat_calc_jump(NFPROTO_BRIDGE, tmp.entries_size));
 
 	size64 = ret;
-	newinfo->entries = vदो_स्मृति(size64);
-	अगर (!newinfo->entries) अणु
-		vमुक्त(entries_पंचांगp);
+	newinfo->entries = vmalloc(size64);
+	if (!newinfo->entries) {
+		vfree(entries_tmp);
 		ret = -ENOMEM;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 
-	स_रखो(&state, 0, माप(state));
+	memset(&state, 0, sizeof(state));
 	state.buf_kern_start = newinfo->entries;
 	state.buf_kern_len = size64;
 
-	ret = compat_copy_entries(entries_पंचांगp, पंचांगp.entries_size, &state);
-	अगर (WARN_ON(ret < 0)) अणु
-		vमुक्त(entries_पंचांगp);
-		जाओ out_unlock;
-	पूर्ण
+	ret = compat_copy_entries(entries_tmp, tmp.entries_size, &state);
+	if (WARN_ON(ret < 0)) {
+		vfree(entries_tmp);
+		goto out_unlock;
+	}
 
-	vमुक्त(entries_पंचांगp);
-	पंचांगp.entries_size = size64;
+	vfree(entries_tmp);
+	tmp.entries_size = size64;
 
-	क्रम (i = 0; i < NF_BR_NUMHOOKS; i++) अणु
-		अक्षर __user *usrptr;
-		अगर (पंचांगp.hook_entry[i]) अणु
-			अचिन्हित पूर्णांक delta;
-			usrptr = (अक्षर __user *) पंचांगp.hook_entry[i];
-			delta = usrptr - पंचांगp.entries;
+	for (i = 0; i < NF_BR_NUMHOOKS; i++) {
+		char __user *usrptr;
+		if (tmp.hook_entry[i]) {
+			unsigned int delta;
+			usrptr = (char __user *) tmp.hook_entry[i];
+			delta = usrptr - tmp.entries;
 			usrptr += xt_compat_calc_jump(NFPROTO_BRIDGE, delta);
-			पंचांगp.hook_entry[i] = (काष्ठा ebt_entries __user *)usrptr;
-		पूर्ण
-	पूर्ण
+			tmp.hook_entry[i] = (struct ebt_entries __user *)usrptr;
+		}
+	}
 
 	xt_compat_flush_offsets(NFPROTO_BRIDGE);
 	xt_compat_unlock(NFPROTO_BRIDGE);
 
-	ret = करो_replace_finish(net, &पंचांगp, newinfo);
-	अगर (ret == 0)
-		वापस ret;
-मुक्त_entries:
-	vमुक्त(newinfo->entries);
-मुक्त_newinfo:
-	vमुक्त(newinfo);
-	वापस ret;
+	ret = do_replace_finish(net, &tmp, newinfo);
+	if (ret == 0)
+		return ret;
+free_entries:
+	vfree(newinfo->entries);
+free_newinfo:
+	vfree(newinfo);
+	return ret;
 out_unlock:
 	xt_compat_flush_offsets(NFPROTO_BRIDGE);
 	xt_compat_unlock(NFPROTO_BRIDGE);
-	जाओ मुक्त_entries;
-पूर्ण
+	goto free_entries;
+}
 
-अटल पूर्णांक compat_update_counters(काष्ठा net *net, sockptr_t arg,
-				  अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा compat_ebt_replace hlp;
+static int compat_update_counters(struct net *net, sockptr_t arg,
+				  unsigned int len)
+{
+	struct compat_ebt_replace hlp;
 
-	अगर (copy_from_sockptr(&hlp, arg, माप(hlp)))
-		वापस -EFAULT;
+	if (copy_from_sockptr(&hlp, arg, sizeof(hlp)))
+		return -EFAULT;
 
-	/* try real handler in हाल userland supplied needed padding */
-	अगर (len != माप(hlp) + hlp.num_counters * माप(काष्ठा ebt_counter))
-		वापस update_counters(net, arg, len);
+	/* try real handler in case userland supplied needed padding */
+	if (len != sizeof(hlp) + hlp.num_counters * sizeof(struct ebt_counter))
+		return update_counters(net, arg, len);
 
-	वापस करो_update_counters(net, hlp.name, compat_ptr(hlp.counters),
+	return do_update_counters(net, hlp.name, compat_ptr(hlp.counters),
 				  hlp.num_counters, len);
-पूर्ण
+}
 
-अटल पूर्णांक compat_करो_ebt_get_ctl(काष्ठा sock *sk, पूर्णांक cmd,
-		व्योम __user *user, पूर्णांक *len)
-अणु
-	पूर्णांक ret;
-	काष्ठा compat_ebt_replace पंचांगp;
-	काष्ठा ebt_table *t;
-	काष्ठा net *net = sock_net(sk);
+static int compat_do_ebt_get_ctl(struct sock *sk, int cmd,
+		void __user *user, int *len)
+{
+	int ret;
+	struct compat_ebt_replace tmp;
+	struct ebt_table *t;
+	struct net *net = sock_net(sk);
 
-	अगर ((cmd == EBT_SO_GET_INFO || cmd == EBT_SO_GET_INIT_INFO) &&
-	    *len != माप(काष्ठा compat_ebt_replace))
-		वापस -EINVAL;
+	if ((cmd == EBT_SO_GET_INFO || cmd == EBT_SO_GET_INIT_INFO) &&
+	    *len != sizeof(struct compat_ebt_replace))
+		return -EINVAL;
 
-	अगर (copy_from_user(&पंचांगp, user, माप(पंचांगp)))
-		वापस -EFAULT;
+	if (copy_from_user(&tmp, user, sizeof(tmp)))
+		return -EFAULT;
 
-	पंचांगp.name[माप(पंचांगp.name) - 1] = '\0';
+	tmp.name[sizeof(tmp.name) - 1] = '\0';
 
-	t = find_table_lock(net, पंचांगp.name, &ret, &ebt_mutex);
-	अगर (!t)
-		वापस ret;
+	t = find_table_lock(net, tmp.name, &ret, &ebt_mutex);
+	if (!t)
+		return ret;
 
 	xt_compat_lock(NFPROTO_BRIDGE);
-	चयन (cmd) अणु
-	हाल EBT_SO_GET_INFO:
-		पंचांगp.nentries = t->निजी->nentries;
-		ret = compat_table_info(t->निजी, &पंचांगp);
-		अगर (ret)
-			जाओ out;
-		पंचांगp.valid_hooks = t->valid_hooks;
+	switch (cmd) {
+	case EBT_SO_GET_INFO:
+		tmp.nentries = t->private->nentries;
+		ret = compat_table_info(t->private, &tmp);
+		if (ret)
+			goto out;
+		tmp.valid_hooks = t->valid_hooks;
 
-		अगर (copy_to_user(user, &पंचांगp, *len) != 0) अणु
+		if (copy_to_user(user, &tmp, *len) != 0) {
 			ret = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ret = 0;
-		अवरोध;
-	हाल EBT_SO_GET_INIT_INFO:
-		पंचांगp.nentries = t->table->nentries;
-		पंचांगp.entries_size = t->table->entries_size;
-		पंचांगp.valid_hooks = t->table->valid_hooks;
+		break;
+	case EBT_SO_GET_INIT_INFO:
+		tmp.nentries = t->table->nentries;
+		tmp.entries_size = t->table->entries_size;
+		tmp.valid_hooks = t->table->valid_hooks;
 
-		अगर (copy_to_user(user, &पंचांगp, *len) != 0) अणु
+		if (copy_to_user(user, &tmp, *len) != 0) {
 			ret = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ret = 0;
-		अवरोध;
-	हाल EBT_SO_GET_ENTRIES:
-	हाल EBT_SO_GET_INIT_ENTRIES:
-		/* try real handler first in हाल of userland-side padding.
-		 * in हाल we are dealing with an 'ordinary' 32 bit binary
+		break;
+	case EBT_SO_GET_ENTRIES:
+	case EBT_SO_GET_INIT_ENTRIES:
+		/* try real handler first in case of userland-side padding.
+		 * in case we are dealing with an 'ordinary' 32 bit binary
 		 * without 64bit compatibility padding, this will fail right
 		 * after copy_from_user when the *len argument is validated.
 		 *
-		 * the compat_ variant needs to करो one pass over the kernel
-		 * data set to adjust क्रम size dअगरferences beक्रमe it the check.
+		 * the compat_ variant needs to do one pass over the kernel
+		 * data set to adjust for size differences before it the check.
 		 */
-		अगर (copy_everything_to_user(t, user, len, cmd) == 0)
+		if (copy_everything_to_user(t, user, len, cmd) == 0)
 			ret = 0;
-		अन्यथा
+		else
 			ret = compat_copy_everything_to_user(t, user, len, cmd);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
+	}
  out:
 	xt_compat_flush_offsets(NFPROTO_BRIDGE);
 	xt_compat_unlock(NFPROTO_BRIDGE);
 	mutex_unlock(&ebt_mutex);
-	वापस ret;
-पूर्ण
-#पूर्ण_अगर
+	return ret;
+}
+#endif
 
-अटल पूर्णांक करो_ebt_get_ctl(काष्ठा sock *sk, पूर्णांक cmd, व्योम __user *user, पूर्णांक *len)
-अणु
-	काष्ठा net *net = sock_net(sk);
-	काष्ठा ebt_replace पंचांगp;
-	काष्ठा ebt_table *t;
-	पूर्णांक ret;
+static int do_ebt_get_ctl(struct sock *sk, int cmd, void __user *user, int *len)
+{
+	struct net *net = sock_net(sk);
+	struct ebt_replace tmp;
+	struct ebt_table *t;
+	int ret;
 
-	अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-		वापस -EPERM;
+	if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+		return -EPERM;
 
-#अगर_घोषित CONFIG_NETFILTER_XTABLES_COMPAT
-	/* try real handler in हाल userland supplied needed padding */
-	अगर (in_compat_syscall() &&
+#ifdef CONFIG_NETFILTER_XTABLES_COMPAT
+	/* try real handler in case userland supplied needed padding */
+	if (in_compat_syscall() &&
 	    ((cmd != EBT_SO_GET_INFO && cmd != EBT_SO_GET_INIT_INFO) ||
-	     *len != माप(पंचांगp)))
-		वापस compat_करो_ebt_get_ctl(sk, cmd, user, len);
-#पूर्ण_अगर
+	     *len != sizeof(tmp)))
+		return compat_do_ebt_get_ctl(sk, cmd, user, len);
+#endif
 
-	अगर (copy_from_user(&पंचांगp, user, माप(पंचांगp)))
-		वापस -EFAULT;
+	if (copy_from_user(&tmp, user, sizeof(tmp)))
+		return -EFAULT;
 
-	पंचांगp.name[माप(पंचांगp.name) - 1] = '\0';
+	tmp.name[sizeof(tmp.name) - 1] = '\0';
 
-	t = find_table_lock(net, पंचांगp.name, &ret, &ebt_mutex);
-	अगर (!t)
-		वापस ret;
+	t = find_table_lock(net, tmp.name, &ret, &ebt_mutex);
+	if (!t)
+		return ret;
 
-	चयन (cmd) अणु
-	हाल EBT_SO_GET_INFO:
-	हाल EBT_SO_GET_INIT_INFO:
-		अगर (*len != माप(काष्ठा ebt_replace)) अणु
+	switch (cmd) {
+	case EBT_SO_GET_INFO:
+	case EBT_SO_GET_INIT_INFO:
+		if (*len != sizeof(struct ebt_replace)) {
 			ret = -EINVAL;
 			mutex_unlock(&ebt_mutex);
-			अवरोध;
-		पूर्ण
-		अगर (cmd == EBT_SO_GET_INFO) अणु
-			पंचांगp.nentries = t->निजी->nentries;
-			पंचांगp.entries_size = t->निजी->entries_size;
-			पंचांगp.valid_hooks = t->valid_hooks;
-		पूर्ण अन्यथा अणु
-			पंचांगp.nentries = t->table->nentries;
-			पंचांगp.entries_size = t->table->entries_size;
-			पंचांगp.valid_hooks = t->table->valid_hooks;
-		पूर्ण
+			break;
+		}
+		if (cmd == EBT_SO_GET_INFO) {
+			tmp.nentries = t->private->nentries;
+			tmp.entries_size = t->private->entries_size;
+			tmp.valid_hooks = t->valid_hooks;
+		} else {
+			tmp.nentries = t->table->nentries;
+			tmp.entries_size = t->table->entries_size;
+			tmp.valid_hooks = t->table->valid_hooks;
+		}
 		mutex_unlock(&ebt_mutex);
-		अगर (copy_to_user(user, &पंचांगp, *len) != 0) अणु
+		if (copy_to_user(user, &tmp, *len) != 0) {
 			ret = -EFAULT;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		ret = 0;
-		अवरोध;
+		break;
 
-	हाल EBT_SO_GET_ENTRIES:
-	हाल EBT_SO_GET_INIT_ENTRIES:
+	case EBT_SO_GET_ENTRIES:
+	case EBT_SO_GET_INIT_ENTRIES:
 		ret = copy_everything_to_user(t, user, len, cmd);
 		mutex_unlock(&ebt_mutex);
-		अवरोध;
+		break;
 
-	शेष:
+	default:
 		mutex_unlock(&ebt_mutex);
 		ret = -EINVAL;
-	पूर्ण
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक करो_ebt_set_ctl(काष्ठा sock *sk, पूर्णांक cmd, sockptr_t arg,
-		अचिन्हित पूर्णांक len)
-अणु
-	काष्ठा net *net = sock_net(sk);
-	पूर्णांक ret;
+static int do_ebt_set_ctl(struct sock *sk, int cmd, sockptr_t arg,
+		unsigned int len)
+{
+	struct net *net = sock_net(sk);
+	int ret;
 
-	अगर (!ns_capable(net->user_ns, CAP_NET_ADMIN))
-		वापस -EPERM;
+	if (!ns_capable(net->user_ns, CAP_NET_ADMIN))
+		return -EPERM;
 
-	चयन (cmd) अणु
-	हाल EBT_SO_SET_ENTRIES:
-#अगर_घोषित CONFIG_NETFILTER_XTABLES_COMPAT
-		अगर (in_compat_syscall())
-			ret = compat_करो_replace(net, arg, len);
-		अन्यथा
-#पूर्ण_अगर
-			ret = करो_replace(net, arg, len);
-		अवरोध;
-	हाल EBT_SO_SET_COUNTERS:
-#अगर_घोषित CONFIG_NETFILTER_XTABLES_COMPAT
-		अगर (in_compat_syscall())
+	switch (cmd) {
+	case EBT_SO_SET_ENTRIES:
+#ifdef CONFIG_NETFILTER_XTABLES_COMPAT
+		if (in_compat_syscall())
+			ret = compat_do_replace(net, arg, len);
+		else
+#endif
+			ret = do_replace(net, arg, len);
+		break;
+	case EBT_SO_SET_COUNTERS:
+#ifdef CONFIG_NETFILTER_XTABLES_COMPAT
+		if (in_compat_syscall())
 			ret = compat_update_counters(net, arg, len);
-		अन्यथा
-#पूर्ण_अगर
+		else
+#endif
 			ret = update_counters(net, arg, len);
-		अवरोध;
-	शेष:
+		break;
+	default:
 		ret = -EINVAL;
-	पूर्ण
-	वापस ret;
-पूर्ण
+	}
+	return ret;
+}
 
-अटल काष्ठा nf_sockopt_ops ebt_sockopts = अणु
+static struct nf_sockopt_ops ebt_sockopts = {
 	.pf		= PF_INET,
-	.set_opपंचांगin	= EBT_BASE_CTL,
-	.set_opपंचांगax	= EBT_SO_SET_MAX + 1,
-	.set		= करो_ebt_set_ctl,
-	.get_opपंचांगin	= EBT_BASE_CTL,
-	.get_opपंचांगax	= EBT_SO_GET_MAX + 1,
-	.get		= करो_ebt_get_ctl,
+	.set_optmin	= EBT_BASE_CTL,
+	.set_optmax	= EBT_SO_SET_MAX + 1,
+	.set		= do_ebt_set_ctl,
+	.get_optmin	= EBT_BASE_CTL,
+	.get_optmax	= EBT_SO_GET_MAX + 1,
+	.get		= do_ebt_get_ctl,
 	.owner		= THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __net_init ebt_pernet_init(काष्ठा net *net)
-अणु
-	काष्ठा ebt_pernet *ebt_net = net_generic(net, ebt_pernet_id);
+static int __net_init ebt_pernet_init(struct net *net)
+{
+	struct ebt_pernet *ebt_net = net_generic(net, ebt_pernet_id);
 
 	INIT_LIST_HEAD(&ebt_net->tables);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा pernet_operations ebt_net_ops = अणु
+static struct pernet_operations ebt_net_ops = {
 	.init = ebt_pernet_init,
 	.id   = &ebt_pernet_id,
-	.size = माप(काष्ठा ebt_pernet),
-पूर्ण;
+	.size = sizeof(struct ebt_pernet),
+};
 
-अटल पूर्णांक __init ebtables_init(व्योम)
-अणु
-	पूर्णांक ret;
+static int __init ebtables_init(void)
+{
+	int ret;
 
-	ret = xt_रेजिस्टर_target(&ebt_standard_target);
-	अगर (ret < 0)
-		वापस ret;
-	ret = nf_रेजिस्टर_sockopt(&ebt_sockopts);
-	अगर (ret < 0) अणु
-		xt_unरेजिस्टर_target(&ebt_standard_target);
-		वापस ret;
-	पूर्ण
+	ret = xt_register_target(&ebt_standard_target);
+	if (ret < 0)
+		return ret;
+	ret = nf_register_sockopt(&ebt_sockopts);
+	if (ret < 0) {
+		xt_unregister_target(&ebt_standard_target);
+		return ret;
+	}
 
-	ret = रेजिस्टर_pernet_subsys(&ebt_net_ops);
-	अगर (ret < 0) अणु
-		nf_unरेजिस्टर_sockopt(&ebt_sockopts);
-		xt_unरेजिस्टर_target(&ebt_standard_target);
-		वापस ret;
-	पूर्ण
+	ret = register_pernet_subsys(&ebt_net_ops);
+	if (ret < 0) {
+		nf_unregister_sockopt(&ebt_sockopts);
+		xt_unregister_target(&ebt_standard_target);
+		return ret;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम ebtables_fini(व्योम)
-अणु
-	nf_unरेजिस्टर_sockopt(&ebt_sockopts);
-	xt_unरेजिस्टर_target(&ebt_standard_target);
-	unरेजिस्टर_pernet_subsys(&ebt_net_ops);
-पूर्ण
+static void ebtables_fini(void)
+{
+	nf_unregister_sockopt(&ebt_sockopts);
+	xt_unregister_target(&ebt_standard_target);
+	unregister_pernet_subsys(&ebt_net_ops);
+}
 
-EXPORT_SYMBOL(ebt_रेजिस्टर_table);
-EXPORT_SYMBOL(ebt_unरेजिस्टर_table);
-EXPORT_SYMBOL(ebt_करो_table);
+EXPORT_SYMBOL(ebt_register_table);
+EXPORT_SYMBOL(ebt_unregister_table);
+EXPORT_SYMBOL(ebt_do_table);
 module_init(ebtables_init);
-module_निकास(ebtables_fini);
+module_exit(ebtables_fini);
 MODULE_LICENSE("GPL");

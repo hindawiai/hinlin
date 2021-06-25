@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2016 Intel Corporation
+ * Copyright © 2016 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -23,88 +22,88 @@
  *
  */
 
-#समावेश <linux/bitops.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/अक्रमom.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/types.h>
+#include <linux/bitops.h>
+#include <linux/kernel.h>
+#include <linux/random.h>
+#include <linux/slab.h>
+#include <linux/types.h>
 
-#समावेश "i915_random.h"
-#समावेश "i915_utils.h"
+#include "i915_random.h"
+#include "i915_utils.h"
 
-u64 i915_pअक्रमom_u64_state(काष्ठा rnd_state *rnd)
-अणु
+u64 i915_prandom_u64_state(struct rnd_state *rnd)
+{
 	u64 x;
 
-	x = pअक्रमom_u32_state(rnd);
+	x = prandom_u32_state(rnd);
 	x <<= 32;
-	x |= pअक्रमom_u32_state(rnd);
+	x |= prandom_u32_state(rnd);
 
-	वापस x;
-पूर्ण
+	return x;
+}
 
-व्योम i915_pअक्रमom_shuffle(व्योम *arr, माप_प्रकार elsz, माप_प्रकार count,
-			  काष्ठा rnd_state *state)
-अणु
-	अक्षर stack[128];
+void i915_prandom_shuffle(void *arr, size_t elsz, size_t count,
+			  struct rnd_state *state)
+{
+	char stack[128];
 
-	अगर (WARN_ON(elsz > माप(stack) || count > U32_MAX))
-		वापस;
+	if (WARN_ON(elsz > sizeof(stack) || count > U32_MAX))
+		return;
 
-	अगर (!elsz || !count)
-		वापस;
+	if (!elsz || !count)
+		return;
 
 	/* Fisher-Yates shuffle courtesy of Knuth */
-	जबतक (--count) अणु
-		माप_प्रकार swp;
+	while (--count) {
+		size_t swp;
 
-		swp = i915_pअक्रमom_u32_max_state(count + 1, state);
-		अगर (swp == count)
-			जारी;
+		swp = i915_prandom_u32_max_state(count + 1, state);
+		if (swp == count)
+			continue;
 
-		स_नकल(stack, arr + count * elsz, elsz);
-		स_नकल(arr + count * elsz, arr + swp * elsz, elsz);
-		स_नकल(arr + swp * elsz, stack, elsz);
-	पूर्ण
-पूर्ण
+		memcpy(stack, arr + count * elsz, elsz);
+		memcpy(arr + count * elsz, arr + swp * elsz, elsz);
+		memcpy(arr + swp * elsz, stack, elsz);
+	}
+}
 
-व्योम i915_अक्रमom_reorder(अचिन्हित पूर्णांक *order, अचिन्हित पूर्णांक count,
-			 काष्ठा rnd_state *state)
-अणु
-	i915_pअक्रमom_shuffle(order, माप(*order), count, state);
-पूर्ण
+void i915_random_reorder(unsigned int *order, unsigned int count,
+			 struct rnd_state *state)
+{
+	i915_prandom_shuffle(order, sizeof(*order), count, state);
+}
 
-अचिन्हित पूर्णांक *i915_अक्रमom_order(अचिन्हित पूर्णांक count, काष्ठा rnd_state *state)
-अणु
-	अचिन्हित पूर्णांक *order, i;
+unsigned int *i915_random_order(unsigned int count, struct rnd_state *state)
+{
+	unsigned int *order, i;
 
-	order = kदो_स्मृति_array(count, माप(*order),
+	order = kmalloc_array(count, sizeof(*order),
 			      GFP_KERNEL | __GFP_RETRY_MAYFAIL | __GFP_NOWARN);
-	अगर (!order)
-		वापस order;
+	if (!order)
+		return order;
 
-	क्रम (i = 0; i < count; i++)
+	for (i = 0; i < count; i++)
 		order[i] = i;
 
-	i915_अक्रमom_reorder(order, count, state);
-	वापस order;
-पूर्ण
+	i915_random_reorder(order, count, state);
+	return order;
+}
 
-u64 igt_अक्रमom_offset(काष्ठा rnd_state *state,
+u64 igt_random_offset(struct rnd_state *state,
 		      u64 start, u64 end,
 		      u64 len, u64 align)
-अणु
+{
 	u64 range, addr;
 
 	BUG_ON(range_overflows(start, len, end));
-	BUG_ON(round_up(start, align) > round_करोwn(end - len, align));
+	BUG_ON(round_up(start, align) > round_down(end - len, align));
 
-	range = round_करोwn(end - len, align) - round_up(start, align);
-	अगर (range) अणु
-		addr = i915_pअक्रमom_u64_state(state);
-		भाग64_u64_rem(addr, range, &addr);
+	range = round_down(end - len, align) - round_up(start, align);
+	if (range) {
+		addr = i915_prandom_u64_state(state);
+		div64_u64_rem(addr, range, &addr);
 		start += addr;
-	पूर्ण
+	}
 
-	वापस round_up(start, align);
-पूर्ण
+	return round_up(start, align);
+}

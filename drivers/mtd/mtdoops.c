@@ -1,433 +1,432 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * MTD Oops/Panic logger
  *
- * Copyright तऊ 2007 Nokia Corporation. All rights reserved.
+ * Copyright © 2007 Nokia Corporation. All rights reserved.
  *
- * Author: Riअक्षरd Purdie <rpurdie@खोलोedhand.com>
+ * Author: Richard Purdie <rpurdie@openedhand.com>
  */
 
-#समावेश <linux/kernel.h>
-#समावेश <linux/module.h>
-#समावेश <linux/console.h>
-#समावेश <linux/vदो_स्मृति.h>
-#समावेश <linux/workqueue.h>
-#समावेश <linux/sched.h>
-#समावेश <linux/रुको.h>
-#समावेश <linux/delay.h>
-#समावेश <linux/पूर्णांकerrupt.h>
-#समावेश <linux/mtd/mtd.h>
-#समावेश <linux/kmsg_dump.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/console.h>
+#include <linux/vmalloc.h>
+#include <linux/workqueue.h>
+#include <linux/sched.h>
+#include <linux/wait.h>
+#include <linux/delay.h>
+#include <linux/interrupt.h>
+#include <linux/mtd/mtd.h>
+#include <linux/kmsg_dump.h>
 
 /* Maximum MTD partition size */
-#घोषणा MTDOOPS_MAX_MTD_SIZE (8 * 1024 * 1024)
+#define MTDOOPS_MAX_MTD_SIZE (8 * 1024 * 1024)
 
-#घोषणा MTDOOPS_KERNMSG_MAGIC 0x5d005d00
-#घोषणा MTDOOPS_HEADER_SIZE   8
+#define MTDOOPS_KERNMSG_MAGIC 0x5d005d00
+#define MTDOOPS_HEADER_SIZE   8
 
-अटल अचिन्हित दीर्घ record_size = 4096;
-module_param(record_size, uदीर्घ, 0400);
+static unsigned long record_size = 4096;
+module_param(record_size, ulong, 0400);
 MODULE_PARM_DESC(record_size,
 		"record size for MTD OOPS pages in bytes (default 4096)");
 
-अटल अक्षर mtddev[80];
+static char mtddev[80];
 module_param_string(mtddev, mtddev, 80, 0400);
 MODULE_PARM_DESC(mtddev,
 		"name or index number of the MTD device to use");
 
-अटल पूर्णांक dump_oops = 1;
-module_param(dump_oops, पूर्णांक, 0600);
+static int dump_oops = 1;
+module_param(dump_oops, int, 0600);
 MODULE_PARM_DESC(dump_oops,
 		"set to 1 to dump oopses, 0 to only dump panics (default 1)");
 
-अटल काष्ठा mtकरोops_context अणु
-	काष्ठा kmsg_dumper dump;
+static struct mtdoops_context {
+	struct kmsg_dumper dump;
 
-	पूर्णांक mtd_index;
-	काष्ठा work_काष्ठा work_erase;
-	काष्ठा work_काष्ठा work_ग_लिखो;
-	काष्ठा mtd_info *mtd;
-	पूर्णांक oops_pages;
-	पूर्णांक nextpage;
-	पूर्णांक nextcount;
-	अचिन्हित दीर्घ *oops_page_used;
+	int mtd_index;
+	struct work_struct work_erase;
+	struct work_struct work_write;
+	struct mtd_info *mtd;
+	int oops_pages;
+	int nextpage;
+	int nextcount;
+	unsigned long *oops_page_used;
 
-	अचिन्हित दीर्घ oops_buf_busy;
-	व्योम *oops_buf;
-पूर्ण oops_cxt;
+	unsigned long oops_buf_busy;
+	void *oops_buf;
+} oops_cxt;
 
-अटल व्योम mark_page_used(काष्ठा mtकरोops_context *cxt, पूर्णांक page)
-अणु
+static void mark_page_used(struct mtdoops_context *cxt, int page)
+{
 	set_bit(page, cxt->oops_page_used);
-पूर्ण
+}
 
-अटल व्योम mark_page_unused(काष्ठा mtकरोops_context *cxt, पूर्णांक page)
-अणु
+static void mark_page_unused(struct mtdoops_context *cxt, int page)
+{
 	clear_bit(page, cxt->oops_page_used);
-पूर्ण
+}
 
-अटल पूर्णांक page_is_used(काष्ठा mtकरोops_context *cxt, पूर्णांक page)
-अणु
-	वापस test_bit(page, cxt->oops_page_used);
-पूर्ण
+static int page_is_used(struct mtdoops_context *cxt, int page)
+{
+	return test_bit(page, cxt->oops_page_used);
+}
 
-अटल पूर्णांक mtकरोops_erase_block(काष्ठा mtकरोops_context *cxt, पूर्णांक offset)
-अणु
-	काष्ठा mtd_info *mtd = cxt->mtd;
-	u32 start_page_offset = mtd_भाग_by_eb(offset, mtd) * mtd->erasesize;
+static int mtdoops_erase_block(struct mtdoops_context *cxt, int offset)
+{
+	struct mtd_info *mtd = cxt->mtd;
+	u32 start_page_offset = mtd_div_by_eb(offset, mtd) * mtd->erasesize;
 	u32 start_page = start_page_offset / record_size;
 	u32 erase_pages = mtd->erasesize / record_size;
-	काष्ठा erase_info erase;
-	पूर्णांक ret;
-	पूर्णांक page;
+	struct erase_info erase;
+	int ret;
+	int page;
 
 	erase.addr = offset;
 	erase.len = mtd->erasesize;
 
 	ret = mtd_erase(mtd, &erase);
-	अगर (ret) अणु
-		prपूर्णांकk(KERN_WARNING "mtdoops: erase of region [0x%llx, 0x%llx] on \"%s\" failed\n",
-		       (अचिन्हित दीर्घ दीर्घ)erase.addr,
-		       (अचिन्हित दीर्घ दीर्घ)erase.len, mtddev);
-		वापस ret;
-	पूर्ण
+	if (ret) {
+		printk(KERN_WARNING "mtdoops: erase of region [0x%llx, 0x%llx] on \"%s\" failed\n",
+		       (unsigned long long)erase.addr,
+		       (unsigned long long)erase.len, mtddev);
+		return ret;
+	}
 
 	/* Mark pages as unused */
-	क्रम (page = start_page; page < start_page + erase_pages; page++)
+	for (page = start_page; page < start_page + erase_pages; page++)
 		mark_page_unused(cxt, page);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम mtकरोops_inc_counter(काष्ठा mtकरोops_context *cxt)
-अणु
+static void mtdoops_inc_counter(struct mtdoops_context *cxt)
+{
 	cxt->nextpage++;
-	अगर (cxt->nextpage >= cxt->oops_pages)
+	if (cxt->nextpage >= cxt->oops_pages)
 		cxt->nextpage = 0;
 	cxt->nextcount++;
-	अगर (cxt->nextcount == 0xffffffff)
+	if (cxt->nextcount == 0xffffffff)
 		cxt->nextcount = 0;
 
-	अगर (page_is_used(cxt, cxt->nextpage)) अणु
+	if (page_is_used(cxt, cxt->nextpage)) {
 		schedule_work(&cxt->work_erase);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	prपूर्णांकk(KERN_DEBUG "mtdoops: ready %d, %d (no erase)\n",
+	printk(KERN_DEBUG "mtdoops: ready %d, %d (no erase)\n",
 	       cxt->nextpage, cxt->nextcount);
-पूर्ण
+}
 
 /* Scheduled work - when we can't proceed without erasing a block */
-अटल व्योम mtकरोops_workfunc_erase(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा mtकरोops_context *cxt =
-			container_of(work, काष्ठा mtकरोops_context, work_erase);
-	काष्ठा mtd_info *mtd = cxt->mtd;
-	पूर्णांक i = 0, j, ret, mod;
+static void mtdoops_workfunc_erase(struct work_struct *work)
+{
+	struct mtdoops_context *cxt =
+			container_of(work, struct mtdoops_context, work_erase);
+	struct mtd_info *mtd = cxt->mtd;
+	int i = 0, j, ret, mod;
 
-	/* We were unरेजिस्टरed */
-	अगर (!mtd)
-		वापस;
+	/* We were unregistered */
+	if (!mtd)
+		return;
 
 	mod = (cxt->nextpage * record_size) % mtd->erasesize;
-	अगर (mod != 0) अणु
+	if (mod != 0) {
 		cxt->nextpage = cxt->nextpage + ((mtd->erasesize - mod) / record_size);
-		अगर (cxt->nextpage >= cxt->oops_pages)
+		if (cxt->nextpage >= cxt->oops_pages)
 			cxt->nextpage = 0;
-	पूर्ण
+	}
 
-	जबतक ((ret = mtd_block_isbad(mtd, cxt->nextpage * record_size)) > 0) अणु
+	while ((ret = mtd_block_isbad(mtd, cxt->nextpage * record_size)) > 0) {
 badblock:
-		prपूर्णांकk(KERN_WARNING "mtdoops: bad block at %08lx\n",
+		printk(KERN_WARNING "mtdoops: bad block at %08lx\n",
 		       cxt->nextpage * record_size);
 		i++;
 		cxt->nextpage = cxt->nextpage + (mtd->erasesize / record_size);
-		अगर (cxt->nextpage >= cxt->oops_pages)
+		if (cxt->nextpage >= cxt->oops_pages)
 			cxt->nextpage = 0;
-		अगर (i == cxt->oops_pages / (mtd->erasesize / record_size)) अणु
-			prपूर्णांकk(KERN_ERR "mtdoops: all blocks bad!\n");
-			वापस;
-		पूर्ण
-	पूर्ण
+		if (i == cxt->oops_pages / (mtd->erasesize / record_size)) {
+			printk(KERN_ERR "mtdoops: all blocks bad!\n");
+			return;
+		}
+	}
 
-	अगर (ret < 0) अणु
-		prपूर्णांकk(KERN_ERR "mtdoops: mtd_block_isbad failed, aborting\n");
-		वापस;
-	पूर्ण
+	if (ret < 0) {
+		printk(KERN_ERR "mtdoops: mtd_block_isbad failed, aborting\n");
+		return;
+	}
 
-	क्रम (j = 0, ret = -1; (j < 3) && (ret < 0); j++)
-		ret = mtकरोops_erase_block(cxt, cxt->nextpage * record_size);
+	for (j = 0, ret = -1; (j < 3) && (ret < 0); j++)
+		ret = mtdoops_erase_block(cxt, cxt->nextpage * record_size);
 
-	अगर (ret >= 0) अणु
-		prपूर्णांकk(KERN_DEBUG "mtdoops: ready %d, %d\n",
+	if (ret >= 0) {
+		printk(KERN_DEBUG "mtdoops: ready %d, %d\n",
 		       cxt->nextpage, cxt->nextcount);
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (ret == -EIO) अणु
+	if (ret == -EIO) {
 		ret = mtd_block_markbad(mtd, cxt->nextpage * record_size);
-		अगर (ret < 0 && ret != -EOPNOTSUPP) अणु
-			prपूर्णांकk(KERN_ERR "mtdoops: block_markbad failed, aborting\n");
-			वापस;
-		पूर्ण
-	पूर्ण
-	जाओ badblock;
-पूर्ण
+		if (ret < 0 && ret != -EOPNOTSUPP) {
+			printk(KERN_ERR "mtdoops: block_markbad failed, aborting\n");
+			return;
+		}
+	}
+	goto badblock;
+}
 
-अटल व्योम mtकरोops_ग_लिखो(काष्ठा mtकरोops_context *cxt, पूर्णांक panic)
-अणु
-	काष्ठा mtd_info *mtd = cxt->mtd;
-	माप_प्रकार retlen;
+static void mtdoops_write(struct mtdoops_context *cxt, int panic)
+{
+	struct mtd_info *mtd = cxt->mtd;
+	size_t retlen;
 	u32 *hdr;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (test_and_set_bit(0, &cxt->oops_buf_busy))
-		वापस;
+	if (test_and_set_bit(0, &cxt->oops_buf_busy))
+		return;
 
-	/* Add mtकरोops header to the buffer */
+	/* Add mtdoops header to the buffer */
 	hdr = cxt->oops_buf;
 	hdr[0] = cxt->nextcount;
 	hdr[1] = MTDOOPS_KERNMSG_MAGIC;
 
-	अगर (panic) अणु
-		ret = mtd_panic_ग_लिखो(mtd, cxt->nextpage * record_size,
+	if (panic) {
+		ret = mtd_panic_write(mtd, cxt->nextpage * record_size,
 				      record_size, &retlen, cxt->oops_buf);
-		अगर (ret == -EOPNOTSUPP) अणु
-			prपूर्णांकk(KERN_ERR "mtdoops: Cannot write from panic without panic_write\n");
-			जाओ out;
-		पूर्ण
-	पूर्ण अन्यथा
-		ret = mtd_ग_लिखो(mtd, cxt->nextpage * record_size,
+		if (ret == -EOPNOTSUPP) {
+			printk(KERN_ERR "mtdoops: Cannot write from panic without panic_write\n");
+			goto out;
+		}
+	} else
+		ret = mtd_write(mtd, cxt->nextpage * record_size,
 				record_size, &retlen, cxt->oops_buf);
 
-	अगर (retlen != record_size || ret < 0)
-		prपूर्णांकk(KERN_ERR "mtdoops: write failure at %ld (%td of %ld written), error %d\n",
+	if (retlen != record_size || ret < 0)
+		printk(KERN_ERR "mtdoops: write failure at %ld (%td of %ld written), error %d\n",
 		       cxt->nextpage * record_size, retlen, record_size, ret);
 	mark_page_used(cxt, cxt->nextpage);
-	स_रखो(cxt->oops_buf, 0xff, record_size);
+	memset(cxt->oops_buf, 0xff, record_size);
 
-	mtकरोops_inc_counter(cxt);
+	mtdoops_inc_counter(cxt);
 out:
 	clear_bit(0, &cxt->oops_buf_busy);
-पूर्ण
+}
 
-अटल व्योम mtकरोops_workfunc_ग_लिखो(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा mtकरोops_context *cxt =
-			container_of(work, काष्ठा mtकरोops_context, work_ग_लिखो);
+static void mtdoops_workfunc_write(struct work_struct *work)
+{
+	struct mtdoops_context *cxt =
+			container_of(work, struct mtdoops_context, work_write);
 
-	mtकरोops_ग_लिखो(cxt, 0);
-पूर्ण
+	mtdoops_write(cxt, 0);
+}
 
-अटल व्योम find_next_position(काष्ठा mtकरोops_context *cxt)
-अणु
-	काष्ठा mtd_info *mtd = cxt->mtd;
-	पूर्णांक ret, page, maxpos = 0;
+static void find_next_position(struct mtdoops_context *cxt)
+{
+	struct mtd_info *mtd = cxt->mtd;
+	int ret, page, maxpos = 0;
 	u32 count[2], maxcount = 0xffffffff;
-	माप_प्रकार retlen;
+	size_t retlen;
 
-	क्रम (page = 0; page < cxt->oops_pages; page++) अणु
-		अगर (mtd_block_isbad(mtd, page * record_size))
-			जारी;
+	for (page = 0; page < cxt->oops_pages; page++) {
+		if (mtd_block_isbad(mtd, page * record_size))
+			continue;
 		/* Assume the page is used */
 		mark_page_used(cxt, page);
-		ret = mtd_पढ़ो(mtd, page * record_size, MTDOOPS_HEADER_SIZE,
-			       &retlen, (u_अक्षर *)&count[0]);
-		अगर (retlen != MTDOOPS_HEADER_SIZE ||
-				(ret < 0 && !mtd_is_bitflip(ret))) अणु
-			prपूर्णांकk(KERN_ERR "mtdoops: read failure at %ld (%td of %d read), err %d\n",
+		ret = mtd_read(mtd, page * record_size, MTDOOPS_HEADER_SIZE,
+			       &retlen, (u_char *)&count[0]);
+		if (retlen != MTDOOPS_HEADER_SIZE ||
+				(ret < 0 && !mtd_is_bitflip(ret))) {
+			printk(KERN_ERR "mtdoops: read failure at %ld (%td of %d read), err %d\n",
 			       page * record_size, retlen,
 			       MTDOOPS_HEADER_SIZE, ret);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
-		अगर (count[0] == 0xffffffff && count[1] == 0xffffffff)
+		if (count[0] == 0xffffffff && count[1] == 0xffffffff)
 			mark_page_unused(cxt, page);
-		अगर (count[0] == 0xffffffff || count[1] != MTDOOPS_KERNMSG_MAGIC)
-			जारी;
-		अगर (maxcount == 0xffffffff) अणु
+		if (count[0] == 0xffffffff || count[1] != MTDOOPS_KERNMSG_MAGIC)
+			continue;
+		if (maxcount == 0xffffffff) {
 			maxcount = count[0];
 			maxpos = page;
-		पूर्ण अन्यथा अगर (count[0] < 0x40000000 && maxcount > 0xc0000000) अणु
+		} else if (count[0] < 0x40000000 && maxcount > 0xc0000000) {
 			maxcount = count[0];
 			maxpos = page;
-		पूर्ण अन्यथा अगर (count[0] > maxcount && count[0] < 0xc0000000) अणु
+		} else if (count[0] > maxcount && count[0] < 0xc0000000) {
 			maxcount = count[0];
 			maxpos = page;
-		पूर्ण अन्यथा अगर (count[0] > maxcount && count[0] > 0xc0000000
-					&& maxcount > 0x80000000) अणु
+		} else if (count[0] > maxcount && count[0] > 0xc0000000
+					&& maxcount > 0x80000000) {
 			maxcount = count[0];
 			maxpos = page;
-		पूर्ण
-	पूर्ण
-	अगर (maxcount == 0xffffffff) अणु
+		}
+	}
+	if (maxcount == 0xffffffff) {
 		cxt->nextpage = cxt->oops_pages - 1;
 		cxt->nextcount = 0;
-	पूर्ण
-	अन्यथा अणु
+	}
+	else {
 		cxt->nextpage = maxpos;
 		cxt->nextcount = maxcount;
-	पूर्ण
+	}
 
-	mtकरोops_inc_counter(cxt);
-पूर्ण
+	mtdoops_inc_counter(cxt);
+}
 
-अटल व्योम mtकरोops_करो_dump(काष्ठा kmsg_dumper *dumper,
-			    क्रमागत kmsg_dump_reason reason)
-अणु
-	काष्ठा mtकरोops_context *cxt = container_of(dumper,
-			काष्ठा mtकरोops_context, dump);
-	काष्ठा kmsg_dump_iter iter;
+static void mtdoops_do_dump(struct kmsg_dumper *dumper,
+			    enum kmsg_dump_reason reason)
+{
+	struct mtdoops_context *cxt = container_of(dumper,
+			struct mtdoops_context, dump);
+	struct kmsg_dump_iter iter;
 
-	/* Only dump oopses अगर dump_oops is set */
-	अगर (reason == KMSG_DUMP_OOPS && !dump_oops)
-		वापस;
+	/* Only dump oopses if dump_oops is set */
+	if (reason == KMSG_DUMP_OOPS && !dump_oops)
+		return;
 
-	kmsg_dump_शुरुआत(&iter);
+	kmsg_dump_rewind(&iter);
 
-	अगर (test_and_set_bit(0, &cxt->oops_buf_busy))
-		वापस;
+	if (test_and_set_bit(0, &cxt->oops_buf_busy))
+		return;
 	kmsg_dump_get_buffer(&iter, true, cxt->oops_buf + MTDOOPS_HEADER_SIZE,
-			     record_size - MTDOOPS_HEADER_SIZE, शून्य);
+			     record_size - MTDOOPS_HEADER_SIZE, NULL);
 	clear_bit(0, &cxt->oops_buf_busy);
 
-	अगर (reason != KMSG_DUMP_OOPS) अणु
+	if (reason != KMSG_DUMP_OOPS) {
 		/* Panics must be written immediately */
-		mtकरोops_ग_लिखो(cxt, 1);
-	पूर्ण अन्यथा अणु
-		/* For other हालs, schedule work to ग_लिखो it "nicely" */
-		schedule_work(&cxt->work_ग_लिखो);
-	पूर्ण
-पूर्ण
+		mtdoops_write(cxt, 1);
+	} else {
+		/* For other cases, schedule work to write it "nicely" */
+		schedule_work(&cxt->work_write);
+	}
+}
 
-अटल व्योम mtकरोops_notअगरy_add(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा mtकरोops_context *cxt = &oops_cxt;
-	u64 mtकरोops_pages = भाग_u64(mtd->size, record_size);
-	पूर्णांक err;
+static void mtdoops_notify_add(struct mtd_info *mtd)
+{
+	struct mtdoops_context *cxt = &oops_cxt;
+	u64 mtdoops_pages = div_u64(mtd->size, record_size);
+	int err;
 
-	अगर (!म_भेद(mtd->name, mtddev))
+	if (!strcmp(mtd->name, mtddev))
 		cxt->mtd_index = mtd->index;
 
-	अगर (mtd->index != cxt->mtd_index || cxt->mtd_index < 0)
-		वापस;
+	if (mtd->index != cxt->mtd_index || cxt->mtd_index < 0)
+		return;
 
-	अगर (mtd->size < mtd->erasesize * 2) अणु
-		prपूर्णांकk(KERN_ERR "mtdoops: MTD partition %d not big enough for mtdoops\n",
+	if (mtd->size < mtd->erasesize * 2) {
+		printk(KERN_ERR "mtdoops: MTD partition %d not big enough for mtdoops\n",
 		       mtd->index);
-		वापस;
-	पूर्ण
-	अगर (mtd->erasesize < record_size) अणु
-		prपूर्णांकk(KERN_ERR "mtdoops: eraseblock size of MTD partition %d too small\n",
+		return;
+	}
+	if (mtd->erasesize < record_size) {
+		printk(KERN_ERR "mtdoops: eraseblock size of MTD partition %d too small\n",
 		       mtd->index);
-		वापस;
-	पूर्ण
-	अगर (mtd->size > MTDOOPS_MAX_MTD_SIZE) अणु
-		prपूर्णांकk(KERN_ERR "mtdoops: mtd%d is too large (limit is %d MiB)\n",
+		return;
+	}
+	if (mtd->size > MTDOOPS_MAX_MTD_SIZE) {
+		printk(KERN_ERR "mtdoops: mtd%d is too large (limit is %d MiB)\n",
 		       mtd->index, MTDOOPS_MAX_MTD_SIZE / 1024 / 1024);
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	/* oops_page_used is a bit field */
 	cxt->oops_page_used =
-		vदो_स्मृति(array_size(माप(अचिन्हित दीर्घ),
-				   DIV_ROUND_UP(mtकरोops_pages,
+		vmalloc(array_size(sizeof(unsigned long),
+				   DIV_ROUND_UP(mtdoops_pages,
 						BITS_PER_LONG)));
-	अगर (!cxt->oops_page_used) अणु
-		prपूर्णांकk(KERN_ERR "mtdoops: could not allocate page array\n");
-		वापस;
-	पूर्ण
+	if (!cxt->oops_page_used) {
+		printk(KERN_ERR "mtdoops: could not allocate page array\n");
+		return;
+	}
 
 	cxt->dump.max_reason = KMSG_DUMP_OOPS;
-	cxt->dump.dump = mtकरोops_करो_dump;
-	err = kmsg_dump_रेजिस्टर(&cxt->dump);
-	अगर (err) अणु
-		prपूर्णांकk(KERN_ERR "mtdoops: registering kmsg dumper failed, error %d\n", err);
-		vमुक्त(cxt->oops_page_used);
-		cxt->oops_page_used = शून्य;
-		वापस;
-	पूर्ण
+	cxt->dump.dump = mtdoops_do_dump;
+	err = kmsg_dump_register(&cxt->dump);
+	if (err) {
+		printk(KERN_ERR "mtdoops: registering kmsg dumper failed, error %d\n", err);
+		vfree(cxt->oops_page_used);
+		cxt->oops_page_used = NULL;
+		return;
+	}
 
 	cxt->mtd = mtd;
-	cxt->oops_pages = (पूर्णांक)mtd->size / record_size;
+	cxt->oops_pages = (int)mtd->size / record_size;
 	find_next_position(cxt);
-	prपूर्णांकk(KERN_INFO "mtdoops: Attached to MTD device %d\n", mtd->index);
-पूर्ण
+	printk(KERN_INFO "mtdoops: Attached to MTD device %d\n", mtd->index);
+}
 
-अटल व्योम mtकरोops_notअगरy_हटाओ(काष्ठा mtd_info *mtd)
-अणु
-	काष्ठा mtकरोops_context *cxt = &oops_cxt;
+static void mtdoops_notify_remove(struct mtd_info *mtd)
+{
+	struct mtdoops_context *cxt = &oops_cxt;
 
-	अगर (mtd->index != cxt->mtd_index || cxt->mtd_index < 0)
-		वापस;
+	if (mtd->index != cxt->mtd_index || cxt->mtd_index < 0)
+		return;
 
-	अगर (kmsg_dump_unरेजिस्टर(&cxt->dump) < 0)
-		prपूर्णांकk(KERN_WARNING "mtdoops: could not unregister kmsg_dumper\n");
+	if (kmsg_dump_unregister(&cxt->dump) < 0)
+		printk(KERN_WARNING "mtdoops: could not unregister kmsg_dumper\n");
 
-	cxt->mtd = शून्य;
+	cxt->mtd = NULL;
 	flush_work(&cxt->work_erase);
-	flush_work(&cxt->work_ग_लिखो);
-पूर्ण
+	flush_work(&cxt->work_write);
+}
 
 
-अटल काष्ठा mtd_notअगरier mtकरोops_notअगरier = अणु
-	.add	= mtकरोops_notअगरy_add,
-	.हटाओ	= mtकरोops_notअगरy_हटाओ,
-पूर्ण;
+static struct mtd_notifier mtdoops_notifier = {
+	.add	= mtdoops_notify_add,
+	.remove	= mtdoops_notify_remove,
+};
 
-अटल पूर्णांक __init mtकरोops_init(व्योम)
-अणु
-	काष्ठा mtकरोops_context *cxt = &oops_cxt;
-	पूर्णांक mtd_index;
-	अक्षर *endp;
+static int __init mtdoops_init(void)
+{
+	struct mtdoops_context *cxt = &oops_cxt;
+	int mtd_index;
+	char *endp;
 
-	अगर (म_माप(mtddev) == 0) अणु
-		prपूर्णांकk(KERN_ERR "mtdoops: mtd device (mtddev=name/number) must be supplied\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर ((record_size & 4095) != 0) अणु
-		prपूर्णांकk(KERN_ERR "mtdoops: record_size must be a multiple of 4096\n");
-		वापस -EINVAL;
-	पूर्ण
-	अगर (record_size < 4096) अणु
-		prपूर्णांकk(KERN_ERR "mtdoops: record_size must be over 4096 bytes\n");
-		वापस -EINVAL;
-	पूर्ण
+	if (strlen(mtddev) == 0) {
+		printk(KERN_ERR "mtdoops: mtd device (mtddev=name/number) must be supplied\n");
+		return -EINVAL;
+	}
+	if ((record_size & 4095) != 0) {
+		printk(KERN_ERR "mtdoops: record_size must be a multiple of 4096\n");
+		return -EINVAL;
+	}
+	if (record_size < 4096) {
+		printk(KERN_ERR "mtdoops: record_size must be over 4096 bytes\n");
+		return -EINVAL;
+	}
 
 	/* Setup the MTD device to use */
 	cxt->mtd_index = -1;
-	mtd_index = simple_म_से_अदीर्घ(mtddev, &endp, 0);
-	अगर (*endp == '\0')
+	mtd_index = simple_strtoul(mtddev, &endp, 0);
+	if (*endp == '\0')
 		cxt->mtd_index = mtd_index;
 
-	cxt->oops_buf = vदो_स्मृति(record_size);
-	अगर (!cxt->oops_buf) अणु
-		prपूर्णांकk(KERN_ERR "mtdoops: failed to allocate buffer workspace\n");
-		वापस -ENOMEM;
-	पूर्ण
-	स_रखो(cxt->oops_buf, 0xff, record_size);
+	cxt->oops_buf = vmalloc(record_size);
+	if (!cxt->oops_buf) {
+		printk(KERN_ERR "mtdoops: failed to allocate buffer workspace\n");
+		return -ENOMEM;
+	}
+	memset(cxt->oops_buf, 0xff, record_size);
 	cxt->oops_buf_busy = 0;
 
-	INIT_WORK(&cxt->work_erase, mtकरोops_workfunc_erase);
-	INIT_WORK(&cxt->work_ग_लिखो, mtकरोops_workfunc_ग_लिखो);
+	INIT_WORK(&cxt->work_erase, mtdoops_workfunc_erase);
+	INIT_WORK(&cxt->work_write, mtdoops_workfunc_write);
 
-	रेजिस्टर_mtd_user(&mtकरोops_notअगरier);
-	वापस 0;
-पूर्ण
+	register_mtd_user(&mtdoops_notifier);
+	return 0;
+}
 
-अटल व्योम __निकास mtकरोops_निकास(व्योम)
-अणु
-	काष्ठा mtकरोops_context *cxt = &oops_cxt;
+static void __exit mtdoops_exit(void)
+{
+	struct mtdoops_context *cxt = &oops_cxt;
 
-	unरेजिस्टर_mtd_user(&mtकरोops_notअगरier);
-	vमुक्त(cxt->oops_buf);
-	vमुक्त(cxt->oops_page_used);
-पूर्ण
+	unregister_mtd_user(&mtdoops_notifier);
+	vfree(cxt->oops_buf);
+	vfree(cxt->oops_page_used);
+}
 
 
-module_init(mtकरोops_init);
-module_निकास(mtकरोops_निकास);
+module_init(mtdoops_init);
+module_exit(mtdoops_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Richard Purdie <rpurdie@openedhand.com>");

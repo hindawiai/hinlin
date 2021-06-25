@@ -1,379 +1,378 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- * BCM63xx Power Doमुख्य Controller Driver
+ * BCM63xx Power Domain Controller Driver
  *
- * Copyright (C) 2020 थlvaro Fernथँndez Rojas <noltari@gmail.com>
+ * Copyright (C) 2020 Álvaro Fernández Rojas <noltari@gmail.com>
  */
 
-#समावेश <dt-bindings/soc/bcm6318-pm.h>
-#समावेश <dt-bindings/soc/bcm6328-pm.h>
-#समावेश <dt-bindings/soc/bcm6362-pm.h>
-#समावेश <dt-bindings/soc/bcm63268-pm.h>
-#समावेश <linux/पन.स>
-#समावेश <linux/module.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/pm_करोमुख्य.h>
-#समावेश <linux/of.h>
-#समावेश <linux/of_device.h>
+#include <dt-bindings/soc/bcm6318-pm.h>
+#include <dt-bindings/soc/bcm6328-pm.h>
+#include <dt-bindings/soc/bcm6362-pm.h>
+#include <dt-bindings/soc/bcm63268-pm.h>
+#include <linux/io.h>
+#include <linux/module.h>
+#include <linux/platform_device.h>
+#include <linux/pm_domain.h>
+#include <linux/of.h>
+#include <linux/of_device.h>
 
-काष्ठा bcm63xx_घातer_dev अणु
-	काष्ठा generic_pm_करोमुख्य genpd;
-	काष्ठा bcm63xx_घातer *घातer;
-	uपूर्णांक32_t mask;
-पूर्ण;
+struct bcm63xx_power_dev {
+	struct generic_pm_domain genpd;
+	struct bcm63xx_power *power;
+	uint32_t mask;
+};
 
-काष्ठा bcm63xx_घातer अणु
-	व्योम __iomem *base;
+struct bcm63xx_power {
+	void __iomem *base;
 	spinlock_t lock;
-	काष्ठा bcm63xx_घातer_dev *dev;
-	काष्ठा genpd_onecell_data genpd_data;
-	काष्ठा generic_pm_करोमुख्य **genpd;
-पूर्ण;
+	struct bcm63xx_power_dev *dev;
+	struct genpd_onecell_data genpd_data;
+	struct generic_pm_domain **genpd;
+};
 
-काष्ठा bcm63xx_घातer_data अणु
-	स्थिर अक्षर * स्थिर name;
-	uपूर्णांक8_t bit;
-	अचिन्हित पूर्णांक flags;
-पूर्ण;
+struct bcm63xx_power_data {
+	const char * const name;
+	uint8_t bit;
+	unsigned int flags;
+};
 
-अटल पूर्णांक bcm63xx_घातer_get_state(काष्ठा bcm63xx_घातer_dev *pmd, bool *is_on)
-अणु
-	काष्ठा bcm63xx_घातer *घातer = pmd->घातer;
+static int bcm63xx_power_get_state(struct bcm63xx_power_dev *pmd, bool *is_on)
+{
+	struct bcm63xx_power *power = pmd->power;
 
-	अगर (!pmd->mask) अणु
+	if (!pmd->mask) {
 		*is_on = false;
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	*is_on = !(__raw_पढ़ोl(घातer->base) & pmd->mask);
+	*is_on = !(__raw_readl(power->base) & pmd->mask);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bcm63xx_घातer_set_state(काष्ठा bcm63xx_घातer_dev *pmd, bool on)
-अणु
-	काष्ठा bcm63xx_घातer *घातer = pmd->घातer;
-	अचिन्हित दीर्घ flags;
-	uपूर्णांक32_t val;
+static int bcm63xx_power_set_state(struct bcm63xx_power_dev *pmd, bool on)
+{
+	struct bcm63xx_power *power = pmd->power;
+	unsigned long flags;
+	uint32_t val;
 
-	अगर (!pmd->mask)
-		वापस -EINVAL;
+	if (!pmd->mask)
+		return -EINVAL;
 
-	spin_lock_irqsave(&घातer->lock, flags);
-	val = __raw_पढ़ोl(घातer->base);
-	अगर (on)
+	spin_lock_irqsave(&power->lock, flags);
+	val = __raw_readl(power->base);
+	if (on)
 		val &= ~pmd->mask;
-	अन्यथा
+	else
 		val |= pmd->mask;
-	__raw_ग_लिखोl(val, घातer->base);
-	spin_unlock_irqrestore(&घातer->lock, flags);
+	__raw_writel(val, power->base);
+	spin_unlock_irqrestore(&power->lock, flags);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक bcm63xx_घातer_on(काष्ठा generic_pm_करोमुख्य *genpd)
-अणु
-	काष्ठा bcm63xx_घातer_dev *pmd = container_of(genpd,
-		काष्ठा bcm63xx_घातer_dev, genpd);
+static int bcm63xx_power_on(struct generic_pm_domain *genpd)
+{
+	struct bcm63xx_power_dev *pmd = container_of(genpd,
+		struct bcm63xx_power_dev, genpd);
 
-	वापस bcm63xx_घातer_set_state(pmd, true);
-पूर्ण
+	return bcm63xx_power_set_state(pmd, true);
+}
 
-अटल पूर्णांक bcm63xx_घातer_off(काष्ठा generic_pm_करोमुख्य *genpd)
-अणु
-	काष्ठा bcm63xx_घातer_dev *pmd = container_of(genpd,
-		काष्ठा bcm63xx_घातer_dev, genpd);
+static int bcm63xx_power_off(struct generic_pm_domain *genpd)
+{
+	struct bcm63xx_power_dev *pmd = container_of(genpd,
+		struct bcm63xx_power_dev, genpd);
 
-	वापस bcm63xx_घातer_set_state(pmd, false);
-पूर्ण
+	return bcm63xx_power_set_state(pmd, false);
+}
 
-अटल पूर्णांक bcm63xx_घातer_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	काष्ठा device *dev = &pdev->dev;
-	काष्ठा device_node *np = dev->of_node;
-	काष्ठा resource *res;
-	स्थिर काष्ठा bcm63xx_घातer_data *entry, *table;
-	काष्ठा bcm63xx_घातer *घातer;
-	अचिन्हित पूर्णांक nकरोm;
-	uपूर्णांक8_t max_bit = 0;
-	पूर्णांक ret;
+static int bcm63xx_power_probe(struct platform_device *pdev)
+{
+	struct device *dev = &pdev->dev;
+	struct device_node *np = dev->of_node;
+	struct resource *res;
+	const struct bcm63xx_power_data *entry, *table;
+	struct bcm63xx_power *power;
+	unsigned int ndom;
+	uint8_t max_bit = 0;
+	int ret;
 
-	घातer = devm_kzalloc(dev, माप(*घातer), GFP_KERNEL);
-	अगर (!घातer)
-		वापस -ENOMEM;
+	power = devm_kzalloc(dev, sizeof(*power), GFP_KERNEL);
+	if (!power)
+		return -ENOMEM;
 
-	res = platक्रमm_get_resource(pdev, IORESOURCE_MEM, 0);
-	घातer->base = devm_ioremap_resource(&pdev->dev, res);
-	अगर (IS_ERR(घातer->base))
-		वापस PTR_ERR(घातer->base);
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	power->base = devm_ioremap_resource(&pdev->dev, res);
+	if (IS_ERR(power->base))
+		return PTR_ERR(power->base);
 
 	table = of_device_get_match_data(dev);
-	अगर (!table)
-		वापस -EINVAL;
+	if (!table)
+		return -EINVAL;
 
-	घातer->genpd_data.num_करोमुख्यs = 0;
-	nकरोm = 0;
-	क्रम (entry = table; entry->name; entry++) अणु
+	power->genpd_data.num_domains = 0;
+	ndom = 0;
+	for (entry = table; entry->name; entry++) {
 		max_bit = max(max_bit, entry->bit);
-		nकरोm++;
-	पूर्ण
+		ndom++;
+	}
 
-	अगर (!nकरोm)
-		वापस -ENODEV;
+	if (!ndom)
+		return -ENODEV;
 
-	घातer->genpd_data.num_करोमुख्यs = max_bit + 1;
+	power->genpd_data.num_domains = max_bit + 1;
 
-	घातer->dev = devm_kसुस्मृति(dev, घातer->genpd_data.num_करोमुख्यs,
-				  माप(काष्ठा bcm63xx_घातer_dev),
+	power->dev = devm_kcalloc(dev, power->genpd_data.num_domains,
+				  sizeof(struct bcm63xx_power_dev),
 				  GFP_KERNEL);
-	अगर (!घातer->dev)
-		वापस -ENOMEM;
+	if (!power->dev)
+		return -ENOMEM;
 
-	घातer->genpd = devm_kसुस्मृति(dev, घातer->genpd_data.num_करोमुख्यs,
-				    माप(काष्ठा generic_pm_करोमुख्य *),
+	power->genpd = devm_kcalloc(dev, power->genpd_data.num_domains,
+				    sizeof(struct generic_pm_domain *),
 				    GFP_KERNEL);
-	अगर (!घातer->genpd)
-		वापस -ENOMEM;
+	if (!power->genpd)
+		return -ENOMEM;
 
-	घातer->genpd_data.करोमुख्यs = घातer->genpd;
+	power->genpd_data.domains = power->genpd;
 
-	nकरोm = 0;
-	क्रम (entry = table; entry->name; entry++) अणु
-		काष्ठा bcm63xx_घातer_dev *pmd = &घातer->dev[nकरोm];
+	ndom = 0;
+	for (entry = table; entry->name; entry++) {
+		struct bcm63xx_power_dev *pmd = &power->dev[ndom];
 		bool is_on;
 
-		pmd->घातer = घातer;
+		pmd->power = power;
 		pmd->mask = BIT(entry->bit);
 		pmd->genpd.name = entry->name;
 		pmd->genpd.flags = entry->flags;
 
-		ret = bcm63xx_घातer_get_state(pmd, &is_on);
-		अगर (ret)
+		ret = bcm63xx_power_get_state(pmd, &is_on);
+		if (ret)
 			dev_warn(dev, "unable to get current state for %s\n",
 				 pmd->genpd.name);
 
-		pmd->genpd.घातer_on = bcm63xx_घातer_on;
-		pmd->genpd.घातer_off = bcm63xx_घातer_off;
+		pmd->genpd.power_on = bcm63xx_power_on;
+		pmd->genpd.power_off = bcm63xx_power_off;
 
-		pm_genpd_init(&pmd->genpd, शून्य, !is_on);
-		घातer->genpd[entry->bit] = &pmd->genpd;
+		pm_genpd_init(&pmd->genpd, NULL, !is_on);
+		power->genpd[entry->bit] = &pmd->genpd;
 
-		nकरोm++;
-	पूर्ण
+		ndom++;
+	}
 
-	spin_lock_init(&घातer->lock);
+	spin_lock_init(&power->lock);
 
-	ret = of_genpd_add_provider_onecell(np, &घातer->genpd_data);
-	अगर (ret) अणु
+	ret = of_genpd_add_provider_onecell(np, &power->genpd_data);
+	if (ret) {
 		dev_err(dev, "failed to register genpd driver: %d\n", ret);
-		वापस ret;
-	पूर्ण
+		return ret;
+	}
 
-	dev_info(dev, "registered %u power domains\n", nकरोm);
+	dev_info(dev, "registered %u power domains\n", ndom);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा bcm63xx_घातer_data bcm6318_घातer_करोमुख्यs[] = अणु
-	अणु
+static const struct bcm63xx_power_data bcm6318_power_domains[] = {
+	{
 		.name = "pcie",
 		.bit = BCM6318_POWER_DOMAIN_PCIE,
-	पूर्ण, अणु
+	}, {
 		.name = "usb",
 		.bit = BCM6318_POWER_DOMAIN_USB,
-	पूर्ण, अणु
+	}, {
 		.name = "ephy0",
 		.bit = BCM6318_POWER_DOMAIN_EPHY0,
-	पूर्ण, अणु
+	}, {
 		.name = "ephy1",
 		.bit = BCM6318_POWER_DOMAIN_EPHY1,
-	पूर्ण, अणु
+	}, {
 		.name = "ephy2",
 		.bit = BCM6318_POWER_DOMAIN_EPHY2,
-	पूर्ण, अणु
+	}, {
 		.name = "ephy3",
 		.bit = BCM6318_POWER_DOMAIN_EPHY3,
-	पूर्ण, अणु
+	}, {
 		.name = "ldo2p5",
 		.bit = BCM6318_POWER_DOMAIN_LDO2P5,
 		.flags = GENPD_FLAG_ALWAYS_ON,
-	पूर्ण, अणु
+	}, {
 		.name = "ldo2p9",
 		.bit = BCM6318_POWER_DOMAIN_LDO2P9,
 		.flags = GENPD_FLAG_ALWAYS_ON,
-	पूर्ण, अणु
+	}, {
 		.name = "sw1p0",
 		.bit = BCM6318_POWER_DOMAIN_SW1P0,
 		.flags = GENPD_FLAG_ALWAYS_ON,
-	पूर्ण, अणु
+	}, {
 		.name = "pad",
 		.bit = BCM6318_POWER_DOMAIN_PAD,
 		.flags = GENPD_FLAG_ALWAYS_ON,
-	पूर्ण, अणु
+	}, {
 		/* sentinel */
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा bcm63xx_घातer_data bcm6328_घातer_करोमुख्यs[] = अणु
-	अणु
+static const struct bcm63xx_power_data bcm6328_power_domains[] = {
+	{
 		.name = "adsl2-mips",
 		.bit = BCM6328_POWER_DOMAIN_ADSL2_MIPS,
-	पूर्ण, अणु
+	}, {
 		.name = "adsl2-phy",
 		.bit = BCM6328_POWER_DOMAIN_ADSL2_PHY,
-	पूर्ण, अणु
+	}, {
 		.name = "adsl2-afe",
 		.bit = BCM6328_POWER_DOMAIN_ADSL2_AFE,
-	पूर्ण, अणु
+	}, {
 		.name = "sar",
 		.bit = BCM6328_POWER_DOMAIN_SAR,
-	पूर्ण, अणु
+	}, {
 		.name = "pcm",
 		.bit = BCM6328_POWER_DOMAIN_PCM,
-	पूर्ण, अणु
+	}, {
 		.name = "usbd",
 		.bit = BCM6328_POWER_DOMAIN_USBD,
-	पूर्ण, अणु
+	}, {
 		.name = "usbh",
 		.bit = BCM6328_POWER_DOMAIN_USBH,
-	पूर्ण, अणु
+	}, {
 		.name = "pcie",
 		.bit = BCM6328_POWER_DOMAIN_PCIE,
-	पूर्ण, अणु
+	}, {
 		.name = "robosw",
 		.bit = BCM6328_POWER_DOMAIN_ROBOSW,
-	पूर्ण, अणु
+	}, {
 		.name = "ephy",
 		.bit = BCM6328_POWER_DOMAIN_EPHY,
-	पूर्ण, अणु
+	}, {
 		/* sentinel */
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा bcm63xx_घातer_data bcm6362_घातer_करोमुख्यs[] = अणु
-	अणु
+static const struct bcm63xx_power_data bcm6362_power_domains[] = {
+	{
 		.name = "sar",
 		.bit = BCM6362_POWER_DOMAIN_SAR,
-	पूर्ण, अणु
+	}, {
 		.name = "ipsec",
 		.bit = BCM6362_POWER_DOMAIN_IPSEC,
-	पूर्ण, अणु
+	}, {
 		.name = "mips",
 		.bit = BCM6362_POWER_DOMAIN_MIPS,
 		.flags = GENPD_FLAG_ALWAYS_ON,
-	पूर्ण, अणु
+	}, {
 		.name = "dect",
 		.bit = BCM6362_POWER_DOMAIN_DECT,
-	पूर्ण, अणु
+	}, {
 		.name = "usbh",
 		.bit = BCM6362_POWER_DOMAIN_USBH,
-	पूर्ण, अणु
+	}, {
 		.name = "usbd",
 		.bit = BCM6362_POWER_DOMAIN_USBD,
-	पूर्ण, अणु
+	}, {
 		.name = "robosw",
 		.bit = BCM6362_POWER_DOMAIN_ROBOSW,
-	पूर्ण, अणु
+	}, {
 		.name = "pcm",
 		.bit = BCM6362_POWER_DOMAIN_PCM,
-	पूर्ण, अणु
+	}, {
 		.name = "periph",
 		.bit = BCM6362_POWER_DOMAIN_PERIPH,
 		.flags = GENPD_FLAG_ALWAYS_ON,
-	पूर्ण, अणु
+	}, {
 		.name = "adsl-phy",
 		.bit = BCM6362_POWER_DOMAIN_ADSL_PHY,
-	पूर्ण, अणु
+	}, {
 		.name = "gmii-pads",
 		.bit = BCM6362_POWER_DOMAIN_GMII_PADS,
-	पूर्ण, अणु
+	}, {
 		.name = "fap",
 		.bit = BCM6362_POWER_DOMAIN_FAP,
-	पूर्ण, अणु
+	}, {
 		.name = "pcie",
 		.bit = BCM6362_POWER_DOMAIN_PCIE,
-	पूर्ण, अणु
+	}, {
 		.name = "wlan-pads",
 		.bit = BCM6362_POWER_DOMAIN_WLAN_PADS,
-	पूर्ण, अणु
+	}, {
 		/* sentinel */
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा bcm63xx_घातer_data bcm63268_घातer_करोमुख्यs[] = अणु
-	अणु
+static const struct bcm63xx_power_data bcm63268_power_domains[] = {
+	{
 		.name = "sar",
 		.bit = BCM63268_POWER_DOMAIN_SAR,
-	पूर्ण, अणु
+	}, {
 		.name = "ipsec",
 		.bit = BCM63268_POWER_DOMAIN_IPSEC,
-	पूर्ण, अणु
+	}, {
 		.name = "mips",
 		.bit = BCM63268_POWER_DOMAIN_MIPS,
 		.flags = GENPD_FLAG_ALWAYS_ON,
-	पूर्ण, अणु
+	}, {
 		.name = "dect",
 		.bit = BCM63268_POWER_DOMAIN_DECT,
-	पूर्ण, अणु
+	}, {
 		.name = "usbh",
 		.bit = BCM63268_POWER_DOMAIN_USBH,
-	पूर्ण, अणु
+	}, {
 		.name = "usbd",
 		.bit = BCM63268_POWER_DOMAIN_USBD,
-	पूर्ण, अणु
+	}, {
 		.name = "robosw",
 		.bit = BCM63268_POWER_DOMAIN_ROBOSW,
-	पूर्ण, अणु
+	}, {
 		.name = "pcm",
 		.bit = BCM63268_POWER_DOMAIN_PCM,
-	पूर्ण, अणु
+	}, {
 		.name = "periph",
 		.bit = BCM63268_POWER_DOMAIN_PERIPH,
 		.flags = GENPD_FLAG_ALWAYS_ON,
-	पूर्ण, अणु
+	}, {
 		.name = "vdsl-phy",
 		.bit = BCM63268_POWER_DOMAIN_VDSL_PHY,
-	पूर्ण, अणु
+	}, {
 		.name = "vdsl-mips",
 		.bit = BCM63268_POWER_DOMAIN_VDSL_MIPS,
-	पूर्ण, अणु
+	}, {
 		.name = "fap",
 		.bit = BCM63268_POWER_DOMAIN_FAP,
-	पूर्ण, अणु
+	}, {
 		.name = "pcie",
 		.bit = BCM63268_POWER_DOMAIN_PCIE,
-	पूर्ण, अणु
+	}, {
 		.name = "wlan-pads",
 		.bit = BCM63268_POWER_DOMAIN_WLAN_PADS,
-	पूर्ण, अणु
+	}, {
 		/* sentinel */
-	पूर्ण,
-पूर्ण;
+	},
+};
 
-अटल स्थिर काष्ठा of_device_id bcm63xx_घातer_of_match[] = अणु
-	अणु
+static const struct of_device_id bcm63xx_power_of_match[] = {
+	{
 		.compatible = "brcm,bcm6318-power-controller",
-		.data = &bcm6318_घातer_करोमुख्यs,
-	पूर्ण, अणु
+		.data = &bcm6318_power_domains,
+	}, {
 		.compatible = "brcm,bcm6328-power-controller",
-		.data = &bcm6328_घातer_करोमुख्यs,
-	पूर्ण, अणु
+		.data = &bcm6328_power_domains,
+	}, {
 		.compatible = "brcm,bcm6362-power-controller",
-		.data = &bcm6362_घातer_करोमुख्यs,
-	पूर्ण, अणु
+		.data = &bcm6362_power_domains,
+	}, {
 		.compatible = "brcm,bcm63268-power-controller",
-		.data = &bcm63268_घातer_करोमुख्यs,
-	पूर्ण, अणु
+		.data = &bcm63268_power_domains,
+	}, {
 		/* sentinel */
-	पूर्ण
-पूर्ण;
+	}
+};
 
-अटल काष्ठा platक्रमm_driver bcm63xx_घातer_driver = अणु
-	.driver = अणु
+static struct platform_driver bcm63xx_power_driver = {
+	.driver = {
 		.name = "bcm63xx-power-controller",
-		.of_match_table = bcm63xx_घातer_of_match,
-	पूर्ण,
-	.probe  = bcm63xx_घातer_probe,
-पूर्ण;
-builtin_platक्रमm_driver(bcm63xx_घातer_driver);
+		.of_match_table = bcm63xx_power_of_match,
+	},
+	.probe  = bcm63xx_power_probe,
+};
+builtin_platform_driver(bcm63xx_power_driver);

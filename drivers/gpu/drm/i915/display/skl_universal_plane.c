@@ -1,25 +1,24 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: MIT
+// SPDX-License-Identifier: MIT
 /*
- * Copyright तऊ 2020 Intel Corporation
+ * Copyright © 2020 Intel Corporation
  */
 
-#समावेश <drm/drm_atomic_helper.h>
-#समावेश <drm/drm_damage_helper.h>
-#समावेश <drm/drm_fourcc.h>
-#समावेश <drm/drm_plane_helper.h>
+#include <drm/drm_atomic_helper.h>
+#include <drm/drm_damage_helper.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_plane_helper.h>
 
-#समावेश "i915_drv.h"
-#समावेश "intel_atomic_plane.h"
-#समावेश "intel_display_types.h"
-#समावेश "intel_fb.h"
-#समावेश "intel_pm.h"
-#समावेश "intel_psr.h"
-#समावेश "intel_sprite.h"
-#समावेश "skl_scaler.h"
-#समावेश "skl_universal_plane.h"
+#include "i915_drv.h"
+#include "intel_atomic_plane.h"
+#include "intel_display_types.h"
+#include "intel_fb.h"
+#include "intel_pm.h"
+#include "intel_psr.h"
+#include "intel_sprite.h"
+#include "skl_scaler.h"
+#include "skl_universal_plane.h"
 
-अटल स्थिर u32 skl_plane_क्रमmats[] = अणु
+static const u32 skl_plane_formats[] = {
 	DRM_FORMAT_C8,
 	DRM_FORMAT_RGB565,
 	DRM_FORMAT_XRGB8888,
@@ -35,9 +34,9 @@
 	DRM_FORMAT_UYVY,
 	DRM_FORMAT_VYUY,
 	DRM_FORMAT_XYUV8888,
-पूर्ण;
+};
 
-अटल स्थिर u32 skl_planar_क्रमmats[] = अणु
+static const u32 skl_planar_formats[] = {
 	DRM_FORMAT_C8,
 	DRM_FORMAT_RGB565,
 	DRM_FORMAT_XRGB8888,
@@ -54,9 +53,9 @@
 	DRM_FORMAT_VYUY,
 	DRM_FORMAT_NV12,
 	DRM_FORMAT_XYUV8888,
-पूर्ण;
+};
 
-अटल स्थिर u32 glk_planar_क्रमmats[] = अणु
+static const u32 glk_planar_formats[] = {
 	DRM_FORMAT_C8,
 	DRM_FORMAT_RGB565,
 	DRM_FORMAT_XRGB8888,
@@ -76,9 +75,9 @@
 	DRM_FORMAT_P010,
 	DRM_FORMAT_P012,
 	DRM_FORMAT_P016,
-पूर्ण;
+};
 
-अटल स्थिर u32 icl_sdr_y_plane_क्रमmats[] = अणु
+static const u32 icl_sdr_y_plane_formats[] = {
 	DRM_FORMAT_C8,
 	DRM_FORMAT_RGB565,
 	DRM_FORMAT_XRGB8888,
@@ -100,9 +99,9 @@
 	DRM_FORMAT_XVYU2101010,
 	DRM_FORMAT_XVYU12_16161616,
 	DRM_FORMAT_XVYU16161616,
-पूर्ण;
+};
 
-अटल स्थिर u32 icl_sdr_uv_plane_क्रमmats[] = अणु
+static const u32 icl_sdr_uv_plane_formats[] = {
 	DRM_FORMAT_C8,
 	DRM_FORMAT_RGB565,
 	DRM_FORMAT_XRGB8888,
@@ -128,9 +127,9 @@
 	DRM_FORMAT_XVYU2101010,
 	DRM_FORMAT_XVYU12_16161616,
 	DRM_FORMAT_XVYU16161616,
-पूर्ण;
+};
 
-अटल स्थिर u32 icl_hdr_plane_क्रमmats[] = अणु
+static const u32 icl_hdr_plane_formats[] = {
 	DRM_FORMAT_C8,
 	DRM_FORMAT_RGB565,
 	DRM_FORMAT_XRGB8888,
@@ -160,17 +159,17 @@
 	DRM_FORMAT_XVYU2101010,
 	DRM_FORMAT_XVYU12_16161616,
 	DRM_FORMAT_XVYU16161616,
-पूर्ण;
+};
 
-अटल स्थिर u64 skl_plane_क्रमmat_modअगरiers_noccs[] = अणु
+static const u64 skl_plane_format_modifiers_noccs[] = {
 	I915_FORMAT_MOD_Yf_TILED,
 	I915_FORMAT_MOD_Y_TILED,
 	I915_FORMAT_MOD_X_TILED,
 	DRM_FORMAT_MOD_LINEAR,
 	DRM_FORMAT_MOD_INVALID
-पूर्ण;
+};
 
-अटल स्थिर u64 skl_plane_क्रमmat_modअगरiers_ccs[] = अणु
+static const u64 skl_plane_format_modifiers_ccs[] = {
 	I915_FORMAT_MOD_Yf_TILED_CCS,
 	I915_FORMAT_MOD_Y_TILED_CCS,
 	I915_FORMAT_MOD_Yf_TILED,
@@ -178,9 +177,9 @@
 	I915_FORMAT_MOD_X_TILED,
 	DRM_FORMAT_MOD_LINEAR,
 	DRM_FORMAT_MOD_INVALID
-पूर्ण;
+};
 
-अटल स्थिर u64 gen12_plane_क्रमmat_modअगरiers_mc_ccs[] = अणु
+static const u64 gen12_plane_format_modifiers_mc_ccs[] = {
 	I915_FORMAT_MOD_Y_TILED_GEN12_MC_CCS,
 	I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS,
 	I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS_CC,
@@ -188,315 +187,315 @@
 	I915_FORMAT_MOD_X_TILED,
 	DRM_FORMAT_MOD_LINEAR,
 	DRM_FORMAT_MOD_INVALID
-पूर्ण;
+};
 
-अटल स्थिर u64 gen12_plane_क्रमmat_modअगरiers_rc_ccs[] = अणु
+static const u64 gen12_plane_format_modifiers_rc_ccs[] = {
 	I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS,
 	I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS_CC,
 	I915_FORMAT_MOD_Y_TILED,
 	I915_FORMAT_MOD_X_TILED,
 	DRM_FORMAT_MOD_LINEAR,
 	DRM_FORMAT_MOD_INVALID
-पूर्ण;
+};
 
-पूर्णांक skl_क्रमmat_to_fourcc(पूर्णांक क्रमmat, bool rgb_order, bool alpha)
-अणु
-	चयन (क्रमmat) अणु
-	हाल PLANE_CTL_FORMAT_RGB_565:
-		वापस DRM_FORMAT_RGB565;
-	हाल PLANE_CTL_FORMAT_NV12:
-		वापस DRM_FORMAT_NV12;
-	हाल PLANE_CTL_FORMAT_XYUV:
-		वापस DRM_FORMAT_XYUV8888;
-	हाल PLANE_CTL_FORMAT_P010:
-		वापस DRM_FORMAT_P010;
-	हाल PLANE_CTL_FORMAT_P012:
-		वापस DRM_FORMAT_P012;
-	हाल PLANE_CTL_FORMAT_P016:
-		वापस DRM_FORMAT_P016;
-	हाल PLANE_CTL_FORMAT_Y210:
-		वापस DRM_FORMAT_Y210;
-	हाल PLANE_CTL_FORMAT_Y212:
-		वापस DRM_FORMAT_Y212;
-	हाल PLANE_CTL_FORMAT_Y216:
-		वापस DRM_FORMAT_Y216;
-	हाल PLANE_CTL_FORMAT_Y410:
-		वापस DRM_FORMAT_XVYU2101010;
-	हाल PLANE_CTL_FORMAT_Y412:
-		वापस DRM_FORMAT_XVYU12_16161616;
-	हाल PLANE_CTL_FORMAT_Y416:
-		वापस DRM_FORMAT_XVYU16161616;
-	शेष:
-	हाल PLANE_CTL_FORMAT_XRGB_8888:
-		अगर (rgb_order) अणु
-			अगर (alpha)
-				वापस DRM_FORMAT_ABGR8888;
-			अन्यथा
-				वापस DRM_FORMAT_XBGR8888;
-		पूर्ण अन्यथा अणु
-			अगर (alpha)
-				वापस DRM_FORMAT_ARGB8888;
-			अन्यथा
-				वापस DRM_FORMAT_XRGB8888;
-		पूर्ण
-	हाल PLANE_CTL_FORMAT_XRGB_2101010:
-		अगर (rgb_order) अणु
-			अगर (alpha)
-				वापस DRM_FORMAT_ABGR2101010;
-			अन्यथा
-				वापस DRM_FORMAT_XBGR2101010;
-		पूर्ण अन्यथा अणु
-			अगर (alpha)
-				वापस DRM_FORMAT_ARGB2101010;
-			अन्यथा
-				वापस DRM_FORMAT_XRGB2101010;
-		पूर्ण
-	हाल PLANE_CTL_FORMAT_XRGB_16161616F:
-		अगर (rgb_order) अणु
-			अगर (alpha)
-				वापस DRM_FORMAT_ABGR16161616F;
-			अन्यथा
-				वापस DRM_FORMAT_XBGR16161616F;
-		पूर्ण अन्यथा अणु
-			अगर (alpha)
-				वापस DRM_FORMAT_ARGB16161616F;
-			अन्यथा
-				वापस DRM_FORMAT_XRGB16161616F;
-		पूर्ण
-	पूर्ण
-पूर्ण
+int skl_format_to_fourcc(int format, bool rgb_order, bool alpha)
+{
+	switch (format) {
+	case PLANE_CTL_FORMAT_RGB_565:
+		return DRM_FORMAT_RGB565;
+	case PLANE_CTL_FORMAT_NV12:
+		return DRM_FORMAT_NV12;
+	case PLANE_CTL_FORMAT_XYUV:
+		return DRM_FORMAT_XYUV8888;
+	case PLANE_CTL_FORMAT_P010:
+		return DRM_FORMAT_P010;
+	case PLANE_CTL_FORMAT_P012:
+		return DRM_FORMAT_P012;
+	case PLANE_CTL_FORMAT_P016:
+		return DRM_FORMAT_P016;
+	case PLANE_CTL_FORMAT_Y210:
+		return DRM_FORMAT_Y210;
+	case PLANE_CTL_FORMAT_Y212:
+		return DRM_FORMAT_Y212;
+	case PLANE_CTL_FORMAT_Y216:
+		return DRM_FORMAT_Y216;
+	case PLANE_CTL_FORMAT_Y410:
+		return DRM_FORMAT_XVYU2101010;
+	case PLANE_CTL_FORMAT_Y412:
+		return DRM_FORMAT_XVYU12_16161616;
+	case PLANE_CTL_FORMAT_Y416:
+		return DRM_FORMAT_XVYU16161616;
+	default:
+	case PLANE_CTL_FORMAT_XRGB_8888:
+		if (rgb_order) {
+			if (alpha)
+				return DRM_FORMAT_ABGR8888;
+			else
+				return DRM_FORMAT_XBGR8888;
+		} else {
+			if (alpha)
+				return DRM_FORMAT_ARGB8888;
+			else
+				return DRM_FORMAT_XRGB8888;
+		}
+	case PLANE_CTL_FORMAT_XRGB_2101010:
+		if (rgb_order) {
+			if (alpha)
+				return DRM_FORMAT_ABGR2101010;
+			else
+				return DRM_FORMAT_XBGR2101010;
+		} else {
+			if (alpha)
+				return DRM_FORMAT_ARGB2101010;
+			else
+				return DRM_FORMAT_XRGB2101010;
+		}
+	case PLANE_CTL_FORMAT_XRGB_16161616F:
+		if (rgb_order) {
+			if (alpha)
+				return DRM_FORMAT_ABGR16161616F;
+			else
+				return DRM_FORMAT_XBGR16161616F;
+		} else {
+			if (alpha)
+				return DRM_FORMAT_ARGB16161616F;
+			else
+				return DRM_FORMAT_XRGB16161616F;
+		}
+	}
+}
 
-अटल u8 icl_nv12_y_plane_mask(काष्ठा drm_i915_निजी *i915)
-अणु
-	अगर (HAS_D12_PLANE_MINIMIZATION(i915))
-		वापस BIT(PLANE_SPRITE2) | BIT(PLANE_SPRITE3);
-	अन्यथा
-		वापस BIT(PLANE_SPRITE4) | BIT(PLANE_SPRITE5);
-पूर्ण
+static u8 icl_nv12_y_plane_mask(struct drm_i915_private *i915)
+{
+	if (HAS_D12_PLANE_MINIMIZATION(i915))
+		return BIT(PLANE_SPRITE2) | BIT(PLANE_SPRITE3);
+	else
+		return BIT(PLANE_SPRITE4) | BIT(PLANE_SPRITE5);
+}
 
-bool icl_is_nv12_y_plane(काष्ठा drm_i915_निजी *dev_priv,
-			 क्रमागत plane_id plane_id)
-अणु
-	वापस DISPLAY_VER(dev_priv) >= 11 &&
+bool icl_is_nv12_y_plane(struct drm_i915_private *dev_priv,
+			 enum plane_id plane_id)
+{
+	return DISPLAY_VER(dev_priv) >= 11 &&
 		icl_nv12_y_plane_mask(dev_priv) & BIT(plane_id);
-पूर्ण
+}
 
-bool icl_is_hdr_plane(काष्ठा drm_i915_निजी *dev_priv, क्रमागत plane_id plane_id)
-अणु
-	वापस DISPLAY_VER(dev_priv) >= 11 &&
+bool icl_is_hdr_plane(struct drm_i915_private *dev_priv, enum plane_id plane_id)
+{
+	return DISPLAY_VER(dev_priv) >= 11 &&
 		icl_hdr_plane_mask() & BIT(plane_id);
-पूर्ण
+}
 
-अटल व्योम
-skl_plane_ratio(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-		स्थिर काष्ठा पूर्णांकel_plane_state *plane_state,
-		अचिन्हित पूर्णांक *num, अचिन्हित पूर्णांक *den)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(plane_state->uapi.plane->dev);
-	स्थिर काष्ठा drm_framebuffer *fb = plane_state->hw.fb;
+static void
+skl_plane_ratio(const struct intel_crtc_state *crtc_state,
+		const struct intel_plane_state *plane_state,
+		unsigned int *num, unsigned int *den)
+{
+	struct drm_i915_private *dev_priv = to_i915(plane_state->uapi.plane->dev);
+	const struct drm_framebuffer *fb = plane_state->hw.fb;
 
-	अगर (fb->क्रमmat->cpp[0] == 8) अणु
-		अगर (DISPLAY_VER(dev_priv) >= 10) अणु
+	if (fb->format->cpp[0] == 8) {
+		if (DISPLAY_VER(dev_priv) >= 10) {
 			*num = 10;
 			*den = 8;
-		पूर्ण अन्यथा अणु
+		} else {
 			*num = 9;
 			*den = 8;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		*num = 1;
 		*den = 1;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल पूर्णांक skl_plane_min_cdclk(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-			       स्थिर काष्ठा पूर्णांकel_plane_state *plane_state)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(plane_state->uapi.plane->dev);
-	अचिन्हित पूर्णांक num, den;
-	अचिन्हित पूर्णांक pixel_rate = पूर्णांकel_plane_pixel_rate(crtc_state, plane_state);
+static int skl_plane_min_cdclk(const struct intel_crtc_state *crtc_state,
+			       const struct intel_plane_state *plane_state)
+{
+	struct drm_i915_private *dev_priv = to_i915(plane_state->uapi.plane->dev);
+	unsigned int num, den;
+	unsigned int pixel_rate = intel_plane_pixel_rate(crtc_state, plane_state);
 
 	skl_plane_ratio(crtc_state, plane_state, &num, &den);
 
-	/* two pixels per घड़ी on glk+ */
-	अगर (DISPLAY_VER(dev_priv) >= 10)
+	/* two pixels per clock on glk+ */
+	if (DISPLAY_VER(dev_priv) >= 10)
 		den *= 2;
 
-	वापस DIV_ROUND_UP(pixel_rate * num, den);
-पूर्ण
+	return DIV_ROUND_UP(pixel_rate * num, den);
+}
 
-अटल पूर्णांक skl_plane_max_width(स्थिर काष्ठा drm_framebuffer *fb,
-			       पूर्णांक color_plane,
-			       अचिन्हित पूर्णांक rotation)
-अणु
-	पूर्णांक cpp = fb->क्रमmat->cpp[color_plane];
+static int skl_plane_max_width(const struct drm_framebuffer *fb,
+			       int color_plane,
+			       unsigned int rotation)
+{
+	int cpp = fb->format->cpp[color_plane];
 
-	चयन (fb->modअगरier) अणु
-	हाल DRM_FORMAT_MOD_LINEAR:
-	हाल I915_FORMAT_MOD_X_TILED:
+	switch (fb->modifier) {
+	case DRM_FORMAT_MOD_LINEAR:
+	case I915_FORMAT_MOD_X_TILED:
 		/*
 		 * Validated limit is 4k, but has 5k should
 		 * work apart from the following features:
-		 * - Ytile (alपढ़ोy limited to 4k)
-		 * - FP16 (alपढ़ोy limited to 4k)
-		 * - render compression (alपढ़ोy limited to 4k)
-		 * - KVMR sprite and cursor (करोn't care)
-		 * - horizontal panning (TODO verअगरy this)
-		 * - pipe and plane scaling (TODO verअगरy this)
+		 * - Ytile (already limited to 4k)
+		 * - FP16 (already limited to 4k)
+		 * - render compression (already limited to 4k)
+		 * - KVMR sprite and cursor (don't care)
+		 * - horizontal panning (TODO verify this)
+		 * - pipe and plane scaling (TODO verify this)
 		 */
-		अगर (cpp == 8)
-			वापस 4096;
-		अन्यथा
-			वापस 5120;
-	हाल I915_FORMAT_MOD_Y_TILED_CCS:
-	हाल I915_FORMAT_MOD_Yf_TILED_CCS:
-	हाल I915_FORMAT_MOD_Y_TILED_GEN12_MC_CCS:
+		if (cpp == 8)
+			return 4096;
+		else
+			return 5120;
+	case I915_FORMAT_MOD_Y_TILED_CCS:
+	case I915_FORMAT_MOD_Yf_TILED_CCS:
+	case I915_FORMAT_MOD_Y_TILED_GEN12_MC_CCS:
 		/* FIXME AUX plane? */
-	हाल I915_FORMAT_MOD_Y_TILED:
-	हाल I915_FORMAT_MOD_Yf_TILED:
-		अगर (cpp == 8)
-			वापस 2048;
-		अन्यथा
-			वापस 4096;
-	शेष:
-		MISSING_CASE(fb->modअगरier);
-		वापस 2048;
-	पूर्ण
-पूर्ण
+	case I915_FORMAT_MOD_Y_TILED:
+	case I915_FORMAT_MOD_Yf_TILED:
+		if (cpp == 8)
+			return 2048;
+		else
+			return 4096;
+	default:
+		MISSING_CASE(fb->modifier);
+		return 2048;
+	}
+}
 
-अटल पूर्णांक glk_plane_max_width(स्थिर काष्ठा drm_framebuffer *fb,
-			       पूर्णांक color_plane,
-			       अचिन्हित पूर्णांक rotation)
-अणु
-	पूर्णांक cpp = fb->क्रमmat->cpp[color_plane];
+static int glk_plane_max_width(const struct drm_framebuffer *fb,
+			       int color_plane,
+			       unsigned int rotation)
+{
+	int cpp = fb->format->cpp[color_plane];
 
-	चयन (fb->modअगरier) अणु
-	हाल DRM_FORMAT_MOD_LINEAR:
-	हाल I915_FORMAT_MOD_X_TILED:
-		अगर (cpp == 8)
-			वापस 4096;
-		अन्यथा
-			वापस 5120;
-	हाल I915_FORMAT_MOD_Y_TILED_CCS:
-	हाल I915_FORMAT_MOD_Yf_TILED_CCS:
+	switch (fb->modifier) {
+	case DRM_FORMAT_MOD_LINEAR:
+	case I915_FORMAT_MOD_X_TILED:
+		if (cpp == 8)
+			return 4096;
+		else
+			return 5120;
+	case I915_FORMAT_MOD_Y_TILED_CCS:
+	case I915_FORMAT_MOD_Yf_TILED_CCS:
 		/* FIXME AUX plane? */
-	हाल I915_FORMAT_MOD_Y_TILED:
-	हाल I915_FORMAT_MOD_Yf_TILED:
-		अगर (cpp == 8)
-			वापस 2048;
-		अन्यथा
-			वापस 5120;
-	शेष:
-		MISSING_CASE(fb->modअगरier);
-		वापस 2048;
-	पूर्ण
-पूर्ण
+	case I915_FORMAT_MOD_Y_TILED:
+	case I915_FORMAT_MOD_Yf_TILED:
+		if (cpp == 8)
+			return 2048;
+		else
+			return 5120;
+	default:
+		MISSING_CASE(fb->modifier);
+		return 2048;
+	}
+}
 
-अटल पूर्णांक icl_plane_min_width(स्थिर काष्ठा drm_framebuffer *fb,
-			       पूर्णांक color_plane,
-			       अचिन्हित पूर्णांक rotation)
-अणु
+static int icl_plane_min_width(const struct drm_framebuffer *fb,
+			       int color_plane,
+			       unsigned int rotation)
+{
 	/* Wa_14011264657, Wa_14011050563: gen11+ */
-	चयन (fb->क्रमmat->क्रमmat) अणु
-	हाल DRM_FORMAT_C8:
-		वापस 18;
-	हाल DRM_FORMAT_RGB565:
-		वापस 10;
-	हाल DRM_FORMAT_XRGB8888:
-	हाल DRM_FORMAT_XBGR8888:
-	हाल DRM_FORMAT_ARGB8888:
-	हाल DRM_FORMAT_ABGR8888:
-	हाल DRM_FORMAT_XRGB2101010:
-	हाल DRM_FORMAT_XBGR2101010:
-	हाल DRM_FORMAT_ARGB2101010:
-	हाल DRM_FORMAT_ABGR2101010:
-	हाल DRM_FORMAT_XVYU2101010:
-	हाल DRM_FORMAT_Y212:
-	हाल DRM_FORMAT_Y216:
-		वापस 6;
-	हाल DRM_FORMAT_NV12:
-		वापस 20;
-	हाल DRM_FORMAT_P010:
-	हाल DRM_FORMAT_P012:
-	हाल DRM_FORMAT_P016:
-		वापस 12;
-	हाल DRM_FORMAT_XRGB16161616F:
-	हाल DRM_FORMAT_XBGR16161616F:
-	हाल DRM_FORMAT_ARGB16161616F:
-	हाल DRM_FORMAT_ABGR16161616F:
-	हाल DRM_FORMAT_XVYU12_16161616:
-	हाल DRM_FORMAT_XVYU16161616:
-		वापस 4;
-	शेष:
-		वापस 1;
-	पूर्ण
-पूर्ण
+	switch (fb->format->format) {
+	case DRM_FORMAT_C8:
+		return 18;
+	case DRM_FORMAT_RGB565:
+		return 10;
+	case DRM_FORMAT_XRGB8888:
+	case DRM_FORMAT_XBGR8888:
+	case DRM_FORMAT_ARGB8888:
+	case DRM_FORMAT_ABGR8888:
+	case DRM_FORMAT_XRGB2101010:
+	case DRM_FORMAT_XBGR2101010:
+	case DRM_FORMAT_ARGB2101010:
+	case DRM_FORMAT_ABGR2101010:
+	case DRM_FORMAT_XVYU2101010:
+	case DRM_FORMAT_Y212:
+	case DRM_FORMAT_Y216:
+		return 6;
+	case DRM_FORMAT_NV12:
+		return 20;
+	case DRM_FORMAT_P010:
+	case DRM_FORMAT_P012:
+	case DRM_FORMAT_P016:
+		return 12;
+	case DRM_FORMAT_XRGB16161616F:
+	case DRM_FORMAT_XBGR16161616F:
+	case DRM_FORMAT_ARGB16161616F:
+	case DRM_FORMAT_ABGR16161616F:
+	case DRM_FORMAT_XVYU12_16161616:
+	case DRM_FORMAT_XVYU16161616:
+		return 4;
+	default:
+		return 1;
+	}
+}
 
-अटल पूर्णांक icl_plane_max_width(स्थिर काष्ठा drm_framebuffer *fb,
-			       पूर्णांक color_plane,
-			       अचिन्हित पूर्णांक rotation)
-अणु
-	वापस 5120;
-पूर्ण
+static int icl_plane_max_width(const struct drm_framebuffer *fb,
+			       int color_plane,
+			       unsigned int rotation)
+{
+	return 5120;
+}
 
-अटल पूर्णांक skl_plane_max_height(स्थिर काष्ठा drm_framebuffer *fb,
-				पूर्णांक color_plane,
-				अचिन्हित पूर्णांक rotation)
-अणु
-	वापस 4096;
-पूर्ण
+static int skl_plane_max_height(const struct drm_framebuffer *fb,
+				int color_plane,
+				unsigned int rotation)
+{
+	return 4096;
+}
 
-अटल पूर्णांक icl_plane_max_height(स्थिर काष्ठा drm_framebuffer *fb,
-				पूर्णांक color_plane,
-				अचिन्हित पूर्णांक rotation)
-अणु
-	वापस 4320;
-पूर्ण
+static int icl_plane_max_height(const struct drm_framebuffer *fb,
+				int color_plane,
+				unsigned int rotation)
+{
+	return 4320;
+}
 
-अटल अचिन्हित पूर्णांक
-skl_plane_max_stride(काष्ठा पूर्णांकel_plane *plane,
-		     u32 pixel_क्रमmat, u64 modअगरier,
-		     अचिन्हित पूर्णांक rotation)
-अणु
-	स्थिर काष्ठा drm_क्रमmat_info *info = drm_क्रमmat_info(pixel_क्रमmat);
-	पूर्णांक cpp = info->cpp[0];
+static unsigned int
+skl_plane_max_stride(struct intel_plane *plane,
+		     u32 pixel_format, u64 modifier,
+		     unsigned int rotation)
+{
+	const struct drm_format_info *info = drm_format_info(pixel_format);
+	int cpp = info->cpp[0];
 
 	/*
 	 * "The stride in bytes must not exceed the
 	 * of the size of 8K pixels and 32K bytes."
 	 */
-	अगर (drm_rotation_90_or_270(rotation))
-		वापस min(8192, 32768 / cpp);
-	अन्यथा
-		वापस min(8192 * cpp, 32768);
-पूर्ण
+	if (drm_rotation_90_or_270(rotation))
+		return min(8192, 32768 / cpp);
+	else
+		return min(8192 * cpp, 32768);
+}
 
 
-/* Preoffset values क्रम YUV to RGB Conversion */
-#घोषणा PRखातापूर्णF_YUV_TO_RGB_HI		0x1800
-#घोषणा PRखातापूर्णF_YUV_TO_RGB_ME		0x0000
-#घोषणा PRखातापूर्णF_YUV_TO_RGB_LO		0x1800
+/* Preoffset values for YUV to RGB Conversion */
+#define PREOFF_YUV_TO_RGB_HI		0x1800
+#define PREOFF_YUV_TO_RGB_ME		0x0000
+#define PREOFF_YUV_TO_RGB_LO		0x1800
 
-#घोषणा  ROFF(x)          (((x) & 0xffff) << 16)
-#घोषणा  GOFF(x)          (((x) & 0xffff) << 0)
-#घोषणा  BOFF(x)          (((x) & 0xffff) << 16)
+#define  ROFF(x)          (((x) & 0xffff) << 16)
+#define  GOFF(x)          (((x) & 0xffff) << 0)
+#define  BOFF(x)          (((x) & 0xffff) << 16)
 
 /*
- * Programs the input color space conversion stage क्रम ICL HDR planes.
+ * Programs the input color space conversion stage for ICL HDR planes.
  * Note that it is assumed that this stage always happens after YUV
  * range correction. Thus, the input to this stage is assumed to be
  * in full-range YCbCr.
  */
-अटल व्योम
-icl_program_input_csc(काष्ठा पूर्णांकel_plane *plane,
-		      स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-		      स्थिर काष्ठा पूर्णांकel_plane_state *plane_state)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(plane->base.dev);
-	क्रमागत pipe pipe = plane->pipe;
-	क्रमागत plane_id plane_id = plane->id;
+static void
+icl_program_input_csc(struct intel_plane *plane,
+		      const struct intel_crtc_state *crtc_state,
+		      const struct intel_plane_state *plane_state)
+{
+	struct drm_i915_private *dev_priv = to_i915(plane->base.dev);
+	enum pipe pipe = plane->pipe;
+	enum plane_id plane_id = plane->id;
 
-	अटल स्थिर u16 input_csc_matrix[][9] = अणु
+	static const u16 input_csc_matrix[][9] = {
 		/*
 		 * BT.601 full range YCbCr -> full range RGB
 		 * The matrix required is :
@@ -504,11 +503,11 @@ icl_program_input_csc(काष्ठा पूर्णांकel_plane *plane
 		 *  1.000, -0.336, -0.698,
 		 *  1.000, 1.732, 0.0000]
 		 */
-		[DRM_COLOR_YCBCR_BT601] = अणु
+		[DRM_COLOR_YCBCR_BT601] = {
 			0x7AF8, 0x7800, 0x0,
 			0x8B28, 0x7800, 0x9AC0,
 			0x0, 0x7800, 0x7DD8,
-		पूर्ण,
+		},
 		/*
 		 * BT.709 full range YCbCr -> full range RGB
 		 * The matrix required is :
@@ -516,11 +515,11 @@ icl_program_input_csc(काष्ठा पूर्णांकel_plane *plane
 		 *  1.000, -0.187, -0.468,
 		 *  1.000, 1.855, 0.0000]
 		 */
-		[DRM_COLOR_YCBCR_BT709] = अणु
+		[DRM_COLOR_YCBCR_BT709] = {
 			0x7C98, 0x7800, 0x0,
 			0x9EF8, 0x7800, 0xAC00,
 			0x0, 0x7800,  0x7ED8,
-		पूर्ण,
+		},
 		/*
 		 * BT.2020 full range YCbCr -> full range RGB
 		 * The matrix required is :
@@ -528,417 +527,417 @@ icl_program_input_csc(काष्ठा पूर्णांकel_plane *plane
 		 *  1.000, -0.1645, -0.5713,
 		 *  1.000, 1.8814, 0.0000]
 		 */
-		[DRM_COLOR_YCBCR_BT2020] = अणु
+		[DRM_COLOR_YCBCR_BT2020] = {
 			0x7BC8, 0x7800, 0x0,
 			0x8928, 0x7800, 0xAA88,
 			0x0, 0x7800, 0x7F10,
-		पूर्ण,
-	पूर्ण;
-	स्थिर u16 *csc = input_csc_matrix[plane_state->hw.color_encoding];
+		},
+	};
+	const u16 *csc = input_csc_matrix[plane_state->hw.color_encoding];
 
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_INPUT_CSC_COEFF(pipe, plane_id, 0),
+	intel_de_write_fw(dev_priv, PLANE_INPUT_CSC_COEFF(pipe, plane_id, 0),
 			  ROFF(csc[0]) | GOFF(csc[1]));
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_INPUT_CSC_COEFF(pipe, plane_id, 1),
+	intel_de_write_fw(dev_priv, PLANE_INPUT_CSC_COEFF(pipe, plane_id, 1),
 			  BOFF(csc[2]));
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_INPUT_CSC_COEFF(pipe, plane_id, 2),
+	intel_de_write_fw(dev_priv, PLANE_INPUT_CSC_COEFF(pipe, plane_id, 2),
 			  ROFF(csc[3]) | GOFF(csc[4]));
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_INPUT_CSC_COEFF(pipe, plane_id, 3),
+	intel_de_write_fw(dev_priv, PLANE_INPUT_CSC_COEFF(pipe, plane_id, 3),
 			  BOFF(csc[5]));
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_INPUT_CSC_COEFF(pipe, plane_id, 4),
+	intel_de_write_fw(dev_priv, PLANE_INPUT_CSC_COEFF(pipe, plane_id, 4),
 			  ROFF(csc[6]) | GOFF(csc[7]));
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_INPUT_CSC_COEFF(pipe, plane_id, 5),
+	intel_de_write_fw(dev_priv, PLANE_INPUT_CSC_COEFF(pipe, plane_id, 5),
 			  BOFF(csc[8]));
 
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_INPUT_CSC_PRखातापूर्णF(pipe, plane_id, 0),
-			  PRखातापूर्णF_YUV_TO_RGB_HI);
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_INPUT_CSC_PRखातापूर्णF(pipe, plane_id, 1),
-			  PRखातापूर्णF_YUV_TO_RGB_ME);
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_INPUT_CSC_PRखातापूर्णF(pipe, plane_id, 2),
-			  PRखातापूर्णF_YUV_TO_RGB_LO);
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv,
+	intel_de_write_fw(dev_priv, PLANE_INPUT_CSC_PREOFF(pipe, plane_id, 0),
+			  PREOFF_YUV_TO_RGB_HI);
+	intel_de_write_fw(dev_priv, PLANE_INPUT_CSC_PREOFF(pipe, plane_id, 1),
+			  PREOFF_YUV_TO_RGB_ME);
+	intel_de_write_fw(dev_priv, PLANE_INPUT_CSC_PREOFF(pipe, plane_id, 2),
+			  PREOFF_YUV_TO_RGB_LO);
+	intel_de_write_fw(dev_priv,
 			  PLANE_INPUT_CSC_POSTOFF(pipe, plane_id, 0), 0x0);
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv,
+	intel_de_write_fw(dev_priv,
 			  PLANE_INPUT_CSC_POSTOFF(pipe, plane_id, 1), 0x0);
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv,
+	intel_de_write_fw(dev_priv,
 			  PLANE_INPUT_CSC_POSTOFF(pipe, plane_id, 2), 0x0);
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक skl_plane_stride_mult(स्थिर काष्ठा drm_framebuffer *fb,
-					  पूर्णांक color_plane, अचिन्हित पूर्णांक rotation)
-अणु
+static unsigned int skl_plane_stride_mult(const struct drm_framebuffer *fb,
+					  int color_plane, unsigned int rotation)
+{
 	/*
-	 * The stride is either expressed as a multiple of 64 bytes chunks क्रम
-	 * linear buffers or in number of tiles क्रम tiled buffers.
+	 * The stride is either expressed as a multiple of 64 bytes chunks for
+	 * linear buffers or in number of tiles for tiled buffers.
 	 */
-	अगर (is_surface_linear(fb, color_plane))
-		वापस 64;
-	अन्यथा अगर (drm_rotation_90_or_270(rotation))
-		वापस पूर्णांकel_tile_height(fb, color_plane);
-	अन्यथा
-		वापस पूर्णांकel_tile_width_bytes(fb, color_plane);
-पूर्ण
+	if (is_surface_linear(fb, color_plane))
+		return 64;
+	else if (drm_rotation_90_or_270(rotation))
+		return intel_tile_height(fb, color_plane);
+	else
+		return intel_tile_width_bytes(fb, color_plane);
+}
 
-अटल u32 skl_plane_stride(स्थिर काष्ठा पूर्णांकel_plane_state *plane_state,
-			    पूर्णांक color_plane)
-अणु
-	स्थिर काष्ठा drm_framebuffer *fb = plane_state->hw.fb;
-	अचिन्हित पूर्णांक rotation = plane_state->hw.rotation;
+static u32 skl_plane_stride(const struct intel_plane_state *plane_state,
+			    int color_plane)
+{
+	const struct drm_framebuffer *fb = plane_state->hw.fb;
+	unsigned int rotation = plane_state->hw.rotation;
 	u32 stride = plane_state->view.color_plane[color_plane].stride;
 
-	अगर (color_plane >= fb->क्रमmat->num_planes)
-		वापस 0;
+	if (color_plane >= fb->format->num_planes)
+		return 0;
 
-	वापस stride / skl_plane_stride_mult(fb, color_plane, rotation);
-पूर्ण
+	return stride / skl_plane_stride_mult(fb, color_plane, rotation);
+}
 
-अटल व्योम
-skl_disable_plane(काष्ठा पूर्णांकel_plane *plane,
-		  स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(plane->base.dev);
-	क्रमागत plane_id plane_id = plane->id;
-	क्रमागत pipe pipe = plane->pipe;
-	अचिन्हित दीर्घ irqflags;
+static void
+skl_disable_plane(struct intel_plane *plane,
+		  const struct intel_crtc_state *crtc_state)
+{
+	struct drm_i915_private *dev_priv = to_i915(plane->base.dev);
+	enum plane_id plane_id = plane->id;
+	enum pipe pipe = plane->pipe;
+	unsigned long irqflags;
 
 	spin_lock_irqsave(&dev_priv->uncore.lock, irqflags);
 
-	अगर (icl_is_hdr_plane(dev_priv, plane_id))
-		पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_CUS_CTL(pipe, plane_id), 0);
+	if (icl_is_hdr_plane(dev_priv, plane_id))
+		intel_de_write_fw(dev_priv, PLANE_CUS_CTL(pipe, plane_id), 0);
 
-	skl_ग_लिखो_plane_wm(plane, crtc_state);
+	skl_write_plane_wm(plane, crtc_state);
 
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_CTL(pipe, plane_id), 0);
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_SURF(pipe, plane_id), 0);
+	intel_de_write_fw(dev_priv, PLANE_CTL(pipe, plane_id), 0);
+	intel_de_write_fw(dev_priv, PLANE_SURF(pipe, plane_id), 0);
 
 	spin_unlock_irqrestore(&dev_priv->uncore.lock, irqflags);
-पूर्ण
+}
 
-अटल bool
-skl_plane_get_hw_state(काष्ठा पूर्णांकel_plane *plane,
-		       क्रमागत pipe *pipe)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(plane->base.dev);
-	क्रमागत पूर्णांकel_display_घातer_करोमुख्य घातer_करोमुख्य;
-	क्रमागत plane_id plane_id = plane->id;
-	पूर्णांकel_wakeref_t wakeref;
+static bool
+skl_plane_get_hw_state(struct intel_plane *plane,
+		       enum pipe *pipe)
+{
+	struct drm_i915_private *dev_priv = to_i915(plane->base.dev);
+	enum intel_display_power_domain power_domain;
+	enum plane_id plane_id = plane->id;
+	intel_wakeref_t wakeref;
 	bool ret;
 
-	घातer_करोमुख्य = POWER_DOMAIN_PIPE(plane->pipe);
-	wakeref = पूर्णांकel_display_घातer_get_अगर_enabled(dev_priv, घातer_करोमुख्य);
-	अगर (!wakeref)
-		वापस false;
+	power_domain = POWER_DOMAIN_PIPE(plane->pipe);
+	wakeref = intel_display_power_get_if_enabled(dev_priv, power_domain);
+	if (!wakeref)
+		return false;
 
-	ret = पूर्णांकel_de_पढ़ो(dev_priv, PLANE_CTL(plane->pipe, plane_id)) & PLANE_CTL_ENABLE;
+	ret = intel_de_read(dev_priv, PLANE_CTL(plane->pipe, plane_id)) & PLANE_CTL_ENABLE;
 
 	*pipe = plane->pipe;
 
-	पूर्णांकel_display_घातer_put(dev_priv, घातer_करोमुख्य, wakeref);
+	intel_display_power_put(dev_priv, power_domain, wakeref);
 
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल u32 skl_plane_ctl_क्रमmat(u32 pixel_क्रमmat)
-अणु
-	चयन (pixel_क्रमmat) अणु
-	हाल DRM_FORMAT_C8:
-		वापस PLANE_CTL_FORMAT_INDEXED;
-	हाल DRM_FORMAT_RGB565:
-		वापस PLANE_CTL_FORMAT_RGB_565;
-	हाल DRM_FORMAT_XBGR8888:
-	हाल DRM_FORMAT_ABGR8888:
-		वापस PLANE_CTL_FORMAT_XRGB_8888 | PLANE_CTL_ORDER_RGBX;
-	हाल DRM_FORMAT_XRGB8888:
-	हाल DRM_FORMAT_ARGB8888:
-		वापस PLANE_CTL_FORMAT_XRGB_8888;
-	हाल DRM_FORMAT_XBGR2101010:
-	हाल DRM_FORMAT_ABGR2101010:
-		वापस PLANE_CTL_FORMAT_XRGB_2101010 | PLANE_CTL_ORDER_RGBX;
-	हाल DRM_FORMAT_XRGB2101010:
-	हाल DRM_FORMAT_ARGB2101010:
-		वापस PLANE_CTL_FORMAT_XRGB_2101010;
-	हाल DRM_FORMAT_XBGR16161616F:
-	हाल DRM_FORMAT_ABGR16161616F:
-		वापस PLANE_CTL_FORMAT_XRGB_16161616F | PLANE_CTL_ORDER_RGBX;
-	हाल DRM_FORMAT_XRGB16161616F:
-	हाल DRM_FORMAT_ARGB16161616F:
-		वापस PLANE_CTL_FORMAT_XRGB_16161616F;
-	हाल DRM_FORMAT_XYUV8888:
-		वापस PLANE_CTL_FORMAT_XYUV;
-	हाल DRM_FORMAT_YUYV:
-		वापस PLANE_CTL_FORMAT_YUV422 | PLANE_CTL_YUV422_YUYV;
-	हाल DRM_FORMAT_YVYU:
-		वापस PLANE_CTL_FORMAT_YUV422 | PLANE_CTL_YUV422_YVYU;
-	हाल DRM_FORMAT_UYVY:
-		वापस PLANE_CTL_FORMAT_YUV422 | PLANE_CTL_YUV422_UYVY;
-	हाल DRM_FORMAT_VYUY:
-		वापस PLANE_CTL_FORMAT_YUV422 | PLANE_CTL_YUV422_VYUY;
-	हाल DRM_FORMAT_NV12:
-		वापस PLANE_CTL_FORMAT_NV12;
-	हाल DRM_FORMAT_P010:
-		वापस PLANE_CTL_FORMAT_P010;
-	हाल DRM_FORMAT_P012:
-		वापस PLANE_CTL_FORMAT_P012;
-	हाल DRM_FORMAT_P016:
-		वापस PLANE_CTL_FORMAT_P016;
-	हाल DRM_FORMAT_Y210:
-		वापस PLANE_CTL_FORMAT_Y210;
-	हाल DRM_FORMAT_Y212:
-		वापस PLANE_CTL_FORMAT_Y212;
-	हाल DRM_FORMAT_Y216:
-		वापस PLANE_CTL_FORMAT_Y216;
-	हाल DRM_FORMAT_XVYU2101010:
-		वापस PLANE_CTL_FORMAT_Y410;
-	हाल DRM_FORMAT_XVYU12_16161616:
-		वापस PLANE_CTL_FORMAT_Y412;
-	हाल DRM_FORMAT_XVYU16161616:
-		वापस PLANE_CTL_FORMAT_Y416;
-	शेष:
-		MISSING_CASE(pixel_क्रमmat);
-	पूर्ण
+static u32 skl_plane_ctl_format(u32 pixel_format)
+{
+	switch (pixel_format) {
+	case DRM_FORMAT_C8:
+		return PLANE_CTL_FORMAT_INDEXED;
+	case DRM_FORMAT_RGB565:
+		return PLANE_CTL_FORMAT_RGB_565;
+	case DRM_FORMAT_XBGR8888:
+	case DRM_FORMAT_ABGR8888:
+		return PLANE_CTL_FORMAT_XRGB_8888 | PLANE_CTL_ORDER_RGBX;
+	case DRM_FORMAT_XRGB8888:
+	case DRM_FORMAT_ARGB8888:
+		return PLANE_CTL_FORMAT_XRGB_8888;
+	case DRM_FORMAT_XBGR2101010:
+	case DRM_FORMAT_ABGR2101010:
+		return PLANE_CTL_FORMAT_XRGB_2101010 | PLANE_CTL_ORDER_RGBX;
+	case DRM_FORMAT_XRGB2101010:
+	case DRM_FORMAT_ARGB2101010:
+		return PLANE_CTL_FORMAT_XRGB_2101010;
+	case DRM_FORMAT_XBGR16161616F:
+	case DRM_FORMAT_ABGR16161616F:
+		return PLANE_CTL_FORMAT_XRGB_16161616F | PLANE_CTL_ORDER_RGBX;
+	case DRM_FORMAT_XRGB16161616F:
+	case DRM_FORMAT_ARGB16161616F:
+		return PLANE_CTL_FORMAT_XRGB_16161616F;
+	case DRM_FORMAT_XYUV8888:
+		return PLANE_CTL_FORMAT_XYUV;
+	case DRM_FORMAT_YUYV:
+		return PLANE_CTL_FORMAT_YUV422 | PLANE_CTL_YUV422_YUYV;
+	case DRM_FORMAT_YVYU:
+		return PLANE_CTL_FORMAT_YUV422 | PLANE_CTL_YUV422_YVYU;
+	case DRM_FORMAT_UYVY:
+		return PLANE_CTL_FORMAT_YUV422 | PLANE_CTL_YUV422_UYVY;
+	case DRM_FORMAT_VYUY:
+		return PLANE_CTL_FORMAT_YUV422 | PLANE_CTL_YUV422_VYUY;
+	case DRM_FORMAT_NV12:
+		return PLANE_CTL_FORMAT_NV12;
+	case DRM_FORMAT_P010:
+		return PLANE_CTL_FORMAT_P010;
+	case DRM_FORMAT_P012:
+		return PLANE_CTL_FORMAT_P012;
+	case DRM_FORMAT_P016:
+		return PLANE_CTL_FORMAT_P016;
+	case DRM_FORMAT_Y210:
+		return PLANE_CTL_FORMAT_Y210;
+	case DRM_FORMAT_Y212:
+		return PLANE_CTL_FORMAT_Y212;
+	case DRM_FORMAT_Y216:
+		return PLANE_CTL_FORMAT_Y216;
+	case DRM_FORMAT_XVYU2101010:
+		return PLANE_CTL_FORMAT_Y410;
+	case DRM_FORMAT_XVYU12_16161616:
+		return PLANE_CTL_FORMAT_Y412;
+	case DRM_FORMAT_XVYU16161616:
+		return PLANE_CTL_FORMAT_Y416;
+	default:
+		MISSING_CASE(pixel_format);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 skl_plane_ctl_alpha(स्थिर काष्ठा पूर्णांकel_plane_state *plane_state)
-अणु
-	अगर (!plane_state->hw.fb->क्रमmat->has_alpha)
-		वापस PLANE_CTL_ALPHA_DISABLE;
+static u32 skl_plane_ctl_alpha(const struct intel_plane_state *plane_state)
+{
+	if (!plane_state->hw.fb->format->has_alpha)
+		return PLANE_CTL_ALPHA_DISABLE;
 
-	चयन (plane_state->hw.pixel_blend_mode) अणु
-	हाल DRM_MODE_BLEND_PIXEL_NONE:
-		वापस PLANE_CTL_ALPHA_DISABLE;
-	हाल DRM_MODE_BLEND_PREMULTI:
-		वापस PLANE_CTL_ALPHA_SW_PREMULTIPLY;
-	हाल DRM_MODE_BLEND_COVERAGE:
-		वापस PLANE_CTL_ALPHA_HW_PREMULTIPLY;
-	शेष:
+	switch (plane_state->hw.pixel_blend_mode) {
+	case DRM_MODE_BLEND_PIXEL_NONE:
+		return PLANE_CTL_ALPHA_DISABLE;
+	case DRM_MODE_BLEND_PREMULTI:
+		return PLANE_CTL_ALPHA_SW_PREMULTIPLY;
+	case DRM_MODE_BLEND_COVERAGE:
+		return PLANE_CTL_ALPHA_HW_PREMULTIPLY;
+	default:
 		MISSING_CASE(plane_state->hw.pixel_blend_mode);
-		वापस PLANE_CTL_ALPHA_DISABLE;
-	पूर्ण
-पूर्ण
+		return PLANE_CTL_ALPHA_DISABLE;
+	}
+}
 
-अटल u32 glk_plane_color_ctl_alpha(स्थिर काष्ठा पूर्णांकel_plane_state *plane_state)
-अणु
-	अगर (!plane_state->hw.fb->क्रमmat->has_alpha)
-		वापस PLANE_COLOR_ALPHA_DISABLE;
+static u32 glk_plane_color_ctl_alpha(const struct intel_plane_state *plane_state)
+{
+	if (!plane_state->hw.fb->format->has_alpha)
+		return PLANE_COLOR_ALPHA_DISABLE;
 
-	चयन (plane_state->hw.pixel_blend_mode) अणु
-	हाल DRM_MODE_BLEND_PIXEL_NONE:
-		वापस PLANE_COLOR_ALPHA_DISABLE;
-	हाल DRM_MODE_BLEND_PREMULTI:
-		वापस PLANE_COLOR_ALPHA_SW_PREMULTIPLY;
-	हाल DRM_MODE_BLEND_COVERAGE:
-		वापस PLANE_COLOR_ALPHA_HW_PREMULTIPLY;
-	शेष:
+	switch (plane_state->hw.pixel_blend_mode) {
+	case DRM_MODE_BLEND_PIXEL_NONE:
+		return PLANE_COLOR_ALPHA_DISABLE;
+	case DRM_MODE_BLEND_PREMULTI:
+		return PLANE_COLOR_ALPHA_SW_PREMULTIPLY;
+	case DRM_MODE_BLEND_COVERAGE:
+		return PLANE_COLOR_ALPHA_HW_PREMULTIPLY;
+	default:
 		MISSING_CASE(plane_state->hw.pixel_blend_mode);
-		वापस PLANE_COLOR_ALPHA_DISABLE;
-	पूर्ण
-पूर्ण
+		return PLANE_COLOR_ALPHA_DISABLE;
+	}
+}
 
-अटल u32 skl_plane_ctl_tiling(u64 fb_modअगरier)
-अणु
-	चयन (fb_modअगरier) अणु
-	हाल DRM_FORMAT_MOD_LINEAR:
-		अवरोध;
-	हाल I915_FORMAT_MOD_X_TILED:
-		वापस PLANE_CTL_TILED_X;
-	हाल I915_FORMAT_MOD_Y_TILED:
-		वापस PLANE_CTL_TILED_Y;
-	हाल I915_FORMAT_MOD_Y_TILED_CCS:
-	हाल I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS_CC:
-		वापस PLANE_CTL_TILED_Y | PLANE_CTL_RENDER_DECOMPRESSION_ENABLE;
-	हाल I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS:
-		वापस PLANE_CTL_TILED_Y |
+static u32 skl_plane_ctl_tiling(u64 fb_modifier)
+{
+	switch (fb_modifier) {
+	case DRM_FORMAT_MOD_LINEAR:
+		break;
+	case I915_FORMAT_MOD_X_TILED:
+		return PLANE_CTL_TILED_X;
+	case I915_FORMAT_MOD_Y_TILED:
+		return PLANE_CTL_TILED_Y;
+	case I915_FORMAT_MOD_Y_TILED_CCS:
+	case I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS_CC:
+		return PLANE_CTL_TILED_Y | PLANE_CTL_RENDER_DECOMPRESSION_ENABLE;
+	case I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS:
+		return PLANE_CTL_TILED_Y |
 		       PLANE_CTL_RENDER_DECOMPRESSION_ENABLE |
 		       PLANE_CTL_CLEAR_COLOR_DISABLE;
-	हाल I915_FORMAT_MOD_Y_TILED_GEN12_MC_CCS:
-		वापस PLANE_CTL_TILED_Y | PLANE_CTL_MEDIA_DECOMPRESSION_ENABLE;
-	हाल I915_FORMAT_MOD_Yf_TILED:
-		वापस PLANE_CTL_TILED_YF;
-	हाल I915_FORMAT_MOD_Yf_TILED_CCS:
-		वापस PLANE_CTL_TILED_YF | PLANE_CTL_RENDER_DECOMPRESSION_ENABLE;
-	शेष:
-		MISSING_CASE(fb_modअगरier);
-	पूर्ण
+	case I915_FORMAT_MOD_Y_TILED_GEN12_MC_CCS:
+		return PLANE_CTL_TILED_Y | PLANE_CTL_MEDIA_DECOMPRESSION_ENABLE;
+	case I915_FORMAT_MOD_Yf_TILED:
+		return PLANE_CTL_TILED_YF;
+	case I915_FORMAT_MOD_Yf_TILED_CCS:
+		return PLANE_CTL_TILED_YF | PLANE_CTL_RENDER_DECOMPRESSION_ENABLE;
+	default:
+		MISSING_CASE(fb_modifier);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 skl_plane_ctl_rotate(अचिन्हित पूर्णांक rotate)
-अणु
-	चयन (rotate) अणु
-	हाल DRM_MODE_ROTATE_0:
-		अवरोध;
+static u32 skl_plane_ctl_rotate(unsigned int rotate)
+{
+	switch (rotate) {
+	case DRM_MODE_ROTATE_0:
+		break;
 	/*
-	 * DRM_MODE_ROTATE_ is counter घड़ीwise to stay compatible with Xअक्रमr
-	 * जबतक i915 HW rotation is घड़ीwise, thats why this swapping.
+	 * DRM_MODE_ROTATE_ is counter clockwise to stay compatible with Xrandr
+	 * while i915 HW rotation is clockwise, thats why this swapping.
 	 */
-	हाल DRM_MODE_ROTATE_90:
-		वापस PLANE_CTL_ROTATE_270;
-	हाल DRM_MODE_ROTATE_180:
-		वापस PLANE_CTL_ROTATE_180;
-	हाल DRM_MODE_ROTATE_270:
-		वापस PLANE_CTL_ROTATE_90;
-	शेष:
+	case DRM_MODE_ROTATE_90:
+		return PLANE_CTL_ROTATE_270;
+	case DRM_MODE_ROTATE_180:
+		return PLANE_CTL_ROTATE_180;
+	case DRM_MODE_ROTATE_270:
+		return PLANE_CTL_ROTATE_90;
+	default:
 		MISSING_CASE(rotate);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 cnl_plane_ctl_flip(अचिन्हित पूर्णांक reflect)
-अणु
-	चयन (reflect) अणु
-	हाल 0:
-		अवरोध;
-	हाल DRM_MODE_REFLECT_X:
-		वापस PLANE_CTL_FLIP_HORIZONTAL;
-	हाल DRM_MODE_REFLECT_Y:
-	शेष:
+static u32 cnl_plane_ctl_flip(unsigned int reflect)
+{
+	switch (reflect) {
+	case 0:
+		break;
+	case DRM_MODE_REFLECT_X:
+		return PLANE_CTL_FLIP_HORIZONTAL;
+	case DRM_MODE_REFLECT_Y:
+	default:
 		MISSING_CASE(reflect);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल u32 skl_plane_ctl_crtc(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
+static u32 skl_plane_ctl_crtc(const struct intel_crtc_state *crtc_state)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
 	u32 plane_ctl = 0;
 
-	अगर (DISPLAY_VER(dev_priv) >= 10)
-		वापस plane_ctl;
+	if (DISPLAY_VER(dev_priv) >= 10)
+		return plane_ctl;
 
-	अगर (crtc_state->gamma_enable)
+	if (crtc_state->gamma_enable)
 		plane_ctl |= PLANE_CTL_PIPE_GAMMA_ENABLE;
 
-	अगर (crtc_state->csc_enable)
+	if (crtc_state->csc_enable)
 		plane_ctl |= PLANE_CTL_PIPE_CSC_ENABLE;
 
-	वापस plane_ctl;
-पूर्ण
+	return plane_ctl;
+}
 
-अटल u32 skl_plane_ctl(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-			 स्थिर काष्ठा पूर्णांकel_plane_state *plane_state)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv =
+static u32 skl_plane_ctl(const struct intel_crtc_state *crtc_state,
+			 const struct intel_plane_state *plane_state)
+{
+	struct drm_i915_private *dev_priv =
 		to_i915(plane_state->uapi.plane->dev);
-	स्थिर काष्ठा drm_framebuffer *fb = plane_state->hw.fb;
-	अचिन्हित पूर्णांक rotation = plane_state->hw.rotation;
-	स्थिर काष्ठा drm_पूर्णांकel_sprite_colorkey *key = &plane_state->ckey;
+	const struct drm_framebuffer *fb = plane_state->hw.fb;
+	unsigned int rotation = plane_state->hw.rotation;
+	const struct drm_intel_sprite_colorkey *key = &plane_state->ckey;
 	u32 plane_ctl;
 
 	plane_ctl = PLANE_CTL_ENABLE;
 
-	अगर (DISPLAY_VER(dev_priv) < 10 && !IS_GEMINILAKE(dev_priv)) अणु
+	if (DISPLAY_VER(dev_priv) < 10 && !IS_GEMINILAKE(dev_priv)) {
 		plane_ctl |= skl_plane_ctl_alpha(plane_state);
 		plane_ctl |= PLANE_CTL_PLANE_GAMMA_DISABLE;
 
-		अगर (plane_state->hw.color_encoding == DRM_COLOR_YCBCR_BT709)
+		if (plane_state->hw.color_encoding == DRM_COLOR_YCBCR_BT709)
 			plane_ctl |= PLANE_CTL_YUV_TO_RGB_CSC_FORMAT_BT709;
 
-		अगर (plane_state->hw.color_range == DRM_COLOR_YCBCR_FULL_RANGE)
+		if (plane_state->hw.color_range == DRM_COLOR_YCBCR_FULL_RANGE)
 			plane_ctl |= PLANE_CTL_YUV_RANGE_CORRECTION_DISABLE;
-	पूर्ण
+	}
 
-	plane_ctl |= skl_plane_ctl_क्रमmat(fb->क्रमmat->क्रमmat);
-	plane_ctl |= skl_plane_ctl_tiling(fb->modअगरier);
+	plane_ctl |= skl_plane_ctl_format(fb->format->format);
+	plane_ctl |= skl_plane_ctl_tiling(fb->modifier);
 	plane_ctl |= skl_plane_ctl_rotate(rotation & DRM_MODE_ROTATE_MASK);
 
-	अगर (DISPLAY_VER(dev_priv) >= 11 || IS_CANNONLAKE(dev_priv))
+	if (DISPLAY_VER(dev_priv) >= 11 || IS_CANNONLAKE(dev_priv))
 		plane_ctl |= cnl_plane_ctl_flip(rotation &
 						DRM_MODE_REFLECT_MASK);
 
-	अगर (key->flags & I915_SET_COLORKEY_DESTINATION)
+	if (key->flags & I915_SET_COLORKEY_DESTINATION)
 		plane_ctl |= PLANE_CTL_KEY_ENABLE_DESTINATION;
-	अन्यथा अगर (key->flags & I915_SET_COLORKEY_SOURCE)
+	else if (key->flags & I915_SET_COLORKEY_SOURCE)
 		plane_ctl |= PLANE_CTL_KEY_ENABLE_SOURCE;
 
-	वापस plane_ctl;
-पूर्ण
+	return plane_ctl;
+}
 
-अटल u32 glk_plane_color_ctl_crtc(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
+static u32 glk_plane_color_ctl_crtc(const struct intel_crtc_state *crtc_state)
+{
+	struct drm_i915_private *dev_priv = to_i915(crtc_state->uapi.crtc->dev);
 	u32 plane_color_ctl = 0;
 
-	अगर (DISPLAY_VER(dev_priv) >= 11)
-		वापस plane_color_ctl;
+	if (DISPLAY_VER(dev_priv) >= 11)
+		return plane_color_ctl;
 
-	अगर (crtc_state->gamma_enable)
+	if (crtc_state->gamma_enable)
 		plane_color_ctl |= PLANE_COLOR_PIPE_GAMMA_ENABLE;
 
-	अगर (crtc_state->csc_enable)
+	if (crtc_state->csc_enable)
 		plane_color_ctl |= PLANE_COLOR_PIPE_CSC_ENABLE;
 
-	वापस plane_color_ctl;
-पूर्ण
+	return plane_color_ctl;
+}
 
-अटल u32 glk_plane_color_ctl(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-			       स्थिर काष्ठा पूर्णांकel_plane_state *plane_state)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv =
+static u32 glk_plane_color_ctl(const struct intel_crtc_state *crtc_state,
+			       const struct intel_plane_state *plane_state)
+{
+	struct drm_i915_private *dev_priv =
 		to_i915(plane_state->uapi.plane->dev);
-	स्थिर काष्ठा drm_framebuffer *fb = plane_state->hw.fb;
-	काष्ठा पूर्णांकel_plane *plane = to_पूर्णांकel_plane(plane_state->uapi.plane);
+	const struct drm_framebuffer *fb = plane_state->hw.fb;
+	struct intel_plane *plane = to_intel_plane(plane_state->uapi.plane);
 	u32 plane_color_ctl = 0;
 
 	plane_color_ctl |= PLANE_COLOR_PLANE_GAMMA_DISABLE;
 	plane_color_ctl |= glk_plane_color_ctl_alpha(plane_state);
 
-	अगर (fb->क्रमmat->is_yuv && !icl_is_hdr_plane(dev_priv, plane->id)) अणु
-		चयन (plane_state->hw.color_encoding) अणु
-		हाल DRM_COLOR_YCBCR_BT709:
+	if (fb->format->is_yuv && !icl_is_hdr_plane(dev_priv, plane->id)) {
+		switch (plane_state->hw.color_encoding) {
+		case DRM_COLOR_YCBCR_BT709:
 			plane_color_ctl |= PLANE_COLOR_CSC_MODE_YUV709_TO_RGB709;
-			अवरोध;
-		हाल DRM_COLOR_YCBCR_BT2020:
+			break;
+		case DRM_COLOR_YCBCR_BT2020:
 			plane_color_ctl |=
 				PLANE_COLOR_CSC_MODE_YUV2020_TO_RGB2020;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			plane_color_ctl |=
 				PLANE_COLOR_CSC_MODE_YUV601_TO_RGB601;
-		पूर्ण
-		अगर (plane_state->hw.color_range == DRM_COLOR_YCBCR_FULL_RANGE)
+		}
+		if (plane_state->hw.color_range == DRM_COLOR_YCBCR_FULL_RANGE)
 			plane_color_ctl |= PLANE_COLOR_YUV_RANGE_CORRECTION_DISABLE;
-	पूर्ण अन्यथा अगर (fb->क्रमmat->is_yuv) अणु
+	} else if (fb->format->is_yuv) {
 		plane_color_ctl |= PLANE_COLOR_INPUT_CSC_ENABLE;
-		अगर (plane_state->hw.color_range == DRM_COLOR_YCBCR_FULL_RANGE)
+		if (plane_state->hw.color_range == DRM_COLOR_YCBCR_FULL_RANGE)
 			plane_color_ctl |= PLANE_COLOR_YUV_RANGE_CORRECTION_DISABLE;
-	पूर्ण
+	}
 
-	वापस plane_color_ctl;
-पूर्ण
+	return plane_color_ctl;
+}
 
-अटल व्योम
-skl_program_plane(काष्ठा पूर्णांकel_plane *plane,
-		  स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-		  स्थिर काष्ठा पूर्णांकel_plane_state *plane_state,
-		  पूर्णांक color_plane)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(plane->base.dev);
-	क्रमागत plane_id plane_id = plane->id;
-	क्रमागत pipe pipe = plane->pipe;
-	स्थिर काष्ठा drm_पूर्णांकel_sprite_colorkey *key = &plane_state->ckey;
+static void
+skl_program_plane(struct intel_plane *plane,
+		  const struct intel_crtc_state *crtc_state,
+		  const struct intel_plane_state *plane_state,
+		  int color_plane)
+{
+	struct drm_i915_private *dev_priv = to_i915(plane->base.dev);
+	enum plane_id plane_id = plane->id;
+	enum pipe pipe = plane->pipe;
+	const struct drm_intel_sprite_colorkey *key = &plane_state->ckey;
 	u32 surf_addr = plane_state->view.color_plane[color_plane].offset;
 	u32 stride = skl_plane_stride(plane_state, color_plane);
-	स्थिर काष्ठा drm_framebuffer *fb = plane_state->hw.fb;
-	पूर्णांक aux_plane = skl_मुख्य_to_aux_plane(fb, color_plane);
-	पूर्णांक crtc_x = plane_state->uapi.dst.x1;
-	पूर्णांक crtc_y = plane_state->uapi.dst.y1;
+	const struct drm_framebuffer *fb = plane_state->hw.fb;
+	int aux_plane = skl_main_to_aux_plane(fb, color_plane);
+	int crtc_x = plane_state->uapi.dst.x1;
+	int crtc_y = plane_state->uapi.dst.y1;
 	u32 x = plane_state->view.color_plane[color_plane].x;
 	u32 y = plane_state->view.color_plane[color_plane].y;
 	u32 src_w = drm_rect_width(&plane_state->uapi.src) >> 16;
 	u32 src_h = drm_rect_height(&plane_state->uapi.src) >> 16;
 	u8 alpha = plane_state->hw.alpha >> 8;
 	u32 plane_color_ctl = 0, aux_dist = 0;
-	अचिन्हित दीर्घ irqflags;
+	unsigned long irqflags;
 	u32 keymsk, keymax;
 	u32 plane_ctl = plane_state->ctl;
 
 	plane_ctl |= skl_plane_ctl_crtc(crtc_state);
 
-	अगर (DISPLAY_VER(dev_priv) >= 10)
+	if (DISPLAY_VER(dev_priv) >= 10)
 		plane_color_ctl = plane_state->color_ctl |
 			glk_plane_color_ctl_crtc(crtc_state);
 
@@ -949,348 +948,348 @@ skl_program_plane(काष्ठा पूर्णांकel_plane *plane,
 	keymax = (key->max_value & 0xffffff) | PLANE_KEYMAX_ALPHA(alpha);
 
 	keymsk = key->channel_mask & 0x7ffffff;
-	अगर (alpha < 0xff)
+	if (alpha < 0xff)
 		keymsk |= PLANE_KEYMSK_ALPHA_ENABLE;
 
 	/* The scaler will handle the output position */
-	अगर (plane_state->scaler_id >= 0) अणु
+	if (plane_state->scaler_id >= 0) {
 		crtc_x = 0;
 		crtc_y = 0;
-	पूर्ण
+	}
 
-	अगर (aux_plane) अणु
+	if (aux_plane) {
 		aux_dist = plane_state->view.color_plane[aux_plane].offset - surf_addr;
 
-		अगर (DISPLAY_VER(dev_priv) < 12)
+		if (DISPLAY_VER(dev_priv) < 12)
 			aux_dist |= skl_plane_stride(plane_state, aux_plane);
-	पूर्ण
+	}
 
 	spin_lock_irqsave(&dev_priv->uncore.lock, irqflags);
 
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_STRIDE(pipe, plane_id), stride);
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_POS(pipe, plane_id),
+	intel_de_write_fw(dev_priv, PLANE_STRIDE(pipe, plane_id), stride);
+	intel_de_write_fw(dev_priv, PLANE_POS(pipe, plane_id),
 			  (crtc_y << 16) | crtc_x);
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_SIZE(pipe, plane_id),
+	intel_de_write_fw(dev_priv, PLANE_SIZE(pipe, plane_id),
 			  (src_h << 16) | src_w);
 
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_AUX_DIST(pipe, plane_id), aux_dist);
+	intel_de_write_fw(dev_priv, PLANE_AUX_DIST(pipe, plane_id), aux_dist);
 
-	अगर (icl_is_hdr_plane(dev_priv, plane_id))
-		पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_CUS_CTL(pipe, plane_id),
+	if (icl_is_hdr_plane(dev_priv, plane_id))
+		intel_de_write_fw(dev_priv, PLANE_CUS_CTL(pipe, plane_id),
 				  plane_state->cus_ctl);
 
-	अगर (DISPLAY_VER(dev_priv) >= 10)
-		पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_COLOR_CTL(pipe, plane_id),
+	if (DISPLAY_VER(dev_priv) >= 10)
+		intel_de_write_fw(dev_priv, PLANE_COLOR_CTL(pipe, plane_id),
 				  plane_color_ctl);
 
-	अगर (fb->क्रमmat->is_yuv && icl_is_hdr_plane(dev_priv, plane_id))
+	if (fb->format->is_yuv && icl_is_hdr_plane(dev_priv, plane_id))
 		icl_program_input_csc(plane, crtc_state, plane_state);
 
-	अगर (fb->modअगरier == I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS_CC)
-		पूर्णांकel_uncore_ग_लिखो64_fw(&dev_priv->uncore,
+	if (fb->modifier == I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS_CC)
+		intel_uncore_write64_fw(&dev_priv->uncore,
 					PLANE_CC_VAL(pipe, plane_id), plane_state->ccval);
 
-	skl_ग_लिखो_plane_wm(plane, crtc_state);
+	skl_write_plane_wm(plane, crtc_state);
 
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_KEYVAL(pipe, plane_id),
+	intel_de_write_fw(dev_priv, PLANE_KEYVAL(pipe, plane_id),
 			  key->min_value);
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_KEYMSK(pipe, plane_id), keymsk);
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_KEYMAX(pipe, plane_id), keymax);
+	intel_de_write_fw(dev_priv, PLANE_KEYMSK(pipe, plane_id), keymsk);
+	intel_de_write_fw(dev_priv, PLANE_KEYMAX(pipe, plane_id), keymax);
 
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_OFFSET(pipe, plane_id),
+	intel_de_write_fw(dev_priv, PLANE_OFFSET(pipe, plane_id),
 			  (y << 16) | x);
 
-	अगर (DISPLAY_VER(dev_priv) < 11)
-		पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_AUX_OFFSET(pipe, plane_id),
+	if (DISPLAY_VER(dev_priv) < 11)
+		intel_de_write_fw(dev_priv, PLANE_AUX_OFFSET(pipe, plane_id),
 				  (plane_state->view.color_plane[1].y << 16) |
 				   plane_state->view.color_plane[1].x);
 
-	अगर (!drm_atomic_crtc_needs_modeset(&crtc_state->uapi))
-		पूर्णांकel_psr2_program_plane_sel_fetch(plane, crtc_state, plane_state, color_plane);
+	if (!drm_atomic_crtc_needs_modeset(&crtc_state->uapi))
+		intel_psr2_program_plane_sel_fetch(plane, crtc_state, plane_state, color_plane);
 
 	/*
-	 * The control रेजिस्टर self-arms अगर the plane was previously
+	 * The control register self-arms if the plane was previously
 	 * disabled. Try to make the plane enable atomic by writing
-	 * the control रेजिस्टर just beक्रमe the surface रेजिस्टर.
+	 * the control register just before the surface register.
 	 */
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_CTL(pipe, plane_id), plane_ctl);
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_SURF(pipe, plane_id),
-			  पूर्णांकel_plane_ggtt_offset(plane_state) + surf_addr);
+	intel_de_write_fw(dev_priv, PLANE_CTL(pipe, plane_id), plane_ctl);
+	intel_de_write_fw(dev_priv, PLANE_SURF(pipe, plane_id),
+			  intel_plane_ggtt_offset(plane_state) + surf_addr);
 
-	अगर (plane_state->scaler_id >= 0)
+	if (plane_state->scaler_id >= 0)
 		skl_program_plane_scaler(plane, crtc_state, plane_state);
 
 	spin_unlock_irqrestore(&dev_priv->uncore.lock, irqflags);
-पूर्ण
+}
 
-अटल व्योम
-skl_plane_async_flip(काष्ठा पूर्णांकel_plane *plane,
-		     स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-		     स्थिर काष्ठा पूर्णांकel_plane_state *plane_state,
+static void
+skl_plane_async_flip(struct intel_plane *plane,
+		     const struct intel_crtc_state *crtc_state,
+		     const struct intel_plane_state *plane_state,
 		     bool async_flip)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(plane->base.dev);
-	अचिन्हित दीर्घ irqflags;
-	क्रमागत plane_id plane_id = plane->id;
-	क्रमागत pipe pipe = plane->pipe;
+{
+	struct drm_i915_private *dev_priv = to_i915(plane->base.dev);
+	unsigned long irqflags;
+	enum plane_id plane_id = plane->id;
+	enum pipe pipe = plane->pipe;
 	u32 surf_addr = plane_state->view.color_plane[0].offset;
 	u32 plane_ctl = plane_state->ctl;
 
 	plane_ctl |= skl_plane_ctl_crtc(crtc_state);
 
-	अगर (async_flip)
+	if (async_flip)
 		plane_ctl |= PLANE_CTL_ASYNC_FLIP;
 
 	spin_lock_irqsave(&dev_priv->uncore.lock, irqflags);
 
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_CTL(pipe, plane_id), plane_ctl);
-	पूर्णांकel_de_ग_लिखो_fw(dev_priv, PLANE_SURF(pipe, plane_id),
-			  पूर्णांकel_plane_ggtt_offset(plane_state) + surf_addr);
+	intel_de_write_fw(dev_priv, PLANE_CTL(pipe, plane_id), plane_ctl);
+	intel_de_write_fw(dev_priv, PLANE_SURF(pipe, plane_id),
+			  intel_plane_ggtt_offset(plane_state) + surf_addr);
 
 	spin_unlock_irqrestore(&dev_priv->uncore.lock, irqflags);
-पूर्ण
+}
 
-अटल व्योम
-skl_update_plane(काष्ठा पूर्णांकel_plane *plane,
-		 स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-		 स्थिर काष्ठा पूर्णांकel_plane_state *plane_state)
-अणु
-	पूर्णांक color_plane = 0;
+static void
+skl_update_plane(struct intel_plane *plane,
+		 const struct intel_crtc_state *crtc_state,
+		 const struct intel_plane_state *plane_state)
+{
+	int color_plane = 0;
 
-	अगर (plane_state->planar_linked_plane && !plane_state->planar_slave)
+	if (plane_state->planar_linked_plane && !plane_state->planar_slave)
 		/* Program the UV plane on planar master */
 		color_plane = 1;
 
 	skl_program_plane(plane, crtc_state, plane_state, color_plane);
-पूर्ण
+}
 
-अटल bool पूर्णांकel_क्रमmat_is_p01x(u32 क्रमmat)
-अणु
-	चयन (क्रमmat) अणु
-	हाल DRM_FORMAT_P010:
-	हाल DRM_FORMAT_P012:
-	हाल DRM_FORMAT_P016:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool intel_format_is_p01x(u32 format)
+{
+	switch (format) {
+	case DRM_FORMAT_P010:
+	case DRM_FORMAT_P012:
+	case DRM_FORMAT_P016:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल पूर्णांक skl_plane_check_fb(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-			      स्थिर काष्ठा पूर्णांकel_plane_state *plane_state)
-अणु
-	काष्ठा पूर्णांकel_plane *plane = to_पूर्णांकel_plane(plane_state->uapi.plane);
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(plane->base.dev);
-	स्थिर काष्ठा drm_framebuffer *fb = plane_state->hw.fb;
-	अचिन्हित पूर्णांक rotation = plane_state->hw.rotation;
-	काष्ठा drm_क्रमmat_name_buf क्रमmat_name;
+static int skl_plane_check_fb(const struct intel_crtc_state *crtc_state,
+			      const struct intel_plane_state *plane_state)
+{
+	struct intel_plane *plane = to_intel_plane(plane_state->uapi.plane);
+	struct drm_i915_private *dev_priv = to_i915(plane->base.dev);
+	const struct drm_framebuffer *fb = plane_state->hw.fb;
+	unsigned int rotation = plane_state->hw.rotation;
+	struct drm_format_name_buf format_name;
 
-	अगर (!fb)
-		वापस 0;
+	if (!fb)
+		return 0;
 
-	अगर (rotation & ~(DRM_MODE_ROTATE_0 | DRM_MODE_ROTATE_180) &&
-	    is_ccs_modअगरier(fb->modअगरier)) अणु
+	if (rotation & ~(DRM_MODE_ROTATE_0 | DRM_MODE_ROTATE_180) &&
+	    is_ccs_modifier(fb->modifier)) {
 		drm_dbg_kms(&dev_priv->drm,
 			    "RC support only with 0/180 degree rotation (%x)\n",
 			    rotation);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (rotation & DRM_MODE_REFLECT_X &&
-	    fb->modअगरier == DRM_FORMAT_MOD_LINEAR) अणु
+	if (rotation & DRM_MODE_REFLECT_X &&
+	    fb->modifier == DRM_FORMAT_MOD_LINEAR) {
 		drm_dbg_kms(&dev_priv->drm,
 			    "horizontal flip is not supported with linear surface formats\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (drm_rotation_90_or_270(rotation)) अणु
-		अगर (fb->modअगरier != I915_FORMAT_MOD_Y_TILED &&
-		    fb->modअगरier != I915_FORMAT_MOD_Yf_TILED) अणु
+	if (drm_rotation_90_or_270(rotation)) {
+		if (fb->modifier != I915_FORMAT_MOD_Y_TILED &&
+		    fb->modifier != I915_FORMAT_MOD_Yf_TILED) {
 			drm_dbg_kms(&dev_priv->drm,
 				    "Y/Yf tiling required for 90/270!\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		/*
 		 * 90/270 is not allowed with RGB64 16:16:16:16 and
 		 * Indexed 8-bit. RGB 16-bit 5:6:5 is allowed gen11 onwards.
 		 */
-		चयन (fb->क्रमmat->क्रमmat) अणु
-		हाल DRM_FORMAT_RGB565:
-			अगर (DISPLAY_VER(dev_priv) >= 11)
-				अवरोध;
+		switch (fb->format->format) {
+		case DRM_FORMAT_RGB565:
+			if (DISPLAY_VER(dev_priv) >= 11)
+				break;
 			fallthrough;
-		हाल DRM_FORMAT_C8:
-		हाल DRM_FORMAT_XRGB16161616F:
-		हाल DRM_FORMAT_XBGR16161616F:
-		हाल DRM_FORMAT_ARGB16161616F:
-		हाल DRM_FORMAT_ABGR16161616F:
-		हाल DRM_FORMAT_Y210:
-		हाल DRM_FORMAT_Y212:
-		हाल DRM_FORMAT_Y216:
-		हाल DRM_FORMAT_XVYU12_16161616:
-		हाल DRM_FORMAT_XVYU16161616:
+		case DRM_FORMAT_C8:
+		case DRM_FORMAT_XRGB16161616F:
+		case DRM_FORMAT_XBGR16161616F:
+		case DRM_FORMAT_ARGB16161616F:
+		case DRM_FORMAT_ABGR16161616F:
+		case DRM_FORMAT_Y210:
+		case DRM_FORMAT_Y212:
+		case DRM_FORMAT_Y216:
+		case DRM_FORMAT_XVYU12_16161616:
+		case DRM_FORMAT_XVYU16161616:
 			drm_dbg_kms(&dev_priv->drm,
 				    "Unsupported pixel format %s for 90/270!\n",
-				    drm_get_क्रमmat_name(fb->क्रमmat->क्रमmat,
-							&क्रमmat_name));
-			वापस -EINVAL;
-		शेष:
-			अवरोध;
-		पूर्ण
-	पूर्ण
+				    drm_get_format_name(fb->format->format,
+							&format_name));
+			return -EINVAL;
+		default:
+			break;
+		}
+	}
 
 	/* Y-tiling is not supported in IF-ID Interlace mode */
-	अगर (crtc_state->hw.enable &&
+	if (crtc_state->hw.enable &&
 	    crtc_state->hw.adjusted_mode.flags & DRM_MODE_FLAG_INTERLACE &&
-	    (fb->modअगरier == I915_FORMAT_MOD_Y_TILED ||
-	     fb->modअगरier == I915_FORMAT_MOD_Yf_TILED ||
-	     fb->modअगरier == I915_FORMAT_MOD_Y_TILED_CCS ||
-	     fb->modअगरier == I915_FORMAT_MOD_Yf_TILED_CCS ||
-	     fb->modअगरier == I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS ||
-	     fb->modअगरier == I915_FORMAT_MOD_Y_TILED_GEN12_MC_CCS ||
-	     fb->modअगरier == I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS_CC)) अणु
+	    (fb->modifier == I915_FORMAT_MOD_Y_TILED ||
+	     fb->modifier == I915_FORMAT_MOD_Yf_TILED ||
+	     fb->modifier == I915_FORMAT_MOD_Y_TILED_CCS ||
+	     fb->modifier == I915_FORMAT_MOD_Yf_TILED_CCS ||
+	     fb->modifier == I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS ||
+	     fb->modifier == I915_FORMAT_MOD_Y_TILED_GEN12_MC_CCS ||
+	     fb->modifier == I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS_CC)) {
 		drm_dbg_kms(&dev_priv->drm,
 			    "Y/Yf tiling not supported in IF-ID mode\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* Wa_1606054188:tgl,adl-s */
-	अगर ((IS_ALDERLAKE_S(dev_priv) || IS_TIGERLAKE(dev_priv)) &&
+	if ((IS_ALDERLAKE_S(dev_priv) || IS_TIGERLAKE(dev_priv)) &&
 	    plane_state->ckey.flags & I915_SET_COLORKEY_SOURCE &&
-	    पूर्णांकel_क्रमmat_is_p01x(fb->क्रमmat->क्रमmat)) अणु
+	    intel_format_is_p01x(fb->format->format)) {
 		drm_dbg_kms(&dev_priv->drm,
 			    "Source color keying not supported with P01x formats\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक skl_plane_check_dst_coordinates(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state,
-					   स्थिर काष्ठा पूर्णांकel_plane_state *plane_state)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv =
+static int skl_plane_check_dst_coordinates(const struct intel_crtc_state *crtc_state,
+					   const struct intel_plane_state *plane_state)
+{
+	struct drm_i915_private *dev_priv =
 		to_i915(plane_state->uapi.plane->dev);
-	पूर्णांक crtc_x = plane_state->uapi.dst.x1;
-	पूर्णांक crtc_w = drm_rect_width(&plane_state->uapi.dst);
-	पूर्णांक pipe_src_w = crtc_state->pipe_src_w;
+	int crtc_x = plane_state->uapi.dst.x1;
+	int crtc_w = drm_rect_width(&plane_state->uapi.dst);
+	int pipe_src_w = crtc_state->pipe_src_w;
 
 	/*
 	 * Display WA #1175: cnl,glk
 	 * Planes other than the cursor may cause FIFO underflow and display
-	 * corruption अगर starting less than 4 pixels from the right edge of
+	 * corruption if starting less than 4 pixels from the right edge of
 	 * the screen.
 	 * Besides the above WA fix the similar problem, where planes other
 	 * than the cursor ending less than 4 pixels from the left edge of the
 	 * screen may cause FIFO underflow and display corruption.
 	 */
-	अगर (IS_DISPLAY_VER(dev_priv, 10) &&
-	    (crtc_x + crtc_w < 4 || crtc_x > pipe_src_w - 4)) अणु
+	if (IS_DISPLAY_VER(dev_priv, 10) &&
+	    (crtc_x + crtc_w < 4 || crtc_x > pipe_src_w - 4)) {
 		drm_dbg_kms(&dev_priv->drm,
 			    "requested plane X %s position %d invalid (valid range %d-%d)\n",
 			    crtc_x + crtc_w < 4 ? "end" : "start",
 			    crtc_x + crtc_w < 4 ? crtc_x + crtc_w : crtc_x,
 			    4, pipe_src_w - 4);
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक skl_plane_check_nv12_rotation(स्थिर काष्ठा पूर्णांकel_plane_state *plane_state)
-अणु
-	स्थिर काष्ठा drm_framebuffer *fb = plane_state->hw.fb;
-	अचिन्हित पूर्णांक rotation = plane_state->hw.rotation;
-	पूर्णांक src_w = drm_rect_width(&plane_state->uapi.src) >> 16;
+static int skl_plane_check_nv12_rotation(const struct intel_plane_state *plane_state)
+{
+	const struct drm_framebuffer *fb = plane_state->hw.fb;
+	unsigned int rotation = plane_state->hw.rotation;
+	int src_w = drm_rect_width(&plane_state->uapi.src) >> 16;
 
 	/* Display WA #1106 */
-	अगर (पूर्णांकel_क्रमmat_info_is_yuv_semiplanar(fb->क्रमmat, fb->modअगरier) &&
+	if (intel_format_info_is_yuv_semiplanar(fb->format, fb->modifier) &&
 	    src_w & 3 &&
 	    (rotation == DRM_MODE_ROTATE_270 ||
-	     rotation == (DRM_MODE_REFLECT_X | DRM_MODE_ROTATE_90))) अणु
+	     rotation == (DRM_MODE_REFLECT_X | DRM_MODE_ROTATE_90))) {
 		DRM_DEBUG_KMS("src width must be multiple of 4 for rotated planar YUV\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक skl_plane_max_scale(काष्ठा drm_i915_निजी *dev_priv,
-			       स्थिर काष्ठा drm_framebuffer *fb)
-अणु
+static int skl_plane_max_scale(struct drm_i915_private *dev_priv,
+			       const struct drm_framebuffer *fb)
+{
 	/*
-	 * We करोn't yet know the final source width nor
+	 * We don't yet know the final source width nor
 	 * whether we can use the HQ scaler mode. Assume
-	 * the best हाल.
+	 * the best case.
 	 * FIXME need to properly check this later.
 	 */
-	अगर (DISPLAY_VER(dev_priv) >= 10 ||
-	    !पूर्णांकel_क्रमmat_info_is_yuv_semiplanar(fb->क्रमmat, fb->modअगरier))
-		वापस 0x30000 - 1;
-	अन्यथा
-		वापस 0x20000 - 1;
-पूर्ण
+	if (DISPLAY_VER(dev_priv) >= 10 ||
+	    !intel_format_info_is_yuv_semiplanar(fb->format, fb->modifier))
+		return 0x30000 - 1;
+	else
+		return 0x20000 - 1;
+}
 
-अटल पूर्णांक पूर्णांकel_plane_min_width(काष्ठा पूर्णांकel_plane *plane,
-				 स्थिर काष्ठा drm_framebuffer *fb,
-				 पूर्णांक color_plane,
-				 अचिन्हित पूर्णांक rotation)
-अणु
-	अगर (plane->min_width)
-		वापस plane->min_width(fb, color_plane, rotation);
-	अन्यथा
-		वापस 1;
-पूर्ण
+static int intel_plane_min_width(struct intel_plane *plane,
+				 const struct drm_framebuffer *fb,
+				 int color_plane,
+				 unsigned int rotation)
+{
+	if (plane->min_width)
+		return plane->min_width(fb, color_plane, rotation);
+	else
+		return 1;
+}
 
-अटल पूर्णांक पूर्णांकel_plane_max_width(काष्ठा पूर्णांकel_plane *plane,
-				 स्थिर काष्ठा drm_framebuffer *fb,
-				 पूर्णांक color_plane,
-				 अचिन्हित पूर्णांक rotation)
-अणु
-	अगर (plane->max_width)
-		वापस plane->max_width(fb, color_plane, rotation);
-	अन्यथा
-		वापस पूर्णांक_उच्च;
-पूर्ण
+static int intel_plane_max_width(struct intel_plane *plane,
+				 const struct drm_framebuffer *fb,
+				 int color_plane,
+				 unsigned int rotation)
+{
+	if (plane->max_width)
+		return plane->max_width(fb, color_plane, rotation);
+	else
+		return INT_MAX;
+}
 
-अटल पूर्णांक पूर्णांकel_plane_max_height(काष्ठा पूर्णांकel_plane *plane,
-				  स्थिर काष्ठा drm_framebuffer *fb,
-				  पूर्णांक color_plane,
-				  अचिन्हित पूर्णांक rotation)
-अणु
-	अगर (plane->max_height)
-		वापस plane->max_height(fb, color_plane, rotation);
-	अन्यथा
-		वापस पूर्णांक_उच्च;
-पूर्ण
+static int intel_plane_max_height(struct intel_plane *plane,
+				  const struct drm_framebuffer *fb,
+				  int color_plane,
+				  unsigned int rotation)
+{
+	if (plane->max_height)
+		return plane->max_height(fb, color_plane, rotation);
+	else
+		return INT_MAX;
+}
 
-अटल bool
-skl_check_मुख्य_ccs_coordinates(काष्ठा पूर्णांकel_plane_state *plane_state,
-			       पूर्णांक मुख्य_x, पूर्णांक मुख्य_y, u32 मुख्य_offset,
-			       पूर्णांक ccs_plane)
-अणु
-	स्थिर काष्ठा drm_framebuffer *fb = plane_state->hw.fb;
-	पूर्णांक aux_x = plane_state->view.color_plane[ccs_plane].x;
-	पूर्णांक aux_y = plane_state->view.color_plane[ccs_plane].y;
+static bool
+skl_check_main_ccs_coordinates(struct intel_plane_state *plane_state,
+			       int main_x, int main_y, u32 main_offset,
+			       int ccs_plane)
+{
+	const struct drm_framebuffer *fb = plane_state->hw.fb;
+	int aux_x = plane_state->view.color_plane[ccs_plane].x;
+	int aux_y = plane_state->view.color_plane[ccs_plane].y;
 	u32 aux_offset = plane_state->view.color_plane[ccs_plane].offset;
-	u32 alignment = पूर्णांकel_surf_alignment(fb, ccs_plane);
-	पूर्णांक hsub;
-	पूर्णांक vsub;
+	u32 alignment = intel_surf_alignment(fb, ccs_plane);
+	int hsub;
+	int vsub;
 
-	पूर्णांकel_fb_plane_get_subsampling(&hsub, &vsub, fb, ccs_plane);
-	जबतक (aux_offset >= मुख्य_offset && aux_y <= मुख्य_y) अणु
-		पूर्णांक x, y;
+	intel_fb_plane_get_subsampling(&hsub, &vsub, fb, ccs_plane);
+	while (aux_offset >= main_offset && aux_y <= main_y) {
+		int x, y;
 
-		अगर (aux_x == मुख्य_x && aux_y == मुख्य_y)
-			अवरोध;
+		if (aux_x == main_x && aux_y == main_y)
+			break;
 
-		अगर (aux_offset == 0)
-			अवरोध;
+		if (aux_offset == 0)
+			break;
 
 		x = aux_x / hsub;
 		y = aux_y / vsub;
-		aux_offset = पूर्णांकel_plane_adjust_aligned_offset(&x, &y,
+		aux_offset = intel_plane_adjust_aligned_offset(&x, &y,
 							       plane_state,
 							       ccs_plane,
 							       aux_offset,
@@ -1298,120 +1297,120 @@ skl_check_मुख्य_ccs_coordinates(काष्ठा पूर्णा�
 								alignment);
 		aux_x = x * hsub + aux_x % hsub;
 		aux_y = y * vsub + aux_y % vsub;
-	पूर्ण
+	}
 
-	अगर (aux_x != मुख्य_x || aux_y != मुख्य_y)
-		वापस false;
+	if (aux_x != main_x || aux_y != main_y)
+		return false;
 
 	plane_state->view.color_plane[ccs_plane].offset = aux_offset;
 	plane_state->view.color_plane[ccs_plane].x = aux_x;
 	plane_state->view.color_plane[ccs_plane].y = aux_y;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
 
-पूर्णांक skl_calc_मुख्य_surface_offset(स्थिर काष्ठा पूर्णांकel_plane_state *plane_state,
-				 पूर्णांक *x, पूर्णांक *y, u32 *offset)
-अणु
-	काष्ठा पूर्णांकel_plane *plane = to_पूर्णांकel_plane(plane_state->uapi.plane);
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(plane->base.dev);
-	स्थिर काष्ठा drm_framebuffer *fb = plane_state->hw.fb;
-	स्थिर पूर्णांक aux_plane = skl_मुख्य_to_aux_plane(fb, 0);
-	स्थिर u32 aux_offset = plane_state->view.color_plane[aux_plane].offset;
-	स्थिर u32 alignment = पूर्णांकel_surf_alignment(fb, 0);
-	स्थिर पूर्णांक w = drm_rect_width(&plane_state->uapi.src) >> 16;
+int skl_calc_main_surface_offset(const struct intel_plane_state *plane_state,
+				 int *x, int *y, u32 *offset)
+{
+	struct intel_plane *plane = to_intel_plane(plane_state->uapi.plane);
+	struct drm_i915_private *dev_priv = to_i915(plane->base.dev);
+	const struct drm_framebuffer *fb = plane_state->hw.fb;
+	const int aux_plane = skl_main_to_aux_plane(fb, 0);
+	const u32 aux_offset = plane_state->view.color_plane[aux_plane].offset;
+	const u32 alignment = intel_surf_alignment(fb, 0);
+	const int w = drm_rect_width(&plane_state->uapi.src) >> 16;
 
-	पूर्णांकel_add_fb_offsets(x, y, plane_state, 0);
-	*offset = पूर्णांकel_plane_compute_aligned_offset(x, y, plane_state, 0);
-	अगर (drm_WARN_ON(&dev_priv->drm, alignment && !is_घातer_of_2(alignment)))
-		वापस -EINVAL;
+	intel_add_fb_offsets(x, y, plane_state, 0);
+	*offset = intel_plane_compute_aligned_offset(x, y, plane_state, 0);
+	if (drm_WARN_ON(&dev_priv->drm, alignment && !is_power_of_2(alignment)))
+		return -EINVAL;
 
 	/*
-	 * AUX surface offset is specअगरied as the distance from the
-	 * मुख्य surface offset, and it must be non-negative. Make
+	 * AUX surface offset is specified as the distance from the
+	 * main surface offset, and it must be non-negative. Make
 	 * sure that is what we will get.
 	 */
-	अगर (aux_plane && *offset > aux_offset)
-		*offset = पूर्णांकel_plane_adjust_aligned_offset(x, y, plane_state, 0,
+	if (aux_plane && *offset > aux_offset)
+		*offset = intel_plane_adjust_aligned_offset(x, y, plane_state, 0,
 							    *offset,
 							    aux_offset & ~(alignment - 1));
 
 	/*
 	 * When using an X-tiled surface, the plane blows up
-	 * अगर the x offset + width exceed the stride.
+	 * if the x offset + width exceed the stride.
 	 *
 	 * TODO: linear and Y-tiled seem fine, Yf untested,
 	 */
-	अगर (fb->modअगरier == I915_FORMAT_MOD_X_TILED) अणु
-		पूर्णांक cpp = fb->क्रमmat->cpp[0];
+	if (fb->modifier == I915_FORMAT_MOD_X_TILED) {
+		int cpp = fb->format->cpp[0];
 
-		जबतक ((*x + w) * cpp > plane_state->view.color_plane[0].stride) अणु
-			अगर (*offset == 0) अणु
+		while ((*x + w) * cpp > plane_state->view.color_plane[0].stride) {
+			if (*offset == 0) {
 				drm_dbg_kms(&dev_priv->drm,
 					    "Unable to find suitable display surface offset due to X-tiling\n");
-				वापस -EINVAL;
-			पूर्ण
+				return -EINVAL;
+			}
 
-			*offset = पूर्णांकel_plane_adjust_aligned_offset(x, y, plane_state, 0,
+			*offset = intel_plane_adjust_aligned_offset(x, y, plane_state, 0,
 								    *offset,
 								    *offset - alignment);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक skl_check_मुख्य_surface(काष्ठा पूर्णांकel_plane_state *plane_state)
-अणु
-	काष्ठा पूर्णांकel_plane *plane = to_पूर्णांकel_plane(plane_state->uapi.plane);
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(plane->base.dev);
-	स्थिर काष्ठा drm_framebuffer *fb = plane_state->hw.fb;
-	स्थिर अचिन्हित पूर्णांक rotation = plane_state->hw.rotation;
-	पूर्णांक x = plane_state->uapi.src.x1 >> 16;
-	पूर्णांक y = plane_state->uapi.src.y1 >> 16;
-	स्थिर पूर्णांक w = drm_rect_width(&plane_state->uapi.src) >> 16;
-	स्थिर पूर्णांक h = drm_rect_height(&plane_state->uapi.src) >> 16;
-	स्थिर पूर्णांक min_width = पूर्णांकel_plane_min_width(plane, fb, 0, rotation);
-	स्थिर पूर्णांक max_width = पूर्णांकel_plane_max_width(plane, fb, 0, rotation);
-	स्थिर पूर्णांक max_height = पूर्णांकel_plane_max_height(plane, fb, 0, rotation);
-	स्थिर पूर्णांक aux_plane = skl_मुख्य_to_aux_plane(fb, 0);
-	स्थिर u32 alignment = पूर्णांकel_surf_alignment(fb, 0);
+static int skl_check_main_surface(struct intel_plane_state *plane_state)
+{
+	struct intel_plane *plane = to_intel_plane(plane_state->uapi.plane);
+	struct drm_i915_private *dev_priv = to_i915(plane->base.dev);
+	const struct drm_framebuffer *fb = plane_state->hw.fb;
+	const unsigned int rotation = plane_state->hw.rotation;
+	int x = plane_state->uapi.src.x1 >> 16;
+	int y = plane_state->uapi.src.y1 >> 16;
+	const int w = drm_rect_width(&plane_state->uapi.src) >> 16;
+	const int h = drm_rect_height(&plane_state->uapi.src) >> 16;
+	const int min_width = intel_plane_min_width(plane, fb, 0, rotation);
+	const int max_width = intel_plane_max_width(plane, fb, 0, rotation);
+	const int max_height = intel_plane_max_height(plane, fb, 0, rotation);
+	const int aux_plane = skl_main_to_aux_plane(fb, 0);
+	const u32 alignment = intel_surf_alignment(fb, 0);
 	u32 offset;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (w > max_width || w < min_width || h > max_height) अणु
+	if (w > max_width || w < min_width || h > max_height) {
 		drm_dbg_kms(&dev_priv->drm,
 			    "requested Y/RGB source size %dx%d outside limits (min: %dx1 max: %dx%d)\n",
 			    w, h, min_width, max_width, max_height);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	ret = skl_calc_मुख्य_surface_offset(plane_state, &x, &y, &offset);
-	अगर (ret)
-		वापस ret;
+	ret = skl_calc_main_surface_offset(plane_state, &x, &y, &offset);
+	if (ret)
+		return ret;
 
 	/*
-	 * CCS AUX surface करोesn't have its own x/y offsets, we must make sure
-	 * they match with the मुख्य surface x/y offsets.
+	 * CCS AUX surface doesn't have its own x/y offsets, we must make sure
+	 * they match with the main surface x/y offsets.
 	 */
-	अगर (is_ccs_modअगरier(fb->modअगरier)) अणु
-		जबतक (!skl_check_मुख्य_ccs_coordinates(plane_state, x, y,
-						       offset, aux_plane)) अणु
-			अगर (offset == 0)
-				अवरोध;
+	if (is_ccs_modifier(fb->modifier)) {
+		while (!skl_check_main_ccs_coordinates(plane_state, x, y,
+						       offset, aux_plane)) {
+			if (offset == 0)
+				break;
 
-			offset = पूर्णांकel_plane_adjust_aligned_offset(&x, &y, plane_state, 0,
+			offset = intel_plane_adjust_aligned_offset(&x, &y, plane_state, 0,
 								   offset, offset - alignment);
-		पूर्ण
+		}
 
-		अगर (x != plane_state->view.color_plane[aux_plane].x ||
-		    y != plane_state->view.color_plane[aux_plane].y) अणु
+		if (x != plane_state->view.color_plane[aux_plane].x ||
+		    y != plane_state->view.color_plane[aux_plane].y) {
 			drm_dbg_kms(&dev_priv->drm,
 				    "Unable to find suitable display surface offset due to CCS\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
 	drm_WARN_ON(&dev_priv->drm, x > 8191 || y > 8191);
 
@@ -1426,66 +1425,66 @@ skl_check_मुख्य_ccs_coordinates(काष्ठा पूर्णा�
 	drm_rect_translate_to(&plane_state->uapi.src,
 			      x << 16, y << 16);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक skl_check_nv12_aux_surface(काष्ठा पूर्णांकel_plane_state *plane_state)
-अणु
-	काष्ठा पूर्णांकel_plane *plane = to_पूर्णांकel_plane(plane_state->uapi.plane);
-	काष्ठा drm_i915_निजी *i915 = to_i915(plane->base.dev);
-	स्थिर काष्ठा drm_framebuffer *fb = plane_state->hw.fb;
-	अचिन्हित पूर्णांक rotation = plane_state->hw.rotation;
-	पूर्णांक uv_plane = 1;
-	पूर्णांक max_width = पूर्णांकel_plane_max_width(plane, fb, uv_plane, rotation);
-	पूर्णांक max_height = पूर्णांकel_plane_max_height(plane, fb, uv_plane, rotation);
-	पूर्णांक x = plane_state->uapi.src.x1 >> 17;
-	पूर्णांक y = plane_state->uapi.src.y1 >> 17;
-	पूर्णांक w = drm_rect_width(&plane_state->uapi.src) >> 17;
-	पूर्णांक h = drm_rect_height(&plane_state->uapi.src) >> 17;
+static int skl_check_nv12_aux_surface(struct intel_plane_state *plane_state)
+{
+	struct intel_plane *plane = to_intel_plane(plane_state->uapi.plane);
+	struct drm_i915_private *i915 = to_i915(plane->base.dev);
+	const struct drm_framebuffer *fb = plane_state->hw.fb;
+	unsigned int rotation = plane_state->hw.rotation;
+	int uv_plane = 1;
+	int max_width = intel_plane_max_width(plane, fb, uv_plane, rotation);
+	int max_height = intel_plane_max_height(plane, fb, uv_plane, rotation);
+	int x = plane_state->uapi.src.x1 >> 17;
+	int y = plane_state->uapi.src.y1 >> 17;
+	int w = drm_rect_width(&plane_state->uapi.src) >> 17;
+	int h = drm_rect_height(&plane_state->uapi.src) >> 17;
 	u32 offset;
 
-	/* FIXME not quite sure how/अगर these apply to the chroma plane */
-	अगर (w > max_width || h > max_height) अणु
+	/* FIXME not quite sure how/if these apply to the chroma plane */
+	if (w > max_width || h > max_height) {
 		drm_dbg_kms(&i915->drm,
 			    "CbCr source size %dx%d too big (limit %dx%d)\n",
 			    w, h, max_width, max_height);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	पूर्णांकel_add_fb_offsets(&x, &y, plane_state, uv_plane);
-	offset = पूर्णांकel_plane_compute_aligned_offset(&x, &y,
+	intel_add_fb_offsets(&x, &y, plane_state, uv_plane);
+	offset = intel_plane_compute_aligned_offset(&x, &y,
 						    plane_state, uv_plane);
 
-	अगर (is_ccs_modअगरier(fb->modअगरier)) अणु
-		पूर्णांक ccs_plane = मुख्य_to_ccs_plane(fb, uv_plane);
+	if (is_ccs_modifier(fb->modifier)) {
+		int ccs_plane = main_to_ccs_plane(fb, uv_plane);
 		u32 aux_offset = plane_state->view.color_plane[ccs_plane].offset;
-		u32 alignment = पूर्णांकel_surf_alignment(fb, uv_plane);
+		u32 alignment = intel_surf_alignment(fb, uv_plane);
 
-		अगर (offset > aux_offset)
-			offset = पूर्णांकel_plane_adjust_aligned_offset(&x, &y,
+		if (offset > aux_offset)
+			offset = intel_plane_adjust_aligned_offset(&x, &y,
 								   plane_state,
 								   uv_plane,
 								   offset,
 								   aux_offset & ~(alignment - 1));
 
-		जबतक (!skl_check_मुख्य_ccs_coordinates(plane_state, x, y,
-						       offset, ccs_plane)) अणु
-			अगर (offset == 0)
-				अवरोध;
+		while (!skl_check_main_ccs_coordinates(plane_state, x, y,
+						       offset, ccs_plane)) {
+			if (offset == 0)
+				break;
 
-			offset = पूर्णांकel_plane_adjust_aligned_offset(&x, &y,
+			offset = intel_plane_adjust_aligned_offset(&x, &y,
 								   plane_state,
 								   uv_plane,
 								   offset, offset - alignment);
-		पूर्ण
+		}
 
-		अगर (x != plane_state->view.color_plane[ccs_plane].x ||
-		    y != plane_state->view.color_plane[ccs_plane].y) अणु
+		if (x != plane_state->view.color_plane[ccs_plane].x ||
+		    y != plane_state->view.color_plane[ccs_plane].y) {
 			drm_dbg_kms(&i915->drm,
 				    "Unable to find suitable display surface offset due to CCS\n");
-			वापस -EINVAL;
-		पूर्ण
-	पूर्ण
+			return -EINVAL;
+		}
+	}
 
 	drm_WARN_ON(&i915->drm, x > 8191 || y > 8191);
 
@@ -1493,486 +1492,486 @@ skl_check_मुख्य_ccs_coordinates(काष्ठा पूर्णा�
 	plane_state->view.color_plane[uv_plane].x = x;
 	plane_state->view.color_plane[uv_plane].y = y;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक skl_check_ccs_aux_surface(काष्ठा पूर्णांकel_plane_state *plane_state)
-अणु
-	स्थिर काष्ठा drm_framebuffer *fb = plane_state->hw.fb;
-	पूर्णांक src_x = plane_state->uapi.src.x1 >> 16;
-	पूर्णांक src_y = plane_state->uapi.src.y1 >> 16;
+static int skl_check_ccs_aux_surface(struct intel_plane_state *plane_state)
+{
+	const struct drm_framebuffer *fb = plane_state->hw.fb;
+	int src_x = plane_state->uapi.src.x1 >> 16;
+	int src_y = plane_state->uapi.src.y1 >> 16;
 	u32 offset;
-	पूर्णांक ccs_plane;
+	int ccs_plane;
 
-	क्रम (ccs_plane = 0; ccs_plane < fb->क्रमmat->num_planes; ccs_plane++) अणु
-		पूर्णांक मुख्य_hsub, मुख्य_vsub;
-		पूर्णांक hsub, vsub;
-		पूर्णांक x, y;
+	for (ccs_plane = 0; ccs_plane < fb->format->num_planes; ccs_plane++) {
+		int main_hsub, main_vsub;
+		int hsub, vsub;
+		int x, y;
 
-		अगर (!is_ccs_plane(fb, ccs_plane) ||
+		if (!is_ccs_plane(fb, ccs_plane) ||
 		    is_gen12_ccs_cc_plane(fb, ccs_plane))
-			जारी;
+			continue;
 
-		पूर्णांकel_fb_plane_get_subsampling(&मुख्य_hsub, &मुख्य_vsub, fb,
-					       skl_ccs_to_मुख्य_plane(fb, ccs_plane));
-		पूर्णांकel_fb_plane_get_subsampling(&hsub, &vsub, fb, ccs_plane);
+		intel_fb_plane_get_subsampling(&main_hsub, &main_vsub, fb,
+					       skl_ccs_to_main_plane(fb, ccs_plane));
+		intel_fb_plane_get_subsampling(&hsub, &vsub, fb, ccs_plane);
 
-		hsub *= मुख्य_hsub;
-		vsub *= मुख्य_vsub;
+		hsub *= main_hsub;
+		vsub *= main_vsub;
 		x = src_x / hsub;
 		y = src_y / vsub;
 
-		पूर्णांकel_add_fb_offsets(&x, &y, plane_state, ccs_plane);
+		intel_add_fb_offsets(&x, &y, plane_state, ccs_plane);
 
-		offset = पूर्णांकel_plane_compute_aligned_offset(&x, &y,
+		offset = intel_plane_compute_aligned_offset(&x, &y,
 							    plane_state,
 							    ccs_plane);
 
 		plane_state->view.color_plane[ccs_plane].offset = offset;
-		plane_state->view.color_plane[ccs_plane].x = (x * hsub + src_x % hsub) / मुख्य_hsub;
-		plane_state->view.color_plane[ccs_plane].y = (y * vsub + src_y % vsub) / मुख्य_vsub;
-	पूर्ण
+		plane_state->view.color_plane[ccs_plane].x = (x * hsub + src_x % hsub) / main_hsub;
+		plane_state->view.color_plane[ccs_plane].y = (y * vsub + src_y % vsub) / main_vsub;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक skl_check_plane_surface(काष्ठा पूर्णांकel_plane_state *plane_state)
-अणु
-	स्थिर काष्ठा drm_framebuffer *fb = plane_state->hw.fb;
-	पूर्णांक ret;
+static int skl_check_plane_surface(struct intel_plane_state *plane_state)
+{
+	const struct drm_framebuffer *fb = plane_state->hw.fb;
+	int ret;
 
-	ret = पूर्णांकel_plane_compute_gtt(plane_state);
-	अगर (ret)
-		वापस ret;
+	ret = intel_plane_compute_gtt(plane_state);
+	if (ret)
+		return ret;
 
-	अगर (!plane_state->uapi.visible)
-		वापस 0;
+	if (!plane_state->uapi.visible)
+		return 0;
 
 	/*
-	 * Handle the AUX surface first since the मुख्य surface setup depends on
+	 * Handle the AUX surface first since the main surface setup depends on
 	 * it.
 	 */
-	अगर (is_ccs_modअगरier(fb->modअगरier)) अणु
+	if (is_ccs_modifier(fb->modifier)) {
 		ret = skl_check_ccs_aux_surface(plane_state);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	अगर (पूर्णांकel_क्रमmat_info_is_yuv_semiplanar(fb->क्रमmat,
-						fb->modअगरier)) अणु
+	if (intel_format_info_is_yuv_semiplanar(fb->format,
+						fb->modifier)) {
 		ret = skl_check_nv12_aux_surface(plane_state);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	ret = skl_check_मुख्य_surface(plane_state);
-	अगर (ret)
-		वापस ret;
+	ret = skl_check_main_surface(plane_state);
+	if (ret)
+		return ret;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool skl_fb_scalable(स्थिर काष्ठा drm_framebuffer *fb)
-अणु
-	अगर (!fb)
-		वापस false;
+static bool skl_fb_scalable(const struct drm_framebuffer *fb)
+{
+	if (!fb)
+		return false;
 
-	चयन (fb->क्रमmat->क्रमmat) अणु
-	हाल DRM_FORMAT_C8:
-		वापस false;
-	हाल DRM_FORMAT_XRGB16161616F:
-	हाल DRM_FORMAT_ARGB16161616F:
-	हाल DRM_FORMAT_XBGR16161616F:
-	हाल DRM_FORMAT_ABGR16161616F:
-		वापस DISPLAY_VER(to_i915(fb->dev)) >= 11;
-	शेष:
-		वापस true;
-	पूर्ण
-पूर्ण
+	switch (fb->format->format) {
+	case DRM_FORMAT_C8:
+		return false;
+	case DRM_FORMAT_XRGB16161616F:
+	case DRM_FORMAT_ARGB16161616F:
+	case DRM_FORMAT_XBGR16161616F:
+	case DRM_FORMAT_ABGR16161616F:
+		return DISPLAY_VER(to_i915(fb->dev)) >= 11;
+	default:
+		return true;
+	}
+}
 
-अटल पूर्णांक skl_plane_check(काष्ठा पूर्णांकel_crtc_state *crtc_state,
-			   काष्ठा पूर्णांकel_plane_state *plane_state)
-अणु
-	काष्ठा पूर्णांकel_plane *plane = to_पूर्णांकel_plane(plane_state->uapi.plane);
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(plane->base.dev);
-	स्थिर काष्ठा drm_framebuffer *fb = plane_state->hw.fb;
-	पूर्णांक min_scale = DRM_PLANE_HELPER_NO_SCALING;
-	पूर्णांक max_scale = DRM_PLANE_HELPER_NO_SCALING;
-	पूर्णांक ret;
+static int skl_plane_check(struct intel_crtc_state *crtc_state,
+			   struct intel_plane_state *plane_state)
+{
+	struct intel_plane *plane = to_intel_plane(plane_state->uapi.plane);
+	struct drm_i915_private *dev_priv = to_i915(plane->base.dev);
+	const struct drm_framebuffer *fb = plane_state->hw.fb;
+	int min_scale = DRM_PLANE_HELPER_NO_SCALING;
+	int max_scale = DRM_PLANE_HELPER_NO_SCALING;
+	int ret;
 
 	ret = skl_plane_check_fb(crtc_state, plane_state);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	/* use scaler when colorkey is not required */
-	अगर (!plane_state->ckey.flags && skl_fb_scalable(fb)) अणु
+	if (!plane_state->ckey.flags && skl_fb_scalable(fb)) {
 		min_scale = 1;
 		max_scale = skl_plane_max_scale(dev_priv, fb);
-	पूर्ण
+	}
 
-	ret = पूर्णांकel_atomic_plane_check_clipping(plane_state, crtc_state,
+	ret = intel_atomic_plane_check_clipping(plane_state, crtc_state,
 						min_scale, max_scale, true);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
 	ret = skl_check_plane_surface(plane_state);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	अगर (!plane_state->uapi.visible)
-		वापस 0;
+	if (!plane_state->uapi.visible)
+		return 0;
 
 	ret = skl_plane_check_dst_coordinates(crtc_state, plane_state);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	ret = पूर्णांकel_plane_check_src_coordinates(plane_state);
-	अगर (ret)
-		वापस ret;
+	ret = intel_plane_check_src_coordinates(plane_state);
+	if (ret)
+		return ret;
 
 	ret = skl_plane_check_nv12_rotation(plane_state);
-	अगर (ret)
-		वापस ret;
+	if (ret)
+		return ret;
 
-	/* HW only has 8 bits pixel precision, disable plane अगर invisible */
-	अगर (!(plane_state->hw.alpha >> 8))
+	/* HW only has 8 bits pixel precision, disable plane if invisible */
+	if (!(plane_state->hw.alpha >> 8))
 		plane_state->uapi.visible = false;
 
 	plane_state->ctl = skl_plane_ctl(crtc_state, plane_state);
 
-	अगर (DISPLAY_VER(dev_priv) >= 10)
+	if (DISPLAY_VER(dev_priv) >= 10)
 		plane_state->color_ctl = glk_plane_color_ctl(crtc_state,
 							     plane_state);
 
-	अगर (पूर्णांकel_क्रमmat_info_is_yuv_semiplanar(fb->क्रमmat, fb->modअगरier) &&
+	if (intel_format_info_is_yuv_semiplanar(fb->format, fb->modifier) &&
 	    icl_is_hdr_plane(dev_priv, plane->id))
 		/* Enable and use MPEG-2 chroma siting */
 		plane_state->cus_ctl = PLANE_CUS_ENABLE |
 			PLANE_CUS_HPHASE_0 |
 			PLANE_CUS_VPHASE_SIGN_NEGATIVE | PLANE_CUS_VPHASE_0_25;
-	अन्यथा
+	else
 		plane_state->cus_ctl = 0;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool skl_plane_has_fbc(काष्ठा drm_i915_निजी *dev_priv,
-			      क्रमागत pipe pipe, क्रमागत plane_id plane_id)
-अणु
-	अगर (!HAS_FBC(dev_priv))
-		वापस false;
+static bool skl_plane_has_fbc(struct drm_i915_private *dev_priv,
+			      enum pipe pipe, enum plane_id plane_id)
+{
+	if (!HAS_FBC(dev_priv))
+		return false;
 
-	वापस pipe == PIPE_A && plane_id == PLANE_PRIMARY;
-पूर्ण
+	return pipe == PIPE_A && plane_id == PLANE_PRIMARY;
+}
 
-अटल bool skl_plane_has_planar(काष्ठा drm_i915_निजी *dev_priv,
-				 क्रमागत pipe pipe, क्रमागत plane_id plane_id)
-अणु
+static bool skl_plane_has_planar(struct drm_i915_private *dev_priv,
+				 enum pipe pipe, enum plane_id plane_id)
+{
 	/* Display WA #0870: skl, bxt */
-	अगर (IS_SKYLAKE(dev_priv) || IS_BROXTON(dev_priv))
-		वापस false;
+	if (IS_SKYLAKE(dev_priv) || IS_BROXTON(dev_priv))
+		return false;
 
-	अगर (IS_DISPLAY_VER(dev_priv, 9) && pipe == PIPE_C)
-		वापस false;
+	if (IS_DISPLAY_VER(dev_priv, 9) && pipe == PIPE_C)
+		return false;
 
-	अगर (plane_id != PLANE_PRIMARY && plane_id != PLANE_SPRITE0)
-		वापस false;
+	if (plane_id != PLANE_PRIMARY && plane_id != PLANE_SPRITE0)
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल स्थिर u32 *skl_get_plane_क्रमmats(काष्ठा drm_i915_निजी *dev_priv,
-					क्रमागत pipe pipe, क्रमागत plane_id plane_id,
-					पूर्णांक *num_क्रमmats)
-अणु
-	अगर (skl_plane_has_planar(dev_priv, pipe, plane_id)) अणु
-		*num_क्रमmats = ARRAY_SIZE(skl_planar_क्रमmats);
-		वापस skl_planar_क्रमmats;
-	पूर्ण अन्यथा अणु
-		*num_क्रमmats = ARRAY_SIZE(skl_plane_क्रमmats);
-		वापस skl_plane_क्रमmats;
-	पूर्ण
-पूर्ण
+static const u32 *skl_get_plane_formats(struct drm_i915_private *dev_priv,
+					enum pipe pipe, enum plane_id plane_id,
+					int *num_formats)
+{
+	if (skl_plane_has_planar(dev_priv, pipe, plane_id)) {
+		*num_formats = ARRAY_SIZE(skl_planar_formats);
+		return skl_planar_formats;
+	} else {
+		*num_formats = ARRAY_SIZE(skl_plane_formats);
+		return skl_plane_formats;
+	}
+}
 
-अटल स्थिर u32 *glk_get_plane_क्रमmats(काष्ठा drm_i915_निजी *dev_priv,
-					क्रमागत pipe pipe, क्रमागत plane_id plane_id,
-					पूर्णांक *num_क्रमmats)
-अणु
-	अगर (skl_plane_has_planar(dev_priv, pipe, plane_id)) अणु
-		*num_क्रमmats = ARRAY_SIZE(glk_planar_क्रमmats);
-		वापस glk_planar_क्रमmats;
-	पूर्ण अन्यथा अणु
-		*num_क्रमmats = ARRAY_SIZE(skl_plane_क्रमmats);
-		वापस skl_plane_क्रमmats;
-	पूर्ण
-पूर्ण
+static const u32 *glk_get_plane_formats(struct drm_i915_private *dev_priv,
+					enum pipe pipe, enum plane_id plane_id,
+					int *num_formats)
+{
+	if (skl_plane_has_planar(dev_priv, pipe, plane_id)) {
+		*num_formats = ARRAY_SIZE(glk_planar_formats);
+		return glk_planar_formats;
+	} else {
+		*num_formats = ARRAY_SIZE(skl_plane_formats);
+		return skl_plane_formats;
+	}
+}
 
-अटल स्थिर u32 *icl_get_plane_क्रमmats(काष्ठा drm_i915_निजी *dev_priv,
-					क्रमागत pipe pipe, क्रमागत plane_id plane_id,
-					पूर्णांक *num_क्रमmats)
-अणु
-	अगर (icl_is_hdr_plane(dev_priv, plane_id)) अणु
-		*num_क्रमmats = ARRAY_SIZE(icl_hdr_plane_क्रमmats);
-		वापस icl_hdr_plane_क्रमmats;
-	पूर्ण अन्यथा अगर (icl_is_nv12_y_plane(dev_priv, plane_id)) अणु
-		*num_क्रमmats = ARRAY_SIZE(icl_sdr_y_plane_क्रमmats);
-		वापस icl_sdr_y_plane_क्रमmats;
-	पूर्ण अन्यथा अणु
-		*num_क्रमmats = ARRAY_SIZE(icl_sdr_uv_plane_क्रमmats);
-		वापस icl_sdr_uv_plane_क्रमmats;
-	पूर्ण
-पूर्ण
+static const u32 *icl_get_plane_formats(struct drm_i915_private *dev_priv,
+					enum pipe pipe, enum plane_id plane_id,
+					int *num_formats)
+{
+	if (icl_is_hdr_plane(dev_priv, plane_id)) {
+		*num_formats = ARRAY_SIZE(icl_hdr_plane_formats);
+		return icl_hdr_plane_formats;
+	} else if (icl_is_nv12_y_plane(dev_priv, plane_id)) {
+		*num_formats = ARRAY_SIZE(icl_sdr_y_plane_formats);
+		return icl_sdr_y_plane_formats;
+	} else {
+		*num_formats = ARRAY_SIZE(icl_sdr_uv_plane_formats);
+		return icl_sdr_uv_plane_formats;
+	}
+}
 
-अटल bool skl_plane_has_ccs(काष्ठा drm_i915_निजी *dev_priv,
-			      क्रमागत pipe pipe, क्रमागत plane_id plane_id)
-अणु
-	अगर (plane_id == PLANE_CURSOR)
-		वापस false;
+static bool skl_plane_has_ccs(struct drm_i915_private *dev_priv,
+			      enum pipe pipe, enum plane_id plane_id)
+{
+	if (plane_id == PLANE_CURSOR)
+		return false;
 
-	अगर (DISPLAY_VER(dev_priv) >= 11 || IS_CANNONLAKE(dev_priv))
-		वापस true;
+	if (DISPLAY_VER(dev_priv) >= 11 || IS_CANNONLAKE(dev_priv))
+		return true;
 
-	अगर (IS_GEMINILAKE(dev_priv))
-		वापस pipe != PIPE_C;
+	if (IS_GEMINILAKE(dev_priv))
+		return pipe != PIPE_C;
 
-	वापस pipe != PIPE_C &&
+	return pipe != PIPE_C &&
 		(plane_id == PLANE_PRIMARY ||
 		 plane_id == PLANE_SPRITE0);
-पूर्ण
+}
 
-अटल bool skl_plane_क्रमmat_mod_supported(काष्ठा drm_plane *_plane,
-					   u32 क्रमmat, u64 modअगरier)
-अणु
-	काष्ठा पूर्णांकel_plane *plane = to_पूर्णांकel_plane(_plane);
+static bool skl_plane_format_mod_supported(struct drm_plane *_plane,
+					   u32 format, u64 modifier)
+{
+	struct intel_plane *plane = to_intel_plane(_plane);
 
-	चयन (modअगरier) अणु
-	हाल DRM_FORMAT_MOD_LINEAR:
-	हाल I915_FORMAT_MOD_X_TILED:
-	हाल I915_FORMAT_MOD_Y_TILED:
-	हाल I915_FORMAT_MOD_Yf_TILED:
-		अवरोध;
-	हाल I915_FORMAT_MOD_Y_TILED_CCS:
-	हाल I915_FORMAT_MOD_Yf_TILED_CCS:
-		अगर (!plane->has_ccs)
-			वापस false;
-		अवरोध;
-	शेष:
-		वापस false;
-	पूर्ण
+	switch (modifier) {
+	case DRM_FORMAT_MOD_LINEAR:
+	case I915_FORMAT_MOD_X_TILED:
+	case I915_FORMAT_MOD_Y_TILED:
+	case I915_FORMAT_MOD_Yf_TILED:
+		break;
+	case I915_FORMAT_MOD_Y_TILED_CCS:
+	case I915_FORMAT_MOD_Yf_TILED_CCS:
+		if (!plane->has_ccs)
+			return false;
+		break;
+	default:
+		return false;
+	}
 
-	चयन (क्रमmat) अणु
-	हाल DRM_FORMAT_XRGB8888:
-	हाल DRM_FORMAT_XBGR8888:
-	हाल DRM_FORMAT_ARGB8888:
-	हाल DRM_FORMAT_ABGR8888:
-		अगर (is_ccs_modअगरier(modअगरier))
-			वापस true;
+	switch (format) {
+	case DRM_FORMAT_XRGB8888:
+	case DRM_FORMAT_XBGR8888:
+	case DRM_FORMAT_ARGB8888:
+	case DRM_FORMAT_ABGR8888:
+		if (is_ccs_modifier(modifier))
+			return true;
 		fallthrough;
-	हाल DRM_FORMAT_RGB565:
-	हाल DRM_FORMAT_XRGB2101010:
-	हाल DRM_FORMAT_XBGR2101010:
-	हाल DRM_FORMAT_ARGB2101010:
-	हाल DRM_FORMAT_ABGR2101010:
-	हाल DRM_FORMAT_YUYV:
-	हाल DRM_FORMAT_YVYU:
-	हाल DRM_FORMAT_UYVY:
-	हाल DRM_FORMAT_VYUY:
-	हाल DRM_FORMAT_NV12:
-	हाल DRM_FORMAT_XYUV8888:
-	हाल DRM_FORMAT_P010:
-	हाल DRM_FORMAT_P012:
-	हाल DRM_FORMAT_P016:
-	हाल DRM_FORMAT_XVYU2101010:
-		अगर (modअगरier == I915_FORMAT_MOD_Yf_TILED)
-			वापस true;
+	case DRM_FORMAT_RGB565:
+	case DRM_FORMAT_XRGB2101010:
+	case DRM_FORMAT_XBGR2101010:
+	case DRM_FORMAT_ARGB2101010:
+	case DRM_FORMAT_ABGR2101010:
+	case DRM_FORMAT_YUYV:
+	case DRM_FORMAT_YVYU:
+	case DRM_FORMAT_UYVY:
+	case DRM_FORMAT_VYUY:
+	case DRM_FORMAT_NV12:
+	case DRM_FORMAT_XYUV8888:
+	case DRM_FORMAT_P010:
+	case DRM_FORMAT_P012:
+	case DRM_FORMAT_P016:
+	case DRM_FORMAT_XVYU2101010:
+		if (modifier == I915_FORMAT_MOD_Yf_TILED)
+			return true;
 		fallthrough;
-	हाल DRM_FORMAT_C8:
-	हाल DRM_FORMAT_XBGR16161616F:
-	हाल DRM_FORMAT_ABGR16161616F:
-	हाल DRM_FORMAT_XRGB16161616F:
-	हाल DRM_FORMAT_ARGB16161616F:
-	हाल DRM_FORMAT_Y210:
-	हाल DRM_FORMAT_Y212:
-	हाल DRM_FORMAT_Y216:
-	हाल DRM_FORMAT_XVYU12_16161616:
-	हाल DRM_FORMAT_XVYU16161616:
-		अगर (modअगरier == DRM_FORMAT_MOD_LINEAR ||
-		    modअगरier == I915_FORMAT_MOD_X_TILED ||
-		    modअगरier == I915_FORMAT_MOD_Y_TILED)
-			वापस true;
+	case DRM_FORMAT_C8:
+	case DRM_FORMAT_XBGR16161616F:
+	case DRM_FORMAT_ABGR16161616F:
+	case DRM_FORMAT_XRGB16161616F:
+	case DRM_FORMAT_ARGB16161616F:
+	case DRM_FORMAT_Y210:
+	case DRM_FORMAT_Y212:
+	case DRM_FORMAT_Y216:
+	case DRM_FORMAT_XVYU12_16161616:
+	case DRM_FORMAT_XVYU16161616:
+		if (modifier == DRM_FORMAT_MOD_LINEAR ||
+		    modifier == I915_FORMAT_MOD_X_TILED ||
+		    modifier == I915_FORMAT_MOD_Y_TILED)
+			return true;
 		fallthrough;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+	default:
+		return false;
+	}
+}
 
-अटल bool gen12_plane_supports_mc_ccs(काष्ठा drm_i915_निजी *dev_priv,
-					क्रमागत plane_id plane_id)
-अणु
+static bool gen12_plane_supports_mc_ccs(struct drm_i915_private *dev_priv,
+					enum plane_id plane_id)
+{
 	/* Wa_14010477008:tgl[a0..c0],rkl[all],dg1[all] */
-	अगर (IS_DG1(dev_priv) || IS_ROCKETLAKE(dev_priv) ||
+	if (IS_DG1(dev_priv) || IS_ROCKETLAKE(dev_priv) ||
 	    IS_TGL_DISPLAY_STEP(dev_priv, STEP_A0, STEP_C0))
-		वापस false;
+		return false;
 
-	वापस plane_id < PLANE_SPRITE4;
-पूर्ण
+	return plane_id < PLANE_SPRITE4;
+}
 
-अटल bool gen12_plane_क्रमmat_mod_supported(काष्ठा drm_plane *_plane,
-					     u32 क्रमmat, u64 modअगरier)
-अणु
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(_plane->dev);
-	काष्ठा पूर्णांकel_plane *plane = to_पूर्णांकel_plane(_plane);
+static bool gen12_plane_format_mod_supported(struct drm_plane *_plane,
+					     u32 format, u64 modifier)
+{
+	struct drm_i915_private *dev_priv = to_i915(_plane->dev);
+	struct intel_plane *plane = to_intel_plane(_plane);
 
-	चयन (modअगरier) अणु
-	हाल I915_FORMAT_MOD_Y_TILED_GEN12_MC_CCS:
-		अगर (!gen12_plane_supports_mc_ccs(dev_priv, plane->id))
-			वापस false;
+	switch (modifier) {
+	case I915_FORMAT_MOD_Y_TILED_GEN12_MC_CCS:
+		if (!gen12_plane_supports_mc_ccs(dev_priv, plane->id))
+			return false;
 		fallthrough;
-	हाल DRM_FORMAT_MOD_LINEAR:
-	हाल I915_FORMAT_MOD_X_TILED:
-	हाल I915_FORMAT_MOD_Y_TILED:
-	हाल I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS:
-	हाल I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS_CC:
-		अवरोध;
-	शेष:
-		वापस false;
-	पूर्ण
+	case DRM_FORMAT_MOD_LINEAR:
+	case I915_FORMAT_MOD_X_TILED:
+	case I915_FORMAT_MOD_Y_TILED:
+	case I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS:
+	case I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS_CC:
+		break;
+	default:
+		return false;
+	}
 
-	चयन (क्रमmat) अणु
-	हाल DRM_FORMAT_XRGB8888:
-	हाल DRM_FORMAT_XBGR8888:
-	हाल DRM_FORMAT_ARGB8888:
-	हाल DRM_FORMAT_ABGR8888:
-		अगर (is_ccs_modअगरier(modअगरier))
-			वापस true;
+	switch (format) {
+	case DRM_FORMAT_XRGB8888:
+	case DRM_FORMAT_XBGR8888:
+	case DRM_FORMAT_ARGB8888:
+	case DRM_FORMAT_ABGR8888:
+		if (is_ccs_modifier(modifier))
+			return true;
 		fallthrough;
-	हाल DRM_FORMAT_YUYV:
-	हाल DRM_FORMAT_YVYU:
-	हाल DRM_FORMAT_UYVY:
-	हाल DRM_FORMAT_VYUY:
-	हाल DRM_FORMAT_NV12:
-	हाल DRM_FORMAT_XYUV8888:
-	हाल DRM_FORMAT_P010:
-	हाल DRM_FORMAT_P012:
-	हाल DRM_FORMAT_P016:
-		अगर (modअगरier == I915_FORMAT_MOD_Y_TILED_GEN12_MC_CCS)
-			वापस true;
+	case DRM_FORMAT_YUYV:
+	case DRM_FORMAT_YVYU:
+	case DRM_FORMAT_UYVY:
+	case DRM_FORMAT_VYUY:
+	case DRM_FORMAT_NV12:
+	case DRM_FORMAT_XYUV8888:
+	case DRM_FORMAT_P010:
+	case DRM_FORMAT_P012:
+	case DRM_FORMAT_P016:
+		if (modifier == I915_FORMAT_MOD_Y_TILED_GEN12_MC_CCS)
+			return true;
 		fallthrough;
-	हाल DRM_FORMAT_RGB565:
-	हाल DRM_FORMAT_XRGB2101010:
-	हाल DRM_FORMAT_XBGR2101010:
-	हाल DRM_FORMAT_ARGB2101010:
-	हाल DRM_FORMAT_ABGR2101010:
-	हाल DRM_FORMAT_XVYU2101010:
-	हाल DRM_FORMAT_C8:
-	हाल DRM_FORMAT_XBGR16161616F:
-	हाल DRM_FORMAT_ABGR16161616F:
-	हाल DRM_FORMAT_XRGB16161616F:
-	हाल DRM_FORMAT_ARGB16161616F:
-	हाल DRM_FORMAT_Y210:
-	हाल DRM_FORMAT_Y212:
-	हाल DRM_FORMAT_Y216:
-	हाल DRM_FORMAT_XVYU12_16161616:
-	हाल DRM_FORMAT_XVYU16161616:
-		अगर (modअगरier == DRM_FORMAT_MOD_LINEAR ||
-		    modअगरier == I915_FORMAT_MOD_X_TILED ||
-		    modअगरier == I915_FORMAT_MOD_Y_TILED)
-			वापस true;
+	case DRM_FORMAT_RGB565:
+	case DRM_FORMAT_XRGB2101010:
+	case DRM_FORMAT_XBGR2101010:
+	case DRM_FORMAT_ARGB2101010:
+	case DRM_FORMAT_ABGR2101010:
+	case DRM_FORMAT_XVYU2101010:
+	case DRM_FORMAT_C8:
+	case DRM_FORMAT_XBGR16161616F:
+	case DRM_FORMAT_ABGR16161616F:
+	case DRM_FORMAT_XRGB16161616F:
+	case DRM_FORMAT_ARGB16161616F:
+	case DRM_FORMAT_Y210:
+	case DRM_FORMAT_Y212:
+	case DRM_FORMAT_Y216:
+	case DRM_FORMAT_XVYU12_16161616:
+	case DRM_FORMAT_XVYU16161616:
+		if (modifier == DRM_FORMAT_MOD_LINEAR ||
+		    modifier == I915_FORMAT_MOD_X_TILED ||
+		    modifier == I915_FORMAT_MOD_Y_TILED)
+			return true;
 		fallthrough;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+	default:
+		return false;
+	}
+}
 
-अटल स्थिर u64 *gen12_get_plane_modअगरiers(काष्ठा drm_i915_निजी *dev_priv,
-					    क्रमागत plane_id plane_id)
-अणु
-	अगर (gen12_plane_supports_mc_ccs(dev_priv, plane_id))
-		वापस gen12_plane_क्रमmat_modअगरiers_mc_ccs;
-	अन्यथा
-		वापस gen12_plane_क्रमmat_modअगरiers_rc_ccs;
-पूर्ण
+static const u64 *gen12_get_plane_modifiers(struct drm_i915_private *dev_priv,
+					    enum plane_id plane_id)
+{
+	if (gen12_plane_supports_mc_ccs(dev_priv, plane_id))
+		return gen12_plane_format_modifiers_mc_ccs;
+	else
+		return gen12_plane_format_modifiers_rc_ccs;
+}
 
-अटल स्थिर काष्ठा drm_plane_funcs skl_plane_funcs = अणु
+static const struct drm_plane_funcs skl_plane_funcs = {
 	.update_plane = drm_atomic_helper_update_plane,
 	.disable_plane = drm_atomic_helper_disable_plane,
-	.destroy = पूर्णांकel_plane_destroy,
-	.atomic_duplicate_state = पूर्णांकel_plane_duplicate_state,
-	.atomic_destroy_state = पूर्णांकel_plane_destroy_state,
-	.क्रमmat_mod_supported = skl_plane_क्रमmat_mod_supported,
-पूर्ण;
+	.destroy = intel_plane_destroy,
+	.atomic_duplicate_state = intel_plane_duplicate_state,
+	.atomic_destroy_state = intel_plane_destroy_state,
+	.format_mod_supported = skl_plane_format_mod_supported,
+};
 
-अटल स्थिर काष्ठा drm_plane_funcs gen12_plane_funcs = अणु
+static const struct drm_plane_funcs gen12_plane_funcs = {
 	.update_plane = drm_atomic_helper_update_plane,
 	.disable_plane = drm_atomic_helper_disable_plane,
-	.destroy = पूर्णांकel_plane_destroy,
-	.atomic_duplicate_state = पूर्णांकel_plane_duplicate_state,
-	.atomic_destroy_state = पूर्णांकel_plane_destroy_state,
-	.क्रमmat_mod_supported = gen12_plane_क्रमmat_mod_supported,
-पूर्ण;
+	.destroy = intel_plane_destroy,
+	.atomic_duplicate_state = intel_plane_duplicate_state,
+	.atomic_destroy_state = intel_plane_destroy_state,
+	.format_mod_supported = gen12_plane_format_mod_supported,
+};
 
-अटल व्योम
-skl_plane_enable_flip_करोne(काष्ठा पूर्णांकel_plane *plane)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(plane->base.dev);
-	क्रमागत pipe pipe = plane->pipe;
+static void
+skl_plane_enable_flip_done(struct intel_plane *plane)
+{
+	struct drm_i915_private *i915 = to_i915(plane->base.dev);
+	enum pipe pipe = plane->pipe;
 
 	spin_lock_irq(&i915->irq_lock);
 	bdw_enable_pipe_irq(i915, pipe, GEN9_PIPE_PLANE_FLIP_DONE(plane->id));
 	spin_unlock_irq(&i915->irq_lock);
-पूर्ण
+}
 
-अटल व्योम
-skl_plane_disable_flip_करोne(काष्ठा पूर्णांकel_plane *plane)
-अणु
-	काष्ठा drm_i915_निजी *i915 = to_i915(plane->base.dev);
-	क्रमागत pipe pipe = plane->pipe;
+static void
+skl_plane_disable_flip_done(struct intel_plane *plane)
+{
+	struct drm_i915_private *i915 = to_i915(plane->base.dev);
+	enum pipe pipe = plane->pipe;
 
 	spin_lock_irq(&i915->irq_lock);
 	bdw_disable_pipe_irq(i915, pipe, GEN9_PIPE_PLANE_FLIP_DONE(plane->id));
 	spin_unlock_irq(&i915->irq_lock);
-पूर्ण
+}
 
-काष्ठा पूर्णांकel_plane *
-skl_universal_plane_create(काष्ठा drm_i915_निजी *dev_priv,
-			   क्रमागत pipe pipe, क्रमागत plane_id plane_id)
-अणु
-	स्थिर काष्ठा drm_plane_funcs *plane_funcs;
-	काष्ठा पूर्णांकel_plane *plane;
-	क्रमागत drm_plane_type plane_type;
-	अचिन्हित पूर्णांक supported_rotations;
-	अचिन्हित पूर्णांक supported_csc;
-	स्थिर u64 *modअगरiers;
-	स्थिर u32 *क्रमmats;
-	पूर्णांक num_क्रमmats;
-	पूर्णांक ret;
+struct intel_plane *
+skl_universal_plane_create(struct drm_i915_private *dev_priv,
+			   enum pipe pipe, enum plane_id plane_id)
+{
+	const struct drm_plane_funcs *plane_funcs;
+	struct intel_plane *plane;
+	enum drm_plane_type plane_type;
+	unsigned int supported_rotations;
+	unsigned int supported_csc;
+	const u64 *modifiers;
+	const u32 *formats;
+	int num_formats;
+	int ret;
 
-	plane = पूर्णांकel_plane_alloc();
-	अगर (IS_ERR(plane))
-		वापस plane;
+	plane = intel_plane_alloc();
+	if (IS_ERR(plane))
+		return plane;
 
 	plane->pipe = pipe;
 	plane->id = plane_id;
 	plane->frontbuffer_bit = INTEL_FRONTBUFFER(pipe, plane_id);
 
 	plane->has_fbc = skl_plane_has_fbc(dev_priv, pipe, plane_id);
-	अगर (plane->has_fbc) अणु
-		काष्ठा पूर्णांकel_fbc *fbc = &dev_priv->fbc;
+	if (plane->has_fbc) {
+		struct intel_fbc *fbc = &dev_priv->fbc;
 
 		fbc->possible_framebuffer_bits |= plane->frontbuffer_bit;
-	पूर्ण
+	}
 
-	अगर (DISPLAY_VER(dev_priv) >= 11) अणु
+	if (DISPLAY_VER(dev_priv) >= 11) {
 		plane->min_width = icl_plane_min_width;
 		plane->max_width = icl_plane_max_width;
 		plane->max_height = icl_plane_max_height;
-	पूर्ण अन्यथा अगर (DISPLAY_VER(dev_priv) >= 10) अणु
+	} else if (DISPLAY_VER(dev_priv) >= 10) {
 		plane->max_width = glk_plane_max_width;
 		plane->max_height = skl_plane_max_height;
-	पूर्ण अन्यथा अणु
+	} else {
 		plane->max_width = skl_plane_max_width;
 		plane->max_height = skl_plane_max_height;
-	पूर्ण
+	}
 
 	plane->max_stride = skl_plane_max_stride;
 	plane->update_plane = skl_update_plane;
@@ -1981,55 +1980,55 @@ skl_universal_plane_create(काष्ठा drm_i915_निजी *dev_priv,
 	plane->check_plane = skl_plane_check;
 	plane->min_cdclk = skl_plane_min_cdclk;
 
-	अगर (plane_id == PLANE_PRIMARY) अणु
+	if (plane_id == PLANE_PRIMARY) {
 		plane->need_async_flip_disable_wa = IS_DISPLAY_RANGE(dev_priv,
 								     9, 10);
 		plane->async_flip = skl_plane_async_flip;
-		plane->enable_flip_करोne = skl_plane_enable_flip_करोne;
-		plane->disable_flip_करोne = skl_plane_disable_flip_करोne;
-	पूर्ण
+		plane->enable_flip_done = skl_plane_enable_flip_done;
+		plane->disable_flip_done = skl_plane_disable_flip_done;
+	}
 
-	अगर (DISPLAY_VER(dev_priv) >= 11)
-		क्रमmats = icl_get_plane_क्रमmats(dev_priv, pipe,
-						plane_id, &num_क्रमmats);
-	अन्यथा अगर (DISPLAY_VER(dev_priv) >= 10)
-		क्रमmats = glk_get_plane_क्रमmats(dev_priv, pipe,
-						plane_id, &num_क्रमmats);
-	अन्यथा
-		क्रमmats = skl_get_plane_क्रमmats(dev_priv, pipe,
-						plane_id, &num_क्रमmats);
+	if (DISPLAY_VER(dev_priv) >= 11)
+		formats = icl_get_plane_formats(dev_priv, pipe,
+						plane_id, &num_formats);
+	else if (DISPLAY_VER(dev_priv) >= 10)
+		formats = glk_get_plane_formats(dev_priv, pipe,
+						plane_id, &num_formats);
+	else
+		formats = skl_get_plane_formats(dev_priv, pipe,
+						plane_id, &num_formats);
 
 	plane->has_ccs = skl_plane_has_ccs(dev_priv, pipe, plane_id);
-	अगर (DISPLAY_VER(dev_priv) >= 12) अणु
-		modअगरiers = gen12_get_plane_modअगरiers(dev_priv, plane_id);
+	if (DISPLAY_VER(dev_priv) >= 12) {
+		modifiers = gen12_get_plane_modifiers(dev_priv, plane_id);
 		plane_funcs = &gen12_plane_funcs;
-	पूर्ण अन्यथा अणु
-		अगर (plane->has_ccs)
-			modअगरiers = skl_plane_क्रमmat_modअगरiers_ccs;
-		अन्यथा
-			modअगरiers = skl_plane_क्रमmat_modअगरiers_noccs;
+	} else {
+		if (plane->has_ccs)
+			modifiers = skl_plane_format_modifiers_ccs;
+		else
+			modifiers = skl_plane_format_modifiers_noccs;
 		plane_funcs = &skl_plane_funcs;
-	पूर्ण
+	}
 
-	अगर (plane_id == PLANE_PRIMARY)
+	if (plane_id == PLANE_PRIMARY)
 		plane_type = DRM_PLANE_TYPE_PRIMARY;
-	अन्यथा
+	else
 		plane_type = DRM_PLANE_TYPE_OVERLAY;
 
 	ret = drm_universal_plane_init(&dev_priv->drm, &plane->base,
 				       0, plane_funcs,
-				       क्रमmats, num_क्रमmats, modअगरiers,
+				       formats, num_formats, modifiers,
 				       plane_type,
 				       "plane %d%c", plane_id + 1,
 				       pipe_name(pipe));
-	अगर (ret)
-		जाओ fail;
+	if (ret)
+		goto fail;
 
 	supported_rotations =
 		DRM_MODE_ROTATE_0 | DRM_MODE_ROTATE_90 |
 		DRM_MODE_ROTATE_180 | DRM_MODE_ROTATE_270;
 
-	अगर (DISPLAY_VER(dev_priv) >= 11 || IS_CANNONLAKE(dev_priv))
+	if (DISPLAY_VER(dev_priv) >= 11 || IS_CANNONLAKE(dev_priv))
 		supported_rotations |= DRM_MODE_REFLECT_X;
 
 	drm_plane_create_rotation_property(&plane->base,
@@ -2038,7 +2037,7 @@ skl_universal_plane_create(काष्ठा drm_i915_निजी *dev_priv,
 
 	supported_csc = BIT(DRM_COLOR_YCBCR_BT601) | BIT(DRM_COLOR_YCBCR_BT709);
 
-	अगर (DISPLAY_VER(dev_priv) >= 10)
+	if (DISPLAY_VER(dev_priv) >= 10)
 		supported_csc |= BIT(DRM_COLOR_YCBCR_BT2020);
 
 	drm_plane_create_color_properties(&plane->base,
@@ -2056,164 +2055,164 @@ skl_universal_plane_create(काष्ठा drm_i915_निजी *dev_priv,
 
 	drm_plane_create_zpos_immutable_property(&plane->base, plane_id);
 
-	अगर (DISPLAY_VER(dev_priv) >= 12)
+	if (DISPLAY_VER(dev_priv) >= 12)
 		drm_plane_enable_fb_damage_clips(&plane->base);
 
-	अगर (DISPLAY_VER(dev_priv) >= 11 || IS_CANNONLAKE(dev_priv))
+	if (DISPLAY_VER(dev_priv) >= 11 || IS_CANNONLAKE(dev_priv))
 		drm_plane_create_scaling_filter_property(&plane->base,
 						BIT(DRM_SCALING_FILTER_DEFAULT) |
 						BIT(DRM_SCALING_FILTER_NEAREST_NEIGHBOR));
 
-	drm_plane_helper_add(&plane->base, &पूर्णांकel_plane_helper_funcs);
+	drm_plane_helper_add(&plane->base, &intel_plane_helper_funcs);
 
-	वापस plane;
+	return plane;
 
 fail:
-	पूर्णांकel_plane_मुक्त(plane);
+	intel_plane_free(plane);
 
-	वापस ERR_PTR(ret);
-पूर्ण
+	return ERR_PTR(ret);
+}
 
-व्योम
-skl_get_initial_plane_config(काष्ठा पूर्णांकel_crtc *crtc,
-			     काष्ठा पूर्णांकel_initial_plane_config *plane_config)
-अणु
-	काष्ठा पूर्णांकel_crtc_state *crtc_state = to_पूर्णांकel_crtc_state(crtc->base.state);
-	काष्ठा drm_device *dev = crtc->base.dev;
-	काष्ठा drm_i915_निजी *dev_priv = to_i915(dev);
-	काष्ठा पूर्णांकel_plane *plane = to_पूर्णांकel_plane(crtc->base.primary);
-	क्रमागत plane_id plane_id = plane->id;
-	क्रमागत pipe pipe;
+void
+skl_get_initial_plane_config(struct intel_crtc *crtc,
+			     struct intel_initial_plane_config *plane_config)
+{
+	struct intel_crtc_state *crtc_state = to_intel_crtc_state(crtc->base.state);
+	struct drm_device *dev = crtc->base.dev;
+	struct drm_i915_private *dev_priv = to_i915(dev);
+	struct intel_plane *plane = to_intel_plane(crtc->base.primary);
+	enum plane_id plane_id = plane->id;
+	enum pipe pipe;
 	u32 val, base, offset, stride_mult, tiling, alpha;
-	पूर्णांक fourcc, pixel_क्रमmat;
-	अचिन्हित पूर्णांक aligned_height;
-	काष्ठा drm_framebuffer *fb;
-	काष्ठा पूर्णांकel_framebuffer *पूर्णांकel_fb;
+	int fourcc, pixel_format;
+	unsigned int aligned_height;
+	struct drm_framebuffer *fb;
+	struct intel_framebuffer *intel_fb;
 
-	अगर (!plane->get_hw_state(plane, &pipe))
-		वापस;
+	if (!plane->get_hw_state(plane, &pipe))
+		return;
 
 	drm_WARN_ON(dev, pipe != crtc->pipe);
 
-	अगर (crtc_state->bigjoiner) अणु
+	if (crtc_state->bigjoiner) {
 		drm_dbg_kms(&dev_priv->drm,
 			    "Unsupported bigjoiner configuration for initial FB\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	पूर्णांकel_fb = kzalloc(माप(*पूर्णांकel_fb), GFP_KERNEL);
-	अगर (!पूर्णांकel_fb) अणु
+	intel_fb = kzalloc(sizeof(*intel_fb), GFP_KERNEL);
+	if (!intel_fb) {
 		drm_dbg_kms(&dev_priv->drm, "failed to alloc fb\n");
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	fb = &पूर्णांकel_fb->base;
+	fb = &intel_fb->base;
 
 	fb->dev = dev;
 
-	val = पूर्णांकel_de_पढ़ो(dev_priv, PLANE_CTL(pipe, plane_id));
+	val = intel_de_read(dev_priv, PLANE_CTL(pipe, plane_id));
 
-	अगर (DISPLAY_VER(dev_priv) >= 11)
-		pixel_क्रमmat = val & ICL_PLANE_CTL_FORMAT_MASK;
-	अन्यथा
-		pixel_क्रमmat = val & PLANE_CTL_FORMAT_MASK;
+	if (DISPLAY_VER(dev_priv) >= 11)
+		pixel_format = val & ICL_PLANE_CTL_FORMAT_MASK;
+	else
+		pixel_format = val & PLANE_CTL_FORMAT_MASK;
 
-	अगर (DISPLAY_VER(dev_priv) >= 10) अणु
-		alpha = पूर्णांकel_de_पढ़ो(dev_priv,
+	if (DISPLAY_VER(dev_priv) >= 10) {
+		alpha = intel_de_read(dev_priv,
 				      PLANE_COLOR_CTL(pipe, plane_id));
 		alpha &= PLANE_COLOR_ALPHA_MASK;
-	पूर्ण अन्यथा अणु
+	} else {
 		alpha = val & PLANE_CTL_ALPHA_MASK;
-	पूर्ण
+	}
 
-	fourcc = skl_क्रमmat_to_fourcc(pixel_क्रमmat,
+	fourcc = skl_format_to_fourcc(pixel_format,
 				      val & PLANE_CTL_ORDER_RGBX, alpha);
-	fb->क्रमmat = drm_क्रमmat_info(fourcc);
+	fb->format = drm_format_info(fourcc);
 
 	tiling = val & PLANE_CTL_TILED_MASK;
-	चयन (tiling) अणु
-	हाल PLANE_CTL_TILED_LINEAR:
-		fb->modअगरier = DRM_FORMAT_MOD_LINEAR;
-		अवरोध;
-	हाल PLANE_CTL_TILED_X:
+	switch (tiling) {
+	case PLANE_CTL_TILED_LINEAR:
+		fb->modifier = DRM_FORMAT_MOD_LINEAR;
+		break;
+	case PLANE_CTL_TILED_X:
 		plane_config->tiling = I915_TILING_X;
-		fb->modअगरier = I915_FORMAT_MOD_X_TILED;
-		अवरोध;
-	हाल PLANE_CTL_TILED_Y:
+		fb->modifier = I915_FORMAT_MOD_X_TILED;
+		break;
+	case PLANE_CTL_TILED_Y:
 		plane_config->tiling = I915_TILING_Y;
-		अगर (val & PLANE_CTL_RENDER_DECOMPRESSION_ENABLE)
-			fb->modअगरier = DISPLAY_VER(dev_priv) >= 12 ?
+		if (val & PLANE_CTL_RENDER_DECOMPRESSION_ENABLE)
+			fb->modifier = DISPLAY_VER(dev_priv) >= 12 ?
 				I915_FORMAT_MOD_Y_TILED_GEN12_RC_CCS :
 				I915_FORMAT_MOD_Y_TILED_CCS;
-		अन्यथा अगर (val & PLANE_CTL_MEDIA_DECOMPRESSION_ENABLE)
-			fb->modअगरier = I915_FORMAT_MOD_Y_TILED_GEN12_MC_CCS;
-		अन्यथा
-			fb->modअगरier = I915_FORMAT_MOD_Y_TILED;
-		अवरोध;
-	हाल PLANE_CTL_TILED_YF:
-		अगर (val & PLANE_CTL_RENDER_DECOMPRESSION_ENABLE)
-			fb->modअगरier = I915_FORMAT_MOD_Yf_TILED_CCS;
-		अन्यथा
-			fb->modअगरier = I915_FORMAT_MOD_Yf_TILED;
-		अवरोध;
-	शेष:
+		else if (val & PLANE_CTL_MEDIA_DECOMPRESSION_ENABLE)
+			fb->modifier = I915_FORMAT_MOD_Y_TILED_GEN12_MC_CCS;
+		else
+			fb->modifier = I915_FORMAT_MOD_Y_TILED;
+		break;
+	case PLANE_CTL_TILED_YF:
+		if (val & PLANE_CTL_RENDER_DECOMPRESSION_ENABLE)
+			fb->modifier = I915_FORMAT_MOD_Yf_TILED_CCS;
+		else
+			fb->modifier = I915_FORMAT_MOD_Yf_TILED;
+		break;
+	default:
 		MISSING_CASE(tiling);
-		जाओ error;
-	पूर्ण
+		goto error;
+	}
 
 	/*
-	 * DRM_MODE_ROTATE_ is counter घड़ीwise to stay compatible with Xअक्रमr
-	 * जबतक i915 HW rotation is घड़ीwise, thats why this swapping.
+	 * DRM_MODE_ROTATE_ is counter clockwise to stay compatible with Xrandr
+	 * while i915 HW rotation is clockwise, thats why this swapping.
 	 */
-	चयन (val & PLANE_CTL_ROTATE_MASK) अणु
-	हाल PLANE_CTL_ROTATE_0:
+	switch (val & PLANE_CTL_ROTATE_MASK) {
+	case PLANE_CTL_ROTATE_0:
 		plane_config->rotation = DRM_MODE_ROTATE_0;
-		अवरोध;
-	हाल PLANE_CTL_ROTATE_90:
+		break;
+	case PLANE_CTL_ROTATE_90:
 		plane_config->rotation = DRM_MODE_ROTATE_270;
-		अवरोध;
-	हाल PLANE_CTL_ROTATE_180:
+		break;
+	case PLANE_CTL_ROTATE_180:
 		plane_config->rotation = DRM_MODE_ROTATE_180;
-		अवरोध;
-	हाल PLANE_CTL_ROTATE_270:
+		break;
+	case PLANE_CTL_ROTATE_270:
 		plane_config->rotation = DRM_MODE_ROTATE_90;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
-	अगर ((DISPLAY_VER(dev_priv) >= 11 || IS_CANNONLAKE(dev_priv)) && val & PLANE_CTL_FLIP_HORIZONTAL)
+	if ((DISPLAY_VER(dev_priv) >= 11 || IS_CANNONLAKE(dev_priv)) && val & PLANE_CTL_FLIP_HORIZONTAL)
 		plane_config->rotation |= DRM_MODE_REFLECT_X;
 
 	/* 90/270 degree rotation would require extra work */
-	अगर (drm_rotation_90_or_270(plane_config->rotation))
-		जाओ error;
+	if (drm_rotation_90_or_270(plane_config->rotation))
+		goto error;
 
-	base = पूर्णांकel_de_पढ़ो(dev_priv, PLANE_SURF(pipe, plane_id)) & 0xfffff000;
+	base = intel_de_read(dev_priv, PLANE_SURF(pipe, plane_id)) & 0xfffff000;
 	plane_config->base = base;
 
-	offset = पूर्णांकel_de_पढ़ो(dev_priv, PLANE_OFFSET(pipe, plane_id));
+	offset = intel_de_read(dev_priv, PLANE_OFFSET(pipe, plane_id));
 
-	val = पूर्णांकel_de_पढ़ो(dev_priv, PLANE_SIZE(pipe, plane_id));
+	val = intel_de_read(dev_priv, PLANE_SIZE(pipe, plane_id));
 	fb->height = ((val >> 16) & 0xffff) + 1;
 	fb->width = ((val >> 0) & 0xffff) + 1;
 
-	val = पूर्णांकel_de_पढ़ो(dev_priv, PLANE_STRIDE(pipe, plane_id));
+	val = intel_de_read(dev_priv, PLANE_STRIDE(pipe, plane_id));
 	stride_mult = skl_plane_stride_mult(fb, 0, DRM_MODE_ROTATE_0);
 	fb->pitches[0] = (val & 0x3ff) * stride_mult;
 
-	aligned_height = पूर्णांकel_fb_align_height(fb, 0, fb->height);
+	aligned_height = intel_fb_align_height(fb, 0, fb->height);
 
 	plane_config->size = fb->pitches[0] * aligned_height;
 
 	drm_dbg_kms(&dev_priv->drm,
 		    "%s/%s with fb: size=%dx%d@%d, offset=%x, pitch %d, size 0x%x\n",
 		    crtc->base.name, plane->base.name, fb->width, fb->height,
-		    fb->क्रमmat->cpp[0] * 8, base, fb->pitches[0],
+		    fb->format->cpp[0] * 8, base, fb->pitches[0],
 		    plane_config->size);
 
-	plane_config->fb = पूर्णांकel_fb;
-	वापस;
+	plane_config->fb = intel_fb;
+	return;
 
 error:
-	kमुक्त(पूर्णांकel_fb);
-पूर्ण
+	kfree(intel_fb);
+}
 

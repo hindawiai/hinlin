@@ -1,21 +1,20 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
  * Marvell Berlin BG2CD pinctrl driver.
  *
  * Copyright (C) 2014 Marvell Technology Group Ltd.
  *
- * Antoine Tथऊnart <antoine.tenart@मुक्त-electrons.com>
+ * Antoine Ténart <antoine.tenart@free-electrons.com>
  */
 
-#समावेश <linux/init.h>
-#समावेश <linux/of_device.h>
-#समावेश <linux/platक्रमm_device.h>
-#समावेश <linux/regmap.h>
+#include <linux/init.h>
+#include <linux/of_device.h>
+#include <linux/platform_device.h>
+#include <linux/regmap.h>
 
-#समावेश "berlin.h"
+#include "berlin.h"
 
-अटल स्थिर काष्ठा berlin_desc_group berlin2cd_soc_pinctrl_groups[] = अणु
+static const struct berlin_desc_group berlin2cd_soc_pinctrl_groups[] = {
 	/* G */
 	BERLIN_PINCTRL_GROUP("G0", 0x00, 0x3, 0x00,
 		BERLIN_PINCTRL_FUNCTION(0x0, "jtag"),
@@ -119,9 +118,9 @@
 		BERLIN_PINCTRL_FUNCTION_UNKNOWN),
 	BERLIN_PINCTRL_GROUP("G29", 0x08, 0x3, 0x0d,
 		BERLIN_PINCTRL_FUNCTION_UNKNOWN),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा berlin_desc_group berlin2cd_sysmgr_pinctrl_groups[] = अणु
+static const struct berlin_desc_group berlin2cd_sysmgr_pinctrl_groups[] = {
 	/* GSM */
 	BERLIN_PINCTRL_GROUP("GSM0", 0x40, 0x2, 0x00,
 		BERLIN_PINCTRL_FUNCTION_UNKNOWN),
@@ -147,43 +146,43 @@
 		BERLIN_PINCTRL_FUNCTION_UNKNOWN),
 	BERLIN_PINCTRL_GROUP("GSM11", 0x40, 0x1, 0x12,
 		BERLIN_PINCTRL_FUNCTION_UNKNOWN),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा berlin_pinctrl_desc berlin2cd_soc_pinctrl_data = अणु
+static const struct berlin_pinctrl_desc berlin2cd_soc_pinctrl_data = {
 	.groups = berlin2cd_soc_pinctrl_groups,
 	.ngroups = ARRAY_SIZE(berlin2cd_soc_pinctrl_groups),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा berlin_pinctrl_desc berlin2cd_sysmgr_pinctrl_data = अणु
+static const struct berlin_pinctrl_desc berlin2cd_sysmgr_pinctrl_data = {
 	.groups = berlin2cd_sysmgr_pinctrl_groups,
 	.ngroups = ARRAY_SIZE(berlin2cd_sysmgr_pinctrl_groups),
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा of_device_id berlin2cd_pinctrl_match[] = अणु
-	अणु
+static const struct of_device_id berlin2cd_pinctrl_match[] = {
+	{
 		.compatible = "marvell,berlin2cd-soc-pinctrl",
 		.data = &berlin2cd_soc_pinctrl_data
-	पूर्ण,
-	अणु
+	},
+	{
 		.compatible = "marvell,berlin2cd-system-pinctrl",
 		.data = &berlin2cd_sysmgr_pinctrl_data
-	पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+	},
+	{}
+};
 
-अटल पूर्णांक berlin2cd_pinctrl_probe(काष्ठा platक्रमm_device *pdev)
-अणु
-	स्थिर काष्ठा of_device_id *match =
+static int berlin2cd_pinctrl_probe(struct platform_device *pdev)
+{
+	const struct of_device_id *match =
 		of_match_device(berlin2cd_pinctrl_match, &pdev->dev);
 
-	वापस berlin_pinctrl_probe(pdev, match->data);
-पूर्ण
+	return berlin_pinctrl_probe(pdev, match->data);
+}
 
-अटल काष्ठा platक्रमm_driver berlin2cd_pinctrl_driver = अणु
+static struct platform_driver berlin2cd_pinctrl_driver = {
 	.probe	= berlin2cd_pinctrl_probe,
-	.driver	= अणु
+	.driver	= {
 		.name = "berlin-bg2cd-pinctrl",
 		.of_match_table = berlin2cd_pinctrl_match,
-	पूर्ण,
-पूर्ण;
-builtin_platक्रमm_driver(berlin2cd_pinctrl_driver);
+	},
+};
+builtin_platform_driver(berlin2cd_pinctrl_driver);

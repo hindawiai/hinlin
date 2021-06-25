@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#अगर_अघोषित INTEL_LLC_H
-#घोषणा INTEL_LLC_H
+#ifndef INTEL_LLC_H
+#define INTEL_LLC_H
 
-काष्ठा पूर्णांकel_llc;
+struct intel_llc;
 
-व्योम पूर्णांकel_llc_enable(काष्ठा पूर्णांकel_llc *llc);
-व्योम पूर्णांकel_llc_disable(काष्ठा पूर्णांकel_llc *llc);
+void intel_llc_enable(struct intel_llc *llc);
+void intel_llc_disable(struct intel_llc *llc);
 
-#पूर्ण_अगर /* INTEL_LLC_H */
+#endif /* INTEL_LLC_H */

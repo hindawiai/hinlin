@@ -1,76 +1,75 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0+
+// SPDX-License-Identifier: GPL-2.0+
 // Copyright IBM Corp 2019
 /*
  * The DPS310 is a barometric pressure and temperature sensor.
- * Currently only पढ़ोing a single temperature is supported by
+ * Currently only reading a single temperature is supported by
  * this driver.
  *
  * https://www.infineon.com/dgdl/?fileId=5546d462576f34750157750826c42242
  *
  * Temperature calculation:
- *   c0 * 0.5 + c1 * T_raw / kT तओC
+ *   c0 * 0.5 + c1 * T_raw / kT °C
  *
  * TODO:
  *  - Optionally support the FIFO
  */
 
-#समावेश <linux/i2c.h>
-#समावेश <linux/सीमा.स>
-#समावेश <linux/math64.h>
-#समावेश <linux/module.h>
-#समावेश <linux/regmap.h>
+#include <linux/i2c.h>
+#include <linux/limits.h>
+#include <linux/math64.h>
+#include <linux/module.h>
+#include <linux/regmap.h>
 
-#समावेश <linux/iio/iपन.स>
-#समावेश <linux/iio/sysfs.h>
+#include <linux/iio/iio.h>
+#include <linux/iio/sysfs.h>
 
-#घोषणा DPS310_DEV_NAME		"dps310"
+#define DPS310_DEV_NAME		"dps310"
 
-#घोषणा DPS310_PRS_B0		0x00
-#घोषणा DPS310_PRS_B1		0x01
-#घोषणा DPS310_PRS_B2		0x02
-#घोषणा DPS310_TMP_B0		0x03
-#घोषणा DPS310_TMP_B1		0x04
-#घोषणा DPS310_TMP_B2		0x05
-#घोषणा DPS310_PRS_CFG		0x06
-#घोषणा  DPS310_PRS_RATE_BITS	GENMASK(6, 4)
-#घोषणा  DPS310_PRS_PRC_BITS	GENMASK(3, 0)
-#घोषणा DPS310_TMP_CFG		0x07
-#घोषणा  DPS310_TMP_RATE_BITS	GENMASK(6, 4)
-#घोषणा  DPS310_TMP_PRC_BITS	GENMASK(3, 0)
-#घोषणा  DPS310_TMP_EXT		BIT(7)
-#घोषणा DPS310_MEAS_CFG		0x08
-#घोषणा  DPS310_MEAS_CTRL_BITS	GENMASK(2, 0)
-#घोषणा   DPS310_PRS_EN		BIT(0)
-#घोषणा   DPS310_TEMP_EN	BIT(1)
-#घोषणा   DPS310_BACKGROUND	BIT(2)
-#घोषणा  DPS310_PRS_RDY		BIT(4)
-#घोषणा  DPS310_TMP_RDY		BIT(5)
-#घोषणा  DPS310_SENSOR_RDY	BIT(6)
-#घोषणा  DPS310_COEF_RDY	BIT(7)
-#घोषणा DPS310_CFG_REG		0x09
-#घोषणा  DPS310_INT_HL		BIT(7)
-#घोषणा  DPS310_TMP_SHIFT_EN	BIT(3)
-#घोषणा  DPS310_PRS_SHIFT_EN	BIT(4)
-#घोषणा  DPS310_FIFO_EN		BIT(5)
-#घोषणा  DPS310_SPI_EN		BIT(6)
-#घोषणा DPS310_RESET		0x0c
-#घोषणा  DPS310_RESET_MAGIC	0x09
-#घोषणा DPS310_COEF_BASE	0x10
+#define DPS310_PRS_B0		0x00
+#define DPS310_PRS_B1		0x01
+#define DPS310_PRS_B2		0x02
+#define DPS310_TMP_B0		0x03
+#define DPS310_TMP_B1		0x04
+#define DPS310_TMP_B2		0x05
+#define DPS310_PRS_CFG		0x06
+#define  DPS310_PRS_RATE_BITS	GENMASK(6, 4)
+#define  DPS310_PRS_PRC_BITS	GENMASK(3, 0)
+#define DPS310_TMP_CFG		0x07
+#define  DPS310_TMP_RATE_BITS	GENMASK(6, 4)
+#define  DPS310_TMP_PRC_BITS	GENMASK(3, 0)
+#define  DPS310_TMP_EXT		BIT(7)
+#define DPS310_MEAS_CFG		0x08
+#define  DPS310_MEAS_CTRL_BITS	GENMASK(2, 0)
+#define   DPS310_PRS_EN		BIT(0)
+#define   DPS310_TEMP_EN	BIT(1)
+#define   DPS310_BACKGROUND	BIT(2)
+#define  DPS310_PRS_RDY		BIT(4)
+#define  DPS310_TMP_RDY		BIT(5)
+#define  DPS310_SENSOR_RDY	BIT(6)
+#define  DPS310_COEF_RDY	BIT(7)
+#define DPS310_CFG_REG		0x09
+#define  DPS310_INT_HL		BIT(7)
+#define  DPS310_TMP_SHIFT_EN	BIT(3)
+#define  DPS310_PRS_SHIFT_EN	BIT(4)
+#define  DPS310_FIFO_EN		BIT(5)
+#define  DPS310_SPI_EN		BIT(6)
+#define DPS310_RESET		0x0c
+#define  DPS310_RESET_MAGIC	0x09
+#define DPS310_COEF_BASE	0x10
 
-/* Make sure sleep समय is <= 20ms क्रम usleep_range */
-#घोषणा DPS310_POLL_SLEEP_US(t)		min(20000, (t) / 8)
+/* Make sure sleep time is <= 20ms for usleep_range */
+#define DPS310_POLL_SLEEP_US(t)		min(20000, (t) / 8)
 /* Silently handle error in rate value here */
-#घोषणा DPS310_POLL_TIMEOUT_US(rc)	((rc) <= 0 ? 1000000 : 1000000 / (rc))
+#define DPS310_POLL_TIMEOUT_US(rc)	((rc) <= 0 ? 1000000 : 1000000 / (rc))
 
-#घोषणा DPS310_PRS_BASE		DPS310_PRS_B0
-#घोषणा DPS310_TMP_BASE		DPS310_TMP_B0
+#define DPS310_PRS_BASE		DPS310_PRS_B0
+#define DPS310_TMP_BASE		DPS310_TMP_B0
 
 /*
- * These values (defined in the spec) indicate how to scale the raw रेजिस्टर
- * values क्रम each level of precision available.
+ * These values (defined in the spec) indicate how to scale the raw register
+ * values for each level of precision available.
  */
-अटल स्थिर पूर्णांक scale_factors[] = अणु
+static const int scale_factors[] = {
 	 524288,
 	1572864,
 	3670016,
@@ -79,47 +78,47 @@
 	 516096,
 	1040384,
 	2088960,
-पूर्ण;
+};
 
-काष्ठा dps310_data अणु
-	काष्ठा i2c_client *client;
-	काष्ठा regmap *regmap;
-	काष्ठा mutex lock;	/* Lock क्रम sequential HW access functions */
+struct dps310_data {
+	struct i2c_client *client;
+	struct regmap *regmap;
+	struct mutex lock;	/* Lock for sequential HW access functions */
 
 	s32 c0, c1;
 	s32 c00, c10, c20, c30, c01, c11, c21;
 	s32 pressure_raw;
 	s32 temp_raw;
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा iio_chan_spec dps310_channels[] = अणु
-	अणु
+static const struct iio_chan_spec dps310_channels[] = {
+	{
 		.type = IIO_TEMP,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_OVERSAMPLING_RATIO) |
 			BIT(IIO_CHAN_INFO_SAMP_FREQ) |
 			BIT(IIO_CHAN_INFO_PROCESSED),
-	पूर्ण,
-	अणु
+	},
+	{
 		.type = IIO_PRESSURE,
 		.info_mask_separate = BIT(IIO_CHAN_INFO_OVERSAMPLING_RATIO) |
 			BIT(IIO_CHAN_INFO_SAMP_FREQ) |
 			BIT(IIO_CHAN_INFO_PROCESSED),
-	पूर्ण,
-पूर्ण;
+	},
+};
 
 /* To be called after checking the COEF_RDY bit in MEAS_CFG */
-अटल पूर्णांक dps310_get_coefs(काष्ठा dps310_data *data)
-अणु
-	पूर्णांक rc;
+static int dps310_get_coefs(struct dps310_data *data)
+{
+	int rc;
 	u8 coef[18];
 	u32 c0, c1;
 	u32 c00, c10, c20, c30, c01, c11, c21;
 
-	/* Read all sensor calibration coefficients from the COEF रेजिस्टरs. */
-	rc = regmap_bulk_पढ़ो(data->regmap, DPS310_COEF_BASE, coef,
-			      माप(coef));
-	अगर (rc < 0)
-		वापस rc;
+	/* Read all sensor calibration coefficients from the COEF registers. */
+	rc = regmap_bulk_read(data->regmap, DPS310_COEF_BASE, coef,
+			      sizeof(coef));
+	if (rc < 0)
+		return rc;
 
 	/*
 	 * Calculate temperature calibration coefficients c0 and c1. The
@@ -157,319 +156,319 @@
 	c30 = (coef[16] << 8) | coef[17];
 	data->c30 = sign_extend32(c30, 15);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dps310_get_pres_precision(काष्ठा dps310_data *data)
-अणु
-	पूर्णांक rc;
-	पूर्णांक val;
+static int dps310_get_pres_precision(struct dps310_data *data)
+{
+	int rc;
+	int val;
 
-	rc = regmap_पढ़ो(data->regmap, DPS310_PRS_CFG, &val);
-	अगर (rc < 0)
-		वापस rc;
+	rc = regmap_read(data->regmap, DPS310_PRS_CFG, &val);
+	if (rc < 0)
+		return rc;
 
-	वापस BIT(val & GENMASK(2, 0));
-पूर्ण
+	return BIT(val & GENMASK(2, 0));
+}
 
-अटल पूर्णांक dps310_get_temp_precision(काष्ठा dps310_data *data)
-अणु
-	पूर्णांक rc;
-	पूर्णांक val;
+static int dps310_get_temp_precision(struct dps310_data *data)
+{
+	int rc;
+	int val;
 
-	rc = regmap_पढ़ो(data->regmap, DPS310_TMP_CFG, &val);
-	अगर (rc < 0)
-		वापस rc;
+	rc = regmap_read(data->regmap, DPS310_TMP_CFG, &val);
+	if (rc < 0)
+		return rc;
 
 	/*
-	 * Scale factor is bottom 4 bits of the रेजिस्टर, but 1111 is
+	 * Scale factor is bottom 4 bits of the register, but 1111 is
 	 * reserved so just grab bottom three
 	 */
-	वापस BIT(val & GENMASK(2, 0));
-पूर्ण
+	return BIT(val & GENMASK(2, 0));
+}
 
 /* Called with lock held */
-अटल पूर्णांक dps310_set_pres_precision(काष्ठा dps310_data *data, पूर्णांक val)
-अणु
-	पूर्णांक rc;
-	u8 shअगरt_en;
+static int dps310_set_pres_precision(struct dps310_data *data, int val)
+{
+	int rc;
+	u8 shift_en;
 
-	अगर (val < 0 || val > 128)
-		वापस -EINVAL;
+	if (val < 0 || val > 128)
+		return -EINVAL;
 
-	shअगरt_en = val >= 16 ? DPS310_PRS_SHIFT_EN : 0;
-	rc = regmap_ग_लिखो_bits(data->regmap, DPS310_CFG_REG,
-			       DPS310_PRS_SHIFT_EN, shअगरt_en);
-	अगर (rc)
-		वापस rc;
+	shift_en = val >= 16 ? DPS310_PRS_SHIFT_EN : 0;
+	rc = regmap_write_bits(data->regmap, DPS310_CFG_REG,
+			       DPS310_PRS_SHIFT_EN, shift_en);
+	if (rc)
+		return rc;
 
-	वापस regmap_update_bits(data->regmap, DPS310_PRS_CFG,
+	return regmap_update_bits(data->regmap, DPS310_PRS_CFG,
 				  DPS310_PRS_PRC_BITS, ilog2(val));
-पूर्ण
+}
 
 /* Called with lock held */
-अटल पूर्णांक dps310_set_temp_precision(काष्ठा dps310_data *data, पूर्णांक val)
-अणु
-	पूर्णांक rc;
-	u8 shअगरt_en;
+static int dps310_set_temp_precision(struct dps310_data *data, int val)
+{
+	int rc;
+	u8 shift_en;
 
-	अगर (val < 0 || val > 128)
-		वापस -EINVAL;
+	if (val < 0 || val > 128)
+		return -EINVAL;
 
-	shअगरt_en = val >= 16 ? DPS310_TMP_SHIFT_EN : 0;
-	rc = regmap_ग_लिखो_bits(data->regmap, DPS310_CFG_REG,
-			       DPS310_TMP_SHIFT_EN, shअगरt_en);
-	अगर (rc)
-		वापस rc;
+	shift_en = val >= 16 ? DPS310_TMP_SHIFT_EN : 0;
+	rc = regmap_write_bits(data->regmap, DPS310_CFG_REG,
+			       DPS310_TMP_SHIFT_EN, shift_en);
+	if (rc)
+		return rc;
 
-	वापस regmap_update_bits(data->regmap, DPS310_TMP_CFG,
+	return regmap_update_bits(data->regmap, DPS310_TMP_CFG,
 				  DPS310_TMP_PRC_BITS, ilog2(val));
-पूर्ण
+}
 
 /* Called with lock held */
-अटल पूर्णांक dps310_set_pres_samp_freq(काष्ठा dps310_data *data, पूर्णांक freq)
-अणु
+static int dps310_set_pres_samp_freq(struct dps310_data *data, int freq)
+{
 	u8 val;
 
-	अगर (freq < 0 || freq > 128)
-		वापस -EINVAL;
+	if (freq < 0 || freq > 128)
+		return -EINVAL;
 
 	val = ilog2(freq) << 4;
 
-	वापस regmap_update_bits(data->regmap, DPS310_PRS_CFG,
+	return regmap_update_bits(data->regmap, DPS310_PRS_CFG,
 				  DPS310_PRS_RATE_BITS, val);
-पूर्ण
+}
 
 /* Called with lock held */
-अटल पूर्णांक dps310_set_temp_samp_freq(काष्ठा dps310_data *data, पूर्णांक freq)
-अणु
+static int dps310_set_temp_samp_freq(struct dps310_data *data, int freq)
+{
 	u8 val;
 
-	अगर (freq < 0 || freq > 128)
-		वापस -EINVAL;
+	if (freq < 0 || freq > 128)
+		return -EINVAL;
 
 	val = ilog2(freq) << 4;
 
-	वापस regmap_update_bits(data->regmap, DPS310_TMP_CFG,
+	return regmap_update_bits(data->regmap, DPS310_TMP_CFG,
 				  DPS310_TMP_RATE_BITS, val);
-पूर्ण
+}
 
-अटल पूर्णांक dps310_get_pres_samp_freq(काष्ठा dps310_data *data)
-अणु
-	पूर्णांक rc;
-	पूर्णांक val;
+static int dps310_get_pres_samp_freq(struct dps310_data *data)
+{
+	int rc;
+	int val;
 
-	rc = regmap_पढ़ो(data->regmap, DPS310_PRS_CFG, &val);
-	अगर (rc < 0)
-		वापस rc;
+	rc = regmap_read(data->regmap, DPS310_PRS_CFG, &val);
+	if (rc < 0)
+		return rc;
 
-	वापस BIT((val & DPS310_PRS_RATE_BITS) >> 4);
-पूर्ण
+	return BIT((val & DPS310_PRS_RATE_BITS) >> 4);
+}
 
-अटल पूर्णांक dps310_get_temp_samp_freq(काष्ठा dps310_data *data)
-अणु
-	पूर्णांक rc;
-	पूर्णांक val;
+static int dps310_get_temp_samp_freq(struct dps310_data *data)
+{
+	int rc;
+	int val;
 
-	rc = regmap_पढ़ो(data->regmap, DPS310_TMP_CFG, &val);
-	अगर (rc < 0)
-		वापस rc;
+	rc = regmap_read(data->regmap, DPS310_TMP_CFG, &val);
+	if (rc < 0)
+		return rc;
 
-	वापस BIT((val & DPS310_TMP_RATE_BITS) >> 4);
-पूर्ण
+	return BIT((val & DPS310_TMP_RATE_BITS) >> 4);
+}
 
-अटल पूर्णांक dps310_get_pres_k(काष्ठा dps310_data *data)
-अणु
-	पूर्णांक rc = dps310_get_pres_precision(data);
+static int dps310_get_pres_k(struct dps310_data *data)
+{
+	int rc = dps310_get_pres_precision(data);
 
-	अगर (rc < 0)
-		वापस rc;
+	if (rc < 0)
+		return rc;
 
-	वापस scale_factors[ilog2(rc)];
-पूर्ण
+	return scale_factors[ilog2(rc)];
+}
 
-अटल पूर्णांक dps310_get_temp_k(काष्ठा dps310_data *data)
-अणु
-	पूर्णांक rc = dps310_get_temp_precision(data);
+static int dps310_get_temp_k(struct dps310_data *data)
+{
+	int rc = dps310_get_temp_precision(data);
 
-	अगर (rc < 0)
-		वापस rc;
+	if (rc < 0)
+		return rc;
 
-	वापस scale_factors[ilog2(rc)];
-पूर्ण
+	return scale_factors[ilog2(rc)];
+}
 
-अटल पूर्णांक dps310_पढ़ो_pres_raw(काष्ठा dps310_data *data)
-अणु
-	पूर्णांक rc;
-	पूर्णांक rate;
-	पूर्णांक पढ़ोy;
-	पूर्णांक समयout;
+static int dps310_read_pres_raw(struct dps310_data *data)
+{
+	int rc;
+	int rate;
+	int ready;
+	int timeout;
 	s32 raw;
 	u8 val[3];
 
-	अगर (mutex_lock_पूर्णांकerruptible(&data->lock))
-		वापस -EINTR;
+	if (mutex_lock_interruptible(&data->lock))
+		return -EINTR;
 
 	rate = dps310_get_pres_samp_freq(data);
-	समयout = DPS310_POLL_TIMEOUT_US(rate);
+	timeout = DPS310_POLL_TIMEOUT_US(rate);
 
-	/* Poll क्रम sensor पढ़ोiness; base the समयout upon the sample rate. */
-	rc = regmap_पढ़ो_poll_समयout(data->regmap, DPS310_MEAS_CFG, पढ़ोy,
-				      पढ़ोy & DPS310_PRS_RDY,
-				      DPS310_POLL_SLEEP_US(समयout), समयout);
-	अगर (rc)
-		जाओ करोne;
+	/* Poll for sensor readiness; base the timeout upon the sample rate. */
+	rc = regmap_read_poll_timeout(data->regmap, DPS310_MEAS_CFG, ready,
+				      ready & DPS310_PRS_RDY,
+				      DPS310_POLL_SLEEP_US(timeout), timeout);
+	if (rc)
+		goto done;
 
-	rc = regmap_bulk_पढ़ो(data->regmap, DPS310_PRS_BASE, val, माप(val));
-	अगर (rc < 0)
-		जाओ करोne;
+	rc = regmap_bulk_read(data->regmap, DPS310_PRS_BASE, val, sizeof(val));
+	if (rc < 0)
+		goto done;
 
 	raw = (val[0] << 16) | (val[1] << 8) | val[2];
 	data->pressure_raw = sign_extend32(raw, 23);
 
-करोne:
+done:
 	mutex_unlock(&data->lock);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
 /* Called with lock held */
-अटल पूर्णांक dps310_पढ़ो_temp_पढ़ोy(काष्ठा dps310_data *data)
-अणु
-	पूर्णांक rc;
+static int dps310_read_temp_ready(struct dps310_data *data)
+{
+	int rc;
 	u8 val[3];
 	s32 raw;
 
-	rc = regmap_bulk_पढ़ो(data->regmap, DPS310_TMP_BASE, val, माप(val));
-	अगर (rc < 0)
-		वापस rc;
+	rc = regmap_bulk_read(data->regmap, DPS310_TMP_BASE, val, sizeof(val));
+	if (rc < 0)
+		return rc;
 
 	raw = (val[0] << 16) | (val[1] << 8) | val[2];
 	data->temp_raw = sign_extend32(raw, 23);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dps310_पढ़ो_temp_raw(काष्ठा dps310_data *data)
-अणु
-	पूर्णांक rc;
-	पूर्णांक rate;
-	पूर्णांक पढ़ोy;
-	पूर्णांक समयout;
+static int dps310_read_temp_raw(struct dps310_data *data)
+{
+	int rc;
+	int rate;
+	int ready;
+	int timeout;
 
-	अगर (mutex_lock_पूर्णांकerruptible(&data->lock))
-		वापस -EINTR;
+	if (mutex_lock_interruptible(&data->lock))
+		return -EINTR;
 
 	rate = dps310_get_temp_samp_freq(data);
-	समयout = DPS310_POLL_TIMEOUT_US(rate);
+	timeout = DPS310_POLL_TIMEOUT_US(rate);
 
-	/* Poll क्रम sensor पढ़ोiness; base the समयout upon the sample rate. */
-	rc = regmap_पढ़ो_poll_समयout(data->regmap, DPS310_MEAS_CFG, पढ़ोy,
-				      पढ़ोy & DPS310_TMP_RDY,
-				      DPS310_POLL_SLEEP_US(समयout), समयout);
-	अगर (rc < 0)
-		जाओ करोne;
+	/* Poll for sensor readiness; base the timeout upon the sample rate. */
+	rc = regmap_read_poll_timeout(data->regmap, DPS310_MEAS_CFG, ready,
+				      ready & DPS310_TMP_RDY,
+				      DPS310_POLL_SLEEP_US(timeout), timeout);
+	if (rc < 0)
+		goto done;
 
-	rc = dps310_पढ़ो_temp_पढ़ोy(data);
+	rc = dps310_read_temp_ready(data);
 
-करोne:
+done:
 	mutex_unlock(&data->lock);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल bool dps310_is_ग_लिखोable_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल DPS310_PRS_CFG:
-	हाल DPS310_TMP_CFG:
-	हाल DPS310_MEAS_CFG:
-	हाल DPS310_CFG_REG:
-	हाल DPS310_RESET:
-	/* No करोcumentation available on the रेजिस्टरs below */
-	हाल 0x0e:
-	हाल 0x0f:
-	हाल 0x62:
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool dps310_is_writeable_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case DPS310_PRS_CFG:
+	case DPS310_TMP_CFG:
+	case DPS310_MEAS_CFG:
+	case DPS310_CFG_REG:
+	case DPS310_RESET:
+	/* No documentation available on the registers below */
+	case 0x0e:
+	case 0x0f:
+	case 0x62:
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल bool dps310_is_अस्थिर_reg(काष्ठा device *dev, अचिन्हित पूर्णांक reg)
-अणु
-	चयन (reg) अणु
-	हाल DPS310_PRS_B0:
-	हाल DPS310_PRS_B1:
-	हाल DPS310_PRS_B2:
-	हाल DPS310_TMP_B0:
-	हाल DPS310_TMP_B1:
-	हाल DPS310_TMP_B2:
-	हाल DPS310_MEAS_CFG:
-	हाल 0x32:	/* No करोcumentation available on this रेजिस्टर */
-		वापस true;
-	शेष:
-		वापस false;
-	पूर्ण
-पूर्ण
+static bool dps310_is_volatile_reg(struct device *dev, unsigned int reg)
+{
+	switch (reg) {
+	case DPS310_PRS_B0:
+	case DPS310_PRS_B1:
+	case DPS310_PRS_B2:
+	case DPS310_TMP_B0:
+	case DPS310_TMP_B1:
+	case DPS310_TMP_B2:
+	case DPS310_MEAS_CFG:
+	case 0x32:	/* No documentation available on this register */
+		return true;
+	default:
+		return false;
+	}
+}
 
-अटल पूर्णांक dps310_ग_लिखो_raw(काष्ठा iio_dev *iio,
-			    काष्ठा iio_chan_spec स्थिर *chan, पूर्णांक val,
-			    पूर्णांक val2, दीर्घ mask)
-अणु
-	पूर्णांक rc;
-	काष्ठा dps310_data *data = iio_priv(iio);
+static int dps310_write_raw(struct iio_dev *iio,
+			    struct iio_chan_spec const *chan, int val,
+			    int val2, long mask)
+{
+	int rc;
+	struct dps310_data *data = iio_priv(iio);
 
-	अगर (mutex_lock_पूर्णांकerruptible(&data->lock))
-		वापस -EINTR;
+	if (mutex_lock_interruptible(&data->lock))
+		return -EINTR;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_SAMP_FREQ:
-		चयन (chan->type) अणु
-		हाल IIO_PRESSURE:
+	switch (mask) {
+	case IIO_CHAN_INFO_SAMP_FREQ:
+		switch (chan->type) {
+		case IIO_PRESSURE:
 			rc = dps310_set_pres_samp_freq(data, val);
-			अवरोध;
+			break;
 
-		हाल IIO_TEMP:
+		case IIO_TEMP:
 			rc = dps310_set_temp_samp_freq(data, val);
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			rc = -EINVAL;
-			अवरोध;
-		पूर्ण
-		अवरोध;
+			break;
+		}
+		break;
 
-	हाल IIO_CHAN_INFO_OVERSAMPLING_RATIO:
-		चयन (chan->type) अणु
-		हाल IIO_PRESSURE:
+	case IIO_CHAN_INFO_OVERSAMPLING_RATIO:
+		switch (chan->type) {
+		case IIO_PRESSURE:
 			rc = dps310_set_pres_precision(data, val);
-			अवरोध;
+			break;
 
-		हाल IIO_TEMP:
+		case IIO_TEMP:
 			rc = dps310_set_temp_precision(data, val);
-			अवरोध;
+			break;
 
-		शेष:
+		default:
 			rc = -EINVAL;
-			अवरोध;
-		पूर्ण
-		अवरोध;
+			break;
+		}
+		break;
 
-	शेष:
+	default:
 		rc = -EINVAL;
-		अवरोध;
-	पूर्ण
+		break;
+	}
 
 	mutex_unlock(&data->lock);
-	वापस rc;
-पूर्ण
+	return rc;
+}
 
-अटल पूर्णांक dps310_calculate_pressure(काष्ठा dps310_data *data)
-अणु
-	पूर्णांक i;
-	पूर्णांक rc;
-	पूर्णांक t_पढ़ोy;
-	पूर्णांक kpi = dps310_get_pres_k(data);
-	पूर्णांक kti = dps310_get_temp_k(data);
+static int dps310_calculate_pressure(struct dps310_data *data)
+{
+	int i;
+	int rc;
+	int t_ready;
+	int kpi = dps310_get_pres_k(data);
+	int kti = dps310_get_temp_k(data);
 	s64 rem = 0ULL;
 	s64 pressure = 0ULL;
 	s64 p;
@@ -480,28 +479,28 @@
 	s64 kp;
 	s64 kt;
 
-	अगर (kpi < 0)
-		वापस kpi;
+	if (kpi < 0)
+		return kpi;
 
-	अगर (kti < 0)
-		वापस kti;
+	if (kti < 0)
+		return kti;
 
 	kp = (s64)kpi;
 	kt = (s64)kti;
 
-	/* Refresh temp अगर it's पढ़ोy, otherwise just use the latest value */
-	अगर (mutex_trylock(&data->lock)) अणु
-		rc = regmap_पढ़ो(data->regmap, DPS310_MEAS_CFG, &t_पढ़ोy);
-		अगर (rc >= 0 && t_पढ़ोy & DPS310_TMP_RDY)
-			dps310_पढ़ो_temp_पढ़ोy(data);
+	/* Refresh temp if it's ready, otherwise just use the latest value */
+	if (mutex_trylock(&data->lock)) {
+		rc = regmap_read(data->regmap, DPS310_MEAS_CFG, &t_ready);
+		if (rc >= 0 && t_ready & DPS310_TMP_RDY)
+			dps310_read_temp_ready(data);
 
 		mutex_unlock(&data->lock);
-	पूर्ण
+	}
 
 	p = (s64)data->pressure_raw;
 	t = (s64)data->temp_raw;
 
-	/* Section 4.9.1 of the DPS310 spec; algebra'd to aव्योम underflow */
+	/* Section 4.9.1 of the DPS310 spec; algebra'd to avoid underflow */
 	nums[0] = (s64)data->c00;
 	denoms[0] = 1LL;
 	nums[1] = p * (s64)data->c10;
@@ -517,217 +516,217 @@
 	nums[6] = t * p * p * (s64)data->c21;
 	denoms[6] = kp * kp * kt;
 
-	/* Kernel lacks a भाग64_s64_rem function; denoms are all positive */
-	क्रम (i = 0; i < 7; ++i) अणु
+	/* Kernel lacks a div64_s64_rem function; denoms are all positive */
+	for (i = 0; i < 7; ++i) {
 		u64 irem;
 
-		अगर (nums[i] < 0LL) अणु
-			pressure -= भाग64_u64_rem(-nums[i], denoms[i], &irem);
+		if (nums[i] < 0LL) {
+			pressure -= div64_u64_rem(-nums[i], denoms[i], &irem);
 			rems[i] = -irem;
-		पूर्ण अन्यथा अणु
-			pressure += भाग64_u64_rem(nums[i], denoms[i], &irem);
+		} else {
+			pressure += div64_u64_rem(nums[i], denoms[i], &irem);
 			rems[i] = (s64)irem;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	/* Increase precision and calculate the reमुख्यder sum */
-	क्रम (i = 0; i < 7; ++i)
-		rem += भाग64_s64((s64)rems[i] * 1000000000LL, denoms[i]);
+	/* Increase precision and calculate the remainder sum */
+	for (i = 0; i < 7; ++i)
+		rem += div64_s64((s64)rems[i] * 1000000000LL, denoms[i]);
 
-	pressure += भाग_s64(rem, 1000000000LL);
-	अगर (pressure < 0LL)
-		वापस -दुस्फल;
+	pressure += div_s64(rem, 1000000000LL);
+	if (pressure < 0LL)
+		return -ERANGE;
 
-	वापस (पूर्णांक)min_t(s64, pressure, पूर्णांक_उच्च);
-पूर्ण
+	return (int)min_t(s64, pressure, INT_MAX);
+}
 
-अटल पूर्णांक dps310_पढ़ो_pressure(काष्ठा dps310_data *data, पूर्णांक *val, पूर्णांक *val2,
-				दीर्घ mask)
-अणु
-	पूर्णांक rc;
+static int dps310_read_pressure(struct dps310_data *data, int *val, int *val2,
+				long mask)
+{
+	int rc;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_SAMP_FREQ:
+	switch (mask) {
+	case IIO_CHAN_INFO_SAMP_FREQ:
 		rc = dps310_get_pres_samp_freq(data);
-		अगर (rc < 0)
-			वापस rc;
+		if (rc < 0)
+			return rc;
 
 		*val = rc;
-		वापस IIO_VAL_INT;
+		return IIO_VAL_INT;
 
-	हाल IIO_CHAN_INFO_PROCESSED:
-		rc = dps310_पढ़ो_pres_raw(data);
-		अगर (rc)
-			वापस rc;
+	case IIO_CHAN_INFO_PROCESSED:
+		rc = dps310_read_pres_raw(data);
+		if (rc)
+			return rc;
 
 		rc = dps310_calculate_pressure(data);
-		अगर (rc < 0)
-			वापस rc;
+		if (rc < 0)
+			return rc;
 
 		*val = rc;
 		*val2 = 1000; /* Convert Pa to KPa per IIO ABI */
-		वापस IIO_VAL_FRACTIONAL;
+		return IIO_VAL_FRACTIONAL;
 
-	हाल IIO_CHAN_INFO_OVERSAMPLING_RATIO:
+	case IIO_CHAN_INFO_OVERSAMPLING_RATIO:
 		rc = dps310_get_pres_precision(data);
-		अगर (rc < 0)
-			वापस rc;
+		if (rc < 0)
+			return rc;
 
 		*val = rc;
-		वापस IIO_VAL_INT;
+		return IIO_VAL_INT;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक dps310_calculate_temp(काष्ठा dps310_data *data)
-अणु
+static int dps310_calculate_temp(struct dps310_data *data)
+{
 	s64 c0;
 	s64 t;
-	पूर्णांक kt = dps310_get_temp_k(data);
+	int kt = dps310_get_temp_k(data);
 
-	अगर (kt < 0)
-		वापस kt;
+	if (kt < 0)
+		return kt;
 
 	/* Obtain inverse-scaled offset */
-	c0 = भाग_s64((s64)kt * (s64)data->c0, 2);
+	c0 = div_s64((s64)kt * (s64)data->c0, 2);
 
 	/* Add the offset to the unscaled temperature */
 	t = c0 + ((s64)data->temp_raw * (s64)data->c1);
 
 	/* Convert to milliCelsius and scale the temperature */
-	वापस (पूर्णांक)भाग_s64(t * 1000LL, kt);
-पूर्ण
+	return (int)div_s64(t * 1000LL, kt);
+}
 
-अटल पूर्णांक dps310_पढ़ो_temp(काष्ठा dps310_data *data, पूर्णांक *val, पूर्णांक *val2,
-			    दीर्घ mask)
-अणु
-	पूर्णांक rc;
+static int dps310_read_temp(struct dps310_data *data, int *val, int *val2,
+			    long mask)
+{
+	int rc;
 
-	चयन (mask) अणु
-	हाल IIO_CHAN_INFO_SAMP_FREQ:
+	switch (mask) {
+	case IIO_CHAN_INFO_SAMP_FREQ:
 		rc = dps310_get_temp_samp_freq(data);
-		अगर (rc < 0)
-			वापस rc;
+		if (rc < 0)
+			return rc;
 
 		*val = rc;
-		वापस IIO_VAL_INT;
+		return IIO_VAL_INT;
 
-	हाल IIO_CHAN_INFO_PROCESSED:
-		rc = dps310_पढ़ो_temp_raw(data);
-		अगर (rc)
-			वापस rc;
+	case IIO_CHAN_INFO_PROCESSED:
+		rc = dps310_read_temp_raw(data);
+		if (rc)
+			return rc;
 
 		rc = dps310_calculate_temp(data);
-		अगर (rc < 0)
-			वापस rc;
+		if (rc < 0)
+			return rc;
 
 		*val = rc;
-		वापस IIO_VAL_INT;
+		return IIO_VAL_INT;
 
-	हाल IIO_CHAN_INFO_OVERSAMPLING_RATIO:
+	case IIO_CHAN_INFO_OVERSAMPLING_RATIO:
 		rc = dps310_get_temp_precision(data);
-		अगर (rc < 0)
-			वापस rc;
+		if (rc < 0)
+			return rc;
 
 		*val = rc;
-		वापस IIO_VAL_INT;
+		return IIO_VAL_INT;
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल पूर्णांक dps310_पढ़ो_raw(काष्ठा iio_dev *iio,
-			   काष्ठा iio_chan_spec स्थिर *chan,
-			   पूर्णांक *val, पूर्णांक *val2, दीर्घ mask)
-अणु
-	काष्ठा dps310_data *data = iio_priv(iio);
+static int dps310_read_raw(struct iio_dev *iio,
+			   struct iio_chan_spec const *chan,
+			   int *val, int *val2, long mask)
+{
+	struct dps310_data *data = iio_priv(iio);
 
-	चयन (chan->type) अणु
-	हाल IIO_PRESSURE:
-		वापस dps310_पढ़ो_pressure(data, val, val2, mask);
+	switch (chan->type) {
+	case IIO_PRESSURE:
+		return dps310_read_pressure(data, val, val2, mask);
 
-	हाल IIO_TEMP:
-		वापस dps310_पढ़ो_temp(data, val, val2, mask);
+	case IIO_TEMP:
+		return dps310_read_temp(data, val, val2, mask);
 
-	शेष:
-		वापस -EINVAL;
-	पूर्ण
-पूर्ण
+	default:
+		return -EINVAL;
+	}
+}
 
-अटल व्योम dps310_reset(व्योम *action_data)
-अणु
-	काष्ठा dps310_data *data = action_data;
+static void dps310_reset(void *action_data)
+{
+	struct dps310_data *data = action_data;
 
-	regmap_ग_लिखो(data->regmap, DPS310_RESET, DPS310_RESET_MAGIC);
-पूर्ण
+	regmap_write(data->regmap, DPS310_RESET, DPS310_RESET_MAGIC);
+}
 
-अटल स्थिर काष्ठा regmap_config dps310_regmap_config = अणु
+static const struct regmap_config dps310_regmap_config = {
 	.reg_bits = 8,
 	.val_bits = 8,
-	.ग_लिखोable_reg = dps310_is_ग_लिखोable_reg,
-	.अस्थिर_reg = dps310_is_अस्थिर_reg,
+	.writeable_reg = dps310_is_writeable_reg,
+	.volatile_reg = dps310_is_volatile_reg,
 	.cache_type = REGCACHE_RBTREE,
-	.max_रेजिस्टर = 0x62, /* No करोcumentation available on this रेजिस्टर */
-पूर्ण;
+	.max_register = 0x62, /* No documentation available on this register */
+};
 
-अटल स्थिर काष्ठा iio_info dps310_info = अणु
-	.पढ़ो_raw = dps310_पढ़ो_raw,
-	.ग_लिखो_raw = dps310_ग_लिखो_raw,
-पूर्ण;
+static const struct iio_info dps310_info = {
+	.read_raw = dps310_read_raw,
+	.write_raw = dps310_write_raw,
+};
 
 /*
- * Some verions of chip will पढ़ो temperatures in the ~60C range when
+ * Some verions of chip will read temperatures in the ~60C range when
  * its actually ~20C. This is the manufacturer recommended workaround
- * to correct the issue. The रेजिस्टरs used below are unकरोcumented.
+ * to correct the issue. The registers used below are undocumented.
  */
-अटल पूर्णांक dps310_temp_workaround(काष्ठा dps310_data *data)
-अणु
-	पूर्णांक rc;
-	पूर्णांक reg;
+static int dps310_temp_workaround(struct dps310_data *data)
+{
+	int rc;
+	int reg;
 
-	rc = regmap_पढ़ो(data->regmap, 0x32, &reg);
-	अगर (rc < 0)
-		वापस rc;
+	rc = regmap_read(data->regmap, 0x32, &reg);
+	if (rc < 0)
+		return rc;
 
 	/*
-	 * If bit 1 is set then the device is okay, and the workaround करोes not
+	 * If bit 1 is set then the device is okay, and the workaround does not
 	 * need to be applied
 	 */
-	अगर (reg & BIT(1))
-		वापस 0;
+	if (reg & BIT(1))
+		return 0;
 
-	rc = regmap_ग_लिखो(data->regmap, 0x0e, 0xA5);
-	अगर (rc < 0)
-		वापस rc;
+	rc = regmap_write(data->regmap, 0x0e, 0xA5);
+	if (rc < 0)
+		return rc;
 
-	rc = regmap_ग_लिखो(data->regmap, 0x0f, 0x96);
-	अगर (rc < 0)
-		वापस rc;
+	rc = regmap_write(data->regmap, 0x0f, 0x96);
+	if (rc < 0)
+		return rc;
 
-	rc = regmap_ग_लिखो(data->regmap, 0x62, 0x02);
-	अगर (rc < 0)
-		वापस rc;
+	rc = regmap_write(data->regmap, 0x62, 0x02);
+	if (rc < 0)
+		return rc;
 
-	rc = regmap_ग_लिखो(data->regmap, 0x0e, 0x00);
-	अगर (rc < 0)
-		वापस rc;
+	rc = regmap_write(data->regmap, 0x0e, 0x00);
+	if (rc < 0)
+		return rc;
 
-	वापस regmap_ग_लिखो(data->regmap, 0x0f, 0x00);
-पूर्ण
+	return regmap_write(data->regmap, 0x0f, 0x00);
+}
 
-अटल पूर्णांक dps310_probe(काष्ठा i2c_client *client,
-			स्थिर काष्ठा i2c_device_id *id)
-अणु
-	काष्ठा dps310_data *data;
-	काष्ठा iio_dev *iio;
-	पूर्णांक rc, पढ़ोy;
+static int dps310_probe(struct i2c_client *client,
+			const struct i2c_device_id *id)
+{
+	struct dps310_data *data;
+	struct iio_dev *iio;
+	int rc, ready;
 
-	iio = devm_iio_device_alloc(&client->dev,  माप(*data));
-	अगर (!iio)
-		वापस -ENOMEM;
+	iio = devm_iio_device_alloc(&client->dev,  sizeof(*data));
+	if (!iio)
+		return -ENOMEM;
 
 	data = iio_priv(iio);
 	data->client = client;
@@ -737,89 +736,89 @@
 	iio->channels = dps310_channels;
 	iio->num_channels = ARRAY_SIZE(dps310_channels);
 	iio->info = &dps310_info;
-	iio->modes = INDIO_सूचीECT_MODE;
+	iio->modes = INDIO_DIRECT_MODE;
 
 	data->regmap = devm_regmap_init_i2c(client, &dps310_regmap_config);
-	अगर (IS_ERR(data->regmap))
-		वापस PTR_ERR(data->regmap);
+	if (IS_ERR(data->regmap))
+		return PTR_ERR(data->regmap);
 
-	/* Register to run the device reset when the device is हटाओd */
+	/* Register to run the device reset when the device is removed */
 	rc = devm_add_action_or_reset(&client->dev, dps310_reset, data);
-	अगर (rc)
-		वापस rc;
+	if (rc)
+		return rc;
 
 	/*
 	 * Set up pressure sensor in single sample, one measurement per second
 	 * mode
 	 */
-	rc = regmap_ग_लिखो(data->regmap, DPS310_PRS_CFG, 0);
+	rc = regmap_write(data->regmap, DPS310_PRS_CFG, 0);
 
 	/*
-	 * Set up बाह्यal (MEMS) temperature sensor in single sample, one
+	 * Set up external (MEMS) temperature sensor in single sample, one
 	 * measurement per second mode
 	 */
-	rc = regmap_ग_लिखो(data->regmap, DPS310_TMP_CFG, DPS310_TMP_EXT);
-	अगर (rc < 0)
-		वापस rc;
+	rc = regmap_write(data->regmap, DPS310_TMP_CFG, DPS310_TMP_EXT);
+	if (rc < 0)
+		return rc;
 
-	/* Temp and pressure shअगरts are disabled when PRC <= 8 */
-	rc = regmap_ग_लिखो_bits(data->regmap, DPS310_CFG_REG,
+	/* Temp and pressure shifts are disabled when PRC <= 8 */
+	rc = regmap_write_bits(data->regmap, DPS310_CFG_REG,
 			       DPS310_PRS_SHIFT_EN | DPS310_TMP_SHIFT_EN, 0);
-	अगर (rc < 0)
-		वापस rc;
+	if (rc < 0)
+		return rc;
 
-	/* MEAS_CFG करोesn't update correctly unless first written with 0 */
-	rc = regmap_ग_लिखो_bits(data->regmap, DPS310_MEAS_CFG,
+	/* MEAS_CFG doesn't update correctly unless first written with 0 */
+	rc = regmap_write_bits(data->regmap, DPS310_MEAS_CFG,
 			       DPS310_MEAS_CTRL_BITS, 0);
-	अगर (rc < 0)
-		वापस rc;
+	if (rc < 0)
+		return rc;
 
 	/* Turn on temperature and pressure measurement in the background */
-	rc = regmap_ग_लिखो_bits(data->regmap, DPS310_MEAS_CFG,
+	rc = regmap_write_bits(data->regmap, DPS310_MEAS_CFG,
 			       DPS310_MEAS_CTRL_BITS, DPS310_PRS_EN |
 			       DPS310_TEMP_EN | DPS310_BACKGROUND);
-	अगर (rc < 0)
-		वापस rc;
+	if (rc < 0)
+		return rc;
 
 	/*
-	 * Calibration coefficients required क्रम reporting temperature.
+	 * Calibration coefficients required for reporting temperature.
 	 * They are available 40ms after the device has started
 	 */
-	rc = regmap_पढ़ो_poll_समयout(data->regmap, DPS310_MEAS_CFG, पढ़ोy,
-				      पढ़ोy & DPS310_COEF_RDY, 10000, 40000);
-	अगर (rc < 0)
-		वापस rc;
+	rc = regmap_read_poll_timeout(data->regmap, DPS310_MEAS_CFG, ready,
+				      ready & DPS310_COEF_RDY, 10000, 40000);
+	if (rc < 0)
+		return rc;
 
 	rc = dps310_get_coefs(data);
-	अगर (rc < 0)
-		वापस rc;
+	if (rc < 0)
+		return rc;
 
 	rc = dps310_temp_workaround(data);
-	अगर (rc < 0)
-		वापस rc;
+	if (rc < 0)
+		return rc;
 
-	rc = devm_iio_device_रेजिस्टर(&client->dev, iio);
-	अगर (rc)
-		वापस rc;
+	rc = devm_iio_device_register(&client->dev, iio);
+	if (rc)
+		return rc;
 
 	i2c_set_clientdata(client, iio);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा i2c_device_id dps310_id[] = अणु
-	अणु DPS310_DEV_NAME, 0 पूर्ण,
-	अणुपूर्ण
-पूर्ण;
+static const struct i2c_device_id dps310_id[] = {
+	{ DPS310_DEV_NAME, 0 },
+	{}
+};
 MODULE_DEVICE_TABLE(i2c, dps310_id);
 
-अटल काष्ठा i2c_driver dps310_driver = अणु
-	.driver = अणु
+static struct i2c_driver dps310_driver = {
+	.driver = {
 		.name = DPS310_DEV_NAME,
-	पूर्ण,
+	},
 	.probe = dps310_probe,
 	.id_table = dps310_id,
-पूर्ण;
+};
 module_i2c_driver(dps310_driver);
 
 MODULE_AUTHOR("Joel Stanley <joel@jms.id.au>");

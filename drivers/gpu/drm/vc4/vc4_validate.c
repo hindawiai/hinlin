@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2014 Broadcom
+ * Copyright © 2014 Broadcom
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -23,12 +22,12 @@
  */
 
 /**
- * DOC: Command list validator क्रम VC4.
+ * DOC: Command list validator for VC4.
  *
- * Since the VC4 has no IOMMU between it and प्रणाली memory, a user
+ * Since the VC4 has no IOMMU between it and system memory, a user
  * with access to execute command lists could escalate privilege by
- * overwriting प्रणाली memory (drawing to it as a framebuffer) or
- * पढ़ोing प्रणाली memory it shouldn't (पढ़ोing it as a vertex buffer
+ * overwriting system memory (drawing to it as a framebuffer) or
+ * reading system memory it shouldn't (reading it as a vertex buffer
  * or index buffer)
  *
  * We validate binner command lists to ensure that all accesses are
@@ -37,56 +36,56 @@
  * any address fields to make sure they're contained within the BOs
  * they reference.
  *
- * Note that because CL validation is alपढ़ोy पढ़ोing the
+ * Note that because CL validation is already reading the
  * user-submitted CL and writing the validated copy out to the memory
- * that the GPU will actually पढ़ो, this is also where GEM relocation
- * processing (turning BO references पूर्णांकo actual addresses क्रम the GPU
+ * that the GPU will actually read, this is also where GEM relocation
+ * processing (turning BO references into actual addresses for the GPU
  * to use) happens.
  */
 
-#समावेश "uapi/drm/vc4_drm.h"
-#समावेश "vc4_drv.h"
-#समावेश "vc4_packet.h"
+#include "uapi/drm/vc4_drm.h"
+#include "vc4_drv.h"
+#include "vc4_packet.h"
 
-#घोषणा VALIDATE_ARGS \
-	काष्ठा vc4_exec_info *exec,			\
-	व्योम *validated,				\
-	व्योम *untrusted
+#define VALIDATE_ARGS \
+	struct vc4_exec_info *exec,			\
+	void *validated,				\
+	void *untrusted
 
 /** Return the width in pixels of a 64-byte microtile. */
-अटल uपूर्णांक32_t
-utile_width(पूर्णांक cpp)
-अणु
-	चयन (cpp) अणु
-	हाल 1:
-	हाल 2:
-		वापस 8;
-	हाल 4:
-		वापस 4;
-	हाल 8:
-		वापस 2;
-	शेष:
+static uint32_t
+utile_width(int cpp)
+{
+	switch (cpp) {
+	case 1:
+	case 2:
+		return 8;
+	case 4:
+		return 4;
+	case 8:
+		return 2;
+	default:
 		DRM_ERROR("unknown cpp: %d\n", cpp);
-		वापस 1;
-	पूर्ण
-पूर्ण
+		return 1;
+	}
+}
 
 /** Return the height in pixels of a 64-byte microtile. */
-अटल uपूर्णांक32_t
-utile_height(पूर्णांक cpp)
-अणु
-	चयन (cpp) अणु
-	हाल 1:
-		वापस 8;
-	हाल 2:
-	हाल 4:
-	हाल 8:
-		वापस 4;
-	शेष:
+static uint32_t
+utile_height(int cpp)
+{
+	switch (cpp) {
+	case 1:
+		return 8;
+	case 2:
+	case 4:
+	case 8:
+		return 4;
+	default:
 		DRM_ERROR("unknown cpp: %d\n", cpp);
-		वापस 1;
-	पूर्ण
-पूर्ण
+		return 1;
+	}
+}
 
 /**
  * size_is_lt() - Returns whether a miplevel of the given size will
@@ -94,303 +93,303 @@ utile_height(पूर्णांक cpp)
  * tiling layout.
  * @width: Width in pixels of the miplevel
  * @height: Height in pixels of the miplevel
- * @cpp: Bytes per pixel of the pixel क्रमmat
+ * @cpp: Bytes per pixel of the pixel format
  */
-अटल bool
-size_is_lt(uपूर्णांक32_t width, uपूर्णांक32_t height, पूर्णांक cpp)
-अणु
-	वापस (width <= 4 * utile_width(cpp) ||
+static bool
+size_is_lt(uint32_t width, uint32_t height, int cpp)
+{
+	return (width <= 4 * utile_width(cpp) ||
 		height <= 4 * utile_height(cpp));
-पूर्ण
+}
 
-काष्ठा drm_gem_cma_object *
-vc4_use_bo(काष्ठा vc4_exec_info *exec, uपूर्णांक32_t hindex)
-अणु
-	काष्ठा drm_gem_cma_object *obj;
-	काष्ठा vc4_bo *bo;
+struct drm_gem_cma_object *
+vc4_use_bo(struct vc4_exec_info *exec, uint32_t hindex)
+{
+	struct drm_gem_cma_object *obj;
+	struct vc4_bo *bo;
 
-	अगर (hindex >= exec->bo_count) अणु
+	if (hindex >= exec->bo_count) {
 		DRM_DEBUG("BO index %d greater than BO count %d\n",
 			  hindex, exec->bo_count);
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 	obj = exec->bo[hindex];
 	bo = to_vc4_bo(&obj->base);
 
-	अगर (bo->validated_shader) अणु
+	if (bo->validated_shader) {
 		DRM_DEBUG("Trying to use shader BO as something other than "
 			  "a shader\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
-	वापस obj;
-पूर्ण
+	return obj;
+}
 
-अटल काष्ठा drm_gem_cma_object *
-vc4_use_handle(काष्ठा vc4_exec_info *exec, uपूर्णांक32_t gem_handles_packet_index)
-अणु
-	वापस vc4_use_bo(exec, exec->bo_index[gem_handles_packet_index]);
-पूर्ण
+static struct drm_gem_cma_object *
+vc4_use_handle(struct vc4_exec_info *exec, uint32_t gem_handles_packet_index)
+{
+	return vc4_use_bo(exec, exec->bo_index[gem_handles_packet_index]);
+}
 
-अटल bool
-validate_bin_pos(काष्ठा vc4_exec_info *exec, व्योम *untrusted, uपूर्णांक32_t pos)
-अणु
-	/* Note that the untrusted poपूर्णांकer passed to these functions is
+static bool
+validate_bin_pos(struct vc4_exec_info *exec, void *untrusted, uint32_t pos)
+{
+	/* Note that the untrusted pointer passed to these functions is
 	 * incremented past the packet byte.
 	 */
-	वापस (untrusted - 1 == exec->bin_u + pos);
-पूर्ण
+	return (untrusted - 1 == exec->bin_u + pos);
+}
 
-अटल uपूर्णांक32_t
-gl_shader_rec_size(uपूर्णांक32_t poपूर्णांकer_bits)
-अणु
-	uपूर्णांक32_t attribute_count = poपूर्णांकer_bits & 7;
-	bool extended = poपूर्णांकer_bits & 8;
+static uint32_t
+gl_shader_rec_size(uint32_t pointer_bits)
+{
+	uint32_t attribute_count = pointer_bits & 7;
+	bool extended = pointer_bits & 8;
 
-	अगर (attribute_count == 0)
+	if (attribute_count == 0)
 		attribute_count = 8;
 
-	अगर (extended)
-		वापस 100 + attribute_count * 4;
-	अन्यथा
-		वापस 36 + attribute_count * 8;
-पूर्ण
+	if (extended)
+		return 100 + attribute_count * 4;
+	else
+		return 36 + attribute_count * 8;
+}
 
 bool
-vc4_check_tex_size(काष्ठा vc4_exec_info *exec, काष्ठा drm_gem_cma_object *fbo,
-		   uपूर्णांक32_t offset, uपूर्णांक8_t tiling_क्रमmat,
-		   uपूर्णांक32_t width, uपूर्णांक32_t height, uपूर्णांक8_t cpp)
-अणु
-	uपूर्णांक32_t aligned_width, aligned_height, stride, size;
-	uपूर्णांक32_t utile_w = utile_width(cpp);
-	uपूर्णांक32_t utile_h = utile_height(cpp);
+vc4_check_tex_size(struct vc4_exec_info *exec, struct drm_gem_cma_object *fbo,
+		   uint32_t offset, uint8_t tiling_format,
+		   uint32_t width, uint32_t height, uint8_t cpp)
+{
+	uint32_t aligned_width, aligned_height, stride, size;
+	uint32_t utile_w = utile_width(cpp);
+	uint32_t utile_h = utile_height(cpp);
 
-	/* The shaded vertex क्रमmat stores चिन्हित 12.4 fixed poपूर्णांक
+	/* The shaded vertex format stores signed 12.4 fixed point
 	 * (-2048,2047) offsets from the viewport center, so we should
 	 * never have a render target larger than 4096.  The texture
 	 * unit can only sample from 2048x2048, so it's even more
-	 * restricted.  This lets us aव्योम worrying about overflow in
+	 * restricted.  This lets us avoid worrying about overflow in
 	 * our math.
 	 */
-	अगर (width > 4096 || height > 4096) अणु
+	if (width > 4096 || height > 4096) {
 		DRM_DEBUG("Surface dimensions (%d,%d) too large",
 			  width, height);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	चयन (tiling_क्रमmat) अणु
-	हाल VC4_TILING_FORMAT_LINEAR:
+	switch (tiling_format) {
+	case VC4_TILING_FORMAT_LINEAR:
 		aligned_width = round_up(width, utile_w);
 		aligned_height = height;
-		अवरोध;
-	हाल VC4_TILING_FORMAT_T:
+		break;
+	case VC4_TILING_FORMAT_T:
 		aligned_width = round_up(width, utile_w * 8);
 		aligned_height = round_up(height, utile_h * 8);
-		अवरोध;
-	हाल VC4_TILING_FORMAT_LT:
+		break;
+	case VC4_TILING_FORMAT_LT:
 		aligned_width = round_up(width, utile_w);
 		aligned_height = round_up(height, utile_h);
-		अवरोध;
-	शेष:
-		DRM_DEBUG("buffer tiling %d unsupported\n", tiling_क्रमmat);
-		वापस false;
-	पूर्ण
+		break;
+	default:
+		DRM_DEBUG("buffer tiling %d unsupported\n", tiling_format);
+		return false;
+	}
 
 	stride = aligned_width * cpp;
 	size = stride * aligned_height;
 
-	अगर (size + offset < size ||
-	    size + offset > fbo->base.size) अणु
+	if (size + offset < size ||
+	    size + offset > fbo->base.size) {
 		DRM_DEBUG("Overflow in %dx%d (%dx%d) fbo size (%d + %d > %zd)\n",
 			  width, height,
 			  aligned_width, aligned_height,
 			  size, offset, fbo->base.size);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक
+static int
 validate_flush(VALIDATE_ARGS)
-अणु
-	अगर (!validate_bin_pos(exec, untrusted, exec->args->bin_cl_size - 1)) अणु
+{
+	if (!validate_bin_pos(exec, untrusted, exec->args->bin_cl_size - 1)) {
 		DRM_DEBUG("Bin CL must end with VC4_PACKET_FLUSH\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	exec->found_flush = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
+static int
 validate_start_tile_binning(VALIDATE_ARGS)
-अणु
-	अगर (exec->found_start_tile_binning_packet) अणु
+{
+	if (exec->found_start_tile_binning_packet) {
 		DRM_DEBUG("Duplicate VC4_PACKET_START_TILE_BINNING\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	exec->found_start_tile_binning_packet = true;
 
-	अगर (!exec->found_tile_binning_mode_config_packet) अणु
+	if (!exec->found_tile_binning_mode_config_packet) {
 		DRM_DEBUG("missing VC4_PACKET_TILE_BINNING_MODE_CONFIG\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
+static int
 validate_increment_semaphore(VALIDATE_ARGS)
-अणु
-	अगर (!validate_bin_pos(exec, untrusted, exec->args->bin_cl_size - 2)) अणु
+{
+	if (!validate_bin_pos(exec, untrusted, exec->args->bin_cl_size - 2)) {
 		DRM_DEBUG("Bin CL must end with "
 			  "VC4_PACKET_INCREMENT_SEMAPHORE\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	exec->found_increment_semaphore_packet = true;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
+static int
 validate_indexed_prim_list(VALIDATE_ARGS)
-अणु
-	काष्ठा drm_gem_cma_object *ib;
-	uपूर्णांक32_t length = *(uपूर्णांक32_t *)(untrusted + 1);
-	uपूर्णांक32_t offset = *(uपूर्णांक32_t *)(untrusted + 5);
-	uपूर्णांक32_t max_index = *(uपूर्णांक32_t *)(untrusted + 9);
-	uपूर्णांक32_t index_size = (*(uपूर्णांक8_t *)(untrusted + 0) >> 4) ? 2 : 1;
-	काष्ठा vc4_shader_state *shader_state;
+{
+	struct drm_gem_cma_object *ib;
+	uint32_t length = *(uint32_t *)(untrusted + 1);
+	uint32_t offset = *(uint32_t *)(untrusted + 5);
+	uint32_t max_index = *(uint32_t *)(untrusted + 9);
+	uint32_t index_size = (*(uint8_t *)(untrusted + 0) >> 4) ? 2 : 1;
+	struct vc4_shader_state *shader_state;
 
 	/* Check overflow condition */
-	अगर (exec->shader_state_count == 0) अणु
+	if (exec->shader_state_count == 0) {
 		DRM_DEBUG("shader state must precede primitives\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	shader_state = &exec->shader_state[exec->shader_state_count - 1];
 
-	अगर (max_index > shader_state->max_index)
+	if (max_index > shader_state->max_index)
 		shader_state->max_index = max_index;
 
 	ib = vc4_use_handle(exec, 0);
-	अगर (!ib)
-		वापस -EINVAL;
+	if (!ib)
+		return -EINVAL;
 
 	exec->bin_dep_seqno = max(exec->bin_dep_seqno,
-				  to_vc4_bo(&ib->base)->ग_लिखो_seqno);
+				  to_vc4_bo(&ib->base)->write_seqno);
 
-	अगर (offset > ib->base.size ||
-	    (ib->base.size - offset) / index_size < length) अणु
+	if (offset > ib->base.size ||
+	    (ib->base.size - offset) / index_size < length) {
 		DRM_DEBUG("IB access overflow (%d + %d*%d > %zd)\n",
 			  offset, length, index_size, ib->base.size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	*(uपूर्णांक32_t *)(validated + 5) = ib->paddr + offset;
+	*(uint32_t *)(validated + 5) = ib->paddr + offset;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
+static int
 validate_gl_array_primitive(VALIDATE_ARGS)
-अणु
-	uपूर्णांक32_t length = *(uपूर्णांक32_t *)(untrusted + 1);
-	uपूर्णांक32_t base_index = *(uपूर्णांक32_t *)(untrusted + 5);
-	uपूर्णांक32_t max_index;
-	काष्ठा vc4_shader_state *shader_state;
+{
+	uint32_t length = *(uint32_t *)(untrusted + 1);
+	uint32_t base_index = *(uint32_t *)(untrusted + 5);
+	uint32_t max_index;
+	struct vc4_shader_state *shader_state;
 
 	/* Check overflow condition */
-	अगर (exec->shader_state_count == 0) अणु
+	if (exec->shader_state_count == 0) {
 		DRM_DEBUG("shader state must precede primitives\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	shader_state = &exec->shader_state[exec->shader_state_count - 1];
 
-	अगर (length + base_index < length) अणु
+	if (length + base_index < length) {
 		DRM_DEBUG("primitive vertex count overflow\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	max_index = length + base_index - 1;
 
-	अगर (max_index > shader_state->max_index)
+	if (max_index > shader_state->max_index)
 		shader_state->max_index = max_index;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
+static int
 validate_gl_shader_state(VALIDATE_ARGS)
-अणु
-	uपूर्णांक32_t i = exec->shader_state_count++;
+{
+	uint32_t i = exec->shader_state_count++;
 
-	अगर (i >= exec->shader_state_size) अणु
+	if (i >= exec->shader_state_size) {
 		DRM_DEBUG("More requests for shader states than declared\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	exec->shader_state[i].addr = *(uपूर्णांक32_t *)untrusted;
+	exec->shader_state[i].addr = *(uint32_t *)untrusted;
 	exec->shader_state[i].max_index = 0;
 
-	अगर (exec->shader_state[i].addr & ~0xf) अणु
+	if (exec->shader_state[i].addr & ~0xf) {
 		DRM_DEBUG("high bits set in GL shader rec reference\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	*(uपूर्णांक32_t *)validated = (exec->shader_rec_p +
+	*(uint32_t *)validated = (exec->shader_rec_p +
 				  exec->shader_state[i].addr);
 
 	exec->shader_rec_p +=
 		roundup(gl_shader_rec_size(exec->shader_state[i].addr), 16);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
+static int
 validate_tile_binning_config(VALIDATE_ARGS)
-अणु
-	काष्ठा drm_device *dev = exec->exec_bo->base.dev;
-	काष्ठा vc4_dev *vc4 = to_vc4_dev(dev);
-	uपूर्णांक8_t flags;
-	uपूर्णांक32_t tile_state_size;
-	uपूर्णांक32_t tile_count, bin_addr;
-	पूर्णांक bin_slot;
+{
+	struct drm_device *dev = exec->exec_bo->base.dev;
+	struct vc4_dev *vc4 = to_vc4_dev(dev);
+	uint8_t flags;
+	uint32_t tile_state_size;
+	uint32_t tile_count, bin_addr;
+	int bin_slot;
 
-	अगर (exec->found_tile_binning_mode_config_packet) अणु
+	if (exec->found_tile_binning_mode_config_packet) {
 		DRM_DEBUG("Duplicate VC4_PACKET_TILE_BINNING_MODE_CONFIG\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	exec->found_tile_binning_mode_config_packet = true;
 
-	exec->bin_tiles_x = *(uपूर्णांक8_t *)(untrusted + 12);
-	exec->bin_tiles_y = *(uपूर्णांक8_t *)(untrusted + 13);
+	exec->bin_tiles_x = *(uint8_t *)(untrusted + 12);
+	exec->bin_tiles_y = *(uint8_t *)(untrusted + 13);
 	tile_count = exec->bin_tiles_x * exec->bin_tiles_y;
-	flags = *(uपूर्णांक8_t *)(untrusted + 14);
+	flags = *(uint8_t *)(untrusted + 14);
 
-	अगर (exec->bin_tiles_x == 0 ||
-	    exec->bin_tiles_y == 0) अणु
+	if (exec->bin_tiles_x == 0 ||
+	    exec->bin_tiles_y == 0) {
 		DRM_DEBUG("Tile binning config of %dx%d too small\n",
 			  exec->bin_tiles_x, exec->bin_tiles_y);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (flags & (VC4_BIN_CONFIG_DB_NON_MS |
-		     VC4_BIN_CONFIG_TILE_BUFFER_64BIT)) अणु
+	if (flags & (VC4_BIN_CONFIG_DB_NON_MS |
+		     VC4_BIN_CONFIG_TILE_BUFFER_64BIT)) {
 		DRM_DEBUG("unsupported binning config flags 0x%02x\n", flags);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	bin_slot = vc4_v3d_get_bin_slot(vc4);
-	अगर (bin_slot < 0) अणु
-		अगर (bin_slot != -EINTR && bin_slot != -ERESTARTSYS) अणु
+	if (bin_slot < 0) {
+		if (bin_slot != -EINTR && bin_slot != -ERESTARTSYS) {
 			DRM_ERROR("Failed to allocate binner memory: %d\n",
 				  bin_slot);
-		पूर्ण
-		वापस bin_slot;
-	पूर्ण
+		}
+		return bin_slot;
+	}
 
 	/* The slot we allocated will only be used by this job, and is
-	 * मुक्त when the job completes rendering.
+	 * free when the job completes rendering.
 	 */
 	exec->bin_slots |= BIT(bin_slot);
 	bin_addr = vc4->bin_bo->base.paddr + bin_slot * vc4->bin_alloc_size;
@@ -403,7 +402,7 @@ validate_tile_binning_config(VALIDATE_ARGS)
 	/* Since the tile alloc array will follow us, align. */
 	exec->tile_alloc_offset = bin_addr + roundup(tile_state_size, 4096);
 
-	*(uपूर्णांक8_t *)(validated + 14) =
+	*(uint8_t *)(validated + 14) =
 		((flags & ~(VC4_BIN_CONFIG_ALLOC_INIT_BLOCK_SIZE_MASK |
 			    VC4_BIN_CONFIG_ALLOC_BLOCK_SIZE_MASK)) |
 		 VC4_BIN_CONFIG_AUTO_INIT_TSDA |
@@ -413,36 +412,36 @@ validate_tile_binning_config(VALIDATE_ARGS)
 			       VC4_BIN_CONFIG_ALLOC_BLOCK_SIZE));
 
 	/* tile alloc address. */
-	*(uपूर्णांक32_t *)(validated + 0) = exec->tile_alloc_offset;
+	*(uint32_t *)(validated + 0) = exec->tile_alloc_offset;
 	/* tile alloc size. */
-	*(uपूर्णांक32_t *)(validated + 4) = (bin_addr + vc4->bin_alloc_size -
+	*(uint32_t *)(validated + 4) = (bin_addr + vc4->bin_alloc_size -
 					exec->tile_alloc_offset);
 	/* tile state address. */
-	*(uपूर्णांक32_t *)(validated + 8) = bin_addr;
+	*(uint32_t *)(validated + 8) = bin_addr;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक
+static int
 validate_gem_handles(VALIDATE_ARGS)
-अणु
-	स_नकल(exec->bo_index, untrusted, माप(exec->bo_index));
-	वापस 0;
-पूर्ण
+{
+	memcpy(exec->bo_index, untrusted, sizeof(exec->bo_index));
+	return 0;
+}
 
-#घोषणा VC4_DEFINE_PACKET(packet, func) \
-	[packet] = अणु packet ## _SIZE, #packet, func पूर्ण
+#define VC4_DEFINE_PACKET(packet, func) \
+	[packet] = { packet ## _SIZE, #packet, func }
 
-अटल स्थिर काष्ठा cmd_info अणु
-	uपूर्णांक16_t len;
-	स्थिर अक्षर *name;
-	पूर्णांक (*func)(काष्ठा vc4_exec_info *exec, व्योम *validated,
-		    व्योम *untrusted);
-पूर्ण cmd_info[] = अणु
-	VC4_DEFINE_PACKET(VC4_PACKET_HALT, शून्य),
-	VC4_DEFINE_PACKET(VC4_PACKET_NOP, शून्य),
+static const struct cmd_info {
+	uint16_t len;
+	const char *name;
+	int (*func)(struct vc4_exec_info *exec, void *validated,
+		    void *untrusted);
+} cmd_info[] = {
+	VC4_DEFINE_PACKET(VC4_PACKET_HALT, NULL),
+	VC4_DEFINE_PACKET(VC4_PACKET_NOP, NULL),
 	VC4_DEFINE_PACKET(VC4_PACKET_FLUSH, validate_flush),
-	VC4_DEFINE_PACKET(VC4_PACKET_FLUSH_ALL, शून्य),
+	VC4_DEFINE_PACKET(VC4_PACKET_FLUSH_ALL, NULL),
 	VC4_DEFINE_PACKET(VC4_PACKET_START_TILE_BINNING,
 			  validate_start_tile_binning),
 	VC4_DEFINE_PACKET(VC4_PACKET_INCREMENT_SEMAPHORE,
@@ -453,336 +452,336 @@ validate_gem_handles(VALIDATE_ARGS)
 	VC4_DEFINE_PACKET(VC4_PACKET_GL_ARRAY_PRIMITIVE,
 			  validate_gl_array_primitive),
 
-	VC4_DEFINE_PACKET(VC4_PACKET_PRIMITIVE_LIST_FORMAT, शून्य),
+	VC4_DEFINE_PACKET(VC4_PACKET_PRIMITIVE_LIST_FORMAT, NULL),
 
 	VC4_DEFINE_PACKET(VC4_PACKET_GL_SHADER_STATE, validate_gl_shader_state),
 
-	VC4_DEFINE_PACKET(VC4_PACKET_CONFIGURATION_BITS, शून्य),
-	VC4_DEFINE_PACKET(VC4_PACKET_FLAT_SHADE_FLAGS, शून्य),
-	VC4_DEFINE_PACKET(VC4_PACKET_POINT_SIZE, शून्य),
-	VC4_DEFINE_PACKET(VC4_PACKET_LINE_WIDTH, शून्य),
-	VC4_DEFINE_PACKET(VC4_PACKET_RHT_X_BOUNDARY, शून्य),
-	VC4_DEFINE_PACKET(VC4_PACKET_DEPTH_OFFSET, शून्य),
-	VC4_DEFINE_PACKET(VC4_PACKET_CLIP_WINDOW, शून्य),
-	VC4_DEFINE_PACKET(VC4_PACKET_VIEWPORT_OFFSET, शून्य),
-	VC4_DEFINE_PACKET(VC4_PACKET_CLIPPER_XY_SCALING, शून्य),
-	/* Note: The करोcs say this was also 105, but it was 106 in the
+	VC4_DEFINE_PACKET(VC4_PACKET_CONFIGURATION_BITS, NULL),
+	VC4_DEFINE_PACKET(VC4_PACKET_FLAT_SHADE_FLAGS, NULL),
+	VC4_DEFINE_PACKET(VC4_PACKET_POINT_SIZE, NULL),
+	VC4_DEFINE_PACKET(VC4_PACKET_LINE_WIDTH, NULL),
+	VC4_DEFINE_PACKET(VC4_PACKET_RHT_X_BOUNDARY, NULL),
+	VC4_DEFINE_PACKET(VC4_PACKET_DEPTH_OFFSET, NULL),
+	VC4_DEFINE_PACKET(VC4_PACKET_CLIP_WINDOW, NULL),
+	VC4_DEFINE_PACKET(VC4_PACKET_VIEWPORT_OFFSET, NULL),
+	VC4_DEFINE_PACKET(VC4_PACKET_CLIPPER_XY_SCALING, NULL),
+	/* Note: The docs say this was also 105, but it was 106 in the
 	 * initial userland code drop.
 	 */
-	VC4_DEFINE_PACKET(VC4_PACKET_CLIPPER_Z_SCALING, शून्य),
+	VC4_DEFINE_PACKET(VC4_PACKET_CLIPPER_Z_SCALING, NULL),
 
 	VC4_DEFINE_PACKET(VC4_PACKET_TILE_BINNING_MODE_CONFIG,
 			  validate_tile_binning_config),
 
 	VC4_DEFINE_PACKET(VC4_PACKET_GEM_HANDLES, validate_gem_handles),
-पूर्ण;
+};
 
-पूर्णांक
-vc4_validate_bin_cl(काष्ठा drm_device *dev,
-		    व्योम *validated,
-		    व्योम *unvalidated,
-		    काष्ठा vc4_exec_info *exec)
-अणु
-	uपूर्णांक32_t len = exec->args->bin_cl_size;
-	uपूर्णांक32_t dst_offset = 0;
-	uपूर्णांक32_t src_offset = 0;
+int
+vc4_validate_bin_cl(struct drm_device *dev,
+		    void *validated,
+		    void *unvalidated,
+		    struct vc4_exec_info *exec)
+{
+	uint32_t len = exec->args->bin_cl_size;
+	uint32_t dst_offset = 0;
+	uint32_t src_offset = 0;
 
-	जबतक (src_offset < len) अणु
-		व्योम *dst_pkt = validated + dst_offset;
-		व्योम *src_pkt = unvalidated + src_offset;
-		u8 cmd = *(uपूर्णांक8_t *)src_pkt;
-		स्थिर काष्ठा cmd_info *info;
+	while (src_offset < len) {
+		void *dst_pkt = validated + dst_offset;
+		void *src_pkt = unvalidated + src_offset;
+		u8 cmd = *(uint8_t *)src_pkt;
+		const struct cmd_info *info;
 
-		अगर (cmd >= ARRAY_SIZE(cmd_info)) अणु
+		if (cmd >= ARRAY_SIZE(cmd_info)) {
 			DRM_DEBUG("0x%08x: packet %d out of bounds\n",
 				  src_offset, cmd);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		info = &cmd_info[cmd];
-		अगर (!info->name) अणु
+		if (!info->name) {
 			DRM_DEBUG("0x%08x: packet %d invalid\n",
 				  src_offset, cmd);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (src_offset + info->len > len) अणु
+		if (src_offset + info->len > len) {
 			DRM_DEBUG("0x%08x: packet %d (%s) length 0x%08x "
 				  "exceeds bounds (0x%08x)\n",
 				  src_offset, cmd, info->name, info->len,
 				  src_offset + len);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (cmd != VC4_PACKET_GEM_HANDLES)
-			स_नकल(dst_pkt, src_pkt, info->len);
+		if (cmd != VC4_PACKET_GEM_HANDLES)
+			memcpy(dst_pkt, src_pkt, info->len);
 
-		अगर (info->func && info->func(exec,
+		if (info->func && info->func(exec,
 					     dst_pkt + 1,
-					     src_pkt + 1)) अणु
+					     src_pkt + 1)) {
 			DRM_DEBUG("0x%08x: packet %d (%s) failed to validate\n",
 				  src_offset, cmd, info->name);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		src_offset += info->len;
-		/* GEM handle loading करोesn't produce HW packets. */
-		अगर (cmd != VC4_PACKET_GEM_HANDLES)
+		/* GEM handle loading doesn't produce HW packets. */
+		if (cmd != VC4_PACKET_GEM_HANDLES)
 			dst_offset += info->len;
 
-		/* When the CL hits halt, it'll stop पढ़ोing anything अन्यथा. */
-		अगर (cmd == VC4_PACKET_HALT)
-			अवरोध;
-	पूर्ण
+		/* When the CL hits halt, it'll stop reading anything else. */
+		if (cmd == VC4_PACKET_HALT)
+			break;
+	}
 
 	exec->ct0ea = exec->ct0ca + dst_offset;
 
-	अगर (!exec->found_start_tile_binning_packet) अणु
+	if (!exec->found_start_tile_binning_packet) {
 		DRM_DEBUG("Bin CL missing VC4_PACKET_START_TILE_BINNING\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
 	/* The bin CL must be ended with INCREMENT_SEMAPHORE and FLUSH.  The
 	 * semaphore is used to trigger the render CL to start up, and the
 	 * FLUSH is what caps the bin lists with
-	 * VC4_PACKET_RETURN_FROM_SUB_LIST (so they jump back to the मुख्य
+	 * VC4_PACKET_RETURN_FROM_SUB_LIST (so they jump back to the main
 	 * render CL when they get called to) and actually triggers the queued
 	 * semaphore increment.
 	 */
-	अगर (!exec->found_increment_semaphore_packet || !exec->found_flush) अणु
+	if (!exec->found_increment_semaphore_packet || !exec->found_flush) {
 		DRM_DEBUG("Bin CL missing VC4_PACKET_INCREMENT_SEMAPHORE + "
 			  "VC4_PACKET_FLUSH\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल bool
-reloc_tex(काष्ठा vc4_exec_info *exec,
-	  व्योम *unअगरorm_data_u,
-	  काष्ठा vc4_texture_sample_info *sample,
-	  uपूर्णांक32_t texture_handle_index, bool is_cs)
-अणु
-	काष्ठा drm_gem_cma_object *tex;
-	uपूर्णांक32_t p0 = *(uपूर्णांक32_t *)(unअगरorm_data_u + sample->p_offset[0]);
-	uपूर्णांक32_t p1 = *(uपूर्णांक32_t *)(unअगरorm_data_u + sample->p_offset[1]);
-	uपूर्णांक32_t p2 = (sample->p_offset[2] != ~0 ?
-		       *(uपूर्णांक32_t *)(unअगरorm_data_u + sample->p_offset[2]) : 0);
-	uपूर्णांक32_t p3 = (sample->p_offset[3] != ~0 ?
-		       *(uपूर्णांक32_t *)(unअगरorm_data_u + sample->p_offset[3]) : 0);
-	uपूर्णांक32_t *validated_p0 = exec->unअगरorms_v + sample->p_offset[0];
-	uपूर्णांक32_t offset = p0 & VC4_TEX_P0_OFFSET_MASK;
-	uपूर्णांक32_t miplevels = VC4_GET_FIELD(p0, VC4_TEX_P0_MIPLVLS);
-	uपूर्णांक32_t width = VC4_GET_FIELD(p1, VC4_TEX_P1_WIDTH);
-	uपूर्णांक32_t height = VC4_GET_FIELD(p1, VC4_TEX_P1_HEIGHT);
-	uपूर्णांक32_t cpp, tiling_क्रमmat, utile_w, utile_h;
-	uपूर्णांक32_t i;
-	uपूर्णांक32_t cube_map_stride = 0;
-	क्रमागत vc4_texture_data_type type;
+static bool
+reloc_tex(struct vc4_exec_info *exec,
+	  void *uniform_data_u,
+	  struct vc4_texture_sample_info *sample,
+	  uint32_t texture_handle_index, bool is_cs)
+{
+	struct drm_gem_cma_object *tex;
+	uint32_t p0 = *(uint32_t *)(uniform_data_u + sample->p_offset[0]);
+	uint32_t p1 = *(uint32_t *)(uniform_data_u + sample->p_offset[1]);
+	uint32_t p2 = (sample->p_offset[2] != ~0 ?
+		       *(uint32_t *)(uniform_data_u + sample->p_offset[2]) : 0);
+	uint32_t p3 = (sample->p_offset[3] != ~0 ?
+		       *(uint32_t *)(uniform_data_u + sample->p_offset[3]) : 0);
+	uint32_t *validated_p0 = exec->uniforms_v + sample->p_offset[0];
+	uint32_t offset = p0 & VC4_TEX_P0_OFFSET_MASK;
+	uint32_t miplevels = VC4_GET_FIELD(p0, VC4_TEX_P0_MIPLVLS);
+	uint32_t width = VC4_GET_FIELD(p1, VC4_TEX_P1_WIDTH);
+	uint32_t height = VC4_GET_FIELD(p1, VC4_TEX_P1_HEIGHT);
+	uint32_t cpp, tiling_format, utile_w, utile_h;
+	uint32_t i;
+	uint32_t cube_map_stride = 0;
+	enum vc4_texture_data_type type;
 
 	tex = vc4_use_bo(exec, texture_handle_index);
-	अगर (!tex)
-		वापस false;
+	if (!tex)
+		return false;
 
-	अगर (sample->is_direct) अणु
-		uपूर्णांक32_t reमुख्यing_size = tex->base.size - p0;
+	if (sample->is_direct) {
+		uint32_t remaining_size = tex->base.size - p0;
 
-		अगर (p0 > tex->base.size - 4) अणु
+		if (p0 > tex->base.size - 4) {
 			DRM_DEBUG("UBO offset greater than UBO size\n");
-			जाओ fail;
-		पूर्ण
-		अगर (p1 > reमुख्यing_size - 4) अणु
+			goto fail;
+		}
+		if (p1 > remaining_size - 4) {
 			DRM_DEBUG("UBO clamp would allow reads "
 				  "outside of UBO\n");
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 		*validated_p0 = tex->paddr + p0;
-		वापस true;
-	पूर्ण
+		return true;
+	}
 
-	अगर (width == 0)
+	if (width == 0)
 		width = 2048;
-	अगर (height == 0)
+	if (height == 0)
 		height = 2048;
 
-	अगर (p0 & VC4_TEX_P0_CMMODE_MASK) अणु
-		अगर (VC4_GET_FIELD(p2, VC4_TEX_P2_PTYPE) ==
+	if (p0 & VC4_TEX_P0_CMMODE_MASK) {
+		if (VC4_GET_FIELD(p2, VC4_TEX_P2_PTYPE) ==
 		    VC4_TEX_P2_PTYPE_CUBE_MAP_STRIDE)
 			cube_map_stride = p2 & VC4_TEX_P2_CMST_MASK;
-		अगर (VC4_GET_FIELD(p3, VC4_TEX_P2_PTYPE) ==
-		    VC4_TEX_P2_PTYPE_CUBE_MAP_STRIDE) अणु
-			अगर (cube_map_stride) अणु
+		if (VC4_GET_FIELD(p3, VC4_TEX_P2_PTYPE) ==
+		    VC4_TEX_P2_PTYPE_CUBE_MAP_STRIDE) {
+			if (cube_map_stride) {
 				DRM_DEBUG("Cube map stride set twice\n");
-				जाओ fail;
-			पूर्ण
+				goto fail;
+			}
 
 			cube_map_stride = p3 & VC4_TEX_P2_CMST_MASK;
-		पूर्ण
-		अगर (!cube_map_stride) अणु
+		}
+		if (!cube_map_stride) {
 			DRM_DEBUG("Cube map stride not set\n");
-			जाओ fail;
-		पूर्ण
-	पूर्ण
+			goto fail;
+		}
+	}
 
 	type = (VC4_GET_FIELD(p0, VC4_TEX_P0_TYPE) |
 		(VC4_GET_FIELD(p1, VC4_TEX_P1_TYPE4) << 4));
 
-	चयन (type) अणु
-	हाल VC4_TEXTURE_TYPE_RGBA8888:
-	हाल VC4_TEXTURE_TYPE_RGBX8888:
-	हाल VC4_TEXTURE_TYPE_RGBA32R:
+	switch (type) {
+	case VC4_TEXTURE_TYPE_RGBA8888:
+	case VC4_TEXTURE_TYPE_RGBX8888:
+	case VC4_TEXTURE_TYPE_RGBA32R:
 		cpp = 4;
-		अवरोध;
-	हाल VC4_TEXTURE_TYPE_RGBA4444:
-	हाल VC4_TEXTURE_TYPE_RGBA5551:
-	हाल VC4_TEXTURE_TYPE_RGB565:
-	हाल VC4_TEXTURE_TYPE_LUMALPHA:
-	हाल VC4_TEXTURE_TYPE_S16F:
-	हाल VC4_TEXTURE_TYPE_S16:
+		break;
+	case VC4_TEXTURE_TYPE_RGBA4444:
+	case VC4_TEXTURE_TYPE_RGBA5551:
+	case VC4_TEXTURE_TYPE_RGB565:
+	case VC4_TEXTURE_TYPE_LUMALPHA:
+	case VC4_TEXTURE_TYPE_S16F:
+	case VC4_TEXTURE_TYPE_S16:
 		cpp = 2;
-		अवरोध;
-	हाल VC4_TEXTURE_TYPE_LUMIन_अंकCE:
-	हाल VC4_TEXTURE_TYPE_ALPHA:
-	हाल VC4_TEXTURE_TYPE_S8:
+		break;
+	case VC4_TEXTURE_TYPE_LUMINANCE:
+	case VC4_TEXTURE_TYPE_ALPHA:
+	case VC4_TEXTURE_TYPE_S8:
 		cpp = 1;
-		अवरोध;
-	हाल VC4_TEXTURE_TYPE_ETC1:
+		break;
+	case VC4_TEXTURE_TYPE_ETC1:
 		/* ETC1 is arranged as 64-bit blocks, where each block is 4x4
 		 * pixels.
 		 */
 		cpp = 8;
 		width = (width + 3) >> 2;
 		height = (height + 3) >> 2;
-		अवरोध;
-	हाल VC4_TEXTURE_TYPE_BW1:
-	हाल VC4_TEXTURE_TYPE_A4:
-	हाल VC4_TEXTURE_TYPE_A1:
-	हाल VC4_TEXTURE_TYPE_RGBA64:
-	हाल VC4_TEXTURE_TYPE_YUV422R:
-	शेष:
+		break;
+	case VC4_TEXTURE_TYPE_BW1:
+	case VC4_TEXTURE_TYPE_A4:
+	case VC4_TEXTURE_TYPE_A1:
+	case VC4_TEXTURE_TYPE_RGBA64:
+	case VC4_TEXTURE_TYPE_YUV422R:
+	default:
 		DRM_DEBUG("Texture format %d unsupported\n", type);
-		जाओ fail;
-	पूर्ण
+		goto fail;
+	}
 	utile_w = utile_width(cpp);
 	utile_h = utile_height(cpp);
 
-	अगर (type == VC4_TEXTURE_TYPE_RGBA32R) अणु
-		tiling_क्रमmat = VC4_TILING_FORMAT_LINEAR;
-	पूर्ण अन्यथा अणु
-		अगर (size_is_lt(width, height, cpp))
-			tiling_क्रमmat = VC4_TILING_FORMAT_LT;
-		अन्यथा
-			tiling_क्रमmat = VC4_TILING_FORMAT_T;
-	पूर्ण
+	if (type == VC4_TEXTURE_TYPE_RGBA32R) {
+		tiling_format = VC4_TILING_FORMAT_LINEAR;
+	} else {
+		if (size_is_lt(width, height, cpp))
+			tiling_format = VC4_TILING_FORMAT_LT;
+		else
+			tiling_format = VC4_TILING_FORMAT_T;
+	}
 
-	अगर (!vc4_check_tex_size(exec, tex, offset + cube_map_stride * 5,
-				tiling_क्रमmat, width, height, cpp)) अणु
-		जाओ fail;
-	पूर्ण
+	if (!vc4_check_tex_size(exec, tex, offset + cube_map_stride * 5,
+				tiling_format, width, height, cpp)) {
+		goto fail;
+	}
 
-	/* The mipmap levels are stored beक्रमe the base of the texture.  Make
+	/* The mipmap levels are stored before the base of the texture.  Make
 	 * sure there is actually space in the BO.
 	 */
-	क्रम (i = 1; i <= miplevels; i++) अणु
-		uपूर्णांक32_t level_width = max(width >> i, 1u);
-		uपूर्णांक32_t level_height = max(height >> i, 1u);
-		uपूर्णांक32_t aligned_width, aligned_height;
-		uपूर्णांक32_t level_size;
+	for (i = 1; i <= miplevels; i++) {
+		uint32_t level_width = max(width >> i, 1u);
+		uint32_t level_height = max(height >> i, 1u);
+		uint32_t aligned_width, aligned_height;
+		uint32_t level_size;
 
 		/* Once the levels get small enough, they drop from T to LT. */
-		अगर (tiling_क्रमmat == VC4_TILING_FORMAT_T &&
-		    size_is_lt(level_width, level_height, cpp)) अणु
-			tiling_क्रमmat = VC4_TILING_FORMAT_LT;
-		पूर्ण
+		if (tiling_format == VC4_TILING_FORMAT_T &&
+		    size_is_lt(level_width, level_height, cpp)) {
+			tiling_format = VC4_TILING_FORMAT_LT;
+		}
 
-		चयन (tiling_क्रमmat) अणु
-		हाल VC4_TILING_FORMAT_T:
+		switch (tiling_format) {
+		case VC4_TILING_FORMAT_T:
 			aligned_width = round_up(level_width, utile_w * 8);
 			aligned_height = round_up(level_height, utile_h * 8);
-			अवरोध;
-		हाल VC4_TILING_FORMAT_LT:
+			break;
+		case VC4_TILING_FORMAT_LT:
 			aligned_width = round_up(level_width, utile_w);
 			aligned_height = round_up(level_height, utile_h);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			aligned_width = round_up(level_width, utile_w);
 			aligned_height = level_height;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		level_size = aligned_width * cpp * aligned_height;
 
-		अगर (offset < level_size) अणु
+		if (offset < level_size) {
 			DRM_DEBUG("Level %d (%dx%d -> %dx%d) size %db "
 				  "overflowed buffer bounds (offset %d)\n",
 				  i, level_width, level_height,
 				  aligned_width, aligned_height,
 				  level_size, offset);
-			जाओ fail;
-		पूर्ण
+			goto fail;
+		}
 
 		offset -= level_size;
-	पूर्ण
+	}
 
 	*validated_p0 = tex->paddr + p0;
 
-	अगर (is_cs) अणु
+	if (is_cs) {
 		exec->bin_dep_seqno = max(exec->bin_dep_seqno,
-					  to_vc4_bo(&tex->base)->ग_लिखो_seqno);
-	पूर्ण
+					  to_vc4_bo(&tex->base)->write_seqno);
+	}
 
-	वापस true;
+	return true;
  fail:
 	DRM_INFO("Texture p0 at %d: 0x%08x\n", sample->p_offset[0], p0);
 	DRM_INFO("Texture p1 at %d: 0x%08x\n", sample->p_offset[1], p1);
 	DRM_INFO("Texture p2 at %d: 0x%08x\n", sample->p_offset[2], p2);
 	DRM_INFO("Texture p3 at %d: 0x%08x\n", sample->p_offset[3], p3);
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल पूर्णांक
-validate_gl_shader_rec(काष्ठा drm_device *dev,
-		       काष्ठा vc4_exec_info *exec,
-		       काष्ठा vc4_shader_state *state)
-अणु
-	uपूर्णांक32_t *src_handles;
-	व्योम *pkt_u, *pkt_v;
-	अटल स्थिर uपूर्णांक32_t shader_reloc_offsets[] = अणु
+static int
+validate_gl_shader_rec(struct drm_device *dev,
+		       struct vc4_exec_info *exec,
+		       struct vc4_shader_state *state)
+{
+	uint32_t *src_handles;
+	void *pkt_u, *pkt_v;
+	static const uint32_t shader_reloc_offsets[] = {
 		4, /* fs */
 		16, /* vs */
 		28, /* cs */
-	पूर्ण;
-	uपूर्णांक32_t shader_reloc_count = ARRAY_SIZE(shader_reloc_offsets);
-	काष्ठा drm_gem_cma_object *bo[ARRAY_SIZE(shader_reloc_offsets) + 8];
-	uपूर्णांक32_t nr_attributes, nr_relocs, packet_size;
-	पूर्णांक i;
+	};
+	uint32_t shader_reloc_count = ARRAY_SIZE(shader_reloc_offsets);
+	struct drm_gem_cma_object *bo[ARRAY_SIZE(shader_reloc_offsets) + 8];
+	uint32_t nr_attributes, nr_relocs, packet_size;
+	int i;
 
 	nr_attributes = state->addr & 0x7;
-	अगर (nr_attributes == 0)
+	if (nr_attributes == 0)
 		nr_attributes = 8;
 	packet_size = gl_shader_rec_size(state->addr);
 
 	nr_relocs = ARRAY_SIZE(shader_reloc_offsets) + nr_attributes;
-	अगर (nr_relocs * 4 > exec->shader_rec_size) अणु
+	if (nr_relocs * 4 > exec->shader_rec_size) {
 		DRM_DEBUG("overflowed shader recs reading %d handles "
 			  "from %d bytes left\n",
 			  nr_relocs, exec->shader_rec_size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	src_handles = exec->shader_rec_u;
 	exec->shader_rec_u += nr_relocs * 4;
 	exec->shader_rec_size -= nr_relocs * 4;
 
-	अगर (packet_size > exec->shader_rec_size) अणु
+	if (packet_size > exec->shader_rec_size) {
 		DRM_DEBUG("overflowed shader recs copying %db packet "
 			  "from %d bytes left\n",
 			  packet_size, exec->shader_rec_size);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 	pkt_u = exec->shader_rec_u;
 	pkt_v = exec->shader_rec_v;
-	स_नकल(pkt_v, pkt_u, packet_size);
+	memcpy(pkt_v, pkt_u, packet_size);
 	exec->shader_rec_u += packet_size;
 	/* Shader recs have to be aligned to 16 bytes (due to the attribute
 	 * flags being in the low bytes), so round the next validated shader
@@ -793,148 +792,148 @@ validate_gl_shader_rec(काष्ठा drm_device *dev,
 	exec->shader_rec_v += roundup(packet_size, 16);
 	exec->shader_rec_size -= packet_size;
 
-	क्रम (i = 0; i < shader_reloc_count; i++) अणु
-		अगर (src_handles[i] > exec->bo_count) अणु
+	for (i = 0; i < shader_reloc_count; i++) {
+		if (src_handles[i] > exec->bo_count) {
 			DRM_DEBUG("Shader handle %d too big\n", src_handles[i]);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		bo[i] = exec->bo[src_handles[i]];
-		अगर (!bo[i])
-			वापस -EINVAL;
-	पूर्ण
-	क्रम (i = shader_reloc_count; i < nr_relocs; i++) अणु
+		if (!bo[i])
+			return -EINVAL;
+	}
+	for (i = shader_reloc_count; i < nr_relocs; i++) {
 		bo[i] = vc4_use_bo(exec, src_handles[i]);
-		अगर (!bo[i])
-			वापस -EINVAL;
-	पूर्ण
+		if (!bo[i])
+			return -EINVAL;
+	}
 
-	अगर (((*(uपूर्णांक16_t *)pkt_u & VC4_SHADER_FLAG_FS_SINGLE_THREAD) == 0) !=
-	    to_vc4_bo(&bo[0]->base)->validated_shader->is_thपढ़ोed) अणु
+	if (((*(uint16_t *)pkt_u & VC4_SHADER_FLAG_FS_SINGLE_THREAD) == 0) !=
+	    to_vc4_bo(&bo[0]->base)->validated_shader->is_threaded) {
 		DRM_DEBUG("Thread mode of CL and FS do not match\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर (to_vc4_bo(&bo[1]->base)->validated_shader->is_thपढ़ोed ||
-	    to_vc4_bo(&bo[2]->base)->validated_shader->is_thपढ़ोed) अणु
+	if (to_vc4_bo(&bo[1]->base)->validated_shader->is_threaded ||
+	    to_vc4_bo(&bo[2]->base)->validated_shader->is_threaded) {
 		DRM_DEBUG("cs and vs cannot be threaded\n");
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	क्रम (i = 0; i < shader_reloc_count; i++) अणु
-		काष्ठा vc4_validated_shader_info *validated_shader;
-		uपूर्णांक32_t o = shader_reloc_offsets[i];
-		uपूर्णांक32_t src_offset = *(uपूर्णांक32_t *)(pkt_u + o);
-		uपूर्णांक32_t *texture_handles_u;
-		व्योम *unअगरorm_data_u;
-		uपूर्णांक32_t tex, uni;
+	for (i = 0; i < shader_reloc_count; i++) {
+		struct vc4_validated_shader_info *validated_shader;
+		uint32_t o = shader_reloc_offsets[i];
+		uint32_t src_offset = *(uint32_t *)(pkt_u + o);
+		uint32_t *texture_handles_u;
+		void *uniform_data_u;
+		uint32_t tex, uni;
 
-		*(uपूर्णांक32_t *)(pkt_v + o) = bo[i]->paddr + src_offset;
+		*(uint32_t *)(pkt_v + o) = bo[i]->paddr + src_offset;
 
-		अगर (src_offset != 0) अणु
+		if (src_offset != 0) {
 			DRM_DEBUG("Shaders must be at offset 0 of "
 				  "the BO.\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
 		validated_shader = to_vc4_bo(&bo[i]->base)->validated_shader;
-		अगर (!validated_shader)
-			वापस -EINVAL;
+		if (!validated_shader)
+			return -EINVAL;
 
-		अगर (validated_shader->unअगरorms_src_size >
-		    exec->unअगरorms_size) अणु
+		if (validated_shader->uniforms_src_size >
+		    exec->uniforms_size) {
 			DRM_DEBUG("Uniforms src buffer overflow\n");
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		texture_handles_u = exec->unअगरorms_u;
-		unअगरorm_data_u = (texture_handles_u +
+		texture_handles_u = exec->uniforms_u;
+		uniform_data_u = (texture_handles_u +
 				  validated_shader->num_texture_samples);
 
-		स_नकल(exec->unअगरorms_v, unअगरorm_data_u,
-		       validated_shader->unअगरorms_size);
+		memcpy(exec->uniforms_v, uniform_data_u,
+		       validated_shader->uniforms_size);
 
-		क्रम (tex = 0;
+		for (tex = 0;
 		     tex < validated_shader->num_texture_samples;
-		     tex++) अणु
-			अगर (!reloc_tex(exec,
-				       unअगरorm_data_u,
+		     tex++) {
+			if (!reloc_tex(exec,
+				       uniform_data_u,
 				       &validated_shader->texture_samples[tex],
 				       texture_handles_u[tex],
-				       i == 2)) अणु
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
+				       i == 2)) {
+				return -EINVAL;
+			}
+		}
 
-		/* Fill in the unअगरorm slots that need this shader's
-		 * start-of-unअगरorms address (used क्रम resetting the unअगरorm
+		/* Fill in the uniform slots that need this shader's
+		 * start-of-uniforms address (used for resetting the uniform
 		 * stream in the presence of control flow).
 		 */
-		क्रम (uni = 0;
-		     uni < validated_shader->num_unअगरorm_addr_offsets;
-		     uni++) अणु
-			uपूर्णांक32_t o = validated_shader->unअगरorm_addr_offsets[uni];
-			((uपूर्णांक32_t *)exec->unअगरorms_v)[o] = exec->unअगरorms_p;
-		पूर्ण
+		for (uni = 0;
+		     uni < validated_shader->num_uniform_addr_offsets;
+		     uni++) {
+			uint32_t o = validated_shader->uniform_addr_offsets[uni];
+			((uint32_t *)exec->uniforms_v)[o] = exec->uniforms_p;
+		}
 
-		*(uपूर्णांक32_t *)(pkt_v + o + 4) = exec->unअगरorms_p;
+		*(uint32_t *)(pkt_v + o + 4) = exec->uniforms_p;
 
-		exec->unअगरorms_u += validated_shader->unअगरorms_src_size;
-		exec->unअगरorms_v += validated_shader->unअगरorms_size;
-		exec->unअगरorms_p += validated_shader->unअगरorms_size;
-	पूर्ण
+		exec->uniforms_u += validated_shader->uniforms_src_size;
+		exec->uniforms_v += validated_shader->uniforms_size;
+		exec->uniforms_p += validated_shader->uniforms_size;
+	}
 
-	क्रम (i = 0; i < nr_attributes; i++) अणु
-		काष्ठा drm_gem_cma_object *vbo =
+	for (i = 0; i < nr_attributes; i++) {
+		struct drm_gem_cma_object *vbo =
 			bo[ARRAY_SIZE(shader_reloc_offsets) + i];
-		uपूर्णांक32_t o = 36 + i * 8;
-		uपूर्णांक32_t offset = *(uपूर्णांक32_t *)(pkt_u + o + 0);
-		uपूर्णांक32_t attr_size = *(uपूर्णांक8_t *)(pkt_u + o + 4) + 1;
-		uपूर्णांक32_t stride = *(uपूर्णांक8_t *)(pkt_u + o + 5);
-		uपूर्णांक32_t max_index;
+		uint32_t o = 36 + i * 8;
+		uint32_t offset = *(uint32_t *)(pkt_u + o + 0);
+		uint32_t attr_size = *(uint8_t *)(pkt_u + o + 4) + 1;
+		uint32_t stride = *(uint8_t *)(pkt_u + o + 5);
+		uint32_t max_index;
 
 		exec->bin_dep_seqno = max(exec->bin_dep_seqno,
-					  to_vc4_bo(&vbo->base)->ग_लिखो_seqno);
+					  to_vc4_bo(&vbo->base)->write_seqno);
 
-		अगर (state->addr & 0x8)
-			stride |= (*(uपूर्णांक32_t *)(pkt_u + 100 + i * 4)) & ~0xff;
+		if (state->addr & 0x8)
+			stride |= (*(uint32_t *)(pkt_u + 100 + i * 4)) & ~0xff;
 
-		अगर (vbo->base.size < offset ||
-		    vbo->base.size - offset < attr_size) अणु
+		if (vbo->base.size < offset ||
+		    vbo->base.size - offset < attr_size) {
 			DRM_DEBUG("BO offset overflow (%d + %d > %zu)\n",
 				  offset, attr_size, vbo->base.size);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (stride != 0) अणु
+		if (stride != 0) {
 			max_index = ((vbo->base.size - offset - attr_size) /
 				     stride);
-			अगर (state->max_index > max_index) अणु
+			if (state->max_index > max_index) {
 				DRM_DEBUG("primitives use index %d out of "
 					  "supplied %d\n",
 					  state->max_index, max_index);
-				वापस -EINVAL;
-			पूर्ण
-		पूर्ण
+				return -EINVAL;
+			}
+		}
 
-		*(uपूर्णांक32_t *)(pkt_v + o) = vbo->paddr + offset;
-	पूर्ण
+		*(uint32_t *)(pkt_v + o) = vbo->paddr + offset;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक
-vc4_validate_shader_recs(काष्ठा drm_device *dev,
-			 काष्ठा vc4_exec_info *exec)
-अणु
-	uपूर्णांक32_t i;
-	पूर्णांक ret = 0;
+int
+vc4_validate_shader_recs(struct drm_device *dev,
+			 struct vc4_exec_info *exec)
+{
+	uint32_t i;
+	int ret = 0;
 
-	क्रम (i = 0; i < exec->shader_state_count; i++) अणु
+	for (i = 0; i < exec->shader_state_count; i++) {
 		ret = validate_gl_shader_rec(dev, exec, &exec->shader_state[i]);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस ret;
-पूर्ण
+	return ret;
+}

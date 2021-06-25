@@ -1,14 +1,13 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#अगर_अघोषित SELFTEST_ENGINE_H
-#घोषणा SELFTEST_ENGINE_H
+#ifndef SELFTEST_ENGINE_H
+#define SELFTEST_ENGINE_H
 
-काष्ठा पूर्णांकel_gt;
+struct intel_gt;
 
-पूर्णांक live_engine_pm_selftests(काष्ठा पूर्णांकel_gt *gt);
+int live_engine_pm_selftests(struct intel_gt *gt);
 
-#पूर्ण_अगर
+#endif

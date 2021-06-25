@@ -1,241 +1,240 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /* ir-sony-decoder.c - handle Sony IR Pulse/Space protocol
  *
- * Copyright (C) 2010 by David Hथअrdeman <david@hardeman.nu>
+ * Copyright (C) 2010 by David Härdeman <david@hardeman.nu>
  */
 
-#समावेश <linux/bitrev.h>
-#समावेश <linux/module.h>
-#समावेश "rc-core-priv.h"
+#include <linux/bitrev.h>
+#include <linux/module.h>
+#include "rc-core-priv.h"
 
-#घोषणा SONY_UNIT		600 /* us */
-#घोषणा SONY_HEADER_PULSE	(4 * SONY_UNIT)
-#घोषणा	SONY_HEADER_SPACE	(1 * SONY_UNIT)
-#घोषणा SONY_BIT_0_PULSE	(1 * SONY_UNIT)
-#घोषणा SONY_BIT_1_PULSE	(2 * SONY_UNIT)
-#घोषणा SONY_BIT_SPACE		(1 * SONY_UNIT)
-#घोषणा SONY_TRAILER_SPACE	(10 * SONY_UNIT) /* minimum */
+#define SONY_UNIT		600 /* us */
+#define SONY_HEADER_PULSE	(4 * SONY_UNIT)
+#define	SONY_HEADER_SPACE	(1 * SONY_UNIT)
+#define SONY_BIT_0_PULSE	(1 * SONY_UNIT)
+#define SONY_BIT_1_PULSE	(2 * SONY_UNIT)
+#define SONY_BIT_SPACE		(1 * SONY_UNIT)
+#define SONY_TRAILER_SPACE	(10 * SONY_UNIT) /* minimum */
 
-क्रमागत sony_state अणु
+enum sony_state {
 	STATE_INACTIVE,
 	STATE_HEADER_SPACE,
 	STATE_BIT_PULSE,
 	STATE_BIT_SPACE,
 	STATE_FINISHED,
-पूर्ण;
+};
 
 /**
  * ir_sony_decode() - Decode one Sony pulse or space
- * @dev:	the काष्ठा rc_dev descriptor of the device
- * @ev:         the काष्ठा ir_raw_event descriptor of the pulse/space
+ * @dev:	the struct rc_dev descriptor of the device
+ * @ev:         the struct ir_raw_event descriptor of the pulse/space
  *
- * This function वापसs -EINVAL अगर the pulse violates the state machine
+ * This function returns -EINVAL if the pulse violates the state machine
  */
-अटल पूर्णांक ir_sony_decode(काष्ठा rc_dev *dev, काष्ठा ir_raw_event ev)
-अणु
-	काष्ठा sony_dec *data = &dev->raw->sony;
-	क्रमागत rc_proto protocol;
+static int ir_sony_decode(struct rc_dev *dev, struct ir_raw_event ev)
+{
+	struct sony_dec *data = &dev->raw->sony;
+	enum rc_proto protocol;
 	u32 scancode;
 	u8 device, subdevice, function;
 
-	अगर (!is_timing_event(ev)) अणु
-		अगर (ev.reset)
+	if (!is_timing_event(ev)) {
+		if (ev.reset)
 			data->state = STATE_INACTIVE;
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	अगर (!geq_margin(ev.duration, SONY_UNIT, SONY_UNIT / 2))
-		जाओ out;
+	if (!geq_margin(ev.duration, SONY_UNIT, SONY_UNIT / 2))
+		goto out;
 
 	dev_dbg(&dev->dev, "Sony decode started at state %d (%uus %s)\n",
 		data->state, ev.duration, TO_STR(ev.pulse));
 
-	चयन (data->state) अणु
+	switch (data->state) {
 
-	हाल STATE_INACTIVE:
-		अगर (!ev.pulse)
-			अवरोध;
+	case STATE_INACTIVE:
+		if (!ev.pulse)
+			break;
 
-		अगर (!eq_margin(ev.duration, SONY_HEADER_PULSE, SONY_UNIT / 2))
-			अवरोध;
+		if (!eq_margin(ev.duration, SONY_HEADER_PULSE, SONY_UNIT / 2))
+			break;
 
 		data->count = 0;
 		data->state = STATE_HEADER_SPACE;
-		वापस 0;
+		return 0;
 
-	हाल STATE_HEADER_SPACE:
-		अगर (ev.pulse)
-			अवरोध;
+	case STATE_HEADER_SPACE:
+		if (ev.pulse)
+			break;
 
-		अगर (!eq_margin(ev.duration, SONY_HEADER_SPACE, SONY_UNIT / 2))
-			अवरोध;
+		if (!eq_margin(ev.duration, SONY_HEADER_SPACE, SONY_UNIT / 2))
+			break;
 
 		data->state = STATE_BIT_PULSE;
-		वापस 0;
+		return 0;
 
-	हाल STATE_BIT_PULSE:
-		अगर (!ev.pulse)
-			अवरोध;
+	case STATE_BIT_PULSE:
+		if (!ev.pulse)
+			break;
 
 		data->bits <<= 1;
-		अगर (eq_margin(ev.duration, SONY_BIT_1_PULSE, SONY_UNIT / 2))
+		if (eq_margin(ev.duration, SONY_BIT_1_PULSE, SONY_UNIT / 2))
 			data->bits |= 1;
-		अन्यथा अगर (!eq_margin(ev.duration, SONY_BIT_0_PULSE, SONY_UNIT / 2))
-			अवरोध;
+		else if (!eq_margin(ev.duration, SONY_BIT_0_PULSE, SONY_UNIT / 2))
+			break;
 
 		data->count++;
 		data->state = STATE_BIT_SPACE;
-		वापस 0;
+		return 0;
 
-	हाल STATE_BIT_SPACE:
-		अगर (ev.pulse)
-			अवरोध;
+	case STATE_BIT_SPACE:
+		if (ev.pulse)
+			break;
 
-		अगर (!geq_margin(ev.duration, SONY_BIT_SPACE, SONY_UNIT / 2))
-			अवरोध;
+		if (!geq_margin(ev.duration, SONY_BIT_SPACE, SONY_UNIT / 2))
+			break;
 
 		decrease_duration(&ev, SONY_BIT_SPACE);
 
-		अगर (!geq_margin(ev.duration, SONY_UNIT, SONY_UNIT / 2)) अणु
+		if (!geq_margin(ev.duration, SONY_UNIT, SONY_UNIT / 2)) {
 			data->state = STATE_BIT_PULSE;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
 		data->state = STATE_FINISHED;
 		fallthrough;
 
-	हाल STATE_FINISHED:
-		अगर (ev.pulse)
-			अवरोध;
+	case STATE_FINISHED:
+		if (ev.pulse)
+			break;
 
-		अगर (!geq_margin(ev.duration, SONY_TRAILER_SPACE, SONY_UNIT / 2))
-			अवरोध;
+		if (!geq_margin(ev.duration, SONY_TRAILER_SPACE, SONY_UNIT / 2))
+			break;
 
-		चयन (data->count) अणु
-		हाल 12:
-			अगर (!(dev->enabled_protocols & RC_PROTO_BIT_SONY12))
-				जाओ finish_state_machine;
+		switch (data->count) {
+		case 12:
+			if (!(dev->enabled_protocols & RC_PROTO_BIT_SONY12))
+				goto finish_state_machine;
 
 			device    = bitrev8((data->bits <<  3) & 0xF8);
 			subdevice = 0;
 			function  = bitrev8((data->bits >>  4) & 0xFE);
 			protocol = RC_PROTO_SONY12;
-			अवरोध;
-		हाल 15:
-			अगर (!(dev->enabled_protocols & RC_PROTO_BIT_SONY15))
-				जाओ finish_state_machine;
+			break;
+		case 15:
+			if (!(dev->enabled_protocols & RC_PROTO_BIT_SONY15))
+				goto finish_state_machine;
 
 			device    = bitrev8((data->bits >>  0) & 0xFF);
 			subdevice = 0;
 			function  = bitrev8((data->bits >>  7) & 0xFE);
 			protocol = RC_PROTO_SONY15;
-			अवरोध;
-		हाल 20:
-			अगर (!(dev->enabled_protocols & RC_PROTO_BIT_SONY20))
-				जाओ finish_state_machine;
+			break;
+		case 20:
+			if (!(dev->enabled_protocols & RC_PROTO_BIT_SONY20))
+				goto finish_state_machine;
 
 			device    = bitrev8((data->bits >>  5) & 0xF8);
 			subdevice = bitrev8((data->bits >>  0) & 0xFF);
 			function  = bitrev8((data->bits >> 12) & 0xFE);
 			protocol = RC_PROTO_SONY20;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			dev_dbg(&dev->dev, "Sony invalid bitcount %u\n",
 				data->count);
-			जाओ out;
-		पूर्ण
+			goto out;
+		}
 
 		scancode = device << 16 | subdevice << 8 | function;
 		dev_dbg(&dev->dev, "Sony(%u) scancode 0x%05x\n", data->count,
 			scancode);
-		rc_keyकरोwn(dev, protocol, scancode, 0);
-		जाओ finish_state_machine;
-	पूर्ण
+		rc_keydown(dev, protocol, scancode, 0);
+		goto finish_state_machine;
+	}
 
 out:
 	dev_dbg(&dev->dev, "Sony decode failed at state %d (%uus %s)\n",
 		data->state, ev.duration, TO_STR(ev.pulse));
 	data->state = STATE_INACTIVE;
-	वापस -EINVAL;
+	return -EINVAL;
 
 finish_state_machine:
 	data->state = STATE_INACTIVE;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर काष्ठा ir_raw_timings_pl ir_sony_timings = अणु
+static const struct ir_raw_timings_pl ir_sony_timings = {
 	.header_pulse  = SONY_HEADER_PULSE,
 	.bit_space     = SONY_BIT_SPACE,
 	.bit_pulse[0]  = SONY_BIT_0_PULSE,
 	.bit_pulse[1]  = SONY_BIT_1_PULSE,
 	.trailer_space = SONY_TRAILER_SPACE + SONY_BIT_SPACE,
 	.msb_first     = 0,
-पूर्ण;
+};
 
 /**
  * ir_sony_encode() - Encode a scancode as a stream of raw events
  *
  * @protocol:	protocol to encode
  * @scancode:	scancode to encode
- * @events:	array of raw ir events to ग_लिखो पूर्णांकo
+ * @events:	array of raw ir events to write into
  * @max:	maximum size of @events
  *
  * Returns:	The number of events written.
- *		-ENOBUFS अगर there isn't enough space in the array to fit the
- *		encoding. In this हाल all @max events will have been written.
+ *		-ENOBUFS if there isn't enough space in the array to fit the
+ *		encoding. In this case all @max events will have been written.
  */
-अटल पूर्णांक ir_sony_encode(क्रमागत rc_proto protocol, u32 scancode,
-			  काष्ठा ir_raw_event *events, अचिन्हित पूर्णांक max)
-अणु
-	काष्ठा ir_raw_event *e = events;
+static int ir_sony_encode(enum rc_proto protocol, u32 scancode,
+			  struct ir_raw_event *events, unsigned int max)
+{
+	struct ir_raw_event *e = events;
 	u32 raw, len;
-	पूर्णांक ret;
+	int ret;
 
-	अगर (protocol == RC_PROTO_SONY12) अणु
+	if (protocol == RC_PROTO_SONY12) {
 		raw = (scancode & 0x7f) | ((scancode & 0x1f0000) >> 9);
 		len = 12;
-	पूर्ण अन्यथा अगर (protocol == RC_PROTO_SONY15) अणु
+	} else if (protocol == RC_PROTO_SONY15) {
 		raw = (scancode & 0x7f) | ((scancode & 0xff0000) >> 9);
 		len = 15;
-	पूर्ण अन्यथा अणु
+	} else {
 		raw = (scancode & 0x7f) | ((scancode & 0x1f0000) >> 9) |
 		       ((scancode & 0xff00) << 4);
 		len = 20;
-	पूर्ण
+	}
 
 	ret = ir_raw_gen_pl(&e, max, &ir_sony_timings, len, raw);
-	अगर (ret < 0)
-		वापस ret;
+	if (ret < 0)
+		return ret;
 
-	वापस e - events;
-पूर्ण
+	return e - events;
+}
 
-अटल काष्ठा ir_raw_handler sony_handler = अणु
+static struct ir_raw_handler sony_handler = {
 	.protocols	= RC_PROTO_BIT_SONY12 | RC_PROTO_BIT_SONY15 |
 							RC_PROTO_BIT_SONY20,
 	.decode		= ir_sony_decode,
 	.encode		= ir_sony_encode,
 	.carrier	= 40000,
-	.min_समयout	= SONY_TRAILER_SPACE,
-पूर्ण;
+	.min_timeout	= SONY_TRAILER_SPACE,
+};
 
-अटल पूर्णांक __init ir_sony_decode_init(व्योम)
-अणु
-	ir_raw_handler_रेजिस्टर(&sony_handler);
+static int __init ir_sony_decode_init(void)
+{
+	ir_raw_handler_register(&sony_handler);
 
-	prपूर्णांकk(KERN_INFO "IR Sony protocol handler initialized\n");
-	वापस 0;
-पूर्ण
+	printk(KERN_INFO "IR Sony protocol handler initialized\n");
+	return 0;
+}
 
-अटल व्योम __निकास ir_sony_decode_निकास(व्योम)
-अणु
-	ir_raw_handler_unरेजिस्टर(&sony_handler);
-पूर्ण
+static void __exit ir_sony_decode_exit(void)
+{
+	ir_raw_handler_unregister(&sony_handler);
+}
 
 module_init(ir_sony_decode_init);
-module_निकास(ir_sony_decode_निकास);
+module_exit(ir_sony_decode_exit);
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("David Hथअrdeman <david@hardeman.nu>");
+MODULE_AUTHOR("David Härdeman <david@hardeman.nu>");
 MODULE_DESCRIPTION("Sony IR protocol decoder");

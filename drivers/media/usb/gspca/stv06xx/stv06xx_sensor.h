@@ -1,10 +1,9 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: GPL-2.0-or-later */
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (c) 2001 Jean-Fredric Clere, Nikolas Zimmermann, Georg Acher
  *		      Mark Cave-Ayland, Carlo E Prelz, Dick Streefland
  * Copyright (c) 2002, 2003 Tuukka Toivonen
- * Copyright (c) 2008 Erik Andrथऊn
+ * Copyright (c) 2008 Erik Andrén
  *
  * P/N 861037:      Sensor HDCS1000        ASIC STV0600
  * P/N 861050-0010: Sensor HDCS1000        ASIC STV0600
@@ -15,22 +14,22 @@
  * P/N 861040-0000: Sensor ST VV6410       ASIC STV0610   - QuickCam Web
  */
 
-#अगर_अघोषित STV06XX_SENSOR_H_
-#घोषणा STV06XX_SENSOR_H_
+#ifndef STV06XX_SENSOR_H_
+#define STV06XX_SENSOR_H_
 
-#समावेश "stv06xx.h"
+#include "stv06xx.h"
 
-#घोषणा IS_1020(sd)	((sd)->sensor == &stv06xx_sensor_hdcs1020)
+#define IS_1020(sd)	((sd)->sensor == &stv06xx_sensor_hdcs1020)
 
-बाह्य स्थिर काष्ठा stv06xx_sensor stv06xx_sensor_vv6410;
-बाह्य स्थिर काष्ठा stv06xx_sensor stv06xx_sensor_hdcs1x00;
-बाह्य स्थिर काष्ठा stv06xx_sensor stv06xx_sensor_hdcs1020;
-बाह्य स्थिर काष्ठा stv06xx_sensor stv06xx_sensor_pb0100;
-बाह्य स्थिर काष्ठा stv06xx_sensor stv06xx_sensor_st6422;
+extern const struct stv06xx_sensor stv06xx_sensor_vv6410;
+extern const struct stv06xx_sensor stv06xx_sensor_hdcs1x00;
+extern const struct stv06xx_sensor stv06xx_sensor_hdcs1020;
+extern const struct stv06xx_sensor stv06xx_sensor_pb0100;
+extern const struct stv06xx_sensor stv06xx_sensor_st6422;
 
-काष्ठा stv06xx_sensor अणु
+struct stv06xx_sensor {
 	/* Defines the name of a sensor */
-	अक्षर name[32];
+	char name[32];
 
 	/* Sensor i2c address */
 	u8 i2c_addr;
@@ -42,34 +41,34 @@
 	u8 i2c_len;
 
 	/* Isoc packet size (per mode) */
-	पूर्णांक min_packet_size[4];
-	पूर्णांक max_packet_size[4];
+	int min_packet_size[4];
+	int max_packet_size[4];
 
-	/* Probes अगर the sensor is connected */
-	पूर्णांक (*probe)(काष्ठा sd *sd);
+	/* Probes if the sensor is connected */
+	int (*probe)(struct sd *sd);
 
-	/* Perक्रमms a initialization sequence */
-	पूर्णांक (*init)(काष्ठा sd *sd);
+	/* Performs a initialization sequence */
+	int (*init)(struct sd *sd);
 
 	/* Initializes the controls */
-	पूर्णांक (*init_controls)(काष्ठा sd *sd);
+	int (*init_controls)(struct sd *sd);
 
-	/* Reads a sensor रेजिस्टर */
-	पूर्णांक (*पढ़ो_sensor)(काष्ठा sd *sd, स्थिर u8 address,
-	      u8 *i2c_data, स्थिर u8 len);
+	/* Reads a sensor register */
+	int (*read_sensor)(struct sd *sd, const u8 address,
+	      u8 *i2c_data, const u8 len);
 
-	/* Writes to a sensor रेजिस्टर */
-	पूर्णांक (*ग_लिखो_sensor)(काष्ठा sd *sd, स्थिर u8 address,
-	      u8 *i2c_data, स्थिर u8 len);
+	/* Writes to a sensor register */
+	int (*write_sensor)(struct sd *sd, const u8 address,
+	      u8 *i2c_data, const u8 len);
 
-	/* Inकाष्ठाs the sensor to start streaming */
-	पूर्णांक (*start)(काष्ठा sd *sd);
+	/* Instructs the sensor to start streaming */
+	int (*start)(struct sd *sd);
 
-	/* Inकाष्ठाs the sensor to stop streaming */
-	पूर्णांक (*stop)(काष्ठा sd *sd);
+	/* Instructs the sensor to stop streaming */
+	int (*stop)(struct sd *sd);
 
-	/* Inकाष्ठाs the sensor to dump all its contents */
-	पूर्णांक (*dump)(काष्ठा sd *sd);
-पूर्ण;
+	/* Instructs the sensor to dump all its contents */
+	int (*dump)(struct sd *sd);
+};
 
-#पूर्ण_अगर
+#endif

@@ -1,15 +1,14 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#अगर_अघोषित DEBUGFS_ENGINES_H
-#घोषणा DEBUGFS_ENGINES_H
+#ifndef DEBUGFS_ENGINES_H
+#define DEBUGFS_ENGINES_H
 
-काष्ठा पूर्णांकel_gt;
-काष्ठा dentry;
+struct intel_gt;
+struct dentry;
 
-व्योम debugfs_engines_रेजिस्टर(काष्ठा पूर्णांकel_gt *gt, काष्ठा dentry *root);
+void debugfs_engines_register(struct intel_gt *gt, struct dentry *root);
 
-#पूर्ण_अगर /* DEBUGFS_ENGINES_H */
+#endif /* DEBUGFS_ENGINES_H */

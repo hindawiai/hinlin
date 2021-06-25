@@ -1,54 +1,53 @@
-<शैली गुरु>
 /*
- *	xt_समय
- *	Copyright तऊ CC Computer Consultants GmbH, 2007
+ *	xt_time
+ *	Copyright © CC Computer Consultants GmbH, 2007
  *
- *	based on ipt_समय by Fabrice MARIE <fabrice@netfilter.org>
- *	This is a module which is used क्रम समय matching
- *	It is using some modअगरied code from dietlibc (स_स्थानीय() function)
+ *	based on ipt_time by Fabrice MARIE <fabrice@netfilter.org>
+ *	This is a module which is used for time matching
+ *	It is using some modified code from dietlibc (localtime() function)
  *	that you can find at https://www.fefe.de/dietlibc/
  *	This file is distributed under the terms of the GNU General Public
  *	License (GPL). Copies of the GPL can be obtained from gnu.org/gpl.
  */
 
-#घोषणा pr_fmt(fmt) KBUILD_MODNAME ": " fmt
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#समावेश <linux/kसमय.स>
-#समावेश <linux/module.h>
-#समावेश <linux/skbuff.h>
-#समावेश <linux/types.h>
-#समावेश <linux/netfilter/x_tables.h>
-#समावेश <linux/netfilter/xt_समय.स>
+#include <linux/ktime.h>
+#include <linux/module.h>
+#include <linux/skbuff.h>
+#include <linux/types.h>
+#include <linux/netfilter/x_tables.h>
+#include <linux/netfilter/xt_time.h>
 
-काष्ठा xपंचांग अणु
-	u_पूर्णांक8_t month;    /* (1-12) */
-	u_पूर्णांक8_t monthday; /* (1-31) */
-	u_पूर्णांक8_t weekday;  /* (1-7) */
-	u_पूर्णांक8_t hour;     /* (0-23) */
-	u_पूर्णांक8_t minute;   /* (0-59) */
-	u_पूर्णांक8_t second;   /* (0-59) */
-	अचिन्हित पूर्णांक dse;
-पूर्ण;
+struct xtm {
+	u_int8_t month;    /* (1-12) */
+	u_int8_t monthday; /* (1-31) */
+	u_int8_t weekday;  /* (1-7) */
+	u_int8_t hour;     /* (0-23) */
+	u_int8_t minute;   /* (0-59) */
+	u_int8_t second;   /* (0-59) */
+	unsigned int dse;
+};
 
-बाह्य काष्ठा समयzone sys_tz; /* ouch */
+extern struct timezone sys_tz; /* ouch */
 
-अटल स्थिर u_पूर्णांक16_t days_since_year[] = अणु
+static const u_int16_t days_since_year[] = {
 	0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334,
-पूर्ण;
+};
 
-अटल स्थिर u_पूर्णांक16_t days_since_leapyear[] = अणु
+static const u_int16_t days_since_leapyear[] = {
 	0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335,
-पूर्ण;
+};
 
 /*
- * Since समय progresses क्रमward, it is best to organize this array in reverse,
- * to minimize lookup समय.
+ * Since time progresses forward, it is best to organize this array in reverse,
+ * to minimize lookup time.
  */
-क्रमागत अणु
+enum {
 	DSE_FIRST = 2039,
 	SECONDS_PER_DAY = 86400,
-पूर्ण;
-अटल स्थिर u_पूर्णांक16_t days_since_epoch[] = अणु
+};
+static const u_int16_t days_since_epoch[] = {
 	/* 2039 - 2030 */
 	25202, 24837, 24472, 24106, 23741, 23376, 23011, 22645, 22280, 21915,
 	/* 2029 - 2020 */
@@ -63,62 +62,62 @@
 	6940, 6574, 6209, 5844, 5479, 5113, 4748, 4383, 4018, 3652,
 	/* 1979 - 1970 */
 	3287, 2922, 2557, 2191, 1826, 1461, 1096, 730, 365, 0,
-पूर्ण;
+};
 
-अटल अंतरभूत bool is_leap(अचिन्हित पूर्णांक y)
-अणु
-	वापस y % 4 == 0 && (y % 100 != 0 || y % 400 == 0);
-पूर्ण
+static inline bool is_leap(unsigned int y)
+{
+	return y % 4 == 0 && (y % 100 != 0 || y % 400 == 0);
+}
 
 /*
- * Each network packet has a (nano)seconds-since-the-epoch (SSTE) बारtamp.
- * Since we match against days and dayसमय, the SSTE value needs to be
- * computed back पूर्णांकo human-पढ़ोable dates.
+ * Each network packet has a (nano)seconds-since-the-epoch (SSTE) timestamp.
+ * Since we match against days and daytime, the SSTE value needs to be
+ * computed back into human-readable dates.
  *
- * This is करोne in three separate functions so that the most expensive
- * calculations are करोne last, in हाल a "simple match" can be found earlier.
+ * This is done in three separate functions so that the most expensive
+ * calculations are done last, in case a "simple match" can be found earlier.
  */
-अटल अंतरभूत अचिन्हित पूर्णांक स_स्थानीय_1(काष्ठा xपंचांग *r, समय64_t समय)
-अणु
-	अचिन्हित पूर्णांक v, w;
+static inline unsigned int localtime_1(struct xtm *r, time64_t time)
+{
+	unsigned int v, w;
 
 	/* Each day has 86400s, so finding the hour/minute is actually easy. */
-	भाग_u64_rem(समय, SECONDS_PER_DAY, &v);
+	div_u64_rem(time, SECONDS_PER_DAY, &v);
 	r->second = v % 60;
 	w         = v / 60;
 	r->minute = w % 60;
 	r->hour   = w / 60;
-	वापस v;
-पूर्ण
+	return v;
+}
 
-अटल अंतरभूत व्योम स_स्थानीय_2(काष्ठा xपंचांग *r, समय64_t समय)
-अणु
+static inline void localtime_2(struct xtm *r, time64_t time)
+{
 	/*
-	 * Here comes the rest (weekday, monthday). First, भागide the SSTE
+	 * Here comes the rest (weekday, monthday). First, divide the SSTE
 	 * by seconds-per-day to get the number of _days_ since the epoch.
 	 */
-	r->dse = भाग_u64(समय, SECONDS_PER_DAY);
+	r->dse = div_u64(time, SECONDS_PER_DAY);
 
 	/*
 	 * 1970-01-01 (w=0) was a Thursday (4).
 	 * -1 and +1 map Sunday properly onto 7.
 	 */
 	r->weekday = (4 + r->dse - 1) % 7 + 1;
-पूर्ण
+}
 
-अटल व्योम स_स्थानीय_3(काष्ठा xपंचांग *r, समय64_t समय)
-अणु
-	अचिन्हित पूर्णांक year, i, w = r->dse;
+static void localtime_3(struct xtm *r, time64_t time)
+{
+	unsigned int year, i, w = r->dse;
 
 	/*
 	 * In each year, a certain number of days-since-the-epoch have passed.
-	 * Find the year that is बंदst to said days.
+	 * Find the year that is closest to said days.
 	 *
-	 * Consider, क्रम example, w=21612 (2029-03-04). Loop will पात on
+	 * Consider, for example, w=21612 (2029-03-04). Loop will abort on
 	 * dse[i] <= w, which happens when dse[i] == 21550. This implies
 	 * year == 2009. w will then be 62.
 	 */
-	क्रम (i = 0, year = DSE_FIRST; days_since_epoch[i] > w;
+	for (i = 0, year = DSE_FIRST; days_since_epoch[i] > w;
 	    ++i, --year)
 		/* just loop */;
 
@@ -129,171 +128,171 @@
 	 * r->yearday = w;
 	 *
 	 * On to finding the month (like above). In each month, a certain
-	 * number of days-since-New Year have passed, and find the बंदst
+	 * number of days-since-New Year have passed, and find the closest
 	 * one.
 	 *
-	 * Consider w=62 (in a non-leap year). Loop will पात on
+	 * Consider w=62 (in a non-leap year). Loop will abort on
 	 * dsy[i] < w, which happens when dsy[i] == 31+28 (i == 2).
 	 * Concludes i == 2, i.e. 3rd month => March.
 	 *
-	 * (A dअगरferent approach to use would be to subtract a monthlength
-	 * from w repeatedly जबतक counting.)
+	 * (A different approach to use would be to subtract a monthlength
+	 * from w repeatedly while counting.)
 	 */
-	अगर (is_leap(year)) अणु
+	if (is_leap(year)) {
 		/* use days_since_leapyear[] in a leap year */
-		क्रम (i = ARRAY_SIZE(days_since_leapyear) - 1;
+		for (i = ARRAY_SIZE(days_since_leapyear) - 1;
 		    i > 0 && days_since_leapyear[i] > w; --i)
 			/* just loop */;
 		r->monthday = w - days_since_leapyear[i] + 1;
-	पूर्ण अन्यथा अणु
-		क्रम (i = ARRAY_SIZE(days_since_year) - 1;
+	} else {
+		for (i = ARRAY_SIZE(days_since_year) - 1;
 		    i > 0 && days_since_year[i] > w; --i)
 			/* just loop */;
 		r->monthday = w - days_since_year[i] + 1;
-	पूर्ण
+	}
 
 	r->month    = i + 1;
-पूर्ण
+}
 
-अटल bool
-समय_mt(स्थिर काष्ठा sk_buff *skb, काष्ठा xt_action_param *par)
-अणु
-	स्थिर काष्ठा xt_समय_info *info = par->matchinfo;
-	अचिन्हित पूर्णांक packet_समय;
-	काष्ठा xपंचांग current_समय;
-	समय64_t stamp;
+static bool
+time_mt(const struct sk_buff *skb, struct xt_action_param *par)
+{
+	const struct xt_time_info *info = par->matchinfo;
+	unsigned int packet_time;
+	struct xtm current_time;
+	time64_t stamp;
 
 	/*
-	 * We need real समय here, but we can neither use skb->tstamp
-	 * nor __net_बारtamp().
+	 * We need real time here, but we can neither use skb->tstamp
+	 * nor __net_timestamp().
 	 *
 	 * skb->tstamp and skb->skb_mstamp_ns overlap, however, they
-	 * use dअगरferent घड़ी types (real vs monotonic).
+	 * use different clock types (real vs monotonic).
 	 *
 	 * Suppose you have two rules:
-	 *	1. match beक्रमe 13:00
+	 *	1. match before 13:00
 	 *	2. match after 13:00
 	 *
-	 * If you match against processing समय (kसमय_get_real_seconds) it
-	 * may happen that the same packet matches both rules अगर
-	 * it arrived at the right moment beक्रमe 13:00, so it would be
-	 * better to check skb->tstamp and set it via __net_बारtamp()
-	 * अगर needed.  This however अवरोधs outgoing packets tx बारtamp,
-	 * and causes them to get delayed क्रमever by fq packet scheduler.
+	 * If you match against processing time (ktime_get_real_seconds) it
+	 * may happen that the same packet matches both rules if
+	 * it arrived at the right moment before 13:00, so it would be
+	 * better to check skb->tstamp and set it via __net_timestamp()
+	 * if needed.  This however breaks outgoing packets tx timestamp,
+	 * and causes them to get delayed forever by fq packet scheduler.
 	 */
-	stamp = kसमय_get_real_seconds();
+	stamp = ktime_get_real_seconds();
 
-	अगर (info->flags & XT_TIME_LOCAL_TZ)
-		/* Adjust क्रम local समयzone */
+	if (info->flags & XT_TIME_LOCAL_TZ)
+		/* Adjust for local timezone */
 		stamp -= 60 * sys_tz.tz_minuteswest;
 
 	/*
-	 * xt_समय will match when _all_ of the following hold:
-	 *   - 'now' is in the global समय range date_start..date_end
+	 * xt_time will match when _all_ of the following hold:
+	 *   - 'now' is in the global time range date_start..date_end
 	 *   - 'now' is in the monthday mask
 	 *   - 'now' is in the weekday mask
-	 *   - 'now' is in the dayसमय range समय_start..समय_end
-	 * (and by शेष, libxt_समय will set these so as to match)
+	 *   - 'now' is in the daytime range time_start..time_end
+	 * (and by default, libxt_time will set these so as to match)
 	 *
-	 * note: info->date_start/stop are अचिन्हित 32-bit values that
+	 * note: info->date_start/stop are unsigned 32-bit values that
 	 *	 can hold values beyond y2038, but not after y2106.
 	 */
 
-	अगर (stamp < info->date_start || stamp > info->date_stop)
-		वापस false;
+	if (stamp < info->date_start || stamp > info->date_stop)
+		return false;
 
-	packet_समय = स_स्थानीय_1(&current_समय, stamp);
+	packet_time = localtime_1(&current_time, stamp);
 
-	अगर (info->dayसमय_start < info->dayसमय_stop) अणु
-		अगर (packet_समय < info->dayसमय_start ||
-		    packet_समय > info->dayसमय_stop)
-			वापस false;
-	पूर्ण अन्यथा अणु
-		अगर (packet_समय < info->dayसमय_start &&
-		    packet_समय > info->dayसमय_stop)
-			वापस false;
+	if (info->daytime_start < info->daytime_stop) {
+		if (packet_time < info->daytime_start ||
+		    packet_time > info->daytime_stop)
+			return false;
+	} else {
+		if (packet_time < info->daytime_start &&
+		    packet_time > info->daytime_stop)
+			return false;
 
-		/** अगर user asked to ignore 'next day', then e.g.
+		/** if user asked to ignore 'next day', then e.g.
 		 *  '1 PM Wed, August 1st' should be treated
 		 *  like 'Tue 1 PM July 31st'.
 		 *
 		 * This also causes
-		 * 'Monday, "23:00 to 01:00", to match क्रम 2 hours, starting
+		 * 'Monday, "23:00 to 01:00", to match for 2 hours, starting
 		 * Monday 23:00 to Tuesday 01:00.
 		 */
-		अगर ((info->flags & XT_TIME_CONTIGUOUS) &&
-		     packet_समय <= info->dayसमय_stop)
+		if ((info->flags & XT_TIME_CONTIGUOUS) &&
+		     packet_time <= info->daytime_stop)
 			stamp -= SECONDS_PER_DAY;
-	पूर्ण
+	}
 
-	स_स्थानीय_2(&current_समय, stamp);
+	localtime_2(&current_time, stamp);
 
-	अगर (!(info->weekdays_match & (1 << current_समय.weekday)))
-		वापस false;
+	if (!(info->weekdays_match & (1 << current_time.weekday)))
+		return false;
 
-	/* Do not spend समय computing monthday अगर all days match anyway */
-	अगर (info->monthdays_match != XT_TIME_ALL_MONTHDAYS) अणु
-		स_स्थानीय_3(&current_समय, stamp);
-		अगर (!(info->monthdays_match & (1 << current_समय.monthday)))
-			वापस false;
-	पूर्ण
+	/* Do not spend time computing monthday if all days match anyway */
+	if (info->monthdays_match != XT_TIME_ALL_MONTHDAYS) {
+		localtime_3(&current_time, stamp);
+		if (!(info->monthdays_match & (1 << current_time.monthday)))
+			return false;
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-अटल पूर्णांक समय_mt_check(स्थिर काष्ठा xt_mtchk_param *par)
-अणु
-	स्थिर काष्ठा xt_समय_info *info = par->matchinfo;
+static int time_mt_check(const struct xt_mtchk_param *par)
+{
+	const struct xt_time_info *info = par->matchinfo;
 
-	अगर (info->dayसमय_start > XT_TIME_MAX_DAYTIME ||
-	    info->dayसमय_stop > XT_TIME_MAX_DAYTIME) अणु
+	if (info->daytime_start > XT_TIME_MAX_DAYTIME ||
+	    info->daytime_stop > XT_TIME_MAX_DAYTIME) {
 		pr_info_ratelimited("invalid argument - start or stop time greater than 23:59:59\n");
-		वापस -गलत_तर्क;
-	पूर्ण
+		return -EDOM;
+	}
 
-	अगर (info->flags & ~XT_TIME_ALL_FLAGS) अणु
+	if (info->flags & ~XT_TIME_ALL_FLAGS) {
 		pr_info_ratelimited("unknown flags 0x%x\n",
 				    info->flags & ~XT_TIME_ALL_FLAGS);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	अगर ((info->flags & XT_TIME_CONTIGUOUS) &&
-	     info->dayसमय_start < info->dayसमय_stop)
-		वापस -EINVAL;
+	if ((info->flags & XT_TIME_CONTIGUOUS) &&
+	     info->daytime_start < info->daytime_stop)
+		return -EINVAL;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा xt_match xt_समय_mt_reg __पढ़ो_mostly = अणु
+static struct xt_match xt_time_mt_reg __read_mostly = {
 	.name       = "time",
 	.family     = NFPROTO_UNSPEC,
-	.match      = समय_mt,
-	.checkentry = समय_mt_check,
-	.matchsize  = माप(काष्ठा xt_समय_info),
+	.match      = time_mt,
+	.checkentry = time_mt_check,
+	.matchsize  = sizeof(struct xt_time_info),
 	.me         = THIS_MODULE,
-पूर्ण;
+};
 
-अटल पूर्णांक __init समय_mt_init(व्योम)
-अणु
-	पूर्णांक minutes = sys_tz.tz_minuteswest;
+static int __init time_mt_init(void)
+{
+	int minutes = sys_tz.tz_minuteswest;
 
-	अगर (minutes < 0) /* east of Greenwich */
+	if (minutes < 0) /* east of Greenwich */
 		pr_info("kernel timezone is +%02d%02d\n",
 			-minutes / 60, -minutes % 60);
-	अन्यथा /* west of Greenwich */
+	else /* west of Greenwich */
 		pr_info("kernel timezone is -%02d%02d\n",
 			minutes / 60, minutes % 60);
 
-	वापस xt_रेजिस्टर_match(&xt_समय_mt_reg);
-पूर्ण
+	return xt_register_match(&xt_time_mt_reg);
+}
 
-अटल व्योम __निकास समय_mt_निकास(व्योम)
-अणु
-	xt_unरेजिस्टर_match(&xt_समय_mt_reg);
-पूर्ण
+static void __exit time_mt_exit(void)
+{
+	xt_unregister_match(&xt_time_mt_reg);
+}
 
-module_init(समय_mt_init);
-module_निकास(समय_mt_निकास);
+module_init(time_mt_init);
+module_exit(time_mt_exit);
 MODULE_AUTHOR("Jan Engelhardt <jengelh@medozas.de>");
 MODULE_DESCRIPTION("Xtables: time-based matching");
 MODULE_LICENSE("GPL");

@@ -1,128 +1,127 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
  * Landlock LSM - Ruleset management
  *
- * Copyright तऊ 2016-2020 Mickaथ+l Salaथञn <mic@digikod.net>
- * Copyright तऊ 2018-2020 ANSSI
+ * Copyright © 2016-2020 Mickaël Salaün <mic@digikod.net>
+ * Copyright © 2018-2020 ANSSI
  */
 
-#समावेश <linux/bits.h>
-#समावेश <linux/bug.h>
-#समावेश <linux/compiler_types.h>
-#समावेश <linux/err.h>
-#समावेश <linux/त्रुटिसं.स>
-#समावेश <linux/kernel.h>
-#समावेश <linux/lockdep.h>
-#समावेश <linux/overflow.h>
-#समावेश <linux/rbtree.h>
-#समावेश <linux/refcount.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/spinlock.h>
-#समावेश <linux/workqueue.h>
+#include <linux/bits.h>
+#include <linux/bug.h>
+#include <linux/compiler_types.h>
+#include <linux/err.h>
+#include <linux/errno.h>
+#include <linux/kernel.h>
+#include <linux/lockdep.h>
+#include <linux/overflow.h>
+#include <linux/rbtree.h>
+#include <linux/refcount.h>
+#include <linux/slab.h>
+#include <linux/spinlock.h>
+#include <linux/workqueue.h>
 
-#समावेश "limits.h"
-#समावेश "object.h"
-#समावेश "ruleset.h"
+#include "limits.h"
+#include "object.h"
+#include "ruleset.h"
 
-अटल काष्ठा landlock_ruleset *create_ruleset(स्थिर u32 num_layers)
-अणु
-	काष्ठा landlock_ruleset *new_ruleset;
+static struct landlock_ruleset *create_ruleset(const u32 num_layers)
+{
+	struct landlock_ruleset *new_ruleset;
 
-	new_ruleset = kzalloc(काष्ठा_size(new_ruleset, fs_access_masks,
+	new_ruleset = kzalloc(struct_size(new_ruleset, fs_access_masks,
 				num_layers), GFP_KERNEL_ACCOUNT);
-	अगर (!new_ruleset)
-		वापस ERR_PTR(-ENOMEM);
+	if (!new_ruleset)
+		return ERR_PTR(-ENOMEM);
 	refcount_set(&new_ruleset->usage, 1);
 	mutex_init(&new_ruleset->lock);
 	new_ruleset->root = RB_ROOT;
 	new_ruleset->num_layers = num_layers;
 	/*
-	 * hierarchy = शून्य
+	 * hierarchy = NULL
 	 * num_rules = 0
 	 * fs_access_masks[] = 0
 	 */
-	वापस new_ruleset;
-पूर्ण
+	return new_ruleset;
+}
 
-काष्ठा landlock_ruleset *landlock_create_ruleset(स्थिर u32 fs_access_mask)
-अणु
-	काष्ठा landlock_ruleset *new_ruleset;
+struct landlock_ruleset *landlock_create_ruleset(const u32 fs_access_mask)
+{
+	struct landlock_ruleset *new_ruleset;
 
-	/* Inक्रमms about useless ruleset. */
-	अगर (!fs_access_mask)
-		वापस ERR_PTR(-ENOMSG);
+	/* Informs about useless ruleset. */
+	if (!fs_access_mask)
+		return ERR_PTR(-ENOMSG);
 	new_ruleset = create_ruleset(1);
-	अगर (!IS_ERR(new_ruleset))
+	if (!IS_ERR(new_ruleset))
 		new_ruleset->fs_access_masks[0] = fs_access_mask;
-	वापस new_ruleset;
-पूर्ण
+	return new_ruleset;
+}
 
-अटल व्योम build_check_rule(व्योम)
-अणु
-	स्थिर काष्ठा landlock_rule rule = अणु
+static void build_check_rule(void)
+{
+	const struct landlock_rule rule = {
 		.num_layers = ~0,
-	पूर्ण;
+	};
 
 	BUILD_BUG_ON(rule.num_layers < LANDLOCK_MAX_NUM_LAYERS);
-पूर्ण
+}
 
-अटल काष्ठा landlock_rule *create_rule(
-		काष्ठा landlock_object *स्थिर object,
-		स्थिर काष्ठा landlock_layer (*स्थिर layers)[],
-		स्थिर u32 num_layers,
-		स्थिर काष्ठा landlock_layer *स्थिर new_layer)
-अणु
-	काष्ठा landlock_rule *new_rule;
+static struct landlock_rule *create_rule(
+		struct landlock_object *const object,
+		const struct landlock_layer (*const layers)[],
+		const u32 num_layers,
+		const struct landlock_layer *const new_layer)
+{
+	struct landlock_rule *new_rule;
 	u32 new_num_layers;
 
 	build_check_rule();
-	अगर (new_layer) अणु
-		/* Should alपढ़ोy be checked by landlock_merge_ruleset(). */
-		अगर (WARN_ON_ONCE(num_layers >= LANDLOCK_MAX_NUM_LAYERS))
-			वापस ERR_PTR(-E2BIG);
+	if (new_layer) {
+		/* Should already be checked by landlock_merge_ruleset(). */
+		if (WARN_ON_ONCE(num_layers >= LANDLOCK_MAX_NUM_LAYERS))
+			return ERR_PTR(-E2BIG);
 		new_num_layers = num_layers + 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		new_num_layers = num_layers;
-	पूर्ण
-	new_rule = kzalloc(काष्ठा_size(new_rule, layers, new_num_layers),
+	}
+	new_rule = kzalloc(struct_size(new_rule, layers, new_num_layers),
 			GFP_KERNEL_ACCOUNT);
-	अगर (!new_rule)
-		वापस ERR_PTR(-ENOMEM);
+	if (!new_rule)
+		return ERR_PTR(-ENOMEM);
 	RB_CLEAR_NODE(&new_rule->node);
 	landlock_get_object(object);
 	new_rule->object = object;
 	new_rule->num_layers = new_num_layers;
 	/* Copies the original layer stack. */
-	स_नकल(new_rule->layers, layers,
+	memcpy(new_rule->layers, layers,
 			flex_array_size(new_rule, layers, num_layers));
-	अगर (new_layer)
+	if (new_layer)
 		/* Adds a copy of @new_layer on the layer stack. */
 		new_rule->layers[new_rule->num_layers - 1] = *new_layer;
-	वापस new_rule;
-पूर्ण
+	return new_rule;
+}
 
-अटल व्योम मुक्त_rule(काष्ठा landlock_rule *स्थिर rule)
-अणु
+static void free_rule(struct landlock_rule *const rule)
+{
 	might_sleep();
-	अगर (!rule)
-		वापस;
+	if (!rule)
+		return;
 	landlock_put_object(rule->object);
-	kमुक्त(rule);
-पूर्ण
+	kfree(rule);
+}
 
-अटल व्योम build_check_ruleset(व्योम)
-अणु
-	स्थिर काष्ठा landlock_ruleset ruleset = अणु
+static void build_check_ruleset(void)
+{
+	const struct landlock_ruleset ruleset = {
 		.num_rules = ~0,
 		.num_layers = ~0,
-	पूर्ण;
+	};
 	typeof(ruleset.fs_access_masks[0]) fs_access_mask = ~0;
 
 	BUILD_BUG_ON(ruleset.num_rules < LANDLOCK_MAX_NUM_RULES);
 	BUILD_BUG_ON(ruleset.num_layers < LANDLOCK_MAX_NUM_LAYERS);
 	BUILD_BUG_ON(fs_access_mask < LANDLOCK_MASK_ACCESS_FS);
-पूर्ण
+}
 
 /**
  * insert_rule - Create and insert a rule in a ruleset
@@ -130,345 +129,345 @@
  * @ruleset: The ruleset to be updated.
  * @object: The object to build the new rule with.  The underlying kernel
  *          object must be held by the caller.
- * @layers: One or multiple layers to be copied पूर्णांकo the new rule.
+ * @layers: One or multiple layers to be copied into the new rule.
  * @num_layers: The number of @layers entries.
  *
  * When user space requests to add a new rule to a ruleset, @layers only
- * contains one entry and this entry is not asचिन्हित to any level.  In this
- * हाल, the new rule will extend @ruleset, similarly to a boolean OR between
+ * contains one entry and this entry is not assigned to any level.  In this
+ * case, the new rule will extend @ruleset, similarly to a boolean OR between
  * access rights.
  *
- * When merging a ruleset in a करोमुख्य, or copying a करोमुख्य, @layers will be
- * added to @ruleset as new स्थिरraपूर्णांकs, similarly to a boolean AND between
+ * When merging a ruleset in a domain, or copying a domain, @layers will be
+ * added to @ruleset as new constraints, similarly to a boolean AND between
  * access rights.
  */
-अटल पूर्णांक insert_rule(काष्ठा landlock_ruleset *स्थिर ruleset,
-		काष्ठा landlock_object *स्थिर object,
-		स्थिर काष्ठा landlock_layer (*स्थिर layers)[],
-		माप_प्रकार num_layers)
-अणु
-	काष्ठा rb_node **walker_node;
-	काष्ठा rb_node *parent_node = शून्य;
-	काष्ठा landlock_rule *new_rule;
+static int insert_rule(struct landlock_ruleset *const ruleset,
+		struct landlock_object *const object,
+		const struct landlock_layer (*const layers)[],
+		size_t num_layers)
+{
+	struct rb_node **walker_node;
+	struct rb_node *parent_node = NULL;
+	struct landlock_rule *new_rule;
 
 	might_sleep();
-	lockdep_निश्चित_held(&ruleset->lock);
-	अगर (WARN_ON_ONCE(!object || !layers))
-		वापस -ENOENT;
+	lockdep_assert_held(&ruleset->lock);
+	if (WARN_ON_ONCE(!object || !layers))
+		return -ENOENT;
 	walker_node = &(ruleset->root.rb_node);
-	जबतक (*walker_node) अणु
-		काष्ठा landlock_rule *स्थिर this = rb_entry(*walker_node,
-				काष्ठा landlock_rule, node);
+	while (*walker_node) {
+		struct landlock_rule *const this = rb_entry(*walker_node,
+				struct landlock_rule, node);
 
-		अगर (this->object != object) अणु
+		if (this->object != object) {
 			parent_node = *walker_node;
-			अगर (this->object < object)
+			if (this->object < object)
 				walker_node = &((*walker_node)->rb_right);
-			अन्यथा
+			else
 				walker_node = &((*walker_node)->rb_left);
-			जारी;
-		पूर्ण
+			continue;
+		}
 
 		/* Only a single-level layer should match an existing rule. */
-		अगर (WARN_ON_ONCE(num_layers != 1))
-			वापस -EINVAL;
+		if (WARN_ON_ONCE(num_layers != 1))
+			return -EINVAL;
 
 		/* If there is a matching rule, updates it. */
-		अगर ((*layers)[0].level == 0) अणु
+		if ((*layers)[0].level == 0) {
 			/*
 			 * Extends access rights when the request comes from
-			 * landlock_add_rule(2), i.e. @ruleset is not a करोमुख्य.
+			 * landlock_add_rule(2), i.e. @ruleset is not a domain.
 			 */
-			अगर (WARN_ON_ONCE(this->num_layers != 1))
-				वापस -EINVAL;
-			अगर (WARN_ON_ONCE(this->layers[0].level != 0))
-				वापस -EINVAL;
+			if (WARN_ON_ONCE(this->num_layers != 1))
+				return -EINVAL;
+			if (WARN_ON_ONCE(this->layers[0].level != 0))
+				return -EINVAL;
 			this->layers[0].access |= (*layers)[0].access;
-			वापस 0;
-		पूर्ण
+			return 0;
+		}
 
-		अगर (WARN_ON_ONCE(this->layers[0].level == 0))
-			वापस -EINVAL;
+		if (WARN_ON_ONCE(this->layers[0].level == 0))
+			return -EINVAL;
 
 		/*
 		 * Intersects access rights when it is a merge between a
-		 * ruleset and a करोमुख्य.
+		 * ruleset and a domain.
 		 */
 		new_rule = create_rule(object, &this->layers, this->num_layers,
 				&(*layers)[0]);
-		अगर (IS_ERR(new_rule))
-			वापस PTR_ERR(new_rule);
+		if (IS_ERR(new_rule))
+			return PTR_ERR(new_rule);
 		rb_replace_node(&this->node, &new_rule->node, &ruleset->root);
-		मुक्त_rule(this);
-		वापस 0;
-	पूर्ण
+		free_rule(this);
+		return 0;
+	}
 
-	/* There is no match क्रम @object. */
+	/* There is no match for @object. */
 	build_check_ruleset();
-	अगर (ruleset->num_rules >= LANDLOCK_MAX_NUM_RULES)
-		वापस -E2BIG;
-	new_rule = create_rule(object, layers, num_layers, शून्य);
-	अगर (IS_ERR(new_rule))
-		वापस PTR_ERR(new_rule);
+	if (ruleset->num_rules >= LANDLOCK_MAX_NUM_RULES)
+		return -E2BIG;
+	new_rule = create_rule(object, layers, num_layers, NULL);
+	if (IS_ERR(new_rule))
+		return PTR_ERR(new_rule);
 	rb_link_node(&new_rule->node, parent_node, walker_node);
 	rb_insert_color(&new_rule->node, &ruleset->root);
 	ruleset->num_rules++;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम build_check_layer(व्योम)
-अणु
-	स्थिर काष्ठा landlock_layer layer = अणु
+static void build_check_layer(void)
+{
+	const struct landlock_layer layer = {
 		.level = ~0,
 		.access = ~0,
-	पूर्ण;
+	};
 
 	BUILD_BUG_ON(layer.level < LANDLOCK_MAX_NUM_LAYERS);
 	BUILD_BUG_ON(layer.access < LANDLOCK_MASK_ACCESS_FS);
-पूर्ण
+}
 
 /* @ruleset must be locked by the caller. */
-पूर्णांक landlock_insert_rule(काष्ठा landlock_ruleset *स्थिर ruleset,
-		काष्ठा landlock_object *स्थिर object, स्थिर u32 access)
-अणु
-	काष्ठा landlock_layer layers[] = अणुअणु
+int landlock_insert_rule(struct landlock_ruleset *const ruleset,
+		struct landlock_object *const object, const u32 access)
+{
+	struct landlock_layer layers[] = {{
 		.access = access,
 		/* When @level is zero, insert_rule() extends @ruleset. */
 		.level = 0,
-	पूर्णपूर्ण;
+	}};
 
 	build_check_layer();
-	वापस insert_rule(ruleset, object, &layers, ARRAY_SIZE(layers));
-पूर्ण
+	return insert_rule(ruleset, object, &layers, ARRAY_SIZE(layers));
+}
 
-अटल अंतरभूत व्योम get_hierarchy(काष्ठा landlock_hierarchy *स्थिर hierarchy)
-अणु
-	अगर (hierarchy)
+static inline void get_hierarchy(struct landlock_hierarchy *const hierarchy)
+{
+	if (hierarchy)
 		refcount_inc(&hierarchy->usage);
-पूर्ण
+}
 
-अटल व्योम put_hierarchy(काष्ठा landlock_hierarchy *hierarchy)
-अणु
-	जबतक (hierarchy && refcount_dec_and_test(&hierarchy->usage)) अणु
-		स्थिर काष्ठा landlock_hierarchy *स्थिर मुक्तme = hierarchy;
+static void put_hierarchy(struct landlock_hierarchy *hierarchy)
+{
+	while (hierarchy && refcount_dec_and_test(&hierarchy->usage)) {
+		const struct landlock_hierarchy *const freeme = hierarchy;
 
 		hierarchy = hierarchy->parent;
-		kमुक्त(मुक्तme);
-	पूर्ण
-पूर्ण
+		kfree(freeme);
+	}
+}
 
-अटल पूर्णांक merge_ruleset(काष्ठा landlock_ruleset *स्थिर dst,
-		काष्ठा landlock_ruleset *स्थिर src)
-अणु
-	काष्ठा landlock_rule *walker_rule, *next_rule;
-	पूर्णांक err = 0;
+static int merge_ruleset(struct landlock_ruleset *const dst,
+		struct landlock_ruleset *const src)
+{
+	struct landlock_rule *walker_rule, *next_rule;
+	int err = 0;
 
 	might_sleep();
-	/* Should alपढ़ोy be checked by landlock_merge_ruleset() */
-	अगर (WARN_ON_ONCE(!src))
-		वापस 0;
-	/* Only merge पूर्णांकo a करोमुख्य. */
-	अगर (WARN_ON_ONCE(!dst || !dst->hierarchy))
-		वापस -EINVAL;
+	/* Should already be checked by landlock_merge_ruleset() */
+	if (WARN_ON_ONCE(!src))
+		return 0;
+	/* Only merge into a domain. */
+	if (WARN_ON_ONCE(!dst || !dst->hierarchy))
+		return -EINVAL;
 
 	/* Locks @dst first because we are its only owner. */
 	mutex_lock(&dst->lock);
 	mutex_lock_nested(&src->lock, SINGLE_DEPTH_NESTING);
 
 	/* Stacks the new layer. */
-	अगर (WARN_ON_ONCE(src->num_layers != 1 || dst->num_layers < 1)) अणु
+	if (WARN_ON_ONCE(src->num_layers != 1 || dst->num_layers < 1)) {
 		err = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 	dst->fs_access_masks[dst->num_layers - 1] = src->fs_access_masks[0];
 
 	/* Merges the @src tree. */
-	rbtree_postorder_क्रम_each_entry_safe(walker_rule, next_rule,
-			&src->root, node) अणु
-		काष्ठा landlock_layer layers[] = अणुअणु
+	rbtree_postorder_for_each_entry_safe(walker_rule, next_rule,
+			&src->root, node) {
+		struct landlock_layer layers[] = {{
 			.level = dst->num_layers,
-		पूर्णपूर्ण;
+		}};
 
-		अगर (WARN_ON_ONCE(walker_rule->num_layers != 1)) अणु
+		if (WARN_ON_ONCE(walker_rule->num_layers != 1)) {
 			err = -EINVAL;
-			जाओ out_unlock;
-		पूर्ण
-		अगर (WARN_ON_ONCE(walker_rule->layers[0].level != 0)) अणु
+			goto out_unlock;
+		}
+		if (WARN_ON_ONCE(walker_rule->layers[0].level != 0)) {
 			err = -EINVAL;
-			जाओ out_unlock;
-		पूर्ण
+			goto out_unlock;
+		}
 		layers[0].access = walker_rule->layers[0].access;
 		err = insert_rule(dst, walker_rule->object, &layers,
 				ARRAY_SIZE(layers));
-		अगर (err)
-			जाओ out_unlock;
-	पूर्ण
+		if (err)
+			goto out_unlock;
+	}
 
 out_unlock:
 	mutex_unlock(&src->lock);
 	mutex_unlock(&dst->lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक inherit_ruleset(काष्ठा landlock_ruleset *स्थिर parent,
-		काष्ठा landlock_ruleset *स्थिर child)
-अणु
-	काष्ठा landlock_rule *walker_rule, *next_rule;
-	पूर्णांक err = 0;
+static int inherit_ruleset(struct landlock_ruleset *const parent,
+		struct landlock_ruleset *const child)
+{
+	struct landlock_rule *walker_rule, *next_rule;
+	int err = 0;
 
 	might_sleep();
-	अगर (!parent)
-		वापस 0;
+	if (!parent)
+		return 0;
 
 	/* Locks @child first because we are its only owner. */
 	mutex_lock(&child->lock);
 	mutex_lock_nested(&parent->lock, SINGLE_DEPTH_NESTING);
 
 	/* Copies the @parent tree. */
-	rbtree_postorder_क्रम_each_entry_safe(walker_rule, next_rule,
-			&parent->root, node) अणु
+	rbtree_postorder_for_each_entry_safe(walker_rule, next_rule,
+			&parent->root, node) {
 		err = insert_rule(child, walker_rule->object,
 				&walker_rule->layers, walker_rule->num_layers);
-		अगर (err)
-			जाओ out_unlock;
-	पूर्ण
+		if (err)
+			goto out_unlock;
+	}
 
-	अगर (WARN_ON_ONCE(child->num_layers <= parent->num_layers)) अणु
+	if (WARN_ON_ONCE(child->num_layers <= parent->num_layers)) {
 		err = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
-	/* Copies the parent layer stack and leaves a space क्रम the new layer. */
-	स_नकल(child->fs_access_masks, parent->fs_access_masks,
+		goto out_unlock;
+	}
+	/* Copies the parent layer stack and leaves a space for the new layer. */
+	memcpy(child->fs_access_masks, parent->fs_access_masks,
 			flex_array_size(parent, fs_access_masks, parent->num_layers));
 
-	अगर (WARN_ON_ONCE(!parent->hierarchy)) अणु
+	if (WARN_ON_ONCE(!parent->hierarchy)) {
 		err = -EINVAL;
-		जाओ out_unlock;
-	पूर्ण
+		goto out_unlock;
+	}
 	get_hierarchy(parent->hierarchy);
 	child->hierarchy->parent = parent->hierarchy;
 
 out_unlock:
 	mutex_unlock(&parent->lock);
 	mutex_unlock(&child->lock);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम मुक्त_ruleset(काष्ठा landlock_ruleset *स्थिर ruleset)
-अणु
-	काष्ठा landlock_rule *मुक्तme, *next;
+static void free_ruleset(struct landlock_ruleset *const ruleset)
+{
+	struct landlock_rule *freeme, *next;
 
 	might_sleep();
-	rbtree_postorder_क्रम_each_entry_safe(मुक्तme, next, &ruleset->root,
+	rbtree_postorder_for_each_entry_safe(freeme, next, &ruleset->root,
 			node)
-		मुक्त_rule(मुक्तme);
+		free_rule(freeme);
 	put_hierarchy(ruleset->hierarchy);
-	kमुक्त(ruleset);
-पूर्ण
+	kfree(ruleset);
+}
 
-व्योम landlock_put_ruleset(काष्ठा landlock_ruleset *स्थिर ruleset)
-अणु
+void landlock_put_ruleset(struct landlock_ruleset *const ruleset)
+{
 	might_sleep();
-	अगर (ruleset && refcount_dec_and_test(&ruleset->usage))
-		मुक्त_ruleset(ruleset);
-पूर्ण
+	if (ruleset && refcount_dec_and_test(&ruleset->usage))
+		free_ruleset(ruleset);
+}
 
-अटल व्योम मुक्त_ruleset_work(काष्ठा work_काष्ठा *स्थिर work)
-अणु
-	काष्ठा landlock_ruleset *ruleset;
+static void free_ruleset_work(struct work_struct *const work)
+{
+	struct landlock_ruleset *ruleset;
 
-	ruleset = container_of(work, काष्ठा landlock_ruleset, work_मुक्त);
-	मुक्त_ruleset(ruleset);
-पूर्ण
+	ruleset = container_of(work, struct landlock_ruleset, work_free);
+	free_ruleset(ruleset);
+}
 
-व्योम landlock_put_ruleset_deferred(काष्ठा landlock_ruleset *स्थिर ruleset)
-अणु
-	अगर (ruleset && refcount_dec_and_test(&ruleset->usage)) अणु
-		INIT_WORK(&ruleset->work_मुक्त, मुक्त_ruleset_work);
-		schedule_work(&ruleset->work_मुक्त);
-	पूर्ण
-पूर्ण
+void landlock_put_ruleset_deferred(struct landlock_ruleset *const ruleset)
+{
+	if (ruleset && refcount_dec_and_test(&ruleset->usage)) {
+		INIT_WORK(&ruleset->work_free, free_ruleset_work);
+		schedule_work(&ruleset->work_free);
+	}
+}
 
 /**
- * landlock_merge_ruleset - Merge a ruleset with a करोमुख्य
+ * landlock_merge_ruleset - Merge a ruleset with a domain
  *
- * @parent: Parent करोमुख्य.
+ * @parent: Parent domain.
  * @ruleset: New ruleset to be merged.
  *
- * Returns the पूर्णांकersection of @parent and @ruleset, or वापसs @parent अगर
- * @ruleset is empty, or वापसs a duplicate of @ruleset अगर @parent is empty.
+ * Returns the intersection of @parent and @ruleset, or returns @parent if
+ * @ruleset is empty, or returns a duplicate of @ruleset if @parent is empty.
  */
-काष्ठा landlock_ruleset *landlock_merge_ruleset(
-		काष्ठा landlock_ruleset *स्थिर parent,
-		काष्ठा landlock_ruleset *स्थिर ruleset)
-अणु
-	काष्ठा landlock_ruleset *new_करोm;
+struct landlock_ruleset *landlock_merge_ruleset(
+		struct landlock_ruleset *const parent,
+		struct landlock_ruleset *const ruleset)
+{
+	struct landlock_ruleset *new_dom;
 	u32 num_layers;
-	पूर्णांक err;
+	int err;
 
 	might_sleep();
-	अगर (WARN_ON_ONCE(!ruleset || parent == ruleset))
-		वापस ERR_PTR(-EINVAL);
+	if (WARN_ON_ONCE(!ruleset || parent == ruleset))
+		return ERR_PTR(-EINVAL);
 
-	अगर (parent) अणु
-		अगर (parent->num_layers >= LANDLOCK_MAX_NUM_LAYERS)
-			वापस ERR_PTR(-E2BIG);
+	if (parent) {
+		if (parent->num_layers >= LANDLOCK_MAX_NUM_LAYERS)
+			return ERR_PTR(-E2BIG);
 		num_layers = parent->num_layers + 1;
-	पूर्ण अन्यथा अणु
+	} else {
 		num_layers = 1;
-	पूर्ण
+	}
 
-	/* Creates a new करोमुख्य... */
-	new_करोm = create_ruleset(num_layers);
-	अगर (IS_ERR(new_करोm))
-		वापस new_करोm;
-	new_करोm->hierarchy = kzalloc(माप(*new_करोm->hierarchy),
+	/* Creates a new domain... */
+	new_dom = create_ruleset(num_layers);
+	if (IS_ERR(new_dom))
+		return new_dom;
+	new_dom->hierarchy = kzalloc(sizeof(*new_dom->hierarchy),
 			GFP_KERNEL_ACCOUNT);
-	अगर (!new_करोm->hierarchy) अणु
+	if (!new_dom->hierarchy) {
 		err = -ENOMEM;
-		जाओ out_put_करोm;
-	पूर्ण
-	refcount_set(&new_करोm->hierarchy->usage, 1);
+		goto out_put_dom;
+	}
+	refcount_set(&new_dom->hierarchy->usage, 1);
 
 	/* ...as a child of @parent... */
-	err = inherit_ruleset(parent, new_करोm);
-	अगर (err)
-		जाओ out_put_करोm;
+	err = inherit_ruleset(parent, new_dom);
+	if (err)
+		goto out_put_dom;
 
 	/* ...and including @ruleset. */
-	err = merge_ruleset(new_करोm, ruleset);
-	अगर (err)
-		जाओ out_put_करोm;
+	err = merge_ruleset(new_dom, ruleset);
+	if (err)
+		goto out_put_dom;
 
-	वापस new_करोm;
+	return new_dom;
 
-out_put_करोm:
-	landlock_put_ruleset(new_करोm);
-	वापस ERR_PTR(err);
-पूर्ण
+out_put_dom:
+	landlock_put_ruleset(new_dom);
+	return ERR_PTR(err);
+}
 
 /*
- * The वापसed access has the same lअगरeसमय as @ruleset.
+ * The returned access has the same lifetime as @ruleset.
  */
-स्थिर काष्ठा landlock_rule *landlock_find_rule(
-		स्थिर काष्ठा landlock_ruleset *स्थिर ruleset,
-		स्थिर काष्ठा landlock_object *स्थिर object)
-अणु
-	स्थिर काष्ठा rb_node *node;
+const struct landlock_rule *landlock_find_rule(
+		const struct landlock_ruleset *const ruleset,
+		const struct landlock_object *const object)
+{
+	const struct rb_node *node;
 
-	अगर (!object)
-		वापस शून्य;
+	if (!object)
+		return NULL;
 	node = ruleset->root.rb_node;
-	जबतक (node) अणु
-		काष्ठा landlock_rule *this = rb_entry(node,
-				काष्ठा landlock_rule, node);
+	while (node) {
+		struct landlock_rule *this = rb_entry(node,
+				struct landlock_rule, node);
 
-		अगर (this->object == object)
-			वापस this;
-		अगर (this->object < object)
+		if (this->object == object)
+			return this;
+		if (this->object < object)
 			node = node->rb_right;
-		अन्यथा
+		else
 			node = node->rb_left;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	}
+	return NULL;
+}

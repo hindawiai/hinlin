@@ -1,26 +1,25 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#अगर_अघोषित __INTEL_COLOR_H__
-#घोषणा __INTEL_COLOR_H__
+#ifndef __INTEL_COLOR_H__
+#define __INTEL_COLOR_H__
 
-#समावेश <linux/types.h>
+#include <linux/types.h>
 
-काष्ठा पूर्णांकel_crtc_state;
-काष्ठा पूर्णांकel_crtc;
-काष्ठा drm_property_blob;
+struct intel_crtc_state;
+struct intel_crtc;
+struct drm_property_blob;
 
-व्योम पूर्णांकel_color_init(काष्ठा पूर्णांकel_crtc *crtc);
-पूर्णांक पूर्णांकel_color_check(काष्ठा पूर्णांकel_crtc_state *crtc_state);
-व्योम पूर्णांकel_color_commit(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
-व्योम पूर्णांकel_color_load_luts(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
-व्योम पूर्णांकel_color_get_config(काष्ठा पूर्णांकel_crtc_state *crtc_state);
-पूर्णांक पूर्णांकel_color_get_gamma_bit_precision(स्थिर काष्ठा पूर्णांकel_crtc_state *crtc_state);
-bool पूर्णांकel_color_lut_equal(काष्ठा drm_property_blob *blob1,
-			   काष्ठा drm_property_blob *blob2,
+void intel_color_init(struct intel_crtc *crtc);
+int intel_color_check(struct intel_crtc_state *crtc_state);
+void intel_color_commit(const struct intel_crtc_state *crtc_state);
+void intel_color_load_luts(const struct intel_crtc_state *crtc_state);
+void intel_color_get_config(struct intel_crtc_state *crtc_state);
+int intel_color_get_gamma_bit_precision(const struct intel_crtc_state *crtc_state);
+bool intel_color_lut_equal(struct drm_property_blob *blob1,
+			   struct drm_property_blob *blob2,
 			   u32 gamma_mode, u32 bit_precision);
 
-#पूर्ण_अगर /* __INTEL_COLOR_H__ */
+#endif /* __INTEL_COLOR_H__ */

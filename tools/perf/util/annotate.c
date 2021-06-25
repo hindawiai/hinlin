@@ -1,383 +1,382 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-only
+// SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (C) 2011, Red Hat Inc, Arnalकरो Carvalho de Melo <acme@redhat.com>
+ * Copyright (C) 2011, Red Hat Inc, Arnaldo Carvalho de Melo <acme@redhat.com>
  *
- * Parts came from builtin-annotate.c, see those files क्रम further
+ * Parts came from builtin-annotate.c, see those files for further
  * copyright notes.
  */
 
-#समावेश <त्रुटिसं.स>
-#समावेश <पूर्णांकtypes.h>
-#समावेश <libgen.h>
-#समावेश <मानककोष.स>
-#समावेश "util.h" // hex_width()
-#समावेश "ui/ui.h"
-#समावेश "sort.h"
-#समावेश "build-id.h"
-#समावेश "color.h"
-#समावेश "config.h"
-#समावेश "dso.h"
-#समावेश "env.h"
-#समावेश "map.h"
-#समावेश "maps.h"
-#समावेश "symbol.h"
-#समावेश "srcline.h"
-#समावेश "units.h"
-#समावेश "debug.h"
-#समावेश "annotate.h"
-#समावेश "evsel.h"
-#समावेश "evlist.h"
-#समावेश "bpf-event.h"
-#समावेश "block-range.h"
-#समावेश "string2.h"
-#समावेश "util/event.h"
-#समावेश "arch/common.h"
-#समावेश <regex.h>
-#समावेश <pthपढ़ो.h>
-#समावेश <linux/bitops.h>
-#समावेश <linux/kernel.h>
-#समावेश <linux/माला.स>
-#समावेश <subcmd/parse-options.h>
-#समावेश <subcmd/run-command.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <libgen.h>
+#include <stdlib.h>
+#include "util.h" // hex_width()
+#include "ui/ui.h"
+#include "sort.h"
+#include "build-id.h"
+#include "color.h"
+#include "config.h"
+#include "dso.h"
+#include "env.h"
+#include "map.h"
+#include "maps.h"
+#include "symbol.h"
+#include "srcline.h"
+#include "units.h"
+#include "debug.h"
+#include "annotate.h"
+#include "evsel.h"
+#include "evlist.h"
+#include "bpf-event.h"
+#include "block-range.h"
+#include "string2.h"
+#include "util/event.h"
+#include "arch/common.h"
+#include <regex.h>
+#include <pthread.h>
+#include <linux/bitops.h>
+#include <linux/kernel.h>
+#include <linux/string.h>
+#include <subcmd/parse-options.h>
+#include <subcmd/run-command.h>
 
 /* FIXME: For the HE_COLORSET */
-#समावेश "ui/browser.h"
+#include "ui/browser.h"
 
 /*
  * FIXME: Using the same values as slang.h,
  * but that header may not be available everywhere
  */
-#घोषणा LARROW_CHAR	((अचिन्हित अक्षर)',')
-#घोषणा RARROW_CHAR	((अचिन्हित अक्षर)'+')
-#घोषणा DARROW_CHAR	((अचिन्हित अक्षर)'.')
-#घोषणा UARROW_CHAR	((अचिन्हित अक्षर)'-')
+#define LARROW_CHAR	((unsigned char)',')
+#define RARROW_CHAR	((unsigned char)'+')
+#define DARROW_CHAR	((unsigned char)'.')
+#define UARROW_CHAR	((unsigned char)'-')
 
-#समावेश <linux/प्रकार.स>
+#include <linux/ctype.h>
 
-काष्ठा annotation_options annotation__शेष_options = अणु
+struct annotation_options annotation__default_options = {
 	.use_offset     = true,
 	.jump_arrows    = true,
 	.annotate_src	= true,
 	.offset_level	= ANNOTATION__OFFSET_JUMP_TARGETS,
 	.percent_type	= PERCENT_PERIOD_LOCAL,
-पूर्ण;
+};
 
-अटल regex_t	 file_lineno;
+static regex_t	 file_lineno;
 
-अटल काष्ठा ins_ops *ins__find(काष्ठा arch *arch, स्थिर अक्षर *name);
-अटल व्योम ins__sort(काष्ठा arch *arch);
-अटल पूर्णांक disयंत्र_line__parse(अक्षर *line, स्थिर अक्षर **namep, अक्षर **rawp);
+static struct ins_ops *ins__find(struct arch *arch, const char *name);
+static void ins__sort(struct arch *arch);
+static int disasm_line__parse(char *line, const char **namep, char **rawp);
 
-काष्ठा arch अणु
-	स्थिर अक्षर	*name;
-	काष्ठा ins	*inकाष्ठाions;
-	माप_प्रकार		nr_inकाष्ठाions;
-	माप_प्रकार		nr_inकाष्ठाions_allocated;
-	काष्ठा ins_ops  *(*associate_inकाष्ठाion_ops)(काष्ठा arch *arch, स्थिर अक्षर *name);
-	bool		sorted_inकाष्ठाions;
+struct arch {
+	const char	*name;
+	struct ins	*instructions;
+	size_t		nr_instructions;
+	size_t		nr_instructions_allocated;
+	struct ins_ops  *(*associate_instruction_ops)(struct arch *arch, const char *name);
+	bool		sorted_instructions;
 	bool		initialized;
-	व्योम		*priv;
-	अचिन्हित पूर्णांक	model;
-	अचिन्हित पूर्णांक	family;
-	पूर्णांक		(*init)(काष्ठा arch *arch, अक्षर *cpuid);
-	bool		(*ins_is_fused)(काष्ठा arch *arch, स्थिर अक्षर *ins1,
-					स्थिर अक्षर *ins2);
-	काष्ठा		अणु
-		अक्षर comment_अक्षर;
-		अक्षर skip_functions_अक्षर;
-	पूर्ण objdump;
-पूर्ण;
+	void		*priv;
+	unsigned int	model;
+	unsigned int	family;
+	int		(*init)(struct arch *arch, char *cpuid);
+	bool		(*ins_is_fused)(struct arch *arch, const char *ins1,
+					const char *ins2);
+	struct		{
+		char comment_char;
+		char skip_functions_char;
+	} objdump;
+};
 
-अटल काष्ठा ins_ops call_ops;
-अटल काष्ठा ins_ops dec_ops;
-अटल काष्ठा ins_ops jump_ops;
-अटल काष्ठा ins_ops mov_ops;
-अटल काष्ठा ins_ops nop_ops;
-अटल काष्ठा ins_ops lock_ops;
-अटल काष्ठा ins_ops ret_ops;
+static struct ins_ops call_ops;
+static struct ins_ops dec_ops;
+static struct ins_ops jump_ops;
+static struct ins_ops mov_ops;
+static struct ins_ops nop_ops;
+static struct ins_ops lock_ops;
+static struct ins_ops ret_ops;
 
-अटल पूर्णांक arch__grow_inकाष्ठाions(काष्ठा arch *arch)
-अणु
-	काष्ठा ins *new_inकाष्ठाions;
-	माप_प्रकार new_nr_allocated;
+static int arch__grow_instructions(struct arch *arch)
+{
+	struct ins *new_instructions;
+	size_t new_nr_allocated;
 
-	अगर (arch->nr_inकाष्ठाions_allocated == 0 && arch->inकाष्ठाions)
-		जाओ grow_from_non_allocated_table;
+	if (arch->nr_instructions_allocated == 0 && arch->instructions)
+		goto grow_from_non_allocated_table;
 
-	new_nr_allocated = arch->nr_inकाष्ठाions_allocated + 128;
-	new_inकाष्ठाions = पुनः_स्मृति(arch->inकाष्ठाions, new_nr_allocated * माप(काष्ठा ins));
-	अगर (new_inकाष्ठाions == शून्य)
-		वापस -1;
+	new_nr_allocated = arch->nr_instructions_allocated + 128;
+	new_instructions = realloc(arch->instructions, new_nr_allocated * sizeof(struct ins));
+	if (new_instructions == NULL)
+		return -1;
 
-out_update_inकाष्ठाions:
-	arch->inकाष्ठाions = new_inकाष्ठाions;
-	arch->nr_inकाष्ठाions_allocated = new_nr_allocated;
-	वापस 0;
+out_update_instructions:
+	arch->instructions = new_instructions;
+	arch->nr_instructions_allocated = new_nr_allocated;
+	return 0;
 
 grow_from_non_allocated_table:
-	new_nr_allocated = arch->nr_inकाष्ठाions + 128;
-	new_inकाष्ठाions = सुस्मृति(new_nr_allocated, माप(काष्ठा ins));
-	अगर (new_inकाष्ठाions == शून्य)
-		वापस -1;
+	new_nr_allocated = arch->nr_instructions + 128;
+	new_instructions = calloc(new_nr_allocated, sizeof(struct ins));
+	if (new_instructions == NULL)
+		return -1;
 
-	स_नकल(new_inकाष्ठाions, arch->inकाष्ठाions, arch->nr_inकाष्ठाions);
-	जाओ out_update_inकाष्ठाions;
-पूर्ण
+	memcpy(new_instructions, arch->instructions, arch->nr_instructions);
+	goto out_update_instructions;
+}
 
-अटल पूर्णांक arch__associate_ins_ops(काष्ठा arch* arch, स्थिर अक्षर *name, काष्ठा ins_ops *ops)
-अणु
-	काष्ठा ins *ins;
+static int arch__associate_ins_ops(struct arch* arch, const char *name, struct ins_ops *ops)
+{
+	struct ins *ins;
 
-	अगर (arch->nr_inकाष्ठाions == arch->nr_inकाष्ठाions_allocated &&
-	    arch__grow_inकाष्ठाions(arch))
-		वापस -1;
+	if (arch->nr_instructions == arch->nr_instructions_allocated &&
+	    arch__grow_instructions(arch))
+		return -1;
 
-	ins = &arch->inकाष्ठाions[arch->nr_inकाष्ठाions];
+	ins = &arch->instructions[arch->nr_instructions];
 	ins->name = strdup(name);
-	अगर (!ins->name)
-		वापस -1;
+	if (!ins->name)
+		return -1;
 
 	ins->ops  = ops;
-	arch->nr_inकाष्ठाions++;
+	arch->nr_instructions++;
 
 	ins__sort(arch);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-#समावेश "arch/arc/annotate/instructions.c"
-#समावेश "arch/arm/annotate/instructions.c"
-#समावेश "arch/arm64/annotate/instructions.c"
-#समावेश "arch/csky/annotate/instructions.c"
-#समावेश "arch/mips/annotate/instructions.c"
-#समावेश "arch/x86/annotate/instructions.c"
-#समावेश "arch/powerpc/annotate/instructions.c"
-#समावेश "arch/s390/annotate/instructions.c"
-#समावेश "arch/sparc/annotate/instructions.c"
+#include "arch/arc/annotate/instructions.c"
+#include "arch/arm/annotate/instructions.c"
+#include "arch/arm64/annotate/instructions.c"
+#include "arch/csky/annotate/instructions.c"
+#include "arch/mips/annotate/instructions.c"
+#include "arch/x86/annotate/instructions.c"
+#include "arch/powerpc/annotate/instructions.c"
+#include "arch/s390/annotate/instructions.c"
+#include "arch/sparc/annotate/instructions.c"
 
-अटल काष्ठा arch architectures[] = अणु
-	अणु
+static struct arch architectures[] = {
+	{
 		.name = "arc",
 		.init = arc__annotate_init,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "arm",
 		.init = arm__annotate_init,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "arm64",
 		.init = arm64__annotate_init,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "csky",
 		.init = csky__annotate_init,
-	पूर्ण,
-	अणु
+	},
+	{
 		.name = "mips",
 		.init = mips__annotate_init,
-		.objdump = अणु
-			.comment_अक्षर = '#',
-		पूर्ण,
-	पूर्ण,
-	अणु
+		.objdump = {
+			.comment_char = '#',
+		},
+	},
+	{
 		.name = "x86",
 		.init = x86__annotate_init,
-		.inकाष्ठाions = x86__inकाष्ठाions,
-		.nr_inकाष्ठाions = ARRAY_SIZE(x86__inकाष्ठाions),
+		.instructions = x86__instructions,
+		.nr_instructions = ARRAY_SIZE(x86__instructions),
 		.ins_is_fused = x86__ins_is_fused,
-		.objdump =  अणु
-			.comment_अक्षर = '#',
-		पूर्ण,
-	पूर्ण,
-	अणु
+		.objdump =  {
+			.comment_char = '#',
+		},
+	},
+	{
 		.name = "powerpc",
-		.init = घातerpc__annotate_init,
-	पूर्ण,
-	अणु
+		.init = powerpc__annotate_init,
+	},
+	{
 		.name = "s390",
 		.init = s390__annotate_init,
-		.objdump =  अणु
-			.comment_अक्षर = '#',
-		पूर्ण,
-	पूर्ण,
-	अणु
+		.objdump =  {
+			.comment_char = '#',
+		},
+	},
+	{
 		.name = "sparc",
 		.init = sparc__annotate_init,
-		.objdump = अणु
-			.comment_अक्षर = '#',
-		पूर्ण,
-	पूर्ण,
-पूर्ण;
+		.objdump = {
+			.comment_char = '#',
+		},
+	},
+};
 
-अटल व्योम ins__delete(काष्ठा ins_opeअक्रमs *ops)
-अणु
-	अगर (ops == शून्य)
-		वापस;
-	zमुक्त(&ops->source.raw);
-	zमुक्त(&ops->source.name);
-	zमुक्त(&ops->target.raw);
-	zमुक्त(&ops->target.name);
-पूर्ण
+static void ins__delete(struct ins_operands *ops)
+{
+	if (ops == NULL)
+		return;
+	zfree(&ops->source.raw);
+	zfree(&ops->source.name);
+	zfree(&ops->target.raw);
+	zfree(&ops->target.name);
+}
 
-अटल पूर्णांक ins__raw_scnम_लिखो(काष्ठा ins *ins, अक्षर *bf, माप_प्रकार size,
-			      काष्ठा ins_opeअक्रमs *ops, पूर्णांक max_ins_name)
-अणु
-	वापस scnम_लिखो(bf, size, "%-*s %s", max_ins_name, ins->name, ops->raw);
-पूर्ण
+static int ins__raw_scnprintf(struct ins *ins, char *bf, size_t size,
+			      struct ins_operands *ops, int max_ins_name)
+{
+	return scnprintf(bf, size, "%-*s %s", max_ins_name, ins->name, ops->raw);
+}
 
-पूर्णांक ins__scnम_लिखो(काष्ठा ins *ins, अक्षर *bf, माप_प्रकार size,
-		   काष्ठा ins_opeअक्रमs *ops, पूर्णांक max_ins_name)
-अणु
-	अगर (ins->ops->scnम_लिखो)
-		वापस ins->ops->scnम_लिखो(ins, bf, size, ops, max_ins_name);
+int ins__scnprintf(struct ins *ins, char *bf, size_t size,
+		   struct ins_operands *ops, int max_ins_name)
+{
+	if (ins->ops->scnprintf)
+		return ins->ops->scnprintf(ins, bf, size, ops, max_ins_name);
 
-	वापस ins__raw_scnम_लिखो(ins, bf, size, ops, max_ins_name);
-पूर्ण
+	return ins__raw_scnprintf(ins, bf, size, ops, max_ins_name);
+}
 
-bool ins__is_fused(काष्ठा arch *arch, स्थिर अक्षर *ins1, स्थिर अक्षर *ins2)
-अणु
-	अगर (!arch || !arch->ins_is_fused)
-		वापस false;
+bool ins__is_fused(struct arch *arch, const char *ins1, const char *ins2)
+{
+	if (!arch || !arch->ins_is_fused)
+		return false;
 
-	वापस arch->ins_is_fused(arch, ins1, ins2);
-पूर्ण
+	return arch->ins_is_fused(arch, ins1, ins2);
+}
 
-अटल पूर्णांक call__parse(काष्ठा arch *arch, काष्ठा ins_opeअक्रमs *ops, काष्ठा map_symbol *ms)
-अणु
-	अक्षर *endptr, *tok, *name;
-	काष्ठा map *map = ms->map;
-	काष्ठा addr_map_symbol target = अणु
-		.ms = अणु .map = map, पूर्ण,
-	पूर्ण;
+static int call__parse(struct arch *arch, struct ins_operands *ops, struct map_symbol *ms)
+{
+	char *endptr, *tok, *name;
+	struct map *map = ms->map;
+	struct addr_map_symbol target = {
+		.ms = { .map = map, },
+	};
 
-	ops->target.addr = म_से_अदीर्घl(ops->raw, &endptr, 16);
+	ops->target.addr = strtoull(ops->raw, &endptr, 16);
 
-	name = म_अक्षर(endptr, '<');
-	अगर (name == शून्य)
-		जाओ indirect_call;
+	name = strchr(endptr, '<');
+	if (name == NULL)
+		goto indirect_call;
 
 	name++;
 
-	अगर (arch->objdump.skip_functions_अक्षर &&
-	    म_अक्षर(name, arch->objdump.skip_functions_अक्षर))
-		वापस -1;
+	if (arch->objdump.skip_functions_char &&
+	    strchr(name, arch->objdump.skip_functions_char))
+		return -1;
 
-	tok = म_अक्षर(name, '>');
-	अगर (tok == शून्य)
-		वापस -1;
+	tok = strchr(name, '>');
+	if (tok == NULL)
+		return -1;
 
 	*tok = '\0';
 	ops->target.name = strdup(name);
 	*tok = '>';
 
-	अगर (ops->target.name == शून्य)
-		वापस -1;
+	if (ops->target.name == NULL)
+		return -1;
 find_target:
 	target.addr = map__objdump_2mem(map, ops->target.addr);
 
-	अगर (maps__find_ams(ms->maps, &target) == 0 &&
+	if (maps__find_ams(ms->maps, &target) == 0 &&
 	    map__rip_2objdump(target.ms.map, map->map_ip(target.ms.map, target.addr)) == ops->target.addr)
 		ops->target.sym = target.ms.sym;
 
-	वापस 0;
+	return 0;
 
 indirect_call:
-	tok = म_अक्षर(endptr, '*');
-	अगर (tok != शून्य) अणु
+	tok = strchr(endptr, '*');
+	if (tok != NULL) {
 		endptr++;
 
-		/* Indirect call can use a non-rip रेजिस्टर and offset: callq  *0x8(%rbx).
-		 * Do not parse such inकाष्ठाion.  */
-		अगर (म_माला(endptr, "(%r") == शून्य)
-			ops->target.addr = म_से_अदीर्घl(endptr, शून्य, 16);
-	पूर्ण
-	जाओ find_target;
-पूर्ण
+		/* Indirect call can use a non-rip register and offset: callq  *0x8(%rbx).
+		 * Do not parse such instruction.  */
+		if (strstr(endptr, "(%r") == NULL)
+			ops->target.addr = strtoull(endptr, NULL, 16);
+	}
+	goto find_target;
+}
 
-अटल पूर्णांक call__scnम_लिखो(काष्ठा ins *ins, अक्षर *bf, माप_प्रकार size,
-			   काष्ठा ins_opeअक्रमs *ops, पूर्णांक max_ins_name)
-अणु
-	अगर (ops->target.sym)
-		वापस scnम_लिखो(bf, size, "%-*s %s", max_ins_name, ins->name, ops->target.sym->name);
+static int call__scnprintf(struct ins *ins, char *bf, size_t size,
+			   struct ins_operands *ops, int max_ins_name)
+{
+	if (ops->target.sym)
+		return scnprintf(bf, size, "%-*s %s", max_ins_name, ins->name, ops->target.sym->name);
 
-	अगर (ops->target.addr == 0)
-		वापस ins__raw_scnम_लिखो(ins, bf, size, ops, max_ins_name);
+	if (ops->target.addr == 0)
+		return ins__raw_scnprintf(ins, bf, size, ops, max_ins_name);
 
-	अगर (ops->target.name)
-		वापस scnम_लिखो(bf, size, "%-*s %s", max_ins_name, ins->name, ops->target.name);
+	if (ops->target.name)
+		return scnprintf(bf, size, "%-*s %s", max_ins_name, ins->name, ops->target.name);
 
-	वापस scnम_लिखो(bf, size, "%-*s *%" PRIx64, max_ins_name, ins->name, ops->target.addr);
-पूर्ण
+	return scnprintf(bf, size, "%-*s *%" PRIx64, max_ins_name, ins->name, ops->target.addr);
+}
 
-अटल काष्ठा ins_ops call_ops = अणु
+static struct ins_ops call_ops = {
 	.parse	   = call__parse,
-	.scnम_लिखो = call__scnम_लिखो,
-पूर्ण;
+	.scnprintf = call__scnprintf,
+};
 
-bool ins__is_call(स्थिर काष्ठा ins *ins)
-अणु
-	वापस ins->ops == &call_ops || ins->ops == &s390_call_ops;
-पूर्ण
+bool ins__is_call(const struct ins *ins)
+{
+	return ins->ops == &call_ops || ins->ops == &s390_call_ops;
+}
 
 /*
  * Prevents from matching commas in the comment section, e.g.:
  * ffff200008446e70:       b.cs    ffff2000084470f4 <generic_exec_single+0x314>  // b.hs, b.nlast
  *
  * and skip comma as part of function arguments, e.g.:
- * 1d8b4ac <linemap_lookup(line_maps स्थिर*, अचिन्हित पूर्णांक)+0xcc>
+ * 1d8b4ac <linemap_lookup(line_maps const*, unsigned int)+0xcc>
  */
-अटल अंतरभूत स्थिर अक्षर *validate_comma(स्थिर अक्षर *c, काष्ठा ins_opeअक्रमs *ops)
-अणु
-	अगर (ops->raw_comment && c > ops->raw_comment)
-		वापस शून्य;
+static inline const char *validate_comma(const char *c, struct ins_operands *ops)
+{
+	if (ops->raw_comment && c > ops->raw_comment)
+		return NULL;
 
-	अगर (ops->raw_func_start && c > ops->raw_func_start)
-		वापस शून्य;
+	if (ops->raw_func_start && c > ops->raw_func_start)
+		return NULL;
 
-	वापस c;
-पूर्ण
+	return c;
+}
 
-अटल पूर्णांक jump__parse(काष्ठा arch *arch, काष्ठा ins_opeअक्रमs *ops, काष्ठा map_symbol *ms)
-अणु
-	काष्ठा map *map = ms->map;
-	काष्ठा symbol *sym = ms->sym;
-	काष्ठा addr_map_symbol target = अणु
-		.ms = अणु .map = map, पूर्ण,
-	पूर्ण;
-	स्थिर अक्षर *c = म_अक्षर(ops->raw, ',');
+static int jump__parse(struct arch *arch, struct ins_operands *ops, struct map_symbol *ms)
+{
+	struct map *map = ms->map;
+	struct symbol *sym = ms->sym;
+	struct addr_map_symbol target = {
+		.ms = { .map = map, },
+	};
+	const char *c = strchr(ops->raw, ',');
 	u64 start, end;
 
-	ops->raw_comment = म_अक्षर(ops->raw, arch->objdump.comment_अक्षर);
-	ops->raw_func_start = म_अक्षर(ops->raw, '<');
+	ops->raw_comment = strchr(ops->raw, arch->objdump.comment_char);
+	ops->raw_func_start = strchr(ops->raw, '<');
 
 	c = validate_comma(c, ops);
 
 	/*
-	 * Examples of lines to parse क्रम the _cpp_lex_token@@Base
+	 * Examples of lines to parse for the _cpp_lex_token@@Base
 	 * function:
 	 *
 	 * 1159e6c: jne    115aa32 <_cpp_lex_token@@Base+0xf92>
-	 * 1159e8b: jne    c469be <cpp_named_चालक2name@@Base+0xa72>
+	 * 1159e8b: jne    c469be <cpp_named_operator2name@@Base+0xa72>
 	 *
 	 * The first is a jump to an offset inside the same function,
 	 * the second is to another function, i.e. that 0xa72 is an
-	 * offset in the cpp_named_चालक2name@@base function.
+	 * offset in the cpp_named_operator2name@@base function.
 	 */
 	/*
-	 * skip over possible up to 2 opeअक्रमs to get to address, e.g.:
+	 * skip over possible up to 2 operands to get to address, e.g.:
 	 * tbnz	 w0, #26, ffff0000083cd190 <security_file_permission+0xd0>
 	 */
-	अगर (c++ != शून्य) अणु
-		ops->target.addr = म_से_अदीर्घl(c, शून्य, 16);
-		अगर (!ops->target.addr) अणु
-			c = म_अक्षर(c, ',');
+	if (c++ != NULL) {
+		ops->target.addr = strtoull(c, NULL, 16);
+		if (!ops->target.addr) {
+			c = strchr(c, ',');
 			c = validate_comma(c, ops);
-			अगर (c++ != शून्य)
-				ops->target.addr = म_से_अदीर्घl(c, शून्य, 16);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		ops->target.addr = म_से_अदीर्घl(ops->raw, शून्य, 16);
-	पूर्ण
+			if (c++ != NULL)
+				ops->target.addr = strtoull(c, NULL, 16);
+		}
+	} else {
+		ops->target.addr = strtoull(ops->raw, NULL, 16);
+	}
 
 	target.addr = map__objdump_2mem(map, ops->target.addr);
 	start = map->unmap_ip(map, sym->start),
@@ -388,186 +387,186 @@ bool ins__is_call(स्थिर काष्ठा ins *ins)
 	/*
 	 * FIXME: things like this in _cpp_lex_token (gcc's cc1 program):
 
-		cpp_named_चालक2name@@Base+0xa72
+		cpp_named_operator2name@@Base+0xa72
 
-	 * Poपूर्णांक to a place that is after the cpp_named_चालक2name
-	 * boundaries, i.e.  in the ELF symbol table क्रम cc1
-	 * cpp_named_चालक2name is marked as being 32-bytes दीर्घ, but it in
+	 * Point to a place that is after the cpp_named_operator2name
+	 * boundaries, i.e.  in the ELF symbol table for cc1
+	 * cpp_named_operator2name is marked as being 32-bytes long, but it in
 	 * fact is much larger than that, so we seem to need a symbols__find()
-	 * routine that looks क्रम >= current->start and  < next_symbol->start,
-	 * possibly just क्रम C++ objects?
+	 * routine that looks for >= current->start and  < next_symbol->start,
+	 * possibly just for C++ objects?
 	 *
 	 * For now lets just make some progress by marking jumps to outside the
 	 * current function as call like.
 	 *
 	 * Actual navigation will come next, with further understanding of how
-	 * the symbol searching and disassembly should be करोne.
+	 * the symbol searching and disassembly should be done.
 	 */
-	अगर (maps__find_ams(ms->maps, &target) == 0 &&
+	if (maps__find_ams(ms->maps, &target) == 0 &&
 	    map__rip_2objdump(target.ms.map, map->map_ip(target.ms.map, target.addr)) == ops->target.addr)
 		ops->target.sym = target.ms.sym;
 
-	अगर (!ops->target.outside) अणु
+	if (!ops->target.outside) {
 		ops->target.offset = target.addr - start;
 		ops->target.offset_avail = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		ops->target.offset_avail = false;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक jump__scnम_लिखो(काष्ठा ins *ins, अक्षर *bf, माप_प्रकार size,
-			   काष्ठा ins_opeअक्रमs *ops, पूर्णांक max_ins_name)
-अणु
-	स्थिर अक्षर *c;
+static int jump__scnprintf(struct ins *ins, char *bf, size_t size,
+			   struct ins_operands *ops, int max_ins_name)
+{
+	const char *c;
 
-	अगर (!ops->target.addr || ops->target.offset < 0)
-		वापस ins__raw_scnम_लिखो(ins, bf, size, ops, max_ins_name);
+	if (!ops->target.addr || ops->target.offset < 0)
+		return ins__raw_scnprintf(ins, bf, size, ops, max_ins_name);
 
-	अगर (ops->target.outside && ops->target.sym != शून्य)
-		वापस scnम_लिखो(bf, size, "%-*s %s", max_ins_name, ins->name, ops->target.sym->name);
+	if (ops->target.outside && ops->target.sym != NULL)
+		return scnprintf(bf, size, "%-*s %s", max_ins_name, ins->name, ops->target.sym->name);
 
-	c = म_अक्षर(ops->raw, ',');
+	c = strchr(ops->raw, ',');
 	c = validate_comma(c, ops);
 
-	अगर (c != शून्य) अणु
-		स्थिर अक्षर *c2 = म_अक्षर(c + 1, ',');
+	if (c != NULL) {
+		const char *c2 = strchr(c + 1, ',');
 
 		c2 = validate_comma(c2, ops);
-		/* check क्रम 3-op insn */
-		अगर (c2 != शून्य)
+		/* check for 3-op insn */
+		if (c2 != NULL)
 			c = c2;
 		c++;
 
 		/* mirror arch objdump's space-after-comma style */
-		अगर (*c == ' ')
+		if (*c == ' ')
 			c++;
-	पूर्ण
+	}
 
-	वापस scnम_लिखो(bf, size, "%-*s %.*s%" PRIx64, max_ins_name,
+	return scnprintf(bf, size, "%-*s %.*s%" PRIx64, max_ins_name,
 			 ins->name, c ? c - ops->raw : 0, ops->raw,
 			 ops->target.offset);
-पूर्ण
+}
 
-अटल काष्ठा ins_ops jump_ops = अणु
+static struct ins_ops jump_ops = {
 	.parse	   = jump__parse,
-	.scnम_लिखो = jump__scnम_लिखो,
-पूर्ण;
+	.scnprintf = jump__scnprintf,
+};
 
-bool ins__is_jump(स्थिर काष्ठा ins *ins)
-अणु
-	वापस ins->ops == &jump_ops;
-पूर्ण
+bool ins__is_jump(const struct ins *ins)
+{
+	return ins->ops == &jump_ops;
+}
 
-अटल पूर्णांक comment__symbol(अक्षर *raw, अक्षर *comment, u64 *addrp, अक्षर **namep)
-अणु
-	अक्षर *endptr, *name, *t;
+static int comment__symbol(char *raw, char *comment, u64 *addrp, char **namep)
+{
+	char *endptr, *name, *t;
 
-	अगर (म_माला(raw, "(%rip)") == शून्य)
-		वापस 0;
+	if (strstr(raw, "(%rip)") == NULL)
+		return 0;
 
-	*addrp = म_से_अदीर्घl(comment, &endptr, 16);
-	अगर (endptr == comment)
-		वापस 0;
-	name = म_अक्षर(endptr, '<');
-	अगर (name == शून्य)
-		वापस -1;
+	*addrp = strtoull(comment, &endptr, 16);
+	if (endptr == comment)
+		return 0;
+	name = strchr(endptr, '<');
+	if (name == NULL)
+		return -1;
 
 	name++;
 
-	t = म_अक्षर(name, '>');
-	अगर (t == शून्य)
-		वापस 0;
+	t = strchr(name, '>');
+	if (t == NULL)
+		return 0;
 
 	*t = '\0';
 	*namep = strdup(name);
 	*t = '>';
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक lock__parse(काष्ठा arch *arch, काष्ठा ins_opeअक्रमs *ops, काष्ठा map_symbol *ms)
-अणु
-	ops->locked.ops = zalloc(माप(*ops->locked.ops));
-	अगर (ops->locked.ops == शून्य)
-		वापस 0;
+static int lock__parse(struct arch *arch, struct ins_operands *ops, struct map_symbol *ms)
+{
+	ops->locked.ops = zalloc(sizeof(*ops->locked.ops));
+	if (ops->locked.ops == NULL)
+		return 0;
 
-	अगर (disयंत्र_line__parse(ops->raw, &ops->locked.ins.name, &ops->locked.ops->raw) < 0)
-		जाओ out_मुक्त_ops;
+	if (disasm_line__parse(ops->raw, &ops->locked.ins.name, &ops->locked.ops->raw) < 0)
+		goto out_free_ops;
 
 	ops->locked.ins.ops = ins__find(arch, ops->locked.ins.name);
 
-	अगर (ops->locked.ins.ops == शून्य)
-		जाओ out_मुक्त_ops;
+	if (ops->locked.ins.ops == NULL)
+		goto out_free_ops;
 
-	अगर (ops->locked.ins.ops->parse &&
+	if (ops->locked.ins.ops->parse &&
 	    ops->locked.ins.ops->parse(arch, ops->locked.ops, ms) < 0)
-		जाओ out_मुक्त_ops;
+		goto out_free_ops;
 
-	वापस 0;
+	return 0;
 
-out_मुक्त_ops:
-	zमुक्त(&ops->locked.ops);
-	वापस 0;
-पूर्ण
+out_free_ops:
+	zfree(&ops->locked.ops);
+	return 0;
+}
 
-अटल पूर्णांक lock__scnम_लिखो(काष्ठा ins *ins, अक्षर *bf, माप_प्रकार size,
-			   काष्ठा ins_opeअक्रमs *ops, पूर्णांक max_ins_name)
-अणु
-	पूर्णांक prपूर्णांकed;
+static int lock__scnprintf(struct ins *ins, char *bf, size_t size,
+			   struct ins_operands *ops, int max_ins_name)
+{
+	int printed;
 
-	अगर (ops->locked.ins.ops == शून्य)
-		वापस ins__raw_scnम_लिखो(ins, bf, size, ops, max_ins_name);
+	if (ops->locked.ins.ops == NULL)
+		return ins__raw_scnprintf(ins, bf, size, ops, max_ins_name);
 
-	prपूर्णांकed = scnम_लिखो(bf, size, "%-*s ", max_ins_name, ins->name);
-	वापस prपूर्णांकed + ins__scnम_लिखो(&ops->locked.ins, bf + prपूर्णांकed,
-					size - prपूर्णांकed, ops->locked.ops, max_ins_name);
-पूर्ण
+	printed = scnprintf(bf, size, "%-*s ", max_ins_name, ins->name);
+	return printed + ins__scnprintf(&ops->locked.ins, bf + printed,
+					size - printed, ops->locked.ops, max_ins_name);
+}
 
-अटल व्योम lock__delete(काष्ठा ins_opeअक्रमs *ops)
-अणु
-	काष्ठा ins *ins = &ops->locked.ins;
+static void lock__delete(struct ins_operands *ops)
+{
+	struct ins *ins = &ops->locked.ins;
 
-	अगर (ins->ops && ins->ops->मुक्त)
-		ins->ops->मुक्त(ops->locked.ops);
-	अन्यथा
+	if (ins->ops && ins->ops->free)
+		ins->ops->free(ops->locked.ops);
+	else
 		ins__delete(ops->locked.ops);
 
-	zमुक्त(&ops->locked.ops);
-	zमुक्त(&ops->target.raw);
-	zमुक्त(&ops->target.name);
-पूर्ण
+	zfree(&ops->locked.ops);
+	zfree(&ops->target.raw);
+	zfree(&ops->target.name);
+}
 
-अटल काष्ठा ins_ops lock_ops = अणु
-	.मुक्त	   = lock__delete,
+static struct ins_ops lock_ops = {
+	.free	   = lock__delete,
 	.parse	   = lock__parse,
-	.scnम_लिखो = lock__scnम_लिखो,
-पूर्ण;
+	.scnprintf = lock__scnprintf,
+};
 
-अटल पूर्णांक mov__parse(काष्ठा arch *arch, काष्ठा ins_opeअक्रमs *ops, काष्ठा map_symbol *ms __maybe_unused)
-अणु
-	अक्षर *s = म_अक्षर(ops->raw, ','), *target, *comment, prev;
+static int mov__parse(struct arch *arch, struct ins_operands *ops, struct map_symbol *ms __maybe_unused)
+{
+	char *s = strchr(ops->raw, ','), *target, *comment, prev;
 
-	अगर (s == शून्य)
-		वापस -1;
+	if (s == NULL)
+		return -1;
 
 	*s = '\0';
 	ops->source.raw = strdup(ops->raw);
 	*s = ',';
 
-	अगर (ops->source.raw == शून्य)
-		वापस -1;
+	if (ops->source.raw == NULL)
+		return -1;
 
 	target = ++s;
-	comment = म_अक्षर(s, arch->objdump.comment_अक्षर);
+	comment = strchr(s, arch->objdump.comment_char);
 
-	अगर (comment != शून्य)
+	if (comment != NULL)
 		s = comment - 1;
-	अन्यथा
-		s = म_अक्षर(s, '\0') - 1;
+	else
+		s = strchr(s, '\0') - 1;
 
-	जबतक (s > target && है_खाली(s[0]))
+	while (s > target && isspace(s[0]))
 		--s;
 	s++;
 	prev = *s;
@@ -576,43 +575,43 @@ out_मुक्त_ops:
 	ops->target.raw = strdup(target);
 	*s = prev;
 
-	अगर (ops->target.raw == शून्य)
-		जाओ out_मुक्त_source;
+	if (ops->target.raw == NULL)
+		goto out_free_source;
 
-	अगर (comment == शून्य)
-		वापस 0;
+	if (comment == NULL)
+		return 0;
 
 	comment = skip_spaces(comment);
 	comment__symbol(ops->source.raw, comment + 1, &ops->source.addr, &ops->source.name);
 	comment__symbol(ops->target.raw, comment + 1, &ops->target.addr, &ops->target.name);
 
-	वापस 0;
+	return 0;
 
-out_मुक्त_source:
-	zमुक्त(&ops->source.raw);
-	वापस -1;
-पूर्ण
+out_free_source:
+	zfree(&ops->source.raw);
+	return -1;
+}
 
-अटल पूर्णांक mov__scnम_लिखो(काष्ठा ins *ins, अक्षर *bf, माप_प्रकार size,
-			   काष्ठा ins_opeअक्रमs *ops, पूर्णांक max_ins_name)
-अणु
-	वापस scnम_लिखो(bf, size, "%-*s %s,%s", max_ins_name, ins->name,
+static int mov__scnprintf(struct ins *ins, char *bf, size_t size,
+			   struct ins_operands *ops, int max_ins_name)
+{
+	return scnprintf(bf, size, "%-*s %s,%s", max_ins_name, ins->name,
 			 ops->source.name ?: ops->source.raw,
 			 ops->target.name ?: ops->target.raw);
-पूर्ण
+}
 
-अटल काष्ठा ins_ops mov_ops = अणु
+static struct ins_ops mov_ops = {
 	.parse	   = mov__parse,
-	.scnम_लिखो = mov__scnम_लिखो,
-पूर्ण;
+	.scnprintf = mov__scnprintf,
+};
 
-अटल पूर्णांक dec__parse(काष्ठा arch *arch __maybe_unused, काष्ठा ins_opeअक्रमs *ops, काष्ठा map_symbol *ms __maybe_unused)
-अणु
-	अक्षर *target, *comment, *s, prev;
+static int dec__parse(struct arch *arch __maybe_unused, struct ins_operands *ops, struct map_symbol *ms __maybe_unused)
+{
+	char *target, *comment, *s, prev;
 
 	target = s = ops->raw;
 
-	जबतक (s[0] != '\0' && !है_खाली(s[0]))
+	while (s[0] != '\0' && !isspace(s[0]))
 		++s;
 	prev = *s;
 	*s = '\0';
@@ -620,287 +619,287 @@ out_मुक्त_source:
 	ops->target.raw = strdup(target);
 	*s = prev;
 
-	अगर (ops->target.raw == शून्य)
-		वापस -1;
+	if (ops->target.raw == NULL)
+		return -1;
 
-	comment = म_अक्षर(s, arch->objdump.comment_अक्षर);
-	अगर (comment == शून्य)
-		वापस 0;
+	comment = strchr(s, arch->objdump.comment_char);
+	if (comment == NULL)
+		return 0;
 
 	comment = skip_spaces(comment);
 	comment__symbol(ops->target.raw, comment + 1, &ops->target.addr, &ops->target.name);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dec__scnम_लिखो(काष्ठा ins *ins, अक्षर *bf, माप_प्रकार size,
-			   काष्ठा ins_opeअक्रमs *ops, पूर्णांक max_ins_name)
-अणु
-	वापस scnम_लिखो(bf, size, "%-*s %s", max_ins_name, ins->name,
+static int dec__scnprintf(struct ins *ins, char *bf, size_t size,
+			   struct ins_operands *ops, int max_ins_name)
+{
+	return scnprintf(bf, size, "%-*s %s", max_ins_name, ins->name,
 			 ops->target.name ?: ops->target.raw);
-पूर्ण
+}
 
-अटल काष्ठा ins_ops dec_ops = अणु
+static struct ins_ops dec_ops = {
 	.parse	   = dec__parse,
-	.scnम_लिखो = dec__scnम_लिखो,
-पूर्ण;
+	.scnprintf = dec__scnprintf,
+};
 
-अटल पूर्णांक nop__scnम_लिखो(काष्ठा ins *ins __maybe_unused, अक्षर *bf, माप_प्रकार size,
-			  काष्ठा ins_opeअक्रमs *ops __maybe_unused, पूर्णांक max_ins_name)
-अणु
-	वापस scnम_लिखो(bf, size, "%-*s", max_ins_name, "nop");
-पूर्ण
+static int nop__scnprintf(struct ins *ins __maybe_unused, char *bf, size_t size,
+			  struct ins_operands *ops __maybe_unused, int max_ins_name)
+{
+	return scnprintf(bf, size, "%-*s", max_ins_name, "nop");
+}
 
-अटल काष्ठा ins_ops nop_ops = अणु
-	.scnम_लिखो = nop__scnम_लिखो,
-पूर्ण;
+static struct ins_ops nop_ops = {
+	.scnprintf = nop__scnprintf,
+};
 
-अटल काष्ठा ins_ops ret_ops = अणु
-	.scnम_लिखो = ins__raw_scnम_लिखो,
-पूर्ण;
+static struct ins_ops ret_ops = {
+	.scnprintf = ins__raw_scnprintf,
+};
 
-bool ins__is_ret(स्थिर काष्ठा ins *ins)
-अणु
-	वापस ins->ops == &ret_ops;
-पूर्ण
+bool ins__is_ret(const struct ins *ins)
+{
+	return ins->ops == &ret_ops;
+}
 
-bool ins__is_lock(स्थिर काष्ठा ins *ins)
-अणु
-	वापस ins->ops == &lock_ops;
-पूर्ण
+bool ins__is_lock(const struct ins *ins)
+{
+	return ins->ops == &lock_ops;
+}
 
-अटल पूर्णांक ins__key_cmp(स्थिर व्योम *name, स्थिर व्योम *insp)
-अणु
-	स्थिर काष्ठा ins *ins = insp;
+static int ins__key_cmp(const void *name, const void *insp)
+{
+	const struct ins *ins = insp;
 
-	वापस म_भेद(name, ins->name);
-पूर्ण
+	return strcmp(name, ins->name);
+}
 
-अटल पूर्णांक ins__cmp(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	स्थिर काष्ठा ins *ia = a;
-	स्थिर काष्ठा ins *ib = b;
+static int ins__cmp(const void *a, const void *b)
+{
+	const struct ins *ia = a;
+	const struct ins *ib = b;
 
-	वापस म_भेद(ia->name, ib->name);
-पूर्ण
+	return strcmp(ia->name, ib->name);
+}
 
-अटल व्योम ins__sort(काष्ठा arch *arch)
-अणु
-	स्थिर पूर्णांक nmemb = arch->nr_inकाष्ठाions;
+static void ins__sort(struct arch *arch)
+{
+	const int nmemb = arch->nr_instructions;
 
-	क्विक(arch->inकाष्ठाions, nmemb, माप(काष्ठा ins), ins__cmp);
-पूर्ण
+	qsort(arch->instructions, nmemb, sizeof(struct ins), ins__cmp);
+}
 
-अटल काष्ठा ins_ops *__ins__find(काष्ठा arch *arch, स्थिर अक्षर *name)
-अणु
-	काष्ठा ins *ins;
-	स्थिर पूर्णांक nmemb = arch->nr_inकाष्ठाions;
+static struct ins_ops *__ins__find(struct arch *arch, const char *name)
+{
+	struct ins *ins;
+	const int nmemb = arch->nr_instructions;
 
-	अगर (!arch->sorted_inकाष्ठाions) अणु
+	if (!arch->sorted_instructions) {
 		ins__sort(arch);
-		arch->sorted_inकाष्ठाions = true;
-	पूर्ण
+		arch->sorted_instructions = true;
+	}
 
-	ins = द्वा_खोज(name, arch->inकाष्ठाions, nmemb, माप(काष्ठा ins), ins__key_cmp);
-	वापस ins ? ins->ops : शून्य;
-पूर्ण
+	ins = bsearch(name, arch->instructions, nmemb, sizeof(struct ins), ins__key_cmp);
+	return ins ? ins->ops : NULL;
+}
 
-अटल काष्ठा ins_ops *ins__find(काष्ठा arch *arch, स्थिर अक्षर *name)
-अणु
-	काष्ठा ins_ops *ops = __ins__find(arch, name);
+static struct ins_ops *ins__find(struct arch *arch, const char *name)
+{
+	struct ins_ops *ops = __ins__find(arch, name);
 
-	अगर (!ops && arch->associate_inकाष्ठाion_ops)
-		ops = arch->associate_inकाष्ठाion_ops(arch, name);
+	if (!ops && arch->associate_instruction_ops)
+		ops = arch->associate_instruction_ops(arch, name);
 
-	वापस ops;
-पूर्ण
+	return ops;
+}
 
-अटल पूर्णांक arch__key_cmp(स्थिर व्योम *name, स्थिर व्योम *archp)
-अणु
-	स्थिर काष्ठा arch *arch = archp;
+static int arch__key_cmp(const void *name, const void *archp)
+{
+	const struct arch *arch = archp;
 
-	वापस म_भेद(name, arch->name);
-पूर्ण
+	return strcmp(name, arch->name);
+}
 
-अटल पूर्णांक arch__cmp(स्थिर व्योम *a, स्थिर व्योम *b)
-अणु
-	स्थिर काष्ठा arch *aa = a;
-	स्थिर काष्ठा arch *ab = b;
+static int arch__cmp(const void *a, const void *b)
+{
+	const struct arch *aa = a;
+	const struct arch *ab = b;
 
-	वापस म_भेद(aa->name, ab->name);
-पूर्ण
+	return strcmp(aa->name, ab->name);
+}
 
-अटल व्योम arch__sort(व्योम)
-अणु
-	स्थिर पूर्णांक nmemb = ARRAY_SIZE(architectures);
+static void arch__sort(void)
+{
+	const int nmemb = ARRAY_SIZE(architectures);
 
-	क्विक(architectures, nmemb, माप(काष्ठा arch), arch__cmp);
-पूर्ण
+	qsort(architectures, nmemb, sizeof(struct arch), arch__cmp);
+}
 
-अटल काष्ठा arch *arch__find(स्थिर अक्षर *name)
-अणु
-	स्थिर पूर्णांक nmemb = ARRAY_SIZE(architectures);
-	अटल bool sorted;
+static struct arch *arch__find(const char *name)
+{
+	const int nmemb = ARRAY_SIZE(architectures);
+	static bool sorted;
 
-	अगर (!sorted) अणु
+	if (!sorted) {
 		arch__sort();
 		sorted = true;
-	पूर्ण
+	}
 
-	वापस द्वा_खोज(name, architectures, nmemb, माप(काष्ठा arch), arch__key_cmp);
-पूर्ण
+	return bsearch(name, architectures, nmemb, sizeof(struct arch), arch__key_cmp);
+}
 
-अटल काष्ठा annotated_source *annotated_source__new(व्योम)
-अणु
-	काष्ठा annotated_source *src = zalloc(माप(*src));
+static struct annotated_source *annotated_source__new(void)
+{
+	struct annotated_source *src = zalloc(sizeof(*src));
 
-	अगर (src != शून्य)
+	if (src != NULL)
 		INIT_LIST_HEAD(&src->source);
 
-	वापस src;
-पूर्ण
+	return src;
+}
 
-अटल __maybe_unused व्योम annotated_source__delete(काष्ठा annotated_source *src)
-अणु
-	अगर (src == शून्य)
-		वापस;
-	zमुक्त(&src->histograms);
-	zमुक्त(&src->cycles_hist);
-	मुक्त(src);
-पूर्ण
+static __maybe_unused void annotated_source__delete(struct annotated_source *src)
+{
+	if (src == NULL)
+		return;
+	zfree(&src->histograms);
+	zfree(&src->cycles_hist);
+	free(src);
+}
 
-अटल पूर्णांक annotated_source__alloc_histograms(काष्ठा annotated_source *src,
-					      माप_प्रकार size, पूर्णांक nr_hists)
-अणु
-	माप_प्रकार माप_sym_hist;
+static int annotated_source__alloc_histograms(struct annotated_source *src,
+					      size_t size, int nr_hists)
+{
+	size_t sizeof_sym_hist;
 
 	/*
-	 * Add buffer of one element क्रम zero length symbol.
-	 * When sample is taken from first inकाष्ठाion of
+	 * Add buffer of one element for zero length symbol.
+	 * When sample is taken from first instruction of
 	 * zero length symbol, perf still resolves it and
 	 * shows symbol name in perf report and allows to
 	 * annotate it.
 	 */
-	अगर (size == 0)
+	if (size == 0)
 		size = 1;
 
-	/* Check क्रम overflow when calculating माप_sym_hist */
-	अगर (size > (SIZE_MAX - माप(काष्ठा sym_hist)) / माप(काष्ठा sym_hist_entry))
-		वापस -1;
+	/* Check for overflow when calculating sizeof_sym_hist */
+	if (size > (SIZE_MAX - sizeof(struct sym_hist)) / sizeof(struct sym_hist_entry))
+		return -1;
 
-	माप_sym_hist = (माप(काष्ठा sym_hist) + size * माप(काष्ठा sym_hist_entry));
+	sizeof_sym_hist = (sizeof(struct sym_hist) + size * sizeof(struct sym_hist_entry));
 
-	/* Check क्रम overflow in zalloc argument */
-	अगर (माप_sym_hist > SIZE_MAX / nr_hists)
-		वापस -1;
+	/* Check for overflow in zalloc argument */
+	if (sizeof_sym_hist > SIZE_MAX / nr_hists)
+		return -1;
 
-	src->माप_sym_hist = माप_sym_hist;
+	src->sizeof_sym_hist = sizeof_sym_hist;
 	src->nr_histograms   = nr_hists;
-	src->histograms	     = सुस्मृति(nr_hists, माप_sym_hist) ;
-	वापस src->histograms ? 0 : -1;
-पूर्ण
+	src->histograms	     = calloc(nr_hists, sizeof_sym_hist) ;
+	return src->histograms ? 0 : -1;
+}
 
 /* The cycles histogram is lazily allocated. */
-अटल पूर्णांक symbol__alloc_hist_cycles(काष्ठा symbol *sym)
-अणु
-	काष्ठा annotation *notes = symbol__annotation(sym);
-	स्थिर माप_प्रकार size = symbol__size(sym);
+static int symbol__alloc_hist_cycles(struct symbol *sym)
+{
+	struct annotation *notes = symbol__annotation(sym);
+	const size_t size = symbol__size(sym);
 
-	notes->src->cycles_hist = सुस्मृति(size, माप(काष्ठा cyc_hist));
-	अगर (notes->src->cycles_hist == शून्य)
-		वापस -1;
-	वापस 0;
-पूर्ण
+	notes->src->cycles_hist = calloc(size, sizeof(struct cyc_hist));
+	if (notes->src->cycles_hist == NULL)
+		return -1;
+	return 0;
+}
 
-व्योम symbol__annotate_zero_histograms(काष्ठा symbol *sym)
-अणु
-	काष्ठा annotation *notes = symbol__annotation(sym);
+void symbol__annotate_zero_histograms(struct symbol *sym)
+{
+	struct annotation *notes = symbol__annotation(sym);
 
-	pthपढ़ो_mutex_lock(&notes->lock);
-	अगर (notes->src != शून्य) अणु
-		स_रखो(notes->src->histograms, 0,
-		       notes->src->nr_histograms * notes->src->माप_sym_hist);
-		अगर (notes->src->cycles_hist)
-			स_रखो(notes->src->cycles_hist, 0,
-				symbol__size(sym) * माप(काष्ठा cyc_hist));
-	पूर्ण
-	pthपढ़ो_mutex_unlock(&notes->lock);
-पूर्ण
+	pthread_mutex_lock(&notes->lock);
+	if (notes->src != NULL) {
+		memset(notes->src->histograms, 0,
+		       notes->src->nr_histograms * notes->src->sizeof_sym_hist);
+		if (notes->src->cycles_hist)
+			memset(notes->src->cycles_hist, 0,
+				symbol__size(sym) * sizeof(struct cyc_hist));
+	}
+	pthread_mutex_unlock(&notes->lock);
+}
 
-अटल पूर्णांक __symbol__account_cycles(काष्ठा cyc_hist *ch,
+static int __symbol__account_cycles(struct cyc_hist *ch,
 				    u64 start,
-				    अचिन्हित offset, अचिन्हित cycles,
-				    अचिन्हित have_start)
-अणु
+				    unsigned offset, unsigned cycles,
+				    unsigned have_start)
+{
 	/*
 	 * For now we can only account one basic block per
 	 * final jump. But multiple could be overlapping.
-	 * Always account the दीर्घest one. So when
-	 * a लघुer one has been alपढ़ोy seen throw it away.
+	 * Always account the longest one. So when
+	 * a shorter one has been already seen throw it away.
 	 *
 	 * We separately always account the full cycles.
 	 */
 	ch[offset].num_aggr++;
 	ch[offset].cycles_aggr += cycles;
 
-	अगर (cycles > ch[offset].cycles_max)
+	if (cycles > ch[offset].cycles_max)
 		ch[offset].cycles_max = cycles;
 
-	अगर (ch[offset].cycles_min) अणु
-		अगर (cycles && cycles < ch[offset].cycles_min)
+	if (ch[offset].cycles_min) {
+		if (cycles && cycles < ch[offset].cycles_min)
 			ch[offset].cycles_min = cycles;
-	पूर्ण अन्यथा
+	} else
 		ch[offset].cycles_min = cycles;
 
-	अगर (!have_start && ch[offset].have_start)
-		वापस 0;
-	अगर (ch[offset].num) अणु
-		अगर (have_start && (!ch[offset].have_start ||
-				   ch[offset].start > start)) अणु
+	if (!have_start && ch[offset].have_start)
+		return 0;
+	if (ch[offset].num) {
+		if (have_start && (!ch[offset].have_start ||
+				   ch[offset].start > start)) {
 			ch[offset].have_start = 0;
 			ch[offset].cycles = 0;
 			ch[offset].num = 0;
-			अगर (ch[offset].reset < 0xffff)
+			if (ch[offset].reset < 0xffff)
 				ch[offset].reset++;
-		पूर्ण अन्यथा अगर (have_start &&
+		} else if (have_start &&
 			   ch[offset].start < start)
-			वापस 0;
-	पूर्ण
+			return 0;
+	}
 
-	अगर (ch[offset].num < NUM_SPARKS)
+	if (ch[offset].num < NUM_SPARKS)
 		ch[offset].cycles_spark[ch[offset].num] = cycles;
 
 	ch[offset].have_start = have_start;
 	ch[offset].start = start;
 	ch[offset].cycles += cycles;
 	ch[offset].num++;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक __symbol__inc_addr_samples(काष्ठा map_symbol *ms,
-				      काष्ठा annotated_source *src, पूर्णांक evidx, u64 addr,
-				      काष्ठा perf_sample *sample)
-अणु
-	काष्ठा symbol *sym = ms->sym;
-	अचिन्हित offset;
-	काष्ठा sym_hist *h;
+static int __symbol__inc_addr_samples(struct map_symbol *ms,
+				      struct annotated_source *src, int evidx, u64 addr,
+				      struct perf_sample *sample)
+{
+	struct symbol *sym = ms->sym;
+	unsigned offset;
+	struct sym_hist *h;
 
 	pr_debug3("%s: addr=%#" PRIx64 "\n", __func__, ms->map->unmap_ip(ms->map, addr));
 
-	अगर ((addr < sym->start || addr >= sym->end) &&
-	    (addr != sym->end || sym->start != sym->end)) अणु
+	if ((addr < sym->start || addr >= sym->end) &&
+	    (addr != sym->end || sym->start != sym->end)) {
 		pr_debug("%s(%d): ERANGE! sym->name=%s, start=%#" PRIx64 ", addr=%#" PRIx64 ", end=%#" PRIx64 "\n",
 		       __func__, __LINE__, sym->name, sym->start, addr, sym->end);
-		वापस -दुस्फल;
-	पूर्ण
+		return -ERANGE;
+	}
 
 	offset = addr - sym->start;
 	h = annotated_source__histogram(src, evidx);
-	अगर (h == शून्य) अणु
+	if (h == NULL) {
 		pr_debug("%s(%d): ENOMEM! sym->name=%s, start=%#" PRIx64 ", addr=%#" PRIx64 ", end=%#" PRIx64 ", func: %d\n",
 			 __func__, __LINE__, sym->name, sym->start, addr, sym->end, sym->type == STT_FUNC);
-		वापस -ENOMEM;
-	पूर्ण
+		return -ENOMEM;
+	}
 	h->nr_samples++;
 	h->addr[offset].nr_samples++;
 	h->period += sample->period;
@@ -910,556 +909,556 @@ bool ins__is_lock(स्थिर काष्ठा ins *ins)
 		  ", evidx=%d] => nr_samples: %" PRIu64 ", period: %" PRIu64 "\n",
 		  sym->start, sym->name, addr, addr - sym->start, evidx,
 		  h->addr[offset].nr_samples, h->addr[offset].period);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल काष्ठा cyc_hist *symbol__cycles_hist(काष्ठा symbol *sym)
-अणु
-	काष्ठा annotation *notes = symbol__annotation(sym);
+static struct cyc_hist *symbol__cycles_hist(struct symbol *sym)
+{
+	struct annotation *notes = symbol__annotation(sym);
 
-	अगर (notes->src == शून्य) अणु
+	if (notes->src == NULL) {
 		notes->src = annotated_source__new();
-		अगर (notes->src == शून्य)
-			वापस शून्य;
-		जाओ alloc_cycles_hist;
-	पूर्ण
+		if (notes->src == NULL)
+			return NULL;
+		goto alloc_cycles_hist;
+	}
 
-	अगर (!notes->src->cycles_hist) अणु
+	if (!notes->src->cycles_hist) {
 alloc_cycles_hist:
 		symbol__alloc_hist_cycles(sym);
-	पूर्ण
+	}
 
-	वापस notes->src->cycles_hist;
-पूर्ण
+	return notes->src->cycles_hist;
+}
 
-काष्ठा annotated_source *symbol__hists(काष्ठा symbol *sym, पूर्णांक nr_hists)
-अणु
-	काष्ठा annotation *notes = symbol__annotation(sym);
+struct annotated_source *symbol__hists(struct symbol *sym, int nr_hists)
+{
+	struct annotation *notes = symbol__annotation(sym);
 
-	अगर (notes->src == शून्य) अणु
+	if (notes->src == NULL) {
 		notes->src = annotated_source__new();
-		अगर (notes->src == शून्य)
-			वापस शून्य;
-		जाओ alloc_histograms;
-	पूर्ण
+		if (notes->src == NULL)
+			return NULL;
+		goto alloc_histograms;
+	}
 
-	अगर (notes->src->histograms == शून्य) अणु
+	if (notes->src->histograms == NULL) {
 alloc_histograms:
 		annotated_source__alloc_histograms(notes->src, symbol__size(sym),
 						   nr_hists);
-	पूर्ण
+	}
 
-	वापस notes->src;
-पूर्ण
+	return notes->src;
+}
 
-अटल पूर्णांक symbol__inc_addr_samples(काष्ठा map_symbol *ms,
-				    काष्ठा evsel *evsel, u64 addr,
-				    काष्ठा perf_sample *sample)
-अणु
-	काष्ठा symbol *sym = ms->sym;
-	काष्ठा annotated_source *src;
+static int symbol__inc_addr_samples(struct map_symbol *ms,
+				    struct evsel *evsel, u64 addr,
+				    struct perf_sample *sample)
+{
+	struct symbol *sym = ms->sym;
+	struct annotated_source *src;
 
-	अगर (sym == शून्य)
-		वापस 0;
+	if (sym == NULL)
+		return 0;
 	src = symbol__hists(sym, evsel->evlist->core.nr_entries);
-	वापस src ? __symbol__inc_addr_samples(ms, src, evsel->idx, addr, sample) : 0;
-पूर्ण
+	return src ? __symbol__inc_addr_samples(ms, src, evsel->idx, addr, sample) : 0;
+}
 
-अटल पूर्णांक symbol__account_cycles(u64 addr, u64 start,
-				  काष्ठा symbol *sym, अचिन्हित cycles)
-अणु
-	काष्ठा cyc_hist *cycles_hist;
-	अचिन्हित offset;
+static int symbol__account_cycles(u64 addr, u64 start,
+				  struct symbol *sym, unsigned cycles)
+{
+	struct cyc_hist *cycles_hist;
+	unsigned offset;
 
-	अगर (sym == शून्य)
-		वापस 0;
+	if (sym == NULL)
+		return 0;
 	cycles_hist = symbol__cycles_hist(sym);
-	अगर (cycles_hist == शून्य)
-		वापस -ENOMEM;
-	अगर (addr < sym->start || addr >= sym->end)
-		वापस -दुस्फल;
+	if (cycles_hist == NULL)
+		return -ENOMEM;
+	if (addr < sym->start || addr >= sym->end)
+		return -ERANGE;
 
-	अगर (start) अणु
-		अगर (start < sym->start || start >= sym->end)
-			वापस -दुस्फल;
-		अगर (start >= addr)
+	if (start) {
+		if (start < sym->start || start >= sym->end)
+			return -ERANGE;
+		if (start >= addr)
 			start = 0;
-	पूर्ण
+	}
 	offset = addr - sym->start;
-	वापस __symbol__account_cycles(cycles_hist,
+	return __symbol__account_cycles(cycles_hist,
 					start ? start - sym->start : 0,
 					offset, cycles,
 					!!start);
-पूर्ण
+}
 
-पूर्णांक addr_map_symbol__account_cycles(काष्ठा addr_map_symbol *ams,
-				    काष्ठा addr_map_symbol *start,
-				    अचिन्हित cycles)
-अणु
+int addr_map_symbol__account_cycles(struct addr_map_symbol *ams,
+				    struct addr_map_symbol *start,
+				    unsigned cycles)
+{
 	u64 saddr = 0;
-	पूर्णांक err;
+	int err;
 
-	अगर (!cycles)
-		वापस 0;
+	if (!cycles)
+		return 0;
 
 	/*
 	 * Only set start when IPC can be computed. We can only
 	 * compute it when the basic block is completely in a single
 	 * function.
-	 * Special हाल the हाल when the jump is अन्यथाwhere, but
+	 * Special case the case when the jump is elsewhere, but
 	 * it starts on the function start.
 	 */
-	अगर (start &&
+	if (start &&
 		(start->ms.sym == ams->ms.sym ||
 		 (ams->ms.sym &&
 		   start->addr == ams->ms.sym->start + ams->ms.map->start)))
 		saddr = start->al_addr;
-	अगर (saddr == 0)
+	if (saddr == 0)
 		pr_debug2("BB with bad start: addr %"PRIx64" start %"PRIx64" sym %"PRIx64" saddr %"PRIx64"\n",
 			ams->addr,
 			start ? start->addr : 0,
 			ams->ms.sym ? ams->ms.sym->start + ams->ms.map->start : 0,
 			saddr);
 	err = symbol__account_cycles(ams->al_addr, saddr, ams->ms.sym, cycles);
-	अगर (err)
+	if (err)
 		pr_debug2("account_cycles failed %d\n", err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल अचिन्हित annotation__count_insn(काष्ठा annotation *notes, u64 start, u64 end)
-अणु
-	अचिन्हित n_insn = 0;
+static unsigned annotation__count_insn(struct annotation *notes, u64 start, u64 end)
+{
+	unsigned n_insn = 0;
 	u64 offset;
 
-	क्रम (offset = start; offset <= end; offset++) अणु
-		अगर (notes->offsets[offset])
+	for (offset = start; offset <= end; offset++) {
+		if (notes->offsets[offset])
 			n_insn++;
-	पूर्ण
-	वापस n_insn;
-पूर्ण
+	}
+	return n_insn;
+}
 
-अटल व्योम annotation__count_and_fill(काष्ठा annotation *notes, u64 start, u64 end, काष्ठा cyc_hist *ch)
-अणु
-	अचिन्हित n_insn;
-	अचिन्हित पूर्णांक cover_insn = 0;
+static void annotation__count_and_fill(struct annotation *notes, u64 start, u64 end, struct cyc_hist *ch)
+{
+	unsigned n_insn;
+	unsigned int cover_insn = 0;
 	u64 offset;
 
 	n_insn = annotation__count_insn(notes, start, end);
-	अगर (n_insn && ch->num && ch->cycles) अणु
-		भग्न ipc = n_insn / ((द्विगुन)ch->cycles / (द्विगुन)ch->num);
+	if (n_insn && ch->num && ch->cycles) {
+		float ipc = n_insn / ((double)ch->cycles / (double)ch->num);
 
 		/* Hide data when there are too many overlaps. */
-		अगर (ch->reset >= 0x7fff)
-			वापस;
+		if (ch->reset >= 0x7fff)
+			return;
 
-		क्रम (offset = start; offset <= end; offset++) अणु
-			काष्ठा annotation_line *al = notes->offsets[offset];
+		for (offset = start; offset <= end; offset++) {
+			struct annotation_line *al = notes->offsets[offset];
 
-			अगर (al && al->ipc == 0.0) अणु
+			if (al && al->ipc == 0.0) {
 				al->ipc = ipc;
 				cover_insn++;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (cover_insn) अणु
+		if (cover_insn) {
 			notes->hit_cycles += ch->cycles;
 			notes->hit_insn += n_insn * ch->num;
 			notes->cover_insn += cover_insn;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम annotation__compute_ipc(काष्ठा annotation *notes, माप_प्रकार size)
-अणु
+void annotation__compute_ipc(struct annotation *notes, size_t size)
+{
 	s64 offset;
 
-	अगर (!notes->src || !notes->src->cycles_hist)
-		वापस;
+	if (!notes->src || !notes->src->cycles_hist)
+		return;
 
 	notes->total_insn = annotation__count_insn(notes, 0, size - 1);
 	notes->hit_cycles = 0;
 	notes->hit_insn = 0;
 	notes->cover_insn = 0;
 
-	pthपढ़ो_mutex_lock(&notes->lock);
-	क्रम (offset = size - 1; offset >= 0; --offset) अणु
-		काष्ठा cyc_hist *ch;
+	pthread_mutex_lock(&notes->lock);
+	for (offset = size - 1; offset >= 0; --offset) {
+		struct cyc_hist *ch;
 
 		ch = &notes->src->cycles_hist[offset];
-		अगर (ch && ch->cycles) अणु
-			काष्ठा annotation_line *al;
+		if (ch && ch->cycles) {
+			struct annotation_line *al;
 
-			अगर (ch->have_start)
+			if (ch->have_start)
 				annotation__count_and_fill(notes, ch->start, offset, ch);
 			al = notes->offsets[offset];
-			अगर (al && ch->num_aggr) अणु
+			if (al && ch->num_aggr) {
 				al->cycles = ch->cycles_aggr / ch->num_aggr;
 				al->cycles_max = ch->cycles_max;
 				al->cycles_min = ch->cycles_min;
-			पूर्ण
+			}
 			notes->have_cycles = true;
-		पूर्ण
-	पूर्ण
-	pthपढ़ो_mutex_unlock(&notes->lock);
-पूर्ण
+		}
+	}
+	pthread_mutex_unlock(&notes->lock);
+}
 
-पूर्णांक addr_map_symbol__inc_samples(काष्ठा addr_map_symbol *ams, काष्ठा perf_sample *sample,
-				 काष्ठा evsel *evsel)
-अणु
-	वापस symbol__inc_addr_samples(&ams->ms, evsel, ams->al_addr, sample);
-पूर्ण
+int addr_map_symbol__inc_samples(struct addr_map_symbol *ams, struct perf_sample *sample,
+				 struct evsel *evsel)
+{
+	return symbol__inc_addr_samples(&ams->ms, evsel, ams->al_addr, sample);
+}
 
-पूर्णांक hist_entry__inc_addr_samples(काष्ठा hist_entry *he, काष्ठा perf_sample *sample,
-				 काष्ठा evsel *evsel, u64 ip)
-अणु
-	वापस symbol__inc_addr_samples(&he->ms, evsel, ip, sample);
-पूर्ण
+int hist_entry__inc_addr_samples(struct hist_entry *he, struct perf_sample *sample,
+				 struct evsel *evsel, u64 ip)
+{
+	return symbol__inc_addr_samples(&he->ms, evsel, ip, sample);
+}
 
-अटल व्योम disयंत्र_line__init_ins(काष्ठा disयंत्र_line *dl, काष्ठा arch *arch, काष्ठा map_symbol *ms)
-अणु
+static void disasm_line__init_ins(struct disasm_line *dl, struct arch *arch, struct map_symbol *ms)
+{
 	dl->ins.ops = ins__find(arch, dl->ins.name);
 
-	अगर (!dl->ins.ops)
-		वापस;
+	if (!dl->ins.ops)
+		return;
 
-	अगर (dl->ins.ops->parse && dl->ins.ops->parse(arch, &dl->ops, ms) < 0)
-		dl->ins.ops = शून्य;
-पूर्ण
+	if (dl->ins.ops->parse && dl->ins.ops->parse(arch, &dl->ops, ms) < 0)
+		dl->ins.ops = NULL;
+}
 
-अटल पूर्णांक disयंत्र_line__parse(अक्षर *line, स्थिर अक्षर **namep, अक्षर **rawp)
-अणु
-	अक्षर पंचांगp, *name = skip_spaces(line);
+static int disasm_line__parse(char *line, const char **namep, char **rawp)
+{
+	char tmp, *name = skip_spaces(line);
 
-	अगर (name[0] == '\0')
-		वापस -1;
+	if (name[0] == '\0')
+		return -1;
 
 	*rawp = name + 1;
 
-	जबतक ((*rawp)[0] != '\0' && !है_खाली((*rawp)[0]))
+	while ((*rawp)[0] != '\0' && !isspace((*rawp)[0]))
 		++*rawp;
 
-	पंचांगp = (*rawp)[0];
+	tmp = (*rawp)[0];
 	(*rawp)[0] = '\0';
 	*namep = strdup(name);
 
-	अगर (*namep == शून्य)
-		जाओ out;
+	if (*namep == NULL)
+		goto out;
 
-	(*rawp)[0] = पंचांगp;
+	(*rawp)[0] = tmp;
 	*rawp = strim(*rawp);
 
-	वापस 0;
+	return 0;
 
 out:
-	वापस -1;
-पूर्ण
+	return -1;
+}
 
-काष्ठा annotate_args अणु
-	काष्ठा arch		  *arch;
-	काष्ठा map_symbol	  ms;
-	काष्ठा evsel		  *evsel;
-	काष्ठा annotation_options *options;
+struct annotate_args {
+	struct arch		  *arch;
+	struct map_symbol	  ms;
+	struct evsel		  *evsel;
+	struct annotation_options *options;
 	s64			  offset;
-	अक्षर			  *line;
-	पूर्णांक			  line_nr;
-	अक्षर			  *fileloc;
-पूर्ण;
+	char			  *line;
+	int			  line_nr;
+	char			  *fileloc;
+};
 
-अटल व्योम annotation_line__init(काष्ठा annotation_line *al,
-				  काष्ठा annotate_args *args,
-				  पूर्णांक nr)
-अणु
+static void annotation_line__init(struct annotation_line *al,
+				  struct annotate_args *args,
+				  int nr)
+{
 	al->offset = args->offset;
 	al->line = strdup(args->line);
 	al->line_nr = args->line_nr;
 	al->fileloc = args->fileloc;
 	al->data_nr = nr;
-पूर्ण
+}
 
-अटल व्योम annotation_line__निकास(काष्ठा annotation_line *al)
-अणु
-	मुक्त_srcline(al->path);
-	zमुक्त(&al->line);
-पूर्ण
+static void annotation_line__exit(struct annotation_line *al)
+{
+	free_srcline(al->path);
+	zfree(&al->line);
+}
 
-अटल माप_प्रकार disयंत्र_line_size(पूर्णांक nr)
-अणु
-	काष्ठा annotation_line *al;
+static size_t disasm_line_size(int nr)
+{
+	struct annotation_line *al;
 
-	वापस (माप(काष्ठा disयंत्र_line) + (माप(al->data[0]) * nr));
-पूर्ण
+	return (sizeof(struct disasm_line) + (sizeof(al->data[0]) * nr));
+}
 
 /*
- * Allocating the disयंत्र annotation line data with
- * following काष्ठाure:
+ * Allocating the disasm annotation line data with
+ * following structure:
  *
  *    -------------------------------------------
- *    काष्ठा disयंत्र_line | काष्ठा annotation_line
+ *    struct disasm_line | struct annotation_line
  *    -------------------------------------------
  *
  * We have 'struct annotation_line' member as last member
  * of 'struct disasm_line' to have an easy access.
  */
-अटल काष्ठा disयंत्र_line *disयंत्र_line__new(काष्ठा annotate_args *args)
-अणु
-	काष्ठा disयंत्र_line *dl = शून्य;
-	पूर्णांक nr = 1;
+static struct disasm_line *disasm_line__new(struct annotate_args *args)
+{
+	struct disasm_line *dl = NULL;
+	int nr = 1;
 
-	अगर (evsel__is_group_event(args->evsel))
+	if (evsel__is_group_event(args->evsel))
 		nr = args->evsel->core.nr_members;
 
-	dl = zalloc(disयंत्र_line_size(nr));
-	अगर (!dl)
-		वापस शून्य;
+	dl = zalloc(disasm_line_size(nr));
+	if (!dl)
+		return NULL;
 
 	annotation_line__init(&dl->al, args, nr);
-	अगर (dl->al.line == शून्य)
-		जाओ out_delete;
+	if (dl->al.line == NULL)
+		goto out_delete;
 
-	अगर (args->offset != -1) अणु
-		अगर (disयंत्र_line__parse(dl->al.line, &dl->ins.name, &dl->ops.raw) < 0)
-			जाओ out_मुक्त_line;
+	if (args->offset != -1) {
+		if (disasm_line__parse(dl->al.line, &dl->ins.name, &dl->ops.raw) < 0)
+			goto out_free_line;
 
-		disयंत्र_line__init_ins(dl, args->arch, &args->ms);
-	पूर्ण
+		disasm_line__init_ins(dl, args->arch, &args->ms);
+	}
 
-	वापस dl;
+	return dl;
 
-out_मुक्त_line:
-	zमुक्त(&dl->al.line);
+out_free_line:
+	zfree(&dl->al.line);
 out_delete:
-	मुक्त(dl);
-	वापस शून्य;
-पूर्ण
+	free(dl);
+	return NULL;
+}
 
-व्योम disयंत्र_line__मुक्त(काष्ठा disयंत्र_line *dl)
-अणु
-	अगर (dl->ins.ops && dl->ins.ops->मुक्त)
-		dl->ins.ops->मुक्त(&dl->ops);
-	अन्यथा
+void disasm_line__free(struct disasm_line *dl)
+{
+	if (dl->ins.ops && dl->ins.ops->free)
+		dl->ins.ops->free(&dl->ops);
+	else
 		ins__delete(&dl->ops);
-	zमुक्त(&dl->ins.name);
-	annotation_line__निकास(&dl->al);
-	मुक्त(dl);
-पूर्ण
+	zfree(&dl->ins.name);
+	annotation_line__exit(&dl->al);
+	free(dl);
+}
 
-पूर्णांक disयंत्र_line__scnम_लिखो(काष्ठा disयंत्र_line *dl, अक्षर *bf, माप_प्रकार size, bool raw, पूर्णांक max_ins_name)
-अणु
-	अगर (raw || !dl->ins.ops)
-		वापस scnम_लिखो(bf, size, "%-*s %s", max_ins_name, dl->ins.name, dl->ops.raw);
+int disasm_line__scnprintf(struct disasm_line *dl, char *bf, size_t size, bool raw, int max_ins_name)
+{
+	if (raw || !dl->ins.ops)
+		return scnprintf(bf, size, "%-*s %s", max_ins_name, dl->ins.name, dl->ops.raw);
 
-	वापस ins__scnम_लिखो(&dl->ins, bf, size, &dl->ops, max_ins_name);
-पूर्ण
+	return ins__scnprintf(&dl->ins, bf, size, &dl->ops, max_ins_name);
+}
 
-अटल व्योम annotation_line__add(काष्ठा annotation_line *al, काष्ठा list_head *head)
-अणु
+static void annotation_line__add(struct annotation_line *al, struct list_head *head)
+{
 	list_add_tail(&al->node, head);
-पूर्ण
+}
 
-काष्ठा annotation_line *
-annotation_line__next(काष्ठा annotation_line *pos, काष्ठा list_head *head)
-अणु
-	list_क्रम_each_entry_जारी(pos, head, node)
-		अगर (pos->offset >= 0)
-			वापस pos;
+struct annotation_line *
+annotation_line__next(struct annotation_line *pos, struct list_head *head)
+{
+	list_for_each_entry_continue(pos, head, node)
+		if (pos->offset >= 0)
+			return pos;
 
-	वापस शून्य;
-पूर्ण
+	return NULL;
+}
 
-अटल स्थिर अक्षर *annotate__address_color(काष्ठा block_range *br)
-अणु
-	द्विगुन cov = block_range__coverage(br);
+static const char *annotate__address_color(struct block_range *br)
+{
+	double cov = block_range__coverage(br);
 
-	अगर (cov >= 0) अणु
-		/* mark red क्रम >75% coverage */
-		अगर (cov > 0.75)
-			वापस PERF_COLOR_RED;
+	if (cov >= 0) {
+		/* mark red for >75% coverage */
+		if (cov > 0.75)
+			return PERF_COLOR_RED;
 
-		/* mark dull क्रम <1% coverage */
-		अगर (cov < 0.01)
-			वापस PERF_COLOR_NORMAL;
-	पूर्ण
+		/* mark dull for <1% coverage */
+		if (cov < 0.01)
+			return PERF_COLOR_NORMAL;
+	}
 
-	वापस PERF_COLOR_MAGENTA;
-पूर्ण
+	return PERF_COLOR_MAGENTA;
+}
 
-अटल स्थिर अक्षर *annotate__यंत्र_color(काष्ठा block_range *br)
-अणु
-	द्विगुन cov = block_range__coverage(br);
+static const char *annotate__asm_color(struct block_range *br)
+{
+	double cov = block_range__coverage(br);
 
-	अगर (cov >= 0) अणु
-		/* mark dull क्रम <1% coverage */
-		अगर (cov < 0.01)
-			वापस PERF_COLOR_NORMAL;
-	पूर्ण
+	if (cov >= 0) {
+		/* mark dull for <1% coverage */
+		if (cov < 0.01)
+			return PERF_COLOR_NORMAL;
+	}
 
-	वापस PERF_COLOR_BLUE;
-पूर्ण
+	return PERF_COLOR_BLUE;
+}
 
-अटल व्योम annotate__branch_म_लिखो(काष्ठा block_range *br, u64 addr)
-अणु
+static void annotate__branch_printf(struct block_range *br, u64 addr)
+{
 	bool emit_comment = true;
 
-	अगर (!br)
-		वापस;
+	if (!br)
+		return;
 
-#अगर 1
-	अगर (br->is_target && br->start == addr) अणु
-		काष्ठा block_range *branch = br;
-		द्विगुन p;
+#if 1
+	if (br->is_target && br->start == addr) {
+		struct block_range *branch = br;
+		double p;
 
 		/*
 		 * Find matching branch to our target.
 		 */
-		जबतक (!branch->is_branch)
+		while (!branch->is_branch)
 			branch = block_range__next(branch);
 
-		p = 100 *(द्विगुन)br->entry / branch->coverage;
+		p = 100 *(double)br->entry / branch->coverage;
 
-		अगर (p > 0.1) अणु
-			अगर (emit_comment) अणु
+		if (p > 0.1) {
+			if (emit_comment) {
 				emit_comment = false;
-				म_लिखो("\t#");
-			पूर्ण
+				printf("\t#");
+			}
 
 			/*
 			 * The percentage of coverage joined at this target in relation
 			 * to the next branch.
 			 */
-			म_लिखो(" +%.2f%%", p);
-		पूर्ण
-	पूर्ण
-#पूर्ण_अगर
-	अगर (br->is_branch && br->end == addr) अणु
-		द्विगुन p = 100*(द्विगुन)br->taken / br->coverage;
+			printf(" +%.2f%%", p);
+		}
+	}
+#endif
+	if (br->is_branch && br->end == addr) {
+		double p = 100*(double)br->taken / br->coverage;
 
-		अगर (p > 0.1) अणु
-			अगर (emit_comment) अणु
+		if (p > 0.1) {
+			if (emit_comment) {
 				emit_comment = false;
-				म_लिखो("\t#");
-			पूर्ण
+				printf("\t#");
+			}
 
 			/*
 			 * The percentage of coverage leaving at this branch, and
 			 * its prediction ratio.
 			 */
-			म_लिखो(" -%.2f%% (p:%.2f%%)", p, 100*(द्विगुन)br->pred  / br->taken);
-		पूर्ण
-	पूर्ण
-पूर्ण
+			printf(" -%.2f%% (p:%.2f%%)", p, 100*(double)br->pred  / br->taken);
+		}
+	}
+}
 
-अटल पूर्णांक disयंत्र_line__prपूर्णांक(काष्ठा disयंत्र_line *dl, u64 start, पूर्णांक addr_fmt_width)
-अणु
+static int disasm_line__print(struct disasm_line *dl, u64 start, int addr_fmt_width)
+{
 	s64 offset = dl->al.offset;
-	स्थिर u64 addr = start + offset;
-	काष्ठा block_range *br;
+	const u64 addr = start + offset;
+	struct block_range *br;
 
 	br = block_range__find(addr);
-	color_ख_लिखो(मानक_निकास, annotate__address_color(br), "  %*" PRIx64 ":", addr_fmt_width, addr);
-	color_ख_लिखो(मानक_निकास, annotate__यंत्र_color(br), "%s", dl->al.line);
-	annotate__branch_म_लिखो(br, addr);
-	वापस 0;
-पूर्ण
+	color_fprintf(stdout, annotate__address_color(br), "  %*" PRIx64 ":", addr_fmt_width, addr);
+	color_fprintf(stdout, annotate__asm_color(br), "%s", dl->al.line);
+	annotate__branch_printf(br, addr);
+	return 0;
+}
 
-अटल पूर्णांक
-annotation_line__prपूर्णांक(काष्ठा annotation_line *al, काष्ठा symbol *sym, u64 start,
-		       काष्ठा evsel *evsel, u64 len, पूर्णांक min_pcnt, पूर्णांक prपूर्णांकed,
-		       पूर्णांक max_lines, काष्ठा annotation_line *queue, पूर्णांक addr_fmt_width,
-		       पूर्णांक percent_type)
-अणु
-	काष्ठा disयंत्र_line *dl = container_of(al, काष्ठा disयंत्र_line, al);
-	अटल स्थिर अक्षर *prev_line;
+static int
+annotation_line__print(struct annotation_line *al, struct symbol *sym, u64 start,
+		       struct evsel *evsel, u64 len, int min_pcnt, int printed,
+		       int max_lines, struct annotation_line *queue, int addr_fmt_width,
+		       int percent_type)
+{
+	struct disasm_line *dl = container_of(al, struct disasm_line, al);
+	static const char *prev_line;
 
-	अगर (al->offset != -1) अणु
-		द्विगुन max_percent = 0.0;
-		पूर्णांक i, nr_percent = 1;
-		स्थिर अक्षर *color;
-		काष्ठा annotation *notes = symbol__annotation(sym);
+	if (al->offset != -1) {
+		double max_percent = 0.0;
+		int i, nr_percent = 1;
+		const char *color;
+		struct annotation *notes = symbol__annotation(sym);
 
-		क्रम (i = 0; i < al->data_nr; i++) अणु
-			द्विगुन percent;
+		for (i = 0; i < al->data_nr; i++) {
+			double percent;
 
 			percent = annotation_data__percent(&al->data[i],
 							   percent_type);
 
-			अगर (percent > max_percent)
+			if (percent > max_percent)
 				max_percent = percent;
-		पूर्ण
+		}
 
-		अगर (al->data_nr > nr_percent)
+		if (al->data_nr > nr_percent)
 			nr_percent = al->data_nr;
 
-		अगर (max_percent < min_pcnt)
-			वापस -1;
+		if (max_percent < min_pcnt)
+			return -1;
 
-		अगर (max_lines && prपूर्णांकed >= max_lines)
-			वापस 1;
+		if (max_lines && printed >= max_lines)
+			return 1;
 
-		अगर (queue != शून्य) अणु
-			list_क्रम_each_entry_from(queue, &notes->src->source, node) अणु
-				अगर (queue == al)
-					अवरोध;
-				annotation_line__prपूर्णांक(queue, sym, start, evsel, len,
-						       0, 0, 1, शून्य, addr_fmt_width,
+		if (queue != NULL) {
+			list_for_each_entry_from(queue, &notes->src->source, node) {
+				if (queue == al)
+					break;
+				annotation_line__print(queue, sym, start, evsel, len,
+						       0, 0, 1, NULL, addr_fmt_width,
 						       percent_type);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		color = get_percent_color(max_percent);
 
-		क्रम (i = 0; i < nr_percent; i++) अणु
-			काष्ठा annotation_data *data = &al->data[i];
-			द्विगुन percent;
+		for (i = 0; i < nr_percent; i++) {
+			struct annotation_data *data = &al->data[i];
+			double percent;
 
 			percent = annotation_data__percent(data, percent_type);
 			color = get_percent_color(percent);
 
-			अगर (symbol_conf.show_total_period)
-				color_ख_लिखो(मानक_निकास, color, " %11" PRIu64,
+			if (symbol_conf.show_total_period)
+				color_fprintf(stdout, color, " %11" PRIu64,
 					      data->he.period);
-			अन्यथा अगर (symbol_conf.show_nr_samples)
-				color_ख_लिखो(मानक_निकास, color, " %7" PRIu64,
+			else if (symbol_conf.show_nr_samples)
+				color_fprintf(stdout, color, " %7" PRIu64,
 					      data->he.nr_samples);
-			अन्यथा
-				color_ख_लिखो(मानक_निकास, color, " %7.2f", percent);
-		पूर्ण
+			else
+				color_fprintf(stdout, color, " %7.2f", percent);
+		}
 
-		म_लिखो(" : ");
+		printf(" : ");
 
-		disयंत्र_line__prपूर्णांक(dl, start, addr_fmt_width);
+		disasm_line__print(dl, start, addr_fmt_width);
 
 		/*
-		 * Also color the filename and line अगर needed, with
-		 * the same color than the percentage. Don't prपूर्णांक it
-		 * twice क्रम बंद colored addr with the same filename:line
+		 * Also color the filename and line if needed, with
+		 * the same color than the percentage. Don't print it
+		 * twice for close colored addr with the same filename:line
 		 */
-		अगर (al->path) अणु
-			अगर (!prev_line || म_भेद(prev_line, al->path)) अणु
-				color_ख_लिखो(मानक_निकास, color, " // %s", al->path);
+		if (al->path) {
+			if (!prev_line || strcmp(prev_line, al->path)) {
+				color_fprintf(stdout, color, " // %s", al->path);
 				prev_line = al->path;
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		म_लिखो("\n");
-	पूर्ण अन्यथा अगर (max_lines && prपूर्णांकed >= max_lines)
-		वापस 1;
-	अन्यथा अणु
-		पूर्णांक width = symbol_conf.show_total_period ? 12 : 8;
+		printf("\n");
+	} else if (max_lines && printed >= max_lines)
+		return 1;
+	else {
+		int width = symbol_conf.show_total_period ? 12 : 8;
 
-		अगर (queue)
-			वापस -1;
+		if (queue)
+			return -1;
 
-		अगर (evsel__is_group_event(evsel))
+		if (evsel__is_group_event(evsel))
 			width *= evsel->core.nr_members;
 
-		अगर (!*al->line)
-			म_लिखो(" %*s:\n", width, " ");
-		अन्यथा
-			म_लिखो(" %*s: %-*d %s\n", width, " ", addr_fmt_width, al->line_nr, al->line);
-	पूर्ण
+		if (!*al->line)
+			printf(" %*s:\n", width, " ");
+		else
+			printf(" %*s: %-*d %s\n", width, " ", addr_fmt_width, al->line_nr, al->line);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
  * symbol__parse_objdump_line() parses objdump output (with -d --no-show-raw)
@@ -1474,43 +1473,43 @@ annotation_line__prपूर्णांक(काष्ठा annotation_line *
  *    415515:       add    $0x8,%rsp
  *    415519:       retq
  *
- * it will be parsed and saved पूर्णांकo काष्ठा disयंत्र_line as
+ * it will be parsed and saved into struct disasm_line as
  *  <offset>       <name>  <ops.raw>
  *
  * The offset will be a relative offset from the start of the symbol and -1
- * means that it's not a disassembly line so should be treated dअगरferently.
- * The ops.raw part will be parsed further according to type of the inकाष्ठाion.
+ * means that it's not a disassembly line so should be treated differently.
+ * The ops.raw part will be parsed further according to type of the instruction.
  */
-अटल पूर्णांक symbol__parse_objdump_line(काष्ठा symbol *sym,
-				      काष्ठा annotate_args *args,
-				      अक्षर *parsed_line, पूर्णांक *line_nr, अक्षर **fileloc)
-अणु
-	काष्ठा map *map = args->ms.map;
-	काष्ठा annotation *notes = symbol__annotation(sym);
-	काष्ठा disयंत्र_line *dl;
-	अक्षर *पंचांगp;
+static int symbol__parse_objdump_line(struct symbol *sym,
+				      struct annotate_args *args,
+				      char *parsed_line, int *line_nr, char **fileloc)
+{
+	struct map *map = args->ms.map;
+	struct annotation *notes = symbol__annotation(sym);
+	struct disasm_line *dl;
+	char *tmp;
 	s64 line_ip, offset = -1;
 	regmatch_t match[2];
 
 	/* /filename:linenr ? Save line number and ignore. */
-	अगर (regexec(&file_lineno, parsed_line, 2, match, 0) == 0) अणु
-		*line_nr = म_से_प(parsed_line + match[1].rm_so);
+	if (regexec(&file_lineno, parsed_line, 2, match, 0) == 0) {
+		*line_nr = atoi(parsed_line + match[1].rm_so);
 		*fileloc = strdup(parsed_line);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
 	/* Process hex address followed by ':'. */
-	line_ip = म_से_अदीर्घl(parsed_line, &पंचांगp, 16);
-	अगर (parsed_line != पंचांगp && पंचांगp[0] == ':' && tmp[1] != '\0') अणु
+	line_ip = strtoull(parsed_line, &tmp, 16);
+	if (parsed_line != tmp && tmp[0] == ':' && tmp[1] != '\0') {
 		u64 start = map__rip_2objdump(map, sym->start),
 		    end = map__rip_2objdump(map, sym->end);
 
 		offset = line_ip - start;
-		अगर ((u64)line_ip < start || (u64)line_ip >= end)
+		if ((u64)line_ip < start || (u64)line_ip >= end)
 			offset = -1;
-		अन्यथा
-			parsed_line = पंचांगp + 1;
-	पूर्ण
+		else
+			parsed_line = tmp + 1;
+	}
 
 	args->offset  = offset;
 	args->line    = parsed_line;
@@ -1518,478 +1517,478 @@ annotation_line__prपूर्णांक(काष्ठा annotation_line *
 	args->fileloc = *fileloc;
 	args->ms.sym  = sym;
 
-	dl = disयंत्र_line__new(args);
+	dl = disasm_line__new(args);
 	(*line_nr)++;
 
-	अगर (dl == शून्य)
-		वापस -1;
+	if (dl == NULL)
+		return -1;
 
-	अगर (!disयंत्र_line__has_local_offset(dl)) अणु
+	if (!disasm_line__has_local_offset(dl)) {
 		dl->ops.target.offset = dl->ops.target.addr -
 					map__rip_2objdump(map, sym->start);
 		dl->ops.target.offset_avail = true;
-	पूर्ण
+	}
 
 	/* kcore has no symbols, so add the call target symbol */
-	अगर (dl->ins.ops && ins__is_call(&dl->ins) && !dl->ops.target.sym) अणु
-		काष्ठा addr_map_symbol target = अणु
+	if (dl->ins.ops && ins__is_call(&dl->ins) && !dl->ops.target.sym) {
+		struct addr_map_symbol target = {
 			.addr = dl->ops.target.addr,
-			.ms = अणु .map = map, पूर्ण,
-		पूर्ण;
+			.ms = { .map = map, },
+		};
 
-		अगर (!maps__find_ams(args->ms.maps, &target) &&
+		if (!maps__find_ams(args->ms.maps, &target) &&
 		    target.ms.sym->start == target.al_addr)
 			dl->ops.target.sym = target.ms.sym;
-	पूर्ण
+	}
 
 	annotation_line__add(&dl->al, &notes->src->source);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल __attribute__((स्थिरructor)) व्योम symbol__init_regexpr(व्योम)
-अणु
+static __attribute__((constructor)) void symbol__init_regexpr(void)
+{
 	regcomp(&file_lineno, "^/[^:]+:([0-9]+)", REG_EXTENDED);
-पूर्ण
+}
 
-अटल व्योम delete_last_nop(काष्ठा symbol *sym)
-अणु
-	काष्ठा annotation *notes = symbol__annotation(sym);
-	काष्ठा list_head *list = &notes->src->source;
-	काष्ठा disयंत्र_line *dl;
+static void delete_last_nop(struct symbol *sym)
+{
+	struct annotation *notes = symbol__annotation(sym);
+	struct list_head *list = &notes->src->source;
+	struct disasm_line *dl;
 
-	जबतक (!list_empty(list)) अणु
-		dl = list_entry(list->prev, काष्ठा disयंत्र_line, al.node);
+	while (!list_empty(list)) {
+		dl = list_entry(list->prev, struct disasm_line, al.node);
 
-		अगर (dl->ins.ops) अणु
-			अगर (dl->ins.ops != &nop_ops)
-				वापस;
-		पूर्ण अन्यथा अणु
-			अगर (!म_माला(dl->al.line, " nop ") &&
-			    !म_माला(dl->al.line, " nopl ") &&
-			    !म_माला(dl->al.line, " nopw "))
-				वापस;
-		पूर्ण
+		if (dl->ins.ops) {
+			if (dl->ins.ops != &nop_ops)
+				return;
+		} else {
+			if (!strstr(dl->al.line, " nop ") &&
+			    !strstr(dl->al.line, " nopl ") &&
+			    !strstr(dl->al.line, " nopw "))
+				return;
+		}
 
 		list_del_init(&dl->al.node);
-		disयंत्र_line__मुक्त(dl);
-	पूर्ण
-पूर्ण
+		disasm_line__free(dl);
+	}
+}
 
-पूर्णांक symbol__म_त्रुटि_disassemble(काष्ठा map_symbol *ms, पूर्णांक errnum, अक्षर *buf, माप_प्रकार buflen)
-अणु
-	काष्ठा dso *dso = ms->map->dso;
+int symbol__strerror_disassemble(struct map_symbol *ms, int errnum, char *buf, size_t buflen)
+{
+	struct dso *dso = ms->map->dso;
 
 	BUG_ON(buflen == 0);
 
-	अगर (errnum >= 0) अणु
+	if (errnum >= 0) {
 		str_error_r(errnum, buf, buflen);
-		वापस 0;
-	पूर्ण
+		return 0;
+	}
 
-	चयन (errnum) अणु
-	हाल SYMBOL_ANNOTATE_ERRNO__NO_VMLINUX: अणु
-		अक्षर bf[SBUILD_ID_SIZE + 15] = " with build id ";
-		अक्षर *build_id_msg = शून्य;
+	switch (errnum) {
+	case SYMBOL_ANNOTATE_ERRNO__NO_VMLINUX: {
+		char bf[SBUILD_ID_SIZE + 15] = " with build id ";
+		char *build_id_msg = NULL;
 
-		अगर (dso->has_build_id) अणु
-			build_id__प्र_लिखो(&dso->bid, bf + 15);
+		if (dso->has_build_id) {
+			build_id__sprintf(&dso->bid, bf + 15);
 			build_id_msg = bf;
-		पूर्ण
-		scnम_लिखो(buf, buflen,
+		}
+		scnprintf(buf, buflen,
 			  "No vmlinux file%s\nwas found in the path.\n\n"
 			  "Note that annotation using /proc/kcore requires CAP_SYS_RAWIO capability.\n\n"
 			  "Please use:\n\n"
 			  "  perf buildid-cache -vu vmlinux\n\n"
 			  "or:\n\n"
 			  "  --vmlinux vmlinux\n", build_id_msg ?: "");
-	पूर्ण
-		अवरोध;
-	हाल SYMBOL_ANNOTATE_ERRNO__NO_LIBOPCODES_FOR_BPF:
-		scnम_लिखो(buf, buflen, "Please link with binutils's libopcode to enable BPF annotation");
-		अवरोध;
-	हाल SYMBOL_ANNOTATE_ERRNO__ARCH_INIT_REGEXP:
-		scnम_लिखो(buf, buflen, "Problems with arch specific instruction name regular expressions.");
-		अवरोध;
-	हाल SYMBOL_ANNOTATE_ERRNO__ARCH_INIT_CPUID_PARSING:
-		scnम_लिखो(buf, buflen, "Problems while parsing the CPUID in the arch specific initialization.");
-		अवरोध;
-	हाल SYMBOL_ANNOTATE_ERRNO__BPF_INVALID_खाता:
-		scnम_लिखो(buf, buflen, "Invalid BPF file: %s.", dso->दीर्घ_name);
-		अवरोध;
-	हाल SYMBOL_ANNOTATE_ERRNO__BPF_MISSING_BTF:
-		scnम_लिखो(buf, buflen, "The %s BPF file has no BTF section, compile with -g or use pahole -J.",
-			  dso->दीर्घ_name);
-		अवरोध;
-	शेष:
-		scnम_लिखो(buf, buflen, "Internal error: Invalid %d error code\n", errnum);
-		अवरोध;
-	पूर्ण
+	}
+		break;
+	case SYMBOL_ANNOTATE_ERRNO__NO_LIBOPCODES_FOR_BPF:
+		scnprintf(buf, buflen, "Please link with binutils's libopcode to enable BPF annotation");
+		break;
+	case SYMBOL_ANNOTATE_ERRNO__ARCH_INIT_REGEXP:
+		scnprintf(buf, buflen, "Problems with arch specific instruction name regular expressions.");
+		break;
+	case SYMBOL_ANNOTATE_ERRNO__ARCH_INIT_CPUID_PARSING:
+		scnprintf(buf, buflen, "Problems while parsing the CPUID in the arch specific initialization.");
+		break;
+	case SYMBOL_ANNOTATE_ERRNO__BPF_INVALID_FILE:
+		scnprintf(buf, buflen, "Invalid BPF file: %s.", dso->long_name);
+		break;
+	case SYMBOL_ANNOTATE_ERRNO__BPF_MISSING_BTF:
+		scnprintf(buf, buflen, "The %s BPF file has no BTF section, compile with -g or use pahole -J.",
+			  dso->long_name);
+		break;
+	default:
+		scnprintf(buf, buflen, "Internal error: Invalid %d error code\n", errnum);
+		break;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक dso__disassemble_filename(काष्ठा dso *dso, अक्षर *filename, माप_प्रकार filename_size)
-अणु
-	अक्षर linkname[PATH_MAX];
-	अक्षर *build_id_filename;
-	अक्षर *build_id_path = शून्य;
-	अक्षर *pos;
-	पूर्णांक len;
+static int dso__disassemble_filename(struct dso *dso, char *filename, size_t filename_size)
+{
+	char linkname[PATH_MAX];
+	char *build_id_filename;
+	char *build_id_path = NULL;
+	char *pos;
+	int len;
 
-	अगर (dso->symtab_type == DSO_BINARY_TYPE__KALLSYMS &&
+	if (dso->symtab_type == DSO_BINARY_TYPE__KALLSYMS &&
 	    !dso__is_kcore(dso))
-		वापस SYMBOL_ANNOTATE_ERRNO__NO_VMLINUX;
+		return SYMBOL_ANNOTATE_ERRNO__NO_VMLINUX;
 
-	build_id_filename = dso__build_id_filename(dso, शून्य, 0, false);
-	अगर (build_id_filename) अणु
+	build_id_filename = dso__build_id_filename(dso, NULL, 0, false);
+	if (build_id_filename) {
 		__symbol__join_symfs(filename, filename_size, build_id_filename);
-		मुक्त(build_id_filename);
-	पूर्ण अन्यथा अणु
-		अगर (dso->has_build_id)
-			वापस ENOMEM;
-		जाओ fallback;
-	पूर्ण
+		free(build_id_filename);
+	} else {
+		if (dso->has_build_id)
+			return ENOMEM;
+		goto fallback;
+	}
 
 	build_id_path = strdup(filename);
-	अगर (!build_id_path)
-		वापस ENOMEM;
+	if (!build_id_path)
+		return ENOMEM;
 
 	/*
-	 * old style build-id cache has name of XX/XXXXXXX.. जबतक
-	 * new style has XX/XXXXXXX../अणुelf,kallsyms,vdsoपूर्ण.
-	 * extract the build-id part of स_नाम in the new style only.
+	 * old style build-id cache has name of XX/XXXXXXX.. while
+	 * new style has XX/XXXXXXX../{elf,kallsyms,vdso}.
+	 * extract the build-id part of dirname in the new style only.
 	 */
-	pos = म_खोजप(build_id_path, '/');
-	अगर (pos && म_माप(pos) < SBUILD_ID_SIZE - 2)
-		स_नाम(build_id_path);
+	pos = strrchr(build_id_path, '/');
+	if (pos && strlen(pos) < SBUILD_ID_SIZE - 2)
+		dirname(build_id_path);
 
-	अगर (dso__is_kcore(dso))
-		जाओ fallback;
+	if (dso__is_kcore(dso))
+		goto fallback;
 
-	len = पढ़ोlink(build_id_path, linkname, माप(linkname) - 1);
-	अगर (len < 0)
-		जाओ fallback;
+	len = readlink(build_id_path, linkname, sizeof(linkname) - 1);
+	if (len < 0)
+		goto fallback;
 
 	linkname[len] = '\0';
-	अगर (म_माला(linkname, DSO__NAME_KALLSYMS) ||
-		access(filename, R_OK)) अणु
+	if (strstr(linkname, DSO__NAME_KALLSYMS) ||
+		access(filename, R_OK)) {
 fallback:
 		/*
-		 * If we करोn't have build-ids or the build-id file isn't in the
+		 * If we don't have build-ids or the build-id file isn't in the
 		 * cache, or is just a kallsyms file, well, lets hope that this
 		 * DSO is the same as when 'perf record' ran.
 		 */
-		__symbol__join_symfs(filename, filename_size, dso->दीर्घ_name);
-	पूर्ण
+		__symbol__join_symfs(filename, filename_size, dso->long_name);
+	}
 
-	मुक्त(build_id_path);
-	वापस 0;
-पूर्ण
+	free(build_id_path);
+	return 0;
+}
 
-#अगर defined(HAVE_LIBBFD_SUPPORT) && defined(HAVE_LIBBPF_SUPPORT)
-#घोषणा PACKAGE "perf"
-#समावेश <bfd.h>
-#समावेश <dis-यंत्र.h>
-#समावेश <bpf/bpf.h>
-#समावेश <bpf/btf.h>
-#समावेश <bpf/libbpf.h>
-#समावेश <linux/btf.h>
+#if defined(HAVE_LIBBFD_SUPPORT) && defined(HAVE_LIBBPF_SUPPORT)
+#define PACKAGE "perf"
+#include <bfd.h>
+#include <dis-asm.h>
+#include <bpf/bpf.h>
+#include <bpf/btf.h>
+#include <bpf/libbpf.h>
+#include <linux/btf.h>
 
-अटल पूर्णांक symbol__disassemble_bpf(काष्ठा symbol *sym,
-				   काष्ठा annotate_args *args)
-अणु
-	काष्ठा annotation *notes = symbol__annotation(sym);
-	काष्ठा annotation_options *opts = args->options;
-	काष्ठा bpf_prog_info_linear *info_linear;
-	काष्ठा bpf_prog_linfo *prog_linfo = शून्य;
-	काष्ठा bpf_prog_info_node *info_node;
-	पूर्णांक len = sym->end - sym->start;
+static int symbol__disassemble_bpf(struct symbol *sym,
+				   struct annotate_args *args)
+{
+	struct annotation *notes = symbol__annotation(sym);
+	struct annotation_options *opts = args->options;
+	struct bpf_prog_info_linear *info_linear;
+	struct bpf_prog_linfo *prog_linfo = NULL;
+	struct bpf_prog_info_node *info_node;
+	int len = sym->end - sym->start;
 	disassembler_ftype disassemble;
-	काष्ठा map *map = args->ms.map;
-	काष्ठा disassemble_info info;
-	काष्ठा dso *dso = map->dso;
-	पूर्णांक pc = 0, count, sub_id;
-	काष्ठा btf *btf = शून्य;
-	अक्षर tpath[PATH_MAX];
-	माप_प्रकार buf_size;
-	पूर्णांक nr_skip = 0;
-	अक्षर *buf;
+	struct map *map = args->ms.map;
+	struct disassemble_info info;
+	struct dso *dso = map->dso;
+	int pc = 0, count, sub_id;
+	struct btf *btf = NULL;
+	char tpath[PATH_MAX];
+	size_t buf_size;
+	int nr_skip = 0;
+	char *buf;
 	bfd *bfdf;
-	पूर्णांक ret;
-	खाता *s;
+	int ret;
+	FILE *s;
 
-	अगर (dso->binary_type != DSO_BINARY_TYPE__BPF_PROG_INFO)
-		वापस SYMBOL_ANNOTATE_ERRNO__BPF_INVALID_खाता;
+	if (dso->binary_type != DSO_BINARY_TYPE__BPF_PROG_INFO)
+		return SYMBOL_ANNOTATE_ERRNO__BPF_INVALID_FILE;
 
 	pr_debug("%s: handling sym %s addr %" PRIx64 " len %" PRIx64 "\n", __func__,
 		  sym->name, sym->start, sym->end - sym->start);
 
-	स_रखो(tpath, 0, माप(tpath));
-	perf_exe(tpath, माप(tpath));
+	memset(tpath, 0, sizeof(tpath));
+	perf_exe(tpath, sizeof(tpath));
 
-	bfdf = bfd_खोलोr(tpath, शून्य);
-	निश्चित(bfdf);
-	निश्चित(bfd_check_क्रमmat(bfdf, bfd_object));
+	bfdf = bfd_openr(tpath, NULL);
+	assert(bfdf);
+	assert(bfd_check_format(bfdf, bfd_object));
 
-	s = खोलो_memstream(&buf, &buf_size);
-	अगर (!s) अणु
-		ret = त्रुटि_सं;
-		जाओ out;
-	पूर्ण
+	s = open_memstream(&buf, &buf_size);
+	if (!s) {
+		ret = errno;
+		goto out;
+	}
 	init_disassemble_info(&info, s,
-			      (ख_लिखो_ftype) ख_लिखो);
+			      (fprintf_ftype) fprintf);
 
 	info.arch = bfd_get_arch(bfdf);
 	info.mach = bfd_get_mach(bfdf);
 
 	info_node = perf_env__find_bpf_prog_info(dso->bpf_prog.env,
 						 dso->bpf_prog.id);
-	अगर (!info_node) अणु
+	if (!info_node) {
 		ret = SYMBOL_ANNOTATE_ERRNO__BPF_MISSING_BTF;
-		जाओ out;
-	पूर्ण
+		goto out;
+	}
 	info_linear = info_node->info_linear;
 	sub_id = dso->bpf_prog.sub_id;
 
-	info.buffer = (व्योम *)(uपूर्णांकptr_t)(info_linear->info.jited_prog_insns);
+	info.buffer = (void *)(uintptr_t)(info_linear->info.jited_prog_insns);
 	info.buffer_length = info_linear->info.jited_prog_len;
 
-	अगर (info_linear->info.nr_line_info)
+	if (info_linear->info.nr_line_info)
 		prog_linfo = bpf_prog_linfo__new(&info_linear->info);
 
-	अगर (info_linear->info.btf_id) अणु
-		काष्ठा btf_node *node;
+	if (info_linear->info.btf_id) {
+		struct btf_node *node;
 
 		node = perf_env__find_btf(dso->bpf_prog.env,
 					  info_linear->info.btf_id);
-		अगर (node)
+		if (node)
 			btf = btf__new((__u8 *)(node->data),
 				       node->data_size);
-	पूर्ण
+	}
 
-	disassemble_init_क्रम_target(&info);
+	disassemble_init_for_target(&info);
 
-#अगर_घोषित DISASM_FOUR_ARGS_SIGNATURE
+#ifdef DISASM_FOUR_ARGS_SIGNATURE
 	disassemble = disassembler(info.arch,
 				   bfd_big_endian(bfdf),
 				   info.mach,
 				   bfdf);
-#अन्यथा
+#else
 	disassemble = disassembler(bfdf);
-#पूर्ण_अगर
-	निश्चित(disassemble);
+#endif
+	assert(disassemble);
 
-	ख_साफ(s);
-	करो अणु
-		स्थिर काष्ठा bpf_line_info *linfo = शून्य;
-		काष्ठा disयंत्र_line *dl;
-		माप_प्रकार prev_buf_size;
-		स्थिर अक्षर *srcline;
+	fflush(s);
+	do {
+		const struct bpf_line_info *linfo = NULL;
+		struct disasm_line *dl;
+		size_t prev_buf_size;
+		const char *srcline;
 		u64 addr;
 
-		addr = pc + ((u64 *)(uपूर्णांकptr_t)(info_linear->info.jited_ksyms))[sub_id];
+		addr = pc + ((u64 *)(uintptr_t)(info_linear->info.jited_ksyms))[sub_id];
 		count = disassemble(pc, &info);
 
-		अगर (prog_linfo)
+		if (prog_linfo)
 			linfo = bpf_prog_linfo__lfind_addr_func(prog_linfo,
 								addr, sub_id,
 								nr_skip);
 
-		अगर (linfo && btf) अणु
+		if (linfo && btf) {
 			srcline = btf__name_by_offset(btf, linfo->line_off);
 			nr_skip++;
-		पूर्ण अन्यथा
-			srcline = शून्य;
+		} else
+			srcline = NULL;
 
-		ख_लिखो(s, "\n");
+		fprintf(s, "\n");
 		prev_buf_size = buf_size;
-		ख_साफ(s);
+		fflush(s);
 
-		अगर (!opts->hide_src_code && srcline) अणु
+		if (!opts->hide_src_code && srcline) {
 			args->offset = -1;
 			args->line = strdup(srcline);
 			args->line_nr = 0;
-			args->fileloc = शून्य;
+			args->fileloc = NULL;
 			args->ms.sym  = sym;
-			dl = disयंत्र_line__new(args);
-			अगर (dl) अणु
+			dl = disasm_line__new(args);
+			if (dl) {
 				annotation_line__add(&dl->al,
 						     &notes->src->source);
-			पूर्ण
-		पूर्ण
+			}
+		}
 
 		args->offset = pc;
 		args->line = buf + prev_buf_size;
 		args->line_nr = 0;
-		args->fileloc = शून्य;
+		args->fileloc = NULL;
 		args->ms.sym  = sym;
-		dl = disयंत्र_line__new(args);
-		अगर (dl)
+		dl = disasm_line__new(args);
+		if (dl)
 			annotation_line__add(&dl->al, &notes->src->source);
 
 		pc += count;
-	पूर्ण जबतक (count > 0 && pc < len);
+	} while (count > 0 && pc < len);
 
 	ret = 0;
 out:
-	मुक्त(prog_linfo);
-	मुक्त(btf);
-	ख_बंद(s);
-	bfd_बंद(bfdf);
-	वापस ret;
-पूर्ण
-#अन्यथा // defined(HAVE_LIBBFD_SUPPORT) && defined(HAVE_LIBBPF_SUPPORT)
-अटल पूर्णांक symbol__disassemble_bpf(काष्ठा symbol *sym __maybe_unused,
-				   काष्ठा annotate_args *args __maybe_unused)
-अणु
-	वापस SYMBOL_ANNOTATE_ERRNO__NO_LIBOPCODES_FOR_BPF;
-पूर्ण
-#पूर्ण_अगर // defined(HAVE_LIBBFD_SUPPORT) && defined(HAVE_LIBBPF_SUPPORT)
+	free(prog_linfo);
+	free(btf);
+	fclose(s);
+	bfd_close(bfdf);
+	return ret;
+}
+#else // defined(HAVE_LIBBFD_SUPPORT) && defined(HAVE_LIBBPF_SUPPORT)
+static int symbol__disassemble_bpf(struct symbol *sym __maybe_unused,
+				   struct annotate_args *args __maybe_unused)
+{
+	return SYMBOL_ANNOTATE_ERRNO__NO_LIBOPCODES_FOR_BPF;
+}
+#endif // defined(HAVE_LIBBFD_SUPPORT) && defined(HAVE_LIBBPF_SUPPORT)
 
-अटल पूर्णांक
-symbol__disassemble_bpf_image(काष्ठा symbol *sym,
-			      काष्ठा annotate_args *args)
-अणु
-	काष्ठा annotation *notes = symbol__annotation(sym);
-	काष्ठा disयंत्र_line *dl;
+static int
+symbol__disassemble_bpf_image(struct symbol *sym,
+			      struct annotate_args *args)
+{
+	struct annotation *notes = symbol__annotation(sym);
+	struct disasm_line *dl;
 
 	args->offset = -1;
 	args->line = strdup("to be implemented");
 	args->line_nr = 0;
-	args->fileloc = शून्य;
-	dl = disयंत्र_line__new(args);
-	अगर (dl)
+	args->fileloc = NULL;
+	dl = disasm_line__new(args);
+	if (dl)
 		annotation_line__add(&dl->al, &notes->src->source);
 
-	मुक्त(args->line);
-	वापस 0;
-पूर्ण
+	free(args->line);
+	return 0;
+}
 
 /*
- * Possibly create a new version of line with tअसल expanded. Returns the
- * existing or new line, storage is updated अगर a new line is allocated. If
- * allocation fails then शून्य is वापसed.
+ * Possibly create a new version of line with tabs expanded. Returns the
+ * existing or new line, storage is updated if a new line is allocated. If
+ * allocation fails then NULL is returned.
  */
-अटल अक्षर *expand_tअसल(अक्षर *line, अक्षर **storage, माप_प्रकार *storage_len)
-अणु
-	माप_प्रकार i, src, dst, len, new_storage_len, num_tअसल;
-	अक्षर *new_line;
-	माप_प्रकार line_len = म_माप(line);
+static char *expand_tabs(char *line, char **storage, size_t *storage_len)
+{
+	size_t i, src, dst, len, new_storage_len, num_tabs;
+	char *new_line;
+	size_t line_len = strlen(line);
 
-	क्रम (num_tअसल = 0, i = 0; i < line_len; i++)
-		अगर (line[i] == '\t')
-			num_tअसल++;
+	for (num_tabs = 0, i = 0; i < line_len; i++)
+		if (line[i] == '\t')
+			num_tabs++;
 
-	अगर (num_tअसल == 0)
-		वापस line;
+	if (num_tabs == 0)
+		return line;
 
 	/*
-	 * Space क्रम the line and '\0', less the leading and trailing
-	 * spaces. Each tab may पूर्णांकroduce 7 additional spaces.
+	 * Space for the line and '\0', less the leading and trailing
+	 * spaces. Each tab may introduce 7 additional spaces.
 	 */
-	new_storage_len = line_len + 1 + (num_tअसल * 7);
+	new_storage_len = line_len + 1 + (num_tabs * 7);
 
-	new_line = दो_स्मृति(new_storage_len);
-	अगर (new_line == शून्य) अणु
+	new_line = malloc(new_storage_len);
+	if (new_line == NULL) {
 		pr_err("Failure allocating memory for tab expansion\n");
-		वापस शून्य;
-	पूर्ण
+		return NULL;
+	}
 
 	/*
-	 * Copy regions starting at src and expand tअसल. If there are two
-	 * adjacent tअसल then 'src == i', the स_नकल is of size 0 and the spaces
+	 * Copy regions starting at src and expand tabs. If there are two
+	 * adjacent tabs then 'src == i', the memcpy is of size 0 and the spaces
 	 * are inserted.
 	 */
-	क्रम (i = 0, src = 0, dst = 0; i < line_len && num_tअसल; i++) अणु
-		अगर (line[i] == '\t') अणु
+	for (i = 0, src = 0, dst = 0; i < line_len && num_tabs; i++) {
+		if (line[i] == '\t') {
 			len = i - src;
-			स_नकल(&new_line[dst], &line[src], len);
+			memcpy(&new_line[dst], &line[src], len);
 			dst += len;
 			new_line[dst++] = ' ';
-			जबतक (dst % 8 != 0)
+			while (dst % 8 != 0)
 				new_line[dst++] = ' ';
 			src = i + 1;
-			num_tअसल--;
-		पूर्ण
-	पूर्ण
+			num_tabs--;
+		}
+	}
 
 	/* Expand the last region. */
 	len = line_len - src;
-	स_नकल(&new_line[dst], &line[src], len);
+	memcpy(&new_line[dst], &line[src], len);
 	dst += len;
 	new_line[dst] = '\0';
 
-	मुक्त(*storage);
+	free(*storage);
 	*storage = new_line;
 	*storage_len = new_storage_len;
-	वापस new_line;
+	return new_line;
 
-पूर्ण
+}
 
-अटल पूर्णांक symbol__disassemble(काष्ठा symbol *sym, काष्ठा annotate_args *args)
-अणु
-	काष्ठा annotation_options *opts = args->options;
-	काष्ठा map *map = args->ms.map;
-	काष्ठा dso *dso = map->dso;
-	अक्षर *command;
-	खाता *file;
-	अक्षर symfs_filename[PATH_MAX];
-	काष्ठा kcore_extract kce;
+static int symbol__disassemble(struct symbol *sym, struct annotate_args *args)
+{
+	struct annotation_options *opts = args->options;
+	struct map *map = args->ms.map;
+	struct dso *dso = map->dso;
+	char *command;
+	FILE *file;
+	char symfs_filename[PATH_MAX];
+	struct kcore_extract kce;
 	bool delete_extract = false;
 	bool decomp = false;
-	पूर्णांक lineno = 0;
-	अक्षर *fileloc = शून्य;
-	पूर्णांक nline;
-	अक्षर *line;
-	माप_प्रकार line_len;
-	स्थिर अक्षर *objdump_argv[] = अणु
+	int lineno = 0;
+	char *fileloc = NULL;
+	int nline;
+	char *line;
+	size_t line_len;
+	const char *objdump_argv[] = {
 		"/bin/sh",
 		"-c",
-		शून्य, /* Will be the objdump command to run. */
+		NULL, /* Will be the objdump command to run. */
 		"--",
-		शून्य, /* Will be the symfs path. */
-		शून्य,
-	पूर्ण;
-	काष्ठा child_process objdump_process;
-	पूर्णांक err = dso__disassemble_filename(dso, symfs_filename, माप(symfs_filename));
+		NULL, /* Will be the symfs path. */
+		NULL,
+	};
+	struct child_process objdump_process;
+	int err = dso__disassemble_filename(dso, symfs_filename, sizeof(symfs_filename));
 
-	अगर (err)
-		वापस err;
+	if (err)
+		return err;
 
 	pr_debug("%s: filename=%s, sym=%s, start=%#" PRIx64 ", end=%#" PRIx64 "\n", __func__,
 		 symfs_filename, sym->name, map->unmap_ip(map, sym->start),
 		 map->unmap_ip(map, sym->end));
 
 	pr_debug("annotating [%p] %30s : [%p] %30s\n",
-		 dso, dso->दीर्घ_name, sym, sym->name);
+		 dso, dso->long_name, sym, sym->name);
 
-	अगर (dso->binary_type == DSO_BINARY_TYPE__BPF_PROG_INFO) अणु
-		वापस symbol__disassemble_bpf(sym, args);
-	पूर्ण अन्यथा अगर (dso->binary_type == DSO_BINARY_TYPE__BPF_IMAGE) अणु
-		वापस symbol__disassemble_bpf_image(sym, args);
-	पूर्ण अन्यथा अगर (dso__is_kcore(dso)) अणु
+	if (dso->binary_type == DSO_BINARY_TYPE__BPF_PROG_INFO) {
+		return symbol__disassemble_bpf(sym, args);
+	} else if (dso->binary_type == DSO_BINARY_TYPE__BPF_IMAGE) {
+		return symbol__disassemble_bpf_image(sym, args);
+	} else if (dso__is_kcore(dso)) {
 		kce.kcore_filename = symfs_filename;
 		kce.addr = map__rip_2objdump(map, sym->start);
 		kce.offs = sym->start;
 		kce.len = sym->end - sym->start;
-		अगर (!kcore_extract__create(&kce)) अणु
+		if (!kcore_extract__create(&kce)) {
 			delete_extract = true;
 			strlcpy(symfs_filename, kce.extract_filename,
-				माप(symfs_filename));
-		पूर्ण
-	पूर्ण अन्यथा अगर (dso__needs_decompress(dso)) अणु
-		अक्षर पंचांगp[KMOD_DECOMP_LEN];
+				sizeof(symfs_filename));
+		}
+	} else if (dso__needs_decompress(dso)) {
+		char tmp[KMOD_DECOMP_LEN];
 
-		अगर (dso__decompress_kmodule_path(dso, symfs_filename,
-						 पंचांगp, माप(पंचांगp)) < 0)
-			वापस -1;
+		if (dso__decompress_kmodule_path(dso, symfs_filename,
+						 tmp, sizeof(tmp)) < 0)
+			return -1;
 
 		decomp = true;
-		म_नकल(symfs_filename, पंचांगp);
-	पूर्ण
+		strcpy(symfs_filename, tmp);
+	}
 
-	err = aप्र_लिखो(&command,
+	err = asprintf(&command,
 		 "%s %s%s --start-address=0x%016" PRIx64
 		 " --stop-address=0x%016" PRIx64
 		 " -l -d %s %s %s %c%s%c %s%s -C \"$1\"",
@@ -1998,7 +1997,7 @@ symbol__disassemble_bpf_image(काष्ठा symbol *sym,
 		 opts->disassembler_style ?: "",
 		 map__rip_2objdump(map, sym->start),
 		 map__rip_2objdump(map, sym->end),
-		 opts->show_यंत्र_raw ? "" : "--no-show-raw-insn",
+		 opts->show_asm_raw ? "" : "--no-show-raw-insn",
 		 opts->annotate_src ? "-S" : "",
 		 opts->prefix ? "--prefix " : "",
 		 opts->prefix ? '"' : ' ',
@@ -2007,156 +2006,156 @@ symbol__disassemble_bpf_image(काष्ठा symbol *sym,
 		 opts->prefix_strip ? "--prefix-strip=" : "",
 		 opts->prefix_strip ?: "");
 
-	अगर (err < 0) अणु
+	if (err < 0) {
 		pr_err("Failure allocating memory for the command to run\n");
-		जाओ out_हटाओ_पंचांगp;
-	पूर्ण
+		goto out_remove_tmp;
+	}
 
 	pr_debug("Executing: %s\n", command);
 
 	objdump_argv[2] = command;
 	objdump_argv[4] = symfs_filename;
 
-	/* Create a pipe to पढ़ो from क्रम मानक_निकास */
-	स_रखो(&objdump_process, 0, माप(objdump_process));
+	/* Create a pipe to read from for stdout */
+	memset(&objdump_process, 0, sizeof(objdump_process));
 	objdump_process.argv = objdump_argv;
 	objdump_process.out = -1;
-	अगर (start_command(&objdump_process)) अणु
+	if (start_command(&objdump_process)) {
 		pr_err("Failure starting to run %s\n", command);
 		err = -1;
-		जाओ out_मुक्त_command;
-	पूर्ण
+		goto out_free_command;
+	}
 
-	file = fकरोpen(objdump_process.out, "r");
-	अगर (!file) अणु
+	file = fdopen(objdump_process.out, "r");
+	if (!file) {
 		pr_err("Failure creating FILE stream for %s\n", command);
 		/*
 		 * If we were using debug info should retry with
 		 * original binary.
 		 */
 		err = -1;
-		जाओ out_बंद_मानक_निकास;
-	पूर्ण
+		goto out_close_stdout;
+	}
 
-	/* Storage क्रम getline. */
-	line = शून्य;
+	/* Storage for getline. */
+	line = NULL;
 	line_len = 0;
 
 	nline = 0;
-	जबतक (!ख_पूर्ण(file)) अणु
-		स्थिर अक्षर *match;
-		अक्षर *expanded_line;
+	while (!feof(file)) {
+		const char *match;
+		char *expanded_line;
 
-		अगर (getline(&line, &line_len, file) < 0 || !line)
-			अवरोध;
+		if (getline(&line, &line_len, file) < 0 || !line)
+			break;
 
 		/* Skip lines containing "filename:" */
-		match = म_माला(line, symfs_filename);
-		अगर (match && match[म_माप(symfs_filename)] == ':')
-			जारी;
+		match = strstr(line, symfs_filename);
+		if (match && match[strlen(symfs_filename)] == ':')
+			continue;
 
 		expanded_line = strim(line);
-		expanded_line = expand_tअसल(expanded_line, &line, &line_len);
-		अगर (!expanded_line)
-			अवरोध;
+		expanded_line = expand_tabs(expanded_line, &line, &line_len);
+		if (!expanded_line)
+			break;
 
 		/*
 		 * The source code line number (lineno) needs to be kept in
 		 * across calls to symbol__parse_objdump_line(), so that it
-		 * can associate it with the inकाष्ठाions till the next one.
-		 * See disयंत्र_line__new() and काष्ठा disयंत्र_line::line_nr.
+		 * can associate it with the instructions till the next one.
+		 * See disasm_line__new() and struct disasm_line::line_nr.
 		 */
-		अगर (symbol__parse_objdump_line(sym, args, expanded_line,
+		if (symbol__parse_objdump_line(sym, args, expanded_line,
 					       &lineno, &fileloc) < 0)
-			अवरोध;
+			break;
 		nline++;
-	पूर्ण
-	मुक्त(line);
+	}
+	free(line);
 
 	err = finish_command(&objdump_process);
-	अगर (err)
+	if (err)
 		pr_err("Error running %s\n", command);
 
-	अगर (nline == 0) अणु
+	if (nline == 0) {
 		err = -1;
 		pr_err("No output from %s\n", command);
-	पूर्ण
+	}
 
 	/*
-	 * kallsyms करोes not have symbol sizes so there may a nop at the end.
+	 * kallsyms does not have symbol sizes so there may a nop at the end.
 	 * Remove it.
 	 */
-	अगर (dso__is_kcore(dso))
+	if (dso__is_kcore(dso))
 		delete_last_nop(sym);
 
-	ख_बंद(file);
+	fclose(file);
 
-out_बंद_मानक_निकास:
-	बंद(objdump_process.out);
+out_close_stdout:
+	close(objdump_process.out);
 
-out_मुक्त_command:
-	मुक्त(command);
+out_free_command:
+	free(command);
 
-out_हटाओ_पंचांगp:
-	अगर (decomp)
+out_remove_tmp:
+	if (decomp)
 		unlink(symfs_filename);
 
-	अगर (delete_extract)
+	if (delete_extract)
 		kcore_extract__delete(&kce);
 
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल व्योम calc_percent(काष्ठा sym_hist *sym_hist,
-			 काष्ठा hists *hists,
-			 काष्ठा annotation_data *data,
+static void calc_percent(struct sym_hist *sym_hist,
+			 struct hists *hists,
+			 struct annotation_data *data,
 			 s64 offset, s64 end)
-अणु
-	अचिन्हित पूर्णांक hits = 0;
+{
+	unsigned int hits = 0;
 	u64 period = 0;
 
-	जबतक (offset < end) अणु
+	while (offset < end) {
 		hits   += sym_hist->addr[offset].nr_samples;
 		period += sym_hist->addr[offset].period;
 		++offset;
-	पूर्ण
+	}
 
-	अगर (sym_hist->nr_samples) अणु
+	if (sym_hist->nr_samples) {
 		data->he.period     = period;
 		data->he.nr_samples = hits;
 		data->percent[PERCENT_HITS_LOCAL] = 100.0 * hits / sym_hist->nr_samples;
-	पूर्ण
+	}
 
-	अगर (hists->stats.nr_non_filtered_samples)
+	if (hists->stats.nr_non_filtered_samples)
 		data->percent[PERCENT_HITS_GLOBAL] = 100.0 * hits / hists->stats.nr_non_filtered_samples;
 
-	अगर (sym_hist->period)
+	if (sym_hist->period)
 		data->percent[PERCENT_PERIOD_LOCAL] = 100.0 * period / sym_hist->period;
 
-	अगर (hists->stats.total_period)
+	if (hists->stats.total_period)
 		data->percent[PERCENT_PERIOD_GLOBAL] = 100.0 * period / hists->stats.total_period;
-पूर्ण
+}
 
-अटल व्योम annotation__calc_percent(काष्ठा annotation *notes,
-				     काष्ठा evsel *leader, s64 len)
-अणु
-	काष्ठा annotation_line *al, *next;
-	काष्ठा evsel *evsel;
+static void annotation__calc_percent(struct annotation *notes,
+				     struct evsel *leader, s64 len)
+{
+	struct annotation_line *al, *next;
+	struct evsel *evsel;
 
-	list_क्रम_each_entry(al, &notes->src->source, node) अणु
+	list_for_each_entry(al, &notes->src->source, node) {
 		s64 end;
-		पूर्णांक i = 0;
+		int i = 0;
 
-		अगर (al->offset == -1)
-			जारी;
+		if (al->offset == -1)
+			continue;
 
 		next = annotation_line__next(al, &notes->src->source);
 		end  = next ? next->offset : len;
 
-		क्रम_each_group_evsel(evsel, leader) अणु
-			काष्ठा hists *hists = evsel__hists(evsel);
-			काष्ठा annotation_data *data;
-			काष्ठा sym_hist *sym_hist;
+		for_each_group_evsel(evsel, leader) {
+			struct hists *hists = evsel__hists(evsel);
+			struct annotation_data *data;
+			struct sym_hist *sym_hist;
 
 			BUG_ON(i >= al->data_nr);
 
@@ -2164,947 +2163,947 @@ out_हटाओ_पंचांगp:
 			data = &al->data[i++];
 
 			calc_percent(sym_hist, hists, data, al->offset, end);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-व्योम symbol__calc_percent(काष्ठा symbol *sym, काष्ठा evsel *evsel)
-अणु
-	काष्ठा annotation *notes = symbol__annotation(sym);
+void symbol__calc_percent(struct symbol *sym, struct evsel *evsel)
+{
+	struct annotation *notes = symbol__annotation(sym);
 
 	annotation__calc_percent(notes, evsel, symbol__size(sym));
-पूर्ण
+}
 
-पूर्णांक symbol__annotate(काष्ठा map_symbol *ms, काष्ठा evsel *evsel,
-		     काष्ठा annotation_options *options, काष्ठा arch **parch)
-अणु
-	काष्ठा symbol *sym = ms->sym;
-	काष्ठा annotation *notes = symbol__annotation(sym);
-	काष्ठा annotate_args args = अणु
+int symbol__annotate(struct map_symbol *ms, struct evsel *evsel,
+		     struct annotation_options *options, struct arch **parch)
+{
+	struct symbol *sym = ms->sym;
+	struct annotation *notes = symbol__annotation(sym);
+	struct annotate_args args = {
 		.evsel		= evsel,
 		.options	= options,
-	पूर्ण;
-	काष्ठा perf_env *env = evsel__env(evsel);
-	स्थिर अक्षर *arch_name = perf_env__arch(env);
-	काष्ठा arch *arch;
-	पूर्णांक err;
+	};
+	struct perf_env *env = evsel__env(evsel);
+	const char *arch_name = perf_env__arch(env);
+	struct arch *arch;
+	int err;
 
-	अगर (!arch_name)
-		वापस त्रुटि_सं;
+	if (!arch_name)
+		return errno;
 
 	args.arch = arch = arch__find(arch_name);
-	अगर (arch == शून्य)
-		वापस ENOTSUP;
+	if (arch == NULL)
+		return ENOTSUP;
 
-	अगर (parch)
+	if (parch)
 		*parch = arch;
 
-	अगर (arch->init) अणु
-		err = arch->init(arch, env ? env->cpuid : शून्य);
-		अगर (err) अणु
+	if (arch->init) {
+		err = arch->init(arch, env ? env->cpuid : NULL);
+		if (err) {
 			pr_err("%s: failed to initialize %s arch priv area\n", __func__, arch->name);
-			वापस err;
-		पूर्ण
-	पूर्ण
+			return err;
+		}
+	}
 
 	args.ms = *ms;
 	notes->start = map__rip_2objdump(ms->map, sym->start);
 
-	वापस symbol__disassemble(sym, &args);
-पूर्ण
+	return symbol__disassemble(sym, &args);
+}
 
-अटल व्योम insert_source_line(काष्ठा rb_root *root, काष्ठा annotation_line *al,
-			       काष्ठा annotation_options *opts)
-अणु
-	काष्ठा annotation_line *iter;
-	काष्ठा rb_node **p = &root->rb_node;
-	काष्ठा rb_node *parent = शून्य;
-	पूर्णांक i, ret;
+static void insert_source_line(struct rb_root *root, struct annotation_line *al,
+			       struct annotation_options *opts)
+{
+	struct annotation_line *iter;
+	struct rb_node **p = &root->rb_node;
+	struct rb_node *parent = NULL;
+	int i, ret;
 
-	जबतक (*p != शून्य) अणु
+	while (*p != NULL) {
 		parent = *p;
-		iter = rb_entry(parent, काष्ठा annotation_line, rb_node);
+		iter = rb_entry(parent, struct annotation_line, rb_node);
 
-		ret = म_भेद(iter->path, al->path);
-		अगर (ret == 0) अणु
-			क्रम (i = 0; i < al->data_nr; i++) अणु
+		ret = strcmp(iter->path, al->path);
+		if (ret == 0) {
+			for (i = 0; i < al->data_nr; i++) {
 				iter->data[i].percent_sum += annotation_data__percent(&al->data[i],
 										      opts->percent_type);
-			पूर्ण
-			वापस;
-		पूर्ण
+			}
+			return;
+		}
 
-		अगर (ret < 0)
+		if (ret < 0)
 			p = &(*p)->rb_left;
-		अन्यथा
+		else
 			p = &(*p)->rb_right;
-	पूर्ण
+	}
 
-	क्रम (i = 0; i < al->data_nr; i++) अणु
+	for (i = 0; i < al->data_nr; i++) {
 		al->data[i].percent_sum = annotation_data__percent(&al->data[i],
 								   opts->percent_type);
-	पूर्ण
+	}
 
 	rb_link_node(&al->rb_node, parent, p);
 	rb_insert_color(&al->rb_node, root);
-पूर्ण
+}
 
-अटल पूर्णांक cmp_source_line(काष्ठा annotation_line *a, काष्ठा annotation_line *b)
-अणु
-	पूर्णांक i;
+static int cmp_source_line(struct annotation_line *a, struct annotation_line *b)
+{
+	int i;
 
-	क्रम (i = 0; i < a->data_nr; i++) अणु
-		अगर (a->data[i].percent_sum == b->data[i].percent_sum)
-			जारी;
-		वापस a->data[i].percent_sum > b->data[i].percent_sum;
-	पूर्ण
+	for (i = 0; i < a->data_nr; i++) {
+		if (a->data[i].percent_sum == b->data[i].percent_sum)
+			continue;
+		return a->data[i].percent_sum > b->data[i].percent_sum;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल व्योम __resort_source_line(काष्ठा rb_root *root, काष्ठा annotation_line *al)
-अणु
-	काष्ठा annotation_line *iter;
-	काष्ठा rb_node **p = &root->rb_node;
-	काष्ठा rb_node *parent = शून्य;
+static void __resort_source_line(struct rb_root *root, struct annotation_line *al)
+{
+	struct annotation_line *iter;
+	struct rb_node **p = &root->rb_node;
+	struct rb_node *parent = NULL;
 
-	जबतक (*p != शून्य) अणु
+	while (*p != NULL) {
 		parent = *p;
-		iter = rb_entry(parent, काष्ठा annotation_line, rb_node);
+		iter = rb_entry(parent, struct annotation_line, rb_node);
 
-		अगर (cmp_source_line(al, iter))
+		if (cmp_source_line(al, iter))
 			p = &(*p)->rb_left;
-		अन्यथा
+		else
 			p = &(*p)->rb_right;
-	पूर्ण
+	}
 
 	rb_link_node(&al->rb_node, parent, p);
 	rb_insert_color(&al->rb_node, root);
-पूर्ण
+}
 
-अटल व्योम resort_source_line(काष्ठा rb_root *dest_root, काष्ठा rb_root *src_root)
-अणु
-	काष्ठा annotation_line *al;
-	काष्ठा rb_node *node;
+static void resort_source_line(struct rb_root *dest_root, struct rb_root *src_root)
+{
+	struct annotation_line *al;
+	struct rb_node *node;
 
 	node = rb_first(src_root);
-	जबतक (node) अणु
-		काष्ठा rb_node *next;
+	while (node) {
+		struct rb_node *next;
 
-		al = rb_entry(node, काष्ठा annotation_line, rb_node);
+		al = rb_entry(node, struct annotation_line, rb_node);
 		next = rb_next(node);
 		rb_erase(node, src_root);
 
 		__resort_source_line(dest_root, al);
 		node = next;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम prपूर्णांक_summary(काष्ठा rb_root *root, स्थिर अक्षर *filename)
-अणु
-	काष्ठा annotation_line *al;
-	काष्ठा rb_node *node;
+static void print_summary(struct rb_root *root, const char *filename)
+{
+	struct annotation_line *al;
+	struct rb_node *node;
 
-	म_लिखो("\nSorted summary for file %s\n", filename);
-	म_लिखो("----------------------------------------------\n\n");
+	printf("\nSorted summary for file %s\n", filename);
+	printf("----------------------------------------------\n\n");
 
-	अगर (RB_EMPTY_ROOT(root)) अणु
-		म_लिखो(" Nothing higher than %1.1f%%\n", MIN_GREEN);
-		वापस;
-	पूर्ण
+	if (RB_EMPTY_ROOT(root)) {
+		printf(" Nothing higher than %1.1f%%\n", MIN_GREEN);
+		return;
+	}
 
 	node = rb_first(root);
-	जबतक (node) अणु
-		द्विगुन percent, percent_max = 0.0;
-		स्थिर अक्षर *color;
-		अक्षर *path;
-		पूर्णांक i;
+	while (node) {
+		double percent, percent_max = 0.0;
+		const char *color;
+		char *path;
+		int i;
 
-		al = rb_entry(node, काष्ठा annotation_line, rb_node);
-		क्रम (i = 0; i < al->data_nr; i++) अणु
+		al = rb_entry(node, struct annotation_line, rb_node);
+		for (i = 0; i < al->data_nr; i++) {
 			percent = al->data[i].percent_sum;
 			color = get_percent_color(percent);
-			color_ख_लिखो(मानक_निकास, color, " %7.2f", percent);
+			color_fprintf(stdout, color, " %7.2f", percent);
 
-			अगर (percent > percent_max)
+			if (percent > percent_max)
 				percent_max = percent;
-		पूर्ण
+		}
 
 		path = al->path;
 		color = get_percent_color(percent_max);
-		color_ख_लिखो(मानक_निकास, color, " %s\n", path);
+		color_fprintf(stdout, color, " %s\n", path);
 
 		node = rb_next(node);
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम symbol__annotate_hits(काष्ठा symbol *sym, काष्ठा evsel *evsel)
-अणु
-	काष्ठा annotation *notes = symbol__annotation(sym);
-	काष्ठा sym_hist *h = annotation__histogram(notes, evsel->idx);
+static void symbol__annotate_hits(struct symbol *sym, struct evsel *evsel)
+{
+	struct annotation *notes = symbol__annotation(sym);
+	struct sym_hist *h = annotation__histogram(notes, evsel->idx);
 	u64 len = symbol__size(sym), offset;
 
-	क्रम (offset = 0; offset < len; ++offset)
-		अगर (h->addr[offset].nr_samples != 0)
-			म_लिखो("%*" PRIx64 ": %" PRIu64 "\n", BITS_PER_LONG / 2,
+	for (offset = 0; offset < len; ++offset)
+		if (h->addr[offset].nr_samples != 0)
+			printf("%*" PRIx64 ": %" PRIu64 "\n", BITS_PER_LONG / 2,
 			       sym->start + offset, h->addr[offset].nr_samples);
-	म_लिखो("%*s: %" PRIu64 "\n", BITS_PER_LONG / 2, "h->nr_samples", h->nr_samples);
-पूर्ण
+	printf("%*s: %" PRIu64 "\n", BITS_PER_LONG / 2, "h->nr_samples", h->nr_samples);
+}
 
-अटल पूर्णांक annotated_source__addr_fmt_width(काष्ठा list_head *lines, u64 start)
-अणु
-	अक्षर bf[32];
-	काष्ठा annotation_line *line;
+static int annotated_source__addr_fmt_width(struct list_head *lines, u64 start)
+{
+	char bf[32];
+	struct annotation_line *line;
 
-	list_क्रम_each_entry_reverse(line, lines, node) अणु
-		अगर (line->offset != -1)
-			वापस scnम_लिखो(bf, माप(bf), "%" PRIx64, start + line->offset);
-	पूर्ण
+	list_for_each_entry_reverse(line, lines, node) {
+		if (line->offset != -1)
+			return scnprintf(bf, sizeof(bf), "%" PRIx64, start + line->offset);
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक symbol__annotate_म_लिखो(काष्ठा map_symbol *ms, काष्ठा evsel *evsel,
-			    काष्ठा annotation_options *opts)
-अणु
-	काष्ठा map *map = ms->map;
-	काष्ठा symbol *sym = ms->sym;
-	काष्ठा dso *dso = map->dso;
-	अक्षर *filename;
-	स्थिर अक्षर *d_filename;
-	स्थिर अक्षर *evsel_name = evsel__name(evsel);
-	काष्ठा annotation *notes = symbol__annotation(sym);
-	काष्ठा sym_hist *h = annotation__histogram(notes, evsel->idx);
-	काष्ठा annotation_line *pos, *queue = शून्य;
+int symbol__annotate_printf(struct map_symbol *ms, struct evsel *evsel,
+			    struct annotation_options *opts)
+{
+	struct map *map = ms->map;
+	struct symbol *sym = ms->sym;
+	struct dso *dso = map->dso;
+	char *filename;
+	const char *d_filename;
+	const char *evsel_name = evsel__name(evsel);
+	struct annotation *notes = symbol__annotation(sym);
+	struct sym_hist *h = annotation__histogram(notes, evsel->idx);
+	struct annotation_line *pos, *queue = NULL;
 	u64 start = map__rip_2objdump(map, sym->start);
-	पूर्णांक prपूर्णांकed = 2, queue_len = 0, addr_fmt_width;
-	पूर्णांक more = 0;
+	int printed = 2, queue_len = 0, addr_fmt_width;
+	int more = 0;
 	bool context = opts->context;
 	u64 len;
-	पूर्णांक width = symbol_conf.show_total_period ? 12 : 8;
-	पूर्णांक graph_करोtted_len;
-	अक्षर buf[512];
+	int width = symbol_conf.show_total_period ? 12 : 8;
+	int graph_dotted_len;
+	char buf[512];
 
-	filename = strdup(dso->दीर्घ_name);
-	अगर (!filename)
-		वापस -ENOMEM;
+	filename = strdup(dso->long_name);
+	if (!filename)
+		return -ENOMEM;
 
-	अगर (opts->full_path)
+	if (opts->full_path)
 		d_filename = filename;
-	अन्यथा
+	else
 		d_filename = basename(filename);
 
 	len = symbol__size(sym);
 
-	अगर (evsel__is_group_event(evsel)) अणु
+	if (evsel__is_group_event(evsel)) {
 		width *= evsel->core.nr_members;
-		evsel__group_desc(evsel, buf, माप(buf));
+		evsel__group_desc(evsel, buf, sizeof(buf));
 		evsel_name = buf;
-	पूर्ण
+	}
 
-	graph_करोtted_len = म_लिखो(" %-*.*s|	Source code & Disassembly of %s for %s (%" PRIu64 " samples, "
+	graph_dotted_len = printf(" %-*.*s|	Source code & Disassembly of %s for %s (%" PRIu64 " samples, "
 				  "percent: %s)\n",
 				  width, width, symbol_conf.show_total_period ? "Period" :
 				  symbol_conf.show_nr_samples ? "Samples" : "Percent",
 				  d_filename, evsel_name, h->nr_samples,
 				  percent_type_str(opts->percent_type));
 
-	म_लिखो("%-*.*s----\n",
-	       graph_करोtted_len, graph_करोtted_len, graph_करोtted_line);
+	printf("%-*.*s----\n",
+	       graph_dotted_len, graph_dotted_len, graph_dotted_line);
 
-	अगर (verbose > 0)
+	if (verbose > 0)
 		symbol__annotate_hits(sym, evsel);
 
 	addr_fmt_width = annotated_source__addr_fmt_width(&notes->src->source, start);
 
-	list_क्रम_each_entry(pos, &notes->src->source, node) अणु
-		पूर्णांक err;
+	list_for_each_entry(pos, &notes->src->source, node) {
+		int err;
 
-		अगर (context && queue == शून्य) अणु
+		if (context && queue == NULL) {
 			queue = pos;
 			queue_len = 0;
-		पूर्ण
+		}
 
-		err = annotation_line__prपूर्णांक(pos, sym, start, evsel, len,
-					     opts->min_pcnt, prपूर्णांकed, opts->max_lines,
+		err = annotation_line__print(pos, sym, start, evsel, len,
+					     opts->min_pcnt, printed, opts->max_lines,
 					     queue, addr_fmt_width, opts->percent_type);
 
-		चयन (err) अणु
-		हाल 0:
-			++prपूर्णांकed;
-			अगर (context) अणु
-				prपूर्णांकed += queue_len;
-				queue = शून्य;
+		switch (err) {
+		case 0:
+			++printed;
+			if (context) {
+				printed += queue_len;
+				queue = NULL;
 				queue_len = 0;
-			पूर्ण
-			अवरोध;
-		हाल 1:
+			}
+			break;
+		case 1:
 			/* filtered by max_lines */
 			++more;
-			अवरोध;
-		हाल -1:
-		शेष:
+			break;
+		case -1:
+		default:
 			/*
 			 * Filtered by min_pcnt or non IP lines when
 			 * context != 0
 			 */
-			अगर (!context)
-				अवरोध;
-			अगर (queue_len == context)
+			if (!context)
+				break;
+			if (queue_len == context)
 				queue = list_entry(queue->node.next, typeof(*queue), node);
-			अन्यथा
+			else
 				++queue_len;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
-	मुक्त(filename);
+	free(filename);
 
-	वापस more;
-पूर्ण
+	return more;
+}
 
-अटल व्योम खाता__set_percent_color(व्योम *fp __maybe_unused,
-				    द्विगुन percent __maybe_unused,
+static void FILE__set_percent_color(void *fp __maybe_unused,
+				    double percent __maybe_unused,
 				    bool current __maybe_unused)
-अणु
-पूर्ण
+{
+}
 
-अटल पूर्णांक खाता__set_jumps_percent_color(व्योम *fp __maybe_unused,
-					 पूर्णांक nr __maybe_unused, bool current __maybe_unused)
-अणु
-	वापस 0;
-पूर्ण
+static int FILE__set_jumps_percent_color(void *fp __maybe_unused,
+					 int nr __maybe_unused, bool current __maybe_unused)
+{
+	return 0;
+}
 
-अटल पूर्णांक खाता__set_color(व्योम *fp __maybe_unused, पूर्णांक color __maybe_unused)
-अणु
-	वापस 0;
-पूर्ण
+static int FILE__set_color(void *fp __maybe_unused, int color __maybe_unused)
+{
+	return 0;
+}
 
-अटल व्योम खाता__म_लिखो(व्योम *fp, स्थिर अक्षर *fmt, ...)
-अणु
-	बहु_सूची args;
+static void FILE__printf(void *fp, const char *fmt, ...)
+{
+	va_list args;
 
-	बहु_शुरू(args, fmt);
-	भख_लिखो(fp, fmt, args);
-	बहु_पूर्ण(args);
-पूर्ण
+	va_start(args, fmt);
+	vfprintf(fp, fmt, args);
+	va_end(args);
+}
 
-अटल व्योम खाता__ग_लिखो_graph(व्योम *fp, पूर्णांक graph)
-अणु
-	स्थिर अक्षर *s;
-	चयन (graph) अणु
+static void FILE__write_graph(void *fp, int graph)
+{
+	const char *s;
+	switch (graph) {
 
-	हाल DARROW_CHAR: s = "ै"; अवरोध;
-	हाल UARROW_CHAR: s = "ै"; अवरोध;
-	हाल LARROW_CHAR: s = "ै"; अवरोध;
-	हाल RARROW_CHAR: s = "ै"; अवरोध;
-	शेष:		s = "?"; अवरोध;
-	पूर्ण
+	case DARROW_CHAR: s = "↓"; break;
+	case UARROW_CHAR: s = "↑"; break;
+	case LARROW_CHAR: s = "←"; break;
+	case RARROW_CHAR: s = "→"; break;
+	default:		s = "?"; break;
+	}
 
-	ख_माला_दो(s, fp);
-पूर्ण
+	fputs(s, fp);
+}
 
-अटल पूर्णांक symbol__annotate_ख_लिखो2(काष्ठा symbol *sym, खाता *fp,
-				     काष्ठा annotation_options *opts)
-अणु
-	काष्ठा annotation *notes = symbol__annotation(sym);
-	काष्ठा annotation_ग_लिखो_ops wops = अणु
+static int symbol__annotate_fprintf2(struct symbol *sym, FILE *fp,
+				     struct annotation_options *opts)
+{
+	struct annotation *notes = symbol__annotation(sym);
+	struct annotation_write_ops wops = {
 		.first_line		 = true,
 		.obj			 = fp,
-		.set_color		 = खाता__set_color,
-		.set_percent_color	 = खाता__set_percent_color,
-		.set_jumps_percent_color = खाता__set_jumps_percent_color,
-		.म_लिखो			 = खाता__म_लिखो,
-		.ग_लिखो_graph		 = खाता__ग_लिखो_graph,
-	पूर्ण;
-	काष्ठा annotation_line *al;
+		.set_color		 = FILE__set_color,
+		.set_percent_color	 = FILE__set_percent_color,
+		.set_jumps_percent_color = FILE__set_jumps_percent_color,
+		.printf			 = FILE__printf,
+		.write_graph		 = FILE__write_graph,
+	};
+	struct annotation_line *al;
 
-	list_क्रम_each_entry(al, &notes->src->source, node) अणु
-		अगर (annotation_line__filter(al, notes))
-			जारी;
-		annotation_line__ग_लिखो(al, notes, &wops, opts);
-		ख_अक्षर_दो('\n', fp);
+	list_for_each_entry(al, &notes->src->source, node) {
+		if (annotation_line__filter(al, notes))
+			continue;
+		annotation_line__write(al, notes, &wops, opts);
+		fputc('\n', fp);
 		wops.first_line = false;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक map_symbol__annotation_dump(काष्ठा map_symbol *ms, काष्ठा evsel *evsel,
-				काष्ठा annotation_options *opts)
-अणु
-	स्थिर अक्षर *ev_name = evsel__name(evsel);
-	अक्षर buf[1024];
-	अक्षर *filename;
-	पूर्णांक err = -1;
-	खाता *fp;
+int map_symbol__annotation_dump(struct map_symbol *ms, struct evsel *evsel,
+				struct annotation_options *opts)
+{
+	const char *ev_name = evsel__name(evsel);
+	char buf[1024];
+	char *filename;
+	int err = -1;
+	FILE *fp;
 
-	अगर (aप्र_लिखो(&filename, "%s.annotation", ms->sym->name) < 0)
-		वापस -1;
+	if (asprintf(&filename, "%s.annotation", ms->sym->name) < 0)
+		return -1;
 
-	fp = ख_खोलो(filename, "w");
-	अगर (fp == शून्य)
-		जाओ out_मुक्त_filename;
+	fp = fopen(filename, "w");
+	if (fp == NULL)
+		goto out_free_filename;
 
-	अगर (evsel__is_group_event(evsel)) अणु
-		evsel__group_desc(evsel, buf, माप(buf));
+	if (evsel__is_group_event(evsel)) {
+		evsel__group_desc(evsel, buf, sizeof(buf));
 		ev_name = buf;
-	पूर्ण
+	}
 
-	ख_लिखो(fp, "%s() %s\nEvent: %s\n\n",
-		ms->sym->name, ms->map->dso->दीर्घ_name, ev_name);
-	symbol__annotate_ख_लिखो2(ms->sym, fp, opts);
+	fprintf(fp, "%s() %s\nEvent: %s\n\n",
+		ms->sym->name, ms->map->dso->long_name, ev_name);
+	symbol__annotate_fprintf2(ms->sym, fp, opts);
 
-	ख_बंद(fp);
+	fclose(fp);
 	err = 0;
-out_मुक्त_filename:
-	मुक्त(filename);
-	वापस err;
-पूर्ण
+out_free_filename:
+	free(filename);
+	return err;
+}
 
-व्योम symbol__annotate_zero_histogram(काष्ठा symbol *sym, पूर्णांक evidx)
-अणु
-	काष्ठा annotation *notes = symbol__annotation(sym);
-	काष्ठा sym_hist *h = annotation__histogram(notes, evidx);
+void symbol__annotate_zero_histogram(struct symbol *sym, int evidx)
+{
+	struct annotation *notes = symbol__annotation(sym);
+	struct sym_hist *h = annotation__histogram(notes, evidx);
 
-	स_रखो(h, 0, notes->src->माप_sym_hist);
-पूर्ण
+	memset(h, 0, notes->src->sizeof_sym_hist);
+}
 
-व्योम symbol__annotate_decay_histogram(काष्ठा symbol *sym, पूर्णांक evidx)
-अणु
-	काष्ठा annotation *notes = symbol__annotation(sym);
-	काष्ठा sym_hist *h = annotation__histogram(notes, evidx);
-	पूर्णांक len = symbol__size(sym), offset;
+void symbol__annotate_decay_histogram(struct symbol *sym, int evidx)
+{
+	struct annotation *notes = symbol__annotation(sym);
+	struct sym_hist *h = annotation__histogram(notes, evidx);
+	int len = symbol__size(sym), offset;
 
 	h->nr_samples = 0;
-	क्रम (offset = 0; offset < len; ++offset) अणु
+	for (offset = 0; offset < len; ++offset) {
 		h->addr[offset].nr_samples = h->addr[offset].nr_samples * 7 / 8;
 		h->nr_samples += h->addr[offset].nr_samples;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम annotated_source__purge(काष्ठा annotated_source *as)
-अणु
-	काष्ठा annotation_line *al, *n;
+void annotated_source__purge(struct annotated_source *as)
+{
+	struct annotation_line *al, *n;
 
-	list_क्रम_each_entry_safe(al, n, &as->source, node) अणु
+	list_for_each_entry_safe(al, n, &as->source, node) {
 		list_del_init(&al->node);
-		disयंत्र_line__मुक्त(disयंत्र_line(al));
-	पूर्ण
-पूर्ण
+		disasm_line__free(disasm_line(al));
+	}
+}
 
-अटल माप_प्रकार disयंत्र_line__ख_लिखो(काष्ठा disयंत्र_line *dl, खाता *fp)
-अणु
-	माप_प्रकार prपूर्णांकed;
+static size_t disasm_line__fprintf(struct disasm_line *dl, FILE *fp)
+{
+	size_t printed;
 
-	अगर (dl->al.offset == -1)
-		वापस ख_लिखो(fp, "%s\n", dl->al.line);
+	if (dl->al.offset == -1)
+		return fprintf(fp, "%s\n", dl->al.line);
 
-	prपूर्णांकed = ख_लिखो(fp, "%#" PRIx64 " %s", dl->al.offset, dl->ins.name);
+	printed = fprintf(fp, "%#" PRIx64 " %s", dl->al.offset, dl->ins.name);
 
-	अगर (dl->ops.raw[0] != '\0') अणु
-		prपूर्णांकed += ख_लिखो(fp, "%.*s %s\n", 6 - (पूर्णांक)prपूर्णांकed, " ",
+	if (dl->ops.raw[0] != '\0') {
+		printed += fprintf(fp, "%.*s %s\n", 6 - (int)printed, " ",
 				   dl->ops.raw);
-	पूर्ण
+	}
 
-	वापस prपूर्णांकed + ख_लिखो(fp, "\n");
-पूर्ण
+	return printed + fprintf(fp, "\n");
+}
 
-माप_प्रकार disयंत्र__ख_लिखो(काष्ठा list_head *head, खाता *fp)
-अणु
-	काष्ठा disयंत्र_line *pos;
-	माप_प्रकार prपूर्णांकed = 0;
+size_t disasm__fprintf(struct list_head *head, FILE *fp)
+{
+	struct disasm_line *pos;
+	size_t printed = 0;
 
-	list_क्रम_each_entry(pos, head, al.node)
-		prपूर्णांकed += disयंत्र_line__ख_लिखो(pos, fp);
+	list_for_each_entry(pos, head, al.node)
+		printed += disasm_line__fprintf(pos, fp);
 
-	वापस prपूर्णांकed;
-पूर्ण
+	return printed;
+}
 
-bool disयंत्र_line__is_valid_local_jump(काष्ठा disयंत्र_line *dl, काष्ठा symbol *sym)
-अणु
-	अगर (!dl || !dl->ins.ops || !ins__is_jump(&dl->ins) ||
-	    !disयंत्र_line__has_local_offset(dl) || dl->ops.target.offset < 0 ||
+bool disasm_line__is_valid_local_jump(struct disasm_line *dl, struct symbol *sym)
+{
+	if (!dl || !dl->ins.ops || !ins__is_jump(&dl->ins) ||
+	    !disasm_line__has_local_offset(dl) || dl->ops.target.offset < 0 ||
 	    dl->ops.target.offset >= (s64)symbol__size(sym))
-		वापस false;
+		return false;
 
-	वापस true;
-पूर्ण
+	return true;
+}
 
-व्योम annotation__mark_jump_tarमाला_लो(काष्ठा annotation *notes, काष्ठा symbol *sym)
-अणु
+void annotation__mark_jump_targets(struct annotation *notes, struct symbol *sym)
+{
 	u64 offset, size = symbol__size(sym);
 
-	/* PLT symbols contain बाह्यal offsets */
-	अगर (म_माला(sym->name, "@plt"))
-		वापस;
+	/* PLT symbols contain external offsets */
+	if (strstr(sym->name, "@plt"))
+		return;
 
-	क्रम (offset = 0; offset < size; ++offset) अणु
-		काष्ठा annotation_line *al = notes->offsets[offset];
-		काष्ठा disयंत्र_line *dl;
+	for (offset = 0; offset < size; ++offset) {
+		struct annotation_line *al = notes->offsets[offset];
+		struct disasm_line *dl;
 
-		dl = disयंत्र_line(al);
+		dl = disasm_line(al);
 
-		अगर (!disयंत्र_line__is_valid_local_jump(dl, sym))
-			जारी;
+		if (!disasm_line__is_valid_local_jump(dl, sym))
+			continue;
 
 		al = notes->offsets[dl->ops.target.offset];
 
 		/*
-		 * FIXME: Oops, no jump target? Buggy disassembler? Or करो we
+		 * FIXME: Oops, no jump target? Buggy disassembler? Or do we
 		 * have to adjust to the previous offset?
 		 */
-		अगर (al == शून्य)
-			जारी;
+		if (al == NULL)
+			continue;
 
-		अगर (++al->jump_sources > notes->max_jump_sources)
+		if (++al->jump_sources > notes->max_jump_sources)
 			notes->max_jump_sources = al->jump_sources;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम annotation__set_offsets(काष्ठा annotation *notes, s64 size)
-अणु
-	काष्ठा annotation_line *al;
+void annotation__set_offsets(struct annotation *notes, s64 size)
+{
+	struct annotation_line *al;
 
 	notes->max_line_len = 0;
 	notes->nr_entries = 0;
-	notes->nr_यंत्र_entries = 0;
+	notes->nr_asm_entries = 0;
 
-	list_क्रम_each_entry(al, &notes->src->source, node) अणु
-		माप_प्रकार line_len = म_माप(al->line);
+	list_for_each_entry(al, &notes->src->source, node) {
+		size_t line_len = strlen(al->line);
 
-		अगर (notes->max_line_len < line_len)
+		if (notes->max_line_len < line_len)
 			notes->max_line_len = line_len;
 		al->idx = notes->nr_entries++;
-		अगर (al->offset != -1) अणु
-			al->idx_यंत्र = notes->nr_यंत्र_entries++;
+		if (al->offset != -1) {
+			al->idx_asm = notes->nr_asm_entries++;
 			/*
-			 * FIXME: लघु term bandaid to cope with assembly
+			 * FIXME: short term bandaid to cope with assembly
 			 * routines that comes with labels in the same column
 			 * as the address in objdump, sigh.
 			 *
 			 * E.g. copy_user_generic_unrolled
  			 */
-			अगर (al->offset < size)
+			if (al->offset < size)
 				notes->offsets[al->offset] = al;
-		पूर्ण अन्यथा
-			al->idx_यंत्र = -1;
-	पूर्ण
-पूर्ण
+		} else
+			al->idx_asm = -1;
+	}
+}
 
-अटल अंतरभूत पूर्णांक width_jumps(पूर्णांक n)
-अणु
-	अगर (n >= 100)
-		वापस 5;
-	अगर (n / 10)
-		वापस 2;
-	वापस 1;
-पूर्ण
+static inline int width_jumps(int n)
+{
+	if (n >= 100)
+		return 5;
+	if (n / 10)
+		return 2;
+	return 1;
+}
 
-अटल पूर्णांक annotation__max_ins_name(काष्ठा annotation *notes)
-अणु
-	पूर्णांक max_name = 0, len;
-	काष्ठा annotation_line *al;
+static int annotation__max_ins_name(struct annotation *notes)
+{
+	int max_name = 0, len;
+	struct annotation_line *al;
 
-        list_क्रम_each_entry(al, &notes->src->source, node) अणु
-		अगर (al->offset == -1)
-			जारी;
+        list_for_each_entry(al, &notes->src->source, node) {
+		if (al->offset == -1)
+			continue;
 
-		len = म_माप(disयंत्र_line(al)->ins.name);
-		अगर (max_name < len)
+		len = strlen(disasm_line(al)->ins.name);
+		if (max_name < len)
 			max_name = len;
-	पूर्ण
+	}
 
-	वापस max_name;
-पूर्ण
+	return max_name;
+}
 
-व्योम annotation__init_column_widths(काष्ठा annotation *notes, काष्ठा symbol *sym)
-अणु
+void annotation__init_column_widths(struct annotation *notes, struct symbol *sym)
+{
 	notes->widths.addr = notes->widths.target =
 		notes->widths.min_addr = hex_width(symbol__size(sym));
 	notes->widths.max_addr = hex_width(sym->end);
 	notes->widths.jumps = width_jumps(notes->max_jump_sources);
 	notes->widths.max_ins_name = annotation__max_ins_name(notes);
-पूर्ण
+}
 
-व्योम annotation__update_column_widths(काष्ठा annotation *notes)
-अणु
-	अगर (notes->options->use_offset)
+void annotation__update_column_widths(struct annotation *notes)
+{
+	if (notes->options->use_offset)
 		notes->widths.target = notes->widths.min_addr;
-	अन्यथा
+	else
 		notes->widths.target = notes->widths.max_addr;
 
 	notes->widths.addr = notes->widths.target;
 
-	अगर (notes->options->show_nr_jumps)
+	if (notes->options->show_nr_jumps)
 		notes->widths.addr += notes->widths.jumps + 1;
-पूर्ण
+}
 
-अटल व्योम annotation__calc_lines(काष्ठा annotation *notes, काष्ठा map *map,
-				   काष्ठा rb_root *root,
-				   काष्ठा annotation_options *opts)
-अणु
-	काष्ठा annotation_line *al;
-	काष्ठा rb_root पंचांगp_root = RB_ROOT;
+static void annotation__calc_lines(struct annotation *notes, struct map *map,
+				   struct rb_root *root,
+				   struct annotation_options *opts)
+{
+	struct annotation_line *al;
+	struct rb_root tmp_root = RB_ROOT;
 
-	list_क्रम_each_entry(al, &notes->src->source, node) अणु
-		द्विगुन percent_max = 0.0;
-		पूर्णांक i;
+	list_for_each_entry(al, &notes->src->source, node) {
+		double percent_max = 0.0;
+		int i;
 
-		क्रम (i = 0; i < al->data_nr; i++) अणु
-			द्विगुन percent;
+		for (i = 0; i < al->data_nr; i++) {
+			double percent;
 
 			percent = annotation_data__percent(&al->data[i],
 							   opts->percent_type);
 
-			अगर (percent > percent_max)
+			if (percent > percent_max)
 				percent_max = percent;
-		पूर्ण
+		}
 
-		अगर (percent_max <= 0.5)
-			जारी;
+		if (percent_max <= 0.5)
+			continue;
 
-		al->path = get_srcline(map->dso, notes->start + al->offset, शून्य,
+		al->path = get_srcline(map->dso, notes->start + al->offset, NULL,
 				       false, true, notes->start + al->offset);
-		insert_source_line(&पंचांगp_root, al, opts);
-	पूर्ण
+		insert_source_line(&tmp_root, al, opts);
+	}
 
-	resort_source_line(root, &पंचांगp_root);
-पूर्ण
+	resort_source_line(root, &tmp_root);
+}
 
-अटल व्योम symbol__calc_lines(काष्ठा map_symbol *ms, काष्ठा rb_root *root,
-			       काष्ठा annotation_options *opts)
-अणु
-	काष्ठा annotation *notes = symbol__annotation(ms->sym);
+static void symbol__calc_lines(struct map_symbol *ms, struct rb_root *root,
+			       struct annotation_options *opts)
+{
+	struct annotation *notes = symbol__annotation(ms->sym);
 
 	annotation__calc_lines(notes, ms->map, root, opts);
-पूर्ण
+}
 
-पूर्णांक symbol__tty_annotate2(काष्ठा map_symbol *ms, काष्ठा evsel *evsel,
-			  काष्ठा annotation_options *opts)
-अणु
-	काष्ठा dso *dso = ms->map->dso;
-	काष्ठा symbol *sym = ms->sym;
-	काष्ठा rb_root source_line = RB_ROOT;
-	काष्ठा hists *hists = evsel__hists(evsel);
-	अक्षर buf[1024];
+int symbol__tty_annotate2(struct map_symbol *ms, struct evsel *evsel,
+			  struct annotation_options *opts)
+{
+	struct dso *dso = ms->map->dso;
+	struct symbol *sym = ms->sym;
+	struct rb_root source_line = RB_ROOT;
+	struct hists *hists = evsel__hists(evsel);
+	char buf[1024];
 
-	अगर (symbol__annotate2(ms, evsel, opts, शून्य) < 0)
-		वापस -1;
+	if (symbol__annotate2(ms, evsel, opts, NULL) < 0)
+		return -1;
 
-	अगर (opts->prपूर्णांक_lines) अणु
+	if (opts->print_lines) {
 		srcline_full_filename = opts->full_path;
 		symbol__calc_lines(ms, &source_line, opts);
-		prपूर्णांक_summary(&source_line, dso->दीर्घ_name);
-	पूर्ण
+		print_summary(&source_line, dso->long_name);
+	}
 
-	hists__scnम_लिखो_title(hists, buf, माप(buf));
-	ख_लिखो(मानक_निकास, "%s, [percent: %s]\n%s() %s\n",
-		buf, percent_type_str(opts->percent_type), sym->name, dso->दीर्घ_name);
-	symbol__annotate_ख_लिखो2(sym, मानक_निकास, opts);
+	hists__scnprintf_title(hists, buf, sizeof(buf));
+	fprintf(stdout, "%s, [percent: %s]\n%s() %s\n",
+		buf, percent_type_str(opts->percent_type), sym->name, dso->long_name);
+	symbol__annotate_fprintf2(sym, stdout, opts);
 
 	annotated_source__purge(symbol__annotation(sym)->src);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक symbol__tty_annotate(काष्ठा map_symbol *ms, काष्ठा evsel *evsel,
-			 काष्ठा annotation_options *opts)
-अणु
-	काष्ठा dso *dso = ms->map->dso;
-	काष्ठा symbol *sym = ms->sym;
-	काष्ठा rb_root source_line = RB_ROOT;
+int symbol__tty_annotate(struct map_symbol *ms, struct evsel *evsel,
+			 struct annotation_options *opts)
+{
+	struct dso *dso = ms->map->dso;
+	struct symbol *sym = ms->sym;
+	struct rb_root source_line = RB_ROOT;
 
-	अगर (symbol__annotate(ms, evsel, opts, शून्य) < 0)
-		वापस -1;
+	if (symbol__annotate(ms, evsel, opts, NULL) < 0)
+		return -1;
 
 	symbol__calc_percent(sym, evsel);
 
-	अगर (opts->prपूर्णांक_lines) अणु
+	if (opts->print_lines) {
 		srcline_full_filename = opts->full_path;
 		symbol__calc_lines(ms, &source_line, opts);
-		prपूर्णांक_summary(&source_line, dso->दीर्घ_name);
-	पूर्ण
+		print_summary(&source_line, dso->long_name);
+	}
 
-	symbol__annotate_म_लिखो(ms, evsel, opts);
+	symbol__annotate_printf(ms, evsel, opts);
 
 	annotated_source__purge(symbol__annotation(sym)->src);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-bool ui__has_annotation(व्योम)
-अणु
-	वापस use_browser == 1 && perf_hpp_list.sym;
-पूर्ण
+bool ui__has_annotation(void)
+{
+	return use_browser == 1 && perf_hpp_list.sym;
+}
 
 
-अटल द्विगुन annotation_line__max_percent(काष्ठा annotation_line *al,
-					   काष्ठा annotation *notes,
-					   अचिन्हित पूर्णांक percent_type)
-अणु
-	द्विगुन percent_max = 0.0;
-	पूर्णांक i;
+static double annotation_line__max_percent(struct annotation_line *al,
+					   struct annotation *notes,
+					   unsigned int percent_type)
+{
+	double percent_max = 0.0;
+	int i;
 
-	क्रम (i = 0; i < notes->nr_events; i++) अणु
-		द्विगुन percent;
+	for (i = 0; i < notes->nr_events; i++) {
+		double percent;
 
 		percent = annotation_data__percent(&al->data[i],
 						   percent_type);
 
-		अगर (percent > percent_max)
+		if (percent > percent_max)
 			percent_max = percent;
-	पूर्ण
+	}
 
-	वापस percent_max;
-पूर्ण
+	return percent_max;
+}
 
-अटल व्योम disयंत्र_line__ग_लिखो(काष्ठा disयंत्र_line *dl, काष्ठा annotation *notes,
-			       व्योम *obj, अक्षर *bf, माप_प्रकार size,
-			       व्योम (*obj__म_लिखो)(व्योम *obj, स्थिर अक्षर *fmt, ...),
-			       व्योम (*obj__ग_लिखो_graph)(व्योम *obj, पूर्णांक graph))
-अणु
-	अगर (dl->ins.ops && dl->ins.ops->scnम_लिखो) अणु
-		अगर (ins__is_jump(&dl->ins)) अणु
+static void disasm_line__write(struct disasm_line *dl, struct annotation *notes,
+			       void *obj, char *bf, size_t size,
+			       void (*obj__printf)(void *obj, const char *fmt, ...),
+			       void (*obj__write_graph)(void *obj, int graph))
+{
+	if (dl->ins.ops && dl->ins.ops->scnprintf) {
+		if (ins__is_jump(&dl->ins)) {
 			bool fwd;
 
-			अगर (dl->ops.target.outside)
-				जाओ call_like;
+			if (dl->ops.target.outside)
+				goto call_like;
 			fwd = dl->ops.target.offset > dl->al.offset;
-			obj__ग_लिखो_graph(obj, fwd ? DARROW_CHAR : UARROW_CHAR);
-			obj__म_लिखो(obj, " ");
-		पूर्ण अन्यथा अगर (ins__is_call(&dl->ins)) अणु
+			obj__write_graph(obj, fwd ? DARROW_CHAR : UARROW_CHAR);
+			obj__printf(obj, " ");
+		} else if (ins__is_call(&dl->ins)) {
 call_like:
-			obj__ग_लिखो_graph(obj, RARROW_CHAR);
-			obj__म_लिखो(obj, " ");
-		पूर्ण अन्यथा अगर (ins__is_ret(&dl->ins)) अणु
-			obj__ग_लिखो_graph(obj, LARROW_CHAR);
-			obj__म_लिखो(obj, " ");
-		पूर्ण अन्यथा अणु
-			obj__म_लिखो(obj, "  ");
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		obj__म_लिखो(obj, "  ");
-	पूर्ण
+			obj__write_graph(obj, RARROW_CHAR);
+			obj__printf(obj, " ");
+		} else if (ins__is_ret(&dl->ins)) {
+			obj__write_graph(obj, LARROW_CHAR);
+			obj__printf(obj, " ");
+		} else {
+			obj__printf(obj, "  ");
+		}
+	} else {
+		obj__printf(obj, "  ");
+	}
 
-	disयंत्र_line__scnम_लिखो(dl, bf, size, !notes->options->use_offset, notes->widths.max_ins_name);
-पूर्ण
+	disasm_line__scnprintf(dl, bf, size, !notes->options->use_offset, notes->widths.max_ins_name);
+}
 
-अटल व्योम ipc_coverage_string(अक्षर *bf, पूर्णांक size, काष्ठा annotation *notes)
-अणु
-	द्विगुन ipc = 0.0, coverage = 0.0;
+static void ipc_coverage_string(char *bf, int size, struct annotation *notes)
+{
+	double ipc = 0.0, coverage = 0.0;
 
-	अगर (notes->hit_cycles)
-		ipc = notes->hit_insn / ((द्विगुन)notes->hit_cycles);
+	if (notes->hit_cycles)
+		ipc = notes->hit_insn / ((double)notes->hit_cycles);
 
-	अगर (notes->total_insn) अणु
+	if (notes->total_insn) {
 		coverage = notes->cover_insn * 100.0 /
-			((द्विगुन)notes->total_insn);
-	पूर्ण
+			((double)notes->total_insn);
+	}
 
-	scnम_लिखो(bf, size, "(Average IPC: %.2f, IPC Coverage: %.1f%%)",
+	scnprintf(bf, size, "(Average IPC: %.2f, IPC Coverage: %.1f%%)",
 		  ipc, coverage);
-पूर्ण
+}
 
-अटल व्योम __annotation_line__ग_लिखो(काष्ठा annotation_line *al, काष्ठा annotation *notes,
-				     bool first_line, bool current_entry, bool change_color, पूर्णांक width,
-				     व्योम *obj, अचिन्हित पूर्णांक percent_type,
-				     पूर्णांक  (*obj__set_color)(व्योम *obj, पूर्णांक color),
-				     व्योम (*obj__set_percent_color)(व्योम *obj, द्विगुन percent, bool current),
-				     पूर्णांक  (*obj__set_jumps_percent_color)(व्योम *obj, पूर्णांक nr, bool current),
-				     व्योम (*obj__म_लिखो)(व्योम *obj, स्थिर अक्षर *fmt, ...),
-				     व्योम (*obj__ग_लिखो_graph)(व्योम *obj, पूर्णांक graph))
+static void __annotation_line__write(struct annotation_line *al, struct annotation *notes,
+				     bool first_line, bool current_entry, bool change_color, int width,
+				     void *obj, unsigned int percent_type,
+				     int  (*obj__set_color)(void *obj, int color),
+				     void (*obj__set_percent_color)(void *obj, double percent, bool current),
+				     int  (*obj__set_jumps_percent_color)(void *obj, int nr, bool current),
+				     void (*obj__printf)(void *obj, const char *fmt, ...),
+				     void (*obj__write_graph)(void *obj, int graph))
 
-अणु
-	द्विगुन percent_max = annotation_line__max_percent(al, notes, percent_type);
-	पूर्णांक pcnt_width = annotation__pcnt_width(notes),
+{
+	double percent_max = annotation_line__max_percent(al, notes, percent_type);
+	int pcnt_width = annotation__pcnt_width(notes),
 	    cycles_width = annotation__cycles_width(notes);
 	bool show_title = false;
-	अक्षर bf[256];
-	पूर्णांक prपूर्णांकed;
+	char bf[256];
+	int printed;
 
-	अगर (first_line && (al->offset == -1 || percent_max == 0.0)) अणु
-		अगर (notes->have_cycles) अणु
-			अगर (al->ipc == 0.0 && al->cycles == 0)
+	if (first_line && (al->offset == -1 || percent_max == 0.0)) {
+		if (notes->have_cycles) {
+			if (al->ipc == 0.0 && al->cycles == 0)
 				show_title = true;
-		पूर्ण अन्यथा
+		} else
 			show_title = true;
-	पूर्ण
+	}
 
-	अगर (al->offset != -1 && percent_max != 0.0) अणु
-		पूर्णांक i;
+	if (al->offset != -1 && percent_max != 0.0) {
+		int i;
 
-		क्रम (i = 0; i < notes->nr_events; i++) अणु
-			द्विगुन percent;
+		for (i = 0; i < notes->nr_events; i++) {
+			double percent;
 
 			percent = annotation_data__percent(&al->data[i], percent_type);
 
 			obj__set_percent_color(obj, percent, current_entry);
-			अगर (symbol_conf.show_total_period) अणु
-				obj__म_लिखो(obj, "%11" PRIu64 " ", al->data[i].he.period);
-			पूर्ण अन्यथा अगर (symbol_conf.show_nr_samples) अणु
-				obj__म_लिखो(obj, "%6" PRIu64 " ",
+			if (symbol_conf.show_total_period) {
+				obj__printf(obj, "%11" PRIu64 " ", al->data[i].he.period);
+			} else if (symbol_conf.show_nr_samples) {
+				obj__printf(obj, "%6" PRIu64 " ",
 						   al->data[i].he.nr_samples);
-			पूर्ण अन्यथा अणु
-				obj__म_लिखो(obj, "%6.2f ", percent);
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			} else {
+				obj__printf(obj, "%6.2f ", percent);
+			}
+		}
+	} else {
 		obj__set_percent_color(obj, 0, current_entry);
 
-		अगर (!show_title)
-			obj__म_लिखो(obj, "%-*s", pcnt_width, " ");
-		अन्यथा अणु
-			obj__म_लिखो(obj, "%-*s", pcnt_width,
+		if (!show_title)
+			obj__printf(obj, "%-*s", pcnt_width, " ");
+		else {
+			obj__printf(obj, "%-*s", pcnt_width,
 					   symbol_conf.show_total_period ? "Period" :
 					   symbol_conf.show_nr_samples ? "Samples" : "Percent");
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	अगर (notes->have_cycles) अणु
-		अगर (al->ipc)
-			obj__म_लिखो(obj, "%*.2f ", ANNOTATION__IPC_WIDTH - 1, al->ipc);
-		अन्यथा अगर (!show_title)
-			obj__म_लिखो(obj, "%*s", ANNOTATION__IPC_WIDTH, " ");
-		अन्यथा
-			obj__म_लिखो(obj, "%*s ", ANNOTATION__IPC_WIDTH - 1, "IPC");
+	if (notes->have_cycles) {
+		if (al->ipc)
+			obj__printf(obj, "%*.2f ", ANNOTATION__IPC_WIDTH - 1, al->ipc);
+		else if (!show_title)
+			obj__printf(obj, "%*s", ANNOTATION__IPC_WIDTH, " ");
+		else
+			obj__printf(obj, "%*s ", ANNOTATION__IPC_WIDTH - 1, "IPC");
 
-		अगर (!notes->options->show_minmax_cycle) अणु
-			अगर (al->cycles)
-				obj__म_लिखो(obj, "%*" PRIu64 " ",
+		if (!notes->options->show_minmax_cycle) {
+			if (al->cycles)
+				obj__printf(obj, "%*" PRIu64 " ",
 					   ANNOTATION__CYCLES_WIDTH - 1, al->cycles);
-			अन्यथा अगर (!show_title)
-				obj__म_लिखो(obj, "%*s",
+			else if (!show_title)
+				obj__printf(obj, "%*s",
 					    ANNOTATION__CYCLES_WIDTH, " ");
-			अन्यथा
-				obj__म_लिखो(obj, "%*s ",
+			else
+				obj__printf(obj, "%*s ",
 					    ANNOTATION__CYCLES_WIDTH - 1,
 					    "Cycle");
-		पूर्ण अन्यथा अणु
-			अगर (al->cycles) अणु
-				अक्षर str[32];
+		} else {
+			if (al->cycles) {
+				char str[32];
 
-				scnम_लिखो(str, माप(str),
+				scnprintf(str, sizeof(str),
 					"%" PRIu64 "(%" PRIu64 "/%" PRIu64 ")",
 					al->cycles, al->cycles_min,
 					al->cycles_max);
 
-				obj__म_लिखो(obj, "%*s ",
+				obj__printf(obj, "%*s ",
 					    ANNOTATION__MINMAX_CYCLES_WIDTH - 1,
 					    str);
-			पूर्ण अन्यथा अगर (!show_title)
-				obj__म_लिखो(obj, "%*s",
+			} else if (!show_title)
+				obj__printf(obj, "%*s",
 					    ANNOTATION__MINMAX_CYCLES_WIDTH,
 					    " ");
-			अन्यथा
-				obj__म_लिखो(obj, "%*s ",
+			else
+				obj__printf(obj, "%*s ",
 					    ANNOTATION__MINMAX_CYCLES_WIDTH - 1,
 					    "Cycle(min/max)");
-		पूर्ण
+		}
 
-		अगर (show_title && !*al->line) अणु
-			ipc_coverage_string(bf, माप(bf), notes);
-			obj__म_लिखो(obj, "%*s", ANNOTATION__AVG_IPC_WIDTH, bf);
-		पूर्ण
-	पूर्ण
+		if (show_title && !*al->line) {
+			ipc_coverage_string(bf, sizeof(bf), notes);
+			obj__printf(obj, "%*s", ANNOTATION__AVG_IPC_WIDTH, bf);
+		}
+	}
 
-	obj__म_लिखो(obj, " ");
+	obj__printf(obj, " ");
 
-	अगर (!*al->line)
-		obj__म_लिखो(obj, "%-*s", width - pcnt_width - cycles_width, " ");
-	अन्यथा अगर (al->offset == -1) अणु
-		अगर (al->line_nr && notes->options->show_linenr)
-			prपूर्णांकed = scnम_लिखो(bf, माप(bf), "%-*d ", notes->widths.addr + 1, al->line_nr);
-		अन्यथा
-			prपूर्णांकed = scnम_लिखो(bf, माप(bf), "%-*s  ", notes->widths.addr, " ");
-		obj__म_लिखो(obj, bf);
-		obj__म_लिखो(obj, "%-*s", width - prपूर्णांकed - pcnt_width - cycles_width + 1, al->line);
-	पूर्ण अन्यथा अणु
+	if (!*al->line)
+		obj__printf(obj, "%-*s", width - pcnt_width - cycles_width, " ");
+	else if (al->offset == -1) {
+		if (al->line_nr && notes->options->show_linenr)
+			printed = scnprintf(bf, sizeof(bf), "%-*d ", notes->widths.addr + 1, al->line_nr);
+		else
+			printed = scnprintf(bf, sizeof(bf), "%-*s  ", notes->widths.addr, " ");
+		obj__printf(obj, bf);
+		obj__printf(obj, "%-*s", width - printed - pcnt_width - cycles_width + 1, al->line);
+	} else {
 		u64 addr = al->offset;
-		पूर्णांक color = -1;
+		int color = -1;
 
-		अगर (!notes->options->use_offset)
+		if (!notes->options->use_offset)
 			addr += notes->start;
 
-		अगर (!notes->options->use_offset) अणु
-			prपूर्णांकed = scnम_लिखो(bf, माप(bf), "%" PRIx64 ": ", addr);
-		पूर्ण अन्यथा अणु
-			अगर (al->jump_sources &&
-			    notes->options->offset_level >= ANNOTATION__OFFSET_JUMP_TARGETS) अणु
-				अगर (notes->options->show_nr_jumps) अणु
-					पूर्णांक prev;
-					prपूर्णांकed = scnम_लिखो(bf, माप(bf), "%*d ",
+		if (!notes->options->use_offset) {
+			printed = scnprintf(bf, sizeof(bf), "%" PRIx64 ": ", addr);
+		} else {
+			if (al->jump_sources &&
+			    notes->options->offset_level >= ANNOTATION__OFFSET_JUMP_TARGETS) {
+				if (notes->options->show_nr_jumps) {
+					int prev;
+					printed = scnprintf(bf, sizeof(bf), "%*d ",
 							    notes->widths.jumps,
 							    al->jump_sources);
 					prev = obj__set_jumps_percent_color(obj, al->jump_sources,
 									    current_entry);
-					obj__म_लिखो(obj, bf);
+					obj__printf(obj, bf);
 					obj__set_color(obj, prev);
-				पूर्ण
-prपूर्णांक_addr:
-				prपूर्णांकed = scnम_लिखो(bf, माप(bf), "%*" PRIx64 ": ",
+				}
+print_addr:
+				printed = scnprintf(bf, sizeof(bf), "%*" PRIx64 ": ",
 						    notes->widths.target, addr);
-			पूर्ण अन्यथा अगर (ins__is_call(&disयंत्र_line(al)->ins) &&
-				   notes->options->offset_level >= ANNOTATION__OFFSET_CALL) अणु
-				जाओ prपूर्णांक_addr;
-			पूर्ण अन्यथा अगर (notes->options->offset_level == ANNOTATION__MAX_OFFSET_LEVEL) अणु
-				जाओ prपूर्णांक_addr;
-			पूर्ण अन्यथा अणु
-				prपूर्णांकed = scnम_लिखो(bf, माप(bf), "%-*s  ",
+			} else if (ins__is_call(&disasm_line(al)->ins) &&
+				   notes->options->offset_level >= ANNOTATION__OFFSET_CALL) {
+				goto print_addr;
+			} else if (notes->options->offset_level == ANNOTATION__MAX_OFFSET_LEVEL) {
+				goto print_addr;
+			} else {
+				printed = scnprintf(bf, sizeof(bf), "%-*s  ",
 						    notes->widths.addr, " ");
-			पूर्ण
-		पूर्ण
+			}
+		}
 
-		अगर (change_color)
+		if (change_color)
 			color = obj__set_color(obj, HE_COLORSET_ADDR);
-		obj__म_लिखो(obj, bf);
-		अगर (change_color)
+		obj__printf(obj, bf);
+		if (change_color)
 			obj__set_color(obj, color);
 
-		disयंत्र_line__ग_लिखो(disयंत्र_line(al), notes, obj, bf, माप(bf), obj__म_लिखो, obj__ग_लिखो_graph);
+		disasm_line__write(disasm_line(al), notes, obj, bf, sizeof(bf), obj__printf, obj__write_graph);
 
-		obj__म_लिखो(obj, "%-*s", width - pcnt_width - cycles_width - 3 - prपूर्णांकed, bf);
-	पूर्ण
+		obj__printf(obj, "%-*s", width - pcnt_width - cycles_width - 3 - printed, bf);
+	}
 
-पूर्ण
+}
 
-व्योम annotation_line__ग_लिखो(काष्ठा annotation_line *al, काष्ठा annotation *notes,
-			    काष्ठा annotation_ग_लिखो_ops *wops,
-			    काष्ठा annotation_options *opts)
-अणु
-	__annotation_line__ग_लिखो(al, notes, wops->first_line, wops->current_entry,
+void annotation_line__write(struct annotation_line *al, struct annotation *notes,
+			    struct annotation_write_ops *wops,
+			    struct annotation_options *opts)
+{
+	__annotation_line__write(al, notes, wops->first_line, wops->current_entry,
 				 wops->change_color, wops->width, wops->obj,
 				 opts->percent_type,
 				 wops->set_color, wops->set_percent_color,
-				 wops->set_jumps_percent_color, wops->म_लिखो,
-				 wops->ग_लिखो_graph);
-पूर्ण
+				 wops->set_jumps_percent_color, wops->printf,
+				 wops->write_graph);
+}
 
-पूर्णांक symbol__annotate2(काष्ठा map_symbol *ms, काष्ठा evsel *evsel,
-		      काष्ठा annotation_options *options, काष्ठा arch **parch)
-अणु
-	काष्ठा symbol *sym = ms->sym;
-	काष्ठा annotation *notes = symbol__annotation(sym);
-	माप_प्रकार size = symbol__size(sym);
-	पूर्णांक nr_pcnt = 1, err;
+int symbol__annotate2(struct map_symbol *ms, struct evsel *evsel,
+		      struct annotation_options *options, struct arch **parch)
+{
+	struct symbol *sym = ms->sym;
+	struct annotation *notes = symbol__annotation(sym);
+	size_t size = symbol__size(sym);
+	int nr_pcnt = 1, err;
 
-	notes->offsets = zalloc(size * माप(काष्ठा annotation_line *));
-	अगर (notes->offsets == शून्य)
-		वापस ENOMEM;
+	notes->offsets = zalloc(size * sizeof(struct annotation_line *));
+	if (notes->offsets == NULL)
+		return ENOMEM;
 
-	अगर (evsel__is_group_event(evsel))
+	if (evsel__is_group_event(evsel))
 		nr_pcnt = evsel->core.nr_members;
 
 	err = symbol__annotate(ms, evsel, options, parch);
-	अगर (err)
-		जाओ out_मुक्त_offsets;
+	if (err)
+		goto out_free_offsets;
 
 	notes->options = options;
 
 	symbol__calc_percent(sym, evsel);
 
 	annotation__set_offsets(notes, size);
-	annotation__mark_jump_tarमाला_लो(notes, sym);
+	annotation__mark_jump_targets(notes, sym);
 	annotation__compute_ipc(notes, size);
 	annotation__init_column_widths(notes, sym);
 	notes->nr_events = nr_pcnt;
@@ -3112,118 +3111,118 @@ prपूर्णांक_addr:
 	annotation__update_column_widths(notes);
 	sym->annotate2 = true;
 
-	वापस 0;
+	return 0;
 
-out_मुक्त_offsets:
-	zमुक्त(&notes->offsets);
-	वापस err;
-पूर्ण
+out_free_offsets:
+	zfree(&notes->offsets);
+	return err;
+}
 
-अटल पूर्णांक annotation__config(स्थिर अक्षर *var, स्थिर अक्षर *value, व्योम *data)
-अणु
-	काष्ठा annotation_options *opt = data;
+static int annotation__config(const char *var, const char *value, void *data)
+{
+	struct annotation_options *opt = data;
 
-	अगर (!strstarts(var, "annotate."))
-		वापस 0;
+	if (!strstarts(var, "annotate."))
+		return 0;
 
-	अगर (!म_भेद(var, "annotate.offset_level")) अणु
+	if (!strcmp(var, "annotate.offset_level")) {
 		perf_config_u8(&opt->offset_level, "offset_level", value);
 
-		अगर (opt->offset_level > ANNOTATION__MAX_OFFSET_LEVEL)
+		if (opt->offset_level > ANNOTATION__MAX_OFFSET_LEVEL)
 			opt->offset_level = ANNOTATION__MAX_OFFSET_LEVEL;
-		अन्यथा अगर (opt->offset_level < ANNOTATION__MIN_OFFSET_LEVEL)
+		else if (opt->offset_level < ANNOTATION__MIN_OFFSET_LEVEL)
 			opt->offset_level = ANNOTATION__MIN_OFFSET_LEVEL;
-	पूर्ण अन्यथा अगर (!म_भेद(var, "annotate.hide_src_code")) अणु
+	} else if (!strcmp(var, "annotate.hide_src_code")) {
 		opt->hide_src_code = perf_config_bool("hide_src_code", value);
-	पूर्ण अन्यथा अगर (!म_भेद(var, "annotate.jump_arrows")) अणु
+	} else if (!strcmp(var, "annotate.jump_arrows")) {
 		opt->jump_arrows = perf_config_bool("jump_arrows", value);
-	पूर्ण अन्यथा अगर (!म_भेद(var, "annotate.show_linenr")) अणु
+	} else if (!strcmp(var, "annotate.show_linenr")) {
 		opt->show_linenr = perf_config_bool("show_linenr", value);
-	पूर्ण अन्यथा अगर (!म_भेद(var, "annotate.show_nr_jumps")) अणु
+	} else if (!strcmp(var, "annotate.show_nr_jumps")) {
 		opt->show_nr_jumps = perf_config_bool("show_nr_jumps", value);
-	पूर्ण अन्यथा अगर (!म_भेद(var, "annotate.show_nr_samples")) अणु
+	} else if (!strcmp(var, "annotate.show_nr_samples")) {
 		symbol_conf.show_nr_samples = perf_config_bool("show_nr_samples",
 								value);
-	पूर्ण अन्यथा अगर (!म_भेद(var, "annotate.show_total_period")) अणु
+	} else if (!strcmp(var, "annotate.show_total_period")) {
 		symbol_conf.show_total_period = perf_config_bool("show_total_period",
 								value);
-	पूर्ण अन्यथा अगर (!म_भेद(var, "annotate.use_offset")) अणु
+	} else if (!strcmp(var, "annotate.use_offset")) {
 		opt->use_offset = perf_config_bool("use_offset", value);
-	पूर्ण अन्यथा अगर (!म_भेद(var, "annotate.disassembler_style")) अणु
+	} else if (!strcmp(var, "annotate.disassembler_style")) {
 		opt->disassembler_style = value;
-	पूर्ण अन्यथा अगर (!म_भेद(var, "annotate.demangle")) अणु
+	} else if (!strcmp(var, "annotate.demangle")) {
 		symbol_conf.demangle = perf_config_bool("demangle", value);
-	पूर्ण अन्यथा अगर (!म_भेद(var, "annotate.demangle_kernel")) अणु
+	} else if (!strcmp(var, "annotate.demangle_kernel")) {
 		symbol_conf.demangle_kernel = perf_config_bool("demangle_kernel", value);
-	पूर्ण अन्यथा अणु
+	} else {
 		pr_debug("%s variable unknown, ignoring...", var);
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम annotation_config__init(काष्ठा annotation_options *opt)
-अणु
+void annotation_config__init(struct annotation_options *opt)
+{
 	perf_config(annotation__config, opt);
-पूर्ण
+}
 
-अटल अचिन्हित पूर्णांक parse_percent_type(अक्षर *str1, अक्षर *str2)
-अणु
-	अचिन्हित पूर्णांक type = (अचिन्हित पूर्णांक) -1;
+static unsigned int parse_percent_type(char *str1, char *str2)
+{
+	unsigned int type = (unsigned int) -1;
 
-	अगर (!म_भेद("period", str1)) अणु
-		अगर (!म_भेद("local", str2))
+	if (!strcmp("period", str1)) {
+		if (!strcmp("local", str2))
 			type = PERCENT_PERIOD_LOCAL;
-		अन्यथा अगर (!म_भेद("global", str2))
+		else if (!strcmp("global", str2))
 			type = PERCENT_PERIOD_GLOBAL;
-	पूर्ण
+	}
 
-	अगर (!म_भेद("hits", str1)) अणु
-		अगर (!म_भेद("local", str2))
+	if (!strcmp("hits", str1)) {
+		if (!strcmp("local", str2))
 			type = PERCENT_HITS_LOCAL;
-		अन्यथा अगर (!म_भेद("global", str2))
+		else if (!strcmp("global", str2))
 			type = PERCENT_HITS_GLOBAL;
-	पूर्ण
+	}
 
-	वापस type;
-पूर्ण
+	return type;
+}
 
-पूर्णांक annotate_parse_percent_type(स्थिर काष्ठा option *opt, स्थिर अक्षर *_str,
-				पूर्णांक unset __maybe_unused)
-अणु
-	काष्ठा annotation_options *opts = opt->value;
-	अचिन्हित पूर्णांक type;
-	अक्षर *str1, *str2;
-	पूर्णांक err = -1;
+int annotate_parse_percent_type(const struct option *opt, const char *_str,
+				int unset __maybe_unused)
+{
+	struct annotation_options *opts = opt->value;
+	unsigned int type;
+	char *str1, *str2;
+	int err = -1;
 
 	str1 = strdup(_str);
-	अगर (!str1)
-		वापस -ENOMEM;
+	if (!str1)
+		return -ENOMEM;
 
-	str2 = म_अक्षर(str1, '-');
-	अगर (!str2)
-		जाओ out;
+	str2 = strchr(str1, '-');
+	if (!str2)
+		goto out;
 
 	*str2++ = 0;
 
 	type = parse_percent_type(str1, str2);
-	अगर (type == (अचिन्हित पूर्णांक) -1)
+	if (type == (unsigned int) -1)
 		type = parse_percent_type(str2, str1);
-	अगर (type != (अचिन्हित पूर्णांक) -1) अणु
+	if (type != (unsigned int) -1) {
 		opts->percent_type = type;
 		err = 0;
-	पूर्ण
+	}
 
 out:
-	मुक्त(str1);
-	वापस err;
-पूर्ण
+	free(str1);
+	return err;
+}
 
-पूर्णांक annotate_check_args(काष्ठा annotation_options *args)
-अणु
-	अगर (args->prefix_strip && !args->prefix) अणु
+int annotate_check_args(struct annotation_options *args)
+{
+	if (args->prefix_strip && !args->prefix) {
 		pr_err("--prefix-strip requires --prefix\n");
-		वापस -1;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return -1;
+	}
+	return 0;
+}

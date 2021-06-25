@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
  * Copyright 2020 Advanced Micro Devices, Inc.
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -20,63 +19,63 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  *
- * Authors: Christian Kथघnig
+ * Authors: Christian König
  */
 
-#समावेश <drm/tपंचांग/tपंचांग_resource.h>
-#समावेश <drm/tपंचांग/tपंचांग_bo_driver.h>
+#include <drm/ttm/ttm_resource.h>
+#include <drm/ttm/ttm_bo_driver.h>
 
-पूर्णांक tपंचांग_resource_alloc(काष्ठा tपंचांग_buffer_object *bo,
-		       स्थिर काष्ठा tपंचांग_place *place,
-		       काष्ठा tपंचांग_resource *res)
-अणु
-	काष्ठा tपंचांग_resource_manager *man =
-		tपंचांग_manager_type(bo->bdev, res->mem_type);
+int ttm_resource_alloc(struct ttm_buffer_object *bo,
+		       const struct ttm_place *place,
+		       struct ttm_resource *res)
+{
+	struct ttm_resource_manager *man =
+		ttm_manager_type(bo->bdev, res->mem_type);
 
-	res->mm_node = शून्य;
-	अगर (!man->func || !man->func->alloc)
-		वापस 0;
+	res->mm_node = NULL;
+	if (!man->func || !man->func->alloc)
+		return 0;
 
-	वापस man->func->alloc(man, bo, place, res);
-पूर्ण
+	return man->func->alloc(man, bo, place, res);
+}
 
-व्योम tपंचांग_resource_मुक्त(काष्ठा tपंचांग_buffer_object *bo, काष्ठा tपंचांग_resource *res)
-अणु
-	काष्ठा tपंचांग_resource_manager *man =
-		tपंचांग_manager_type(bo->bdev, res->mem_type);
+void ttm_resource_free(struct ttm_buffer_object *bo, struct ttm_resource *res)
+{
+	struct ttm_resource_manager *man =
+		ttm_manager_type(bo->bdev, res->mem_type);
 
-	अगर (man->func && man->func->मुक्त)
-		man->func->मुक्त(man, res);
+	if (man->func && man->func->free)
+		man->func->free(man, res);
 
-	res->mm_node = शून्य;
+	res->mm_node = NULL;
 	res->mem_type = TTM_PL_SYSTEM;
-पूर्ण
-EXPORT_SYMBOL(tपंचांग_resource_मुक्त);
+}
+EXPORT_SYMBOL(ttm_resource_free);
 
 /**
- * tपंचांग_resource_manager_init
+ * ttm_resource_manager_init
  *
  * @man: memory manager object to init
  * @p_size: size managed area in pages.
  *
  * Initialise core parts of a manager object.
  */
-व्योम tपंचांग_resource_manager_init(काष्ठा tपंचांग_resource_manager *man,
-			       अचिन्हित दीर्घ p_size)
-अणु
-	अचिन्हित i;
+void ttm_resource_manager_init(struct ttm_resource_manager *man,
+			       unsigned long p_size)
+{
+	unsigned i;
 
 	spin_lock_init(&man->move_lock);
 	man->size = p_size;
 
-	क्रम (i = 0; i < TTM_MAX_BO_PRIORITY; ++i)
+	for (i = 0; i < TTM_MAX_BO_PRIORITY; ++i)
 		INIT_LIST_HEAD(&man->lru[i]);
-	man->move = शून्य;
-पूर्ण
-EXPORT_SYMBOL(tपंचांग_resource_manager_init);
+	man->move = NULL;
+}
+EXPORT_SYMBOL(ttm_resource_manager_init);
 
 /*
- * tपंचांग_resource_manager_evict_all
+ * ttm_resource_manager_evict_all
  *
  * @bdev - device to use
  * @man - manager to use
@@ -84,63 +83,63 @@ EXPORT_SYMBOL(tपंचांग_resource_manager_init);
  * Evict all the objects out of a memory manager until it is empty.
  * Part of memory manager cleanup sequence.
  */
-पूर्णांक tपंचांग_resource_manager_evict_all(काष्ठा tपंचांग_device *bdev,
-				   काष्ठा tपंचांग_resource_manager *man)
-अणु
-	काष्ठा tपंचांग_operation_ctx ctx = अणु
-		.पूर्णांकerruptible = false,
-		.no_रुको_gpu = false,
-		.क्रमce_alloc = true
-	पूर्ण;
-	काष्ठा dma_fence *fence;
-	पूर्णांक ret;
-	अचिन्हित i;
+int ttm_resource_manager_evict_all(struct ttm_device *bdev,
+				   struct ttm_resource_manager *man)
+{
+	struct ttm_operation_ctx ctx = {
+		.interruptible = false,
+		.no_wait_gpu = false,
+		.force_alloc = true
+	};
+	struct dma_fence *fence;
+	int ret;
+	unsigned i;
 
 	/*
 	 * Can't use standard list traversal since we're unlocking.
 	 */
 
 	spin_lock(&bdev->lru_lock);
-	क्रम (i = 0; i < TTM_MAX_BO_PRIORITY; ++i) अणु
-		जबतक (!list_empty(&man->lru[i])) अणु
+	for (i = 0; i < TTM_MAX_BO_PRIORITY; ++i) {
+		while (!list_empty(&man->lru[i])) {
 			spin_unlock(&bdev->lru_lock);
-			ret = tपंचांग_mem_evict_first(bdev, man, शून्य, &ctx,
-						  शून्य);
-			अगर (ret)
-				वापस ret;
+			ret = ttm_mem_evict_first(bdev, man, NULL, &ctx,
+						  NULL);
+			if (ret)
+				return ret;
 			spin_lock(&bdev->lru_lock);
-		पूर्ण
-	पूर्ण
+		}
+	}
 	spin_unlock(&bdev->lru_lock);
 
 	spin_lock(&man->move_lock);
 	fence = dma_fence_get(man->move);
 	spin_unlock(&man->move_lock);
 
-	अगर (fence) अणु
-		ret = dma_fence_रुको(fence, false);
+	if (fence) {
+		ret = dma_fence_wait(fence, false);
 		dma_fence_put(fence);
-		अगर (ret)
-			वापस ret;
-	पूर्ण
+		if (ret)
+			return ret;
+	}
 
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(tपंचांग_resource_manager_evict_all);
+	return 0;
+}
+EXPORT_SYMBOL(ttm_resource_manager_evict_all);
 
 /**
- * tपंचांग_resource_manager_debug
+ * ttm_resource_manager_debug
  *
  * @man: manager type to dump.
- * @p: prपूर्णांकer to use क्रम debug.
+ * @p: printer to use for debug.
  */
-व्योम tपंचांग_resource_manager_debug(काष्ठा tपंचांग_resource_manager *man,
-				काष्ठा drm_prपूर्णांकer *p)
-अणु
-	drm_म_लिखो(p, "  use_type: %d\n", man->use_type);
-	drm_म_लिखो(p, "  use_tt: %d\n", man->use_tt);
-	drm_म_लिखो(p, "  size: %llu\n", man->size);
-	अगर (man->func && man->func->debug)
+void ttm_resource_manager_debug(struct ttm_resource_manager *man,
+				struct drm_printer *p)
+{
+	drm_printf(p, "  use_type: %d\n", man->use_type);
+	drm_printf(p, "  use_tt: %d\n", man->use_tt);
+	drm_printf(p, "  size: %llu\n", man->size);
+	if (man->func && man->func->debug)
 		(*man->func->debug)(man, p);
-पूर्ण
-EXPORT_SYMBOL(tपंचांग_resource_manager_debug);
+}
+EXPORT_SYMBOL(ttm_resource_manager_debug);

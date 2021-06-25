@@ -1,30 +1,29 @@
-<शैली गुरु>
 /*
- * SPDX-License-Identअगरier: MIT
+ * SPDX-License-Identifier: MIT
  *
- * Copyright तऊ 2017-2018 Intel Corporation
+ * Copyright © 2017-2018 Intel Corporation
  */
 
-#समावेश "../intel_timeline.h"
+#include "../intel_timeline.h"
 
-#समावेश "mock_timeline.h"
+#include "mock_timeline.h"
 
-व्योम mock_समयline_init(काष्ठा पूर्णांकel_समयline *समयline, u64 context)
-अणु
-	समयline->gt = शून्य;
-	समयline->fence_context = context;
+void mock_timeline_init(struct intel_timeline *timeline, u64 context)
+{
+	timeline->gt = NULL;
+	timeline->fence_context = context;
 
-	mutex_init(&समयline->mutex);
+	mutex_init(&timeline->mutex);
 
-	INIT_ACTIVE_FENCE(&समयline->last_request);
-	INIT_LIST_HEAD(&समयline->requests);
+	INIT_ACTIVE_FENCE(&timeline->last_request);
+	INIT_LIST_HEAD(&timeline->requests);
 
-	i915_syncmap_init(&समयline->sync);
+	i915_syncmap_init(&timeline->sync);
 
-	INIT_LIST_HEAD(&समयline->link);
-पूर्ण
+	INIT_LIST_HEAD(&timeline->link);
+}
 
-व्योम mock_समयline_fini(काष्ठा पूर्णांकel_समयline *समयline)
-अणु
-	i915_syncmap_मुक्त(&समयline->sync);
-पूर्ण
+void mock_timeline_fini(struct intel_timeline *timeline)
+{
+	i915_syncmap_free(&timeline->sync);
+}

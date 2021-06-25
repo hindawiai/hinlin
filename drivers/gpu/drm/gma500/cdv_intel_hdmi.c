@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2006-2011 Intel Corporation
+ * Copyright © 2006-2011 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,282 +21,282 @@
  * DEALINGS IN THE SOFTWARE.
  *
  * Authors:
- *	jim liu <jim.liu@पूर्णांकel.com>
+ *	jim liu <jim.liu@intel.com>
  */
 
-#समावेश <linux/pm_runसमय.स>
+#include <linux/pm_runtime.h>
 
-#समावेश <drm/drm.h>
-#समावेश <drm/drm_crtc.h>
-#समावेश <drm/drm_edid.h>
-#समावेश <drm/drm_simple_kms_helper.h>
+#include <drm/drm.h>
+#include <drm/drm_crtc.h>
+#include <drm/drm_edid.h>
+#include <drm/drm_simple_kms_helper.h>
 
-#समावेश "cdv_device.h"
-#समावेश "psb_drv.h"
-#समावेश "psb_intel_drv.h"
-#समावेश "psb_intel_reg.h"
+#include "cdv_device.h"
+#include "psb_drv.h"
+#include "psb_intel_drv.h"
+#include "psb_intel_reg.h"
 
 /* hdmi control bits */
-#घोषणा HDMI_शून्य_PACKETS_DURING_VSYNC	(1 << 9)
-#घोषणा HDMI_BORDER_ENABLE		(1 << 7)
-#घोषणा HDMI_AUDIO_ENABLE		(1 << 6)
-#घोषणा HDMI_VSYNC_ACTIVE_HIGH		(1 << 4)
-#घोषणा HDMI_HSYNC_ACTIVE_HIGH		(1 << 3)
+#define HDMI_NULL_PACKETS_DURING_VSYNC	(1 << 9)
+#define HDMI_BORDER_ENABLE		(1 << 7)
+#define HDMI_AUDIO_ENABLE		(1 << 6)
+#define HDMI_VSYNC_ACTIVE_HIGH		(1 << 4)
+#define HDMI_HSYNC_ACTIVE_HIGH		(1 << 3)
 /* hdmi-b control bits */
-#घोषणा	HDMIB_PIPE_B_SELECT		(1 << 30)
+#define	HDMIB_PIPE_B_SELECT		(1 << 30)
 
 
-काष्ठा mid_पूर्णांकel_hdmi_priv अणु
+struct mid_intel_hdmi_priv {
 	u32 hdmi_reg;
 	u32 save_HDMIB;
 	bool has_hdmi_sink;
 	bool has_hdmi_audio;
 	/* Should set this when detect hotplug */
 	bool hdmi_device_connected;
-	काष्ठा i2c_adapter *hdmi_i2c_adapter;	/* क्रम control functions */
-	काष्ठा drm_device *dev;
-पूर्ण;
+	struct i2c_adapter *hdmi_i2c_adapter;	/* for control functions */
+	struct drm_device *dev;
+};
 
-अटल व्योम cdv_hdmi_mode_set(काष्ठा drm_encoder *encoder,
-			काष्ठा drm_display_mode *mode,
-			काष्ठा drm_display_mode *adjusted_mode)
-अणु
-	काष्ठा drm_device *dev = encoder->dev;
-	काष्ठा gma_encoder *gma_encoder = to_gma_encoder(encoder);
-	काष्ठा mid_पूर्णांकel_hdmi_priv *hdmi_priv = gma_encoder->dev_priv;
+static void cdv_hdmi_mode_set(struct drm_encoder *encoder,
+			struct drm_display_mode *mode,
+			struct drm_display_mode *adjusted_mode)
+{
+	struct drm_device *dev = encoder->dev;
+	struct gma_encoder *gma_encoder = to_gma_encoder(encoder);
+	struct mid_intel_hdmi_priv *hdmi_priv = gma_encoder->dev_priv;
 	u32 hdmib;
-	काष्ठा drm_crtc *crtc = encoder->crtc;
-	काष्ठा gma_crtc *gma_crtc = to_gma_crtc(crtc);
+	struct drm_crtc *crtc = encoder->crtc;
+	struct gma_crtc *gma_crtc = to_gma_crtc(crtc);
 
 	hdmib = (2 << 10);
 
-	अगर (adjusted_mode->flags & DRM_MODE_FLAG_PVSYNC)
+	if (adjusted_mode->flags & DRM_MODE_FLAG_PVSYNC)
 		hdmib |= HDMI_VSYNC_ACTIVE_HIGH;
-	अगर (adjusted_mode->flags & DRM_MODE_FLAG_PHSYNC)
+	if (adjusted_mode->flags & DRM_MODE_FLAG_PHSYNC)
 		hdmib |= HDMI_HSYNC_ACTIVE_HIGH;
 
-	अगर (gma_crtc->pipe == 1)
+	if (gma_crtc->pipe == 1)
 		hdmib |= HDMIB_PIPE_B_SELECT;
 
-	अगर (hdmi_priv->has_hdmi_audio) अणु
+	if (hdmi_priv->has_hdmi_audio) {
 		hdmib |= HDMI_AUDIO_ENABLE;
-		hdmib |= HDMI_शून्य_PACKETS_DURING_VSYNC;
-	पूर्ण
+		hdmib |= HDMI_NULL_PACKETS_DURING_VSYNC;
+	}
 
 	REG_WRITE(hdmi_priv->hdmi_reg, hdmib);
 	REG_READ(hdmi_priv->hdmi_reg);
-पूर्ण
+}
 
-अटल व्योम cdv_hdmi_dpms(काष्ठा drm_encoder *encoder, पूर्णांक mode)
-अणु
-	काष्ठा drm_device *dev = encoder->dev;
-	काष्ठा gma_encoder *gma_encoder = to_gma_encoder(encoder);
-	काष्ठा mid_पूर्णांकel_hdmi_priv *hdmi_priv = gma_encoder->dev_priv;
+static void cdv_hdmi_dpms(struct drm_encoder *encoder, int mode)
+{
+	struct drm_device *dev = encoder->dev;
+	struct gma_encoder *gma_encoder = to_gma_encoder(encoder);
+	struct mid_intel_hdmi_priv *hdmi_priv = gma_encoder->dev_priv;
 	u32 hdmib;
 
 	hdmib = REG_READ(hdmi_priv->hdmi_reg);
 
-	अगर (mode != DRM_MODE_DPMS_ON)
+	if (mode != DRM_MODE_DPMS_ON)
 		REG_WRITE(hdmi_priv->hdmi_reg, hdmib & ~HDMIB_PORT_EN);
-	अन्यथा
+	else
 		REG_WRITE(hdmi_priv->hdmi_reg, hdmib | HDMIB_PORT_EN);
 	REG_READ(hdmi_priv->hdmi_reg);
-पूर्ण
+}
 
-अटल व्योम cdv_hdmi_save(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा drm_device *dev = connector->dev;
-	काष्ठा gma_encoder *gma_encoder = gma_attached_encoder(connector);
-	काष्ठा mid_पूर्णांकel_hdmi_priv *hdmi_priv = gma_encoder->dev_priv;
+static void cdv_hdmi_save(struct drm_connector *connector)
+{
+	struct drm_device *dev = connector->dev;
+	struct gma_encoder *gma_encoder = gma_attached_encoder(connector);
+	struct mid_intel_hdmi_priv *hdmi_priv = gma_encoder->dev_priv;
 
 	hdmi_priv->save_HDMIB = REG_READ(hdmi_priv->hdmi_reg);
-पूर्ण
+}
 
-अटल व्योम cdv_hdmi_restore(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा drm_device *dev = connector->dev;
-	काष्ठा gma_encoder *gma_encoder = gma_attached_encoder(connector);
-	काष्ठा mid_पूर्णांकel_hdmi_priv *hdmi_priv = gma_encoder->dev_priv;
+static void cdv_hdmi_restore(struct drm_connector *connector)
+{
+	struct drm_device *dev = connector->dev;
+	struct gma_encoder *gma_encoder = gma_attached_encoder(connector);
+	struct mid_intel_hdmi_priv *hdmi_priv = gma_encoder->dev_priv;
 
 	REG_WRITE(hdmi_priv->hdmi_reg, hdmi_priv->save_HDMIB);
 	REG_READ(hdmi_priv->hdmi_reg);
-पूर्ण
+}
 
-अटल क्रमागत drm_connector_status cdv_hdmi_detect(
-				काष्ठा drm_connector *connector, bool क्रमce)
-अणु
-	काष्ठा gma_encoder *gma_encoder = gma_attached_encoder(connector);
-	काष्ठा mid_पूर्णांकel_hdmi_priv *hdmi_priv = gma_encoder->dev_priv;
-	काष्ठा edid *edid = शून्य;
-	क्रमागत drm_connector_status status = connector_status_disconnected;
+static enum drm_connector_status cdv_hdmi_detect(
+				struct drm_connector *connector, bool force)
+{
+	struct gma_encoder *gma_encoder = gma_attached_encoder(connector);
+	struct mid_intel_hdmi_priv *hdmi_priv = gma_encoder->dev_priv;
+	struct edid *edid = NULL;
+	enum drm_connector_status status = connector_status_disconnected;
 
 	edid = drm_get_edid(connector, &gma_encoder->i2c_bus->adapter);
 
 	hdmi_priv->has_hdmi_sink = false;
 	hdmi_priv->has_hdmi_audio = false;
-	अगर (edid) अणु
-		अगर (edid->input & DRM_EDID_INPUT_DIGITAL) अणु
+	if (edid) {
+		if (edid->input & DRM_EDID_INPUT_DIGITAL) {
 			status = connector_status_connected;
 			hdmi_priv->has_hdmi_sink =
 						drm_detect_hdmi_monitor(edid);
 			hdmi_priv->has_hdmi_audio =
 						drm_detect_monitor_audio(edid);
-		पूर्ण
-		kमुक्त(edid);
-	पूर्ण
-	वापस status;
-पूर्ण
+		}
+		kfree(edid);
+	}
+	return status;
+}
 
-अटल पूर्णांक cdv_hdmi_set_property(काष्ठा drm_connector *connector,
-				       काष्ठा drm_property *property,
-				       uपूर्णांक64_t value)
-अणु
-	काष्ठा drm_encoder *encoder = connector->encoder;
+static int cdv_hdmi_set_property(struct drm_connector *connector,
+				       struct drm_property *property,
+				       uint64_t value)
+{
+	struct drm_encoder *encoder = connector->encoder;
 
-	अगर (!म_भेद(property->name, "scaling mode") && encoder) अणु
-		काष्ठा gma_crtc *crtc = to_gma_crtc(encoder->crtc);
+	if (!strcmp(property->name, "scaling mode") && encoder) {
+		struct gma_crtc *crtc = to_gma_crtc(encoder->crtc);
 		bool centre;
-		uपूर्णांक64_t curValue;
+		uint64_t curValue;
 
-		अगर (!crtc)
-			वापस -1;
+		if (!crtc)
+			return -1;
 
-		चयन (value) अणु
-		हाल DRM_MODE_SCALE_FULLSCREEN:
-			अवरोध;
-		हाल DRM_MODE_SCALE_NO_SCALE:
-			अवरोध;
-		हाल DRM_MODE_SCALE_ASPECT:
-			अवरोध;
-		शेष:
-			वापस -1;
-		पूर्ण
+		switch (value) {
+		case DRM_MODE_SCALE_FULLSCREEN:
+			break;
+		case DRM_MODE_SCALE_NO_SCALE:
+			break;
+		case DRM_MODE_SCALE_ASPECT:
+			break;
+		default:
+			return -1;
+		}
 
-		अगर (drm_object_property_get_value(&connector->base,
+		if (drm_object_property_get_value(&connector->base,
 							property, &curValue))
-			वापस -1;
+			return -1;
 
-		अगर (curValue == value)
-			वापस 0;
+		if (curValue == value)
+			return 0;
 
-		अगर (drm_object_property_set_value(&connector->base,
+		if (drm_object_property_set_value(&connector->base,
 							property, value))
-			वापस -1;
+			return -1;
 
 		centre = (curValue == DRM_MODE_SCALE_NO_SCALE) ||
 			(value == DRM_MODE_SCALE_NO_SCALE);
 
-		अगर (crtc->saved_mode.hdisplay != 0 &&
-		    crtc->saved_mode.vdisplay != 0) अणु
-			अगर (centre) अणु
-				अगर (!drm_crtc_helper_set_mode(encoder->crtc, &crtc->saved_mode,
+		if (crtc->saved_mode.hdisplay != 0 &&
+		    crtc->saved_mode.vdisplay != 0) {
+			if (centre) {
+				if (!drm_crtc_helper_set_mode(encoder->crtc, &crtc->saved_mode,
 					    encoder->crtc->x, encoder->crtc->y, encoder->crtc->primary->fb))
-					वापस -1;
-			पूर्ण अन्यथा अणु
-				स्थिर काष्ठा drm_encoder_helper_funcs *helpers
-						    = encoder->helper_निजी;
+					return -1;
+			} else {
+				const struct drm_encoder_helper_funcs *helpers
+						    = encoder->helper_private;
 				helpers->mode_set(encoder, &crtc->saved_mode,
 					     &crtc->saved_adjusted_mode);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	वापस 0;
-पूर्ण
+			}
+		}
+	}
+	return 0;
+}
 
 /*
- * Return the list of HDMI DDC modes अगर available.
+ * Return the list of HDMI DDC modes if available.
  */
-अटल पूर्णांक cdv_hdmi_get_modes(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा gma_encoder *gma_encoder = gma_attached_encoder(connector);
-	काष्ठा edid *edid = शून्य;
-	पूर्णांक ret = 0;
+static int cdv_hdmi_get_modes(struct drm_connector *connector)
+{
+	struct gma_encoder *gma_encoder = gma_attached_encoder(connector);
+	struct edid *edid = NULL;
+	int ret = 0;
 
 	edid = drm_get_edid(connector, &gma_encoder->i2c_bus->adapter);
-	अगर (edid) अणु
+	if (edid) {
 		drm_connector_update_edid_property(connector, edid);
 		ret = drm_add_edid_modes(connector, edid);
-		kमुक्त(edid);
-	पूर्ण
-	वापस ret;
-पूर्ण
+		kfree(edid);
+	}
+	return ret;
+}
 
-अटल क्रमागत drm_mode_status cdv_hdmi_mode_valid(काष्ठा drm_connector *connector,
-				 काष्ठा drm_display_mode *mode)
-अणु
-	अगर (mode->घड़ी > 165000)
-		वापस MODE_CLOCK_HIGH;
-	अगर (mode->घड़ी < 20000)
-		वापस MODE_CLOCK_HIGH;
+static enum drm_mode_status cdv_hdmi_mode_valid(struct drm_connector *connector,
+				 struct drm_display_mode *mode)
+{
+	if (mode->clock > 165000)
+		return MODE_CLOCK_HIGH;
+	if (mode->clock < 20000)
+		return MODE_CLOCK_HIGH;
 
-	/* just in हाल */
-	अगर (mode->flags & DRM_MODE_FLAG_DBLSCAN)
-		वापस MODE_NO_DBLESCAN;
+	/* just in case */
+	if (mode->flags & DRM_MODE_FLAG_DBLSCAN)
+		return MODE_NO_DBLESCAN;
 
-	/* just in हाल */
-	अगर (mode->flags & DRM_MODE_FLAG_INTERLACE)
-		वापस MODE_NO_INTERLACE;
+	/* just in case */
+	if (mode->flags & DRM_MODE_FLAG_INTERLACE)
+		return MODE_NO_INTERLACE;
 
-	वापस MODE_OK;
-पूर्ण
+	return MODE_OK;
+}
 
-अटल व्योम cdv_hdmi_destroy(काष्ठा drm_connector *connector)
-अणु
-	काष्ठा gma_encoder *gma_encoder = gma_attached_encoder(connector);
+static void cdv_hdmi_destroy(struct drm_connector *connector)
+{
+	struct gma_encoder *gma_encoder = gma_attached_encoder(connector);
 
-	psb_पूर्णांकel_i2c_destroy(gma_encoder->i2c_bus);
-	drm_connector_unरेजिस्टर(connector);
+	psb_intel_i2c_destroy(gma_encoder->i2c_bus);
+	drm_connector_unregister(connector);
 	drm_connector_cleanup(connector);
-	kमुक्त(connector);
-पूर्ण
+	kfree(connector);
+}
 
-अटल स्थिर काष्ठा drm_encoder_helper_funcs cdv_hdmi_helper_funcs = अणु
+static const struct drm_encoder_helper_funcs cdv_hdmi_helper_funcs = {
 	.dpms = cdv_hdmi_dpms,
 	.prepare = gma_encoder_prepare,
 	.mode_set = cdv_hdmi_mode_set,
 	.commit = gma_encoder_commit,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा drm_connector_helper_funcs
-					cdv_hdmi_connector_helper_funcs = अणु
+static const struct drm_connector_helper_funcs
+					cdv_hdmi_connector_helper_funcs = {
 	.get_modes = cdv_hdmi_get_modes,
 	.mode_valid = cdv_hdmi_mode_valid,
 	.best_encoder = gma_best_encoder,
-पूर्ण;
+};
 
-अटल स्थिर काष्ठा drm_connector_funcs cdv_hdmi_connector_funcs = अणु
+static const struct drm_connector_funcs cdv_hdmi_connector_funcs = {
 	.dpms = drm_helper_connector_dpms,
 	.detect = cdv_hdmi_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.set_property = cdv_hdmi_set_property,
 	.destroy = cdv_hdmi_destroy,
-पूर्ण;
+};
 
-व्योम cdv_hdmi_init(काष्ठा drm_device *dev,
-			काष्ठा psb_पूर्णांकel_mode_device *mode_dev, पूर्णांक reg)
-अणु
-	काष्ठा gma_encoder *gma_encoder;
-	काष्ठा gma_connector *gma_connector;
-	काष्ठा drm_connector *connector;
-	काष्ठा drm_encoder *encoder;
-	काष्ठा mid_पूर्णांकel_hdmi_priv *hdmi_priv;
-	पूर्णांक ddc_bus;
+void cdv_hdmi_init(struct drm_device *dev,
+			struct psb_intel_mode_device *mode_dev, int reg)
+{
+	struct gma_encoder *gma_encoder;
+	struct gma_connector *gma_connector;
+	struct drm_connector *connector;
+	struct drm_encoder *encoder;
+	struct mid_intel_hdmi_priv *hdmi_priv;
+	int ddc_bus;
 
-	gma_encoder = kzalloc(माप(काष्ठा gma_encoder), GFP_KERNEL);
+	gma_encoder = kzalloc(sizeof(struct gma_encoder), GFP_KERNEL);
 
-	अगर (!gma_encoder)
-		वापस;
+	if (!gma_encoder)
+		return;
 
-	gma_connector = kzalloc(माप(काष्ठा gma_connector),
+	gma_connector = kzalloc(sizeof(struct gma_connector),
 				      GFP_KERNEL);
 
-	अगर (!gma_connector)
-		जाओ err_connector;
+	if (!gma_connector)
+		goto err_connector;
 
-	hdmi_priv = kzalloc(माप(काष्ठा mid_पूर्णांकel_hdmi_priv), GFP_KERNEL);
+	hdmi_priv = kzalloc(sizeof(struct mid_intel_hdmi_priv), GFP_KERNEL);
 
-	अगर (!hdmi_priv)
-		जाओ err_priv;
+	if (!hdmi_priv)
+		goto err_priv;
 
 	connector = &gma_connector->base;
 	connector->polled = DRM_CONNECTOR_POLL_HPD;
@@ -321,46 +320,46 @@
 	drm_connector_helper_add(connector,
 				 &cdv_hdmi_connector_helper_funcs);
 	connector->display_info.subpixel_order = SubPixelHorizontalRGB;
-	connector->पूर्णांकerlace_allowed = false;
-	connector->द्विगुनscan_allowed = false;
+	connector->interlace_allowed = false;
+	connector->doublescan_allowed = false;
 
 	drm_object_attach_property(&connector->base,
 				      dev->mode_config.scaling_mode_property,
 				      DRM_MODE_SCALE_FULLSCREEN);
 
-	चयन (reg) अणु
-	हाल SDVOB:
+	switch (reg) {
+	case SDVOB:
 		ddc_bus = GPIOE;
 		gma_encoder->ddi_select = DDI0_SELECT;
-		अवरोध;
-	हाल SDVOC:
+		break;
+	case SDVOC:
 		ddc_bus = GPIOD;
 		gma_encoder->ddi_select = DDI1_SELECT;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		DRM_ERROR("unknown reg 0x%x for HDMI\n", reg);
-		जाओ failed_ddc;
-		अवरोध;
-	पूर्ण
+		goto failed_ddc;
+		break;
+	}
 
-	gma_encoder->i2c_bus = psb_पूर्णांकel_i2c_create(dev,
+	gma_encoder->i2c_bus = psb_intel_i2c_create(dev,
 				ddc_bus, (reg == SDVOB) ? "HDMIB" : "HDMIC");
 
-	अगर (!gma_encoder->i2c_bus) अणु
+	if (!gma_encoder->i2c_bus) {
 		dev_err(dev->dev, "No ddc adapter available!\n");
-		जाओ failed_ddc;
-	पूर्ण
+		goto failed_ddc;
+	}
 
 	hdmi_priv->hdmi_i2c_adapter = &(gma_encoder->i2c_bus->adapter);
 	hdmi_priv->dev = dev;
-	drm_connector_रेजिस्टर(connector);
-	वापस;
+	drm_connector_register(connector);
+	return;
 
 failed_ddc:
 	drm_encoder_cleanup(encoder);
 	drm_connector_cleanup(connector);
 err_priv:
-	kमुक्त(gma_connector);
+	kfree(gma_connector);
 err_connector:
-	kमुक्त(gma_encoder);
-पूर्ण
+	kfree(gma_encoder);
+}

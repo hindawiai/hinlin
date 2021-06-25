@@ -1,320 +1,319 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright oडट 2010 - 2015 UNISYS CORPORATION
+ * Copyright � 2010 - 2015 UNISYS CORPORATION
  * All rights reserved.
  */
 
-#समावेश <linux/प्रकार.स>
-#समावेश <linux/debugfs.h>
-#समावेश <linux/module.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/visorbus.h>
-#समावेश <linux/uuid.h>
+#include <linux/ctype.h>
+#include <linux/debugfs.h>
+#include <linux/module.h>
+#include <linux/slab.h>
+#include <linux/visorbus.h>
+#include <linux/uuid.h>
 
-#समावेश "visorbus_private.h"
+#include "visorbus_private.h"
 
-अटल स्थिर guid_t visor_vbus_channel_guid = VISOR_VBUS_CHANNEL_GUID;
+static const guid_t visor_vbus_channel_guid = VISOR_VBUS_CHANNEL_GUID;
 
-/* Display string that is guaranteed to be no दीर्घer the 99 अक्षरacters */
-#घोषणा LINESIZE 99
-#घोषणा POLLJIFFIES_NORMALCHANNEL 10
+/* Display string that is guaranteed to be no longer the 99 characters */
+#define LINESIZE 99
+#define POLLJIFFIES_NORMALCHANNEL 10
 
 /* stores whether bus_registration was successful */
-अटल bool initialized;
-अटल काष्ठा dentry *visorbus_debugfs_dir;
+static bool initialized;
+static struct dentry *visorbus_debugfs_dir;
 
 /*
  * DEVICE type attributes
  *
  * The modalias file will contain the guid of the device.
  */
-अटल sमाप_प्रकार modalias_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा visor_device *vdev;
-	स्थिर guid_t *guid;
+static ssize_t modalias_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct visor_device *vdev;
+	const guid_t *guid;
 
 	vdev = to_visor_device(dev);
 	guid = visorchannel_get_guid(vdev->visorchannel);
-	वापस प्र_लिखो(buf, "visorbus:%pUl\n", guid);
-पूर्ण
-अटल DEVICE_ATTR_RO(modalias);
+	return sprintf(buf, "visorbus:%pUl\n", guid);
+}
+static DEVICE_ATTR_RO(modalias);
 
-अटल काष्ठा attribute *visorbus_dev_attrs[] = अणु
+static struct attribute *visorbus_dev_attrs[] = {
 	&dev_attr_modalias.attr,
-	शून्य,
-पूर्ण;
+	NULL,
+};
 
 ATTRIBUTE_GROUPS(visorbus_dev);
 
-/* filled in with info about parent chipset driver when we रेजिस्टर with it */
-अटल काष्ठा visor_vbus_deviceinfo chipset_driverinfo;
+/* filled in with info about parent chipset driver when we register with it */
+static struct visor_vbus_deviceinfo chipset_driverinfo;
 /* filled in with info about this driver, wrt it servicing client busses */
-अटल काष्ठा visor_vbus_deviceinfo clientbus_driverinfo;
+static struct visor_vbus_deviceinfo clientbus_driverinfo;
 
-/* list of visor_device काष्ठाs, linked via .list_all */
-अटल LIST_HEAD(list_all_bus_instances);
-/* list of visor_device काष्ठाs, linked via .list_all */
-अटल LIST_HEAD(list_all_device_instances);
+/* list of visor_device structs, linked via .list_all */
+static LIST_HEAD(list_all_bus_instances);
+/* list of visor_device structs, linked via .list_all */
+static LIST_HEAD(list_all_device_instances);
 
 /*
- * Generic function useful क्रम validating any type of channel when it is
+ * Generic function useful for validating any type of channel when it is
  * received by the client that will be accessing the channel.
- * Note that <logCtx> is only needed क्रम callers in the EFI environment, and
+ * Note that <logCtx> is only needed for callers in the EFI environment, and
  * is used to pass the EFI_DIAG_CAPTURE_PROTOCOL needed to log messages.
  */
-पूर्णांक visor_check_channel(काष्ठा channel_header *ch, काष्ठा device *dev,
-			स्थिर guid_t *expected_guid, अक्षर *chname,
+int visor_check_channel(struct channel_header *ch, struct device *dev,
+			const guid_t *expected_guid, char *chname,
 			u64 expected_min_bytes, u32 expected_version,
 			u64 expected_signature)
-अणु
-	अगर (!guid_is_null(expected_guid)) अणु
-		/* caller wants us to verअगरy type GUID */
-		अगर (!guid_equal(&ch->chtype, expected_guid)) अणु
+{
+	if (!guid_is_null(expected_guid)) {
+		/* caller wants us to verify type GUID */
+		if (!guid_equal(&ch->chtype, expected_guid)) {
 			dev_err(dev, "Channel mismatch on channel=%s(%pUL) field=type expected=%pUL actual=%pUL\n",
 				chname, expected_guid, expected_guid,
 				&ch->chtype);
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	/* verअगरy channel size */
-	अगर (expected_min_bytes > 0) अणु
-		अगर (ch->size < expected_min_bytes) अणु
+			return 0;
+		}
+	}
+	/* verify channel size */
+	if (expected_min_bytes > 0) {
+		if (ch->size < expected_min_bytes) {
 			dev_err(dev, "Channel mismatch on channel=%s(%pUL) field=size expected=0x%-8.8Lx actual=0x%-8.8Lx\n",
 				chname, expected_guid,
-				(अचिन्हित दीर्घ दीर्घ)expected_min_bytes,
+				(unsigned long long)expected_min_bytes,
 				ch->size);
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	/* verअगरy channel version */
-	अगर (expected_version > 0) अणु
-		अगर (ch->version_id != expected_version) अणु
+			return 0;
+		}
+	}
+	/* verify channel version */
+	if (expected_version > 0) {
+		if (ch->version_id != expected_version) {
 			dev_err(dev, "Channel mismatch on channel=%s(%pUL) field=version expected=0x%-8.8lx actual=0x%-8.8x\n",
 				chname, expected_guid,
-				(अचिन्हित दीर्घ)expected_version,
+				(unsigned long)expected_version,
 				ch->version_id);
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	/* verअगरy channel signature */
-	अगर (expected_signature > 0) अणु
-		अगर (ch->signature != expected_signature) अणु
+			return 0;
+		}
+	}
+	/* verify channel signature */
+	if (expected_signature > 0) {
+		if (ch->signature != expected_signature) {
 			dev_err(dev, "Channel mismatch on channel=%s(%pUL) field=signature expected=0x%-8.8Lx actual=0x%-8.8Lx\n",
 				chname, expected_guid,	expected_signature,
 				ch->signature);
-			वापस 0;
-		पूर्ण
-	पूर्ण
-	वापस 1;
-पूर्ण
+			return 0;
+		}
+	}
+	return 1;
+}
 
-अटल पूर्णांक visorbus_uevent(काष्ठा device *xdev, काष्ठा kobj_uevent_env *env)
-अणु
-	काष्ठा visor_device *dev;
-	स्थिर guid_t *guid;
+static int visorbus_uevent(struct device *xdev, struct kobj_uevent_env *env)
+{
+	struct visor_device *dev;
+	const guid_t *guid;
 
 	dev = to_visor_device(xdev);
 	guid = visorchannel_get_guid(dev->visorchannel);
-	वापस add_uevent_var(env, "MODALIAS=visorbus:%pUl", guid);
-पूर्ण
+	return add_uevent_var(env, "MODALIAS=visorbus:%pUl", guid);
+}
 
 /*
- * visorbus_match() - called स्वतःmatically upon adding a visor_device
+ * visorbus_match() - called automatically upon adding a visor_device
  *                    (device_add), or adding a visor_driver
- *                    (visorbus_रेजिस्टर_visor_driver)
- * @xdev: काष्ठा device क्रम the device being matched
- * @xdrv: काष्ठा device_driver क्रम driver to match device against
+ *                    (visorbus_register_visor_driver)
+ * @xdev: struct device for the device being matched
+ * @xdrv: struct device_driver for driver to match device against
  *
- * Return: 1 अगरf the provided driver can control the specअगरied device
+ * Return: 1 iff the provided driver can control the specified device
  */
-अटल पूर्णांक visorbus_match(काष्ठा device *xdev, काष्ठा device_driver *xdrv)
-अणु
-	स्थिर guid_t *channel_type;
-	पूर्णांक i;
-	काष्ठा visor_device *dev;
-	काष्ठा visor_driver *drv;
-	काष्ठा visorchannel *chan;
+static int visorbus_match(struct device *xdev, struct device_driver *xdrv)
+{
+	const guid_t *channel_type;
+	int i;
+	struct visor_device *dev;
+	struct visor_driver *drv;
+	struct visorchannel *chan;
 
 	dev = to_visor_device(xdev);
 	channel_type = visorchannel_get_guid(dev->visorchannel);
 	drv = to_visor_driver(xdrv);
 	chan = dev->visorchannel;
-	अगर (!drv->channel_types)
-		वापस 0;
-	क्रम (i = 0; !guid_is_null(&drv->channel_types[i].guid); i++)
-		अगर (guid_equal(&drv->channel_types[i].guid, channel_type) &&
+	if (!drv->channel_types)
+		return 0;
+	for (i = 0; !guid_is_null(&drv->channel_types[i].guid); i++)
+		if (guid_equal(&drv->channel_types[i].guid, channel_type) &&
 		    visor_check_channel(visorchannel_get_header(chan),
 					xdev,
 					&drv->channel_types[i].guid,
-					(अक्षर *)drv->channel_types[i].name,
+					(char *)drv->channel_types[i].name,
 					drv->channel_types[i].min_bytes,
 					drv->channel_types[i].version,
 					VISOR_CHANNEL_SIGNATURE))
-			वापस i + 1;
-	वापस 0;
-पूर्ण
+			return i + 1;
+	return 0;
+}
 
 /*
  * This describes the TYPE of bus.
  * (Don't confuse this with an INSTANCE of the bus.)
  */
-अटल काष्ठा bus_type visorbus_type = अणु
+static struct bus_type visorbus_type = {
 	.name = "visorbus",
 	.match = visorbus_match,
 	.uevent = visorbus_uevent,
 	.dev_groups = visorbus_dev_groups,
-पूर्ण;
+};
 
-काष्ठा visor_busdev अणु
+struct visor_busdev {
 	u32 bus_no;
 	u32 dev_no;
-पूर्ण;
+};
 
-अटल पूर्णांक match_visorbus_dev_by_id(काष्ठा device *dev, स्थिर व्योम *data)
-अणु
-	काष्ठा visor_device *vdev = to_visor_device(dev);
-	स्थिर काष्ठा visor_busdev *id = data;
+static int match_visorbus_dev_by_id(struct device *dev, const void *data)
+{
+	struct visor_device *vdev = to_visor_device(dev);
+	const struct visor_busdev *id = data;
 
-	अगर (vdev->chipset_bus_no == id->bus_no &&
+	if (vdev->chipset_bus_no == id->bus_no &&
 	    vdev->chipset_dev_no == id->dev_no)
-		वापस 1;
-	वापस 0;
-पूर्ण
+		return 1;
+	return 0;
+}
 
-काष्ठा visor_device *visorbus_get_device_by_id(u32 bus_no, u32 dev_no,
-					       काष्ठा visor_device *from)
-अणु
-	काष्ठा device *dev;
-	काष्ठा device *dev_start = शून्य;
-	काष्ठा visor_busdev id = अणु
+struct visor_device *visorbus_get_device_by_id(u32 bus_no, u32 dev_no,
+					       struct visor_device *from)
+{
+	struct device *dev;
+	struct device *dev_start = NULL;
+	struct visor_busdev id = {
 		.bus_no = bus_no,
 		.dev_no = dev_no
-	पूर्ण;
+	};
 
-	अगर (from)
+	if (from)
 		dev_start = &from->device;
-	dev = bus_find_device(&visorbus_type, dev_start, (व्योम *)&id,
+	dev = bus_find_device(&visorbus_type, dev_start, (void *)&id,
 			      match_visorbus_dev_by_id);
-	अगर (!dev)
-		वापस शून्य;
-	वापस to_visor_device(dev);
-पूर्ण
+	if (!dev)
+		return NULL;
+	return to_visor_device(dev);
+}
 
 /*
- * visorbus_release_busdevice() - called when device_unरेजिस्टर() is called क्रम
+ * visorbus_release_busdevice() - called when device_unregister() is called for
  *                                the bus device instance, after all other tasks
  *                                involved with destroying the dev are complete
- * @xdev: काष्ठा device क्रम the bus being released
+ * @xdev: struct device for the bus being released
  */
-अटल व्योम visorbus_release_busdevice(काष्ठा device *xdev)
-अणु
-	काष्ठा visor_device *dev = dev_get_drvdata(xdev);
+static void visorbus_release_busdevice(struct device *xdev)
+{
+	struct visor_device *dev = dev_get_drvdata(xdev);
 
-	debugfs_हटाओ(dev->debugfs_bus_info);
-	debugfs_हटाओ_recursive(dev->debugfs_dir);
+	debugfs_remove(dev->debugfs_bus_info);
+	debugfs_remove_recursive(dev->debugfs_dir);
 	visorchannel_destroy(dev->visorchannel);
-	kमुक्त(dev);
-पूर्ण
+	kfree(dev);
+}
 
 /*
- * visorbus_release_device() - called when device_unरेजिस्टर() is called क्रम
+ * visorbus_release_device() - called when device_unregister() is called for
  *                             each child device instance
- * @xdev: काष्ठा device क्रम the visor device being released
+ * @xdev: struct device for the visor device being released
  */
-अटल व्योम visorbus_release_device(काष्ठा device *xdev)
-अणु
-	काष्ठा visor_device *dev = to_visor_device(xdev);
+static void visorbus_release_device(struct device *xdev)
+{
+	struct visor_device *dev = to_visor_device(xdev);
 
 	visorchannel_destroy(dev->visorchannel);
-	kमुक्त(dev);
-पूर्ण
+	kfree(dev);
+}
 
 /*
- * BUS specअगरic channel attributes to appear under
+ * BUS specific channel attributes to appear under
  * /sys/bus/visorbus<x>/dev<y>/channel
  */
 
-अटल sमाप_प्रकार physaddr_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा visor_device *vdev = to_visor_device(dev);
+static ssize_t physaddr_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct visor_device *vdev = to_visor_device(dev);
 
-	वापस प्र_लिखो(buf, "0x%llx\n",
+	return sprintf(buf, "0x%llx\n",
 		       visorchannel_get_physaddr(vdev->visorchannel));
-पूर्ण
-अटल DEVICE_ATTR_RO(physaddr);
+}
+static DEVICE_ATTR_RO(physaddr);
 
-अटल sमाप_प्रकार nbytes_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			   अक्षर *buf)
-अणु
-	काष्ठा visor_device *vdev = to_visor_device(dev);
+static ssize_t nbytes_show(struct device *dev, struct device_attribute *attr,
+			   char *buf)
+{
+	struct visor_device *vdev = to_visor_device(dev);
 
-	वापस प्र_लिखो(buf, "0x%lx\n",
+	return sprintf(buf, "0x%lx\n",
 		       visorchannel_get_nbytes(vdev->visorchannel));
-पूर्ण
-अटल DEVICE_ATTR_RO(nbytes);
+}
+static DEVICE_ATTR_RO(nbytes);
 
-अटल sमाप_प्रकार clientpartition_show(काष्ठा device *dev,
-				    काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा visor_device *vdev = to_visor_device(dev);
+static ssize_t clientpartition_show(struct device *dev,
+				    struct device_attribute *attr, char *buf)
+{
+	struct visor_device *vdev = to_visor_device(dev);
 
-	वापस प्र_लिखो(buf, "0x%llx\n",
+	return sprintf(buf, "0x%llx\n",
 		       visorchannel_get_clientpartition(vdev->visorchannel));
-पूर्ण
-अटल DEVICE_ATTR_RO(clientpartition);
+}
+static DEVICE_ATTR_RO(clientpartition);
 
-अटल sमाप_प्रकार typeguid_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा visor_device *vdev = to_visor_device(dev);
-	अक्षर typeid[LINESIZE];
+static ssize_t typeguid_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct visor_device *vdev = to_visor_device(dev);
+	char typeid[LINESIZE];
 
-	वापस प्र_लिखो(buf, "%s\n",
+	return sprintf(buf, "%s\n",
 		       visorchannel_id(vdev->visorchannel, typeid));
-पूर्ण
-अटल DEVICE_ATTR_RO(typeguid);
+}
+static DEVICE_ATTR_RO(typeguid);
 
-अटल sमाप_प्रकार zoneguid_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	काष्ठा visor_device *vdev = to_visor_device(dev);
-	अक्षर zoneid[LINESIZE];
+static ssize_t zoneguid_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	struct visor_device *vdev = to_visor_device(dev);
+	char zoneid[LINESIZE];
 
-	वापस प्र_लिखो(buf, "%s\n",
+	return sprintf(buf, "%s\n",
 		       visorchannel_zoneid(vdev->visorchannel, zoneid));
-पूर्ण
-अटल DEVICE_ATTR_RO(zoneguid);
+}
+static DEVICE_ATTR_RO(zoneguid);
 
-अटल sमाप_प्रकार typename_show(काष्ठा device *dev, काष्ठा device_attribute *attr,
-			     अक्षर *buf)
-अणु
-	पूर्णांक i = 0;
-	काष्ठा bus_type *xbus = dev->bus;
-	काष्ठा device_driver *xdrv = dev->driver;
-	काष्ठा visor_driver *drv = शून्य;
+static ssize_t typename_show(struct device *dev, struct device_attribute *attr,
+			     char *buf)
+{
+	int i = 0;
+	struct bus_type *xbus = dev->bus;
+	struct device_driver *xdrv = dev->driver;
+	struct visor_driver *drv = NULL;
 
-	अगर (!xdrv)
-		वापस 0;
+	if (!xdrv)
+		return 0;
 	i = xbus->match(dev, xdrv);
-	अगर (!i)
-		वापस 0;
+	if (!i)
+		return 0;
 	drv = to_visor_driver(xdrv);
-	वापस प्र_लिखो(buf, "%s\n", drv->channel_types[i - 1].name);
-पूर्ण
-अटल DEVICE_ATTR_RO(typename);
+	return sprintf(buf, "%s\n", drv->channel_types[i - 1].name);
+}
+static DEVICE_ATTR_RO(typename);
 
-अटल काष्ठा attribute *channel_attrs[] = अणु
+static struct attribute *channel_attrs[] = {
 	&dev_attr_physaddr.attr,
 	&dev_attr_nbytes.attr,
 	&dev_attr_clientpartition.attr,
 	&dev_attr_typeguid.attr,
 	&dev_attr_zoneguid.attr,
 	&dev_attr_typename.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
 ATTRIBUTE_GROUPS(channel);
 
@@ -324,76 +323,76 @@ ATTRIBUTE_GROUPS(channel);
  *  define & implement display of bus attributes under
  *  /sys/bus/visorbus/devices/visorbus<n>.
  */
-अटल sमाप_प्रकार partition_handle_show(काष्ठा device *dev,
-				     काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा visor_device *vdev = to_visor_device(dev);
+static ssize_t partition_handle_show(struct device *dev,
+				     struct device_attribute *attr, char *buf)
+{
+	struct visor_device *vdev = to_visor_device(dev);
 	u64 handle = visorchannel_get_clientpartition(vdev->visorchannel);
 
-	वापस प्र_लिखो(buf, "0x%llx\n", handle);
-पूर्ण
-अटल DEVICE_ATTR_RO(partition_handle);
+	return sprintf(buf, "0x%llx\n", handle);
+}
+static DEVICE_ATTR_RO(partition_handle);
 
-अटल sमाप_प्रकार partition_guid_show(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा visor_device *vdev = to_visor_device(dev);
+static ssize_t partition_guid_show(struct device *dev,
+				   struct device_attribute *attr, char *buf)
+{
+	struct visor_device *vdev = to_visor_device(dev);
 
-	वापस प्र_लिखो(buf, "{%pUb}\n", &vdev->partition_guid);
-पूर्ण
-अटल DEVICE_ATTR_RO(partition_guid);
+	return sprintf(buf, "{%pUb}\n", &vdev->partition_guid);
+}
+static DEVICE_ATTR_RO(partition_guid);
 
-अटल sमाप_प्रकार partition_name_show(काष्ठा device *dev,
-				   काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा visor_device *vdev = to_visor_device(dev);
+static ssize_t partition_name_show(struct device *dev,
+				   struct device_attribute *attr, char *buf)
+{
+	struct visor_device *vdev = to_visor_device(dev);
 
-	वापस प्र_लिखो(buf, "%s\n", vdev->name);
-पूर्ण
-अटल DEVICE_ATTR_RO(partition_name);
+	return sprintf(buf, "%s\n", vdev->name);
+}
+static DEVICE_ATTR_RO(partition_name);
 
-अटल sमाप_प्रकार channel_addr_show(काष्ठा device *dev,
-				 काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा visor_device *vdev = to_visor_device(dev);
+static ssize_t channel_addr_show(struct device *dev,
+				 struct device_attribute *attr, char *buf)
+{
+	struct visor_device *vdev = to_visor_device(dev);
 	u64 addr = visorchannel_get_physaddr(vdev->visorchannel);
 
-	वापस प्र_लिखो(buf, "0x%llx\n", addr);
-पूर्ण
-अटल DEVICE_ATTR_RO(channel_addr);
+	return sprintf(buf, "0x%llx\n", addr);
+}
+static DEVICE_ATTR_RO(channel_addr);
 
-अटल sमाप_प्रकार channel_bytes_show(काष्ठा device *dev,
-				  काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा visor_device *vdev = to_visor_device(dev);
+static ssize_t channel_bytes_show(struct device *dev,
+				  struct device_attribute *attr, char *buf)
+{
+	struct visor_device *vdev = to_visor_device(dev);
 	u64 nbytes = visorchannel_get_nbytes(vdev->visorchannel);
 
-	वापस प्र_लिखो(buf, "0x%llx\n", nbytes);
-पूर्ण
-अटल DEVICE_ATTR_RO(channel_bytes);
+	return sprintf(buf, "0x%llx\n", nbytes);
+}
+static DEVICE_ATTR_RO(channel_bytes);
 
-अटल sमाप_प्रकार channel_id_show(काष्ठा device *dev,
-			       काष्ठा device_attribute *attr, अक्षर *buf)
-अणु
-	काष्ठा visor_device *vdev = to_visor_device(dev);
-	पूर्णांक len = 0;
+static ssize_t channel_id_show(struct device *dev,
+			       struct device_attribute *attr, char *buf)
+{
+	struct visor_device *vdev = to_visor_device(dev);
+	int len = 0;
 
 	visorchannel_id(vdev->visorchannel, buf);
-	len = म_माप(buf);
+	len = strlen(buf);
 	buf[len++] = '\n';
-	वापस len;
-पूर्ण
-अटल DEVICE_ATTR_RO(channel_id);
+	return len;
+}
+static DEVICE_ATTR_RO(channel_id);
 
-अटल काष्ठा attribute *visorbus_attrs[] = अणु
+static struct attribute *visorbus_attrs[] = {
 	&dev_attr_partition_handle.attr,
 	&dev_attr_partition_guid.attr,
 	&dev_attr_partition_name.attr,
 	&dev_attr_channel_addr.attr,
 	&dev_attr_channel_bytes.attr,
 	&dev_attr_channel_id.attr,
-	शून्य
-पूर्ण;
+	NULL
+};
 
 ATTRIBUTE_GROUPS(visorbus);
 
@@ -405,250 +404,250 @@ ATTRIBUTE_GROUPS(visorbus);
  */
 
 /*
- * vbuschannel_prपूर्णांक_devinfo() - क्रमmat a काष्ठा visor_vbus_deviceinfo
- *                               and ग_लिखो it to a seq_file
- * @devinfo: the काष्ठा visor_vbus_deviceinfo to क्रमmat
- * @seq: seq_file to ग_लिखो to
- * @devix: the device index to be included in the output data, or -1 अगर no
+ * vbuschannel_print_devinfo() - format a struct visor_vbus_deviceinfo
+ *                               and write it to a seq_file
+ * @devinfo: the struct visor_vbus_deviceinfo to format
+ * @seq: seq_file to write to
+ * @devix: the device index to be included in the output data, or -1 if no
  *         device index is to be included
  *
- * Reads @devInfo, and ग_लिखोs it in human-पढ़ोable notation to @seq.
+ * Reads @devInfo, and writes it in human-readable notation to @seq.
  */
-अटल व्योम vbuschannel_prपूर्णांक_devinfo(काष्ठा visor_vbus_deviceinfo *devinfo,
-				      काष्ठा seq_file *seq, पूर्णांक devix)
-अणु
+static void vbuschannel_print_devinfo(struct visor_vbus_deviceinfo *devinfo,
+				      struct seq_file *seq, int devix)
+{
 	/* uninitialized vbus device entry */
-	अगर (!है_छाप(devinfo->devtype[0]))
-		वापस;
-	अगर (devix >= 0)
-		seq_म_लिखो(seq, "[%d]", devix);
-	अन्यथा
-		/* vbus device entry is क्रम bus or chipset */
-		seq_माला_दो(seq, "   ");
+	if (!isprint(devinfo->devtype[0]))
+		return;
+	if (devix >= 0)
+		seq_printf(seq, "[%d]", devix);
+	else
+		/* vbus device entry is for bus or chipset */
+		seq_puts(seq, "   ");
 	/*
-	 * Note: because the s-Par back-end is मुक्त to scribble in this area,
+	 * Note: because the s-Par back-end is free to scribble in this area,
 	 * we never assume '\0'-termination.
 	 */
-	seq_म_लिखो(seq, "%-*.*s ", (पूर्णांक)माप(devinfo->devtype),
-		   (पूर्णांक)माप(devinfo->devtype), devinfo->devtype);
-	seq_म_लिखो(seq, "%-*.*s ", (पूर्णांक)माप(devinfo->drvname),
-		   (पूर्णांक)माप(devinfo->drvname), devinfo->drvname);
-	seq_म_लिखो(seq, "%.*s\n", (पूर्णांक)माप(devinfo->infostrs),
+	seq_printf(seq, "%-*.*s ", (int)sizeof(devinfo->devtype),
+		   (int)sizeof(devinfo->devtype), devinfo->devtype);
+	seq_printf(seq, "%-*.*s ", (int)sizeof(devinfo->drvname),
+		   (int)sizeof(devinfo->drvname), devinfo->drvname);
+	seq_printf(seq, "%.*s\n", (int)sizeof(devinfo->infostrs),
 		   devinfo->infostrs);
-पूर्ण
+}
 
-अटल पूर्णांक bus_info_debugfs_show(काष्ठा seq_file *seq, व्योम *v)
-अणु
-	पूर्णांक i = 0;
-	अचिन्हित दीर्घ off;
-	काष्ठा visor_vbus_deviceinfo dev_info;
-	काष्ठा visor_device *vdev = seq->निजी;
-	काष्ठा visorchannel *channel = vdev->visorchannel;
+static int bus_info_debugfs_show(struct seq_file *seq, void *v)
+{
+	int i = 0;
+	unsigned long off;
+	struct visor_vbus_deviceinfo dev_info;
+	struct visor_device *vdev = seq->private;
+	struct visorchannel *channel = vdev->visorchannel;
 
-	अगर (!channel)
-		वापस 0;
+	if (!channel)
+		return 0;
 
-	seq_म_लिखो(seq,
+	seq_printf(seq,
 		   "Client device/driver info for %s partition (vbus #%u):\n",
-		   ((vdev->name) ? (अक्षर *)(vdev->name) : ""),
+		   ((vdev->name) ? (char *)(vdev->name) : ""),
 		   vdev->chipset_bus_no);
-	अगर (visorchannel_पढ़ो(channel,
-			      दुरत्व(काष्ठा visor_vbus_channel, chp_info),
-			      &dev_info, माप(dev_info)) >= 0)
-		vbuschannel_prपूर्णांक_devinfo(&dev_info, seq, -1);
-	अगर (visorchannel_पढ़ो(channel,
-			      दुरत्व(काष्ठा visor_vbus_channel, bus_info),
-			      &dev_info, माप(dev_info)) >= 0)
-		vbuschannel_prपूर्णांक_devinfo(&dev_info, seq, -1);
+	if (visorchannel_read(channel,
+			      offsetof(struct visor_vbus_channel, chp_info),
+			      &dev_info, sizeof(dev_info)) >= 0)
+		vbuschannel_print_devinfo(&dev_info, seq, -1);
+	if (visorchannel_read(channel,
+			      offsetof(struct visor_vbus_channel, bus_info),
+			      &dev_info, sizeof(dev_info)) >= 0)
+		vbuschannel_print_devinfo(&dev_info, seq, -1);
 
-	off = दुरत्व(काष्ठा visor_vbus_channel, dev_info);
-	जबतक (off + माप(dev_info) <= visorchannel_get_nbytes(channel)) अणु
-		अगर (visorchannel_पढ़ो(channel, off, &dev_info,
-				      माप(dev_info)) >= 0)
-			vbuschannel_prपूर्णांक_devinfo(&dev_info, seq, i);
-		off += माप(dev_info);
+	off = offsetof(struct visor_vbus_channel, dev_info);
+	while (off + sizeof(dev_info) <= visorchannel_get_nbytes(channel)) {
+		if (visorchannel_read(channel, off, &dev_info,
+				      sizeof(dev_info)) >= 0)
+			vbuschannel_print_devinfo(&dev_info, seq, i);
+		off += sizeof(dev_info);
 		i++;
-	पूर्ण
-	वापस 0;
-पूर्ण
+	}
+	return 0;
+}
 
-अटल पूर्णांक bus_info_debugfs_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	वापस single_खोलो(file, bus_info_debugfs_show, inode->i_निजी);
-पूर्ण
+static int bus_info_debugfs_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, bus_info_debugfs_show, inode->i_private);
+}
 
-अटल स्थिर काष्ठा file_operations bus_info_debugfs_fops = अणु
+static const struct file_operations bus_info_debugfs_fops = {
 	.owner = THIS_MODULE,
-	.खोलो = bus_info_debugfs_खोलो,
-	.पढ़ो = seq_पढ़ो,
+	.open = bus_info_debugfs_open,
+	.read = seq_read,
 	.llseek = seq_lseek,
 	.release = single_release,
-पूर्ण;
+};
 
-अटल व्योम dev_periodic_work(काष्ठा समयr_list *t)
-अणु
-	काष्ठा visor_device *dev = from_समयr(dev, t, समयr);
-	काष्ठा visor_driver *drv = to_visor_driver(dev->device.driver);
+static void dev_periodic_work(struct timer_list *t)
+{
+	struct visor_device *dev = from_timer(dev, t, timer);
+	struct visor_driver *drv = to_visor_driver(dev->device.driver);
 
-	drv->channel_पूर्णांकerrupt(dev);
-	mod_समयr(&dev->समयr, jअगरfies + POLLJIFFIES_NORMALCHANNEL);
-पूर्ण
+	drv->channel_interrupt(dev);
+	mod_timer(&dev->timer, jiffies + POLLJIFFIES_NORMALCHANNEL);
+}
 
-अटल पूर्णांक dev_start_periodic_work(काष्ठा visor_device *dev)
-अणु
-	अगर (dev->being_हटाओd || dev->समयr_active)
-		वापस -EINVAL;
+static int dev_start_periodic_work(struct visor_device *dev)
+{
+	if (dev->being_removed || dev->timer_active)
+		return -EINVAL;
 
 	/* now up by at least 2 */
 	get_device(&dev->device);
-	dev->समयr.expires = jअगरfies + POLLJIFFIES_NORMALCHANNEL;
-	add_समयr(&dev->समयr);
-	dev->समयr_active = true;
-	वापस 0;
-पूर्ण
+	dev->timer.expires = jiffies + POLLJIFFIES_NORMALCHANNEL;
+	add_timer(&dev->timer);
+	dev->timer_active = true;
+	return 0;
+}
 
-अटल व्योम dev_stop_periodic_work(काष्ठा visor_device *dev)
-अणु
-	अगर (!dev->समयr_active)
-		वापस;
+static void dev_stop_periodic_work(struct visor_device *dev)
+{
+	if (!dev->timer_active)
+		return;
 
-	del_समयr_sync(&dev->समयr);
-	dev->समयr_active = false;
+	del_timer_sync(&dev->timer);
+	dev->timer_active = false;
 	put_device(&dev->device);
-पूर्ण
+}
 
 /*
- * visordriver_हटाओ_device() - handle visor device going away
- * @xdev: काष्ठा device क्रम the visor device being हटाओd
+ * visordriver_remove_device() - handle visor device going away
+ * @xdev: struct device for the visor device being removed
  *
- * This is called when device_unरेजिस्टर() is called क्रम each child device
- * instance, to notअगरy the appropriate visorbus function driver that the device
+ * This is called when device_unregister() is called for each child device
+ * instance, to notify the appropriate visorbus function driver that the device
  * is going away, and to decrease the reference count of the device.
  *
- * Return: 0 अगरf successful
+ * Return: 0 iff successful
  */
-अटल पूर्णांक visordriver_हटाओ_device(काष्ठा device *xdev)
-अणु
-	काष्ठा visor_device *dev = to_visor_device(xdev);
-	काष्ठा visor_driver *drv = to_visor_driver(xdev->driver);
+static int visordriver_remove_device(struct device *xdev)
+{
+	struct visor_device *dev = to_visor_device(xdev);
+	struct visor_driver *drv = to_visor_driver(xdev->driver);
 
 	mutex_lock(&dev->visordriver_callback_lock);
-	dev->being_हटाओd = true;
-	drv->हटाओ(dev);
+	dev->being_removed = true;
+	drv->remove(dev);
 	mutex_unlock(&dev->visordriver_callback_lock);
 	dev_stop_periodic_work(dev);
 	put_device(&dev->device);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * visorbus_unरेजिस्टर_visor_driver() - unरेजिस्टरs the provided driver
- * @drv: the driver to unरेजिस्टर
+ * visorbus_unregister_visor_driver() - unregisters the provided driver
+ * @drv: the driver to unregister
  *
- * A visor function driver calls this function to unरेजिस्टर the driver,
- * i.e., within its module_निकास function.
+ * A visor function driver calls this function to unregister the driver,
+ * i.e., within its module_exit function.
  */
-व्योम visorbus_unरेजिस्टर_visor_driver(काष्ठा visor_driver *drv)
-अणु
-	driver_unरेजिस्टर(&drv->driver);
-पूर्ण
-EXPORT_SYMBOL_GPL(visorbus_unरेजिस्टर_visor_driver);
+void visorbus_unregister_visor_driver(struct visor_driver *drv)
+{
+	driver_unregister(&drv->driver);
+}
+EXPORT_SYMBOL_GPL(visorbus_unregister_visor_driver);
 
 /*
- * visorbus_पढ़ो_channel() - पढ़ोs from the designated channel पूर्णांकo
+ * visorbus_read_channel() - reads from the designated channel into
  *                           the provided buffer
- * @dev:    the device whose channel is पढ़ो from
- * @offset: the offset पूर्णांकo the channel at which पढ़ोing starts
- * @dest:   the destination buffer that is written पूर्णांकo from the channel
- * @nbytes: the number of bytes to पढ़ो from the channel
+ * @dev:    the device whose channel is read from
+ * @offset: the offset into the channel at which reading starts
+ * @dest:   the destination buffer that is written into from the channel
+ * @nbytes: the number of bytes to read from the channel
  *
- * If receiving a message, use the visorchannel_संकेतहटाओ() function instead.
+ * If receiving a message, use the visorchannel_signalremove() function instead.
  *
- * Return: पूर्णांकeger indicating success (zero) or failure (non-zero)
+ * Return: integer indicating success (zero) or failure (non-zero)
  */
-पूर्णांक visorbus_पढ़ो_channel(काष्ठा visor_device *dev, अचिन्हित दीर्घ offset,
-			  व्योम *dest, अचिन्हित दीर्घ nbytes)
-अणु
-	वापस visorchannel_पढ़ो(dev->visorchannel, offset, dest, nbytes);
-पूर्ण
-EXPORT_SYMBOL_GPL(visorbus_पढ़ो_channel);
+int visorbus_read_channel(struct visor_device *dev, unsigned long offset,
+			  void *dest, unsigned long nbytes)
+{
+	return visorchannel_read(dev->visorchannel, offset, dest, nbytes);
+}
+EXPORT_SYMBOL_GPL(visorbus_read_channel);
 
 /*
- * visorbus_ग_लिखो_channel() - ग_लिखोs the provided buffer पूर्णांकo the designated
+ * visorbus_write_channel() - writes the provided buffer into the designated
  *                            channel
  * @dev:    the device whose channel is written to
- * @offset: the offset पूर्णांकo the channel at which writing starts
- * @src:    the source buffer that is written पूर्णांकo the channel
- * @nbytes: the number of bytes to ग_लिखो पूर्णांकo the channel
+ * @offset: the offset into the channel at which writing starts
+ * @src:    the source buffer that is written into the channel
+ * @nbytes: the number of bytes to write into the channel
  *
- * If sending a message, use the visorchannel_संकेतinsert() function instead.
+ * If sending a message, use the visorchannel_signalinsert() function instead.
  *
- * Return: पूर्णांकeger indicating success (zero) or failure (non-zero)
+ * Return: integer indicating success (zero) or failure (non-zero)
  */
-पूर्णांक visorbus_ग_लिखो_channel(काष्ठा visor_device *dev, अचिन्हित दीर्घ offset,
-			   व्योम *src, अचिन्हित दीर्घ nbytes)
-अणु
-	वापस visorchannel_ग_लिखो(dev->visorchannel, offset, src, nbytes);
-पूर्ण
-EXPORT_SYMBOL_GPL(visorbus_ग_लिखो_channel);
+int visorbus_write_channel(struct visor_device *dev, unsigned long offset,
+			   void *src, unsigned long nbytes)
+{
+	return visorchannel_write(dev->visorchannel, offset, src, nbytes);
+}
+EXPORT_SYMBOL_GPL(visorbus_write_channel);
 
 /*
- * visorbus_enable_channel_पूर्णांकerrupts() - enables पूर्णांकerrupts on the
+ * visorbus_enable_channel_interrupts() - enables interrupts on the
  *                                        designated device
- * @dev: the device on which to enable पूर्णांकerrupts
+ * @dev: the device on which to enable interrupts
  *
- * Currently we करोn't yet have a real पूर्णांकerrupt, so क्रम now we just call the
- * पूर्णांकerrupt function periodically via a समयr.
+ * Currently we don't yet have a real interrupt, so for now we just call the
+ * interrupt function periodically via a timer.
  */
-पूर्णांक visorbus_enable_channel_पूर्णांकerrupts(काष्ठा visor_device *dev)
-अणु
-	काष्ठा visor_driver *drv = to_visor_driver(dev->device.driver);
+int visorbus_enable_channel_interrupts(struct visor_device *dev)
+{
+	struct visor_driver *drv = to_visor_driver(dev->device.driver);
 
-	अगर (!drv->channel_पूर्णांकerrupt) अणु
+	if (!drv->channel_interrupt) {
 		dev_err(&dev->device, "%s no interrupt function!\n", __func__);
-		वापस -ENOENT;
-	पूर्ण
+		return -ENOENT;
+	}
 
-	वापस dev_start_periodic_work(dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(visorbus_enable_channel_पूर्णांकerrupts);
+	return dev_start_periodic_work(dev);
+}
+EXPORT_SYMBOL_GPL(visorbus_enable_channel_interrupts);
 
 /*
- * visorbus_disable_channel_पूर्णांकerrupts() - disables पूर्णांकerrupts on the
+ * visorbus_disable_channel_interrupts() - disables interrupts on the
  *                                         designated device
- * @dev: the device on which to disable पूर्णांकerrupts
+ * @dev: the device on which to disable interrupts
  */
-व्योम visorbus_disable_channel_पूर्णांकerrupts(काष्ठा visor_device *dev)
-अणु
+void visorbus_disable_channel_interrupts(struct visor_device *dev)
+{
 	dev_stop_periodic_work(dev);
-पूर्ण
-EXPORT_SYMBOL_GPL(visorbus_disable_channel_पूर्णांकerrupts);
+}
+EXPORT_SYMBOL_GPL(visorbus_disable_channel_interrupts);
 
 /*
  * create_visor_device() - create visor device as a result of receiving the
- *                         controlvm device_create message क्रम a new device
- * @dev: a freshly-zeroed काष्ठा visor_device, containing only filled-in values
- *       क्रम chipset_bus_no and chipset_dev_no, that will be initialized
+ *                         controlvm device_create message for a new device
+ * @dev: a freshly-zeroed struct visor_device, containing only filled-in values
+ *       for chipset_bus_no and chipset_dev_no, that will be initialized
  *
  * This is how everything starts from the device end.
  * This function is called when a channel first appears via a ControlVM
  * message.  In response, this function allocates a visor_device to correspond
  * to the new channel, and attempts to connect it the appropriate * driver. If
- * the appropriate driver is found, the visor_driver.probe() function क्रम that
+ * the appropriate driver is found, the visor_driver.probe() function for that
  * driver will be called, and will be passed the new * visor_device that we
  * just created.
  *
- * It's ok अगर the appropriate driver is not yet loaded, because in that हाल
- * the new device काष्ठा will just stick around in the bus' list of devices.
- * When the appropriate driver calls visorbus_रेजिस्टर_visor_driver(), the
- * visor_driver.probe() क्रम the new driver will be called with the new device.
+ * It's ok if the appropriate driver is not yet loaded, because in that case
+ * the new device struct will just stick around in the bus' list of devices.
+ * When the appropriate driver calls visorbus_register_visor_driver(), the
+ * visor_driver.probe() for the new driver will be called with the new device.
  *
- * Return: 0 अगर successful, otherwise the negative value वापसed by
- *         device_add() indicating the reason क्रम failure
+ * Return: 0 if successful, otherwise the negative value returned by
+ *         device_add() indicating the reason for failure
  */
-पूर्णांक create_visor_device(काष्ठा visor_device *dev)
-अणु
-	पूर्णांक err;
+int create_visor_device(struct visor_device *dev)
+{
+	int err;
 	u32 chipset_bus_no = dev->chipset_bus_no;
 	u32 chipset_dev_no = dev->chipset_dev_no;
 
@@ -657,9 +656,9 @@ EXPORT_SYMBOL_GPL(visorbus_disable_channel_पूर्णांकerrupts);
 	dev->device.groups = channel_groups;
 	device_initialize(&dev->device);
 	dev->device.release = visorbus_release_device;
-	/* keep a reference just क्रम us (now 2) */
+	/* keep a reference just for us (now 2) */
 	get_device(&dev->device);
-	समयr_setup(&dev->समयr, dev_periodic_work, 0);
+	timer_setup(&dev->timer, dev_periodic_work, 0);
 	/*
 	 * bus_id must be a unique name with respect to this bus TYPE (NOT bus
 	 * instance).  That's why we need to include the bus number within the
@@ -667,198 +666,198 @@ EXPORT_SYMBOL_GPL(visorbus_disable_channel_पूर्णांकerrupts);
 	 */
 	err = dev_set_name(&dev->device, "vbus%u:dev%u",
 			   chipset_bus_no, chipset_dev_no);
-	अगर (err)
-		जाओ err_put;
+	if (err)
+		goto err_put;
 	/*
-	 * device_add करोes this:
+	 * device_add does this:
 	 *    bus_add_device(dev)
 	 *    ->device_attach(dev)
-	 *      ->क्रम each driver drv रेजिस्टरed on the bus that dev is on
-	 *          अगर (dev.drv)  **  device alपढ़ोy has a driver **
+	 *      ->for each driver drv registered on the bus that dev is on
+	 *          if (dev.drv)  **  device already has a driver **
 	 *            ** not sure we could ever get here... **
-	 *          अन्यथा
-	 *            अगर (bus.match(dev,drv)) [visorbus_match]
+	 *          else
+	 *            if (bus.match(dev,drv)) [visorbus_match]
 	 *              dev.drv = drv
-	 *              अगर (!drv.probe(dev))  [visordriver_probe_device]
-	 *                dev.drv = शून्य
+	 *              if (!drv.probe(dev))  [visordriver_probe_device]
+	 *                dev.drv = NULL
 	 *
-	 * Note that device_add करोes NOT fail अगर no driver failed to claim the
+	 * Note that device_add does NOT fail if no driver failed to claim the
 	 * device.  The device will be linked onto bus_type.klist_devices
-	 * regardless (use bus_क्रम_each_dev).
+	 * regardless (use bus_for_each_dev).
 	 */
 	err = device_add(&dev->device);
-	अगर (err < 0)
-		जाओ err_put;
+	if (err < 0)
+		goto err_put;
 	list_add_tail(&dev->list_all, &list_all_device_instances);
 	dev->state.created = 1;
 	visorbus_response(dev, err, CONTROLVM_DEVICE_CREATE);
 	/* success: reference kept via unmatched get_device() */
-	वापस 0;
+	return 0;
 
 err_put:
 	put_device(&dev->device);
 	dev_err(&dev->device, "Creating visor device failed. %d\n", err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-व्योम हटाओ_visor_device(काष्ठा visor_device *dev)
-अणु
+void remove_visor_device(struct visor_device *dev)
+{
 	list_del(&dev->list_all);
 	put_device(&dev->device);
-	अगर (dev->pending_msg_hdr)
+	if (dev->pending_msg_hdr)
 		visorbus_response(dev, 0, CONTROLVM_DEVICE_DESTROY);
-	device_unरेजिस्टर(&dev->device);
-पूर्ण
+	device_unregister(&dev->device);
+}
 
-अटल पूर्णांक get_vbus_header_info(काष्ठा visorchannel *chan,
-				काष्ठा device *dev,
-				काष्ठा visor_vbus_headerinfo *hdr_info)
-अणु
-	पूर्णांक err;
+static int get_vbus_header_info(struct visorchannel *chan,
+				struct device *dev,
+				struct visor_vbus_headerinfo *hdr_info)
+{
+	int err;
 
-	अगर (!visor_check_channel(visorchannel_get_header(chan),
+	if (!visor_check_channel(visorchannel_get_header(chan),
 				 dev,
 				 &visor_vbus_channel_guid,
 				 "vbus",
-				 माप(काष्ठा visor_vbus_channel),
+				 sizeof(struct visor_vbus_channel),
 				 VISOR_VBUS_CHANNEL_VERSIONID,
 				 VISOR_CHANNEL_SIGNATURE))
-		वापस -EINVAL;
+		return -EINVAL;
 
-	err = visorchannel_पढ़ो(chan, माप(काष्ठा channel_header), hdr_info,
-				माप(*hdr_info));
-	अगर (err < 0)
-		वापस err;
-	अगर (hdr_info->काष्ठा_bytes < माप(काष्ठा visor_vbus_headerinfo))
-		वापस -EINVAL;
-	अगर (hdr_info->device_info_काष्ठा_bytes <
-	    माप(काष्ठा visor_vbus_deviceinfo))
-		वापस -EINVAL;
-	वापस 0;
-पूर्ण
+	err = visorchannel_read(chan, sizeof(struct channel_header), hdr_info,
+				sizeof(*hdr_info));
+	if (err < 0)
+		return err;
+	if (hdr_info->struct_bytes < sizeof(struct visor_vbus_headerinfo))
+		return -EINVAL;
+	if (hdr_info->device_info_struct_bytes <
+	    sizeof(struct visor_vbus_deviceinfo))
+		return -EINVAL;
+	return 0;
+}
 
 /*
- * ग_लिखो_vbus_chp_info() - ग_लिखो the contents of <info> to the काष्ठा
+ * write_vbus_chp_info() - write the contents of <info> to the struct
  *                         visor_vbus_channel.chp_info
- * @chan:     indentअगरies the s-Par channel that will be updated
- * @hdr_info: used to find appropriate channel offset to ग_लिखो data
- * @info:     contains the inक्रमmation to ग_लिखो
+ * @chan:     indentifies the s-Par channel that will be updated
+ * @hdr_info: used to find appropriate channel offset to write data
+ * @info:     contains the information to write
  *
- * Writes chipset info पूर्णांकo the channel memory to be used क्रम diagnostic
+ * Writes chipset info into the channel memory to be used for diagnostic
  * purposes.
  *
- * Returns no value since this is debug inक्रमmation and not needed क्रम
+ * Returns no value since this is debug information and not needed for
  * device functionality.
  */
-अटल व्योम ग_लिखो_vbus_chp_info(काष्ठा visorchannel *chan,
-				काष्ठा visor_vbus_headerinfo *hdr_info,
-				काष्ठा visor_vbus_deviceinfo *info)
-अणु
-	पूर्णांक off;
+static void write_vbus_chp_info(struct visorchannel *chan,
+				struct visor_vbus_headerinfo *hdr_info,
+				struct visor_vbus_deviceinfo *info)
+{
+	int off;
 
-	अगर (hdr_info->chp_info_offset == 0)
-		वापस;
+	if (hdr_info->chp_info_offset == 0)
+		return;
 
-	off = माप(काष्ठा channel_header) + hdr_info->chp_info_offset;
-	visorchannel_ग_लिखो(chan, off, info, माप(*info));
-पूर्ण
+	off = sizeof(struct channel_header) + hdr_info->chp_info_offset;
+	visorchannel_write(chan, off, info, sizeof(*info));
+}
 
 /*
- * ग_लिखो_vbus_bus_info() - ग_लिखो the contents of <info> to the काष्ठा
+ * write_vbus_bus_info() - write the contents of <info> to the struct
  *                         visor_vbus_channel.bus_info
- * @chan:     indentअगरies the s-Par channel that will be updated
- * @hdr_info: used to find appropriate channel offset to ग_लिखो data
- * @info:     contains the inक्रमmation to ग_लिखो
+ * @chan:     indentifies the s-Par channel that will be updated
+ * @hdr_info: used to find appropriate channel offset to write data
+ * @info:     contains the information to write
  *
- * Writes bus info पूर्णांकo the channel memory to be used क्रम diagnostic
+ * Writes bus info into the channel memory to be used for diagnostic
  * purposes.
  *
- * Returns no value since this is debug inक्रमmation and not needed क्रम
+ * Returns no value since this is debug information and not needed for
  * device functionality.
  */
-अटल व्योम ग_लिखो_vbus_bus_info(काष्ठा visorchannel *chan,
-				काष्ठा visor_vbus_headerinfo *hdr_info,
-				काष्ठा visor_vbus_deviceinfo *info)
-अणु
-	पूर्णांक off;
+static void write_vbus_bus_info(struct visorchannel *chan,
+				struct visor_vbus_headerinfo *hdr_info,
+				struct visor_vbus_deviceinfo *info)
+{
+	int off;
 
-	अगर (hdr_info->bus_info_offset == 0)
-		वापस;
+	if (hdr_info->bus_info_offset == 0)
+		return;
 
-	off = माप(काष्ठा channel_header) + hdr_info->bus_info_offset;
-	visorchannel_ग_लिखो(chan, off, info, माप(*info));
-पूर्ण
+	off = sizeof(struct channel_header) + hdr_info->bus_info_offset;
+	visorchannel_write(chan, off, info, sizeof(*info));
+}
 
 /*
- * ग_लिखो_vbus_dev_info() - ग_लिखो the contents of <info> to the काष्ठा
+ * write_vbus_dev_info() - write the contents of <info> to the struct
  *                         visor_vbus_channel.dev_info[<devix>]
- * @chan:     indentअगरies the s-Par channel that will be updated
- * @hdr_info: used to find appropriate channel offset to ग_लिखो data
- * @info:     contains the inक्रमmation to ग_लिखो
+ * @chan:     indentifies the s-Par channel that will be updated
+ * @hdr_info: used to find appropriate channel offset to write data
+ * @info:     contains the information to write
  * @devix:    the relative device number (0..n-1) of the device on the bus
  *
- * Writes device info पूर्णांकo the channel memory to be used क्रम diagnostic
+ * Writes device info into the channel memory to be used for diagnostic
  * purposes.
  *
- * Returns no value since this is debug inक्रमmation and not needed क्रम
+ * Returns no value since this is debug information and not needed for
  * device functionality.
  */
-अटल व्योम ग_लिखो_vbus_dev_info(काष्ठा visorchannel *chan,
-				काष्ठा visor_vbus_headerinfo *hdr_info,
-				काष्ठा visor_vbus_deviceinfo *info,
-				अचिन्हित पूर्णांक devix)
-अणु
-	पूर्णांक off;
+static void write_vbus_dev_info(struct visorchannel *chan,
+				struct visor_vbus_headerinfo *hdr_info,
+				struct visor_vbus_deviceinfo *info,
+				unsigned int devix)
+{
+	int off;
 
-	अगर (hdr_info->dev_info_offset == 0)
-		वापस;
-	off = (माप(काष्ठा channel_header) + hdr_info->dev_info_offset) +
-	      (hdr_info->device_info_काष्ठा_bytes * devix);
-	visorchannel_ग_लिखो(chan, off, info, माप(*info));
-पूर्ण
+	if (hdr_info->dev_info_offset == 0)
+		return;
+	off = (sizeof(struct channel_header) + hdr_info->dev_info_offset) +
+	      (hdr_info->device_info_struct_bytes * devix);
+	visorchannel_write(chan, off, info, sizeof(*info));
+}
 
-अटल व्योम bus_device_info_init(
-		काष्ठा visor_vbus_deviceinfo *bus_device_info_ptr,
-		स्थिर अक्षर *dev_type, स्थिर अक्षर *drv_name)
-अणु
-	स_रखो(bus_device_info_ptr, 0, माप(काष्ठा visor_vbus_deviceinfo));
-	snम_लिखो(bus_device_info_ptr->devtype,
-		 माप(bus_device_info_ptr->devtype),
+static void bus_device_info_init(
+		struct visor_vbus_deviceinfo *bus_device_info_ptr,
+		const char *dev_type, const char *drv_name)
+{
+	memset(bus_device_info_ptr, 0, sizeof(struct visor_vbus_deviceinfo));
+	snprintf(bus_device_info_ptr->devtype,
+		 sizeof(bus_device_info_ptr->devtype),
 		 "%s", (dev_type) ? dev_type : "unknownType");
-	snम_लिखो(bus_device_info_ptr->drvname,
-		 माप(bus_device_info_ptr->drvname),
+	snprintf(bus_device_info_ptr->drvname,
+		 sizeof(bus_device_info_ptr->drvname),
 		 "%s", (drv_name) ? drv_name : "unknownDriver");
-	snम_लिखो(bus_device_info_ptr->infostrs,
-		 माप(bus_device_info_ptr->infostrs), "kernel ver. %s",
+	snprintf(bus_device_info_ptr->infostrs,
+		 sizeof(bus_device_info_ptr->infostrs), "kernel ver. %s",
 		 utsname()->release);
-पूर्ण
+}
 
 /*
- * publish_vbus_dev_info() - क्रम a child device just created on a client bus,
- *			     fill in inक्रमmation about the driver that is
- *			     controlling this device पूर्णांकo the appropriate slot
+ * publish_vbus_dev_info() - for a child device just created on a client bus,
+ *			     fill in information about the driver that is
+ *			     controlling this device into the appropriate slot
  *			     within the vbus channel of the bus instance
- * @visordev: काष्ठा visor_device क्रम the desired device
+ * @visordev: struct visor_device for the desired device
  */
-अटल व्योम publish_vbus_dev_info(काष्ठा visor_device *visordev)
-अणु
-	पूर्णांक i;
-	काष्ठा visor_device *bdev;
-	काष्ठा visor_driver *visordrv;
+static void publish_vbus_dev_info(struct visor_device *visordev)
+{
+	int i;
+	struct visor_device *bdev;
+	struct visor_driver *visordrv;
 	u32 bus_no = visordev->chipset_bus_no;
 	u32 dev_no = visordev->chipset_dev_no;
-	काष्ठा visor_vbus_deviceinfo dev_info;
-	स्थिर अक्षर *chan_type_name = शून्य;
-	काष्ठा visor_vbus_headerinfo *hdr_info;
+	struct visor_vbus_deviceinfo dev_info;
+	const char *chan_type_name = NULL;
+	struct visor_vbus_headerinfo *hdr_info;
 
-	अगर (!visordev->device.driver)
-		वापस;
-	bdev = visorbus_get_device_by_id(bus_no, BUS_ROOT_DEVICE, शून्य);
-	अगर (!bdev)
-		वापस;
-	hdr_info = (काष्ठा visor_vbus_headerinfo *)bdev->vbus_hdr_info;
-	अगर (!hdr_info)
-		वापस;
+	if (!visordev->device.driver)
+		return;
+	bdev = visorbus_get_device_by_id(bus_no, BUS_ROOT_DEVICE, NULL);
+	if (!bdev)
+		return;
+	hdr_info = (struct visor_vbus_headerinfo *)bdev->vbus_hdr_info;
+	if (!hdr_info)
+		return;
 	visordrv = to_visor_driver(visordev->device.driver);
 
 	/*
@@ -867,154 +866,154 @@ err_put:
 	 * the type of this device, so that we can include the device
 	 * type name
 	 */
-	क्रम (i = 0; visordrv->channel_types[i].name; i++) अणु
-		अगर (guid_equal(&visordrv->channel_types[i].guid,
-			       &visordev->channel_type_guid)) अणु
+	for (i = 0; visordrv->channel_types[i].name; i++) {
+		if (guid_equal(&visordrv->channel_types[i].guid,
+			       &visordev->channel_type_guid)) {
 			chan_type_name = visordrv->channel_types[i].name;
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 	bus_device_info_init(&dev_info, chan_type_name, visordrv->name);
-	ग_लिखो_vbus_dev_info(bdev->visorchannel, hdr_info, &dev_info, dev_no);
-	ग_लिखो_vbus_chp_info(bdev->visorchannel, hdr_info, &chipset_driverinfo);
-	ग_लिखो_vbus_bus_info(bdev->visorchannel, hdr_info,
+	write_vbus_dev_info(bdev->visorchannel, hdr_info, &dev_info, dev_no);
+	write_vbus_chp_info(bdev->visorchannel, hdr_info, &chipset_driverinfo);
+	write_vbus_bus_info(bdev->visorchannel, hdr_info,
 			    &clientbus_driverinfo);
-पूर्ण
+}
 
 /*
  * visordriver_probe_device() - handle new visor device coming online
- * @xdev: काष्ठा device क्रम the visor device being probed
+ * @xdev: struct device for the visor device being probed
  *
- * This is called स्वतःmatically upon adding a visor_device (device_add), or
- * adding a visor_driver (visorbus_रेजिस्टर_visor_driver), but only after
- * visorbus_match() has वापसed 1 to indicate a successful match between
+ * This is called automatically upon adding a visor_device (device_add), or
+ * adding a visor_driver (visorbus_register_visor_driver), but only after
+ * visorbus_match() has returned 1 to indicate a successful match between
  * driver and device.
  *
  * If successful, a reference to the device will be held onto via get_device().
  *
- * Return: 0 अगर successful, meaning the function driver's probe() function
- *         was successful with this device, otherwise a negative त्रुटि_सं
+ * Return: 0 if successful, meaning the function driver's probe() function
+ *         was successful with this device, otherwise a negative errno
  *         value indicating failure reason
  */
-अटल पूर्णांक visordriver_probe_device(काष्ठा device *xdev)
-अणु
-	पूर्णांक err;
-	काष्ठा visor_driver *drv = to_visor_driver(xdev->driver);
-	काष्ठा visor_device *dev = to_visor_device(xdev);
+static int visordriver_probe_device(struct device *xdev)
+{
+	int err;
+	struct visor_driver *drv = to_visor_driver(xdev->driver);
+	struct visor_device *dev = to_visor_device(xdev);
 
 	mutex_lock(&dev->visordriver_callback_lock);
-	dev->being_हटाओd = false;
+	dev->being_removed = false;
 	err = drv->probe(dev);
-	अगर (err) अणु
+	if (err) {
 		mutex_unlock(&dev->visordriver_callback_lock);
-		वापस err;
-	पूर्ण
+		return err;
+	}
 	/* success: reference kept via unmatched get_device() */
 	get_device(&dev->device);
 	publish_vbus_dev_info(dev);
 	mutex_unlock(&dev->visordriver_callback_lock);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- * visorbus_रेजिस्टर_visor_driver() - रेजिस्टरs the provided visor driver क्रम
+ * visorbus_register_visor_driver() - registers the provided visor driver for
  *				      handling one or more visor device
  *                                    types (channel_types)
- * @drv: the driver to रेजिस्टर
+ * @drv: the driver to register
  *
- * A visor function driver calls this function to रेजिस्टर the driver. The
- * caller MUST fill in the following fields within the #drv काष्ठाure:
- *     name, version, owner, channel_types, probe, हटाओ
+ * A visor function driver calls this function to register the driver. The
+ * caller MUST fill in the following fields within the #drv structure:
+ *     name, version, owner, channel_types, probe, remove
  *
  * Here's how the whole Linux bus / driver / device model works.
  *
- * At प्रणाली start-up, the visorbus kernel module is loaded, which रेजिस्टरs
- * visorbus_type as a bus type, using bus_रेजिस्टर().
+ * At system start-up, the visorbus kernel module is loaded, which registers
+ * visorbus_type as a bus type, using bus_register().
  *
  * All kernel modules that support particular device types on a
  * visorbus bus are loaded.  Each of these kernel modules calls
- * visorbus_रेजिस्टर_visor_driver() in their init functions, passing a
- * visor_driver काष्ठा.  visorbus_रेजिस्टर_visor_driver() in turn calls
- * रेजिस्टर_driver(&visor_driver.driver).  This .driver member is
+ * visorbus_register_visor_driver() in their init functions, passing a
+ * visor_driver struct.  visorbus_register_visor_driver() in turn calls
+ * register_driver(&visor_driver.driver).  This .driver member is
  * initialized with generic methods (like probe), whose sole responsibility
- * is to act as a broker क्रम the real methods, which are within the
- * visor_driver काष्ठा.  (This is the way the subclass behavior is
+ * is to act as a broker for the real methods, which are within the
+ * visor_driver struct.  (This is the way the subclass behavior is
  * implemented, since visor_driver is essentially a subclass of the
- * generic driver.)  Whenever a driver_रेजिस्टर() happens, core bus code in
- * the kernel करोes (see device_attach() in drivers/base/dd.c):
+ * generic driver.)  Whenever a driver_register() happens, core bus code in
+ * the kernel does (see device_attach() in drivers/base/dd.c):
  *
- *     क्रम each dev associated with the bus (the bus that driver is on) that
- *     करोes not yet have a driver
- *         अगर bus.match(dev,newdriver) == yes_matched  ** .match specअगरied
- *                                                ** during bus_रेजिस्टर().
- *             newdriver.probe(dev)  ** क्रम visor drivers, this will call
+ *     for each dev associated with the bus (the bus that driver is on) that
+ *     does not yet have a driver
+ *         if bus.match(dev,newdriver) == yes_matched  ** .match specified
+ *                                                ** during bus_register().
+ *             newdriver.probe(dev)  ** for visor drivers, this will call
  *                   ** the generic driver.probe implemented in visorbus.c,
- *                   ** which in turn calls the probe specअगरied within the
- *                   ** काष्ठा visor_driver (which was specअगरied by the
+ *                   ** which in turn calls the probe specified within the
+ *                   ** struct visor_driver (which was specified by the
  *                   ** actual device driver as part of
- *                   ** visorbus_रेजिस्टर_visor_driver()).
+ *                   ** visorbus_register_visor_driver()).
  *
  * The above dance also happens when a new device appears.
- * So the question is, how are devices created within the प्रणाली?
+ * So the question is, how are devices created within the system?
  * Basically, just call device_add(dev).  See pci_bus_add_devices().
- * pci_scan_device() shows an example of how to build a device काष्ठा.  It
- * वापसs the newly-created काष्ठा to pci_scan_single_device(), who adds it
+ * pci_scan_device() shows an example of how to build a device struct.  It
+ * returns the newly-created struct to pci_scan_single_device(), who adds it
  * to the list of devices at PCIBUS.devices.  That list of devices is what
  * is traversed by pci_bus_add_devices().
  *
- * Return: पूर्णांकeger indicating success (zero) or failure (non-zero)
+ * Return: integer indicating success (zero) or failure (non-zero)
  */
-पूर्णांक visorbus_रेजिस्टर_visor_driver(काष्ठा visor_driver *drv)
-अणु
-	/* can't रेजिस्टर on a nonexistent bus */
-	अगर (!initialized)
-		वापस -ENODEV;
-	अगर (!drv->probe)
-		वापस -EINVAL;
-	अगर (!drv->हटाओ)
-		वापस -EINVAL;
-	अगर (!drv->छोड़ो)
-		वापस -EINVAL;
-	अगर (!drv->resume)
-		वापस -EINVAL;
+int visorbus_register_visor_driver(struct visor_driver *drv)
+{
+	/* can't register on a nonexistent bus */
+	if (!initialized)
+		return -ENODEV;
+	if (!drv->probe)
+		return -EINVAL;
+	if (!drv->remove)
+		return -EINVAL;
+	if (!drv->pause)
+		return -EINVAL;
+	if (!drv->resume)
+		return -EINVAL;
 
 	drv->driver.name = drv->name;
 	drv->driver.bus = &visorbus_type;
 	drv->driver.probe = visordriver_probe_device;
-	drv->driver.हटाओ = visordriver_हटाओ_device;
+	drv->driver.remove = visordriver_remove_device;
 	drv->driver.owner = drv->owner;
 	/*
-	 * driver_रेजिस्टर करोes this:
+	 * driver_register does this:
 	 *   bus_add_driver(drv)
-	 *   ->अगर (drv.bus)  ** (bus_type) **
+	 *   ->if (drv.bus)  ** (bus_type) **
 	 *       driver_attach(drv)
-	 *         क्रम each dev with bus type of drv.bus
-	 *           अगर (!dev.drv)  ** no driver asचिन्हित yet **
-	 *             अगर (bus.match(dev,drv))  [visorbus_match]
+	 *         for each dev with bus type of drv.bus
+	 *           if (!dev.drv)  ** no driver assigned yet **
+	 *             if (bus.match(dev,drv))  [visorbus_match]
 	 *               dev.drv = drv
-	 *               अगर (!drv.probe(dev))   [visordriver_probe_device]
-	 *                 dev.drv = शून्य
+	 *               if (!drv.probe(dev))   [visordriver_probe_device]
+	 *                 dev.drv = NULL
 	 */
-	वापस driver_रेजिस्टर(&drv->driver);
-पूर्ण
-EXPORT_SYMBOL_GPL(visorbus_रेजिस्टर_visor_driver);
+	return driver_register(&drv->driver);
+}
+EXPORT_SYMBOL_GPL(visorbus_register_visor_driver);
 
 /*
- * visorbus_create_instance() - create a device instance क्रम the visorbus itself
- * @dev: काष्ठा visor_device indicating the bus instance
+ * visorbus_create_instance() - create a device instance for the visorbus itself
+ * @dev: struct visor_device indicating the bus instance
  *
- * Return: 0 क्रम success, otherwise negative त्रुटि_सं value indicating reason क्रम
+ * Return: 0 for success, otherwise negative errno value indicating reason for
  *         failure
  */
-पूर्णांक visorbus_create_instance(काष्ठा visor_device *dev)
-अणु
-	पूर्णांक id = dev->chipset_bus_no;
-	पूर्णांक err;
-	काष्ठा visor_vbus_headerinfo *hdr_info;
+int visorbus_create_instance(struct visor_device *dev)
+{
+	int id = dev->chipset_bus_no;
+	int err;
+	struct visor_vbus_headerinfo *hdr_info;
 
-	hdr_info = kzalloc(माप(*hdr_info), GFP_KERNEL);
-	अगर (!hdr_info)
-		वापस -ENOMEM;
+	hdr_info = kzalloc(sizeof(*hdr_info), GFP_KERNEL);
+	if (!hdr_info)
+		return -ENOMEM;
 	dev_set_name(&dev->device, "visorbus%d", id);
 	dev->device.bus = &visorbus_type;
 	dev->device.groups = visorbus_groups;
@@ -1026,210 +1025,210 @@ EXPORT_SYMBOL_GPL(visorbus_रेजिस्टर_visor_driver);
 						    &bus_info_debugfs_fops);
 	dev_set_drvdata(&dev->device, dev);
 	err = get_vbus_header_info(dev->visorchannel, &dev->device, hdr_info);
-	अगर (err < 0)
-		जाओ err_debugfs_dir;
-	err = device_रेजिस्टर(&dev->device);
-	अगर (err < 0)
-		जाओ err_debugfs_dir;
+	if (err < 0)
+		goto err_debugfs_dir;
+	err = device_register(&dev->device);
+	if (err < 0)
+		goto err_debugfs_dir;
 	list_add_tail(&dev->list_all, &list_all_bus_instances);
 	dev->state.created = 1;
-	dev->vbus_hdr_info = (व्योम *)hdr_info;
-	ग_लिखो_vbus_chp_info(dev->visorchannel, hdr_info, &chipset_driverinfo);
-	ग_लिखो_vbus_bus_info(dev->visorchannel, hdr_info, &clientbus_driverinfo);
+	dev->vbus_hdr_info = (void *)hdr_info;
+	write_vbus_chp_info(dev->visorchannel, hdr_info, &chipset_driverinfo);
+	write_vbus_bus_info(dev->visorchannel, hdr_info, &clientbus_driverinfo);
 	visorbus_response(dev, err, CONTROLVM_BUS_CREATE);
-	वापस 0;
+	return 0;
 
 err_debugfs_dir:
-	debugfs_हटाओ_recursive(dev->debugfs_dir);
-	kमुक्त(hdr_info);
+	debugfs_remove_recursive(dev->debugfs_dir);
+	kfree(hdr_info);
 	dev_err(&dev->device, "%s failed: %d\n", __func__, err);
-	वापस err;
-पूर्ण
+	return err;
+}
 
 /*
- * visorbus_हटाओ_instance() - हटाओ a device instance क्रम the visorbus itself
- * @dev: काष्ठा visor_device indentअगरying the bus to हटाओ
+ * visorbus_remove_instance() - remove a device instance for the visorbus itself
+ * @dev: struct visor_device indentifying the bus to remove
  */
-व्योम visorbus_हटाओ_instance(काष्ठा visor_device *dev)
-अणु
+void visorbus_remove_instance(struct visor_device *dev)
+{
 	/*
-	 * Note that this will result in the release method क्रम
+	 * Note that this will result in the release method for
 	 * dev->dev being called, which will call
-	 * visorbus_release_busdevice().  This has something to करो with
-	 * the put_device() करोne in device_unरेजिस्टर(), but I have never
+	 * visorbus_release_busdevice().  This has something to do with
+	 * the put_device() done in device_unregister(), but I have never
 	 * successfully been able to trace thru the code to see where/how
-	 * release() माला_लो called.  But I know it करोes.
+	 * release() gets called.  But I know it does.
 	 */
-	kमुक्त(dev->vbus_hdr_info);
+	kfree(dev->vbus_hdr_info);
 	list_del(&dev->list_all);
-	अगर (dev->pending_msg_hdr)
+	if (dev->pending_msg_hdr)
 		visorbus_response(dev, 0, CONTROLVM_BUS_DESTROY);
-	device_unरेजिस्टर(&dev->device);
-पूर्ण
+	device_unregister(&dev->device);
+}
 
 /*
- * हटाओ_all_visor_devices() - हटाओ all child visorbus device instances
+ * remove_all_visor_devices() - remove all child visorbus device instances
  */
-अटल व्योम हटाओ_all_visor_devices(व्योम)
-अणु
-	काष्ठा list_head *listentry, *listपंचांगp;
+static void remove_all_visor_devices(void)
+{
+	struct list_head *listentry, *listtmp;
 
-	list_क्रम_each_safe(listentry, listपंचांगp, &list_all_device_instances) अणु
-		काष्ठा visor_device *dev;
+	list_for_each_safe(listentry, listtmp, &list_all_device_instances) {
+		struct visor_device *dev;
 
-		dev = list_entry(listentry, काष्ठा visor_device, list_all);
-		हटाओ_visor_device(dev);
-	पूर्ण
-पूर्ण
+		dev = list_entry(listentry, struct visor_device, list_all);
+		remove_visor_device(dev);
+	}
+}
 
 /*
- * छोड़ो_state_change_complete() - the callback function to be called by a
+ * pause_state_change_complete() - the callback function to be called by a
  *                                 visorbus function driver when a
  *                                 pending "pause device" operation has
  *                                 completed
- * @dev: काष्ठा visor_device identअगरying the छोड़ोd device
- * @status: 0 अगरf the छोड़ो state change completed successfully, otherwise
- *          a negative त्रुटि_सं value indicating the reason क्रम failure
+ * @dev: struct visor_device identifying the paused device
+ * @status: 0 iff the pause state change completed successfully, otherwise
+ *          a negative errno value indicating the reason for failure
  */
-अटल व्योम छोड़ो_state_change_complete(काष्ठा visor_device *dev, पूर्णांक status)
-अणु
-	अगर (!dev->pausing)
-		वापस;
+static void pause_state_change_complete(struct visor_device *dev, int status)
+{
+	if (!dev->pausing)
+		return;
 
 	dev->pausing = false;
 	visorbus_device_changestate_response(dev, status,
 					     segment_state_standby);
-पूर्ण
+}
 
 /*
  * resume_state_change_complete() - the callback function to be called by a
  *                                  visorbus function driver when a
  *                                  pending "resume device" operation has
  *                                  completed
- * @dev: काष्ठा visor_device identअगरying the resumed device
- * @status: 0 अगरf the resume state change completed successfully, otherwise
- *          a negative त्रुटि_सं value indicating the reason क्रम failure
+ * @dev: struct visor_device identifying the resumed device
+ * @status: 0 iff the resume state change completed successfully, otherwise
+ *          a negative errno value indicating the reason for failure
  */
-अटल व्योम resume_state_change_complete(काष्ठा visor_device *dev, पूर्णांक status)
-अणु
-	अगर (!dev->resuming)
-		वापस;
+static void resume_state_change_complete(struct visor_device *dev, int status)
+{
+	if (!dev->resuming)
+		return;
 
 	dev->resuming = false;
 	/*
-	 * Notअगरy the chipset driver that the resume is complete,
+	 * Notify the chipset driver that the resume is complete,
 	 * which will presumably want to send some sort of response to
 	 * the initiator.
 	 */
 	visorbus_device_changestate_response(dev, status,
 					     segment_state_running);
-पूर्ण
+}
 
 /*
- * visorchipset_initiate_device_छोड़ो_resume() - start a छोड़ो or resume
- *                                               operation क्रम a visor device
- * @dev: काष्ठा visor_device identअगरying the device being छोड़ोd or resumed
- * @is_छोड़ो: true to indicate छोड़ो operation, false to indicate resume
+ * visorchipset_initiate_device_pause_resume() - start a pause or resume
+ *                                               operation for a visor device
+ * @dev: struct visor_device identifying the device being paused or resumed
+ * @is_pause: true to indicate pause operation, false to indicate resume
  *
- * Tell the subordinate function driver क्रम a specअगरic device to छोड़ो
- * or resume that device.  Success/failure result is वापसed asynchronously
- * via a callback function; see छोड़ो_state_change_complete() and
+ * Tell the subordinate function driver for a specific device to pause
+ * or resume that device.  Success/failure result is returned asynchronously
+ * via a callback function; see pause_state_change_complete() and
  * resume_state_change_complete().
  */
-अटल पूर्णांक visorchipset_initiate_device_छोड़ो_resume(काष्ठा visor_device *dev,
-						     bool is_छोड़ो)
-अणु
-	पूर्णांक err;
-	काष्ठा visor_driver *drv;
+static int visorchipset_initiate_device_pause_resume(struct visor_device *dev,
+						     bool is_pause)
+{
+	int err;
+	struct visor_driver *drv;
 
-	/* If no driver associated with the device nothing to छोड़ो/resume */
-	अगर (!dev->device.driver)
-		वापस 0;
-	अगर (dev->pausing || dev->resuming)
-		वापस -EBUSY;
+	/* If no driver associated with the device nothing to pause/resume */
+	if (!dev->device.driver)
+		return 0;
+	if (dev->pausing || dev->resuming)
+		return -EBUSY;
 
 	drv = to_visor_driver(dev->device.driver);
-	अगर (is_छोड़ो) अणु
+	if (is_pause) {
 		dev->pausing = true;
-		err = drv->छोड़ो(dev, छोड़ो_state_change_complete);
-	पूर्ण अन्यथा अणु
+		err = drv->pause(dev, pause_state_change_complete);
+	} else {
 		/*
-		 * The vbus_dev_info काष्ठाure in the channel was been cleared,
+		 * The vbus_dev_info structure in the channel was been cleared,
 		 * make sure it is valid.
 		 */
 		publish_vbus_dev_info(dev);
 		dev->resuming = true;
 		err = drv->resume(dev, resume_state_change_complete);
-	पूर्ण
-	वापस err;
-पूर्ण
+	}
+	return err;
+}
 
 /*
- * visorchipset_device_छोड़ो() - start a छोड़ो operation क्रम a visor device
- * @dev_info: काष्ठा visor_device identअगरying the device being छोड़ोd
+ * visorchipset_device_pause() - start a pause operation for a visor device
+ * @dev_info: struct visor_device identifying the device being paused
  *
- * Tell the subordinate function driver क्रम a specअगरic device to छोड़ो
- * that device.  Success/failure result is वापसed asynchronously
- * via a callback function; see छोड़ो_state_change_complete().
+ * Tell the subordinate function driver for a specific device to pause
+ * that device.  Success/failure result is returned asynchronously
+ * via a callback function; see pause_state_change_complete().
  */
-पूर्णांक visorchipset_device_छोड़ो(काष्ठा visor_device *dev_info)
-अणु
-	पूर्णांक err;
+int visorchipset_device_pause(struct visor_device *dev_info)
+{
+	int err;
 
-	err = visorchipset_initiate_device_छोड़ो_resume(dev_info, true);
-	अगर (err < 0) अणु
+	err = visorchipset_initiate_device_pause_resume(dev_info, true);
+	if (err < 0) {
 		dev_info->pausing = false;
-		वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return err;
+	}
+	return 0;
+}
 
 /*
- * visorchipset_device_resume() - start a resume operation क्रम a visor device
- * @dev_info: काष्ठा visor_device identअगरying the device being resumed
+ * visorchipset_device_resume() - start a resume operation for a visor device
+ * @dev_info: struct visor_device identifying the device being resumed
  *
- * Tell the subordinate function driver क्रम a specअगरic device to resume
- * that device.  Success/failure result is वापसed asynchronously
+ * Tell the subordinate function driver for a specific device to resume
+ * that device.  Success/failure result is returned asynchronously
  * via a callback function; see resume_state_change_complete().
  */
-पूर्णांक visorchipset_device_resume(काष्ठा visor_device *dev_info)
-अणु
-	पूर्णांक err;
+int visorchipset_device_resume(struct visor_device *dev_info)
+{
+	int err;
 
-	err = visorchipset_initiate_device_छोड़ो_resume(dev_info, false);
-	अगर (err < 0) अणु
+	err = visorchipset_initiate_device_pause_resume(dev_info, false);
+	if (err < 0) {
 		dev_info->resuming = false;
-		वापस err;
-	पूर्ण
-	वापस 0;
-पूर्ण
+		return err;
+	}
+	return 0;
+}
 
-पूर्णांक visorbus_init(व्योम)
-अणु
-	पूर्णांक err;
+int visorbus_init(void)
+{
+	int err;
 
-	visorbus_debugfs_dir = debugfs_create_dir("visorbus", शून्य);
+	visorbus_debugfs_dir = debugfs_create_dir("visorbus", NULL);
 	bus_device_info_init(&clientbus_driverinfo, "clientbus", "visorbus");
-	err = bus_रेजिस्टर(&visorbus_type);
-	अगर (err < 0)
-		वापस err;
+	err = bus_register(&visorbus_type);
+	if (err < 0)
+		return err;
 	initialized = true;
 	bus_device_info_init(&chipset_driverinfo, "chipset", "visorchipset");
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-व्योम visorbus_निकास(व्योम)
-अणु
-	काष्ठा list_head *listentry, *listपंचांगp;
+void visorbus_exit(void)
+{
+	struct list_head *listentry, *listtmp;
 
-	हटाओ_all_visor_devices();
-	list_क्रम_each_safe(listentry, listपंचांगp, &list_all_bus_instances) अणु
-		काष्ठा visor_device *dev;
+	remove_all_visor_devices();
+	list_for_each_safe(listentry, listtmp, &list_all_bus_instances) {
+		struct visor_device *dev;
 
-		dev = list_entry(listentry, काष्ठा visor_device, list_all);
-		visorbus_हटाओ_instance(dev);
-	पूर्ण
-	bus_unरेजिस्टर(&visorbus_type);
+		dev = list_entry(listentry, struct visor_device, list_all);
+		visorbus_remove_instance(dev);
+	}
+	bus_unregister(&visorbus_type);
 	initialized = false;
-	debugfs_हटाओ_recursive(visorbus_debugfs_dir);
-पूर्ण
+	debugfs_remove_recursive(visorbus_debugfs_dir);
+}

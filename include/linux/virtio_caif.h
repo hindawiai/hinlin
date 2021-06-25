@@ -1,25 +1,24 @@
-<शैली गुरु>
 /*
  * Copyright (C) ST-Ericsson AB 2012
- * Author: Sjur Brथइndeland <sjur.bअक्रमeland@stericsson.com>
+ * Author: Sjur Brændeland <sjur.brandeland@stericsson.com>
  *
  * This header is BSD licensed so
  * anyone can use the definitions to implement compatible remote processors
  */
 
-#अगर_अघोषित VIRTIO_CAIF_H
-#घोषणा VIRTIO_CAIF_H
+#ifndef VIRTIO_CAIF_H
+#define VIRTIO_CAIF_H
 
-#समावेश <linux/types.h>
-काष्ठा virtio_caअगर_transf_config अणु
+#include <linux/types.h>
+struct virtio_caif_transf_config {
 	__virtio16 headroom;
 	__virtio16 tailroom;
 	__virtio32 mtu;
 	u8 reserved[4];
-पूर्ण;
+};
 
-काष्ठा virtio_caअगर_config अणु
-	काष्ठा virtio_caअगर_transf_config uplink, करोwnlink;
+struct virtio_caif_config {
+	struct virtio_caif_transf_config uplink, downlink;
 	u8 reserved[8];
-पूर्ण;
-#पूर्ण_अगर
+};
+#endif

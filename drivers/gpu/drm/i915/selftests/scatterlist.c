@@ -1,13 +1,12 @@
-<शैली गुरु>
 /*
- * Copyright तऊ 2016 Intel Corporation
+ * Copyright © 2016 Intel Corporation
  *
- * Permission is hereby granted, मुक्त of अक्षरge, to any person obtaining a
- * copy of this software and associated करोcumentation files (the "Software"),
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modअगरy, merge, publish, distribute, sublicense,
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
  * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to करो so, subject to the following conditions:
+ * Software is furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice (including the next
  * paragraph) shall be included in all copies or substantial portions of the
@@ -22,231 +21,231 @@
  * IN THE SOFTWARE.
  */
 
-#समावेश <linux/prime_numbers.h>
-#समावेश <linux/अक्रमom.h>
+#include <linux/prime_numbers.h>
+#include <linux/random.h>
 
-#समावेश "i915_selftest.h"
-#समावेश "i915_utils.h"
+#include "i915_selftest.h"
+#include "i915_utils.h"
 
-#घोषणा PFN_BIAS (1 << 10)
+#define PFN_BIAS (1 << 10)
 
-काष्ठा pfn_table अणु
-	काष्ठा sg_table st;
-	अचिन्हित दीर्घ start, end;
-पूर्ण;
+struct pfn_table {
+	struct sg_table st;
+	unsigned long start, end;
+};
 
-प्रकार अचिन्हित पूर्णांक (*npages_fn_t)(अचिन्हित दीर्घ n,
-				    अचिन्हित दीर्घ count,
-				    काष्ठा rnd_state *rnd);
+typedef unsigned int (*npages_fn_t)(unsigned long n,
+				    unsigned long count,
+				    struct rnd_state *rnd);
 
-अटल noअंतरभूत पूर्णांक expect_pfn_sg(काष्ठा pfn_table *pt,
+static noinline int expect_pfn_sg(struct pfn_table *pt,
 				  npages_fn_t npages_fn,
-				  काष्ठा rnd_state *rnd,
-				  स्थिर अक्षर *who,
-				  अचिन्हित दीर्घ समयout)
-अणु
-	काष्ठा scatterlist *sg;
-	अचिन्हित दीर्घ pfn, n;
+				  struct rnd_state *rnd,
+				  const char *who,
+				  unsigned long timeout)
+{
+	struct scatterlist *sg;
+	unsigned long pfn, n;
 
 	pfn = pt->start;
-	क्रम_each_sg(pt->st.sgl, sg, pt->st.nents, n) अणु
-		काष्ठा page *page = sg_page(sg);
-		अचिन्हित पूर्णांक npages = npages_fn(n, pt->st.nents, rnd);
+	for_each_sg(pt->st.sgl, sg, pt->st.nents, n) {
+		struct page *page = sg_page(sg);
+		unsigned int npages = npages_fn(n, pt->st.nents, rnd);
 
-		अगर (page_to_pfn(page) != pfn) अणु
+		if (page_to_pfn(page) != pfn) {
 			pr_err("%s: %s left pages out of order, expected pfn %lu, found pfn %lu (using for_each_sg)\n",
 			       __func__, who, pfn, page_to_pfn(page));
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (sg->length != npages * PAGE_SIZE) अणु
+		if (sg->length != npages * PAGE_SIZE) {
 			pr_err("%s: %s copied wrong sg length, expected size %lu, found %u (using for_each_sg)\n",
 			       __func__, who, npages * PAGE_SIZE, sg->length);
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (igt_समयout(समयout, "%s timed out\n", who))
-			वापस -EINTR;
+		if (igt_timeout(timeout, "%s timed out\n", who))
+			return -EINTR;
 
 		pfn += npages;
-	पूर्ण
-	अगर (pfn != pt->end) अणु
+	}
+	if (pfn != pt->end) {
 		pr_err("%s: %s finished on wrong pfn, expected %lu, found %lu\n",
 		       __func__, who, pt->end, pfn);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल noअंतरभूत पूर्णांक expect_pfn_sg_page_iter(काष्ठा pfn_table *pt,
-					    स्थिर अक्षर *who,
-					    अचिन्हित दीर्घ समयout)
-अणु
-	काष्ठा sg_page_iter sgiter;
-	अचिन्हित दीर्घ pfn;
+static noinline int expect_pfn_sg_page_iter(struct pfn_table *pt,
+					    const char *who,
+					    unsigned long timeout)
+{
+	struct sg_page_iter sgiter;
+	unsigned long pfn;
 
 	pfn = pt->start;
-	क्रम_each_sg_page(pt->st.sgl, &sgiter, pt->st.nents, 0) अणु
-		काष्ठा page *page = sg_page_iter_page(&sgiter);
+	for_each_sg_page(pt->st.sgl, &sgiter, pt->st.nents, 0) {
+		struct page *page = sg_page_iter_page(&sgiter);
 
-		अगर (page != pfn_to_page(pfn)) अणु
+		if (page != pfn_to_page(pfn)) {
 			pr_err("%s: %s left pages out of order, expected pfn %lu, found pfn %lu (using for_each_sg_page)\n",
 			       __func__, who, pfn, page_to_pfn(page));
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (igt_समयout(समयout, "%s timed out\n", who))
-			वापस -EINTR;
+		if (igt_timeout(timeout, "%s timed out\n", who))
+			return -EINTR;
 
 		pfn++;
-	पूर्ण
-	अगर (pfn != pt->end) अणु
+	}
+	if (pfn != pt->end) {
 		pr_err("%s: %s finished on wrong pfn, expected %lu, found %lu\n",
 		       __func__, who, pt->end, pfn);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल noअंतरभूत पूर्णांक expect_pfn_sgtiter(काष्ठा pfn_table *pt,
-				       स्थिर अक्षर *who,
-				       अचिन्हित दीर्घ समयout)
-अणु
-	काष्ठा sgt_iter sgt;
-	काष्ठा page *page;
-	अचिन्हित दीर्घ pfn;
+static noinline int expect_pfn_sgtiter(struct pfn_table *pt,
+				       const char *who,
+				       unsigned long timeout)
+{
+	struct sgt_iter sgt;
+	struct page *page;
+	unsigned long pfn;
 
 	pfn = pt->start;
-	क्रम_each_sgt_page(page, sgt, &pt->st) अणु
-		अगर (page != pfn_to_page(pfn)) अणु
+	for_each_sgt_page(page, sgt, &pt->st) {
+		if (page != pfn_to_page(pfn)) {
 			pr_err("%s: %s left pages out of order, expected pfn %lu, found pfn %lu (using for_each_sgt_page)\n",
 			       __func__, who, pfn, page_to_pfn(page));
-			वापस -EINVAL;
-		पूर्ण
+			return -EINVAL;
+		}
 
-		अगर (igt_समयout(समयout, "%s timed out\n", who))
-			वापस -EINTR;
+		if (igt_timeout(timeout, "%s timed out\n", who))
+			return -EINTR;
 
 		pfn++;
-	पूर्ण
-	अगर (pfn != pt->end) अणु
+	}
+	if (pfn != pt->end) {
 		pr_err("%s: %s finished on wrong pfn, expected %lu, found %lu\n",
 		       __func__, who, pt->end, pfn);
-		वापस -EINVAL;
-	पूर्ण
+		return -EINVAL;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक expect_pfn_sgtable(काष्ठा pfn_table *pt,
+static int expect_pfn_sgtable(struct pfn_table *pt,
 			      npages_fn_t npages_fn,
-			      काष्ठा rnd_state *rnd,
-			      स्थिर अक्षर *who,
-			      अचिन्हित दीर्घ समयout)
-अणु
-	पूर्णांक err;
+			      struct rnd_state *rnd,
+			      const char *who,
+			      unsigned long timeout)
+{
+	int err;
 
-	err = expect_pfn_sg(pt, npages_fn, rnd, who, समयout);
-	अगर (err)
-		वापस err;
+	err = expect_pfn_sg(pt, npages_fn, rnd, who, timeout);
+	if (err)
+		return err;
 
-	err = expect_pfn_sg_page_iter(pt, who, समयout);
-	अगर (err)
-		वापस err;
+	err = expect_pfn_sg_page_iter(pt, who, timeout);
+	if (err)
+		return err;
 
-	err = expect_pfn_sgtiter(pt, who, समयout);
-	अगर (err)
-		वापस err;
+	err = expect_pfn_sgtiter(pt, who, timeout);
+	if (err)
+		return err;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल अचिन्हित पूर्णांक one(अचिन्हित दीर्घ n,
-			अचिन्हित दीर्घ count,
-			काष्ठा rnd_state *rnd)
-अणु
-	वापस 1;
-पूर्ण
+static unsigned int one(unsigned long n,
+			unsigned long count,
+			struct rnd_state *rnd)
+{
+	return 1;
+}
 
-अटल अचिन्हित पूर्णांक grow(अचिन्हित दीर्घ n,
-			 अचिन्हित दीर्घ count,
-			 काष्ठा rnd_state *rnd)
-अणु
-	वापस n + 1;
-पूर्ण
+static unsigned int grow(unsigned long n,
+			 unsigned long count,
+			 struct rnd_state *rnd)
+{
+	return n + 1;
+}
 
-अटल अचिन्हित पूर्णांक shrink(अचिन्हित दीर्घ n,
-			   अचिन्हित दीर्घ count,
-			   काष्ठा rnd_state *rnd)
-अणु
-	वापस count - n;
-पूर्ण
+static unsigned int shrink(unsigned long n,
+			   unsigned long count,
+			   struct rnd_state *rnd)
+{
+	return count - n;
+}
 
-अटल अचिन्हित पूर्णांक अक्रमom(अचिन्हित दीर्घ n,
-			   अचिन्हित दीर्घ count,
-			   काष्ठा rnd_state *rnd)
-अणु
-	वापस 1 + (pअक्रमom_u32_state(rnd) % 1024);
-पूर्ण
+static unsigned int random(unsigned long n,
+			   unsigned long count,
+			   struct rnd_state *rnd)
+{
+	return 1 + (prandom_u32_state(rnd) % 1024);
+}
 
-अटल अचिन्हित पूर्णांक अक्रमom_page_size_pages(अचिन्हित दीर्घ n,
-					   अचिन्हित दीर्घ count,
-					   काष्ठा rnd_state *rnd)
-अणु
+static unsigned int random_page_size_pages(unsigned long n,
+					   unsigned long count,
+					   struct rnd_state *rnd)
+{
 	/* 4K, 64K, 2M */
-	अटल अचिन्हित पूर्णांक page_count[] = अणु
+	static unsigned int page_count[] = {
 		BIT(12) >> PAGE_SHIFT,
 		BIT(16) >> PAGE_SHIFT,
 		BIT(21) >> PAGE_SHIFT,
-	पूर्ण;
+	};
 
-	वापस page_count[(pअक्रमom_u32_state(rnd) % 3)];
-पूर्ण
+	return page_count[(prandom_u32_state(rnd) % 3)];
+}
 
-अटल अंतरभूत bool page_contiguous(काष्ठा page *first,
-				   काष्ठा page *last,
-				   अचिन्हित दीर्घ npages)
-अणु
-	वापस first + npages == last;
-पूर्ण
+static inline bool page_contiguous(struct page *first,
+				   struct page *last,
+				   unsigned long npages)
+{
+	return first + npages == last;
+}
 
-अटल पूर्णांक alloc_table(काष्ठा pfn_table *pt,
-		       अचिन्हित दीर्घ count, अचिन्हित दीर्घ max,
+static int alloc_table(struct pfn_table *pt,
+		       unsigned long count, unsigned long max,
 		       npages_fn_t npages_fn,
-		       काष्ठा rnd_state *rnd,
-		       पूर्णांक alloc_error)
-अणु
-	काष्ठा scatterlist *sg;
-	अचिन्हित दीर्घ n, pfn;
+		       struct rnd_state *rnd,
+		       int alloc_error)
+{
+	struct scatterlist *sg;
+	unsigned long n, pfn;
 
-	अगर (sg_alloc_table(&pt->st, max,
+	if (sg_alloc_table(&pt->st, max,
 			   GFP_KERNEL | __GFP_NORETRY | __GFP_NOWARN))
-		वापस alloc_error;
+		return alloc_error;
 
 	/* count should be less than 20 to prevent overflowing sg->length */
 	GEM_BUG_ON(overflows_type(count * PAGE_SIZE, sg->length));
 
-	/* Conकाष्ठा a table where each scatterlist contains dअगरferent number
-	 * of entries. The idea is to check that we can iterate the inभागidual
+	/* Construct a table where each scatterlist contains different number
+	 * of entries. The idea is to check that we can iterate the individual
 	 * pages from inside the coalesced lists.
 	 */
 	pt->start = PFN_BIAS;
 	pfn = pt->start;
 	sg = pt->st.sgl;
-	क्रम (n = 0; n < count; n++) अणु
-		अचिन्हित दीर्घ npages = npages_fn(n, count, rnd);
+	for (n = 0; n < count; n++) {
+		unsigned long npages = npages_fn(n, count, rnd);
 
 		/* Nobody expects the Sparse Memmap! */
-		अगर (!page_contiguous(pfn_to_page(pfn),
+		if (!page_contiguous(pfn_to_page(pfn),
 				     pfn_to_page(pfn + npages),
-				     npages)) अणु
-			sg_मुक्त_table(&pt->st);
-			वापस -ENOSPC;
-		पूर्ण
+				     npages)) {
+			sg_free_table(&pt->st);
+			return -ENOSPC;
+		}
 
-		अगर (n)
+		if (n)
 			sg = sg_next(sg);
 		sg_set_page(sg, pfn_to_page(pfn), npages * PAGE_SIZE, 0);
 
@@ -255,127 +254,127 @@
 		GEM_BUG_ON(sg->offset != 0);
 
 		pfn += npages;
-	पूर्ण
+	}
 	sg_mark_end(sg);
 	pt->st.nents = n;
 	pt->end = pfn;
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल स्थिर npages_fn_t npages_funcs[] = अणु
+static const npages_fn_t npages_funcs[] = {
 	one,
 	grow,
 	shrink,
-	अक्रमom,
-	अक्रमom_page_size_pages,
-	शून्य,
-पूर्ण;
+	random,
+	random_page_size_pages,
+	NULL,
+};
 
-अटल पूर्णांक igt_sg_alloc(व्योम *ignored)
-अणु
-	IGT_TIMEOUT(end_समय);
-	स्थिर अचिन्हित दीर्घ max_order = 20; /* approximating a 4GiB object */
-	काष्ठा rnd_state prng;
-	अचिन्हित दीर्घ prime;
-	पूर्णांक alloc_error = -ENOMEM;
+static int igt_sg_alloc(void *ignored)
+{
+	IGT_TIMEOUT(end_time);
+	const unsigned long max_order = 20; /* approximating a 4GiB object */
+	struct rnd_state prng;
+	unsigned long prime;
+	int alloc_error = -ENOMEM;
 
-	क्रम_each_prime_number(prime, max_order) अणु
-		अचिन्हित दीर्घ size = BIT(prime);
-		पूर्णांक offset;
+	for_each_prime_number(prime, max_order) {
+		unsigned long size = BIT(prime);
+		int offset;
 
-		क्रम (offset = -1; offset <= 1; offset++) अणु
-			अचिन्हित दीर्घ sz = size + offset;
-			स्थिर npages_fn_t *npages;
-			काष्ठा pfn_table pt;
-			पूर्णांक err;
+		for (offset = -1; offset <= 1; offset++) {
+			unsigned long sz = size + offset;
+			const npages_fn_t *npages;
+			struct pfn_table pt;
+			int err;
 
-			क्रम (npages = npages_funcs; *npages; npages++) अणु
-				pअक्रमom_seed_state(&prng,
-						   i915_selftest.अक्रमom_seed);
+			for (npages = npages_funcs; *npages; npages++) {
+				prandom_seed_state(&prng,
+						   i915_selftest.random_seed);
 				err = alloc_table(&pt, sz, sz, *npages, &prng,
 						  alloc_error);
-				अगर (err == -ENOSPC)
-					अवरोध;
-				अगर (err)
-					वापस err;
+				if (err == -ENOSPC)
+					break;
+				if (err)
+					return err;
 
-				pअक्रमom_seed_state(&prng,
-						   i915_selftest.अक्रमom_seed);
+				prandom_seed_state(&prng,
+						   i915_selftest.random_seed);
 				err = expect_pfn_sgtable(&pt, *npages, &prng,
 							 "sg_alloc_table",
-							 end_समय);
-				sg_मुक्त_table(&pt.st);
-				अगर (err)
-					वापस err;
-			पूर्ण
-		पूर्ण
+							 end_time);
+				sg_free_table(&pt.st);
+				if (err)
+					return err;
+			}
+		}
 
-		/* Test at least one continuation beक्रमe accepting oom */
-		अगर (size > SG_MAX_SINGLE_ALLOC)
+		/* Test at least one continuation before accepting oom */
+		if (size > SG_MAX_SINGLE_ALLOC)
 			alloc_error = -ENOSPC;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक igt_sg_trim(व्योम *ignored)
-अणु
-	IGT_TIMEOUT(end_समय);
-	स्थिर अचिन्हित दीर्घ max = PAGE_SIZE; /* not prime! */
-	काष्ठा pfn_table pt;
-	अचिन्हित दीर्घ prime;
-	पूर्णांक alloc_error = -ENOMEM;
+static int igt_sg_trim(void *ignored)
+{
+	IGT_TIMEOUT(end_time);
+	const unsigned long max = PAGE_SIZE; /* not prime! */
+	struct pfn_table pt;
+	unsigned long prime;
+	int alloc_error = -ENOMEM;
 
-	क्रम_each_prime_number(prime, max) अणु
-		स्थिर npages_fn_t *npages;
-		पूर्णांक err;
+	for_each_prime_number(prime, max) {
+		const npages_fn_t *npages;
+		int err;
 
-		क्रम (npages = npages_funcs; *npages; npages++) अणु
-			काष्ठा rnd_state prng;
+		for (npages = npages_funcs; *npages; npages++) {
+			struct rnd_state prng;
 
-			pअक्रमom_seed_state(&prng, i915_selftest.अक्रमom_seed);
+			prandom_seed_state(&prng, i915_selftest.random_seed);
 			err = alloc_table(&pt, prime, max, *npages, &prng,
 					  alloc_error);
-			अगर (err == -ENOSPC)
-				अवरोध;
-			अगर (err)
-				वापस err;
+			if (err == -ENOSPC)
+				break;
+			if (err)
+				return err;
 
-			अगर (i915_sg_trim(&pt.st)) अणु
-				अगर (pt.st.orig_nents != prime ||
-				    pt.st.nents != prime) अणु
+			if (i915_sg_trim(&pt.st)) {
+				if (pt.st.orig_nents != prime ||
+				    pt.st.nents != prime) {
 					pr_err("i915_sg_trim failed (nents %u, orig_nents %u), expected %lu\n",
 					       pt.st.nents, pt.st.orig_nents, prime);
 					err = -EINVAL;
-				पूर्ण अन्यथा अणु
-					pअक्रमom_seed_state(&prng,
-							   i915_selftest.अक्रमom_seed);
+				} else {
+					prandom_seed_state(&prng,
+							   i915_selftest.random_seed);
 					err = expect_pfn_sgtable(&pt,
 								 *npages, &prng,
 								 "i915_sg_trim",
-								 end_समय);
-				पूर्ण
-			पूर्ण
-			sg_मुक्त_table(&pt.st);
-			अगर (err)
-				वापस err;
-		पूर्ण
+								 end_time);
+				}
+			}
+			sg_free_table(&pt.st);
+			if (err)
+				return err;
+		}
 
-		/* Test at least one continuation beक्रमe accepting oom */
-		अगर (prime > SG_MAX_SINGLE_ALLOC)
+		/* Test at least one continuation before accepting oom */
+		if (prime > SG_MAX_SINGLE_ALLOC)
 			alloc_error = -ENOSPC;
-	पूर्ण
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-पूर्णांक scatterlist_mock_selftests(व्योम)
-अणु
-	अटल स्थिर काष्ठा i915_subtest tests[] = अणु
+int scatterlist_mock_selftests(void)
+{
+	static const struct i915_subtest tests[] = {
 		SUBTEST(igt_sg_alloc),
 		SUBTEST(igt_sg_trim),
-	पूर्ण;
+	};
 
-	वापस i915_subtests(tests, शून्य);
-पूर्ण
+	return i915_subtests(tests, NULL);
+}

@@ -1,133 +1,132 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Broadcom B43 wireless driver
  * PPR (Power Per Rate) management
  *
- * Copyright (c) 2014 Rafaध Miधecki <zajec5@gmail.com>
+ * Copyright (c) 2014 Rafał Miłecki <zajec5@gmail.com>
  */
 
-#समावेश "ppr.h"
-#समावेश "b43.h"
+#include "ppr.h"
+#include "b43.h"
 
-#घोषणा ppr_क्रम_each_entry(ppr, i, entry)				\
-	क्रम (i = 0, entry = &(ppr)->__all_rates[i];			\
+#define ppr_for_each_entry(ppr, i, entry)				\
+	for (i = 0, entry = &(ppr)->__all_rates[i];			\
 	     i < B43_PPR_RATES_NUM;					\
 	     i++, entry++)
 
-व्योम b43_ppr_clear(काष्ठा b43_wldev *dev, काष्ठा b43_ppr *ppr)
-अणु
-	स_रखो(ppr, 0, माप(*ppr));
+void b43_ppr_clear(struct b43_wldev *dev, struct b43_ppr *ppr)
+{
+	memset(ppr, 0, sizeof(*ppr));
 
-	/* Compile-समय PPR check */
-	BUILD_BUG_ON(माप(काष्ठा b43_ppr) != B43_PPR_RATES_NUM * माप(u8));
-पूर्ण
+	/* Compile-time PPR check */
+	BUILD_BUG_ON(sizeof(struct b43_ppr) != B43_PPR_RATES_NUM * sizeof(u8));
+}
 
-व्योम b43_ppr_add(काष्ठा b43_wldev *dev, काष्ठा b43_ppr *ppr, पूर्णांक dअगरf)
-अणु
-	पूर्णांक i;
+void b43_ppr_add(struct b43_wldev *dev, struct b43_ppr *ppr, int diff)
+{
+	int i;
 	u8 *rate;
 
-	ppr_क्रम_each_entry(ppr, i, rate) अणु
-		*rate = clamp_val(*rate + dअगरf, 0, 127);
-	पूर्ण
-पूर्ण
+	ppr_for_each_entry(ppr, i, rate) {
+		*rate = clamp_val(*rate + diff, 0, 127);
+	}
+}
 
-व्योम b43_ppr_apply_max(काष्ठा b43_wldev *dev, काष्ठा b43_ppr *ppr, u8 max)
-अणु
-	पूर्णांक i;
+void b43_ppr_apply_max(struct b43_wldev *dev, struct b43_ppr *ppr, u8 max)
+{
+	int i;
 	u8 *rate;
 
-	ppr_क्रम_each_entry(ppr, i, rate) अणु
+	ppr_for_each_entry(ppr, i, rate) {
 		*rate = min(*rate, max);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम b43_ppr_apply_min(काष्ठा b43_wldev *dev, काष्ठा b43_ppr *ppr, u8 min)
-अणु
-	पूर्णांक i;
+void b43_ppr_apply_min(struct b43_wldev *dev, struct b43_ppr *ppr, u8 min)
+{
+	int i;
 	u8 *rate;
 
-	ppr_क्रम_each_entry(ppr, i, rate) अणु
+	ppr_for_each_entry(ppr, i, rate) {
 		*rate = max(*rate, min);
-	पूर्ण
-पूर्ण
+	}
+}
 
-u8 b43_ppr_get_max(काष्ठा b43_wldev *dev, काष्ठा b43_ppr *ppr)
-अणु
+u8 b43_ppr_get_max(struct b43_wldev *dev, struct b43_ppr *ppr)
+{
 	u8 res = 0;
-	पूर्णांक i;
+	int i;
 	u8 *rate;
 
-	ppr_क्रम_each_entry(ppr, i, rate) अणु
+	ppr_for_each_entry(ppr, i, rate) {
 		res = max(*rate, res);
-	पूर्ण
+	}
 
-	वापस res;
-पूर्ण
+	return res;
+}
 
-bool b43_ppr_load_max_from_sprom(काष्ठा b43_wldev *dev, काष्ठा b43_ppr *ppr,
-				 क्रमागत b43_band band)
-अणु
-	काष्ठा b43_ppr_rates *rates = &ppr->rates;
-	काष्ठा ssb_sprom *sprom = dev->dev->bus_sprom;
-	काष्ठा b43_phy *phy = &dev->phy;
+bool b43_ppr_load_max_from_sprom(struct b43_wldev *dev, struct b43_ppr *ppr,
+				 enum b43_band band)
+{
+	struct b43_ppr_rates *rates = &ppr->rates;
+	struct ssb_sprom *sprom = dev->dev->bus_sprom;
+	struct b43_phy *phy = &dev->phy;
 	u8 maxpwr, off;
 	u32 sprom_ofdm_po;
 	u16 *sprom_mcs_po;
 	u8 extra_cdd_po, extra_stbc_po;
-	पूर्णांक i;
+	int i;
 
-	चयन (band) अणु
-	हाल B43_BAND_2G:
+	switch (band) {
+	case B43_BAND_2G:
 		maxpwr = min(sprom->core_pwr_info[0].maxpwr_2g,
 			     sprom->core_pwr_info[1].maxpwr_2g);
 		sprom_ofdm_po = sprom->ofdm2gpo;
 		sprom_mcs_po = sprom->mcs2gpo;
 		extra_cdd_po = (sprom->cddpo >> 0) & 0xf;
 		extra_stbc_po = (sprom->stbcpo >> 0) & 0xf;
-		अवरोध;
-	हाल B43_BAND_5G_LO:
+		break;
+	case B43_BAND_5G_LO:
 		maxpwr = min(sprom->core_pwr_info[0].maxpwr_5gl,
 			     sprom->core_pwr_info[1].maxpwr_5gl);
 		sprom_ofdm_po = sprom->ofdm5glpo;
 		sprom_mcs_po = sprom->mcs5glpo;
 		extra_cdd_po = (sprom->cddpo >> 8) & 0xf;
 		extra_stbc_po = (sprom->stbcpo >> 8) & 0xf;
-		अवरोध;
-	हाल B43_BAND_5G_MI:
+		break;
+	case B43_BAND_5G_MI:
 		maxpwr = min(sprom->core_pwr_info[0].maxpwr_5g,
 			     sprom->core_pwr_info[1].maxpwr_5g);
 		sprom_ofdm_po = sprom->ofdm5gpo;
 		sprom_mcs_po = sprom->mcs5gpo;
 		extra_cdd_po = (sprom->cddpo >> 4) & 0xf;
 		extra_stbc_po = (sprom->stbcpo >> 4) & 0xf;
-		अवरोध;
-	हाल B43_BAND_5G_HI:
+		break;
+	case B43_BAND_5G_HI:
 		maxpwr = min(sprom->core_pwr_info[0].maxpwr_5gh,
 			     sprom->core_pwr_info[1].maxpwr_5gh);
 		sprom_ofdm_po = sprom->ofdm5ghpo;
 		sprom_mcs_po = sprom->mcs5ghpo;
 		extra_cdd_po = (sprom->cddpo >> 12) & 0xf;
 		extra_stbc_po = (sprom->stbcpo >> 12) & 0xf;
-		अवरोध;
-	शेष:
+		break;
+	default:
 		WARN_ON_ONCE(1);
-		वापस false;
-	पूर्ण
+		return false;
+	}
 
-	अगर (band == B43_BAND_2G) अणु
-		क्रम (i = 0; i < 4; i++) अणु
+	if (band == B43_BAND_2G) {
+		for (i = 0; i < 4; i++) {
 			off = ((sprom->cck2gpo >> (i * 4)) & 0xf) * 2;
 			rates->cck[i] = maxpwr - off;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	/* OFDM */
-	क्रम (i = 0; i < 8; i++) अणु
+	for (i = 0; i < 8; i++) {
 		off = ((sprom_ofdm_po >> (i * 4)) & 0xf) * 2;
 		rates->ofdm[i] = maxpwr - off;
-	पूर्ण
+	}
 
 	/* MCS 20 SISO */
 	rates->mcs_20[0] = rates->ofdm[0];
@@ -140,18 +139,18 @@ bool b43_ppr_load_max_from_sprom(काष्ठा b43_wldev *dev, काष्
 	rates->mcs_20[7] = rates->ofdm[7];
 
 	/* MCS 20 CDD */
-	क्रम (i = 0; i < 4; i++) अणु
+	for (i = 0; i < 4; i++) {
 		off = ((sprom_mcs_po[0] >> (i * 4)) & 0xf) * 2;
 		rates->mcs_20_cdd[i] = maxpwr - off;
-		अगर (phy->type == B43_PHYTYPE_N && phy->rev >= 3)
+		if (phy->type == B43_PHYTYPE_N && phy->rev >= 3)
 			rates->mcs_20_cdd[i] -= extra_cdd_po;
-	पूर्ण
-	क्रम (i = 0; i < 4; i++) अणु
+	}
+	for (i = 0; i < 4; i++) {
 		off = ((sprom_mcs_po[1] >> (i * 4)) & 0xf) * 2;
 		rates->mcs_20_cdd[4 + i] = maxpwr - off;
-		अगर (phy->type == B43_PHYTYPE_N && phy->rev >= 3)
+		if (phy->type == B43_PHYTYPE_N && phy->rev >= 3)
 			rates->mcs_20_cdd[4 + i] -= extra_cdd_po;
-	पूर्ण
+	}
 
 	/* OFDM 20 CDD */
 	rates->ofdm_20_cdd[0] = rates->mcs_20_cdd[0];
@@ -164,28 +163,28 @@ bool b43_ppr_load_max_from_sprom(काष्ठा b43_wldev *dev, काष्
 	rates->ofdm_20_cdd[7] = rates->mcs_20_cdd[6];
 
 	/* MCS 20 STBC */
-	क्रम (i = 0; i < 4; i++) अणु
+	for (i = 0; i < 4; i++) {
 		off = ((sprom_mcs_po[0] >> (i * 4)) & 0xf) * 2;
 		rates->mcs_20_stbc[i] = maxpwr - off;
-		अगर (phy->type == B43_PHYTYPE_N && phy->rev >= 3)
+		if (phy->type == B43_PHYTYPE_N && phy->rev >= 3)
 			rates->mcs_20_stbc[i] -= extra_stbc_po;
-	पूर्ण
-	क्रम (i = 0; i < 4; i++) अणु
+	}
+	for (i = 0; i < 4; i++) {
 		off = ((sprom_mcs_po[1] >> (i * 4)) & 0xf) * 2;
 		rates->mcs_20_stbc[4 + i] = maxpwr - off;
-		अगर (phy->type == B43_PHYTYPE_N && phy->rev >= 3)
+		if (phy->type == B43_PHYTYPE_N && phy->rev >= 3)
 			rates->mcs_20_stbc[4 + i] -= extra_stbc_po;
-	पूर्ण
+	}
 
 	/* MCS 20 SDM */
-	क्रम (i = 0; i < 4; i++) अणु
+	for (i = 0; i < 4; i++) {
 		off = ((sprom_mcs_po[2] >> (i * 4)) & 0xf) * 2;
 		rates->mcs_20_sdm[i] = maxpwr - off;
-	पूर्ण
-	क्रम (i = 0; i < 4; i++) अणु
+	}
+	for (i = 0; i < 4; i++) {
 		off = ((sprom_mcs_po[3] >> (i * 4)) & 0xf) * 2;
 		rates->mcs_20_sdm[4 + i] = maxpwr - off;
-	पूर्ण
+	}
 
-	वापस true;
-पूर्ण
+	return true;
+}

@@ -1,202 +1,201 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0
 /******************************************************************************
  *
  * Copyright(c) 2007 - 2012 Realtek Corporation. All rights reserved.
  *
  ******************************************************************************/
 
-#समावेश "Mp_Precomp.h"
+#include "Mp_Precomp.h"
 
 /* defines */
-#घोषणा HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(val)			      \
-करो अणु									      \
+#define HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(val)			      \
+do {									      \
 	halbtc8723b2ant_PsTdma(pBtCoexist, NORMAL_EXEC, true, val);           \
 	pCoexDm->psTdmaDuAdjType = val;                                       \
-पूर्ण जबतक (0)
+} while (0)
 
-/*  Global variables, these are अटल variables */
-अटल काष्ठा coex_dm_8723b_2ant GLCoexDm8723b2Ant;
-अटल काष्ठा coex_dm_8723b_2ant *pCoexDm = &GLCoexDm8723b2Ant;
-अटल काष्ठा coex_sta_8723b_2ant GLCoexSta8723b2Ant;
-अटल काष्ठा coex_sta_8723b_2ant *pCoexSta = &GLCoexSta8723b2Ant;
+/*  Global variables, these are static variables */
+static struct coex_dm_8723b_2ant GLCoexDm8723b2Ant;
+static struct coex_dm_8723b_2ant *pCoexDm = &GLCoexDm8723b2Ant;
+static struct coex_sta_8723b_2ant GLCoexSta8723b2Ant;
+static struct coex_sta_8723b_2ant *pCoexSta = &GLCoexSta8723b2Ant;
 
-अटल स्थिर अक्षर *स्थिर GLBtInfoSrc8723b2Ant[] = अणु
+static const char *const GLBtInfoSrc8723b2Ant[] = {
 	"BT Info[wifi fw]",
 	"BT Info[bt rsp]",
 	"BT Info[bt auto report]",
-पूर्ण;
+};
 
-अटल u32 GLCoexVerDate8723b2Ant = 20131211;
-अटल u32 GLCoexVer8723b2Ant = 0x40;
+static u32 GLCoexVerDate8723b2Ant = 20131211;
+static u32 GLCoexVer8723b2Ant = 0x40;
 
 /*  local function start with halbtc8723b2ant_ */
-अटल u8 halbtc8723b2ant_BtRssiState(
+static u8 halbtc8723b2ant_BtRssiState(
 	u8 levelNum, u8 rssiThresh, u8 rssiThresh1
 )
-अणु
+{
 	s32 btRssi = 0;
 	u8 btRssiState = pCoexSta->preBtRssiState;
 
 	btRssi = pCoexSta->btRssi;
 
-	अगर (levelNum == 2) अणु
-		अगर (
+	if (levelNum == 2) {
+		if (
 			(pCoexSta->preBtRssiState == BTC_RSSI_STATE_LOW) ||
 			(pCoexSta->preBtRssiState == BTC_RSSI_STATE_STAY_LOW)
-		) अणु
-			अगर (btRssi >= (rssiThresh + BTC_RSSI_COEX_THRESH_TOL_8723B_2ANT)) अणु
+		) {
+			if (btRssi >= (rssiThresh + BTC_RSSI_COEX_THRESH_TOL_8723B_2ANT)) {
 				btRssiState = BTC_RSSI_STATE_HIGH;
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_BT_RSSI_STATE, ("[BTCoex], BT Rssi state switch to High\n"));
-			पूर्ण अन्यथा अणु
+			} else {
 				btRssiState = BTC_RSSI_STATE_STAY_LOW;
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_BT_RSSI_STATE, ("[BTCoex], BT Rssi state stay at Low\n"));
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (btRssi < rssiThresh) अणु
+			}
+		} else {
+			if (btRssi < rssiThresh) {
 				btRssiState = BTC_RSSI_STATE_LOW;
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_BT_RSSI_STATE, ("[BTCoex], BT Rssi state switch to Low\n"));
-			पूर्ण अन्यथा अणु
+			} else {
 				btRssiState = BTC_RSSI_STATE_STAY_HIGH;
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_BT_RSSI_STATE, ("[BTCoex], BT Rssi state stay at High\n"));
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अगर (levelNum == 3) अणु
-		अगर (rssiThresh > rssiThresh1) अणु
+			}
+		}
+	} else if (levelNum == 3) {
+		if (rssiThresh > rssiThresh1) {
 			BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_BT_RSSI_STATE, ("[BTCoex], BT Rssi thresh error!!\n"));
-			वापस pCoexSta->preBtRssiState;
-		पूर्ण
+			return pCoexSta->preBtRssiState;
+		}
 
-		अगर (
+		if (
 			(pCoexSta->preBtRssiState == BTC_RSSI_STATE_LOW) ||
 			(pCoexSta->preBtRssiState == BTC_RSSI_STATE_STAY_LOW)
-		) अणु
-			अगर (btRssi >= (rssiThresh + BTC_RSSI_COEX_THRESH_TOL_8723B_2ANT)) अणु
+		) {
+			if (btRssi >= (rssiThresh + BTC_RSSI_COEX_THRESH_TOL_8723B_2ANT)) {
 				btRssiState = BTC_RSSI_STATE_MEDIUM;
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_BT_RSSI_STATE, ("[BTCoex], BT Rssi state switch to Medium\n"));
-			पूर्ण अन्यथा अणु
+			} else {
 				btRssiState = BTC_RSSI_STATE_STAY_LOW;
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_BT_RSSI_STATE, ("[BTCoex], BT Rssi state stay at Low\n"));
-			पूर्ण
-		पूर्ण अन्यथा अगर (
+			}
+		} else if (
 			(pCoexSta->preBtRssiState == BTC_RSSI_STATE_MEDIUM) ||
 			(pCoexSta->preBtRssiState == BTC_RSSI_STATE_STAY_MEDIUM)
-		) अणु
-			अगर (btRssi >= (rssiThresh1 + BTC_RSSI_COEX_THRESH_TOL_8723B_2ANT)) अणु
+		) {
+			if (btRssi >= (rssiThresh1 + BTC_RSSI_COEX_THRESH_TOL_8723B_2ANT)) {
 				btRssiState = BTC_RSSI_STATE_HIGH;
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_BT_RSSI_STATE, ("[BTCoex], BT Rssi state switch to High\n"));
-			पूर्ण अन्यथा अगर (btRssi < rssiThresh) अणु
+			} else if (btRssi < rssiThresh) {
 				btRssiState = BTC_RSSI_STATE_LOW;
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_BT_RSSI_STATE, ("[BTCoex], BT Rssi state switch to Low\n"));
-			पूर्ण अन्यथा अणु
+			} else {
 				btRssiState = BTC_RSSI_STATE_STAY_MEDIUM;
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_BT_RSSI_STATE, ("[BTCoex], BT Rssi state stay at Medium\n"));
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (btRssi < rssiThresh1) अणु
+			}
+		} else {
+			if (btRssi < rssiThresh1) {
 				btRssiState = BTC_RSSI_STATE_MEDIUM;
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_BT_RSSI_STATE, ("[BTCoex], BT Rssi state switch to Medium\n"));
-			पूर्ण अन्यथा अणु
+			} else {
 				btRssiState = BTC_RSSI_STATE_STAY_HIGH;
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_BT_RSSI_STATE, ("[BTCoex], BT Rssi state stay at High\n"));
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
 	pCoexSta->preBtRssiState = btRssiState;
 
-	वापस btRssiState;
-पूर्ण
+	return btRssiState;
+}
 
-अटल u8 halbtc8723b2ant_WअगरiRssiState(
-	काष्ठा btc_coexist *pBtCoexist,
+static u8 halbtc8723b2ant_WifiRssiState(
+	struct btc_coexist *pBtCoexist,
 	u8 index,
 	u8 levelNum,
 	u8 rssiThresh,
 	u8 rssiThresh1
 )
-अणु
-	s32 wअगरiRssi = 0;
-	u8 wअगरiRssiState = pCoexSta->preWअगरiRssiState[index];
+{
+	s32 wifiRssi = 0;
+	u8 wifiRssiState = pCoexSta->preWifiRssiState[index];
 
-	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_S4_WIFI_RSSI, &wअगरiRssi);
+	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_S4_WIFI_RSSI, &wifiRssi);
 
-	अगर (levelNum == 2) अणु
-		अगर (
-			(pCoexSta->preWअगरiRssiState[index] == BTC_RSSI_STATE_LOW) ||
-			(pCoexSta->preWअगरiRssiState[index] == BTC_RSSI_STATE_STAY_LOW)
-		) अणु
-			अगर (wअगरiRssi >= (rssiThresh + BTC_RSSI_COEX_THRESH_TOL_8723B_2ANT)) अणु
-				wअगरiRssiState = BTC_RSSI_STATE_HIGH;
+	if (levelNum == 2) {
+		if (
+			(pCoexSta->preWifiRssiState[index] == BTC_RSSI_STATE_LOW) ||
+			(pCoexSta->preWifiRssiState[index] == BTC_RSSI_STATE_STAY_LOW)
+		) {
+			if (wifiRssi >= (rssiThresh + BTC_RSSI_COEX_THRESH_TOL_8723B_2ANT)) {
+				wifiRssiState = BTC_RSSI_STATE_HIGH;
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_WIFI_RSSI_STATE, ("[BTCoex], wifi RSSI state switch to High\n"));
-			पूर्ण अन्यथा अणु
-				wअगरiRssiState = BTC_RSSI_STATE_STAY_LOW;
+			} else {
+				wifiRssiState = BTC_RSSI_STATE_STAY_LOW;
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_WIFI_RSSI_STATE, ("[BTCoex], wifi RSSI state stay at Low\n"));
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (wअगरiRssi < rssiThresh) अणु
-				wअगरiRssiState = BTC_RSSI_STATE_LOW;
+			}
+		} else {
+			if (wifiRssi < rssiThresh) {
+				wifiRssiState = BTC_RSSI_STATE_LOW;
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_WIFI_RSSI_STATE, ("[BTCoex], wifi RSSI state switch to Low\n"));
-			पूर्ण अन्यथा अणु
-				wअगरiRssiState = BTC_RSSI_STATE_STAY_HIGH;
+			} else {
+				wifiRssiState = BTC_RSSI_STATE_STAY_HIGH;
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_WIFI_RSSI_STATE, ("[BTCoex], wifi RSSI state stay at High\n"));
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अगर (levelNum == 3) अणु
-		अगर (rssiThresh > rssiThresh1) अणु
+			}
+		}
+	} else if (levelNum == 3) {
+		if (rssiThresh > rssiThresh1) {
 			BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_WIFI_RSSI_STATE, ("[BTCoex], wifi RSSI thresh error!!\n"));
-			वापस pCoexSta->preWअगरiRssiState[index];
-		पूर्ण
+			return pCoexSta->preWifiRssiState[index];
+		}
 
-		अगर (
-			(pCoexSta->preWअगरiRssiState[index] == BTC_RSSI_STATE_LOW) ||
-			(pCoexSta->preWअगरiRssiState[index] == BTC_RSSI_STATE_STAY_LOW)
-		) अणु
-			अगर (wअगरiRssi >= (rssiThresh + BTC_RSSI_COEX_THRESH_TOL_8723B_2ANT)) अणु
-				wअगरiRssiState = BTC_RSSI_STATE_MEDIUM;
+		if (
+			(pCoexSta->preWifiRssiState[index] == BTC_RSSI_STATE_LOW) ||
+			(pCoexSta->preWifiRssiState[index] == BTC_RSSI_STATE_STAY_LOW)
+		) {
+			if (wifiRssi >= (rssiThresh + BTC_RSSI_COEX_THRESH_TOL_8723B_2ANT)) {
+				wifiRssiState = BTC_RSSI_STATE_MEDIUM;
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_WIFI_RSSI_STATE, ("[BTCoex], wifi RSSI state switch to Medium\n"));
-			पूर्ण अन्यथा अणु
-				wअगरiRssiState = BTC_RSSI_STATE_STAY_LOW;
+			} else {
+				wifiRssiState = BTC_RSSI_STATE_STAY_LOW;
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_WIFI_RSSI_STATE, ("[BTCoex], wifi RSSI state stay at Low\n"));
-			पूर्ण
-		पूर्ण अन्यथा अगर (
-			(pCoexSta->preWअगरiRssiState[index] == BTC_RSSI_STATE_MEDIUM) ||
-			(pCoexSta->preWअगरiRssiState[index] == BTC_RSSI_STATE_STAY_MEDIUM)
-		) अणु
-			अगर (wअगरiRssi >= (rssiThresh1 + BTC_RSSI_COEX_THRESH_TOL_8723B_2ANT)) अणु
-				wअगरiRssiState = BTC_RSSI_STATE_HIGH;
+			}
+		} else if (
+			(pCoexSta->preWifiRssiState[index] == BTC_RSSI_STATE_MEDIUM) ||
+			(pCoexSta->preWifiRssiState[index] == BTC_RSSI_STATE_STAY_MEDIUM)
+		) {
+			if (wifiRssi >= (rssiThresh1 + BTC_RSSI_COEX_THRESH_TOL_8723B_2ANT)) {
+				wifiRssiState = BTC_RSSI_STATE_HIGH;
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_WIFI_RSSI_STATE, ("[BTCoex], wifi RSSI state switch to High\n"));
-			पूर्ण अन्यथा अगर (wअगरiRssi < rssiThresh) अणु
-				wअगरiRssiState = BTC_RSSI_STATE_LOW;
+			} else if (wifiRssi < rssiThresh) {
+				wifiRssiState = BTC_RSSI_STATE_LOW;
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_WIFI_RSSI_STATE, ("[BTCoex], wifi RSSI state switch to Low\n"));
-			पूर्ण अन्यथा अणु
-				wअगरiRssiState = BTC_RSSI_STATE_STAY_MEDIUM;
+			} else {
+				wifiRssiState = BTC_RSSI_STATE_STAY_MEDIUM;
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_WIFI_RSSI_STATE, ("[BTCoex], wifi RSSI state stay at Medium\n"));
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (wअगरiRssi < rssiThresh1) अणु
-				wअगरiRssiState = BTC_RSSI_STATE_MEDIUM;
+			}
+		} else {
+			if (wifiRssi < rssiThresh1) {
+				wifiRssiState = BTC_RSSI_STATE_MEDIUM;
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_WIFI_RSSI_STATE, ("[BTCoex], wifi RSSI state switch to Medium\n"));
-			पूर्ण अन्यथा अणु
-				wअगरiRssiState = BTC_RSSI_STATE_STAY_HIGH;
+			} else {
+				wifiRssiState = BTC_RSSI_STATE_STAY_HIGH;
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_WIFI_RSSI_STATE, ("[BTCoex], wifi RSSI state stay at High\n"));
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	pCoexSta->preWअगरiRssiState[index] = wअगरiRssiState;
+	pCoexSta->preWifiRssiState[index] = wifiRssiState;
 
-	वापस wअगरiRssiState;
-पूर्ण
+	return wifiRssiState;
+}
 
-अटल व्योम halbtc8723b2ant_LimitedRx(
-	काष्ठा btc_coexist *pBtCoexist,
+static void halbtc8723b2ant_LimitedRx(
+	struct btc_coexist *pBtCoexist,
 	bool bForceExec,
 	bool bRejApAggPkt,
 	bool bBtCtrlAggBufSize,
 	u8 aggBufSize
 )
-अणु
+{
 	bool bRejectRxAgg = bRejApAggPkt;
 	bool bBtCtrlRxAggSize = bBtCtrlAggBufSize;
 	u8 rxAggSize = aggBufSize;
@@ -210,11 +209,11 @@
 	/*  aggregation buf size, only work when BT control Rx aggregation size. */
 	pBtCoexist->fBtcSet(pBtCoexist, BTC_SET_U1_AGG_BUF_SIZE, &rxAggSize);
 	/*  real update aggregation setting */
-	pBtCoexist->fBtcSet(pBtCoexist, BTC_SET_ACT_AGGREGATE_CTRL, शून्य);
-पूर्ण
+	pBtCoexist->fBtcSet(pBtCoexist, BTC_SET_ACT_AGGREGATE_CTRL, NULL);
+}
 
-अटल व्योम halbtc8723b2ant_MonitorBtCtr(काष्ठा btc_coexist *pBtCoexist)
-अणु
+static void halbtc8723b2ant_MonitorBtCtr(struct btc_coexist *pBtCoexist)
+{
 	u32 regHPTxRx, regLPTxRx, u4Tmp;
 	u32 regHPTx = 0, regHPRx = 0, regLPTx = 0, regLPRx = 0;
 
@@ -261,11 +260,11 @@
 
 	/*  reset counter */
 	pBtCoexist->fBtcWrite1Byte(pBtCoexist, 0x76e, 0xc);
-पूर्ण
+}
 
-अटल व्योम halbtc8723b2ant_QueryBtInfo(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	u8 	H2C_Parameter[1] = अणु0पूर्ण;
+static void halbtc8723b2ant_QueryBtInfo(struct btc_coexist *pBtCoexist)
+{
+	u8 	H2C_Parameter[1] = {0};
 
 	pCoexSta->bC2hBtInfoReqSent = true;
 
@@ -278,42 +277,42 @@
 	);
 
 	pBtCoexist->fBtcFillH2c(pBtCoexist, 0x61, 1, H2C_Parameter);
-पूर्ण
+}
 
-अटल bool halbtc8723b2ant_IsWअगरiStatusChanged(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	अटल bool	bPreWअगरiBusy, bPreUnder4way, bPreBtHsOn;
-	bool bWअगरiBusy = false, bUnder4way = false, bBtHsOn = false;
-	bool bWअगरiConnected = false;
+static bool halbtc8723b2ant_IsWifiStatusChanged(struct btc_coexist *pBtCoexist)
+{
+	static bool	bPreWifiBusy, bPreUnder4way, bPreBtHsOn;
+	bool bWifiBusy = false, bUnder4way = false, bBtHsOn = false;
+	bool bWifiConnected = false;
 
-	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_BL_WIFI_CONNECTED, &bWअगरiConnected);
-	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_BL_WIFI_BUSY, &bWअगरiBusy);
+	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_BL_WIFI_CONNECTED, &bWifiConnected);
+	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_BL_WIFI_BUSY, &bWifiBusy);
 	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_BL_HS_OPERATION, &bBtHsOn);
 	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_BL_WIFI_4_WAY_PROGRESS, &bUnder4way);
 
-	अगर (bWअगरiConnected) अणु
-		अगर (bWअगरiBusy != bPreWअगरiBusy) अणु
-			bPreWअगरiBusy = bWअगरiBusy;
-			वापस true;
-		पूर्ण
+	if (bWifiConnected) {
+		if (bWifiBusy != bPreWifiBusy) {
+			bPreWifiBusy = bWifiBusy;
+			return true;
+		}
 
-		अगर (bUnder4way != bPreUnder4way) अणु
+		if (bUnder4way != bPreUnder4way) {
 			bPreUnder4way = bUnder4way;
-			वापस true;
-		पूर्ण
+			return true;
+		}
 
-		अगर (bBtHsOn != bPreBtHsOn) अणु
+		if (bBtHsOn != bPreBtHsOn) {
 			bPreBtHsOn = bBtHsOn;
-			वापस true;
-		पूर्ण
-	पूर्ण
+			return true;
+		}
+	}
 
-	वापस false;
-पूर्ण
+	return false;
+}
 
-अटल व्योम halbtc8723b2ant_UpdateBtLinkInfo(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	काष्ठा btc_bt_link_info *pBtLinkInfo = &pBtCoexist->btLinkInfo;
+static void halbtc8723b2ant_UpdateBtLinkInfo(struct btc_coexist *pBtCoexist)
+{
+	struct btc_bt_link_info *pBtLinkInfo = &pBtCoexist->btLinkInfo;
 	bool bBtHsOn = false;
 
 	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_BL_HS_OPERATION, &bBtHsOn);
@@ -324,236 +323,236 @@
 	pBtLinkInfo->bPanExist = pCoexSta->bPanExist;
 	pBtLinkInfo->bHidExist = pCoexSta->bHidExist;
 
-	/*  work around क्रम HS mode. */
-	अगर (bBtHsOn) अणु
+	/*  work around for HS mode. */
+	if (bBtHsOn) {
 		pBtLinkInfo->bPanExist = true;
 		pBtLinkInfo->bBtLinkExist = true;
-	पूर्ण
+	}
 
-	/*  check अगर Sco only */
-	अगर (
+	/*  check if Sco only */
+	if (
 		pBtLinkInfo->bScoExist &&
 		!pBtLinkInfo->bA2dpExist &&
 		!pBtLinkInfo->bPanExist &&
 		!pBtLinkInfo->bHidExist
 	)
 		pBtLinkInfo->bScoOnly = true;
-	अन्यथा
+	else
 		pBtLinkInfo->bScoOnly = false;
 
-	/*  check अगर A2dp only */
-	अगर (
+	/*  check if A2dp only */
+	if (
 		!pBtLinkInfo->bScoExist &&
 		pBtLinkInfo->bA2dpExist &&
 		!pBtLinkInfo->bPanExist &&
 		!pBtLinkInfo->bHidExist
 	)
 		pBtLinkInfo->bA2dpOnly = true;
-	अन्यथा
+	else
 		pBtLinkInfo->bA2dpOnly = false;
 
-	/*  check अगर Pan only */
-	अगर (
+	/*  check if Pan only */
+	if (
 		!pBtLinkInfo->bScoExist &&
 		!pBtLinkInfo->bA2dpExist &&
 		pBtLinkInfo->bPanExist &&
 		!pBtLinkInfo->bHidExist
 	)
 		pBtLinkInfo->bPanOnly = true;
-	अन्यथा
+	else
 		pBtLinkInfo->bPanOnly = false;
 
-	/*  check अगर Hid only */
-	अगर (
+	/*  check if Hid only */
+	if (
 		!pBtLinkInfo->bScoExist &&
 		!pBtLinkInfo->bA2dpExist &&
 		!pBtLinkInfo->bPanExist &&
 		pBtLinkInfo->bHidExist
 	)
 		pBtLinkInfo->bHidOnly = true;
-	अन्यथा
+	else
 		pBtLinkInfo->bHidOnly = false;
-पूर्ण
+}
 
-अटल u8 halbtc8723b2ant_ActionAlgorithm(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	काष्ठा btc_bt_link_info *pBtLinkInfo = &pBtCoexist->btLinkInfo;
+static u8 halbtc8723b2ant_ActionAlgorithm(struct btc_coexist *pBtCoexist)
+{
+	struct btc_bt_link_info *pBtLinkInfo = &pBtCoexist->btLinkInfo;
 	bool bBtHsOn = false;
 	u8 algorithm = BT_8723B_2ANT_COEX_ALGO_UNDEFINED;
-	u8 numOfDअगरfProfile = 0;
+	u8 numOfDiffProfile = 0;
 
 	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_BL_HS_OPERATION, &bBtHsOn);
 
-	अगर (!pBtLinkInfo->bBtLinkExist) अणु
+	if (!pBtLinkInfo->bBtLinkExist) {
 		BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], No BT link exists!!!\n"));
-		वापस algorithm;
-	पूर्ण
+		return algorithm;
+	}
 
-	अगर (pBtLinkInfo->bScoExist)
-		numOfDअगरfProfile++;
+	if (pBtLinkInfo->bScoExist)
+		numOfDiffProfile++;
 
-	अगर (pBtLinkInfo->bHidExist)
-		numOfDअगरfProfile++;
+	if (pBtLinkInfo->bHidExist)
+		numOfDiffProfile++;
 
-	अगर (pBtLinkInfo->bPanExist)
-		numOfDअगरfProfile++;
+	if (pBtLinkInfo->bPanExist)
+		numOfDiffProfile++;
 
-	अगर (pBtLinkInfo->bA2dpExist)
-		numOfDअगरfProfile++;
+	if (pBtLinkInfo->bA2dpExist)
+		numOfDiffProfile++;
 
-	अगर (numOfDअगरfProfile == 1) अणु
-		अगर (pBtLinkInfo->bScoExist) अणु
+	if (numOfDiffProfile == 1) {
+		if (pBtLinkInfo->bScoExist) {
 			BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], SCO only\n"));
 			algorithm = BT_8723B_2ANT_COEX_ALGO_SCO;
-		पूर्ण अन्यथा अणु
-			अगर (pBtLinkInfo->bHidExist) अणु
+		} else {
+			if (pBtLinkInfo->bHidExist) {
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], HID only\n"));
 				algorithm = BT_8723B_2ANT_COEX_ALGO_HID;
-			पूर्ण अन्यथा अगर (pBtLinkInfo->bA2dpExist) अणु
+			} else if (pBtLinkInfo->bA2dpExist) {
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], A2DP only\n"));
 				algorithm = BT_8723B_2ANT_COEX_ALGO_A2DP;
-			पूर्ण अन्यथा अगर (pBtLinkInfo->bPanExist) अणु
-				अगर (bBtHsOn) अणु
+			} else if (pBtLinkInfo->bPanExist) {
+				if (bBtHsOn) {
 					BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], PAN(HS) only\n"));
 					algorithm = BT_8723B_2ANT_COEX_ALGO_PANHS;
-				पूर्ण अन्यथा अणु
+				} else {
 					BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], PAN(EDR) only\n"));
 					algorithm = BT_8723B_2ANT_COEX_ALGO_PANEDR;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अगर (numOfDअगरfProfile == 2) अणु
-		अगर (pBtLinkInfo->bScoExist) अणु
-			अगर (pBtLinkInfo->bHidExist) अणु
+				}
+			}
+		}
+	} else if (numOfDiffProfile == 2) {
+		if (pBtLinkInfo->bScoExist) {
+			if (pBtLinkInfo->bHidExist) {
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], SCO + HID\n"));
 				algorithm = BT_8723B_2ANT_COEX_ALGO_PANEDR_HID;
-			पूर्ण अन्यथा अगर (pBtLinkInfo->bA2dpExist) अणु
+			} else if (pBtLinkInfo->bA2dpExist) {
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], SCO + A2DP ==> SCO\n"));
 				algorithm = BT_8723B_2ANT_COEX_ALGO_PANEDR_HID;
-			पूर्ण अन्यथा अगर (pBtLinkInfo->bPanExist) अणु
-				अगर (bBtHsOn) अणु
+			} else if (pBtLinkInfo->bPanExist) {
+				if (bBtHsOn) {
 					BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], SCO + PAN(HS)\n"));
 					algorithm = BT_8723B_2ANT_COEX_ALGO_SCO;
-				पूर्ण अन्यथा अणु
+				} else {
 					BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], SCO + PAN(EDR)\n"));
 					algorithm = BT_8723B_2ANT_COEX_ALGO_PANEDR_HID;
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (
+				}
+			}
+		} else {
+			if (
 				pBtLinkInfo->bHidExist &&
 				pBtLinkInfo->bA2dpExist
-			) अणु
+			) {
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], HID + A2DP\n"));
 				algorithm = BT_8723B_2ANT_COEX_ALGO_HID_A2DP;
-			पूर्ण अन्यथा अगर (
+			} else if (
 				pBtLinkInfo->bHidExist &&
 				pBtLinkInfo->bPanExist
-			) अणु
-				अगर (bBtHsOn) अणु
+			) {
+				if (bBtHsOn) {
 					BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], HID + PAN(HS)\n"));
 					algorithm = BT_8723B_2ANT_COEX_ALGO_HID;
-				पूर्ण अन्यथा अणु
+				} else {
 					BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], HID + PAN(EDR)\n"));
 					algorithm = BT_8723B_2ANT_COEX_ALGO_PANEDR_HID;
-				पूर्ण
-			पूर्ण अन्यथा अगर (
+				}
+			} else if (
 				pBtLinkInfo->bPanExist &&
 				pBtLinkInfo->bA2dpExist
-			) अणु
-				अगर (bBtHsOn) अणु
+			) {
+				if (bBtHsOn) {
 					BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], A2DP + PAN(HS)\n"));
 					algorithm = BT_8723B_2ANT_COEX_ALGO_A2DP_PANHS;
-				पूर्ण अन्यथा अणु
+				} else {
 					BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], A2DP + PAN(EDR)\n"));
 					algorithm = BT_8723B_2ANT_COEX_ALGO_PANEDR_A2DP;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अगर (numOfDअगरfProfile == 3) अणु
-		अगर (pBtLinkInfo->bScoExist) अणु
-			अगर (
+				}
+			}
+		}
+	} else if (numOfDiffProfile == 3) {
+		if (pBtLinkInfo->bScoExist) {
+			if (
 				pBtLinkInfo->bHidExist &&
 				pBtLinkInfo->bA2dpExist
-			) अणु
+			) {
 				BTC_PRINT(
 					BTC_MSG_ALGORITHM,
 					ALGO_TRACE,
 					("[BTCoex], SCO + HID + A2DP ==> HID\n")
 				);
 				algorithm = BT_8723B_2ANT_COEX_ALGO_PANEDR_HID;
-			पूर्ण अन्यथा अगर (
+			} else if (
 				pBtLinkInfo->bHidExist &&
 				pBtLinkInfo->bPanExist
-			) अणु
-				अगर (bBtHsOn) अणु
+			) {
+				if (bBtHsOn) {
 					BTC_PRINT(
 						BTC_MSG_ALGORITHM,
 						ALGO_TRACE,
 						("[BTCoex], SCO + HID + PAN(HS)\n")
 					);
 					algorithm = BT_8723B_2ANT_COEX_ALGO_PANEDR_HID;
-				पूर्ण अन्यथा अणु
+				} else {
 					BTC_PRINT(
 						BTC_MSG_ALGORITHM,
 						ALGO_TRACE,
 						("[BTCoex], SCO + HID + PAN(EDR)\n")
 					);
 					algorithm = BT_8723B_2ANT_COEX_ALGO_PANEDR_HID;
-				पूर्ण
-			पूर्ण अन्यथा अगर (
+				}
+			} else if (
 				pBtLinkInfo->bPanExist &&
 				pBtLinkInfo->bA2dpExist
-			) अणु
-				अगर (bBtHsOn) अणु
+			) {
+				if (bBtHsOn) {
 					BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], SCO + A2DP + PAN(HS)\n"));
 					algorithm = BT_8723B_2ANT_COEX_ALGO_PANEDR_HID;
-				पूर्ण अन्यथा अणु
+				} else {
 					BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], SCO + A2DP + PAN(EDR) ==> HID\n"));
 					algorithm = BT_8723B_2ANT_COEX_ALGO_PANEDR_HID;
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा अणु
-			अगर (
+				}
+			}
+		} else {
+			if (
 				pBtLinkInfo->bHidExist &&
 				pBtLinkInfo->bPanExist &&
 				pBtLinkInfo->bA2dpExist
-			) अणु
-				अगर (bBtHsOn) अणु
+			) {
+				if (bBtHsOn) {
 					BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], HID + A2DP + PAN(HS)\n"));
 					algorithm = BT_8723B_2ANT_COEX_ALGO_HID_A2DP;
-				पूर्ण अन्यथा अणु
+				} else {
 					BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], HID + A2DP + PAN(EDR)\n"));
 					algorithm = BT_8723B_2ANT_COEX_ALGO_HID_A2DP_PANEDR;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण अन्यथा अगर (numOfDअगरfProfile >= 3) अणु
-		अगर (pBtLinkInfo->bScoExist) अणु
-			अगर (
+				}
+			}
+		}
+	} else if (numOfDiffProfile >= 3) {
+		if (pBtLinkInfo->bScoExist) {
+			if (
 				pBtLinkInfo->bHidExist &&
 				pBtLinkInfo->bPanExist &&
 				pBtLinkInfo->bA2dpExist
-			) अणु
-				अगर (bBtHsOn) अणु
+			) {
+				if (bBtHsOn) {
 					BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], Error!!! SCO + HID + A2DP + PAN(HS)\n"));
 
-				पूर्ण अन्यथा अणु
+				} else {
 					BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], SCO + HID + A2DP + PAN(EDR) ==>PAN(EDR)+HID\n"));
 					algorithm = BT_8723B_2ANT_COEX_ALGO_PANEDR_HID;
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				}
+			}
+		}
+	}
 
-	वापस algorithm;
-पूर्ण
+	return algorithm;
+}
 
-अटल व्योम halbtc8723b2ant_SetFwDacSwingLevel(
-	काष्ठा btc_coexist *pBtCoexist, u8 dacSwingLvl
+static void halbtc8723b2ant_SetFwDacSwingLevel(
+	struct btc_coexist *pBtCoexist, u8 dacSwingLvl
 )
-अणु
-	u8 	H2C_Parameter[1] = अणु0पूर्ण;
+{
+	u8 	H2C_Parameter[1] = {0};
 
 	/*  There are several type of dacswing */
 	/*  0x18/ 0x10/ 0xc/ 0x8/ 0x4/ 0x6 */
@@ -571,13 +570,13 @@
 	);
 
 	pBtCoexist->fBtcFillH2c(pBtCoexist, 0x64, 1, H2C_Parameter);
-पूर्ण
+}
 
-अटल व्योम halbtc8723b2ant_SetFwDecBtPwr(
-	काष्ठा btc_coexist *pBtCoexist, u8 decBtPwrLvl
+static void halbtc8723b2ant_SetFwDecBtPwr(
+	struct btc_coexist *pBtCoexist, u8 decBtPwrLvl
 )
-अणु
-	u8 	H2C_Parameter[1] = अणु0पूर्ण;
+{
+	u8 	H2C_Parameter[1] = {0};
 
 	H2C_Parameter[0] = decBtPwrLvl;
 
@@ -592,12 +591,12 @@
 	);
 
 	pBtCoexist->fBtcFillH2c(pBtCoexist, 0x62, 1, H2C_Parameter);
-पूर्ण
+}
 
-अटल व्योम halbtc8723b2ant_DecBtPwr(
-	काष्ठा btc_coexist *pBtCoexist, bool bForceExec, u8 decBtPwrLvl
+static void halbtc8723b2ant_DecBtPwr(
+	struct btc_coexist *pBtCoexist, bool bForceExec, u8 decBtPwrLvl
 )
-अणु
+{
 	BTC_PRINT(
 		BTC_MSG_ALGORITHM,
 		ALGO_TRACE_FW,
@@ -609,7 +608,7 @@
 	);
 	pCoexDm->curBtDecPwrLvl = decBtPwrLvl;
 
-	अगर (!bForceExec) अणु
+	if (!bForceExec) {
 		BTC_PRINT(
 			BTC_MSG_ALGORITHM,
 			ALGO_TRACE_FW_DETAIL,
@@ -620,18 +619,18 @@
 			)
 		);
 
-		अगर (pCoexDm->preBtDecPwrLvl == pCoexDm->curBtDecPwrLvl)
-			वापस;
-	पूर्ण
+		if (pCoexDm->preBtDecPwrLvl == pCoexDm->curBtDecPwrLvl)
+			return;
+	}
 	halbtc8723b2ant_SetFwDecBtPwr(pBtCoexist, pCoexDm->curBtDecPwrLvl);
 
 	pCoexDm->preBtDecPwrLvl = pCoexDm->curBtDecPwrLvl;
-पूर्ण
+}
 
-अटल व्योम halbtc8723b2ant_FwDacSwingLvl(
-	काष्ठा btc_coexist *pBtCoexist, bool bForceExec, u8 fwDacSwingLvl
+static void halbtc8723b2ant_FwDacSwingLvl(
+	struct btc_coexist *pBtCoexist, bool bForceExec, u8 fwDacSwingLvl
 )
-अणु
+{
 	BTC_PRINT(
 		BTC_MSG_ALGORITHM,
 		ALGO_TRACE_FW,
@@ -643,7 +642,7 @@
 	);
 	pCoexDm->curFwDacSwingLvl = fwDacSwingLvl;
 
-	अगर (!bForceExec) अणु
+	if (!bForceExec) {
 		BTC_PRINT(
 			BTC_MSG_ALGORITHM,
 			ALGO_TRACE_FW_DETAIL,
@@ -654,21 +653,21 @@
 			)
 		);
 
-		अगर (pCoexDm->preFwDacSwingLvl == pCoexDm->curFwDacSwingLvl)
-			वापस;
-	पूर्ण
+		if (pCoexDm->preFwDacSwingLvl == pCoexDm->curFwDacSwingLvl)
+			return;
+	}
 
 	halbtc8723b2ant_SetFwDacSwingLevel(pBtCoexist, pCoexDm->curFwDacSwingLvl);
 
 	pCoexDm->preFwDacSwingLvl = pCoexDm->curFwDacSwingLvl;
-पूर्ण
+}
 
-अटल व्योम halbtc8723b2ant_SetSwRfRxLpfCorner(
-	काष्ठा btc_coexist *pBtCoexist,
+static void halbtc8723b2ant_SetSwRfRxLpfCorner(
+	struct btc_coexist *pBtCoexist,
 	bool bRxRfShrinkOn
 )
-अणु
-	अगर (bRxRfShrinkOn) अणु
+{
+	if (bRxRfShrinkOn) {
 		/* Shrink RF Rx LPF corner */
 		BTC_PRINT(
 			BTC_MSG_ALGORITHM,
@@ -676,20 +675,20 @@
 			("[BTCoex], Shrink RF Rx LPF corner!!\n")
 		);
 		pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0x1e, 0xfffff, 0xffffc);
-	पूर्ण अन्यथा अणु
+	} else {
 		/* Resume RF Rx LPF corner */
 		/*  After initialized, we can use pCoexDm->btRf0x1eBackup */
-		अगर (pBtCoexist->bInitilized) अणु
+		if (pBtCoexist->bInitilized) {
 			BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE_SW_EXEC, ("[BTCoex], Resume RF Rx LPF corner!!\n"));
 			pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0x1e, 0xfffff, pCoexDm->btRf0x1eBackup);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम halbtc8723b2ant_RfShrink(
-	काष्ठा btc_coexist *pBtCoexist, bool bForceExec, bool bRxRfShrinkOn
+static void halbtc8723b2ant_RfShrink(
+	struct btc_coexist *pBtCoexist, bool bForceExec, bool bRxRfShrinkOn
 )
-अणु
+{
 	BTC_PRINT(
 		BTC_MSG_ALGORITHM,
 		ALGO_TRACE_SW,
@@ -701,7 +700,7 @@
 	);
 	pCoexDm->bCurRfRxLpfShrink = bRxRfShrinkOn;
 
-	अगर (!bForceExec) अणु
+	if (!bForceExec) {
 		BTC_PRINT(
 			BTC_MSG_ALGORITHM,
 			ALGO_TRACE_SW_DETAIL,
@@ -712,29 +711,29 @@
 			)
 		);
 
-		अगर (pCoexDm->bPreRfRxLpfShrink == pCoexDm->bCurRfRxLpfShrink)
-			वापस;
-	पूर्ण
+		if (pCoexDm->bPreRfRxLpfShrink == pCoexDm->bCurRfRxLpfShrink)
+			return;
+	}
 	halbtc8723b2ant_SetSwRfRxLpfCorner(pBtCoexist, pCoexDm->bCurRfRxLpfShrink);
 
 	pCoexDm->bPreRfRxLpfShrink = pCoexDm->bCurRfRxLpfShrink;
-पूर्ण
+}
 
-अटल व्योम halbtc8723b2ant_SetSwPenaltyTxRateAdaptive(
-	काष्ठा btc_coexist *pBtCoexist, bool bLowPenaltyRa
+static void halbtc8723b2ant_SetSwPenaltyTxRateAdaptive(
+	struct btc_coexist *pBtCoexist, bool bLowPenaltyRa
 )
-अणु
-	u8 	H2C_Parameter[6] = अणु0पूर्ण;
+{
+	u8 	H2C_Parameter[6] = {0};
 
 	H2C_Parameter[0] = 0x6;	/*  opCode, 0x6 = Retry_Penalty */
 
-	अगर (bLowPenaltyRa) अणु
+	if (bLowPenaltyRa) {
 		H2C_Parameter[1] |= BIT0;
 		H2C_Parameter[2] = 0x00;  /* normal rate except MCS7/6/5, OFDM54/48/36 */
 		H2C_Parameter[3] = 0xf7;  /* MCS7 or OFDM54 */
 		H2C_Parameter[4] = 0xf8;  /* MCS6 or OFDM48 */
 		H2C_Parameter[5] = 0xf9;	/* MCS5 or OFDM36 */
-	पूर्ण
+	}
 
 	BTC_PRINT(
 		BTC_MSG_ALGORITHM,
@@ -746,13 +745,13 @@
 	);
 
 	pBtCoexist->fBtcFillH2c(pBtCoexist, 0x69, 6, H2C_Parameter);
-पूर्ण
+}
 
-अटल व्योम halbtc8723b2ant_LowPenaltyRa(
-	काष्ठा btc_coexist *pBtCoexist, bool bForceExec, bool bLowPenaltyRa
+static void halbtc8723b2ant_LowPenaltyRa(
+	struct btc_coexist *pBtCoexist, bool bForceExec, bool bLowPenaltyRa
 )
-अणु
-	/* वापस; */
+{
+	/* return; */
 	BTC_PRINT(
 		BTC_MSG_ALGORITHM,
 		ALGO_TRACE_SW,
@@ -764,7 +763,7 @@
 	);
 	pCoexDm->bCurLowPenaltyRa = bLowPenaltyRa;
 
-	अगर (!bForceExec) अणु
+	if (!bForceExec) {
 		BTC_PRINT(
 			BTC_MSG_ALGORITHM,
 			ALGO_TRACE_SW_DETAIL,
@@ -775,16 +774,16 @@
 			)
 		);
 
-		अगर (pCoexDm->bPreLowPenaltyRa == pCoexDm->bCurLowPenaltyRa)
-			वापस;
-	पूर्ण
+		if (pCoexDm->bPreLowPenaltyRa == pCoexDm->bCurLowPenaltyRa)
+			return;
+	}
 	halbtc8723b2ant_SetSwPenaltyTxRateAdaptive(pBtCoexist, pCoexDm->bCurLowPenaltyRa);
 
 	pCoexDm->bPreLowPenaltyRa = pCoexDm->bCurLowPenaltyRa;
-पूर्ण
+}
 
-अटल व्योम halbtc8723b2ant_SetDacSwingReg(काष्ठा btc_coexist *pBtCoexist, u32 level)
-अणु
+static void halbtc8723b2ant_SetDacSwingReg(struct btc_coexist *pBtCoexist, u32 level)
+{
 	u8 val = (u8)level;
 
 	BTC_PRINT(
@@ -793,26 +792,26 @@
 		("[BTCoex], Write SwDacSwing = 0x%x\n", level)
 	);
 	pBtCoexist->fBtcWrite1ByteBitMask(pBtCoexist, 0x883, 0x3e, val);
-पूर्ण
+}
 
-अटल व्योम halbtc8723b2ant_SetSwFullTimeDacSwing(
-	काष्ठा btc_coexist *pBtCoexist, bool bSwDacSwingOn, u32 swDacSwingLvl
+static void halbtc8723b2ant_SetSwFullTimeDacSwing(
+	struct btc_coexist *pBtCoexist, bool bSwDacSwingOn, u32 swDacSwingLvl
 )
-अणु
-	अगर (bSwDacSwingOn)
+{
+	if (bSwDacSwingOn)
 		halbtc8723b2ant_SetDacSwingReg(pBtCoexist, swDacSwingLvl);
-	अन्यथा
+	else
 		halbtc8723b2ant_SetDacSwingReg(pBtCoexist, 0x18);
-पूर्ण
+}
 
 
-अटल व्योम halbtc8723b2ant_DacSwing(
-	काष्ठा btc_coexist *pBtCoexist,
+static void halbtc8723b2ant_DacSwing(
+	struct btc_coexist *pBtCoexist,
 	bool bForceExec,
 	bool bDacSwingOn,
 	u32 dacSwingLvl
 )
-अणु
+{
 	BTC_PRINT(
 		BTC_MSG_ALGORITHM,
 		ALGO_TRACE_SW,
@@ -826,7 +825,7 @@
 	pCoexDm->bCurDacSwingOn = bDacSwingOn;
 	pCoexDm->curDacSwingLvl = dacSwingLvl;
 
-	अगर (!bForceExec) अणु
+	if (!bForceExec) {
 		BTC_PRINT(
 			BTC_MSG_ALGORITHM,
 			ALGO_TRACE_SW_DETAIL,
@@ -839,25 +838,25 @@
 			)
 		);
 
-		अगर ((pCoexDm->bPreDacSwingOn == pCoexDm->bCurDacSwingOn) &&
+		if ((pCoexDm->bPreDacSwingOn == pCoexDm->bCurDacSwingOn) &&
 			(pCoexDm->preDacSwingLvl == pCoexDm->curDacSwingLvl))
-			वापस;
-	पूर्ण
+			return;
+	}
 	mdelay(30);
 	halbtc8723b2ant_SetSwFullTimeDacSwing(pBtCoexist, bDacSwingOn, dacSwingLvl);
 
 	pCoexDm->bPreDacSwingOn = pCoexDm->bCurDacSwingOn;
 	pCoexDm->preDacSwingLvl = pCoexDm->curDacSwingLvl;
-पूर्ण
+}
 
-अटल व्योम halbtc8723b2ant_SetAgcTable(
-	काष्ठा btc_coexist *pBtCoexist, bool bAgcTableEn
+static void halbtc8723b2ant_SetAgcTable(
+	struct btc_coexist *pBtCoexist, bool bAgcTableEn
 )
-अणु
+{
 	u8 rssiAdjustVal = 0;
 
 	/* BB AGC Gain Table */
-	अगर (bAgcTableEn) अणु
+	if (bAgcTableEn) {
 		BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE_SW_EXEC, ("[BTCoex], BB Agc Table On!\n"));
 		pBtCoexist->fBtcWrite4Byte(pBtCoexist, 0xc78, 0x6e1A0001);
 		pBtCoexist->fBtcWrite4Byte(pBtCoexist, 0xc78, 0x6d1B0001);
@@ -866,7 +865,7 @@
 		pBtCoexist->fBtcWrite4Byte(pBtCoexist, 0xc78, 0x6a1E0001);
 		pBtCoexist->fBtcWrite4Byte(pBtCoexist, 0xc78, 0x691F0001);
 		pBtCoexist->fBtcWrite4Byte(pBtCoexist, 0xc78, 0x68200001);
-	पूर्ण अन्यथा अणु
+	} else {
 		BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE_SW_EXEC, ("[BTCoex], BB Agc Table Off!\n"));
 		pBtCoexist->fBtcWrite4Byte(pBtCoexist, 0xc78, 0xaa1A0001);
 		pBtCoexist->fBtcWrite4Byte(pBtCoexist, 0xc78, 0xa91B0001);
@@ -875,45 +874,45 @@
 		pBtCoexist->fBtcWrite4Byte(pBtCoexist, 0xc78, 0xa61E0001);
 		pBtCoexist->fBtcWrite4Byte(pBtCoexist, 0xc78, 0xa51F0001);
 		pBtCoexist->fBtcWrite4Byte(pBtCoexist, 0xc78, 0xa4200001);
-	पूर्ण
+	}
 
 
 	/* RF Gain */
 	pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0xef, 0xfffff, 0x02000);
-	अगर (bAgcTableEn) अणु
+	if (bAgcTableEn) {
 		BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE_SW_EXEC, ("[BTCoex], Agc Table On!\n"));
 		pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0x3b, 0xfffff, 0x38fff);
 		pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0x3b, 0xfffff, 0x38ffe);
-	पूर्ण अन्यथा अणु
+	} else {
 		BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE_SW_EXEC, ("[BTCoex], Agc Table Off!\n"));
 		pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0x3b, 0xfffff, 0x380c3);
 		pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0x3b, 0xfffff, 0x28ce6);
-	पूर्ण
+	}
 	pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0xef, 0xfffff, 0x0);
 
 	pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0xed, 0xfffff, 0x1);
-	अगर (bAgcTableEn) अणु
+	if (bAgcTableEn) {
 		BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE_SW_EXEC, ("[BTCoex], Agc Table On!\n"));
 		pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0x40, 0xfffff, 0x38fff);
 		pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0x40, 0xfffff, 0x38ffe);
-	पूर्ण अन्यथा अणु
+	} else {
 		BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE_SW_EXEC, ("[BTCoex], Agc Table Off!\n"));
 		pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0x40, 0xfffff, 0x380c3);
 		pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0x40, 0xfffff, 0x28ce6);
-	पूर्ण
+	}
 	pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0xed, 0xfffff, 0x0);
 
-	/*  set rssiAdjustVal क्रम wअगरi module. */
-	अगर (bAgcTableEn)
+	/*  set rssiAdjustVal for wifi module. */
+	if (bAgcTableEn)
 		rssiAdjustVal = 8;
 
 	pBtCoexist->fBtcSet(pBtCoexist, BTC_SET_U1_RSSI_ADJ_VAL_FOR_AGC_TABLE_ON, &rssiAdjustVal);
-पूर्ण
+}
 
-अटल व्योम halbtc8723b2ant_AgcTable(
-	काष्ठा btc_coexist *pBtCoexist, bool bForceExec, bool bAgcTableEn
+static void halbtc8723b2ant_AgcTable(
+	struct btc_coexist *pBtCoexist, bool bForceExec, bool bAgcTableEn
 )
-अणु
+{
 	BTC_PRINT(
 		BTC_MSG_ALGORITHM,
 		ALGO_TRACE_SW,
@@ -925,7 +924,7 @@
 	);
 	pCoexDm->bCurAgcTableEn = bAgcTableEn;
 
-	अगर (!bForceExec) अणु
+	if (!bForceExec) {
 		BTC_PRINT(
 			BTC_MSG_ALGORITHM,
 			ALGO_TRACE_SW_DETAIL,
@@ -936,22 +935,22 @@
 			)
 		);
 
-		अगर (pCoexDm->bPreAgcTableEn == pCoexDm->bCurAgcTableEn)
-			वापस;
-	पूर्ण
+		if (pCoexDm->bPreAgcTableEn == pCoexDm->bCurAgcTableEn)
+			return;
+	}
 	halbtc8723b2ant_SetAgcTable(pBtCoexist, bAgcTableEn);
 
 	pCoexDm->bPreAgcTableEn = pCoexDm->bCurAgcTableEn;
-पूर्ण
+}
 
-अटल व्योम halbtc8723b2ant_SetCoexTable(
-	काष्ठा btc_coexist *pBtCoexist,
+static void halbtc8723b2ant_SetCoexTable(
+	struct btc_coexist *pBtCoexist,
 	u32 val0x6c0,
 	u32 val0x6c4,
 	u32 val0x6c8,
 	u8 val0x6cc
 )
-अणु
+{
 	BTC_PRINT(
 		BTC_MSG_ALGORITHM,
 		ALGO_TRACE_SW_EXEC,
@@ -979,17 +978,17 @@
 		("[BTCoex], set coex table, set 0x6cc = 0x%x\n", val0x6cc)
 	);
 	pBtCoexist->fBtcWrite1Byte(pBtCoexist, 0x6cc, val0x6cc);
-पूर्ण
+}
 
-अटल व्योम halbtc8723b2ant_CoexTable(
-	काष्ठा btc_coexist *pBtCoexist,
+static void halbtc8723b2ant_CoexTable(
+	struct btc_coexist *pBtCoexist,
 	bool bForceExec,
 	u32 val0x6c0,
 	u32 val0x6c4,
 	u32 val0x6c8,
 	u8 val0x6cc
 )
-अणु
+{
 	BTC_PRINT(
 		BTC_MSG_ALGORITHM,
 		ALGO_TRACE_SW,
@@ -1007,7 +1006,7 @@
 	pCoexDm->curVal0x6c8 = val0x6c8;
 	pCoexDm->curVal0x6cc = val0x6cc;
 
-	अगर (!bForceExec) अणु
+	if (!bForceExec) {
 		BTC_PRINT(
 			BTC_MSG_ALGORITHM,
 			ALGO_TRACE_SW_DETAIL,
@@ -1031,78 +1030,78 @@
 			)
 		);
 
-		अगर (
+		if (
 			(pCoexDm->preVal0x6c0 == pCoexDm->curVal0x6c0) &&
 			(pCoexDm->preVal0x6c4 == pCoexDm->curVal0x6c4) &&
 			(pCoexDm->preVal0x6c8 == pCoexDm->curVal0x6c8) &&
 			(pCoexDm->preVal0x6cc == pCoexDm->curVal0x6cc)
 		)
-			वापस;
-	पूर्ण
+			return;
+	}
 	halbtc8723b2ant_SetCoexTable(pBtCoexist, val0x6c0, val0x6c4, val0x6c8, val0x6cc);
 
 	pCoexDm->preVal0x6c0 = pCoexDm->curVal0x6c0;
 	pCoexDm->preVal0x6c4 = pCoexDm->curVal0x6c4;
 	pCoexDm->preVal0x6c8 = pCoexDm->curVal0x6c8;
 	pCoexDm->preVal0x6cc = pCoexDm->curVal0x6cc;
-पूर्ण
+}
 
-अटल व्योम halbtc8723b2ant_CoexTableWithType(
-	काष्ठा btc_coexist *pBtCoexist, bool bForceExec, u8 type
+static void halbtc8723b2ant_CoexTableWithType(
+	struct btc_coexist *pBtCoexist, bool bForceExec, u8 type
 )
-अणु
-	चयन (type) अणु
-	हाल 0:
+{
+	switch (type) {
+	case 0:
 		halbtc8723b2ant_CoexTable(pBtCoexist, bForceExec, 0x55555555, 0x55555555, 0xffff, 0x3);
-		अवरोध;
-	हाल 1:
+		break;
+	case 1:
 		halbtc8723b2ant_CoexTable(pBtCoexist, bForceExec, 0x55555555, 0x5afa5afa, 0xffff, 0x3);
-		अवरोध;
-	हाल 2:
+		break;
+	case 2:
 		halbtc8723b2ant_CoexTable(pBtCoexist, bForceExec, 0x5a5a5a5a, 0x5a5a5a5a, 0xffff, 0x3);
-		अवरोध;
-	हाल 3:
+		break;
+	case 3:
 		halbtc8723b2ant_CoexTable(pBtCoexist, bForceExec, 0xaaaaaaaa, 0xaaaaaaaa, 0xffff, 0x3);
-		अवरोध;
-	हाल 4:
+		break;
+	case 4:
 		halbtc8723b2ant_CoexTable(pBtCoexist, bForceExec, 0xffffffff, 0xffffffff, 0xffff, 0x3);
-		अवरोध;
-	हाल 5:
+		break;
+	case 5:
 		halbtc8723b2ant_CoexTable(pBtCoexist, bForceExec, 0x5fff5fff, 0x5fff5fff, 0xffff, 0x3);
-		अवरोध;
-	हाल 6:
+		break;
+	case 6:
 		halbtc8723b2ant_CoexTable(pBtCoexist, bForceExec, 0x55ff55ff, 0x5a5a5a5a, 0xffff, 0x3);
-		अवरोध;
-	हाल 7:
+		break;
+	case 7:
 		halbtc8723b2ant_CoexTable(pBtCoexist, bForceExec, 0x55ff55ff, 0xfafafafa, 0xffff, 0x3);
-		अवरोध;
-	हाल 8:
+		break;
+	case 8:
 		halbtc8723b2ant_CoexTable(pBtCoexist, bForceExec, 0x5aea5aea, 0x5aea5aea, 0xffff, 0x3);
-		अवरोध;
-	हाल 9:
+		break;
+	case 9:
 		halbtc8723b2ant_CoexTable(pBtCoexist, bForceExec, 0x55ff55ff, 0x5aea5aea, 0xffff, 0x3);
-		अवरोध;
-	हाल 10:
+		break;
+	case 10:
 		halbtc8723b2ant_CoexTable(pBtCoexist, bForceExec, 0x55ff55ff, 0x5aff5aff, 0xffff, 0x3);
-		अवरोध;
-	हाल 11:
+		break;
+	case 11:
 		halbtc8723b2ant_CoexTable(pBtCoexist, bForceExec, 0x55ff55ff, 0x5a5f5a5f, 0xffff, 0x3);
-		अवरोध;
-	हाल 12:
+		break;
+	case 12:
 		halbtc8723b2ant_CoexTable(pBtCoexist, bForceExec, 0x55ff55ff, 0x5f5f5f5f, 0xffff, 0x3);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-अटल व्योम halbtc8723b2ant_SetFwIgnoreWlanAct(
-	काष्ठा btc_coexist *pBtCoexist, bool bEnable
+static void halbtc8723b2ant_SetFwIgnoreWlanAct(
+	struct btc_coexist *pBtCoexist, bool bEnable
 )
-अणु
-	u8 	H2C_Parameter[1] = अणु0पूर्ण;
+{
+	u8 	H2C_Parameter[1] = {0};
 
-	अगर (bEnable)
+	if (bEnable)
 		H2C_Parameter[0] |= BIT0;		/*  function enable */
 
 	BTC_PRINT(
@@ -1115,12 +1114,12 @@
 	);
 
 	pBtCoexist->fBtcFillH2c(pBtCoexist, 0x63, 1, H2C_Parameter);
-पूर्ण
+}
 
-अटल व्योम halbtc8723b2ant_IgnoreWlanAct(
-	काष्ठा btc_coexist *pBtCoexist, bool bForceExec, bool bEnable
+static void halbtc8723b2ant_IgnoreWlanAct(
+	struct btc_coexist *pBtCoexist, bool bForceExec, bool bEnable
 )
-अणु
+{
 	BTC_PRINT(
 		BTC_MSG_ALGORITHM,
 		ALGO_TRACE_FW,
@@ -1133,28 +1132,28 @@
 
 	pCoexDm->bCurIgnoreWlanAct = bEnable;
 
-	अगर (!bForceExec) अणु
+	if (!bForceExec) {
 		BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE_FW_DETAIL, ("[BTCoex], bPreIgnoreWlanAct = %d, bCurIgnoreWlanAct = %d!!\n",
 			pCoexDm->bPreIgnoreWlanAct, pCoexDm->bCurIgnoreWlanAct));
 
-		अगर (pCoexDm->bPreIgnoreWlanAct == pCoexDm->bCurIgnoreWlanAct)
-			वापस;
-	पूर्ण
+		if (pCoexDm->bPreIgnoreWlanAct == pCoexDm->bCurIgnoreWlanAct)
+			return;
+	}
 	halbtc8723b2ant_SetFwIgnoreWlanAct(pBtCoexist, bEnable);
 
 	pCoexDm->bPreIgnoreWlanAct = pCoexDm->bCurIgnoreWlanAct;
-पूर्ण
+}
 
-अटल व्योम halbtc8723b2ant_SetFwPstdma(
-	काष्ठा btc_coexist *pBtCoexist,
+static void halbtc8723b2ant_SetFwPstdma(
+	struct btc_coexist *pBtCoexist,
 	u8 byte1,
 	u8 byte2,
 	u8 byte3,
 	u8 byte4,
 	u8 byte5
 )
-अणु
-	u8 	H2C_Parameter[5] = अणु0पूर्ण;
+{
+	u8 	H2C_Parameter[5] = {0};
 
 	H2C_Parameter[0] = byte1;
 	H2C_Parameter[1] = byte2;
@@ -1182,130 +1181,130 @@
 	);
 
 	pBtCoexist->fBtcFillH2c(pBtCoexist, 0x60, 5, H2C_Parameter);
-पूर्ण
+}
 
-अटल व्योम halbtc8723b2ant_SwMechanism1(
-	काष्ठा btc_coexist *pBtCoexist,
+static void halbtc8723b2ant_SwMechanism1(
+	struct btc_coexist *pBtCoexist,
 	bool bShrinkRxLPF,
 	bool bLowPenaltyRA,
 	bool bLimitedDIG,
 	bool bBTLNAConstrain
 )
-अणु
+{
 	halbtc8723b2ant_RfShrink(pBtCoexist, NORMAL_EXEC, bShrinkRxLPF);
 	halbtc8723b2ant_LowPenaltyRa(pBtCoexist, NORMAL_EXEC, bLowPenaltyRA);
-पूर्ण
+}
 
-अटल व्योम halbtc8723b2ant_SwMechanism2(
-	काष्ठा btc_coexist *pBtCoexist,
-	bool bAGCTableShअगरt,
+static void halbtc8723b2ant_SwMechanism2(
+	struct btc_coexist *pBtCoexist,
+	bool bAGCTableShift,
 	bool bADCBackOff,
 	bool bSWDACSwing,
 	u32 dacSwingLvl
 )
-अणु
-	halbtc8723b2ant_AgcTable(pBtCoexist, NORMAL_EXEC, bAGCTableShअगरt);
+{
+	halbtc8723b2ant_AgcTable(pBtCoexist, NORMAL_EXEC, bAGCTableShift);
 	halbtc8723b2ant_DacSwing(pBtCoexist, NORMAL_EXEC, bSWDACSwing, dacSwingLvl);
-पूर्ण
+}
 
-अटल व्योम halbtc8723b2ant_SetAntPath(
-	काष्ठा btc_coexist *pBtCoexist, u8 antPosType, bool bInitHwCfg, bool bWअगरiOff
+static void halbtc8723b2ant_SetAntPath(
+	struct btc_coexist *pBtCoexist, u8 antPosType, bool bInitHwCfg, bool bWifiOff
 )
-अणु
-	काष्ठा btc_board_info *pBoardInfo = &pBtCoexist->boardInfo;
+{
+	struct btc_board_info *pBoardInfo = &pBtCoexist->boardInfo;
 	u32 fwVer = 0, u4Tmp = 0;
 	bool bPgExtSwitch = false;
 	bool bUseExtSwitch = false;
-	u8 	H2C_Parameter[2] = अणु0पूर्ण;
+	u8 	H2C_Parameter[2] = {0};
 
 	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_BL_EXT_SWITCH, &bPgExtSwitch);
 	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_FW_VER, &fwVer);	/*  [31:16]=fw ver, [15:0]=fw sub ver */
 
-	अगर ((fwVer > 0 && fwVer < 0xc0000) || bPgExtSwitch)
+	if ((fwVer > 0 && fwVer < 0xc0000) || bPgExtSwitch)
 		bUseExtSwitch = true;
 
-	अगर (bInitHwCfg) अणु
+	if (bInitHwCfg) {
 		pBtCoexist->fBtcWrite1ByteBitMask(pBtCoexist, 0x39, 0x8, 0x1);
 		pBtCoexist->fBtcWrite1Byte(pBtCoexist, 0x974, 0xff);
 		pBtCoexist->fBtcWrite1ByteBitMask(pBtCoexist, 0x944, 0x3, 0x3);
 		pBtCoexist->fBtcWrite1Byte(pBtCoexist, 0x930, 0x77);
 		pBtCoexist->fBtcWrite1ByteBitMask(pBtCoexist, 0x67, 0x20, 0x1);
 
-		अगर (fwVer >= 0x180000) अणु
+		if (fwVer >= 0x180000) {
 			/* Use H2C to set GNT_BT to LOW */
 			H2C_Parameter[0] = 0;
 			pBtCoexist->fBtcFillH2c(pBtCoexist, 0x6E, 1, H2C_Parameter);
-		पूर्ण अन्यथा अणु
+		} else {
 			pBtCoexist->fBtcWrite1Byte(pBtCoexist, 0x765, 0x0);
-		पूर्ण
+		}
 
 		pBtCoexist->fBtcWrite4Byte(pBtCoexist, 0x948, 0x0);
 
 		pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0x1, 0xfffff, 0x0); /* WiFi TRx Mask off */
 		pBtCoexist->fBtcSetBtReg(pBtCoexist, BTC_BT_REG_RF, 0x3c, 0x01); /* BT TRx Mask off */
 
-		अगर (pBoardInfo->btdmAntPos == BTC_ANTENNA_AT_MAIN_PORT) अणु
+		if (pBoardInfo->btdmAntPos == BTC_ANTENNA_AT_MAIN_PORT) {
 			/* tell firmware "no antenna inverse" */
 			H2C_Parameter[0] = 0;
-		पूर्ण अन्यथा अणु
+		} else {
 			/* tell firmware "antenna inverse" */
 			H2C_Parameter[0] = 1;
-		पूर्ण
+		}
 
-		अगर (bUseExtSwitch) अणु
-			/* ext चयन type */
+		if (bUseExtSwitch) {
+			/* ext switch type */
 			H2C_Parameter[1] = 1;
-		पूर्ण अन्यथा अणु
-			/* पूर्णांक चयन type */
+		} else {
+			/* int switch type */
 			H2C_Parameter[1] = 0;
-		पूर्ण
+		}
 		pBtCoexist->fBtcFillH2c(pBtCoexist, 0x65, 2, H2C_Parameter);
-	पूर्ण
+	}
 
-	/*  ext चयन setting */
-	अगर (bUseExtSwitch) अणु
-		अगर (bInitHwCfg) अणु
+	/*  ext switch setting */
+	if (bUseExtSwitch) {
+		if (bInitHwCfg) {
 			/*  0x4c[23]= 0, 0x4c[24]= 1  Antenna control by WL/BT */
 			u4Tmp = pBtCoexist->fBtcRead4Byte(pBtCoexist, 0x4c);
 			u4Tmp &= ~BIT23;
 			u4Tmp |= BIT24;
 			pBtCoexist->fBtcWrite4Byte(pBtCoexist, 0x4c, u4Tmp);
-		पूर्ण
+		}
 
-		pBtCoexist->fBtcWrite4Byte(pBtCoexist, 0x948, 0x0); /*  fixed पूर्णांकernal चयन S1->WiFi, S0->BT */
-		चयन (antPosType) अणु
-		हाल BTC_ANT_WIFI_AT_MAIN:
-			pBtCoexist->fBtcWrite1ByteBitMask(pBtCoexist, 0x92c, 0x3, 0x1);	/*  ext चयन मुख्य at wअगरi */
-			अवरोध;
-		हाल BTC_ANT_WIFI_AT_AUX:
-			pBtCoexist->fBtcWrite1ByteBitMask(pBtCoexist, 0x92c, 0x3, 0x2);	/*  ext चयन aux at wअगरi */
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु /*  पूर्णांकernal चयन */
-		अगर (bInitHwCfg) अणु
+		pBtCoexist->fBtcWrite4Byte(pBtCoexist, 0x948, 0x0); /*  fixed internal switch S1->WiFi, S0->BT */
+		switch (antPosType) {
+		case BTC_ANT_WIFI_AT_MAIN:
+			pBtCoexist->fBtcWrite1ByteBitMask(pBtCoexist, 0x92c, 0x3, 0x1);	/*  ext switch main at wifi */
+			break;
+		case BTC_ANT_WIFI_AT_AUX:
+			pBtCoexist->fBtcWrite1ByteBitMask(pBtCoexist, 0x92c, 0x3, 0x2);	/*  ext switch aux at wifi */
+			break;
+		}
+	} else { /*  internal switch */
+		if (bInitHwCfg) {
 			/*  0x4c[23]= 0, 0x4c[24]= 1  Antenna control by WL/BT */
 			u4Tmp = pBtCoexist->fBtcRead4Byte(pBtCoexist, 0x4c);
 			u4Tmp |= BIT23;
 			u4Tmp &= ~BIT24;
 			pBtCoexist->fBtcWrite4Byte(pBtCoexist, 0x4c, u4Tmp);
-		पूर्ण
+		}
 
-		pBtCoexist->fBtcWrite1ByteBitMask(pBtCoexist, 0x64, 0x1, 0x0); /* fixed बाह्यal चयन S1->Main, S0->Aux */
-		चयन (antPosType) अणु
-		हाल BTC_ANT_WIFI_AT_MAIN:
-			pBtCoexist->fBtcWrite4Byte(pBtCoexist, 0x948, 0x0); /*  fixed पूर्णांकernal चयन S1->WiFi, S0->BT */
-			अवरोध;
-		हाल BTC_ANT_WIFI_AT_AUX:
-			pBtCoexist->fBtcWrite4Byte(pBtCoexist, 0x948, 0x280); /*  fixed पूर्णांकernal चयन S0->WiFi, S1->BT */
-			अवरोध;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		pBtCoexist->fBtcWrite1ByteBitMask(pBtCoexist, 0x64, 0x1, 0x0); /* fixed external switch S1->Main, S0->Aux */
+		switch (antPosType) {
+		case BTC_ANT_WIFI_AT_MAIN:
+			pBtCoexist->fBtcWrite4Byte(pBtCoexist, 0x948, 0x0); /*  fixed internal switch S1->WiFi, S0->BT */
+			break;
+		case BTC_ANT_WIFI_AT_AUX:
+			pBtCoexist->fBtcWrite4Byte(pBtCoexist, 0x948, 0x280); /*  fixed internal switch S0->WiFi, S1->BT */
+			break;
+		}
+	}
+}
 
-अटल व्योम halbtc8723b2ant_PsTdma(
-	काष्ठा btc_coexist *pBtCoexist, bool bForceExec, bool bTurnOn, u8 type
+static void halbtc8723b2ant_PsTdma(
+	struct btc_coexist *pBtCoexist, bool bForceExec, bool bTurnOn, u8 type
 )
-अणु
+{
 	BTC_PRINT(
 		BTC_MSG_ALGORITHM,
 		ALGO_TRACE_FW,
@@ -1319,7 +1318,7 @@
 	pCoexDm->bCurPsTdmaOn = bTurnOn;
 	pCoexDm->curPsTdma = type;
 
-	अगर (!bForceExec) अणु
+	if (!bForceExec) {
 		BTC_PRINT(
 			BTC_MSG_ALGORITHM,
 			ALGO_TRACE_FW_DETAIL,
@@ -1338,105 +1337,105 @@
 			)
 		);
 
-		अगर (
+		if (
 			(pCoexDm->bPrePsTdmaOn == pCoexDm->bCurPsTdmaOn) &&
 			(pCoexDm->prePsTdma == pCoexDm->curPsTdma)
 		)
-			वापस;
-	पूर्ण
+			return;
+	}
 
-	अगर (bTurnOn) अणु
-		चयन (type) अणु
-		हाल 1:
-		शेष:
+	if (bTurnOn) {
+		switch (type) {
+		case 1:
+		default:
 			halbtc8723b2ant_SetFwPstdma(pBtCoexist, 0xe3, 0x1a, 0x1a, 0xe1, 0x90);
-			अवरोध;
-		हाल 2:
+			break;
+		case 2:
 			halbtc8723b2ant_SetFwPstdma(pBtCoexist, 0xe3, 0x12, 0x12, 0xe1, 0x90);
-			अवरोध;
-		हाल 3:
+			break;
+		case 3:
 			halbtc8723b2ant_SetFwPstdma(pBtCoexist, 0xe3, 0x1c, 0x3, 0xf1, 0x90);
-			अवरोध;
-		हाल 4:
+			break;
+		case 4:
 			halbtc8723b2ant_SetFwPstdma(pBtCoexist, 0xe3, 0x10, 0x03, 0xf1, 0x90);
-			अवरोध;
-		हाल 5:
+			break;
+		case 5:
 			halbtc8723b2ant_SetFwPstdma(pBtCoexist, 0xe3, 0x1a, 0x1a, 0x60, 0x90);
-			अवरोध;
-		हाल 6:
+			break;
+		case 6:
 			halbtc8723b2ant_SetFwPstdma(pBtCoexist, 0xe3, 0x12, 0x12, 0x60, 0x90);
-			अवरोध;
-		हाल 7:
+			break;
+		case 7:
 			halbtc8723b2ant_SetFwPstdma(pBtCoexist, 0xe3, 0x1c, 0x3, 0x70, 0x90);
-			अवरोध;
-		हाल 8:
+			break;
+		case 8:
 			halbtc8723b2ant_SetFwPstdma(pBtCoexist, 0xa3, 0x10, 0x3, 0x70, 0x90);
-			अवरोध;
-		हाल 9:
+			break;
+		case 9:
 			halbtc8723b2ant_SetFwPstdma(pBtCoexist, 0xe3, 0x1a, 0x1a, 0xe1, 0x90);
-			अवरोध;
-		हाल 10:
+			break;
+		case 10:
 			halbtc8723b2ant_SetFwPstdma(pBtCoexist, 0xe3, 0x12, 0x12, 0xe1, 0x90);
-			अवरोध;
-		हाल 11:
+			break;
+		case 11:
 			halbtc8723b2ant_SetFwPstdma(pBtCoexist, 0xe3, 0xa, 0xa, 0xe1, 0x90);
-			अवरोध;
-		हाल 12:
+			break;
+		case 12:
 			halbtc8723b2ant_SetFwPstdma(pBtCoexist, 0xe3, 0x5, 0x5, 0xe1, 0x90);
-			अवरोध;
-		हाल 13:
+			break;
+		case 13:
 			halbtc8723b2ant_SetFwPstdma(pBtCoexist, 0xe3, 0x1a, 0x1a, 0x60, 0x90);
-			अवरोध;
-		हाल 14:
+			break;
+		case 14:
 			halbtc8723b2ant_SetFwPstdma(pBtCoexist, 0xe3, 0x12, 0x12, 0x60, 0x90);
-			अवरोध;
-		हाल 15:
+			break;
+		case 15:
 			halbtc8723b2ant_SetFwPstdma(pBtCoexist, 0xe3, 0xa, 0xa, 0x60, 0x90);
-			अवरोध;
-		हाल 16:
+			break;
+		case 16:
 			halbtc8723b2ant_SetFwPstdma(pBtCoexist, 0xe3, 0x5, 0x5, 0x60, 0x90);
-			अवरोध;
-		हाल 17:
+			break;
+		case 17:
 			halbtc8723b2ant_SetFwPstdma(pBtCoexist, 0xa3, 0x2f, 0x2f, 0x60, 0x90);
-			अवरोध;
-		हाल 18:
+			break;
+		case 18:
 			halbtc8723b2ant_SetFwPstdma(pBtCoexist, 0xe3, 0x5, 0x5, 0xe1, 0x90);
-			अवरोध;
-		हाल 19:
+			break;
+		case 19:
 			halbtc8723b2ant_SetFwPstdma(pBtCoexist, 0xe3, 0x25, 0x25, 0xe1, 0x90);
-			अवरोध;
-		हाल 20:
+			break;
+		case 20:
 			halbtc8723b2ant_SetFwPstdma(pBtCoexist, 0xe3, 0x25, 0x25, 0x60, 0x90);
-			अवरोध;
-		हाल 21:
+			break;
+		case 21:
 			halbtc8723b2ant_SetFwPstdma(pBtCoexist, 0xe3, 0x15, 0x03, 0x70, 0x90);
-			अवरोध;
-		हाल 71:
+			break;
+		case 71:
 			halbtc8723b2ant_SetFwPstdma(pBtCoexist, 0xe3, 0x1a, 0x1a, 0xe1, 0x90);
-			अवरोध;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+			break;
+		}
+	} else {
 		/*  disable PS tdma */
-		चयन (type) अणु
-		हाल 0:
+		switch (type) {
+		case 0:
 			halbtc8723b2ant_SetFwPstdma(pBtCoexist, 0x0, 0x0, 0x0, 0x40, 0x0);
-			अवरोध;
-		हाल 1:
+			break;
+		case 1:
 			halbtc8723b2ant_SetFwPstdma(pBtCoexist, 0x0, 0x0, 0x0, 0x48, 0x0);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			halbtc8723b2ant_SetFwPstdma(pBtCoexist, 0x0, 0x0, 0x0, 0x40, 0x0);
-			अवरोध;
-		पूर्ण
-	पूर्ण
+			break;
+		}
+	}
 
 	/*  update pre state */
 	pCoexDm->bPrePsTdmaOn = pCoexDm->bCurPsTdmaOn;
 	pCoexDm->prePsTdma = pCoexDm->curPsTdma;
-पूर्ण
+}
 
-अटल व्योम halbtc8723b2ant_CoexAllOff(काष्ठा btc_coexist *pBtCoexist)
-अणु
+static void halbtc8723b2ant_CoexAllOff(struct btc_coexist *pBtCoexist)
+{
 	/*  fw all off */
 	halbtc8723b2ant_PsTdma(pBtCoexist, NORMAL_EXEC, false, 1);
 	halbtc8723b2ant_FwDacSwingLvl(pBtCoexist, NORMAL_EXEC, 6);
@@ -1449,11 +1448,11 @@
 	/*  hw all off */
 	/* pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0x1, 0xfffff, 0x0); */
 	halbtc8723b2ant_CoexTableWithType(pBtCoexist, NORMAL_EXEC, 0);
-पूर्ण
+}
 
-अटल व्योम halbtc8723b2ant_InitCoexDm(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	/*  क्रमce to reset coex mechanism */
+static void halbtc8723b2ant_InitCoexDm(struct btc_coexist *pBtCoexist)
+{
+	/*  force to reset coex mechanism */
 
 	halbtc8723b2ant_PsTdma(pBtCoexist, FORCE_EXEC, false, 1);
 	halbtc8723b2ant_FwDacSwingLvl(pBtCoexist, FORCE_EXEC, 6);
@@ -1461,23 +1460,23 @@
 
 	halbtc8723b2ant_SwMechanism1(pBtCoexist, false, false, false, false);
 	halbtc8723b2ant_SwMechanism2(pBtCoexist, false, false, false, 0x18);
-पूर्ण
+}
 
-अटल व्योम halbtc8723b2ant_ActionBtInquiry(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	bool bWअगरiConnected = false;
+static void halbtc8723b2ant_ActionBtInquiry(struct btc_coexist *pBtCoexist)
+{
+	bool bWifiConnected = false;
 	bool bLowPwrDisable = true;
 
 	pBtCoexist->fBtcSet(pBtCoexist, BTC_SET_ACT_DISABLE_LOW_POWER, &bLowPwrDisable);
-	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_BL_WIFI_CONNECTED, &bWअगरiConnected);
+	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_BL_WIFI_CONNECTED, &bWifiConnected);
 
-	अगर (bWअगरiConnected) अणु
+	if (bWifiConnected) {
 		halbtc8723b2ant_CoexTableWithType(pBtCoexist, NORMAL_EXEC, 7);
 		halbtc8723b2ant_PsTdma(pBtCoexist, NORMAL_EXEC, true, 3);
-	पूर्ण अन्यथा अणु
+	} else {
 		halbtc8723b2ant_CoexTableWithType(pBtCoexist, NORMAL_EXEC, 0);
 		halbtc8723b2ant_PsTdma(pBtCoexist, NORMAL_EXEC, false, 1);
-	पूर्ण
+	}
 
 	halbtc8723b2ant_FwDacSwingLvl(pBtCoexist, FORCE_EXEC, 6);
 	halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 0);
@@ -1489,19 +1488,19 @@
 	pCoexDm->backup0x948 = pBtCoexist->fBtcRead4Byte(pBtCoexist, 0x948);
 
 	halbtc8723b2ant_SetAntPath(pBtCoexist, BTC_ANT_WIFI_AT_AUX, false, false);
-पूर्ण
+}
 
-अटल bool halbtc8723b2ant_IsCommonAction(काष्ठा btc_coexist *pBtCoexist)
-अणु
+static bool halbtc8723b2ant_IsCommonAction(struct btc_coexist *pBtCoexist)
+{
 	u8 btRssiState = BTC_RSSI_STATE_HIGH;
-	bool bCommon = false, bWअगरiConnected = false, bWअगरiBusy = false;
+	bool bCommon = false, bWifiConnected = false, bWifiBusy = false;
 	bool bBtHsOn = false, bLowPwrDisable = false;
 
 	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_BL_HS_OPERATION, &bBtHsOn);
-	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_BL_WIFI_CONNECTED, &bWअगरiConnected);
-	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_BL_WIFI_BUSY, &bWअगरiBusy);
+	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_BL_WIFI_CONNECTED, &bWifiConnected);
+	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_BL_WIFI_BUSY, &bWifiBusy);
 
-	अगर (!bWअगरiConnected) अणु
+	if (!bWifiConnected) {
 		bLowPwrDisable = false;
 		pBtCoexist->fBtcSet(pBtCoexist, BTC_SET_ACT_DISABLE_LOW_POWER, &bLowPwrDisable);
 		halbtc8723b2ant_LimitedRx(pBtCoexist, NORMAL_EXEC, false, false, 0x8);
@@ -1518,8 +1517,8 @@
 		halbtc8723b2ant_SwMechanism2(pBtCoexist, false, false, false, 0x18);
 
 		bCommon = true;
-	पूर्ण अन्यथा अणु
-		अगर (BT_8723B_2ANT_BT_STATUS_NON_CONNECTED_IDLE == pCoexDm->btStatus) अणु
+	} else {
+		if (BT_8723B_2ANT_BT_STATUS_NON_CONNECTED_IDLE == pCoexDm->btStatus) {
 			bLowPwrDisable = false;
 			pBtCoexist->fBtcSet(pBtCoexist, BTC_SET_ACT_DISABLE_LOW_POWER, &bLowPwrDisable);
 			halbtc8723b2ant_LimitedRx(pBtCoexist, NORMAL_EXEC, false, false, 0x8);
@@ -1536,12 +1535,12 @@
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, false, false, false, 0x18);
 
 			bCommon = true;
-		पूर्ण अन्यथा अगर (BT_8723B_2ANT_BT_STATUS_CONNECTED_IDLE == pCoexDm->btStatus) अणु
+		} else if (BT_8723B_2ANT_BT_STATUS_CONNECTED_IDLE == pCoexDm->btStatus) {
 			bLowPwrDisable = true;
 			pBtCoexist->fBtcSet(pBtCoexist, BTC_SET_ACT_DISABLE_LOW_POWER, &bLowPwrDisable);
 
-			अगर (bBtHsOn)
-				वापस false;
+			if (bBtHsOn)
+				return false;
 
 			BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], Wifi connected + BT connected-idle!!\n"));
 			halbtc8723b2ant_LimitedRx(pBtCoexist, NORMAL_EXEC, false, false, 0x8);
@@ -1556,16 +1555,16 @@
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, false, false, false, 0x18);
 
 			bCommon = true;
-		पूर्ण अन्यथा अणु
+		} else {
 			bLowPwrDisable = true;
 			pBtCoexist->fBtcSet(pBtCoexist, BTC_SET_ACT_DISABLE_LOW_POWER, &bLowPwrDisable);
 
-			अगर (bWअगरiBusy) अणु
+			if (bWifiBusy) {
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], Wifi Connected-Busy + BT Busy!!\n"));
 				bCommon = false;
-			पूर्ण अन्यथा अणु
-				अगर (bBtHsOn)
-					वापस false;
+			} else {
+				if (bBtHsOn)
+					return false;
 
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], Wifi Connected-Idle + BT Busy!!\n"));
 				btRssiState = halbtc8723b2ant_BtRssiState(2, 29, 0);
@@ -1576,69 +1575,69 @@
 				halbtc8723b2ant_PsTdma(pBtCoexist, NORMAL_EXEC, true, 21);
 				halbtc8723b2ant_FwDacSwingLvl(pBtCoexist, NORMAL_EXEC, 0xb);
 
-				अगर (BTC_RSSI_HIGH(btRssiState))
+				if (BTC_RSSI_HIGH(btRssiState))
 					halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 2);
-				अन्यथा
+				else
 					halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 0);
 
 				halbtc8723b2ant_SwMechanism1(pBtCoexist, false, false, false, false);
 				halbtc8723b2ant_SwMechanism2(pBtCoexist, false, false, false, 0x18);
 				bCommon = true;
-			पूर्ण
-		पूर्ण
-	पूर्ण
+			}
+		}
+	}
 
-	वापस bCommon;
-पूर्ण
+	return bCommon;
+}
 
-अटल व्योम halbtc8723b2ant_TdmaDurationAdjust(
-	काष्ठा btc_coexist *pBtCoexist, bool bScoHid, bool bTxPause, u8 maxInterval
+static void halbtc8723b2ant_TdmaDurationAdjust(
+	struct btc_coexist *pBtCoexist, bool bScoHid, bool bTxPause, u8 maxInterval
 )
-अणु
-	अटल s32 up, dn, m, n, WaitCount;
+{
+	static s32 up, dn, m, n, WaitCount;
 	s32 result;   /* 0: no change, +1: increase WiFi duration, -1: decrease WiFi duration */
 	u8 retryCount = 0;
 
 	BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE_FW, ("[BTCoex], TdmaDurationAdjust()\n"));
 
-	अगर (!pCoexDm->bAutoTdmaAdjust) अणु
+	if (!pCoexDm->bAutoTdmaAdjust) {
 		pCoexDm->bAutoTdmaAdjust = true;
 		BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE_FW_DETAIL, ("[BTCoex], first run TdmaDurationAdjust()!!\n"));
-		अणु
-			अगर (bScoHid) अणु
-				अगर (bTxPause) अणु
-					अगर (maxInterval == 1)
+		{
+			if (bScoHid) {
+				if (bTxPause) {
+					if (maxInterval == 1)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(13);
-					अन्यथा अगर (maxInterval == 2)
+					else if (maxInterval == 2)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(14);
-					अन्यथा
+					else
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(15);
-				पूर्ण अन्यथा अणु
-					अगर (maxInterval == 1)
+				} else {
+					if (maxInterval == 1)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(9);
-					अन्यथा अगर (maxInterval == 2)
+					else if (maxInterval == 2)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(10);
-					अन्यथा
+					else
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(11);
-				पूर्ण
-			पूर्ण अन्यथा अणु
-				अगर (bTxPause) अणु
-					अगर (maxInterval == 1)
+				}
+			} else {
+				if (bTxPause) {
+					if (maxInterval == 1)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(5);
-					अन्यथा अगर (maxInterval == 2)
+					else if (maxInterval == 2)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(6);
-					अन्यथा
+					else
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(7);
-				पूर्ण अन्यथा अणु
-					अगर (maxInterval == 1)
+				} else {
+					if (maxInterval == 1)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(1);
-					अन्यथा अगर (maxInterval == 2)
+					else if (maxInterval == 2)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(2);
-					अन्यथा
+					else
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(3);
-				पूर्ण
-			पूर्ण
-		पूर्ण
+				}
+			}
+		}
 		/*  */
 		up = 0;
 		dn = 0;
@@ -1646,7 +1645,7 @@
 		n = 3;
 		result = 0;
 		WaitCount = 0;
-	पूर्ण अन्यथा अणु
+	} else {
 		/* acquire the BT TRx retry count from BT_Info byte2 */
 		retryCount = pCoexSta->btRetryCnt;
 		BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE_FW_DETAIL, ("[BTCoex], retryCount = %d\n", retryCount));
@@ -1661,35 +1660,35 @@
 		result = 0;
 		WaitCount++;
 
-		अगर (retryCount == 0) अणु /*  no retry in the last 2-second duration */
+		if (retryCount == 0) { /*  no retry in the last 2-second duration */
 			up++;
 			dn--;
 
-			अगर (dn <= 0)
+			if (dn <= 0)
 				dn = 0;
 
-			अगर (up >= n) अणु /*  अगर ़ ःॉज n ो 2ॉई retry countॉज0, ो	्ऋडो/एWiFi duration */
+			if (up >= n) { /*  if 連續 n 個2秒 retry count為0, 則調寬WiFi duration */
 				WaitCount = 0;
 				n = 3;
 				up = 0;
 				dn = 0;
 				result = 1;
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE_FW_DETAIL, ("[BTCoex], Increase wifi duration!!\n"));
-			पूर्ण
-		पूर्ण अन्यथा अगर (retryCount <= 3) अणु /*  <=3 retry in the last 2-second duration */
+			}
+		} else if (retryCount <= 3) { /*  <=3 retry in the last 2-second duration */
 			up--;
 			dn++;
 
-			अगर (up <= 0)
+			if (up <= 0)
 				up = 0;
 
-			अगर (dn == 2) अणु /*  अगर ़ ःॉज 2 ो 2ॉई retry count< 3, ो	्ऋडॉऋWiFi duration */
-				अगर (WaitCount <= 2)
-					m++; /*  ़डोdच ॉखोउोऊो leveldचऐdठो */
-				अन्यथा
+			if (dn == 2) { /*  if 連續 2 個2秒 retry count< 3, 則調窄WiFi duration */
+				if (WaitCount <= 2)
+					m++; /*  避免一直在兩個level中來回 */
+				else
 					m = 1;
 
-				अगर (m >= 20) /* m ौ ोअईो ञ = 20 ' ौ ोअई120ॉई recheckौ/ोइ्ऋडौख WiFi duration. */
+				if (m >= 20) /* m 最大值 = 20 ' 最大120秒 recheck是否調整 WiFi duration. */
 					m = 20;
 
 				n = 3 * m;
@@ -1698,14 +1697,14 @@
 				WaitCount = 0;
 				result = -1;
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE_FW_DETAIL, ("[BTCoex], Decrease wifi duration for retryCounter<3!!\n"));
-			पूर्ण
-		पूर्ण अन्यथा अणु /* retry count > 3, ोऋ्इ1ौएँ retry count > 3, ो	्ऋडॉऋWiFi duration */
-			अगर (WaitCount == 1)
-				m++; /*  ़डोdच ॉखोउोऊो leveldचऐdठो */
-			अन्यथा
+			}
+		} else { /* retry count > 3, 只要1次 retry count > 3, 則調窄WiFi duration */
+			if (WaitCount == 1)
+				m++; /*  避免一直在兩個level中來回 */
+			else
 				m = 1;
 
-			अगर (m >= 20) /* m ौ ोअईो ञ = 20 ' ौ ोअई120ॉई recheckौ/ोइ्ऋडौख WiFi duration. */
+			if (m >= 20) /* m 最大值 = 20 ' 最大120秒 recheck是否調整 WiFi duration. */
 				m = 20;
 
 			n = 3 * m;
@@ -1714,310 +1713,310 @@
 			WaitCount = 0;
 			result = -1;
 			BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE_FW_DETAIL, ("[BTCoex], Decrease wifi duration for retryCounter>3!!\n"));
-		पूर्ण
+		}
 
 		BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE_FW_DETAIL, ("[BTCoex], max Interval = %d\n", maxInterval));
-		अगर (maxInterval == 1) अणु
-			अगर (bTxPause) अणु
+		if (maxInterval == 1) {
+			if (bTxPause) {
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE_FW_DETAIL, ("[BTCoex], TxPause = 1\n"));
 
-				अगर (pCoexDm->curPsTdma == 71)
+				if (pCoexDm->curPsTdma == 71)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(5);
-				अन्यथा अगर (pCoexDm->curPsTdma == 1)
+				else if (pCoexDm->curPsTdma == 1)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(5);
-				अन्यथा अगर (pCoexDm->curPsTdma == 2)
+				else if (pCoexDm->curPsTdma == 2)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(6);
-				अन्यथा अगर (pCoexDm->curPsTdma == 3)
+				else if (pCoexDm->curPsTdma == 3)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(7);
-				अन्यथा अगर (pCoexDm->curPsTdma == 4)
+				else if (pCoexDm->curPsTdma == 4)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(8);
 
-				अगर (pCoexDm->curPsTdma == 9)
+				if (pCoexDm->curPsTdma == 9)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(13);
-				अन्यथा अगर (pCoexDm->curPsTdma == 10)
+				else if (pCoexDm->curPsTdma == 10)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(14);
-				अन्यथा अगर (pCoexDm->curPsTdma == 11)
+				else if (pCoexDm->curPsTdma == 11)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(15);
-				अन्यथा अगर (pCoexDm->curPsTdma == 12)
+				else if (pCoexDm->curPsTdma == 12)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(16);
 
-				अगर (result == -1) अणु
-					अगर (pCoexDm->curPsTdma == 5)
+				if (result == -1) {
+					if (pCoexDm->curPsTdma == 5)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(6);
-					अन्यथा अगर (pCoexDm->curPsTdma == 6)
+					else if (pCoexDm->curPsTdma == 6)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(7);
-					अन्यथा अगर (pCoexDm->curPsTdma == 7)
+					else if (pCoexDm->curPsTdma == 7)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(8);
-					अन्यथा अगर (pCoexDm->curPsTdma == 13)
+					else if (pCoexDm->curPsTdma == 13)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(14);
-					अन्यथा अगर (pCoexDm->curPsTdma == 14)
+					else if (pCoexDm->curPsTdma == 14)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(15);
-					अन्यथा अगर (pCoexDm->curPsTdma == 15)
+					else if (pCoexDm->curPsTdma == 15)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(16);
-				पूर्ण अन्यथा अगर (result == 1) अणु
-					अगर (pCoexDm->curPsTdma == 8)
+				} else if (result == 1) {
+					if (pCoexDm->curPsTdma == 8)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(7);
-					अन्यथा अगर (pCoexDm->curPsTdma == 7)
+					else if (pCoexDm->curPsTdma == 7)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(6);
-					अन्यथा अगर (pCoexDm->curPsTdma == 6)
+					else if (pCoexDm->curPsTdma == 6)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(5);
-					अन्यथा अगर (pCoexDm->curPsTdma == 16)
+					else if (pCoexDm->curPsTdma == 16)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(15);
-					अन्यथा अगर (pCoexDm->curPsTdma == 15)
+					else if (pCoexDm->curPsTdma == 15)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(14);
-					अन्यथा अगर (pCoexDm->curPsTdma == 14)
+					else if (pCoexDm->curPsTdma == 14)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(13);
-				पूर्ण
-			पूर्ण अन्यथा अणु
+				}
+			} else {
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE_FW_DETAIL, ("[BTCoex], TxPause = 0\n"));
-				अगर (pCoexDm->curPsTdma == 5)
+				if (pCoexDm->curPsTdma == 5)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(71);
-				अन्यथा अगर (pCoexDm->curPsTdma == 6)
+				else if (pCoexDm->curPsTdma == 6)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(2);
-				अन्यथा अगर (pCoexDm->curPsTdma == 7)
+				else if (pCoexDm->curPsTdma == 7)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(3);
-				अन्यथा अगर (pCoexDm->curPsTdma == 8)
+				else if (pCoexDm->curPsTdma == 8)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(4);
 
-				अगर (pCoexDm->curPsTdma == 13)
+				if (pCoexDm->curPsTdma == 13)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(9);
-				अन्यथा अगर (pCoexDm->curPsTdma == 14)
+				else if (pCoexDm->curPsTdma == 14)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(10);
-				अन्यथा अगर (pCoexDm->curPsTdma == 15)
+				else if (pCoexDm->curPsTdma == 15)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(11);
-				अन्यथा अगर (pCoexDm->curPsTdma == 16)
+				else if (pCoexDm->curPsTdma == 16)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(12);
 
-				अगर (result == -1) अणु
-					अगर (pCoexDm->curPsTdma == 71)
+				if (result == -1) {
+					if (pCoexDm->curPsTdma == 71)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(1);
-					अन्यथा अगर (pCoexDm->curPsTdma == 1)
+					else if (pCoexDm->curPsTdma == 1)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(2);
-					अन्यथा अगर (pCoexDm->curPsTdma == 2)
+					else if (pCoexDm->curPsTdma == 2)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(3);
-					अन्यथा अगर (pCoexDm->curPsTdma == 3)
+					else if (pCoexDm->curPsTdma == 3)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(4);
-					अन्यथा अगर (pCoexDm->curPsTdma == 9)
+					else if (pCoexDm->curPsTdma == 9)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(10);
-					अन्यथा अगर (pCoexDm->curPsTdma == 10)
+					else if (pCoexDm->curPsTdma == 10)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(11);
-					अन्यथा अगर (pCoexDm->curPsTdma == 11)
+					else if (pCoexDm->curPsTdma == 11)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(12);
-				पूर्ण अन्यथा अगर (result == 1) अणु
-					अगर (pCoexDm->curPsTdma == 4)
+				} else if (result == 1) {
+					if (pCoexDm->curPsTdma == 4)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(3);
-					अन्यथा अगर (pCoexDm->curPsTdma == 3)
+					else if (pCoexDm->curPsTdma == 3)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(2);
-					अन्यथा अगर (pCoexDm->curPsTdma == 2)
+					else if (pCoexDm->curPsTdma == 2)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(1);
-					अन्यथा अगर (pCoexDm->curPsTdma == 1)
+					else if (pCoexDm->curPsTdma == 1)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(71);
-					अन्यथा अगर (pCoexDm->curPsTdma == 12)
+					else if (pCoexDm->curPsTdma == 12)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(11);
-					अन्यथा अगर (pCoexDm->curPsTdma == 11)
+					else if (pCoexDm->curPsTdma == 11)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(10);
-					अन्यथा अगर (pCoexDm->curPsTdma == 10)
+					else if (pCoexDm->curPsTdma == 10)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(9);
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा अगर (maxInterval == 2) अणु
-			अगर (bTxPause) अणु
+				}
+			}
+		} else if (maxInterval == 2) {
+			if (bTxPause) {
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE_FW_DETAIL, ("[BTCoex], TxPause = 1\n"));
-				अगर (pCoexDm->curPsTdma == 1)
+				if (pCoexDm->curPsTdma == 1)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(6);
-				अन्यथा अगर (pCoexDm->curPsTdma == 2)
+				else if (pCoexDm->curPsTdma == 2)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(6);
-				अन्यथा अगर (pCoexDm->curPsTdma == 3)
+				else if (pCoexDm->curPsTdma == 3)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(7);
-				अन्यथा अगर (pCoexDm->curPsTdma == 4)
+				else if (pCoexDm->curPsTdma == 4)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(8);
 
-				अगर (pCoexDm->curPsTdma == 9)
+				if (pCoexDm->curPsTdma == 9)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(14);
-				अन्यथा अगर (pCoexDm->curPsTdma == 10)
+				else if (pCoexDm->curPsTdma == 10)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(14);
-				अन्यथा अगर (pCoexDm->curPsTdma == 11)
+				else if (pCoexDm->curPsTdma == 11)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(15);
-				अन्यथा अगर (pCoexDm->curPsTdma == 12)
+				else if (pCoexDm->curPsTdma == 12)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(16);
 
-				अगर (result == -1) अणु
-					अगर (pCoexDm->curPsTdma == 5)
+				if (result == -1) {
+					if (pCoexDm->curPsTdma == 5)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(6);
-					अन्यथा अगर (pCoexDm->curPsTdma == 6)
+					else if (pCoexDm->curPsTdma == 6)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(7);
-					अन्यथा अगर (pCoexDm->curPsTdma == 7)
+					else if (pCoexDm->curPsTdma == 7)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(8);
-					अन्यथा अगर (pCoexDm->curPsTdma == 13)
+					else if (pCoexDm->curPsTdma == 13)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(14);
-					अन्यथा अगर (pCoexDm->curPsTdma == 14)
+					else if (pCoexDm->curPsTdma == 14)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(15);
-					अन्यथा अगर (pCoexDm->curPsTdma == 15)
+					else if (pCoexDm->curPsTdma == 15)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(16);
-				पूर्ण अन्यथा अगर (result == 1) अणु
-					अगर (pCoexDm->curPsTdma == 8)
+				} else if (result == 1) {
+					if (pCoexDm->curPsTdma == 8)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(7);
-					अन्यथा अगर (pCoexDm->curPsTdma == 7)
+					else if (pCoexDm->curPsTdma == 7)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(6);
-					अन्यथा अगर (pCoexDm->curPsTdma == 6)
+					else if (pCoexDm->curPsTdma == 6)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(6);
-					अन्यथा अगर (pCoexDm->curPsTdma == 16)
+					else if (pCoexDm->curPsTdma == 16)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(15);
-					अन्यथा अगर (pCoexDm->curPsTdma == 15)
+					else if (pCoexDm->curPsTdma == 15)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(14);
-					अन्यथा अगर (pCoexDm->curPsTdma == 14)
+					else if (pCoexDm->curPsTdma == 14)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(14);
-				पूर्ण
-			पूर्ण अन्यथा अणु
+				}
+			} else {
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE_FW_DETAIL, ("[BTCoex], TxPause = 0\n"));
-				अगर (pCoexDm->curPsTdma == 5)
+				if (pCoexDm->curPsTdma == 5)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(2);
-				अन्यथा अगर (pCoexDm->curPsTdma == 6)
+				else if (pCoexDm->curPsTdma == 6)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(2);
-				अन्यथा अगर (pCoexDm->curPsTdma == 7)
+				else if (pCoexDm->curPsTdma == 7)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(3);
-				अन्यथा अगर (pCoexDm->curPsTdma == 8)
+				else if (pCoexDm->curPsTdma == 8)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(4);
 
-				अगर (pCoexDm->curPsTdma == 13)
+				if (pCoexDm->curPsTdma == 13)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(10);
-				अन्यथा अगर (pCoexDm->curPsTdma == 14)
+				else if (pCoexDm->curPsTdma == 14)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(10);
-				अन्यथा अगर (pCoexDm->curPsTdma == 15)
+				else if (pCoexDm->curPsTdma == 15)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(11);
-				अन्यथा अगर (pCoexDm->curPsTdma == 16)
+				else if (pCoexDm->curPsTdma == 16)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(12);
 
-				अगर (result == -1) अणु
-					अगर (pCoexDm->curPsTdma == 1)
+				if (result == -1) {
+					if (pCoexDm->curPsTdma == 1)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(2);
-					अन्यथा अगर (pCoexDm->curPsTdma == 2)
+					else if (pCoexDm->curPsTdma == 2)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(3);
-					अन्यथा अगर (pCoexDm->curPsTdma == 3)
+					else if (pCoexDm->curPsTdma == 3)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(4);
-					अन्यथा अगर (pCoexDm->curPsTdma == 9)
+					else if (pCoexDm->curPsTdma == 9)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(10);
-					अन्यथा अगर (pCoexDm->curPsTdma == 10)
+					else if (pCoexDm->curPsTdma == 10)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(11);
-					अन्यथा अगर (pCoexDm->curPsTdma == 11)
+					else if (pCoexDm->curPsTdma == 11)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(12);
-				पूर्ण अन्यथा अगर (result == 1) अणु
-					अगर (pCoexDm->curPsTdma == 4)
+				} else if (result == 1) {
+					if (pCoexDm->curPsTdma == 4)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(3);
-					अन्यथा अगर (pCoexDm->curPsTdma == 3)
+					else if (pCoexDm->curPsTdma == 3)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(2);
-					अन्यथा अगर (pCoexDm->curPsTdma == 2)
+					else if (pCoexDm->curPsTdma == 2)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(2);
-					अन्यथा अगर (pCoexDm->curPsTdma == 12)
+					else if (pCoexDm->curPsTdma == 12)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(11);
-					अन्यथा अगर (pCoexDm->curPsTdma == 11)
+					else if (pCoexDm->curPsTdma == 11)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(10);
-					अन्यथा अगर (pCoexDm->curPsTdma == 10)
+					else if (pCoexDm->curPsTdma == 10)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(10);
-				पूर्ण
-			पूर्ण
-		पूर्ण अन्यथा अगर (maxInterval == 3) अणु
-			अगर (bTxPause) अणु
+				}
+			}
+		} else if (maxInterval == 3) {
+			if (bTxPause) {
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE_FW_DETAIL, ("[BTCoex], TxPause = 1\n"));
-				अगर (pCoexDm->curPsTdma == 1)
+				if (pCoexDm->curPsTdma == 1)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(7);
-				अन्यथा अगर (pCoexDm->curPsTdma == 2)
+				else if (pCoexDm->curPsTdma == 2)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(7);
-				अन्यथा अगर (pCoexDm->curPsTdma == 3)
+				else if (pCoexDm->curPsTdma == 3)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(7);
-				अन्यथा अगर (pCoexDm->curPsTdma == 4)
+				else if (pCoexDm->curPsTdma == 4)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(8);
 
-				अगर (pCoexDm->curPsTdma == 9)
+				if (pCoexDm->curPsTdma == 9)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(15);
-				अन्यथा अगर (pCoexDm->curPsTdma == 10)
+				else if (pCoexDm->curPsTdma == 10)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(15);
-				अन्यथा अगर (pCoexDm->curPsTdma == 11)
+				else if (pCoexDm->curPsTdma == 11)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(15);
-				अन्यथा अगर (pCoexDm->curPsTdma == 12)
+				else if (pCoexDm->curPsTdma == 12)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(16);
 
-				अगर (result == -1) अणु
-					अगर (pCoexDm->curPsTdma == 5)
+				if (result == -1) {
+					if (pCoexDm->curPsTdma == 5)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(7);
-					अन्यथा अगर (pCoexDm->curPsTdma == 6)
+					else if (pCoexDm->curPsTdma == 6)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(7);
-					अन्यथा अगर (pCoexDm->curPsTdma == 7)
+					else if (pCoexDm->curPsTdma == 7)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(8);
-					अन्यथा अगर (pCoexDm->curPsTdma == 13)
+					else if (pCoexDm->curPsTdma == 13)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(15);
-					अन्यथा अगर (pCoexDm->curPsTdma == 14)
+					else if (pCoexDm->curPsTdma == 14)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(15);
-					अन्यथा अगर (pCoexDm->curPsTdma == 15)
+					else if (pCoexDm->curPsTdma == 15)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(16);
-				पूर्ण अन्यथा अगर (result == 1) अणु
-					अगर (pCoexDm->curPsTdma == 8)
+				} else if (result == 1) {
+					if (pCoexDm->curPsTdma == 8)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(7);
-					अन्यथा अगर (pCoexDm->curPsTdma == 7)
+					else if (pCoexDm->curPsTdma == 7)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(7);
-					अन्यथा अगर (pCoexDm->curPsTdma == 6)
+					else if (pCoexDm->curPsTdma == 6)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(7);
-					अन्यथा अगर (pCoexDm->curPsTdma == 16)
+					else if (pCoexDm->curPsTdma == 16)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(15);
-					अन्यथा अगर (pCoexDm->curPsTdma == 15)
+					else if (pCoexDm->curPsTdma == 15)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(15);
-					अन्यथा अगर (pCoexDm->curPsTdma == 14)
+					else if (pCoexDm->curPsTdma == 14)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(15);
-				पूर्ण
-			पूर्ण अन्यथा अणु
+				}
+			} else {
 				BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE_FW_DETAIL, ("[BTCoex], TxPause = 0\n"));
-				अगर (pCoexDm->curPsTdma == 5)
+				if (pCoexDm->curPsTdma == 5)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(3);
-				अन्यथा अगर (pCoexDm->curPsTdma == 6)
+				else if (pCoexDm->curPsTdma == 6)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(3);
-				अन्यथा अगर (pCoexDm->curPsTdma == 7)
+				else if (pCoexDm->curPsTdma == 7)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(3);
-				अन्यथा अगर (pCoexDm->curPsTdma == 8)
+				else if (pCoexDm->curPsTdma == 8)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(4);
 
-				अगर (pCoexDm->curPsTdma == 13)
+				if (pCoexDm->curPsTdma == 13)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(11);
-				अन्यथा अगर (pCoexDm->curPsTdma == 14)
+				else if (pCoexDm->curPsTdma == 14)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(11);
-				अन्यथा अगर (pCoexDm->curPsTdma == 15)
+				else if (pCoexDm->curPsTdma == 15)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(11);
-				अन्यथा अगर (pCoexDm->curPsTdma == 16)
+				else if (pCoexDm->curPsTdma == 16)
 					HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(12);
 
-				अगर (result == -1) अणु
-					अगर (pCoexDm->curPsTdma == 1)
+				if (result == -1) {
+					if (pCoexDm->curPsTdma == 1)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(3);
-					अन्यथा अगर (pCoexDm->curPsTdma == 2)
+					else if (pCoexDm->curPsTdma == 2)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(3);
-					अन्यथा अगर (pCoexDm->curPsTdma == 3)
+					else if (pCoexDm->curPsTdma == 3)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(4);
-					अन्यथा अगर (pCoexDm->curPsTdma == 9)
+					else if (pCoexDm->curPsTdma == 9)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(11);
-					अन्यथा अगर (pCoexDm->curPsTdma == 10)
+					else if (pCoexDm->curPsTdma == 10)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(11);
-					अन्यथा अगर (pCoexDm->curPsTdma == 11)
+					else if (pCoexDm->curPsTdma == 11)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(12);
-				पूर्ण अन्यथा अगर (result == 1) अणु
-					अगर (pCoexDm->curPsTdma == 4)
+				} else if (result == 1) {
+					if (pCoexDm->curPsTdma == 4)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(3);
-					अन्यथा अगर (pCoexDm->curPsTdma == 3)
+					else if (pCoexDm->curPsTdma == 3)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(3);
-					अन्यथा अगर (pCoexDm->curPsTdma == 2)
+					else if (pCoexDm->curPsTdma == 2)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(3);
-					अन्यथा अगर (pCoexDm->curPsTdma == 12)
+					else if (pCoexDm->curPsTdma == 12)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(11);
-					अन्यथा अगर (pCoexDm->curPsTdma == 11)
+					else if (pCoexDm->curPsTdma == 11)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(11);
-					अन्यथा अगर (pCoexDm->curPsTdma == 10)
+					else if (pCoexDm->curPsTdma == 10)
 						HAL_BTC8723B2ANT_DMA_DURATION_ADJUST(11);
-				पूर्ण
-			पूर्ण
-		पूर्ण
-	पूर्ण
+				}
+			}
+		}
+	}
 
-	/*  अगर current PsTdma not match with the recorded one (when scan, dhcp...), */
+	/*  if current PsTdma not match with the recorded one (when scan, dhcp...), */
 	/*  then we have to adjust it back to the previous record one. */
-	अगर (pCoexDm->curPsTdma != pCoexDm->psTdmaDuAdjType) अणु
+	if (pCoexDm->curPsTdma != pCoexDm->psTdmaDuAdjType) {
 		bool bScan = false, bLink = false, bRoam = false;
 		BTC_PRINT(
 			BTC_MSG_ALGORITHM,
@@ -2033,21 +2032,21 @@
 		pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_BL_WIFI_LINK, &bLink);
 		pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_BL_WIFI_ROAM, &bRoam);
 
-		अगर (!bScan && !bLink && !bRoam)
+		if (!bScan && !bLink && !bRoam)
 			halbtc8723b2ant_PsTdma(pBtCoexist, NORMAL_EXEC, true, pCoexDm->psTdmaDuAdjType);
-		अन्यथा अणु
+		else {
 			BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE_FW_DETAIL, ("[BTCoex], roaming/link/scan is under progress, will adjust next time!!!\n"));
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*  SCO only or SCO+PAN(HS) */
-अटल व्योम halbtc8723b2ant_ActionSco(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	u8 wअगरiRssiState, btRssiState;
-	u32 wअगरiBw;
+static void halbtc8723b2ant_ActionSco(struct btc_coexist *pBtCoexist)
+{
+	u8 wifiRssiState, btRssiState;
+	u32 wifiBw;
 
-	wअगरiRssiState = halbtc8723b2ant_WअगरiRssiState(pBtCoexist, 0, 2, 15, 0);
+	wifiRssiState = halbtc8723b2ant_WifiRssiState(pBtCoexist, 0, 2, 15, 0);
 	btRssiState = halbtc8723b2ant_BtRssiState(2, 29, 0);
 
 	pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0x1, 0xfffff, 0x0);
@@ -2056,53 +2055,53 @@
 
 	halbtc8723b2ant_FwDacSwingLvl(pBtCoexist, NORMAL_EXEC, 4);
 
-	अगर (BTC_RSSI_HIGH(btRssiState))
+	if (BTC_RSSI_HIGH(btRssiState))
 		halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 2);
-	अन्यथा
+	else
 		halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 0);
 
-	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_BW, &wअगरiBw);
+	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_BW, &wifiBw);
 
-	अगर (BTC_WIFI_BW_LEGACY == wअगरiBw) /* क्रम SCO quality at 11b/g mode */
+	if (BTC_WIFI_BW_LEGACY == wifiBw) /* for SCO quality at 11b/g mode */
 		halbtc8723b2ant_CoexTableWithType(pBtCoexist, NORMAL_EXEC, 2);
-	अन्यथा  /* क्रम SCO quality & wअगरi perक्रमmance balance at 11n mode */
+	else  /* for SCO quality & wifi performance balance at 11n mode */
 		halbtc8723b2ant_CoexTableWithType(pBtCoexist, NORMAL_EXEC, 8);
 
-	halbtc8723b2ant_PsTdma(pBtCoexist, NORMAL_EXEC, false, 0); /* क्रम voice quality */
+	halbtc8723b2ant_PsTdma(pBtCoexist, NORMAL_EXEC, false, 0); /* for voice quality */
 
 	/*  sw mechanism */
-	अगर (BTC_WIFI_BW_HT40 == wअगरiBw) अणु
-		अगर (
-			(wअगरiRssiState == BTC_RSSI_STATE_HIGH) ||
-			(wअगरiRssiState == BTC_RSSI_STATE_STAY_HIGH)
-		) अणु
+	if (BTC_WIFI_BW_HT40 == wifiBw) {
+		if (
+			(wifiRssiState == BTC_RSSI_STATE_HIGH) ||
+			(wifiRssiState == BTC_RSSI_STATE_STAY_HIGH)
+		) {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, true, true, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, true, false, true, 0x4);
-		पूर्ण अन्यथा अणु
+		} else {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, true, true, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, false, false, true, 0x4);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (
-			(wअगरiRssiState == BTC_RSSI_STATE_HIGH) ||
-			(wअगरiRssiState == BTC_RSSI_STATE_STAY_HIGH)
-		) अणु
+		}
+	} else {
+		if (
+			(wifiRssiState == BTC_RSSI_STATE_HIGH) ||
+			(wifiRssiState == BTC_RSSI_STATE_STAY_HIGH)
+		) {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, false, true, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, true, false, true, 0x4);
-		पूर्ण अन्यथा अणु
+		} else {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, false, true, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, false, false, true, 0x4);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 
-अटल व्योम halbtc8723b2ant_ActionHid(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	u8 wअगरiRssiState, btRssiState;
-	u32 wअगरiBw;
+static void halbtc8723b2ant_ActionHid(struct btc_coexist *pBtCoexist)
+{
+	u8 wifiRssiState, btRssiState;
+	u32 wifiBw;
 
-	wअगरiRssiState = halbtc8723b2ant_WअगरiRssiState(pBtCoexist, 0, 2, 15, 0);
+	wifiRssiState = halbtc8723b2ant_WifiRssiState(pBtCoexist, 0, 2, 15, 0);
 	btRssiState = halbtc8723b2ant_BtRssiState(2, 29, 0);
 
 	pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0x1, 0xfffff, 0x0);
@@ -2111,68 +2110,68 @@
 
 	halbtc8723b2ant_FwDacSwingLvl(pBtCoexist, NORMAL_EXEC, 6);
 
-	अगर (BTC_RSSI_HIGH(btRssiState))
+	if (BTC_RSSI_HIGH(btRssiState))
 		halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 2);
-	अन्यथा
+	else
 		halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 0);
 
-	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_BW, &wअगरiBw);
+	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_BW, &wifiBw);
 
-	अगर (BTC_WIFI_BW_LEGACY == wअगरiBw) /* क्रम HID at 11b/g mode */
+	if (BTC_WIFI_BW_LEGACY == wifiBw) /* for HID at 11b/g mode */
 		halbtc8723b2ant_CoexTableWithType(pBtCoexist, NORMAL_EXEC, 7);
-	अन्यथा  /* क्रम HID quality & wअगरi perक्रमmance balance at 11n mode */
+	else  /* for HID quality & wifi performance balance at 11n mode */
 		halbtc8723b2ant_CoexTableWithType(pBtCoexist, NORMAL_EXEC, 9);
 
-	अगर (
+	if (
 		(btRssiState == BTC_RSSI_STATE_HIGH) ||
 		(btRssiState == BTC_RSSI_STATE_STAY_HIGH)
 	)
 		halbtc8723b2ant_PsTdma(pBtCoexist, NORMAL_EXEC, true, 9);
-	अन्यथा
+	else
 		halbtc8723b2ant_PsTdma(pBtCoexist, NORMAL_EXEC, true, 13);
 
 	/*  sw mechanism */
-	अगर (BTC_WIFI_BW_HT40 == wअगरiBw) अणु
-		अगर (
-			(wअगरiRssiState == BTC_RSSI_STATE_HIGH) ||
-			(wअगरiRssiState == BTC_RSSI_STATE_STAY_HIGH)
-		) अणु
+	if (BTC_WIFI_BW_HT40 == wifiBw) {
+		if (
+			(wifiRssiState == BTC_RSSI_STATE_HIGH) ||
+			(wifiRssiState == BTC_RSSI_STATE_STAY_HIGH)
+		) {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, true, true, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, true, false, false, 0x18);
-		पूर्ण अन्यथा अणु
+		} else {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, true, true, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, false, false, false, 0x18);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (
-			(wअगरiRssiState == BTC_RSSI_STATE_HIGH) ||
-			(wअगरiRssiState == BTC_RSSI_STATE_STAY_HIGH)
-		) अणु
+		}
+	} else {
+		if (
+			(wifiRssiState == BTC_RSSI_STATE_HIGH) ||
+			(wifiRssiState == BTC_RSSI_STATE_STAY_HIGH)
+		) {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, false, true, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, true, false, false, 0x18);
-		पूर्ण अन्यथा अणु
+		} else {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, false, true, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, false, false, false, 0x18);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /* A2DP only / PAN(EDR) only/ A2DP+PAN(HS) */
-अटल व्योम halbtc8723b2ant_ActionA2dp(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	u8 wअगरiRssiState, wअगरiRssiState1, btRssiState;
-	u32 wअगरiBw;
+static void halbtc8723b2ant_ActionA2dp(struct btc_coexist *pBtCoexist)
+{
+	u8 wifiRssiState, wifiRssiState1, btRssiState;
+	u32 wifiBw;
 	u8 apNum = 0;
 
-	wअगरiRssiState = halbtc8723b2ant_WअगरiRssiState(pBtCoexist, 0, 2, 15, 0);
-	wअगरiRssiState1 = halbtc8723b2ant_WअगरiRssiState(pBtCoexist, 1, 2, 40, 0);
+	wifiRssiState = halbtc8723b2ant_WifiRssiState(pBtCoexist, 0, 2, 15, 0);
+	wifiRssiState1 = halbtc8723b2ant_WifiRssiState(pBtCoexist, 1, 2, 40, 0);
 	btRssiState = halbtc8723b2ant_BtRssiState(2, 29, 0);
 
 	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U1_AP_NUM, &apNum);
 
 	/*  define the office environment */
-	अगर (apNum >= 10 && BTC_RSSI_HIGH(wअगरiRssiState1)) अणु
-		/* DbgPrपूर्णांक(" AP#>10(%d)\n", apNum); */
+	if (apNum >= 10 && BTC_RSSI_HIGH(wifiRssiState1)) {
+		/* DbgPrint(" AP#>10(%d)\n", apNum); */
 		pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0x1, 0xfffff, 0x0);
 		halbtc8723b2ant_LimitedRx(pBtCoexist, NORMAL_EXEC, false, false, 0x8);
 		halbtc8723b2ant_FwDacSwingLvl(pBtCoexist, NORMAL_EXEC, 6);
@@ -2181,70 +2180,70 @@
 		halbtc8723b2ant_PsTdma(pBtCoexist, NORMAL_EXEC, false, 1);
 
 		/*  sw mechanism */
-		pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_BW, &wअगरiBw);
-		अगर (BTC_WIFI_BW_HT40 == wअगरiBw) अणु
+		pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_BW, &wifiBw);
+		if (BTC_WIFI_BW_HT40 == wifiBw) {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, true, false, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, true, false, true, 0x18);
-		पूर्ण अन्यथा अणु
+		} else {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, false, false, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, true, false, true, 0x18);
-		पूर्ण
-		वापस;
-	पूर्ण
+		}
+		return;
+	}
 
 	pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0x1, 0xfffff, 0x0);
 	halbtc8723b2ant_LimitedRx(pBtCoexist, NORMAL_EXEC, false, false, 0x8);
 
 	halbtc8723b2ant_FwDacSwingLvl(pBtCoexist, NORMAL_EXEC, 6);
 
-	अगर (BTC_RSSI_HIGH(btRssiState))
+	if (BTC_RSSI_HIGH(btRssiState))
 		halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 2);
-	अन्यथा
+	else
 		halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 0);
 
 	halbtc8723b2ant_CoexTableWithType(pBtCoexist, NORMAL_EXEC, 7);
 
-	अगर (
+	if (
 		(btRssiState == BTC_RSSI_STATE_HIGH) ||
 		(btRssiState == BTC_RSSI_STATE_STAY_HIGH)
 	)
 		halbtc8723b2ant_TdmaDurationAdjust(pBtCoexist, false, false, 1);
-	अन्यथा
+	else
 		halbtc8723b2ant_TdmaDurationAdjust(pBtCoexist, false, true, 1);
 
 	/*  sw mechanism */
-	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_BW, &wअगरiBw);
-	अगर (BTC_WIFI_BW_HT40 == wअगरiBw) अणु
-		अगर (
-			(wअगरiRssiState == BTC_RSSI_STATE_HIGH) ||
-			(wअगरiRssiState == BTC_RSSI_STATE_STAY_HIGH)
-		) अणु
+	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_BW, &wifiBw);
+	if (BTC_WIFI_BW_HT40 == wifiBw) {
+		if (
+			(wifiRssiState == BTC_RSSI_STATE_HIGH) ||
+			(wifiRssiState == BTC_RSSI_STATE_STAY_HIGH)
+		) {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, true, false, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, true, false, false, 0x18);
-		पूर्ण अन्यथा अणु
+		} else {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, true, false, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, false, false, false, 0x18);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (
-			(wअगरiRssiState == BTC_RSSI_STATE_HIGH) ||
-			(wअगरiRssiState == BTC_RSSI_STATE_STAY_HIGH)
-		) अणु
+		}
+	} else {
+		if (
+			(wifiRssiState == BTC_RSSI_STATE_HIGH) ||
+			(wifiRssiState == BTC_RSSI_STATE_STAY_HIGH)
+		) {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, false, false, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, true, false, false, 0x18);
-		पूर्ण अन्यथा अणु
+		} else {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, false, false, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, false, false, false, 0x18);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम halbtc8723b2ant_ActionA2dpPanHs(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	u8 wअगरiRssiState, btRssiState;
-	u32 wअगरiBw;
+static void halbtc8723b2ant_ActionA2dpPanHs(struct btc_coexist *pBtCoexist)
+{
+	u8 wifiRssiState, btRssiState;
+	u32 wifiBw;
 
-	wअगरiRssiState = halbtc8723b2ant_WअगरiRssiState(pBtCoexist, 0, 2, 15, 0);
+	wifiRssiState = halbtc8723b2ant_WifiRssiState(pBtCoexist, 0, 2, 15, 0);
 	btRssiState = halbtc8723b2ant_BtRssiState(2, 29, 0);
 
 	pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0x1, 0xfffff, 0x0);
@@ -2253,9 +2252,9 @@
 
 	halbtc8723b2ant_FwDacSwingLvl(pBtCoexist, NORMAL_EXEC, 6);
 
-	अगर (BTC_RSSI_HIGH(btRssiState))
+	if (BTC_RSSI_HIGH(btRssiState))
 		halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 2);
-	अन्यथा
+	else
 		halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 0);
 
 	halbtc8723b2ant_CoexTableWithType(pBtCoexist, NORMAL_EXEC, 7);
@@ -2263,38 +2262,38 @@
 	halbtc8723b2ant_TdmaDurationAdjust(pBtCoexist, false, true, 2);
 
 	/*  sw mechanism */
-	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_BW, &wअगरiBw);
-	अगर (BTC_WIFI_BW_HT40 == wअगरiBw) अणु
-		अगर (
-			(wअगरiRssiState == BTC_RSSI_STATE_HIGH) ||
-			(wअगरiRssiState == BTC_RSSI_STATE_STAY_HIGH)
-		) अणु
+	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_BW, &wifiBw);
+	if (BTC_WIFI_BW_HT40 == wifiBw) {
+		if (
+			(wifiRssiState == BTC_RSSI_STATE_HIGH) ||
+			(wifiRssiState == BTC_RSSI_STATE_STAY_HIGH)
+		) {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, true, false, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, true, false, false, 0x18);
-		पूर्ण अन्यथा अणु
+		} else {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, true, false, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, false, false, false, 0x18);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (
-			(wअगरiRssiState == BTC_RSSI_STATE_HIGH) ||
-			(wअगरiRssiState == BTC_RSSI_STATE_STAY_HIGH)
-		) अणु
+		}
+	} else {
+		if (
+			(wifiRssiState == BTC_RSSI_STATE_HIGH) ||
+			(wifiRssiState == BTC_RSSI_STATE_STAY_HIGH)
+		) {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, false, false, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, true, false, false, 0x18);
-		पूर्ण अन्यथा अणु
+		} else {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, false, false, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, false, false, false, 0x18);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम halbtc8723b2ant_ActionPanEdr(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	u8 wअगरiRssiState, btRssiState;
-	u32 wअगरiBw;
+static void halbtc8723b2ant_ActionPanEdr(struct btc_coexist *pBtCoexist)
+{
+	u8 wifiRssiState, btRssiState;
+	u32 wifiBw;
 
-	wअगरiRssiState = halbtc8723b2ant_WअगरiRssiState(pBtCoexist, 0, 2, 15, 0);
+	wifiRssiState = halbtc8723b2ant_WifiRssiState(pBtCoexist, 0, 2, 15, 0);
 	btRssiState = halbtc8723b2ant_BtRssiState(2, 29, 0);
 
 	pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0x1, 0xfffff, 0x0);
@@ -2303,56 +2302,56 @@
 
 	halbtc8723b2ant_FwDacSwingLvl(pBtCoexist, NORMAL_EXEC, 6);
 
-	अगर (BTC_RSSI_HIGH(btRssiState))
+	if (BTC_RSSI_HIGH(btRssiState))
 		halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 2);
-	अन्यथा
+	else
 		halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 0);
 
 	halbtc8723b2ant_CoexTableWithType(pBtCoexist, NORMAL_EXEC, 10);
 
-	अगर (
+	if (
 		(btRssiState == BTC_RSSI_STATE_HIGH) ||
 		(btRssiState == BTC_RSSI_STATE_STAY_HIGH)
 	)
 		halbtc8723b2ant_PsTdma(pBtCoexist, NORMAL_EXEC, true, 1);
-	अन्यथा
+	else
 		halbtc8723b2ant_PsTdma(pBtCoexist, NORMAL_EXEC, true, 5);
 
 	/*  sw mechanism */
-	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_BW, &wअगरiBw);
-	अगर (BTC_WIFI_BW_HT40 == wअगरiBw) अणु
-		अगर (
-			(wअगरiRssiState == BTC_RSSI_STATE_HIGH) ||
-			(wअगरiRssiState == BTC_RSSI_STATE_STAY_HIGH)
-		) अणु
+	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_BW, &wifiBw);
+	if (BTC_WIFI_BW_HT40 == wifiBw) {
+		if (
+			(wifiRssiState == BTC_RSSI_STATE_HIGH) ||
+			(wifiRssiState == BTC_RSSI_STATE_STAY_HIGH)
+		) {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, true, false, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, true, false, false, 0x18);
-		पूर्ण अन्यथा अणु
+		} else {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, true, false, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, false, false, false, 0x18);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (
-			(wअगरiRssiState == BTC_RSSI_STATE_HIGH) ||
-			(wअगरiRssiState == BTC_RSSI_STATE_STAY_HIGH)
-		) अणु
+		}
+	} else {
+		if (
+			(wifiRssiState == BTC_RSSI_STATE_HIGH) ||
+			(wifiRssiState == BTC_RSSI_STATE_STAY_HIGH)
+		) {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, false, false, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, true, false, false, 0x18);
-		पूर्ण अन्यथा अणु
+		} else {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, false, false, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, false, false, false, 0x18);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 
 /* PAN(HS) only */
-अटल व्योम halbtc8723b2ant_ActionPanHs(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	u8 wअगरiRssiState, btRssiState;
-	u32 wअगरiBw;
+static void halbtc8723b2ant_ActionPanHs(struct btc_coexist *pBtCoexist)
+{
+	u8 wifiRssiState, btRssiState;
+	u32 wifiBw;
 
-	wअगरiRssiState = halbtc8723b2ant_WअगरiRssiState(pBtCoexist, 0, 2, 15, 0);
+	wifiRssiState = halbtc8723b2ant_WifiRssiState(pBtCoexist, 0, 2, 15, 0);
 	btRssiState = halbtc8723b2ant_BtRssiState(2, 29, 0);
 
 	pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0x1, 0xfffff, 0x0);
@@ -2361,48 +2360,48 @@
 
 	halbtc8723b2ant_FwDacSwingLvl(pBtCoexist, NORMAL_EXEC, 6);
 
-	अगर (BTC_RSSI_HIGH(btRssiState))
+	if (BTC_RSSI_HIGH(btRssiState))
 		halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 2);
-	अन्यथा
+	else
 		halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 0);
 
 	halbtc8723b2ant_CoexTableWithType(pBtCoexist, NORMAL_EXEC, 7);
 
 	halbtc8723b2ant_PsTdma(pBtCoexist, NORMAL_EXEC, false, 1);
 
-	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_BW, &wअगरiBw);
-	अगर (BTC_WIFI_BW_HT40 == wअगरiBw) अणु
-		अगर (
-			(wअगरiRssiState == BTC_RSSI_STATE_HIGH) ||
-			(wअगरiRssiState == BTC_RSSI_STATE_STAY_HIGH)
-		) अणु
+	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_BW, &wifiBw);
+	if (BTC_WIFI_BW_HT40 == wifiBw) {
+		if (
+			(wifiRssiState == BTC_RSSI_STATE_HIGH) ||
+			(wifiRssiState == BTC_RSSI_STATE_STAY_HIGH)
+		) {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, true, false, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, true, false, false, 0x18);
-		पूर्ण अन्यथा अणु
+		} else {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, true, false, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, false, false, false, 0x18);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (
-			(wअगरiRssiState == BTC_RSSI_STATE_HIGH) ||
-			(wअगरiRssiState == BTC_RSSI_STATE_STAY_HIGH)
-		) अणु
+		}
+	} else {
+		if (
+			(wifiRssiState == BTC_RSSI_STATE_HIGH) ||
+			(wifiRssiState == BTC_RSSI_STATE_STAY_HIGH)
+		) {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, false, false, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, true, false, false, 0x18);
-		पूर्ण अन्यथा अणु
+		} else {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, false, false, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, false, false, false, 0x18);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /* PAN(EDR)+A2DP */
-अटल व्योम halbtc8723b2ant_ActionPanEdrA2dp(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	u8 wअगरiRssiState, btRssiState;
-	u32 wअगरiBw;
+static void halbtc8723b2ant_ActionPanEdrA2dp(struct btc_coexist *pBtCoexist)
+{
+	u8 wifiRssiState, btRssiState;
+	u32 wifiBw;
 
-	wअगरiRssiState = halbtc8723b2ant_WअगरiRssiState(pBtCoexist, 0, 2, 15, 0);
+	wifiRssiState = halbtc8723b2ant_WifiRssiState(pBtCoexist, 0, 2, 15, 0);
 	btRssiState = halbtc8723b2ant_BtRssiState(2, 29, 0);
 
 	pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0x1, 0xfffff, 0x0);
@@ -2411,123 +2410,123 @@
 
 	halbtc8723b2ant_FwDacSwingLvl(pBtCoexist, NORMAL_EXEC, 6);
 
-	अगर (BTC_RSSI_HIGH(btRssiState))
+	if (BTC_RSSI_HIGH(btRssiState))
 		halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 2);
-	अन्यथा
+	else
 		halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 0);
 
-	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_BW, &wअगरiBw);
+	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_BW, &wifiBw);
 
-	अगर (
+	if (
 		(btRssiState == BTC_RSSI_STATE_HIGH) ||
 		(btRssiState == BTC_RSSI_STATE_STAY_HIGH)
-	) अणु
+	) {
 		halbtc8723b2ant_CoexTableWithType(pBtCoexist, NORMAL_EXEC, 12);
-		अगर (BTC_WIFI_BW_HT40 == wअगरiBw)
+		if (BTC_WIFI_BW_HT40 == wifiBw)
 			halbtc8723b2ant_TdmaDurationAdjust(pBtCoexist, false, true, 3);
-		अन्यथा
+		else
 			halbtc8723b2ant_TdmaDurationAdjust(pBtCoexist, false, false, 3);
-	पूर्ण अन्यथा अणु
+	} else {
 		halbtc8723b2ant_CoexTableWithType(pBtCoexist, NORMAL_EXEC, 7);
 		halbtc8723b2ant_TdmaDurationAdjust(pBtCoexist, false, true, 3);
-	पूर्ण
+	}
 
 	/*  sw mechanism */
-	अगर (BTC_WIFI_BW_HT40 == wअगरiBw) अणु
-		अगर (
-			(wअगरiRssiState == BTC_RSSI_STATE_HIGH) ||
-			(wअगरiRssiState == BTC_RSSI_STATE_STAY_HIGH)
-		) अणु
+	if (BTC_WIFI_BW_HT40 == wifiBw) {
+		if (
+			(wifiRssiState == BTC_RSSI_STATE_HIGH) ||
+			(wifiRssiState == BTC_RSSI_STATE_STAY_HIGH)
+		) {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, true, false, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, true, false, false, 0x18);
-		पूर्ण अन्यथा अणु
+		} else {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, true, false, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, false, false, false, 0x18);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (
-			(wअगरiRssiState == BTC_RSSI_STATE_HIGH) ||
-			(wअगरiRssiState == BTC_RSSI_STATE_STAY_HIGH)
-		) अणु
+		}
+	} else {
+		if (
+			(wifiRssiState == BTC_RSSI_STATE_HIGH) ||
+			(wifiRssiState == BTC_RSSI_STATE_STAY_HIGH)
+		) {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, false, false, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, true, false, false, 0x18);
-		पूर्ण अन्यथा अणु
+		} else {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, false, false, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, false, false, false, 0x18);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम halbtc8723b2ant_ActionPanEdrHid(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	u8 wअगरiRssiState, btRssiState;
-	u32 wअगरiBw;
+static void halbtc8723b2ant_ActionPanEdrHid(struct btc_coexist *pBtCoexist)
+{
+	u8 wifiRssiState, btRssiState;
+	u32 wifiBw;
 
-	wअगरiRssiState = halbtc8723b2ant_WअगरiRssiState(pBtCoexist, 0, 2, 15, 0);
+	wifiRssiState = halbtc8723b2ant_WifiRssiState(pBtCoexist, 0, 2, 15, 0);
 	btRssiState = halbtc8723b2ant_BtRssiState(2, 29, 0);
-	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_BW, &wअगरiBw);
+	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_BW, &wifiBw);
 
 	halbtc8723b2ant_LimitedRx(pBtCoexist, NORMAL_EXEC, false, false, 0x8);
 
-	अगर (BTC_RSSI_HIGH(btRssiState))
+	if (BTC_RSSI_HIGH(btRssiState))
 		halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 2);
-	अन्यथा
+	else
 		halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 0);
 
-	अगर (
+	if (
 		(btRssiState == BTC_RSSI_STATE_HIGH) ||
 		(btRssiState == BTC_RSSI_STATE_STAY_HIGH)
-	) अणु
-		अगर (BTC_WIFI_BW_HT40 == wअगरiBw) अणु
+	) {
+		if (BTC_WIFI_BW_HT40 == wifiBw) {
 			halbtc8723b2ant_FwDacSwingLvl(pBtCoexist, NORMAL_EXEC, 3);
 			halbtc8723b2ant_CoexTableWithType(pBtCoexist, NORMAL_EXEC, 11);
 			pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0x1, 0xfffff, 0x780);
-		पूर्ण अन्यथा अणु
+		} else {
 			halbtc8723b2ant_FwDacSwingLvl(pBtCoexist, NORMAL_EXEC, 6);
 			halbtc8723b2ant_CoexTableWithType(pBtCoexist, NORMAL_EXEC, 7);
 			pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0x1, 0xfffff, 0x0);
-		पूर्ण
+		}
 		halbtc8723b2ant_TdmaDurationAdjust(pBtCoexist, true, false, 2);
-	पूर्ण अन्यथा अणु
+	} else {
 		halbtc8723b2ant_FwDacSwingLvl(pBtCoexist, NORMAL_EXEC, 6);
 		halbtc8723b2ant_CoexTableWithType(pBtCoexist, NORMAL_EXEC, 11);
 		pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0x1, 0xfffff, 0x0);
 		halbtc8723b2ant_TdmaDurationAdjust(pBtCoexist, true, true, 2);
-	पूर्ण
+	}
 
 	/*  sw mechanism */
-	अगर (BTC_WIFI_BW_HT40 == wअगरiBw) अणु
-		अगर (
-			(wअगरiRssiState == BTC_RSSI_STATE_HIGH) ||
-			(wअगरiRssiState == BTC_RSSI_STATE_STAY_HIGH)
-		) अणु
+	if (BTC_WIFI_BW_HT40 == wifiBw) {
+		if (
+			(wifiRssiState == BTC_RSSI_STATE_HIGH) ||
+			(wifiRssiState == BTC_RSSI_STATE_STAY_HIGH)
+		) {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, true, true, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, true, false, false, 0x18);
-		पूर्ण अन्यथा अणु
+		} else {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, true, true, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, false, false, false, 0x18);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (
-			(wअगरiRssiState == BTC_RSSI_STATE_HIGH) ||
-			(wअगरiRssiState == BTC_RSSI_STATE_STAY_HIGH)
-		) अणु
+		}
+	} else {
+		if (
+			(wifiRssiState == BTC_RSSI_STATE_HIGH) ||
+			(wifiRssiState == BTC_RSSI_STATE_STAY_HIGH)
+		) {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, false, true, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, true, false, false, 0x18);
-		पूर्ण अन्यथा अणु
+		} else {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, false, true, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, false, false, false, 0x18);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /*  HID+A2DP+PAN(EDR) */
-अटल व्योम halbtc8723b2ant_ActionHidA2dpPanEdr(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	u8 wअगरiRssiState, btRssiState;
-	u32 wअगरiBw;
+static void halbtc8723b2ant_ActionHidA2dpPanEdr(struct btc_coexist *pBtCoexist)
+{
+	u8 wifiRssiState, btRssiState;
+	u32 wifiBw;
 
-	wअगरiRssiState = halbtc8723b2ant_WअगरiRssiState(pBtCoexist, 0, 2, 15, 0);
+	wifiRssiState = halbtc8723b2ant_WifiRssiState(pBtCoexist, 0, 2, 15, 0);
 	btRssiState = halbtc8723b2ant_BtRssiState(2, 29, 0);
 
 	pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0x1, 0xfffff, 0x0);
@@ -2536,59 +2535,59 @@
 
 	halbtc8723b2ant_FwDacSwingLvl(pBtCoexist, NORMAL_EXEC, 6);
 
-	अगर (BTC_RSSI_HIGH(btRssiState))
+	if (BTC_RSSI_HIGH(btRssiState))
 		halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 2);
-	अन्यथा
+	else
 		halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 0);
 
-	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_BW, &wअगरiBw);
+	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_BW, &wifiBw);
 
 	halbtc8723b2ant_CoexTableWithType(pBtCoexist, NORMAL_EXEC, 7);
 
-	अगर (
+	if (
 		(btRssiState == BTC_RSSI_STATE_HIGH) ||
 		(btRssiState == BTC_RSSI_STATE_STAY_HIGH)
-	) अणु
-		अगर (BTC_WIFI_BW_HT40 == wअगरiBw)
+	) {
+		if (BTC_WIFI_BW_HT40 == wifiBw)
 			halbtc8723b2ant_TdmaDurationAdjust(pBtCoexist, true, true, 2);
-		अन्यथा
+		else
 			halbtc8723b2ant_TdmaDurationAdjust(pBtCoexist, true, false, 3);
-	पूर्ण अन्यथा
+	} else
 		halbtc8723b2ant_TdmaDurationAdjust(pBtCoexist, true, true, 3);
 
 	/*  sw mechanism */
-	अगर (BTC_WIFI_BW_HT40 == wअगरiBw) अणु
-		अगर (
-			(wअगरiRssiState == BTC_RSSI_STATE_HIGH) ||
-			(wअगरiRssiState == BTC_RSSI_STATE_STAY_HIGH)
-		) अणु
+	if (BTC_WIFI_BW_HT40 == wifiBw) {
+		if (
+			(wifiRssiState == BTC_RSSI_STATE_HIGH) ||
+			(wifiRssiState == BTC_RSSI_STATE_STAY_HIGH)
+		) {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, true, true, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, true, false, false, 0x18);
-		पूर्ण अन्यथा अणु
+		} else {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, true, true, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, false, false, false, 0x18);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (
-			(wअगरiRssiState == BTC_RSSI_STATE_HIGH) ||
-			(wअगरiRssiState == BTC_RSSI_STATE_STAY_HIGH)
-		) अणु
+		}
+	} else {
+		if (
+			(wifiRssiState == BTC_RSSI_STATE_HIGH) ||
+			(wifiRssiState == BTC_RSSI_STATE_STAY_HIGH)
+		) {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, false, true, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, true, false, false, 0x18);
-		पूर्ण अन्यथा अणु
+		} else {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, false, true, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, false, false, false, 0x18);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम halbtc8723b2ant_ActionHidA2dp(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	u8 wअगरiRssiState, btRssiState;
-	u32 wअगरiBw;
+static void halbtc8723b2ant_ActionHidA2dp(struct btc_coexist *pBtCoexist)
+{
+	u8 wifiRssiState, btRssiState;
+	u32 wifiBw;
 	u8 apNum = 0;
 
-	wअगरiRssiState = halbtc8723b2ant_WअगरiRssiState(pBtCoexist, 0, 2, 15, 0);
+	wifiRssiState = halbtc8723b2ant_WifiRssiState(pBtCoexist, 0, 2, 15, 0);
 	/* btRssiState = halbtc8723b2ant_BtRssiState(2, 29, 0); */
 	btRssiState = halbtc8723b2ant_BtRssiState(3, 29, 37);
 
@@ -2598,101 +2597,101 @@
 
 	halbtc8723b2ant_FwDacSwingLvl(pBtCoexist, NORMAL_EXEC, 6);
 
-	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_BW, &wअगरiBw);
-	अगर (BTC_WIFI_BW_LEGACY == wअगरiBw) अणु
-		अगर (BTC_RSSI_HIGH(btRssiState))
+	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_BW, &wifiBw);
+	if (BTC_WIFI_BW_LEGACY == wifiBw) {
+		if (BTC_RSSI_HIGH(btRssiState))
 			halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 2);
-		अन्यथा अगर (BTC_RSSI_MEDIUM(btRssiState))
+		else if (BTC_RSSI_MEDIUM(btRssiState))
 			halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 2);
-		अन्यथा
+		else
 			halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 0);
-	पूर्ण अन्यथा अणु
-		/*  only 802.11N mode we have to dec bt घातer to 4 degree */
-		अगर (BTC_RSSI_HIGH(btRssiState)) अणु
+	} else {
+		/*  only 802.11N mode we have to dec bt power to 4 degree */
+		if (BTC_RSSI_HIGH(btRssiState)) {
 			pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U1_AP_NUM, &apNum);
 			/*  need to check ap Number of Not */
-			अगर (apNum < 10)
+			if (apNum < 10)
 				halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 4);
-			अन्यथा
+			else
 				halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 2);
-		पूर्ण अन्यथा अगर (BTC_RSSI_MEDIUM(btRssiState))
+		} else if (BTC_RSSI_MEDIUM(btRssiState))
 			halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 2);
-		अन्यथा
+		else
 			halbtc8723b2ant_DecBtPwr(pBtCoexist, NORMAL_EXEC, 0);
-	पूर्ण
+	}
 
 	halbtc8723b2ant_CoexTableWithType(pBtCoexist, NORMAL_EXEC, 7);
 
-	अगर (
+	if (
 		(btRssiState == BTC_RSSI_STATE_HIGH) ||
 		(btRssiState == BTC_RSSI_STATE_STAY_HIGH)
 	)
 		halbtc8723b2ant_TdmaDurationAdjust(pBtCoexist, true, false, 2);
-	अन्यथा
+	else
 		halbtc8723b2ant_TdmaDurationAdjust(pBtCoexist, true, true, 2);
 
 	/*  sw mechanism */
-	अगर (BTC_WIFI_BW_HT40 == wअगरiBw) अणु
-		अगर (
-			(wअगरiRssiState == BTC_RSSI_STATE_HIGH) ||
-			(wअगरiRssiState == BTC_RSSI_STATE_STAY_HIGH)
-		) अणु
+	if (BTC_WIFI_BW_HT40 == wifiBw) {
+		if (
+			(wifiRssiState == BTC_RSSI_STATE_HIGH) ||
+			(wifiRssiState == BTC_RSSI_STATE_STAY_HIGH)
+		) {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, true, true, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, true, false, false, 0x18);
-		पूर्ण अन्यथा अणु
+		} else {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, true, true, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, false, false, false, 0x18);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		अगर (
-			(wअगरiRssiState == BTC_RSSI_STATE_HIGH) ||
-			(wअगरiRssiState == BTC_RSSI_STATE_STAY_HIGH)
-		) अणु
+		}
+	} else {
+		if (
+			(wifiRssiState == BTC_RSSI_STATE_HIGH) ||
+			(wifiRssiState == BTC_RSSI_STATE_STAY_HIGH)
+		) {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, false, true, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, true, false, false, 0x18);
-		पूर्ण अन्यथा अणु
+		} else {
 			halbtc8723b2ant_SwMechanism1(pBtCoexist, false, true, false, false);
 			halbtc8723b2ant_SwMechanism2(pBtCoexist, false, false, false, 0x18);
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
-अटल व्योम halbtc8723b2ant_RunCoexistMechanism(काष्ठा btc_coexist *pBtCoexist)
-अणु
+static void halbtc8723b2ant_RunCoexistMechanism(struct btc_coexist *pBtCoexist)
+{
 	u8 algorithm = 0;
 
 	BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], RunCoexistMechanism() ===>\n"));
 
-	अगर (pBtCoexist->bManualControl) अणु
+	if (pBtCoexist->bManualControl) {
 		BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], RunCoexistMechanism(), return for Manual CTRL <===\n"));
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (pCoexSta->bUnderIps) अणु
+	if (pCoexSta->bUnderIps) {
 		BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], wifi is under IPS !!!\n"));
-		वापस;
-	पूर्ण
+		return;
+	}
 
 	algorithm = halbtc8723b2ant_ActionAlgorithm(pBtCoexist);
-	अगर (pCoexSta->bC2hBtInquiryPage && (BT_8723B_2ANT_COEX_ALGO_PANHS != algorithm)) अणु
+	if (pCoexSta->bC2hBtInquiryPage && (BT_8723B_2ANT_COEX_ALGO_PANHS != algorithm)) {
 		BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], BT is under inquiry/page scan !!\n"));
 		halbtc8723b2ant_ActionBtInquiry(pBtCoexist);
-		वापस;
-	पूर्ण अन्यथा अणु
-		अगर (pCoexDm->bNeedRecover0x948) अणु
+		return;
+	} else {
+		if (pCoexDm->bNeedRecover0x948) {
 			pCoexDm->bNeedRecover0x948 = false;
 			pBtCoexist->fBtcWrite4Byte(pBtCoexist, 0x948, pCoexDm->backup0x948);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	pCoexDm->curAlgorithm = algorithm;
 	BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], Algorithm = %d\n", pCoexDm->curAlgorithm));
 
-	अगर (halbtc8723b2ant_IsCommonAction(pBtCoexist)) अणु
+	if (halbtc8723b2ant_IsCommonAction(pBtCoexist)) {
 		BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], Action 2-Ant common.\n"));
 		pCoexDm->bAutoTdmaAdjust = false;
-	पूर्ण अन्यथा अणु
-		अगर (pCoexDm->curAlgorithm != pCoexDm->preAlgorithm) अणु
+	} else {
+		if (pCoexDm->curAlgorithm != pCoexDm->preAlgorithm) {
 			BTC_PRINT(
 				BTC_MSG_ALGORITHM,
 				ALGO_TRACE,
@@ -2703,86 +2702,86 @@
 				)
 			);
 			pCoexDm->bAutoTdmaAdjust = false;
-		पूर्ण
+		}
 
 
-		चयन (pCoexDm->curAlgorithm) अणु
-		हाल BT_8723B_2ANT_COEX_ALGO_SCO:
+		switch (pCoexDm->curAlgorithm) {
+		case BT_8723B_2ANT_COEX_ALGO_SCO:
 			BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], Action 2-Ant, algorithm = SCO.\n"));
 			halbtc8723b2ant_ActionSco(pBtCoexist);
-			अवरोध;
-		हाल BT_8723B_2ANT_COEX_ALGO_HID:
+			break;
+		case BT_8723B_2ANT_COEX_ALGO_HID:
 			BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], Action 2-Ant, algorithm = HID.\n"));
 			halbtc8723b2ant_ActionHid(pBtCoexist);
-			अवरोध;
-		हाल BT_8723B_2ANT_COEX_ALGO_A2DP:
+			break;
+		case BT_8723B_2ANT_COEX_ALGO_A2DP:
 			BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], Action 2-Ant, algorithm = A2DP.\n"));
 			halbtc8723b2ant_ActionA2dp(pBtCoexist);
-			अवरोध;
-		हाल BT_8723B_2ANT_COEX_ALGO_A2DP_PANHS:
+			break;
+		case BT_8723B_2ANT_COEX_ALGO_A2DP_PANHS:
 			BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], Action 2-Ant, algorithm = A2DP+PAN(HS).\n"));
 			halbtc8723b2ant_ActionA2dpPanHs(pBtCoexist);
-			अवरोध;
-		हाल BT_8723B_2ANT_COEX_ALGO_PANEDR:
+			break;
+		case BT_8723B_2ANT_COEX_ALGO_PANEDR:
 			BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], Action 2-Ant, algorithm = PAN(EDR).\n"));
 			halbtc8723b2ant_ActionPanEdr(pBtCoexist);
-			अवरोध;
-		हाल BT_8723B_2ANT_COEX_ALGO_PANHS:
+			break;
+		case BT_8723B_2ANT_COEX_ALGO_PANHS:
 			BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], Action 2-Ant, algorithm = HS mode.\n"));
 			halbtc8723b2ant_ActionPanHs(pBtCoexist);
-			अवरोध;
-		हाल BT_8723B_2ANT_COEX_ALGO_PANEDR_A2DP:
+			break;
+		case BT_8723B_2ANT_COEX_ALGO_PANEDR_A2DP:
 			BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], Action 2-Ant, algorithm = PAN+A2DP.\n"));
 			halbtc8723b2ant_ActionPanEdrA2dp(pBtCoexist);
-			अवरोध;
-		हाल BT_8723B_2ANT_COEX_ALGO_PANEDR_HID:
+			break;
+		case BT_8723B_2ANT_COEX_ALGO_PANEDR_HID:
 			BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], Action 2-Ant, algorithm = PAN(EDR)+HID.\n"));
 			halbtc8723b2ant_ActionPanEdrHid(pBtCoexist);
-			अवरोध;
-		हाल BT_8723B_2ANT_COEX_ALGO_HID_A2DP_PANEDR:
+			break;
+		case BT_8723B_2ANT_COEX_ALGO_HID_A2DP_PANEDR:
 			BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], Action 2-Ant, algorithm = HID+A2DP+PAN.\n"));
 			halbtc8723b2ant_ActionHidA2dpPanEdr(pBtCoexist);
-			अवरोध;
-		हाल BT_8723B_2ANT_COEX_ALGO_HID_A2DP:
+			break;
+		case BT_8723B_2ANT_COEX_ALGO_HID_A2DP:
 			BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], Action 2-Ant, algorithm = HID+A2DP.\n"));
 			halbtc8723b2ant_ActionHidA2dp(pBtCoexist);
-			अवरोध;
-		शेष:
+			break;
+		default:
 			BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], Action 2-Ant, algorithm = coexist All Off!!\n"));
 			halbtc8723b2ant_CoexAllOff(pBtCoexist);
-			अवरोध;
-		पूर्ण
+			break;
+		}
 		pCoexDm->preAlgorithm = pCoexDm->curAlgorithm;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम halbtc8723b2ant_WअगरiOffHwCfg(काष्ठा btc_coexist *pBtCoexist)
-अणु
+static void halbtc8723b2ant_WifiOffHwCfg(struct btc_coexist *pBtCoexist)
+{
 	bool bIsInMpMode = false;
-	u8 H2C_Parameter[2] = अणु0पूर्ण;
+	u8 H2C_Parameter[2] = {0};
 	u32 fwVer = 0;
 
 	/*  set wlan_act to low */
 	pBtCoexist->fBtcWrite1Byte(pBtCoexist, 0x76e, 0x4);
 
-	pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0x1, 0xfffff, 0x780); /* WiFi जाओ standby जबतक GNT_BT 0-->1 */
+	pBtCoexist->fBtcSetRfReg(pBtCoexist, BTC_RF_A, 0x1, 0xfffff, 0x780); /* WiFi goto standby while GNT_BT 0-->1 */
 	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_FW_VER, &fwVer);
-	अगर (fwVer >= 0x180000) अणु
+	if (fwVer >= 0x180000) {
 		/* Use H2C to set GNT_BT to HIGH */
 		H2C_Parameter[0] = 1;
 		pBtCoexist->fBtcFillH2c(pBtCoexist, 0x6E, 1, H2C_Parameter);
-	पूर्ण अन्यथा
+	} else
 		pBtCoexist->fBtcWrite1Byte(pBtCoexist, 0x765, 0x18);
 
 	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_BL_WIFI_IS_IN_MP_MODE, &bIsInMpMode);
-	अगर (!bIsInMpMode)
+	if (!bIsInMpMode)
 		pBtCoexist->fBtcWrite1ByteBitMask(pBtCoexist, 0x67, 0x20, 0x0); /* BT select s0/s1 is controlled by BT */
-	अन्यथा
+	else
 		pBtCoexist->fBtcWrite1ByteBitMask(pBtCoexist, 0x67, 0x20, 0x1); /* BT select s0/s1 is controlled by WiFi */
-पूर्ण
+}
 
-अटल व्योम halbtc8723b2ant_InitHwConfig(काष्ठा btc_coexist *pBtCoexist, bool bBackUp)
-अणु
+static void halbtc8723b2ant_InitHwConfig(struct btc_coexist *pBtCoexist, bool bBackUp)
+{
 	u8 u1Tmp = 0;
 
 	BTC_PRINT(BTC_MSG_INTERFACE, INTF_INIT, ("[BTCoex], 2Ant Init HW Config!!\n"));
@@ -2807,23 +2806,23 @@
 	pBtCoexist->fBtcWrite1Byte(pBtCoexist, 0x76e, 0xc); /* 0x76e[3] = 1, WLAN_Act control by PTA */
 	pBtCoexist->fBtcWrite1Byte(pBtCoexist, 0x778, 0x3);
 	pBtCoexist->fBtcWrite1ByteBitMask(pBtCoexist, 0x40, 0x20, 0x1);
-पूर्ण
+}
 
 /*  */
 /*  work around function start with wa_halbtc8723b2ant_ */
 /*  */
 /*  */
-/*  बाह्य function start with EXhalbtc8723b2ant_ */
+/*  extern function start with EXhalbtc8723b2ant_ */
 /*  */
-व्योम EXhalbtc8723b2ant_PowerOnSetting(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	काष्ठा btc_board_info *pBoardInfo = &pBtCoexist->boardInfo;
-	u8 u1Tmp = 0x4; /* Set BIT2 by शेष since it's 2ant हाल */
+void EXhalbtc8723b2ant_PowerOnSetting(struct btc_coexist *pBtCoexist)
+{
+	struct btc_board_info *pBoardInfo = &pBtCoexist->boardInfo;
+	u8 u1Tmp = 0x4; /* Set BIT2 by default since it's 2ant case */
 	u16 u2Tmp = 0x0;
 
 	pBtCoexist->fBtcWrite1Byte(pBtCoexist, 0x67, 0x20);
 
-	/*  enable BB, REG_SYS_FUNC_EN such that we can ग_लिखो 0x948 correctly. */
+	/*  enable BB, REG_SYS_FUNC_EN such that we can write 0x948 correctly. */
 	u2Tmp = pBtCoexist->fBtcRead2Byte(pBtCoexist, 0x2);
 	pBtCoexist->fBtcWrite2Byte(pBtCoexist, 0x2, u2Tmp | BIT0 | BIT1);
 
@@ -2833,77 +2832,77 @@
 	pBtCoexist->fBtcWrite1Byte(pBtCoexist, 0x76e, 0x4);
 
 	/*  */
-	/*  S0 or S1 setting and Local रेजिस्टर setting(By the setting fw can get ant number, S0/S1, ... info) */
+	/*  S0 or S1 setting and Local register setting(By the setting fw can get ant number, S0/S1, ... info) */
 	/*  Local setting bit define */
-	/* 	BIT0: "0" क्रम no antenna inverse; "1" क्रम antenna inverse */
-	/* 	BIT1: "0" क्रम पूर्णांकernal चयन; "1" क्रम बाह्यal चयन */
-	/* 	BIT2: "0" क्रम one antenna; "1" क्रम two antenna */
-	/*  NOTE: here शेष all पूर्णांकernal चयन and 1-antenna ==> BIT1 = 0 and BIT2 = 0 */
-	अगर (pBtCoexist->chipInterface == BTC_INTF_USB) अणु
-		/*  fixed at S0 क्रम USB पूर्णांकerface */
+	/* 	BIT0: "0" for no antenna inverse; "1" for antenna inverse */
+	/* 	BIT1: "0" for internal switch; "1" for external switch */
+	/* 	BIT2: "0" for one antenna; "1" for two antenna */
+	/*  NOTE: here default all internal switch and 1-antenna ==> BIT1 = 0 and BIT2 = 0 */
+	if (pBtCoexist->chipInterface == BTC_INTF_USB) {
+		/*  fixed at S0 for USB interface */
 		pBtCoexist->fBtcWrite4Byte(pBtCoexist, 0x948, 0x0);
 
 		u1Tmp |= 0x1;	/*  antenna inverse */
 		pBtCoexist->fBtcWriteLocalReg1Byte(pBtCoexist, 0xfe08, u1Tmp);
 
 		pBoardInfo->btdmAntPos = BTC_ANTENNA_AT_AUX_PORT;
-	पूर्ण अन्यथा अणु
-		/*  क्रम PCIE and SDIO पूर्णांकerface, we check efuse 0xc3[6] */
-		अगर (pBoardInfo->singleAntPath == 0) अणु
+	} else {
+		/*  for PCIE and SDIO interface, we check efuse 0xc3[6] */
+		if (pBoardInfo->singleAntPath == 0) {
 			/*  set to S1 */
 			pBtCoexist->fBtcWrite4Byte(pBtCoexist, 0x948, 0x280);
 			pBoardInfo->btdmAntPos = BTC_ANTENNA_AT_MAIN_PORT;
-		पूर्ण अन्यथा अगर (pBoardInfo->singleAntPath == 1) अणु
+		} else if (pBoardInfo->singleAntPath == 1) {
 			/*  set to S0 */
 			pBtCoexist->fBtcWrite4Byte(pBtCoexist, 0x948, 0x0);
 			u1Tmp |= 0x1;	/*  antenna inverse */
 			pBoardInfo->btdmAntPos = BTC_ANTENNA_AT_AUX_PORT;
-		पूर्ण
+		}
 
-		अगर (pBtCoexist->chipInterface == BTC_INTF_PCI)
+		if (pBtCoexist->chipInterface == BTC_INTF_PCI)
 			pBtCoexist->fBtcWriteLocalReg1Byte(pBtCoexist, 0x384, u1Tmp);
-		अन्यथा अगर (pBtCoexist->chipInterface == BTC_INTF_SDIO)
+		else if (pBtCoexist->chipInterface == BTC_INTF_SDIO)
 			pBtCoexist->fBtcWriteLocalReg1Byte(pBtCoexist, 0x60, u1Tmp);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम EXhalbtc8723b2ant_InitHwConfig(काष्ठा btc_coexist *pBtCoexist, bool bWअगरiOnly)
-अणु
+void EXhalbtc8723b2ant_InitHwConfig(struct btc_coexist *pBtCoexist, bool bWifiOnly)
+{
 	halbtc8723b2ant_InitHwConfig(pBtCoexist, true);
-पूर्ण
+}
 
-व्योम EXhalbtc8723b2ant_InitCoexDm(काष्ठा btc_coexist *pBtCoexist)
-अणु
+void EXhalbtc8723b2ant_InitCoexDm(struct btc_coexist *pBtCoexist)
+{
 	BTC_PRINT(BTC_MSG_INTERFACE, INTF_INIT, ("[BTCoex], Coex Mechanism Init!!\n"));
 
 	halbtc8723b2ant_InitCoexDm(pBtCoexist);
-पूर्ण
+}
 
-व्योम EXhalbtc8723b2ant_DisplayCoexInfo(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	काष्ठा btc_board_info *pBoardInfo = &pBtCoexist->boardInfo;
-	काष्ठा btc_stack_info *pStackInfo = &pBtCoexist->stackInfo;
-	काष्ठा btc_bt_link_info *pBtLinkInfo = &pBtCoexist->btLinkInfo;
+void EXhalbtc8723b2ant_DisplayCoexInfo(struct btc_coexist *pBtCoexist)
+{
+	struct btc_board_info *pBoardInfo = &pBtCoexist->boardInfo;
+	struct btc_stack_info *pStackInfo = &pBtCoexist->stackInfo;
+	struct btc_bt_link_info *pBtLinkInfo = &pBtCoexist->btLinkInfo;
 	u8 *cliBuf = pBtCoexist->cliBuf;
 	u8 u1Tmp[4], i, btInfoExt, psTdmaCase = 0;
 	u32 u4Tmp[4];
-	bool bRoam = false, bScan = false, bLink = false, bWअगरiUnder5G = false;
-	bool bBtHsOn = false, bWअगरiBusy = false;
-	s32 wअगरiRssi = 0, btHsRssi = 0;
-	u32 wअगरiBw, wअगरiTrafficDir, faOfdm, faCck;
-	u8 wअगरiDot11Chnl, wअगरiHsChnl;
+	bool bRoam = false, bScan = false, bLink = false, bWifiUnder5G = false;
+	bool bBtHsOn = false, bWifiBusy = false;
+	s32 wifiRssi = 0, btHsRssi = 0;
+	u32 wifiBw, wifiTrafficDir, faOfdm, faCck;
+	u8 wifiDot11Chnl, wifiHsChnl;
 	u32 fwVer = 0, btPatchVer = 0;
 	u8 apNum = 0;
 
 	CL_SPRINTF(cliBuf, BT_TMP_BUF_SIZE, "\r\n ============[BT Coexist info]============");
 	CL_PRINTF(cliBuf);
 
-	अगर (pBtCoexist->bManualControl) अणु
+	if (pBtCoexist->bManualControl) {
 		CL_SPRINTF(cliBuf, BT_TMP_BUF_SIZE, "\r\n ============[Under Manual Control]============");
 		CL_PRINTF(cliBuf);
 		CL_SPRINTF(cliBuf, BT_TMP_BUF_SIZE, "\r\n ==========================================");
 		CL_PRINTF(cliBuf);
-	पूर्ण
+	}
 
 	CL_SPRINTF(
 		cliBuf,
@@ -2918,7 +2917,7 @@
 		cliBuf,
 		BT_TMP_BUF_SIZE,
 		"\r\n %-35s = %s / %d", "BT stack/ hci ext ver", \
-		(pStackInfo->bProfileNotअगरied ? "Yes" : "No"),
+		(pStackInfo->bProfileNotified ? "Yes" : "No"),
 		pStackInfo->hciVersion
 	);
 	CL_PRINTF(cliBuf);
@@ -2930,14 +2929,14 @@
 	CL_PRINTF(cliBuf);
 
 	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_BL_HS_OPERATION, &bBtHsOn);
-	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U1_WIFI_DOT11_CHNL, &wअगरiDot11Chnl);
-	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U1_WIFI_HS_CHNL, &wअगरiHsChnl);
+	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U1_WIFI_DOT11_CHNL, &wifiDot11Chnl);
+	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U1_WIFI_HS_CHNL, &wifiHsChnl);
 	CL_SPRINTF(
 		cliBuf,
 		BT_TMP_BUF_SIZE,
 		"\r\n %-35s = %d / %d(%d)", "Dot11 channel / HsChnl(HsMode)", \
-		wअगरiDot11Chnl,
-		wअगरiHsChnl,
+		wifiDot11Chnl,
+		wifiHsChnl,
 		bBtHsOn
 	);
 	CL_PRINTF(cliBuf);
@@ -2946,20 +2945,20 @@
 		cliBuf,
 		BT_TMP_BUF_SIZE,
 		"\r\n %-35s = %02x %02x %02x ", "H2C Wifi inform bt chnl Info", \
-		pCoexDm->wअगरiChnlInfo[0],
-		pCoexDm->wअगरiChnlInfo[1],
-		pCoexDm->wअगरiChnlInfo[2]
+		pCoexDm->wifiChnlInfo[0],
+		pCoexDm->wifiChnlInfo[1],
+		pCoexDm->wifiChnlInfo[2]
 	);
 	CL_PRINTF(cliBuf);
 
-	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_S4_WIFI_RSSI, &wअगरiRssi);
+	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_S4_WIFI_RSSI, &wifiRssi);
 	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_S4_HS_RSSI, &btHsRssi);
 	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U1_AP_NUM, &apNum);
 	CL_SPRINTF(
 		cliBuf,
 		BT_TMP_BUF_SIZE,
 		"\r\n %-35s = %d/ %d/ %d", "Wifi rssi/ HS rssi/ AP#", \
-		wअगरiRssi,
+		wifiRssi,
 		btHsRssi,
 		apNum
 	);
@@ -2978,17 +2977,17 @@
 	);
 	CL_PRINTF(cliBuf);
 
-	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_BL_WIFI_UNDER_5G, &bWअगरiUnder5G);
-	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_BW, &wअगरiBw);
-	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_BL_WIFI_BUSY, &bWअगरiBusy);
-	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_TRAFFIC_सूचीECTION, &wअगरiTrafficDir);
+	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_BL_WIFI_UNDER_5G, &bWifiUnder5G);
+	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_BW, &wifiBw);
+	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_BL_WIFI_BUSY, &bWifiBusy);
+	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_TRAFFIC_DIRECTION, &wifiTrafficDir);
 	CL_SPRINTF(
 		cliBuf,
 		BT_TMP_BUF_SIZE,
 		"\r\n %-35s = %s / %s/ %s ", "Wifi status", \
-		(bWअगरiUnder5G ? "5G" : "2.4G"),
-		((BTC_WIFI_BW_LEGACY == wअगरiBw) ? "Legacy" : (((BTC_WIFI_BW_HT40 == wअगरiBw) ? "HT40" : "HT20"))),
-		((!bWअगरiBusy) ? "idle" : ((BTC_WIFI_TRAFFIC_TX == wअगरiTrafficDir) ? "uplink" : "downlink"))
+		(bWifiUnder5G ? "5G" : "2.4G"),
+		((BTC_WIFI_BW_LEGACY == wifiBw) ? "Legacy" : (((BTC_WIFI_BW_HT40 == wifiBw) ? "HT40" : "HT20"))),
+		((!bWifiBusy) ? "idle" : ((BTC_WIFI_TRAFFIC_TX == wifiTrafficDir) ? "uplink" : "downlink"))
 	);
 	CL_PRINTF(cliBuf);
 
@@ -3024,8 +3023,8 @@
 	);
 	CL_PRINTF(cliBuf);
 
-	क्रम (i = 0; i < BT_INFO_SRC_8723B_2ANT_MAX; i++) अणु
-		अगर (pCoexSta->btInfoC2hCnt[i]) अणु
+	for (i = 0; i < BT_INFO_SRC_8723B_2ANT_MAX; i++) {
+		if (pCoexSta->btInfoC2hCnt[i]) {
 			CL_SPRINTF(
 				cliBuf,
 				BT_TMP_BUF_SIZE,
@@ -3040,8 +3039,8 @@
 				pCoexSta->btInfoC2hCnt[i]
 			);
 			CL_PRINTF(cliBuf);
-		पूर्ण
-	पूर्ण
+		}
+	}
 
 	CL_SPRINTF(
 		cliBuf,
@@ -3257,88 +3256,88 @@
 
 	halbtc8723b2ant_MonitorBtCtr(pBtCoexist);
 	pBtCoexist->fBtcDispDbgMsg(pBtCoexist, BTC_DBG_DISP_COEX_STATISTICS);
-पूर्ण
+}
 
 
-व्योम EXhalbtc8723b2ant_IpsNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 type)
-अणु
-	अगर (BTC_IPS_ENTER == type) अणु
+void EXhalbtc8723b2ant_IpsNotify(struct btc_coexist *pBtCoexist, u8 type)
+{
+	if (BTC_IPS_ENTER == type) {
 		BTC_PRINT(BTC_MSG_INTERFACE, INTF_NOTIFY, ("[BTCoex], IPS ENTER notify\n"));
 		pCoexSta->bUnderIps = true;
-		halbtc8723b2ant_WअगरiOffHwCfg(pBtCoexist);
+		halbtc8723b2ant_WifiOffHwCfg(pBtCoexist);
 		halbtc8723b2ant_IgnoreWlanAct(pBtCoexist, FORCE_EXEC, true);
 		halbtc8723b2ant_CoexAllOff(pBtCoexist);
-	पूर्ण अन्यथा अगर (BTC_IPS_LEAVE == type) अणु
+	} else if (BTC_IPS_LEAVE == type) {
 		BTC_PRINT(BTC_MSG_INTERFACE, INTF_NOTIFY, ("[BTCoex], IPS LEAVE notify\n"));
 		pCoexSta->bUnderIps = false;
 		halbtc8723b2ant_InitHwConfig(pBtCoexist, false);
 		halbtc8723b2ant_InitCoexDm(pBtCoexist);
 		halbtc8723b2ant_QueryBtInfo(pBtCoexist);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम EXhalbtc8723b2ant_LpsNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 type)
-अणु
-	अगर (BTC_LPS_ENABLE == type) अणु
+void EXhalbtc8723b2ant_LpsNotify(struct btc_coexist *pBtCoexist, u8 type)
+{
+	if (BTC_LPS_ENABLE == type) {
 		BTC_PRINT(BTC_MSG_INTERFACE, INTF_NOTIFY, ("[BTCoex], LPS ENABLE notify\n"));
 		pCoexSta->bUnderLps = true;
-	पूर्ण अन्यथा अगर (BTC_LPS_DISABLE == type) अणु
+	} else if (BTC_LPS_DISABLE == type) {
 		BTC_PRINT(BTC_MSG_INTERFACE, INTF_NOTIFY, ("[BTCoex], LPS DISABLE notify\n"));
 		pCoexSta->bUnderLps = false;
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम EXhalbtc8723b2ant_ScanNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 type)
-अणु
-	अगर (BTC_SCAN_START == type) अणु
+void EXhalbtc8723b2ant_ScanNotify(struct btc_coexist *pBtCoexist, u8 type)
+{
+	if (BTC_SCAN_START == type) {
 		BTC_PRINT(BTC_MSG_INTERFACE, INTF_NOTIFY, ("[BTCoex], SCAN START notify\n"));
-	पूर्ण अन्यथा अगर (BTC_SCAN_FINISH == type) अणु
+	} else if (BTC_SCAN_FINISH == type) {
 		BTC_PRINT(BTC_MSG_INTERFACE, INTF_NOTIFY, ("[BTCoex], SCAN FINISH notify\n"));
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम EXhalbtc8723b2ant_ConnectNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 type)
-अणु
-	अगर (BTC_ASSOCIATE_START == type) अणु
+void EXhalbtc8723b2ant_ConnectNotify(struct btc_coexist *pBtCoexist, u8 type)
+{
+	if (BTC_ASSOCIATE_START == type) {
 		BTC_PRINT(BTC_MSG_INTERFACE, INTF_NOTIFY, ("[BTCoex], CONNECT START notify\n"));
-	पूर्ण अन्यथा अगर (BTC_ASSOCIATE_FINISH == type) अणु
+	} else if (BTC_ASSOCIATE_FINISH == type) {
 		BTC_PRINT(BTC_MSG_INTERFACE, INTF_NOTIFY, ("[BTCoex], CONNECT FINISH notify\n"));
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम EXhalbtc8723b2ant_MediaStatusNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 type)
-अणु
-	u8 H2C_Parameter[3] = अणु0पूर्ण;
-	u32 wअगरiBw;
-	u8 wअगरiCentralChnl;
+void EXhalbtc8723b2ant_MediaStatusNotify(struct btc_coexist *pBtCoexist, u8 type)
+{
+	u8 H2C_Parameter[3] = {0};
+	u32 wifiBw;
+	u8 wifiCentralChnl;
 	u8 apNum = 0;
 
-	अगर (BTC_MEDIA_CONNECT == type) अणु
+	if (BTC_MEDIA_CONNECT == type) {
 		BTC_PRINT(BTC_MSG_INTERFACE, INTF_NOTIFY, ("[BTCoex], MEDIA connect notify\n"));
-	पूर्ण अन्यथा अणु
+	} else {
 		BTC_PRINT(BTC_MSG_INTERFACE, INTF_NOTIFY, ("[BTCoex], MEDIA disconnect notify\n"));
-	पूर्ण
+	}
 
-	/*  only 2.4G we need to inक्रमm bt the chnl mask */
-	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U1_WIFI_CENTRAL_CHNL, &wअगरiCentralChnl);
-	अगर ((BTC_MEDIA_CONNECT == type) && (wअगरiCentralChnl <= 14)) अणु
+	/*  only 2.4G we need to inform bt the chnl mask */
+	pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U1_WIFI_CENTRAL_CHNL, &wifiCentralChnl);
+	if ((BTC_MEDIA_CONNECT == type) && (wifiCentralChnl <= 14)) {
 		H2C_Parameter[0] = 0x1;
-		H2C_Parameter[1] = wअगरiCentralChnl;
-		pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_BW, &wअगरiBw);
-		अगर (BTC_WIFI_BW_HT40 == wअगरiBw)
+		H2C_Parameter[1] = wifiCentralChnl;
+		pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_WIFI_BW, &wifiBw);
+		if (BTC_WIFI_BW_HT40 == wifiBw)
 			H2C_Parameter[2] = 0x30;
-		अन्यथा अणु
+		else {
 			pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U1_AP_NUM, &apNum);
-			अगर (apNum < 10)
+			if (apNum < 10)
 				H2C_Parameter[2] = 0x30;
-			अन्यथा
+			else
 				H2C_Parameter[2] = 0x20;
-		पूर्ण
-	पूर्ण
+		}
+	}
 
-	pCoexDm->wअगरiChnlInfo[0] = H2C_Parameter[0];
-	pCoexDm->wअगरiChnlInfo[1] = H2C_Parameter[1];
-	pCoexDm->wअगरiChnlInfo[2] = H2C_Parameter[2];
+	pCoexDm->wifiChnlInfo[0] = H2C_Parameter[0];
+	pCoexDm->wifiChnlInfo[1] = H2C_Parameter[1];
+	pCoexDm->wifiChnlInfo[2] = H2C_Parameter[2];
 
 	BTC_PRINT(
 		BTC_MSG_ALGORITHM,
@@ -3350,51 +3349,51 @@
 	);
 
 	pBtCoexist->fBtcFillH2c(pBtCoexist, 0x66, 3, H2C_Parameter);
-पूर्ण
+}
 
-व्योम EXhalbtc8723b2ant_SpecialPacketNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 type)
-अणु
-	अगर (type == BTC_PACKET_DHCP) अणु
+void EXhalbtc8723b2ant_SpecialPacketNotify(struct btc_coexist *pBtCoexist, u8 type)
+{
+	if (type == BTC_PACKET_DHCP) {
 		BTC_PRINT(BTC_MSG_INTERFACE, INTF_NOTIFY, ("[BTCoex], DHCP Packet notify\n"));
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम EXhalbtc8723b2ant_BtInfoNotअगरy(
-	काष्ठा btc_coexist *pBtCoexist, u8 *पंचांगpBuf, u8 length
+void EXhalbtc8723b2ant_BtInfoNotify(
+	struct btc_coexist *pBtCoexist, u8 *tmpBuf, u8 length
 )
-अणु
+{
 	u8 	btInfo = 0;
 	u8 	i, rspSource = 0;
 	bool bBtBusy = false, bLimitedDig = false;
-	bool bWअगरiConnected = false;
+	bool bWifiConnected = false;
 
 	pCoexSta->bC2hBtInfoReqSent = false;
 
-	rspSource = पंचांगpBuf[0] & 0xf;
-	अगर (rspSource >= BT_INFO_SRC_8723B_2ANT_MAX)
+	rspSource = tmpBuf[0] & 0xf;
+	if (rspSource >= BT_INFO_SRC_8723B_2ANT_MAX)
 		rspSource = BT_INFO_SRC_8723B_2ANT_WIFI_FW;
 
 	pCoexSta->btInfoC2hCnt[rspSource]++;
 
 	BTC_PRINT(BTC_MSG_INTERFACE, INTF_NOTIFY, ("[BTCoex], Bt info[%d], length =%d, hex data =[", rspSource, length));
-	क्रम (i = 0; i < length; i++) अणु
-		pCoexSta->btInfoC2h[rspSource][i] = पंचांगpBuf[i];
-		अगर (i == 1)
-			btInfo = पंचांगpBuf[i];
+	for (i = 0; i < length; i++) {
+		pCoexSta->btInfoC2h[rspSource][i] = tmpBuf[i];
+		if (i == 1)
+			btInfo = tmpBuf[i];
 
-		अगर (i == length - 1) अणु
-			BTC_PRINT(BTC_MSG_INTERFACE, INTF_NOTIFY, ("0x%02x]\n", पंचांगpBuf[i]));
-		पूर्ण अन्यथा अणु
-			BTC_PRINT(BTC_MSG_INTERFACE, INTF_NOTIFY, ("0x%02x, ", पंचांगpBuf[i]));
-		पूर्ण
-	पूर्ण
+		if (i == length - 1) {
+			BTC_PRINT(BTC_MSG_INTERFACE, INTF_NOTIFY, ("0x%02x]\n", tmpBuf[i]));
+		} else {
+			BTC_PRINT(BTC_MSG_INTERFACE, INTF_NOTIFY, ("0x%02x, ", tmpBuf[i]));
+		}
+	}
 
-	अगर (pBtCoexist->bManualControl) अणु
+	if (pBtCoexist->bManualControl) {
 		BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], BtInfoNotify(), return for Manual CTRL<===\n"));
-		वापस;
-	पूर्ण
+		return;
+	}
 
-	अगर (BT_INFO_SRC_8723B_2ANT_WIFI_FW != rspSource) अणु
+	if (BT_INFO_SRC_8723B_2ANT_WIFI_FW != rspSource) {
 		pCoexSta->btRetryCnt = pCoexSta->btInfoC2h[rspSource][2] & 0xf; /* [3:0] */
 
 		pCoexSta->btRssi = pCoexSta->btInfoC2h[rspSource][3] * 2 + 10;
@@ -3403,98 +3402,98 @@
 
 		pCoexSta->bBtTxRxMask = (pCoexSta->btInfoC2h[rspSource][2] & 0x40);
 		pBtCoexist->fBtcSet(pBtCoexist, BTC_SET_BL_BT_TX_RX_MASK, &pCoexSta->bBtTxRxMask);
-		अगर (pCoexSta->bBtTxRxMask) अणु
-			/* BT पूर्णांकo is responded by BT FW and BT RF REG 0x3C != 0x01 => Need to चयन BT TRx Mask */
+		if (pCoexSta->bBtTxRxMask) {
+			/* BT into is responded by BT FW and BT RF REG 0x3C != 0x01 => Need to switch BT TRx Mask */
 			BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], Switch BT TRx Mask since BT RF REG 0x3C != 0x01\n"));
 			pBtCoexist->fBtcSetBtReg(pBtCoexist, BTC_BT_REG_RF, 0x3c, 0x01);
-		पूर्ण
+		}
 
-		/*  Here we need to resend some wअगरi info to BT */
+		/*  Here we need to resend some wifi info to BT */
 		/*  because bt is reset and loss of the info. */
-		अगर ((pCoexSta->btInfoExt & BIT1)) अणु
+		if ((pCoexSta->btInfoExt & BIT1)) {
 			BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], BT ext info bit1 check, send wifi BW&Chnl to BT!!\n"));
-			pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_BL_WIFI_CONNECTED, &bWअगरiConnected);
+			pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_BL_WIFI_CONNECTED, &bWifiConnected);
 
-			अगर (bWअगरiConnected)
-				EXhalbtc8723b2ant_MediaStatusNotअगरy(pBtCoexist, BTC_MEDIA_CONNECT);
-			अन्यथा
-				EXhalbtc8723b2ant_MediaStatusNotअगरy(pBtCoexist, BTC_MEDIA_DISCONNECT);
-		पूर्ण
+			if (bWifiConnected)
+				EXhalbtc8723b2ant_MediaStatusNotify(pBtCoexist, BTC_MEDIA_CONNECT);
+			else
+				EXhalbtc8723b2ant_MediaStatusNotify(pBtCoexist, BTC_MEDIA_DISCONNECT);
+		}
 
-		अगर ((pCoexSta->btInfoExt & BIT3)) अणु
+		if ((pCoexSta->btInfoExt & BIT3)) {
 			BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], BT ext info bit3 check, set BT NOT to ignore Wlan active!!\n"));
 			halbtc8723b2ant_IgnoreWlanAct(pBtCoexist, FORCE_EXEC, false);
-		पूर्ण अन्यथा अणु
-			/*  BT alपढ़ोy NOT ignore Wlan active, करो nothing here. */
-		पूर्ण
-	पूर्ण
+		} else {
+			/*  BT already NOT ignore Wlan active, do nothing here. */
+		}
+	}
 
-	/*  check BIT2 first ==> check अगर bt is under inquiry or page scan */
-	अगर (btInfo & BT_INFO_8723B_2ANT_B_INQ_PAGE)
+	/*  check BIT2 first ==> check if bt is under inquiry or page scan */
+	if (btInfo & BT_INFO_8723B_2ANT_B_INQ_PAGE)
 		pCoexSta->bC2hBtInquiryPage = true;
-	अन्यथा
+	else
 		pCoexSta->bC2hBtInquiryPage = false;
 
 	/*  set link exist status */
-	अगर (!(btInfo & BT_INFO_8723B_2ANT_B_CONNECTION)) अणु
+	if (!(btInfo & BT_INFO_8723B_2ANT_B_CONNECTION)) {
 		pCoexSta->bBtLinkExist = false;
 		pCoexSta->bPanExist = false;
 		pCoexSta->bA2dpExist = false;
 		pCoexSta->bHidExist = false;
 		pCoexSta->bScoExist = false;
-	पूर्ण अन्यथा अणु /*  connection exists */
+	} else { /*  connection exists */
 		pCoexSta->bBtLinkExist = true;
-		अगर (btInfo & BT_INFO_8723B_2ANT_B_FTP)
+		if (btInfo & BT_INFO_8723B_2ANT_B_FTP)
 			pCoexSta->bPanExist = true;
-		अन्यथा
+		else
 			pCoexSta->bPanExist = false;
-		अगर (btInfo & BT_INFO_8723B_2ANT_B_A2DP)
+		if (btInfo & BT_INFO_8723B_2ANT_B_A2DP)
 			pCoexSta->bA2dpExist = true;
-		अन्यथा
+		else
 			pCoexSta->bA2dpExist = false;
-		अगर (btInfo & BT_INFO_8723B_2ANT_B_HID)
+		if (btInfo & BT_INFO_8723B_2ANT_B_HID)
 			pCoexSta->bHidExist = true;
-		अन्यथा
+		else
 			pCoexSta->bHidExist = false;
-		अगर (btInfo & BT_INFO_8723B_2ANT_B_SCO_ESCO)
+		if (btInfo & BT_INFO_8723B_2ANT_B_SCO_ESCO)
 			pCoexSta->bScoExist = true;
-		अन्यथा
+		else
 			pCoexSta->bScoExist = false;
-	पूर्ण
+	}
 
 	halbtc8723b2ant_UpdateBtLinkInfo(pBtCoexist);
 
-	अगर (!(btInfo & BT_INFO_8723B_2ANT_B_CONNECTION)) अणु
+	if (!(btInfo & BT_INFO_8723B_2ANT_B_CONNECTION)) {
 		pCoexDm->btStatus = BT_8723B_2ANT_BT_STATUS_NON_CONNECTED_IDLE;
 		BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], BtInfoNotify(), BT Non-Connected idle!!!\n"));
-	पूर्ण अन्यथा अगर (btInfo == BT_INFO_8723B_2ANT_B_CONNECTION)	अणु /*  connection exists but no busy */
+	} else if (btInfo == BT_INFO_8723B_2ANT_B_CONNECTION)	{ /*  connection exists but no busy */
 		pCoexDm->btStatus = BT_8723B_2ANT_BT_STATUS_CONNECTED_IDLE;
 		BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], BtInfoNotify(), BT Connected-idle!!!\n"));
-	पूर्ण अन्यथा अगर (
+	} else if (
 		(btInfo & BT_INFO_8723B_2ANT_B_SCO_ESCO) ||
 		(btInfo & BT_INFO_8723B_2ANT_B_SCO_BUSY)
-	) अणु
+	) {
 		pCoexDm->btStatus = BT_8723B_2ANT_BT_STATUS_SCO_BUSY;
 		BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], BtInfoNotify(), BT SCO busy!!!\n"));
-	पूर्ण अन्यथा अगर (btInfo & BT_INFO_8723B_2ANT_B_ACL_BUSY) अणु
+	} else if (btInfo & BT_INFO_8723B_2ANT_B_ACL_BUSY) {
 		pCoexDm->btStatus = BT_8723B_2ANT_BT_STATUS_ACL_BUSY;
 		BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], BtInfoNotify(), BT ACL busy!!!\n"));
-	पूर्ण अन्यथा अणु
+	} else {
 		pCoexDm->btStatus = BT_8723B_2ANT_BT_STATUS_MAX;
 		BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], BtInfoNotify(), BT Non-Defined state!!!\n"));
-	पूर्ण
+	}
 
-	अगर (
+	if (
 		(BT_8723B_2ANT_BT_STATUS_ACL_BUSY == pCoexDm->btStatus) ||
 		(BT_8723B_2ANT_BT_STATUS_SCO_BUSY == pCoexDm->btStatus) ||
 		(BT_8723B_2ANT_BT_STATUS_ACL_SCO_BUSY == pCoexDm->btStatus)
-	) अणु
+	) {
 		bBtBusy = true;
 		bLimitedDig = true;
-	पूर्ण अन्यथा अणु
+	} else {
 		bBtBusy = false;
 		bLimitedDig = false;
-	पूर्ण
+	}
 
 	pBtCoexist->fBtcSet(pBtCoexist, BTC_SET_BL_BT_TRAFFIC_BUSY, &bBtBusy);
 
@@ -3502,41 +3501,41 @@
 	pBtCoexist->fBtcSet(pBtCoexist, BTC_SET_BL_BT_LIMITED_DIG, &bLimitedDig);
 
 	halbtc8723b2ant_RunCoexistMechanism(pBtCoexist);
-पूर्ण
+}
 
-व्योम EXhalbtc8723b2ant_HaltNotअगरy(काष्ठा btc_coexist *pBtCoexist)
-अणु
+void EXhalbtc8723b2ant_HaltNotify(struct btc_coexist *pBtCoexist)
+{
 	BTC_PRINT(BTC_MSG_INTERFACE, INTF_NOTIFY, ("[BTCoex], Halt notify\n"));
 
-	halbtc8723b2ant_WअगरiOffHwCfg(pBtCoexist);
-	pBtCoexist->fBtcSetBtReg(pBtCoexist, BTC_BT_REG_RF, 0x3c, 0x15); /* BT जाओ standby जबतक GNT_BT 1-->0 */
+	halbtc8723b2ant_WifiOffHwCfg(pBtCoexist);
+	pBtCoexist->fBtcSetBtReg(pBtCoexist, BTC_BT_REG_RF, 0x3c, 0x15); /* BT goto standby while GNT_BT 1-->0 */
 	halbtc8723b2ant_IgnoreWlanAct(pBtCoexist, FORCE_EXEC, true);
 
-	EXhalbtc8723b2ant_MediaStatusNotअगरy(pBtCoexist, BTC_MEDIA_DISCONNECT);
-पूर्ण
+	EXhalbtc8723b2ant_MediaStatusNotify(pBtCoexist, BTC_MEDIA_DISCONNECT);
+}
 
-व्योम EXhalbtc8723b2ant_PnpNotअगरy(काष्ठा btc_coexist *pBtCoexist, u8 pnpState)
-अणु
+void EXhalbtc8723b2ant_PnpNotify(struct btc_coexist *pBtCoexist, u8 pnpState)
+{
 	BTC_PRINT(BTC_MSG_INTERFACE, INTF_NOTIFY, ("[BTCoex], Pnp notify\n"));
 
-	अगर (BTC_WIFI_PNP_SLEEP == pnpState) अणु
+	if (BTC_WIFI_PNP_SLEEP == pnpState) {
 		BTC_PRINT(BTC_MSG_INTERFACE, INTF_NOTIFY, ("[BTCoex], Pnp notify to SLEEP\n"));
-	पूर्ण अन्यथा अगर (BTC_WIFI_PNP_WAKE_UP == pnpState) अणु
+	} else if (BTC_WIFI_PNP_WAKE_UP == pnpState) {
 		BTC_PRINT(BTC_MSG_INTERFACE, INTF_NOTIFY, ("[BTCoex], Pnp notify to WAKE UP\n"));
 		halbtc8723b2ant_InitHwConfig(pBtCoexist, false);
 		halbtc8723b2ant_InitCoexDm(pBtCoexist);
 		halbtc8723b2ant_QueryBtInfo(pBtCoexist);
-	पूर्ण
-पूर्ण
+	}
+}
 
-व्योम EXhalbtc8723b2ant_Periodical(काष्ठा btc_coexist *pBtCoexist)
-अणु
-	अटल u8 disVerInfoCnt;
+void EXhalbtc8723b2ant_Periodical(struct btc_coexist *pBtCoexist)
+{
+	static u8 disVerInfoCnt;
 	u32 fwVer = 0, btPatchVer = 0;
 
 	BTC_PRINT(BTC_MSG_ALGORITHM, ALGO_TRACE, ("[BTCoex], ==========================Periodical ===========================\n"));
 
-	अगर (disVerInfoCnt <= 5) अणु
+	if (disVerInfoCnt <= 5) {
 		disVerInfoCnt += 1;
 		BTC_PRINT(BTC_MSG_INTERFACE, INTF_INIT, ("[BTCoex], ****************************************************************\n"));
 		pBtCoexist->fBtcGet(pBtCoexist, BTC_GET_U4_BT_PATCH_VER, &btPatchVer);
@@ -3544,11 +3543,11 @@
 		BTC_PRINT(BTC_MSG_INTERFACE, INTF_INIT, ("[BTCoex], CoexVer/ FwVer/ PatchVer = %d_%x/ 0x%x/ 0x%x(%d)\n", \
 			GLCoexVerDate8723b2Ant, GLCoexVer8723b2Ant, fwVer, btPatchVer, btPatchVer));
 		BTC_PRINT(BTC_MSG_INTERFACE, INTF_INIT, ("[BTCoex], ****************************************************************\n"));
-	पूर्ण
+	}
 
-	अगर (
-		halbtc8723b2ant_IsWअगरiStatusChanged(pBtCoexist) ||
+	if (
+		halbtc8723b2ant_IsWifiStatusChanged(pBtCoexist) ||
 		pCoexDm->bAutoTdmaAdjust
 	)
 		halbtc8723b2ant_RunCoexistMechanism(pBtCoexist);
-पूर्ण
+}

@@ -1,1868 +1,1867 @@
-<शैली गुरु>
-// SPDX-License-Identअगरier: GPL-2.0-or-later
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
- *  Timers असलtract layer
+ *  Timers abstract layer
  *  Copyright (c) by Jaroslav Kysela <perex@perex.cz>
  */
 
-#समावेश <linux/delay.h>
-#समावेश <linux/init.h>
-#समावेश <linux/slab.h>
-#समावेश <linux/समय.स>
-#समावेश <linux/mutex.h>
-#समावेश <linux/device.h>
-#समावेश <linux/module.h>
-#समावेश <linux/माला.स>
-#समावेश <linux/sched/संकेत.स>
-#समावेश <sound/core.h>
-#समावेश <sound/समयr.h>
-#समावेश <sound/control.h>
-#समावेश <sound/info.h>
-#समावेश <sound/minors.h>
-#समावेश <sound/initval.h>
-#समावेश <linux/kmod.h>
+#include <linux/delay.h>
+#include <linux/init.h>
+#include <linux/slab.h>
+#include <linux/time.h>
+#include <linux/mutex.h>
+#include <linux/device.h>
+#include <linux/module.h>
+#include <linux/string.h>
+#include <linux/sched/signal.h>
+#include <sound/core.h>
+#include <sound/timer.h>
+#include <sound/control.h>
+#include <sound/info.h>
+#include <sound/minors.h>
+#include <sound/initval.h>
+#include <linux/kmod.h>
 
-/* पूर्णांकernal flags */
-#घोषणा SNDRV_TIMER_IFLG_PAUSED		0x00010000
-#घोषणा SNDRV_TIMER_IFLG_DEAD		0x00020000
+/* internal flags */
+#define SNDRV_TIMER_IFLG_PAUSED		0x00010000
+#define SNDRV_TIMER_IFLG_DEAD		0x00020000
 
-#अगर IS_ENABLED(CONFIG_SND_HRTIMER)
-#घोषणा DEFAULT_TIMER_LIMIT 4
-#अन्यथा
-#घोषणा DEFAULT_TIMER_LIMIT 1
-#पूर्ण_अगर
+#if IS_ENABLED(CONFIG_SND_HRTIMER)
+#define DEFAULT_TIMER_LIMIT 4
+#else
+#define DEFAULT_TIMER_LIMIT 1
+#endif
 
-अटल पूर्णांक समयr_limit = DEFAULT_TIMER_LIMIT;
-अटल पूर्णांक समयr_tstamp_monotonic = 1;
+static int timer_limit = DEFAULT_TIMER_LIMIT;
+static int timer_tstamp_monotonic = 1;
 MODULE_AUTHOR("Jaroslav Kysela <perex@perex.cz>, Takashi Iwai <tiwai@suse.de>");
 MODULE_DESCRIPTION("ALSA timer interface");
 MODULE_LICENSE("GPL");
-module_param(समयr_limit, पूर्णांक, 0444);
-MODULE_PARM_DESC(समयr_limit, "Maximum global timers in system.");
-module_param(समयr_tstamp_monotonic, पूर्णांक, 0444);
-MODULE_PARM_DESC(समयr_tstamp_monotonic, "Use posix monotonic clock source for timestamps (default).");
+module_param(timer_limit, int, 0444);
+MODULE_PARM_DESC(timer_limit, "Maximum global timers in system.");
+module_param(timer_tstamp_monotonic, int, 0444);
+MODULE_PARM_DESC(timer_tstamp_monotonic, "Use posix monotonic clock source for timestamps (default).");
 
 MODULE_ALIAS_CHARDEV(CONFIG_SND_MAJOR, SNDRV_MINOR_TIMER);
 MODULE_ALIAS("devname:snd/timer");
 
-क्रमागत समयr_tपढ़ो_क्रमmat अणु
+enum timer_tread_format {
 	TREAD_FORMAT_NONE = 0,
 	TREAD_FORMAT_TIME64,
 	TREAD_FORMAT_TIME32,
-पूर्ण;
+};
 
-काष्ठा snd_समयr_tपढ़ो32 अणु
-	पूर्णांक event;
+struct snd_timer_tread32 {
+	int event;
 	s32 tstamp_sec;
 	s32 tstamp_nsec;
-	अचिन्हित पूर्णांक val;
-पूर्ण;
+	unsigned int val;
+};
 
-काष्ठा snd_समयr_tपढ़ो64 अणु
-	पूर्णांक event;
+struct snd_timer_tread64 {
+	int event;
 	u8 pad1[4];
 	s64 tstamp_sec;
 	s64 tstamp_nsec;
-	अचिन्हित पूर्णांक val;
+	unsigned int val;
 	u8 pad2[4];
-पूर्ण;
+};
 
-काष्ठा snd_समयr_user अणु
-	काष्ठा snd_समयr_instance *समयri;
-	पूर्णांक tपढ़ो;		/* enhanced पढ़ो with बारtamps and events */
-	अचिन्हित दीर्घ ticks;
-	अचिन्हित दीर्घ overrun;
-	पूर्णांक qhead;
-	पूर्णांक qtail;
-	पूर्णांक qused;
-	पूर्णांक queue_size;
+struct snd_timer_user {
+	struct snd_timer_instance *timeri;
+	int tread;		/* enhanced read with timestamps and events */
+	unsigned long ticks;
+	unsigned long overrun;
+	int qhead;
+	int qtail;
+	int qused;
+	int queue_size;
 	bool disconnected;
-	काष्ठा snd_समयr_पढ़ो *queue;
-	काष्ठा snd_समयr_tपढ़ो64 *tqueue;
+	struct snd_timer_read *queue;
+	struct snd_timer_tread64 *tqueue;
 	spinlock_t qlock;
-	अचिन्हित दीर्घ last_resolution;
-	अचिन्हित पूर्णांक filter;
-	काष्ठा बारpec64 tstamp;		/* trigger tstamp */
-	रुको_queue_head_t qchange_sleep;
-	काष्ठा fasync_काष्ठा *fasync;
-	काष्ठा mutex ioctl_lock;
-पूर्ण;
+	unsigned long last_resolution;
+	unsigned int filter;
+	struct timespec64 tstamp;		/* trigger tstamp */
+	wait_queue_head_t qchange_sleep;
+	struct fasync_struct *fasync;
+	struct mutex ioctl_lock;
+};
 
-काष्ठा snd_समयr_status32 अणु
+struct snd_timer_status32 {
 	s32 tstamp_sec;			/* Timestamp - last update */
 	s32 tstamp_nsec;
-	अचिन्हित पूर्णांक resolution;	/* current period resolution in ns */
-	अचिन्हित पूर्णांक lost;		/* counter of master tick lost */
-	अचिन्हित पूर्णांक overrun;		/* count of पढ़ो queue overruns */
-	अचिन्हित पूर्णांक queue;		/* used queue size */
-	अचिन्हित अक्षर reserved[64];	/* reserved */
-पूर्ण;
+	unsigned int resolution;	/* current period resolution in ns */
+	unsigned int lost;		/* counter of master tick lost */
+	unsigned int overrun;		/* count of read queue overruns */
+	unsigned int queue;		/* used queue size */
+	unsigned char reserved[64];	/* reserved */
+};
 
-#घोषणा SNDRV_TIMER_IOCTL_STATUS32	_IOR('T', 0x14, काष्ठा snd_समयr_status32)
+#define SNDRV_TIMER_IOCTL_STATUS32	_IOR('T', 0x14, struct snd_timer_status32)
 
-काष्ठा snd_समयr_status64 अणु
+struct snd_timer_status64 {
 	s64 tstamp_sec;			/* Timestamp - last update */
 	s64 tstamp_nsec;
-	अचिन्हित पूर्णांक resolution;	/* current period resolution in ns */
-	अचिन्हित पूर्णांक lost;		/* counter of master tick lost */
-	अचिन्हित पूर्णांक overrun;		/* count of पढ़ो queue overruns */
-	अचिन्हित पूर्णांक queue;		/* used queue size */
-	अचिन्हित अक्षर reserved[64];	/* reserved */
-पूर्ण;
+	unsigned int resolution;	/* current period resolution in ns */
+	unsigned int lost;		/* counter of master tick lost */
+	unsigned int overrun;		/* count of read queue overruns */
+	unsigned int queue;		/* used queue size */
+	unsigned char reserved[64];	/* reserved */
+};
 
-#घोषणा SNDRV_TIMER_IOCTL_STATUS64	_IOR('T', 0x14, काष्ठा snd_समयr_status64)
+#define SNDRV_TIMER_IOCTL_STATUS64	_IOR('T', 0x14, struct snd_timer_status64)
 
-/* list of समयrs */
-अटल LIST_HEAD(snd_समयr_list);
+/* list of timers */
+static LIST_HEAD(snd_timer_list);
 
 /* list of slave instances */
-अटल LIST_HEAD(snd_समयr_slave_list);
+static LIST_HEAD(snd_timer_slave_list);
 
-/* lock क्रम slave active lists */
-अटल DEFINE_SPINLOCK(slave_active_lock);
+/* lock for slave active lists */
+static DEFINE_SPINLOCK(slave_active_lock);
 
-#घोषणा MAX_SLAVE_INSTANCES	1000
-अटल पूर्णांक num_slaves;
+#define MAX_SLAVE_INSTANCES	1000
+static int num_slaves;
 
-अटल DEFINE_MUTEX(रेजिस्टर_mutex);
+static DEFINE_MUTEX(register_mutex);
 
-अटल पूर्णांक snd_समयr_मुक्त(काष्ठा snd_समयr *समयr);
-अटल पूर्णांक snd_समयr_dev_मुक्त(काष्ठा snd_device *device);
-अटल पूर्णांक snd_समयr_dev_रेजिस्टर(काष्ठा snd_device *device);
-अटल पूर्णांक snd_समयr_dev_disconnect(काष्ठा snd_device *device);
+static int snd_timer_free(struct snd_timer *timer);
+static int snd_timer_dev_free(struct snd_device *device);
+static int snd_timer_dev_register(struct snd_device *device);
+static int snd_timer_dev_disconnect(struct snd_device *device);
 
-अटल व्योम snd_समयr_reschedule(काष्ठा snd_समयr * समयr, अचिन्हित दीर्घ ticks_left);
-
-/*
- * create a समयr instance with the given owner string.
- */
-काष्ठा snd_समयr_instance *snd_समयr_instance_new(स्थिर अक्षर *owner)
-अणु
-	काष्ठा snd_समयr_instance *समयri;
-
-	समयri = kzalloc(माप(*समयri), GFP_KERNEL);
-	अगर (समयri == शून्य)
-		वापस शून्य;
-	समयri->owner = kstrdup(owner, GFP_KERNEL);
-	अगर (! समयri->owner) अणु
-		kमुक्त(समयri);
-		वापस शून्य;
-	पूर्ण
-	INIT_LIST_HEAD(&समयri->खोलो_list);
-	INIT_LIST_HEAD(&समयri->active_list);
-	INIT_LIST_HEAD(&समयri->ack_list);
-	INIT_LIST_HEAD(&समयri->slave_list_head);
-	INIT_LIST_HEAD(&समयri->slave_active_head);
-
-	वापस समयri;
-पूर्ण
-EXPORT_SYMBOL(snd_समयr_instance_new);
-
-व्योम snd_समयr_instance_मुक्त(काष्ठा snd_समयr_instance *समयri)
-अणु
-	अगर (समयri) अणु
-		अगर (समयri->निजी_मुक्त)
-			समयri->निजी_मुक्त(समयri);
-		kमुक्त(समयri->owner);
-		kमुक्त(समयri);
-	पूर्ण
-पूर्ण
-EXPORT_SYMBOL(snd_समयr_instance_मुक्त);
+static void snd_timer_reschedule(struct snd_timer * timer, unsigned long ticks_left);
 
 /*
- * find a समयr instance from the given समयr id
+ * create a timer instance with the given owner string.
  */
-अटल काष्ठा snd_समयr *snd_समयr_find(काष्ठा snd_समयr_id *tid)
-अणु
-	काष्ठा snd_समयr *समयr;
+struct snd_timer_instance *snd_timer_instance_new(const char *owner)
+{
+	struct snd_timer_instance *timeri;
 
-	list_क्रम_each_entry(समयr, &snd_समयr_list, device_list) अणु
-		अगर (समयr->पंचांगr_class != tid->dev_class)
-			जारी;
-		अगर ((समयr->पंचांगr_class == SNDRV_TIMER_CLASS_CARD ||
-		     समयr->पंचांगr_class == SNDRV_TIMER_CLASS_PCM) &&
-		    (समयr->card == शून्य ||
-		     समयr->card->number != tid->card))
-			जारी;
-		अगर (समयr->पंचांगr_device != tid->device)
-			जारी;
-		अगर (समयr->पंचांगr_subdevice != tid->subdevice)
-			जारी;
-		वापस समयr;
-	पूर्ण
-	वापस शून्य;
-पूर्ण
+	timeri = kzalloc(sizeof(*timeri), GFP_KERNEL);
+	if (timeri == NULL)
+		return NULL;
+	timeri->owner = kstrdup(owner, GFP_KERNEL);
+	if (! timeri->owner) {
+		kfree(timeri);
+		return NULL;
+	}
+	INIT_LIST_HEAD(&timeri->open_list);
+	INIT_LIST_HEAD(&timeri->active_list);
+	INIT_LIST_HEAD(&timeri->ack_list);
+	INIT_LIST_HEAD(&timeri->slave_list_head);
+	INIT_LIST_HEAD(&timeri->slave_active_head);
 
-#अगर_घोषित CONFIG_MODULES
+	return timeri;
+}
+EXPORT_SYMBOL(snd_timer_instance_new);
 
-अटल व्योम snd_समयr_request(काष्ठा snd_समयr_id *tid)
-अणु
-	चयन (tid->dev_class) अणु
-	हाल SNDRV_TIMER_CLASS_GLOBAL:
-		अगर (tid->device < समयr_limit)
+void snd_timer_instance_free(struct snd_timer_instance *timeri)
+{
+	if (timeri) {
+		if (timeri->private_free)
+			timeri->private_free(timeri);
+		kfree(timeri->owner);
+		kfree(timeri);
+	}
+}
+EXPORT_SYMBOL(snd_timer_instance_free);
+
+/*
+ * find a timer instance from the given timer id
+ */
+static struct snd_timer *snd_timer_find(struct snd_timer_id *tid)
+{
+	struct snd_timer *timer;
+
+	list_for_each_entry(timer, &snd_timer_list, device_list) {
+		if (timer->tmr_class != tid->dev_class)
+			continue;
+		if ((timer->tmr_class == SNDRV_TIMER_CLASS_CARD ||
+		     timer->tmr_class == SNDRV_TIMER_CLASS_PCM) &&
+		    (timer->card == NULL ||
+		     timer->card->number != tid->card))
+			continue;
+		if (timer->tmr_device != tid->device)
+			continue;
+		if (timer->tmr_subdevice != tid->subdevice)
+			continue;
+		return timer;
+	}
+	return NULL;
+}
+
+#ifdef CONFIG_MODULES
+
+static void snd_timer_request(struct snd_timer_id *tid)
+{
+	switch (tid->dev_class) {
+	case SNDRV_TIMER_CLASS_GLOBAL:
+		if (tid->device < timer_limit)
 			request_module("snd-timer-%i", tid->device);
-		अवरोध;
-	हाल SNDRV_TIMER_CLASS_CARD:
-	हाल SNDRV_TIMER_CLASS_PCM:
-		अगर (tid->card < snd_ecards_limit)
+		break;
+	case SNDRV_TIMER_CLASS_CARD:
+	case SNDRV_TIMER_CLASS_PCM:
+		if (tid->card < snd_ecards_limit)
 			request_module("snd-card-%i", tid->card);
-		अवरोध;
-	शेष:
-		अवरोध;
-	पूर्ण
-पूर्ण
+		break;
+	default:
+		break;
+	}
+}
 
-#पूर्ण_अगर
+#endif
 
-/* move the slave अगर it beदीर्घs to the master; वापस 1 अगर match */
-अटल पूर्णांक check_matching_master_slave(काष्ठा snd_समयr_instance *master,
-				       काष्ठा snd_समयr_instance *slave)
-अणु
-	अगर (slave->slave_class != master->slave_class ||
+/* move the slave if it belongs to the master; return 1 if match */
+static int check_matching_master_slave(struct snd_timer_instance *master,
+				       struct snd_timer_instance *slave)
+{
+	if (slave->slave_class != master->slave_class ||
 	    slave->slave_id != master->slave_id)
-		वापस 0;
-	अगर (master->समयr->num_instances >= master->समयr->max_instances)
-		वापस -EBUSY;
-	list_move_tail(&slave->खोलो_list, &master->slave_list_head);
-	master->समयr->num_instances++;
+		return 0;
+	if (master->timer->num_instances >= master->timer->max_instances)
+		return -EBUSY;
+	list_move_tail(&slave->open_list, &master->slave_list_head);
+	master->timer->num_instances++;
 	spin_lock_irq(&slave_active_lock);
-	spin_lock(&master->समयr->lock);
+	spin_lock(&master->timer->lock);
 	slave->master = master;
-	slave->समयr = master->समयr;
-	अगर (slave->flags & SNDRV_TIMER_IFLG_RUNNING)
+	slave->timer = master->timer;
+	if (slave->flags & SNDRV_TIMER_IFLG_RUNNING)
 		list_add_tail(&slave->active_list, &master->slave_active_head);
-	spin_unlock(&master->समयr->lock);
+	spin_unlock(&master->timer->lock);
 	spin_unlock_irq(&slave_active_lock);
-	वापस 1;
-पूर्ण
+	return 1;
+}
 
 /*
- * look क्रम a master instance matching with the slave id of the given slave.
- * when found, relink the खोलो_link of the slave.
+ * look for a master instance matching with the slave id of the given slave.
+ * when found, relink the open_link of the slave.
  *
- * call this with रेजिस्टर_mutex करोwn.
+ * call this with register_mutex down.
  */
-अटल पूर्णांक snd_समयr_check_slave(काष्ठा snd_समयr_instance *slave)
-अणु
-	काष्ठा snd_समयr *समयr;
-	काष्ठा snd_समयr_instance *master;
-	पूर्णांक err = 0;
+static int snd_timer_check_slave(struct snd_timer_instance *slave)
+{
+	struct snd_timer *timer;
+	struct snd_timer_instance *master;
+	int err = 0;
 
 	/* FIXME: it's really dumb to look up all entries.. */
-	list_क्रम_each_entry(समयr, &snd_समयr_list, device_list) अणु
-		list_क्रम_each_entry(master, &समयr->खोलो_list_head, खोलो_list) अणु
+	list_for_each_entry(timer, &snd_timer_list, device_list) {
+		list_for_each_entry(master, &timer->open_list_head, open_list) {
 			err = check_matching_master_slave(master, slave);
-			अगर (err != 0) /* match found or error */
-				जाओ out;
-		पूर्ण
-	पूर्ण
+			if (err != 0) /* match found or error */
+				goto out;
+		}
+	}
  out:
-	वापस err < 0 ? err : 0;
-पूर्ण
+	return err < 0 ? err : 0;
+}
 
 /*
- * look क्रम slave instances matching with the slave id of the given master.
- * when found, relink the खोलो_link of slaves.
+ * look for slave instances matching with the slave id of the given master.
+ * when found, relink the open_link of slaves.
  *
- * call this with रेजिस्टर_mutex करोwn.
+ * call this with register_mutex down.
  */
-अटल पूर्णांक snd_समयr_check_master(काष्ठा snd_समयr_instance *master)
-अणु
-	काष्ठा snd_समयr_instance *slave, *पंचांगp;
-	पूर्णांक err = 0;
+static int snd_timer_check_master(struct snd_timer_instance *master)
+{
+	struct snd_timer_instance *slave, *tmp;
+	int err = 0;
 
 	/* check all pending slaves */
-	list_क्रम_each_entry_safe(slave, पंचांगp, &snd_समयr_slave_list, खोलो_list) अणु
+	list_for_each_entry_safe(slave, tmp, &snd_timer_slave_list, open_list) {
 		err = check_matching_master_slave(master, slave);
-		अगर (err < 0)
-			अवरोध;
-	पूर्ण
-	वापस err < 0 ? err : 0;
-पूर्ण
+		if (err < 0)
+			break;
+	}
+	return err < 0 ? err : 0;
+}
 
-अटल व्योम snd_समयr_बंद_locked(काष्ठा snd_समयr_instance *समयri,
-				   काष्ठा device **card_devp_to_put);
+static void snd_timer_close_locked(struct snd_timer_instance *timeri,
+				   struct device **card_devp_to_put);
 
 /*
- * खोलो a समयr instance
- * when खोलोing a master, the slave id must be here given.
+ * open a timer instance
+ * when opening a master, the slave id must be here given.
  */
-पूर्णांक snd_समयr_खोलो(काष्ठा snd_समयr_instance *समयri,
-		   काष्ठा snd_समयr_id *tid,
-		   अचिन्हित पूर्णांक slave_id)
-अणु
-	काष्ठा snd_समयr *समयr;
-	काष्ठा device *card_dev_to_put = शून्य;
-	पूर्णांक err;
+int snd_timer_open(struct snd_timer_instance *timeri,
+		   struct snd_timer_id *tid,
+		   unsigned int slave_id)
+{
+	struct snd_timer *timer;
+	struct device *card_dev_to_put = NULL;
+	int err;
 
-	mutex_lock(&रेजिस्टर_mutex);
-	अगर (tid->dev_class == SNDRV_TIMER_CLASS_SLAVE) अणु
-		/* खोलो a slave instance */
-		अगर (tid->dev_sclass <= SNDRV_TIMER_SCLASS_NONE ||
-		    tid->dev_sclass > SNDRV_TIMER_SCLASS_OSS_SEQUENCER) अणु
+	mutex_lock(&register_mutex);
+	if (tid->dev_class == SNDRV_TIMER_CLASS_SLAVE) {
+		/* open a slave instance */
+		if (tid->dev_sclass <= SNDRV_TIMER_SCLASS_NONE ||
+		    tid->dev_sclass > SNDRV_TIMER_SCLASS_OSS_SEQUENCER) {
 			pr_debug("ALSA: timer: invalid slave class %i\n",
 				 tid->dev_sclass);
 			err = -EINVAL;
-			जाओ unlock;
-		पूर्ण
-		अगर (num_slaves >= MAX_SLAVE_INSTANCES) अणु
+			goto unlock;
+		}
+		if (num_slaves >= MAX_SLAVE_INSTANCES) {
 			err = -EBUSY;
-			जाओ unlock;
-		पूर्ण
-		समयri->slave_class = tid->dev_sclass;
-		समयri->slave_id = tid->device;
-		समयri->flags |= SNDRV_TIMER_IFLG_SLAVE;
-		list_add_tail(&समयri->खोलो_list, &snd_समयr_slave_list);
+			goto unlock;
+		}
+		timeri->slave_class = tid->dev_sclass;
+		timeri->slave_id = tid->device;
+		timeri->flags |= SNDRV_TIMER_IFLG_SLAVE;
+		list_add_tail(&timeri->open_list, &snd_timer_slave_list);
 		num_slaves++;
-		err = snd_समयr_check_slave(समयri);
-		जाओ list_added;
-	पूर्ण
+		err = snd_timer_check_slave(timeri);
+		goto list_added;
+	}
 
-	/* खोलो a master instance */
-	समयr = snd_समयr_find(tid);
-#अगर_घोषित CONFIG_MODULES
-	अगर (!समयr) अणु
-		mutex_unlock(&रेजिस्टर_mutex);
-		snd_समयr_request(tid);
-		mutex_lock(&रेजिस्टर_mutex);
-		समयr = snd_समयr_find(tid);
-	पूर्ण
-#पूर्ण_अगर
-	अगर (!समयr) अणु
+	/* open a master instance */
+	timer = snd_timer_find(tid);
+#ifdef CONFIG_MODULES
+	if (!timer) {
+		mutex_unlock(&register_mutex);
+		snd_timer_request(tid);
+		mutex_lock(&register_mutex);
+		timer = snd_timer_find(tid);
+	}
+#endif
+	if (!timer) {
 		err = -ENODEV;
-		जाओ unlock;
-	पूर्ण
-	अगर (!list_empty(&समयr->खोलो_list_head)) अणु
-		काष्ठा snd_समयr_instance *t =
-			list_entry(समयr->खोलो_list_head.next,
-				    काष्ठा snd_समयr_instance, खोलो_list);
-		अगर (t->flags & SNDRV_TIMER_IFLG_EXCLUSIVE) अणु
+		goto unlock;
+	}
+	if (!list_empty(&timer->open_list_head)) {
+		struct snd_timer_instance *t =
+			list_entry(timer->open_list_head.next,
+				    struct snd_timer_instance, open_list);
+		if (t->flags & SNDRV_TIMER_IFLG_EXCLUSIVE) {
 			err = -EBUSY;
-			जाओ unlock;
-		पूर्ण
-	पूर्ण
-	अगर (समयr->num_instances >= समयr->max_instances) अणु
+			goto unlock;
+		}
+	}
+	if (timer->num_instances >= timer->max_instances) {
 		err = -EBUSY;
-		जाओ unlock;
-	पूर्ण
-	अगर (!try_module_get(समयr->module)) अणु
+		goto unlock;
+	}
+	if (!try_module_get(timer->module)) {
 		err = -EBUSY;
-		जाओ unlock;
-	पूर्ण
-	/* take a card refcount क्रम safe disconnection */
-	अगर (समयr->card) अणु
-		get_device(&समयr->card->card_dev);
-		card_dev_to_put = &समयr->card->card_dev;
-	पूर्ण
+		goto unlock;
+	}
+	/* take a card refcount for safe disconnection */
+	if (timer->card) {
+		get_device(&timer->card->card_dev);
+		card_dev_to_put = &timer->card->card_dev;
+	}
 
-	अगर (list_empty(&समयr->खोलो_list_head) && समयr->hw.खोलो) अणु
-		err = समयr->hw.खोलो(समयr);
-		अगर (err) अणु
-			module_put(समयr->module);
-			जाओ unlock;
-		पूर्ण
-	पूर्ण
+	if (list_empty(&timer->open_list_head) && timer->hw.open) {
+		err = timer->hw.open(timer);
+		if (err) {
+			module_put(timer->module);
+			goto unlock;
+		}
+	}
 
-	समयri->समयr = समयr;
-	समयri->slave_class = tid->dev_sclass;
-	समयri->slave_id = slave_id;
+	timeri->timer = timer;
+	timeri->slave_class = tid->dev_sclass;
+	timeri->slave_id = slave_id;
 
-	list_add_tail(&समयri->खोलो_list, &समयr->खोलो_list_head);
-	समयr->num_instances++;
-	err = snd_समयr_check_master(समयri);
+	list_add_tail(&timeri->open_list, &timer->open_list_head);
+	timer->num_instances++;
+	err = snd_timer_check_master(timeri);
 list_added:
-	अगर (err < 0)
-		snd_समयr_बंद_locked(समयri, &card_dev_to_put);
+	if (err < 0)
+		snd_timer_close_locked(timeri, &card_dev_to_put);
 
  unlock:
-	mutex_unlock(&रेजिस्टर_mutex);
-	/* put_device() is called after unlock क्रम aव्योमing deadlock */
-	अगर (err < 0 && card_dev_to_put)
+	mutex_unlock(&register_mutex);
+	/* put_device() is called after unlock for avoiding deadlock */
+	if (err < 0 && card_dev_to_put)
 		put_device(card_dev_to_put);
-	वापस err;
-पूर्ण
-EXPORT_SYMBOL(snd_समयr_खोलो);
+	return err;
+}
+EXPORT_SYMBOL(snd_timer_open);
 
 /*
- * बंद a समयr instance
- * call this with रेजिस्टर_mutex करोwn.
+ * close a timer instance
+ * call this with register_mutex down.
  */
-अटल व्योम snd_समयr_बंद_locked(काष्ठा snd_समयr_instance *समयri,
-				   काष्ठा device **card_devp_to_put)
-अणु
-	काष्ठा snd_समयr *समयr = समयri->समयr;
-	काष्ठा snd_समयr_instance *slave, *पंचांगp;
+static void snd_timer_close_locked(struct snd_timer_instance *timeri,
+				   struct device **card_devp_to_put)
+{
+	struct snd_timer *timer = timeri->timer;
+	struct snd_timer_instance *slave, *tmp;
 
-	अगर (समयr) अणु
-		spin_lock_irq(&समयr->lock);
-		समयri->flags |= SNDRV_TIMER_IFLG_DEAD;
-		spin_unlock_irq(&समयr->lock);
-	पूर्ण
+	if (timer) {
+		spin_lock_irq(&timer->lock);
+		timeri->flags |= SNDRV_TIMER_IFLG_DEAD;
+		spin_unlock_irq(&timer->lock);
+	}
 
-	अगर (!list_empty(&समयri->खोलो_list)) अणु
-		list_del_init(&समयri->खोलो_list);
-		अगर (समयri->flags & SNDRV_TIMER_IFLG_SLAVE)
+	if (!list_empty(&timeri->open_list)) {
+		list_del_init(&timeri->open_list);
+		if (timeri->flags & SNDRV_TIMER_IFLG_SLAVE)
 			num_slaves--;
-	पूर्ण
+	}
 
-	/* क्रमce to stop the समयr */
-	snd_समयr_stop(समयri);
+	/* force to stop the timer */
+	snd_timer_stop(timeri);
 
-	अगर (समयr) अणु
-		समयr->num_instances--;
-		/* रुको, until the active callback is finished */
-		spin_lock_irq(&समयr->lock);
-		जबतक (समयri->flags & SNDRV_TIMER_IFLG_CALLBACK) अणु
-			spin_unlock_irq(&समयr->lock);
+	if (timer) {
+		timer->num_instances--;
+		/* wait, until the active callback is finished */
+		spin_lock_irq(&timer->lock);
+		while (timeri->flags & SNDRV_TIMER_IFLG_CALLBACK) {
+			spin_unlock_irq(&timer->lock);
 			udelay(10);
-			spin_lock_irq(&समयr->lock);
-		पूर्ण
-		spin_unlock_irq(&समयr->lock);
+			spin_lock_irq(&timer->lock);
+		}
+		spin_unlock_irq(&timer->lock);
 
-		/* हटाओ slave links */
+		/* remove slave links */
 		spin_lock_irq(&slave_active_lock);
-		spin_lock(&समयr->lock);
-		समयri->समयr = शून्य;
-		list_क्रम_each_entry_safe(slave, पंचांगp, &समयri->slave_list_head,
-					 खोलो_list) अणु
-			list_move_tail(&slave->खोलो_list, &snd_समयr_slave_list);
-			समयr->num_instances--;
-			slave->master = शून्य;
-			slave->समयr = शून्य;
+		spin_lock(&timer->lock);
+		timeri->timer = NULL;
+		list_for_each_entry_safe(slave, tmp, &timeri->slave_list_head,
+					 open_list) {
+			list_move_tail(&slave->open_list, &snd_timer_slave_list);
+			timer->num_instances--;
+			slave->master = NULL;
+			slave->timer = NULL;
 			list_del_init(&slave->ack_list);
 			list_del_init(&slave->active_list);
-		पूर्ण
-		spin_unlock(&समयr->lock);
+		}
+		spin_unlock(&timer->lock);
 		spin_unlock_irq(&slave_active_lock);
 
-		/* slave करोesn't need to release समयr resources below */
-		अगर (समयri->flags & SNDRV_TIMER_IFLG_SLAVE)
-			समयr = शून्य;
-	पूर्ण
+		/* slave doesn't need to release timer resources below */
+		if (timeri->flags & SNDRV_TIMER_IFLG_SLAVE)
+			timer = NULL;
+	}
 
-	अगर (समयr) अणु
-		अगर (list_empty(&समयr->खोलो_list_head) && समयr->hw.बंद)
-			समयr->hw.बंद(समयr);
-		/* release a card refcount क्रम safe disconnection */
-		अगर (समयr->card)
-			*card_devp_to_put = &समयr->card->card_dev;
-		module_put(समयr->module);
-	पूर्ण
-पूर्ण
+	if (timer) {
+		if (list_empty(&timer->open_list_head) && timer->hw.close)
+			timer->hw.close(timer);
+		/* release a card refcount for safe disconnection */
+		if (timer->card)
+			*card_devp_to_put = &timer->card->card_dev;
+		module_put(timer->module);
+	}
+}
 
 /*
- * बंद a समयr instance
+ * close a timer instance
  */
-व्योम snd_समयr_बंद(काष्ठा snd_समयr_instance *समयri)
-अणु
-	काष्ठा device *card_dev_to_put = शून्य;
+void snd_timer_close(struct snd_timer_instance *timeri)
+{
+	struct device *card_dev_to_put = NULL;
 
-	अगर (snd_BUG_ON(!समयri))
-		वापस;
+	if (snd_BUG_ON(!timeri))
+		return;
 
-	mutex_lock(&रेजिस्टर_mutex);
-	snd_समयr_बंद_locked(समयri, &card_dev_to_put);
-	mutex_unlock(&रेजिस्टर_mutex);
-	/* put_device() is called after unlock क्रम aव्योमing deadlock */
-	अगर (card_dev_to_put)
+	mutex_lock(&register_mutex);
+	snd_timer_close_locked(timeri, &card_dev_to_put);
+	mutex_unlock(&register_mutex);
+	/* put_device() is called after unlock for avoiding deadlock */
+	if (card_dev_to_put)
 		put_device(card_dev_to_put);
-पूर्ण
-EXPORT_SYMBOL(snd_समयr_बंद);
+}
+EXPORT_SYMBOL(snd_timer_close);
 
-अटल अचिन्हित दीर्घ snd_समयr_hw_resolution(काष्ठा snd_समयr *समयr)
-अणु
-	अगर (समयr->hw.c_resolution)
-		वापस समयr->hw.c_resolution(समयr);
-	अन्यथा
-		वापस समयr->hw.resolution;
-पूर्ण
+static unsigned long snd_timer_hw_resolution(struct snd_timer *timer)
+{
+	if (timer->hw.c_resolution)
+		return timer->hw.c_resolution(timer);
+	else
+		return timer->hw.resolution;
+}
 
-अचिन्हित दीर्घ snd_समयr_resolution(काष्ठा snd_समयr_instance *समयri)
-अणु
-	काष्ठा snd_समयr * समयr;
-	अचिन्हित दीर्घ ret = 0;
-	अचिन्हित दीर्घ flags;
+unsigned long snd_timer_resolution(struct snd_timer_instance *timeri)
+{
+	struct snd_timer * timer;
+	unsigned long ret = 0;
+	unsigned long flags;
 
-	अगर (समयri == शून्य)
-		वापस 0;
-	समयr = समयri->समयr;
-	अगर (समयr) अणु
-		spin_lock_irqsave(&समयr->lock, flags);
-		ret = snd_समयr_hw_resolution(समयr);
-		spin_unlock_irqrestore(&समयr->lock, flags);
-	पूर्ण
-	वापस ret;
-पूर्ण
-EXPORT_SYMBOL(snd_समयr_resolution);
+	if (timeri == NULL)
+		return 0;
+	timer = timeri->timer;
+	if (timer) {
+		spin_lock_irqsave(&timer->lock, flags);
+		ret = snd_timer_hw_resolution(timer);
+		spin_unlock_irqrestore(&timer->lock, flags);
+	}
+	return ret;
+}
+EXPORT_SYMBOL(snd_timer_resolution);
 
-अटल व्योम snd_समयr_notअगरy1(काष्ठा snd_समयr_instance *ti, पूर्णांक event)
-अणु
-	काष्ठा snd_समयr *समयr = ti->समयr;
-	अचिन्हित दीर्घ resolution = 0;
-	काष्ठा snd_समयr_instance *ts;
-	काष्ठा बारpec64 tstamp;
+static void snd_timer_notify1(struct snd_timer_instance *ti, int event)
+{
+	struct snd_timer *timer = ti->timer;
+	unsigned long resolution = 0;
+	struct snd_timer_instance *ts;
+	struct timespec64 tstamp;
 
-	अगर (समयr_tstamp_monotonic)
-		kसमय_get_ts64(&tstamp);
-	अन्यथा
-		kसमय_get_real_ts64(&tstamp);
-	अगर (snd_BUG_ON(event < SNDRV_TIMER_EVENT_START ||
+	if (timer_tstamp_monotonic)
+		ktime_get_ts64(&tstamp);
+	else
+		ktime_get_real_ts64(&tstamp);
+	if (snd_BUG_ON(event < SNDRV_TIMER_EVENT_START ||
 		       event > SNDRV_TIMER_EVENT_PAUSE))
-		वापस;
-	अगर (समयr &&
+		return;
+	if (timer &&
 	    (event == SNDRV_TIMER_EVENT_START ||
 	     event == SNDRV_TIMER_EVENT_CONTINUE))
-		resolution = snd_समयr_hw_resolution(समयr);
-	अगर (ti->ccallback)
+		resolution = snd_timer_hw_resolution(timer);
+	if (ti->ccallback)
 		ti->ccallback(ti, event, &tstamp, resolution);
-	अगर (ti->flags & SNDRV_TIMER_IFLG_SLAVE)
-		वापस;
-	अगर (समयr == शून्य)
-		वापस;
-	अगर (समयr->hw.flags & SNDRV_TIMER_HW_SLAVE)
-		वापस;
+	if (ti->flags & SNDRV_TIMER_IFLG_SLAVE)
+		return;
+	if (timer == NULL)
+		return;
+	if (timer->hw.flags & SNDRV_TIMER_HW_SLAVE)
+		return;
 	event += 10; /* convert to SNDRV_TIMER_EVENT_MXXX */
-	list_क्रम_each_entry(ts, &ti->slave_active_head, active_list)
-		अगर (ts->ccallback)
+	list_for_each_entry(ts, &ti->slave_active_head, active_list)
+		if (ts->ccallback)
 			ts->ccallback(ts, event, &tstamp, resolution);
-पूर्ण
+}
 
-/* start/जारी a master समयr */
-अटल पूर्णांक snd_समयr_start1(काष्ठा snd_समयr_instance *समयri,
-			    bool start, अचिन्हित दीर्घ ticks)
-अणु
-	काष्ठा snd_समयr *समयr;
-	पूर्णांक result;
-	अचिन्हित दीर्घ flags;
+/* start/continue a master timer */
+static int snd_timer_start1(struct snd_timer_instance *timeri,
+			    bool start, unsigned long ticks)
+{
+	struct snd_timer *timer;
+	int result;
+	unsigned long flags;
 
-	समयr = समयri->समयr;
-	अगर (!समयr)
-		वापस -EINVAL;
+	timer = timeri->timer;
+	if (!timer)
+		return -EINVAL;
 
-	spin_lock_irqsave(&समयr->lock, flags);
-	अगर (समयri->flags & SNDRV_TIMER_IFLG_DEAD) अणु
+	spin_lock_irqsave(&timer->lock, flags);
+	if (timeri->flags & SNDRV_TIMER_IFLG_DEAD) {
 		result = -EINVAL;
-		जाओ unlock;
-	पूर्ण
-	अगर (समयr->card && समयr->card->shutकरोwn) अणु
+		goto unlock;
+	}
+	if (timer->card && timer->card->shutdown) {
 		result = -ENODEV;
-		जाओ unlock;
-	पूर्ण
-	अगर (समयri->flags & (SNDRV_TIMER_IFLG_RUNNING |
-			     SNDRV_TIMER_IFLG_START)) अणु
+		goto unlock;
+	}
+	if (timeri->flags & (SNDRV_TIMER_IFLG_RUNNING |
+			     SNDRV_TIMER_IFLG_START)) {
 		result = -EBUSY;
-		जाओ unlock;
-	पूर्ण
+		goto unlock;
+	}
 
-	अगर (start)
-		समयri->ticks = समयri->cticks = ticks;
-	अन्यथा अगर (!समयri->cticks)
-		समयri->cticks = 1;
-	समयri->pticks = 0;
+	if (start)
+		timeri->ticks = timeri->cticks = ticks;
+	else if (!timeri->cticks)
+		timeri->cticks = 1;
+	timeri->pticks = 0;
 
-	list_move_tail(&समयri->active_list, &समयr->active_list_head);
-	अगर (समयr->running) अणु
-		अगर (समयr->hw.flags & SNDRV_TIMER_HW_SLAVE)
-			जाओ __start_now;
-		समयr->flags |= SNDRV_TIMER_FLG_RESCHED;
-		समयri->flags |= SNDRV_TIMER_IFLG_START;
+	list_move_tail(&timeri->active_list, &timer->active_list_head);
+	if (timer->running) {
+		if (timer->hw.flags & SNDRV_TIMER_HW_SLAVE)
+			goto __start_now;
+		timer->flags |= SNDRV_TIMER_FLG_RESCHED;
+		timeri->flags |= SNDRV_TIMER_IFLG_START;
 		result = 1; /* delayed start */
-	पूर्ण अन्यथा अणु
-		अगर (start)
-			समयr->sticks = ticks;
-		समयr->hw.start(समयr);
+	} else {
+		if (start)
+			timer->sticks = ticks;
+		timer->hw.start(timer);
 	      __start_now:
-		समयr->running++;
-		समयri->flags |= SNDRV_TIMER_IFLG_RUNNING;
+		timer->running++;
+		timeri->flags |= SNDRV_TIMER_IFLG_RUNNING;
 		result = 0;
-	पूर्ण
-	snd_समयr_notअगरy1(समयri, start ? SNDRV_TIMER_EVENT_START :
+	}
+	snd_timer_notify1(timeri, start ? SNDRV_TIMER_EVENT_START :
 			  SNDRV_TIMER_EVENT_CONTINUE);
  unlock:
-	spin_unlock_irqrestore(&समयr->lock, flags);
-	वापस result;
-पूर्ण
+	spin_unlock_irqrestore(&timer->lock, flags);
+	return result;
+}
 
-/* start/जारी a slave समयr */
-अटल पूर्णांक snd_समयr_start_slave(काष्ठा snd_समयr_instance *समयri,
+/* start/continue a slave timer */
+static int snd_timer_start_slave(struct snd_timer_instance *timeri,
 				 bool start)
-अणु
-	अचिन्हित दीर्घ flags;
-	पूर्णांक err;
+{
+	unsigned long flags;
+	int err;
 
 	spin_lock_irqsave(&slave_active_lock, flags);
-	अगर (समयri->flags & SNDRV_TIMER_IFLG_DEAD) अणु
+	if (timeri->flags & SNDRV_TIMER_IFLG_DEAD) {
 		err = -EINVAL;
-		जाओ unlock;
-	पूर्ण
-	अगर (समयri->flags & SNDRV_TIMER_IFLG_RUNNING) अणु
+		goto unlock;
+	}
+	if (timeri->flags & SNDRV_TIMER_IFLG_RUNNING) {
 		err = -EBUSY;
-		जाओ unlock;
-	पूर्ण
-	समयri->flags |= SNDRV_TIMER_IFLG_RUNNING;
-	अगर (समयri->master && समयri->समयr) अणु
-		spin_lock(&समयri->समयr->lock);
-		list_add_tail(&समयri->active_list,
-			      &समयri->master->slave_active_head);
-		snd_समयr_notअगरy1(समयri, start ? SNDRV_TIMER_EVENT_START :
+		goto unlock;
+	}
+	timeri->flags |= SNDRV_TIMER_IFLG_RUNNING;
+	if (timeri->master && timeri->timer) {
+		spin_lock(&timeri->timer->lock);
+		list_add_tail(&timeri->active_list,
+			      &timeri->master->slave_active_head);
+		snd_timer_notify1(timeri, start ? SNDRV_TIMER_EVENT_START :
 				  SNDRV_TIMER_EVENT_CONTINUE);
-		spin_unlock(&समयri->समयr->lock);
-	पूर्ण
+		spin_unlock(&timeri->timer->lock);
+	}
 	err = 1; /* delayed start */
  unlock:
 	spin_unlock_irqrestore(&slave_active_lock, flags);
-	वापस err;
-पूर्ण
+	return err;
+}
 
-/* stop/छोड़ो a master समयr */
-अटल पूर्णांक snd_समयr_stop1(काष्ठा snd_समयr_instance *समयri, bool stop)
-अणु
-	काष्ठा snd_समयr *समयr;
-	पूर्णांक result = 0;
-	अचिन्हित दीर्घ flags;
+/* stop/pause a master timer */
+static int snd_timer_stop1(struct snd_timer_instance *timeri, bool stop)
+{
+	struct snd_timer *timer;
+	int result = 0;
+	unsigned long flags;
 
-	समयr = समयri->समयr;
-	अगर (!समयr)
-		वापस -EINVAL;
-	spin_lock_irqsave(&समयr->lock, flags);
-	अगर (!(समयri->flags & (SNDRV_TIMER_IFLG_RUNNING |
-			       SNDRV_TIMER_IFLG_START))) अणु
+	timer = timeri->timer;
+	if (!timer)
+		return -EINVAL;
+	spin_lock_irqsave(&timer->lock, flags);
+	if (!(timeri->flags & (SNDRV_TIMER_IFLG_RUNNING |
+			       SNDRV_TIMER_IFLG_START))) {
 		result = -EBUSY;
-		जाओ unlock;
-	पूर्ण
-	list_del_init(&समयri->ack_list);
-	list_del_init(&समयri->active_list);
-	अगर (समयr->card && समयr->card->shutकरोwn)
-		जाओ unlock;
-	अगर (stop) अणु
-		समयri->cticks = समयri->ticks;
-		समयri->pticks = 0;
-	पूर्ण
-	अगर ((समयri->flags & SNDRV_TIMER_IFLG_RUNNING) &&
-	    !(--समयr->running)) अणु
-		समयr->hw.stop(समयr);
-		अगर (समयr->flags & SNDRV_TIMER_FLG_RESCHED) अणु
-			समयr->flags &= ~SNDRV_TIMER_FLG_RESCHED;
-			snd_समयr_reschedule(समयr, 0);
-			अगर (समयr->flags & SNDRV_TIMER_FLG_CHANGE) अणु
-				समयr->flags &= ~SNDRV_TIMER_FLG_CHANGE;
-				समयr->hw.start(समयr);
-			पूर्ण
-		पूर्ण
-	पूर्ण
-	समयri->flags &= ~(SNDRV_TIMER_IFLG_RUNNING | SNDRV_TIMER_IFLG_START);
-	अगर (stop)
-		समयri->flags &= ~SNDRV_TIMER_IFLG_PAUSED;
-	अन्यथा
-		समयri->flags |= SNDRV_TIMER_IFLG_PAUSED;
-	snd_समयr_notअगरy1(समयri, stop ? SNDRV_TIMER_EVENT_STOP :
+		goto unlock;
+	}
+	list_del_init(&timeri->ack_list);
+	list_del_init(&timeri->active_list);
+	if (timer->card && timer->card->shutdown)
+		goto unlock;
+	if (stop) {
+		timeri->cticks = timeri->ticks;
+		timeri->pticks = 0;
+	}
+	if ((timeri->flags & SNDRV_TIMER_IFLG_RUNNING) &&
+	    !(--timer->running)) {
+		timer->hw.stop(timer);
+		if (timer->flags & SNDRV_TIMER_FLG_RESCHED) {
+			timer->flags &= ~SNDRV_TIMER_FLG_RESCHED;
+			snd_timer_reschedule(timer, 0);
+			if (timer->flags & SNDRV_TIMER_FLG_CHANGE) {
+				timer->flags &= ~SNDRV_TIMER_FLG_CHANGE;
+				timer->hw.start(timer);
+			}
+		}
+	}
+	timeri->flags &= ~(SNDRV_TIMER_IFLG_RUNNING | SNDRV_TIMER_IFLG_START);
+	if (stop)
+		timeri->flags &= ~SNDRV_TIMER_IFLG_PAUSED;
+	else
+		timeri->flags |= SNDRV_TIMER_IFLG_PAUSED;
+	snd_timer_notify1(timeri, stop ? SNDRV_TIMER_EVENT_STOP :
 			  SNDRV_TIMER_EVENT_PAUSE);
  unlock:
-	spin_unlock_irqrestore(&समयr->lock, flags);
-	वापस result;
-पूर्ण
+	spin_unlock_irqrestore(&timer->lock, flags);
+	return result;
+}
 
-/* stop/छोड़ो a slave समयr */
-अटल पूर्णांक snd_समयr_stop_slave(काष्ठा snd_समयr_instance *समयri, bool stop)
-अणु
-	अचिन्हित दीर्घ flags;
+/* stop/pause a slave timer */
+static int snd_timer_stop_slave(struct snd_timer_instance *timeri, bool stop)
+{
+	unsigned long flags;
 
 	spin_lock_irqsave(&slave_active_lock, flags);
-	अगर (!(समयri->flags & SNDRV_TIMER_IFLG_RUNNING)) अणु
+	if (!(timeri->flags & SNDRV_TIMER_IFLG_RUNNING)) {
 		spin_unlock_irqrestore(&slave_active_lock, flags);
-		वापस -EBUSY;
-	पूर्ण
-	समयri->flags &= ~SNDRV_TIMER_IFLG_RUNNING;
-	अगर (समयri->समयr) अणु
-		spin_lock(&समयri->समयr->lock);
-		list_del_init(&समयri->ack_list);
-		list_del_init(&समयri->active_list);
-		snd_समयr_notअगरy1(समयri, stop ? SNDRV_TIMER_EVENT_STOP :
+		return -EBUSY;
+	}
+	timeri->flags &= ~SNDRV_TIMER_IFLG_RUNNING;
+	if (timeri->timer) {
+		spin_lock(&timeri->timer->lock);
+		list_del_init(&timeri->ack_list);
+		list_del_init(&timeri->active_list);
+		snd_timer_notify1(timeri, stop ? SNDRV_TIMER_EVENT_STOP :
 				  SNDRV_TIMER_EVENT_PAUSE);
-		spin_unlock(&समयri->समयr->lock);
-	पूर्ण
+		spin_unlock(&timeri->timer->lock);
+	}
 	spin_unlock_irqrestore(&slave_active_lock, flags);
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
 /*
- *  start the समयr instance
+ *  start the timer instance
  */
-पूर्णांक snd_समयr_start(काष्ठा snd_समयr_instance *समयri, अचिन्हित पूर्णांक ticks)
-अणु
-	अगर (समयri == शून्य || ticks < 1)
-		वापस -EINVAL;
-	अगर (समयri->flags & SNDRV_TIMER_IFLG_SLAVE)
-		वापस snd_समयr_start_slave(समयri, true);
-	अन्यथा
-		वापस snd_समयr_start1(समयri, true, ticks);
-पूर्ण
-EXPORT_SYMBOL(snd_समयr_start);
+int snd_timer_start(struct snd_timer_instance *timeri, unsigned int ticks)
+{
+	if (timeri == NULL || ticks < 1)
+		return -EINVAL;
+	if (timeri->flags & SNDRV_TIMER_IFLG_SLAVE)
+		return snd_timer_start_slave(timeri, true);
+	else
+		return snd_timer_start1(timeri, true, ticks);
+}
+EXPORT_SYMBOL(snd_timer_start);
 
 /*
- * stop the समयr instance.
+ * stop the timer instance.
  *
- * करो not call this from the समयr callback!
+ * do not call this from the timer callback!
  */
-पूर्णांक snd_समयr_stop(काष्ठा snd_समयr_instance *समयri)
-अणु
-	अगर (समयri->flags & SNDRV_TIMER_IFLG_SLAVE)
-		वापस snd_समयr_stop_slave(समयri, true);
-	अन्यथा
-		वापस snd_समयr_stop1(समयri, true);
-पूर्ण
-EXPORT_SYMBOL(snd_समयr_stop);
+int snd_timer_stop(struct snd_timer_instance *timeri)
+{
+	if (timeri->flags & SNDRV_TIMER_IFLG_SLAVE)
+		return snd_timer_stop_slave(timeri, true);
+	else
+		return snd_timer_stop1(timeri, true);
+}
+EXPORT_SYMBOL(snd_timer_stop);
 
 /*
  * start again..  the tick is kept.
  */
-पूर्णांक snd_समयr_जारी(काष्ठा snd_समयr_instance *समयri)
-अणु
-	/* समयr can जारी only after छोड़ो */
-	अगर (!(समयri->flags & SNDRV_TIMER_IFLG_PAUSED))
-		वापस -EINVAL;
+int snd_timer_continue(struct snd_timer_instance *timeri)
+{
+	/* timer can continue only after pause */
+	if (!(timeri->flags & SNDRV_TIMER_IFLG_PAUSED))
+		return -EINVAL;
 
-	अगर (समयri->flags & SNDRV_TIMER_IFLG_SLAVE)
-		वापस snd_समयr_start_slave(समयri, false);
-	अन्यथा
-		वापस snd_समयr_start1(समयri, false, 0);
-पूर्ण
-EXPORT_SYMBOL(snd_समयr_जारी);
+	if (timeri->flags & SNDRV_TIMER_IFLG_SLAVE)
+		return snd_timer_start_slave(timeri, false);
+	else
+		return snd_timer_start1(timeri, false, 0);
+}
+EXPORT_SYMBOL(snd_timer_continue);
 
 /*
- * छोड़ो.. remember the ticks left
+ * pause.. remember the ticks left
  */
-पूर्णांक snd_समयr_छोड़ो(काष्ठा snd_समयr_instance * समयri)
-अणु
-	अगर (समयri->flags & SNDRV_TIMER_IFLG_SLAVE)
-		वापस snd_समयr_stop_slave(समयri, false);
-	अन्यथा
-		वापस snd_समयr_stop1(समयri, false);
-पूर्ण
-EXPORT_SYMBOL(snd_समयr_छोड़ो);
+int snd_timer_pause(struct snd_timer_instance * timeri)
+{
+	if (timeri->flags & SNDRV_TIMER_IFLG_SLAVE)
+		return snd_timer_stop_slave(timeri, false);
+	else
+		return snd_timer_stop1(timeri, false);
+}
+EXPORT_SYMBOL(snd_timer_pause);
 
 /*
- * reschedule the समयr
+ * reschedule the timer
  *
  * start pending instances and check the scheduling ticks.
- * when the scheduling ticks is changed set CHANGE flag to reprogram the समयr.
+ * when the scheduling ticks is changed set CHANGE flag to reprogram the timer.
  */
-अटल व्योम snd_समयr_reschedule(काष्ठा snd_समयr * समयr, अचिन्हित दीर्घ ticks_left)
-अणु
-	काष्ठा snd_समयr_instance *ti;
-	अचिन्हित दीर्घ ticks = ~0UL;
+static void snd_timer_reschedule(struct snd_timer * timer, unsigned long ticks_left)
+{
+	struct snd_timer_instance *ti;
+	unsigned long ticks = ~0UL;
 
-	list_क्रम_each_entry(ti, &समयr->active_list_head, active_list) अणु
-		अगर (ti->flags & SNDRV_TIMER_IFLG_START) अणु
+	list_for_each_entry(ti, &timer->active_list_head, active_list) {
+		if (ti->flags & SNDRV_TIMER_IFLG_START) {
 			ti->flags &= ~SNDRV_TIMER_IFLG_START;
 			ti->flags |= SNDRV_TIMER_IFLG_RUNNING;
-			समयr->running++;
-		पूर्ण
-		अगर (ti->flags & SNDRV_TIMER_IFLG_RUNNING) अणु
-			अगर (ticks > ti->cticks)
+			timer->running++;
+		}
+		if (ti->flags & SNDRV_TIMER_IFLG_RUNNING) {
+			if (ticks > ti->cticks)
 				ticks = ti->cticks;
-		पूर्ण
-	पूर्ण
-	अगर (ticks == ~0UL) अणु
-		समयr->flags &= ~SNDRV_TIMER_FLG_RESCHED;
-		वापस;
-	पूर्ण
-	अगर (ticks > समयr->hw.ticks)
-		ticks = समयr->hw.ticks;
-	अगर (ticks_left != ticks)
-		समयr->flags |= SNDRV_TIMER_FLG_CHANGE;
-	समयr->sticks = ticks;
-पूर्ण
+		}
+	}
+	if (ticks == ~0UL) {
+		timer->flags &= ~SNDRV_TIMER_FLG_RESCHED;
+		return;
+	}
+	if (ticks > timer->hw.ticks)
+		ticks = timer->hw.ticks;
+	if (ticks_left != ticks)
+		timer->flags |= SNDRV_TIMER_FLG_CHANGE;
+	timer->sticks = ticks;
+}
 
-/* call callbacks in समयr ack list */
-अटल व्योम snd_समयr_process_callbacks(काष्ठा snd_समयr *समयr,
-					काष्ठा list_head *head)
-अणु
-	काष्ठा snd_समयr_instance *ti;
-	अचिन्हित दीर्घ resolution, ticks;
+/* call callbacks in timer ack list */
+static void snd_timer_process_callbacks(struct snd_timer *timer,
+					struct list_head *head)
+{
+	struct snd_timer_instance *ti;
+	unsigned long resolution, ticks;
 
-	जबतक (!list_empty(head)) अणु
-		ti = list_first_entry(head, काष्ठा snd_समयr_instance,
+	while (!list_empty(head)) {
+		ti = list_first_entry(head, struct snd_timer_instance,
 				      ack_list);
 
-		/* हटाओ from ack_list and make empty */
+		/* remove from ack_list and make empty */
 		list_del_init(&ti->ack_list);
 
-		अगर (!(ti->flags & SNDRV_TIMER_IFLG_DEAD)) अणु
+		if (!(ti->flags & SNDRV_TIMER_IFLG_DEAD)) {
 			ticks = ti->pticks;
 			ti->pticks = 0;
 			resolution = ti->resolution;
 			ti->flags |= SNDRV_TIMER_IFLG_CALLBACK;
-			spin_unlock(&समयr->lock);
-			अगर (ti->callback)
+			spin_unlock(&timer->lock);
+			if (ti->callback)
 				ti->callback(ti, resolution, ticks);
-			spin_lock(&समयr->lock);
+			spin_lock(&timer->lock);
 			ti->flags &= ~SNDRV_TIMER_IFLG_CALLBACK;
-		पूर्ण
-	पूर्ण
-पूर्ण
+		}
+	}
+}
 
 /* clear pending instances from ack list */
-अटल व्योम snd_समयr_clear_callbacks(काष्ठा snd_समयr *समयr,
-				      काष्ठा list_head *head)
-अणु
-	अचिन्हित दीर्घ flags;
+static void snd_timer_clear_callbacks(struct snd_timer *timer,
+				      struct list_head *head)
+{
+	unsigned long flags;
 
-	spin_lock_irqsave(&समयr->lock, flags);
-	जबतक (!list_empty(head))
+	spin_lock_irqsave(&timer->lock, flags);
+	while (!list_empty(head))
 		list_del_init(head->next);
-	spin_unlock_irqrestore(&समयr->lock, flags);
-पूर्ण
+	spin_unlock_irqrestore(&timer->lock, flags);
+}
 
 /*
- * समयr work
+ * timer work
  *
  */
-अटल व्योम snd_समयr_work(काष्ठा work_काष्ठा *work)
-अणु
-	काष्ठा snd_समयr *समयr = container_of(work, काष्ठा snd_समयr, task_work);
-	अचिन्हित दीर्घ flags;
+static void snd_timer_work(struct work_struct *work)
+{
+	struct snd_timer *timer = container_of(work, struct snd_timer, task_work);
+	unsigned long flags;
 
-	अगर (समयr->card && समयr->card->shutकरोwn) अणु
-		snd_समयr_clear_callbacks(समयr, &समयr->sack_list_head);
-		वापस;
-	पूर्ण
+	if (timer->card && timer->card->shutdown) {
+		snd_timer_clear_callbacks(timer, &timer->sack_list_head);
+		return;
+	}
 
-	spin_lock_irqsave(&समयr->lock, flags);
-	snd_समयr_process_callbacks(समयr, &समयr->sack_list_head);
-	spin_unlock_irqrestore(&समयr->lock, flags);
-पूर्ण
+	spin_lock_irqsave(&timer->lock, flags);
+	snd_timer_process_callbacks(timer, &timer->sack_list_head);
+	spin_unlock_irqrestore(&timer->lock, flags);
+}
 
 /*
- * समयr पूर्णांकerrupt
+ * timer interrupt
  *
- * ticks_left is usually equal to समयr->sticks.
+ * ticks_left is usually equal to timer->sticks.
  *
  */
-व्योम snd_समयr_पूर्णांकerrupt(काष्ठा snd_समयr * समयr, अचिन्हित दीर्घ ticks_left)
-अणु
-	काष्ठा snd_समयr_instance *ti, *ts, *पंचांगp;
-	अचिन्हित दीर्घ resolution;
-	काष्ठा list_head *ack_list_head;
-	अचिन्हित दीर्घ flags;
+void snd_timer_interrupt(struct snd_timer * timer, unsigned long ticks_left)
+{
+	struct snd_timer_instance *ti, *ts, *tmp;
+	unsigned long resolution;
+	struct list_head *ack_list_head;
+	unsigned long flags;
 	bool use_work = false;
 
-	अगर (समयr == शून्य)
-		वापस;
+	if (timer == NULL)
+		return;
 
-	अगर (समयr->card && समयr->card->shutकरोwn) अणु
-		snd_समयr_clear_callbacks(समयr, &समयr->ack_list_head);
-		वापस;
-	पूर्ण
+	if (timer->card && timer->card->shutdown) {
+		snd_timer_clear_callbacks(timer, &timer->ack_list_head);
+		return;
+	}
 
-	spin_lock_irqsave(&समयr->lock, flags);
+	spin_lock_irqsave(&timer->lock, flags);
 
 	/* remember the current resolution */
-	resolution = snd_समयr_hw_resolution(समयr);
+	resolution = snd_timer_hw_resolution(timer);
 
-	/* loop क्रम all active instances
-	 * Here we cannot use list_क्रम_each_entry because the active_list of a
-	 * processed instance is relinked to करोne_list_head beक्रमe the callback
+	/* loop for all active instances
+	 * Here we cannot use list_for_each_entry because the active_list of a
+	 * processed instance is relinked to done_list_head before the callback
 	 * is called.
 	 */
-	list_क्रम_each_entry_safe(ti, पंचांगp, &समयr->active_list_head,
-				 active_list) अणु
-		अगर (ti->flags & SNDRV_TIMER_IFLG_DEAD)
-			जारी;
-		अगर (!(ti->flags & SNDRV_TIMER_IFLG_RUNNING))
-			जारी;
+	list_for_each_entry_safe(ti, tmp, &timer->active_list_head,
+				 active_list) {
+		if (ti->flags & SNDRV_TIMER_IFLG_DEAD)
+			continue;
+		if (!(ti->flags & SNDRV_TIMER_IFLG_RUNNING))
+			continue;
 		ti->pticks += ticks_left;
 		ti->resolution = resolution;
-		अगर (ti->cticks < ticks_left)
+		if (ti->cticks < ticks_left)
 			ti->cticks = 0;
-		अन्यथा
+		else
 			ti->cticks -= ticks_left;
-		अगर (ti->cticks) /* not expired */
-			जारी;
-		अगर (ti->flags & SNDRV_TIMER_IFLG_AUTO) अणु
+		if (ti->cticks) /* not expired */
+			continue;
+		if (ti->flags & SNDRV_TIMER_IFLG_AUTO) {
 			ti->cticks = ti->ticks;
-		पूर्ण अन्यथा अणु
+		} else {
 			ti->flags &= ~SNDRV_TIMER_IFLG_RUNNING;
-			--समयr->running;
+			--timer->running;
 			list_del_init(&ti->active_list);
-		पूर्ण
-		अगर ((समयr->hw.flags & SNDRV_TIMER_HW_WORK) ||
+		}
+		if ((timer->hw.flags & SNDRV_TIMER_HW_WORK) ||
 		    (ti->flags & SNDRV_TIMER_IFLG_FAST))
-			ack_list_head = &समयr->ack_list_head;
-		अन्यथा
-			ack_list_head = &समयr->sack_list_head;
-		अगर (list_empty(&ti->ack_list))
+			ack_list_head = &timer->ack_list_head;
+		else
+			ack_list_head = &timer->sack_list_head;
+		if (list_empty(&ti->ack_list))
 			list_add_tail(&ti->ack_list, ack_list_head);
-		list_क्रम_each_entry(ts, &ti->slave_active_head, active_list) अणु
+		list_for_each_entry(ts, &ti->slave_active_head, active_list) {
 			ts->pticks = ti->pticks;
 			ts->resolution = resolution;
-			अगर (list_empty(&ts->ack_list))
+			if (list_empty(&ts->ack_list))
 				list_add_tail(&ts->ack_list, ack_list_head);
-		पूर्ण
-	पूर्ण
-	अगर (समयr->flags & SNDRV_TIMER_FLG_RESCHED)
-		snd_समयr_reschedule(समयr, समयr->sticks);
-	अगर (समयr->running) अणु
-		अगर (समयr->hw.flags & SNDRV_TIMER_HW_STOP) अणु
-			समयr->hw.stop(समयr);
-			समयr->flags |= SNDRV_TIMER_FLG_CHANGE;
-		पूर्ण
-		अगर (!(समयr->hw.flags & SNDRV_TIMER_HW_AUTO) ||
-		    (समयr->flags & SNDRV_TIMER_FLG_CHANGE)) अणु
-			/* restart समयr */
-			समयr->flags &= ~SNDRV_TIMER_FLG_CHANGE;
-			समयr->hw.start(समयr);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		समयr->hw.stop(समयr);
-	पूर्ण
+		}
+	}
+	if (timer->flags & SNDRV_TIMER_FLG_RESCHED)
+		snd_timer_reschedule(timer, timer->sticks);
+	if (timer->running) {
+		if (timer->hw.flags & SNDRV_TIMER_HW_STOP) {
+			timer->hw.stop(timer);
+			timer->flags |= SNDRV_TIMER_FLG_CHANGE;
+		}
+		if (!(timer->hw.flags & SNDRV_TIMER_HW_AUTO) ||
+		    (timer->flags & SNDRV_TIMER_FLG_CHANGE)) {
+			/* restart timer */
+			timer->flags &= ~SNDRV_TIMER_FLG_CHANGE;
+			timer->hw.start(timer);
+		}
+	} else {
+		timer->hw.stop(timer);
+	}
 
 	/* now process all fast callbacks */
-	snd_समयr_process_callbacks(समयr, &समयr->ack_list_head);
+	snd_timer_process_callbacks(timer, &timer->ack_list_head);
 
-	/* करो we have any slow callbacks? */
-	use_work = !list_empty(&समयr->sack_list_head);
-	spin_unlock_irqrestore(&समयr->lock, flags);
+	/* do we have any slow callbacks? */
+	use_work = !list_empty(&timer->sack_list_head);
+	spin_unlock_irqrestore(&timer->lock, flags);
 
-	अगर (use_work)
-		queue_work(प्रणाली_highpri_wq, &समयr->task_work);
-पूर्ण
-EXPORT_SYMBOL(snd_समयr_पूर्णांकerrupt);
+	if (use_work)
+		queue_work(system_highpri_wq, &timer->task_work);
+}
+EXPORT_SYMBOL(snd_timer_interrupt);
 
 /*
 
  */
 
-पूर्णांक snd_समयr_new(काष्ठा snd_card *card, अक्षर *id, काष्ठा snd_समयr_id *tid,
-		  काष्ठा snd_समयr **rसमयr)
-अणु
-	काष्ठा snd_समयr *समयr;
-	पूर्णांक err;
-	अटल स्थिर काष्ठा snd_device_ops ops = अणु
-		.dev_मुक्त = snd_समयr_dev_मुक्त,
-		.dev_रेजिस्टर = snd_समयr_dev_रेजिस्टर,
-		.dev_disconnect = snd_समयr_dev_disconnect,
-	पूर्ण;
+int snd_timer_new(struct snd_card *card, char *id, struct snd_timer_id *tid,
+		  struct snd_timer **rtimer)
+{
+	struct snd_timer *timer;
+	int err;
+	static const struct snd_device_ops ops = {
+		.dev_free = snd_timer_dev_free,
+		.dev_register = snd_timer_dev_register,
+		.dev_disconnect = snd_timer_dev_disconnect,
+	};
 
-	अगर (snd_BUG_ON(!tid))
-		वापस -EINVAL;
-	अगर (tid->dev_class == SNDRV_TIMER_CLASS_CARD ||
-	    tid->dev_class == SNDRV_TIMER_CLASS_PCM) अणु
-		अगर (WARN_ON(!card))
-			वापस -EINVAL;
-	पूर्ण
-	अगर (rसमयr)
-		*rसमयr = शून्य;
-	समयr = kzalloc(माप(*समयr), GFP_KERNEL);
-	अगर (!समयr)
-		वापस -ENOMEM;
-	समयr->पंचांगr_class = tid->dev_class;
-	समयr->card = card;
-	समयr->पंचांगr_device = tid->device;
-	समयr->पंचांगr_subdevice = tid->subdevice;
-	अगर (id)
-		strscpy(समयr->id, id, माप(समयr->id));
-	समयr->sticks = 1;
-	INIT_LIST_HEAD(&समयr->device_list);
-	INIT_LIST_HEAD(&समयr->खोलो_list_head);
-	INIT_LIST_HEAD(&समयr->active_list_head);
-	INIT_LIST_HEAD(&समयr->ack_list_head);
-	INIT_LIST_HEAD(&समयr->sack_list_head);
-	spin_lock_init(&समयr->lock);
-	INIT_WORK(&समयr->task_work, snd_समयr_work);
-	समयr->max_instances = 1000; /* शेष limit per समयr */
-	अगर (card != शून्य) अणु
-		समयr->module = card->module;
-		err = snd_device_new(card, SNDRV_DEV_TIMER, समयr, &ops);
-		अगर (err < 0) अणु
-			snd_समयr_मुक्त(समयr);
-			वापस err;
-		पूर्ण
-	पूर्ण
-	अगर (rसमयr)
-		*rसमयr = समयr;
-	वापस 0;
-पूर्ण
-EXPORT_SYMBOL(snd_समयr_new);
+	if (snd_BUG_ON(!tid))
+		return -EINVAL;
+	if (tid->dev_class == SNDRV_TIMER_CLASS_CARD ||
+	    tid->dev_class == SNDRV_TIMER_CLASS_PCM) {
+		if (WARN_ON(!card))
+			return -EINVAL;
+	}
+	if (rtimer)
+		*rtimer = NULL;
+	timer = kzalloc(sizeof(*timer), GFP_KERNEL);
+	if (!timer)
+		return -ENOMEM;
+	timer->tmr_class = tid->dev_class;
+	timer->card = card;
+	timer->tmr_device = tid->device;
+	timer->tmr_subdevice = tid->subdevice;
+	if (id)
+		strscpy(timer->id, id, sizeof(timer->id));
+	timer->sticks = 1;
+	INIT_LIST_HEAD(&timer->device_list);
+	INIT_LIST_HEAD(&timer->open_list_head);
+	INIT_LIST_HEAD(&timer->active_list_head);
+	INIT_LIST_HEAD(&timer->ack_list_head);
+	INIT_LIST_HEAD(&timer->sack_list_head);
+	spin_lock_init(&timer->lock);
+	INIT_WORK(&timer->task_work, snd_timer_work);
+	timer->max_instances = 1000; /* default limit per timer */
+	if (card != NULL) {
+		timer->module = card->module;
+		err = snd_device_new(card, SNDRV_DEV_TIMER, timer, &ops);
+		if (err < 0) {
+			snd_timer_free(timer);
+			return err;
+		}
+	}
+	if (rtimer)
+		*rtimer = timer;
+	return 0;
+}
+EXPORT_SYMBOL(snd_timer_new);
 
-अटल पूर्णांक snd_समयr_मुक्त(काष्ठा snd_समयr *समयr)
-अणु
-	अगर (!समयr)
-		वापस 0;
+static int snd_timer_free(struct snd_timer *timer)
+{
+	if (!timer)
+		return 0;
 
-	mutex_lock(&रेजिस्टर_mutex);
-	अगर (! list_empty(&समयr->खोलो_list_head)) अणु
-		काष्ठा list_head *p, *n;
-		काष्ठा snd_समयr_instance *ti;
-		pr_warn("ALSA: timer %p is busy?\n", समयr);
-		list_क्रम_each_safe(p, n, &समयr->खोलो_list_head) अणु
+	mutex_lock(&register_mutex);
+	if (! list_empty(&timer->open_list_head)) {
+		struct list_head *p, *n;
+		struct snd_timer_instance *ti;
+		pr_warn("ALSA: timer %p is busy?\n", timer);
+		list_for_each_safe(p, n, &timer->open_list_head) {
 			list_del_init(p);
-			ti = list_entry(p, काष्ठा snd_समयr_instance, खोलो_list);
-			ti->समयr = शून्य;
-		पूर्ण
-	पूर्ण
-	list_del(&समयr->device_list);
-	mutex_unlock(&रेजिस्टर_mutex);
+			ti = list_entry(p, struct snd_timer_instance, open_list);
+			ti->timer = NULL;
+		}
+	}
+	list_del(&timer->device_list);
+	mutex_unlock(&register_mutex);
 
-	अगर (समयr->निजी_मुक्त)
-		समयr->निजी_मुक्त(समयr);
-	kमुक्त(समयr);
-	वापस 0;
-पूर्ण
+	if (timer->private_free)
+		timer->private_free(timer);
+	kfree(timer);
+	return 0;
+}
 
-अटल पूर्णांक snd_समयr_dev_मुक्त(काष्ठा snd_device *device)
-अणु
-	काष्ठा snd_समयr *समयr = device->device_data;
-	वापस snd_समयr_मुक्त(समयr);
-पूर्ण
+static int snd_timer_dev_free(struct snd_device *device)
+{
+	struct snd_timer *timer = device->device_data;
+	return snd_timer_free(timer);
+}
 
-अटल पूर्णांक snd_समयr_dev_रेजिस्टर(काष्ठा snd_device *dev)
-अणु
-	काष्ठा snd_समयr *समयr = dev->device_data;
-	काष्ठा snd_समयr *समयr1;
+static int snd_timer_dev_register(struct snd_device *dev)
+{
+	struct snd_timer *timer = dev->device_data;
+	struct snd_timer *timer1;
 
-	अगर (snd_BUG_ON(!समयr || !समयr->hw.start || !समयr->hw.stop))
-		वापस -ENXIO;
-	अगर (!(समयr->hw.flags & SNDRV_TIMER_HW_SLAVE) &&
-	    !समयr->hw.resolution && समयr->hw.c_resolution == शून्य)
-	    	वापस -EINVAL;
+	if (snd_BUG_ON(!timer || !timer->hw.start || !timer->hw.stop))
+		return -ENXIO;
+	if (!(timer->hw.flags & SNDRV_TIMER_HW_SLAVE) &&
+	    !timer->hw.resolution && timer->hw.c_resolution == NULL)
+	    	return -EINVAL;
 
-	mutex_lock(&रेजिस्टर_mutex);
-	list_क्रम_each_entry(समयr1, &snd_समयr_list, device_list) अणु
-		अगर (समयr1->पंचांगr_class > समयr->पंचांगr_class)
-			अवरोध;
-		अगर (समयr1->पंचांगr_class < समयr->पंचांगr_class)
-			जारी;
-		अगर (समयr1->card && समयr->card) अणु
-			अगर (समयr1->card->number > समयr->card->number)
-				अवरोध;
-			अगर (समयr1->card->number < समयr->card->number)
-				जारी;
-		पूर्ण
-		अगर (समयr1->पंचांगr_device > समयr->पंचांगr_device)
-			अवरोध;
-		अगर (समयr1->पंचांगr_device < समयr->पंचांगr_device)
-			जारी;
-		अगर (समयr1->पंचांगr_subdevice > समयr->पंचांगr_subdevice)
-			अवरोध;
-		अगर (समयr1->पंचांगr_subdevice < समयr->पंचांगr_subdevice)
-			जारी;
+	mutex_lock(&register_mutex);
+	list_for_each_entry(timer1, &snd_timer_list, device_list) {
+		if (timer1->tmr_class > timer->tmr_class)
+			break;
+		if (timer1->tmr_class < timer->tmr_class)
+			continue;
+		if (timer1->card && timer->card) {
+			if (timer1->card->number > timer->card->number)
+				break;
+			if (timer1->card->number < timer->card->number)
+				continue;
+		}
+		if (timer1->tmr_device > timer->tmr_device)
+			break;
+		if (timer1->tmr_device < timer->tmr_device)
+			continue;
+		if (timer1->tmr_subdevice > timer->tmr_subdevice)
+			break;
+		if (timer1->tmr_subdevice < timer->tmr_subdevice)
+			continue;
 		/* conflicts.. */
-		mutex_unlock(&रेजिस्टर_mutex);
-		वापस -EBUSY;
-	पूर्ण
-	list_add_tail(&समयr->device_list, &समयr1->device_list);
-	mutex_unlock(&रेजिस्टर_mutex);
-	वापस 0;
-पूर्ण
+		mutex_unlock(&register_mutex);
+		return -EBUSY;
+	}
+	list_add_tail(&timer->device_list, &timer1->device_list);
+	mutex_unlock(&register_mutex);
+	return 0;
+}
 
-अटल पूर्णांक snd_समयr_dev_disconnect(काष्ठा snd_device *device)
-अणु
-	काष्ठा snd_समयr *समयr = device->device_data;
-	काष्ठा snd_समयr_instance *ti;
+static int snd_timer_dev_disconnect(struct snd_device *device)
+{
+	struct snd_timer *timer = device->device_data;
+	struct snd_timer_instance *ti;
 
-	mutex_lock(&रेजिस्टर_mutex);
-	list_del_init(&समयr->device_list);
+	mutex_lock(&register_mutex);
+	list_del_init(&timer->device_list);
 	/* wake up pending sleepers */
-	list_क्रम_each_entry(ti, &समयr->खोलो_list_head, खोलो_list) अणु
-		अगर (ti->disconnect)
+	list_for_each_entry(ti, &timer->open_list_head, open_list) {
+		if (ti->disconnect)
 			ti->disconnect(ti);
-	पूर्ण
-	mutex_unlock(&रेजिस्टर_mutex);
-	वापस 0;
-पूर्ण
+	}
+	mutex_unlock(&register_mutex);
+	return 0;
+}
 
-व्योम snd_समयr_notअगरy(काष्ठा snd_समयr *समयr, पूर्णांक event, काष्ठा बारpec64 *tstamp)
-अणु
-	अचिन्हित दीर्घ flags;
-	अचिन्हित दीर्घ resolution = 0;
-	काष्ठा snd_समयr_instance *ti, *ts;
+void snd_timer_notify(struct snd_timer *timer, int event, struct timespec64 *tstamp)
+{
+	unsigned long flags;
+	unsigned long resolution = 0;
+	struct snd_timer_instance *ti, *ts;
 
-	अगर (समयr->card && समयr->card->shutकरोwn)
-		वापस;
-	अगर (! (समयr->hw.flags & SNDRV_TIMER_HW_SLAVE))
-		वापस;
-	अगर (snd_BUG_ON(event < SNDRV_TIMER_EVENT_MSTART ||
+	if (timer->card && timer->card->shutdown)
+		return;
+	if (! (timer->hw.flags & SNDRV_TIMER_HW_SLAVE))
+		return;
+	if (snd_BUG_ON(event < SNDRV_TIMER_EVENT_MSTART ||
 		       event > SNDRV_TIMER_EVENT_MRESUME))
-		वापस;
-	spin_lock_irqsave(&समयr->lock, flags);
-	अगर (event == SNDRV_TIMER_EVENT_MSTART ||
+		return;
+	spin_lock_irqsave(&timer->lock, flags);
+	if (event == SNDRV_TIMER_EVENT_MSTART ||
 	    event == SNDRV_TIMER_EVENT_MCONTINUE ||
 	    event == SNDRV_TIMER_EVENT_MRESUME)
-		resolution = snd_समयr_hw_resolution(समयr);
-	list_क्रम_each_entry(ti, &समयr->active_list_head, active_list) अणु
-		अगर (ti->ccallback)
+		resolution = snd_timer_hw_resolution(timer);
+	list_for_each_entry(ti, &timer->active_list_head, active_list) {
+		if (ti->ccallback)
 			ti->ccallback(ti, event, tstamp, resolution);
-		list_क्रम_each_entry(ts, &ti->slave_active_head, active_list)
-			अगर (ts->ccallback)
+		list_for_each_entry(ts, &ti->slave_active_head, active_list)
+			if (ts->ccallback)
 				ts->ccallback(ts, event, tstamp, resolution);
-	पूर्ण
-	spin_unlock_irqrestore(&समयr->lock, flags);
-पूर्ण
-EXPORT_SYMBOL(snd_समयr_notअगरy);
+	}
+	spin_unlock_irqrestore(&timer->lock, flags);
+}
+EXPORT_SYMBOL(snd_timer_notify);
 
 /*
- * exported functions क्रम global समयrs
+ * exported functions for global timers
  */
-पूर्णांक snd_समयr_global_new(अक्षर *id, पूर्णांक device, काष्ठा snd_समयr **rसमयr)
-अणु
-	काष्ठा snd_समयr_id tid;
+int snd_timer_global_new(char *id, int device, struct snd_timer **rtimer)
+{
+	struct snd_timer_id tid;
 
 	tid.dev_class = SNDRV_TIMER_CLASS_GLOBAL;
 	tid.dev_sclass = SNDRV_TIMER_SCLASS_NONE;
 	tid.card = -1;
 	tid.device = device;
 	tid.subdevice = 0;
-	वापस snd_समयr_new(शून्य, id, &tid, rसमयr);
-पूर्ण
-EXPORT_SYMBOL(snd_समयr_global_new);
+	return snd_timer_new(NULL, id, &tid, rtimer);
+}
+EXPORT_SYMBOL(snd_timer_global_new);
 
-पूर्णांक snd_समयr_global_मुक्त(काष्ठा snd_समयr *समयr)
-अणु
-	वापस snd_समयr_मुक्त(समयr);
-पूर्ण
-EXPORT_SYMBOL(snd_समयr_global_मुक्त);
+int snd_timer_global_free(struct snd_timer *timer)
+{
+	return snd_timer_free(timer);
+}
+EXPORT_SYMBOL(snd_timer_global_free);
 
-पूर्णांक snd_समयr_global_रेजिस्टर(काष्ठा snd_समयr *समयr)
-अणु
-	काष्ठा snd_device dev;
+int snd_timer_global_register(struct snd_timer *timer)
+{
+	struct snd_device dev;
 
-	स_रखो(&dev, 0, माप(dev));
-	dev.device_data = समयr;
-	वापस snd_समयr_dev_रेजिस्टर(&dev);
-पूर्ण
-EXPORT_SYMBOL(snd_समयr_global_रेजिस्टर);
+	memset(&dev, 0, sizeof(dev));
+	dev.device_data = timer;
+	return snd_timer_dev_register(&dev);
+}
+EXPORT_SYMBOL(snd_timer_global_register);
 
 /*
- *  System समयr
+ *  System timer
  */
 
-काष्ठा snd_समयr_प्रणाली_निजी अणु
-	काष्ठा समयr_list tlist;
-	काष्ठा snd_समयr *snd_समयr;
-	अचिन्हित दीर्घ last_expires;
-	अचिन्हित दीर्घ last_jअगरfies;
-	अचिन्हित दीर्घ correction;
-पूर्ण;
+struct snd_timer_system_private {
+	struct timer_list tlist;
+	struct snd_timer *snd_timer;
+	unsigned long last_expires;
+	unsigned long last_jiffies;
+	unsigned long correction;
+};
 
-अटल व्योम snd_समयr_s_function(काष्ठा समयr_list *t)
-अणु
-	काष्ठा snd_समयr_प्रणाली_निजी *priv = from_समयr(priv, t,
+static void snd_timer_s_function(struct timer_list *t)
+{
+	struct snd_timer_system_private *priv = from_timer(priv, t,
 								tlist);
-	काष्ठा snd_समयr *समयr = priv->snd_समयr;
-	अचिन्हित दीर्घ jअगरf = jअगरfies;
-	अगर (समय_after(jअगरf, priv->last_expires))
-		priv->correction += (दीर्घ)jअगरf - (दीर्घ)priv->last_expires;
-	snd_समयr_पूर्णांकerrupt(समयr, (दीर्घ)jअगरf - (दीर्घ)priv->last_jअगरfies);
-पूर्ण
+	struct snd_timer *timer = priv->snd_timer;
+	unsigned long jiff = jiffies;
+	if (time_after(jiff, priv->last_expires))
+		priv->correction += (long)jiff - (long)priv->last_expires;
+	snd_timer_interrupt(timer, (long)jiff - (long)priv->last_jiffies);
+}
 
-अटल पूर्णांक snd_समयr_s_start(काष्ठा snd_समयr * समयr)
-अणु
-	काष्ठा snd_समयr_प्रणाली_निजी *priv;
-	अचिन्हित दीर्घ njअगरf;
+static int snd_timer_s_start(struct snd_timer * timer)
+{
+	struct snd_timer_system_private *priv;
+	unsigned long njiff;
 
-	priv = (काष्ठा snd_समयr_प्रणाली_निजी *) समयr->निजी_data;
-	njअगरf = (priv->last_jअगरfies = jअगरfies);
-	अगर (priv->correction > समयr->sticks - 1) अणु
-		priv->correction -= समयr->sticks - 1;
-		njअगरf++;
-	पूर्ण अन्यथा अणु
-		njअगरf += समयr->sticks - priv->correction;
+	priv = (struct snd_timer_system_private *) timer->private_data;
+	njiff = (priv->last_jiffies = jiffies);
+	if (priv->correction > timer->sticks - 1) {
+		priv->correction -= timer->sticks - 1;
+		njiff++;
+	} else {
+		njiff += timer->sticks - priv->correction;
 		priv->correction = 0;
-	पूर्ण
-	priv->last_expires = njअगरf;
-	mod_समयr(&priv->tlist, njअगरf);
-	वापस 0;
-पूर्ण
+	}
+	priv->last_expires = njiff;
+	mod_timer(&priv->tlist, njiff);
+	return 0;
+}
 
-अटल पूर्णांक snd_समयr_s_stop(काष्ठा snd_समयr * समयr)
-अणु
-	काष्ठा snd_समयr_प्रणाली_निजी *priv;
-	अचिन्हित दीर्घ jअगरf;
+static int snd_timer_s_stop(struct snd_timer * timer)
+{
+	struct snd_timer_system_private *priv;
+	unsigned long jiff;
 
-	priv = (काष्ठा snd_समयr_प्रणाली_निजी *) समयr->निजी_data;
-	del_समयr(&priv->tlist);
-	jअगरf = jअगरfies;
-	अगर (समय_beक्रमe(jअगरf, priv->last_expires))
-		समयr->sticks = priv->last_expires - jअगरf;
-	अन्यथा
-		समयr->sticks = 1;
+	priv = (struct snd_timer_system_private *) timer->private_data;
+	del_timer(&priv->tlist);
+	jiff = jiffies;
+	if (time_before(jiff, priv->last_expires))
+		timer->sticks = priv->last_expires - jiff;
+	else
+		timer->sticks = 1;
 	priv->correction = 0;
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_समयr_s_बंद(काष्ठा snd_समयr *समयr)
-अणु
-	काष्ठा snd_समयr_प्रणाली_निजी *priv;
+static int snd_timer_s_close(struct snd_timer *timer)
+{
+	struct snd_timer_system_private *priv;
 
-	priv = (काष्ठा snd_समयr_प्रणाली_निजी *)समयr->निजी_data;
-	del_समयr_sync(&priv->tlist);
-	वापस 0;
-पूर्ण
+	priv = (struct snd_timer_system_private *)timer->private_data;
+	del_timer_sync(&priv->tlist);
+	return 0;
+}
 
-अटल स्थिर काष्ठा snd_समयr_hardware snd_समयr_प्रणाली =
-अणु
+static const struct snd_timer_hardware snd_timer_system =
+{
 	.flags =	SNDRV_TIMER_HW_FIRST | SNDRV_TIMER_HW_WORK,
 	.resolution =	1000000000L / HZ,
 	.ticks =	10000000L,
-	.बंद =	snd_समयr_s_बंद,
-	.start =	snd_समयr_s_start,
-	.stop =		snd_समयr_s_stop
-पूर्ण;
+	.close =	snd_timer_s_close,
+	.start =	snd_timer_s_start,
+	.stop =		snd_timer_s_stop
+};
 
-अटल व्योम snd_समयr_मुक्त_प्रणाली(काष्ठा snd_समयr *समयr)
-अणु
-	kमुक्त(समयr->निजी_data);
-पूर्ण
+static void snd_timer_free_system(struct snd_timer *timer)
+{
+	kfree(timer->private_data);
+}
 
-अटल पूर्णांक snd_समयr_रेजिस्टर_प्रणाली(व्योम)
-अणु
-	काष्ठा snd_समयr *समयr;
-	काष्ठा snd_समयr_प्रणाली_निजी *priv;
-	पूर्णांक err;
+static int snd_timer_register_system(void)
+{
+	struct snd_timer *timer;
+	struct snd_timer_system_private *priv;
+	int err;
 
-	err = snd_समयr_global_new("system", SNDRV_TIMER_GLOBAL_SYSTEM, &समयr);
-	अगर (err < 0)
-		वापस err;
-	म_नकल(समयr->name, "system timer");
-	समयr->hw = snd_समयr_प्रणाली;
-	priv = kzalloc(माप(*priv), GFP_KERNEL);
-	अगर (priv == शून्य) अणु
-		snd_समयr_मुक्त(समयr);
-		वापस -ENOMEM;
-	पूर्ण
-	priv->snd_समयr = समयr;
-	समयr_setup(&priv->tlist, snd_समयr_s_function, 0);
-	समयr->निजी_data = priv;
-	समयr->निजी_मुक्त = snd_समयr_मुक्त_प्रणाली;
-	वापस snd_समयr_global_रेजिस्टर(समयr);
-पूर्ण
+	err = snd_timer_global_new("system", SNDRV_TIMER_GLOBAL_SYSTEM, &timer);
+	if (err < 0)
+		return err;
+	strcpy(timer->name, "system timer");
+	timer->hw = snd_timer_system;
+	priv = kzalloc(sizeof(*priv), GFP_KERNEL);
+	if (priv == NULL) {
+		snd_timer_free(timer);
+		return -ENOMEM;
+	}
+	priv->snd_timer = timer;
+	timer_setup(&priv->tlist, snd_timer_s_function, 0);
+	timer->private_data = priv;
+	timer->private_free = snd_timer_free_system;
+	return snd_timer_global_register(timer);
+}
 
-#अगर_घोषित CONFIG_SND_PROC_FS
+#ifdef CONFIG_SND_PROC_FS
 /*
- *  Info पूर्णांकerface
+ *  Info interface
  */
 
-अटल व्योम snd_समयr_proc_पढ़ो(काष्ठा snd_info_entry *entry,
-				काष्ठा snd_info_buffer *buffer)
-अणु
-	काष्ठा snd_समयr *समयr;
-	काष्ठा snd_समयr_instance *ti;
+static void snd_timer_proc_read(struct snd_info_entry *entry,
+				struct snd_info_buffer *buffer)
+{
+	struct snd_timer *timer;
+	struct snd_timer_instance *ti;
 
-	mutex_lock(&रेजिस्टर_mutex);
-	list_क्रम_each_entry(समयr, &snd_समयr_list, device_list) अणु
-		अगर (समयr->card && समयr->card->shutकरोwn)
-			जारी;
-		चयन (समयr->पंचांगr_class) अणु
-		हाल SNDRV_TIMER_CLASS_GLOBAL:
-			snd_iम_लिखो(buffer, "G%i: ", समयr->पंचांगr_device);
-			अवरोध;
-		हाल SNDRV_TIMER_CLASS_CARD:
-			snd_iम_लिखो(buffer, "C%i-%i: ",
-				    समयr->card->number, समयr->पंचांगr_device);
-			अवरोध;
-		हाल SNDRV_TIMER_CLASS_PCM:
-			snd_iम_लिखो(buffer, "P%i-%i-%i: ", समयr->card->number,
-				    समयr->पंचांगr_device, समयr->पंचांगr_subdevice);
-			अवरोध;
-		शेष:
-			snd_iम_लिखो(buffer, "?%i-%i-%i-%i: ", समयr->पंचांगr_class,
-				    समयr->card ? समयr->card->number : -1,
-				    समयr->पंचांगr_device, समयr->पंचांगr_subdevice);
-		पूर्ण
-		snd_iम_लिखो(buffer, "%s :", समयr->name);
-		अगर (समयr->hw.resolution)
-			snd_iम_लिखो(buffer, " %lu.%03luus (%lu ticks)",
-				    समयr->hw.resolution / 1000,
-				    समयr->hw.resolution % 1000,
-				    समयr->hw.ticks);
-		अगर (समयr->hw.flags & SNDRV_TIMER_HW_SLAVE)
-			snd_iम_लिखो(buffer, " SLAVE");
-		snd_iम_लिखो(buffer, "\n");
-		list_क्रम_each_entry(ti, &समयr->खोलो_list_head, खोलो_list)
-			snd_iम_लिखो(buffer, "  Client %s : %s\n",
+	mutex_lock(&register_mutex);
+	list_for_each_entry(timer, &snd_timer_list, device_list) {
+		if (timer->card && timer->card->shutdown)
+			continue;
+		switch (timer->tmr_class) {
+		case SNDRV_TIMER_CLASS_GLOBAL:
+			snd_iprintf(buffer, "G%i: ", timer->tmr_device);
+			break;
+		case SNDRV_TIMER_CLASS_CARD:
+			snd_iprintf(buffer, "C%i-%i: ",
+				    timer->card->number, timer->tmr_device);
+			break;
+		case SNDRV_TIMER_CLASS_PCM:
+			snd_iprintf(buffer, "P%i-%i-%i: ", timer->card->number,
+				    timer->tmr_device, timer->tmr_subdevice);
+			break;
+		default:
+			snd_iprintf(buffer, "?%i-%i-%i-%i: ", timer->tmr_class,
+				    timer->card ? timer->card->number : -1,
+				    timer->tmr_device, timer->tmr_subdevice);
+		}
+		snd_iprintf(buffer, "%s :", timer->name);
+		if (timer->hw.resolution)
+			snd_iprintf(buffer, " %lu.%03luus (%lu ticks)",
+				    timer->hw.resolution / 1000,
+				    timer->hw.resolution % 1000,
+				    timer->hw.ticks);
+		if (timer->hw.flags & SNDRV_TIMER_HW_SLAVE)
+			snd_iprintf(buffer, " SLAVE");
+		snd_iprintf(buffer, "\n");
+		list_for_each_entry(ti, &timer->open_list_head, open_list)
+			snd_iprintf(buffer, "  Client %s : %s\n",
 				    ti->owner ? ti->owner : "unknown",
 				    (ti->flags & (SNDRV_TIMER_IFLG_START |
 						  SNDRV_TIMER_IFLG_RUNNING))
 				    ? "running" : "stopped");
-	पूर्ण
-	mutex_unlock(&रेजिस्टर_mutex);
-पूर्ण
+	}
+	mutex_unlock(&register_mutex);
+}
 
-अटल काष्ठा snd_info_entry *snd_समयr_proc_entry;
+static struct snd_info_entry *snd_timer_proc_entry;
 
-अटल व्योम __init snd_समयr_proc_init(व्योम)
-अणु
-	काष्ठा snd_info_entry *entry;
+static void __init snd_timer_proc_init(void)
+{
+	struct snd_info_entry *entry;
 
-	entry = snd_info_create_module_entry(THIS_MODULE, "timers", शून्य);
-	अगर (entry != शून्य) अणु
-		entry->c.text.पढ़ो = snd_समयr_proc_पढ़ो;
-		अगर (snd_info_रेजिस्टर(entry) < 0) अणु
-			snd_info_मुक्त_entry(entry);
-			entry = शून्य;
-		पूर्ण
-	पूर्ण
-	snd_समयr_proc_entry = entry;
-पूर्ण
+	entry = snd_info_create_module_entry(THIS_MODULE, "timers", NULL);
+	if (entry != NULL) {
+		entry->c.text.read = snd_timer_proc_read;
+		if (snd_info_register(entry) < 0) {
+			snd_info_free_entry(entry);
+			entry = NULL;
+		}
+	}
+	snd_timer_proc_entry = entry;
+}
 
-अटल व्योम __निकास snd_समयr_proc_करोne(व्योम)
-अणु
-	snd_info_मुक्त_entry(snd_समयr_proc_entry);
-पूर्ण
-#अन्यथा /* !CONFIG_SND_PROC_FS */
-#घोषणा snd_समयr_proc_init()
-#घोषणा snd_समयr_proc_करोne()
-#पूर्ण_अगर
+static void __exit snd_timer_proc_done(void)
+{
+	snd_info_free_entry(snd_timer_proc_entry);
+}
+#else /* !CONFIG_SND_PROC_FS */
+#define snd_timer_proc_init()
+#define snd_timer_proc_done()
+#endif
 
 /*
- *  USER SPACE पूर्णांकerface
+ *  USER SPACE interface
  */
 
-अटल व्योम snd_समयr_user_पूर्णांकerrupt(काष्ठा snd_समयr_instance *समयri,
-				     अचिन्हित दीर्घ resolution,
-				     अचिन्हित दीर्घ ticks)
-अणु
-	काष्ठा snd_समयr_user *tu = समयri->callback_data;
-	काष्ठा snd_समयr_पढ़ो *r;
-	पूर्णांक prev;
+static void snd_timer_user_interrupt(struct snd_timer_instance *timeri,
+				     unsigned long resolution,
+				     unsigned long ticks)
+{
+	struct snd_timer_user *tu = timeri->callback_data;
+	struct snd_timer_read *r;
+	int prev;
 
 	spin_lock(&tu->qlock);
-	अगर (tu->qused > 0) अणु
+	if (tu->qused > 0) {
 		prev = tu->qtail == 0 ? tu->queue_size - 1 : tu->qtail - 1;
 		r = &tu->queue[prev];
-		अगर (r->resolution == resolution) अणु
+		if (r->resolution == resolution) {
 			r->ticks += ticks;
-			जाओ __wake;
-		पूर्ण
-	पूर्ण
-	अगर (tu->qused >= tu->queue_size) अणु
+			goto __wake;
+		}
+	}
+	if (tu->qused >= tu->queue_size) {
 		tu->overrun++;
-	पूर्ण अन्यथा अणु
+	} else {
 		r = &tu->queue[tu->qtail++];
 		tu->qtail %= tu->queue_size;
 		r->resolution = resolution;
 		r->ticks = ticks;
 		tu->qused++;
-	पूर्ण
+	}
       __wake:
 	spin_unlock(&tu->qlock);
-	समाप्त_fasync(&tu->fasync, SIGIO, POLL_IN);
+	kill_fasync(&tu->fasync, SIGIO, POLL_IN);
 	wake_up(&tu->qchange_sleep);
-पूर्ण
+}
 
-अटल व्योम snd_समयr_user_append_to_tqueue(काष्ठा snd_समयr_user *tu,
-					    काष्ठा snd_समयr_tपढ़ो64 *tपढ़ो)
-अणु
-	अगर (tu->qused >= tu->queue_size) अणु
+static void snd_timer_user_append_to_tqueue(struct snd_timer_user *tu,
+					    struct snd_timer_tread64 *tread)
+{
+	if (tu->qused >= tu->queue_size) {
 		tu->overrun++;
-	पूर्ण अन्यथा अणु
-		स_नकल(&tu->tqueue[tu->qtail++], tपढ़ो, माप(*tपढ़ो));
+	} else {
+		memcpy(&tu->tqueue[tu->qtail++], tread, sizeof(*tread));
 		tu->qtail %= tu->queue_size;
 		tu->qused++;
-	पूर्ण
-पूर्ण
+	}
+}
 
-अटल व्योम snd_समयr_user_ccallback(काष्ठा snd_समयr_instance *समयri,
-				     पूर्णांक event,
-				     काष्ठा बारpec64 *tstamp,
-				     अचिन्हित दीर्घ resolution)
-अणु
-	काष्ठा snd_समयr_user *tu = समयri->callback_data;
-	काष्ठा snd_समयr_tपढ़ो64 r1;
-	अचिन्हित दीर्घ flags;
+static void snd_timer_user_ccallback(struct snd_timer_instance *timeri,
+				     int event,
+				     struct timespec64 *tstamp,
+				     unsigned long resolution)
+{
+	struct snd_timer_user *tu = timeri->callback_data;
+	struct snd_timer_tread64 r1;
+	unsigned long flags;
 
-	अगर (event >= SNDRV_TIMER_EVENT_START &&
+	if (event >= SNDRV_TIMER_EVENT_START &&
 	    event <= SNDRV_TIMER_EVENT_PAUSE)
 		tu->tstamp = *tstamp;
-	अगर ((tu->filter & (1 << event)) == 0 || !tu->tपढ़ो)
-		वापस;
-	स_रखो(&r1, 0, माप(r1));
+	if ((tu->filter & (1 << event)) == 0 || !tu->tread)
+		return;
+	memset(&r1, 0, sizeof(r1));
 	r1.event = event;
 	r1.tstamp_sec = tstamp->tv_sec;
 	r1.tstamp_nsec = tstamp->tv_nsec;
 	r1.val = resolution;
 	spin_lock_irqsave(&tu->qlock, flags);
-	snd_समयr_user_append_to_tqueue(tu, &r1);
+	snd_timer_user_append_to_tqueue(tu, &r1);
 	spin_unlock_irqrestore(&tu->qlock, flags);
-	समाप्त_fasync(&tu->fasync, SIGIO, POLL_IN);
+	kill_fasync(&tu->fasync, SIGIO, POLL_IN);
 	wake_up(&tu->qchange_sleep);
-पूर्ण
+}
 
-अटल व्योम snd_समयr_user_disconnect(काष्ठा snd_समयr_instance *समयri)
-अणु
-	काष्ठा snd_समयr_user *tu = समयri->callback_data;
+static void snd_timer_user_disconnect(struct snd_timer_instance *timeri)
+{
+	struct snd_timer_user *tu = timeri->callback_data;
 
 	tu->disconnected = true;
 	wake_up(&tu->qchange_sleep);
-पूर्ण
+}
 
-अटल व्योम snd_समयr_user_tपूर्णांकerrupt(काष्ठा snd_समयr_instance *समयri,
-				      अचिन्हित दीर्घ resolution,
-				      अचिन्हित दीर्घ ticks)
-अणु
-	काष्ठा snd_समयr_user *tu = समयri->callback_data;
-	काष्ठा snd_समयr_tपढ़ो64 *r, r1;
-	काष्ठा बारpec64 tstamp;
-	पूर्णांक prev, append = 0;
+static void snd_timer_user_tinterrupt(struct snd_timer_instance *timeri,
+				      unsigned long resolution,
+				      unsigned long ticks)
+{
+	struct snd_timer_user *tu = timeri->callback_data;
+	struct snd_timer_tread64 *r, r1;
+	struct timespec64 tstamp;
+	int prev, append = 0;
 
-	स_रखो(&r1, 0, माप(r1));
-	स_रखो(&tstamp, 0, माप(tstamp));
+	memset(&r1, 0, sizeof(r1));
+	memset(&tstamp, 0, sizeof(tstamp));
 	spin_lock(&tu->qlock);
-	अगर ((tu->filter & ((1 << SNDRV_TIMER_EVENT_RESOLUTION) |
-			   (1 << SNDRV_TIMER_EVENT_TICK))) == 0) अणु
+	if ((tu->filter & ((1 << SNDRV_TIMER_EVENT_RESOLUTION) |
+			   (1 << SNDRV_TIMER_EVENT_TICK))) == 0) {
 		spin_unlock(&tu->qlock);
-		वापस;
-	पूर्ण
-	अगर (tu->last_resolution != resolution || ticks > 0) अणु
-		अगर (समयr_tstamp_monotonic)
-			kसमय_get_ts64(&tstamp);
-		अन्यथा
-			kसमय_get_real_ts64(&tstamp);
-	पूर्ण
-	अगर ((tu->filter & (1 << SNDRV_TIMER_EVENT_RESOLUTION)) &&
-	    tu->last_resolution != resolution) अणु
+		return;
+	}
+	if (tu->last_resolution != resolution || ticks > 0) {
+		if (timer_tstamp_monotonic)
+			ktime_get_ts64(&tstamp);
+		else
+			ktime_get_real_ts64(&tstamp);
+	}
+	if ((tu->filter & (1 << SNDRV_TIMER_EVENT_RESOLUTION)) &&
+	    tu->last_resolution != resolution) {
 		r1.event = SNDRV_TIMER_EVENT_RESOLUTION;
 		r1.tstamp_sec = tstamp.tv_sec;
 		r1.tstamp_nsec = tstamp.tv_nsec;
 		r1.val = resolution;
-		snd_समयr_user_append_to_tqueue(tu, &r1);
+		snd_timer_user_append_to_tqueue(tu, &r1);
 		tu->last_resolution = resolution;
 		append++;
-	पूर्ण
-	अगर ((tu->filter & (1 << SNDRV_TIMER_EVENT_TICK)) == 0)
-		जाओ __wake;
-	अगर (ticks == 0)
-		जाओ __wake;
-	अगर (tu->qused > 0) अणु
+	}
+	if ((tu->filter & (1 << SNDRV_TIMER_EVENT_TICK)) == 0)
+		goto __wake;
+	if (ticks == 0)
+		goto __wake;
+	if (tu->qused > 0) {
 		prev = tu->qtail == 0 ? tu->queue_size - 1 : tu->qtail - 1;
 		r = &tu->tqueue[prev];
-		अगर (r->event == SNDRV_TIMER_EVENT_TICK) अणु
+		if (r->event == SNDRV_TIMER_EVENT_TICK) {
 			r->tstamp_sec = tstamp.tv_sec;
 			r->tstamp_nsec = tstamp.tv_nsec;
 			r->val += ticks;
 			append++;
-			जाओ __wake;
-		पूर्ण
-	पूर्ण
+			goto __wake;
+		}
+	}
 	r1.event = SNDRV_TIMER_EVENT_TICK;
 	r1.tstamp_sec = tstamp.tv_sec;
 	r1.tstamp_nsec = tstamp.tv_nsec;
 	r1.val = ticks;
-	snd_समयr_user_append_to_tqueue(tu, &r1);
+	snd_timer_user_append_to_tqueue(tu, &r1);
 	append++;
       __wake:
 	spin_unlock(&tu->qlock);
-	अगर (append == 0)
-		वापस;
-	समाप्त_fasync(&tu->fasync, SIGIO, POLL_IN);
+	if (append == 0)
+		return;
+	kill_fasync(&tu->fasync, SIGIO, POLL_IN);
 	wake_up(&tu->qchange_sleep);
-पूर्ण
+}
 
-अटल पूर्णांक पुनः_स्मृति_user_queue(काष्ठा snd_समयr_user *tu, पूर्णांक size)
-अणु
-	काष्ठा snd_समयr_पढ़ो *queue = शून्य;
-	काष्ठा snd_समयr_tपढ़ो64 *tqueue = शून्य;
+static int realloc_user_queue(struct snd_timer_user *tu, int size)
+{
+	struct snd_timer_read *queue = NULL;
+	struct snd_timer_tread64 *tqueue = NULL;
 
-	अगर (tu->tपढ़ो) अणु
-		tqueue = kसुस्मृति(size, माप(*tqueue), GFP_KERNEL);
-		अगर (!tqueue)
-			वापस -ENOMEM;
-	पूर्ण अन्यथा अणु
-		queue = kसुस्मृति(size, माप(*queue), GFP_KERNEL);
-		अगर (!queue)
-			वापस -ENOMEM;
-	पूर्ण
+	if (tu->tread) {
+		tqueue = kcalloc(size, sizeof(*tqueue), GFP_KERNEL);
+		if (!tqueue)
+			return -ENOMEM;
+	} else {
+		queue = kcalloc(size, sizeof(*queue), GFP_KERNEL);
+		if (!queue)
+			return -ENOMEM;
+	}
 
 	spin_lock_irq(&tu->qlock);
-	kमुक्त(tu->queue);
-	kमुक्त(tu->tqueue);
+	kfree(tu->queue);
+	kfree(tu->tqueue);
 	tu->queue_size = size;
 	tu->queue = queue;
 	tu->tqueue = tqueue;
 	tu->qhead = tu->qtail = tu->qused = 0;
 	spin_unlock_irq(&tu->qlock);
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-अटल पूर्णांक snd_समयr_user_खोलो(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा snd_समयr_user *tu;
-	पूर्णांक err;
+static int snd_timer_user_open(struct inode *inode, struct file *file)
+{
+	struct snd_timer_user *tu;
+	int err;
 
-	err = stream_खोलो(inode, file);
-	अगर (err < 0)
-		वापस err;
+	err = stream_open(inode, file);
+	if (err < 0)
+		return err;
 
-	tu = kzalloc(माप(*tu), GFP_KERNEL);
-	अगर (tu == शून्य)
-		वापस -ENOMEM;
+	tu = kzalloc(sizeof(*tu), GFP_KERNEL);
+	if (tu == NULL)
+		return -ENOMEM;
 	spin_lock_init(&tu->qlock);
-	init_रुकोqueue_head(&tu->qchange_sleep);
+	init_waitqueue_head(&tu->qchange_sleep);
 	mutex_init(&tu->ioctl_lock);
 	tu->ticks = 1;
-	अगर (पुनः_स्मृति_user_queue(tu, 128) < 0) अणु
-		kमुक्त(tu);
-		वापस -ENOMEM;
-	पूर्ण
-	file->निजी_data = tu;
-	वापस 0;
-पूर्ण
+	if (realloc_user_queue(tu, 128) < 0) {
+		kfree(tu);
+		return -ENOMEM;
+	}
+	file->private_data = tu;
+	return 0;
+}
 
-अटल पूर्णांक snd_समयr_user_release(काष्ठा inode *inode, काष्ठा file *file)
-अणु
-	काष्ठा snd_समयr_user *tu;
+static int snd_timer_user_release(struct inode *inode, struct file *file)
+{
+	struct snd_timer_user *tu;
 
-	अगर (file->निजी_data) अणु
-		tu = file->निजी_data;
-		file->निजी_data = शून्य;
+	if (file->private_data) {
+		tu = file->private_data;
+		file->private_data = NULL;
 		mutex_lock(&tu->ioctl_lock);
-		अगर (tu->समयri) अणु
-			snd_समयr_बंद(tu->समयri);
-			snd_समयr_instance_मुक्त(tu->समयri);
-		पूर्ण
+		if (tu->timeri) {
+			snd_timer_close(tu->timeri);
+			snd_timer_instance_free(tu->timeri);
+		}
 		mutex_unlock(&tu->ioctl_lock);
-		kमुक्त(tu->queue);
-		kमुक्त(tu->tqueue);
-		kमुक्त(tu);
-	पूर्ण
-	वापस 0;
-पूर्ण
+		kfree(tu->queue);
+		kfree(tu->tqueue);
+		kfree(tu);
+	}
+	return 0;
+}
 
-अटल व्योम snd_समयr_user_zero_id(काष्ठा snd_समयr_id *id)
-अणु
+static void snd_timer_user_zero_id(struct snd_timer_id *id)
+{
 	id->dev_class = SNDRV_TIMER_CLASS_NONE;
 	id->dev_sclass = SNDRV_TIMER_SCLASS_NONE;
 	id->card = -1;
 	id->device = -1;
 	id->subdevice = -1;
-पूर्ण
+}
 
-अटल व्योम snd_समयr_user_copy_id(काष्ठा snd_समयr_id *id, काष्ठा snd_समयr *समयr)
-अणु
-	id->dev_class = समयr->पंचांगr_class;
+static void snd_timer_user_copy_id(struct snd_timer_id *id, struct snd_timer *timer)
+{
+	id->dev_class = timer->tmr_class;
 	id->dev_sclass = SNDRV_TIMER_SCLASS_NONE;
-	id->card = समयr->card ? समयr->card->number : -1;
-	id->device = समयr->पंचांगr_device;
-	id->subdevice = समयr->पंचांगr_subdevice;
-पूर्ण
+	id->card = timer->card ? timer->card->number : -1;
+	id->device = timer->tmr_device;
+	id->subdevice = timer->tmr_subdevice;
+}
 
-अटल पूर्णांक snd_समयr_user_next_device(काष्ठा snd_समयr_id __user *_tid)
-अणु
-	काष्ठा snd_समयr_id id;
-	काष्ठा snd_समयr *समयr;
-	काष्ठा list_head *p;
+static int snd_timer_user_next_device(struct snd_timer_id __user *_tid)
+{
+	struct snd_timer_id id;
+	struct snd_timer *timer;
+	struct list_head *p;
 
-	अगर (copy_from_user(&id, _tid, माप(id)))
-		वापस -EFAULT;
-	mutex_lock(&रेजिस्टर_mutex);
-	अगर (id.dev_class < 0) अणु		/* first item */
-		अगर (list_empty(&snd_समयr_list))
-			snd_समयr_user_zero_id(&id);
-		अन्यथा अणु
-			समयr = list_entry(snd_समयr_list.next,
-					   काष्ठा snd_समयr, device_list);
-			snd_समयr_user_copy_id(&id, समयr);
-		पूर्ण
-	पूर्ण अन्यथा अणु
-		चयन (id.dev_class) अणु
-		हाल SNDRV_TIMER_CLASS_GLOBAL:
+	if (copy_from_user(&id, _tid, sizeof(id)))
+		return -EFAULT;
+	mutex_lock(&register_mutex);
+	if (id.dev_class < 0) {		/* first item */
+		if (list_empty(&snd_timer_list))
+			snd_timer_user_zero_id(&id);
+		else {
+			timer = list_entry(snd_timer_list.next,
+					   struct snd_timer, device_list);
+			snd_timer_user_copy_id(&id, timer);
+		}
+	} else {
+		switch (id.dev_class) {
+		case SNDRV_TIMER_CLASS_GLOBAL:
 			id.device = id.device < 0 ? 0 : id.device + 1;
-			list_क्रम_each(p, &snd_समयr_list) अणु
-				समयr = list_entry(p, काष्ठा snd_समयr, device_list);
-				अगर (समयr->पंचांगr_class > SNDRV_TIMER_CLASS_GLOBAL) अणु
-					snd_समयr_user_copy_id(&id, समयr);
-					अवरोध;
-				पूर्ण
-				अगर (समयr->पंचांगr_device >= id.device) अणु
-					snd_समयr_user_copy_id(&id, समयr);
-					अवरोध;
-				पूर्ण
-			पूर्ण
-			अगर (p == &snd_समयr_list)
-				snd_समयr_user_zero_id(&id);
-			अवरोध;
-		हाल SNDRV_TIMER_CLASS_CARD:
-		हाल SNDRV_TIMER_CLASS_PCM:
-			अगर (id.card < 0) अणु
+			list_for_each(p, &snd_timer_list) {
+				timer = list_entry(p, struct snd_timer, device_list);
+				if (timer->tmr_class > SNDRV_TIMER_CLASS_GLOBAL) {
+					snd_timer_user_copy_id(&id, timer);
+					break;
+				}
+				if (timer->tmr_device >= id.device) {
+					snd_timer_user_copy_id(&id, timer);
+					break;
+				}
+			}
+			if (p == &snd_timer_list)
+				snd_timer_user_zero_id(&id);
+			break;
+		case SNDRV_TIMER_CLASS_CARD:
+		case SNDRV_TIMER_CLASS_PCM:
+			if (id.card < 0) {
 				id.card = 0;
-			पूर्ण अन्यथा अणु
-				अगर (id.device < 0) अणु
+			} else {
+				if (id.device < 0) {
 					id.device = 0;
-				पूर्ण अन्यथा अणु
-					अगर (id.subdevice < 0)
+				} else {
+					if (id.subdevice < 0)
 						id.subdevice = 0;
-					अन्यथा अगर (id.subdevice < पूर्णांक_उच्च)
+					else if (id.subdevice < INT_MAX)
 						id.subdevice++;
-				पूर्ण
-			पूर्ण
-			list_क्रम_each(p, &snd_समयr_list) अणु
-				समयr = list_entry(p, काष्ठा snd_समयr, device_list);
-				अगर (समयr->पंचांगr_class > id.dev_class) अणु
-					snd_समयr_user_copy_id(&id, समयr);
-					अवरोध;
-				पूर्ण
-				अगर (समयr->पंचांगr_class < id.dev_class)
-					जारी;
-				अगर (समयr->card->number > id.card) अणु
-					snd_समयr_user_copy_id(&id, समयr);
-					अवरोध;
-				पूर्ण
-				अगर (समयr->card->number < id.card)
-					जारी;
-				अगर (समयr->पंचांगr_device > id.device) अणु
-					snd_समयr_user_copy_id(&id, समयr);
-					अवरोध;
-				पूर्ण
-				अगर (समयr->पंचांगr_device < id.device)
-					जारी;
-				अगर (समयr->पंचांगr_subdevice > id.subdevice) अणु
-					snd_समयr_user_copy_id(&id, समयr);
-					अवरोध;
-				पूर्ण
-				अगर (समयr->पंचांगr_subdevice < id.subdevice)
-					जारी;
-				snd_समयr_user_copy_id(&id, समयr);
-				अवरोध;
-			पूर्ण
-			अगर (p == &snd_समयr_list)
-				snd_समयr_user_zero_id(&id);
-			अवरोध;
-		शेष:
-			snd_समयr_user_zero_id(&id);
-		पूर्ण
-	पूर्ण
-	mutex_unlock(&रेजिस्टर_mutex);
-	अगर (copy_to_user(_tid, &id, माप(*_tid)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+				}
+			}
+			list_for_each(p, &snd_timer_list) {
+				timer = list_entry(p, struct snd_timer, device_list);
+				if (timer->tmr_class > id.dev_class) {
+					snd_timer_user_copy_id(&id, timer);
+					break;
+				}
+				if (timer->tmr_class < id.dev_class)
+					continue;
+				if (timer->card->number > id.card) {
+					snd_timer_user_copy_id(&id, timer);
+					break;
+				}
+				if (timer->card->number < id.card)
+					continue;
+				if (timer->tmr_device > id.device) {
+					snd_timer_user_copy_id(&id, timer);
+					break;
+				}
+				if (timer->tmr_device < id.device)
+					continue;
+				if (timer->tmr_subdevice > id.subdevice) {
+					snd_timer_user_copy_id(&id, timer);
+					break;
+				}
+				if (timer->tmr_subdevice < id.subdevice)
+					continue;
+				snd_timer_user_copy_id(&id, timer);
+				break;
+			}
+			if (p == &snd_timer_list)
+				snd_timer_user_zero_id(&id);
+			break;
+		default:
+			snd_timer_user_zero_id(&id);
+		}
+	}
+	mutex_unlock(&register_mutex);
+	if (copy_to_user(_tid, &id, sizeof(*_tid)))
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक snd_समयr_user_ginfo(काष्ठा file *file,
-				काष्ठा snd_समयr_ginfo __user *_ginfo)
-अणु
-	काष्ठा snd_समयr_ginfo *ginfo;
-	काष्ठा snd_समयr_id tid;
-	काष्ठा snd_समयr *t;
-	काष्ठा list_head *p;
-	पूर्णांक err = 0;
+static int snd_timer_user_ginfo(struct file *file,
+				struct snd_timer_ginfo __user *_ginfo)
+{
+	struct snd_timer_ginfo *ginfo;
+	struct snd_timer_id tid;
+	struct snd_timer *t;
+	struct list_head *p;
+	int err = 0;
 
-	ginfo = memdup_user(_ginfo, माप(*ginfo));
-	अगर (IS_ERR(ginfo))
-		वापस PTR_ERR(ginfo);
+	ginfo = memdup_user(_ginfo, sizeof(*ginfo));
+	if (IS_ERR(ginfo))
+		return PTR_ERR(ginfo);
 
 	tid = ginfo->tid;
-	स_रखो(ginfo, 0, माप(*ginfo));
+	memset(ginfo, 0, sizeof(*ginfo));
 	ginfo->tid = tid;
-	mutex_lock(&रेजिस्टर_mutex);
-	t = snd_समयr_find(&tid);
-	अगर (t != शून्य) अणु
+	mutex_lock(&register_mutex);
+	t = snd_timer_find(&tid);
+	if (t != NULL) {
 		ginfo->card = t->card ? t->card->number : -1;
-		अगर (t->hw.flags & SNDRV_TIMER_HW_SLAVE)
+		if (t->hw.flags & SNDRV_TIMER_HW_SLAVE)
 			ginfo->flags |= SNDRV_TIMER_FLG_SLAVE;
-		strscpy(ginfo->id, t->id, माप(ginfo->id));
-		strscpy(ginfo->name, t->name, माप(ginfo->name));
+		strscpy(ginfo->id, t->id, sizeof(ginfo->id));
+		strscpy(ginfo->name, t->name, sizeof(ginfo->name));
 		ginfo->resolution = t->hw.resolution;
-		अगर (t->hw.resolution_min > 0) अणु
+		if (t->hw.resolution_min > 0) {
 			ginfo->resolution_min = t->hw.resolution_min;
 			ginfo->resolution_max = t->hw.resolution_max;
-		पूर्ण
-		list_क्रम_each(p, &t->खोलो_list_head) अणु
+		}
+		list_for_each(p, &t->open_list_head) {
 			ginfo->clients++;
-		पूर्ण
-	पूर्ण अन्यथा अणु
+		}
+	} else {
 		err = -ENODEV;
-	पूर्ण
-	mutex_unlock(&रेजिस्टर_mutex);
-	अगर (err >= 0 && copy_to_user(_ginfo, ginfo, माप(*ginfo)))
+	}
+	mutex_unlock(&register_mutex);
+	if (err >= 0 && copy_to_user(_ginfo, ginfo, sizeof(*ginfo)))
 		err = -EFAULT;
-	kमुक्त(ginfo);
-	वापस err;
-पूर्ण
+	kfree(ginfo);
+	return err;
+}
 
-अटल पूर्णांक समयr_set_gparams(काष्ठा snd_समयr_gparams *gparams)
-अणु
-	काष्ठा snd_समयr *t;
-	पूर्णांक err;
+static int timer_set_gparams(struct snd_timer_gparams *gparams)
+{
+	struct snd_timer *t;
+	int err;
 
-	mutex_lock(&रेजिस्टर_mutex);
-	t = snd_समयr_find(&gparams->tid);
-	अगर (!t) अणु
+	mutex_lock(&register_mutex);
+	t = snd_timer_find(&gparams->tid);
+	if (!t) {
 		err = -ENODEV;
-		जाओ _error;
-	पूर्ण
-	अगर (!list_empty(&t->खोलो_list_head)) अणु
+		goto _error;
+	}
+	if (!list_empty(&t->open_list_head)) {
 		err = -EBUSY;
-		जाओ _error;
-	पूर्ण
-	अगर (!t->hw.set_period) अणु
+		goto _error;
+	}
+	if (!t->hw.set_period) {
 		err = -ENOSYS;
-		जाओ _error;
-	पूर्ण
+		goto _error;
+	}
 	err = t->hw.set_period(t, gparams->period_num, gparams->period_den);
 _error:
-	mutex_unlock(&रेजिस्टर_mutex);
-	वापस err;
-पूर्ण
+	mutex_unlock(&register_mutex);
+	return err;
+}
 
-अटल पूर्णांक snd_समयr_user_gparams(काष्ठा file *file,
-				  काष्ठा snd_समयr_gparams __user *_gparams)
-अणु
-	काष्ठा snd_समयr_gparams gparams;
+static int snd_timer_user_gparams(struct file *file,
+				  struct snd_timer_gparams __user *_gparams)
+{
+	struct snd_timer_gparams gparams;
 
-	अगर (copy_from_user(&gparams, _gparams, माप(gparams)))
-		वापस -EFAULT;
-	वापस समयr_set_gparams(&gparams);
-पूर्ण
+	if (copy_from_user(&gparams, _gparams, sizeof(gparams)))
+		return -EFAULT;
+	return timer_set_gparams(&gparams);
+}
 
-अटल पूर्णांक snd_समयr_user_gstatus(काष्ठा file *file,
-				  काष्ठा snd_समयr_gstatus __user *_gstatus)
-अणु
-	काष्ठा snd_समयr_gstatus gstatus;
-	काष्ठा snd_समयr_id tid;
-	काष्ठा snd_समयr *t;
-	पूर्णांक err = 0;
+static int snd_timer_user_gstatus(struct file *file,
+				  struct snd_timer_gstatus __user *_gstatus)
+{
+	struct snd_timer_gstatus gstatus;
+	struct snd_timer_id tid;
+	struct snd_timer *t;
+	int err = 0;
 
-	अगर (copy_from_user(&gstatus, _gstatus, माप(gstatus)))
-		वापस -EFAULT;
+	if (copy_from_user(&gstatus, _gstatus, sizeof(gstatus)))
+		return -EFAULT;
 	tid = gstatus.tid;
-	स_रखो(&gstatus, 0, माप(gstatus));
+	memset(&gstatus, 0, sizeof(gstatus));
 	gstatus.tid = tid;
-	mutex_lock(&रेजिस्टर_mutex);
-	t = snd_समयr_find(&tid);
-	अगर (t != शून्य) अणु
+	mutex_lock(&register_mutex);
+	t = snd_timer_find(&tid);
+	if (t != NULL) {
 		spin_lock_irq(&t->lock);
-		gstatus.resolution = snd_समयr_hw_resolution(t);
-		अगर (t->hw.precise_resolution) अणु
+		gstatus.resolution = snd_timer_hw_resolution(t);
+		if (t->hw.precise_resolution) {
 			t->hw.precise_resolution(t, &gstatus.resolution_num,
 						 &gstatus.resolution_den);
-		पूर्ण अन्यथा अणु
+		} else {
 			gstatus.resolution_num = gstatus.resolution;
 			gstatus.resolution_den = 1000000000uL;
-		पूर्ण
+		}
 		spin_unlock_irq(&t->lock);
-	पूर्ण अन्यथा अणु
+	} else {
 		err = -ENODEV;
-	पूर्ण
-	mutex_unlock(&रेजिस्टर_mutex);
-	अगर (err >= 0 && copy_to_user(_gstatus, &gstatus, माप(gstatus)))
+	}
+	mutex_unlock(&register_mutex);
+	if (err >= 0 && copy_to_user(_gstatus, &gstatus, sizeof(gstatus)))
 		err = -EFAULT;
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक snd_समयr_user_tselect(काष्ठा file *file,
-				  काष्ठा snd_समयr_select __user *_tselect)
-अणु
-	काष्ठा snd_समयr_user *tu;
-	काष्ठा snd_समयr_select tselect;
-	अक्षर str[32];
-	पूर्णांक err = 0;
+static int snd_timer_user_tselect(struct file *file,
+				  struct snd_timer_select __user *_tselect)
+{
+	struct snd_timer_user *tu;
+	struct snd_timer_select tselect;
+	char str[32];
+	int err = 0;
 
-	tu = file->निजी_data;
-	अगर (tu->समयri) अणु
-		snd_समयr_बंद(tu->समयri);
-		snd_समयr_instance_मुक्त(tu->समयri);
-		tu->समयri = शून्य;
-	पूर्ण
-	अगर (copy_from_user(&tselect, _tselect, माप(tselect))) अणु
+	tu = file->private_data;
+	if (tu->timeri) {
+		snd_timer_close(tu->timeri);
+		snd_timer_instance_free(tu->timeri);
+		tu->timeri = NULL;
+	}
+	if (copy_from_user(&tselect, _tselect, sizeof(tselect))) {
 		err = -EFAULT;
-		जाओ __err;
-	पूर्ण
-	प्र_लिखो(str, "application %i", current->pid);
-	अगर (tselect.id.dev_class != SNDRV_TIMER_CLASS_SLAVE)
+		goto __err;
+	}
+	sprintf(str, "application %i", current->pid);
+	if (tselect.id.dev_class != SNDRV_TIMER_CLASS_SLAVE)
 		tselect.id.dev_sclass = SNDRV_TIMER_SCLASS_APPLICATION;
-	tu->समयri = snd_समयr_instance_new(str);
-	अगर (!tu->समयri) अणु
+	tu->timeri = snd_timer_instance_new(str);
+	if (!tu->timeri) {
 		err = -ENOMEM;
-		जाओ __err;
-	पूर्ण
+		goto __err;
+	}
 
-	tu->समयri->flags |= SNDRV_TIMER_IFLG_FAST;
-	tu->समयri->callback = tu->tपढ़ो
-			? snd_समयr_user_tपूर्णांकerrupt : snd_समयr_user_पूर्णांकerrupt;
-	tu->समयri->ccallback = snd_समयr_user_ccallback;
-	tu->समयri->callback_data = (व्योम *)tu;
-	tu->समयri->disconnect = snd_समयr_user_disconnect;
+	tu->timeri->flags |= SNDRV_TIMER_IFLG_FAST;
+	tu->timeri->callback = tu->tread
+			? snd_timer_user_tinterrupt : snd_timer_user_interrupt;
+	tu->timeri->ccallback = snd_timer_user_ccallback;
+	tu->timeri->callback_data = (void *)tu;
+	tu->timeri->disconnect = snd_timer_user_disconnect;
 
-	err = snd_समयr_खोलो(tu->समयri, &tselect.id, current->pid);
-	अगर (err < 0) अणु
-		snd_समयr_instance_मुक्त(tu->समयri);
-		tu->समयri = शून्य;
-	पूर्ण
+	err = snd_timer_open(tu->timeri, &tselect.id, current->pid);
+	if (err < 0) {
+		snd_timer_instance_free(tu->timeri);
+		tu->timeri = NULL;
+	}
 
       __err:
-	वापस err;
-पूर्ण
+	return err;
+}
 
-अटल पूर्णांक snd_समयr_user_info(काष्ठा file *file,
-			       काष्ठा snd_समयr_info __user *_info)
-अणु
-	काष्ठा snd_समयr_user *tu;
-	काष्ठा snd_समयr_info *info;
-	काष्ठा snd_समयr *t;
-	पूर्णांक err = 0;
+static int snd_timer_user_info(struct file *file,
+			       struct snd_timer_info __user *_info)
+{
+	struct snd_timer_user *tu;
+	struct snd_timer_info *info;
+	struct snd_timer *t;
+	int err = 0;
 
-	tu = file->निजी_data;
-	अगर (!tu->समयri)
-		वापस -EBADFD;
-	t = tu->समयri->समयr;
-	अगर (!t)
-		वापस -EBADFD;
+	tu = file->private_data;
+	if (!tu->timeri)
+		return -EBADFD;
+	t = tu->timeri->timer;
+	if (!t)
+		return -EBADFD;
 
-	info = kzalloc(माप(*info), GFP_KERNEL);
-	अगर (! info)
-		वापस -ENOMEM;
+	info = kzalloc(sizeof(*info), GFP_KERNEL);
+	if (! info)
+		return -ENOMEM;
 	info->card = t->card ? t->card->number : -1;
-	अगर (t->hw.flags & SNDRV_TIMER_HW_SLAVE)
+	if (t->hw.flags & SNDRV_TIMER_HW_SLAVE)
 		info->flags |= SNDRV_TIMER_FLG_SLAVE;
-	strscpy(info->id, t->id, माप(info->id));
-	strscpy(info->name, t->name, माप(info->name));
+	strscpy(info->id, t->id, sizeof(info->id));
+	strscpy(info->name, t->name, sizeof(info->name));
 	info->resolution = t->hw.resolution;
-	अगर (copy_to_user(_info, info, माप(*_info)))
+	if (copy_to_user(_info, info, sizeof(*_info)))
 		err = -EFAULT;
-	kमुक्त(info);
-	वापस err;
-पूर्ण
+	kfree(info);
+	return err;
+}
 
-अटल पूर्णांक snd_समयr_user_params(काष्ठा file *file,
-				 काष्ठा snd_समयr_params __user *_params)
-अणु
-	काष्ठा snd_समयr_user *tu;
-	काष्ठा snd_समयr_params params;
-	काष्ठा snd_समयr *t;
-	पूर्णांक err;
+static int snd_timer_user_params(struct file *file,
+				 struct snd_timer_params __user *_params)
+{
+	struct snd_timer_user *tu;
+	struct snd_timer_params params;
+	struct snd_timer *t;
+	int err;
 
-	tu = file->निजी_data;
-	अगर (!tu->समयri)
-		वापस -EBADFD;
-	t = tu->समयri->समयr;
-	अगर (!t)
-		वापस -EBADFD;
-	अगर (copy_from_user(&params, _params, माप(params)))
-		वापस -EFAULT;
-	अगर (!(t->hw.flags & SNDRV_TIMER_HW_SLAVE)) अणु
+	tu = file->private_data;
+	if (!tu->timeri)
+		return -EBADFD;
+	t = tu->timeri->timer;
+	if (!t)
+		return -EBADFD;
+	if (copy_from_user(&params, _params, sizeof(params)))
+		return -EFAULT;
+	if (!(t->hw.flags & SNDRV_TIMER_HW_SLAVE)) {
 		u64 resolution;
 
-		अगर (params.ticks < 1) अणु
+		if (params.ticks < 1) {
 			err = -EINVAL;
-			जाओ _end;
-		पूर्ण
+			goto _end;
+		}
 
 		/* Don't allow resolution less than 1ms */
-		resolution = snd_समयr_resolution(tu->समयri);
+		resolution = snd_timer_resolution(tu->timeri);
 		resolution *= params.ticks;
-		अगर (resolution < 1000000) अणु
+		if (resolution < 1000000) {
 			err = -EINVAL;
-			जाओ _end;
-		पूर्ण
-	पूर्ण
-	अगर (params.queue_size > 0 &&
-	    (params.queue_size < 32 || params.queue_size > 1024)) अणु
+			goto _end;
+		}
+	}
+	if (params.queue_size > 0 &&
+	    (params.queue_size < 32 || params.queue_size > 1024)) {
 		err = -EINVAL;
-		जाओ _end;
-	पूर्ण
-	अगर (params.filter & ~((1<<SNDRV_TIMER_EVENT_RESOLUTION)|
+		goto _end;
+	}
+	if (params.filter & ~((1<<SNDRV_TIMER_EVENT_RESOLUTION)|
 			      (1<<SNDRV_TIMER_EVENT_TICK)|
 			      (1<<SNDRV_TIMER_EVENT_START)|
 			      (1<<SNDRV_TIMER_EVENT_STOP)|
@@ -1875,311 +1874,311 @@ _error:
 			      (1<<SNDRV_TIMER_EVENT_MCONTINUE)|
 			      (1<<SNDRV_TIMER_EVENT_MPAUSE)|
 			      (1<<SNDRV_TIMER_EVENT_MSUSPEND)|
-			      (1<<SNDRV_TIMER_EVENT_MRESUME))) अणु
+			      (1<<SNDRV_TIMER_EVENT_MRESUME))) {
 		err = -EINVAL;
-		जाओ _end;
-	पूर्ण
-	snd_समयr_stop(tu->समयri);
+		goto _end;
+	}
+	snd_timer_stop(tu->timeri);
 	spin_lock_irq(&t->lock);
-	tu->समयri->flags &= ~(SNDRV_TIMER_IFLG_AUTO|
+	tu->timeri->flags &= ~(SNDRV_TIMER_IFLG_AUTO|
 			       SNDRV_TIMER_IFLG_EXCLUSIVE|
 			       SNDRV_TIMER_IFLG_EARLY_EVENT);
-	अगर (params.flags & SNDRV_TIMER_PSFLG_AUTO)
-		tu->समयri->flags |= SNDRV_TIMER_IFLG_AUTO;
-	अगर (params.flags & SNDRV_TIMER_PSFLG_EXCLUSIVE)
-		tu->समयri->flags |= SNDRV_TIMER_IFLG_EXCLUSIVE;
-	अगर (params.flags & SNDRV_TIMER_PSFLG_EARLY_EVENT)
-		tu->समयri->flags |= SNDRV_TIMER_IFLG_EARLY_EVENT;
+	if (params.flags & SNDRV_TIMER_PSFLG_AUTO)
+		tu->timeri->flags |= SNDRV_TIMER_IFLG_AUTO;
+	if (params.flags & SNDRV_TIMER_PSFLG_EXCLUSIVE)
+		tu->timeri->flags |= SNDRV_TIMER_IFLG_EXCLUSIVE;
+	if (params.flags & SNDRV_TIMER_PSFLG_EARLY_EVENT)
+		tu->timeri->flags |= SNDRV_TIMER_IFLG_EARLY_EVENT;
 	spin_unlock_irq(&t->lock);
-	अगर (params.queue_size > 0 &&
-	    (अचिन्हित पूर्णांक)tu->queue_size != params.queue_size) अणु
-		err = पुनः_स्मृति_user_queue(tu, params.queue_size);
-		अगर (err < 0)
-			जाओ _end;
-	पूर्ण
+	if (params.queue_size > 0 &&
+	    (unsigned int)tu->queue_size != params.queue_size) {
+		err = realloc_user_queue(tu, params.queue_size);
+		if (err < 0)
+			goto _end;
+	}
 	spin_lock_irq(&tu->qlock);
 	tu->qhead = tu->qtail = tu->qused = 0;
-	अगर (tu->समयri->flags & SNDRV_TIMER_IFLG_EARLY_EVENT) अणु
-		अगर (tu->tपढ़ो) अणु
-			काष्ठा snd_समयr_tपढ़ो64 tपढ़ो;
-			स_रखो(&tपढ़ो, 0, माप(tपढ़ो));
-			tपढ़ो.event = SNDRV_TIMER_EVENT_EARLY;
-			tपढ़ो.tstamp_sec = 0;
-			tपढ़ो.tstamp_nsec = 0;
-			tपढ़ो.val = 0;
-			snd_समयr_user_append_to_tqueue(tu, &tपढ़ो);
-		पूर्ण अन्यथा अणु
-			काष्ठा snd_समयr_पढ़ो *r = &tu->queue[0];
+	if (tu->timeri->flags & SNDRV_TIMER_IFLG_EARLY_EVENT) {
+		if (tu->tread) {
+			struct snd_timer_tread64 tread;
+			memset(&tread, 0, sizeof(tread));
+			tread.event = SNDRV_TIMER_EVENT_EARLY;
+			tread.tstamp_sec = 0;
+			tread.tstamp_nsec = 0;
+			tread.val = 0;
+			snd_timer_user_append_to_tqueue(tu, &tread);
+		} else {
+			struct snd_timer_read *r = &tu->queue[0];
 			r->resolution = 0;
 			r->ticks = 0;
 			tu->qused++;
 			tu->qtail++;
-		पूर्ण
-	पूर्ण
+		}
+	}
 	tu->filter = params.filter;
 	tu->ticks = params.ticks;
 	spin_unlock_irq(&tu->qlock);
 	err = 0;
  _end:
-	अगर (copy_to_user(_params, &params, माप(params)))
-		वापस -EFAULT;
-	वापस err;
-पूर्ण
+	if (copy_to_user(_params, &params, sizeof(params)))
+		return -EFAULT;
+	return err;
+}
 
-अटल पूर्णांक snd_समयr_user_status32(काष्ठा file *file,
-				   काष्ठा snd_समयr_status32 __user *_status)
- अणु
-	काष्ठा snd_समयr_user *tu;
-	काष्ठा snd_समयr_status32 status;
+static int snd_timer_user_status32(struct file *file,
+				   struct snd_timer_status32 __user *_status)
+ {
+	struct snd_timer_user *tu;
+	struct snd_timer_status32 status;
 
-	tu = file->निजी_data;
-	अगर (!tu->समयri)
-		वापस -EBADFD;
-	स_रखो(&status, 0, माप(status));
+	tu = file->private_data;
+	if (!tu->timeri)
+		return -EBADFD;
+	memset(&status, 0, sizeof(status));
 	status.tstamp_sec = tu->tstamp.tv_sec;
 	status.tstamp_nsec = tu->tstamp.tv_nsec;
-	status.resolution = snd_समयr_resolution(tu->समयri);
-	status.lost = tu->समयri->lost;
+	status.resolution = snd_timer_resolution(tu->timeri);
+	status.lost = tu->timeri->lost;
 	status.overrun = tu->overrun;
 	spin_lock_irq(&tu->qlock);
 	status.queue = tu->qused;
 	spin_unlock_irq(&tu->qlock);
-	अगर (copy_to_user(_status, &status, माप(status)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user(_status, &status, sizeof(status)))
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक snd_समयr_user_status64(काष्ठा file *file,
-				   काष्ठा snd_समयr_status64 __user *_status)
-अणु
-	काष्ठा snd_समयr_user *tu;
-	काष्ठा snd_समयr_status64 status;
+static int snd_timer_user_status64(struct file *file,
+				   struct snd_timer_status64 __user *_status)
+{
+	struct snd_timer_user *tu;
+	struct snd_timer_status64 status;
 
-	tu = file->निजी_data;
-	अगर (!tu->समयri)
-		वापस -EBADFD;
-	स_रखो(&status, 0, माप(status));
+	tu = file->private_data;
+	if (!tu->timeri)
+		return -EBADFD;
+	memset(&status, 0, sizeof(status));
 	status.tstamp_sec = tu->tstamp.tv_sec;
 	status.tstamp_nsec = tu->tstamp.tv_nsec;
-	status.resolution = snd_समयr_resolution(tu->समयri);
-	status.lost = tu->समयri->lost;
+	status.resolution = snd_timer_resolution(tu->timeri);
+	status.lost = tu->timeri->lost;
 	status.overrun = tu->overrun;
 	spin_lock_irq(&tu->qlock);
 	status.queue = tu->qused;
 	spin_unlock_irq(&tu->qlock);
-	अगर (copy_to_user(_status, &status, माप(status)))
-		वापस -EFAULT;
-	वापस 0;
-पूर्ण
+	if (copy_to_user(_status, &status, sizeof(status)))
+		return -EFAULT;
+	return 0;
+}
 
-अटल पूर्णांक snd_समयr_user_start(काष्ठा file *file)
-अणु
-	पूर्णांक err;
-	काष्ठा snd_समयr_user *tu;
+static int snd_timer_user_start(struct file *file)
+{
+	int err;
+	struct snd_timer_user *tu;
 
-	tu = file->निजी_data;
-	अगर (!tu->समयri)
-		वापस -EBADFD;
-	snd_समयr_stop(tu->समयri);
-	tu->समयri->lost = 0;
+	tu = file->private_data;
+	if (!tu->timeri)
+		return -EBADFD;
+	snd_timer_stop(tu->timeri);
+	tu->timeri->lost = 0;
 	tu->last_resolution = 0;
-	err = snd_समयr_start(tu->समयri, tu->ticks);
-	अगर (err < 0)
-		वापस err;
-	वापस 0;
-पूर्ण
+	err = snd_timer_start(tu->timeri, tu->ticks);
+	if (err < 0)
+		return err;
+	return 0;
+}
 
-अटल पूर्णांक snd_समयr_user_stop(काष्ठा file *file)
-अणु
-	पूर्णांक err;
-	काष्ठा snd_समयr_user *tu;
+static int snd_timer_user_stop(struct file *file)
+{
+	int err;
+	struct snd_timer_user *tu;
 
-	tu = file->निजी_data;
-	अगर (!tu->समयri)
-		वापस -EBADFD;
-	err = snd_समयr_stop(tu->समयri);
-	अगर (err < 0)
-		वापस err;
-	वापस 0;
-पूर्ण
+	tu = file->private_data;
+	if (!tu->timeri)
+		return -EBADFD;
+	err = snd_timer_stop(tu->timeri);
+	if (err < 0)
+		return err;
+	return 0;
+}
 
-अटल पूर्णांक snd_समयr_user_जारी(काष्ठा file *file)
-अणु
-	पूर्णांक err;
-	काष्ठा snd_समयr_user *tu;
+static int snd_timer_user_continue(struct file *file)
+{
+	int err;
+	struct snd_timer_user *tu;
 
-	tu = file->निजी_data;
-	अगर (!tu->समयri)
-		वापस -EBADFD;
-	/* start समयr instead of जारी अगर it's not used beक्रमe */
-	अगर (!(tu->समयri->flags & SNDRV_TIMER_IFLG_PAUSED))
-		वापस snd_समयr_user_start(file);
-	tu->समयri->lost = 0;
-	err = snd_समयr_जारी(tu->समयri);
-	अगर (err < 0)
-		वापस err;
-	वापस 0;
-पूर्ण
+	tu = file->private_data;
+	if (!tu->timeri)
+		return -EBADFD;
+	/* start timer instead of continue if it's not used before */
+	if (!(tu->timeri->flags & SNDRV_TIMER_IFLG_PAUSED))
+		return snd_timer_user_start(file);
+	tu->timeri->lost = 0;
+	err = snd_timer_continue(tu->timeri);
+	if (err < 0)
+		return err;
+	return 0;
+}
 
-अटल पूर्णांक snd_समयr_user_छोड़ो(काष्ठा file *file)
-अणु
-	पूर्णांक err;
-	काष्ठा snd_समयr_user *tu;
+static int snd_timer_user_pause(struct file *file)
+{
+	int err;
+	struct snd_timer_user *tu;
 
-	tu = file->निजी_data;
-	अगर (!tu->समयri)
-		वापस -EBADFD;
-	err = snd_समयr_छोड़ो(tu->समयri);
-	अगर (err < 0)
-		वापस err;
-	वापस 0;
-पूर्ण
+	tu = file->private_data;
+	if (!tu->timeri)
+		return -EBADFD;
+	err = snd_timer_pause(tu->timeri);
+	if (err < 0)
+		return err;
+	return 0;
+}
 
-अटल पूर्णांक snd_समयr_user_tपढ़ो(व्योम __user *argp, काष्ठा snd_समयr_user *tu,
-				अचिन्हित पूर्णांक cmd, bool compat)
-अणु
-	पूर्णांक __user *p = argp;
-	पूर्णांक xarg, old_tपढ़ो;
+static int snd_timer_user_tread(void __user *argp, struct snd_timer_user *tu,
+				unsigned int cmd, bool compat)
+{
+	int __user *p = argp;
+	int xarg, old_tread;
 
-	अगर (tu->समयri)	/* too late */
-		वापस -EBUSY;
-	अगर (get_user(xarg, p))
-		वापस -EFAULT;
+	if (tu->timeri)	/* too late */
+		return -EBUSY;
+	if (get_user(xarg, p))
+		return -EFAULT;
 
-	old_tपढ़ो = tu->tपढ़ो;
+	old_tread = tu->tread;
 
-	अगर (!xarg)
-		tu->tपढ़ो = TREAD_FORMAT_NONE;
-	अन्यथा अगर (cmd == SNDRV_TIMER_IOCTL_TREAD64 ||
+	if (!xarg)
+		tu->tread = TREAD_FORMAT_NONE;
+	else if (cmd == SNDRV_TIMER_IOCTL_TREAD64 ||
 		 (IS_ENABLED(CONFIG_64BIT) && !compat))
-		tu->tपढ़ो = TREAD_FORMAT_TIME64;
-	अन्यथा
-		tu->tपढ़ो = TREAD_FORMAT_TIME32;
+		tu->tread = TREAD_FORMAT_TIME64;
+	else
+		tu->tread = TREAD_FORMAT_TIME32;
 
-	अगर (tu->tपढ़ो != old_tपढ़ो &&
-	    पुनः_स्मृति_user_queue(tu, tu->queue_size) < 0) अणु
-		tu->tपढ़ो = old_tपढ़ो;
-		वापस -ENOMEM;
-	पूर्ण
+	if (tu->tread != old_tread &&
+	    realloc_user_queue(tu, tu->queue_size) < 0) {
+		tu->tread = old_tread;
+		return -ENOMEM;
+	}
 
-	वापस 0;
-पूर्ण
+	return 0;
+}
 
-क्रमागत अणु
+enum {
 	SNDRV_TIMER_IOCTL_START_OLD = _IO('T', 0x20),
 	SNDRV_TIMER_IOCTL_STOP_OLD = _IO('T', 0x21),
 	SNDRV_TIMER_IOCTL_CONTINUE_OLD = _IO('T', 0x22),
 	SNDRV_TIMER_IOCTL_PAUSE_OLD = _IO('T', 0x23),
-पूर्ण;
+};
 
-अटल दीर्घ __snd_समयr_user_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-				 अचिन्हित दीर्घ arg, bool compat)
-अणु
-	काष्ठा snd_समयr_user *tu;
-	व्योम __user *argp = (व्योम __user *)arg;
-	पूर्णांक __user *p = argp;
+static long __snd_timer_user_ioctl(struct file *file, unsigned int cmd,
+				 unsigned long arg, bool compat)
+{
+	struct snd_timer_user *tu;
+	void __user *argp = (void __user *)arg;
+	int __user *p = argp;
 
-	tu = file->निजी_data;
-	चयन (cmd) अणु
-	हाल SNDRV_TIMER_IOCTL_PVERSION:
-		वापस put_user(SNDRV_TIMER_VERSION, p) ? -EFAULT : 0;
-	हाल SNDRV_TIMER_IOCTL_NEXT_DEVICE:
-		वापस snd_समयr_user_next_device(argp);
-	हाल SNDRV_TIMER_IOCTL_TREAD_OLD:
-	हाल SNDRV_TIMER_IOCTL_TREAD64:
-		वापस snd_समयr_user_tपढ़ो(argp, tu, cmd, compat);
-	हाल SNDRV_TIMER_IOCTL_GINFO:
-		वापस snd_समयr_user_ginfo(file, argp);
-	हाल SNDRV_TIMER_IOCTL_GPARAMS:
-		वापस snd_समयr_user_gparams(file, argp);
-	हाल SNDRV_TIMER_IOCTL_GSTATUS:
-		वापस snd_समयr_user_gstatus(file, argp);
-	हाल SNDRV_TIMER_IOCTL_SELECT:
-		वापस snd_समयr_user_tselect(file, argp);
-	हाल SNDRV_TIMER_IOCTL_INFO:
-		वापस snd_समयr_user_info(file, argp);
-	हाल SNDRV_TIMER_IOCTL_PARAMS:
-		वापस snd_समयr_user_params(file, argp);
-	हाल SNDRV_TIMER_IOCTL_STATUS32:
-		वापस snd_समयr_user_status32(file, argp);
-	हाल SNDRV_TIMER_IOCTL_STATUS64:
-		वापस snd_समयr_user_status64(file, argp);
-	हाल SNDRV_TIMER_IOCTL_START:
-	हाल SNDRV_TIMER_IOCTL_START_OLD:
-		वापस snd_समयr_user_start(file);
-	हाल SNDRV_TIMER_IOCTL_STOP:
-	हाल SNDRV_TIMER_IOCTL_STOP_OLD:
-		वापस snd_समयr_user_stop(file);
-	हाल SNDRV_TIMER_IOCTL_CONTINUE:
-	हाल SNDRV_TIMER_IOCTL_CONTINUE_OLD:
-		वापस snd_समयr_user_जारी(file);
-	हाल SNDRV_TIMER_IOCTL_PAUSE:
-	हाल SNDRV_TIMER_IOCTL_PAUSE_OLD:
-		वापस snd_समयr_user_छोड़ो(file);
-	पूर्ण
-	वापस -ENOTTY;
-पूर्ण
+	tu = file->private_data;
+	switch (cmd) {
+	case SNDRV_TIMER_IOCTL_PVERSION:
+		return put_user(SNDRV_TIMER_VERSION, p) ? -EFAULT : 0;
+	case SNDRV_TIMER_IOCTL_NEXT_DEVICE:
+		return snd_timer_user_next_device(argp);
+	case SNDRV_TIMER_IOCTL_TREAD_OLD:
+	case SNDRV_TIMER_IOCTL_TREAD64:
+		return snd_timer_user_tread(argp, tu, cmd, compat);
+	case SNDRV_TIMER_IOCTL_GINFO:
+		return snd_timer_user_ginfo(file, argp);
+	case SNDRV_TIMER_IOCTL_GPARAMS:
+		return snd_timer_user_gparams(file, argp);
+	case SNDRV_TIMER_IOCTL_GSTATUS:
+		return snd_timer_user_gstatus(file, argp);
+	case SNDRV_TIMER_IOCTL_SELECT:
+		return snd_timer_user_tselect(file, argp);
+	case SNDRV_TIMER_IOCTL_INFO:
+		return snd_timer_user_info(file, argp);
+	case SNDRV_TIMER_IOCTL_PARAMS:
+		return snd_timer_user_params(file, argp);
+	case SNDRV_TIMER_IOCTL_STATUS32:
+		return snd_timer_user_status32(file, argp);
+	case SNDRV_TIMER_IOCTL_STATUS64:
+		return snd_timer_user_status64(file, argp);
+	case SNDRV_TIMER_IOCTL_START:
+	case SNDRV_TIMER_IOCTL_START_OLD:
+		return snd_timer_user_start(file);
+	case SNDRV_TIMER_IOCTL_STOP:
+	case SNDRV_TIMER_IOCTL_STOP_OLD:
+		return snd_timer_user_stop(file);
+	case SNDRV_TIMER_IOCTL_CONTINUE:
+	case SNDRV_TIMER_IOCTL_CONTINUE_OLD:
+		return snd_timer_user_continue(file);
+	case SNDRV_TIMER_IOCTL_PAUSE:
+	case SNDRV_TIMER_IOCTL_PAUSE_OLD:
+		return snd_timer_user_pause(file);
+	}
+	return -ENOTTY;
+}
 
-अटल दीर्घ snd_समयr_user_ioctl(काष्ठा file *file, अचिन्हित पूर्णांक cmd,
-				 अचिन्हित दीर्घ arg)
-अणु
-	काष्ठा snd_समयr_user *tu = file->निजी_data;
-	दीर्घ ret;
+static long snd_timer_user_ioctl(struct file *file, unsigned int cmd,
+				 unsigned long arg)
+{
+	struct snd_timer_user *tu = file->private_data;
+	long ret;
 
 	mutex_lock(&tu->ioctl_lock);
-	ret = __snd_समयr_user_ioctl(file, cmd, arg, false);
+	ret = __snd_timer_user_ioctl(file, cmd, arg, false);
 	mutex_unlock(&tu->ioctl_lock);
-	वापस ret;
-पूर्ण
+	return ret;
+}
 
-अटल पूर्णांक snd_समयr_user_fasync(पूर्णांक fd, काष्ठा file * file, पूर्णांक on)
-अणु
-	काष्ठा snd_समयr_user *tu;
+static int snd_timer_user_fasync(int fd, struct file * file, int on)
+{
+	struct snd_timer_user *tu;
 
-	tu = file->निजी_data;
-	वापस fasync_helper(fd, file, on, &tu->fasync);
-पूर्ण
+	tu = file->private_data;
+	return fasync_helper(fd, file, on, &tu->fasync);
+}
 
-अटल sमाप_प्रकार snd_समयr_user_पढ़ो(काष्ठा file *file, अक्षर __user *buffer,
-				   माप_प्रकार count, loff_t *offset)
-अणु
-	काष्ठा snd_समयr_tपढ़ो64 *tपढ़ो;
-	काष्ठा snd_समयr_tपढ़ो32 tपढ़ो32;
-	काष्ठा snd_समयr_user *tu;
-	दीर्घ result = 0, unit;
-	पूर्णांक qhead;
-	पूर्णांक err = 0;
+static ssize_t snd_timer_user_read(struct file *file, char __user *buffer,
+				   size_t count, loff_t *offset)
+{
+	struct snd_timer_tread64 *tread;
+	struct snd_timer_tread32 tread32;
+	struct snd_timer_user *tu;
+	long result = 0, unit;
+	int qhead;
+	int err = 0;
 
-	tu = file->निजी_data;
-	चयन (tu->tपढ़ो) अणु
-	हाल TREAD_FORMAT_TIME64:
-		unit = माप(काष्ठा snd_समयr_tपढ़ो64);
-		अवरोध;
-	हाल TREAD_FORMAT_TIME32:
-		unit = माप(काष्ठा snd_समयr_tपढ़ो32);
-		अवरोध;
-	हाल TREAD_FORMAT_NONE:
-		unit = माप(काष्ठा snd_समयr_पढ़ो);
-		अवरोध;
-	शेष:
+	tu = file->private_data;
+	switch (tu->tread) {
+	case TREAD_FORMAT_TIME64:
+		unit = sizeof(struct snd_timer_tread64);
+		break;
+	case TREAD_FORMAT_TIME32:
+		unit = sizeof(struct snd_timer_tread32);
+		break;
+	case TREAD_FORMAT_NONE:
+		unit = sizeof(struct snd_timer_read);
+		break;
+	default:
 		WARN_ONCE(1, "Corrupt snd_timer_user\n");
-		वापस -ENOTSUPP;
-	पूर्ण
+		return -ENOTSUPP;
+	}
 
 	mutex_lock(&tu->ioctl_lock);
 	spin_lock_irq(&tu->qlock);
-	जबतक ((दीर्घ)count - result >= unit) अणु
-		जबतक (!tu->qused) अणु
-			रुको_queue_entry_t रुको;
+	while ((long)count - result >= unit) {
+		while (!tu->qused) {
+			wait_queue_entry_t wait;
 
-			अगर ((file->f_flags & O_NONBLOCK) != 0 || result > 0) अणु
+			if ((file->f_flags & O_NONBLOCK) != 0 || result > 0) {
 				err = -EAGAIN;
-				जाओ _error;
-			पूर्ण
+				goto _error;
+			}
 
 			set_current_state(TASK_INTERRUPTIBLE);
-			init_रुकोqueue_entry(&रुको, current);
-			add_रुको_queue(&tu->qchange_sleep, &रुको);
+			init_waitqueue_entry(&wait, current);
+			add_wait_queue(&tu->qchange_sleep, &wait);
 
 			spin_unlock_irq(&tu->qlock);
 			mutex_unlock(&tu->ioctl_lock);
@@ -2187,163 +2186,163 @@ _error:
 			mutex_lock(&tu->ioctl_lock);
 			spin_lock_irq(&tu->qlock);
 
-			हटाओ_रुको_queue(&tu->qchange_sleep, &रुको);
+			remove_wait_queue(&tu->qchange_sleep, &wait);
 
-			अगर (tu->disconnected) अणु
+			if (tu->disconnected) {
 				err = -ENODEV;
-				जाओ _error;
-			पूर्ण
-			अगर (संकेत_pending(current)) अणु
+				goto _error;
+			}
+			if (signal_pending(current)) {
 				err = -ERESTARTSYS;
-				जाओ _error;
-			पूर्ण
-		पूर्ण
+				goto _error;
+			}
+		}
 
 		qhead = tu->qhead++;
 		tu->qhead %= tu->queue_size;
 		tu->qused--;
 		spin_unlock_irq(&tu->qlock);
 
-		tपढ़ो = &tu->tqueue[qhead];
+		tread = &tu->tqueue[qhead];
 
-		चयन (tu->tपढ़ो) अणु
-		हाल TREAD_FORMAT_TIME64:
-			अगर (copy_to_user(buffer, tपढ़ो,
-					 माप(काष्ठा snd_समयr_tपढ़ो64)))
+		switch (tu->tread) {
+		case TREAD_FORMAT_TIME64:
+			if (copy_to_user(buffer, tread,
+					 sizeof(struct snd_timer_tread64)))
 				err = -EFAULT;
-			अवरोध;
-		हाल TREAD_FORMAT_TIME32:
-			स_रखो(&tपढ़ो32, 0, माप(tपढ़ो32));
-			tपढ़ो32 = (काष्ठा snd_समयr_tपढ़ो32) अणु
-				.event = tपढ़ो->event,
-				.tstamp_sec = tपढ़ो->tstamp_sec,
-				.tstamp_nsec = tपढ़ो->tstamp_nsec,
-				.val = tपढ़ो->val,
-			पूर्ण;
+			break;
+		case TREAD_FORMAT_TIME32:
+			memset(&tread32, 0, sizeof(tread32));
+			tread32 = (struct snd_timer_tread32) {
+				.event = tread->event,
+				.tstamp_sec = tread->tstamp_sec,
+				.tstamp_nsec = tread->tstamp_nsec,
+				.val = tread->val,
+			};
 
-			अगर (copy_to_user(buffer, &tपढ़ो32, माप(tपढ़ो32)))
+			if (copy_to_user(buffer, &tread32, sizeof(tread32)))
 				err = -EFAULT;
-			अवरोध;
-		हाल TREAD_FORMAT_NONE:
-			अगर (copy_to_user(buffer, &tu->queue[qhead],
-					 माप(काष्ठा snd_समयr_पढ़ो)))
+			break;
+		case TREAD_FORMAT_NONE:
+			if (copy_to_user(buffer, &tu->queue[qhead],
+					 sizeof(struct snd_timer_read)))
 				err = -EFAULT;
-			अवरोध;
-		शेष:
+			break;
+		default:
 			err = -ENOTSUPP;
-			अवरोध;
-		पूर्ण
+			break;
+		}
 
 		spin_lock_irq(&tu->qlock);
-		अगर (err < 0)
-			जाओ _error;
+		if (err < 0)
+			goto _error;
 		result += unit;
 		buffer += unit;
-	पूर्ण
+	}
  _error:
 	spin_unlock_irq(&tu->qlock);
 	mutex_unlock(&tu->ioctl_lock);
-	वापस result > 0 ? result : err;
-पूर्ण
+	return result > 0 ? result : err;
+}
 
-अटल __poll_t snd_समयr_user_poll(काष्ठा file *file, poll_table * रुको)
-अणु
+static __poll_t snd_timer_user_poll(struct file *file, poll_table * wait)
+{
         __poll_t mask;
-        काष्ठा snd_समयr_user *tu;
+        struct snd_timer_user *tu;
 
-        tu = file->निजी_data;
+        tu = file->private_data;
 
-        poll_रुको(file, &tu->qchange_sleep, रुको);
+        poll_wait(file, &tu->qchange_sleep, wait);
 
 	mask = 0;
 	spin_lock_irq(&tu->qlock);
-	अगर (tu->qused)
+	if (tu->qused)
 		mask |= EPOLLIN | EPOLLRDNORM;
-	अगर (tu->disconnected)
+	if (tu->disconnected)
 		mask |= EPOLLERR;
 	spin_unlock_irq(&tu->qlock);
 
-	वापस mask;
-पूर्ण
+	return mask;
+}
 
-#अगर_घोषित CONFIG_COMPAT
-#समावेश "timer_compat.c"
-#अन्यथा
-#घोषणा snd_समयr_user_ioctl_compat	शून्य
-#पूर्ण_अगर
+#ifdef CONFIG_COMPAT
+#include "timer_compat.c"
+#else
+#define snd_timer_user_ioctl_compat	NULL
+#endif
 
-अटल स्थिर काष्ठा file_operations snd_समयr_f_ops =
-अणु
+static const struct file_operations snd_timer_f_ops =
+{
 	.owner =	THIS_MODULE,
-	.पढ़ो =		snd_समयr_user_पढ़ो,
-	.खोलो =		snd_समयr_user_खोलो,
-	.release =	snd_समयr_user_release,
+	.read =		snd_timer_user_read,
+	.open =		snd_timer_user_open,
+	.release =	snd_timer_user_release,
 	.llseek =	no_llseek,
-	.poll =		snd_समयr_user_poll,
-	.unlocked_ioctl =	snd_समयr_user_ioctl,
-	.compat_ioctl =	snd_समयr_user_ioctl_compat,
-	.fasync = 	snd_समयr_user_fasync,
-पूर्ण;
+	.poll =		snd_timer_user_poll,
+	.unlocked_ioctl =	snd_timer_user_ioctl,
+	.compat_ioctl =	snd_timer_user_ioctl_compat,
+	.fasync = 	snd_timer_user_fasync,
+};
 
-/* unरेजिस्टर the प्रणाली समयr */
-अटल व्योम snd_समयr_मुक्त_all(व्योम)
-अणु
-	काष्ठा snd_समयr *समयr, *n;
+/* unregister the system timer */
+static void snd_timer_free_all(void)
+{
+	struct snd_timer *timer, *n;
 
-	list_क्रम_each_entry_safe(समयr, n, &snd_समयr_list, device_list)
-		snd_समयr_मुक्त(समयr);
-पूर्ण
+	list_for_each_entry_safe(timer, n, &snd_timer_list, device_list)
+		snd_timer_free(timer);
+}
 
-अटल काष्ठा device समयr_dev;
+static struct device timer_dev;
 
 /*
  *  ENTRY functions
  */
 
-अटल पूर्णांक __init alsa_समयr_init(व्योम)
-अणु
-	पूर्णांक err;
+static int __init alsa_timer_init(void)
+{
+	int err;
 
-	snd_device_initialize(&समयr_dev, शून्य);
-	dev_set_name(&समयr_dev, "timer");
+	snd_device_initialize(&timer_dev, NULL);
+	dev_set_name(&timer_dev, "timer");
 
-#अगर_घोषित SNDRV_OSS_INFO_DEV_TIMERS
-	snd_oss_info_रेजिस्टर(SNDRV_OSS_INFO_DEV_TIMERS, SNDRV_CARDS - 1,
+#ifdef SNDRV_OSS_INFO_DEV_TIMERS
+	snd_oss_info_register(SNDRV_OSS_INFO_DEV_TIMERS, SNDRV_CARDS - 1,
 			      "system timer");
-#पूर्ण_अगर
+#endif
 
-	err = snd_समयr_रेजिस्टर_प्रणाली();
-	अगर (err < 0) अणु
+	err = snd_timer_register_system();
+	if (err < 0) {
 		pr_err("ALSA: unable to register system timer (%i)\n", err);
-		जाओ put_समयr;
-	पूर्ण
+		goto put_timer;
+	}
 
-	err = snd_रेजिस्टर_device(SNDRV_DEVICE_TYPE_TIMER, शून्य, 0,
-				  &snd_समयr_f_ops, शून्य, &समयr_dev);
-	अगर (err < 0) अणु
+	err = snd_register_device(SNDRV_DEVICE_TYPE_TIMER, NULL, 0,
+				  &snd_timer_f_ops, NULL, &timer_dev);
+	if (err < 0) {
 		pr_err("ALSA: unable to register timer device (%i)\n", err);
-		snd_समयr_मुक्त_all();
-		जाओ put_समयr;
-	पूर्ण
+		snd_timer_free_all();
+		goto put_timer;
+	}
 
-	snd_समयr_proc_init();
-	वापस 0;
+	snd_timer_proc_init();
+	return 0;
 
-put_समयr:
-	put_device(&समयr_dev);
-	वापस err;
-पूर्ण
+put_timer:
+	put_device(&timer_dev);
+	return err;
+}
 
-अटल व्योम __निकास alsa_समयr_निकास(व्योम)
-अणु
-	snd_unरेजिस्टर_device(&समयr_dev);
-	snd_समयr_मुक्त_all();
-	put_device(&समयr_dev);
-	snd_समयr_proc_करोne();
-#अगर_घोषित SNDRV_OSS_INFO_DEV_TIMERS
-	snd_oss_info_unरेजिस्टर(SNDRV_OSS_INFO_DEV_TIMERS, SNDRV_CARDS - 1);
-#पूर्ण_अगर
-पूर्ण
+static void __exit alsa_timer_exit(void)
+{
+	snd_unregister_device(&timer_dev);
+	snd_timer_free_all();
+	put_device(&timer_dev);
+	snd_timer_proc_done();
+#ifdef SNDRV_OSS_INFO_DEV_TIMERS
+	snd_oss_info_unregister(SNDRV_OSS_INFO_DEV_TIMERS, SNDRV_CARDS - 1);
+#endif
+}
 
-module_init(alsa_समयr_init)
-module_निकास(alsa_समयr_निकास)
+module_init(alsa_timer_init)
+module_exit(alsa_timer_exit)

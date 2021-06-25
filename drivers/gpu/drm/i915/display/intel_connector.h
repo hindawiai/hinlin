@@ -1,37 +1,36 @@
-<शैली गुरु>
-/* SPDX-License-Identअगरier: MIT */
+/* SPDX-License-Identifier: MIT */
 /*
- * Copyright तऊ 2019 Intel Corporation
+ * Copyright © 2019 Intel Corporation
  */
 
-#अगर_अघोषित __INTEL_CONNECTOR_H__
-#घोषणा __INTEL_CONNECTOR_H__
+#ifndef __INTEL_CONNECTOR_H__
+#define __INTEL_CONNECTOR_H__
 
-#समावेश "intel_display.h"
+#include "intel_display.h"
 
-काष्ठा drm_connector;
-काष्ठा edid;
-काष्ठा i2c_adapter;
-काष्ठा पूर्णांकel_connector;
-काष्ठा पूर्णांकel_encoder;
+struct drm_connector;
+struct edid;
+struct i2c_adapter;
+struct intel_connector;
+struct intel_encoder;
 
-पूर्णांक पूर्णांकel_connector_init(काष्ठा पूर्णांकel_connector *connector);
-काष्ठा पूर्णांकel_connector *पूर्णांकel_connector_alloc(व्योम);
-व्योम पूर्णांकel_connector_मुक्त(काष्ठा पूर्णांकel_connector *connector);
-व्योम पूर्णांकel_connector_destroy(काष्ठा drm_connector *connector);
-पूर्णांक पूर्णांकel_connector_रेजिस्टर(काष्ठा drm_connector *connector);
-व्योम पूर्णांकel_connector_unरेजिस्टर(काष्ठा drm_connector *connector);
-व्योम पूर्णांकel_connector_attach_encoder(काष्ठा पूर्णांकel_connector *connector,
-				    काष्ठा पूर्णांकel_encoder *encoder);
-bool पूर्णांकel_connector_get_hw_state(काष्ठा पूर्णांकel_connector *connector);
-क्रमागत pipe पूर्णांकel_connector_get_pipe(काष्ठा पूर्णांकel_connector *connector);
-पूर्णांक पूर्णांकel_connector_update_modes(काष्ठा drm_connector *connector,
-				 काष्ठा edid *edid);
-पूर्णांक पूर्णांकel_ddc_get_modes(काष्ठा drm_connector *c, काष्ठा i2c_adapter *adapter);
-व्योम पूर्णांकel_attach_क्रमce_audio_property(काष्ठा drm_connector *connector);
-व्योम पूर्णांकel_attach_broadcast_rgb_property(काष्ठा drm_connector *connector);
-व्योम पूर्णांकel_attach_aspect_ratio_property(काष्ठा drm_connector *connector);
-व्योम पूर्णांकel_attach_hdmi_colorspace_property(काष्ठा drm_connector *connector);
-व्योम पूर्णांकel_attach_dp_colorspace_property(काष्ठा drm_connector *connector);
+int intel_connector_init(struct intel_connector *connector);
+struct intel_connector *intel_connector_alloc(void);
+void intel_connector_free(struct intel_connector *connector);
+void intel_connector_destroy(struct drm_connector *connector);
+int intel_connector_register(struct drm_connector *connector);
+void intel_connector_unregister(struct drm_connector *connector);
+void intel_connector_attach_encoder(struct intel_connector *connector,
+				    struct intel_encoder *encoder);
+bool intel_connector_get_hw_state(struct intel_connector *connector);
+enum pipe intel_connector_get_pipe(struct intel_connector *connector);
+int intel_connector_update_modes(struct drm_connector *connector,
+				 struct edid *edid);
+int intel_ddc_get_modes(struct drm_connector *c, struct i2c_adapter *adapter);
+void intel_attach_force_audio_property(struct drm_connector *connector);
+void intel_attach_broadcast_rgb_property(struct drm_connector *connector);
+void intel_attach_aspect_ratio_property(struct drm_connector *connector);
+void intel_attach_hdmi_colorspace_property(struct drm_connector *connector);
+void intel_attach_dp_colorspace_property(struct drm_connector *connector);
 
-#पूर्ण_अगर /* __INTEL_CONNECTOR_H__ */
+#endif /* __INTEL_CONNECTOR_H__ */
